@@ -53,7 +53,8 @@ export default function NewInvoice() {
 
   useEffect(() => {
     // Load clients for dropdown
-    supabase.from('clients').select('id, name').order('name').then(({ data }) => {
+    supabase.from('clients').select('id, name').order('name').then(({ data, error }) => {
+      console.log('clients:', data, 'error:', error)
       setClients(data || [])
     })
     // Generate invoice number

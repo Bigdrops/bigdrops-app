@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
+import { useNavigate } from 'react-router-dom'
 
 export default function Invoices() {
   const [invoices, setInvoices] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('All')
+  const navigate = useNavigate()
 
   useEffect(() => {
     supabase.from('invoices').select('*').order('created_at', { ascending: false }).then(({ data }) => {
@@ -33,7 +35,7 @@ export default function Invoices() {
             </div>
           ))}
         </div>
-        <div style={{ backgroundColor: '#CC0000', color: 'white', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+        <div onClick={() => navigate('/invoices/new')} style={{ backgroundColor: '#CC0000', color: 'white', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
           + New Invoice
         </div>
       </div>
