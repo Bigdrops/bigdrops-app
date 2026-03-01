@@ -7,11 +7,15 @@ export default function Clients() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let mounted = true
     supabase.from('clients').select('*').order('name').then(({ data, error }) => {
-      if (error) console.error('Error fetching clients:', error)
-      setClients(data || [])
-      setLoading(false)
+      if (mounted) {
+        if (error) console.error('Error:', error)
+        setClients(data || [])
+        setLoading(false)
+      }
     })
+    return () => { mounted = false }
   }, [])
 
   return (

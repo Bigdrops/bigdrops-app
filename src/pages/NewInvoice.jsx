@@ -52,17 +52,15 @@ export default function NewInvoice() {
   const [items, setItems] = useState([{ ...emptyItem }])
 
   useEffect(() => {
-    // Load clients for dropdown
     supabase.from('clients').select('id, name').order('name').then(({ data, error }) => {
-      console.log('clients:', data, 'error:', error)
+      console.log('clients loaded:', data, error)
       setClients(data || [])
     })
-    // Generate invoice number
     supabase.from('invoices').select('invoice_number').order('created_at', { ascending: false }).limit(1).then(({ data }) => {
       if (data && data.length > 0) {
         const last = data[0].invoice_number
         const num = parseInt(last.replace('SASINV-B', '')) + 1
-        setInvoice(i => ({ ...i, invoice_number: `SASINV-B${String(num).padStart(3, '0')}` }))
+        setInvoice(i => ({ ...i, invoice_number: 'SASINV-B' + String(num).padStart(3, '0') }))
       } else {
         setInvoice(i => ({ ...i, invoice_number: 'SASINV-B001' }))
       }
@@ -74,7 +72,6 @@ export default function NewInvoice() {
   const updateItem = (index, field, value) => {
     const updated = [...items]
     updated[index] = { ...updated[index], [field]: value }
-    // Auto calculate amount
     if (field === 'quantity' || field === 'unit_price') {
       updated[index].amount = updated[index].quantity * updated[index].unit_price
     }
@@ -85,7 +82,6 @@ export default function NewInvoice() {
   const addGroupHeader = () => setItems([...items, { ...emptyItem, row_type: 'group_header', sort_order: items.length }])
   const removeItem = (index) => setItems(items.filter((_, i) => i !== index))
 
-  // Calculations
   const subtotal = items.filter(i => i.row_type === 'standard').reduce((sum, i) => sum + (i.quantity * i.unit_price), 0)
   const vatAmount = subtotal * (invoice.vat / 100)
   const installRateTotal = items.filter(i => i.row_type === 'standard' && !i.install_rate_taxable).reduce((sum, i) => sum + Number(i.install_rate || 0), 0)
@@ -109,7 +105,7 @@ export default function NewInvoice() {
     return convert(naira) + ' NAIRA' + (kobo > 0 ? ' AND ' + convert(kobo) + ' KOBO' : '') + ' ONLY'
   }
 
-  const handleSave = async (status = 'draft') => {
+  const handleSave = async (status) => {
     setSaving(true)
     const amountInWords = numberToWords(total)
     const { data: inv, error } = await supabase.from('invoices').insert([{
@@ -122,25 +118,63 @@ export default function NewInvoice() {
       amount_in_words: amountInWords,
     }]).select().single()
 
-    if (error) { alert('Error saving invoice: ' + error.message); setSaving(false); return }
+    if (error) {
+      alert('Error saving invoice: ' + error.message)
+      setSaving(false)
+      return
+    }
 
-    // Save line items
-    const itemsToSave = items.map((item, i) => ({ ...item, invoice_id: inv.id, sort_order: i, amount: item.quantity * item.unit_price }))
+    const itemsToSave = items.map((item, i) => ({
+      ...item,
+      invoice_id: inv.id,
+      sort_order: i,
+      amount: item.quantity * item.unit_price,
+    }))
     await supabase.from('invoice_items').insert(itemsToSave)
 
     setSaving(false)
     navigate('/invoices')
   }
 
-  const inputStyle = { width: '100%', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }
-  const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#555', marginBottom: '4px' }
+  const inputStyle = {
+    width: '100%',
+    padding: '8px 12px',
+    border: '1px solid #ddd',
+    borderRadius: '6px',
+    fontSize: '14px',
+    outline: 'none',
+    boxSizing: 'border-box',
+  }
+
+  const labelStyle = {
+    display: 'block',
+    fontSize: '12px',
+    fontWeight: 'bold',
+    color: '#555',
+    marginBottom: '4px',
+  }
+
+  const sectionStyle = {
+    backgroundColor: 'white',
+    padding: '24px',
+    borderRadius: '8px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+    marginBottom: '20px',
+  }
+
+  const sectionTitleStyle = {
+    margin: '0 0 16px 0',
+    color: '#0056B3',
+    fontSize: '14px',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+  }
 
   return (
     <Layout title="New Invoice">
       <div style={{ maxWidth: '1100px' }}>
 
-        {/* Document Type & Number */}
-        <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '20px' }}>
+        <div style={sectionStyle}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
             <div>
               <label style={labelStyle}>Document Type</label>
@@ -166,9 +200,8 @@ export default function NewInvoice() {
           </div>
         </div>
 
-        {/* Client Selection */}
-        <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '20px' }}>
-          <h3 style={{ margin: '0 0 16px 0', color: '#0056B3', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>Client Details</h3>
+        <div style={sectionStyle}>
+          <h3 style={sectionTitleStyle}>Client Details</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
               <label style={labelStyle}>Select Client</label>
@@ -177,20 +210,21 @@ export default function NewInvoice() {
                 updateInvoice('client_id', e.target.value)
                 updateInvoice('client_name', client ? client.name : '')
               }}>
-                <option value="">— Select a client —</option>
-                {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                <option value="">— {clients.length} clients loaded, select one —</option>
+                {clients.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Client Name (auto-filled)</label>
-              <input style={inputStyle} value={invoice.client_name} onChange={e => updateInvoice('client_name', e.target.value)} placeholder="Or type manually" />
+              <label style={labelStyle}>Client Name</label>
+              <input style={inputStyle} value={invoice.client_name} onChange={e => updateInvoice('client_name', e.target.value)} placeholder="Auto-filled or type manually" />
             </div>
           </div>
         </div>
 
-        {/* Custom Header Fields */}
-        <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '20px' }}>
-          <h3 style={{ margin: '0 0 16px 0', color: '#0056B3', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>Custom Header Fields (Optional)</h3>
+        <div style={sectionStyle}>
+          <h3 style={sectionTitleStyle}>Custom Header Fields (Optional)</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             <div>
               <label style={labelStyle}>Work Duration</label>
@@ -207,16 +241,15 @@ export default function NewInvoice() {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Custom Fields (JSON)</label>
-              <input style={inputStyle} value={invoice.custom_fields} onChange={e => updateInvoice('custom_fields', e.target.value)} placeholder='e.g. {"Capacity":"500KVA"}' />
+              <label style={labelStyle}>Custom Fields</label>
+              <input style={inputStyle} value={invoice.custom_fields} onChange={e => updateInvoice('custom_fields', e.target.value)} placeholder="e.g. Capacity: 500KVA" />
             </div>
           </div>
         </div>
 
-        {/* Line Items Table */}
-        <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '20px' }}>
+        <div style={sectionStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ margin: 0, color: '#0056B3', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>Line Items</h3>
+            <h3 style={{ ...sectionTitleStyle, margin: 0 }}>Line Items</h3>
             <div style={{ display: 'flex', gap: '10px' }}>
               <div onClick={addGroupHeader} style={{ padding: '8px 14px', backgroundColor: '#1a1a1a', color: 'white', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
                 + Group Header
@@ -231,15 +264,15 @@ export default function NewInvoice() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ backgroundColor: '#1a1a1a' }}>
-                  <th style={{ padding: '10px 12px', textAlign: 'left', color: 'white', minWidth: '180px' }}>Description</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', color: 'white', minWidth: '200px' }}>Description</th>
                   <th style={{ padding: '10px 12px', textAlign: 'left', color: 'white', minWidth: '80px' }}>Make</th>
                   <th style={{ padding: '10px 12px', textAlign: 'left', color: 'white', minWidth: '60px' }}>Qty</th>
                   <th style={{ padding: '10px 12px', textAlign: 'left', color: 'white', minWidth: '60px' }}>Unit</th>
-                  <th style={{ padding: '10px 12px', textAlign: 'left', color: 'white', minWidth: '100px' }}>Unit Price</th>
-                  <th style={{ padding: '10px 12px', textAlign: 'left', color: 'white', minWidth: '100px' }}>Amount</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', color: 'white', minWidth: '120px' }}>Unit Price</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', color: 'white', minWidth: '120px' }}>Amount</th>
                   <th style={{ padding: '10px 12px', textAlign: 'left', color: 'white', minWidth: '60px' }}>VAT %</th>
-                  <th style={{ padding: '10px 12px', textAlign: 'left', color: 'white', minWidth: '80px' }}>Install Rate</th>
-                  <th style={{ padding: '10px 12px', color: 'white', minWidth: '40px' }}></th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', color: 'white', minWidth: '100px' }}>Install Rate</th>
+                  <th style={{ padding: '10px 12px', color: 'white', minWidth: '30px' }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -248,14 +281,14 @@ export default function NewInvoice() {
                     <tr key={index} style={{ backgroundColor: '#333' }}>
                       <td colSpan="8" style={{ padding: '10px 12px' }}>
                         <input
-                          style={{ ...inputStyle, backgroundColor: 'transparent', color: 'white', fontWeight: 'bold', border: 'none', borderBottom: '1px solid #555' }}
+                          style={{ width: '100%', backgroundColor: 'transparent', color: 'white', fontWeight: 'bold', border: 'none', borderBottom: '1px solid #555', fontSize: '14px', outline: 'none', padding: '4px' }}
                           value={item.group_name}
                           onChange={e => updateItem(index, 'group_name', e.target.value)}
                           placeholder="Group name (e.g. Electrical Works)"
                         />
                       </td>
-                      <td style={{ padding: '10px 12px' }}>
-                        <span onClick={() => removeItem(index)} style={{ color: '#ff6b6b', cursor: 'pointer', fontSize: '16px' }}>×</span>
+                      <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                        <span onClick={() => removeItem(index)} style={{ color: '#ff6b6b', cursor: 'pointer', fontSize: '18px', fontWeight: 'bold' }}>x</span>
                       </td>
                     </tr>
                   ) : (
@@ -264,15 +297,29 @@ export default function NewInvoice() {
                         <input style={inputStyle} value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} placeholder="Item description" />
                         <input style={{ ...inputStyle, marginTop: '4px', fontSize: '12px', color: '#888' }} value={item.sub_description} onChange={e => updateItem(index, 'sub_description', e.target.value)} placeholder="Sub-description (optional)" />
                       </td>
-                      <td style={{ padding: '8px 12px' }}><input style={inputStyle} value={item.make} onChange={e => updateItem(index, 'make', e.target.value)} placeholder="Make" /></td>
-                      <td style={{ padding: '8px 12px' }}><input style={inputStyle} type="number" value={item.quantity} onChange={e => updateItem(index, 'quantity', Number(e.target.value))} /></td>
-                      <td style={{ padding: '8px 12px' }}><input style={inputStyle} value={item.unit} onChange={e => updateItem(index, 'unit', e.target.value)} placeholder="pcs" /></td>
-                      <td style={{ padding: '8px 12px' }}><input style={inputStyle} type="number" value={item.unit_price} onChange={e => updateItem(index, 'unit_price', Number(e.target.value))} /></td>
-                      <td style={{ padding: '8px 12px', fontWeight: 'bold', color: '#1a1a1a' }}>₦{(item.quantity * item.unit_price).toLocaleString()}</td>
-                      <td style={{ padding: '8px 12px' }}><input style={inputStyle} type="number" value={item.vat_rate} onChange={e => updateItem(index, 'vat_rate', Number(e.target.value))} /></td>
-                      <td style={{ padding: '8px 12px' }}><input style={inputStyle} type="number" value={item.install_rate} onChange={e => updateItem(index, 'install_rate', Number(e.target.value))} /></td>
                       <td style={{ padding: '8px 12px' }}>
-                        <span onClick={() => removeItem(index)} style={{ color: '#CC0000', cursor: 'pointer', fontSize: '16px' }}>×</span>
+                        <input style={inputStyle} value={item.make} onChange={e => updateItem(index, 'make', e.target.value)} placeholder="Brand" />
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <input style={inputStyle} type="number" min="0" value={item.quantity} onChange={e => updateItem(index, 'quantity', Number(e.target.value))} />
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <input style={inputStyle} value={item.unit} onChange={e => updateItem(index, 'unit', e.target.value)} placeholder="pcs" />
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <input style={inputStyle} type="number" min="0" value={item.unit_price} onChange={e => updateItem(index, 'unit_price', Number(e.target.value))} />
+                      </td>
+                      <td style={{ padding: '8px 12px', fontWeight: 'bold', color: '#1a1a1a' }}>
+                        {(item.quantity * item.unit_price).toLocaleString()}
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <input style={inputStyle} type="number" min="0" value={item.vat_rate} onChange={e => updateItem(index, 'vat_rate', Number(e.target.value))} />
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <input style={inputStyle} type="number" min="0" value={item.install_rate} onChange={e => updateItem(index, 'install_rate', Number(e.target.value))} />
+                      </td>
+                      <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                        <span onClick={() => removeItem(index)} style={{ color: '#CC0000', cursor: 'pointer', fontSize: '18px', fontWeight: 'bold' }}>x</span>
                       </td>
                     </tr>
                   )
@@ -282,32 +329,29 @@ export default function NewInvoice() {
           </div>
         </div>
 
-        {/* Totals */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-          {/* Below table extras */}
-          <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#0056B3', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>Additional Charges</h3>
+          <div style={sectionStyle}>
+            <h3 style={sectionTitleStyle}>Additional Charges</h3>
             {[
-              { label: 'Workmanship', field: 'workmanship' },
-              { label: 'Transportation', field: 'transportation' },
-              { label: 'Shipping', field: 'shipping' },
-              { label: 'Discount', field: 'discount' },
+              { label: 'Workmanship (N)', field: 'workmanship' },
+              { label: 'Transportation (N)', field: 'transportation' },
+              { label: 'Shipping (N)', field: 'shipping' },
+              { label: 'Discount (N)', field: 'discount' },
               { label: 'VAT %', field: 'vat' },
               { label: 'WHT %', field: 'wht' },
             ].map(({ label, field }) => (
               <div key={field} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <label style={labelStyle}>{label}</label>
-                <input type="number" style={{ ...inputStyle, width: '160px', textAlign: 'right' }} value={invoice[field]} onChange={e => updateInvoice(field, Number(e.target.value))} />
+                <label style={{ ...labelStyle, marginBottom: 0 }}>{label}</label>
+                <input type="number" min="0" style={{ ...inputStyle, width: '160px', textAlign: 'right' }} value={invoice[field]} onChange={e => updateInvoice(field, Number(e.target.value))} />
               </div>
             ))}
           </div>
 
-          {/* Grand Total */}
-          <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#0056B3', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>Summary</h3>
+          <div style={sectionStyle}>
+            <h3 style={sectionTitleStyle}>Summary</h3>
             {[
               { label: 'Subtotal', value: subtotal },
-              { label: `VAT (${invoice.vat}%)`, value: vatAmount },
+              { label: 'VAT (' + invoice.vat + '%)', value: vatAmount },
               { label: 'Workmanship', value: Number(invoice.workmanship || 0) },
               { label: 'Transportation', value: Number(invoice.transportation || 0) },
               { label: 'Shipping', value: Number(invoice.shipping || 0) },
@@ -316,12 +360,12 @@ export default function NewInvoice() {
             ].map(({ label, value }) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
                 <span style={{ color: '#555' }}>{label}</span>
-                <span style={{ color: value < 0 ? '#CC0000' : '#1a1a1a' }}>₦{value.toLocaleString()}</span>
+                <span style={{ color: value < 0 ? '#CC0000' : '#1a1a1a' }}>N{value.toLocaleString()}</span>
               </div>
             ))}
             <div style={{ borderTop: '2px solid #1a1a1a', paddingTop: '12px', marginTop: '12px', display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontWeight: 'bold', fontSize: '16px' }}>TOTAL (NGN)</span>
-              <span style={{ fontWeight: 'bold', fontSize: '20px', color: '#CC0000' }}>₦{total.toLocaleString()}</span>
+              <span style={{ fontWeight: 'bold', fontSize: '20px', color: '#CC0000' }}>N{total.toLocaleString()}</span>
             </div>
             <div style={{ marginTop: '12px', padding: '10px', backgroundColor: '#f9f9f9', borderRadius: '6px', fontSize: '12px', color: '#555', fontStyle: 'italic' }}>
               {numberToWords(total)}
@@ -329,22 +373,20 @@ export default function NewInvoice() {
           </div>
         </div>
 
-        {/* Notes & Terms */}
-        <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '20px' }}>
+        <div style={sectionStyle}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
               <label style={labelStyle}>Notes</label>
               <textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={invoice.notes} onChange={e => updateInvoice('notes', e.target.value)} placeholder="Notes to client..." />
             </div>
             <div>
-              <label style={labelStyle}>Terms & Conditions</label>
+              <label style={labelStyle}>Terms and Conditions</label>
               <textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={invoice.terms} onChange={e => updateInvoice('terms', e.target.value)} placeholder="Terms and conditions..." />
             </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingBottom: '40px' }}>
           <div onClick={() => navigate('/invoices')} style={{ padding: '12px 24px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', border: '1px solid #ddd', backgroundColor: 'white' }}>
             Cancel
           </div>
@@ -352,7 +394,7 @@ export default function NewInvoice() {
             {saving ? 'Saving...' : 'Save as Draft'}
           </div>
           <div onClick={() => handleSave('sent')} style={{ padding: '12px 24px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', backgroundColor: '#CC0000', color: 'white', fontWeight: 'bold' }}>
-            {saving ? 'Saving...' : 'Save & Send'}
+            {saving ? 'Saving...' : 'Save and Send'}
           </div>
         </div>
 
