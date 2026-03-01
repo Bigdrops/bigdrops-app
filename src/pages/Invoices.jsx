@@ -66,6 +66,7 @@ export default function Invoices() {
                 return (
                   <tr
                     key={inv.id}
+                    onClick={() => navigate('/invoices/' + inv.id)}
                     style={{ backgroundColor: index % 2 === 0 ? '#f9f9f9' : 'white', borderBottom: '1px solid #eee', cursor: 'pointer' }}
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F0F4FF'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#f9f9f9' : 'white'}

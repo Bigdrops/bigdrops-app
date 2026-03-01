@@ -5,6 +5,7 @@ import Quotations from './pages/Quotations'
 import CSR from './pages/CSR'
 import Clients from './pages/Clients'
 import NewInvoice from './pages/NewInvoice'
+import ViewInvoice from './pages/ViewInvoice'
 
 const navItems = [
   { label: 'Dashboard', path: '/', icon: '🏠' },
@@ -53,10 +54,11 @@ function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/invoices" element={<Invoices />} />
+        <Route path="/invoices/new" element={<NewInvoice />} />
+        <Route path="/invoices/:id" element={<ViewInvoice />} />
         <Route path="/quotations" element={<Quotations />} />
         <Route path="/csr" element={<CSR />} />
         <Route path="/clients" element={<Clients />} />
-        <Route path="/invoices/new" element={<NewInvoice />} />
       </Routes>
     </BrowserRouter>
   )
