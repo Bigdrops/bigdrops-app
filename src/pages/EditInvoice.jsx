@@ -121,11 +121,12 @@ export default function EditInvoice() {
     const kobo = Math.round((num - naira) * 100)
     return convert(naira) + ' NAIRA' + (kobo > 0 ? ' AND ' + convert(kobo) + ' KOBO' : '') + ' ONLY'
   }
-
   const handleSave = async (status) => {
     setSaving(true)
     const amountInWords = numberToWords(total)
-    const { data: updatedData, error } = await supabase.from('invoices').update({
+    
+    // Update invoice header
+    const { error } = await supabase.from('invoices').update({
       ...invoice,
       status,
       subtotal,
@@ -135,25 +136,52 @@ export default function EditInvoice() {
       total,
       amount_in_words: amountInWords,
     }).eq('id', id)
-
-    console.log('update result:', updatedData, error)
-    if (error) { alert('Error saving: ' + error.message); setSaving(false); return }
-
-    await supabase.from('invoice_items').delete().eq('invoice_id', id)
-    const itemsToSave = items.map((item, i) => ({
-      ...item,
-      id: undefined,
-      invoice_id: id,
-      sort_order: i,
-      amount: Number(item.quantity) * Number(item.unit_price),
-      vat_rate: 0,
-    }))
-    await supabase.from('invoice_items').insert(itemsToSave)
-
+  
+    if (error) { 
+      alert('Error saving: ' + error.message)
+      setSaving(false)
+      return
+    }
+  
+    // Delete old items
+    const { error: deleteError } = await supabase.from('invoice_items').delete().eq('invoice_id', id)
+    if (deleteError) {
+      console.error('Delete error:', deleteError)
+    }
+  
+    // Prepare items - remove id and created_at, add invoice_id
+    const itemsToSave = items.map((item, i) => {
+      const { id: itemId, created_at, ...cleanItem } = item // Remove existing id and created_at
+      return {
+        ...cleanItem,
+        invoice_id: id,
+        sort_order: i,
+        amount: Number(item.quantity) * Number(item.unit_price),
+        vat_rate: 0,
+      }
+    }).filter(item => item.description.trim() !== '') // Only save items with descriptions
+  
+    console.log('Saving items:', itemsToSave)
+  
+    if (itemsToSave.length > 0) {
+      const { error: insertError, data } = await supabase.from('invoice_items').insert(itemsToSave).select()
+if (insertError) {
+  alert('Insert error: ' + JSON.stringify(insertError))
+}
+console.log('insert result:', data, insertError)
+      if (insertError) {
+        alert('Error saving items: ' + insertError.message)
+        console.error('Insert error:', insertError)
+        setSaving(false)
+        return
+      }
+      console.log('Saved items:', data)
+    }
+  
     setSaving(false)
     navigate('/invoices/' + id)
   }
-
+ 
   const inputStyle = { width: '100%', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }
   const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#555', marginBottom: '4px' }
   const sectionStyle = { backgroundColor: 'white', padding: '24px', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '20px' }
