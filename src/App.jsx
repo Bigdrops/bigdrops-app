@@ -6,6 +6,7 @@ import CSR from './pages/CSR'
 import Clients from './pages/Clients'
 import NewInvoice from './pages/NewInvoice'
 import ViewInvoice from './pages/ViewInvoice'
+import EditInvoice from './pages/EditInvoice'
 
 const navItems = [
   { label: 'Dashboard', path: '/', icon: '🏠' },
@@ -59,6 +60,7 @@ function App() {
         <Route path="/quotations" element={<Quotations />} />
         <Route path="/csr" element={<CSR />} />
         <Route path="/clients" element={<Clients />} />
+        <Route path="/invoices/edit/:id" element={<EditInvoice />} />
       </Routes>
     </BrowserRouter>
   )
