@@ -20,6 +20,7 @@ export default function CSR() {
     if (status === 'Incomplete') return { bg: '#FEE2E2', color: '#CC0000' }
     if (status === 'Pending for spares') return { bg: '#FEF9C3', color: '#CA8A04' }
     if (status === 'Under observation') return { bg: '#E0F2FE', color: '#0284C7' }
+    if (status === 'Field Entry Pending') return { bg: '#EDE9FE', color: '#4B5563' }
     return { bg: '#F5F5F5', color: '#555' }
   }
 
@@ -30,8 +31,35 @@ export default function CSR() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div style={{ color: '#6B6B6B', fontSize: '14px' }}>{csrs.length} reports total</div>
-          <div onClick={() => navigate('/csr/new')} style={{ padding: '10px 20px', backgroundColor: '#CC0000', color: 'white', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>
-            + New CSR
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <div
+              onClick={() => navigate('/csr/new')}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#CC0000',
+                color: 'white',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+              }}
+            >
+              + New CSR
+            </div>
+            <div
+              onClick={() => navigate('/csr/new?type=field')}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#4B5563',
+                color: 'white',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+              }}
+            >
+              + Field CSR
+            </div>
           </div>
         </div>
 

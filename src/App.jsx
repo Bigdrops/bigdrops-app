@@ -9,6 +9,7 @@ import ViewInvoice from './pages/ViewInvoice'
 import EditInvoice from './pages/EditInvoice'
 import NewCSR from './pages/NewCSR'
 import ViewCSR from './pages/ViewCSR'
+import EditCSR from './pages/EditCSR'
 
 const navItems = [
   { label: 'Dashboard', path: '/', icon: '🏠' },
@@ -70,6 +71,7 @@ function App() {
             <Route path="/csr" element={<CSR />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/csr/new" element={<NewCSR />} />
+            <Route path="/csr/edit/:id" element={<EditCSR />} />
             <Route path="/csr/:id" element={<ViewCSR />} />
           </Routes>
         </div>

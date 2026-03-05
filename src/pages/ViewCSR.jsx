@@ -6,7 +6,9 @@ import { pdf } from '@react-pdf/renderer'
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 
 const FOOTER_TEXT = 'Sun & Shield Power Solutions  |  Powering Your World, Shielding Your Future  |  sunshieldpowersolutions@gmail.com  |  08066190685'
-const STATUS_OPTIONS = ['Complete', 'Incomplete', 'Pending for spares', 'Under observation', 'Working solution provided']
+const STATUS_OPTIONS = ['Complete', 'Incomplete', 'Pending for spares', 'Under observation', 'Working solution provided', 'Field Entry Pending']
+// PDF templates only: exclude 'Field Entry Pending' from status checkboxes
+const STATUS_OPTIONS_PDF = ['Complete', 'Incomplete', 'Pending for spares', 'Under observation', 'Working solution provided']
 
 // ─── TEMPLATE 1: Classic Red/Blue ───────────────────────────────────────────
 const t1 = StyleSheet.create({
@@ -56,6 +58,12 @@ function Template1({ csr }) {
           <View style={t1.cell}><Text style={t1.label}>CSR No.</Text><Text style={t1.value}>{csr.csr_number}</Text></View>
           <View style={t1.cellLast}><Text style={t1.label}>Date</Text><Text style={t1.value}>{csr.date}</Text></View>
         </View>
+        {csr.show_po && csr.po_number ? (
+          <View style={t1.row}>
+            <View style={t1.cell}><Text style={t1.label}>PO No.</Text><Text style={t1.value}>{csr.po_number}</Text></View>
+            <View style={t1.cellLast} />
+          </View>
+        ) : null}
         <View style={t1.row}><View style={t1.cellFull}><Text style={t1.label}>Customer Name</Text><Text style={t1.value}>{csr.client_name}</Text></View></View>
         <View style={t1.row}><View style={t1.cellFull}><Text style={t1.label}>Address</Text><Text style={t1.value}>{csr.address}</Text></View></View>
 
@@ -99,7 +107,7 @@ function Template1({ csr }) {
           </View>
           <View style={t1.statusPanel}>
             <Text style={t1.statusTitle}>Status after Service:</Text>
-            {STATUS_OPTIONS.map(opt => (
+            {STATUS_OPTIONS_PDF.map(opt => (
               <View key={opt} style={t1.cbRow}>
                 <View style={csr.status === opt ? t1.chkOn : t1.chk}>
                   {csr.status === opt && <Text style={t1.chkMark}>✓</Text>}
@@ -189,6 +197,12 @@ function Template2({ csr }) {
             <View style={t2.cell}><Text style={t2.label}>Date</Text><Text style={t2.value}>{csr.date}</Text></View>
             <View style={[t2.cellLast, { flex: 2 }]}><Text style={t2.label}>Customer</Text><Text style={t2.value}>{csr.client_name}</Text></View>
           </View>
+          {csr.show_po && csr.po_number ? (
+            <View style={t2.row}>
+              <View style={t2.cell}><Text style={t2.label}>PO No.</Text><Text style={t2.value}>{csr.po_number}</Text></View>
+              <View style={[t2.cellLast, { flex: 2 }]} />
+            </View>
+          ) : null}
           <View style={t2.rowLast}><View style={t2.cellFull}><Text style={t2.label}>Address</Text><Text style={t2.value}>{csr.address}</Text></View></View>
         </View>
 
@@ -242,7 +256,7 @@ function Template2({ csr }) {
               </View>
               <View style={t2.statusPanel}>
                 <Text style={t2.statusTitle}>Status</Text>
-                {STATUS_OPTIONS.map(opt => (
+                {STATUS_OPTIONS_PDF.map(opt => (
                   <View key={opt} style={t2.cbRow}>
                     <View style={csr.status === opt ? t2.chkOn : t2.chk}>
                       {csr.status === opt && <Text style={t2.chkMark}>✓</Text>}
@@ -311,7 +325,7 @@ const t3 = StyleSheet.create({
   divider: { borderTopWidth: 1, borderTopColor: '#d0d8ec' },
 })
 
-function Template3({ csr }) {
+export function Template3({ csr }) {
   return (
     <Document>
       <Page size="A4" style={t3.page}>
@@ -332,6 +346,9 @@ function Template3({ csr }) {
           <View style={t3.titleMeta}>
             <Text style={t3.titleMetaText}><Text style={t3.titleMetaBold}>CSR No.: </Text>{csr.csr_number}</Text>
             <Text style={t3.titleMetaText}><Text style={t3.titleMetaBold}>Date: </Text>{csr.date}</Text>
+            {csr.show_po && csr.po_number ? (
+              <Text style={t3.titleMetaText}><Text style={t3.titleMetaBold}>PO No.: </Text>{csr.po_number}</Text>
+            ) : null}
           </View>
         </View>
 
@@ -405,7 +422,7 @@ function Template3({ csr }) {
                   </View>
                 </View>
                 <Text style={t3.lbl}>Status After Service</Text>
-                {STATUS_OPTIONS.map(opt => (
+                {STATUS_OPTIONS_PDF.map(opt => (
                   <View key={opt} style={t3.cbRow}>
                     <View style={csr.status === opt ? t3.chkOn : t3.chk}>
                       {csr.status === opt && <Text style={t3.chkMark}>✓</Text>}
@@ -461,6 +478,7 @@ export default function ViewCSR() {
     'Pending for spares': { bg: '#FEF9C3', color: '#CA8A04' },
     'Under observation': { bg: '#E0F2FE', color: '#0284C7' },
     'Working solution provided': { bg: '#F3E8FF', color: '#7C3AED' },
+    'Field Entry Pending': { bg: '#EDE9FE', color: '#4B5563' },
   }
   const s = statusColor[csr.status] || { bg: '#F5F5F5', color: '#555' }
 

@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
-import { pdf } from '@react-pdf/renderer'
-import { Template3 } from './ViewCSR'
 
-export default function NewCSR() {
+export default function EditCSR() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const type = searchParams.get('type')
-  const isField = type === 'field'
+  const { id } = useParams()
   const [clients, setClients] = useState([])
   const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const [csr, setCsr] = useState({
     csr_number: '',
@@ -48,104 +45,68 @@ export default function NewCSR() {
   })
 
   useEffect(() => {
-    // Fetch clients WITH address
-    supabase
-      .from('clients')
-      .select('id, name, address')
-      .order('name')
-      .then(({ data }) => setClients(data || []))
+    const loadData = async () => {
+      try {
+        setLoading(true)
 
-    // Auto-generate CSR number
-    supabase
-      .from('csrs')
-      .select('csr_number')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          const last = data[0].csr_number || 'SASI-CSR-B000'
-          const match = last.match(/(\d+)$/)
+        const { data: clientsData } = await supabase
+          .from('clients')
+          .select('id, name, address')
+          .order('name')
+        setClients(clientsData || [])
 
-          if (match) {
-            const digits = match[1]
-            const nextNumber = String(parseInt(digits, 10) + 1).padStart(
-              digits.length,
-              '0'
-            )
-            let prefix = last.slice(0, last.length - digits.length)
-            if (isField) {
-              prefix = 'FIELD-'
-            }
-            const nextCsrNumber = prefix + nextNumber
+        const { data, error } = await supabase
+          .from('csrs')
+          .select('*')
+          .eq('id', id)
+          .single()
 
-            setCsr(c => ({
-              ...c,
-              csr_number: nextCsrNumber,
-              status: isField ? 'Field Entry Pending' : c.status,
-            }))
-          } else {
-            setCsr(c => ({
-              ...c,
-              csr_number: isField ? 'FIELD-001' : 'SASI-CSR-B001',
-              status: isField ? 'Field Entry Pending' : c.status,
-            }))
-          }
-        } else {
-          setCsr(c => ({
-            ...c,
-            csr_number: isField ? 'FIELD-001' : 'SASI-CSR-B001',
-            status: isField ? 'Field Entry Pending' : c.status,
-          }))
+        if (error) {
+          alert('Error loading CSR: ' + error.message)
+          navigate('/csr')
+          return
         }
-      })
-  }, [isField])
+
+        setCsr(c => ({
+          ...c,
+          ...data,
+        }))
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (id) {
+      loadData()
+    }
+  }, [id, navigate])
 
   const update = (field, value) =>
     setCsr(c => ({ ...c, [field]: value }))
 
   const handleSave = async () => {
-    if (!isField && !csr.client_id) {
+    if (!csr.client_id) {
       alert('Please select a client before saving')
       return
     }
 
+    setSaving(true)
     const csrData = {
       ...csr,
       client_id: csr.client_id || null,
       linked_invoice_id: csr.linked_invoice_id || null,
     }
-    const { data: existing } = await supabase
+    const { error } = await supabase
       .from('csrs')
-      .select('id')
-      .eq('csr_number', csrData.csr_number)
+      .update(csrData)
+      .eq('id', id)
 
-    if (existing && existing.length > 0) {
-      alert('CSR number already exists. Please use a different number.')
-      return
-    }
-
-    setSaving(true)
-    const { error } = await supabase.from('csrs').insert([csrData])
     if (error) {
       alert('Error: ' + error.message)
       setSaving(false)
       return
     }
     setSaving(false)
-
-    if (isField) {
-      try {
-        const blob = await pdf(<Template3 csr={csrData} />).toBlob()
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = (csrData.csr_number || 'csr') + '.pdf'
-        a.click()
-      } catch (e) {
-        console.error('Failed to generate PDF', e)
-      }
-    }
-
     navigate('/csr')
   }
 
@@ -202,8 +163,18 @@ export default function NewCSR() {
     'Field Entry Pending',
   ]
 
+  if (loading) {
+    return (
+      <Layout title="Edit CSR">
+        <div style={{ maxWidth: '900px' }}>
+          <div style={{ padding: '16px' }}>Loading CSR...</div>
+        </div>
+      </Layout>
+    )
+  }
+
   return (
-    <Layout title="New CSR">
+    <Layout title="Edit CSR">
       <div style={{ maxWidth: '900px' }}>
 
         <div style={sectionStyle}>
@@ -540,10 +511,11 @@ export default function NewCSR() {
               fontWeight: '600',
             }}
           >
-            {saving ? 'Saving...' : 'Save CSR'}
+            {saving ? 'Saving...' : 'Save Changes'}
           </div>
         </div>
       </div>
     </Layout>
   )
 }
+
