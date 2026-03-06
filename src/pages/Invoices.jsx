@@ -27,11 +27,27 @@ export default function Invoices() {
 
   const filtered = filter === 'All' ? invoices : invoices.filter(i => (i.status || 'draft').toLowerCase() === filter.toLowerCase())
 
-  // summary totals (recompute on render so they update with invoices)
-  const totalInvoiced = invoices.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0)
-  const totalDue = invoices.filter(inv => inv.status !== 'paid').reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0)
-  const totalReceived = invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0)
-  const totalVat = invoices.reduce((sum, inv) => sum + (Number(inv.vat_amount) || 0), 0)
+  // summary totals stored in state and recalculated whenever invoices array updates
+  const [totalInvoiced, setTotalInvoiced] = useState(0)
+  const [totalDue, setTotalDue] = useState(0)
+  const [totalReceived, setTotalReceived] = useState(0)
+  const [totalVat, setTotalVat] = useState(0)
+
+  useEffect(() => {
+    // only run after invoices have been fetched (initially empty array yields zeros)
+    setTotalInvoiced(invoices.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0))
+    setTotalDue(
+      invoices
+        .filter(inv => !['paid'].includes(inv.status))
+        .reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0)
+    )
+    setTotalReceived(
+      invoices
+        .filter(inv => inv.status === 'paid')
+        .reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0)
+    )
+    setTotalVat(invoices.reduce((sum, inv) => sum + (Number(inv.vat_amount) || 0), 0))
+  }, [invoices])
 
   return (
     <Layout title="Invoices">

@@ -25,7 +25,7 @@ export default function Clients() {
   return (
     <Layout title="Clients">
       <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'flex-end' }}>
-        <div style={{ backgroundColor: '#CC0000', color: 'white', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+        <div onClick={() => navigate('/clients/new')} style={{ backgroundColor: '#6366F1', color: 'white', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
           + Add Client
         </div>
       </div>
@@ -37,10 +37,28 @@ export default function Clients() {
             <p style={{ padding: '30px', color: '#888', fontSize: '14px' }}>No clients yet.</p>
           ) : (
             clients.map(client => (
-              <div key={client.id} onClick={() => navigate('/clients/' + client.id)} style={{ backgroundColor: 'white', padding: '16px', borderRadius: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid #EBEBEB', cursor: 'pointer', minHeight: '44px' }}>
-                <div style={{ fontWeight: '700', fontSize: '14px', marginBottom: '4px' }}>{client.name}</div>
-                <div style={{ color: '#888', fontSize: '12px', marginBottom: '2px' }}>{client.address || '—'}</div>
-                <div style={{ color: '#888', fontSize: '12px' }}>{client.phone || '—'}</div>
+              <div key={client.id} style={{ backgroundColor: 'white', padding: '16px', borderRadius: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid #EBEBEB', cursor: 'pointer', minHeight: '44px', position: 'relative' }}>
+                <div onClick={() => navigate('/clients/' + client.id)}>
+                  <div style={{ fontWeight: '700', fontSize: '14px', marginBottom: '4px' }}>{client.name}</div>
+                  <div style={{ color: '#888', fontSize: '12px', marginBottom: '2px' }}>{client.address || '—'}</div>
+                  <div style={{ color: '#888', fontSize: '12px' }}>{client.phone || '—'}</div>
+                </div>
+                <div
+                  onClick={() => navigate('/clients/edit/' + client.id)}
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    backgroundColor: '#6366F1',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Edit
+                </div>
               </div>
             ))
           )}
@@ -55,6 +73,7 @@ export default function Clients() {
                 <th style={{ padding: '14px 20px', textAlign: 'left', color: 'white', fontSize: '13px', fontWeight: 'bold' }}>Phone</th>
                 <th style={{ padding: '14px 20px', textAlign: 'left', color: 'white', fontSize: '13px', fontWeight: 'bold' }}>Category</th>
                 <th style={{ padding: '14px 20px', textAlign: 'left', color: 'white', fontSize: '13px', fontWeight: 'bold' }}>Notes</th>
+                <th style={{ padding: '14px 20px', textAlign: 'right', color: 'white', fontSize: '13px', fontWeight: 'bold' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -98,6 +117,14 @@ export default function Clients() {
                     </td>
                     <td style={{ padding: '14px 20px', fontSize: '14px', color: '#555' }}>
                       {client.notes || '—'}
+                    </td>
+                    <td style={{ padding: '14px 20px', textAlign: 'right' }}>
+                      <button
+                        onClick={() => navigate('/clients/edit/' + client.id)}
+                        style={{ backgroundColor: '#6366F1', color: 'white', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}
+                      >
+                        Edit
+                      </button>
                     </td>
                   </tr>
                 ))

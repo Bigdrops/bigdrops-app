@@ -12,10 +12,14 @@ export default function ViewInvoice() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
 
+  // helper to refresh invoice from server
+  const fetchInvoice = async () => {
+    const { data } = await supabase.from('invoices').select('*').eq('id', id).single()
+    setInvoice(data)
+  }
+
   useEffect(() => {
-    supabase.from('invoices').select('*').eq('id', id).single().then(({ data }) => {
-      setInvoice(data)
-    })
+    fetchInvoice()
     supabase.from('invoice_items').select('*').eq('invoice_id', id).order('sort_order').then(({ data }) => {
       setItems(data || [])
       setLoading(false)
@@ -34,6 +38,12 @@ export default function ViewInvoice() {
 
   const s = statusColor(invoice.status)
 
+  const handleStatusChange = async (newStatus) => {
+    if (newStatus === invoice.status) return
+    await supabase.from('invoices').update({ status: newStatus }).eq('id', id)
+    await fetchInvoice()
+  }
+
   return (
     <Layout title={invoice.invoice_number}>
       <div style={{ maxWidth: '900px' }}>
@@ -46,6 +56,50 @@ export default function ViewInvoice() {
           <span style={{ backgroundColor: s.bg, color: s.color, padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', textTransform: 'capitalize' }}>
             {invoice.status || 'draft'}
           </span>
+          {/* action buttons based on current status */}
+          {invoice.status === 'draft' && (
+            <div
+              onClick={() => handleStatusChange('sent')}
+              style={{
+                marginLeft: '8px',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                backgroundColor: '#0056B3',
+                color: 'white',
+                fontSize: '13px',
+                cursor: 'pointer',
+                fontWeight: '600'
+              }}
+            >Mark as Sent</div>
+          )}
+          {invoice.status === 'sent' && (
+            <div
+              onClick={() => handleStatusChange('paid')}
+              style={{
+                marginLeft: '8px',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                backgroundColor: '#16A34A',
+                color: 'white',
+                fontSize: '13px',
+                cursor: 'pointer',
+                fontWeight: '600'
+              }}
+            >Mark as Paid</div>
+          )}
+          {invoice.status === 'paid' && (
+            <div
+              style={{
+                marginLeft: '8px',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                backgroundColor: '#E5E7EB',
+                color: '#6B7280',
+                fontSize: '13px',
+                fontWeight: '600'
+              }}
+            >Paid</div>
+          )}
           <div style={{ flex: 1 }} />
           <PDFDownloadLink
             document={<InvoicePDF invoice={invoice} items={items} />}

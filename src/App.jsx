@@ -7,6 +7,8 @@ import Invoices from './pages/Invoices'
 import Quotations from './pages/Quotations'
 import CSR from './pages/CSR'
 import Clients from './pages/Clients'
+import AddClient from './pages/AddClient'
+import EditClient from './pages/EditClient'
 import NewInvoice from './pages/NewInvoice'
 import ViewInvoice from './pages/ViewInvoice'
 import EditInvoice from './pages/EditInvoice'
@@ -208,6 +210,8 @@ function AppShell({ session, profile, onProfileUpdate }) {
           <Route path="/csr/edit/:id" element={<EditCSR />} />
           <Route path="/csr/:id" element={<ViewCSR />} />
           <Route path="/clients" element={<Clients />} />
+          <Route path="/clients/new" element={<AddClient />} />
+          <Route path="/clients/edit/:id" element={<EditClient />} />
         </Routes>
       </div>
       {isMobile && <BottomNav />}
