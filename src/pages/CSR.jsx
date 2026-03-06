@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 export default function CSR() {
   const navigate = useNavigate()
   const [csrs, setCsrs] = useState([])
   const [loading, setLoading] = useState(true)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     supabase.from('csrs').select('*').order('created_at', { ascending: false }).then(({ data }) => {
@@ -63,47 +65,71 @@ export default function CSR() {
           </div>
         </div>
 
-        {/* Table */}
-        <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-          {loading ? (
-            <p style={{ padding: '30px', color: '#888', fontSize: '14px' }}>Loading...</p>
-          ) : csrs.length === 0 ? (
-            <p style={{ padding: '30px', color: '#888', fontSize: '14px' }}>No CSRs yet. Create your first one.</p>
-          ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #EBEBEB' }}>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6B6B6B', fontWeight: '600', fontSize: '12px' }}>CSR No.</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6B6B6B', fontWeight: '600', fontSize: '12px' }}>Date</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6B6B6B', fontWeight: '600', fontSize: '12px' }}>Client</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6B6B6B', fontWeight: '600', fontSize: '12px' }}>Equipment</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6B6B6B', fontWeight: '600', fontSize: '12px' }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {csrs.map((csr, index) => {
-                  const s = statusColor(csr.status)
-                  return (
-                    <tr key={csr.id} onClick={() => navigate('/csr/' + csr.id)}
-                      style={{ borderBottom: '1px solid #F5F5F5', cursor: 'pointer', backgroundColor: index % 2 === 0 ? 'white' : '#FAFAFA' }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FFF5F5'}
-                      onMouseLeave={e => e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'white' : '#FAFAFA'}>
-                      <td style={{ padding: '12px 16px', fontWeight: '600', color: '#CC0000' }}>{csr.csr_number}</td>
-                      <td style={{ padding: '12px 16px', color: '#6B6B6B' }}>{csr.date}</td>
-                      <td style={{ padding: '12px 16px', fontWeight: '500' }}>{csr.client_name}</td>
-                      <td style={{ padding: '12px 16px', color: '#6B6B6B' }}>{csr.equipment_type} {csr.make ? '— ' + csr.make : ''}</td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{ backgroundColor: s.bg, color: s.color, padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '600' }}>
-                          {csr.status}
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+        {/* List (responsive) */}
+        {isMobile ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px' }}>
+            {loading ? (
+              <p style={{ padding: '30px', color: '#888', fontSize: '14px' }}>Loading...</p>
+            ) : csrs.length === 0 ? (
+              <p style={{ padding: '30px', color: '#888', fontSize: '14px' }}>No CSRs yet. Create your first one.</p>
+            ) : (
+              csrs.map(csr => (
+                <div key={csr.id} onClick={() => navigate('/csr/' + csr.id)} style={{ backgroundColor: 'white', padding: '16px', borderRadius: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid #EBEBEB', cursor: 'pointer', minHeight: '44px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontWeight: '700', color: '#CC0000', fontSize: '14px' }}>{csr.csr_number}</span>
+                    <span style={{ backgroundColor: statusColor(csr.status).bg, color: statusColor(csr.status).color, padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600' }}>{csr.status}</span>
+                  </div>
+                  <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{csr.client_name}</div>
+                  <div style={{ color: '#888', fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{csr.equipment_type}</span>
+                    <span>{csr.date}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+            {loading ? (
+              <p style={{ padding: '30px', color: '#888', fontSize: '14px' }}>Loading...</p>
+            ) : csrs.length === 0 ? (
+              <p style={{ padding: '30px', color: '#888', fontSize: '14px' }}>No CSRs yet. Create your first one.</p>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #EBEBEB' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6B6B6B', fontWeight: '600', fontSize: '12px' }}>CSR No.</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6B6B6B', fontWeight: '600', fontSize: '12px' }}>Date</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6B6B6B', fontWeight: '600', fontSize: '12px' }}>Client</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6B6B6B', fontWeight: '600', fontSize: '12px' }}>Equipment</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6B6B6B', fontWeight: '600', fontSize: '12px' }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {csrs.map((csr, index) => {
+                    const s = statusColor(csr.status)
+                    return (
+                      <tr key={csr.id} onClick={() => navigate('/csr/' + csr.id)}
+                        style={{ borderBottom: '1px solid #F5F5F5', cursor: 'pointer', backgroundColor: index % 2 === 0 ? 'white' : '#FAFAFA' }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FFF5F5'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'white' : '#FAFAFA'}>
+                        <td style={{ padding: '12px 16px', fontWeight: '600', color: '#CC0000' }}>{csr.csr_number}</td>
+                        <td style={{ padding: '12px 16px', color: '#6B6B6B' }}>{csr.date}</td>
+                        <td style={{ padding: '12px 16px', fontWeight: '500' }}>{csr.client_name}</td>
+                        <td style={{ padding: '12px 16px', color: '#6B6B6B' }}>{csr.equipment_type} {csr.make ? '— ' + csr.make : ''}</td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span style={{ backgroundColor: s.bg, color: s.color, padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '600' }}>
+                            {csr.status}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
       </div>
     </Layout>
   )

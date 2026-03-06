@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from './supabase'
+import { useIsMobile } from './hooks/useIsMobile'
 import Dashboard from './pages/Dashboard'
 import Invoices from './pages/Invoices'
 import Quotations from './pages/Quotations'
@@ -16,16 +17,7 @@ import Login from './pages/Login'
 import PendingApproval from './pages/PendingApproval'
 import ResetPassword from './pages/ResetPassword'
 
-// Mobile detection hook
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 640)
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 640)
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
-  }, [])
-  return isMobile
-}
+
 
 const navItems = [
   { label: 'Dashboard', path: '/', icon: '🏠' },
@@ -123,7 +115,8 @@ function BottomNav() {
         { label: 'CSR', path: '/csr', icon: '🔧' },
         { label: 'Clients', path: '/clients', icon: '👥' },
       ].map(item => (
-        <NavLink key={item.path} to={item.path} end={item.path === '/'} style={({ isActive }) => ({ display: 'flex', flexDirection: 'column', alignItems: 'center', textDecoration: 'none', color: isActive ? '#CC0000' : '#888', fontSize: '10px', gap: '2px', minWidth: '44px', padding: '4px' })}>
+        // ensure comfortable touch targets: at least 44×44px
+        <NavLink key={item.path} to={item.path} end={item.path === '/'} style={({ isActive }) => ({ display: 'flex', flexDirection: 'column', alignItems: 'center', textDecoration: 'none', color: isActive ? '#CC0000' : '#888', fontSize: '10px', gap: '2px', minWidth: '44px', minHeight: '44px', padding: '4px' })}>
           <span style={{ fontSize: '20px' }}>{item.icon}</span>
           <span>{item.label}</span>
         </NavLink>
@@ -364,3 +357,6 @@ function App() {
 }
 
 export default App
+
+// export hook so pages can decide between mobile/desktop layouts
+export { useIsMobile }
