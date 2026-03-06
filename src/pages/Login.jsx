@@ -215,8 +215,22 @@ export default function Login() {
   }
 
   return (
-    <div style={containerStyle}>
-      <div style={cardStyle}>
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: '#F7F7F5', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center' 
+    }}>
+      <div style={{ 
+        backgroundColor: 'white', 
+        borderRadius: '12px', 
+        padding: '40px', 
+        width: '100%', 
+        maxWidth: '420px', 
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+        textAlign: 'center'
+      }}>
         <div style={titleStyle}>SUN & SHIELD</div>
         <div style={taglineStyle}>Powering Your World, Shielding Your Future</div>
 

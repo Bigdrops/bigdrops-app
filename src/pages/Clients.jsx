@@ -30,14 +30,14 @@ export default function Clients() {
         </div>
       </div>
       {isMobile ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px' }}>
           {loading ? (
             <p style={{ padding: '30px', color: '#888', fontSize: '14px' }}>Loading...</p>
           ) : clients.length === 0 ? (
             <p style={{ padding: '30px', color: '#888', fontSize: '14px' }}>No clients yet.</p>
           ) : (
             clients.map(client => (
-              <div key={client.id} style={{ backgroundColor: 'white', padding: '16px', borderRadius: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid #EBEBEB', cursor: 'pointer', minHeight: '44px', position: 'relative' }}>
+              <div key={client.id} style={{ backgroundColor: 'white', padding: '16px', marginBottom: '0', borderRadius: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid #EBEBEB', cursor: 'pointer', minHeight: '44px', position: 'relative' }}>
                 <div onClick={() => navigate('/clients/' + client.id)}>
                   <div style={{ fontWeight: '700', fontSize: '14px', marginBottom: '4px' }}>{client.name}</div>
                   <div style={{ color: '#888', fontSize: '12px', marginBottom: '2px' }}>{client.address || '—'}</div>

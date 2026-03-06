@@ -10,9 +10,7 @@ export default function AddClient() {
     contact_person: '',
     email: '',
     phone: '',
-    address: '',
-    city: '',
-    state: ''
+    address: ''
   })
   const [saving, setSaving] = useState(false)
 
@@ -21,7 +19,15 @@ export default function AddClient() {
 
   const handleSave = async () => {
     setSaving(true)
-    const { error } = await supabase.from('clients').insert(client)
+    // only send known fields
+    const payload = {
+      name: client.name,
+      contact_person: client.contact_person,
+      email: client.email,
+      phone: client.phone,
+      address: client.address
+    }
+    const { error } = await supabase.from('clients').insert(payload)
     setSaving(false)
     if (error) {
       console.error('Insert error', error)
@@ -77,18 +83,6 @@ export default function AddClient() {
             placeholder="Address"
             value={client.address}
             onChange={e => update('address', e.target.value)}
-          />
-          <input
-            style={inputStyle}
-            placeholder="City"
-            value={client.city}
-            onChange={e => update('city', e.target.value)}
-          />
-          <input
-            style={inputStyle}
-            placeholder="State"
-            value={client.state}
-            onChange={e => update('state', e.target.value)}
           />
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>

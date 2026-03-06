@@ -40,11 +40,7 @@ export default function PendingApproval({ email }) {
     lineHeight: 1.6,
   }
 
-  const emailStyle = {
-    fontSize: '12px',
-    color: '#9CA3AF',
-    marginBottom: '18px',
-  }
+  // emailStyle removed per design
 
   const buttonStyle = {
     padding: '9px 16px',
@@ -59,14 +55,27 @@ export default function PendingApproval({ email }) {
   }
 
   return (
-    <div style={containerStyle}>
-      <div style={cardStyle}>
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: '#F7F7F5', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center' 
+    }}>
+      <div style={{ 
+        backgroundColor: 'white', 
+        borderRadius: '12px', 
+        padding: '40px', 
+        width: '100%', 
+        maxWidth: '420px', 
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+        textAlign: 'center'
+      }}>
         <div style={{ fontSize: '36px' }}>⛔</div>
         <div style={titleStyle}>Access Restricted</div>
         <div style={messageStyle}>
           Your account is pending activation. Please contact the Admin to activate your account and assign your device ID.
         </div>
-        {email && <div style={emailStyle}>{email}</div>}
         <button
           type="button"
           style={buttonStyle}
