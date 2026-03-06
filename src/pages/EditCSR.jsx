@@ -3,12 +3,24 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 
+// Mobile detection hook
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return isMobile
+}
+
 export default function EditCSR() {
   const navigate = useNavigate()
   const { id } = useParams()
   const [clients, setClients] = useState([])
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
+  const isMobile = useIsMobile()
 
   const [csr, setCsr] = useState({
     csr_number: '',
@@ -110,13 +122,13 @@ export default function EditCSR() {
     navigate('/csr')
   }
 
-  // ✅ FIXED STYLES
+  // ✅ FIXED STYLES - Mobile responsive
   const inputStyle = {
     width: '100%',
     padding: '8px 12px',
     border: '1px solid #ddd',
     borderRadius: '6px',
-    fontSize: '13px',
+    fontSize: '16px', // ← CHANGED: Was '13px', now '16px' to prevent iOS zoom
     outline: 'none',
     boxSizing: 'border-box',
     backgroundColor: 'white',
@@ -154,6 +166,14 @@ export default function EditCSR() {
 
   const sectionBody = { padding: '16px' }
 
+  // Responsive grid helper
+  const getGridStyle = (columns) => ({
+    display: 'grid',
+    gridTemplateColumns: isMobile ? '1fr' : columns,
+    gap: '14px',
+    marginBottom: '14px',
+  })
+
   const statusOptions = [
     'Complete',
     'Incomplete',
@@ -180,7 +200,7 @@ export default function EditCSR() {
         <div style={sectionStyle}>
           <div style={sectionHead}>Customer Details</div>
           <div style={sectionBody}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>CSR Number</label>
                 <input
@@ -190,7 +210,7 @@ export default function EditCSR() {
                 />
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Select Client</label>
                 <select
@@ -217,7 +237,7 @@ export default function EditCSR() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '14px' }}>
+            <div style={getGridStyle('1fr 2fr')}>
               <div>
                 <label style={labelStyle}>Customer Name</label>
                 <input
@@ -289,7 +309,7 @@ export default function EditCSR() {
         <div style={sectionStyle}>
           <div style={sectionHead}>Equipment Details</div>
           <div style={sectionBody}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Equipment Type</label>
                 <input
@@ -316,7 +336,7 @@ export default function EditCSR() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+            <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Model</label>
                 <input
@@ -348,7 +368,7 @@ export default function EditCSR() {
         <div style={sectionStyle}>
           <div style={sectionHead}>Operational Readings</div>
           <div style={sectionBody}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Voltage</label>
                 <input
@@ -375,7 +395,7 @@ export default function EditCSR() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+            <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Temperature</label>
                 <input
@@ -419,7 +439,7 @@ export default function EditCSR() {
         <div style={sectionStyle}>
           <div style={sectionHead}>Service Execution</div>
           <div style={sectionBody}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div style={getGridStyle('1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Start Date</label>
                 <input
@@ -440,7 +460,7 @@ export default function EditCSR() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '14px', marginBottom: '14px' }}>
+            <div style={getGridStyle('1fr')}>
               <div>
                 <label style={labelStyle}>Status</label>
                 <select
@@ -518,4 +538,3 @@ export default function EditCSR() {
     </Layout>
   )
 }
-

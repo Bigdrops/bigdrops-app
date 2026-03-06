@@ -16,6 +16,17 @@ import Login from './pages/Login'
 import PendingApproval from './pages/PendingApproval'
 import ResetPassword from './pages/ResetPassword'
 
+// Mobile detection hook
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return isMobile
+}
+
 const navItems = [
   { label: 'Dashboard', path: '/', icon: '🏠' },
   { label: 'Invoices', path: '/invoices', icon: '📄' },
@@ -24,7 +35,10 @@ const navItems = [
   { label: 'Clients', path: '/clients', icon: '👥' },
 ]
 
-function Sidebar({ session }) {
+function Sidebar({ session, isMobile }) {
+  // Hide sidebar on mobile
+  if (isMobile) return null
+  
   return (
     <div style={{
       width: '240px',
@@ -99,6 +113,25 @@ function Sidebar({ session }) {
   )
 }
 
+// Mobile bottom navigation
+function BottomNav() {
+  return (
+    <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: 'white', borderTop: '1px solid #EBEBEB', display: 'flex', justifyContent: 'space-around', padding: '8px 0', zIndex: 100 }}>
+      {[
+        { label: 'Home', path: '/', icon: '🏠' },
+        { label: 'Invoices', path: '/invoices', icon: '📄' },
+        { label: 'CSR', path: '/csr', icon: '🔧' },
+        { label: 'Clients', path: '/clients', icon: '👥' },
+      ].map(item => (
+        <NavLink key={item.path} to={item.path} end={item.path === '/'} style={({ isActive }) => ({ display: 'flex', flexDirection: 'column', alignItems: 'center', textDecoration: 'none', color: isActive ? '#CC0000' : '#888', fontSize: '10px', gap: '2px', minWidth: '44px', padding: '4px' })}>
+          <span style={{ fontSize: '20px' }}>{item.icon}</span>
+          <span>{item.label}</span>
+        </NavLink>
+      ))}
+    </div>
+  )
+}
+
 function SetPasswordModal({ onComplete }) {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -152,6 +185,7 @@ function SetPasswordModal({ onComplete }) {
 
 function AppShell({ session, profile, onProfileUpdate }) {
   const [showSetPassword, setShowSetPassword] = useState(false)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     if (profile && !profile.has_password) {
@@ -167,8 +201,8 @@ function AppShell({ session, profile, onProfileUpdate }) {
           if (onProfileUpdate) onProfileUpdate()
         }} />
       )}
-      <Sidebar session={session} />
-      <div style={{ flex: 1, minHeight: '100vh', backgroundColor: '#F7F7F5' }}>
+      <Sidebar session={session} isMobile={isMobile} />
+      <div style={{ flex: 1, minHeight: '100vh', backgroundColor: '#F7F7F5', paddingBottom: isMobile ? '70px' : 0 }}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/invoices" element={<Invoices />} />
@@ -183,6 +217,7 @@ function AppShell({ session, profile, onProfileUpdate }) {
           <Route path="/clients" element={<Clients />} />
         </Routes>
       </div>
+      {isMobile && <BottomNav />}
     </div>
   )
 }

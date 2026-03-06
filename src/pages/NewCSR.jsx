@@ -5,6 +5,17 @@ import Layout from '../components/Layout'
 import { pdf } from '@react-pdf/renderer'
 import { Template3 } from './ViewCSR'
 
+// Mobile detection hook
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return isMobile
+}
+
 export default function NewCSR() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -12,6 +23,7 @@ export default function NewCSR() {
   const isField = type === 'field'
   const [clients, setClients] = useState([])
   const [saving, setSaving] = useState(false)
+  const isMobile = useIsMobile()
 
   const [csr, setCsr] = useState({
     csr_number: '',
@@ -68,7 +80,7 @@ export default function NewCSR() {
 
           if (match) {
             const digits = match[1]
-            const nextNumber = String(parseInt(digits, 10) + 1).padStart(
+            const nextNumber = String(parseInt(digits, 10) + 1).padpadStart(
               digits.length,
               '0'
             )
@@ -149,13 +161,13 @@ export default function NewCSR() {
     navigate('/csr')
   }
 
-  // ✅ FIXED STYLES
+  // ✅ FIXED STYLES - Mobile responsive
   const inputStyle = {
     width: '100%',
     padding: '8px 12px',
     border: '1px solid #ddd',
     borderRadius: '6px',
-    fontSize: '13px',
+    fontSize: '16px', // ← CHANGED: Was '13px', now '16px' to prevent iOS zoom
     outline: 'none',
     boxSizing: 'border-box',
     backgroundColor: 'white',
@@ -193,6 +205,14 @@ export default function NewCSR() {
 
   const sectionBody = { padding: '16px' }
 
+  // Responsive grid helper
+  const getGridStyle = (columns) => ({
+    display: 'grid',
+    gridTemplateColumns: isMobile ? '1fr' : columns,
+    gap: '14px',
+    marginBottom: '14px',
+  })
+
   const statusOptions = [
     'Complete',
     'Incomplete',
@@ -209,7 +229,7 @@ export default function NewCSR() {
         <div style={sectionStyle}>
           <div style={sectionHead}>Customer Details</div>
           <div style={sectionBody}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>CSR Number</label>
                 <input
@@ -219,7 +239,7 @@ export default function NewCSR() {
                 />
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Select Client</label>
                 <select
@@ -246,7 +266,7 @@ export default function NewCSR() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '14px' }}>
+            <div style={getGridStyle('1fr 2fr')}>
               <div>
                 <label style={labelStyle}>Customer Name</label>
                 <input
@@ -318,7 +338,7 @@ export default function NewCSR() {
         <div style={sectionStyle}>
           <div style={sectionHead}>Equipment Details</div>
           <div style={sectionBody}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Equipment Type</label>
                 <input
@@ -345,7 +365,7 @@ export default function NewCSR() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+            <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Model</label>
                 <input
@@ -377,7 +397,7 @@ export default function NewCSR() {
         <div style={sectionStyle}>
           <div style={sectionHead}>Operational Readings</div>
           <div style={sectionBody}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Voltage</label>
                 <input
@@ -404,7 +424,7 @@ export default function NewCSR() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+            <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Temperature</label>
                 <input
@@ -448,7 +468,7 @@ export default function NewCSR() {
         <div style={sectionStyle}>
           <div style={sectionHead}>Service Execution</div>
           <div style={sectionBody}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div style={getGridStyle('1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Start Date</label>
                 <input
@@ -469,7 +489,7 @@ export default function NewCSR() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '14px', marginBottom: '14px' }}>
+            <div style={getGridStyle('1fr')}>
               <div>
                 <label style={labelStyle}>Status</label>
                 <select

@@ -20,6 +20,17 @@ const emptyItem = {
   sort_order: 0,
 }
 
+// Mobile detection hook
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return isMobile
+}
+
 export default function NewInvoice() {
   const navigate = useNavigate()
   const [clients, setClients] = useState([])
@@ -29,6 +40,7 @@ export default function NewInvoice() {
   const [csvTab, setCSVTab] = useState('Upload File')
   const [pasteCSV, setPasteCSV] = useState('')
   const csvRef = useRef()
+  const isMobile = useIsMobile()
 
   const [invoice, setInvoice] = useState({
     invoice_number: '',
@@ -180,10 +192,29 @@ export default function NewInvoice() {
     navigate('/invoices')
   }
 
-  const inputStyle = { width: '100%', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }
+  // ✅ FIXED STYLES - Mobile responsive
+  const inputStyle = { 
+    width: '100%', 
+    padding: '8px 12px', 
+    border: '1px solid #ddd', 
+    borderRadius: '6px', 
+    fontSize: '16px', // ← CHANGED: Was '14px', now '16px' to prevent iOS zoom
+    outline: 'none', 
+    boxSizing: 'border-box',
+    color: '#1a1a1a',
+    backgroundColor: 'white',
+  }
+  
   const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#555', marginBottom: '4px' }
   const sectionStyle = { backgroundColor: 'white', padding: '24px', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '20px' }
   const sectionTitleStyle = { margin: '0 0 16px 0', color: '#0056B3', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }
+
+  // Responsive grid helper
+  const getGridStyle = (columns) => ({
+    display: 'grid',
+    gridTemplateColumns: isMobile ? '1fr' : columns,
+    gap: '16px',
+  })
 
   return (
     <Layout title="New Invoice">
@@ -191,7 +222,7 @@ export default function NewInvoice() {
 
         {/* Document Header */}
         <div style={sectionStyle}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+          <div style={getGridStyle('repeat(4, 1fr)')}>
             <div>
               <label style={labelStyle}>Document Type</label>
               <select style={inputStyle} value={invoice.document_type} onChange={e => updateInvoice('document_type', e.target.value)}>
@@ -219,7 +250,7 @@ export default function NewInvoice() {
         {/* Client */}
         <div style={sectionStyle}>
           <h3 style={sectionTitleStyle}>Client Details</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={getGridStyle('1fr 1fr')}>
             <div>
               <label style={labelStyle}>Select Client</label>
               <select style={inputStyle} value={invoice.client_id} onChange={e => {
@@ -241,7 +272,7 @@ export default function NewInvoice() {
         {/* Custom Header */}
         <div style={sectionStyle}>
           <h3 style={sectionTitleStyle}>Custom Header Fields (Optional)</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+          <div style={getGridStyle('repeat(3, 1fr)')}>
             <div>
               <label style={labelStyle}>Work Duration</label>
               <input style={inputStyle} value={invoice.work_duration} onChange={e => updateInvoice('work_duration', e.target.value)} placeholder="e.g. 7 days" />
@@ -265,9 +296,9 @@ export default function NewInvoice() {
 
         {/* Line Items */}
         <div style={sectionStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? '8px' : '0' }}>
             <h3 style={{ ...sectionTitleStyle, margin: 0 }}>Line Items</h3>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
               <input ref={csvRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={handleCSVImport} />
               
               {/* NEW IMPORT CSV DROPDOWN WITH TABS */}
@@ -276,7 +307,7 @@ export default function NewInvoice() {
                   Import CSV <span style={{ fontSize: '11px', opacity: 0.8 }}>▼</span>
                 </div>
                 {showCSVNote && (
-                  <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 200, backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', padding: '16px', width: '340px', marginTop: '6px' }}>
+                  <div style={{ position: 'absolute', top: '100%', left: isMobile ? 'auto' : 0, right: isMobile ? 0 : 'auto', zIndex: 200, backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', padding: '16px', width: isMobile ? '280px' : '340px', marginTop: '6px' }}>
                     
                     {/* Tabs */}
                     <div style={{ display: 'flex', gap: '0', marginBottom: '14px', borderBottom: '2px solid #eee' }}>
@@ -439,7 +470,7 @@ export default function NewInvoice() {
         </div>
 
         {/* Charges & Summary */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
 
           {/* Additional Charges */}
           <div style={sectionStyle}>
@@ -452,21 +483,21 @@ export default function NewInvoice() {
               { label: 'VAT %', field: 'vat' },
               { label: 'WHT %', field: 'wht' },
             ].map(({ label, field }) => (
-              <div key={field} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <div key={field} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? '4px' : '0' }}>
                 <label style={{ ...labelStyle, marginBottom: 0 }}>{label}</label>
-                <input type="number" min="0" style={{ ...inputStyle, width: '160px', textAlign: 'right' }} value={invoice[field]} onChange={e => updateInvoice(field, Number(e.target.value))} />
+                <input type="number" min="0" style={{ ...inputStyle, width: isMobile ? '100%' : '160px', textAlign: 'right' }} value={invoice[field]} onChange={e => updateInvoice(field, Number(e.target.value))} />
               </div>
             ))}
 
             {/* Discount with toggle */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? '4px' : '0' }}>
               <label style={{ ...labelStyle, marginBottom: 0 }}>Discount</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ display: 'flex', borderRadius: '6px', overflow: 'hidden', border: '1px solid #ddd' }}>
                   <div onClick={() => setDiscountType('fixed')} style={{ padding: '6px 12px', fontSize: '12px', cursor: 'pointer', backgroundColor: discountType === 'fixed' ? '#CC0000' : 'white', color: discountType === 'fixed' ? 'white' : '#555', fontWeight: 'bold' }}>N</div>
                   <div onClick={() => setDiscountType('percent')} style={{ padding: '6px 12px', fontSize: '12px', cursor: 'pointer', backgroundColor: discountType === 'percent' ? '#CC0000' : 'white', color: discountType === 'percent' ? 'white' : '#555', fontWeight: 'bold' }}>%</div>
                 </div>
-                <input type="number" min="0" style={{ ...inputStyle, width: '100px', textAlign: 'right' }} value={invoice.discount} onChange={e => updateInvoice('discount', Number(e.target.value))} />
+                <input type="number" min="0" style={{ ...inputStyle, width: isMobile ? '100%' : '100px', textAlign: 'right' }} value={invoice.discount} onChange={e => updateInvoice('discount', Number(e.target.value))} />
               </div>
             </div>
           </div>
@@ -506,7 +537,7 @@ export default function NewInvoice() {
 
         {/* Notes & Terms */}
         <div style={sectionStyle}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={getGridStyle('1fr 1fr')}>
             <div>
               <label style={labelStyle}>Notes</label>
               <textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={invoice.notes} onChange={e => updateInvoice('notes', e.target.value)} placeholder="Notes to client..." />
@@ -519,14 +550,14 @@ export default function NewInvoice() {
         </div>
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingBottom: '40px' }}>
-          <div onClick={() => navigate('/invoices')} style={{ padding: '12px 24px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', border: '1px solid #ddd', backgroundColor: 'white' }}>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingBottom: '40px', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+          <div onClick={() => navigate('/invoices')} style={{ padding: '12px 24px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', border: '1px solid #ddd', backgroundColor: 'white', flex: isMobile ? '1 1 100%' : 'none', textAlign: 'center' }}>
             Cancel
           </div>
-          <div onClick={() => handleSave('draft')} style={{ padding: '12px 24px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', backgroundColor: '#555', color: 'white' }}>
+          <div onClick={() => handleSave('draft')} style={{ padding: '12px 24px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', backgroundColor: '#555', color: 'white', flex: isMobile ? '1 1 100%' : 'none', textAlign: 'center' }}>
             {saving ? 'Saving...' : 'Save as Draft'}
           </div>
-          <div onClick={() => handleSave('sent')} style={{ padding: '12px 24px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', backgroundColor: '#CC0000', color: 'white', fontWeight: 'bold' }}>
+          <div onClick={() => handleSave('sent')} style={{ padding: '12px 24px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', backgroundColor: '#CC0000', color: 'white', fontWeight: 'bold', flex: isMobile ? '1 1 100%' : 'none', textAlign: 'center' }}>
             {saving ? 'Saving...' : 'Save and Send'}
           </div>
         </div>
