@@ -131,6 +131,9 @@ export default function CSR() {
           </div>
         )}
       </div>
+      {isMobile && (
+        <div onClick={() => navigate('/csr/new')} style={{ position: 'fixed', bottom: '80px', right: '20px', width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#CC0000', color: 'white', fontSize: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(204,0,0,0.4)', cursor: 'pointer', zIndex: 99 }}>+</div>
+      )}
     </Layout>
   )
 }
