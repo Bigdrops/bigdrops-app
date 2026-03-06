@@ -101,6 +101,7 @@ export default function Login() {
     borderRadius: '12px',
     boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
     padding: '28px 28px 24px',
+    color: '#1a1a1a',  // ← ADDED: Explicit dark text for card contents
   }
 
   const titleStyle = {
@@ -149,10 +150,11 @@ export default function Login() {
     padding: '9px 11px',
     borderRadius: '8px',
     border: '1px solid #E5E7EB',
-    fontSize: '13px',
+    fontSize: '16px',  // ← CHANGED: Was '13px', now '16px' to prevent iOS zoom
     outline: 'none',
     boxSizing: 'border-box',
     backgroundColor: '#FFFFFF',
+    color: '#1a1a1a',  // ← ADDED: Explicit dark text for inputs
   }
 
   const primaryButtonStyle = {
@@ -303,4 +305,3 @@ export default function Login() {
     </div>
   )
 }
-

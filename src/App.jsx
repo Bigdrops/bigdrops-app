@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from './supabase'
 import Dashboard from './pages/Dashboard'
 import Invoices from './pages/Invoices'
@@ -24,7 +24,7 @@ const navItems = [
   { label: 'Clients', path: '/clients', icon: '👥' },
 ]
 
-function Sidebar() {
+function Sidebar({ session }) {
   return (
     <div style={{
       width: '240px',
@@ -78,36 +78,108 @@ function Sidebar() {
       <div style={{
         padding: '16px 24px',
         borderTop: '1px solid #F0F0F0',
-        color: '#BDBDBD',
-        fontSize: '11px'
       }}>
-        Sun & Shield Power Solutions
+        <div style={{ color: '#BDBDBD', fontSize: '11px', marginBottom: '8px' }}>
+          Sun & Shield Power Solutions
+        </div>
+        <div style={{ color: '#888', fontSize: '11px', marginBottom: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {session?.user?.email || ''}
+        </div>
+        <div
+          onClick={async () => {
+            await supabase.auth.signOut()
+            window.location.href = '/'
+          }}
+          style={{ color: '#CC0000', fontSize: '12px', fontWeight: '600', cursor: 'pointer', padding: '6px 0' }}
+        >
+          Sign Out
+        </div>
       </div>
     </div>
   )
 }
 
-function AppShell() {
+function SetPasswordModal({ onComplete }) {
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
+
+  const handleSubmit = async () => {
+    if (password.length < 6) { setError('Password must be at least 6 characters'); return }
+    if (password !== confirm) { setError('Passwords do not match'); return }
+    setLoading(true)
+    const { error: updateError } = await supabase.auth.updateUser({ password })
+    if (updateError) { setError(updateError.message); setLoading(false); return }
+    await supabase.from('profiles').update({ has_password: true }).eq('id', (await supabase.auth.getUser()).data.user.id)
+    setDone(true)
+    setTimeout(() => onComplete(), 1500)
+  }
+
+  const overlay = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }
+  const card = { backgroundColor: 'white', borderRadius: '12px', padding: '32px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }
+  const input = { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }
+
+  return (
+    <div style={overlay}>
+      <div style={card}>
+        <div style={{ color: '#CC0000', fontWeight: '700', fontSize: '18px', marginBottom: '6px' }}>Set System Password</div>
+        <div style={{ color: '#666', fontSize: '13px', marginBottom: '20px' }}>
+          Set a password so you can also sign in with email. You only need to do this once.
+        </div>
+        {done ? (
+          <div style={{ color: '#16A34A', fontWeight: '600', textAlign: 'center' }}>✓ Password set successfully!</div>
+        ) : (
+          <>
+            <input type="password" placeholder="New password" style={input} value={password} onChange={e => setPassword(e.target.value)} />
+            <input type="password" placeholder="Confirm password" style={input} value={confirm} onChange={e => setConfirm(e.target.value)} />
+            {error && <div style={{ color: '#CC0000', fontSize: '12px', marginBottom: '12px' }}>{error}</div>}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <div onClick={() => onComplete()} style={{ flex: 1, padding: '10px', textAlign: 'center', border: '1px solid #ddd', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: '#666' }}>
+                Skip for now
+              </div>
+              <div onClick={handleSubmit} style={{ flex: 1, padding: '10px', textAlign: 'center', backgroundColor: '#CC0000', color: 'white', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
+                {loading ? 'Setting...' : 'Set Password'}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function AppShell({ session, profile, onProfileUpdate }) {
+  const [showSetPassword, setShowSetPassword] = useState(false)
+
+  useEffect(() => {
+    if (profile && !profile.has_password) {
+      setShowSetPassword(true)
+    }
+  }, [profile])
+
   return (
     <div style={{ display: 'flex' }}>
-      <Sidebar />
-
+      {showSetPassword && (
+        <SetPasswordModal onComplete={() => {
+          setShowSetPassword(false)
+          if (onProfileUpdate) onProfileUpdate()
+        }} />
+      )}
+      <Sidebar session={session} />
       <div style={{ flex: 1, minHeight: '100vh', backgroundColor: '#F7F7F5' }}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-
           <Route path="/invoices" element={<Invoices />} />
           <Route path="/invoices/new" element={<NewInvoice />} />
           <Route path="/invoices/:id" element={<ViewInvoice />} />
           <Route path="/invoices/edit/:id" element={<EditInvoice />} />
-
           <Route path="/quotations" element={<Quotations />} />
-
           <Route path="/csr" element={<CSR />} />
           <Route path="/csr/new" element={<NewCSR />} />
           <Route path="/csr/edit/:id" element={<EditCSR />} />
           <Route path="/csr/:id" element={<ViewCSR />} />
-
           <Route path="/clients" element={<Clients />} />
         </Routes>
       </div>
@@ -120,37 +192,46 @@ function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
 
+  const loadProfile = useCallback(async (userId) => {
+    console.log('Loading profile for userId:', userId)
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+      console.log('Profile data:', data)
+      console.log('Profile error:', error)
+      if (error) {
+        console.error('Supabase profile error:', error)
+      }
+      setProfile(data)
+    } catch (err) {
+      console.error('Profile fetch error:', err)
+    }
+  }, [])
+
   useEffect(() => {
     let mounted = true
-
-    const loadProfile = async (userId) => {
-      console.log('Loading profile for userId:', userId)
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single()
-        console.log('Profile data:', data)
-        console.log('Profile error:', error)
-        if (mounted) setProfile(data)
-      } catch (err) {
-        console.error('Profile fetch error:', err)
-      }
-    }
 
     const initAuth = async () => {
       const timeout = setTimeout(() => {
         if (mounted) {
-          console.warn('Auth timeout fallback triggered')
+          console.warn('Auth timeout fallback triggered - getSession took >5s')
           setAuthLoading(false)
         }
       }, 5000)
 
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        console.log('Calling supabase.auth.getSession()...')
+        const { data: { session }, error } = await supabase.auth.getSession()
+        console.log('getSession returned:', { session: !!session, error })
 
         if (!mounted) return
+
+        if (error) {
+          console.error('getSession error:', error)
+        }
 
         setSession(session)
 
@@ -169,14 +250,19 @@ function App() {
     initAuth()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-
+      (event, session) => {
+        console.log('Auth state change event:', event, 'session:', !!session)
+        
         if (!mounted) return
 
         setSession(session)
 
         if (session?.user) {
-          await loadProfile(session.user.id)
+          setTimeout(() => {
+            if (mounted) {
+              loadProfile(session.user.id)
+            }
+          }, 0)
         } else {
           setProfile(null)
         }
@@ -190,7 +276,7 @@ function App() {
       subscription.unsubscribe()
     }
 
-  }, [])
+  }, [loadProfile])
 
   const loadingView = (
     <div style={{
@@ -233,7 +319,7 @@ function App() {
               ? <Login />
               : !approved
               ? <PendingApproval email={userEmail} />
-              : <AppShell />
+              : <AppShell session={session} profile={profile} onProfileUpdate={() => loadProfile(session.user.id)} />
           }
         />
 
