@@ -1,6 +1,9 @@
+import { useIsMobile } from '../hooks/useIsMobile'
+
 export default function Layout({ title, children }) {
+  const isMobile = useIsMobile()
   return (
-    <div style={{ marginLeft: '240px', backgroundColor: '#F7F7F5', minHeight: '100vh' }}>
+    <div style={{ marginLeft: isMobile ? 0 : '240px', backgroundColor: '#F7F7F5', minHeight: '100vh' }}>
       <div style={{
         height: '60px', backgroundColor: 'white', borderBottom: '1px solid #EBEBEB',
         display: 'flex', alignItems: 'center', padding: '0 30px',

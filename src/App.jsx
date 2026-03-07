@@ -197,7 +197,7 @@ function AppShell({ session, profile, onProfileUpdate }) {
         }} />
       )}
       <Sidebar session={session} isMobile={isMobile} />
-      <div style={{ flex: 1, width: '100%', minHeight: '100vh', backgroundColor: '#F7F7F5', paddingBottom: isMobile ? '70px' : 0 }}>
+      <div style={{ flex: 1, width: '100%', minHeight: '100vh', backgroundColor: '#F7F7F5', paddingBottom: isMobile ? '70px' : 0, marginLeft: isMobile ? 0 : '240px' }}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/invoices" element={<Invoices />} />
