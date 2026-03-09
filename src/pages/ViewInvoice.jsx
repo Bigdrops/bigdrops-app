@@ -10,6 +10,8 @@ export default function ViewInvoice() {
   const navigate = useNavigate()
   const [invoice, setInvoice] = useState(null)
   const [items, setItems] = useState([])
+  const [client, setClient] = useState(null)
+  const [settings, setSettings] = useState({})
   const [loading, setLoading] = useState(true)
   const [showMore, setShowMore] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -27,13 +29,30 @@ export default function ViewInvoice() {
   const fetchInvoice = async () => {
     const { data } = await supabase.from('invoices').select('*').eq('id', id).single()
     setInvoice(data)
+    if (data?.client_id) {
+      const { data: c } = await supabase.from('clients').select('*').eq('id', data.client_id).single()
+      setClient(c || null)
+    }
   }
 
   useEffect(() => {
     fetchInvoice()
     supabase.from('invoice_items').select('*').eq('invoice_id', id).order('sort_order').then(({ data }) => {
-      setItems(data || [])
+      const loaded = (data || []).map(item => ({
+        ...item,
+        custom_data: typeof item.custom_data === 'string'
+          ? JSON.parse(item.custom_data || '{}')
+          : (item.custom_data || {}),
+        install_rate_override: !!(item.install_rate !== null && item.install_rate !== undefined && item.install_rate !== 0),
+        vat_rate: (item.vat_rate === 0 || item.vat_rate === null) ? null : item.vat_rate,
+        discount_rate: (item.discount_rate === 0 || item.discount_rate === null) ? null : item.discount_rate,
+        image_url: item.image_url || null,
+      }))
+      setItems(loaded)
       setLoading(false)
+    })
+    supabase.from('settings').select('*').eq('id', 1).single().then(({ data }) => {
+      if (data) setSettings(data)
     })
   }, [id])
 
@@ -77,23 +96,31 @@ export default function ViewInvoice() {
 
   const handleDuplicate = async () => {
     setShowMore(false)
-    // Get next invoice number
-    const { data: latest } = await supabase.from('invoices').select('invoice_number').order('created_at', { ascending: false }).limit(1).single()
-    const num = latest ? parseInt(latest.invoice_number.replace('SASINV-B', '')) + 1 : 1
-    const newNumber = 'SASINV-B' + String(num).padStart(3, '0')
-
-    const { data: newInv } = await supabase.from('invoices').insert([{
-      ...invoice,
-      id: undefined,
-      created_at: undefined,
-      invoice_number: newNumber,
-      status: 'draft',
-      issue_date: new Date().toISOString().split('T')[0],
-    }]).select().single()
-
-    if (newInv) {
-      await supabase.from('invoice_items').insert(items.map(item => ({ ...item, id: undefined, invoice_id: newInv.id })))
+    try {
+      const { data: allInvoices } = await supabase
+        .from('invoices').select('invoice_number').like('invoice_number', 'SASINV-B%').order('created_at', { ascending: false })
+      let nextNum = 1
+      if (allInvoices && allInvoices.length > 0) {
+        const nums = allInvoices.map(inv => parseInt(inv.invoice_number.replace('SASINV-B', ''))).filter(n => !isNaN(n))
+        nextNum = Math.max(...nums) + 1
+      }
+      const newNumber = 'SASINV-B' + String(nextNum).padStart(3, '0')
+      const { id: _id, created_at: _ca, ...invoiceFields } = invoice
+      const { data: newInv, error } = await supabase.from('invoices').insert([{
+        ...invoiceFields,
+        invoice_number: newNumber,
+        status: 'draft',
+        issue_date: new Date().toISOString().split('T')[0],
+        due_date: null,
+      }]).select().single()
+      if (error) { alert('Failed to duplicate: ' + error.message); return }
+      if (items.length > 0) {
+        const newItems = items.map(({ id: _iid, ...item }) => ({ ...item, invoice_id: newInv.id }))
+        await supabase.from('invoice_items').insert(newItems)
+      }
       navigate('/invoices/' + newInv.id)
+    } catch (err) {
+      alert('Duplicate failed: ' + err.message)
     }
   }
 
@@ -106,9 +133,15 @@ export default function ViewInvoice() {
 
   // Parse custom fields
   let customFields = []
-  try { customFields = JSON.parse(invoice.custom_fields || '[]') } catch (e) { customFields = [] }
+  let bottomFields = []
+  let attachments = []
+  try {
+    const _cf = JSON.parse(invoice.custom_fields || '{}')
+    if (Array.isArray(_cf)) { customFields = _cf }
+    else { customFields = _cf.header || []; bottomFields = _cf.bottom || []; attachments = _cf.attachments || [] }
+  } catch (e) { customFields = []; bottomFields = []; attachments = [] }
 
-  const inputStyle = { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '16px', outline: 'none', boxSizing: 'border-box', backgroundColor: 'white' }
+  const inputStyle = { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '16px', outline: 'none', boxSizing: 'border-box', backgroundColor: 'white', color: '#1a1a1a' }
   const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#555', marginBottom: '4px' }
 
   return (
@@ -118,7 +151,7 @@ export default function ViewInvoice() {
         {/* Record Payment Modal */}
         {showPaymentModal && (
           <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '28px', width: '100%', maxWidth: '440px', boxShadow: '0 8px 40px rgba(0,0,0,0.2)' }}>
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '28px', width: '100%', maxWidth: '440px', boxShadow: '0 8px 40px rgba(0,0,0,0.2)', color: '#1a1a1a' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h3 style={{ margin: 0, fontSize: '17px', color: '#1a1a1a' }}>Record Payment</h3>
                 <span onClick={() => setShowPaymentModal(false)} style={{ cursor: 'pointer', fontSize: '22px', color: '#888', lineHeight: 1 }}>×</span>
@@ -211,7 +244,7 @@ export default function ViewInvoice() {
           <div style={{ flex: 1 }} />
 
           {/* Download PDF */}
-          <PDFDownloadLink document={<InvoicePDF invoice={invoice} items={items} />} fileName={invoice.invoice_number + '.pdf'} style={{ textDecoration: 'none' }}>
+          <PDFDownloadLink document={<InvoicePDF invoice={invoice} items={items} client={client} settings={settings} />} fileName={invoice.invoice_number + '.pdf'} style={{ textDecoration: 'none' }}>
             {({ loading: pdfLoading }) => (
               <div style={{ padding: '10px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', backgroundColor: '#0056B3', color: 'white', fontWeight: 'bold' }}>
                 {pdfLoading ? 'Preparing...' : '⬇ Download PDF'}
@@ -282,18 +315,19 @@ export default function ViewInvoice() {
             <div style={{ flex: 1, minWidth: '160px' }}>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Bill To</div>
               <div style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '4px' }}>{invoice.client_name}</div>
+              {client?.contact_person && <div style={{ fontSize: '13px', color: '#555', marginBottom: '2px' }}>Attn: {client.contact_person}</div>}
+              {client?.phone && <div style={{ fontSize: '13px', color: '#555', marginBottom: '2px' }}>{client.phone}</div>}
+              {client?.email && <div style={{ fontSize: '13px', color: '#555', marginBottom: '2px' }}>{client.email}</div>}
+              {client?.address && <div style={{ fontSize: '13px', color: '#555', marginBottom: '2px' }}>{client.address}</div>}
+              {client?.city && <div style={{ fontSize: '13px', color: '#555', marginBottom: '2px' }}>{client.city}{client.state ? ', ' + client.state : ''}</div>}
             </div>
             <div style={{ flex: 1, minWidth: '160px' }}>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Details</div>
               {invoice.payment_terms && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>Payment Terms: {invoice.payment_terms}</div>}
               {invoice.work_duration && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>Work Duration: {invoice.work_duration}</div>}
-              {customFields.map((f, i) => (
+              {customFields.filter(f => f.label && f.value).map((f, i) => (
                 <div key={i} style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>{f.label}: {f.value}</div>
               ))}
-              {/* fallback for old string custom_fields */}
-              {!Array.isArray(customFields) && invoice.custom_fields && (
-                <div style={{ fontSize: '13px', color: '#555' }}>{invoice.custom_fields}</div>
-              )}
             </div>
           </div>
 
@@ -379,9 +413,27 @@ export default function ViewInvoice() {
             </div>
           )}
           {invoice.terms && (
-            <div style={{ marginBottom: '24px' }}>
+            <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Terms & Conditions</div>
               <div style={{ fontSize: '13px', color: '#555' }}>{invoice.terms}</div>
+            </div>
+          )}
+
+          {/* Attachments */}
+          {attachments.length > 0 && (
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Supporting Documents</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {attachments.map((att, i) => (
+                  <a key={i} href={att.url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', backgroundColor: '#f8f9ff', borderRadius: '8px', border: '1px solid #e0e8ff', textDecoration: 'none', color: '#1a1a1a' }}>
+                    <span style={{ fontSize: '18px' }}>📎</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: '600', color: '#0056B3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.label || att.name}</div>
+                    </div>
+                    <span style={{ fontSize: '12px', color: '#6366F1', flexShrink: 0 }}>↗ Open</span>
+                  </a>
+                ))}
+              </div>
             </div>
           )}
 
@@ -391,9 +443,16 @@ export default function ViewInvoice() {
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#333', marginBottom: '4px' }}>Payment Terms</div>
               <div style={{ fontSize: '12px', color: '#555' }}>{invoice.payment_terms || 'Net 30'}</div>
             </div>
-            <div style={{ width: '200px', borderTop: '1px solid #333', paddingTop: '6px', marginTop: '30px', textAlign: 'center' }}>
-              <div style={{ fontSize: '11px', color: '#555' }}>Authorised Signature</div>
-            </div>
+            {settings.signature_url ? (
+              <div style={{ textAlign: 'center' }}>
+                <img src={settings.signature_url} alt="Signature" style={{ height: '50px', maxWidth: '160px', objectFit: 'contain', display: 'block', marginBottom: '4px' }} />
+                <div style={{ borderTop: '1px solid #333', paddingTop: '4px', fontSize: '11px', color: '#555', width: '160px' }}>Authorised Signature</div>
+              </div>
+            ) : (
+              <div style={{ width: '200px', borderTop: '1px solid #333', paddingTop: '6px', marginTop: '30px', textAlign: 'center' }}>
+                <div style={{ fontSize: '11px', color: '#555' }}>Authorised Signature</div>
+              </div>
+            )}
           </div>
         </div>
       </div>
