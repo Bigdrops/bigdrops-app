@@ -10,7 +10,7 @@ import ItemImageUpload from '../components/ItemImageUpload'
 import AttachmentsPanel from '../components/AttachmentsPanel'
 import ThreadInitPanel from '../components/ThreadInitPanel'
 import MobileItemCard from '../components/MobileItemCard'
-import { BUILTIN_COLUMNS, makeEmptyItem, toDbItem, useInvoiceColumns, resolveInstallRate, resolveRowVat, calcTotals } from '../components/useInvoiceColumns.jsx'
+import { BUILTIN_COLUMNS, makeEmptyItem, toDbItem, useInvoiceColumns, calcTotals } from '../components/useInvoiceColumns.jsx'
 import { generateThreadId, fmtN } from '../hooks/useInvoiceThread'
 
 function useIsMobile() {
