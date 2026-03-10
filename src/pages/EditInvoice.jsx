@@ -8,6 +8,7 @@ import ClientSelector from '../components/ClientSelector'
 import ColumnManager from '../components/ColumnManager'
 import ItemImageUpload from '../components/ItemImageUpload'
 import AttachmentsPanel from '../components/AttachmentsPanel'
+import MobileItemCard from '../components/MobileItemCard'
 import { makeEmptyItem, toDbItem, useInvoiceColumns, calcTotals, BUILTIN_COLUMNS } from '../components/useInvoiceColumns.jsx'
 
 function useIsMobile() {
@@ -20,10 +21,21 @@ function useIsMobile() {
   return isMobile
 }
 
+function useIsNarrow() {
+  const [isNarrow, setIsNarrow] = useState(window.innerWidth < 768)
+  useEffect(() => {
+    const handler = () => setIsNarrow(window.innerWidth < 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return isNarrow
+}
+
 export default function EditInvoice() {
   const navigate = useNavigate()
   const { id } = useParams()
   const isMobile = useIsMobile()
+  const isNarrow = useIsNarrow()
   const csvRef = useRef(null)
 
   const [saving, setSaving] = useState(false)
@@ -50,17 +62,13 @@ export default function EditInvoice() {
   const [invoice, setInvoice] = useState(null)
   const [items, setItems] = useState([makeEmptyItem()])
 
-  // ── FIX: Single async chain so both invoice AND items are loaded before
-  //         setLoading(false) — prevents client wipe from race condition
   useEffect(() => {
     const load = async () => {
-      // 1. Fetch invoice first
       const { data } = await supabase.from('invoices').select('*').eq('id', id).single()
       if (!data) { navigate('/invoices'); return }
       setInvoice(data)
       if (data.invoice_title) setInvoiceTitle(data.invoice_title)
 
-      // 2. Restore all custom_fields including discountType / discountTiming / whtType
       try {
         const parsed = JSON.parse(data.custom_fields || '{}')
         if (parsed && !Array.isArray(parsed)) {
@@ -80,7 +88,6 @@ export default function EditInvoice() {
           if (parsed.attachments) setAttachments(parsed.attachments)
           if (parsed.mergeQtyUnit) setMergeQtyUnit(parsed.mergeQtyUnit)
           if (parsed.showItemImages) setShowItemImages(parsed.showItemImages)
-          // ── FIX: restore discount/wht settings
           if (parsed.discountType) setDiscountType(parsed.discountType)
           if (parsed.discountTiming) setDiscountTiming(parsed.discountTiming)
           if (parsed.whtType) setWhtType(parsed.whtType)
@@ -89,7 +96,6 @@ export default function EditInvoice() {
         }
       } catch(e) {}
 
-      // 3. Fetch items — only THEN mark loading done
       const { data: itemData } = await supabase
         .from('invoice_items').select('*').eq('invoice_id', id).order('sort_order')
       const loaded = (itemData && itemData.length > 0 ? itemData : [makeEmptyItem()]).map(item => ({
@@ -141,7 +147,6 @@ export default function EditInvoice() {
 
   const handleSave = async (status) => {
     setSaving(true)
-    // ── FIX: include discountType, discountTiming, whtType so they survive edits
     const customFieldsData = {
       header: customFields.filter(f=>f.label&&f.value),
       bottom: bottomFields.filter(f=>f.text),
@@ -191,13 +196,6 @@ export default function EditInvoice() {
       .filter(item => item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim())
       .map((item, i) => toDbItem(item, id, i))
 
-    const nonBlankCount = items.filter(it => it.row_type === 'group_header' ? it.group_name?.trim() : it.description?.trim()).length
-    if (itemsToSave.length === 0 && nonBlankCount > 0) {
-      alert('Unable to save line items – make sure each row has a description.');
-      setSaving(false)
-      return
-    }
-
     const { error: delErr } = await supabase.from('invoice_items').delete().eq('invoice_id', id)
     if (delErr) { alert('Error clearing previous items: ' + delErr.message); setSaving(false); return }
     if (itemsToSave.length > 0) {
@@ -240,7 +238,7 @@ export default function EditInvoice() {
 
   return (
     <Layout title={invoice?.invoice_number ? 'Edit ' + invoice.invoice_number : 'Edit Invoice'}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: isMobile ? '12px' : '24px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: isMobile ? '0' : '0 24px' }}>
 
         {showColumnManager && (
           <ColumnManager
@@ -266,7 +264,7 @@ export default function EditInvoice() {
               <input type="date" style={inp} value={invoice.due_date || ''} onChange={e => updateInvoice('due_date', e.target.value)} /></div>
           </div>
           <div style={{ marginTop: '12px' }}>
-            <label style={lbl}>Invoice Title <span style={{ color:'#aaa',fontWeight:'normal' }}>(optional — shows on document when filled)</span></label>
+            <label style={lbl}>Invoice Title <span style={{ color:'#aaa',fontWeight:'normal' }}>(optional)</span></label>
             <input style={inp} value={invoiceTitle} onChange={e => setInvoiceTitle(e.target.value)} placeholder="e.g. Supply and Installation of Electrical Fittings" />
           </div>
         </div>
@@ -329,16 +327,7 @@ export default function EditInvoice() {
                     {csvTab==='Upload File'
                       ? <div onClick={()=>{setShowCSVNote(false);csvRef.current.click()}} style={{ padding:'10px 14px',backgroundColor:'#16A34A',color:'white',borderRadius:'6px',cursor:'pointer',fontSize:'13px',textAlign:'center',fontWeight:'bold' }}>Choose File</div>
                       : <div>
-                          <textarea
-                            value={pasteCSV}
-                            onChange={e => setPasteCSV(e.target.value)}
-                            onClick={e => e.stopPropagation()}
-                            onMouseDown={e => e.stopPropagation()}
-                            onKeyDown={e => e.stopPropagation()}
-                            placeholder={'description,quantity,unit_price\nCable tie,5,700'}
-                            style={{ width:'100%',height:'110px',padding:'8px',border:'1px solid #ddd',borderRadius:'6px',fontSize:'12px',fontFamily:'monospace',outline:'none',boxSizing:'border-box',resize:'vertical',display:'block' }}
-                            autoFocus
-                          />
+                          <textarea value={pasteCSV} onChange={e=>setPasteCSV(e.target.value)} onClick={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()} onKeyDown={e=>e.stopPropagation()} placeholder={'description,quantity,unit_price\nCable tie,5,700'} style={{ width:'100%',height:'110px',padding:'8px',border:'1px solid #ddd',borderRadius:'6px',fontSize:'12px',fontFamily:'monospace',outline:'none',boxSizing:'border-box',resize:'vertical',display:'block' }} autoFocus />
                           <div style={{ display:'flex',gap:'8px',marginTop:'8px' }}>
                             <div onClick={()=>{setPasteCSV('');setShowCSVNote(false)}} style={{ padding:'8px 12px',border:'1px solid #ddd',borderRadius:'6px',cursor:'pointer',fontSize:'12px',color:'#555' }}>Cancel</div>
                             <div onClick={()=>{
@@ -360,7 +349,46 @@ export default function EditInvoice() {
               <div onClick={addItem} style={{ padding:'8px 14px',backgroundColor:'#CC0000',color:'white',borderRadius:'6px',cursor:'pointer',fontSize:'13px' }}>+ Add Item</div>
             </div>
           </div>
-          <div style={{ overflowX: 'auto' }}>
+
+          {/* ── Mobile: vertical cards ── */}
+          {isNarrow && (
+            <div>
+              {(()=>{
+                let n = 0
+                return items.map((item, index) => {
+                  if (item.row_type === 'standard') n++
+                  return (
+                    <MobileItemCard
+                      key={index}
+                      item={item}
+                      index={index}
+                      number={n}
+                      isVisible={isVisible}
+                      getColumn={getColumn}
+                      customColumns={customColumns}
+                      showItemImages={showItemImages}
+                      invoice={invoice}
+                      isFirst={index === 0}
+                      isLast={index === items.length - 1}
+                      onUpdate={(idx, field, value) => {
+                        if (field === '__install_rate_override') {
+                          setItems(prev => prev.map((it, i) => i !== idx ? it : { ...it, ...value }))
+                        } else {
+                          updateItem(idx, field, value)
+                        }
+                      }}
+                      onRemove={removeItem}
+                      onMoveUp={(idx) => moveItem(idx, -1)}
+                      onMoveDown={(idx) => moveItem(idx, 1)}
+                    />
+                  )
+                })
+              })()}
+            </div>
+          )}
+
+          {/* ── Desktop: horizontal table ── */}
+          {!isNarrow && <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ backgroundColor: '#1a1a1a' }}>
@@ -420,13 +448,9 @@ export default function EditInvoice() {
                         {isVisible('unit')&&<td style={{ padding:'8px 12px',minWidth:'100px' }}><UnitInput value={item.unit||''} onChange={val=>updateItem(index,'unit',val)} /></td>}
                         <td style={{ padding:'8px 12px' }}><input style={inp} type="number" min="0" value={item.unit_price} onChange={e=>updateItem(index,'unit_price',Number(e.target.value))} /></td>
                         <td style={{ padding:'8px 12px',fontWeight:'bold',color:'#1a1a1a',whiteSpace:'nowrap' }}>NGN {(Number(item.quantity)*Number(item.unit_price)).toLocaleString()}</td>
-
-                        {/* ── FIX: Install rate — single atomic setItems call, no double-updateItem */}
                         {isVisible('install_rate')&&(
                           <td style={{ padding:'8px 12px' }}>
-                            <input
-                              style={inp}
-                              type="number" min="0"
+                            <input style={inp} type="number" min="0"
                               value={item.install_rate_override ? (item.install_rate ?? '') : ''}
                               placeholder={autoInstall !== null ? String(Number(autoInstall.toFixed(2))) : '0'}
                               onChange={e => {
@@ -439,7 +463,6 @@ export default function EditInvoice() {
                             />
                           </td>
                         )}
-
                         {isVisible('vat_rate')&&(
                           <td style={{ padding:'8px 12px' }}>
                             <input style={{ ...inp, textAlign:'center', backgroundColor: item.vat_rate !== null && item.vat_rate !== undefined ? 'white' : '#f9f9f9', color: item.vat_rate === 0 ? '#CC0000' : '#1a1a1a' }}
@@ -457,8 +480,7 @@ export default function EditInvoice() {
                           const hasOverride = drVal !== null && drVal !== undefined
                           return (
                             <td style={{ padding:'8px 12px' }}>
-                              <input
-                                style={{ ...inp, textAlign:'center', backgroundColor: isExcluded ? '#fff0f0' : hasOverride ? '#fffbe6' : '#f9f9f9', color: isExcluded ? '#CC0000' : '#1a1a1a' }}
+                              <input style={{ ...inp, textAlign:'center', backgroundColor: isExcluded ? '#fff0f0' : hasOverride ? '#fffbe6' : '#f9f9f9', color: isExcluded ? '#CC0000' : '#1a1a1a' }}
                                 type="number" min="0" max="100"
                                 value={hasOverride ? drVal : ''}
                                 placeholder="global"
@@ -475,8 +497,7 @@ export default function EditInvoice() {
                         })()}
                         {customColumns.filter(c=>c.visible).map(col=>(
                           <td key={col.key} style={{ padding:'8px 12px' }}>
-                            <input style={inp}
-                              type={col.type==='number' ? 'number' : 'text'}
+                            <input style={inp} type={col.type==='number' ? 'number' : 'text'}
                               value={(item.custom_data||{})[col.key]||''}
                               onChange={e=>updateItem(index,'custom_data',{ ...(item.custom_data||{}), [col.key]: col.type==='number' ? Number(e.target.value) : e.target.value })}
                             />
@@ -494,7 +515,7 @@ export default function EditInvoice() {
                 })()}
               </tbody>
             </table>
-          </div>
+          </div>}
         </div>
 
         {/* Advanced Options */}
@@ -512,7 +533,7 @@ export default function EditInvoice() {
                   </div>
                   <div>
                     <div style={{ fontSize:'14px',fontWeight:'600',color:'#1a1a1a' }}>Merge Qty + Unit on PDF</div>
-                    <div style={{ fontSize:'12px',color:'#999' }}>Shows "5 Sets" instead of separate Qty and Unit columns</div>
+                    <div style={{ fontSize:'12px',color:'#999' }}>Shows "5 Sets" instead of separate columns</div>
                   </div>
                 </label>
                 <label style={{ display:'flex',alignItems:'center',gap:'12px',cursor:'pointer' }}>
@@ -532,7 +553,7 @@ export default function EditInvoice() {
         {/* Attachments */}
         <div style={sec}>
           <h3 style={secT}>Attachments</h3>
-          <div style={{ fontSize:'12px',color:'#999',marginBottom:'12px' }}>Files attached here appear as download links on the invoice view. File names print in the PDF.</div>
+          <div style={{ fontSize:'12px',color:'#999',marginBottom:'12px' }}>Files attached here appear as download links on the invoice view.</div>
           <AttachmentsPanel attachments={attachments} onChange={setAttachments} />
         </div>
 
@@ -571,7 +592,6 @@ export default function EditInvoice() {
               <div style={{ display:'flex',borderRadius:'6px',overflow:'hidden',border:'1px solid #ddd',marginBottom:'6px' }}>
                 {['percent','fixed'].map(t=><div key={t} onClick={()=>setDiscountType(t)} style={{ flex:1,padding:'7px',textAlign:'center',cursor:'pointer',fontSize:'12px',backgroundColor:discountType===t?'#1a1a1a':'white',color:discountType===t?'white':'#555' }}>{t==='percent'?'%':'NGN'}</div>)}
               </div>
-              {/* Before/After tax timing toggle */}
               <div style={{ display:'flex',borderRadius:'6px',overflow:'hidden',border:'1px solid #ddd',marginBottom:'6px' }}>
                 {['before','after'].map(t=><div key={t} onClick={()=>setDiscountTiming(t)} style={{ flex:1,padding:'7px',textAlign:'center',cursor:'pointer',fontSize:'12px',backgroundColor:discountTiming===t?'#1a1a1a':'white',color:discountTiming===t?'white':'#555' }}>{t==='before'?'Before Tax':'After Tax'}</div>)}
               </div>
@@ -643,13 +663,11 @@ export default function EditInvoice() {
         {/* Notes & Terms */}
         <div style={{ display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:'20px',marginBottom:'20px' }}>
           <div style={sec}>
-            <input style={{ ...inp,fontWeight:'bold',color:'#0056B3',fontSize:'12px',textTransform:'uppercase',letterSpacing:'1px',padding:'4px 8px',border:'none',borderBottom:'2px solid #0056B3',borderRadius:0,marginBottom:'10px' }}
-              value={notesTitle} onChange={e=>setNotesTitle(e.target.value)} />
+            <input style={{ ...inp,fontWeight:'bold',color:'#0056B3',fontSize:'12px',textTransform:'uppercase',letterSpacing:'1px',padding:'4px 8px',border:'none',borderBottom:'2px solid #0056B3',borderRadius:0,marginBottom:'10px' }} value={notesTitle} onChange={e=>setNotesTitle(e.target.value)} />
             <RichTextEditor value={invoice.notes||''} onChange={val=>updateInvoice('notes',val)} placeholder="Add notes..." />
           </div>
           <div style={sec}>
-            <input style={{ ...inp,fontWeight:'bold',color:'#0056B3',fontSize:'12px',textTransform:'uppercase',letterSpacing:'1px',padding:'4px 8px',border:'none',borderBottom:'2px solid #0056B3',borderRadius:0,marginBottom:'10px' }}
-              value={termsTitle} onChange={e=>setTermsTitle(e.target.value)} />
+            <input style={{ ...inp,fontWeight:'bold',color:'#0056B3',fontSize:'12px',textTransform:'uppercase',letterSpacing:'1px',padding:'4px 8px',border:'none',borderBottom:'2px solid #0056B3',borderRadius:0,marginBottom:'10px' }} value={termsTitle} onChange={e=>setTermsTitle(e.target.value)} />
             <RichTextEditor value={invoice.terms||''} onChange={val=>updateInvoice('terms',val)} placeholder="Terms and conditions..." />
           </div>
         </div>
