@@ -176,7 +176,7 @@ export default function ViewInvoice() {
 
   return (
     <Layout title={invoice.invoice_number}>
-      <div style={{ maxWidth: '900px' }}>
+      <div style={{ maxWidth: '900px', width: '100%', boxSizing: 'border-box', padding: isNarrow ? '0' : undefined }}>
 
         {/* Record Payment Modal */}
         {showPaymentModal && (
@@ -305,7 +305,7 @@ export default function ViewInvoice() {
         )}
 
         {/* Invoice Preview */}
-        <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: '40px', overflowX: 'auto' }}>
+        <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: isNarrow ? '16px' : '40px', overflowX: 'auto' }}>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px', flexWrap: 'wrap', gap: '16px' }}>
             <div>
