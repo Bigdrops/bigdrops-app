@@ -5,11 +5,11 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { supabase } from '../supabase'
 import {
   LayoutDashboard, FileText, ClipboardList,
-  Wrench, Users, Settings, Menu, LogOut, ChevronRight,
+  Wrench, Users, Settings, Menu, LogOut, ChevronRight
 } from 'lucide-react'
 
 const navItems = [
-  { label: 'Dashboard',  path: '/',          icon: LayoutDashboard },
+  { label: 'Home',       path: '/',          icon: LayoutDashboard },
   { label: 'Invoices',   path: '/invoices',  icon: FileText },
   { label: 'Quotations', path: '/quotations',icon: ClipboardList },
   { label: 'CSR',        path: '/csr',       icon: Wrench },
@@ -23,47 +23,21 @@ function SidebarContent({ session, onNavigate }) {
       <div className="px-6 py-8">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-lg shadow-sm">B</div>
-          <div>
-            <div className="text-slate-900 font-bold text-base tracking-tight leading-none">BIGDROPS</div>
-            <div className="text-slate-400 text-[10px] tracking-widest uppercase mt-1">Enterprise</div>
-          </div>
+          <div className="text-slate-900 font-bold text-base tracking-tight uppercase">BIGDROPS</div>
         </div>
       </div>
-      
       <nav className="flex-1 px-4 space-y-1">
         {navItems.map(({ label, path, icon: Icon }) => (
-          <NavLink
-            key={path}
-            to={path}
-            end={path === '/'}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group
-              ${isActive ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`
-            }
-          >
-            <Icon size={18} className="shrink-0" />
+          <NavLink key={path} to={path} end={path === '/'} onClick={onNavigate}
+            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${isActive ? 'bg-slate-100 text-slate-900 font-bold' : 'text-slate-500 hover:bg-slate-50'}`}>
+            <Icon size={18} />
             <span className="flex-1">{label}</span>
-            <ChevronRight size={14} className="opacity-0 group-hover:opacity-40 transition-opacity" />
           </NavLink>
         ))}
       </nav>
-
-      <div className="p-4 mt-auto border-t border-slate-100 bg-slate-50/50">
-        <div className="flex items-center gap-3 px-2 mb-4">
-          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-700 text-xs font-bold border-2 border-white shadow-sm">
-            {session?.user?.email?.[0]?.toUpperCase() || 'A'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-slate-900 text-xs font-semibold truncate">{session?.user?.email?.split('@')[0]}</div>
-            <div className="text-slate-400 text-[10px] truncate">Administrator</div>
-          </div>
-        </div>
-        <button 
-          onClick={async () => await supabase.auth.signOut()} 
-          className="w-full flex items-center justify-center gap-2 py-2 text-slate-500 text-xs hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-        >
-          <LogOut size={14} /> Log Out
+      <div className="p-4 border-t border-slate-100">
+        <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 text-slate-400 text-xs hover:text-red-600 w-full px-2 py-2">
+          <LogOut size={14} /> Sign Out
         </button>
       </div>
     </div>
@@ -75,41 +49,36 @@ export default function Layout({ title, children, session }) {
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans antialiased text-slate-900">
       {!isMobile && (
-        <aside className="fixed left-0 top-0 w-64 h-screen z-30">
+        <aside className="fixed left-0 top-0 w-64 h-full z-30">
           <SidebarContent session={session} />
         </aside>
       )}
-      
-      <div className={`flex-1 flex flex-col ${!isMobile ? 'ml-64' : ''}`}>
-        {/* Simplified Header */}
-        <header className="sticky top-0 z-20 h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className={`flex-1 flex flex-col ${!isMobile ? 'pl-64' : ''}`}>
+        <header className="sticky top-0 z-20 h-14 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
             {isMobile && (
               <Sheet>
-                <SheetTrigger asChild>
-                  <button className="p-2 -ml-2 text-slate-500"><Menu size={20} /></button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-64 border-0">
-                  <SidebarContent session={session} />
-                </SheetContent>
+                <SheetTrigger className="p-1 text-slate-500"><Menu size={20} /></SheetTrigger>
+                <SheetContent side="left" className="p-0 w-64 border-0"><SidebarContent session={session} /></SheetContent>
               </Sheet>
             )}
-            <h1 className="text-lg font-bold tracking-tight text-slate-900">{title}</h1>
-          </div>
-          <div className="flex items-center gap-3">
-             <div className="hidden md:block text-right">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</div>
-                <div className="text-xs text-emerald-600 font-medium flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live System
-                </div>
-             </div>
+            <h1 className="text-sm font-bold text-slate-900 uppercase tracking-tight">{title}</h1>
           </div>
         </header>
-
-        <main className={`flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto ${isMobile ? 'pb-24' : ''}`}>
+        <main className={`flex-1 p-4 md:p-8 w-full max-w-5xl mx-auto ${isMobile ? 'pb-24' : ''}`}>
           {children}
         </main>
       </div>
+      {isMobile && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-3 z-20 shadow-lg">
+          {navItems.slice(0, 4).map(({ path, icon: Icon, label }) => (
+            <NavLink key={path} to={path} end={path === '/'} className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>
+              <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
+              <span className="text-[10px] font-bold uppercase">{label}</span>
+            </NavLink>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
