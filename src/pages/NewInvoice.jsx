@@ -8,7 +8,9 @@ import ClientSelector from '../components/ClientSelector'
 import ColumnManager from '../components/ColumnManager'
 import ItemImageUpload from '../components/ItemImageUpload'
 import AttachmentsPanel from '../components/AttachmentsPanel'
+import ThreadInitPanel from '../components/ThreadInitPanel'
 import { BUILTIN_COLUMNS, makeEmptyItem, toDbItem, useInvoiceColumns, resolveInstallRate, resolveRowVat, calcTotals } from '../components/useInvoiceColumns.jsx'
+import { generateThreadId, fmtN } from '../hooks/useInvoiceThread'
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640)
@@ -25,6 +27,9 @@ export default function NewInvoice() {
   const location = useLocation()
   const prefill = location.state?.prefill
   const prefillItems = location.state?.prefillItems
+  // Thread defaults — passed when clicking "Create Next Invoice" from ViewInvoice
+  const threadDefaults = location.state?.threadDefaults
+
   const [saving, setSaving] = useState(false)
   const [discountType, setDiscountType] = useState('fixed')
   const [discountTiming, setDiscountTiming] = useState('after')
@@ -47,6 +52,15 @@ export default function NewInvoice() {
   const csvRef = useRef()
   const isMobile = useIsMobile()
 
+  // ── Thread state ────────────────────────────────────────────────────────────
+  const [isAdvance, setIsAdvance] = useState(false)
+  const [contractTotal, setContractTotal] = useState(0)
+  // Each NewInvoice always generates a thread ID — only saved to DB if isAdvance=true
+  const [newThreadId] = useState(() => generateThreadId())
+  // If coming from "Create Next Invoice", we already have a thread to continue
+  const isThreadContinuation = !!threadDefaults?.thread_id
+  const [suggestedAmountHint, setSuggestedAmountHint] = useState(null)
+
   const [invoiceTitle, setInvoiceTitle] = useState(prefill?.invoice_title || '')
   const [invoice, setInvoice] = useState(prefill ? { ...prefill } : {
     invoice_number: '', client_id: '', client_name: '',
@@ -60,6 +74,7 @@ export default function NewInvoice() {
 
   const [items, setItems] = useState(prefillItems ? prefillItems.map(i => ({ ...i })) : [makeEmptyItem()])
 
+  // ── Auto invoice number ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!prefill) {
       supabase.from('invoices').select('invoice_number').order('created_at', { ascending: false }).limit(1).then(({ data }) => {
@@ -70,6 +85,22 @@ export default function NewInvoice() {
           setInvoice(i => ({ ...i, invoice_number: 'SASINV-B001' }))
         }
       })
+    }
+  }, [])
+
+  // ── Apply thread defaults when continuing a chain ───────────────────────────
+  useEffect(() => {
+    if (!threadDefaults) return
+    // Pre-fill client from the originating invoice
+    if (threadDefaults.client_id) updateInvoice('client_id', threadDefaults.client_id)
+    if (threadDefaults.client_name) updateInvoice('client_name', threadDefaults.client_name)
+    // Show hint banner
+    if (threadDefaults._suggestedAmount > 0) {
+      setSuggestedAmountHint(threadDefaults._suggestedAmount)
+    }
+    // Set contract total for display in ThreadInitPanel (read-only in continuation mode)
+    if (threadDefaults.total_contract_value) {
+      setContractTotal(threadDefaults.total_contract_value)
     }
   }, [])
 
@@ -104,7 +135,7 @@ export default function NewInvoice() {
     reader.readAsText(file); e.target.value = ''
   }
 
-  // Calculations — via shared calcTotals
+  // ── Calculations ─────────────────────────────────────────────────────────────
   const { rawSubtotal, installRateTotal, vatAmount, discountAmount, grandTotal, whtAmount, totalPayable, fixedChargesTotal, extraWithTax, extraWithoutTax } = calcTotals({
     items, columns,
     invoice: { ...invoice, _extraCharges: extraCharges },
@@ -120,29 +151,85 @@ export default function NewInvoice() {
     return c(naira)+' NAIRA'+(kobo>0?' AND '+c(kobo)+' KOBO':'')+' ONLY'
   }
 
+  // ── Save ─────────────────────────────────────────────────────────────────────
   const handleSave = async (status) => {
     setSaving(true)
-    const customFieldsData = { header: customFields.filter(f=>f.label&&f.value), bottom: bottomFields.filter(f=>f.text), extraCharges: extraCharges.filter(c=>c.label), chargeLabels, columnConfig: columns, notesTitle, termsTitle, attachments, mergeQtyUnit, showItemImages, discountType, discountTiming, whtType }
+    const customFieldsData = {
+      header: customFields.filter(f=>f.label&&f.value),
+      bottom: bottomFields.filter(f=>f.text),
+      extraCharges: extraCharges.filter(c=>c.label),
+      chargeLabels, columnConfig: columns, notesTitle, termsTitle,
+      attachments, mergeQtyUnit, showItemImages, discountType, discountTiming, whtType
+    }
     const paymentTermsValue = invoice.payment_terms === 'Custom' ? invoice.custom_payment_terms : invoice.payment_terms
 
+    // ── Thread fields ──────────────────────────────────────────────────────────
+    // Case A: First invoice in a new thread (isAdvance toggle on)
+    // Case B: Continuing an existing thread (threadDefaults passed in)
+    // Case C: Standalone invoice (no thread)
+    let threadFields = {
+      thread_id: null,
+      total_contract_value: 0,
+      thread_position: 1,
+      is_advance: false,
+      amount_received: 0,
+    }
+
+    if (isThreadContinuation) {
+      // Continuing an existing thread — link back, do not regenerate thread_id
+      threadFields = {
+        thread_id: threadDefaults.thread_id,
+        total_contract_value: threadDefaults.total_contract_value || 0,
+        thread_position: threadDefaults.thread_position || 2,
+        is_advance: false,
+        amount_received: 0,
+      }
+    } else if (isAdvance && contractTotal > 0) {
+      // Starting a new thread
+      threadFields = {
+        thread_id: newThreadId,
+        total_contract_value: contractTotal,
+        thread_position: 1,
+        is_advance: true,
+        amount_received: 0,
+      }
+    }
+
     const { data: inv, error } = await supabase.from('invoices').insert([{
-      invoice_number: invoice.invoice_number, invoice_title: invoiceTitle || null, client_id: invoice.client_id || null,
-      client_name: invoice.client_name, issue_date: invoice.issue_date,
-      due_date: invoice.due_date || null, status, document_type: invoice.document_type,
-      payment_terms: paymentTermsValue, notes: invoice.notes, terms: invoice.terms,
-      workmanship: Number(invoice.workmanship||0), transportation: Number(invoice.transportation||0),
-      shipping: Number(invoice.shipping||0), discount: discountAmount, vat: vatAmount,
-      wht: whtAmount, is_advance: invoice.is_advance, advance_percentage: invoice.advance_percentage,
-      custom_fields: JSON.stringify(customFieldsData), work_duration: invoice.work_duration,
-      subtotal: rawSubtotal, install_rate_total: installRateTotal, total: totalPayable,
+      invoice_number: invoice.invoice_number,
+      invoice_title: invoiceTitle || null,
+      client_id: invoice.client_id || null,
+      client_name: invoice.client_name,
+      issue_date: invoice.issue_date,
+      due_date: invoice.due_date || null,
+      status,
+      document_type: invoice.document_type,
+      payment_terms: paymentTermsValue,
+      notes: invoice.notes,
+      terms: invoice.terms,
+      workmanship: Number(invoice.workmanship||0),
+      transportation: Number(invoice.transportation||0),
+      shipping: Number(invoice.shipping||0),
+      discount: discountAmount,
+      vat: vatAmount,
+      wht: whtAmount,
+      custom_fields: JSON.stringify(customFieldsData),
+      work_duration: invoice.work_duration,
+      subtotal: rawSubtotal,
+      install_rate_total: installRateTotal,
+      total: totalPayable,
       amount_in_words: numberToWords(totalPayable),
+      // Thread fields
+      ...threadFields,
     }]).select().single()
 
     if (error) { alert('Error saving: ' + error.message); setSaving(false); return }
+
     const itemsToSave = items
       .filter(item => item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim())
       .map((item, i) => toDbItem(item, inv.id, i))
     if (itemsToSave.length > 0) await supabase.from('invoice_items').insert(itemsToSave)
+
     setSaving(false)
     navigate('/invoices/' + inv.id)
   }
@@ -172,6 +259,30 @@ export default function NewInvoice() {
           />
         )}
 
+        {/* ── Thread continuation banner ── */}
+        {isThreadContinuation && (
+          <div style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '10px', padding: '14px 18px', marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+            <span style={{ fontSize: '18px' }}>🔗</span>
+            <div>
+              <p style={{ margin: 0, fontWeight: 'bold', fontSize: '13px', color: '#1D4ED8' }}>Continuing Job Thread</p>
+              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#3B82F6' }}>
+                Contract total: <strong>₦{fmtN(threadDefaults.total_contract_value)}</strong>
+                {' · '}Previously received: <strong>₦{fmtN(threadDefaults._totalReceived || 0)}</strong>
+                {suggestedAmountHint > 0 && <>{' · '}<strong style={{ color: '#1D4ED8' }}>Suggested: ₦{fmtN(suggestedAmountHint)}</strong></>}
+              </p>
+              {threadDefaults._previousInvoices?.length > 0 && (
+                <div style={{ marginTop: '8px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {threadDefaults._previousInvoices.map(p => (
+                    <span key={p.invoice_number} style={{ fontSize: '11px', backgroundColor: 'white', border: '1px solid #BFDBFE', borderRadius: '6px', padding: '2px 8px', color: '#1D4ED8', fontWeight: 'bold' }}>
+                      {p.invoice_number} · ₦{fmtN(p.amount_received)} received
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Document Header */}
         <div style={sec}>
           <div style={grid('repeat(3, 1fr)')}>
@@ -195,7 +306,7 @@ export default function NewInvoice() {
             clientId={invoice.client_id}
             clientName={invoice.client_name}
             isMobile={isMobile}
-            onClientChange={(id, name, clientObj) => {
+            onClientChange={(id, name) => {
               updateInvoice('client_id', id)
               updateInvoice('client_name', name)
             }}
@@ -243,9 +354,9 @@ export default function NewInvoice() {
                       ? <div onClick={()=>{setShowCSVNote(false);csvRef.current.click()}} style={{ padding:'8px 14px',backgroundColor:'#16A34A',color:'white',borderRadius:'6px',cursor:'pointer',fontSize:'13px',textAlign:'center' }}>Choose File</div>
                       : <div>
                           <div style={{ fontSize:'11px',color:'#888',marginBottom:'6px',lineHeight:'1.6' }}>
-                              <strong>Required:</strong> description, quantity, unit_price<br/>
-                              <strong>Optional:</strong> sub_description, unit
-                            </div>
+                            <strong>Required:</strong> description, quantity, unit_price<br/>
+                            <strong>Optional:</strong> sub_description, unit
+                          </div>
                           <textarea
                             value={pasteCSV}
                             onChange={e => setPasteCSV(e.target.value)}
@@ -286,9 +397,7 @@ export default function NewInvoice() {
                   {isVisible('unit')&&<th style={{ padding:'10px 12px',textAlign:'left',color:'white',minWidth:'70px' }}>Unit</th>}
                   <th style={{ padding:'10px 12px',textAlign:'left',color:'white',minWidth:'120px' }}>Rate</th>
                   <th style={{ padding:'10px 12px',textAlign:'left',color:'white',minWidth:'110px' }}>Amount</th>
-                  {isVisible('install_rate')&&<th style={{ padding:'10px 12px',textAlign:'left',color:'white',minWidth:'110px' }}>
-                    Install Rate
-                  </th>}
+                  {isVisible('install_rate')&&<th style={{ padding:'10px 12px',textAlign:'left',color:'white',minWidth:'110px' }}>Install Rate</th>}
                   {isVisible('vat_rate')&&<th style={{ padding:'10px 12px',textAlign:'center',color:'white',minWidth:'72px' }}>VAT %</th>}
                   {isVisible('discount_rate')&&<th style={{ padding:'10px 12px',textAlign:'center',color:'white',minWidth:'72px' }}>Disc %</th>}
                   {customColumns.filter(c=>c.visible).map(col=>(
@@ -306,7 +415,6 @@ export default function NewInvoice() {
                     if(item.row_type==='standard')n++
                     const visCount = 3+(isVisible('make')?1:0)+(isVisible('unit')?1:0)+(isVisible('install_rate')?1:0)+(isVisible('vat_rate')?1:0)+(isVisible('discount_rate')?1:0)+customColumns.filter(c=>c.visible).length+(showItemImages?1:0)+2
                     const autoInstall = installCol?.formula ? parseFloat(installCol.formula) * Number(item.quantity||1) * Number(item.unit_price||0) : null
-                    // Row up/down buttons
                     const reorderBtns = (
                       <td style={{ padding:'4px 2px',textAlign:'center',verticalAlign:'middle' }}>
                         <div style={{ display:'flex',flexDirection:'column',gap:'1px' }}>
@@ -340,8 +448,7 @@ export default function NewInvoice() {
                         {isVisible('install_rate')&&(
                           <td style={{ padding:'8px 12px' }}>
                             <input
-                              style={inp}
-                              type="number" min="0"
+                              style={inp} type="number" min="0"
                               value={item.install_rate_override ? (item.install_rate ?? '') : ''}
                               placeholder={autoInstall !== null ? String(Number(autoInstall.toFixed(2))) : '0'}
                               onChange={e => {
@@ -360,10 +467,7 @@ export default function NewInvoice() {
                               type="number" min="0" max="100"
                               value={item.vat_rate !== null && item.vat_rate !== undefined ? item.vat_rate : ''}
                               placeholder={String(invoice.vat||0)}
-                              onChange={e=>{
-                                const val = e.target.value
-                                updateItem(index,'vat_rate', val==='' ? null : Number(val))
-                              }}
+                              onChange={e=>{ const val = e.target.value; updateItem(index,'vat_rate', val==='' ? null : Number(val)) }}
                             />
                             {item.vat_rate === 0 && <div style={{ fontSize:'10px',color:'#CC0000',marginTop:'2px' }}>excluded</div>}
                           </td>
@@ -379,10 +483,7 @@ export default function NewInvoice() {
                               type="number" min="0" max="100"
                               value={hasOverride ? drVal : ''}
                               placeholder="global"
-                              onChange={e => {
-                                const val = e.target.value
-                                updateItem(index, 'discount_rate', val === '' ? null : Number(val))
-                              }}
+                              onChange={e => { const val = e.target.value; updateItem(index, 'discount_rate', val === '' ? null : Number(val)) }}
                             />
                             {isExcluded
                               ? <div style={{ fontSize:'10px',color:'#CC0000',marginTop:'2px',fontWeight:'bold' }}>✕ no discount</div>
@@ -544,6 +645,20 @@ export default function NewInvoice() {
           </div>
         </div>
 
+        {/* ── Job Thread Panel ── */}
+        {/* Hidden in thread continuation mode (thread already exists) */}
+        {!isThreadContinuation && (
+          <div style={{ marginBottom: '20px' }}>
+            <ThreadInitPanel
+              isAdvance={isAdvance}
+              setIsAdvance={setIsAdvance}
+              contractTotal={contractTotal}
+              setContractTotal={setContractTotal}
+              invoiceTotal={totalPayable}
+            />
+          </div>
+        )}
+
         {/* Payment Terms */}
         <div style={sec}>
           <h3 style={secT}>Payment Terms</h3>
@@ -559,7 +674,7 @@ export default function NewInvoice() {
           </div>
         </div>
 
-        {/* Bottom Plain-Text Custom Fields */}
+        {/* Project Milestones */}
         <div style={sec}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px' }}>
             <h3 style={{ ...secT,margin:0 }}>Project Milestones</h3>
@@ -574,7 +689,7 @@ export default function NewInvoice() {
           ))}
         </div>
 
-        {/* Notes & Terms — rich text, editable titles */}
+        {/* Notes & Terms */}
         <div style={sec}>
           <div style={grid('1fr 1fr')}>
             <div>
