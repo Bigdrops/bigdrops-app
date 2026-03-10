@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import { supabase } from '../supabase'
@@ -7,7 +7,21 @@ import InvoicePDF from '../components/InvoicePDF'
 import ThreadSummaryCard from '../components/ThreadSummaryCard'
 import { useInvoiceThread } from '../hooks/useInvoiceThread'
 
+function useIsMobile() {
+  const [m, setM] = React.useState(window.innerWidth < 640)
+  React.useEffect(() => { const h = () => setM(window.innerWidth < 640); window.addEventListener('resize', h); return () => window.removeEventListener('resize', h) }, [])
+  return m
+}
+
+function useIsNarrow() {
+  const [n, setN] = React.useState(window.innerWidth < 768)
+  React.useEffect(() => { const h = () => setN(window.innerWidth < 768); window.addEventListener('resize', h); return () => window.removeEventListener('resize', h) }, [])
+  return n
+}
+
 export default function ViewInvoice() {
+  const isMobile = useIsMobile()
+  const isNarrow = useIsNarrow()
   const { id } = useParams()
   const navigate = useNavigate()
   const [invoice, setInvoice] = useState(null)
@@ -329,7 +343,47 @@ export default function ViewInvoice() {
             </div>
           </div>
 
-          <div style={{ overflowX: 'auto', marginBottom: '24px' }}>
+          {/* ── Mobile: vertical item cards (read-only) ── */}
+          {isNarrow && (
+            <div style={{ marginBottom: '24px' }}>
+              {(() => {
+                let stdCount = 0
+                return items.map((item, index) => {
+                  if (item.row_type === 'standard') stdCount++
+                  const n = stdCount
+                  if (item.row_type === 'group_header') {
+                    return (
+                      <div key={index} style={{ backgroundColor: '#333', borderRadius: '8px', padding: '10px 14px', marginBottom: '8px', color: 'white', fontWeight: 'bold', fontSize: '13px' }}>
+                        {item.group_name}
+                      </div>
+                    )
+                  }
+                  return (
+                    <div key={index} style={{ backgroundColor: index % 2 === 0 ? '#f9f9f9' : 'white', border: '1px solid #eee', borderRadius: '8px', padding: '12px 14px', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                        <div style={{ flex: 1 }}>
+                          <span style={{ fontSize: '11px', color: '#999', fontWeight: '700', marginRight: '6px' }}>{n}.</span>
+                          <span style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>{item.description}</span>
+                          {item.sub_description && <div style={{ fontSize: '11px', color: '#888', fontStyle: 'italic', marginTop: '2px' }}>{item.sub_description}</div>}
+                        </div>
+                        <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#CC0000', whiteSpace: 'nowrap', marginLeft: '10px' }}>
+                          ₦{Number(item.amount || item.quantity * item.unit_price || 0).toLocaleString()}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+                        {item.make && <span style={{ fontSize: '11px', backgroundColor: '#f0f0f0', borderRadius: '4px', padding: '2px 8px', color: '#555' }}>Make: {item.make}</span>}
+                        <span style={{ fontSize: '11px', backgroundColor: '#f0f0f0', borderRadius: '4px', padding: '2px 8px', color: '#555' }}>Qty: {item.quantity}{item.unit ? ' ' + item.unit : ''}</span>
+                        <span style={{ fontSize: '11px', backgroundColor: '#f0f0f0', borderRadius: '4px', padding: '2px 8px', color: '#555' }}>₦{Number(item.unit_price || 0).toLocaleString()} / unit</span>
+                      </div>
+                    </div>
+                  )
+                })
+              })()}
+            </div>
+          )}
+
+          {/* ── Desktop: horizontal table ── */}
+          <div style={{ display: isNarrow ? 'none' : 'block', overflowX: 'auto', marginBottom: '24px' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '500px' }}>
               <thead>
                 <tr style={{ backgroundColor: '#1a1a1a' }}>
