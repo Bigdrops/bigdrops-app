@@ -3,10 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { supabase } from '../supabase'
-import {
-  LayoutDashboard, FileText, ClipboardList,
-  Wrench, Users, Settings, Menu, LogOut, ChevronRight
-} from 'lucide-react'
+import { LayoutDashboard, FileText, ClipboardList, Wrench, Users, Settings, Menu, LogOut } from 'lucide-react'
 
 const navItems = [
   { label: 'Home',       path: '/',          icon: LayoutDashboard },
@@ -36,7 +33,10 @@ function SidebarContent({ session, onNavigate }) {
         ))}
       </nav>
       <div className="p-4 border-t border-slate-100">
-        <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 text-slate-400 text-xs hover:text-red-600 w-full px-2 py-2">
+        {session?.user?.email && (
+          <div className="text-xs text-slate-400 truncate mb-2 px-2">{session.user.email}</div>
+        )}
+        <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 text-slate-400 text-xs hover:text-red-600 w-full px-2 py-2 transition-colors">
           <LogOut size={14} /> Sign Out
         </button>
       </div>
@@ -46,39 +46,63 @@ function SidebarContent({ session, onNavigate }) {
 
 export default function Layout({ title, children, session }) {
   const isMobile = useIsMobile()
-  return (
-    <div className="flex min-h-screen bg-slate-50 font-sans antialiased text-slate-900">
-      {!isMobile && (
-        <aside className="fixed left-0 top-0 w-64 h-full z-30">
-          <SidebarContent session={session} />
-        </aside>
-      )}
-      <div className={`flex-1 flex flex-col ${!isMobile ? 'pl-64' : ''}`}>
-        <header className="sticky top-0 z-20 h-14 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {isMobile && (
-              <Sheet>
-                <SheetTrigger className="p-1 text-slate-500"><Menu size={20} /></SheetTrigger>
-                <SheetContent side="left" className="p-0 w-64 border-0"><SidebarContent session={session} /></SheetContent>
-              </Sheet>
-            )}
-            <h1 className="text-sm font-bold text-slate-900 uppercase tracking-tight">{title}</h1>
-          </div>
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col min-h-screen bg-slate-50 font-sans antialiased text-slate-900">
+        {/* Mobile Header */}
+        <header className="sticky top-0 z-20 h-14 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 flex items-center gap-3">
+          <Sheet>
+            <SheetTrigger asChild>
+              <button className="p-1 text-slate-500"><Menu size={20} /></button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-64 border-0">
+              <SidebarContent session={session} />
+            </SheetContent>
+          </Sheet>
+          <h1 className="text-sm font-bold text-slate-900 uppercase tracking-tight">{title}</h1>
         </header>
-        <main className={`flex-1 p-4 md:p-8 w-full max-w-5xl mx-auto ${isMobile ? 'pb-24' : ''}`}>
+
+        {/* Mobile Content */}
+        <main className="flex-1 p-4 pb-24 w-full max-w-5xl mx-auto">
           {children}
         </main>
-      </div>
-      {isMobile && (
+
+        {/* Mobile Bottom Nav */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-3 z-20 shadow-lg">
           {navItems.slice(0, 4).map(({ path, icon: Icon, label }) => (
-            <NavLink key={path} to={path} end={path === '/'} className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>
-              <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
-              <span className="text-[10px] font-bold uppercase">{label}</span>
+            <NavLink key={path} to={path} end={path === '/'}
+              className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>
+              {({ isActive }) => (
+                <>
+                  <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
+                  <span className="text-[10px] font-bold uppercase">{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </div>
-      )}
+      </div>
+    )
+  }
+
+  // Desktop — CSS Grid, no gap
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans antialiased text-slate-900" style={{ display: 'grid', gridTemplateColumns: '256px 1fr' }}>
+      {/* Sidebar */}
+      <aside className="fixed left-0 top-0 w-64 h-full z-30">
+        <SidebarContent session={session} />
+      </aside>
+
+      {/* Main — starts exactly at col 2 */}
+      <div className="flex flex-col col-start-2">
+        <header className="sticky top-0 z-20 h-14 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 flex items-center">
+          <h1 className="text-sm font-bold text-slate-900 uppercase tracking-tight">{title}</h1>
+        </header>
+        <main className="flex-1 p-8 w-full max-w-5xl mx-auto">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }
