@@ -4,6 +4,8 @@ import { PDFDownloadLink } from '@react-pdf/renderer'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import InvoicePDF from '../components/InvoicePDF'
+import ThreadSummaryCard from '../components/ThreadSummaryCard'
+import { useInvoiceThread } from '../hooks/useInvoiceThread'
 
 export default function ViewInvoice() {
   const { id } = useParams()
@@ -25,6 +27,9 @@ export default function ViewInvoice() {
   })
   const [savingPayment, setSavingPayment] = useState(false)
   const moreRef = useRef()
+
+  // ── Thread hook — only active when invoice has a thread_id ─────────────────
+  const { buildNextInvoiceDefaults } = useInvoiceThread(invoice?.thread_id || null)
 
   const fetchInvoice = async () => {
     const { data } = await supabase.from('invoices').select('*').eq('id', id).single()
@@ -56,7 +61,6 @@ export default function ViewInvoice() {
     })
   }, [id])
 
-  // Close more menu on outside click
   useEffect(() => {
     const handler = (e) => { if (moreRef.current && !moreRef.current.contains(e.target)) setShowMore(false) }
     document.addEventListener('mousedown', handler)
@@ -112,6 +116,12 @@ export default function ViewInvoice() {
         status: 'draft',
         issue_date: new Date().toISOString().split('T')[0],
         due_date: null,
+        // Duplicates are standalone — strip thread linkage
+        thread_id: null,
+        total_contract_value: 0,
+        thread_position: 1,
+        is_advance: false,
+        amount_received: 0,
       }]).select().single()
       if (error) { alert('Failed to duplicate: ' + error.message); return }
       if (items.length > 0) {
@@ -131,7 +141,13 @@ export default function ViewInvoice() {
 
   const handleMarkSent = () => { handleStatusChange('sent'); setShowMore(false) }
 
-  // Parse custom fields
+  // ── "Create Next Invoice" — passes thread context to NewInvoice ────────────
+  const handleCreateNextInvoice = () => {
+    const defaults = buildNextInvoiceDefaults()
+    if (!defaults) return
+    navigate('/invoices/new', { state: { threadDefaults: defaults } })
+  }
+
   let customFields = []
   let bottomFields = []
   let attachments = []
@@ -156,14 +172,10 @@ export default function ViewInvoice() {
                 <h3 style={{ margin: 0, fontSize: '17px', color: '#1a1a1a' }}>Record Payment</h3>
                 <span onClick={() => setShowPaymentModal(false)} style={{ cursor: 'pointer', fontSize: '22px', color: '#888', lineHeight: 1 }}>×</span>
               </div>
-
-              {/* Invoice total reference */}
               <div style={{ backgroundColor: '#F0FDF4', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '13px', color: '#555' }}>Invoice Total</span>
                 <span style={{ fontWeight: 'bold', fontSize: '16px', color: '#16A34A' }}>₦{Number(invoice.total || 0).toLocaleString()}</span>
               </div>
-
-              {/* Full / Partial toggle */}
               <div style={{ marginBottom: '16px' }}>
                 <label style={labelStyle}>Payment Type</label>
                 <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid #ddd' }}>
@@ -175,14 +187,12 @@ export default function ViewInvoice() {
                   ))}
                 </div>
               </div>
-
               {paymentForm.type === 'partial' && (
                 <div style={{ marginBottom: '16px' }}>
                   <label style={labelStyle}>Amount Paid (₦)</label>
                   <input style={inputStyle} type="number" min="0" value={paymentForm.amount} onChange={e => setPaymentForm(f => ({ ...f, amount: e.target.value }))} placeholder="Enter amount" />
                 </div>
               )}
-
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
                   <label style={labelStyle}>Date</label>
@@ -193,23 +203,16 @@ export default function ViewInvoice() {
                   <input style={inputStyle} type="time" value={paymentForm.time} onChange={e => setPaymentForm(f => ({ ...f, time: e.target.value }))} />
                 </div>
               </div>
-
               <div style={{ marginBottom: '16px' }}>
                 <label style={labelStyle}>Payment Mode</label>
                 <select style={inputStyle} value={paymentForm.mode} onChange={e => setPaymentForm(f => ({ ...f, mode: e.target.value }))}>
-                  <option>Transfer</option>
-                  <option>Cash</option>
-                  <option>Cheque</option>
-                  <option>POS</option>
-                  <option>Online</option>
+                  <option>Transfer</option><option>Cash</option><option>Cheque</option><option>POS</option><option>Online</option>
                 </select>
               </div>
-
               <div style={{ marginBottom: '24px' }}>
                 <label style={labelStyle}>Bank Reference / Alert No (optional)</label>
                 <input style={inputStyle} value={paymentForm.reference} onChange={e => setPaymentForm(f => ({ ...f, reference: e.target.value }))} placeholder="e.g. 230615123456" />
               </div>
-
               <div style={{ display: 'flex', gap: '10px' }}>
                 <div onClick={() => setShowPaymentModal(false)} style={{ flex: 1, padding: '12px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center', cursor: 'pointer', fontSize: '14px', color: '#555' }}>Cancel</div>
                 <div onClick={handleRecordPayment} style={{ flex: 1, padding: '12px', backgroundColor: '#16A34A', color: 'white', borderRadius: '8px', textAlign: 'center', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
@@ -222,28 +225,18 @@ export default function ViewInvoice() {
 
         {/* Action Bar */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Back */}
           <div onClick={() => navigate('/invoices')} style={{ padding: '10px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', border: '1px solid #ddd', backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
             ← Invoices
           </div>
-
-          {/* Status badge */}
           <span style={{ backgroundColor: s.bg, color: s.color, padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', textTransform: 'capitalize' }}>
             {invoice.status || 'draft'}
           </span>
-
-          {/* Mark as Sent (draft only) */}
           {invoice.status === 'draft' && (
             <div onClick={() => handleStatusChange('sent')} style={{ padding: '8px 14px', borderRadius: '6px', backgroundColor: '#0056B3', color: 'white', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}>
               Mark as Sent
             </div>
           )}
-
-
-
           <div style={{ flex: 1 }} />
-
-          {/* Download PDF */}
           <PDFDownloadLink document={<InvoicePDF invoice={invoice} items={items} client={client} settings={settings} />} fileName={invoice.invoice_number + '.pdf'} style={{ textDecoration: 'none' }}>
             {({ loading: pdfLoading }) => (
               <div style={{ padding: '10px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', backgroundColor: '#0056B3', color: 'white', fontWeight: 'bold' }}>
@@ -251,13 +244,9 @@ export default function ViewInvoice() {
               </div>
             )}
           </PDFDownloadLink>
-
-          {/* Edit */}
           <div onClick={() => navigate('/invoices/edit/' + id)} style={{ padding: '10px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', backgroundColor: '#CC0000', color: 'white', fontWeight: 'bold' }}>
             Edit
           </div>
-
-          {/* More menu */}
           <div ref={moreRef} style={{ position: 'relative' }}>
             <div onClick={() => setShowMore(p => !p)} style={{ padding: '10px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', border: '1px solid #ddd', backgroundColor: 'white', fontWeight: '600', userSelect: 'none' }}>
               ••• More
@@ -290,10 +279,20 @@ export default function ViewInvoice() {
           </div>
         </div>
 
+        {/* ── Thread Summary Card — only renders when invoice belongs to a thread ── */}
+        {invoice.thread_id && (
+          <div style={{ marginBottom: '24px' }}>
+            <ThreadSummaryCard
+              threadId={invoice.thread_id}
+              currentInvoiceId={invoice.id}
+              onCreateNext={handleCreateNextInvoice}
+            />
+          </div>
+        )}
+
         {/* Invoice Preview */}
         <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: '40px', overflowX: 'auto' }}>
 
-          {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <div style={{ color: '#CC0000', fontWeight: 'bold', fontSize: '22px', marginBottom: '4px' }}>SUN & SHIELD POWER SOLUTIONS</div>
@@ -310,7 +309,6 @@ export default function ViewInvoice() {
 
           <div style={{ borderBottom: '2px solid #CC0000', marginBottom: '24px' }} />
 
-          {/* Client & Details */}
           <div style={{ display: 'flex', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
             <div style={{ flex: 1, minWidth: '160px' }}>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Bill To</div>
@@ -331,7 +329,6 @@ export default function ViewInvoice() {
             </div>
           </div>
 
-          {/* Line Items */}
           <div style={{ overflowX: 'auto', marginBottom: '24px' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '500px' }}>
               <thead>
@@ -375,7 +372,6 @@ export default function ViewInvoice() {
             </table>
           </div>
 
-          {/* Totals */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
             <div style={{ width: '300px' }}>
               {[
@@ -398,14 +394,12 @@ export default function ViewInvoice() {
             </div>
           </div>
 
-          {/* Amount in Words */}
           {invoice.amount_in_words && (
             <div style={{ backgroundColor: '#f9f9f9', padding: '12px', borderLeft: '3px solid #CC0000', marginBottom: '24px', fontSize: '12px', color: '#555', fontStyle: 'italic' }}>
               {invoice.amount_in_words}
             </div>
           )}
 
-          {/* Notes & Terms */}
           {invoice.notes && (
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Notes</div>
@@ -419,7 +413,6 @@ export default function ViewInvoice() {
             </div>
           )}
 
-          {/* Attachments */}
           {attachments.length > 0 && (
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Supporting Documents</div>
@@ -437,7 +430,6 @@ export default function ViewInvoice() {
             </div>
           )}
 
-          {/* Footer */}
           <div style={{ borderTop: '1px solid #eee', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#333', marginBottom: '4px' }}>Payment Terms</div>
