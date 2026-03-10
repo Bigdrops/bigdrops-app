@@ -291,12 +291,154 @@ function UserSection({ session, onToast }) {
   )
 }
 
-function AdminSection({ onToast }) {
+// ─── Confirmation Modals ──────────────────────────────────────────────────────
+
+function ConfirmModal({ type, user, onConfirm, onCancel, loading }) {
+  const [emailInput, setEmailInput] = useState('')
+  const cancelRef = useRef()
+  const inputRef = useRef()
+
+  // Esc key closes
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onCancel() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onCancel])
+
+  // Focus Cancel by default (approve/deactivate), focus input for remove
+  useEffect(() => {
+    if (type === 'remove') inputRef.current?.focus()
+    else cancelRef.current?.focus()
+  }, [type])
+
+  const emailMatch = emailInput.trim().toLowerCase() === user.email.toLowerCase()
+
+  const config = {
+    approve: {
+      title: 'Grant Access',
+      icon: <UserCheck size={22} className="text-emerald-600" />,
+      iconBg: 'bg-emerald-50',
+      body: (
+        <>
+          <p className="text-sm text-slate-700 leading-relaxed">
+            You are about to grant <span className="font-bold text-slate-900">{user.email}</span> full access to BIGDROPS.
+          </p>
+          <p className="text-xs text-slate-400 mt-2">They will be able to create invoices, CSRs, and view all client data immediately.</p>
+        </>
+      ),
+      confirmLabel: 'Yes, Grant Access',
+      confirmClass: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+      canConfirm: true,
+    },
+    deactivate: {
+      title: 'Deactivate Account',
+      icon: <UserX size={22} className="text-amber-600" />,
+      iconBg: 'bg-amber-50',
+      body: (
+        <>
+          <p className="text-sm text-slate-700 leading-relaxed">
+            <span className="font-bold text-slate-900">{user.email}</span> will be <span className="font-bold text-amber-700">locked out immediately.</span>
+          </p>
+          <p className="text-xs text-slate-400 mt-2">Their data is preserved. You can reactivate them at any time.</p>
+          <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex gap-2 items-start">
+            <span className="text-amber-500 text-sm mt-0.5">⚠️</span>
+            <p className="text-xs text-amber-700 font-semibold">If they are currently logged in, they will be blocked on their next action.</p>
+          </div>
+        </>
+      ),
+      confirmLabel: 'Yes, Deactivate',
+      confirmClass: 'bg-amber-600 hover:bg-amber-700 text-white',
+      canConfirm: true,
+    },
+    remove: {
+      title: 'Remove User',
+      icon: <Trash2 size={22} className="text-red-600" />,
+      iconBg: 'bg-red-50',
+      body: (
+        <>
+          <p className="text-sm text-slate-700 leading-relaxed">
+            This will <span className="font-bold text-red-700">permanently remove</span> <span className="font-bold text-slate-900">{user.email}</span> from BIGDROPS.
+          </p>
+          <p className="text-xs text-slate-400 mt-2">Their invoice and CSR history is preserved, but their login access is gone forever.</p>
+          <div className="mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex gap-2 items-start">
+            <span className="text-red-500 text-sm mt-0.5">🚨</span>
+            <p className="text-xs text-red-700 font-semibold">This cannot be undone. Type the email address below to confirm.</p>
+          </div>
+          <input
+            ref={inputRef}
+            value={emailInput}
+            onChange={e => setEmailInput(e.target.value)}
+            placeholder={user.email}
+            className="mt-3 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition-colors font-mono"
+          />
+          {emailInput && !emailMatch && (
+            <p className="text-[11px] text-red-500 font-bold mt-1">Email doesn't match</p>
+          )}
+        </>
+      ),
+      confirmLabel: 'Permanently Remove',
+      confirmClass: emailMatch ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed',
+      canConfirm: emailMatch,
+    },
+  }
+
+  const c = config[type]
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
+      onClick={e => { if (e.target === e.currentTarget) onCancel() }}
+    >
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="px-5 pt-5 pb-4 flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${c.iconBg}`}>
+            {c.icon}
+          </div>
+          <h3 className="text-base font-black text-slate-900">{c.title}</h3>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 pb-5">
+          {c.body}
+        </div>
+
+        {/* Actions */}
+        <div className="px-5 pb-5 flex gap-2">
+          <button
+            ref={cancelRef}
+            onClick={onCancel}
+            disabled={loading}
+            className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={c.canConfirm ? onConfirm : undefined}
+            disabled={!c.canConfirm || loading}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors ${c.confirmClass} disabled:opacity-60`}
+          >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : null}
+            {loading ? 'Processing…' : c.confirmLabel}
+          </button>
+        </div>
+
+        <p className="text-center text-[10px] text-slate-300 font-bold pb-3">Press Esc to cancel</p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Admin Section ────────────────────────────────────────────────────────────
+
+function AdminSection({ onToast, session }) {
   const [tab, setTab] = useState('users')
   const [users, setUsers] = useState([])
   const [devices, setDevices] = useState([])
   const [fetching, setFetching] = useState(true)
   const [actionId, setActionId] = useState(null)
+  // modal: { type: 'approve'|'deactivate'|'remove', user }
+  const [modal, setModal] = useState(null)
 
   const fetchAll = useCallback(async () => {
     setFetching(true)
@@ -311,29 +453,29 @@ function AdminSection({ onToast }) {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
-  const approve = async (id) => {
-    setActionId(id + '_a')
-    await supabase.from('profiles').update({ is_approved: true }).eq('id', id)
-    await fetchAll()
-    setActionId(null)
-    onToast('User approved')
-  }
+  const closeModal = useCallback(() => setModal(null), [])
 
-  const deactivate = async (id) => {
-    setActionId(id + '_d')
-    await supabase.from('profiles').update({ is_approved: false }).eq('id', id)
-    await fetchAll()
+  const handleConfirm = async () => {
+    if (!modal) return
+    const { type, user } = modal
+    setActionId(user.id + '_' + type[0])
+    try {
+      if (type === 'approve') {
+        await supabase.from('profiles').update({ is_approved: true }).eq('id', user.id)
+        onToast('Access granted to ' + user.email)
+      } else if (type === 'deactivate') {
+        await supabase.from('profiles').update({ is_approved: false }).eq('id', user.id)
+        onToast(user.email + ' deactivated')
+      } else if (type === 'remove') {
+        await supabase.from('profiles').delete().eq('id', user.id)
+        onToast(user.email + ' removed')
+      }
+      await fetchAll()
+    } catch (e) {
+      onToast('Error: ' + e.message)
+    }
     setActionId(null)
-    onToast('User deactivated')
-  }
-
-  const remove = async (id) => {
-    if (!window.confirm('Remove access? Invoice history is preserved.')) return
-    setActionId(id + '_r')
-    await supabase.from('profiles').delete().eq('id', id)
-    await fetchAll()
-    setActionId(null)
-    onToast('User removed')
+    setModal(null)
   }
 
   const assignDevice = async (code, userId) => {
@@ -349,8 +491,21 @@ function AdminSection({ onToast }) {
     onToast('Device updated')
   }
 
+  const isLoading = (id, suffix) => actionId === id + '_' + suffix
+
   return (
     <div>
+      {/* Confirmation modal */}
+      {modal && (
+        <ConfirmModal
+          type={modal.type}
+          user={modal.user}
+          onConfirm={handleConfirm}
+          onCancel={closeModal}
+          loading={!!actionId}
+        />
+      )}
+
       <div className="flex gap-2 mb-5">
         {['users', 'devices'].map(t => (
           <button key={t} onClick={() => setTab(t)}
@@ -365,11 +520,16 @@ function AdminSection({ onToast }) {
         <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-slate-300" /></div>
       ) : tab === 'users' ? (
         <div className="space-y-3">
-          {users.map(u => (
-            <div key={u.id} className="bg-white rounded-xl border border-slate-200 p-4">
+          {users.map(u => {
+            const isSelf = u.id === session?.user?.id
+            return (
+            <div key={u.id} className={`bg-white rounded-xl border p-4 ${isSelf ? 'border-blue-200 bg-blue-50/30' : 'border-slate-200'}`}>
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-800 truncate">{u.email}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-slate-800 truncate">{u.email}</p>
+                    {isSelf && <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full shrink-0">YOU</span>}
+                  </div>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     {new Date(u.created_at).toLocaleDateString()}
                     {u.assigned_device_code && <span className="ml-2 font-bold text-slate-600">· {u.assigned_device_code}</span>}
@@ -379,24 +539,35 @@ function AdminSection({ onToast }) {
                   {u.is_approved ? 'Active' : 'Pending'}
                 </span>
               </div>
-              <div className="flex gap-2">
-                {!u.is_approved
-                  ? <button onClick={() => approve(u.id)} disabled={actionId === u.id + '_a'}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition-colors disabled:opacity-50">
-                      {actionId === u.id + '_a' ? <Loader2 size={11} className="animate-spin" /> : <UserCheck size={11} />} Approve
-                    </button>
-                  : <button onClick={() => deactivate(u.id)} disabled={actionId === u.id + '_d'}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-colors disabled:opacity-50">
-                      {actionId === u.id + '_d' ? <Loader2 size={11} className="animate-spin" /> : <UserX size={11} />} Deactivate
-                    </button>
-                }
-                <button onClick={() => remove(u.id)} disabled={actionId === u.id + '_r'}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 transition-colors disabled:opacity-50">
-                  {actionId === u.id + '_r' ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />} Remove
-                </button>
-              </div>
+              {isSelf ? (
+                <p className="text-[11px] text-blue-400 font-bold text-center py-1">🔒 Cannot modify your own account</p>
+              ) : (
+                <div className="flex gap-2">
+                  {!u.is_approved
+                    ? <button
+                        onClick={() => setModal({ type: 'approve', user: u })}
+                        disabled={isLoading(u.id, 'a')}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition-colors disabled:opacity-50">
+                        {isLoading(u.id, 'a') ? <Loader2 size={11} className="animate-spin" /> : <UserCheck size={11} />} Approve
+                      </button>
+                    : <button
+                        onClick={() => setModal({ type: 'deactivate', user: u })}
+                        disabled={isLoading(u.id, 'd')}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-colors disabled:opacity-50">
+                        {isLoading(u.id, 'd') ? <Loader2 size={11} className="animate-spin" /> : <UserX size={11} />} Deactivate
+                      </button>
+                  }
+                  <button
+                    onClick={() => setModal({ type: 'remove', user: u })}
+                    disabled={isLoading(u.id, 'r')}
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 transition-colors disabled:opacity-50">
+                    {isLoading(u.id, 'r') ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />} Remove
+                  </button>
+                </div>
+              )}
             </div>
-          ))}
+          )})
+          }
           {users.length === 0 && <p className="text-center text-slate-400 text-xs font-bold py-8">NO USERS FOUND</p>}
         </div>
       ) : (
@@ -465,7 +636,7 @@ export default function Settings() {
       case 'banking':  return <BankingSection onToast={showToast} />
       case 'branding': return <BrandingSection onToast={showToast} />
       case 'user':     return <UserSection session={session} onToast={showToast} />
-      case 'admin':    return <AdminSection onToast={showToast} />
+      case 'admin':    return <AdminSection onToast={showToast} session={session} />
       default:         return null
     }
   }
