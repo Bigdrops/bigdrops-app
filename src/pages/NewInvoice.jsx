@@ -9,6 +9,7 @@ import ColumnManager from '../components/ColumnManager'
 import ItemImageUpload from '../components/ItemImageUpload'
 import AttachmentsPanel from '../components/AttachmentsPanel'
 import ThreadInitPanel from '../components/ThreadInitPanel'
+import MobileItemCard from '../components/MobileItemCard'
 import { BUILTIN_COLUMNS, makeEmptyItem, toDbItem, useInvoiceColumns, resolveInstallRate, resolveRowVat, calcTotals } from '../components/useInvoiceColumns.jsx'
 import { generateThreadId, fmtN } from '../hooks/useInvoiceThread'
 
@@ -20,6 +21,17 @@ function useIsMobile() {
     return () => window.removeEventListener('resize', handler)
   }, [])
   return isMobile
+}
+
+// Separate breakpoint for item table — catches fold phones expanded
+function useIsNarrow() {
+  const [isNarrow, setIsNarrow] = useState(window.innerWidth < 768)
+  useEffect(() => {
+    const handler = () => setIsNarrow(window.innerWidth < 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return isNarrow
 }
 
 export default function NewInvoice() {
@@ -385,7 +397,45 @@ export default function NewInvoice() {
               <div onClick={addItem} style={{ padding:'8px 14px',backgroundColor:'#CC0000',color:'white',borderRadius:'6px',cursor:'pointer',fontSize:'13px' }}>+ Add Item</div>
             </div>
           </div>
-          <div style={{ overflowX: 'auto' }}>
+          {/* ── Mobile: vertical cards — shows on phones AND fold phones expanded ── */}
+          {isNarrow && (
+            <div>
+              {(()=>{
+                let n = 0
+                return items.map((item, index) => {
+                  if (item.row_type === 'standard') n++
+                  return (
+                    <MobileItemCard
+                      key={index}
+                      item={item}
+                      index={index}
+                      number={n}
+                      isVisible={isVisible}
+                      getColumn={getColumn}
+                      customColumns={customColumns}
+                      showItemImages={showItemImages}
+                      invoice={invoice}
+                      isFirst={index === 0}
+                      isLast={index === items.length - 1}
+                      onUpdate={(idx, field, value) => {
+                        if (field === '__install_rate_override') {
+                          setItems(prev => prev.map((it, i) => i !== idx ? it : { ...it, ...value }))
+                        } else {
+                          updateItem(idx, field, value)
+                        }
+                      }}
+                      onRemove={removeItem}
+                      onMoveUp={(idx) => moveItem(idx, -1)}
+                      onMoveDown={(idx) => moveItem(idx, 1)}
+                    />
+                  )
+                })
+              })()}
+            </div>
+          )}
+
+          {/* ── Desktop: horizontal table — only at 768px+ ── */}
+          {!isNarrow && <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ backgroundColor: '#1a1a1a' }}>
@@ -515,7 +565,7 @@ export default function NewInvoice() {
                 })()}
               </tbody>
             </table>
-          </div>
+          </div>}
         </div>
 
         {/* Advanced Options */}
