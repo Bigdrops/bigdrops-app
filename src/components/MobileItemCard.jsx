@@ -13,7 +13,7 @@ export default function MobileItemCard({
   item, index, number,
   isVisible, getColumn, customColumns, showItemImages,
   invoice,
-  onUpdate, onRemove, onMoveUp, onMoveDown,
+  onUpdate, onRemove, onMoveUp, onMoveDown, onInsertBelow,
   isFirst, isLast,
 }) {
   const inp = {
@@ -38,7 +38,10 @@ export default function MobileItemCard({
           onChange={e => onUpdate(index, 'group_name', e.target.value)}
           placeholder="Group name"
         />
-        <span onClick={() => onRemove(index)} style={{ color: '#ff6b6b', cursor: 'pointer', fontSize: '22px', lineHeight: 1 }}>×</span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span onClick={() => onInsertBelow(index)} style={{ color: '#16A34A', cursor: 'pointer', fontSize: '13px', padding: '4px 8px', border: '1px solid #16A34A', borderRadius: '6px', whiteSpace: 'nowrap' }}>+ Below</span>
+          <span onClick={() => onRemove(index)} style={{ color: '#ff6b6b', cursor: 'pointer', fontSize: '22px', lineHeight: 1 }}>×</span>
+        </div>
       </div>
     )
   }
@@ -179,6 +182,16 @@ export default function MobileItemCard({
           <ItemImageUpload value={item.image_url || null} onChange={url => onUpdate(index, 'image_url', url)} />
         </div>
       )}
+
+      {/* Insert below */}
+      <div
+        onClick={() => onInsertBelow(index)}
+        style={{ marginTop: '8px', padding: '8px', border: '1px dashed #ccc', borderRadius: '6px', textAlign: 'center', cursor: 'pointer', fontSize: '12px', color: '#888', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = '#16A34A'; e.currentTarget.style.color = '#16A34A' }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = '#ccc'; e.currentTarget.style.color = '#888' }}
+      >
+        ＋ Insert item below
+      </div>
     </div>
   )
 }
