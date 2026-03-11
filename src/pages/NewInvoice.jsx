@@ -63,6 +63,7 @@ export default function NewInvoice() {
   const [termsTitle, setTermsTitle] = useState('Terms and Conditions')
   const csvRef = useRef()
   const isMobile = useIsMobile()
+  const isNarrow = useIsNarrow()
 
   // ── Thread state ────────────────────────────────────────────────────────────
   const [isAdvance, setIsAdvance] = useState(false)
