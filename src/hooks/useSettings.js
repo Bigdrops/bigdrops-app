@@ -33,7 +33,10 @@ export async function uploadFile(bucket, path, file) {
 }
 
 export async function saveSettings(updates) {
-  const { error } = await supabase.from('settings').upsert({ id: 1, ...updates })
+  // Always upsert with id=1. If RLS blocks this, you need to run the SQL below in Supabase.
+  const { error } = await supabase
+    .from('settings')
+    .upsert({ id: 1, ...updates }, { onConflict: 'id' })
   if (error) throw error
   cachedSettings = { ...(cachedSettings || {}), ...updates }
   listeners.forEach(fn => fn(cachedSettings))
