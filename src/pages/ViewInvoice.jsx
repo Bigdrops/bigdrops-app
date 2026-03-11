@@ -5,6 +5,7 @@ import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import InvoicePDF from '../components/InvoicePDF'
 import ThreadSummaryCard from '../components/ThreadSummaryCard'
+import ViewMobileItemCard from '../components/ViewMobileItemCard'
 import { useInvoiceThread } from '../hooks/useInvoiceThread'
 
 function useIsMobile() {
@@ -350,32 +351,12 @@ export default function ViewInvoice() {
                 let stdCount = 0
                 return items.map((item, index) => {
                   if (item.row_type === 'standard') stdCount++
-                  const n = stdCount
-                  if (item.row_type === 'group_header') {
-                    return (
-                      <div key={index} style={{ backgroundColor: '#333', borderRadius: '8px', padding: '10px 14px', marginBottom: '8px', color: 'white', fontWeight: 'bold', fontSize: '13px' }}>
-                        {item.group_name}
-                      </div>
-                    )
-                  }
                   return (
-                    <div key={index} style={{ backgroundColor: index % 2 === 0 ? '#f9f9f9' : 'white', border: '1px solid #eee', borderRadius: '8px', padding: '12px 14px', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                        <div style={{ flex: 1 }}>
-                          <span style={{ fontSize: '11px', color: '#999', fontWeight: '700', marginRight: '6px' }}>{n}.</span>
-                          <span style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>{item.description}</span>
-                          {item.sub_description && <div style={{ fontSize: '11px', color: '#888', fontStyle: 'italic', marginTop: '2px' }}>{item.sub_description}</div>}
-                        </div>
-                        <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#CC0000', whiteSpace: 'nowrap', marginLeft: '10px' }}>
-                          ₦{Number(item.amount || item.quantity * item.unit_price || 0).toLocaleString()}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
-                        {item.make && <span style={{ fontSize: '11px', backgroundColor: '#f0f0f0', borderRadius: '4px', padding: '2px 8px', color: '#555' }}>Make: {item.make}</span>}
-                        <span style={{ fontSize: '11px', backgroundColor: '#f0f0f0', borderRadius: '4px', padding: '2px 8px', color: '#555' }}>Qty: {item.quantity}{item.unit ? ' ' + item.unit : ''}</span>
-                        <span style={{ fontSize: '11px', backgroundColor: '#f0f0f0', borderRadius: '4px', padding: '2px 8px', color: '#555' }}>₦{Number(item.unit_price || 0).toLocaleString()} / unit</span>
-                      </div>
-                    </div>
+                    <ViewMobileItemCard
+                      key={index}
+                      item={item}
+                      number={stdCount}
+                    />
                   )
                 })
               })()}
