@@ -5,7 +5,6 @@ import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import InvoicePDF from '../components/InvoicePDF'
 import ThreadSummaryCard from '../components/ThreadSummaryCard'
-import ViewMobileItemCard from '../components/ViewMobileItemCard'
 import { useInvoiceThread } from '../hooks/useInvoiceThread'
 
 function useIsMobile() {
@@ -41,6 +40,8 @@ export default function ViewInvoice() {
     type: 'full',
   })
   const [savingPayment, setSavingPayment] = useState(false)
+  const [showAdvanceModal, setShowAdvanceModal] = useState(false)
+  const [advanceForm, setAdvanceForm] = useState({ mode: 'percent', value: '50' })
   const moreRef = useRef()
 
   // ── Thread hook — only active when invoice has a thread_id ─────────────────
@@ -156,6 +157,47 @@ export default function ViewInvoice() {
 
   const handleMarkSent = () => { handleStatusChange('sent'); setShowMore(false) }
 
+  // ── "Create Advance Invoice" — opens a clean modal, then navigates to NewInvoice ──
+  const handleCreateAdvanceInvoice = () => { setShowMore(false); setShowAdvanceModal(true) }
+
+  const handleConfirmAdvance = () => {
+    const val = parseFloat(advanceForm.value)
+    if (isNaN(val) || val <= 0) { alert('Enter a valid amount'); return }
+    const invoiceTotal = Number(invoice.total || 0)
+    let advanceAmount
+    if (advanceForm.mode === 'percent') {
+      if (val > 100) { alert('Percentage cannot exceed 100%'); return }
+      advanceAmount = Math.round((invoiceTotal * val / 100) * 100) / 100
+    } else {
+      if (val > invoiceTotal) { alert('Amount cannot exceed invoice total'); return }
+      advanceAmount = Math.round(val * 100) / 100
+    }
+    const pctLabel = advanceForm.mode === 'percent' ? `${val}%` : `₦${advanceAmount.toLocaleString()}`
+    setShowAdvanceModal(false)
+    navigate('/invoices/new', {
+      state: {
+        prefill: {
+          ...invoice,
+          invoice_number: '',
+          issue_date: new Date().toISOString().split('T')[0],
+          due_date: '',
+          status: 'draft',
+          notes: `Advance invoice (${pctLabel}) for ${invoice.invoice_number}${invoice.invoice_title ? ' — ' + invoice.invoice_title : ''}`,
+          thread_id: null, total_contract_value: 0, thread_position: 1, is_advance: false, amount_received: 0,
+          workmanship: 0, transportation: 0, shipping: 0, discount: 0, wht: 0,
+        },
+        prefillItems: [{
+          id: null, row_type: 'standard',
+          description: `Advance Payment (${pctLabel}) — ${invoice.invoice_number}${invoice.invoice_title ? ': ' + invoice.invoice_title : ''}`,
+          sub_description: '', make: '', quantity: 1, unit: '',
+          unit_price: advanceAmount,
+          install_rate: null, install_rate_override: false, vat_rate: null, discount_rate: null,
+          custom_data: {}, image_url: null, group_name: '', sort_order: 0,
+        }],
+      }
+    })
+  }
+
   // ── "Create Next Invoice" — passes thread context to NewInvoice ────────────
   const handleCreateNextInvoice = () => {
     const defaults = buildNextInvoiceDefaults()
@@ -267,13 +309,14 @@ export default function ViewInvoice() {
               ••• More
             </div>
             {showMore && (
-              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '6px', backgroundColor: 'white', borderRadius: '10px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', border: '1px solid #eee', zIndex: 100, minWidth: '220px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: '100%', right: 0, left: 'auto', marginTop: '6px', backgroundColor: 'white', borderRadius: '10px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', border: '1px solid #eee', zIndex: 200, minWidth: '220px', overflow: 'hidden' }}>
                 {[
                   { label: '💳 Record Payment', action: () => { setShowMore(false); setShowPaymentModal(true) }, show: invoice.status !== 'paid' },
                   { label: '📋 Duplicate Invoice', action: handleDuplicate, show: true },
                   { label: '📄 Convert to Quotation', action: handleConvertToQuote, show: true },
                   { label: '🔧 Generate CSR', action: () => { setShowMore(false); alert('Coming soon') }, show: true },
                   { label: '🚚 Generate Waybill', action: () => { setShowMore(false); alert('Coming soon') }, show: true },
+                  { label: '💰 Create Advance Invoice', action: handleCreateAdvanceInvoice, show: true },
                   { label: invoice.status === 'draft' ? '✅ Mark as Sent' : null, action: handleMarkSent, show: invoice.status === 'draft' },
                   { label: '🗑 Delete Invoice', action: async () => {
                     setShowMore(false)
@@ -293,6 +336,70 @@ export default function ViewInvoice() {
             )}
           </div>
         </div>
+
+        {/* ── Advance Invoice Modal ── */}
+        {showAdvanceModal && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.55)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div style={{ backgroundColor: 'white', borderRadius: '14px', padding: '28px', width: '100%', maxWidth: '420px', boxShadow: '0 12px 50px rgba(0,0,0,0.25)', color: '#1a1a1a' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Create Advance Invoice</h3>
+                <span onClick={() => setShowAdvanceModal(false)} style={{ cursor: 'pointer', fontSize: '24px', color: '#aaa', lineHeight: 1 }}>×</span>
+              </div>
+              <p style={{ margin: '0 0 20px', fontSize: '13px', color: '#777' }}>
+                This will create a new invoice pre-filled with the advance amount from <strong>{invoice.invoice_number}</strong> (Total: ₦{Number(invoice.total||0).toLocaleString()}).
+              </p>
+
+              {/* Mode toggle */}
+              <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid #ddd', marginBottom: '16px' }}>
+                {[
+                  { key: 'percent', label: '% of invoice' },
+                  { key: 'fixed', label: '₦ Fixed amount' },
+                ].map(m => (
+                  <div key={m.key} onClick={() => setAdvanceForm(f => ({ ...f, mode: m.key, value: m.key === 'percent' ? '50' : '' }))}
+                    style={{ flex: 1, padding: '10px', textAlign: 'center', cursor: 'pointer', fontSize: '14px', fontWeight: '600', backgroundColor: advanceForm.mode === m.key ? '#1a1a1a' : 'white', color: advanceForm.mode === m.key ? 'white' : '#555', transition: 'all 0.15s' }}>
+                    {m.label}
+                  </div>
+                ))}
+              </div>
+
+              {/* Value input */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#555', marginBottom: '6px' }}>
+                  {advanceForm.mode === 'percent' ? 'Percentage (%)' : 'Amount (₦)'}
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', backgroundColor: 'white' }}>
+                  <span style={{ padding: '0 14px', fontSize: '16px', color: '#aaa', borderRight: '1px solid #ddd', lineHeight: '44px' }}>
+                    {advanceForm.mode === 'percent' ? '%' : '₦'}
+                  </span>
+                  <input
+                    type="number" min="0" max={advanceForm.mode === 'percent' ? 100 : undefined}
+                    value={advanceForm.value}
+                    onChange={e => setAdvanceForm(f => ({ ...f, value: e.target.value }))}
+                    style={{ flex: 1, padding: '10px 14px', border: 'none', outline: 'none', fontSize: '20px', fontWeight: 'bold', color: '#1a1a1a' }}
+                    autoFocus
+                  />
+                </div>
+
+                {/* Live preview */}
+                {advanceForm.value && !isNaN(parseFloat(advanceForm.value)) && (
+                  <div style={{ marginTop: '10px', padding: '10px 14px', backgroundColor: '#F0FDF4', borderRadius: '8px', fontSize: '13px' }}>
+                    {advanceForm.mode === 'percent'
+                      ? <>Advance amount: <strong style={{ color: '#16A34A' }}>₦{Math.round(Number(invoice.total||0) * parseFloat(advanceForm.value) / 100).toLocaleString()}</strong></>
+                      : <>That's <strong style={{ color: '#16A34A' }}>{Number(invoice.total||0) > 0 ? (parseFloat(advanceForm.value) / Number(invoice.total||0) * 100).toFixed(1) : 0}%</strong> of the invoice total</>
+                    }
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div onClick={() => setShowAdvanceModal(false)} style={{ flex: 1, padding: '12px', textAlign: 'center', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', color: '#555' }}>Cancel</div>
+                <div onClick={handleConfirmAdvance} style={{ flex: 2, padding: '12px', textAlign: 'center', backgroundColor: '#CC0000', color: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                  Create Advance Invoice →
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Thread Summary Card — only renders when invoice belongs to a thread ── */}
         {invoice.thread_id && (
@@ -351,12 +458,32 @@ export default function ViewInvoice() {
                 let stdCount = 0
                 return items.map((item, index) => {
                   if (item.row_type === 'standard') stdCount++
+                  const n = stdCount
+                  if (item.row_type === 'group_header') {
+                    return (
+                      <div key={index} style={{ backgroundColor: '#333', borderRadius: '8px', padding: '10px 14px', marginBottom: '8px', color: 'white', fontWeight: 'bold', fontSize: '13px' }}>
+                        {item.group_name}
+                      </div>
+                    )
+                  }
                   return (
-                    <ViewMobileItemCard
-                      key={index}
-                      item={item}
-                      number={stdCount}
-                    />
+                    <div key={index} style={{ backgroundColor: index % 2 === 0 ? '#f9f9f9' : 'white', border: '1px solid #eee', borderRadius: '8px', padding: '12px 14px', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                        <div style={{ flex: 1 }}>
+                          <span style={{ fontSize: '11px', color: '#999', fontWeight: '700', marginRight: '6px' }}>{n}.</span>
+                          <span style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>{item.description}</span>
+                          {item.sub_description && <div style={{ fontSize: '11px', color: '#888', fontStyle: 'italic', marginTop: '2px' }}>{item.sub_description}</div>}
+                        </div>
+                        <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#CC0000', whiteSpace: 'nowrap', marginLeft: '10px' }}>
+                          ₦{Number(item.amount || item.quantity * item.unit_price || 0).toLocaleString()}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+                        {item.make && <span style={{ fontSize: '11px', backgroundColor: '#f0f0f0', borderRadius: '4px', padding: '2px 8px', color: '#555' }}>Make: {item.make}</span>}
+                        <span style={{ fontSize: '11px', backgroundColor: '#f0f0f0', borderRadius: '4px', padding: '2px 8px', color: '#555' }}>Qty: {item.quantity}{item.unit ? ' ' + item.unit : ''}</span>
+                        <span style={{ fontSize: '11px', backgroundColor: '#f0f0f0', borderRadius: '4px', padding: '2px 8px', color: '#555' }}>₦{Number(item.unit_price || 0).toLocaleString()} / unit</span>
+                      </div>
+                    </div>
                   )
                 })
               })()}
