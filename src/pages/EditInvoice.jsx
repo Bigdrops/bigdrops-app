@@ -437,7 +437,7 @@ export default function EditInvoice() {
               <div style={{ position: 'relative' }}>
                 <div onClick={() => setShowCSVNote(p=>!p)} style={{ padding: '8px 14px', backgroundColor: '#16A34A', color: 'white', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>Import CSV ▾</div>
                 {showCSVNote && (
-                  <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 500, backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.18)', padding: '16px', width: '320px', marginTop: '6px' }}>
+                  <div style={{ position: 'fixed', top: 'auto', left: '50%', transform: 'translateX(-50%)', zIndex: 600, backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.18)', padding: '16px', width: 'min(320px, 90vw)', marginTop: '6px' }}>
                     <div style={{ display: 'flex', marginBottom: '10px', borderBottom: '2px solid #eee' }}>
                       {['Upload File','Paste CSV'].map(tab => (
                         <div key={tab} onClick={()=>setCSVTab(tab)} style={{ padding:'8px 14px',cursor:'pointer',fontSize:'13px',fontWeight:'bold',color:csvTab===tab?'#CC0000':'#888',borderBottom:csvTab===tab?'2px solid #CC0000':'2px solid transparent',marginBottom:'-2px' }}>{tab}</div>
