@@ -33,6 +33,10 @@ const styles = StyleSheet.create({
   tableRowAlt: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#eee', paddingVertical: 5, paddingHorizontal: 8, backgroundColor: '#f9f9f9' },
   groupRow: { flexDirection: 'row', backgroundColor: '#333', paddingVertical: 5, paddingHorizontal: 8 },
   groupText: { color: 'white', fontFamily: 'Helvetica-Bold', fontSize: 9 },
+  // Group subtotal row — rendered after the last item of a group when showSubtotal is true
+  groupSubtotalRow: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', paddingVertical: 4, paddingHorizontal: 8, backgroundColor: '#f0f0f0', borderBottomWidth: 1, borderBottomColor: '#ddd' },
+  groupSubtotalLabel: { fontSize: 8, color: '#555', fontFamily: 'Helvetica-Bold', marginRight: 12 },
+  groupSubtotalValue: { fontSize: 8, color: '#1a1a1a', fontFamily: 'Helvetica-Bold' },
 
   // Columns
   cNum:    { width: 18, textAlign: 'center', fontSize: 8 },
@@ -78,7 +82,7 @@ const styles = StyleSheet.create({
   sigLine: { borderTopWidth: 1, borderTopColor: '#333', width: 170, paddingTop: 4 },
   sigLabel: { fontSize: 8, color: '#555', textAlign: 'center' },
 
-  // Supporting Documents (at very bottom)
+  // Supporting Documents
   docsSection: { marginTop: 16, borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 12 },
   docsSectionLabel: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#333', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
   docItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 5, gap: 6 },
@@ -112,6 +116,7 @@ const parseCF = (raw) => {
     header: [], bottom: [], extraCharges: [], chargeLabels: {},
     mergeQtyUnit: false, showItemImages: false, attachments: [],
     notesTitle: 'Notes', termsTitle: 'Terms and Conditions',
+    groupMeta: {},
   }
   if (!raw) return defaults
   try {
@@ -123,7 +128,7 @@ const parseCF = (raw) => {
 
 export default function InvoicePDF({ invoice, items = [], client, settings = {} }) {
   const cf = parseCF(invoice.custom_fields)
-  const { mergeQtyUnit, showItemImages, attachments, chargeLabels } = cf
+  const { mergeQtyUnit, showItemImages, attachments, chargeLabels, groupMeta } = cf
 
   const companyName    = settings.company_name    || 'SUN & SHIELD POWER SOLUTIONS'
   const companyTagline = settings.company_tagline  || 'Generator Sales | Maintenance | Installation | Rental | Facility Management'
@@ -151,7 +156,46 @@ export default function InvoicePDF({ invoice, items = [], client, settings = {} 
 
   const validAttachments = (attachments || []).filter(a => a.label && a.url)
 
-  let stdCount = 0
+  // ── Build flat render list with group subtotal rows injected ──────────────
+  // Groups are presentation-only. Subtotals = raw sum of that group's line items.
+  // VAT / discount / WHT / grand total are completely unchanged.
+  const renderRows = (() => {
+    const rows = []
+    let currentGroupName = null
+    let currentGroupSubtotal = 0
+    let currentGroupShowSubtotal = false
+
+    const flushGroup = () => {
+      if (currentGroupName !== null && currentGroupShowSubtotal) {
+        rows.push({
+          _type: 'group_subtotal',
+          name: currentGroupName,
+          subtotal: currentGroupSubtotal,
+        })
+      }
+      currentGroupName = null
+      currentGroupSubtotal = 0
+      currentGroupShowSubtotal = false
+    }
+
+    items.forEach((item, index) => {
+      if (item.row_type === 'group_header') {
+        flushGroup()
+        currentGroupName = item.group_name
+        currentGroupShowSubtotal = !!(groupMeta && groupMeta[item.group_name]?.showSubtotal)
+        currentGroupSubtotal = 0
+        rows.push({ _type: 'group_header', item, index })
+      } else {
+        const amount = Number(item.amount || (Number(item.quantity) * Number(item.unit_price)) || 0)
+        currentGroupSubtotal += amount
+        rows.push({ _type: 'item', item, index, amount })
+      }
+    })
+    flushGroup()
+    return rows
+  })()
+
+  let itemCount = 0
 
   return (
     <Document>
@@ -233,24 +277,37 @@ export default function InvoicePDF({ invoice, items = [], client, settings = {} 
             <Text style={[styles.thText, styles.cAmt]}>Amount (NGN)</Text>
           </View>
 
-          {/* Rows */}
-          {items.map((item, index) => {
-            if (item.row_type === 'group_header') {
+          {/* ── Rows: group headers → items → optional group subtotal ── */}
+          {renderRows.map((row, ri) => {
+
+            // Group header row
+            if (row._type === 'group_header') {
               return (
-                <View key={index} style={styles.groupRow}>
-                  <Text style={styles.groupText}>{item.group_name}</Text>
+                <View key={'gh_' + ri} style={styles.groupRow}>
+                  <Text style={styles.groupText}>{row.item.group_name}</Text>
                 </View>
               )
             }
-            stdCount++
-            const rowStyle = index % 2 === 0 ? styles.tableRow : styles.tableRowAlt
-            const amount = Number(item.amount || (item.quantity * item.unit_price) || 0)
+
+            // Group subtotal row (presentation only — does NOT affect invoice totals)
+            if (row._type === 'group_subtotal') {
+              return (
+                <View key={'gs_' + ri} style={styles.groupSubtotalRow}>
+                  <Text style={styles.groupSubtotalLabel}>{row.name} — Section Total</Text>
+                  <Text style={styles.groupSubtotalValue}>NGN {row.subtotal.toLocaleString()}</Text>
+                </View>
+              )
+            }
+
+            // Standard item row
+            itemCount++
+            const { item, amount } = row
+            const rowStyle = itemCount % 2 === 0 ? styles.tableRowAlt : styles.tableRow
 
             return (
-              <View key={index} style={rowStyle} wrap={false}>
-                <Text style={[{ color: '#999', alignSelf: 'flex-start' }, styles.cNum]}>{stdCount}</Text>
+              <View key={'item_' + ri} style={rowStyle} wrap={false}>
+                <Text style={[{ color: '#999', alignSelf: 'flex-start' }, styles.cNum]}>{itemCount}</Text>
 
-                {/* Description + image stacked vertically */}
                 <View style={[styles.cDesc, { alignSelf: 'flex-start' }]}>
                   <Text style={styles.descText}>{item.description}</Text>
                   {item.sub_description
@@ -261,7 +318,6 @@ export default function InvoicePDF({ invoice, items = [], client, settings = {} 
                     ? <Text style={[styles.subDescText, { color: '#777' }]}>Make: {item.make}</Text>
                     : null
                   }
-                  {/* Image sits below text, inside the description cell */}
                   {showItemImages && item.image_url
                     ? <Link src={item.image_url}>
                         <Image src={item.image_url} style={styles.itemThumb} />
@@ -284,7 +340,7 @@ export default function InvoicePDF({ invoice, items = [], client, settings = {} 
           })}
         </View>
 
-        {/* ── TOTALS ── */}
+        {/* ── TOTALS — unchanged, groups have zero effect on these numbers ── */}
         <View style={[styles.totalsSection, { marginTop: 10 }]} wrap={false}>
           <View style={styles.totalsBox}>
             <View style={styles.totalRow}>
@@ -393,7 +449,7 @@ export default function InvoicePDF({ invoice, items = [], client, settings = {} 
           </View>
         )}
 
-        {/* ── SUPPORTING DOCUMENTS (very bottom, clickable) ── */}
+        {/* Supporting Documents */}
         {validAttachments.length > 0 && (
           <View style={styles.docsSection}>
             <Text style={styles.docsSectionLabel}>Supporting Documents</Text>
@@ -406,7 +462,7 @@ export default function InvoicePDF({ invoice, items = [], client, settings = {} 
           </View>
         )}
 
-        {/* ── FOOTER ── */}
+        {/* Footer */}
         {footerText ? (
           <View style={styles.footer}>
             <Text style={styles.footerText}>{footerText}</Text>
