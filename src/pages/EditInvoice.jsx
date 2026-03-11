@@ -118,6 +118,12 @@ export default function EditInvoice() {
   const removeItem = (index) => setItems(items => items.filter((_, i) => i !== index))
   const addItem = () => setItems(items => [...items, { ...makeEmptyItem(), sort_order: items.length }])
   const addGroupHeader = () => setItems(items => [...items, { ...makeEmptyItem(), row_type: 'group_header', sort_order: items.length }])
+  const insertItemAfter = (index) => setItems(items => {
+    const newItem = { ...makeEmptyItem(), sort_order: index + 1 }
+    const next = [...items]
+    next.splice(index + 1, 0, newItem)
+    return next
+  })
   const moveItem = (index, dir) => setItems(items => {
     const newIdx = index + dir
     if (newIdx < 0 || newIdx >= items.length) return items
@@ -378,12 +384,19 @@ export default function EditInvoice() {
                         }
                       }}
                       onRemove={removeItem}
+                      onInsertBelow={(idx) => insertItemAfter(idx)}
                       onMoveUp={(idx) => moveItem(idx, -1)}
                       onMoveDown={(idx) => moveItem(idx, 1)}
                     />
                   )
                 })
               })()}
+
+              {/* Bottom action buttons — no scrolling back to top */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                <div onClick={addGroupHeader} style={{ flex: 1, padding: '12px', backgroundColor: '#1a1a1a', color: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', textAlign: 'center' }}>+ Group</div>
+                <div onClick={addItem} style={{ flex: 2, padding: '12px', backgroundColor: '#CC0000', color: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '700', textAlign: 'center' }}>+ Add Item</div>
+              </div>
             </div>
           )}
 
