@@ -31,6 +31,13 @@ export const makeEmptyItem = () => ({
   custom_data: {},
 })
 
+export const makeEmptyGroup = (name = '') => ({
+  id: 'grp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+  name,
+  showSubtotal: false,
+  items: [],
+})
+
 // Strip client-only fields before saving to Supabase
 export const toDbItem = (item, invoiceId, sortOrder) => {
   const { install_rate_override, id: _id, created_at: _ca, ...rest } = item
@@ -55,14 +62,9 @@ export function useInvoiceColumns(initial) {
   const addCustomColumn = () => setColumns(cols => [...cols, { key: 'custom_' + Date.now(), label: 'New Column', type: 'text', visible: true, removable: true, includeInTotal: false }])
   const removeCustomColumn = (key) => setColumns(cols => cols.filter(c => c.key !== key))
   const resetColumns = () => setColumns(BUILTIN_COLUMNS.map(c => ({ ...c })))
-  // "dir" may be ±1 to move stepwise, or a non‑±1 number treated
-  // as an absolute index position. This lets the ColumnManager perform
-  // drag‑and‑drop by passing the destination index directly.
   const moveColumn = (key, dir) => setColumns(cols => {
     const idx = cols.findIndex(c => c.key === key)
     if (idx < 0) return cols
-
-    // absolute reposition when dir is a number not equal to ±1
     if (typeof dir === 'number' && Math.abs(dir) !== 1) {
       const newIdx = dir
       if (newIdx < 1 || newIdx >= cols.length) return cols
@@ -71,8 +73,6 @@ export function useInvoiceColumns(initial) {
       next.splice(newIdx, 0, col)
       return next
     }
-
-    // otherwise treat dir as relative offset (±1)
     const newIdx = idx + dir
     if (newIdx < 1 || newIdx >= cols.length) return cols
     const next = [...cols]
@@ -89,7 +89,6 @@ export function resolveInstallRate(item, installCol) {
     const factor = parseFloat(installCol.formula)
     if (!isNaN(factor) && factor > 0) return factor * Number(item.quantity || 1) * Number(item.unit_price || 0)
   }
-  // No formula, no override — use raw value
   if (!installCol?.formula && item.install_rate !== null && item.install_rate !== undefined) {
     return Number(item.install_rate || 0)
   }
@@ -104,7 +103,7 @@ export function resolveRowVat(item, globalVatPct) {
 export function calcTotals({ items, columns, invoice, discountType, discountTiming, whtType }) {
   const installCol = columns.find(c => c.key === 'install_rate')
   const globalVatPct = Number(invoice.vat || 0)
-  const globalDiscountInput = Number(invoice.discount || 0)  // either flat amount or percent value
+  const globalDiscountInput = Number(invoice.discount || 0)
   const standardItems = items.filter(i => i.row_type === 'standard')
 
   const rowCalcs = standardItems.map(item => {
@@ -113,19 +112,13 @@ export function calcTotals({ items, columns, invoice, discountType, discountTimi
     const rowVatPct = resolveRowVat(item, globalVatPct)
     const rowVat = rowAmount * (rowVatPct / 100)
 
-    // Per-row discount logic:
-    // discount_rate === null  → row follows global setting (percent of its amount, or flat handled at total level)
-    // discount_rate === 0     → this row is explicitly excluded from discount
-    // discount_rate > 0       → this row uses that specific percent regardless of global
     let rowDiscountPct
     if (item.discount_rate === null || item.discount_rate === undefined) {
-      // Always use global percent for null rows (if global is percent mode)
-      // For flat mode, discount is applied at total level, not per row
       rowDiscountPct = discountType === 'percent' ? globalDiscountInput : 0
     } else if (item.discount_rate === 0) {
-      rowDiscountPct = 0  // explicitly excluded
+      rowDiscountPct = 0
     } else {
-      rowDiscountPct = Number(item.discount_rate)  // row-specific override
+      rowDiscountPct = Number(item.discount_rate)
     }
     const rowDiscount = rowAmount * (rowDiscountPct / 100)
 
@@ -146,17 +139,12 @@ export function calcTotals({ items, columns, invoice, discountType, discountTimi
   const fixedChargesTotal = Number(invoice.workmanship || 0) + Number(invoice.transportation || 0) + Number(invoice.shipping || 0)
   const vatAmount = rowCalcs.reduce((s, r) => s + r.rowVat, 0) + extraWithTax * (globalVatPct / 100)
 
-  // Discount amount:
-  // - percent mode: sum of per-row discounts (each row uses its rate or global %)
-  // - fixed mode: flat amount applied at total level (per-row overrides still take effect as % though)
   const hasAnyRowOverride = standardItems.some(item => item.discount_rate !== null && item.discount_rate !== undefined)
 
   let discountAmount = 0
   if (discountType === 'percent' || hasAnyRowOverride) {
-    // Always compute from per-row amounts
     discountAmount = rowCalcs.reduce((s, r) => s + r.rowDiscount, 0)
   } else {
-    // Pure flat mode with no per-row overrides
     discountAmount = globalDiscountInput
   }
 
