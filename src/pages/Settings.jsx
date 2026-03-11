@@ -67,9 +67,17 @@ function CompanySection({ onToast }) {
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  // Custom additional info fields — stored as JSON in settings.custom_info
+  const [customInfo, setCustomInfo] = useState([]) // [{title, content}]
 
   useEffect(() => {
-    if (!loading && settings) setForm(f => ({ ...f, ...settings }))
+    if (!loading && settings) {
+      setForm(f => ({ ...f, ...settings }))
+      try {
+        const parsed = JSON.parse(settings.custom_info || '[]')
+        if (Array.isArray(parsed)) setCustomInfo(parsed)
+      } catch(e) {}
+    }
   }, [loading, settings])
 
   const u = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -77,11 +85,14 @@ function CompanySection({ onToast }) {
   const save = async () => {
     setSaving(true)
     try {
-      await saveSettings(form)
+      await saveSettings({
+        ...form,
+        custom_info: JSON.stringify(customInfo.filter(f => f.title || f.content))
+      })
       setSaved(true)
       onToast('Company info saved')
       setTimeout(() => setSaved(false), 2500)
-    } catch (e) { alert(e.message) }
+    } catch (e) { alert('Save failed: ' + e.message) }
     setSaving(false)
   }
 
@@ -102,6 +113,44 @@ function CompanySection({ onToast }) {
         <Field label="Email"><Input value={form.company_email} onChange={v => u('company_email', v)} placeholder="info@sunshield.ng" /></Field>
         <Field label="Website"><Input value={form.company_website} onChange={v => u('company_website', v)} placeholder="www.sunshield.ng" /></Field>
       </div>
+
+      {/* ── Additional Info Fields ── */}
+      <div className="pt-2 border-t border-slate-100">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Additional Info</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Extra fields that appear on your invoice header (e.g. RC Number, Tax ID)</p>
+          </div>
+          <button
+            onClick={() => setCustomInfo(p => [...p, { title: '', content: '' }])}
+            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 whitespace-nowrap"
+          >+ Add Field</button>
+        </div>
+        {customInfo.length === 0 && (
+          <p className="text-xs text-slate-300 italic">No extra fields yet. Click + Add Field above.</p>
+        )}
+        {customInfo.map((item, i) => (
+          <div key={i} className="flex gap-2 mb-2 items-center">
+            <input
+              className="w-2/5 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 placeholder:text-slate-300"
+              value={item.title}
+              onChange={e => setCustomInfo(p => p.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
+              placeholder="Title (e.g. RC Number)"
+            />
+            <input
+              className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 placeholder:text-slate-300"
+              value={item.content}
+              onChange={e => setCustomInfo(p => p.map((x, j) => j === i ? { ...x, content: e.target.value } : x))}
+              placeholder="Value"
+            />
+            <button
+              onClick={() => setCustomInfo(p => p.filter((_, j) => j !== i))}
+              className="text-slate-400 hover:text-red-500 text-xl leading-none px-1 flex-shrink-0"
+            >×</button>
+          </div>
+        ))}
+      </div>
+
       <SaveBtn saving={saving} saved={saved} onClick={save} />
     </div>
   )
