@@ -1,117 +1,157 @@
+import { useState } from "react"
+import { Loader2, Mail, Lock } from "lucide-react"
+import { supabase } from "../supabase"
+
+import { Button } from "../components/ui/button"
+import { Card } from "../components/ui/card"
+import { Input } from "../components/ui/input"
+import { Label } from "../components/ui/label"
+
+export default function Login() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  const handleSignIn = async () => {
+    setError("")
+    if (!email || !password) {
+      setError("Enter email and password.")
+      return
+    }
+
+    setLoading(true)
+
+    const { error: err } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    setLoading(false)
+
+    if (err) setError(err.message)
+  }
+
+  const handleGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
+    })
+  }
+
   return (
-    /* 1. Darker background for the whole page */
-    <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] px-4 py-10 antialiased">
-      
-      {/* 2. Modified Card: Removed border, added deep dark background */}
-      <Card className="w-full max-w-md border-none bg-transparent shadow-none text-white">
-        
-        <CardHeader className="space-y-6 text-center">
-          <div className="space-y-2">
-            <div className="text-[10px] font-bold uppercase tracking-[0.4em] text-zinc-500">
-              BigDrops ERP
-            </div>
-            <CardTitle className="text-3xl font-semibold tracking-tight">
-              {isSignup ? 'Create account' : 'Welcome back'}
-            </CardTitle>
-            <CardDescription className="text-zinc-400">
-              {isSignup
-                ? 'Set up your account to access your workspace.'
-                : 'Access your business workspace from one place.'}
-            </CardDescription>
+    <div className="min-h-screen grid md:grid-cols-2 bg-neutral-50">
+
+      {/* Left visual */}
+      <div className="hidden md:flex items-center justify-center bg-neutral-900 text-white p-12">
+        <div className="space-y-6 max-w-md">
+
+          <div className="text-sm uppercase tracking-widest text-neutral-400">
+            BigDrops ERP
           </div>
-        </CardHeader>
 
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            
-            {/* 3. Inputs: Dark theme with white focus ring */}
-            <div className="space-y-2 text-left">
-              <Label htmlFor="email" className="text-xs uppercase tracking-widest text-zinc-500">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="h-12 border-zinc-800 bg-zinc-900/50 text-white placeholder:text-zinc-600 focus-visible:ring-white"
-              />
-            </div>
+          <h1 className="text-4xl font-semibold leading-tight">
+            Manage your
+            <br />
+            business operations
+          </h1>
 
-            <div className="space-y-2 text-left">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="password" className="text-xs uppercase tracking-widest text-zinc-500">Password</Label>
-                {!isSignup && (
-                  <button type="button" onClick={handleForgotPassword} className="text-[11px] text-zinc-500 hover:text-white">
-                    Forgot?
-                  </button>
-                )}
+          <p className="text-neutral-400">
+            Invoices, quotations, CSR and more —
+            all in one workspace.
+          </p>
+
+          {/* abstract visual */}
+          <div className="mt-10 flex gap-6">
+            <div className="w-24 h-24 bg-neutral-700 rounded-full blur-sm"></div>
+            <div className="w-32 h-32 bg-neutral-600 rounded-xl"></div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Right form */}
+      <div className="flex items-center justify-center px-6 py-12">
+
+        <Card className="w-full max-w-md p-8 shadow-xl border-neutral-200">
+
+          <div className="space-y-6">
+
+            <div>
+              <div className="text-xs uppercase tracking-widest text-neutral-500">
+                BigDrops ERP
               </div>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="h-12 border-zinc-800 bg-zinc-900/50 text-white placeholder:text-zinc-600 focus-visible:ring-white"
-              />
+
+              <h2 className="text-2xl font-semibold mt-2">
+                Sign in to continue
+              </h2>
+
+              <p className="text-sm text-neutral-500">
+                Access your workspace.
+              </p>
             </div>
 
-            {isSignup && (
-              <div className="space-y-2 text-left animate-in fade-in slide-in-from-top-1">
-                <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-widest text-zinc-500">Confirm Password</Label>
+            {/* Email */}
+            <div className="space-y-2">
+              <Label>Email</Label>
+
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
+
                 <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="h-12 border-zinc-800 bg-zinc-900/50 text-white placeholder:text-zinc-600 focus-visible:ring-white"
+                  className="pl-9 h-11"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
                 />
               </div>
-            )}
-          </div>
+            </div>
 
-          <div className="space-y-3 pt-2">
-            {/* 4. Main Action: Solid White/Black contrast */}
+            {/* Password */}
+            <div className="space-y-2">
+              <Label>Password</Label>
+
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
+
+                <Input
+                  type="password"
+                  className="pl-9 h-11"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="text-sm text-red-600">
+                {error}
+              </div>
+            )}
+
             <Button
-              type="button"
-              onClick={isSignup ? handleSignUp : handleSignIn}
+              onClick={handleSignIn}
               disabled={loading}
-              className="h-12 w-full bg-white text-black hover:bg-zinc-200 font-bold rounded-lg transition-all"
+              className="w-full h-11"
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {loading ? 'Processing...' : isSignup ? 'Create Account' : 'Sign In'}
+              Sign in
             </Button>
 
-            {/* 5. Secondary Action: Subtle Outline */}
             <Button
-              type="button"
               variant="outline"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="h-12 w-full border-zinc-800 bg-transparent text-white hover:bg-zinc-900 hover:text-white"
+              onClick={handleGoogle}
+              className="w-full h-11"
             >
-              <GoogleIcon className="mr-2 h-4 w-4" />
               Continue with Google
             </Button>
+
           </div>
 
-          {error && <Notice kind="error">{error}</Notice>}
-          {message && <Notice kind="success">{message}</Notice>}
+        </Card>
 
-          <div className="text-center pt-4">
-            <button
-              type="button"
-              className="text-sm font-medium text-zinc-500 hover:text-white transition-colors"
-              onClick={() => {
-                setMode(isSignup ? 'signin' : 'signup')
-                resetFeedback()
-              }}
-            >
-              {isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-            </button>
-          </div>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   )
+}
