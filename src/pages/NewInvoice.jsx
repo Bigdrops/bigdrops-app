@@ -123,7 +123,6 @@ export default function NewInvoice() {
       : [{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }]
   )
 
-  // groups[] metadata only
   const [groups, setGroups] = useState([])
 
   useEffect(() => {
@@ -646,6 +645,219 @@ export default function NewInvoice() {
     )
   }
 
+  const renderMobileRows = () => {
+    let number = 0
+
+    return items.map((item, index) => {
+      if (item.row_type === 'group_header') {
+        const group = groups.find((g) => g.id === item.group_id)
+        if (!group) return null
+
+        const groupItems = items.filter(
+          (it) => it.row_type === 'standard' && it.group_id === group.id
+        )
+
+        const groupSubtotal = groupItems.reduce(
+          (sum, it) => sum + Number(it.quantity || 0) * Number(it.unit_price || 0),
+          0
+        )
+
+        return (
+          <div
+            key={`group_${group.id}_${index}`}
+            style={{
+              border: '2px solid #333',
+              borderRadius: '10px',
+              marginBottom: '16px',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{ backgroundColor: '#333', padding: '10px 14px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                }}
+              >
+                <input
+                  style={{
+                    flex: 1,
+                    backgroundColor: 'transparent',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    border: 'none',
+                    borderBottom: '1px solid #666',
+                    fontSize: '15px',
+                    outline: 'none',
+                    padding: '4px 0',
+                  }}
+                  value={group.name}
+                  onChange={(e) => updateGroupName(group.id, e.target.value)}
+                  placeholder="Group name"
+                />
+                <span
+                  onClick={() => deleteGroup(group.id)}
+                  style={{
+                    color: '#ff6b6b',
+                    cursor: 'pointer',
+                    fontSize: '20px',
+                    lineHeight: 1,
+                  }}
+                >
+                  ×
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div
+                    onClick={() => toggleGroupSubtotal(group.id)}
+                    style={{
+                      width: '36px',
+                      height: '20px',
+                      borderRadius: '10px',
+                      backgroundColor: group.showSubtotal ? '#16A34A' : '#555',
+                      position: 'relative',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        backgroundColor: 'white',
+                        position: 'absolute',
+                        top: '2px',
+                        left: group.showSubtotal ? '18px' : '2px',
+                        transition: 'left 0.2s',
+                      }}
+                    />
+                  </div>
+                  <span style={{ color: '#ccc', fontSize: '12px' }}>
+                    Show subtotal
+                  </span>
+                </label>
+
+                {group.showSubtotal && (
+                  <span
+                    style={{
+                      marginLeft: 'auto',
+                      color: '#4ade80',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    ₦{groupSubtotal.toLocaleString()}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div style={{ padding: '12px' }}>
+              {groupItems.map((groupItem, gi) => {
+                number++
+                const itemIndex = items.indexOf(groupItem)
+
+                return (
+                  <MobileItemCard
+                    key={`group_item_${group.id}_${itemIndex}`}
+                    item={groupItem}
+                    index={itemIndex}
+                    number={number}
+                    isVisible={isVisible}
+                    getColumn={getColumn}
+                    customColumns={customColumns}
+                    showItemImages={showItemImages}
+                    invoice={invoice}
+                    isFirst={gi === 0}
+                    isLast={gi === groupItems.length - 1}
+                    onUpdate={(idx, field, value) => {
+                      if (field === '__install_rate_override') {
+                        setItems((prev) =>
+                          prev.map((it, i) =>
+                            i !== idx ? it : { ...it, ...value }
+                          )
+                        )
+                      } else {
+                        updateItem(idx, field, value)
+                      }
+                    }}
+                    onRemove={removeItem}
+                    onInsertBelow={() => addItemToGroup(group.id)}
+                    onMoveUp={(idx) => moveItem(idx, -1)}
+                    onMoveDown={(idx) => moveItem(idx, 1)}
+                  />
+                )
+              })}
+
+              <div
+                onClick={() => addItemToGroup(group.id)}
+                style={{
+                  padding: '10px',
+                  border: '1px dashed #CC0000',
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  color: '#CC0000',
+                  fontWeight: '600',
+                }}
+              >
+                + Add item to {group.name || 'group'}
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      if (item.row_type === 'standard' && !item.group_id) {
+        number++
+        return (
+          <MobileItemCard
+            key={`ungrouped_${index}`}
+            item={item}
+            index={index}
+            number={number}
+            isVisible={isVisible}
+            getColumn={getColumn}
+            customColumns={customColumns}
+            showItemImages={showItemImages}
+            invoice={invoice}
+            isFirst={number === 1}
+            isLast={index === items.length - 1}
+            onUpdate={(idx, field, value) => {
+              if (field === '__install_rate_override') {
+                setItems((prev) =>
+                  prev.map((it, i) =>
+                    i !== idx ? it : { ...it, ...value }
+                  )
+                )
+              } else {
+                updateItem(idx, field, value)
+              }
+            }}
+            onRemove={removeItem}
+            onInsertBelow={(idx) => insertItemAfter(idx)}
+            onMoveUp={(idx) => moveItem(idx, -1)}
+            onMoveDown={(idx) => moveItem(idx, 1)}
+          />
+        )
+      }
+
+      return null
+    })
+  }
+
   return (
     <Layout title="New Invoice">
       <div style={{ maxWidth: '1100px' }}>
@@ -659,6 +871,12 @@ export default function NewInvoice() {
             onReset={resetColumns}
             onMove={moveColumn}
             onClose={() => setShowColumnManager(false)}
+            vat={invoice.vat || 0}
+            setVat={(value) => updateInvoice('vat', value)}
+            wht={invoice.wht || 0}
+            setWht={(value) => updateInvoice('wht', value)}
+            whtType={whtType}
+            setWhtType={setWhtType}
           />
         )}
 
@@ -1051,119 +1269,9 @@ export default function NewInvoice() {
             </div>
           </div>
 
-          <div
-            style={{
-              marginBottom: '16px',
-              padding: '14px',
-              border: '1px solid #E5E7EB',
-              borderRadius: '8px',
-              backgroundColor: '#FAFAFA',
-            }}
-          >
-            <div
-              style={{
-                fontSize: '12px',
-                fontWeight: 'bold',
-                color: '#555',
-                marginBottom: '10px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.6px',
-              }}
-            >
-              Tax Settings
-            </div>
-            <div style={grid(isMobile ? '1fr' : '1fr 1fr')}>
-              <div>
-                <label style={lbl}>VAT %</label>
-                <input
-                  type="number"
-                  min="0"
-                  style={{ ...inp, textAlign: 'right' }}
-                  value={invoice.vat || 0}
-                  onChange={(e) => updateInvoice('vat', Number(e.target.value))}
-                />
-              </div>
-
-              <div>
-                <label style={lbl}>WHT (deducted)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      borderRadius: '6px',
-                      overflow: 'hidden',
-                      border: '1px solid #ddd',
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setWhtType('percent')}
-                      style={tog(whtType === 'percent')}
-                    >
-                      %
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setWhtType('fixed')}
-                      style={tog(whtType === 'fixed')}
-                    >
-                      ₦
-                    </button>
-                  </div>
-                  <input
-                    type="number"
-                    min="0"
-                    style={{ ...inp, width: '100px', textAlign: 'right' }}
-                    value={invoice.wht || 0}
-                    onChange={(e) => updateInvoice('wht', Number(e.target.value))}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
           {isNarrow && (
             <div>
-              {(() => {
-                const ungrouped = items.filter(
-                  (it) => it.row_type === 'standard' && !it.group_id
-                )
-                let n = 0
-                return ungrouped.map((item) => {
-                  n++
-                  const index = items.indexOf(item)
-                  return (
-                    <MobileItemCard
-                      key={'ug_' + index}
-                      item={item}
-                      index={index}
-                      number={n}
-                      isVisible={isVisible}
-                      getColumn={getColumn}
-                      customColumns={customColumns}
-                      showItemImages={showItemImages}
-                      invoice={invoice}
-                      isFirst={n === 1}
-                      isLast={index === items.length - 1}
-                      onUpdate={(idx, field, value) => {
-                        if (field === '__install_rate_override') {
-                          setItems((prev) =>
-                            prev.map((it, i) =>
-                              i !== idx ? it : { ...it, ...value }
-                            )
-                          )
-                        } else {
-                          updateItem(idx, field, value)
-                        }
-                      }}
-                      onRemove={removeItem}
-                      onInsertBelow={(idx) => insertItemAfter(idx)}
-                      onMoveUp={(idx) => moveItem(idx, -1)}
-                      onMoveDown={(idx) => moveItem(idx, 1)}
-                    />
-                  )
-                })
-              })()}
+              {renderMobileRows()}
 
               <div
                 onClick={addItem}
@@ -1181,168 +1289,6 @@ export default function NewInvoice() {
               >
                 + Add Item
               </div>
-
-              {groups.map((group) => {
-                const groupItems = items.filter(
-                  (it) => it.row_type === 'standard' && it.group_id === group.id
-                )
-                const groupSubtotal = groupItems.reduce(
-                  (s, it) => s + Number(it.quantity || 0) * Number(it.unit_price || 0),
-                  0
-                )
-                let n = 0
-                return (
-                  <div
-                    key={group.id}
-                    style={{
-                      border: '2px solid #333',
-                      borderRadius: '10px',
-                      marginBottom: '16px',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div style={{ backgroundColor: '#333', padding: '10px 14px' }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          marginBottom: '8px',
-                        }}
-                      >
-                        <input
-                          style={{
-                            flex: 1,
-                            backgroundColor: 'transparent',
-                            color: 'white',
-                            fontWeight: 'bold',
-                            border: 'none',
-                            borderBottom: '1px solid #666',
-                            fontSize: '15px',
-                            outline: 'none',
-                            padding: '4px 0',
-                          }}
-                          value={group.name}
-                          onChange={(e) => updateGroupName(group.id, e.target.value)}
-                          placeholder="Group name"
-                        />
-                        <span
-                          onClick={() => deleteGroup(group.id)}
-                          style={{
-                            color: '#ff6b6b',
-                            cursor: 'pointer',
-                            fontSize: '20px',
-                            lineHeight: 1,
-                          }}
-                        >
-                          ×
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <label
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <div
-                            onClick={() => toggleGroupSubtotal(group.id)}
-                            style={{
-                              width: '36px',
-                              height: '20px',
-                              borderRadius: '10px',
-                              backgroundColor: group.showSubtotal ? '#16A34A' : '#555',
-                              position: 'relative',
-                              flexShrink: 0,
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: '16px',
-                                height: '16px',
-                                borderRadius: '50%',
-                                backgroundColor: 'white',
-                                position: 'absolute',
-                                top: '2px',
-                                left: group.showSubtotal ? '18px' : '2px',
-                                transition: 'left 0.2s',
-                              }}
-                            />
-                          </div>
-                          <span style={{ color: '#ccc', fontSize: '12px' }}>
-                            Show subtotal
-                          </span>
-                        </label>
-                        {group.showSubtotal && (
-                          <span
-                            style={{
-                              marginLeft: 'auto',
-                              color: '#4ade80',
-                              fontSize: '13px',
-                              fontWeight: 'bold',
-                            }}
-                          >
-                            ₦{groupSubtotal.toLocaleString()}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div style={{ padding: '12px' }}>
-                      {groupItems.map((item, gi) => {
-                        n++
-                        const index = items.indexOf(item)
-                        return (
-                          <MobileItemCard
-                            key={'g_' + index}
-                            item={item}
-                            index={index}
-                            number={n}
-                            isVisible={isVisible}
-                            getColumn={getColumn}
-                            customColumns={customColumns}
-                            showItemImages={showItemImages}
-                            invoice={invoice}
-                            isFirst={gi === 0}
-                            isLast={gi === groupItems.length - 1}
-                            onUpdate={(idx, field, value) => {
-                              if (field === '__install_rate_override') {
-                                setItems((prev) =>
-                                  prev.map((it, i) =>
-                                    i !== idx ? it : { ...it, ...value }
-                                  )
-                                )
-                              } else {
-                                updateItem(idx, field, value)
-                              }
-                            }}
-                            onRemove={removeItem}
-                            onInsertBelow={() => addItemToGroup(group.id)}
-                            onMoveUp={(idx) => moveItem(idx, -1)}
-                            onMoveDown={(idx) => moveItem(idx, 1)}
-                          />
-                        )
-                      })}
-                      <div
-                        onClick={() => addItemToGroup(group.id)}
-                        style={{
-                          padding: '10px',
-                          border: '1px dashed #CC0000',
-                          borderRadius: '8px',
-                          textAlign: 'center',
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          color: '#CC0000',
-                          fontWeight: '600',
-                        }}
-                      >
-                        + Add item to {group.name || 'group'}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
 
               <div
                 onClick={addGroup}
@@ -2150,7 +2096,8 @@ export default function NewInvoice() {
                 }}
               >
                 <label style={{ ...lbl, marginBottom: 0 }}>Discount</label>
-                <div style={{ display: 'flex', gap: '6px' }}>
+
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   <div
                     style={{
                       display: 'flex',
@@ -2174,8 +2121,33 @@ export default function NewInvoice() {
                       %
                     </button>
                   </div>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      borderRadius: '6px',
+                      overflow: 'hidden',
+                      border: '1px solid #ddd',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setDiscountTiming('before')}
+                      style={tog(discountTiming === 'before')}
+                    >
+                      Before Tax
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDiscountTiming('after')}
+                      style={tog(discountTiming === 'after')}
+                    >
+                      After Tax
+                    </button>
+                  </div>
                 </div>
               </div>
+
               <input
                 type="number"
                 min="0"
@@ -2210,8 +2182,8 @@ export default function NewInvoice() {
                 ? {
                     label:
                       discountType === 'percent'
-                        ? `Discount (${invoice.discount || 0}%)`
-                        : 'Discount',
+                        ? `Discount (${invoice.discount || 0}% ${discountTiming === 'before' ? 'before tax' : 'after tax'})`
+                        : `Discount (${discountTiming === 'before' ? 'before tax' : 'after tax'})`,
                     value: -discountAmount,
                   }
                 : null,
