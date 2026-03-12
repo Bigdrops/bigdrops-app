@@ -10,6 +10,7 @@ import {
   Receipt,
   Trash2,
   Wallet,
+  X,
 } from "lucide-react"
 
 import { supabase } from "../supabase"
@@ -61,6 +62,7 @@ export default function Invoices() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("All")
   const [showSummary, setShowSummary] = useState(true)
+  const [activeInvoice, setActiveInvoice] = useState(null)
 
   const navigate = useNavigate()
   const isMobile = useIsMobile()
@@ -126,6 +128,7 @@ export default function Invoices() {
     await supabase.from("invoices").delete().eq("id", inv.id)
 
     setInvoices((prev) => prev.filter((item) => item.id !== inv.id))
+    setActiveInvoice(null)
   }
 
   const handleDuplicate = async (inv) => {
@@ -147,6 +150,8 @@ export default function Invoices() {
     const newNumber = "SASINV-B" + String(newNum).padStart(3, "0")
 
     const { id, created_at, ...fields } = inv
+
+    setActiveInvoice(null)
 
     navigate("/invoices/new", {
       state: {
@@ -194,10 +199,43 @@ export default function Invoices() {
     },
   ]
 
+  const mobileActions = activeInvoice
+    ? [
+        {
+          label: "Open",
+          icon: Eye,
+          onClick: () => {
+            const id = activeInvoice.id
+            setActiveInvoice(null)
+            navigate("/invoices/" + id)
+          },
+        },
+        {
+          label: "Edit",
+          icon: Pencil,
+          onClick: () => {
+            const id = activeInvoice.id
+            setActiveInvoice(null)
+            navigate("/invoices/" + id + "/edit")
+          },
+        },
+        {
+          label: "Duplicate",
+          icon: Copy,
+          onClick: () => handleDuplicate(activeInvoice),
+        },
+        {
+          label: "Delete",
+          icon: Trash2,
+          danger: true,
+          onClick: () => handleDelete(activeInvoice),
+        },
+      ]
+    : []
+
   return (
     <Layout title="Invoices">
       <div className="space-y-5">
-        {/* header / controls */}
         <div className="rounded-3xl border border-zinc-200 bg-gradient-to-br from-zinc-50 via-white to-zinc-100 p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
@@ -245,7 +283,6 @@ export default function Invoices() {
           </div>
         </div>
 
-        {/* summary */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -295,7 +332,6 @@ export default function Invoices() {
           )}
         </div>
 
-        {/* mobile cards */}
         {isMobile ? (
           <div className="space-y-3 pb-24">
             {loading ? (
@@ -322,23 +358,23 @@ export default function Invoices() {
               filteredInvoices.map((inv) => (
                 <Card
                   key={inv.id}
-                  className="overflow-hidden rounded-[28px] border border-zinc-200 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 shadow-sm"
+                  className="overflow-hidden rounded-[26px] border border-zinc-200 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 shadow-sm"
                 >
-                  <CardContent className="p-0">
-                    <div
-                      className="cursor-pointer p-4"
-                      onClick={() => navigate("/invoices/" + inv.id)}
-                    >
-                      <div className="mb-4 flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold tracking-tight text-zinc-900">
-                            {inv.invoice_number}
-                          </div>
-                          <div className="mt-1 text-sm text-zinc-500">
-                            {inv.client_name || "No client name"}
-                          </div>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div
+                        className="min-w-0 flex-1 cursor-pointer"
+                        onClick={() => navigate("/invoices/" + inv.id)}
+                      >
+                        <div className="truncate text-[18px] font-semibold tracking-tight text-zinc-900 underline underline-offset-2">
+                          {inv.invoice_number}
                         </div>
+                        <div className="mt-2 truncate text-base text-zinc-700">
+                          {inv.client_name || "No client name"}
+                        </div>
+                      </div>
 
+                      <div className="flex items-start gap-2">
                         <Badge
                           className={`rounded-full border px-3 py-1 text-[11px] font-medium capitalize ${getStatusTone(
                             inv.status
@@ -346,71 +382,36 @@ export default function Invoices() {
                         >
                           {inv.status || "draft"}
                         </Badge>
-                      </div>
 
-                      <div className="rounded-2xl border border-zinc-200 bg-white/80 p-4">
-                        <div className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-                          Amount
-                        </div>
-                        <div className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">
-                          {formatCurrency(inv.total)}
-                        </div>
-
-                        <div className="mt-4 flex items-center justify-between text-sm">
-                          <div>
-                            <div className="text-zinc-400">Issue date</div>
-                            <div className="font-medium text-zinc-800">
-                              {inv.issue_date || inv.date || "-"}
-                            </div>
-                          </div>
-
-                          <div className="text-right">
-                            <div className="text-zinc-400">Due date</div>
-                            <div className="font-medium text-zinc-800">
-                              {inv.due_date || "-"}
-                            </div>
-                          </div>
-                        </div>
+                        <button
+                          onClick={() => setActiveInvoice(inv)}
+                          className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 transition hover:bg-zinc-200/70 hover:text-zinc-900"
+                        >
+                          <MoreHorizontal className="h-5 w-5" />
+                        </button>
                       </div>
                     </div>
 
-                    <div className="border-t border-zinc-200 bg-white/70 px-4 py-3">
-                      <div className="grid grid-cols-4 gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="rounded-xl border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100"
-                          onClick={() => navigate("/invoices/" + inv.id)}
-                        >
-                          View
-                        </Button>
+                    <div
+                      className="mt-4 grid grid-cols-2 gap-4 cursor-pointer"
+                      onClick={() => navigate("/invoices/" + inv.id)}
+                    >
+                      <div>
+                        <div className="text-xs uppercase tracking-[0.16em] text-zinc-400">
+                          Amount
+                        </div>
+                        <div className="mt-1 text-[17px] font-semibold text-zinc-950">
+                          {formatCurrency(inv.total)}
+                        </div>
+                      </div>
 
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="rounded-xl border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100"
-                          onClick={() => navigate("/invoices/" + inv.id + "/edit")}
-                        >
-                          Edit
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="rounded-xl border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100"
-                          onClick={() => handleDuplicate(inv)}
-                        >
-                          Copy
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="rounded-xl border-zinc-300 bg-zinc-900 text-white hover:bg-black hover:text-white"
-                          onClick={() => handleDelete(inv)}
-                        >
-                          Del
-                        </Button>
+                      <div className="text-right">
+                        <div className="text-xs uppercase tracking-[0.16em] text-zinc-400">
+                          Date
+                        </div>
+                        <div className="mt-1 text-[17px] font-medium text-zinc-800">
+                          {inv.issue_date || inv.date || "-"}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -419,7 +420,6 @@ export default function Invoices() {
             )}
           </div>
         ) : (
-          /* desktop table */
           <Card className="overflow-hidden rounded-[28px] border border-zinc-200 bg-white shadow-sm">
             <CardContent className="p-0">
               <div className="border-b border-zinc-200 bg-zinc-50 px-5 py-4">
@@ -551,10 +551,7 @@ export default function Invoices() {
                                 Duplicate
                               </DropdownMenuItem>
 
-                              <DropdownMenuItem
-                                onClick={() => handleDelete(inv)}
-                                className="text-zinc-900"
-                              >
+                              <DropdownMenuItem onClick={() => handleDelete(inv)}>
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
                               </DropdownMenuItem>
@@ -570,14 +567,62 @@ export default function Invoices() {
           </Card>
         )}
 
-        {/* mobile floating action */}
         {isMobile && (
           <button
             onClick={() => navigate("/invoices/new")}
-            className="fixed bottom-20 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 text-white shadow-[0_16px_40px_rgba(0,0,0,0.25)] transition hover:bg-black"
+            className="fixed bottom-20 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 text-white shadow-[0_16px_40px_rgba(0,0,0,0.25)] transition hover:bg-black"
           >
             <Plus className="h-5 w-5" />
           </button>
+        )}
+
+        {isMobile && activeInvoice && (
+          <>
+            <div
+              className="fixed inset-0 z-50 bg-black/35"
+              onClick={() => setActiveInvoice(null)}
+            />
+            <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] border-t border-zinc-200 bg-white shadow-[0_-20px_60px_rgba(0,0,0,0.18)]">
+              <div className="flex items-center justify-between px-5 py-4">
+                <div>
+                  <div className="text-lg font-semibold text-zinc-950">Actions</div>
+                  <div className="text-sm text-zinc-500">
+                    {activeInvoice.invoice_number}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setActiveInvoice(null)}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="border-t border-zinc-200 px-4 py-3">
+                <div className="space-y-1">
+                  {mobileActions.map((action) => {
+                    const Icon = action.icon
+
+                    return (
+                      <button
+                        key={action.label}
+                        onClick={action.onClick}
+                        className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition ${
+                          action.danger
+                            ? "text-zinc-950 hover:bg-zinc-100"
+                            : "text-zinc-800 hover:bg-zinc-100"
+                        }`}
+                      >
+                        <Icon className="h-5 w-5 text-zinc-500" />
+                        <span className="text-base">{action.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </Layout>
