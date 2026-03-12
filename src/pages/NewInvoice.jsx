@@ -2343,7 +2343,7 @@ export default function NewInvoice() {
               marginBottom: '12px',
             }}
           >
-            <h3 style={{ ...secT, margin: 0 }}>Project Milestones</h3>
+            <h3 style={{ ...secT, margin: 0 }}>Custom Fields</h3>
             <div
               onClick={() => setBottomFields((f) => [...f, { text: '' }])}
               style={{
