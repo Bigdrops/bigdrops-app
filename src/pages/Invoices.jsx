@@ -1,169 +1,142 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
-import { motion, AnimatePresence } from "framer-motion" // For the "Live" feel
-import { Eye, MoreHorizontal, Pencil, Plus, Copy, Trash2, DollarSign } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion" // The engine
+import { Plus, MoreHorizontal, FileText, Eye, Pencil, Copy, DollarSign, X } from "lucide-react"
 import { supabase } from "../supabase"
 import Layout from "../components/Layout"
-import { useIsMobile } from "../hooks/useIsMobile"
-import { Badge } from "../components/ui/badge"
-import { Button } from "../components/ui/button"
 
 export default function Invoices() {
   const [invoices, setInvoices] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState("All")
   const [activeInvoice, setActiveInvoice] = useState(null)
+  const [filter, setFilter] = useState("All")
   const navigate = useNavigate()
-  const isMobile = useIsMobile()
 
-  useEffect(() => { fetchInvoices() }, [])
-
-  const fetchInvoices = async () => {
-    setLoading(true)
-    const { data } = await supabase.from("invoices").select("*").order("created_at", { ascending: false })
-    setInvoices(data || [])
-    setLoading(false)
-  }
+  useEffect(() => {
+    supabase.from("invoices").select("*").order("created_at", { ascending: false })
+      .then(({ data }) => setInvoices(data || []))
+  }, [])
 
   const filteredInvoices = useMemo(() => {
     if (filter === "All") return invoices
     return invoices.filter(inv => (inv.status || "draft").toLowerCase() === filter.toLowerCase())
   }, [filter, invoices])
 
-  // Animation Variants for the "Live" feel
-  const containerVars = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
-  }
-  const itemVars = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 24 } }
-  }
-
   return (
     <Layout title="Invoices">
-      <div className="max-w-6xl mx-auto space-y-6 pb-24 px-4">
-        
-        {/* HEADER SECTION */}
+      {/* 1. THE LIVE BACKGROUND: Moving gradients */}
+      <div className="fixed inset-0 -z-10 bg-slate-50 overflow-hidden">
         <motion.div 
-          initial={{ opacity: 0, x: -20 }} 
-          animate={{ opacity: 1, x: 0 }}
-          className="rounded-2xl border border-zinc-200 bg-white/80 backdrop-blur-md p-6 shadow-sm sticky top-4 z-30"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-black tracking-tighter text-zinc-950 uppercase italic">Billing</h1>
-              <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mt-1">
-                Records: <span className="text-zinc-900">{filteredInvoices.length}</span>
-              </p>
-            </div>
-          </div>
+          animate={{ 
+            scale: [1, 1.2, 1],
+            x: [0, 50, 0],
+            y: [0, 30, 0] 
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-400/10 rounded-full blur-[120px]" 
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1.2, 1, 1.2],
+            x: [0, -50, 0],
+            y: [0, -30, 0] 
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-red-400/10 rounded-full blur-[120px]" 
+        />
+      </div>
 
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-            {["All", "Draft", "Sent", "Paid", "Overdue"].map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 border ${
-                  filter === f ? "bg-zinc-950 text-white border-zinc-950 shadow-lg shadow-zinc-200 scale-105" : "bg-white text-zinc-400 border-zinc-100 hover:border-zinc-300"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
+      <div className="max-w-6xl mx-auto px-4 pb-32 pt-6">
+        {/* 2. FILTER BAR: Entrance Animation */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 p-2 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 flex gap-2 overflow-x-auto no-scrollbar"
+        >
+          {["All", "Draft", "Sent", "Paid"].map((f) => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${
+                filter === f ? "bg-zinc-950 text-white shadow-xl" : "bg-transparent text-zinc-400"
+              }`}>
+              {f}
+            </button>
+          ))}
         </motion.div>
 
-        {/* LIVE INVOICE LIST */}
-        <motion.div 
-          variants={containerVars}
-          initial="hidden"
-          animate="visible"
-          className="grid gap-3"
-        >
-          {loading ? (
-            <div className="h-64 flex items-center justify-center text-[10px] font-black uppercase tracking-[.3em] text-zinc-300">Syncing...</div>
-          ) : (
-            filteredInvoices.map((inv) => (
+        {/* 3. THE LIST: Fixed Desktop View + Staggered Animation */}
+        <motion.div layout className="grid gap-3">
+          <AnimatePresence mode='popLayout'>
+            {filteredInvoices.map((inv) => (
               <motion.div
+                layout // Smoothly re-orders when filtering
                 key={inv.id}
-                variants={itemVars}
-                whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                whileHover={{ y: -3, scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
-                className="group relative"
+                onClick={() => navigate(`/invoices/${inv.id}`)}
+                className="group flex items-center justify-between p-5 bg-white border border-zinc-200 rounded-[24px] cursor-pointer hover:border-zinc-950 hover:shadow-2xl transition-all duration-300"
               >
-                {/* THE FIX: Wrap entire content in a button or click handler */}
-                <div 
-                  onClick={() => navigate(`/invoices/${inv.id}`)}
-                  className="flex items-center justify-between p-4 bg-white border border-zinc-200 rounded-2xl cursor-pointer hover:shadow-xl hover:border-zinc-400 transition-all duration-300"
-                >
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="hidden md:flex h-10 w-10 items-center justify-center rounded-full bg-zinc-50 text-zinc-400 group-hover:bg-zinc-950 group-hover:text-white transition-colors">
-                      <Eye size={16} />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-black text-zinc-950 uppercase tracking-tight">{inv.invoice_number}</h3>
-                      <p className="text-[11px] font-bold text-zinc-400 uppercase truncate max-w-[150px] md:max-w-none">{inv.client_name}</p>
-                    </div>
+                <div className="flex items-center gap-5 flex-1 min-w-0">
+                  <div className="h-14 w-14 flex items-center justify-center rounded-2xl bg-zinc-50 group-hover:bg-zinc-950 group-hover:text-white transition-colors">
+                    <FileText size={24} />
                   </div>
-
-                  <div className="flex items-center gap-6">
-                    <div className="text-right hidden sm:block">
-                      <p className="text-sm font-black text-zinc-950">₦{Number(inv.total).toLocaleString()}</p>
-                      <p className="text-[9px] font-bold text-zinc-400 uppercase">{inv.issue_date}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                       <Badge className="rounded-lg px-2 py-1 text-[9px] font-black uppercase bg-zinc-50 border-zinc-200 text-zinc-600 group-hover:bg-zinc-950 group-hover:text-white transition-all">
-                        {inv.status}
-                      </Badge>
-                      {/* Separate the "More" button so it doesn't trigger the row click */}
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setActiveInvoice(inv); }}
-                        className="p-2 rounded-xl hover:bg-zinc-100 transition-colors"
-                      >
-                        <MoreHorizontal size={18} className="text-zinc-400" />
-                      </button>
-                    </div>
+                  <div className="min-w-0">
+                    <h3 className="text-base font-black text-zinc-950 uppercase tracking-tighter">{inv.invoice_number}</h3>
+                    <p className="text-xs font-bold text-zinc-400 uppercase truncate">{inv.client_name}</p>
                   </div>
                 </div>
+
+                <div className="flex items-center gap-8">
+                  <div className="text-right hidden sm:block">
+                    <p className="text-lg font-black text-zinc-950 italic">₦{Number(inv.total).toLocaleString()}</p>
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase">{inv.issue_date}</p>
+                  </div>
+                  {/* Entire row is clickable, but this button opens the EXTRA options */}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setActiveInvoice(inv); }}
+                    className="p-3 rounded-xl bg-zinc-50 hover:bg-zinc-950 text-zinc-400 hover:text-white transition-all"
+                  >
+                    <MoreHorizontal size={20} />
+                  </button>
+                </div>
               </motion.div>
-            ))
-          )}
+            ))}
+          </AnimatePresence>
         </motion.div>
       </div>
 
-      {/* FAB with Live Pulse */}
-      <motion.button
-        whileHover={{ scale: 1.1 }}
+      {/* 4. FLOATING ACTION BUTTON */}
+      <motion.button 
+        whileHover={{ scale: 1.1, rotate: 90 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => navigate("/invoices/new")}
-        className="fixed bottom-24 right-8 z-50 h-16 w-16 bg-zinc-950 text-white rounded-2xl shadow-2xl flex items-center justify-center border border-white/10"
+        className="fixed bottom-28 right-8 z-50 h-16 w-16 bg-zinc-950 text-white rounded-[24px] shadow-2xl flex items-center justify-center border border-white/20"
       >
-        <Plus size={28} />
+        <Plus size={32} />
       </motion.button>
 
-      {/* SYNCED ACTIONS POPUP (As requested) */}
+      {/* 5. ACTION DRAWER: Live Slide-up */}
       <AnimatePresence>
         {activeInvoice && (
           <>
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[60] bg-zinc-950/60 backdrop-blur-sm" 
+              className="fixed inset-0 z-[100] bg-zinc-950/40 backdrop-blur-md" 
               onClick={() => setActiveInvoice(null)} 
             />
             <motion.div 
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-x-0 bottom-0 z-[70] bg-white rounded-t-[40px] p-8 pb-12 shadow-2xl"
+              className="fixed inset-x-0 bottom-0 z-[110] bg-white rounded-t-[40px] p-8 shadow-2xl"
             >
-              <div className="w-12 h-1.5 bg-zinc-200 rounded-full mx-auto mb-8" />
-              <h2 className="text-2xl font-black text-zinc-950 uppercase italic mb-8">{activeInvoice.invoice_number}</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <ActionButton icon={<Eye size={20}/>} label="View" onClick={() => navigate(`/invoices/${activeInvoice.id}`)} color="text-blue-500" />
-                <ActionButton icon={<Pencil size={20}/>} label="Edit" onClick={() => navigate(`/invoices/edit/${activeInvoice.id}`)} color="text-red-500" />
-                <ActionButton icon={<Copy size={20}/>} label="Duplicate" onClick={() => {/* logic */}} color="text-orange-500" />
-                <ActionButton icon={<DollarSign size={20}/>} label="Advance" onClick={() => {/* logic */}} color="text-emerald-500" />
-              </div>
+               <div className="w-12 h-1.5 bg-zinc-200 rounded-full mx-auto mb-8" />
+               <div className="grid grid-cols-2 gap-4">
+                  <MenuBtn icon={<Eye/>} label="View" onClick={() => navigate(`/invoices/${activeInvoice.id}`)} />
+                  <MenuBtn icon={<Pencil/>} label="Edit" onClick={() => navigate(`/invoices/edit/${activeInvoice.id}`)} />
+                  <MenuBtn icon={<Copy/>} label="Clone" onClick={() => {}} />
+                  <MenuBtn icon={<DollarSign/>} label="Advance" onClick={() => {}} />
+               </div>
             </motion.div>
           </>
         )}
@@ -172,11 +145,11 @@ export default function Invoices() {
   )
 }
 
-function ActionButton({ icon, label, onClick, color }) {
+function MenuBtn({ icon, label, onClick }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center justify-center p-6 rounded-3xl border border-zinc-100 bg-zinc-50/50 hover:bg-white hover:shadow-xl transition-all group">
-      <div className={`${color} mb-3 group-hover:scale-125 transition-transform`}>{icon}</div>
-      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-zinc-950">{label}</span>
+    <button onClick={onClick} className="flex flex-col items-center justify-center p-6 rounded-[32px] bg-zinc-50 hover:bg-zinc-950 hover:text-white transition-all group">
+      <div className="mb-2 transition-transform group-hover:scale-110">{icon}</div>
+      <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
     </button>
   )
 }
