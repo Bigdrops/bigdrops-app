@@ -1,8 +1,25 @@
 import { useState } from 'react'
+import { Loader2, Mail, Lock, Chrome } from 'lucide-react'
 import { supabase } from '../supabase'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
+function Notice({ kind = 'info', children }) {
+  const styles = kind === 'error'
+    ? 'border-red-200 bg-red-50 text-red-700'
+    : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+
+  return (
+    <div className={`rounded-lg border px-3 py-2 text-sm ${styles}`}>
+      {children}
+    </div>
+  )
+}
 
 export default function Login() {
-  const [mode, setMode] = useState('signin') // 'signin' | 'signup'
+  const [mode, setMode] = useState('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -10,26 +27,28 @@ export default function Login() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  const handleSignIn = async () => {
+  const resetFeedback = () => {
     setError('')
     setMessage('')
+  }
+
+  const handleSignIn = async () => {
+    resetFeedback()
     if (!email || !password) {
       setError('Please enter email and password.')
       return
     }
+
     setLoading(true)
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
-    if (err) {
-      setError(err.message)
-    } else {
-      setMessage('Signed in successfully.')
-    }
+
+    if (err) setError(err.message)
+    else setMessage('Signed in successfully.')
   }
 
   const handleSignUp = async () => {
-    setError('')
-    setMessage('')
+    resetFeedback()
     if (!email || !password || !confirmPassword) {
       setError('Please fill all fields.')
       return
@@ -38,284 +57,165 @@ export default function Login() {
       setError('Passwords do not match.')
       return
     }
+
     setLoading(true)
     const { error: err } = await supabase.auth.signUp({ email, password })
     setLoading(false)
-    if (err) {
-      setError(err.message)
-    } else {
-      setMessage('Account created. Please check your email to confirm.')
-    }
+
+    if (err) setError(err.message)
+    else setMessage('Account created. Please check your email to confirm.')
   }
 
   const handleForgotPassword = async () => {
-    setError('')
-    setMessage('')
+    resetFeedback()
     if (!email) {
       setError('Please enter your email to reset password.')
       return
     }
+
     setLoading(true)
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/reset-password',
+      redirectTo: `${window.location.origin}/reset-password`,
     })
     setLoading(false)
-    if (err) {
-      setError(err.message)
-    } else {
-      setMessage('Password reset email sent. Please check your inbox.')
-    }
+
+    if (err) setError(err.message)
+    else setMessage('Password reset email sent. Please check your inbox.')
   }
 
   const handleGoogleSignIn = async () => {
-    setError('')
-    setMessage('')
+    resetFeedback()
     setLoading(true)
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
+      options: { redirectTo: window.location.origin },
     })
     setLoading(false)
-    if (err) {
-      setError(err.message)
-    }
+
+    if (err) setError(err.message)
   }
 
   const isSignup = mode === 'signup'
 
-  const containerStyle = {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F7F7F5',
-    padding: '20px',
-  }
-
-  const cardStyle = {
-    width: '100%',
-    maxWidth: '420px',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
-    padding: '28px 28px 24px',
-    color: '#1a1a1a',  // ← ADDED: Explicit dark text for card contents
-  }
-
-  const titleStyle = {
-    textAlign: 'center',
-    marginBottom: '4px',
-    color: '#CC0000',
-    fontSize: '20px',
-    fontWeight: 800,
-    letterSpacing: '0.12em',
-    textTransform: 'uppercase',
-  }
-
-  const taglineStyle = {
-    textAlign: 'center',
-    marginBottom: '20px',
-    color: '#888',
-    fontSize: '11px',
-    letterSpacing: '0.04em',
-  }
-
-  const headingStyle = {
-    fontSize: '18px',
-    fontWeight: 600,
-    marginBottom: '4px',
-    textAlign: 'center',
-    color: '#111827',
-  }
-
-  const subHeadingStyle = {
-    fontSize: '13px',
-    color: '#6B7280',
-    marginBottom: '16px',
-    textAlign: 'center',
-  }
-
-  const labelStyle = {
-    display: 'block',
-    fontSize: '12px',
-    fontWeight: 600,
-    color: '#374151',
-    marginBottom: '4px',
-  }
-
-  const inputStyle = {
-    width: '100%',
-    padding: '9px 11px',
-    borderRadius: '8px',
-    border: '1px solid #E5E7EB',
-    fontSize: '16px',  // ← CHANGED: Was '13px', now '16px' to prevent iOS zoom
-    outline: 'none',
-    boxSizing: 'border-box',
-    backgroundColor: '#FFFFFF',
-    color: '#1a1a1a',  // ← ADDED: Explicit dark text for inputs
-  }
-
-  const primaryButtonStyle = {
-    width: '100%',
-    padding: '10px 12px',
-    borderRadius: '999px',
-    border: 'none',
-    backgroundColor: '#CC0000',
-    color: 'white',
-    fontWeight: 600,
-    fontSize: '14px',
-    cursor: 'pointer',
-    marginTop: '4px',
-  }
-
-  const googleButtonStyle = {
-    width: '100%',
-    padding: '9px 12px',
-    borderRadius: '999px',
-    border: '1px solid #D1D5DB',
-    backgroundColor: '#FFFFFF',
-    color: '#374151',
-    fontWeight: 500,
-    fontSize: '13px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    marginTop: '8px',
-  }
-
-  const linkButtonStyle = {
-    border: 'none',
-    background: 'none',
-    color: '#2563EB',
-    fontSize: '12px',
-    padding: 0,
-    cursor: 'pointer',
-  }
-
-  const errorStyle = {
-    marginTop: '10px',
-    padding: '8px 10px',
-    borderRadius: '8px',
-    backgroundColor: '#FEF2F2',
-    color: '#B91C1C',
-    fontSize: '12px',
-  }
-
-  const messageStyle = {
-    marginTop: '10px',
-    padding: '8px 10px',
-    borderRadius: '8px',
-    backgroundColor: '#ECFDF3',
-    color: '#166534',
-    fontSize: '12px',
-  }
-
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#F7F7F5', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center' 
-    }}>
-      <div style={{ 
-        backgroundColor: 'white', 
-        borderRadius: '12px', 
-        padding: '40px', 
-        width: '100%', 
-        maxWidth: '420px', 
-        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-        textAlign: 'center'
-      }}>
-        <div style={titleStyle}>SUN & SHIELD</div>
-        <div style={taglineStyle}>Powering Your World, Shielding Your Future</div>
-
-        <div style={headingStyle}>{isSignup ? 'Create your account' : 'Sign in to your account'}</div>
-        <div style={subHeadingStyle}>
-          {isSignup ? 'Enter your details to get started.' : 'Use your work email to continue.'}
-        </div>
-
-        <div style={{ marginBottom: '12px' }}>
-          <label style={labelStyle}>Email</label>
-          <input
-            type="email"
-            style={inputStyle}
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="you@example.com"
-          />
-        </div>
-        <div style={{ marginBottom: isSignup ? '12px' : '8px' }}>
-          <label style={labelStyle}>Password</label>
-          <input
-            type="password"
-            style={inputStyle}
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="••••••••"
-          />
-        </div>
-
-        {isSignup && (
-          <div style={{ marginBottom: '8px' }}>
-            <label style={labelStyle}>Confirm Password</label>
-            <input
-              type="password"
-              style={inputStyle}
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
-            />
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
+      <Card className="w-full max-w-md border-slate-200 shadow-xl shadow-slate-200/40">
+        <CardHeader className="space-y-3 text-center">
+          <div>
+            <div className="text-xl font-black uppercase tracking-[0.2em] text-red-700">SUN &amp; SHIELD</div>
+            <div className="mt-1 text-xs tracking-wide text-slate-500">
+              Powering Your World, Shielding Your Future
+            </div>
           </div>
-        )}
+          <div className="space-y-1">
+            <CardTitle className="text-2xl text-slate-900">
+              {isSignup ? 'Create your account' : 'Sign in to your account'}
+            </CardTitle>
+            <CardDescription>
+              {isSignup ? 'Enter your details to get started.' : 'Use your work email to continue.'}
+            </CardDescription>
+          </div>
+        </CardHeader>
 
-        {!isSignup && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-            <button type="button" style={linkButtonStyle} onClick={handleForgotPassword}>
-              Forgot Password?
+        <CardContent className="space-y-4">
+          <div className="space-y-2 text-left">
+            <Label htmlFor="email">Email</Label>
+            <div className="relative">
+              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="h-11 pl-9 text-base"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2 text-left">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="h-11 pl-9 text-base"
+              />
+            </div>
+          </div>
+
+          {isSignup && (
+            <div className="space-y-2 text-left">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <div className="relative">
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="h-11 pl-9 text-base"
+                />
+              </div>
+            </div>
+          )}
+
+          {!isSignup && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
+              >
+                Forgot Password?
+              </button>
+            </div>
+          )}
+
+          <Button
+            type="button"
+            onClick={isSignup ? handleSignUp : handleSignIn}
+            disabled={loading}
+            className="h-11 w-full rounded-full bg-red-700 hover:bg-red-800"
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading ? 'Please wait…' : isSignup ? 'Create Account' : 'Sign In'}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="h-11 w-full rounded-full"
+          >
+            <Chrome className="mr-2 h-4 w-4" />
+            Sign in with Google
+          </Button>
+
+          {error && <Notice kind="error">{error}</Notice>}
+          {message && <Notice kind="success">{message}</Notice>}
+
+          <div className="text-center text-sm text-slate-600">
+            {isSignup ? 'Already have an account? ' : "Don't have an account? "}
+            <button
+              type="button"
+              className="font-semibold text-blue-600 transition-colors hover:text-blue-700"
+              onClick={() => {
+                setMode(isSignup ? 'signin' : 'signup')
+                resetFeedback()
+              }}
+            >
+              {isSignup ? 'Sign In' : 'Sign Up'}
             </button>
           </div>
-        )}
-
-        <button
-          type="button"
-          style={{ ...primaryButtonStyle, opacity: loading ? 0.7 : 1, pointerEvents: loading ? 'none' : 'auto' }}
-          onClick={isSignup ? handleSignUp : handleSignIn}
-        >
-          {loading ? 'Please wait…' : isSignup ? 'Create Account' : 'Sign In'}
-        </button>
-
-        <button
-          type="button"
-          style={googleButtonStyle}
-          onClick={handleGoogleSignIn}
-        >
-          <span style={{ fontSize: '16px' }}>G</span>
-          <span>Sign in with Google</span>
-        </button>
-
-        {error && <div style={errorStyle}>{error}</div>}
-        {message && <div style={messageStyle}>{message}</div>}
-
-        <div style={{ marginTop: '14px', fontSize: '12px', textAlign: 'center', color: '#6B7280' }}>
-          {isSignup ? 'Already have an account? ' : "Don't have an account? "}
-          <button
-            type="button"
-            style={linkButtonStyle}
-            onClick={() => {
-              setMode(isSignup ? 'signin' : 'signup')
-              setError('')
-              setMessage('')
-            }}
-          >
-            {isSignup ? 'Sign In' : 'Sign Up'}
-          </button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
