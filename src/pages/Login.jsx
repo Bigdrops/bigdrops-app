@@ -1,30 +1,122 @@
-import { useState } from "react"
-import { Loader2, Mail, Lock } from "lucide-react"
-import { supabase } from "../supabase"
+import { useState } from 'react'
+import { Loader2, Mail, Lock } from 'lucide-react'
+import { supabase } from '../supabase'
 
-import { Button } from "../components/ui/button"
-import { Card } from "../components/ui/card"
-import { Input } from "../components/ui/input"
-import { Label } from "../components/ui/label"
+import { Button } from '../components/ui/button'
+import { Card, CardContent } from '../components/ui/card'
+import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
+
+function GoogleIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path
+        d="M21.805 10.023h-9.8v3.955h5.617c-.242 1.27-.967 2.346-2.06 3.07v2.55h3.33c1.95-1.796 3.073-4.444 3.073-7.598 0-.67-.06-1.314-.16-1.977Z"
+        fill="currentColor"
+      />
+      <path
+        d="M12.005 22c2.79 0 5.13-.924 6.84-2.502l-3.33-2.55c-.924.62-2.104.987-3.51.987-2.7 0-4.99-1.823-5.81-4.273H2.75v2.63A10.326 10.326 0 0 0 12.005 22Z"
+        fill="currentColor"
+      />
+      <path
+        d="M6.195 13.662a6.2 6.2 0 0 1-.325-1.96c0-.68.117-1.34.325-1.96v-2.63H2.75A10.326 10.326 0 0 0 1.68 11.7c0 1.66.397 3.232 1.07 4.59l3.445-2.628Z"
+        fill="currentColor"
+      />
+      <path
+        d="M12.005 5.467c1.52 0 2.887.523 3.962 1.55l2.968-2.968C17.13 2.37 14.79 1.4 12.005 1.4A10.326 10.326 0 0 0 2.75 7.112l3.445 2.63c.82-2.45 3.11-4.275 5.81-4.275Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
+function Notice({ kind = 'info', children }) {
+  const styles =
+    kind === 'error'
+      ? 'border-red-200 bg-red-50 text-red-700'
+      : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+
+  return <div className={`rounded-xl border px-3 py-2 text-sm ${styles}`}>{children}</div>
+}
 
 export default function Login() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [mode, setMode] = useState('signin')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+
+  const isSignup = mode === 'signup'
+
+  const resetFeedback = () => {
+    setError('')
+    setMessage('')
+  }
 
   const handleSignIn = async () => {
-    setError("")
+    resetFeedback()
+
     if (!email || !password) {
-      setError("Enter email and password.")
+      setError('Please enter email and password.')
       return
     }
 
     setLoading(true)
+    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+    setLoading(false)
 
-    const { error: err } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    if (err) setError(err.message)
+    else setMessage('Signed in successfully.')
+  }
+
+  const handleSignUp = async () => {
+    resetFeedback()
+
+    if (!email || !password || !confirmPassword) {
+      setError('Please fill all fields.')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
+
+    setLoading(true)
+    const { error: err } = await supabase.auth.signUp({ email, password })
+    setLoading(false)
+
+    if (err) setError(err.message)
+    else setMessage('Account created. Please check your email to confirm.')
+  }
+
+  const handleForgotPassword = async () => {
+    resetFeedback()
+
+    if (!email) {
+      setError('Please enter your email to reset password.')
+      return
+    }
+
+    setLoading(true)
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    setLoading(false)
+
+    if (err) setError(err.message)
+    else setMessage('Password reset email sent. Please check your inbox.')
+  }
+
+  const handleGoogleSignIn = async () => {
+    resetFeedback()
+    setLoading(true)
+
+    const { error: err } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
     })
 
     setLoading(false)
@@ -32,125 +124,184 @@ export default function Login() {
     if (err) setError(err.message)
   }
 
-  const handleGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin },
-    })
-  }
-
   return (
-    <div className="min-h-screen grid md:grid-cols-2 bg-neutral-50">
-
-      {/* Left visual */}
-      <div className="hidden md:flex items-center justify-center bg-neutral-900 text-white p-12">
-        <div className="space-y-6 max-w-md">
-
-          <div className="text-sm uppercase tracking-widest text-neutral-400">
-            BigDrops ERP
-          </div>
-
-          <h1 className="text-4xl font-semibold leading-tight">
-            Manage your
-            <br />
-            business operations
-          </h1>
-
-          <p className="text-neutral-400">
-            Invoices, quotations, CSR and more —
-            all in one workspace.
-          </p>
-
-          {/* abstract visual */}
-          <div className="mt-10 flex gap-6">
-            <div className="w-24 h-24 bg-neutral-700 rounded-full blur-sm"></div>
-            <div className="w-32 h-32 bg-neutral-600 rounded-xl"></div>
-          </div>
-
-        </div>
+    <div className="relative min-h-screen overflow-hidden bg-[#f6f6f4] text-slate-950">
+      {/* floating background forms */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-16 top-24 h-40 w-40 rounded-[2.5rem] bg-white shadow-[0_30px_80px_rgba(0,0,0,0.08)] md:-left-10 md:top-20 md:h-56 md:w-56" />
+        <div className="absolute right-[-3.5rem] top-14 h-32 w-32 rounded-full bg-[#111111] shadow-[0_30px_60px_rgba(0,0,0,0.18)] md:right-[8%] md:top-24 md:h-44 md:w-44" />
+        <div className="absolute bottom-28 left-[-2rem] h-28 w-28 rounded-full border border-black/10 bg-white/90 shadow-[0_20px_40px_rgba(0,0,0,0.06)] md:bottom-24 md:left-[10%] md:h-36 md:w-36" />
+        <div className="absolute bottom-16 right-6 h-24 w-24 rounded-[1.75rem] bg-[#d9d9d4] shadow-[0_20px_40px_rgba(0,0,0,0.08)] md:bottom-20 md:right-[14%] md:h-28 md:w-28" />
+        <div className="absolute left-1/2 top-1/2 hidden h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/50 blur-3xl md:block" />
       </div>
 
-      {/* Right form */}
-      <div className="flex items-center justify-center px-6 py-12">
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-10 sm:px-6 lg:grid lg:grid-cols-2 lg:gap-10 lg:px-10">
+        {/* left content */}
+        <div className="mb-8 hidden lg:block">
+          <div className="max-w-xl">
+            <div className="mb-4 inline-flex rounded-full border border-black/10 bg-white/70 px-4 py-1 text-xs font-medium uppercase tracking-[0.28em] text-slate-600 backdrop-blur">
+              BigDrops ERP
+            </div>
 
-        <Card className="w-full max-w-md p-8 shadow-xl border-neutral-200">
+            <h1 className="max-w-lg text-5xl font-semibold leading-[1.05] tracking-tight text-slate-950">
+              Run operations across multiple business profiles.
+            </h1>
 
-          <div className="space-y-6">
+            <p className="mt-5 max-w-md text-base leading-7 text-slate-600">
+              Invoices, quotations, reports and workflow tools in one controlled workspace.
+            </p>
 
-            <div>
-              <div className="text-xs uppercase tracking-widest text-neutral-500">
-                BigDrops ERP
+            <div className="mt-10 grid max-w-md grid-cols-2 gap-4">
+              <div className="rounded-3xl border border-black/10 bg-white/80 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.06)] backdrop-blur">
+                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Profiles</div>
+                <div className="mt-2 text-2xl font-semibold">Multi-business</div>
               </div>
 
-              <h2 className="text-2xl font-semibold mt-2">
-                Sign in to continue
-              </h2>
+              <div className="rounded-3xl bg-[#111111] p-5 text-white shadow-[0_24px_60px_rgba(0,0,0,0.22)]">
+                <div className="text-xs uppercase tracking-[0.18em] text-white/60">Control</div>
+                <div className="mt-2 text-2xl font-semibold">One ERP</div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-              <p className="text-sm text-neutral-500">
-                Access your workspace.
+        {/* form */}
+        <div className="w-full">
+          <Card className="mx-auto w-full max-w-md rounded-[2rem] border border-black/10 bg-white/80 shadow-[0_25px_80px_rgba(0,0,0,0.10)] backdrop-blur">
+            <CardContent className="p-6 sm:p-8">
+              <div className="mb-6 text-center lg:text-left">
+                <div className="text-xs font-medium uppercase tracking-[0.28em] text-slate-500">
+                  BigDrops ERP
+                </div>
+                <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                  {isSignup ? 'Create your account' : 'Sign in to continue'}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {isSignup
+                    ? 'Set up your account and access your workspace.'
+                    : 'Access your business workspace from one place.'}
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-slate-700">
+                    Email
+                  </Label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="h-12 rounded-xl border-black/10 bg-white pl-9 text-base shadow-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-slate-700">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="h-12 rounded-xl border-black/10 bg-white pl-9 text-base shadow-none"
+                    />
+                  </div>
+                </div>
+
+                {isSignup && (
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className="text-slate-700">
+                      Confirm Password
+                    </Label>
+                    <div className="relative">
+                      <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={e => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="h-12 rounded-xl border-black/10 bg-white pl-9 text-base shadow-none"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {!isSignup && (
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-sm font-medium text-slate-600 transition hover:text-slate-950"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                )}
+
+                <Button
+                  type="button"
+                  onClick={isSignup ? handleSignUp : handleSignIn}
+                  disabled={loading}
+                  className="h-12 w-full rounded-xl bg-[#111111] text-white hover:bg-black"
+                >
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {loading ? 'Please wait…' : isSignup ? 'Create Account' : 'Sign In'}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGoogleSignIn}
+                  disabled={loading}
+                  className="h-12 w-full rounded-xl border-black/10 bg-white text-slate-900 hover:bg-slate-50"
+                >
+                  <GoogleIcon className="mr-2 h-4 w-4" />
+                  Continue with Google
+                </Button>
+
+                {error && <Notice kind="error">{error}</Notice>}
+                {message && <Notice kind="success">{message}</Notice>}
+
+                <div className="pt-2 text-center text-sm text-slate-600">
+                  {isSignup ? 'Already have an account? ' : "Don't have an account? "}
+                  <button
+                    type="button"
+                    className="font-semibold text-slate-950 underline underline-offset-4"
+                    onClick={() => {
+                      setMode(isSignup ? 'signin' : 'signup')
+                      resetFeedback()
+                    }}
+                  >
+                    {isSignup ? 'Sign In' : 'Sign Up'}
+                  </button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* mobile support copy */}
+          <div className="mx-auto mt-6 max-w-md lg:hidden">
+            <div className="rounded-3xl border border-black/10 bg-white/70 px-5 py-4 text-center shadow-[0_20px_50px_rgba(0,0,0,0.06)] backdrop-blur">
+              <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
+                One workspace
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                Invoices, quotations, reports and business tools in one controlled system.
               </p>
             </div>
-
-            {/* Email */}
-            <div className="space-y-2">
-              <Label>Email</Label>
-
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
-
-                <Input
-                  className="pl-9 h-11"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div className="space-y-2">
-              <Label>Password</Label>
-
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
-
-                <Input
-                  type="password"
-                  className="pl-9 h-11"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div className="text-sm text-red-600">
-                {error}
-              </div>
-            )}
-
-            <Button
-              onClick={handleSignIn}
-              disabled={loading}
-              className="w-full h-11"
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign in
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={handleGoogle}
-              className="w-full h-11"
-            >
-              Continue with Google
-            </Button>
-
           </div>
-
-        </Card>
-
+        </div>
       </div>
     </div>
   )
