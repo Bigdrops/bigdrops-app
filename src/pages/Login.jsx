@@ -1,20 +1,40 @@
 import { useState } from 'react'
-import { Loader2, Mail, Lock, Chrome } from 'lucide-react'
+import { Loader2, Mail, Lock } from 'lucide-react'
 import { supabase } from '../supabase'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Button } from '../components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
 
 function Notice({ kind = 'info', children }) {
-  const styles = kind === 'error'
-    ? 'border-red-200 bg-red-50 text-red-700'
-    : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  const styles =
+    kind === 'error'
+      ? 'border-destructive/20 bg-destructive/10 text-destructive'
+      : 'border-emerald-200 bg-emerald-50 text-emerald-700'
 
+  return <div className={`rounded-lg border px-3 py-2 text-sm ${styles}`}>{children}</div>
+}
+
+function GoogleIcon(props) {
   return (
-    <div className={`rounded-lg border px-3 py-2 text-sm ${styles}`}>
-      {children}
-    </div>
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path
+        d="M21.805 10.023h-9.8v3.955h5.617c-.242 1.27-.967 2.346-2.06 3.07v2.55h3.33c1.95-1.796 3.073-4.444 3.073-7.598 0-.67-.06-1.314-.16-1.977Z"
+        fill="currentColor"
+      />
+      <path
+        d="M12.005 22c2.79 0 5.13-.924 6.84-2.502l-3.33-2.55c-.924.62-2.104.987-3.51.987-2.7 0-4.99-1.823-5.81-4.273H2.75v2.63A10.326 10.326 0 0 0 12.005 22Z"
+        fill="currentColor"
+      />
+      <path
+        d="M6.195 13.662a6.2 6.2 0 0 1-.325-1.96c0-.68.117-1.34.325-1.96v-2.63H2.75A10.326 10.326 0 0 0 1.68 11.7c0 1.66.397 3.232 1.07 4.59l3.445-2.628Z"
+        fill="currentColor"
+      />
+      <path
+        d="M12.005 5.467c1.52 0 2.887.523 3.962 1.55l2.968-2.968C17.13 2.37 14.79 1.4 12.005 1.4A10.326 10.326 0 0 0 2.75 7.112l3.445 2.63c.82-2.45 3.11-4.275 5.81-4.275Z"
+        fill="currentColor"
+      />
+    </svg>
   )
 }
 
@@ -53,6 +73,7 @@ export default function Login() {
       setError('Please fill all fields.')
       return
     }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match.')
       return
@@ -86,10 +107,12 @@ export default function Login() {
   const handleGoogleSignIn = async () => {
     resetFeedback()
     setLoading(true)
+
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin },
     })
+
     setLoading(false)
 
     if (err) setError(err.message)
@@ -98,21 +121,20 @@ export default function Login() {
   const isSignup = mode === 'signup'
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
-      <Card className="w-full max-w-md border-slate-200 shadow-xl shadow-slate-200/40">
-        <CardHeader className="space-y-3 text-center">
-          <div>
-            <div className="text-xl font-black uppercase tracking-[0.2em] text-red-700">SUN &amp; SHIELD</div>
-            <div className="mt-1 text-xs tracking-wide text-slate-500">
-              Powering Your World, Shielding Your Future
-            </div>
-          </div>
+    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-10">
+      <Card className="w-full max-w-md border-border shadow-sm">
+        <CardHeader className="space-y-2 text-center">
           <div className="space-y-1">
-            <CardTitle className="text-2xl text-slate-900">
-              {isSignup ? 'Create your account' : 'Sign in to your account'}
+            <div className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              BigDrops ERP
+            </div>
+            <CardTitle className="text-2xl">
+              {isSignup ? 'Create your account' : 'Sign in to continue'}
             </CardTitle>
             <CardDescription>
-              {isSignup ? 'Enter your details to get started.' : 'Use your work email to continue.'}
+              {isSignup
+                ? 'Set up your account to access your workspace.'
+                : 'Access your business workspace from one place.'}
             </CardDescription>
           </div>
         </CardHeader>
@@ -121,14 +143,14 @@ export default function Login() {
           <div className="space-y-2 text-left">
             <Label htmlFor="email">Email</Label>
             <div className="relative">
-              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="h-11 pl-9 text-base"
+                className="h-11 pl-9"
               />
             </div>
           </div>
@@ -136,14 +158,14 @@ export default function Login() {
           <div className="space-y-2 text-left">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
-              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="h-11 pl-9 text-base"
+                className="h-11 pl-9"
               />
             </div>
           </div>
@@ -152,14 +174,14 @@ export default function Login() {
             <div className="space-y-2 text-left">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="confirmPassword"
                   type="password"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="h-11 pl-9 text-base"
+                  className="h-11 pl-9"
                 />
               </div>
             </div>
@@ -170,7 +192,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={handleForgotPassword}
-                className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
+                className="text-sm font-medium text-primary hover:opacity-80"
               >
                 Forgot Password?
               </button>
@@ -181,7 +203,7 @@ export default function Login() {
             type="button"
             onClick={isSignup ? handleSignUp : handleSignIn}
             disabled={loading}
-            className="h-11 w-full rounded-full bg-red-700 hover:bg-red-800"
+            className="h-11 w-full"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {loading ? 'Please wait…' : isSignup ? 'Create Account' : 'Sign In'}
@@ -192,20 +214,20 @@ export default function Login() {
             variant="outline"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="h-11 w-full rounded-full"
+            className="h-11 w-full"
           >
-            <Chrome className="mr-2 h-4 w-4" />
-            Sign in with Google
+            <GoogleIcon className="mr-2 h-4 w-4" />
+            Continue with Google
           </Button>
 
           {error && <Notice kind="error">{error}</Notice>}
           {message && <Notice kind="success">{message}</Notice>}
 
-          <div className="text-center text-sm text-slate-600">
+          <div className="text-center text-sm text-muted-foreground">
             {isSignup ? 'Already have an account? ' : "Don't have an account? "}
             <button
               type="button"
-              className="font-semibold text-blue-600 transition-colors hover:text-blue-700"
+              className="font-semibold text-primary hover:opacity-80"
               onClick={() => {
                 setMode(isSignup ? 'signin' : 'signup')
                 resetFeedback()
