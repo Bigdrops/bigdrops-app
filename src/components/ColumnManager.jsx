@@ -1,98 +1,143 @@
+import { useState } from 'react'
+import { Settings2, Table2, Percent, Eye, EyeOff, GripVertical, Plus, RotateCcw, X } from 'lucide-react'
+import { Button } from '../components/ui/button'
+import { Card, CardContent } from '../components/ui/card'
+import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import { COLUMN_TYPES } from './useInvoiceColumns.jsx'
 
-export default function ColumnManager({ columns, onUpdate, onToggle, onAddCustom, onRemoveCustom, onReset, onMove, onClose }) {
-  const inp = { padding: '6px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', outline: 'none', color: '#1a1a1a', backgroundColor: 'white', boxSizing: 'border-box', width: '100%' }
+export default function ColumnManager({
+  columns,
+  onUpdate,
+  onToggle,
+  onAddCustom,
+  onRemoveCustom,
+  onReset,
+  onMove,
+  onClose,
+  vat,
+  setVat,
+  wht,
+  setWht,
+  whtType,
+  setWhtType,
+}) {
+  const [activeTab, setActiveTab] = useState('table')
 
-  const builtinCols = columns.filter(c => !c.key.startsWith('custom_'))
-  const customCols  = columns.filter(c =>  c.key.startsWith('custom_'))
+  const builtinCols = columns.filter((c) => !c.key.startsWith('custom_'))
+  const customCols = columns.filter((c) => c.key.startsWith('custom_'))
 
   const handleDragStart = (e, key) => e.dataTransfer.setData('text/plain', key)
-  const handleDragOver  = e => e.preventDefault()
+  const handleDragOver = (e) => e.preventDefault()
   const handleDrop = (e, targetKey) => {
     e.preventDefault()
     const draggedKey = e.dataTransfer.getData('text/plain')
     if (!draggedKey || draggedKey === targetKey || !onMove) return
-    const fromIdx = columns.findIndex(c => c.key === draggedKey)
-    const toIdx   = columns.findIndex(c => c.key === targetKey)
+    const fromIdx = columns.findIndex((c) => c.key === draggedKey)
+    const toIdx = columns.findIndex((c) => c.key === targetKey)
     if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return
     onMove(draggedKey, toIdx)
   }
 
-  const typeLabel = t => ({ install_rate: 'Rate', vat_rate: 'VAT%', discount_rate: 'Disc%' }[t] || t)
+  const typeLabel = (t) =>
+    ({ install_rate: 'Rate', vat_rate: 'VAT%', discount_rate: 'Disc%' }[t] || t)
 
-  // Eye button — clear 👁 / hidden 🚫 with tooltip
-  const EyeBtn = ({ visible, onToggle }) => (
-    <button
-      onClick={onToggle}
-      title={visible ? 'Hide column' : 'Show column'}
-      style={{
-        width: '34px', height: '34px', borderRadius: '8px', border: '1px solid',
-        borderColor: visible ? '#c7d2fe' : '#e0e0e0',
-        backgroundColor: visible ? '#eef2ff' : '#f5f5f5',
-        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '17px', lineHeight: 1, flexShrink: 0,
-        transition: 'all 0.15s',
-      }}
+  const RowShell = ({ children, muted = false }) => (
+    <div
+      className={`flex items-start gap-3 border-b border-border py-3 ${
+        muted ? 'opacity-55' : ''
+      }`}
     >
-      {visible ? '👁️' : '🚫'}
-    </button>
+      {children}
+    </div>
   )
 
-  const ColRow = ({ col, idx, isCustom }) => (
-    <div
-      key={col.key}
-      draggable
-      onDragStart={e => handleDragStart(e, col.key)}
-      onDragOver={handleDragOver}
-      onDrop={e => handleDrop(e, col.key)}
-      style={{
-        display: 'flex', alignItems: 'flex-start', gap: '10px',
-        padding: '10px 0', borderBottom: '1px solid #f5f5f5',
-        cursor: 'grab', opacity: col.visible ? 1 : 0.5,
-      }}
+  const VisibilityBtn = ({ visible, onClick }) => (
+    <Button
+      type="button"
+      variant="outline"
+      size="icon"
+      onClick={onClick}
+      className={`h-9 w-9 rounded-xl ${visible ? 'border-primary/30 bg-primary/5' : ''}`}
+      title={visible ? 'Hide column' : 'Show column'}
     >
-      {/* Drag handle */}
-      <div style={{ fontSize: '14px', color: '#ccc', paddingTop: '8px', userSelect: 'none', flexShrink: 0 }}>⠿</div>
+      {visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+    </Button>
+  )
 
-      {/* Eye toggle */}
-      <EyeBtn visible={col.visible} onToggle={() => onToggle(col.key)} />
+  const ColRow = ({ col, isCustom }) => (
+    <RowShell muted={!col.visible}>
+      <div
+        draggable
+        onDragStart={(e) => handleDragStart(e, col.key)}
+        onDragOver={handleDragOver}
+        onDrop={(e) => handleDrop(e, col.key)}
+        className="flex h-9 w-8 items-center justify-center text-muted-foreground cursor-grab"
+        title="Drag to reorder"
+      >
+        <GripVertical className="h-4 w-4" />
+      </div>
 
-      {/* Column info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {isCustom
-          ? <input style={inp} value={col.label} onChange={e => onUpdate(col.key, 'label', e.target.value)} placeholder="Column name" />
-          : <div style={{ fontSize: '13px', fontWeight: '600', color: col.visible ? '#1a1a1a' : '#aaa', paddingTop: '6px' }}>{col.label}</div>
-        }
+      <VisibilityBtn visible={col.visible} onClick={() => onToggle(col.key)} />
 
-        {/* Install rate formula */}
+      <div className="min-w-0 flex-1 space-y-2">
+        {isCustom ? (
+          <Input
+            value={col.label}
+            onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
+            placeholder="Column name"
+            className="h-9"
+          />
+        ) : (
+          <div className="pt-2 text-sm font-medium text-foreground">{col.label}</div>
+        )}
+
         {col.key === 'install_rate' && (
-          <div style={{ marginTop: '6px' }}>
-            <div style={{ fontSize: '11px', color: '#999', marginBottom: '3px' }}>
-              Multiplier (e.g. 0.1 = 10% of Qty×Rate). Blank = manual per row.
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground">
+              Multiplier. Example: <strong>0.1</strong> means 10% of Qty × Rate.
+              Leave blank for manual row entry.
             </div>
-            <input
-              style={inp} type="number" step="0.01" min="0"
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
               value={col.formula || ''}
-              onChange={e => onUpdate(col.key, 'formula', e.target.value)}
+              onChange={(e) => onUpdate(col.key, 'formula', e.target.value)}
               placeholder="e.g. 0.1"
+              className="h-9"
             />
           </div>
         )}
+
         {(col.key === 'vat_rate' || col.key === 'discount_rate') && (
-          <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-            Set 0 on a row to exclude it. Blank = global rate.
+          <div className="text-xs text-muted-foreground">
+            Set <strong>0</strong> on a row to exclude it. Leave blank to use the global rate.
           </div>
         )}
 
-        {/* Custom: type + include in total */}
         {isCustom && (
-          <div style={{ display: 'flex', gap: '8px', marginTop: '6px', alignItems: 'center' }}>
-            <select style={{ ...inp, width: 'auto', flex: 1 }} value={col.type} onChange={e => onUpdate(col.key, 'type', e.target.value)}>
-              {COLUMN_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              value={col.type}
+              onChange={(e) => onUpdate(col.key, 'type', e.target.value)}
+            >
+              {COLUMN_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
             </select>
+
             {col.type === 'number' && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#555', whiteSpace: 'nowrap', cursor: 'pointer' }}>
-                <input type="checkbox" checked={!!col.includeInTotal} onChange={e => onUpdate(col.key, 'includeInTotal', e.target.checked)} />
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={!!col.includeInTotal}
+                  onChange={(e) => onUpdate(col.key, 'includeInTotal', e.target.checked)}
+                />
                 Add to total
               </label>
             )}
@@ -100,75 +145,171 @@ export default function ColumnManager({ columns, onUpdate, onToggle, onAddCustom
         )}
       </div>
 
-      {/* Type badge for builtins */}
-      {!isCustom && (
-        <div style={{ fontSize: '11px', color: '#bbb', padding: '2px 8px', border: '1px solid #eee', borderRadius: '4px', whiteSpace: 'nowrap', marginTop: '6px', flexShrink: 0 }}>
-          {typeLabel(col.type || 'text')}
+      {!isCustom ? (
+        <div className="pt-2">
+          <div className="rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground">
+            {typeLabel(col.type || 'text')}
+          </div>
         </div>
-      )}
-
-      {/* Delete for custom */}
-      {isCustom && (
-        <div
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => onRemoveCustom(col.key)}
-          style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#CC0000', fontSize: '20px', flexShrink: 0 }}
-        >×</div>
+          className="h-9 w-9 rounded-xl text-destructive hover:text-destructive"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       )}
-    </div>
+    </RowShell>
   )
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ backgroundColor: 'white', borderRadius: '12px', width: '100%', maxWidth: '520px', maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxShadow: '0 8px 40px rgba(0,0,0,0.2)' }}>
-
-        {/* Header */}
-        <div style={{ padding: '18px 22px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '16px', color: '#1a1a1a' }}>Edit Columns</h3>
-            <div style={{ fontSize: '11px', color: '#aaa', marginTop: '2px' }}>👁️ show/hide · ⠿ drag to reorder</div>
-          </div>
-          <span onClick={onClose} style={{ cursor: 'pointer', fontSize: '22px', color: '#888', lineHeight: 1 }}>×</span>
-        </div>
-
-        <div style={{ overflowY: 'auto', flex: 1, padding: '4px 22px 16px' }}>
-
-          {/* Standard columns */}
-          <div style={{ fontSize: '10px', color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '12px 0 4px' }}>
-            Standard Columns
-          </div>
-          {builtinCols.map((col, idx) => (
-            <ColRow key={col.key} col={col} idx={idx} isCustom={false} />
-          ))}
-
-          {/* Custom columns */}
-          {customCols.length > 0 && (
-            <>
-              <div style={{ fontSize: '10px', color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '16px 0 4px' }}>
-                Custom Columns
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-4">
+      <Card className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl">
+        <div className="flex items-center justify-between border-b px-5 py-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
+              <Settings2 className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold">Table & Tax Settings</h3>
+              <div className="text-xs text-muted-foreground">
+                Manage columns, row behavior, VAT and WHT
               </div>
-              {customCols.map((col, idx) => (
-                <ColRow key={col.key} col={col} idx={idx} isCustom={true} />
-              ))}
-            </>
-          )}
-
-          {/* Add custom */}
-          <div style={{ padding: '14px 0 4px' }}>
-            <div
-              onClick={onAddCustom}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#6366F1', fontSize: '13px', fontWeight: 'bold', padding: '8px 14px', border: '1px dashed #6366F1', borderRadius: '8px' }}
-            >
-              <span style={{ fontSize: '18px', lineHeight: 1 }}>+</span> Add Custom Column
             </div>
           </div>
+
+          <Button type="button" variant="ghost" size="icon" onClick={onClose} className="rounded-xl">
+            <X className="h-5 w-5" />
+          </Button>
         </div>
 
-        {/* Footer */}
-        <div style={{ padding: '14px 22px', borderTop: '1px solid #eee', display: 'flex', gap: '10px' }}>
-          <div onClick={onReset} style={{ flex: 1, padding: '10px', border: '1px solid #ddd', borderRadius: '6px', textAlign: 'center', cursor: 'pointer', fontSize: '13px', color: '#555' }}>Reset</div>
-          <div onClick={onClose} style={{ flex: 2, padding: '10px', backgroundColor: '#6366F1', color: 'white', borderRadius: '6px', textAlign: 'center', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>Done</div>
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-4 grid w-full grid-cols-2">
+              <TabsTrigger value="table" className="gap-2">
+                <Table2 className="h-4 w-4" />
+                Table
+              </TabsTrigger>
+              <TabsTrigger value="tax" className="gap-2">
+                <Percent className="h-4 w-4" />
+                Tax
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="table" className="mt-0 space-y-5">
+              <Card className="rounded-2xl">
+                <CardContent className="p-4">
+                  <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Standard Columns
+                  </div>
+                  <div>
+                    {builtinCols.map((col) => (
+                      <ColRow key={col.key} col={col} isCustom={false} />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl">
+                <CardContent className="p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Custom Columns
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={onAddCustom} className="gap-2 rounded-xl">
+                      <Plus className="h-4 w-4" />
+                      Add Custom Column
+                    </Button>
+                  </div>
+
+                  {customCols.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+                      No custom columns yet.
+                    </div>
+                  ) : (
+                    <div>
+                      {customCols.map((col) => (
+                        <ColRow key={col.key} col={col} isCustom={true} />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="tax" className="mt-0">
+              <Card className="rounded-2xl">
+                <CardContent className="space-y-5 p-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="global-vat">VAT %</Label>
+                    <Input
+                      id="global-vat"
+                      type="number"
+                      min="0"
+                      value={vat ?? 0}
+                      onChange={(e) => setVat(Number(e.target.value))}
+                    />
+                    <div className="text-xs text-muted-foreground">
+                      Standard Nigerian VAT rate can be set here for the invoice.
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label>WHT (Withholding Tax)</Label>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant={whtType === 'percent' ? 'default' : 'outline'}
+                        onClick={() => setWhtType('percent')}
+                        className="rounded-xl"
+                      >
+                        Percent %
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={whtType === 'fixed' ? 'default' : 'outline'}
+                        onClick={() => setWhtType('fixed')}
+                        className="rounded-xl"
+                      >
+                        Fixed ₦
+                      </Button>
+                    </div>
+
+                    <Input
+                      type="number"
+                      min="0"
+                      value={wht ?? 0}
+                      onChange={(e) => setWht(Number(e.target.value))}
+                    />
+
+                    <div className="text-xs text-muted-foreground">
+                      WHT is deducted from the payable amount, not added to the invoice total.
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border bg-muted/40 p-3 text-sm text-muted-foreground">
+                    Row-level VAT and row-level discount controls still remain in the table when those columns are visible.
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
-      </div>
+
+        <div className="flex gap-3 border-t px-5 py-4">
+          <Button type="button" variant="outline" onClick={onReset} className="flex-1 rounded-xl gap-2">
+            <RotateCcw className="h-4 w-4" />
+            Reset
+          </Button>
+          <Button type="button" onClick={onClose} className="flex-[1.4] rounded-xl">
+            Done
+          </Button>
+        </div>
+      </Card>
     </div>
   )
 }
