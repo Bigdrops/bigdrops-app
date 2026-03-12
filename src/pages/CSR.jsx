@@ -1,6 +1,7 @@
+
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ClipboardList, Plus, Wrench } from "lucide-react"
+import { ClipboardList, Plus, Wrench, ChevronDown, ChevronUp } from "lucide-react"
 
 import { supabase } from "../supabase"
 import Layout from "../components/Layout"
@@ -60,6 +61,7 @@ export default function CSR() {
 
   const [csrs, setCsrs] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showSummary, setShowSummary] = useState(false)
 
   useEffect(() => {
     fetchCsrs()
@@ -88,36 +90,31 @@ export default function CSR() {
 
   const summaryCards = [
     {
-      label: "Total Reports",
+      label: "Total",
       value: summary.total,
       tone:
         "bg-gradient-to-br from-zinc-900 to-zinc-700 text-white border-zinc-800",
-      iconTone: "bg-white/10 text-white",
     },
     {
       label: "Complete",
       value: summary.complete,
       tone: "bg-zinc-100 text-zinc-900 border-zinc-200",
-      iconTone: "bg-zinc-900 text-white",
     },
     {
-      label: "Pending Spares",
+      label: "Pending",
       value: summary.pending,
       tone: "bg-white text-zinc-900 border-zinc-200",
-      iconTone: "bg-zinc-800 text-white",
     },
     {
-      label: "Under Observation",
+      label: "Observe",
       value: summary.observation,
       tone: "bg-zinc-200/70 text-zinc-900 border-zinc-300",
-      iconTone: "bg-zinc-900 text-white",
     },
   ]
 
   return (
     <Layout title="Customer Service Reports">
       <div className="space-y-5">
-        {/* header */}
         <div className="rounded-3xl border border-zinc-200 bg-gradient-to-br from-zinc-50 via-white to-zinc-100 p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
@@ -128,7 +125,7 @@ export default function CSR() {
                 Track customer service activity clearly
               </div>
               <div className="text-sm text-zinc-600">
-                Review service status, monitor pending work, and create new reports quickly.
+                Review service status, monitor pending work, and create reports quickly.
               </div>
             </div>
 
@@ -153,44 +150,67 @@ export default function CSR() {
           </div>
         </div>
 
-        {/* summary */}
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {summaryCards.map((item) => (
-            <Card
-              key={item.label}
-              className={`rounded-3xl border shadow-sm ${item.tone}`}
-            >
-              <CardContent className="p-4">
-                <div
-                  className={`mb-4 flex h-10 w-10 items-center justify-center rounded-2xl ${item.iconTone}`}
-                >
-                  <ClipboardList className="h-5 w-5" />
-                </div>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-zinc-900">Summary</div>
+              <div className="text-xs text-zinc-500">
+                Quick view of service activity
+              </div>
+            </div>
 
-                <div className="text-[11px] uppercase tracking-[0.16em] opacity-70">
-                  {item.label}
-                </div>
-                <div className="mt-2 text-2xl font-semibold tracking-tight">
-                  {item.value}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+            <Button
+              variant="ghost"
+              onClick={() => setShowSummary((prev) => !prev)}
+              className="text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+            >
+              {showSummary ? (
+                <>
+                  <ChevronUp className="mr-2 h-4 w-4" />
+                  Hide
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="mr-2 h-4 w-4" />
+                  Show
+                </>
+              )}
+            </Button>
+          </div>
+
+          {showSummary && (
+            <div className="grid grid-cols-4 gap-2 lg:gap-3">
+              {summaryCards.map((item) => (
+                <Card
+                  key={item.label}
+                  className={`rounded-2xl border shadow-sm ${item.tone}`}
+                >
+                  <CardContent className="p-3">
+                    <div className="text-[10px] uppercase tracking-[0.14em] opacity-70">
+                      {item.label}
+                    </div>
+                    <div className="mt-1 text-lg font-semibold tracking-tight lg:text-2xl">
+                      {item.value}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* mobile */}
         {isMobile ? (
           <div className="space-y-3 pb-24">
             {loading ? (
               <Card className="rounded-3xl border-zinc-200 bg-zinc-50">
-                <CardContent className="p-6 text-sm text-zinc-500">
+                <CardContent className="p-5 text-sm text-zinc-500">
                   Loading service reports...
                 </CardContent>
               </Card>
             ) : csrs.length === 0 ? (
               <Card className="rounded-3xl border-zinc-200 bg-zinc-50">
-                <CardContent className="p-6 text-center">
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 text-white">
+                <CardContent className="p-5 text-center">
+                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-zinc-900 text-white">
                     <ClipboardList className="h-5 w-5" />
                   </div>
                   <div className="text-base font-semibold text-zinc-900">
@@ -205,25 +225,25 @@ export default function CSR() {
               csrs.map((csr) => (
                 <Card
                   key={csr.id}
-                  className="overflow-hidden rounded-[28px] border border-zinc-200 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 shadow-sm"
+                  className="overflow-hidden rounded-[24px] border border-zinc-200 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 shadow-sm"
                 >
-                  <CardContent className="p-0">
+                  <CardContent className="p-4">
                     <div
-                      className="cursor-pointer p-4"
+                      className="cursor-pointer"
                       onClick={() => navigate("/csr/" + csr.id)}
                     >
-                      <div className="mb-4 flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold tracking-tight text-zinc-900">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[17px] font-semibold tracking-tight text-zinc-900">
                             {csr.csr_number}
                           </div>
-                          <div className="mt-1 text-sm text-zinc-500">
+                          <div className="mt-1 truncate text-sm text-zinc-700">
                             {csr.client_name || "No client name"}
                           </div>
                         </div>
 
                         <Badge
-                          className={`rounded-full border px-3 py-1 text-[11px] font-medium ${getStatusTone(
+                          className={`rounded-full border px-3 py-1 text-[10px] font-medium whitespace-nowrap ${getStatusTone(
                             csr.status
                           )}`}
                         >
@@ -231,42 +251,31 @@ export default function CSR() {
                         </Badge>
                       </div>
 
-                      <div className="rounded-2xl border border-zinc-200 bg-white/80 p-4">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <div className="text-zinc-400">Equipment</div>
-                            <div className="mt-1 font-medium text-zinc-800">
-                              {csr.equipment_type || "-"}
-                            </div>
+                      <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                        <div className="min-w-0">
+                          <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-400">
+                            Equipment
                           </div>
-
-                          <div className="text-right">
-                            <div className="text-zinc-400">Date</div>
-                            <div className="mt-1 font-medium text-zinc-800">
-                              {csr.date || "-"}
-                            </div>
+                          <div className="mt-1 truncate font-medium text-zinc-800">
+                            {csr.equipment_type || "-"}
                           </div>
                         </div>
 
-                        {csr.make && (
-                          <div className="mt-4 border-t border-zinc-200 pt-4">
-                            <div className="text-zinc-400 text-sm">Make</div>
-                            <div className="mt-1 text-sm font-medium text-zinc-800">
-                              {csr.make}
-                            </div>
+                        <div className="text-right">
+                          <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-400">
+                            Date
                           </div>
-                        )}
+                          <div className="mt-1 font-medium text-zinc-800">
+                            {csr.date || "-"}
+                          </div>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="border-t border-zinc-200 bg-white/70 px-4 py-3">
-                      <Button
-                        variant="outline"
-                        className="w-full rounded-xl border-zinc-300 bg-zinc-900 text-white hover:bg-black hover:text-white"
-                        onClick={() => navigate("/csr/" + csr.id)}
-                      >
-                        View Report
-                      </Button>
+                      {csr.make && (
+                        <div className="mt-3 truncate text-sm text-zinc-500">
+                          {csr.make}
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -274,7 +283,6 @@ export default function CSR() {
             )}
           </div>
         ) : (
-          /* desktop */
           <Card className="overflow-hidden rounded-[28px] border border-zinc-200 bg-white shadow-sm">
             <CardContent className="p-0">
               <div className="border-b border-zinc-200 bg-zinc-50 px-5 py-4">
@@ -356,7 +364,6 @@ export default function CSR() {
           </Card>
         )}
 
-        {/* mobile fab */}
         {isMobile && (
           <button
             onClick={() => navigate("/csr/new")}
