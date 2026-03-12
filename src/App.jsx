@@ -1,7 +1,11 @@
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useEffect, useState, useRef } from 'react'
+import { Loader2 } from 'lucide-react'
 import { supabase } from './supabase'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { useIsMobile } from './hooks/useIsMobile'
 import Dashboard from './pages/Dashboard'
 import Invoices from './pages/Invoices'
@@ -29,41 +33,75 @@ function SetPasswordModal({ onComplete }) {
   const [done, setDone] = useState(false)
 
   const handleSubmit = async () => {
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return }
-    if (password !== confirm) { setError('Passwords do not match'); return }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match')
+      return
+    }
+
     setLoading(true)
     const { error: updateError } = await supabase.auth.updateUser({ password })
-    if (updateError) { setError(updateError.message); setLoading(false); return }
+    if (updateError) {
+      setError(updateError.message)
+      setLoading(false)
+      return
+    }
+
     const { data: { user } } = await supabase.auth.getUser()
     await supabase.from('profiles').update({ has_password: true }).eq('id', user.id)
     setDone(true)
     setTimeout(() => onComplete(), 1500)
   }
 
-  const overlay = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }
-  const card = { backgroundColor: 'white', borderRadius: '12px', padding: '32px', width: '100%', maxWidth: '400px', margin: '20px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }
-  const inp = { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '16px', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }
-
   return (
-    <div style={overlay}>
-      <div style={card}>
-        <div style={{ color: '#CC0000', fontWeight: '700', fontSize: '18px', marginBottom: '6px' }}>Set System Password</div>
-        <div style={{ color: '#666', fontSize: '13px', marginBottom: '20px' }}>Set a password to sign in with email. You only need to do this once.</div>
+    <Dialog open>
+      <DialogContent className="sm:max-w-md" hideClose>
+        <DialogHeader>
+          <DialogTitle className="text-red-700">Set System Password</DialogTitle>
+          <DialogDescription>
+            Set a password to sign in with email. You only need to do this once.
+          </DialogDescription>
+        </DialogHeader>
+
         {done ? (
-          <div style={{ color: '#16A34A', fontWeight: '600', textAlign: 'center' }}>✓ Password set successfully!</div>
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-700">
+            Password set successfully.
+          </div>
         ) : (
-          <>
-            <input type="password" placeholder="New password" style={inp} value={password} onChange={e => setPassword(e.target.value)} />
-            <input type="password" placeholder="Confirm password" style={inp} value={confirm} onChange={e => setConfirm(e.target.value)} />
-            {error && <div style={{ color: '#CC0000', fontSize: '12px', marginBottom: '12px' }}>{error}</div>}
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <div onClick={() => onComplete()} style={{ flex: 1, padding: '10px', textAlign: 'center', border: '1px solid #ddd', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: '#666' }}>Skip for now</div>
-              <div onClick={handleSubmit} style={{ flex: 1, padding: '10px', textAlign: 'center', backgroundColor: '#CC0000', color: 'white', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>{loading ? 'Setting...' : 'Set Password'}</div>
+          <div className="space-y-3">
+            <Input
+              type="password"
+              placeholder="New password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+            />
+            <Input
+              type="password"
+              placeholder="Confirm password"
+              value={confirm}
+              onChange={e => setConfirm(e.target.value)}
+            />
+            {error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" className="flex-1" onClick={onComplete}>
+                Skip for now
+              </Button>
+              <Button type="button" className="flex-1 bg-red-700 hover:bg-red-800" onClick={handleSubmit} disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading ? 'Setting...' : 'Set Password'}
+              </Button>
             </div>
-          </>
+          </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
