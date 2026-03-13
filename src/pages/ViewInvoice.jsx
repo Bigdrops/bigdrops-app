@@ -197,21 +197,18 @@ export default function ViewInvoice() {
     setSavingAdvance(true)
     const threadId = generateThreadId()
     const { error } = await supabase.from('invoices').update({
-      thread_id:     threadId,
-      thread_role:   'advance',
-      thread_position: 1,
-      is_advance:    true,
+      thread_id:            threadId,
+      thread_role:          'advance',
+      thread_position:      1,
+      is_advance:           true,
       total_contract_value: contractVal,
-      advance_mode:  'percent',
-      advance_value: derivedPct,
-      job_title:     advanceForm.jobTitle.trim() || null,
+      advance_mode:         'percent',
+      advance_value:        derivedPct,
+      job_title:            advanceForm.jobTitle.trim() || null,
       thread_created_from_invoice_id: id,
     }).eq('id', id)
     setSavingAdvance(false)
     if (error) { alert('Failed to convert: ' + error.message); return }
-    setShowAdvanceModal(false)
-    await fetchInvoice()
-  }
     setShowAdvanceModal(false)
     await fetchInvoice()
   }
