@@ -23,6 +23,10 @@ const NewCSR         = lazy(() => import('./pages/NewCSR'))
 const ViewCSR        = lazy(() => import('./pages/ViewCSR'))
 const EditCSR        = lazy(() => import('./pages/EditCSR'))
 const Settings       = lazy(() => import('./pages/Settings'))
+const Projects       = lazy(() => import('./pages/Projects'))        // ← Added
+const NewProject     = lazy(() => import('./pages/NewProject'))      // ← Added
+const ProjectDetail  = lazy(() => import('./pages/ProjectDetail'))   // ← Added
+const Reports        = lazy(() => import('./pages/Reports'))         // ← Added
 const Login          = lazy(() => import('./pages/Login'))
 const PendingApproval = lazy(() => import('./pages/PendingApproval'))
 const ResetPassword  = lazy(() => import('./pages/ResetPassword'))
@@ -43,8 +47,7 @@ function SetPasswordModal({ onComplete }) {
   const handleSubmit = async () => {
     if (password.length < 6) {
       setError('Password must be at least 6 characters')
-      return
-    }
+      return    }
     if (password !== confirm) {
       setError('Passwords do not match')
       return
@@ -93,8 +96,7 @@ function SetPasswordModal({ onComplete }) {
               onChange={e => setConfirm(e.target.value)}
             />
             {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error}
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">                {error}
               </div>
             )}
             <div className="flex gap-2">
@@ -142,6 +144,9 @@ function AppShell({ session, profile, onProfileUpdate }) {
         <Route path="/clients/new" element={<AddClient />} />
         <Route path="/clients/edit/:id" element={<EditClient />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/projects" element={<Projects />} />              {/* ← Added */}
+        <Route path="/projects/new" element={<NewProject />} />        {/* ← Added */}        <Route path="/projects/:id" element={<ProjectDetail />} />     {/* ← Added */}
+        <Route path="/reports" element={<Reports />} />                {/* ← Added */}
       </Routes>
       </Suspense>
     </>
@@ -189,8 +194,7 @@ function App() {
   }, [])
 
   if (authLoading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F7F5' }}>
+    return (      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F7F5' }}>
         <div style={{ textAlign: 'center', color: '#4B5563', fontSize: '14px' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '999px', border: '3px solid #E5E7EB', borderTopColor: '#CC0000', margin: '0 auto 10px', animation: 'spin 1s linear infinite' }} />
           Checking authentication…
