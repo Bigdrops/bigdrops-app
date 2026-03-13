@@ -93,6 +93,20 @@ const styles = StyleSheet.create({
   // Footer
   footer: { borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 10, marginTop: 12 },
   footerText: { fontSize: 7.5, color: '#888', textAlign: 'center', lineHeight: 1.6 },
+
+  // Advance Payment Schedule
+  advanceBlock: { marginBottom: 14, backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#BFDBFE', borderRadius: 6, padding: 12 },
+  advanceTitle: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#1D4ED8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 },
+  advanceDesc: { fontSize: 8, color: '#374151', marginBottom: 8, lineHeight: 1.5 },
+  advanceGrid: { flexDirection: 'row', gap: 8 },
+  advanceNowBox: { flex: 1, backgroundColor: '#DBEAFE', borderWidth: 2, borderColor: '#3B82F6', borderRadius: 5, padding: 8 },
+  advanceBalBox: { flex: 1, backgroundColor: 'white', borderWidth: 1, borderColor: '#93C5FD', borderRadius: 5, padding: 8 },
+  advanceBoxLabel: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#1D4ED8', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 },
+  advanceBoxAmt: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#1E3A8A' },
+  advanceBoxSub: { fontSize: 7, color: '#3B82F6', marginTop: 2 },
+  advanceBalLabel: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 },
+  advanceBalAmt: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#374151' },
+  advanceBalSub: { fontSize: 7, color: '#888', marginTop: 2 },
 })
 
 const stripHtml = (html) => {
@@ -128,7 +142,7 @@ const parseCF = (raw) => {
 
 export default function InvoicePDF({ invoice, items = [], client, settings = {} }) {
   const cf = parseCF(invoice.custom_fields)
-  const { mergeQtyUnit, showItemImages, attachments, chargeLabels, groupMeta } = cf
+  const { mergeQtyUnit, showItemImages, attachments, chargeLabels, groupMeta, advanceMeta } = cf
 
   const companyName    = settings.company_name    || 'SUN & SHIELD POWER SOLUTIONS'
   const companyTagline = settings.company_tagline  || 'Generator Sales | Maintenance | Installation | Rental | Facility Management'
@@ -187,7 +201,8 @@ export default function InvoicePDF({ invoice, items = [], client, settings = {} 
         rows.push({ _type: 'group_header', item, index })
       } else {
         const amount = Number(item.amount || (Number(item.quantity) * Number(item.unit_price)) || 0)
-        currentGroupSubtotal += amount
+        // Only accumulate when inside a named group — ungrouped items must not bleed into next group's subtotal
+        if (currentGroupName !== null) currentGroupSubtotal += amount
         rows.push({ _type: 'item', item, index, amount })
       }
     })
@@ -402,6 +417,28 @@ export default function InvoicePDF({ invoice, items = [], client, settings = {} 
             <Text style={styles.amountWordsText}>{invoice.amount_in_words}</Text>
           </View>
         ) : null}
+
+        {/* ── Advance Payment Schedule — only when invoice was created as an advance ── */}
+        {advanceMeta && advanceMeta.advanceAmount > 0 && (
+          <View style={styles.advanceBlock}>
+            <Text style={styles.advanceTitle}>Payment Schedule</Text>
+            <Text style={styles.advanceDesc}>
+              {`This invoice covers a ${advanceMeta.pct}% advance on total contract value of NGN ${Number(advanceMeta.contractTotal).toLocaleString()}.${advanceMeta.sourceInvoiceNumber ? ' Ref: ' + advanceMeta.sourceInvoiceNumber + (advanceMeta.sourceInvoiceTitle ? ' — ' + advanceMeta.sourceInvoiceTitle : '') : ''}`}
+            </Text>
+            <View style={styles.advanceGrid}>
+              <View style={styles.advanceNowBox}>
+                <Text style={styles.advanceBoxLabel}>{`Amount Due Now (${advanceMeta.pct}%)`}</Text>
+                <Text style={styles.advanceBoxAmt}>{`NGN ${Number(advanceMeta.advanceAmount).toLocaleString()}`}</Text>
+                <Text style={styles.advanceBoxSub}>Current Invoice</Text>
+              </View>
+              <View style={styles.advanceBalBox}>
+                <Text style={styles.advanceBalLabel}>{`Balance (${(100 - advanceMeta.pct).toFixed(1)}%)`}</Text>
+                <Text style={styles.advanceBalAmt}>{`NGN ${Number(advanceMeta.balance).toLocaleString()}`}</Text>
+                <Text style={styles.advanceBalSub}>Due on completion</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Bottom milestone fields */}
         {cf.bottom && cf.bottom.filter(f => f.text).length > 0 && (

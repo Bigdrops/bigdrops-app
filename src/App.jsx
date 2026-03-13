@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useEffect, useState, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
@@ -7,23 +6,32 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { useIsMobile } from './hooks/useIsMobile'
-import Dashboard from './pages/Dashboard'
-import Invoices from './pages/Invoices'
-import Quotations from './pages/Quotations'
-import CSR from './pages/CSR'
-import Clients from './pages/Clients'
-import AddClient from './pages/AddClient'
-import EditClient from './pages/EditClient'
-import NewInvoice from './pages/NewInvoice'
-import ViewInvoice from './pages/ViewInvoice'
-import EditInvoice from './pages/EditInvoice'
-import NewCSR from './pages/NewCSR'
-import ViewCSR from './pages/ViewCSR'
-import EditCSR from './pages/EditCSR'
-import Settings from './pages/Settings'
-import Login from './pages/Login'
-import PendingApproval from './pages/PendingApproval'
-import ResetPassword from './pages/ResetPassword'
+import { lazy, Suspense } from 'react'
+
+// Lazy-loaded routes — each page loads only when first visited, not upfront
+const Dashboard      = lazy(() => import('./pages/Dashboard'))
+const Invoices       = lazy(() => import('./pages/Invoices'))
+const Quotations     = lazy(() => import('./pages/Quotations'))
+const CSR            = lazy(() => import('./pages/CSR'))
+const Clients        = lazy(() => import('./pages/Clients'))
+const AddClient      = lazy(() => import('./pages/AddClient'))
+const EditClient     = lazy(() => import('./pages/EditClient'))
+const NewInvoice     = lazy(() => import('./pages/NewInvoice'))
+const ViewInvoice    = lazy(() => import('./pages/ViewInvoice'))
+const EditInvoice    = lazy(() => import('./pages/EditInvoice'))
+const NewCSR         = lazy(() => import('./pages/NewCSR'))
+const ViewCSR        = lazy(() => import('./pages/ViewCSR'))
+const EditCSR        = lazy(() => import('./pages/EditCSR'))
+const Settings       = lazy(() => import('./pages/Settings'))
+const Login          = lazy(() => import('./pages/Login'))
+const PendingApproval = lazy(() => import('./pages/PendingApproval'))
+const ResetPassword  = lazy(() => import('./pages/ResetPassword'))
+
+const PageLoader = () => (
+  <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F7F5' }}>
+    <div style={{ width: '28px', height: '28px', borderRadius: '999px', border: '3px solid #E5E7EB', borderTopColor: '#CC0000', animation: 'spin 1s linear infinite' }} />
+  </div>
+)
 
 function SetPasswordModal({ onComplete }) {
   const [password, setPassword] = useState('')
@@ -118,6 +126,7 @@ function AppShell({ session, profile, onProfileUpdate }) {
       {showSetPassword && (
         <SetPasswordModal onComplete={() => { setShowSetPassword(false); onProfileUpdate() }} />
       )}
+      <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/" element={<Dashboard session={session} />} />
         <Route path="/invoices" element={<Invoices />} />
@@ -134,6 +143,7 @@ function AppShell({ session, profile, onProfileUpdate }) {
         <Route path="/clients/edit/:id" element={<EditClient />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
+      </Suspense>
     </>
   )
 }
@@ -193,6 +203,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/*" element={
@@ -203,6 +214,7 @@ function App() {
             : <AppShell session={session} profile={profile} onProfileUpdate={() => loadProfile(session.user.id)} />
         } />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }

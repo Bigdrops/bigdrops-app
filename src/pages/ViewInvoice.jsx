@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { PDFDownloadLink } from '@react-pdf/renderer'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
-import InvoicePDF from '../components/InvoicePDF'
 import ThreadSummaryCard from '../components/ThreadSummaryCard'
 import { useInvoiceThread } from '../hooks/useInvoiceThread'
 
@@ -42,7 +40,33 @@ export default function ViewInvoice() {
   const [savingPayment, setSavingPayment] = useState(false)
   const [showAdvanceModal, setShowAdvanceModal] = useState(false)
   const [advanceForm, setAdvanceForm] = useState({ mode: 'percent', value: '50' })
+  const [pdfGenerating, setPdfGenerating] = useState(false)
   const moreRef = useRef()
+
+  const handleDownloadPDF = async () => {
+    if (pdfGenerating) return
+    setPdfGenerating(true)
+    try {
+      const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('../components/InvoicePDF'),
+      ])
+      const blob = await pdf(
+        <InvoicePDF invoice={invoice} items={items} client={client} settings={settings} />
+      ).toBlob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = (invoice.invoice_number || 'invoice') + '.pdf'
+      document.body.appendChild(a)
+      a.click()
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url) }, 100)
+    } catch (err) {
+      alert('PDF generation failed: ' + err.message)
+    } finally {
+      setPdfGenerating(false)
+    }
+  }
 
   // ── Thread hook — only active when invoice has a thread_id ─────────────────
   const { buildNextInvoiceDefaults } = useInvoiceThread(invoice?.thread_id || null)
@@ -163,37 +187,35 @@ export default function ViewInvoice() {
   const handleConfirmAdvance = () => {
     const val = parseFloat(advanceForm.value)
     if (isNaN(val) || val <= 0) { alert('Enter a valid amount'); return }
-    const invoiceTotal = Number(invoice.total || 0)
-    let advanceAmount
+    const contractTotal = Number(invoice.total || 0)
+    let advanceAmount, pct
     if (advanceForm.mode === 'percent') {
       if (val > 100) { alert('Percentage cannot exceed 100%'); return }
-      advanceAmount = Math.round((invoiceTotal * val / 100) * 100) / 100
+      pct = val
+      advanceAmount = Math.round((contractTotal * val / 100) * 100) / 100
     } else {
-      if (val > invoiceTotal) { alert('Amount cannot exceed invoice total'); return }
+      if (val > contractTotal) { alert('Amount cannot exceed invoice total'); return }
       advanceAmount = Math.round(val * 100) / 100
+      pct = contractTotal > 0 ? Math.round((advanceAmount / contractTotal) * 10000) / 100 : 0
     }
-    const pctLabel = advanceForm.mode === 'percent' ? `${val}%` : `₦${advanceAmount.toLocaleString()}`
+    const balance = Math.round((contractTotal - advanceAmount) * 100) / 100
     setShowAdvanceModal(false)
     navigate('/invoices/new', {
       state: {
+        // Pass full invoice fields — NewInvoice will use these as prefill
         prefill: {
           ...invoice,
-          invoice_number: '',
+          invoice_number: '', // auto-assigned in NewInvoice
           issue_date: new Date().toISOString().split('T')[0],
           due_date: '',
           status: 'draft',
-          notes: `Advance invoice (${pctLabel}) for ${invoice.invoice_number}${invoice.invoice_title ? ' — ' + invoice.invoice_title : ''}`,
-          thread_id: null, total_contract_value: 0, thread_position: 1, is_advance: false, amount_received: 0,
-          workmanship: 0, transportation: 0, shipping: 0, discount: 0, wht: 0,
+          notes: invoice.notes || '',
+          thread_id: null, total_contract_value: 0, thread_position: 1, is_advance: true, amount_received: 0,
         },
-        prefillItems: [{
-          id: null, row_type: 'standard',
-          description: `Advance Payment (${pctLabel}) — ${invoice.invoice_number}${invoice.invoice_title ? ': ' + invoice.invoice_title : ''}`,
-          sub_description: '', make: '', quantity: 1, unit: '',
-          unit_price: advanceAmount,
-          install_rate: null, install_rate_override: false, vat_rate: null, discount_rate: null,
-          custom_data: {}, image_url: null, group_name: '', sort_order: 0,
-        }],
+        // Pass ALL original line items — the full invoice renders with a payment schedule block
+        prefillItems: items.map(it => ({ ...it, id: null })),
+        // advanceMeta stored in custom_fields on save, rendered as payment schedule in PDF
+        advanceMeta: { pct, advanceAmount, balance, contractTotal, sourceInvoiceNumber: invoice.invoice_number, sourceInvoiceTitle: invoice.invoice_title || '' },
       }
     })
   }
@@ -294,13 +316,12 @@ export default function ViewInvoice() {
             </div>
           )}
           <div style={{ flex: 1 }} />
-          <PDFDownloadLink document={<InvoicePDF invoice={invoice} items={items} client={client} settings={settings} />} fileName={invoice.invoice_number + '.pdf'} style={{ textDecoration: 'none' }}>
-            {({ loading: pdfLoading }) => (
-              <div style={{ padding: '10px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', backgroundColor: '#0056B3', color: 'white', fontWeight: 'bold' }}>
-                {pdfLoading ? 'Preparing...' : '⬇ Download PDF'}
-              </div>
-            )}
-          </PDFDownloadLink>
+          <div
+            onClick={handleDownloadPDF}
+            style={{ padding: '10px 16px', borderRadius: '6px', cursor: pdfGenerating ? 'default' : 'pointer', fontSize: '14px', backgroundColor: '#0056B3', color: 'white', fontWeight: 'bold', opacity: pdfGenerating ? 0.7 : 1 }}
+          >
+            {pdfGenerating ? 'Preparing...' : '⬇ Download PDF'}
+          </div>
           <div onClick={() => navigate('/invoices/edit/' + id)} style={{ padding: '10px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', backgroundColor: '#CC0000', color: 'white', fontWeight: 'bold' }}>
             Edit
           </div>
