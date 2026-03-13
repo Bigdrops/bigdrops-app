@@ -1681,6 +1681,46 @@ export default function EditInvoice() {
                   })()}
                 </tbody>
               </table>
+
+              {/* Persistent action bar so Add Item never disappears */}
+              <div
+                style={{
+                  marginTop: '14px',
+                  display: 'flex',
+                  gap: '10px',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div
+                  onClick={addItem}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: '#CC0000',
+                    color: 'white',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  + Add Item
+                </div>
+
+                <div
+                  onClick={addGroup}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: '#1a1a1a',
+                    color: 'white',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                  }}
+                >
+                  + Add Group
+                </div>
+              </div>
+
             </div>
           )}
         </div>
