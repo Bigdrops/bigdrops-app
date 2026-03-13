@@ -40,78 +40,12 @@ function useIsNarrow() {
 const makeGroupId = () =>
   `grp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
-const normalizePrefillItems = (prefillItems) => {
-  if (!prefillItems || !Array.isArray(prefillItems) || prefillItems.length === 0) {
-    return [{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }]
-  }
-
-  let currentGroupId = null
-  let currentGroupName = ''
-
-  return prefillItems.map((item, idx) => {
-    const rowType = item.row_type || 'standard'
-
-    if (rowType === 'group_header') {
-      currentGroupId = item.group_id || makeGroupId()
-      currentGroupName = item.group_name || `Group ${idx + 1}`
-
-      return {
-        ...item,
-        row_type: 'group_header',
-        group_id: currentGroupId,
-        group_name: currentGroupName,
-        sort_order: idx,
-      }
-    }
-
-    const itemGroupId =
-      item.group_id !== undefined && item.group_id !== null ? item.group_id : null
-
-    const itemGroupName =
-      item.group_name !== undefined && item.group_name !== null ? item.group_name : ''
-
-    return {
-      ...item,
-      row_type: 'standard',
-      group_id: itemGroupId,
-      group_name: itemGroupName,
-      sort_order: idx,
-    }
-  })
-}
-
-const deriveGroupsFromItems = (normalizedItems) => {
-  const groups = []
-  const seen = new Set()
-
-  normalizedItems.forEach((item, idx) => {
-    if (item.row_type === 'group_header') {
-      const id = item.group_id || makeGroupId()
-      if (!seen.has(id)) {
-        groups.push({
-          ...(makeEmptyGroup() || {}),
-          id,
-          name: item.group_name || `Group ${idx + 1}`,
-          showSubtotal: false,
-        })
-        seen.add(id)
-      }
-    }
-  })
-
-  return groups
-}
-
 export default function NewInvoice() {
   const navigate = useNavigate()
   const location = useLocation()
-
-  const prefill = location.state?.prefill
-  const prefillItems = location.state?.prefillItems
-  const threadDefaults = location.state?.threadDefaults
-
-  const normalizedPrefillItems = normalizePrefillItems(prefillItems)
-  const initialGroups = deriveGroupsFromItems(normalizedPrefillItems)
+  const prefill        = location.state?.prefill
+  const prefillItems   = location.state?.prefillItems
+  const threadDefaults = location.state?.threadDefaults  // from buildNextInvoiceDefaults()
 
   const [saving, setSaving] = useState(false)
   const [discountType, setDiscountType] = useState('fixed')
@@ -125,7 +59,6 @@ export default function NewInvoice() {
   const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
   const [showItemImages, setShowItemImages] = useState(false)
   const [attachments, setAttachments] = useState([])
-
   const {
     columns,
     isVisible,
@@ -138,7 +71,6 @@ export default function NewInvoice() {
     moveColumn,
     customColumns,
   } = useInvoiceColumns()
-
   const [customFields, setCustomFields] = useState([])
   const [bottomFields, setBottomFields] = useState([])
   const [extraCharges, setExtraCharges] = useState([])
@@ -149,21 +81,17 @@ export default function NewInvoice() {
   })
   const [notesTitle, setNotesTitle] = useState('Notes')
   const [termsTitle, setTermsTitle] = useState('Terms and Conditions')
-
   const isMobile = useIsMobile()
   const isNarrow = useIsNarrow()
 
-  const [invoiceTitle, setInvoiceTitle] = useState(
-    prefill?.invoice_title || threadDefaults?.job_title || ''
-  )
-
+  const [invoiceTitle, setInvoiceTitle] = useState(prefill?.invoice_title || '')
   const [invoice, setInvoice] = useState(
     prefill
       ? { ...prefill }
       : {
           invoice_number: '',
-          client_id: threadDefaults?.client_id || '',
-          client_name: threadDefaults?.client_name || '',
+          client_id: '',
+          client_name: '',
           issue_date: new Date().toISOString().split('T')[0],
           due_date: '',
           status: 'draft',
@@ -185,8 +113,18 @@ export default function NewInvoice() {
         }
   )
 
-  const [items, setItems] = useState(normalizedPrefillItems)
-  const [groups, setGroups] = useState(initialGroups)
+  const [items, setItems] = useState(
+    prefillItems
+      ? prefillItems.map((i) => ({
+          ...i,
+          row_type: i.row_type || 'standard',
+          group_id: i.group_id || null,
+          group_name: i.group_name || '',
+        }))
+      : [{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }]
+  )
+
+  const [groups, setGroups] = useState([])
 
   useEffect(() => {
     if (!prefill) {
@@ -197,7 +135,8 @@ export default function NewInvoice() {
         .limit(1)
         .then(({ data }) => {
           if (data && data.length > 0) {
-            const num = parseInt(data[0].invoice_number.replace('SASINV-B', '')) + 1
+            const num =
+              parseInt(data[0].invoice_number.replace('SASINV-B', '')) + 1
             setInvoice((i) => ({
               ...i,
               invoice_number: 'SASINV-B' + String(num).padStart(3, '0'),
@@ -225,11 +164,9 @@ export default function NewInvoice() {
         group_id: null,
         group_name: '',
       }
-
       if (insertAt === null || insertAt >= prev.length) {
         return [...prev, { ...newItem, sort_order: prev.length }]
       }
-
       const next = [...prev]
       next.splice(insertAt, 0, { ...newItem, sort_order: insertAt })
       return next.map((it, idx) => ({ ...it, sort_order: idx }))
@@ -237,45 +174,6 @@ export default function NewInvoice() {
   }
 
   const addItem = () => addUngroupedItem()
-
-  const addUngroupedItemAfterGroup = (groupId) => {
-    setItems((prev) => {
-      const headerIdx = prev.findIndex(
-        (item) => item.row_type === 'group_header' && item.group_id === groupId
-      )
-
-      if (headerIdx === -1) {
-        return [
-          ...prev,
-          {
-            ...makeEmptyItem(),
-            row_type: 'standard',
-            group_id: null,
-            group_name: '',
-            sort_order: prev.length,
-          },
-        ]
-      }
-
-      let insertAt = headerIdx + 1
-
-      for (let i = headerIdx + 1; i < prev.length; i++) {
-        if (prev[i].row_type === 'group_header') break
-        insertAt = i + 1
-      }
-
-      const next = [...prev]
-      next.splice(insertAt, 0, {
-        ...makeEmptyItem(),
-        row_type: 'standard',
-        group_id: null,
-        group_name: '',
-        sort_order: insertAt,
-      })
-
-      return next.map((item, idx) => ({ ...item, sort_order: idx }))
-    })
-  }
 
   const removeItem = (index) =>
     setItems((prev) =>
@@ -289,7 +187,6 @@ export default function NewInvoice() {
   const moveItem = (index, dir) => {
     const newIdx = index + dir
     if (newIdx < 0 || newIdx >= items.length) return
-
     const next = [...items]
     ;[next[index], next[newIdx]] = [next[newIdx], next[index]]
     setItems(next.map((item, idx) => ({ ...item, sort_order: idx })))
@@ -298,7 +195,6 @@ export default function NewInvoice() {
   const addGroup = () => {
     const base = makeEmptyGroup()
     const id = base.id || makeGroupId()
-
     const group = {
       ...base,
       id,
@@ -307,7 +203,6 @@ export default function NewInvoice() {
     }
 
     setGroups((prev) => [...prev, group])
-
     setItems((prev) => [
       ...prev.map((item, idx) => ({ ...item, sort_order: idx })),
       {
@@ -324,10 +219,11 @@ export default function NewInvoice() {
     setGroups((prev) =>
       prev.map((g) => (g.id === groupId ? { ...g, name: newName } : g))
     )
-
     setItems((prev) =>
       prev.map((item) =>
-        item.group_id === groupId ? { ...item, group_name: newName } : item
+        item.group_id === groupId
+          ? { ...item, group_name: newName }
+          : item
       )
     )
   }
@@ -341,7 +237,6 @@ export default function NewInvoice() {
 
   const deleteGroup = (groupId) => {
     setGroups((prev) => prev.filter((g) => g.id !== groupId))
-
     setItems((prev) =>
       prev
         .filter(
@@ -409,7 +304,6 @@ export default function NewInvoice() {
         headers.forEach((h, idx) => {
           row[h] = cols[idx] || ''
         })
-
         newItems.push({
           ...makeEmptyItem(),
           row_type: 'standard',
@@ -458,7 +352,6 @@ export default function NewInvoice() {
 
   const numberToWords = (num) => {
     if (!num || num === 0) return 'ZERO NAIRA ONLY'
-
     const ones = [
       '',
       'ONE',
@@ -481,7 +374,6 @@ export default function NewInvoice() {
       'EIGHTEEN',
       'NINETEEN',
     ]
-
     const tens = [
       '',
       '',
@@ -494,35 +386,24 @@ export default function NewInvoice() {
       'EIGHTY',
       'NINETY',
     ]
-
     const c = (n) => {
       if (n < 20) return ones[n]
       if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '')
-      if (n < 1000) {
+      if (n < 1000)
         return (
           ones[Math.floor(n / 100)] +
           ' HUNDRED' +
           (n % 100 ? ' ' + c(n % 100) : '')
         )
-      }
-      if (n < 1e6) {
+      if (n < 1e6)
         return c(Math.floor(n / 1000)) + ' THOUSAND' + (n % 1000 ? ' ' + c(n % 1000) : '')
-      }
-      if (n < 1e9) {
+      if (n < 1e9)
         return c(Math.floor(n / 1e6)) + ' MILLION' + (n % 1e6 ? ' ' + c(n % 1e6) : '')
-      }
       return c(Math.floor(n / 1e9)) + ' BILLION' + (n % 1e9 ? ' ' + c(n % 1e9) : '')
     }
-
     const naira = Math.floor(num)
     const kobo = Math.round((num - naira) * 100)
-
-    return (
-      c(naira) +
-      ' NAIRA' +
-      (kobo > 0 ? ' AND ' + c(kobo) + ' KOBO' : '') +
-      ' ONLY'
-    )
+    return c(naira) + ' NAIRA' + (kobo > 0 ? ' AND ' + c(kobo) + ' KOBO' : '') + ' ONLY'
   }
 
   const handleSave = async (status) => {
@@ -555,12 +436,6 @@ export default function NewInvoice() {
         ? invoice.custom_payment_terms
         : invoice.payment_terms
 
-    const threadId = threadDefaults?.thread_id || null
-    const totalContractValue = Number(threadDefaults?.total_contract_value || 0)
-    const threadPosition = Number(threadDefaults?.thread_position || 1)
-    const threadRole = threadDefaults?.thread_role || null
-    const jobTitle = threadDefaults?.job_title || null
-
     const { data: inv, error } = await supabase
       .from('invoices')
       .insert([
@@ -588,18 +463,17 @@ export default function NewInvoice() {
           install_rate_total: installRateTotal,
           total: totalPayable,
           amount_in_words: numberToWords(totalPayable),
-
-          thread_id: threadId,
-          total_contract_value: totalContractValue,
-          thread_position: threadPosition,
-          thread_role: threadRole,
-          job_title: jobTitle,
-
-          is_advance: false,
+          // Thread fields — from prefill (clone/advance) or threadDefaults (follow-up)
+          thread_id:            prefill?.thread_id            ?? threadDefaults?.thread_id            ?? null,
+          thread_role:          prefill?.thread_role          ?? threadDefaults?.thread_role          ?? null,
+          thread_position:      prefill?.thread_position      ?? threadDefaults?.thread_position      ?? 1,
+          total_contract_value: prefill?.total_contract_value ?? threadDefaults?.total_contract_value ?? 0,
+          job_title:            prefill?.job_title            ?? threadDefaults?.job_title            ?? null,
+          is_advance:           prefill?.is_advance           ?? false,
+          advance_mode:         prefill?.advance_mode         ?? null,
+          advance_value:        prefill?.advance_value        ?? null,
+          thread_created_from_invoice_id: prefill?.thread_created_from_invoice_id ?? null,
           amount_received: 0,
-          advance_mode: null,
-          advance_value: null,
-          thread_created_from_invoice_id: null,
         },
       ])
       .select()
@@ -638,7 +512,6 @@ export default function NewInvoice() {
     color: '#1a1a1a',
     backgroundColor: 'white',
   }
-
   const lbl = {
     display: 'block',
     fontSize: '12px',
@@ -646,7 +519,6 @@ export default function NewInvoice() {
     color: '#555',
     marginBottom: '4px',
   }
-
   const sec = {
     backgroundColor: 'white',
     padding: '24px',
@@ -654,7 +526,6 @@ export default function NewInvoice() {
     boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
     marginBottom: '20px',
   }
-
   const secT = {
     margin: '0 0 16px 0',
     color: '#0056B3',
@@ -662,13 +533,11 @@ export default function NewInvoice() {
     textTransform: 'uppercase',
     letterSpacing: '1px',
   }
-
   const grid = (cols) => ({
     display: 'grid',
     gridTemplateColumns: isMobile ? '1fr' : cols,
     gap: '16px',
   })
-
   const tog = (active) => ({
     padding: '5px 12px',
     fontSize: '12px',
@@ -682,11 +551,11 @@ export default function NewInvoice() {
 
   const renderGroupHeaderRow = (item, index, reorderBtns, visCount) => {
     const g = groups.find((group) => group.id === item.group_id)
-
     const gItems = g
-      ? items.filter((it) => it.row_type === 'standard' && it.group_id === g.id)
+      ? items.filter(
+          (it) => it.row_type === 'standard' && it.group_id === g.id
+        )
       : []
-
     const gTotal = gItems.reduce(
       (s, it) => s + Number(it.quantity || 0) * Number(it.unit_price || 0),
       0
@@ -717,7 +586,6 @@ export default function NewInvoice() {
               }}
               placeholder="Group name"
             />
-
             {g && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <label
@@ -752,12 +620,10 @@ export default function NewInvoice() {
                       }}
                     />
                   </div>
-
                   <span style={{ color: '#ccc', fontSize: '11px', whiteSpace: 'nowrap' }}>
                     Subtotal
                   </span>
                 </label>
-
                 {g.showSubtotal && (
                   <span
                     style={{
@@ -774,7 +640,6 @@ export default function NewInvoice() {
             )}
           </div>
         </td>
-
         <td style={{ padding: '10px 12px', textAlign: 'center' }}>
           <span
             onClick={() => (g ? deleteGroup(g.id) : removeItem(index))}
@@ -805,174 +670,157 @@ export default function NewInvoice() {
         )
 
         return (
-          <div key={`group_${group.id}_${index}`} style={{ marginBottom: '12px' }}>
-            <div
-              style={{
-                border: '2px solid #333',
-                borderRadius: '10px',
-                overflow: 'hidden',
-              }}
-            >
-              <div style={{ backgroundColor: '#333', padding: '10px 14px' }}>
-                <div
+          <div
+            key={`group_${group.id}_${index}`}
+            style={{
+              border: '2px solid #333',
+              borderRadius: '10px',
+              marginBottom: '16px',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{ backgroundColor: '#333', padding: '10px 14px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                }}
+              >
+                <input
+                  style={{
+                    flex: 1,
+                    backgroundColor: 'transparent',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    border: 'none',
+                    borderBottom: '1px solid #666',
+                    fontSize: '15px',
+                    outline: 'none',
+                    padding: '4px 0',
+                  }}
+                  value={group.name}
+                  onChange={(e) => updateGroupName(group.id, e.target.value)}
+                  placeholder="Group name"
+                />
+                <span
+                  onClick={() => deleteGroup(group.id)}
+                  style={{
+                    color: '#ff6b6b',
+                    cursor: 'pointer',
+                    fontSize: '20px',
+                    lineHeight: 1,
+                  }}
+                >
+                  ×
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <label
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '8px',
+                    gap: '6px',
+                    cursor: 'pointer',
                   }}
                 >
-                  <input
+                  <div
+                    onClick={() => toggleGroupSubtotal(group.id)}
                     style={{
-                      flex: 1,
-                      backgroundColor: 'transparent',
-                      color: 'white',
-                      fontWeight: 'bold',
-                      border: 'none',
-                      borderBottom: '1px solid #666',
-                      fontSize: '15px',
-                      outline: 'none',
-                      padding: '4px 0',
-                    }}
-                    value={group.name}
-                    onChange={(e) => updateGroupName(group.id, e.target.value)}
-                    placeholder="Group name"
-                  />
-
-                  <span
-                    onClick={() => deleteGroup(group.id)}
-                    style={{
-                      color: '#ff6b6b',
-                      cursor: 'pointer',
-                      fontSize: '20px',
-                      lineHeight: 1,
-                    }}
-                  >
-                    ×
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <label
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      cursor: 'pointer',
+                      width: '36px',
+                      height: '20px',
+                      borderRadius: '10px',
+                      backgroundColor: group.showSubtotal ? '#16A34A' : '#555',
+                      position: 'relative',
+                      flexShrink: 0,
                     }}
                   >
                     <div
-                      onClick={() => toggleGroupSubtotal(group.id)}
                       style={{
-                        width: '36px',
-                        height: '20px',
-                        borderRadius: '10px',
-                        backgroundColor: group.showSubtotal ? '#16A34A' : '#555',
-                        position: 'relative',
-                        flexShrink: 0,
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        backgroundColor: 'white',
+                        position: 'absolute',
+                        top: '2px',
+                        left: group.showSubtotal ? '18px' : '2px',
+                        transition: 'left 0.2s',
                       }}
-                    >
-                      <div
-                        style={{
-                          width: '16px',
-                          height: '16px',
-                          borderRadius: '50%',
-                          backgroundColor: 'white',
-                          position: 'absolute',
-                          top: '2px',
-                          left: group.showSubtotal ? '18px' : '2px',
-                          transition: 'left 0.2s',
-                        }}
-                      />
-                    </div>
-
-                    <span style={{ color: '#ccc', fontSize: '12px' }}>
-                      Show subtotal
-                    </span>
-                  </label>
-
-                  {group.showSubtotal && (
-                    <span
-                      style={{
-                        marginLeft: 'auto',
-                        color: '#4ade80',
-                        fontSize: '13px',
-                        fontWeight: 'bold',
-                      }}
-                    >
-                      ₦{groupSubtotal.toLocaleString()}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ padding: '12px' }}>
-                {groupItems.map((groupItem, gi) => {
-                  number++
-                  const itemIndex = items.indexOf(groupItem)
-
-                  return (
-                    <MobileItemCard
-                      key={`group_item_${group.id}_${itemIndex}`}
-                      item={groupItem}
-                      index={itemIndex}
-                      number={number}
-                      isVisible={isVisible}
-                      getColumn={getColumn}
-                      customColumns={customColumns}
-                      showItemImages={showItemImages}
-                      invoice={invoice}
-                      isFirst={gi === 0}
-                      isLast={gi === groupItems.length - 1}
-                      onUpdate={(idx, field, value) => {
-                        if (field === '__install_rate_override') {
-                          setItems((prev) =>
-                            prev.map((it, i) => (i !== idx ? it : { ...it, ...value }))
-                          )
-                        } else {
-                          updateItem(idx, field, value)
-                        }
-                      }}
-                      onRemove={removeItem}
-                      onInsertBelow={() => addItemToGroup(group.id)}
-                      onMoveUp={(idx) => moveItem(idx, -1)}
-                      onMoveDown={(idx) => moveItem(idx, 1)}
                     />
-                  )
-                })}
+                  </div>
+                  <span style={{ color: '#ccc', fontSize: '12px' }}>
+                    Show subtotal
+                  </span>
+                </label>
 
-                <div
-                  onClick={() => addItemToGroup(group.id)}
-                  style={{
-                    padding: '10px',
-                    border: '1px dashed #CC0000',
-                    borderRadius: '8px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    color: '#CC0000',
-                    fontWeight: '600',
-                    marginBottom: '10px',
-                  }}
-                >
-                  + Add item to {group.name || 'group'}
-                </div>
+                {group.showSubtotal && (
+                  <span
+                    style={{
+                      marginLeft: 'auto',
+                      color: '#4ade80',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    ₦{groupSubtotal.toLocaleString()}
+                  </span>
+                )}
+              </div>
+            </div>
 
-                <div
-                  onClick={() => addUngroupedItemAfterGroup(group.id)}
-                  style={{
-                    padding: '10px',
-                    border: '1px dashed #555',
-                    borderRadius: '8px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    color: '#555',
-                    fontWeight: '600',
-                  }}
-                >
-                  + Add ungrouped item below
-                </div>
+            <div style={{ padding: '12px' }}>
+              {groupItems.map((groupItem, gi) => {
+                number++
+                const itemIndex = items.indexOf(groupItem)
+
+                return (
+                  <MobileItemCard
+                    key={`group_item_${group.id}_${itemIndex}`}
+                    item={groupItem}
+                    index={itemIndex}
+                    number={number}
+                    isVisible={isVisible}
+                    getColumn={getColumn}
+                    customColumns={customColumns}
+                    showItemImages={showItemImages}
+                    invoice={invoice}
+                    isFirst={gi === 0}
+                    isLast={gi === groupItems.length - 1}
+                    onUpdate={(idx, field, value) => {
+                      if (field === '__install_rate_override') {
+                        setItems((prev) =>
+                          prev.map((it, i) =>
+                            i !== idx ? it : { ...it, ...value }
+                          )
+                        )
+                      } else {
+                        updateItem(idx, field, value)
+                      }
+                    }}
+                    onRemove={removeItem}
+                    onInsertBelow={() => addItemToGroup(group.id)}
+                    onMoveUp={(idx) => moveItem(idx, -1)}
+                    onMoveDown={(idx) => moveItem(idx, 1)}
+                  />
+                )
+              })}
+
+              <div
+                onClick={() => addItemToGroup(group.id)}
+                style={{
+                  padding: '10px',
+                  border: '1px dashed #CC0000',
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  color: '#CC0000',
+                  fontWeight: '600',
+                }}
+              >
+                + Add item to {group.name || 'group'}
               </div>
             </div>
           </div>
@@ -997,7 +845,9 @@ export default function NewInvoice() {
             onUpdate={(idx, field, value) => {
               if (field === '__install_rate_override') {
                 setItems((prev) =>
-                  prev.map((it, i) => (i !== idx ? it : { ...it, ...value }))
+                  prev.map((it, i) =>
+                    i !== idx ? it : { ...it, ...value }
+                  )
                 )
               } else {
                 updateItem(idx, field, value)
@@ -1018,6 +868,27 @@ export default function NewInvoice() {
   return (
     <Layout title="New Invoice">
       <div style={{ maxWidth: '1100px' }}>
+        {/* Thread context banner — shown when creating a follow-up invoice */}
+        {threadDefaults && (
+          <div style={{ marginBottom: '20px', padding: '14px 18px', backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#1D4ED8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                Job Thread · Invoice {threadDefaults.thread_position} of chain
+              </div>
+              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1E3A8A' }}>
+                {threadDefaults.job_title || 'Follow-up Invoice'}
+              </div>
+              {threadDefaults._suggestedAmount > 0 && (
+                <div style={{ fontSize: '12px', color: '#3B82F6', marginTop: '2px' }}>
+                  Suggested amount: ₦{Number(threadDefaults._suggestedAmount).toLocaleString()}
+                </div>
+              )}
+            </div>
+            <div style={{ fontSize: '11px', color: '#1D4ED8', fontWeight: 'bold', backgroundColor: '#DBEAFE', padding: '6px 12px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
+              {threadDefaults.thread_role === 'final' ? 'FINAL INVOICE' : 'PROGRESS INVOICE'}
+            </div>
+          </div>
+        )}
         {showColumnManager && (
           <ColumnManager
             columns={columns}
@@ -1037,58 +908,6 @@ export default function NewInvoice() {
           />
         )}
 
-        {threadDefaults && (
-          <div
-            style={{
-              backgroundColor: '#EFF6FF',
-              border: '1px solid #BFDBFE',
-              borderRadius: '10px',
-              padding: '14px 16px',
-              marginBottom: '20px',
-            }}
-          >
-            <div
-              style={{
-                fontSize: '11px',
-                fontWeight: 'bold',
-                color: '#1D4ED8',
-                textTransform: 'uppercase',
-                letterSpacing: '1px',
-                marginBottom: '6px',
-              }}
-            >
-              Job Thread
-            </div>
-
-            <div style={{ fontSize: '13px', color: '#1E3A8A', lineHeight: 1.6 }}>
-              {threadDefaults.job_title ? (
-                <div style={{ marginBottom: '4px', fontWeight: 'bold' }}>
-                  {threadDefaults.job_title}
-                </div>
-              ) : null}
-
-              <div>
-                Contract Total:{' '}
-                <strong>₦{Number(threadDefaults.total_contract_value || 0).toLocaleString()}</strong>
-              </div>
-
-              {threadDefaults._suggestedAmount > 0 && (
-                <div>
-                  Suggested Amount:{' '}
-                  <strong>₦{Number(threadDefaults._suggestedAmount || 0).toLocaleString()}</strong>
-                </div>
-              )}
-
-              {threadDefaults._totalReceived > 0 && (
-                <div>
-                  Already Received:{' '}
-                  <strong>₦{Number(threadDefaults._totalReceived || 0).toLocaleString()}</strong>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         <div style={sec}>
           <div style={grid('repeat(3, 1fr)')}>
             <div>
@@ -1099,7 +918,6 @@ export default function NewInvoice() {
                 onChange={(e) => updateInvoice('invoice_number', e.target.value)}
               />
             </div>
-
             <div>
               <label style={lbl}>Issue Date</label>
               <input
@@ -1109,7 +927,6 @@ export default function NewInvoice() {
                 onChange={(e) => updateInvoice('issue_date', e.target.value)}
               />
             </div>
-
             <div>
               <label style={lbl}>Due Date</label>
               <input
@@ -1120,7 +937,6 @@ export default function NewInvoice() {
               />
             </div>
           </div>
-
           <div style={{ marginTop: '12px' }}>
             <label style={lbl}>
               Invoice Title{' '}
@@ -1152,7 +968,6 @@ export default function NewInvoice() {
 
         <div style={sec}>
           <h3 style={secT}>Header Fields</h3>
-
           <div style={grid('1fr 1fr')}>
             <div>
               <label style={lbl}>Work Duration</label>
@@ -1164,7 +979,6 @@ export default function NewInvoice() {
               />
             </div>
           </div>
-
           <div style={{ marginTop: '20px' }}>
             <div
               style={{
@@ -1187,13 +1001,11 @@ export default function NewInvoice() {
                 + Add Field
               </div>
             </div>
-
             {customFields.length === 0 && (
               <div style={{ fontSize: '13px', color: '#bbb', fontStyle: 'italic' }}>
                 Fields like Engine No, Serial No — appear on invoice header.
               </div>
             )}
-
             {customFields.map((field, i) => (
               <div
                 key={i}
@@ -1255,7 +1067,6 @@ export default function NewInvoice() {
             }}
           >
             <h3 style={{ ...secT, margin: 0 }}>Line Items</h3>
-
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <input
                 id="invoice-csv-import"
@@ -1371,7 +1182,6 @@ export default function NewInvoice() {
                           <br />
                           <strong>Optional:</strong> sub_description, unit
                         </div>
-
                         <textarea
                           value={pasteCSV}
                           onChange={(e) => setPasteCSV(e.target.value)}
@@ -1390,7 +1200,6 @@ export default function NewInvoice() {
                             display: 'block',
                           }}
                         />
-
                         <div
                           style={{
                             display: 'flex',
@@ -1403,22 +1212,17 @@ export default function NewInvoice() {
                               if (!pasteCSV.trim()) return
                               const lines = pasteCSV.split('\n').filter((l) => l.trim())
                               if (lines.length < 2) return
-
                               const headers = lines[0]
                                 .split(',')
                                 .map((h) => h.trim().toLowerCase())
-
                               const newItems = []
-
                               for (let i = 1; i < lines.length; i++) {
                                 const cols = lines[i].split(',').map((c) => c.trim())
                                 if (!cols[0]) continue
                                 const row = {}
-
                                 headers.forEach((h, idx) => {
                                   row[h] = cols[idx] || ''
                                 })
-
                                 newItems.push({
                                   ...makeEmptyItem(),
                                   row_type: 'standard',
@@ -1432,7 +1236,6 @@ export default function NewInvoice() {
                                   sort_order: newItems.length,
                                 })
                               }
-
                               if (newItems.length > 0) {
                                 setItems((p) => [
                                   ...p.filter(
@@ -1686,15 +1489,12 @@ export default function NewInvoice() {
                     <th style={{ padding: '10px 12px', color: 'white', width: '30px' }} />
                   </tr>
                 </thead>
-
                 <tbody>
                   {(() => {
                     let n = 0
                     const installCol = getColumn('install_rate')
-
                     return items.map((item, index) => {
                       if (item.row_type === 'standard') n++
-
                       const visCount =
                         3 +
                         (isVisible('make') ? 1 : 0) +
@@ -1705,13 +1505,11 @@ export default function NewInvoice() {
                         customColumns.filter((c) => c.visible).length +
                         (showItemImages ? 1 : 0) +
                         2
-
                       const autoInstall = installCol?.formula
                         ? parseFloat(installCol.formula) *
                           Number(item.quantity || 1) *
                           Number(item.unit_price || 0)
                         : null
-
                       const reorderBtns = (
                         <td
                           style={{
@@ -1762,7 +1560,6 @@ export default function NewInvoice() {
                           }}
                         >
                           {reorderBtns}
-
                           <td
                             style={{
                               padding: '8px',
@@ -1774,22 +1571,24 @@ export default function NewInvoice() {
                           >
                             {n}
                           </td>
-
                           <td style={{ padding: '8px 12px' }}>
                             <input
                               style={inp}
                               value={item.description}
-                              onChange={(e) => updateItem(index, 'description', e.target.value)}
+                              onChange={(e) =>
+                                updateItem(index, 'description', e.target.value)
+                              }
                               placeholder="Item description"
                             />
                             <input
                               style={{ ...inp, marginTop: '4px', fontSize: '13px', color: '#888' }}
                               value={item.sub_description || ''}
-                              onChange={(e) => updateItem(index, 'sub_description', e.target.value)}
+                              onChange={(e) =>
+                                updateItem(index, 'sub_description', e.target.value)
+                              }
                               placeholder="Sub-description (optional)"
                             />
                           </td>
-
                           {isVisible('make') && (
                             <td style={{ padding: '8px 12px' }}>
                               <input
@@ -1800,17 +1599,17 @@ export default function NewInvoice() {
                               />
                             </td>
                           )}
-
                           <td style={{ padding: '8px 12px' }}>
                             <input
                               style={inp}
                               type="number"
                               min="0"
                               value={item.quantity}
-                              onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
+                              onChange={(e) =>
+                                updateItem(index, 'quantity', Number(e.target.value))
+                              }
                             />
                           </td>
-
                           {isVisible('unit') && (
                             <td style={{ padding: '8px 12px', minWidth: '100px' }}>
                               <UnitInput
@@ -1819,7 +1618,6 @@ export default function NewInvoice() {
                               />
                             </td>
                           )}
-
                           <td style={{ padding: '8px 12px' }}>
                             <input
                               style={inp}
@@ -1831,7 +1629,6 @@ export default function NewInvoice() {
                               }
                             />
                           </td>
-
                           <td
                             style={{
                               padding: '8px 12px',
@@ -1840,16 +1637,22 @@ export default function NewInvoice() {
                               whiteSpace: 'nowrap',
                             }}
                           >
-                            NGN {(Number(item.quantity) * Number(item.unit_price)).toLocaleString()}
+                            NGN{' '}
+                            {(
+                              Number(item.quantity) * Number(item.unit_price)
+                            ).toLocaleString()}
                           </td>
-
                           {isVisible('install_rate') && (
                             <td style={{ padding: '8px 12px' }}>
                               <input
                                 style={inp}
                                 type="number"
                                 min="0"
-                                value={item.install_rate_override ? item.install_rate ?? '' : ''}
+                                value={
+                                  item.install_rate_override
+                                    ? item.install_rate ?? ''
+                                    : ''
+                                }
                                 placeholder={
                                   autoInstall !== null
                                     ? String(Number(autoInstall.toFixed(2)))
@@ -1878,7 +1681,6 @@ export default function NewInvoice() {
                               />
                             </td>
                           )}
-
                           {isVisible('vat_rate') && (
                             <td style={{ padding: '8px 12px' }}>
                               <input
@@ -1902,7 +1704,11 @@ export default function NewInvoice() {
                                 placeholder={String(invoice.vat || 0)}
                                 onChange={(e) => {
                                   const val = e.target.value
-                                  updateItem(index, 'vat_rate', val === '' ? null : Number(val))
+                                  updateItem(
+                                    index,
+                                    'vat_rate',
+                                    val === '' ? null : Number(val)
+                                  )
                                 }}
                               />
                               {item.vat_rate === 0 && (
@@ -1918,13 +1724,11 @@ export default function NewInvoice() {
                               )}
                             </td>
                           )}
-
                           {isVisible('discount_rate') &&
                             (() => {
                               const drVal = item.discount_rate
                               const isExcluded = drVal === 0
                               const hasOverride = drVal !== null && drVal !== undefined
-
                               return (
                                 <td style={{ padding: '8px 12px' }}>
                                   <input
@@ -1952,7 +1756,6 @@ export default function NewInvoice() {
                                       )
                                     }}
                                   />
-
                                   {isExcluded ? (
                                     <div
                                       style={{
@@ -1988,7 +1791,6 @@ export default function NewInvoice() {
                                 </td>
                               )
                             })()}
-
                           {customColumns
                             .filter((c) => c.visible)
                             .map((col) => (
@@ -2009,7 +1811,6 @@ export default function NewInvoice() {
                                 />
                               </td>
                             ))}
-
                           {showItemImages && (
                             <td style={{ padding: '8px 12px', verticalAlign: 'top' }}>
                               <ItemImageUpload
@@ -2018,7 +1819,6 @@ export default function NewInvoice() {
                               />
                             </td>
                           )}
-
                           <td
                             style={{
                               padding: '8px 12px',
@@ -2058,7 +1858,6 @@ export default function NewInvoice() {
               {showAdvanced ? '▲' : '▾'}
             </span>
           </div>
-
           {showAdvanced && (
             <div style={{ marginTop: '16px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -2096,7 +1895,6 @@ export default function NewInvoice() {
                       }}
                     />
                   </div>
-
                   <div>
                     <div
                       style={{
@@ -2147,7 +1945,6 @@ export default function NewInvoice() {
                       }}
                     />
                   </div>
-
                   <div>
                     <div
                       style={{
@@ -2200,13 +1997,7 @@ export default function NewInvoice() {
                 }}
               >
                 <input
-                  style={{
-                    ...inp,
-                    width: '130px',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    color: '#555',
-                  }}
+                  style={{ ...inp, width: '130px', fontSize: '12px', fontWeight: 'bold', color: '#555' }}
                   value={chargeLabels[key]}
                   onChange={(e) =>
                     setChargeLabels((p) => ({ ...p, [key]: e.target.value }))
@@ -2243,7 +2034,6 @@ export default function NewInvoice() {
                   }}
                   placeholder="Charge name"
                 />
-
                 <input
                   type="number"
                   min="0"
@@ -2255,7 +2045,6 @@ export default function NewInvoice() {
                     setExtraCharges(u)
                   }}
                 />
-
                 <div
                   onClick={() => {
                     const u = [...extraCharges]
@@ -2273,9 +2062,10 @@ export default function NewInvoice() {
                 >
                   {charge.withTax ? '+VAT' : 'No VAT'}
                 </div>
-
                 <span
-                  onClick={() => setExtraCharges(extraCharges.filter((_, j) => j !== i))}
+                  onClick={() =>
+                    setExtraCharges(extraCharges.filter((_, j) => j !== i))
+                  }
                   style={{ color: '#CC0000', cursor: 'pointer', fontSize: '18px' }}
                 >
                   ×
@@ -2299,7 +2089,6 @@ export default function NewInvoice() {
               >
                 + Charge (with VAT)
               </div>
-
               <div
                 onClick={() =>
                   setExtraCharges([...extraCharges, { label: '', value: 0, withTax: false }])
@@ -2399,7 +2188,6 @@ export default function NewInvoice() {
 
           <div style={sec}>
             <h3 style={secT}>Summary</h3>
-
             {[
               { label: 'Subtotal', value: rawSubtotal },
               ...extraCharges
@@ -2407,7 +2195,10 @@ export default function NewInvoice() {
                 .map((c) => ({ label: c.label + ' (+VAT)', value: Number(c.value) })),
               { label: `VAT (${invoice.vat || 0}%)`, value: vatAmount },
               { label: chargeLabels.workmanship, value: Number(invoice.workmanship || 0) },
-              { label: chargeLabels.transportation, value: Number(invoice.transportation || 0) },
+              {
+                label: chargeLabels.transportation,
+                value: Number(invoice.transportation || 0),
+              },
               { label: chargeLabels.shipping, value: Number(invoice.shipping || 0) },
               installRateTotal > 0
                 ? { label: 'Install Rate Total', value: installRateTotal }
@@ -2555,14 +2346,15 @@ export default function NewInvoice() {
                 <option>Custom</option>
               </select>
             </div>
-
             {invoice.payment_terms === 'Custom' && (
               <div>
                 <label style={lbl}>Specify Terms</label>
                 <input
                   style={inp}
                   value={invoice.custom_payment_terms}
-                  onChange={(e) => updateInvoice('custom_payment_terms', e.target.value)}
+                  onChange={(e) =>
+                    updateInvoice('custom_payment_terms', e.target.value)
+                  }
                   placeholder="e.g. 60% downpayment, 40% on delivery"
                 />
               </div>
@@ -2592,23 +2384,16 @@ export default function NewInvoice() {
               + Add Custom Field
             </div>
           </div>
-
           {bottomFields.length === 0 && (
             <div style={{ fontSize: '13px', color: '#bbb', fontStyle: 'italic' }}>
               Plain-text entries like "ADVANCE PAYMENT DUE (60%)" that appear below the
               totals.
             </div>
           )}
-
           {bottomFields.map((field, i) => (
             <div
               key={i}
-              style={{
-                display: 'flex',
-                gap: '8px',
-                marginBottom: '10px',
-                alignItems: 'center',
-              }}
+              style={{ display: 'flex', gap: '8px', marginBottom: '10px', alignItems: 'center' }}
             >
               <input
                 style={{ ...inp, flex: 1 }}
@@ -2620,9 +2405,10 @@ export default function NewInvoice() {
                 }}
                 placeholder="e.g. ADVANCE PAYMENT DUE (60%): ₦141,601"
               />
-
               <span
-                onClick={() => setBottomFields(bottomFields.filter((_, j) => j !== i))}
+                onClick={() =>
+                  setBottomFields(bottomFields.filter((_, j) => j !== i))
+                }
                 style={{ color: '#CC0000', cursor: 'pointer', fontSize: '20px' }}
               >
                 ×
@@ -2657,7 +2443,6 @@ export default function NewInvoice() {
                 placeholder="Notes to client..."
               />
             </div>
-
             <div>
               <input
                 style={{
@@ -2710,7 +2495,6 @@ export default function NewInvoice() {
           >
             {saving ? 'Saving...' : 'Save and Send'}
           </div>
-
           <div
             onClick={() => handleSave('draft')}
             style={{
@@ -2725,7 +2509,6 @@ export default function NewInvoice() {
           >
             {saving ? 'Saving...' : 'Save as Draft'}
           </div>
-
           <div
             onClick={() => navigate('/invoices')}
             style={{
