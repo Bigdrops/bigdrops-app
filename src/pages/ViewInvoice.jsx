@@ -40,7 +40,7 @@ export default function ViewInvoice() {
   // Convert to Advance modal
   const [showAdvanceModal, setShowAdvanceModal] = useState(false)
   const [advanceForm, setAdvanceForm] = useState({
-    contractValue: '', mode: 'percent', value: '50', jobTitle: '',
+    contractValue: '', jobTitle: '',
   })
   const [savingAdvance, setSavingAdvance] = useState(false)
 
@@ -187,11 +187,13 @@ export default function ViewInvoice() {
   // ── Convert to Advance Invoice (writes to this invoice) ────────────────────
   const handleConfirmAdvance = async () => {
     const contractVal = parseFloat(advanceForm.contractValue)
-    if (isNaN(contractVal) || contractVal <= 0) { alert('Enter a valid contract value'); return }
-    if (contractVal < Number(invoice.total || 0)) {
-      alert('Contract value cannot be less than the current invoice total')
+    if (isNaN(contractVal) || contractVal <= 0) { alert('Enter the total contract value'); return }
+    const invoiceTotal = Number(invoice.total || 0)
+    if (contractVal < invoiceTotal) {
+      alert(`Contract value must be at least ₦${invoiceTotal.toLocaleString()} (this invoice's total)`)
       return
     }
+    const derivedPct = contractVal > 0 ? Math.round((invoiceTotal / contractVal) * 10000) / 100 : 0
     setSavingAdvance(true)
     const threadId = generateThreadId()
     const { error } = await supabase.from('invoices').update({
@@ -200,13 +202,16 @@ export default function ViewInvoice() {
       thread_position: 1,
       is_advance:    true,
       total_contract_value: contractVal,
-      advance_mode:  advanceForm.mode,
-      advance_value: parseFloat(advanceForm.value) || null,
+      advance_mode:  'percent',
+      advance_value: derivedPct,
       job_title:     advanceForm.jobTitle.trim() || null,
       thread_created_from_invoice_id: id,
     }).eq('id', id)
     setSavingAdvance(false)
     if (error) { alert('Failed to convert: ' + error.message); return }
+    setShowAdvanceModal(false)
+    await fetchInvoice()
+  }
     setShowAdvanceModal(false)
     await fetchInvoice()
   }
@@ -241,15 +246,11 @@ export default function ViewInvoice() {
   // ── Advance modal live preview ──────────────────────────────────────────────
   const advancePreview = (() => {
     const cv  = parseFloat(advanceForm.contractValue) || 0
-    const val = parseFloat(advanceForm.value) || 0
-    if (!cv || !val) return null
-    if (advanceForm.mode === 'percent') {
-      const due = Math.round(cv * val / 100 * 100) / 100
-      return { pct: val, due, balance: Math.max(0, cv - due) }
-    } else {
-      const pct = cv > 0 ? Math.round((val / cv) * 10000) / 100 : 0
-      return { pct, due: val, balance: Math.max(0, cv - val) }
-    }
+    const due = Number(invoice.total || 0)
+    if (!cv || cv < due) return null
+    const pct     = Math.round((due / cv) * 10000) / 100
+    const balance = Math.max(0, cv - due)
+    return { pct, due, balance }
   })()
 
   // ── Custom fields ───────────────────────────────────────────────────────────
@@ -329,19 +330,28 @@ export default function ViewInvoice() {
                 <span onClick={() => setShowAdvanceModal(false)} style={{ cursor: 'pointer', fontSize: '22px', color: '#aaa', lineHeight: 1 }}>×</span>
               </div>
               <p style={{ margin: '0 0 20px', fontSize: '13px', color: '#777', lineHeight: '1.5' }}>
-                This invoice becomes the first in a job thread. Set the total contract value and the advance portion being collected now.
+                This invoice (₦{Number(invoice.total || 0).toLocaleString()}) becomes the <strong>advance payment</strong> for a larger job. Enter the total contract value below.
               </p>
+
+              {/* This invoice's amount — read only, for context */}
+              <div style={{ marginBottom: '16px', padding: '12px 16px', backgroundColor: '#F8FAFF', border: '1px solid #DBEAFE', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748B' }}>This Invoice (Advance Amount)</span>
+                <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#1D4ED8' }}>₦{Number(invoice.total || 0).toLocaleString()}</span>
+              </div>
 
               {/* Contract value */}
               <div style={{ marginBottom: '16px' }}>
                 <label style={labelStyle}>Total Contract Value (₦) *</label>
                 <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden' }}>
                   <span style={{ padding: '0 12px', fontSize: '16px', color: '#aaa', borderRight: '1px solid #ddd', lineHeight: '44px' }}>₦</span>
-                  <input type="number" min="0" value={advanceForm.contractValue}
+                  <input type="number" min={invoice.total || 0} value={advanceForm.contractValue}
                     onChange={e => setAdvanceForm(f => ({ ...f, contractValue: e.target.value }))}
                     style={{ flex: 1, padding: '10px 14px', border: 'none', outline: 'none', fontSize: '16px', fontWeight: 'bold', color: '#1a1a1a' }}
-                    placeholder="e.g. 1500000" autoFocus />
+                    placeholder={`Min ₦${Number(invoice.total || 0).toLocaleString()}`} autoFocus />
                 </div>
+                <p style={{ margin: '5px 0 0', fontSize: '11px', color: '#94A3B8' }}>
+                  Must be greater than this invoice's total. The advance % is calculated automatically.
+                </p>
               </div>
 
               {/* Job title */}
@@ -352,44 +362,21 @@ export default function ViewInvoice() {
                   placeholder="e.g. Block B Electrical Installation" />
               </div>
 
-              {/* Advance mode */}
-              <div style={{ marginBottom: '12px' }}>
-                <label style={labelStyle}>Advance Type</label>
-                <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid #ddd' }}>
-                  {[{ key: 'percent', label: '% of Contract' }, { key: 'fixed', label: '₦ Fixed Amount' }].map(m => (
-                    <div key={m.key} onClick={() => setAdvanceForm(f => ({ ...f, mode: m.key, value: m.key === 'percent' ? '50' : '' }))}
-                      style={{ flex: 1, padding: '10px', textAlign: 'center', cursor: 'pointer', fontSize: '13px', fontWeight: '600', backgroundColor: advanceForm.mode === m.key ? '#1a1a1a' : 'white', color: advanceForm.mode === m.key ? 'white' : '#555' }}>
-                      {m.label}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Advance value */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>{advanceForm.mode === 'percent' ? 'Percentage (%)' : 'Advance Amount (₦)'}</label>
-                <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden' }}>
-                  <span style={{ padding: '0 12px', fontSize: '16px', color: '#aaa', borderRight: '1px solid #ddd', lineHeight: '44px' }}>
-                    {advanceForm.mode === 'percent' ? '%' : '₦'}
-                  </span>
-                  <input type="number" min="0" max={advanceForm.mode === 'percent' ? 100 : undefined}
-                    value={advanceForm.value}
-                    onChange={e => setAdvanceForm(f => ({ ...f, value: e.target.value }))}
-                    style={{ flex: 1, padding: '10px 14px', border: 'none', outline: 'none', fontSize: '20px', fontWeight: 'bold', color: '#1a1a1a' }} />
-                </div>
-              </div>
-
               {/* Live preview */}
               {advancePreview && (
                 <div style={{ marginBottom: '20px', backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '10px', padding: '14px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                     <div>
-                      <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#1D4ED8', textTransform: 'uppercase', marginBottom: '3px' }}>Advance Due Now ({advancePreview.pct.toFixed(1)}%)</div>
-                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#1E3A8A' }}>₦{advancePreview.due.toLocaleString()}</div>
+                      <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#1D4ED8', textTransform: 'uppercase', marginBottom: '3px' }}>Advance %</div>
+                      <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1E3A8A' }}>{advancePreview.pct.toFixed(1)}%</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#64748B', textTransform: 'uppercase', marginBottom: '3px' }}>Balance Remaining</div>
-                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#374151' }}>₦{advancePreview.balance.toLocaleString()}</div>
+                      <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#1D4ED8', textTransform: 'uppercase', marginBottom: '3px' }}>Advance Due</div>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1E3A8A' }}>₦{advancePreview.due.toLocaleString()}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#64748B', textTransform: 'uppercase', marginBottom: '3px' }}>Balance</div>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#374151' }}>₦{advancePreview.balance.toLocaleString()}</div>
                     </div>
                   </div>
                 </div>
