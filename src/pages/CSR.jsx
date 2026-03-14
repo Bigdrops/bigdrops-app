@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ClipboardList, Plus } from "lucide-react"
+import { ClipboardList, Plus, Search, SlidersHorizontal } from "lucide-react"
 
 import { supabase } from "../supabase"
 import Layout from "../components/Layout"
@@ -33,6 +33,8 @@ export default function CSR() {
   const [dateFilter, setDateFilter] = useState("All Time")
   const [sortBy, setSortBy] = useState("Newest")
   const [openMenuId, setOpenMenuId] = useState(null)
+  const [showSearch, setShowSearch] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
     fetchCsrs()
@@ -77,6 +79,17 @@ export default function CSR() {
   const formatStatusLabel = (status) => {
     const key = getCsrStatusKey(status)
     return key.charAt(0).toUpperCase() + key.slice(1)
+  }
+
+  const formatCardDate = (value) => {
+    if (!value) return "-"
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return value
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
   }
 
   const clientOptions = useMemo(() => {
@@ -142,42 +155,56 @@ export default function CSR() {
   const filterSelectClass = "h-10 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 outline-none"
   const hasActiveFilters =
     !!search || clientFilter !== "All" || statusFilter !== "All" || dateFilter !== "All Time"
+  const iconButtonClass = "h-10 w-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center text-zinc-500"
 
   return (
     <Layout title="Customer Service Reports">
       <div className="space-y-5">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, gap: 12 }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#0F172A" }}>Customer Service Reports</h2>
             <p style={{ margin: "4px 0 0", fontSize: 13, color: "#94A3B8" }}>
               {csrs.length} report{csrs.length !== 1 ? "s" : ""} total
             </p>
           </div>
-          <button
-            onClick={() => navigate("/csr/new")}
-            style={{
-              backgroundColor: "#0F172A",
-              color: "white",
-              border: "none",
-              borderRadius: 10,
-              padding: "10px 18px",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            + New CSR
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={() => setShowSearch((prev) => !prev)} className={iconButtonClass} aria-label="Toggle search">
+              <Search size={16} />
+            </button>
+            <button onClick={() => setShowFilters((prev) => !prev)} className={iconButtonClass} aria-label="Toggle filters">
+              <SlidersHorizontal size={16} />
+            </button>
+            <button
+              onClick={() => navigate("/csr/new")}
+              style={{
+                backgroundColor: "#0F172A",
+                color: "white",
+                border: "none",
+                borderRadius: 10,
+                padding: "10px 18px",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              + New CSR
+            </button>
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search CSRs, clients, or equipment..."
-            className="h-11 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 outline-none"
-          />
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
+        {showSearch && (
+          <div className="mb-4">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search CSRs, clients, or equipment..."
+              className="h-11 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 outline-none"
+            />
+          </div>
+        )}
+
+        {showFilters && (
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold uppercase text-zinc-400">Client</span>
               <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className={filterSelectClass}>
@@ -218,7 +245,7 @@ export default function CSR() {
               Clear Filters
             </button>
           </div>
-        </div>
+        )}
 
         {isMobile ? (
           <div className="space-y-3 pb-24">
@@ -246,21 +273,15 @@ export default function CSR() {
               filteredCsrs.map((csr) => (
                 <div key={csr.id} className="flex items-start gap-2">
                   <Card className="flex-1 overflow-hidden rounded-[24px] border border-zinc-200 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 shadow-sm">
-                    <CardContent className="p-4">
+                    <CardContent className="px-4 py-3">
                       <div
                         className="cursor-pointer"
                         onClick={() => navigate("/csr/" + csr.id)}
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-[17px] font-semibold tracking-tight text-zinc-900">
-                              {csr.csr_number}
-                            </div>
-                            <div className="mt-1 truncate text-sm text-zinc-700">
-                              {csr.client_name || "No client name"}
-                            </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="truncate text-[15px] font-semibold tracking-tight text-zinc-900">
+                            {csr.csr_number}
                           </div>
-
                           <span
                             className="rounded-full px-3 py-1 text-[10px] font-semibold whitespace-nowrap"
                             style={getCsrStatusBadgeStyle(csr.status)}
@@ -269,31 +290,13 @@ export default function CSR() {
                           </span>
                         </div>
 
-                        <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                          <div className="min-w-0">
-                            <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-400">
-                              Equipment
-                            </div>
-                            <div className="mt-1 truncate font-medium text-zinc-800">
-                              {csr.equipment_type || "-"}
-                            </div>
-                          </div>
-
-                          <div className="text-right">
-                            <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-400">
-                              Date
-                            </div>
-                            <div className="mt-1 font-medium text-zinc-800">
-                              {csr.date || "-"}
-                            </div>
-                          </div>
+                        <div className="mt-1 truncate text-sm text-zinc-500">
+                          {csr.client_name || "No client name"}
                         </div>
 
-                        {csr.make && (
-                          <div className="mt-3 truncate text-sm text-zinc-500">
-                            {csr.make}
-                          </div>
-                        )}
+                        <div className="mt-1 truncate text-xs text-zinc-500">
+                          {`${csr.equipment_type || "-"}`}{csr.make ? ` (${csr.make})` : ""}{" · "}{formatCardDate(csr.date)}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { Plus, MoreHorizontal, FileText, Eye, Pencil, Copy, DollarSign, X,
-         Send, Archive, Trash2, FileOutput, Truck, Wrench } from "lucide-react"
+         Send, Archive, Trash2, FileOutput, Truck, Wrench, Search, SlidersHorizontal } from "lucide-react"
 import { supabase } from "../supabase"
 import Layout from "../components/Layout"
 
@@ -13,6 +13,8 @@ export default function Invoices() {
   const [statusFilter, setStatusFilter]   = useState("All")
   const [dateFilter, setDateFilter]       = useState("All Time")
   const [sortBy, setSortBy]               = useState("Newest")
+  const [showSearch, setShowSearch]       = useState(false)
+  const [showFilters, setShowFilters]     = useState(false)
   const [showArchiveWarn, setShowArchiveWarn] = useState(false)
   const [showDeleteWarn,  setShowDeleteWarn]  = useState(false)
   const navigate = useNavigate()
@@ -186,61 +188,89 @@ export default function Invoices() {
   }
 
   const filterSelectClass = "h-10 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 outline-none"
+  const iconButtonClass = "h-10 w-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center text-zinc-500"
 
   return (
     <Layout title="Invoices">
       <div className="max-w-6xl mx-auto px-4 pb-32 pt-6">
 
-        <div className="mb-4">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search invoices or clients..."
-            className="w-full h-11 rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 outline-none"
-          />
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="m-0 text-[22px] font-extrabold text-slate-900">Invoices</h2>
+            <p className="mt-1 text-[13px] text-slate-400">
+              {invoices.length} invoice{invoices.length !== 1 ? "s" : ""} total
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowSearch((prev) => !prev)} className={iconButtonClass} aria-label="Toggle search">
+              <Search size={16} />
+            </button>
+            <button onClick={() => setShowFilters((prev) => !prev)} className={iconButtonClass} aria-label="Toggle filters">
+              <SlidersHorizontal size={16} />
+            </button>
+            <button
+              onClick={() => navigate("/invoices/new")}
+              className="h-10 rounded-xl bg-slate-900 px-4 text-[13px] font-bold text-white"
+            >
+              + New Invoice
+            </button>
+          </div>
         </div>
 
-        <div className="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-black uppercase text-zinc-400">Client</span>
-            <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className={filterSelectClass}>
-              <option>All</option>
-              {clientOptions.map((client) => (
-                <option key={client} value={client}>{client}</option>
-              ))}
-            </select>
+        {showSearch && (
+          <div className="mb-4">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search invoices or clients..."
+              className="w-full h-11 rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 outline-none"
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-black uppercase text-zinc-400">Status</span>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterSelectClass}>
-              {["All", "Draft", "Sent", "Paid", "Overdue", "Partial"].map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
+        )}
+
+        {showFilters && (
+          <div className="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-black uppercase text-zinc-400">Client</span>
+              <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className={filterSelectClass}>
+                <option>All</option>
+                {clientOptions.map((client) => (
+                  <option key={client} value={client}>{client}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-black uppercase text-zinc-400">Status</span>
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterSelectClass}>
+                {["All", "Draft", "Sent", "Paid", "Overdue", "Partial"].map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-black uppercase text-zinc-400">Date</span>
+              <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className={filterSelectClass}>
+                {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-black uppercase text-zinc-400">Sort</span>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={filterSelectClass}>
+                {["Newest", "Oldest", "Highest Value", "Lowest Value"].map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={resetFilters}
+              className="h-10 rounded-xl border border-zinc-200 px-4 text-xs font-black uppercase text-zinc-500 transition hover:bg-zinc-50"
+            >
+              Clear Filters
+            </button>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-black uppercase text-zinc-400">Date</span>
-            <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className={filterSelectClass}>
-              {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-black uppercase text-zinc-400">Sort</span>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={filterSelectClass}>
-              {["Newest", "Oldest", "Highest Value", "Lowest Value"].map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          </div>
-          <button
-            onClick={resetFilters}
-            className="h-10 rounded-xl border border-zinc-200 px-4 text-xs font-black uppercase text-zinc-500 transition hover:bg-zinc-50"
-          >
-            Clear Filters
-          </button>
-        </div>
+        )}
 
         {/* Invoice list */}
         <div className="grid gap-3">
