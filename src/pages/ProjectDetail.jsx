@@ -61,6 +61,7 @@ export default function ProjectDetail() {
       po_number: p?.po_number || '',
       start_date: p?.start_date || '',
       notes: p?.notes || '',
+    location: p?.location || '',
     })
 
     const [invRes, csrRes] = await Promise.all([
@@ -81,6 +82,7 @@ export default function ProjectDetail() {
       po_number:     editForm.po_number.trim() || null,
       start_date:    editForm.start_date,
       notes:         editForm.notes.trim() || null,
+      location:      editForm.location.trim() || null,
     }).eq('id', id)
     setSaving(false)
     if (error) { alert('Failed to save: ' + error.message); return }
@@ -180,6 +182,11 @@ export default function ProjectDetail() {
                       <Hash size={12} />PO: {project.po_number}
                     </span>
                   )}
+                  {project.location && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      📍 {project.location}
+                    </span>
+                  )}
                 </div>
                 {project.notes && (
                   <div style={{ marginTop: 8, fontSize: 12, color: '#94A3B8', fontStyle: 'italic' }}>{project.notes}</div>
@@ -220,6 +227,10 @@ export default function ProjectDetail() {
                 <div>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 5, textTransform: 'uppercase' }}>P.O. Number</label>
                   <input style={inputStyle} value={editForm.po_number} onChange={e => setEditForm(f => ({ ...f, po_number: e.target.value }))} placeholder="Optional" />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 5, textTransform: 'uppercase' }}>Site / Location</label>
+                  <input style={inputStyle} value={editForm.location} onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} placeholder="Optional" />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 5, textTransform: 'uppercase' }}>Notes</label>
@@ -361,8 +372,9 @@ export default function ProjectDetail() {
               <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Project Info</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[
-                  { label: 'Client',   value: project.client_name || '—' },
-                  { label: 'P.O. No.', value: project.po_number   || '—' },
+                  { label: 'Client',    value: project.client_name  || '—' },
+                  { label: 'Location',  value: project.location     || '—' },
+                  { label: 'P.O. No.', value: project.po_number    || '—' },
                   { label: 'Value',    value: project.project_value ? `₦${Number(project.project_value).toLocaleString()}` : '—' },
                   { label: 'Started',  value: project.start_date ? new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—' },
                 ].map(row => (
