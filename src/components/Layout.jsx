@@ -5,7 +5,7 @@ import { supabase } from '../supabase'
 import {
   LayoutDashboard, FileText, ClipboardList, Wrench, Users,
   Settings, LogOut, FolderKanban, BarChart3, Grid2x2,
-  Package, ChevronDown, Check, Plus, Building2
+  Package, ChevronDown, Check, Plus, Building2, X
 } from 'lucide-react'
 
 // ── Navigation structure ─────────────────────────────────────────────────────
@@ -57,8 +57,8 @@ const bottomNav = [
 
 // Placeholder businesses — UI only, no backend yet
 const businesses = [
-  { id: 1, name: 'Sun & Shield Power Solutions', subtitle: 'Accounts Lite', active: true },
-  { id: 2, name: 'Abisco Allied Ventures', subtitle: '', active: false },
+  { id: 1, name: 'Sun & Shield Power Solutions', active: true },
+  { id: 2, name: 'Abisco Allied Ventures', active: false },
 ]
 
 // ── Sidebar nav item ─────────────────────────────────────────────────────────
@@ -168,9 +168,6 @@ function BusinessSwitcher() {
         </div>
         <div className="hidden sm:block min-w-0">
           <div className="text-xs font-semibold text-slate-700 leading-tight max-w-[150px] truncate">{active?.name}</div>
-          {active?.subtitle && (
-            <div className="text-[10px] text-slate-400 leading-tight">{active.subtitle}</div>
-          )}
         </div>
         <ChevronDown size={11} className="text-slate-400 hidden sm:block flex-shrink-0" />
       </button>
@@ -209,7 +206,6 @@ function BusinessSwitcher() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-slate-800 truncate">{biz.name}</div>
-                    {biz.subtitle && <div className="text-xs text-slate-400">{biz.subtitle}</div>}
                   </div>
                   {biz.active && <Check size={15} className="text-slate-800 flex-shrink-0" />}
                 </button>
