@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { supabase } from '../supabase'
+import { QUICK_TILE_REGISTRY, DEFAULT_QUICK_TILES } from '../config/quickTiles'
 import {
   LayoutDashboard, FileText, ClipboardList, Wrench, Users,
   Settings, LogOut, FolderKanban, BarChart3, Grid2x2,
@@ -229,27 +230,77 @@ function BusinessSwitcher() {
   )
 }
 
+function QuickTileRail({ tiles }) {
+  const navigate = useNavigate()
+  const validTiles = tiles.filter((id) => QUICK_TILE_REGISTRY[id])
+
+  if (validTiles.length === 0) return null
+
+  return (
+    <div className="flex-1 min-w-0 overflow-x-auto whitespace-nowrap">
+      <div className="inline-flex items-center gap-3 px-2">
+        {validTiles.map((id) => {
+          const tile = QUICK_TILE_REGISTRY[id]
+          return (
+            <button
+              key={id}
+              onClick={() => navigate(tile.path)}
+              className="text-xs font-semibold text-slate-700 hover:text-slate-900"
+            >
+              {tile.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ── Main Layout ──────────────────────────────────────────────────────────────
 export default function Layout({ title, children, session }) {
   const isMobile = useIsMobile()
+  const location = useLocation()
+  const isDashboard = location.pathname === '/'
   const [moreOpen, setMoreOpen] = useState(false)
+  let activeTiles = DEFAULT_QUICK_TILES
+  try {
+    const savedTiles = localStorage.getItem('quick_tiles')
+    const parsed = savedTiles ? JSON.parse(savedTiles) : DEFAULT_QUICK_TILES
+    if (Array.isArray(parsed)) activeTiles = parsed
+  } catch (e) {
+    activeTiles = DEFAULT_QUICK_TILES
+  }
 
   if (isMobile) {
     return (
       <div className="flex flex-col min-h-screen bg-slate-50 font-sans antialiased text-slate-900">
 
         {/* Mobile Header */}
-        <header className="sticky top-0 z-20 h-14 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 flex items-center justify-between gap-3">
-          <button
-            onClick={() => setMoreOpen(true)}
-            className="w-9 h-9 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-700 shrink-0"
-            aria-label="Open navigation menu"
-          >
-            <Menu size={18} />
-          </button>
-          <h1 className="text-sm font-bold text-slate-900 uppercase tracking-tight truncate">{title}</h1>
-          <BusinessSwitcher />
-        </header>
+        {isDashboard ? (
+          <header className="sticky top-0 z-20 h-14 bg-white/90 backdrop-blur-md border-b border-slate-200 px-2 flex items-center gap-2">
+            <button
+              onClick={() => setMoreOpen(true)}
+              className="w-9 h-9 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-700 shrink-0"
+              aria-label="Open navigation menu"
+            >
+              <Menu size={18} />
+            </button>
+            <QuickTileRail tiles={activeTiles} />
+            <BusinessSwitcher />
+          </header>
+        ) : (
+          <header className="sticky top-0 z-20 h-14 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 flex items-center justify-between gap-3">
+            <button
+              onClick={() => setMoreOpen(true)}
+              className="w-9 h-9 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-700 shrink-0"
+              aria-label="Open navigation menu"
+            >
+              <Menu size={18} />
+            </button>
+            <h1 className="text-sm font-bold text-slate-900 uppercase tracking-tight truncate">{title}</h1>
+            <BusinessSwitcher />
+          </header>
+        )}
 
         {/* Mobile Content */}
         <main className="flex-1 p-4 pb-24 w-full max-w-5xl mx-auto">

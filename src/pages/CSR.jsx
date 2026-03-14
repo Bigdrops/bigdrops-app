@@ -1,21 +1,13 @@
-
+﻿
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ClipboardList, Plus, Search, SlidersHorizontal } from "lucide-react"
+import { ClipboardList, Plus, Search, SlidersHorizontal, Wrench } from "lucide-react"
 
 import { supabase } from "../supabase"
 import Layout from "../components/Layout"
 import { useIsMobile } from "../hooks/useIsMobile"
 
 import { Card, CardContent } from "../components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table"
 
 function normalizeStatus(status) {
   return (status || "").trim().toLowerCase()
@@ -159,7 +151,7 @@ export default function CSR() {
 
   return (
     <Layout title="Customer Service Reports">
-      <div className="space-y-5">
+      <div className="space-y-5" style={{ fontFamily: "'Inter', sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, gap: 12 }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#0F172A" }}>Customer Service Reports</h2>
@@ -271,43 +263,95 @@ export default function CSR() {
               </Card>
             ) : (
               filteredCsrs.map((csr) => (
-                <div key={csr.id} className="flex items-start gap-2">
-                  <Card className="flex-1 overflow-hidden rounded-[24px] border border-zinc-200 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 shadow-sm">
-                    <CardContent className="px-4 py-3">
-                      <div
-                        className="cursor-pointer"
-                        onClick={() => navigate("/csr/" + csr.id)}
+                <div
+                  key={csr.id}
+                  onClick={() => navigate("/csr/" + csr.id)}
+                  style={{
+                    background: "white",
+                    borderRadius: 32,
+                    border: "1px solid #e2eefc",
+                    boxShadow: "0 10px 28px -12px rgba(10,40,70,0.12)",
+                    padding: "18px 20px",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 16,
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fcff" }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "white" }}
+                >
+                  <div
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 18,
+                      background: "#fff2df",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Wrench size={20} color="#8c5a17" />
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#6a89a8", textTransform: "uppercase" }}>CSR</span>
+                      <span style={{ fontSize: 18, fontWeight: 800, color: "#0d2f50" }}>{csr.csr_number || "-"}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: "#2a4b74" }}>{csr.client_name || "No client name"}</span>
+                      <span style={{ fontSize: 14, color: "#617e9e", fontWeight: 500 }}>{formatCardDate(csr.date)}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span
+                        style={{
+                          borderRadius: 60,
+                          padding: "5px 12px",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          ...(getCsrStatusKey(csr.status) === "completed"
+                            ? { background: "#e2f3e4", color: "#1f7840" }
+                            : { background: "#eef4fa", color: "#1d3f61" }),
+                        }}
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="truncate text-[15px] font-semibold tracking-tight text-zinc-900">
-                            {csr.csr_number}
-                          </div>
-                          <span
-                            className="rounded-full px-3 py-1 text-[10px] font-semibold whitespace-nowrap"
-                            style={getCsrStatusBadgeStyle(csr.status)}
-                          >
-                            {formatStatusLabel(csr.status)}
-                          </span>
-                        </div>
+                        {formatStatusLabel(csr.status)}
+                      </span>
+                      {(csr.make || csr.equipment_type) && (
+                        <span
+                          style={{
+                            borderRadius: 60,
+                            padding: "5px 12px",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            background: "#eef4fa",
+                            color: "#1d3f61",
+                          }}
+                        >
+                          {csr.make || csr.equipment_type}
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                        <div className="mt-1 truncate text-sm text-zinc-500">
-                          {csr.client_name || "No client name"}
-                        </div>
-
-                        <div className="mt-1 truncate text-xs text-zinc-500">
-                          {`${csr.equipment_type || "-"}`}{csr.make ? ` (${csr.make})` : ""}{" · "}{formatCardDate(csr.date)}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <div className="relative" onClick={(e) => e.stopPropagation()}>
+                  <div className="relative" onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
                         setOpenMenuId(openMenuId === csr.id ? null : csr.id)
                       }}
-                      className="flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-500 shadow-sm"
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 12,
+                        border: "1px solid #d9e5f2",
+                        background: "white",
+                        color: "#48627e",
+                        fontSize: 14,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
                     >
                       •••
                     </button>
@@ -352,75 +396,111 @@ export default function CSR() {
                   </div>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-zinc-200 bg-white hover:bg-white">
-                      <TableHead className="h-12 text-zinc-500">CSR No.</TableHead>
-                      <TableHead className="text-zinc-500">Date</TableHead>
-                      <TableHead className="text-zinc-500">Client</TableHead>
-                      <TableHead className="text-zinc-500">Equipment</TableHead>
-                      <TableHead className="text-zinc-500">Status</TableHead>
-                      <TableHead className="text-right text-zinc-500">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-
-                  <TableBody>
+                <div className="space-y-3 p-4">
                   {filteredCsrs.map((csr) => (
-                      <TableRow
-                        key={csr.id}
-                        onClick={() => navigate("/csr/" + csr.id)}
-                        className="cursor-pointer border-zinc-200 hover:bg-zinc-50/80"
+                    <div
+                      key={csr.id}
+                      onClick={() => navigate("/csr/" + csr.id)}
+                      style={{
+                        background: "white",
+                        borderRadius: 32,
+                        border: "1px solid #e2eefc",
+                        boxShadow: "0 10px 28px -12px rgba(10,40,70,0.12)",
+                        padding: "18px 20px",
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 16,
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fcff" }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "white" }}
+                    >
+                      <div
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 18,
+                          background: "#fff2df",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
                       >
-                        <TableCell className="font-semibold text-zinc-900">
-                          {csr.csr_number}
-                        </TableCell>
+                        <Wrench size={20} color="#8c5a17" />
+                      </div>
 
-                        <TableCell className="text-zinc-600">
-                          {csr.date || "-"}
-                        </TableCell>
-
-                        <TableCell className="font-medium text-zinc-800">
-                          {csr.client_name || "-"}
-                        </TableCell>
-
-                        <TableCell className="text-zinc-600">
-                          {csr.equipment_type || "-"}
-                          {csr.make ? ` — ${csr.make}` : ""}
-                        </TableCell>
-
-                        <TableCell>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "#6a89a8", textTransform: "uppercase" }}>CSR</span>
+                          <span style={{ fontSize: 18, fontWeight: 800, color: "#0d2f50" }}>{csr.csr_number || "-"}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 15, fontWeight: 600, color: "#2a4b74" }}>{csr.client_name || "No client name"}</span>
+                          <span style={{ fontSize: 14, color: "#617e9e", fontWeight: 500 }}>{formatCardDate(csr.date)}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                           <span
-                            className="inline-flex rounded-full px-3 py-1 text-[11px] font-medium"
-                            style={getCsrStatusBadgeStyle(csr.status)}
+                            style={{
+                              borderRadius: 60,
+                              padding: "5px 12px",
+                              fontSize: 12,
+                              fontWeight: 600,
+                              ...(getCsrStatusKey(csr.status) === "completed"
+                                ? { background: "#e2f3e4", color: "#1f7840" }
+                                : { background: "#eef4fa", color: "#1d3f61" }),
+                            }}
                           >
                             {formatStatusLabel(csr.status)}
                           </span>
-                        </TableCell>
-
-                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="relative inline-block">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setOpenMenuId(openMenuId === csr.id ? null : csr.id)
+                          {(csr.make || csr.equipment_type) && (
+                            <span
+                              style={{
+                                borderRadius: 60,
+                                padding: "5px 12px",
+                                fontSize: 12,
+                                fontWeight: 600,
+                                background: "#eef4fa",
+                                color: "#1d3f61",
                               }}
-                              className="rounded-xl border border-zinc-200 bg-white px-3 py-1 text-sm text-zinc-500 hover:bg-zinc-50"
                             >
-                              •••
-                            </button>
-                            {openMenuId === csr.id && (
-                              <div className="absolute right-0 top-10 z-20 w-36 rounded-2xl border border-zinc-200 bg-white p-1 shadow-xl">
-                                <button onClick={() => { setOpenMenuId(null); navigate("/csr/" + csr.id) }} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">View</button>
-                                <button onClick={() => { setOpenMenuId(null); navigate("/csr/edit/" + csr.id) }} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">Edit</button>
-                                <button onClick={() => handleDelete(csr)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">Delete</button>
-                              </div>
-                            )}
+                              {csr.make || csr.equipment_type}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="relative" onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setOpenMenuId(openMenuId === csr.id ? null : csr.id)
+                          }}
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 12,
+                            border: "1px solid #d9e5f2",
+                            background: "white",
+                            color: "#48627e",
+                            fontSize: 14,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          •••
+                        </button>
+                        {openMenuId === csr.id && (
+                          <div className="absolute right-0 top-12 z-20 w-36 rounded-2xl border border-zinc-200 bg-white p-1 shadow-xl">
+                            <button onClick={() => { setOpenMenuId(null); navigate("/csr/" + csr.id) }} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">View</button>
+                            <button onClick={() => { setOpenMenuId(null); navigate("/csr/edit/" + csr.id) }} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">Edit</button>
+                            <button onClick={() => handleDelete(csr)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">Delete</button>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>

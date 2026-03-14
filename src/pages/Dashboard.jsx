@@ -14,60 +14,65 @@ export default function Dashboard({ session }) {
   const navigate = useNavigate()
   const [playground, setPlayground] = useState([])
   const [loading, setLoading] = useState(true)
-  const [metrics, setMetrics] = useState({ invoices: 0, csrs: 0, revenue: 0 })
   const [error, setError] = useState(null)
 
   useEffect(() => {
     async function load() {
       try {
-        // Fetch each table independently so one failure doesn't block others
-        const invResult = await supabase
-          .from('invoices')
-          .select('id, invoice_number, client_name, total, status, created_at')
-          .order('created_at', { ascending: false })
-          .limit(6)
-
-        const csrResult = await supabase
-          .from('csrs')
-          .select('id, csr_number, client_name, status, created_at, date')
-          .order('date', { ascending: false })  // CSRs use 'date' not 'created_at'
-          .limit(6)
+        const [invResult, quotationResult, csrResult] = await Promise.all([
+          supabase
+            .from('invoices')
+            .select('id, invoice_number, client_name, total, status, created_at')
+            .order('created_at', { ascending: false })
+            .limit(8),
+          supabase
+            .from('quotations')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(8),
+          supabase
+            .from('csrs')
+            .select('id, csr_number, client_name, status, created_at, date')
+            .order('date', { ascending: false })
+            .limit(8),
+        ])
 
         const invData = invResult.data || []
+        const quotationData = quotationResult.data || []
         const csrData = csrResult.data || []
 
-        // Tag each doc with type
         const tagged = [
-          ...invData.map(d => ({ ...d, _type: 'Invoice',   displayId: d.invoice_number, sortKey: d.created_at })),
-          ...csrData.map(d => ({ ...d, _type: 'CSR',       displayId: d.csr_number,     sortKey: d.created_at || d.date, total: null })),
+          ...invData.map((d) => ({
+            ...d,
+            _type: 'Invoice',
+            displayId: d.invoice_number,
+            sortKey: d.created_at,
+          })),
+          ...quotationData.map((d) => ({
+            ...d,
+            _type: 'Quotation',
+            displayId:
+              d.quotation_number ||
+              d.quote_number ||
+              d.quotation_no ||
+              d.quote_no ||
+              d.reference ||
+              `Quotation ${d.id}`,
+            sortKey: d.created_at || d.date,
+          })),
+          ...csrData.map((d) => ({
+            ...d,
+            _type: 'CSR',
+            displayId: d.csr_number,
+            sortKey: d.created_at || d.date,
+            total: null,
+          })),
         ]
-          .filter(d => d.sortKey) // drop null dates
+          .filter((d) => d.sortKey)
           .sort((a, b) => new Date(b.sortKey) - new Date(a.sortKey))
           .slice(0, 6)
 
         setPlayground(tagged)
-
-        // Metrics — separate calls so they don't affect each other
-        const { count: invCount } = await supabase
-          .from('invoices')
-          .select('id', { count: 'exact', head: true })
-
-        const { count: csrCount } = await supabase
-          .from('csrs')
-          .select('id', { count: 'exact', head: true })
-
-        const { data: paidInvoices } = await supabase
-          .from('invoices')
-          .select('total')
-          .eq('status', 'paid')
-
-        const revenue = (paidInvoices || []).reduce((sum, i) => sum + Number(i.total || 0), 0)
-
-        setMetrics({
-          invoices: invCount || 0,
-          csrs: csrCount || 0,
-          revenue,
-        })
       } catch (err) {
         console.error('Dashboard load error:', err)
         setError(err.message)
@@ -79,39 +84,15 @@ export default function Dashboard({ session }) {
     load()
   }, [])
 
-  const formatRevenue = (n) => {
-    if (n >= 1_000_000) return `₦${(n / 1_000_000).toFixed(1)}M`
-    if (n >= 1_000) return `₦${(n / 1_000).toFixed(0)}k`
-    return `₦${n}`
-  }
-
   return (
     <Layout title="Overview" session={session}>
-      {/* Metric strip */}
-      <div className="flex items-center gap-6 mb-8 px-2 overflow-x-auto border-b border-slate-200 pb-4">
-        <div className="shrink-0">
-          <span className="text-[10px] font-bold text-slate-400 uppercase block">Invoices</span>
-          <span className="text-lg font-bold">{loading ? '—' : metrics.invoices}</span>
-        </div>
-        <div className="shrink-0 text-slate-200">|</div>
-        <div className="shrink-0">
-          <span className="text-[10px] font-bold text-slate-400 uppercase block">CSRs</span>
-          <span className="text-lg font-bold">{loading ? '—' : metrics.csrs}</span>
-        </div>
-        <div className="shrink-0 text-slate-200">|</div>
-        <div className="shrink-0">
-          <span className="text-[10px] font-bold text-slate-400 uppercase block">Revenue</span>
-          <span className="text-lg font-bold text-emerald-600">{loading ? '—' : formatRevenue(metrics.revenue)}</span>
-        </div>
-      </div>
-
       {/* Quick Actions */}
       <div className="grid grid-cols-3 gap-3 mb-8">
         {[
           { label: 'Invoice', icon: Plus,          path: '/invoices/new',   color: 'bg-slate-900' },
           { label: 'CSR',     icon: Wrench,         path: '/csr/new',        color: 'bg-slate-800' },
           { label: 'Quote',   icon: ClipboardList,  path: '/quotations/new', color: 'bg-slate-700' },
-        ].map(btn => (
+        ].map((btn) => (
           <button
             key={btn.label}
             onClick={() => navigate(btn.path)}
@@ -151,7 +132,7 @@ export default function Dashboard({ session }) {
                 Create your first invoice →
               </button>
             </div>
-          ) : playground.map(doc => {
+          ) : playground.map((doc) => {
             const conf = DOC_CONFIG[doc._type]
             return (
               <div
@@ -160,7 +141,7 @@ export default function Dashboard({ session }) {
                 className="flex items-center gap-4 px-4 py-4 hover:bg-slate-50 cursor-pointer group"
                 role="button"
                 tabIndex={0}
-                onKeyDown={e => e.key === 'Enter' && navigate(`/${conf.path}/${doc.id}`)}
+                onKeyDown={(e) => e.key === 'Enter' && navigate(`/${conf.path}/${doc.id}`)}
               >
                 <div className={`w-10 h-10 rounded-lg ${conf.bg} ${conf.color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
                   <conf.icon size={18} />

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
-import { FolderKanban, Plus, Search, SlidersHorizontal, FileText, Check } from 'lucide-react'
+import { FolderKanban, Plus, Search, SlidersHorizontal, Check } from 'lucide-react'
 
 const STATUS_CONFIG = {
   active:    { label: 'Active',    bg: '#DCFCE7', color: '#16A34A' },
@@ -165,9 +165,22 @@ export default function Projects() {
   const hasActiveFilters =
     !!search || clientFilter !== 'All' || statusFilter !== 'All' || dateFilter !== 'All Time'
 
+  const formatProjectValue = (value) => {
+    const amount = Number(value || 0)
+    if (!amount) return ''
+    if (amount >= 1_000_000) return `₦${(amount / 1_000_000).toFixed(1)}M`
+    return `₦${amount.toLocaleString()}`
+  }
+
   return (
     <Layout title="Projects">
-      <div style={{ maxWidth: 900 }}>
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+      `}</style>
+      <div style={{ maxWidth: 900, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12 }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#0F172A' }}>Projects</h2>
@@ -288,6 +301,10 @@ export default function Projects() {
             {filtered.map(project => {
               const st = STATUS_CONFIG[project.status] || STATUS_CONFIG.active
               const count = docCounts[project.id] || 0
+              const formattedValue = formatProjectValue(project.project_value)
+              const startedText = project.start_date
+                ? new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                : '-'
               return (
                 <div
                   key={project.id}
@@ -295,86 +312,186 @@ export default function Projects() {
                   style={{
                     position: 'relative',
                     backgroundColor: 'white',
-                    border: '1px solid #E2E8F0',
-                    borderRadius: 999,
-                    padding: '16px 18px',
+                    border: '1px solid #e8e8e8',
+                    borderRadius: 24,
+                    padding: 24,
                     cursor: 'pointer',
-                    transition: 'border-color 0.15s, box-shadow 0.15s',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                    overflow: 'hidden',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#94A3B8'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.06)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#E2E8F0'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)' }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 14px 30px rgba(15, 23, 42, 0.12)'
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, paddingRight: 42 }}>
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 4,
+                    background: 'linear-gradient(90deg, #10b981, #3b82f6)',
+                  }} />
+
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                        <span style={{
+                          fontSize: 11,
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                          color: '#10b981',
+                          background: '#d1fae5',
+                          borderRadius: 999,
+                          padding: '4px 10px',
+                        }}>
+                          PROJ
+                        </span>
+                        <span style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          borderRadius: 999,
+                          padding: '4px 10px',
+                          background: st.bg,
+                          color: st.color,
+                        }}>
+                          {st.label}
+                        </span>
+                      </div>
+                      <div style={{
+                        fontSize: 20,
+                        fontWeight: 800,
+                        letterSpacing: '-0.02em',
+                        color: '#171717',
+                        lineHeight: 1.25,
+                      }}>
                         {project.name}
                       </div>
-                    </div>
-                    <span style={{
-                      fontSize: 11, fontWeight: 700, padding: '4px 10px',
-                      borderRadius: 20, backgroundColor: st.bg, color: st.color, flexShrink: 0,
-                    }}>
-                      {st.label}
-                    </span>
-                  </div>
-
-                  {project.client_name && (
-                    <div style={{ marginTop: 6, fontSize: 12, color: '#64748B', paddingRight: 42 }}>
-                      {project.client_name}
-                    </div>
-                  )}
-
-                  <div style={{ marginTop: 6, fontSize: 12, color: '#64748B', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', paddingRight: 42 }}>
-                    <span>Started {new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <FileText size={11} />
-                      {count} doc{count !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-
-                  <div style={{ position: 'absolute', right: 14, bottom: 14 }} onClick={e => e.stopPropagation()}>
-                    <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        setOpenMenuId(openMenuId === project.id ? null : project.id)
-                      }}
-                      style={{
-                        width: 32, height: 32, borderRadius: 999, border: '1px solid #E2E8F0',
-                        background: 'white', color: '#64748B', cursor: 'pointer', fontSize: 16, fontWeight: 700,
-                      }}
-                    >
-                      ...
-                    </button>
-                    {openMenuId === project.id && (
                       <div style={{
-                        position: 'absolute', right: 0, bottom: 'calc(100% + 8px)', zIndex: 20, width: 220,
-                        borderRadius: 14, border: '1px solid #E2E8F0', background: 'white', padding: 6,
-                        boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)',
+                        marginTop: 6,
+                        fontSize: 15,
+                        fontWeight: 600,
+                        color: '#525252',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                       }}>
-                        {statusActions.map(action => {
-                          const isCurrent = project.status === action.value
-                          return (
-                            <button
-                              key={action.value}
-                              onClick={() => handleStatusUpdate(project, action.value)}
-                              style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                width: '100%', border: 'none', background: isCurrent ? '#F8FAFC' : 'transparent',
-                                textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 13,
-                                color: '#334155', cursor: 'pointer', fontWeight: isCurrent ? 700 : 500,
-                              }}
-                            >
-                              <span>{action.label}</span>
-                              {isCurrent && <Check size={14} color="#0F172A" />}
-                            </button>
-                          )
-                        })}
-                        <div style={{ height: 1, background: '#E2E8F0', margin: '6px 4px' }} />
-                        <button onClick={() => handleArchive(project)} style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#334155', cursor: 'pointer' }}>Archive</button>
-                        <button onClick={() => handleDelete(project)} style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#DC2626', cursor: 'pointer' }}>Delete</button>
+                        {project.client_name || 'No client'}
                       </div>
-                    )}
+                    </div>
+
+                    <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={e => {
+                          e.stopPropagation()
+                          setOpenMenuId(openMenuId === project.id ? null : project.id)
+                        }}
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 12,
+                          border: '1px solid transparent',
+                          background: '#fff',
+                          color: '#737373',
+                          cursor: 'pointer',
+                          fontSize: 18,
+                          fontWeight: 700,
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#f5f5f5' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
+                      >
+                        •••
+                      </button>
+                      {openMenuId === project.id && (
+                        <div style={{
+                          position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 20, width: 220,
+                          borderRadius: 14, border: '1px solid #E2E8F0', background: 'white', padding: 6,
+                          boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)',
+                        }}>
+                          {statusActions.map(action => {
+                            const isCurrent = project.status === action.value
+                            return (
+                              <button
+                                key={action.value}
+                                onClick={() => handleStatusUpdate(project, action.value)}
+                                style={{
+                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                  width: '100%', border: 'none', background: isCurrent ? '#F8FAFC' : 'transparent',
+                                  textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 13,
+                                  color: '#334155', cursor: 'pointer', fontWeight: isCurrent ? 700 : 500,
+                                }}
+                              >
+                                <span>{action.label}</span>
+                                {isCurrent && <Check size={14} color="#0F172A" />}
+                              </button>
+                            )
+                          })}
+                          <div style={{ height: 1, background: '#E2E8F0', margin: '6px 4px' }} />
+                          <button onClick={() => handleArchive(project)} style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#334155', cursor: 'pointer' }}>Archive</button>
+                          <button onClick={() => handleDelete(project)} style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#DC2626', cursor: 'pointer' }}>Delete</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{
+                        width: 28, height: 28, borderRadius: 6, background: '#f5f5f5',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
+                      }}>📄</span>
+                      <span style={{ fontSize: 13, color: '#737373', fontWeight: 500 }}>
+                        {count} linked doc{count !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{
+                        width: 28, height: 28, borderRadius: 6, background: '#f5f5f5',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
+                      }}>🗓️</span>
+                      <span style={{ fontSize: 13, color: '#737373', fontWeight: 500 }}>
+                        Started {startedText}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    marginTop: 18,
+                    paddingTop: 14,
+                    borderTop: '1px solid #e8e8e8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                  }}>
+                    <div style={{
+                      fontSize: 24,
+                      fontWeight: 800,
+                      letterSpacing: '-0.02em',
+                      color: '#171717',
+                    }}>
+                      {formattedValue}
+                    </div>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: '#10b981',
+                          boxShadow: '0 0 0 3px rgba(16,185,129,0.2)',
+                          animation: 'pulse 2s infinite',
+                        }}
+                      />
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#525252' }}>
+                        {st.label}
+                      </span>
+                    </div>
                   </div>
                 </div>
               )

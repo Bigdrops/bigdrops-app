@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react"
+﻿import { useEffect, useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { Plus, MoreHorizontal, FileText, Eye, Pencil, Copy, DollarSign, X,
          Send, Archive, Trash2, FileOutput, Truck, Wrench, Search, SlidersHorizontal } from "lucide-react"
@@ -79,7 +79,7 @@ export default function Invoices() {
     setShowDeleteWarn(false)
   }
 
-  // ── Actions ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handleView  = () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) }
   const handleEdit  = () => { closeSheet(); navigate(`/invoices/edit/${activeInvoice.id}`) }
@@ -192,7 +192,7 @@ export default function Invoices() {
 
   return (
     <Layout title="Invoices">
-      <div className="max-w-6xl mx-auto px-4 pb-32 pt-6">
+      <div className="max-w-6xl mx-auto px-4 pb-32 pt-6" style={{ fontFamily: "'Inter', sans-serif" }}>
 
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>
@@ -273,54 +273,101 @@ export default function Invoices() {
         )}
 
         {/* Invoice list */}
-        <div className="grid gap-3">
-          {filteredInvoices.map((inv) => (
+        <div
+          style={{
+            background: "white",
+            border: "1px solid #e2e8f0",
+            borderRadius: 24,
+            overflow: "hidden",
+            boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
+          }}
+        >
+          {filteredInvoices.map((inv, idx) => (
             <div
               key={inv.id}
               onClick={() => navigate(`/invoices/${inv.id}`)}
-              className="group flex items-center justify-between p-5 bg-white border border-zinc-200 rounded-[24px] cursor-pointer hover:border-zinc-950 hover:shadow-xl transition-all duration-200"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "48px 1fr auto 38px",
+                gap: 14,
+                padding: "16px 18px",
+                alignItems: "center",
+                borderBottom: idx === filteredInvoices.length - 1 ? "none" : "1px solid #f1f5f9",
+                cursor: "pointer",
+              }}
             >
-              <div className="flex items-center gap-5 flex-1 min-w-0">
-                <div className="h-14 w-14 flex items-center justify-center rounded-2xl bg-zinc-50 group-hover:bg-zinc-950 group-hover:text-white transition-colors shrink-0">
-                  <FileText size={24} />
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  background: "#eff6ff",
+                  color: "#2563eb",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <FileText size={18} />
+              </div>
+
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                  <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 900, textTransform: "uppercase" }}>INV</span>
+                  <span style={{ fontSize: 16, fontWeight: 900, letterSpacing: "-0.02em", color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {inv.invoice_number}
+                  </span>
                 </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-black text-zinc-950 uppercase tracking-tighter">{inv.invoice_number}</h3>
-                    <span
-                      style={getInvoiceStatusStyle(inv.status)}
-                      className="rounded-full px-2.5 py-1 text-[10px] font-black"
-                    >
-                      {formatStatusLabel(inv.status)}
-                    </span>
-                    {inv.thread_role && (
-                      <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase ${roleColor(inv.thread_role)}`}>
-                        {inv.thread_role}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs font-bold text-zinc-400 uppercase truncate">{inv.client_name || "No client"}</p>
-                  <div
-                    className="sm:hidden flex items-center gap-3 flex-wrap"
-                    style={{ color: '#64748B', fontSize: 12 }}
-                  >
-                    <span>{formatInvoiceDate(inv.issue_date) || "No date"}</span>
-                    <span>{`₦${Number(inv.total || 0).toLocaleString()}`}</span>
-                  </div>
+                <div style={{ fontSize: 13, color: "#64748b", fontWeight: 700, marginTop: 2 }}>
+                  {inv.client_name || "No client"}
+                </div>
+                <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 700, marginTop: 2 }}>
+                  {formatInvoiceDate(inv.issue_date) || "No date"}
                 </div>
               </div>
-              <div className="flex items-center gap-6">
-                <div className="text-right hidden sm:block">
-                  <p className="text-lg font-black text-zinc-950">₦{Number(inv.total || 0).toLocaleString()}</p>
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase">{inv.issue_date}</p>
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setActiveInvoice(inv) }}
-                  className="p-3 rounded-xl bg-zinc-50 hover:bg-zinc-950 text-zinc-400 hover:text-white transition-all"
+
+              <div style={{ justifySelf: "end", textAlign: "right" }}>
+                <span
+                  style={{
+                    ...getInvoiceStatusStyle(inv.status),
+                    borderRadius: 999,
+                    padding: "6px 10px",
+                    fontSize: 11,
+                    fontWeight: 900,
+                    display: "inline-block",
+                  }}
                 >
-                  <MoreHorizontal size={20} />
-                </button>
+                  {formatStatusLabel(inv.status)}
+                </span>
+                <div style={{ marginTop: 6, fontSize: 15, fontWeight: 900, letterSpacing: "-0.03em", color: "#0f172a" }}>
+                  ₦{Number(inv.total || 0).toLocaleString()}
+                </div>
+                {inv.thread_role && (
+                  <div style={{ marginTop: 4 }}>
+                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase ${roleColor(inv.thread_role)}`}>
+                      {inv.thread_role}
+                    </span>
+                  </div>
+                )}
               </div>
+
+              <button
+                onClick={(e) => { e.stopPropagation(); setActiveInvoice(inv) }}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 12,
+                  border: "1px solid #e2e8f0",
+                  background: "white",
+                  color: "#64748b",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                <MoreHorizontal size={18} />
+              </button>
             </div>
           ))}
 
@@ -360,7 +407,7 @@ export default function Invoices() {
                 <p className="text-xs text-zinc-400 font-bold">{activeInvoice.client_name}</p>
               </div>
               <div className="flex items-center gap-3">
-                <p className="text-xl font-black text-zinc-950">₦{Number(activeInvoice.total || 0).toLocaleString()}</p>
+                <p className="text-xl font-black text-zinc-950">â‚¦{Number(activeInvoice.total || 0).toLocaleString()}</p>
                 <button onClick={closeSheet} className="p-2 rounded-xl bg-zinc-100 text-zinc-400 hover:bg-zinc-200">
                   <X size={18} />
                 </button>
@@ -422,7 +469,7 @@ export default function Invoices() {
           </div>
           <h3 className="text-xl font-black text-zinc-950 text-center mb-2">Delete Invoice?</h3>
           <p className="text-sm text-zinc-500 text-center font-medium leading-relaxed mb-8">
-            Deleting is permanent and cannot be undone. You may choose to archive it instead — archived invoices remain recoverable for 30 days.
+            Deleting is permanent and cannot be undone. You may choose to archive it instead â€” archived invoices remain recoverable for 30 days.
           </p>
           <div className="flex gap-3">
             <button onClick={() => setShowDeleteWarn(false)}

@@ -2,10 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import { useSettings, uploadFile, saveSettings } from '../hooks/useSettings'
+import { QUICK_TILE_REGISTRY, DEFAULT_QUICK_TILES } from '../config/quickTiles'
 import {
   Building2, CreditCard, ImageIcon, FileText,
   Shield, Check, Loader2, ChevronRight, Upload, X,
-  Eye, EyeOff, UserCheck, UserX, Trash2, Smartphone
+  Eye, EyeOff, UserCheck, UserX, Trash2, Smartphone, LayoutDashboard
 } from 'lucide-react'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
@@ -340,6 +341,96 @@ function UserSection({ session, onToast }) {
   )
 }
 
+function DashboardSection() {
+  const allTiles = Object.keys(QUICK_TILE_REGISTRY)
+
+  const getInitialTiles = () => {
+    try {
+      const saved = localStorage.getItem('quick_tiles')
+      if (!saved) return DEFAULT_QUICK_TILES
+      const parsed = JSON.parse(saved)
+      if (!Array.isArray(parsed)) return DEFAULT_QUICK_TILES
+      const validSaved = parsed.filter((id) => QUICK_TILE_REGISTRY[id])
+      return validSaved.length > 0 ? validSaved : DEFAULT_QUICK_TILES
+    } catch (e) {
+      return DEFAULT_QUICK_TILES
+    }
+  }
+
+  const [activeTiles, setActiveTiles] = useState(getInitialTiles)
+
+  const saveTiles = (nextTiles) => {
+    setActiveTiles(nextTiles)
+    localStorage.setItem('quick_tiles', JSON.stringify(nextTiles))
+  }
+
+  const toggleTile = (tileId) => {
+    const included = activeTiles.includes(tileId)
+    if (included) {
+      saveTiles(activeTiles.filter((id) => id !== tileId))
+    } else {
+      saveTiles([...activeTiles, tileId])
+    }
+  }
+
+  const moveTile = (tileId, direction) => {
+    const idx = activeTiles.indexOf(tileId)
+    if (idx < 0) return
+    const target = direction === 'up' ? idx - 1 : idx + 1
+    if (target < 0 || target >= activeTiles.length) return
+    const next = [...activeTiles]
+    ;[next[idx], next[target]] = [next[target], next[idx]]
+    saveTiles(next)
+  }
+
+  return (
+    <div className="space-y-2">
+      {allTiles.map((tileId) => {
+        const tile = QUICK_TILE_REGISTRY[tileId]
+        const included = activeTiles.includes(tileId)
+        const idx = activeTiles.indexOf(tileId)
+        const isFirst = idx === 0
+        const isLast = idx === activeTiles.length - 1
+
+        return (
+          <div
+            key={tileId}
+            className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center gap-3"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-800">{tile.label}</p>
+            </div>
+            <button
+              onClick={() => toggleTile(tileId)}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                included
+                  ? 'border-red-200 text-red-600 hover:bg-red-50'
+                  : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+              }`}
+            >
+              {included ? 'Exclude' : 'Include'}
+            </button>
+            <button
+              onClick={() => moveTile(tileId, 'up')}
+              disabled={!included || isFirst}
+              className="px-2 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Up
+            </button>
+            <button
+              onClick={() => moveTile(tileId, 'down')}
+              disabled={!included || isLast}
+              className="px-2 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Down
+            </button>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Confirmation Modals ──────────────────────────────────────────────────────
 
 function ConfirmModal({ type, user, onConfirm, onCancel, loading }) {
@@ -660,6 +751,7 @@ const SECTIONS = [
   { id: 'company',  label: 'Company Info',    icon: Building2,  desc: 'Name, address, contact' },
   { id: 'banking',  label: 'Banking',          icon: CreditCard, desc: 'Account & bank details' },
   { id: 'branding', label: 'Logo & Branding',  icon: ImageIcon,  desc: 'Logo, signature, footer' },
+  { id: 'dashboard', label: 'Dashboard',       icon: LayoutDashboard, desc: 'Quick tiles on dashboard header' },
   { id: 'user',     label: 'User Settings',    icon: FileText,   desc: 'Change your password' },
 ]
 
@@ -684,6 +776,7 @@ export default function Settings() {
       case 'company':  return <CompanySection onToast={showToast} />
       case 'banking':  return <BankingSection onToast={showToast} />
       case 'branding': return <BrandingSection onToast={showToast} />
+      case 'dashboard': return <DashboardSection />
       case 'user':     return <UserSection session={session} onToast={showToast} />
       case 'admin':    return <AdminSection onToast={showToast} session={session} />
       default:         return null

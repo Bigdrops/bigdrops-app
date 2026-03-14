@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -553,7 +553,7 @@ export default function NewInvoice() {
     return (
       <tr key={index} style={{ backgroundColor: '#333' }}>
         {reorderBtns}
-        <td style={{ padding: '10px 8px', textAlign: 'center', color: '#888' }}>—</td>
+        <td style={{ padding: '10px 8px', textAlign: 'center', color: '#888' }}>Ã¢â‚¬â€</td>
         <td colSpan={visCount} style={{ padding: '10px 12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <input
@@ -585,7 +585,7 @@ export default function NewInvoice() {
                     cursor: 'pointer',
                   }}
                 >
-                  <div
+                    <div
                     onClick={() => toggleGroupSubtotal(g.id)}
                     style={{
                       width: '32px',
@@ -622,7 +622,7 @@ export default function NewInvoice() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    ₦{gTotal.toLocaleString()}
+                    Ã¢â€šÂ¦{gTotal.toLocaleString()}
                   </span>
                 )}
               </div>
@@ -634,7 +634,7 @@ export default function NewInvoice() {
             onClick={() => (g ? deleteGroup(g.id) : removeItem(index))}
             style={{ color: '#ff6b6b', cursor: 'pointer', fontSize: '18px' }}
           >
-            ×
+            Ãƒâ€”
           </span>
         </td>
       </tr>
@@ -702,7 +702,7 @@ export default function NewInvoice() {
                     lineHeight: 1,
                   }}
                 >
-                  ×
+                  Ãƒâ€”
                 </span>
               </div>
 
@@ -715,7 +715,7 @@ export default function NewInvoice() {
                     cursor: 'pointer',
                   }}
                 >
-                  <div
+                    <div
                     onClick={() => toggleGroupSubtotal(group.id)}
                     style={{
                       width: '36px',
@@ -753,7 +753,7 @@ export default function NewInvoice() {
                       fontWeight: 'bold',
                     }}
                   >
-                    ₦{groupSubtotal.toLocaleString()}
+                    Ã¢â€šÂ¦{groupSubtotal.toLocaleString()}
                   </span>
                 )}
               </div>
@@ -857,19 +857,19 @@ export default function NewInvoice() {
   return (
     <Layout title="New Invoice">
       <div style={{ maxWidth: '1100px' }}>
-        {/* Thread context banner — shown when creating a follow-up invoice */}
+        {/* Thread context banner Ã¢â‚¬â€ shown when creating a follow-up invoice */}
         {threadDefaults && (
           <div style={{ marginBottom: '20px', padding: '14px 18px', backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#1D4ED8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
-                Job Thread · Invoice {threadDefaults.thread_position} of chain
+                Job Thread Ã‚Â· Invoice {threadDefaults.thread_position} of chain
               </div>
               <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1E3A8A' }}>
                 {threadDefaults.job_title || 'Follow-up Invoice'}
               </div>
               {threadDefaults._suggestedAmount > 0 && (
                 <div style={{ fontSize: '12px', color: '#3B82F6', marginTop: '2px' }}>
-                  Suggested amount: ₦{Number(threadDefaults._suggestedAmount).toLocaleString()}
+                  Suggested amount: Ã¢â€šÂ¦{Number(threadDefaults._suggestedAmount).toLocaleString()}
                 </div>
               )}
             </div>
@@ -930,7 +930,7 @@ export default function NewInvoice() {
             <label style={lbl}>
               Invoice Title{' '}
               <span style={{ color: '#aaa', fontWeight: 'normal' }}>
-                (optional — shows on document when filled)
+                (optional Ã¢â‚¬â€ shows on document when filled)
               </span>
             </label>
             <input
@@ -992,7 +992,7 @@ export default function NewInvoice() {
             </div>
             {customFields.length === 0 && (
               <div style={{ fontSize: '13px', color: '#bbb', fontStyle: 'italic' }}>
-                Fields like Engine No, Serial No — appear on invoice header.
+                Fields like Engine No, Serial No Ã¢â‚¬â€ appear on invoice header.
               </div>
             )}
             {customFields.map((field, i) => (
@@ -1037,7 +1037,7 @@ export default function NewInvoice() {
                     fontSize: '22px',
                   }}
                 >
-                  ×
+                  Ãƒâ€”
                 </div>
               </div>
             ))}
@@ -1078,7 +1078,7 @@ export default function NewInvoice() {
                   fontWeight: 'bold',
                 }}
               >
-                ⚙ Columns
+                Ã¢Å¡â„¢ Columns
               </div>
 
               <div style={{ position: 'relative' }}>
@@ -1093,7 +1093,7 @@ export default function NewInvoice() {
                     fontSize: '13px',
                   }}
                 >
-                  Import CSV ▾
+                  Import CSV Ã¢â€“Â¾
                 </div>
 
                 {showCSVNote && (
@@ -1112,6 +1112,30 @@ export default function NewInvoice() {
                     }}
                     onClick={(e) => e.stopPropagation()}
                   >
+                    <div
+                      style={{
+                        marginBottom: '12px',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '8px',
+                        padding: '10px',
+                        backgroundColor: '#F8FAFC',
+                        fontSize: '12px',
+                        color: '#475569',
+                        lineHeight: '1.6',
+                        whiteSpace: 'pre-line',
+                      }}
+                    >
+                      {`CSV Format:
+description, make, quantity, unit, unit_price
+
+Paste your item list into any AI with this message:
+"Convert my list below into a CSV with these exact columns:
+description, make, quantity, unit, unit_price —
+no extra text, just the CSV"
+
+Then paste the result here or upload the .csv file.`}
+                    </div>
+
                     <div
                       style={{
                         display: 'flex',
@@ -1518,7 +1542,7 @@ export default function NewInvoice() {
                                 padding: '2px',
                               }}
                             >
-                              ▲
+                              Ã¢â€“Â²
                             </div>
                             <div
                               onClick={() => moveItem(index, 1)}
@@ -1530,7 +1554,7 @@ export default function NewInvoice() {
                                 padding: '2px',
                               }}
                             >
-                              ▼
+                              Ã¢â€“Â¼
                             </div>
                           </div>
                         </td>
@@ -1754,7 +1778,7 @@ export default function NewInvoice() {
                                         fontWeight: 'bold',
                                       }}
                                     >
-                                      ✕ no discount
+                                      Ã¢Å“â€¢ no discount
                                     </div>
                                   ) : drVal > 0 ? (
                                     <div
@@ -1819,7 +1843,7 @@ export default function NewInvoice() {
                               onClick={() => removeItem(index)}
                               style={{ color: '#CC0000', cursor: 'pointer', fontSize: '18px' }}
                             >
-                              ×
+                              Ãƒâ€”
                             </span>
                           </td>
                         </tr>
@@ -1844,7 +1868,7 @@ export default function NewInvoice() {
           >
             <h3 style={{ ...secT, margin: 0 }}>Advanced Options</h3>
             <span style={{ fontSize: '18px', color: '#aaa' }}>
-              {showAdvanced ? '▲' : '▾'}
+              {showAdvanced ? 'Ã¢â€“Â²' : 'Ã¢â€“Â¾'}
             </span>
           </div>
           {showAdvanced && (
@@ -1858,7 +1882,7 @@ export default function NewInvoice() {
                     cursor: 'pointer',
                   }}
                 >
-                  <div
+                    <div
                     onClick={() => setMergeQtyUnit((p) => !p)}
                     style={{
                       width: '44px',
@@ -1884,7 +1908,7 @@ export default function NewInvoice() {
                       }}
                     />
                   </div>
-                  <div>
+                    <div>
                     <div
                       style={{
                         fontSize: '14px',
@@ -1908,7 +1932,7 @@ export default function NewInvoice() {
                     cursor: 'pointer',
                   }}
                 >
-                  <div
+                    <div
                     onClick={() => setShowItemImages((p) => !p)}
                     style={{
                       width: '44px',
@@ -1934,7 +1958,7 @@ export default function NewInvoice() {
                       }}
                     />
                   </div>
-                  <div>
+                    <div>
                     <div
                       style={{
                         fontSize: '14px',
@@ -1945,7 +1969,7 @@ export default function NewInvoice() {
                       Show item images in PDF
                     </div>
                     <div style={{ fontSize: '12px', color: '#999' }}>
-                      Adds an image column — upload images per row above
+                      Adds an image column Ã¢â‚¬â€ upload images per row above
                     </div>
                   </div>
                 </label>
@@ -2057,7 +2081,7 @@ export default function NewInvoice() {
                   }
                   style={{ color: '#CC0000', cursor: 'pointer', fontSize: '18px' }}
                 >
-                  ×
+                  Ãƒâ€”
                 </span>
               </div>
             ))}
@@ -2113,9 +2137,8 @@ export default function NewInvoice() {
                 }}
               >
                 <label style={{ ...lbl, marginBottom: 0 }}>Discount</label>
-
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  <div
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <div
                     style={{
                       display: 'flex',
                       borderRadius: '6px',
@@ -2128,7 +2151,7 @@ export default function NewInvoice() {
                       onClick={() => setDiscountType('fixed')}
                       style={tog(discountType === 'fixed')}
                     >
-                      ₦
+                      Ã¢â€šÂ¦
                     </button>
                     <button
                       type="button"
@@ -2224,7 +2247,7 @@ export default function NewInvoice() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {value < 0 ? '-' : ''}₦{Math.abs(value).toLocaleString()}
+                    {value < 0 ? '-' : ''}Ã¢â€šÂ¦{Math.abs(value).toLocaleString()}
                   </span>
                 </div>
               ))}
@@ -2248,7 +2271,7 @@ export default function NewInvoice() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                ₦{grandTotal.toLocaleString()}
+                Ã¢â€šÂ¦{grandTotal.toLocaleString()}
               </span>
             </div>
 
@@ -2268,11 +2291,11 @@ export default function NewInvoice() {
                   Less: WHT (
                   {whtType === 'percent'
                     ? (invoice.wht || 0) + '%'
-                    : '₦' + Number(invoice.wht || 0).toLocaleString()}
+                    : 'Ã¢â€šÂ¦' + Number(invoice.wht || 0).toLocaleString()}
                   )
                 </span>
                 <span style={{ whiteSpace: 'nowrap' }}>
-                  -₦{whtAmount.toLocaleString()}
+                  -Ã¢â€šÂ¦{whtAmount.toLocaleString()}
                 </span>
               </div>
             )}
@@ -2298,7 +2321,7 @@ export default function NewInvoice() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                ₦{totalPayable.toLocaleString()}
+                Ã¢â€šÂ¦{totalPayable.toLocaleString()}
               </span>
             </div>
 
@@ -2392,7 +2415,7 @@ export default function NewInvoice() {
                   u[i] = { text: e.target.value }
                   setBottomFields(u)
                 }}
-                placeholder="e.g. ADVANCE PAYMENT DUE (60%): ₦141,601"
+                placeholder="e.g. ADVANCE PAYMENT DUE (60%): Ã¢â€šÂ¦141,601"
               />
               <span
                 onClick={() =>
@@ -2400,7 +2423,7 @@ export default function NewInvoice() {
                 }
                 style={{ color: '#CC0000', cursor: 'pointer', fontSize: '20px' }}
               >
-                ×
+                Ãƒâ€”
               </span>
             </div>
           ))}
@@ -2518,3 +2541,10 @@ export default function NewInvoice() {
     </Layout>
   )
 }
+
+
+
+
+
+
+
