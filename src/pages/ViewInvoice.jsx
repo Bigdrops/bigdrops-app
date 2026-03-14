@@ -319,27 +319,6 @@ export default function ViewInvoice() {
           </div>
         </div>
 
-        {/* ── Thread Summary Card — shown when invoice belongs to a thread ── */}
-        {hasThread && (
-          <ThreadSummaryCard
-            threadId={invoice.thread_id}
-            currentInvoiceId={invoice.id}
-            onCreateNext={handleCreateNextInvoice}
-          />
-        )}
-
-        {/* ── Convert to Advance CTA — shown only on standalone standard invoices ── */}
-        {isStandalone && (
-          <div style={{ marginBottom: '24px', padding: '16px 20px', backgroundColor: '#F8FAFF', border: '1px dashed #BFDBFE', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1D4ED8', marginBottom: '2px' }}>Make this an Advance Invoice</div>
-              <div style={{ fontSize: '12px', color: '#64748B' }}>Convert to a job thread — track contract value, progress and balance invoices.</div>
-            </div>
-            <div onClick={() => setShowAdvanceModal(true)} style={{ padding: '8px 16px', backgroundColor: '#1D4ED8', color: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-              Convert →
-            </div>
-          </div>
-        )}
 
         {/* ── Invoice Preview ── */}
         <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: isNarrow ? '16px' : '40px', overflowX: 'auto' }}>
@@ -352,11 +331,6 @@ export default function ViewInvoice() {
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ color: '#CC0000', fontWeight: 'bold', fontSize: '20px', marginBottom: '4px' }}>{invoice.document_type || 'INVOICE'}</div>
-              {invoice.thread_role === 'advance' && (
-                <div style={{ display: 'inline-block', backgroundColor: '#F59E0B', color: 'white', fontSize: '11px', fontWeight: 'bold', padding: '3px 12px', borderRadius: '20px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Advance Invoice
-                </div>
-              )}
               <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>{invoice.invoice_number}</div>
               <div style={{ fontSize: '12px', color: '#555' }}>Date: {invoice.issue_date}</div>
               {invoice.due_date && <div style={{ fontSize: '12px', color: '#555' }}>Due: {invoice.due_date}</div>}
@@ -377,7 +351,6 @@ export default function ViewInvoice() {
             </div>
             <div style={{ flex: 1, minWidth: '160px' }}>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Details</div>
-              {invoice.job_title && <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1D4ED8', marginBottom: '6px' }}>Job: {invoice.job_title}</div>}
               {invoice.payment_terms && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>Payment Terms: {invoice.payment_terms}</div>}
               {invoice.work_duration && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>Work Duration: {invoice.work_duration}</div>}
               {customFields.filter(f => f.label && f.value).map((f, i) => (
@@ -486,41 +459,17 @@ export default function ViewInvoice() {
                 </div>
               ))}
 
-              {/* Advance mode totals */}
-              {invoice.thread_role === 'advance' && invoice.total_contract_value > 0 ? (
-                <>
-                  <div style={{ borderTop: '2px solid #1a1a1a', paddingTop: '10px', marginTop: '8px', display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#555' }}>Total Project Value</span>
-                    <span style={{ fontWeight: 'bold', fontSize: '16px', color: '#1a1a1a' }}>₦{Number(invoice.total_contract_value).toLocaleString()}</span>
-                  </div>
-                  <div style={{ backgroundColor: '#FEF3C7', border: '2px dashed #F59E0B', borderRadius: '10px', padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '13px', color: '#92400E' }}>
-                      {invoice.advance_mode === 'percent' && invoice.advance_value
-                        ? `${invoice.advance_value}% Advance Due`
-                        : 'Advance Due Now'}
-                    </span>
-                    <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#B45309' }}>₦{Number(invoice.total || 0).toLocaleString()}</span>
-                  </div>
-                </>
-              ) : (
-                <div style={{ borderTop: '2px solid #1a1a1a', paddingTop: '10px', marginTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 'bold', fontSize: '15px' }}>TOTAL (NGN)</span>
-                  <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#CC0000' }}>₦{Number(invoice.total || 0).toLocaleString()}</span>
-                </div>
-              )}
+              {/* Grand total */}
+              <div style={{ borderTop: '2px solid #1a1a1a', paddingTop: '10px', marginTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '15px' }}>TOTAL (NGN)</span>
+                <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#CC0000' }}>₦{Number(invoice.total || 0).toLocaleString()}</span>
+              </div>
             </div>
           </div>
 
           {invoice.amount_in_words && (
             <div style={{ backgroundColor: '#f9f9f9', padding: '12px', borderLeft: '3px solid #CC0000', marginBottom: '24px', fontSize: '12px', color: '#555', fontStyle: 'italic' }}>
               {invoice.amount_in_words}
-            </div>
-          )}
-
-          {/* Balance note for advance invoices */}
-          {invoice.thread_role === 'advance' && invoice.total_contract_value > 0 && (
-            <div style={{ marginBottom: '20px', padding: '12px 16px', backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', fontSize: '13px', color: '#1D4ED8' }}>
-              Balance of {invoice.advance_mode === 'percent' && invoice.advance_value ? `${100 - invoice.advance_value}%` : ''} (₦{Math.max(0, Number(invoice.total_contract_value) - Number(invoice.total || 0)).toLocaleString()}) due upon project completion.
             </div>
           )}
 
