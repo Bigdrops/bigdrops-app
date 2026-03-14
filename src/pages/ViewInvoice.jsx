@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
-import ThreadSummaryCard from '../components/ThreadSummaryCard'
-import { useInvoiceThread, generateThreadId } from '../hooks/useInvoiceThread'
+
 
 function useIsMobile() {
   const [m, setM] = React.useState(window.innerWidth < 640)
@@ -37,13 +36,6 @@ export default function ViewInvoice() {
   })
   const [savingPayment, setSavingPayment] = useState(false)
 
-  // Convert to Advance modal
-  const [showAdvanceModal, setShowAdvanceModal] = useState(false)
-  const [advanceForm, setAdvanceForm] = useState({
-    contractValue: '', jobTitle: '',
-  })
-  const [savingAdvance, setSavingAdvance] = useState(false)
-
   // PDF
   const [pdfGenerating, setPdfGenerating] = useState(false)
 
@@ -53,9 +45,6 @@ export default function ViewInvoice() {
   const [projectLinking, setProjectLinking] = useState(false)
 
   const moreRef = useRef()
-
-  // Thread hook — only active when invoice has a thread_id
-  const { buildNextInvoiceDefaults } = useInvoiceThread(invoice?.thread_id || null)
 
   const fetchInvoice = async () => {
     const { data } = await supabase.from('invoices').select('*').eq('id', id).single()
@@ -92,9 +81,6 @@ export default function ViewInvoice() {
   if (loading)  return <Layout title="Invoice"><p style={{ padding: 30 }}>Loading...</p></Layout>
   if (!invoice) return <Layout title="Invoice"><p style={{ padding: 30 }}>Invoice not found.</p></Layout>
 
-  const isAdvance   = !!invoice.thread_role === 'advance' || !!invoice.is_advance
-  const hasThread   = !!invoice.thread_id
-  const isStandalone = !hasThread
 
   // ── Status helpers ──────────────────────────────────────────────────────────
   const statusColor = (status) => {
@@ -177,9 +163,6 @@ export default function ViewInvoice() {
             due_date: null,
             // Strip thread/advance fields — clone is standalone
             thread_id: null, thread_role: null, thread_position: 1,
-            total_contract_value: 0, is_advance: false, amount_received: 0,
-            advance_mode: null, advance_value: null, job_title: '',
-            thread_created_from_invoice_id: null,
           },
           prefillItems: items.map(it => ({ ...it, id: null })),
         }
@@ -189,40 +172,6 @@ export default function ViewInvoice() {
     }
   }
 
-  // ── Convert to Advance Invoice (writes to this invoice) ────────────────────
-  const handleConfirmAdvance = async () => {
-    const contractVal = parseFloat(advanceForm.contractValue)
-    if (isNaN(contractVal) || contractVal <= 0) { alert('Enter the total contract value'); return }
-    const invoiceTotal = Number(invoice.total || 0)
-    if (contractVal < invoiceTotal) {
-      alert(`Contract value must be at least ₦${invoiceTotal.toLocaleString()} (this invoice's total)`)
-      return
-    }
-    const derivedPct = contractVal > 0 ? Math.round((invoiceTotal / contractVal) * 10000) / 100 : 0
-    setSavingAdvance(true)
-    const threadId = generateThreadId()
-    const { error } = await supabase.from('invoices').update({
-      thread_id:            threadId,
-      thread_role:          'advance',
-      thread_position:      1,
-      is_advance:           true,
-      total_contract_value: contractVal,
-      advance_mode:         'percent',
-      advance_value:        derivedPct,
-      job_title:            advanceForm.jobTitle.trim() || null,
-      thread_created_from_invoice_id: id,
-    }).eq('id', id)
-    setSavingAdvance(false)
-    if (error) { alert('Failed to convert: ' + error.message); return }
-    setShowAdvanceModal(false)
-    await fetchInvoice()
-  }
-
-  // ── Create follow-up invoice from thread ────────────────────────────────────
-  const handleCreateNextInvoice = (defaults) => {
-    if (!defaults) return
-    navigate('/invoices/new', { state: { threadDefaults: defaults } })
-  }
 
   // ── Misc More menu actions ──────────────────────────────────────────────────
   const handleConvertToQuote = () => { setShowMore(false); alert('Quotations module coming soon.') }
@@ -245,15 +194,6 @@ export default function ViewInvoice() {
     navigate('/invoices')
   }
 
-  // ── Advance modal live preview ──────────────────────────────────────────────
-  const advancePreview = (() => {
-    const cv  = parseFloat(advanceForm.contractValue) || 0
-    const due = Number(invoice.total || 0)
-    if (!cv || cv < due) return null
-    const pct     = Math.round((due / cv) * 10000) / 100
-    const balance = Math.max(0, cv - due)
-    return { pct, due, balance }
-  })()
 
   // ── Custom fields ───────────────────────────────────────────────────────────
   let customFields = [], bottomFields = [], attachments = []
@@ -323,76 +263,6 @@ export default function ViewInvoice() {
           </div>
         )}
 
-        {/* ── Convert to Advance Invoice Modal ── */}
-        {showAdvanceModal && (
-          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-            <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '460px', boxShadow: '0 12px 50px rgba(0,0,0,0.25)', color: '#1a1a1a' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Convert to Advance Invoice</h3>
-                <span onClick={() => setShowAdvanceModal(false)} style={{ cursor: 'pointer', fontSize: '22px', color: '#aaa', lineHeight: 1 }}>×</span>
-              </div>
-              <p style={{ margin: '0 0 20px', fontSize: '13px', color: '#777', lineHeight: '1.5' }}>
-                This invoice (₦{Number(invoice.total || 0).toLocaleString()}) becomes the <strong>advance payment</strong> for a larger job. Enter the total contract value below.
-              </p>
-
-              {/* This invoice's amount — read only, for context */}
-              <div style={{ marginBottom: '16px', padding: '12px 16px', backgroundColor: '#F8FAFF', border: '1px solid #DBEAFE', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748B' }}>This Invoice (Advance Amount)</span>
-                <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#1D4ED8' }}>₦{Number(invoice.total || 0).toLocaleString()}</span>
-              </div>
-
-              {/* Contract value */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>Total Contract Value (₦) *</label>
-                <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden' }}>
-                  <span style={{ padding: '0 12px', fontSize: '16px', color: '#aaa', borderRight: '1px solid #ddd', lineHeight: '44px' }}>₦</span>
-                  <input type="number" min={invoice.total || 0} value={advanceForm.contractValue}
-                    onChange={e => setAdvanceForm(f => ({ ...f, contractValue: e.target.value }))}
-                    style={{ flex: 1, padding: '10px 14px', border: 'none', outline: 'none', fontSize: '16px', fontWeight: 'bold', color: '#1a1a1a' }}
-                    placeholder={`Min ₦${Number(invoice.total || 0).toLocaleString()}`} autoFocus />
-                </div>
-                <p style={{ margin: '5px 0 0', fontSize: '11px', color: '#94A3B8' }}>
-                  Must be greater than this invoice's total. The advance % is calculated automatically.
-                </p>
-              </div>
-
-              {/* Job title */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>Job / Project Title (optional)</label>
-                <input style={inputStyle} value={advanceForm.jobTitle}
-                  onChange={e => setAdvanceForm(f => ({ ...f, jobTitle: e.target.value }))}
-                  placeholder="e.g. Block B Electrical Installation" />
-              </div>
-
-              {/* Live preview */}
-              {advancePreview && (
-                <div style={{ marginBottom: '20px', backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '10px', padding: '14px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                    <div>
-                      <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#1D4ED8', textTransform: 'uppercase', marginBottom: '3px' }}>Advance %</div>
-                      <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1E3A8A' }}>{advancePreview.pct.toFixed(1)}%</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#1D4ED8', textTransform: 'uppercase', marginBottom: '3px' }}>Advance Due</div>
-                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1E3A8A' }}>₦{advancePreview.due.toLocaleString()}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#64748B', textTransform: 'uppercase', marginBottom: '3px' }}>Balance</div>
-                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#374151' }}>₦{advancePreview.balance.toLocaleString()}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <div onClick={() => setShowAdvanceModal(false)} style={{ flex: 1, padding: '12px', textAlign: 'center', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', color: '#555' }}>Cancel</div>
-                <div onClick={handleConfirmAdvance} style={{ flex: 2, padding: '12px', textAlign: 'center', backgroundColor: '#1D4ED8', color: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
-                  {savingAdvance ? 'Converting...' : 'Convert to Advance Invoice'}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* ── Action Bar ── */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -409,11 +279,6 @@ export default function ViewInvoice() {
           <span style={{ backgroundColor: s.bg, color: s.color, padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', textTransform: 'capitalize' }}>
             {invoice.status || 'draft'}
           </span>
-          {invoice.thread_role && (
-            <span style={{ backgroundColor: invoice.thread_role === 'advance' ? '#DBEAFE' : invoice.thread_role === 'final' ? '#DCFCE7' : '#FEF3C7', color: invoice.thread_role === 'advance' ? '#1D4ED8' : invoice.thread_role === 'final' ? '#16A34A' : '#92400E', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              {invoice.thread_role}
-            </span>
-          )}
           {invoice.status === 'draft' && (
             <div onClick={() => handleStatusChange('sent')} style={{ padding: '8px 14px', borderRadius: '6px', backgroundColor: '#0056B3', color: 'white', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}>
               Mark as Sent
@@ -438,7 +303,6 @@ export default function ViewInvoice() {
                   { label: '📄 Convert to Quotation',  action: handleConvertToQuote,                                             show: true },
                   { label: '🔧 Generate CSR',          action: () => { setShowMore(false); alert('Coming soon') },               show: true },
                   { label: '🚚 Generate Waybill',      action: () => { setShowMore(false); alert('Coming soon') },               show: true },
-                  { label: '💰 Convert to Advance',    action: () => { setShowMore(false); setShowAdvanceModal(true) },          show: isStandalone },
                   { label: invoice.status === 'draft' ? '✅ Mark as Sent' : null, action: handleMarkSent,                      show: invoice.status === 'draft' },
                   { label: '📦 Archive Invoice',       action: handleArchive,                                                    show: true },
                   { label: '🗑 Delete Invoice',        action: handleDelete,                                                     show: true, danger: true },
