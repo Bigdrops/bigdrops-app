@@ -463,17 +463,6 @@ export default function NewInvoice() {
           install_rate_total: installRateTotal,
           total: totalPayable,
           amount_in_words: numberToWords(totalPayable),
-          // Thread fields — from prefill (clone/advance) or threadDefaults (follow-up)
-          thread_id:            prefill?.thread_id            ?? threadDefaults?.thread_id            ?? null,
-          thread_role:          prefill?.thread_role          ?? threadDefaults?.thread_role          ?? null,
-          thread_position:      prefill?.thread_position      ?? threadDefaults?.thread_position      ?? 1,
-          total_contract_value: prefill?.total_contract_value ?? threadDefaults?.total_contract_value ?? 0,
-          job_title:            prefill?.job_title            ?? threadDefaults?.job_title            ?? null,
-          is_advance:           prefill?.is_advance           ?? false,
-          advance_mode:         prefill?.advance_mode         ?? null,
-          advance_value:        prefill?.advance_value        ?? null,
-          thread_created_from_invoice_id: prefill?.thread_created_from_invoice_id ?? null,
-          amount_received: 0,
         },
       ])
       .select()

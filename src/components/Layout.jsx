@@ -5,7 +5,7 @@ import { supabase } from '../supabase'
 import {
   LayoutDashboard, FileText, ClipboardList, Wrench, Users,
   Settings, LogOut, FolderKanban, BarChart3, Grid2x2,
-  Package, ChevronDown, Check, Plus, Building2, X
+  Package, ChevronDown, Check, Plus, Building2, X, Menu
 } from 'lucide-react'
 
 // ── Navigation structure ─────────────────────────────────────────────────────
@@ -240,6 +240,13 @@ export default function Layout({ title, children, session }) {
 
         {/* Mobile Header */}
         <header className="sticky top-0 z-20 h-14 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 flex items-center justify-between gap-3">
+          <button
+            onClick={() => setMoreOpen(true)}
+            className="w-9 h-9 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-700 shrink-0"
+            aria-label="Open navigation menu"
+          >
+            <Menu size={18} />
+          </button>
           <h1 className="text-sm font-bold text-slate-900 uppercase tracking-tight truncate">{title}</h1>
           <BusinessSwitcher />
         </header>

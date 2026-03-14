@@ -8,7 +8,11 @@ import Layout from "../components/Layout"
 export default function Invoices() {
   const [invoices, setInvoices]           = useState([])
   const [activeInvoice, setActiveInvoice] = useState(null)
-  const [filter, setFilter]               = useState("All")
+  const [search, setSearch]               = useState("")
+  const [clientFilter, setClientFilter]   = useState("All")
+  const [statusFilter, setStatusFilter]   = useState("All")
+  const [dateFilter, setDateFilter]       = useState("All Time")
+  const [sortBy, setSortBy]               = useState("Newest")
   const [showArchiveWarn, setShowArchiveWarn] = useState(false)
   const [showDeleteWarn,  setShowDeleteWarn]  = useState(false)
   const navigate = useNavigate()
@@ -24,10 +28,48 @@ export default function Invoices() {
 
   useEffect(() => { fetchInvoices() }, [])
 
+  const clientOptions = useMemo(() => {
+    return Array.from(new Set(invoices.map(inv => inv.client_name).filter(Boolean))).sort((a, b) => a.localeCompare(b))
+  }, [invoices])
+
   const filteredInvoices = useMemo(() => {
-    if (filter === "All") return invoices
-    return invoices.filter(inv => (inv.status || "draft").toLowerCase() === filter.toLowerCase())
-  }, [filter, invoices])
+    const now = new Date()
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)
+    const currentYearStart = new Date(now.getFullYear(), 0, 1)
+    const searchTerm = search.trim().toLowerCase()
+
+    const matchesDateRange = (value) => {
+      if (dateFilter === "All Time") return true
+      const date = value ? new Date(value) : null
+      if (!date || Number.isNaN(date.getTime())) return false
+      if (dateFilter === "This Month") return date >= currentMonthStart
+      if (dateFilter === "Last Month") return date >= lastMonthStart && date <= lastMonthEnd
+      if (dateFilter === "This Year") return date >= currentYearStart
+      return true
+    }
+
+    const sorted = invoices.filter((inv) => {
+      const normalizedStatus = (inv.status || "draft").toLowerCase()
+      const matchesSearch = !searchTerm
+        || inv.invoice_number?.toLowerCase().includes(searchTerm)
+        || inv.client_name?.toLowerCase().includes(searchTerm)
+      const matchesClient = clientFilter === "All" || (inv.client_name || "") === clientFilter
+      const matchesStatus = statusFilter === "All" || normalizedStatus === statusFilter.toLowerCase()
+      const matchesDate = matchesDateRange(inv.issue_date || inv.created_at)
+      return matchesSearch && matchesClient && matchesStatus && matchesDate
+    })
+
+    sorted.sort((a, b) => {
+      if (sortBy === "Oldest") return new Date(a.created_at || a.issue_date || 0) - new Date(b.created_at || b.issue_date || 0)
+      if (sortBy === "Highest Value") return Number(b.total || 0) - Number(a.total || 0)
+      if (sortBy === "Lowest Value") return Number(a.total || 0) - Number(b.total || 0)
+      return new Date(b.created_at || b.issue_date || 0) - new Date(a.created_at || a.issue_date || 0)
+    })
+
+    return sorted
+  }, [clientFilter, dateFilter, invoices, search, sortBy, statusFilter])
 
   const closeSheet = () => {
     setActiveInvoice(null)
@@ -110,20 +152,94 @@ export default function Invoices() {
     return ""
   }
 
+  const formatInvoiceDate = (value) => {
+    if (!value) return ""
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return ""
+    return date.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
+
+  const getInvoiceStatusStyle = (status) => {
+    const normalized = (status || "draft").toLowerCase()
+    if (normalized === "sent") return { backgroundColor: "#E0F2FE", color: "#0369A1" }
+    if (normalized === "paid") return { backgroundColor: "#DCFCE7", color: "#16A34A" }
+    if (normalized === "overdue") return { backgroundColor: "#FEE2E2", color: "#DC2626" }
+    if (normalized === "partial") return { backgroundColor: "#FEF3C7", color: "#92400E" }
+    return { backgroundColor: "#F1F5F9", color: "#64748B" }
+  }
+
+  const formatStatusLabel = (status) => {
+    const value = (status || "draft").toLowerCase()
+    return value.charAt(0).toUpperCase() + value.slice(1)
+  }
+
+  const resetFilters = () => {
+    setSearch("")
+    setClientFilter("All")
+    setStatusFilter("All")
+    setDateFilter("All Time")
+    setSortBy("Newest")
+  }
+
+  const filterSelectClass = "h-10 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 outline-none"
+
   return (
     <Layout title="Invoices">
       <div className="max-w-6xl mx-auto px-4 pb-32 pt-6">
 
-        {/* Filter bar */}
-        <div className="mb-8 p-2 bg-white rounded-2xl border border-zinc-200 flex gap-2 overflow-x-auto">
-          {["All", "Draft", "Sent", "Paid"].map((f) => (
-            <button key={f} onClick={() => setFilter(f)}
-              className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${
-                filter === f ? "bg-zinc-950 text-white" : "bg-transparent text-zinc-400 hover:text-zinc-600"
-              }`}>
-              {f}
-            </button>
-          ))}
+        <div className="mb-4">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search invoices or clients..."
+            className="w-full h-11 rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 outline-none"
+          />
+        </div>
+
+        <div className="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-black uppercase text-zinc-400">Client</span>
+            <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className={filterSelectClass}>
+              <option>All</option>
+              {clientOptions.map((client) => (
+                <option key={client} value={client}>{client}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-black uppercase text-zinc-400">Status</span>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterSelectClass}>
+              {["All", "Draft", "Sent", "Paid", "Overdue", "Partial"].map((option) => (
+                <option key={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-black uppercase text-zinc-400">Date</span>
+            <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className={filterSelectClass}>
+              {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
+                <option key={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-black uppercase text-zinc-400">Sort</span>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={filterSelectClass}>
+              {["Newest", "Oldest", "Highest Value", "Lowest Value"].map((option) => (
+                <option key={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={resetFilters}
+            className="h-10 rounded-xl border border-zinc-200 px-4 text-xs font-black uppercase text-zinc-500 transition hover:bg-zinc-50"
+          >
+            Clear Filters
+          </button>
         </div>
 
         {/* Invoice list */}
@@ -141,6 +257,12 @@ export default function Invoices() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-base font-black text-zinc-950 uppercase tracking-tighter">{inv.invoice_number}</h3>
+                    <span
+                      style={getInvoiceStatusStyle(inv.status)}
+                      className="rounded-full px-2.5 py-1 text-[10px] font-black"
+                    >
+                      {formatStatusLabel(inv.status)}
+                    </span>
                     {inv.thread_role && (
                       <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase ${roleColor(inv.thread_role)}`}>
                         {inv.thread_role}
@@ -148,6 +270,13 @@ export default function Invoices() {
                     )}
                   </div>
                   <p className="text-xs font-bold text-zinc-400 uppercase truncate">{inv.client_name || "No client"}</p>
+                  <div
+                    className="sm:hidden flex items-center gap-3 flex-wrap"
+                    style={{ color: '#64748B', fontSize: 12 }}
+                  >
+                    <span>{formatInvoiceDate(inv.issue_date) || "No date"}</span>
+                    <span>{`₦${Number(inv.total || 0).toLocaleString()}`}</span>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-6">
@@ -167,7 +296,7 @@ export default function Invoices() {
 
           {filteredInvoices.length === 0 && (
             <div className="text-center py-20 text-zinc-400 font-bold text-sm uppercase tracking-widest">
-              No {filter !== "All" ? filter.toLowerCase() + " " : ""}invoices
+              No invoices match the current filters
             </div>
           )}
         </div>

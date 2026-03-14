@@ -99,20 +99,19 @@ export default function ProjectDetail() {
 
     let found = false
     if (linkType === 'invoice') {
-      // Try invoice_number first, then UUID
-      let query = supabase.from('invoices').select('id, invoice_number').eq('project_id', null)
       const isUUID = /^[0-9a-f-]{36}$/i.test(val)
+      let query = supabase.from('invoices').select('id, invoice_number').is('project_id', null)
       query = isUUID ? query.eq('id', val) : query.ilike('invoice_number', val)
-      const { data } = await query.single()
+      const { data, error } = await query.maybeSingle()
       if (data) {
         await supabase.from('invoices').update({ project_id: id }).eq('id', data.id)
         found = true
       }
     } else if (linkType === 'csr') {
-      let query = supabase.from('csrs').select('id, csr_number').eq('project_id', null)
       const isUUID = /^[0-9a-f-]{36}$/i.test(val)
+      let query = supabase.from('csrs').select('id, csr_number').is('project_id', null)
       query = isUUID ? query.eq('id', val) : query.ilike('csr_number', val)
-      const { data } = await query.single()
+      const { data, error } = await query.maybeSingle()
       if (data) {
         await supabase.from('csrs').update({ project_id: id }).eq('id', data.id)
         found = true
@@ -121,7 +120,7 @@ export default function ProjectDetail() {
 
     setLinking(false)
     if (!found) {
-      setLinkError(`No unlinked ${linkType} found with that ID. Make sure it's not already in a project.`)
+      setLinkError(`No unlinked ${linkType} found with that number. Check the document number and make sure it is not already linked to another project.`)
       return
     }
     setLinkDocId('')
@@ -158,38 +157,41 @@ export default function ProjectDetail() {
                 <FolderKanban size={22} color="#475569" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
                   <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0F172A' }}>{project.name}</h1>
                   <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, backgroundColor: st.bg, color: st.color }}>{st.label}</span>
                 </div>
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12, color: '#64748B' }}>
+
+                {/* All project info inline */}
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 12, color: '#64748B', marginBottom: 6 }}>
                   {project.client_name && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <Building2 size={12} />{project.client_name}
-                    </span>
-                  )}
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <Calendar size={12} />
-                    Started {new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </span>
-                  {project.project_value && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <DollarSign size={12} />₦{Number(project.project_value).toLocaleString()}
-                    </span>
-                  )}
-                  {project.po_number && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <Hash size={12} />PO: {project.po_number}
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Building2 size={12} /><strong style={{ color: '#334155' }}>{project.client_name}</strong>
                     </span>
                   )}
                   {project.location && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       📍 {project.location}
                     </span>
                   )}
+                  {project.po_number && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Hash size={12} />PO: <strong style={{ color: '#334155' }}>{project.po_number}</strong>
+                    </span>
+                  )}
+                  {project.project_value && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <DollarSign size={12} />₦{Number(project.project_value).toLocaleString()}
+                    </span>
+                  )}
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Calendar size={12} />
+                    Started {new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
                 </div>
+
                 {project.notes && (
-                  <div style={{ marginTop: 8, fontSize: 12, color: '#94A3B8', fontStyle: 'italic' }}>{project.notes}</div>
+                  <div style={{ fontSize: 12, color: '#94A3B8', fontStyle: 'italic' }}>{project.notes}</div>
                 )}
               </div>
               <button
@@ -367,25 +369,6 @@ export default function ProjectDetail() {
               </div>
             </div>
 
-            {/* Project Info */}
-            <div style={{ backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: 12, padding: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Project Info</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {[
-                  { label: 'Client',    value: project.client_name  || '—' },
-                  { label: 'Location',  value: project.location     || '—' },
-                  { label: 'P.O. No.', value: project.po_number    || '—' },
-                  { label: 'Value',    value: project.project_value ? `₦${Number(project.project_value).toLocaleString()}` : '—' },
-                  { label: 'Started',  value: project.start_date ? new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—' },
-                ].map(row => (
-                  <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, color: '#94A3B8' }}>{row.label}</span>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>{row.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
           </div>
         </div>
 
@@ -404,7 +387,7 @@ export default function ProjectDetail() {
                 <button onClick={() => { setShowLink(false); setLinkDocId(''); setLinkError('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: 20, lineHeight: 1 }}>×</button>
               </div>
               <p style={{ margin: '0 0 20px', fontSize: 13, color: '#64748B', lineHeight: 1.5 }}>
-                Drop the document number or ID to link it to this project.
+                Type the document number exactly as it appears on the document — e.g. <strong>SASINV-B021</strong> for an invoice or <strong>CSR-004</strong> for a CSR.
               </p>
 
               {/* Type selector */}

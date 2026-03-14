@@ -1,14 +1,12 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ClipboardList, Plus, Wrench, ChevronDown, ChevronUp } from "lucide-react"
+import { ClipboardList, Plus } from "lucide-react"
 
 import { supabase } from "../supabase"
 import Layout from "../components/Layout"
 import { useIsMobile } from "../hooks/useIsMobile"
 
-import { Badge } from "../components/ui/badge"
-import { Button } from "../components/ui/button"
 import { Card, CardContent } from "../components/ui/card"
 import {
   Table,
@@ -23,48 +21,27 @@ function normalizeStatus(status) {
   return (status || "").trim().toLowerCase()
 }
 
-function getStatusTone(status) {
-  const normalized = normalizeStatus(status)
-
-  if (normalized === "complete") {
-    return "bg-zinc-900 text-white border-zinc-900"
-  }
-
-  if (normalized === "incomplete") {
-    return "bg-zinc-200 text-zinc-800 border-zinc-200"
-  }
-
-  if (normalized === "pending for spares") {
-    return "bg-zinc-100 text-zinc-700 border-zinc-200"
-  }
-
-  if (normalized === "under observation") {
-    return "bg-zinc-800 text-zinc-100 border-zinc-800"
-  }
-
-  if (normalized === "field entry pending") {
-    return "bg-white text-zinc-700 border-zinc-300"
-  }
-
-  return "bg-transparent text-zinc-600 border-zinc-300"
-}
-
-function getStatusCount(csrs, targetStatus) {
-  return csrs.filter(
-    (item) => normalizeStatus(item.status) === normalizeStatus(targetStatus)
-  ).length
-}
-
 export default function CSR() {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
 
   const [csrs, setCsrs] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showSummary, setShowSummary] = useState(false)
+  const [search, setSearch] = useState("")
+  const [clientFilter, setClientFilter] = useState("All")
+  const [statusFilter, setStatusFilter] = useState("All")
+  const [dateFilter, setDateFilter] = useState("All Time")
+  const [sortBy, setSortBy] = useState("Newest")
+  const [openMenuId, setOpenMenuId] = useState(null)
 
   useEffect(() => {
     fetchCsrs()
+  }, [])
+
+  useEffect(() => {
+    const handleOutsideClick = () => setOpenMenuId(null)
+    document.addEventListener("mousedown", handleOutsideClick)
+    return () => document.removeEventListener("mousedown", handleOutsideClick)
   }, [])
 
   const fetchCsrs = async () => {
@@ -79,124 +56,168 @@ export default function CSR() {
     setLoading(false)
   }
 
-  const summary = useMemo(() => {
-    return {
-      total: csrs.length,
-      complete: getStatusCount(csrs, "Complete"),
-      pending: getStatusCount(csrs, "Pending for spares"),
-      observation: getStatusCount(csrs, "Under observation"),
-    }
+  const getCsrStatusKey = (status) => {
+    const normalized = normalizeStatus(status)
+    if (!normalized) return "draft"
+    if (normalized.includes("cancel")) return "cancelled"
+    if (normalized.includes("complete")) return "completed"
+    if (normalized.includes("pending")) return "pending"
+    if (normalized.includes("draft")) return "draft"
+    return normalized
+  }
+
+  const getCsrStatusBadgeStyle = (status) => {
+    const key = getCsrStatusKey(status)
+    if (key === "completed") return { backgroundColor: "#DCFCE7", color: "#16A34A" }
+    if (key === "pending") return { backgroundColor: "#FEF3C7", color: "#92400E" }
+    if (key === "cancelled") return { backgroundColor: "#FEE2E2", color: "#DC2626" }
+    return { backgroundColor: "#F1F5F9", color: "#64748B" }
+  }
+
+  const formatStatusLabel = (status) => {
+    const key = getCsrStatusKey(status)
+    return key.charAt(0).toUpperCase() + key.slice(1)
+  }
+
+  const clientOptions = useMemo(() => {
+    return Array.from(new Set(csrs.map((csr) => csr.client_name).filter(Boolean))).sort((a, b) => a.localeCompare(b))
   }, [csrs])
 
-  const summaryCards = [
-    {
-      label: "Total",
-      value: summary.total,
-      tone:
-        "bg-gradient-to-br from-zinc-900 to-zinc-700 text-white border-zinc-800",
-    },
-    {
-      label: "Complete",
-      value: summary.complete,
-      tone: "bg-zinc-100 text-zinc-900 border-zinc-200",
-    },
-    {
-      label: "Pending",
-      value: summary.pending,
-      tone: "bg-white text-zinc-900 border-zinc-200",
-    },
-    {
-      label: "Observe",
-      value: summary.observation,
-      tone: "bg-zinc-200/70 text-zinc-900 border-zinc-300",
-    },
-  ]
+  const filteredCsrs = useMemo(() => {
+    const now = new Date()
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)
+    const currentYearStart = new Date(now.getFullYear(), 0, 1)
+    const searchTerm = search.trim().toLowerCase()
+
+    const matchesDateRange = (value, fallback) => {
+      if (dateFilter === "All Time") return true
+      const date = new Date(value || fallback || 0)
+      if (Number.isNaN(date.getTime())) return false
+      if (dateFilter === "This Month") return date >= currentMonthStart
+      if (dateFilter === "Last Month") return date >= lastMonthStart && date <= lastMonthEnd
+      if (dateFilter === "This Year") return date >= currentYearStart
+      return true
+    }
+
+    const sorted = csrs.filter((csr) => {
+      const matchesSearch = !searchTerm
+        || csr.csr_number?.toLowerCase().includes(searchTerm)
+        || csr.client_name?.toLowerCase().includes(searchTerm)
+        || csr.equipment_type?.toLowerCase().includes(searchTerm)
+        || csr.make?.toLowerCase().includes(searchTerm)
+      const matchesClient = clientFilter === "All" || (csr.client_name || "") === clientFilter
+      const matchesStatus = statusFilter === "All" || getCsrStatusKey(csr.status) === statusFilter.toLowerCase()
+      const matchesDate = matchesDateRange(csr.date, csr.created_at)
+      return matchesSearch && matchesClient && matchesStatus && matchesDate
+    })
+
+    sorted.sort((a, b) => {
+      const aDate = new Date(a.date || a.created_at || 0)
+      const bDate = new Date(b.date || b.created_at || 0)
+      if (sortBy === "Oldest") return aDate - bDate
+      return bDate - aDate
+    })
+
+    return sorted
+  }, [clientFilter, csrs, dateFilter, search, sortBy, statusFilter])
+
+  const resetFilters = () => {
+    setSearch("")
+    setClientFilter("All")
+    setStatusFilter("All")
+    setDateFilter("All Time")
+    setSortBy("Newest")
+  }
+
+  const handleDelete = async (csr) => {
+    const confirmed = window.confirm("Delete this CSR permanently? This cannot be undone.")
+    if (!confirmed) return
+    await supabase.from("csrs").delete().eq("id", csr.id)
+    setOpenMenuId(null)
+    await fetchCsrs()
+  }
+
+  const filterSelectClass = "h-10 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 outline-none"
+  const hasActiveFilters =
+    !!search || clientFilter !== "All" || statusFilter !== "All" || dateFilter !== "All Time"
 
   return (
     <Layout title="Customer Service Reports">
       <div className="space-y-5">
-        <div className="rounded-3xl border border-zinc-200 bg-gradient-to-br from-zinc-50 via-white to-zinc-100 p-4 shadow-sm sm:p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-2">
-              <div className="text-xs font-medium uppercase tracking-[0.2em] text-zinc-500">
-                Service Operations
-              </div>
-              <div className="text-2xl font-semibold tracking-tight text-zinc-950">
-                Track customer service activity clearly
-              </div>
-              <div className="text-sm text-zinc-600">
-                Review service status, monitor pending work, and create reports quickly.
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button
-                onClick={() => navigate("/csr/new")}
-                className="h-11 rounded-xl bg-zinc-900 px-5 text-white hover:bg-black"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                New CSR
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => navigate("/csr/new?type=field")}
-                className="h-11 rounded-xl border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-              >
-                <Wrench className="mr-2 h-4 w-4" />
-                Field CSR
-              </Button>
-            </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#0F172A" }}>Customer Service Reports</h2>
+            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#94A3B8" }}>
+              {csrs.length} report{csrs.length !== 1 ? "s" : ""} total
+            </p>
           </div>
+          <button
+            onClick={() => navigate("/csr/new")}
+            style={{
+              backgroundColor: "#0F172A",
+              color: "white",
+              border: "none",
+              borderRadius: 10,
+              padding: "10px 18px",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            + New CSR
+          </button>
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm font-semibold text-zinc-900">Summary</div>
-              <div className="text-xs text-zinc-500">
-                Quick view of service activity
-              </div>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search CSRs, clients, or equipment..."
+            className="h-11 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 outline-none"
+          />
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase text-zinc-400">Client</span>
+              <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className={filterSelectClass}>
+                <option>All</option>
+                {clientOptions.map((client) => (
+                  <option key={client} value={client}>{client}</option>
+                ))}
+              </select>
             </div>
-
-            <Button
-              variant="ghost"
-              onClick={() => setShowSummary((prev) => !prev)}
-              className="text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase text-zinc-400">Status</span>
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterSelectClass}>
+                {["All", "Draft", "Completed", "Pending", "Cancelled"].map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase text-zinc-400">Date</span>
+              <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className={filterSelectClass}>
+                {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase text-zinc-400">Sort</span>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={filterSelectClass}>
+                {["Newest", "Oldest"].map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={resetFilters}
+              className="h-10 rounded-xl border border-zinc-200 px-4 text-xs font-bold uppercase text-zinc-500 transition hover:bg-zinc-50"
             >
-              {showSummary ? (
-                <>
-                  <ChevronUp className="mr-2 h-4 w-4" />
-                  Hide
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="mr-2 h-4 w-4" />
-                  Show
-                </>
-              )}
-            </Button>
+              Clear Filters
+            </button>
           </div>
-
-          {showSummary && (
-            <div className="grid grid-cols-4 gap-2 lg:gap-3">
-              {summaryCards.map((item) => (
-                <Card
-                  key={item.label}
-                  className={`rounded-2xl border shadow-sm ${item.tone}`}
-                >
-                  <CardContent className="p-3">
-                    <div className="text-[10px] uppercase tracking-[0.14em] opacity-70">
-                      {item.label}
-                    </div>
-                    <div className="mt-1 text-lg font-semibold tracking-tight lg:text-2xl">
-                      {item.value}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
         </div>
 
         {isMobile ? (
@@ -207,78 +228,95 @@ export default function CSR() {
                   Loading service reports...
                 </CardContent>
               </Card>
-            ) : csrs.length === 0 ? (
+            ) : filteredCsrs.length === 0 ? (
               <Card className="rounded-3xl border-zinc-200 bg-zinc-50">
                 <CardContent className="p-5 text-center">
                   <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-zinc-900 text-white">
                     <ClipboardList className="h-5 w-5" />
                   </div>
                   <div className="text-base font-semibold text-zinc-900">
-                    No service reports yet
+                    {hasActiveFilters ? "No service reports found" : "No service reports yet"}
                   </div>
                   <div className="mt-1 text-sm text-zinc-500">
-                    Create your first CSR to start tracking service activity.
+                    {hasActiveFilters ? "Try a different search or filter." : "Create your first CSR to start tracking service activity."}
                   </div>
                 </CardContent>
               </Card>
             ) : (
-              csrs.map((csr) => (
-                <Card
-                  key={csr.id}
-                  className="overflow-hidden rounded-[24px] border border-zinc-200 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 shadow-sm"
-                >
-                  <CardContent className="p-4">
-                    <div
-                      className="cursor-pointer"
-                      onClick={() => navigate("/csr/" + csr.id)}
+              filteredCsrs.map((csr) => (
+                <div key={csr.id} className="flex items-start gap-2">
+                  <Card className="flex-1 overflow-hidden rounded-[24px] border border-zinc-200 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 shadow-sm">
+                    <CardContent className="p-4">
+                      <div
+                        className="cursor-pointer"
+                        onClick={() => navigate("/csr/" + csr.id)}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-[17px] font-semibold tracking-tight text-zinc-900">
+                              {csr.csr_number}
+                            </div>
+                            <div className="mt-1 truncate text-sm text-zinc-700">
+                              {csr.client_name || "No client name"}
+                            </div>
+                          </div>
+
+                          <span
+                            className="rounded-full px-3 py-1 text-[10px] font-semibold whitespace-nowrap"
+                            style={getCsrStatusBadgeStyle(csr.status)}
+                          >
+                            {formatStatusLabel(csr.status)}
+                          </span>
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                          <div className="min-w-0">
+                            <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-400">
+                              Equipment
+                            </div>
+                            <div className="mt-1 truncate font-medium text-zinc-800">
+                              {csr.equipment_type || "-"}
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-400">
+                              Date
+                            </div>
+                            <div className="mt-1 font-medium text-zinc-800">
+                              {csr.date || "-"}
+                            </div>
+                          </div>
+                        </div>
+
+                        {csr.make && (
+                          <div className="mt-3 truncate text-sm text-zinc-500">
+                            {csr.make}
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <div className="relative" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setOpenMenuId(openMenuId === csr.id ? null : csr.id)
+                      }}
+                      className="flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-500 shadow-sm"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-[17px] font-semibold tracking-tight text-zinc-900">
-                            {csr.csr_number}
-                          </div>
-                          <div className="mt-1 truncate text-sm text-zinc-700">
-                            {csr.client_name || "No client name"}
-                          </div>
-                        </div>
-
-                        <Badge
-                          className={`rounded-full border px-3 py-1 text-[10px] font-medium whitespace-nowrap ${getStatusTone(
-                            csr.status
-                          )}`}
-                        >
-                          {csr.status || "Unknown"}
-                        </Badge>
+                      •••
+                    </button>
+                    {openMenuId === csr.id && (
+                      <div className="absolute right-0 top-12 z-20 w-36 rounded-2xl border border-zinc-200 bg-white p-1 shadow-xl">
+                        <button onClick={() => { setOpenMenuId(null); navigate("/csr/" + csr.id) }} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">View</button>
+                        <button onClick={() => { setOpenMenuId(null); navigate("/csr/edit/" + csr.id) }} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">Edit</button>
+                        <button onClick={() => handleDelete(csr)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">Delete</button>
                       </div>
-
-                      <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                        <div className="min-w-0">
-                          <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-400">
-                            Equipment
-                          </div>
-                          <div className="mt-1 truncate font-medium text-zinc-800">
-                            {csr.equipment_type || "-"}
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-400">
-                            Date
-                          </div>
-                          <div className="mt-1 font-medium text-zinc-800">
-                            {csr.date || "-"}
-                          </div>
-                        </div>
-                      </div>
-
-                      {csr.make && (
-                        <div className="mt-3 truncate text-sm text-zinc-500">
-                          {csr.make}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                    )}
+                  </div>
+                </div>
               ))
             )}
           </div>
@@ -290,7 +328,7 @@ export default function CSR() {
                   CSR List
                 </div>
                 <div className="text-xs text-zinc-500">
-                  {csrs.length} record{csrs.length === 1 ? "" : "s"}
+                  {filteredCsrs.length} record{filteredCsrs.length === 1 ? "" : "s"}
                 </div>
               </div>
 
@@ -298,16 +336,16 @@ export default function CSR() {
                 <div className="p-6 text-sm text-zinc-500">
                   Loading service reports...
                 </div>
-              ) : csrs.length === 0 ? (
+              ) : filteredCsrs.length === 0 ? (
                 <div className="p-10 text-center">
                   <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 text-white">
                     <ClipboardList className="h-5 w-5" />
                   </div>
                   <div className="text-base font-semibold text-zinc-900">
-                    No service reports yet
+                    No service reports found
                   </div>
                   <div className="mt-1 text-sm text-zinc-500">
-                    Create your first CSR to populate this list.
+                    Try a different search or filter.
                   </div>
                 </div>
               ) : (
@@ -319,11 +357,12 @@ export default function CSR() {
                       <TableHead className="text-zinc-500">Client</TableHead>
                       <TableHead className="text-zinc-500">Equipment</TableHead>
                       <TableHead className="text-zinc-500">Status</TableHead>
+                      <TableHead className="text-right text-zinc-500">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
 
                   <TableBody>
-                    {csrs.map((csr) => (
+                  {filteredCsrs.map((csr) => (
                       <TableRow
                         key={csr.id}
                         onClick={() => navigate("/csr/" + csr.id)}
@@ -347,13 +386,33 @@ export default function CSR() {
                         </TableCell>
 
                         <TableCell>
-                          <Badge
-                            className={`rounded-full border px-3 py-1 text-[11px] font-medium ${getStatusTone(
-                              csr.status
-                            )}`}
+                          <span
+                            className="inline-flex rounded-full px-3 py-1 text-[11px] font-medium"
+                            style={getCsrStatusBadgeStyle(csr.status)}
                           >
-                            {csr.status || "Unknown"}
-                          </Badge>
+                            {formatStatusLabel(csr.status)}
+                          </span>
+                        </TableCell>
+
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="relative inline-block">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setOpenMenuId(openMenuId === csr.id ? null : csr.id)
+                              }}
+                              className="rounded-xl border border-zinc-200 bg-white px-3 py-1 text-sm text-zinc-500 hover:bg-zinc-50"
+                            >
+                              •••
+                            </button>
+                            {openMenuId === csr.id && (
+                              <div className="absolute right-0 top-10 z-20 w-36 rounded-2xl border border-zinc-200 bg-white p-1 shadow-xl">
+                                <button onClick={() => { setOpenMenuId(null); navigate("/csr/" + csr.id) }} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">View</button>
+                                <button onClick={() => { setOpenMenuId(null); navigate("/csr/edit/" + csr.id) }} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">Edit</button>
+                                <button onClick={() => handleDelete(csr)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">Delete</button>
+                              </div>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

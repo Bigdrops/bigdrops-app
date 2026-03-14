@@ -80,7 +80,7 @@ export default function NewProject() {
             <ClientSelector
               value={form.client_id}
               clientName={form.client_name}
-              onChange={(id, name) => { set('client_id', id); set('client_name', name) }}
+              onClientChange={(id, name) => { set('client_id', id); set('client_name', name) }}
             />
           </div>
 
