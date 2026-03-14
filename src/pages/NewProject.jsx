@@ -26,6 +26,7 @@ export default function NewProject() {
     project_value: '',
     po_number: '',
     notes: '',
+    location: '',
     start_date: new Date().toISOString().split('T')[0],
   })
 
@@ -43,6 +44,7 @@ export default function NewProject() {
       project_value: form.project_value ? parseFloat(form.project_value) : null,
       po_number:     form.po_number.trim() || null,
       notes:         form.notes.trim() || null,
+      location:      form.location.trim() || null,
     }).select().single()
     setSaving(false)
     if (error) { alert('Failed to create project: ' + error.message); return }
@@ -108,6 +110,17 @@ export default function NewProject() {
                 style={{ ...inputStyle, border: 'none', borderRadius: 0 }}
               />
             </div>
+          </div>
+
+          {/* Location */}
+          <div>
+            <label style={labelStyle}>Site / Location</label>
+            <input
+              style={inputStyle}
+              value={form.location}
+              onChange={e => set('location', e.target.value)}
+              placeholder="e.g. Block B, Dangote Cement Plant, Ibese"
+            />
           </div>
 
           {/* P.O. Number */}
