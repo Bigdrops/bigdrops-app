@@ -181,15 +181,21 @@ function BusinessSwitcher() {
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-md bg-white rounded-t-2xl shadow-2xl pb-8 safe-area-pb"
+            className="w-full max-w-md bg-white rounded-t-2xl shadow-2xl pb-8"
             onClick={e => e.stopPropagation()}
           >
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-2">
-              <div className="w-10 h-1 bg-slate-200 rounded-full" />
+            {/* Handle + close */}
+            <div className="flex items-center justify-between px-4 pt-3 pb-2">
+              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto" />
             </div>
-            <div className="px-6 py-3 border-b border-slate-100">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
               <div className="text-sm font-bold text-slate-800">Switch Business</div>
+              <button
+                onClick={() => setOpen(false)}
+                className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
+              >
+                <X size={14} />
+              </button>
             </div>
             <div className="px-4 py-2 space-y-1">
               {businesses.map(biz => (
@@ -293,8 +299,14 @@ export default function Layout({ title, children, session }) {
               className="w-full bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
-              <div className="flex justify-center pt-3 pb-1">
+              <div className="flex items-center justify-between px-4 pt-3 pb-1">
                 <div className="w-10 h-1 bg-slate-200 rounded-full" />
+                <button
+                  onClick={() => setMoreOpen(false)}
+                  className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
+                >
+                  <X size={14} />
+                </button>
               </div>
               <SidebarContent session={session} onNavigate={() => setMoreOpen(false)} />
             </div>
