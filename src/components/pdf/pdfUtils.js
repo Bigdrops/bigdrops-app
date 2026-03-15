@@ -66,6 +66,12 @@ export const buildRenderRows = (items, groupMeta) => {
 
 export const extractInvoiceData = (invoice, items, client, settings) => {
   const cf = parseCF(invoice.custom_fields)
+  const columnConfig = cf.columnConfig || []
+  const isColVisible = (key) => {
+    if (!columnConfig.length) return true
+    const col = columnConfig.find(c => c.key === key)
+    return col ? col.visible !== false : true
+  }
 
   const companyName    = settings.company_name    || 'SUN & SHIELD POWER SOLUTIONS'
   const companyTagline = settings.company_tagline  || ''
@@ -97,7 +103,7 @@ export const extractInvoiceData = (invoice, items, client, settings) => {
     cf, companyName, companyTagline, companyAddress, companyCity,
     companyPhone, companyEmail, logoUrl, footerText,
     subtotal, vatAmount, discount, whtAmount, totalPayable, grandTotal, installTotal,
-    fixedCharges, validAttachments, renderRows,
+    fixedCharges, validAttachments, renderRows, isColVisible,
   }
 }
 

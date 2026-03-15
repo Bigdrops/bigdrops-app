@@ -1107,18 +1107,18 @@ export default function NewInvoice() {
                   <div
                     style={{
                       position: 'absolute',
-                      left: 0,
-                      right: 0,
-                      top: 'calc(100% + 8px)',
-                      zIndex: 700,
-                      backgroundColor: 'white',
-                      border: '1px solid #ddd',
-                      borderRadius: '12px',
-                      boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-                      padding: '16px',
+                      top: '100%',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
                       width: 'calc(100vw - 32px)',
-                      maxWidth: '100vw',
-                      overflowX: 'hidden',
+                      maxWidth: '480px',
+                      zIndex: 100,
+                      backgroundColor: 'white',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                      border: '1px solid #E2E8F0',
+                      overflow: 'hidden',
+                      padding: '16px',
                     }}
                     onClick={(e) => e.stopPropagation()}
                   >

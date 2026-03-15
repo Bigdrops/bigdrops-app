@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
-import { FolderKanban, Plus, Search, SlidersHorizontal } from 'lucide-react'
+import { Calendar, FileText, FolderKanban, Plus, Search, SlidersHorizontal } from 'lucide-react'
 
 const STATUS_CONFIG = {
   active:    { label: 'Active',    bg: '#DCFCE7', color: '#16A34A' },
@@ -141,8 +141,8 @@ export default function Projects() {
   const formatProjectValue = (value) => {
     const amount = Number(value || 0)
     if (!amount) return ''
-    if (amount >= 1_000_000) return `Ã¢â€šÂ¦${(amount / 1_000_000).toFixed(1)}M`
-    return `Ã¢â€šÂ¦${amount.toLocaleString()}`
+    if (amount >= 1_000_000) return '\u20A6' + (amount / 1_000_000).toFixed(1) + 'M'
+    return '\u20A6' + amount.toLocaleString()
   }
 
   return (
@@ -257,7 +257,7 @@ export default function Projects() {
               const formattedValue = formatProjectValue(project.project_value)
               const startedText = project.start_date
                 ? new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-                : 'Ã¢â‚¬â€'
+                : '-'
               const isMenuOpen = openMenuId === project.id
 
               return (
@@ -299,7 +299,7 @@ export default function Projects() {
                       </button>
 
                       {isMenuOpen && (
-                        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 50, width: 220, borderRadius: 14, border: '1px solid #E2E8F0', background: 'white', padding: 6, boxShadow: '0 12px 30px rgba(15,23,42,0.12)' }}>
+                        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 50, minWidth: 200, borderRadius: 14, border: '1px solid #E2E8F0', background: 'white', padding: 6, boxShadow: '0 12px 30px rgba(15,23,42,0.12)' }}>
                           <button
                             className="proj-menu-item"
                             onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate(`/projects/${project.id}`) }}
@@ -307,7 +307,8 @@ export default function Projects() {
                           >
                             Edit
                           </button>
-                          <div style={{ padding: '10px 12px 6px' }}>
+                          <div style={{ height: 1, background: '#E2E8F0', margin: '4px' }} />
+                          <div style={{ padding: '10px 12px 6px 12px' }}>
                             <div style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.08em' }}>
                               Status
                             </div>
@@ -348,14 +349,17 @@ export default function Projects() {
                     </div>
                   </div>
 
-                  {/* Stats row */}
                   <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ width: 28, height: 28, borderRadius: 6, background: '#f5f5f5', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>Ã°Å¸â€œâ€ž</span>
+                      <span style={{ width: 28, height: 28, borderRadius: 6, background: '#f5f5f5', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#737373' }}>
+                        <FileText size={14} />
+                      </span>
                       <span style={{ fontSize: 13, color: '#737373', fontWeight: 500 }}>{count} linked doc{count !== 1 ? 's' : ''}</span>
                     </div>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ width: 28, height: 28, borderRadius: 6, background: '#f5f5f5', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>Ã°Å¸â€”â€œÃ¯Â¸Â</span>
+                      <span style={{ width: 28, height: 28, borderRadius: 6, background: '#f5f5f5', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#737373' }}>
+                        <Calendar size={14} />
+                      </span>
                       <span style={{ fontSize: 13, color: '#737373', fontWeight: 500 }}>Started {startedText}</span>
                     </div>
                   </div>

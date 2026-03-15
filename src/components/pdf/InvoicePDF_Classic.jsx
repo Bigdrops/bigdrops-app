@@ -81,7 +81,9 @@ export default function InvoicePDF_Classic({ invoice, items = [], client, settin
   let itemCount = 0
 
   // Check if any item has a make value
-  const hasMake = items.some(i => i.make)
+  const hasMake =
+    d.isColVisible('make') &&
+    items.some(i => i.make)
 
   return (
     <Document>
@@ -137,7 +139,7 @@ export default function InvoicePDF_Classic({ invoice, items = [], client, settin
             <Text style={[s.thText, s.cDesc]}>Description</Text>
             {hasMake ? <Text style={[s.thText, s.cMake]}>Make</Text> : null}
             <Text style={[s.thText, s.cQty]}>Qty</Text>
-            <Text style={[s.thText, s.cUnit]}>Unit</Text>
+            {d.isColVisible('unit') ? <Text style={[s.thText, s.cUnit]}>Unit</Text> : null}
             <Text style={[s.thText, s.cPrice]}>Unit Price</Text>
             <Text style={[s.thText, s.cAmt]}>Amount (NGN)</Text>
           </View>
@@ -169,7 +171,7 @@ export default function InvoicePDF_Classic({ invoice, items = [], client, settin
                 </View>
                 {hasMake ? <Text style={[s.cMake, { alignSelf: 'flex-start', color: '#555' }]}>{item.make || ''}</Text> : null}
                 <Text style={[s.cQty, { alignSelf: 'flex-start' }]}>{item.quantity}</Text>
-                <Text style={[s.cUnit, { alignSelf: 'flex-start', color: '#555' }]}>{item.unit || ''}</Text>
+                {d.isColVisible('unit') ? <Text style={[s.cUnit, { alignSelf: 'flex-start', color: '#555' }]}>{item.unit || ''}</Text> : null}
                 <Text style={[s.cPrice, { alignSelf: 'flex-start' }]}>{Number(item.unit_price || 0).toLocaleString()}</Text>
                 <Text style={[s.cAmt, { alignSelf: 'flex-start' }]}>{amount.toLocaleString()}</Text>
               </View>
@@ -181,7 +183,7 @@ export default function InvoicePDF_Classic({ invoice, items = [], client, settin
         <View style={[s.totalsSection, { marginTop: 10 }]} wrap={false}>
           <View style={s.totalsBox}>
             <View style={s.totalRow}><Text style={s.totalLabel}>Subtotal</Text><Text style={s.totalValue}>NGN {d.subtotal.toLocaleString()}</Text></View>
-            {d.installTotal > 0 && <View style={s.totalRow}><Text style={s.totalLabel}>Install Rate</Text><Text style={s.totalValue}>NGN {d.installTotal.toLocaleString()}</Text></View>}
+            {d.isColVisible('install_rate') && d.installTotal > 0 && <View style={s.totalRow}><Text style={s.totalLabel}>Install Rate</Text><Text style={s.totalValue}>NGN {d.installTotal.toLocaleString()}</Text></View>}
             {d.fixedCharges.map(e => <View key={e.label} style={s.totalRow}><Text style={s.totalLabel}>{e.label}</Text><Text style={s.totalValue}>NGN {e.value.toLocaleString()}</Text></View>)}
             {d.cf.extraCharges && d.cf.extraCharges.filter(c => Number(c.value) > 0).map((c, i) => <View key={i} style={s.totalRow}><Text style={s.totalLabel}>{c.label}</Text><Text style={s.totalValue}>NGN {Number(c.value).toLocaleString()}</Text></View>)}
             {d.vatAmount > 0 && <View style={s.totalRow}><Text style={s.totalLabel}>VAT</Text><Text style={s.totalValue}>NGN {d.vatAmount.toLocaleString()}</Text></View>}

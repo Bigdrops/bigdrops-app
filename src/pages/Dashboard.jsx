@@ -89,17 +89,21 @@ export default function Dashboard({ session }) {
       {/* Quick Actions */}
       <div className="grid grid-cols-3 gap-3 mb-8">
         {[
-          { label: 'Invoice', icon: Plus,          path: '/invoices/new',   color: 'bg-slate-900' },
-          { label: 'CSR',     icon: Wrench,         path: '/csr/new',        color: 'bg-slate-800' },
-          { label: 'Quote',   icon: ClipboardList,  path: '/quotations/new', color: 'bg-slate-700' },
+          { label: 'Invoice', icon: Plus,          path: '/invoices/new', color: 'bg-slate-900' },
+          { label: 'CSR',     icon: Wrench,        path: '/csr/new',      color: 'bg-slate-800' },
+          { label: 'Quote',   icon: ClipboardList, path: null,            color: 'bg-slate-700', disabled: true },
         ].map((btn) => (
           <button
             key={btn.label}
-            onClick={() => navigate(btn.path)}
-            className={`${btn.color} text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-sm active:scale-95 transition-all hover:opacity-90`}
+            onClick={() => { if (btn.path) navigate(btn.path) }}
+            disabled={btn.disabled}
+            className={`${btn.color} text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-sm transition-all ${btn.disabled ? 'opacity-65 cursor-not-allowed' : 'active:scale-95 hover:opacity-90'}`}
           >
             <btn.icon size={20} />
-            <span className="text-[10px] font-bold uppercase">{btn.label}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-bold uppercase">{btn.label}</span>
+              {btn.disabled ? <span className="text-[8px] bg-slate-100 text-slate-300 px-1.5 py-0.5 rounded font-bold">SOON</span> : null}
+            </div>
           </button>
         ))}
       </div>
