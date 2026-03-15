@@ -153,6 +153,13 @@ export default function Projects() {
           50% { opacity: 0.7; }
         }
         .proj-menu-item:hover { background: #F8FAFC !important; }
+        .proj-card {
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .proj-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 14px 30px rgba(15,23,42,0.12) !important;
+        }
       `}</style>
       <div style={{ maxWidth: 900, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
 
@@ -257,24 +264,33 @@ export default function Projects() {
               const formattedValue = formatProjectValue(project.project_value)
               const startedText = project.start_date
                 ? new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-                : '-'
+                : null
               const isMenuOpen = openMenuId === project.id
 
               return (
                 <div
                   key={project.id}
+                  className="proj-card"
                   onClick={() => navigate(`/projects/${project.id}`)}
                   style={{
-                    position: 'relative', backgroundColor: 'white', border: '1px solid #e8e8e8',
-                    borderRadius: 24, padding: 24, cursor: 'pointer', overflow: 'hidden',
-                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                    position: 'relative',
+                    backgroundColor: 'white',
+                    border: '1px solid #e8e8e8',
+                    borderRadius: 24,
+                    // FIX 1: NO overflow:hidden on the card — it clips the dropdown
+                    // The gradient bar uses its own borderRadius instead
+                    padding: '28px 24px 24px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.08)',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 14px 30px rgba(15,23,42,0.12)' }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 >
-                  {/* Top gradient bar */}
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #10b981, #3b82f6)' }} />
+                  {/* Gradient top bar — uses borderRadius so card doesn't need overflow:hidden */}
+                  <div style={{
+                    position: 'absolute', top: 0, left: 0, right: 0, height: 4,
+                    background: 'linear-gradient(90deg, #10b981, #3b82f6)',
+                    borderRadius: '24px 24px 0 0',
+                    pointerEvents: 'none',
+                  }} />
 
                   {/* Header row */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
@@ -284,63 +300,115 @@ export default function Projects() {
                         <span style={{ fontSize: 11, fontWeight: 700, borderRadius: 999, padding: '4px 10px', background: st.bg, color: st.color }}>{st.label}</span>
                       </div>
                       <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', color: '#171717', lineHeight: 1.25 }}>{project.name}</div>
-                      <div style={{ marginTop: 6, fontSize: 15, fontWeight: 600, color: '#525252', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {project.client_name || ''}
-                      </div>
+                      {project.client_name && (
+                        <div style={{ marginTop: 6, fontSize: 15, fontWeight: 600, color: '#525252', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {project.client_name}
+                        </div>
+                      )}
                     </div>
 
-                    {/* Action menu */}
-                    <div style={{ position: 'relative', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                    {/* FIX 2: menu wrapper has high zIndex when open so it floats above sibling cards */}
+                    <div
+                      style={{ position: 'relative', flexShrink: 0, zIndex: isMenuOpen ? 300 : 1 }}
+                      onClick={e => e.stopPropagation()}
+                    >
                       <button
                         onClick={e => { e.stopPropagation(); setOpenMenuId(isMenuOpen ? null : project.id) }}
-                        style={{ width: 36, height: 36, borderRadius: 12, border: '1px solid #E2E8F0', background: 'white', color: '#737373', cursor: 'pointer', fontSize: 18, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        style={{
+                          width: 36, height: 36, borderRadius: 12,
+                          border: '1px solid #E2E8F0',
+                          background: isMenuOpen ? '#F8FAFC' : 'white',
+                          color: '#737373', cursor: 'pointer', fontSize: 18, fontWeight: 700,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
                       >
-                        {'\u2022\u2022\u2022'}
+                        •••
                       </button>
 
                       {isMenuOpen && (
-                        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 50, minWidth: 200, borderRadius: 14, border: '1px solid #E2E8F0', background: 'white', padding: 6, boxShadow: '0 12px 30px rgba(15,23,42,0.12)' }}>
+                        <div
+                          style={{
+                            position: 'absolute',
+                            right: 0,
+                            top: 'calc(100% + 6px)',
+                            zIndex: 300,
+                            minWidth: 210,
+                            // FIX 3: maxHeight + scroll = menu never gets cut off at bottom of viewport
+                            maxHeight: '72vh',
+                            overflowY: 'auto',
+                            borderRadius: 14,
+                            border: '1px solid #E2E8F0',
+                            background: 'white',
+                            padding: '6px',
+                            boxShadow: '0 20px 50px rgba(15,23,42,0.18)',
+                          }}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          {/* Edit */}
                           <button
                             className="proj-menu-item"
                             onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate(`/projects/${project.id}`) }}
-                            style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#334155', cursor: 'pointer', fontWeight: 600 }}
+                            style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 14, color: '#334155', cursor: 'pointer', fontWeight: 600 }}
                           >
                             Edit
                           </button>
-                          <div style={{ height: 1, background: '#E2E8F0', margin: '4px' }} />
-                          <div style={{ padding: '10px 12px 6px 12px' }}>
-                            <div style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.08em' }}>
+
+                          <div style={{ height: 1, background: '#F1F5F9', margin: '4px 0' }} />
+
+                          {/* Status label */}
+                          <div style={{ padding: '8px 12px 4px' }}>
+                            <span style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.08em' }}>
                               Status
-                            </div>
+                            </span>
                           </div>
+
                           {[
-                            { label: 'Active', value: 'active' },
+                            { label: 'Active',    value: 'active' },
                             { label: 'Completed', value: 'completed' },
-                            { label: 'On Hold', value: 'on_hold' },
+                            { label: 'On Hold',   value: 'on_hold' },
                             { label: 'Cancelled', value: 'cancelled' },
-                          ].map(action => (
-                            <button
-                              key={action.value}
-                              className="proj-menu-item"
-                              onClick={e => { e.stopPropagation(); supabase.from('projects').update({ status: action.value }).eq('id', project.id).then(() => { setOpenMenuId(null); fetchProjects() }) }}
-                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', border: 'none', background: project.status === action.value ? '#F8FAFC' : 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#334155', cursor: 'pointer', fontWeight: project.status === action.value ? 700 : 500 }}
-                            >
-                              <span>{action.label}</span>
-                              {project.status === action.value && <span style={{ fontSize: 11, color: '#10b981' }}>{'\u2713'}</span>}
-                            </button>
-                          ))}
-                          <div style={{ height: 1, background: '#E2E8F0', margin: '4px' }} />
+                          ].map(action => {
+                            const isCurrent = project.status === action.value
+                            return (
+                              <button
+                                key={action.value}
+                                className="proj-menu-item"
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  supabase.from('projects').update({ status: action.value }).eq('id', project.id)
+                                    .then(() => { setOpenMenuId(null); fetchProjects() })
+                                }}
+                                style={{
+                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                  width: '100%', border: 'none',
+                                  background: isCurrent ? '#F0FDF4' : 'transparent',
+                                  textAlign: 'left', padding: '9px 12px', borderRadius: 10,
+                                  fontSize: 13, color: '#334155', cursor: 'pointer',
+                                  fontWeight: isCurrent ? 700 : 500,
+                                }}
+                              >
+                                <span>{action.label}</span>
+                                {isCurrent && <span style={{ color: '#10b981', fontWeight: 800, fontSize: 14 }}>✓</span>}
+                              </button>
+                            )
+                          })}
+
+                          <div style={{ height: 1, background: '#F1F5F9', margin: '4px 0' }} />
+
+                          {/* Archive */}
                           <button
                             className="proj-menu-item"
                             onClick={e => { e.stopPropagation(); handleArchive(project) }}
-                            style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#F59E0B', cursor: 'pointer', fontWeight: 600 }}
+                            style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 14, color: '#D97706', cursor: 'pointer', fontWeight: 600 }}
                           >
                             Archive
                           </button>
+
+                          {/* Delete */}
                           <button
                             className="proj-menu-item"
                             onClick={e => { e.stopPropagation(); handleDelete(project) }}
-                            style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 13, color: '#CC0000', cursor: 'pointer', fontWeight: 600 }}
+                            style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 14, color: '#CC0000', cursor: 'pointer', fontWeight: 600 }}
                           >
                             Delete
                           </button>
@@ -349,6 +417,7 @@ export default function Projects() {
                     </div>
                   </div>
 
+                  {/* Stats row */}
                   <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ width: 28, height: 28, borderRadius: 6, background: '#f5f5f5', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#737373' }}>
@@ -356,19 +425,29 @@ export default function Projects() {
                       </span>
                       <span style={{ fontSize: 13, color: '#737373', fontWeight: 500 }}>{count} linked doc{count !== 1 ? 's' : ''}</span>
                     </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ width: 28, height: 28, borderRadius: 6, background: '#f5f5f5', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#737373' }}>
-                        <Calendar size={14} />
-                      </span>
-                      <span style={{ fontSize: 13, color: '#737373', fontWeight: 500 }}>Started {startedText}</span>
-                    </div>
+                    {startedText && (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 28, height: 28, borderRadius: 6, background: '#f5f5f5', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#737373' }}>
+                          <Calendar size={14} />
+                        </span>
+                        <span style={{ fontSize: 13, color: '#737373', fontWeight: 500 }}>Started {startedText}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Footer */}
-                  <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid #e8e8e8', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                    <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em', color: '#171717' }}>{formattedValue}</div>
+                  <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#171717' }}>
+                      {formattedValue}
+                    </div>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 0 3px rgba(16,185,129,0.2)', animation: 'pulse 2s infinite', display: 'inline-block' }} />
+                      <span style={{
+                        width: 8, height: 8, borderRadius: '50%',
+                        background: st.color,
+                        boxShadow: `0 0 0 3px ${st.bg}`,
+                        animation: project.status === 'active' ? 'pulse 2s infinite' : 'none',
+                        display: 'inline-block', flexShrink: 0,
+                      }} />
                       <span style={{ fontSize: 13, fontWeight: 600, color: '#525252' }}>{st.label}</span>
                     </div>
                   </div>
