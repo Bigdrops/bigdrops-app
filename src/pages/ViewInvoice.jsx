@@ -3,6 +3,45 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 
+const TEMPLATES = [
+  { id: 'classic',  label: 'Classic',  description: 'Navy · Minimal' },
+  { id: 'proforma', label: 'Proforma', description: 'Green · Centered' },
+  { id: 'bold',     label: 'Bold',     description: 'Dark band · Strong' },
+  { id: 'compact',  label: 'Compact',  description: 'Tight · Dense' },
+]
+
+function TemplateSelector() {
+  const [active, setActive] = useState(() => {
+    try { return localStorage.getItem('invoice_pdf_template') || 'classic' } catch { return 'classic' }
+  })
+  const handleSelect = (id) => {
+    setActive(id)
+    try { localStorage.setItem('invoice_pdf_template', id) } catch {}
+  }
+  return (
+    <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid #E2E8F0' }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>PDF Template</div>
+      <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
+        {TEMPLATES.map(t => {
+          const on = active === t.id
+          return (
+            <div key={t.id} onClick={() => handleSelect(t.id)} style={{ flexShrink: 0, width: 130, border: `2px solid ${on ? '#0F172A' : '#E2E8F0'}`, borderRadius: 12, padding: '14px 12px', backgroundColor: on ? '#0F172A' : 'white', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
+              <div style={{ height: 36, borderRadius: 4, marginBottom: 8, overflow: 'hidden', background: on ? '#1E3A5F' : '#F1F5F9', display: 'flex', flexDirection: 'column', gap: 2, padding: 4 }}>
+                {t.id === 'classic'  && <><div style={{ height: 5, background: on ? '#3B82F6' : '#0F172A', borderRadius: 2 }}/><div style={{ height: 2, background: on ? '#475569' : '#CBD5E1', borderRadius: 1 }}/><div style={{ height: 2, background: on ? '#475569' : '#CBD5E1', borderRadius: 1, width: '70%' }}/></>}
+                {t.id === 'proforma' && <><div style={{ height: 5, background: '#16A34A', borderRadius: 2, alignSelf: 'center', width: '80%' }}/><div style={{ height: 2, background: '#86EFAC', borderRadius: 1, alignSelf: 'center', width: '50%' }}/><div style={{ height: 2, background: '#BBF7D0', borderRadius: 1, alignSelf: 'center', width: '40%' }}/></>}
+                {t.id === 'bold'     && <><div style={{ height: 14, background: '#0F172A', borderRadius: '2px 2px 0 0', margin: -4, marginBottom: 2 }}/><div style={{ height: 2, background: '#3B82F6' }}/><div style={{ height: 2, background: on ? '#93C5FD' : '#CBD5E1', borderRadius: 1, marginTop: 2 }}/></>}
+                {t.id === 'compact'  && <><div style={{ height: 2, background: on ? '#94A3B8' : '#1E293B', borderRadius: 1 }}/><div style={{ height: 1.5, background: on ? '#475569' : '#E2E8F0', borderRadius: 1 }}/><div style={{ height: 1.5, background: on ? '#475569' : '#E2E8F0', borderRadius: 1 }}/><div style={{ height: 1.5, background: on ? '#475569' : '#E2E8F0', borderRadius: 1 }}/><div style={{ height: 1.5, background: on ? '#475569' : '#E2E8F0', borderRadius: 1 }}/></>}
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: on ? 'white' : '#0F172A', marginBottom: 2 }}>{t.label}</div>
+              <div style={{ fontSize: 10, color: on ? '#94A3B8' : '#64748B' }}>{t.description}</div>
+              {on && <div style={{ marginTop: 5, fontSize: 9, fontWeight: 700, color: '#3B82F6', textTransform: 'uppercase' }}>Active</div>}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 function useIsMobile() {
   const [m, setM] = React.useState(window.innerWidth < 640)
@@ -38,6 +77,11 @@ export default function ViewInvoice() {
 
   // PDF
   const [pdfGenerating, setPdfGenerating] = useState(false)
+
+  // Project linking modal
+  const [showProjectModal, setShowProjectModal] = useState(false)
+  const [projectLinkId, setProjectLinkId] = useState('')
+  const [projectLinking, setProjectLinking] = useState(false)
 
   const moreRef = useRef()
 
@@ -264,49 +308,13 @@ export default function ViewInvoice() {
           <div onClick={() => navigate('/invoices')} style={{ padding: '10px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', border: '1px solid #ddd', backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
             ← Invoices
           </div>
-          {!invoice.project_id && (
-            <div style={{
-              padding: '8px 14px',
-              borderRadius: '6px',
-              border: '1px solid #E2E8F0',
-              backgroundColor: '#F8FAFC',
-              fontSize: '12px',
-              color: '#94A3B8',
-              lineHeight: 1.5,
-              maxWidth: 280
-            }}>
-              No project linked. Go to{' '}
-              <span
-                onClick={() => navigate('/projects')}
-                style={{ color: '#1D4ED8', cursor: 'pointer', fontWeight: 600 }}
-              >
-                Projects
-              </span>
-              {' '}to create one, then paste this invoice number{' '}
-              <strong style={{ color: '#334155' }}>{invoice.invoice_number}</strong>
-              {' '}to link it.
-            </div>
-          )}
-          {invoice.project_id && (
-            <div
-              onClick={() => navigate(`/projects/${invoice.project_id}`)}
-              style={{
-                padding: '8px 14px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                border: '1px solid #BFDBFE',
-                backgroundColor: '#EFF6FF',
-                color: '#1D4ED8',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              🔗 Linked Documents
-            </div>
-          )}
+          {/* Linked Documents */}
+          <div
+            onClick={() => invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectModal(true)}
+            style={{ padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #BFDBFE', backgroundColor: invoice.project_id ? '#EFF6FF' : 'white', color: invoice.project_id ? '#1D4ED8' : '#64748B', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            🔗 {invoice.project_id ? 'Linked Documents' : 'Link to Project'}
+          </div>
           <span style={{ backgroundColor: s.bg, color: s.color, padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', textTransform: 'capitalize' }}>
             {invoice.status || 'draft'}
           </span>
@@ -551,6 +559,56 @@ export default function ViewInvoice() {
             )}
           </div>
         </div>
+
+        {/* ── Link to Project Modal ── */}
+        {showProjectModal && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '400px', boxShadow: '0 12px 50px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>Link to Project</h3>
+                <span onClick={() => { setShowProjectModal(false); setProjectLinkId('') }} style={{ cursor: 'pointer', fontSize: '20px', color: '#aaa', lineHeight: 1 }}>×</span>
+              </div>
+              <p style={{ margin: '0 0 18px', fontSize: '13px', color: '#64748B', lineHeight: 1.5 }}>
+                Enter a Project ID to link this invoice, or go to Projects to create a new one.
+              </p>
+              <div style={{ marginBottom: '14px' }}>
+                <input
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
+                  value={projectLinkId}
+                  onChange={e => setProjectLinkId(e.target.value)}
+                  placeholder="Paste Project ID (UUID)"
+                  autoFocus
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                <button onClick={() => { setShowProjectModal(false); setProjectLinkId('') }} style={{ flex: 1, padding: '10px', border: '1px solid #E2E8F0', borderRadius: '8px', background: 'white', fontSize: '13px', color: '#64748B', cursor: 'pointer' }}>Cancel</button>
+                <button
+                  disabled={projectLinking}
+                  onClick={async () => {
+                    if (!projectLinkId.trim()) return
+                    setProjectLinking(true)
+                    const { error } = await supabase.from('invoices').update({ project_id: projectLinkId.trim() }).eq('id', id)
+                    setProjectLinking(false)
+                    if (error) { alert('Failed to link: ' + error.message); return }
+                    setShowProjectModal(false)
+                    setProjectLinkId('')
+                    await fetchInvoice()
+                  }}
+                  style={{ flex: 2, padding: '10px', border: 'none', borderRadius: '8px', background: projectLinking ? '#94A3B8' : '#0F172A', fontSize: '13px', color: 'white', cursor: projectLinking ? 'not-allowed' : 'pointer', fontWeight: '700' }}
+                >
+                  {projectLinking ? 'Linking...' : 'Link Invoice'}
+                </button>
+              </div>
+              <button onClick={() => { setShowProjectModal(false); navigate('/projects') }} style={{ width: '100%', padding: '9px', border: '1px solid #BFDBFE', borderRadius: '8px', background: '#EFF6FF', fontSize: '13px', color: '#1D4ED8', cursor: 'pointer', fontWeight: '600' }}>
+                Go to Projects →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── PDF Template Selector ── */}
+        <TemplateSelector />
+
       </div>
     </Layout>
   )
