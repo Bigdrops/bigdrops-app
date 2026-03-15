@@ -8,7 +8,7 @@ import {
   Building2, CreditCard, ImageIcon, FileText,
   Shield, Check, Loader2, ChevronRight, Upload, X,
   Eye, EyeOff, UserCheck, UserX, Trash2, Smartphone, LayoutDashboard,
-  FolderKanban, Wrench, ClipboardList
+  FolderKanban, Wrench
 } from 'lucide-react'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
@@ -70,6 +70,7 @@ function CompanySection({ onToast }) {
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [editing, setEditing] = useState(false)
   // Custom additional info fields — stored as JSON in settings.custom_info
   const [customInfo, setCustomInfo] = useState([]) // [{title, content}]
 
@@ -83,7 +84,38 @@ function CompanySection({ onToast }) {
     }
   }, [loading, settings])
 
+  useEffect(() => {
+    if (!loading) {
+      const hasSavedData = [
+        settings?.company_name,
+        settings?.company_tagline,
+        settings?.company_address,
+        settings?.company_phone,
+        settings?.company_email,
+      ].some(Boolean)
+      setEditing(!hasSavedData)
+    }
+  }, [loading, settings])
+
   const u = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const restoreSavedCompanyState = () => {
+    setForm({
+      company_name: settings?.company_name || '',
+      company_tagline: settings?.company_tagline || '',
+      company_address: settings?.company_address || '',
+      company_city: settings?.company_city || '',
+      company_phone: settings?.company_phone || '',
+      company_email: settings?.company_email || '',
+      company_website: settings?.company_website || '',
+    })
+    try {
+      const parsed = JSON.parse(settings?.custom_info || '[]')
+      setCustomInfo(Array.isArray(parsed) ? parsed : [])
+    } catch {
+      setCustomInfo([])
+    }
+  }
 
   const save = async () => {
     setSaving(true)
@@ -93,6 +125,7 @@ function CompanySection({ onToast }) {
         custom_info: JSON.stringify(customInfo.filter(f => f.title || f.content))
       })
       setSaved(true)
+      setEditing(false)
       onToast('Company info saved')
       setTimeout(() => setSaved(false), 2500)
     } catch (e) { alert('Save failed: ' + e.message) }
@@ -101,8 +134,55 @@ function CompanySection({ onToast }) {
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-slate-300" /></div>
 
+  if (!editing) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div>
+            <div className="text-sm font-bold text-slate-900">Saved business identity</div>
+            <div className="mt-1 text-xs text-slate-500">
+              These details appear anywhere the app needs your company identity.
+            </div>
+          </div>
+          <button
+            onClick={() => setEditing(true)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+          >
+            Edit
+          </button>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <SummaryField label="Company Name" value={form.company_name} />
+          <SummaryField label="Tagline" value={form.company_tagline} />
+          <SummaryField label="Address" value={form.company_address} />
+          <SummaryField label="City / State" value={form.company_city} />
+          <SummaryField label="Phone" value={form.company_phone} />
+          <SummaryField label="Email" value={form.company_email} />
+          <SummaryField label="Website" value={form.company_website} />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+        <div>
+          <div className="text-sm font-bold text-slate-900">Edit business identity</div>
+          <div className="mt-1 text-xs text-slate-500">
+            Save changes to update the company details used across the workspace.
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            restoreSavedCompanyState()
+            setEditing(false)
+          }}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+        >
+          Cancel
+        </button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Company Name"><Input value={form.company_name} onChange={v => u('company_name', v)} placeholder="Sun & Shield Power Solutions" /></Field>
         <Field label="Tagline"><Input value={form.company_tagline} onChange={v => u('company_tagline', v)} placeholder="Generator Sales | Maintenance" /></Field>
@@ -164,18 +244,41 @@ function BankingSection({ onToast }) {
   const [form, setForm] = useState({ bank_name: '', bank_account_name: '', bank_account_number: '', bank_sort_code: '' })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   useEffect(() => {
     if (!loading && settings) setForm(f => ({ ...f, ...settings }))
   }, [loading, settings])
 
+  useEffect(() => {
+    if (!loading) {
+      const hasSavedData = [
+        settings?.bank_name,
+        settings?.bank_account_name,
+        settings?.bank_account_number,
+        settings?.bank_sort_code,
+      ].some(Boolean)
+      setEditing(!hasSavedData)
+    }
+  }, [loading, settings])
+
   const u = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const restoreSavedBankingState = () => {
+    setForm({
+      bank_name: settings?.bank_name || '',
+      bank_account_name: settings?.bank_account_name || '',
+      bank_account_number: settings?.bank_account_number || '',
+      bank_sort_code: settings?.bank_sort_code || '',
+    })
+  }
 
   const save = async () => {
     setSaving(true)
     try {
       await saveSettings(form)
       setSaved(true)
+      setEditing(false)
       onToast('Banking details saved')
       setTimeout(() => setSaved(false), 2500)
     } catch (e) { alert(e.message) }
@@ -184,8 +287,52 @@ function BankingSection({ onToast }) {
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-slate-300" /></div>
 
+  if (!editing) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div>
+            <div className="text-sm font-bold text-slate-900">Saved payment details</div>
+            <div className="mt-1 text-xs text-slate-500">
+              This workspace currently supports one saved bank account.
+            </div>
+          </div>
+          <button
+            onClick={() => setEditing(true)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+          >
+            Edit
+          </button>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <SummaryField label="Bank Name" value={form.bank_name} />
+          <SummaryField label="Account Name" value={form.bank_account_name} />
+          <SummaryField label="Account Number" value={form.bank_account_number} />
+          <SummaryField label="Sort Code / SWIFT" value={form.bank_sort_code} />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+        <div>
+          <div className="text-sm font-bold text-slate-900">Edit payment details</div>
+          <div className="mt-1 text-xs text-slate-500">
+            Update the single bank account currently stored for invoices and payment instructions.
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            restoreSavedBankingState()
+            setEditing(false)
+          }}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+        >
+          Cancel
+        </button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Bank Name"><Input value={form.bank_name} onChange={v => u('bank_name', v)} placeholder="First Bank of Nigeria" /></Field>
         <Field label="Account Name"><Input value={form.bank_account_name} onChange={v => u('bank_account_name', v)} placeholder="Sun & Shield Power Solutions" /></Field>
@@ -344,7 +491,7 @@ function UserSection({ session, onToast }) {
 }
 
 function DashboardSection() {
-  const orderedTiles = ['invoices', 'projects', 'csr', 'quotations']
+  const orderedTiles = ['invoices', 'projects', 'csr']
   const [flashTile, setFlashTile] = useState(null)
   const tileMeta = {
     invoices: {
@@ -364,12 +511,6 @@ function DashboardSection() {
       iconBg: '#FFF7ED',
       iconColor: '#EA580C',
       description: 'Customer service reports',
-    },
-    quotations: {
-      icon: ClipboardList,
-      iconBg: '#F5F3FF',
-      iconColor: '#7C3AED',
-      description: 'Quotes and estimates',
     },
   }
 
@@ -417,7 +558,7 @@ function DashboardSection() {
       <div className="border-b border-slate-100 px-5 py-4">
         <h3 className="text-sm font-bold text-slate-900">Quick Tiles</h3>
         <p className="mt-1 text-xs text-slate-400">
-          Choose which modules appear as quick-access chips at the top of your dashboard
+          Local mobile preference only. These quick-access chips appear on this device at the top of the mobile dashboard.
         </p>
       </div>
       <div className="px-5">
@@ -452,8 +593,17 @@ function DashboardSection() {
       })}
       </div>
       <p className="px-5 pb-4 pt-3 text-center text-[11px] text-slate-400">
-        Changes apply instantly on your dashboard
+        Saved only on this device. Desktop navigation is unchanged.
       </p>
+    </div>
+  )
+}
+
+function SummaryField({ label, value }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
+      <div className="mt-1 text-sm font-medium text-slate-800">{value || 'Not set'}</div>
     </div>
   )
 }
@@ -861,7 +1011,7 @@ export default function Settings() {
         )}
 
         <p className="text-center text-[11px] text-slate-300 font-bold uppercase tracking-widest mt-8 pb-4">
-          BIGDROPS · Sun & Shield Power Solutions
+          BIGDROPS ERP
         </p>
       </div>
     </Layout>

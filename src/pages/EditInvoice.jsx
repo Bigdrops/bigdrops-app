@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
 import {
   makeEmptyItem,
   makeEmptyGroup,
@@ -549,13 +550,6 @@ export default function EditInvoice() {
     color: '#1a1a1a',
     backgroundColor: 'white',
   }
-  const lbl = {
-    display: 'block',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    color: '#555',
-    marginBottom: '4px',
-  }
   const sec = {
     backgroundColor: 'white',
     padding: '24px',
@@ -570,11 +564,6 @@ export default function EditInvoice() {
     textTransform: 'uppercase',
     letterSpacing: '1px',
   }
-  const grid = (cols) => ({
-    display: 'grid',
-    gridTemplateColumns: isMobile ? '1fr' : cols,
-    gap: '16px',
-  })
   const tog = (active) => ({
     padding: '5px 12px',
     fontSize: '12px',
@@ -933,8 +922,8 @@ export default function EditInvoice() {
         )}
 
         <Card className="mb-5">
-          <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardContent className="space-y-3 pt-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
               <Label>Invoice Number</Label>
               <Input
@@ -961,9 +950,12 @@ export default function EditInvoice() {
             </div>
           </div>
 
-          <div style={{ marginTop: '12px' }}>
+          <div className="space-y-2">
             <Label>
-              Invoice Title <span style={{ color: '#aaa', fontWeight: 'normal' }}>(optional)</span>
+              Invoice Title{' '}
+              <span style={{ color: '#aaa', fontWeight: 'normal' }}>
+                (optional — shows on document when filled)
+              </span>
             </Label>
             <Input
               value={invoiceTitle}
@@ -999,19 +991,19 @@ export default function EditInvoice() {
               Header Fields
             </CardTitle>
           </CardHeader>
-          <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="space-y-5">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <Label>Work Duration</Label>
               <Input
                 value={invoice.work_duration || ''}
                 onChange={(e) => updateInvoice('work_duration', e.target.value)}
-                placeholder="e.g. 4-6 weeks"
+                placeholder="e.g. 7 days"
               />
             </div>
           </div>
 
-          <div style={{ marginTop: '20px' }}>
+          <div className="space-y-3">
             <div
               style={{
                 display: 'flex',
@@ -1039,26 +1031,18 @@ export default function EditInvoice() {
             {customFields.map((field, i) => (
               <div
                 key={i}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr 36px',
-                  gap: '8px',
-                  marginBottom: '10px',
-                  alignItems: 'center',
-                }}
+                className="grid grid-cols-[1fr_1fr_36px] items-center gap-2"
               >
-                <input
-                  style={inp}
+                <Input
                   value={field.label}
                   onChange={(e) => {
                     const u = [...customFields]
                     u[i] = { ...u[i], label: e.target.value }
                     setCustomFields(u)
                   }}
-                  placeholder="Label"
+                  placeholder="Label (e.g. Engine No)"
                 />
-                <input
-                  style={inp}
+                <Input
                   value={field.value}
                   onChange={(e) => {
                     const u = [...customFields]
@@ -1067,21 +1051,15 @@ export default function EditInvoice() {
                   }}
                   placeholder="Value"
                 />
-                <div
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCustomFields(customFields.filter((_, j) => j !== i))}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: '#CC0000',
-                    fontSize: '22px',
-                    lineHeight: 1,
-                    paddingTop: '4px',
-                  }}
+                  className="text-red-600 hover:bg-red-50 hover:text-red-600"
                 >
                   {'\u00D7'}
-                </div>
+                </Button>
               </div>
             ))}
           </div>
@@ -1144,9 +1122,8 @@ export default function EditInvoice() {
                   <div
                     style={{
                       position: 'absolute',
-                      top: '100%',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
+                      top: 'calc(100% + 8px)',
+                      left: 0,
                       width: 'calc(100vw - 32px)',
                       maxWidth: '480px',
                       zIndex: 100,
@@ -1159,6 +1136,20 @@ export default function EditInvoice() {
                     }}
                     onClick={(e) => e.stopPropagation()}
                   >
+                    <div
+                      onClick={() => setShowCSVNote(false)}
+                      style={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 12,
+                        fontSize: 20,
+                        cursor: 'pointer',
+                        color: '#94A3B8',
+                        lineHeight: 1
+                      }}
+                    >
+                      ×
+                    </div>
                     <div
                       style={{
                         marginBottom: '12px',
@@ -1767,107 +1758,62 @@ Then paste the result here or upload the .csv file.`}
           )}
         </div>
 
-        <div style={sec}>
-          <div
+        <Card className="mb-5">
+          <CardHeader
+            className="cursor-pointer"
             onClick={() => setShowAdvanced((p) => !p)}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              cursor: 'pointer',
-            }}
           >
-            <h3 style={{ ...secT, margin: 0 }}>Advanced Options</h3>
-            <span style={{ fontSize: '18px', color: '#aaa' }}>{showAdvanced ? '\u25B2' : '\u25BC'}</span>
-          </div>
-          {showAdvanced && (
-            <div style={{ marginTop: '16px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-                    <div
-                    onClick={() => setMergeQtyUnit((p) => !p)}
-                    style={{
-                      width: '44px',
-                      height: '24px',
-                      borderRadius: '12px',
-                      backgroundColor: mergeQtyUnit ? '#CC0000' : '#ddd',
-                      position: 'relative',
-                      transition: 'background 0.2s',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        backgroundColor: 'white',
-                        position: 'absolute',
-                        top: '2px',
-                        left: mergeQtyUnit ? '22px' : '2px',
-                        transition: 'left 0.2s',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                      }}
-                    />
-                  </div>
-                    <div>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>
-                      Merge Qty + Unit on PDF
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#999' }}>
-                      Shows "5 Sets" instead of separate Qty and Unit columns
-                    </div>
-                  </div>
-                </label>
-
-                <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-                    <div
-                    onClick={() => setShowItemImages((p) => !p)}
-                    style={{
-                      width: '44px',
-                      height: '24px',
-                      borderRadius: '12px',
-                      backgroundColor: showItemImages ? '#CC0000' : '#ddd',
-                      position: 'relative',
-                      transition: 'background 0.2s',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        backgroundColor: 'white',
-                        position: 'absolute',
-                        top: '2px',
-                        left: showItemImages ? '22px' : '2px',
-                        transition: 'left 0.2s',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                      }}
-                    />
-                  </div>
-                    <div>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>
-                      Show item images in PDF
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#999' }}>
-                      Adds an image column - upload images per row above
-                    </div>
-                  </div>
-                </label>
-              </div>
+            <div className="flex items-center justify-between gap-4">
+              <CardTitle className="text-base">Advanced Options</CardTitle>
+              <span className="text-lg text-slate-400">{showAdvanced ? '▲' : '▾'}</span>
             </div>
-          )}
-        </div>
+          </CardHeader>
+          {showAdvanced && (
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+                <div className="space-y-1">
+                  <div className="text-sm font-semibold text-slate-900">
+                    Merge Qty + Unit on PDF
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Shows &quot;5 Sets&quot; instead of separate Qty and Unit columns
+                  </div>
+                </div>
+                <Switch
+                  checked={mergeQtyUnit}
+                  onCheckedChange={() => setMergeQtyUnit((p) => !p)}
+                />
+              </div>
 
-        <div style={sec}>
-          <h3 style={secT}>Attachments</h3>
-          <div style={{ fontSize: '12px', color: '#999', marginBottom: '12px' }}>
-            Files attached here appear as download links on the invoice view.
-          </div>
-          <AttachmentsPanel attachments={attachments} onChange={setAttachments} />
-        </div>
+              <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+                <div className="space-y-1">
+                  <div className="text-sm font-semibold text-slate-900">
+                    Show item images in PDF
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Adds an image column - upload images per row above
+                  </div>
+                </div>
+                <Switch
+                  checked={showItemImages}
+                  onCheckedChange={() => setShowItemImages((p) => !p)}
+                />
+              </div>
+            </CardContent>
+          )}
+        </Card>
+
+        <Card className="mb-5">
+          <CardHeader>
+            <CardTitle className="text-base">Attachments</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="text-xs text-slate-500">
+              Files attached here appear as download links on the invoice view.
+            </div>
+            <AttachmentsPanel attachments={attachments} onChange={setAttachments} />
+          </CardContent>
+        </Card>
 
         <div
           style={{
@@ -1877,32 +1823,29 @@ Then paste the result here or upload the .csv file.`}
             marginBottom: '20px',
           }}
         >
-          <div style={sec}>
-            <h3 style={secT}>Additional Charges</h3>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Additional Charges</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
 
             {['workmanship', 'transportation', 'shipping'].map((key) => (
               <div
                 key={key}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '12px',
-                  gap: '8px',
-                }}
+                className="flex items-center justify-between gap-2"
               >
-                <input
-                  style={{ ...inp, width: '130px', fontSize: '12px', fontWeight: 'bold', color: '#555' }}
+                <Input
+                  className="w-[130px] text-xs font-bold text-slate-600"
                   value={chargeLabels[key]}
                   onChange={(e) =>
                     setChargeLabels((p) => ({ ...p, [key]: e.target.value }))
                   }
                   placeholder={key}
                 />
-                <input
+                <Input
                   type="number"
                   min="0"
-                  style={{ ...inp, width: '140px', textAlign: 'right' }}
+                  className="w-[140px] text-right"
                   value={invoice[key] || 0}
                   onChange={(e) => updateInvoice(key, Number(e.target.value))}
                 />
@@ -1912,15 +1855,10 @@ Then paste the result here or upload the .csv file.`}
             {extraCharges.map((charge, i) => (
               <div
                 key={i}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '10px',
-                }}
+                className="flex items-center gap-2"
               >
-                <input
-                  style={{ ...inp, flex: 1, fontSize: '12px' }}
+                <Input
+                  className="flex-1 text-xs"
                   value={charge.label}
                   onChange={(e) => {
                     const u = [...extraCharges]
@@ -1929,10 +1867,10 @@ Then paste the result here or upload the .csv file.`}
                   }}
                   placeholder="Charge name"
                 />
-                <input
+                <Input
                   type="number"
                   min="0"
-                  style={{ ...inp, width: '90px', textAlign: 'right' }}
+                  className="w-[90px] text-right"
                   value={charge.value || 0}
                   onChange={(e) => {
                     const u = [...extraCharges]
@@ -1940,94 +1878,61 @@ Then paste the result here or upload the .csv file.`}
                     setExtraCharges(u)
                   }}
                 />
-                <div
+                <Button
+                  type="button"
                   onClick={() => {
                     const u = [...extraCharges]
                     u[i] = { ...u[i], withTax: !u[i].withTax }
                     setExtraCharges(u)
                   }}
-                  style={{
-                    fontSize: '11px',
-                    color: charge.withTax ? '#0056B3' : '#888',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    fontWeight: 'bold',
-                    minWidth: '44px',
-                  }}
+                  variant="ghost"
+                  className={`h-9 px-2 text-[11px] font-bold ${charge.withTax ? 'text-blue-700' : 'text-slate-500'}`}
                 >
                   {charge.withTax ? '+VAT' : 'No VAT'}
-                </div>
-                <span
+                </Button>
+                <Button
+                  type="button"
                   onClick={() =>
                     setExtraCharges(extraCharges.filter((_, j) => j !== i))
                   }
-                  style={{ color: '#CC0000', cursor: 'pointer', fontSize: '18px' }}
+                  variant="ghost"
+                  className="h-9 px-2 text-lg text-red-700"
                 >
                   {'\u00D7'}
-                </span>
+                </Button>
               </div>
             ))}
 
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-              <div
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
                 onClick={() =>
                   setExtraCharges([...extraCharges, { label: '', value: 0, withTax: true }])
                 }
-                style={{
-                  padding: '6px 12px',
-                  border: '1px dashed #0056B3',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  color: '#0056B3',
-                }}
+                variant="outline"
+                className="border-dashed border-blue-700 text-xs text-blue-700"
               >
                 + Charge (with VAT)
-              </div>
-              <div
+              </Button>
+              <Button
+                type="button"
                 onClick={() =>
                   setExtraCharges([...extraCharges, { label: '', value: 0, withTax: false }])
                 }
-                style={{
-                  padding: '6px 12px',
-                  border: '1px dashed #888',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  color: '#888',
-                }}
+                variant="outline"
+                className="border-dashed text-xs text-slate-500"
               >
                 + Charge (no VAT)
-              </div>
+              </Button>
             </div>
 
-            <div
-              style={{
-                marginTop: '16px',
-                paddingTop: '16px',
-                borderTop: '1px solid #eee',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '8px',
-                  flexWrap: 'wrap',
-                  gap: '6px',
-                }}
-              >
-                <label style={{ ...lbl, marginBottom: 0 }}>Discount</label>
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    <div
-                    style={{
-                      display: 'flex',
-                      borderRadius: '6px',
-                      overflow: 'hidden',
-                      border: '1px solid #ddd',
-                    }}
-                  >
+            <Separator />
+
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label className="mb-0">Discount</Label>
+                <div className="flex flex-wrap gap-2">
+                  <div className="flex overflow-hidden rounded-md border">
                     <button
                       type="button"
                       onClick={() => setDiscountType('fixed')}
@@ -2044,14 +1949,7 @@ Then paste the result here or upload the .csv file.`}
                     </button>
                   </div>
 
-                  <div
-                    style={{
-                      display: 'flex',
-                      borderRadius: '6px',
-                      overflow: 'hidden',
-                      border: '1px solid #ddd',
-                    }}
-                  >
+                  <div className="flex overflow-hidden rounded-md border">
                     <button
                       type="button"
                       onClick={() => setDiscountTiming('before')}
@@ -2070,18 +1968,22 @@ Then paste the result here or upload the .csv file.`}
                 </div>
               </div>
 
-              <input
+              <Input
                 type="number"
                 min="0"
-                style={{ ...inp, textAlign: 'right' }}
+                className="text-right"
                 value={invoice.discount || 0}
                 onChange={(e) => updateInvoice('discount', Number(e.target.value))}
               />
             </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div style={sec}>
-            <h3 style={secT}>Summary</h3>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
             {[
               { label: 'Subtotal', value: rawSubtotal },
               ...extraCharges
@@ -2115,60 +2017,28 @@ Then paste the result here or upload the .csv file.`}
               .map(({ label, value }) => (
                 <div
                   key={label}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: '8px',
-                    fontSize: '14px',
-                  }}
+                  className="flex justify-between text-sm"
                 >
-                  <span style={{ color: '#555' }}>{label}</span>
+                  <span className="text-slate-600">{label}</span>
                   <span
-                    style={{
-                      color: value < 0 ? '#CC0000' : '#1a1a1a',
-                      whiteSpace: 'nowrap',
-                    }}
+                    className={`whitespace-nowrap ${value < 0 ? 'text-red-700' : 'text-slate-900'}`}
                   >
                     {value < 0 ? '-' : ''}{'\u20A6'}{Math.abs(value).toLocaleString()}
                   </span>
                 </div>
               ))}
 
-            <div
-              style={{
-                borderTop: '2px solid #1a1a1a',
-                paddingTop: '12px',
-                marginTop: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <span style={{ fontWeight: 'bold', fontSize: '15px' }}>Grand Total</span>
-              <span
-                style={{
-                  fontWeight: 'bold',
-                  fontSize: '20px',
-                  color: '#1a1a1a',
-                  whiteSpace: 'nowrap',
-                }}
-              >
+            <Separator className="my-2 bg-slate-900" />
+
+            <div className="flex items-center justify-between">
+              <span className="text-[15px] font-bold">Grand Total</span>
+              <span className="whitespace-nowrap text-xl font-bold text-slate-900">
                 {'\u20A6'}{grandTotal.toLocaleString()}
               </span>
             </div>
 
             {whtAmount > 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginTop: '8px',
-                  fontSize: '13px',
-                  color: '#CC0000',
-                  borderTop: '1px dashed #ddd',
-                  paddingTop: '8px',
-                }}
-              >
+              <div className="mt-2 flex justify-between border-t border-dashed pt-2 text-[13px] text-red-700">
                 <span>
                   Less: WHT (
                   {whtType === 'percent'
@@ -2182,118 +2052,117 @@ Then paste the result here or upload the .csv file.`}
               </div>
             )}
 
-            <div
-              style={{
-                borderTop: '2px solid #CC0000',
-                paddingTop: '10px',
-                marginTop: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <span style={{ fontWeight: 'bold', fontSize: '15px', color: '#CC0000' }}>
-                Total Payable
-              </span>
-              <span
-                style={{
-                  fontWeight: 'bold',
-                  fontSize: '22px',
-                  color: '#CC0000',
-                  whiteSpace: 'nowrap',
-                }}
-              >
+            <Separator className="my-2 bg-red-700" />
+
+            <div className="flex items-center justify-between">
+              <span className="text-[15px] font-bold text-red-700">Total Payable</span>
+              <span className="whitespace-nowrap text-[22px] font-bold text-red-700">
                 {'\u20A6'}{totalPayable.toLocaleString()}
               </span>
             </div>
 
-            <div
-              style={{
-                marginTop: '12px',
-                padding: '10px',
-                backgroundColor: '#f9f9f9',
-                borderRadius: '6px',
-                fontSize: '12px',
-                color: '#555',
-                fontStyle: 'italic',
-              }}
-            >
+            <div className="mt-3 rounded-md bg-slate-50 p-3 text-xs italic text-slate-600">
               {numberToWords(totalPayable)}
             </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div style={sec}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '12px',
-            }}
-          >
-            <h3 style={{ ...secT, margin: 0 }}>Custom Fields</h3>
-            <div
-              onClick={() => setBottomFields((f) => [...f, { text: '' }])}
-              style={{
-                cursor: 'pointer',
-                color: '#6366F1',
-                fontSize: '13px',
-                fontWeight: 'bold',
-              }}
-            >
-              + Add Custom Field
+        <Card className="mb-5">
+          <CardHeader>
+            <CardTitle className="text-base">Payment Terms</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <Label>Payment Terms</Label>
+              <Select
+                value={invoice.payment_terms || ''}
+                onValueChange={(value) => updateInvoice('payment_terms', value)}
+              >
+                <SelectTrigger className="mt-2">
+                  <SelectValue placeholder="Select payment terms" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Net 30">Net 30</SelectItem>
+                  <SelectItem value="Net 60">Net 60</SelectItem>
+                  <SelectItem value="Due on receipt">Due on receipt</SelectItem>
+                  <SelectItem value="50% advance">50% advance</SelectItem>
+                  <SelectItem value="Custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </div>
+            {invoice.payment_terms === 'Custom' && (
+              <div>
+                <Label>Specify Terms</Label>
+                <Input
+                  className="mt-2"
+                  value={invoice.custom_payment_terms || ''}
+                  onChange={(e) => updateInvoice('custom_payment_terms', e.target.value)}
+                  placeholder="e.g. 60% downpayment, 40% on delivery"
+                />
+              </div>
+            )}
+            </div>
+          </CardContent>
+        </Card>
 
+        <Card className="mb-5">
+          <CardHeader>
+            <div className="flex items-center justify-between gap-4">
+              <CardTitle className="text-base">Custom Fields</CardTitle>
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-auto p-0 text-sm font-bold text-indigo-500"
+                onClick={() => setBottomFields((f) => [...f, { text: '' }])}
+              >
+              + Add Custom Field
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
           {bottomFields.length === 0 && (
-            <div style={{ fontSize: '13px', color: '#bbb', fontStyle: 'italic' }}>
-              Plain-text entries like "ADVANCE PAYMENT DUE (60%)" that appear below the totals.
+            <div className="text-sm italic text-slate-400">
+              Plain-text entries like "ADVANCE PAYMENT DUE (60%)" that appear below the
+              totals.
             </div>
           )}
 
           {bottomFields.map((field, i) => (
             <div
               key={i}
-              style={{ display: 'flex', gap: '8px', marginBottom: '10px', alignItems: 'center' }}
+              className="flex items-center gap-2"
             >
-              <input
-                style={{ ...inp, flex: 1 }}
+              <Input
+                className="flex-1"
                 value={field.text}
                 onChange={(e) => {
                   const u = [...bottomFields]
                   u[i] = { text: e.target.value }
                   setBottomFields(u)
                 }}
-                placeholder={"e.g. ADVANCE PAYMENT DUE (60%): " + '\u20A6' + "141,601"}
+                placeholder="e.g. ADVANCE PAYMENT DUE (60%): ₦141,601"
               />
-              <span
+              <Button
+                type="button"
                 onClick={() => setBottomFields(bottomFields.filter((_, j) => j !== i))}
-                style={{ color: '#CC0000', cursor: 'pointer', fontSize: '20px' }}
+                variant="ghost"
+                className="h-9 px-2 text-xl text-red-700"
               >
                 {'\u00D7'}
-              </span>
+              </Button>
             </div>
           ))}
-        </div>
+          </CardContent>
+        </Card>
 
-        <div style={sec}>
-          <div style={grid('1fr 1fr')}>
+        <Card className="mb-5">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <input
-                style={{
-                  ...inp,
-                  fontWeight: 'bold',
-                  color: '#0056B3',
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  padding: '4px 8px',
-                  border: 'none',
-                  borderBottom: '2px solid #0056B3',
-                  borderRadius: 0,
-                  marginBottom: '10px',
-                }}
+              <Input
+                className="mb-3 rounded-none border-0 border-b-2 border-blue-700 px-2 py-1 text-xs font-bold uppercase tracking-[1px] text-blue-700 shadow-none focus-visible:ring-0"
                 value={notesTitle}
                 onChange={(e) => setNotesTitle(e.target.value)}
               />
@@ -2305,20 +2174,8 @@ Then paste the result here or upload the .csv file.`}
             </div>
 
             <div>
-              <input
-                style={{
-                  ...inp,
-                  fontWeight: 'bold',
-                  color: '#0056B3',
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  padding: '4px 8px',
-                  border: 'none',
-                  borderBottom: '2px solid #0056B3',
-                  borderRadius: 0,
-                  marginBottom: '10px',
-                }}
+              <Input
+                className="mb-3 rounded-none border-0 border-b-2 border-blue-700 px-2 py-1 text-xs font-bold uppercase tracking-[1px] text-blue-700 shadow-none focus-visible:ring-0"
                 value={termsTitle}
                 onChange={(e) => setTermsTitle(e.target.value)}
               />
@@ -2328,94 +2185,34 @@ Then paste the result here or upload the .csv file.`}
                 placeholder="Terms and conditions..."
               />
             </div>
-          </div>
-        </div>
-
-        <div style={sec}>
-          <h3 style={secT}>Payment Terms</h3>
-          <div style={grid('1fr 1fr')}>
-            <div>
-              <label style={lbl}>Payment Terms</label>
-              <select
-                style={inp}
-                value={invoice.payment_terms || ''}
-                onChange={(e) => updateInvoice('payment_terms', e.target.value)}
-              >
-                <option>Net 30</option>
-                <option>Net 60</option>
-                <option>Due on receipt</option>
-                <option>50% advance</option>
-                <option>Custom</option>
-              </select>
             </div>
-            {invoice.payment_terms === 'Custom' && (
-              <div>
-                <label style={lbl}>Specify Terms</label>
-                <input
-                  style={inp}
-                  value={invoice.custom_payment_terms || ''}
-                  onChange={(e) => updateInvoice('custom_payment_terms', e.target.value)}
-                  placeholder="e.g. 60% downpayment, 40% on delivery"
-                />
-              </div>
-            )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-            paddingBottom: '40px',
-            maxWidth: '400px',
-            marginLeft: 'auto',
-          }}
-        >
-          <div
+        <div className="ml-auto flex max-w-[400px] flex-col gap-2.5 pb-10">
+          <Button
+            type="button"
             onClick={() => handleSave('sent')}
-            style={{
-              padding: '14px 24px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '15px',
-              backgroundColor: '#CC0000',
-              color: 'white',
-              fontWeight: 'bold',
-              textAlign: 'center',
-            }}
+            className="h-auto bg-red-700 px-6 py-3.5 text-[15px] font-bold hover:bg-red-800"
           >
             {saving ? 'Saving...' : 'Save Changes'}
-          </div>
-          <div
+          </Button>
+          <Button
+            type="button"
             onClick={() => handleSave('draft')}
-            style={{
-              padding: '14px 24px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '15px',
-              backgroundColor: '#555',
-              color: 'white',
-              textAlign: 'center',
-            }}
+            variant="secondary"
+            className="h-auto bg-slate-600 px-6 py-3.5 text-[15px] text-white hover:bg-slate-700"
           >
             {saving ? 'Saving...' : 'Save as Draft'}
-          </div>
-          <div
+          </Button>
+          <Button
+            type="button"
             onClick={() => navigate('/invoices/' + id)}
-            style={{
-              padding: '14px 24px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '15px',
-              border: '1px solid #ddd',
-              backgroundColor: 'white',
-              textAlign: 'center',
-              color: '#555',
-            }}
+            variant="outline"
+            className="h-auto px-6 py-3.5 text-[15px] text-slate-600"
           >
             Cancel
-          </div>
+          </Button>
         </div>
       </div>
     </Layout>

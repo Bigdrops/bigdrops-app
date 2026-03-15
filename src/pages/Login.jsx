@@ -44,6 +44,7 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [signupCompleteEmail, setSignupCompleteEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -85,11 +86,25 @@ export default function Login() {
     }
 
     setLoading(true)
-    const { error: err } = await supabase.auth.signUp({ email, password })
+    const { data, error: err } = await supabase.auth.signUp({ email, password })
     setLoading(false)
 
     if (err) setError(err.message)
-    else setMessage('Account created. Please check your email to confirm.')
+    else {
+      const userId = data?.user?.id
+      if (userId) {
+        try {
+          await supabase.from('profiles').upsert(
+            { id: userId, email, has_password: true },
+            { onConflict: 'id' }
+          )
+        } catch {
+          // Best effort only; the app also self-heals this flag after sign-in/reset.
+        }
+      }
+      setSignupCompleteEmail(email)
+      setMessage('')
+    }
   }
 
   const handleForgotPassword = async () => {
@@ -144,7 +159,7 @@ export default function Login() {
             </div>
 
             <h1 className="max-w-lg text-5xl font-semibold leading-[1.05] tracking-tight text-slate-950">
-              Run operations across multiple business profiles.
+              Run operations in one controlled workspace.
             </h1>
 
             <p className="mt-5 max-w-md text-base leading-7 text-slate-600">
@@ -153,8 +168,8 @@ export default function Login() {
 
             <div className="mt-10 grid max-w-md grid-cols-2 gap-4">
               <div className="rounded-3xl border border-black/10 bg-white/80 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.06)] backdrop-blur">
-                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Profiles</div>
-                <div className="mt-2 text-2xl font-semibold">Multi-business</div>
+                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Workspace</div>
+                <div className="mt-2 text-2xl font-semibold">Business ops</div>
               </div>
 
               <div className="rounded-3xl bg-[#111111] p-5 text-white shadow-[0_24px_60px_rgba(0,0,0,0.22)]">
@@ -169,124 +184,165 @@ export default function Login() {
         <div className="w-full">
           <Card className="mx-auto w-full max-w-md rounded-[2rem] border border-black/10 bg-white/80 shadow-[0_25px_80px_rgba(0,0,0,0.10)] backdrop-blur">
             <CardContent className="p-6 sm:p-8">
-              <div className="mb-6 text-center lg:text-left">
-                <div className="text-xs font-medium uppercase tracking-[0.28em] text-slate-500">
-                  BigDrops ERP
-                </div>
-                <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                  {isSignup ? 'Create your account' : 'Sign in to continue'}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {isSignup
-                    ? 'Set up your account and access your workspace.'
-                    : 'Access your business workspace from one place.'}
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-700">
-                    Email
-                  </Label>
-                  <div className="relative">
-                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="h-12 rounded-xl border-black/10 bg-white pl-9 text-base shadow-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-slate-700">
-                    Password
-                  </Label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="h-12 rounded-xl border-black/10 bg-white pl-9 text-base shadow-none"
-                    />
-                  </div>
-                </div>
-
-                {isSignup && (
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-slate-700">
-                      Confirm Password
-                    </Label>
-                    <div className="relative">
-                      <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <Input
-                        id="confirmPassword"
-                        type="password"
-                        value={confirmPassword}
-                        onChange={e => setConfirmPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="h-12 rounded-xl border-black/10 bg-white pl-9 text-base shadow-none"
-                      />
+              {signupCompleteEmail ? (
+                <div className="space-y-5">
+                  <div className="text-center lg:text-left">
+                    <div className="text-xs font-medium uppercase tracking-[0.28em] text-slate-500">
+                      Account Created
                     </div>
+                    <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                      Check your email
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      We sent a confirmation link to <span className="font-semibold text-slate-900">{signupCompleteEmail}</span>.
+                    </p>
                   </div>
-                )}
 
-                {!isSignup && (
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleForgotPassword}
-                      className="text-sm font-medium text-slate-600 transition hover:text-slate-950"
-                    >
-                      Forgot Password?
-                    </button>
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+                    <div className="font-semibold">Next steps</div>
+                    <div className="mt-2">1. Open the confirmation email.</div>
+                    <div>2. Confirm your account.</div>
+                    <div>3. Return here and sign in.</div>
                   </div>
-                )}
 
-                <Button
-                  type="button"
-                  onClick={isSignup ? handleSignUp : handleSignIn}
-                  disabled={loading}
-                  className="h-12 w-full rounded-xl bg-[#111111] text-white hover:bg-black"
-                >
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {loading ? 'Please wait…' : isSignup ? 'Create Account' : 'Sign In'}
-                </Button>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                    If you already confirmed your email, you can go straight back to sign in.
+                  </div>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleGoogleSignIn}
-                  disabled={loading}
-                  className="h-12 w-full rounded-xl border-black/10 bg-white text-slate-900 hover:bg-slate-50"
-                >
-                  <GoogleIcon className="mr-2 h-4 w-4" />
-                  Continue with Google
-                </Button>
-
-                {error && <Notice kind="error">{error}</Notice>}
-                {message && <Notice kind="success">{message}</Notice>}
-
-                <div className="pt-2 text-center text-sm text-slate-600">
-                  {isSignup ? 'Already have an account? ' : "Don't have an account? "}
-                  <button
+                  <Button
                     type="button"
-                    className="font-semibold text-slate-950 underline underline-offset-4"
                     onClick={() => {
-                      setMode(isSignup ? 'signin' : 'signup')
+                      setMode('signin')
+                      setSignupCompleteEmail('')
                       resetFeedback()
                     }}
+                    className="h-12 w-full rounded-xl bg-[#111111] text-white hover:bg-black"
                   >
-                    {isSignup ? 'Sign In' : 'Sign Up'}
-                  </button>
+                    Back to Sign In
+                  </Button>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="mb-6 text-center lg:text-left">
+                    <div className="text-xs font-medium uppercase tracking-[0.28em] text-slate-500">
+                      BigDrops ERP
+                    </div>
+                    <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                      {isSignup ? 'Create your account' : 'Sign in to continue'}
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {isSignup
+                        ? 'Set up your account and access your workspace.'
+                        : 'Access your business workspace from one place.'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-slate-700">
+                        Email
+                      </Label>
+                      <div className="relative">
+                        <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Input
+                          id="email"
+                          type="email"
+                          value={email}
+                          onChange={e => setEmail(e.target.value)}
+                          placeholder="you@example.com"
+                          className="h-12 rounded-xl border-black/10 bg-white pl-9 text-base shadow-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="text-slate-700">
+                        Password
+                      </Label>
+                      <div className="relative">
+                        <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Input
+                          id="password"
+                          type="password"
+                          value={password}
+                          onChange={e => setPassword(e.target.value)}
+                          placeholder="Password"
+                          className="h-12 rounded-xl border-black/10 bg-white pl-9 text-base shadow-none"
+                        />
+                      </div>
+                    </div>
+
+                    {isSignup && (
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword" className="text-slate-700">
+                          Confirm Password
+                        </Label>
+                        <div className="relative">
+                          <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                          <Input
+                            id="confirmPassword"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={e => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm password"
+                            className="h-12 rounded-xl border-black/10 bg-white pl-9 text-base shadow-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {!isSignup && (
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleForgotPassword}
+                          className="text-sm font-medium text-slate-600 transition hover:text-slate-950"
+                        >
+                          Forgot Password?
+                        </button>
+                      </div>
+                    )}
+
+                    <Button
+                      type="button"
+                      onClick={isSignup ? handleSignUp : handleSignIn}
+                      disabled={loading}
+                      className="h-12 w-full rounded-xl bg-[#111111] text-white hover:bg-black"
+                    >
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {loading ? 'Please wait...' : isSignup ? 'Create Account' : 'Sign In'}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleGoogleSignIn}
+                      disabled={loading}
+                      className="h-12 w-full rounded-xl border-black/10 bg-white text-slate-900 hover:bg-slate-50"
+                    >
+                      <GoogleIcon className="mr-2 h-4 w-4" />
+                      Continue with Google
+                    </Button>
+
+                    {error && <Notice kind="error">{error}</Notice>}
+                    {message && <Notice kind="success">{message}</Notice>}
+
+                    <div className="pt-2 text-center text-sm text-slate-600">
+                      {isSignup ? 'Already have an account? ' : "Don't have an account? "}
+                      <button
+                        type="button"
+                        className="font-semibold text-slate-950 underline underline-offset-4"
+                        onClick={() => {
+                          setMode(isSignup ? 'signin' : 'signup')
+                          resetFeedback()
+                        }}
+                      >
+                        {isSignup ? 'Sign In' : 'Sign Up'}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 

@@ -19,7 +19,7 @@ export const parseCF = (raw) => {
     header: [], bottom: [], extraCharges: [], chargeLabels: {},
     mergeQtyUnit: false, showItemImages: false, attachments: [],
     notesTitle: 'Notes', termsTitle: 'Terms and Conditions',
-    groupMeta: {},
+    groupMeta: {}, columnConfig: [],
   }
   if (!raw) return defaults
   try {
@@ -73,7 +73,7 @@ export const extractInvoiceData = (invoice, items, client, settings) => {
     return col ? col.visible !== false : true
   }
 
-  const companyName    = settings.company_name    || 'SUN & SHIELD POWER SOLUTIONS'
+  const companyName    = settings.company_name    || ''
   const companyTagline = settings.company_tagline  || ''
   const companyAddress = settings.company_address  || ''
   const companyCity    = settings.company_city     || ''

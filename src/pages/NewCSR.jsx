@@ -1,11 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { pdf } from '@react-pdf/renderer'
+
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
-import { pdf } from '@react-pdf/renderer'
 import { Template3 } from './ViewCSR'
+import {
+  createDefaultCsr,
+  DEFAULT_CSR_META,
+  DEFAULT_MATERIAL_ROW,
+  getCsrViewData,
+  getNextCsrNumber,
+  serializeCsrMaterials,
+} from '../components/csr/csrUtils'
 
-// Mobile detection hook
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640)
   useEffect(() => {
@@ -16,104 +24,87 @@ function useIsMobile() {
   return isMobile
 }
 
+const EMPTY_BRANDING = {
+  companyName: '',
+  companyTagline: '',
+  contactLine: '',
+  footerText: '',
+}
+
 export default function NewCSR() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const type = searchParams.get('type')
   const isField = type === 'field'
-  const [clients, setClients] = useState([])
-  const [saving, setSaving] = useState(false)
   const isMobile = useIsMobile()
 
-  const [csr, setCsr] = useState({
-    csr_number: '',
-    date: new Date().toISOString().split('T')[0],
-    client_id: '',
-    client_name: '',
-    address: '',
-    problem_reported: '',
-    equipment_type: '',
-    equipment_location: '',
-    make: '',
-    model: '',
-    serial_no: '',
-    capacity: '',
-    voltage: '',
-    frequency: '',
-    battery: '',
-    temperature: '',
-    pressure: '',
-    hours: '',
-    materials_used: '',
-    service_rendered: '',
-    engineer_remarks: '',
-    status: 'Complete',
-    start_date: new Date().toISOString().split('T')[0],
-    start_time: '',
-    end_date: new Date().toISOString().split('T')[0],
-    end_time: '',
-    customer_feedback: '',
-    acknowledgement_name: '',
-    linked_invoice_id: '',
-    show_po: false,
-    po_number: '',
-  })
+  const [clients, setClients] = useState([])
+  const [saving, setSaving] = useState(false)
+  const [csr, setCsr] = useState(() => createDefaultCsr(isField))
+  const [csrMeta, setCsrMeta] = useState(() => ({ ...DEFAULT_CSR_META }))
+  const [materialsRows, setMaterialsRows] = useState([{ ...DEFAULT_MATERIAL_ROW }])
 
   useEffect(() => {
-    // Fetch clients WITH address
-    supabase
-      .from('clients')
-      .select('id, name, address')
-      .order('name')
-      .then(({ data }) => setClients(data || []))
+    let mounted = true
 
-    // Auto-generate CSR number
-    supabase
-      .from('csrs')
-      .select('csr_number')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          const last = data[0].csr_number || 'SASI-CSR-B000'
-          const match = last.match(/(\d+)$/)
+    const load = async () => {
+      const { data: clientsData } = await supabase
+        .from('clients')
+        .select('id, name, address')
+        .order('name')
 
-          if (match) {
-            const digits = match[1]
-            const nextNumber = String(parseInt(digits, 10) + 1).padpadStart(
-              digits.length,
-              '0'
-            )
-            let prefix = last.slice(0, last.length - digits.length)
-            if (isField) {
-              prefix = 'FIELD-'
-            }
-            const nextCsrNumber = prefix + nextNumber
+      if (mounted) {
+        setClients(clientsData || [])
+      }
 
-            setCsr(c => ({
-              ...c,
-              csr_number: nextCsrNumber,
-              status: isField ? 'Field Entry Pending' : c.status,
-            }))
-          } else {
-            setCsr(c => ({
-              ...c,
-              csr_number: isField ? 'FIELD-001' : 'SASI-CSR-B001',
-              status: isField ? 'Field Entry Pending' : c.status,
-            }))
-          }
-        } else {
-          setCsr(c => ({
-            ...c,
-            csr_number: isField ? 'FIELD-001' : 'SASI-CSR-B001',
-            status: isField ? 'Field Entry Pending' : c.status,
-          }))
-        }
-      })
+      const { data: latestRows } = await supabase
+        .from('csrs')
+        .select('csr_number')
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      const latestNumber = latestRows?.[0]?.csr_number || ''
+      const nextNumber = getNextCsrNumber(latestNumber)
+
+      if (mounted) {
+        setCsr((current) => ({
+          ...current,
+          csr_number: current.csr_number || nextNumber,
+          status: isField ? 'Field Entry Pending' : current.status,
+        }))
+      }
+    }
+
+    load()
+
+    return () => {
+      mounted = false
+    }
   }, [isField])
 
-  const update = (field, value) =>
-    setCsr(c => ({ ...c, [field]: value }))
+  const update = (field, value) => {
+    setCsr((current) => ({ ...current, [field]: value }))
+  }
+
+  const updateMeta = (field, value) => {
+    setCsrMeta((current) => ({ ...current, [field]: value }))
+  }
+
+  const updateMaterialRow = (index, field, value) => {
+    setMaterialsRows((current) =>
+      current.map((row, rowIndex) => (rowIndex === index ? { ...row, [field]: value } : row))
+    )
+  }
+
+  const addMaterialRow = () => {
+    setMaterialsRows((current) => [...current, { ...DEFAULT_MATERIAL_ROW }])
+  }
+
+  const removeMaterialRow = (index) => {
+    setMaterialsRows((current) =>
+      current.length === 1 ? [{ ...DEFAULT_MATERIAL_ROW }] : current.filter((_, rowIndex) => rowIndex !== index)
+    )
+  }
 
   const handleSave = async () => {
     if (!isField && !csr.client_id) {
@@ -125,7 +116,9 @@ export default function NewCSR() {
       ...csr,
       client_id: csr.client_id || null,
       linked_invoice_id: csr.linked_invoice_id || null,
+      materials_used: serializeCsrMaterials(materialsRows, csrMeta),
     }
+
     const { data: existing } = await supabase
       .from('csrs')
       .select('id')
@@ -138,36 +131,39 @@ export default function NewCSR() {
 
     setSaving(true)
     const { error } = await supabase.from('csrs').insert([csrData])
+
     if (error) {
       alert('Error: ' + error.message)
       setSaving(false)
       return
     }
+
     setSaving(false)
 
     if (isField) {
       try {
-        const blob = await pdf(<Template3 csr={csrData} />).toBlob()
+        const blob = await pdf(
+          <Template3 csr={getCsrViewData(csrData)} branding={EMPTY_BRANDING} />
+        ).toBlob()
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
         a.download = (csrData.csr_number || 'csr') + '.pdf'
         a.click()
-      } catch (e) {
-        console.error('Failed to generate PDF', e)
+      } catch (error) {
+        console.error('Failed to generate PDF', error)
       }
     }
 
     navigate('/csr')
   }
 
-  // ✅ FIXED STYLES - Mobile responsive
   const inputStyle = {
     width: '100%',
     padding: '8px 12px',
     border: '1px solid #ddd',
     borderRadius: '6px',
-    fontSize: '16px', // ← CHANGED: Was '13px', now '16px' to prevent iOS zoom
+    fontSize: '16px',
     outline: 'none',
     boxSizing: 'border-box',
     backgroundColor: 'white',
@@ -205,7 +201,6 @@ export default function NewCSR() {
 
   const sectionBody = { padding: '16px' }
 
-  // Responsive grid helper
   const getGridStyle = (columns) => ({
     display: 'grid',
     gridTemplateColumns: isMobile ? '1fr' : columns,
@@ -225,41 +220,48 @@ export default function NewCSR() {
   return (
     <Layout title="New CSR">
       <div style={{ maxWidth: '900px' }}>
-
         <div style={sectionStyle}>
           <div style={sectionHead}>Customer Details</div>
           <div style={sectionBody}>
-            <div style={getGridStyle('1fr 1fr 1fr')}>
+            <div style={getGridStyle('1fr 1fr')}>
               <div>
                 <label style={labelStyle}>CSR Number</label>
                 <input
                   style={{ ...inputStyle, fontWeight: 'bold', color: '#CC0000' }}
                   value={csr.csr_number}
-                  onChange={e => update('csr_number', e.target.value)}
+                  onChange={(event) => update('csr_number', event.target.value)}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Date</label>
+                <input
+                  type="date"
+                  style={inputStyle}
+                  value={csr.date}
+                  onChange={(event) => update('date', event.target.value)}
                 />
               </div>
             </div>
-            <div style={getGridStyle('1fr 1fr 1fr')}>
+
+            <div style={getGridStyle('1fr')}>
               <div>
                 <label style={labelStyle}>Select Client</label>
                 <select
                   style={inputStyle}
                   value={csr.client_id}
-                  onChange={e => {
-                    const selectedId = e.target.value
-                    const client = clients.find(
-                      c => String(c.id) === String(selectedId)
-                    )
+                  onChange={(event) => {
+                    const selectedId = event.target.value
+                    const client = clients.find((item) => String(item.id) === String(selectedId))
 
                     update('client_id', selectedId)
                     update('client_name', client ? client.name : '')
-                    update('address', client && client.address ? client.address : '')
+                    update('address', client?.address || '')
                   }}
                 >
-                  <option value="">— Select client —</option>
-                  {clients.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
+                  <option value="">Select client</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
                     </option>
                   ))}
                 </select>
@@ -272,7 +274,7 @@ export default function NewCSR() {
                 <input
                   style={inputStyle}
                   value={csr.client_name}
-                  onChange={e => update('client_name', e.target.value)}
+                  onChange={(event) => update('client_name', event.target.value)}
                 />
               </div>
               <div>
@@ -280,7 +282,7 @@ export default function NewCSR() {
                 <input
                   style={inputStyle}
                   value={csr.address}
-                  onChange={e => update('address', e.target.value)}
+                  onChange={(event) => update('address', event.target.value)}
                 />
               </div>
             </div>
@@ -290,25 +292,14 @@ export default function NewCSR() {
         <div style={sectionStyle}>
           <div style={sectionHead}>PO Number</div>
           <div style={sectionBody}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                marginBottom: '12px',
-              }}
-            >
-              <label style={{ ...labelStyle, marginBottom: 0 }}>Add PO Number</label>
-              <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', fontSize: '12px' }}>
-                <input
-                  type="checkbox"
-                  checked={csr.show_po}
-                  onChange={e => update('show_po', e.target.checked)}
-                  style={{ marginRight: '6px' }}
-                />
-                <span>{csr.show_po ? 'On' : 'Off'}</span>
-              </label>
-            </div>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12px', marginBottom: '12px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={csr.show_po}
+                onChange={(event) => update('show_po', event.target.checked)}
+              />
+              Include PO Number
+            </label>
 
             {csr.show_po && (
               <div>
@@ -316,7 +307,7 @@ export default function NewCSR() {
                 <input
                   style={inputStyle}
                   value={csr.po_number}
-                  onChange={e => update('po_number', e.target.value)}
+                  onChange={(event) => update('po_number', event.target.value)}
                 />
               </div>
             )}
@@ -330,7 +321,7 @@ export default function NewCSR() {
             <textarea
               style={{ ...inputStyle, minHeight: '80px' }}
               value={csr.problem_reported}
-              onChange={e => update('problem_reported', e.target.value)}
+              onChange={(event) => update('problem_reported', event.target.value)}
             />
           </div>
         </div>
@@ -341,54 +332,41 @@ export default function NewCSR() {
             <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Equipment Type</label>
-                <input
-                  style={inputStyle}
-                  value={csr.equipment_type}
-                  onChange={e => update('equipment_type', e.target.value)}
-                />
+                <input style={inputStyle} value={csr.equipment_type} onChange={(event) => update('equipment_type', event.target.value)} />
               </div>
               <div>
                 <label style={labelStyle}>Equipment Location</label>
-                <input
-                  style={inputStyle}
-                  value={csr.equipment_location}
-                  onChange={e => update('equipment_location', e.target.value)}
-                />
+                <input style={inputStyle} value={csr.equipment_location} onChange={(event) => update('equipment_location', event.target.value)} />
               </div>
               <div>
                 <label style={labelStyle}>Make</label>
-                <input
-                  style={inputStyle}
-                  value={csr.make}
-                  onChange={e => update('make', e.target.value)}
-                />
+                <input style={inputStyle} value={csr.make} onChange={(event) => update('make', event.target.value)} />
+              </div>
+            </div>
+
+            <div style={getGridStyle('1fr 1fr')}>
+              <div>
+                <label style={labelStyle}>Model Field Title</label>
+                <input style={inputStyle} value={csrMeta.modelLabel} onChange={(event) => updateMeta('modelLabel', event.target.value)} />
+              </div>
+              <div>
+                <label style={labelStyle}>Serial Field Title</label>
+                <input style={inputStyle} value={csrMeta.serialLabel} onChange={(event) => updateMeta('serialLabel', event.target.value)} />
               </div>
             </div>
 
             <div style={getGridStyle('1fr 1fr 1fr')}>
               <div>
-                <label style={labelStyle}>Model</label>
-                <input
-                  style={inputStyle}
-                  value={csr.model}
-                  onChange={e => update('model', e.target.value)}
-                />
+                <label style={labelStyle}>{csrMeta.modelLabel}</label>
+                <input style={inputStyle} value={csr.model} onChange={(event) => update('model', event.target.value)} />
               </div>
               <div>
-                <label style={labelStyle}>Serial No</label>
-                <input
-                  style={inputStyle}
-                  value={csr.serial_no}
-                  onChange={e => update('serial_no', e.target.value)}
-                />
+                <label style={labelStyle}>{csrMeta.serialLabel}</label>
+                <input style={inputStyle} value={csr.serial_no} onChange={(event) => update('serial_no', event.target.value)} />
               </div>
               <div>
                 <label style={labelStyle}>Capacity</label>
-                <input
-                  style={inputStyle}
-                  value={csr.capacity}
-                  onChange={e => update('capacity', e.target.value)}
-                />
+                <input style={inputStyle} value={csr.capacity} onChange={(event) => update('capacity', event.target.value)} />
               </div>
             </div>
           </div>
@@ -397,110 +375,142 @@ export default function NewCSR() {
         <div style={sectionStyle}>
           <div style={sectionHead}>Operational Readings</div>
           <div style={sectionBody}>
-            <div style={getGridStyle('1fr 1fr 1fr')}>
-              <div>
-                <label style={labelStyle}>Voltage</label>
-                <input
-                  style={inputStyle}
-                  value={csr.voltage}
-                  onChange={e => update('voltage', e.target.value)}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>Frequency</label>
-                <input
-                  style={inputStyle}
-                  value={csr.frequency}
-                  onChange={e => update('frequency', e.target.value)}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>Battery</label>
-                <input
-                  style={inputStyle}
-                  value={csr.battery}
-                  onChange={e => update('battery', e.target.value)}
-                />
-              </div>
-            </div>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12px', marginBottom: '12px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={csrMeta.showOperationalReadings}
+                onChange={(event) => updateMeta('showOperationalReadings', event.target.checked)}
+              />
+              Include operational readings
+            </label>
 
-            <div style={getGridStyle('1fr 1fr 1fr')}>
-              <div>
-                <label style={labelStyle}>Temperature</label>
-                <input
-                  style={inputStyle}
-                  value={csr.temperature}
-                  onChange={e => update('temperature', e.target.value)}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>Pressure</label>
-                <input
-                  style={inputStyle}
-                  value={csr.pressure}
-                  onChange={e => update('pressure', e.target.value)}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>Hours</label>
-                <input
-                  style={inputStyle}
-                  value={csr.hours}
-                  onChange={e => update('hours', e.target.value)}
-                />
-              </div>
-            </div>
+            {csrMeta.showOperationalReadings && (
+              <>
+                <div style={getGridStyle('1fr 1fr 1fr')}>
+                  <div>
+                    <label style={labelStyle}>Voltage</label>
+                    <input style={inputStyle} value={csr.voltage} onChange={(event) => update('voltage', event.target.value)} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Frequency</label>
+                    <input style={inputStyle} value={csr.frequency} onChange={(event) => update('frequency', event.target.value)} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Battery</label>
+                    <input style={inputStyle} value={csr.battery} onChange={(event) => update('battery', event.target.value)} />
+                  </div>
+                </div>
+
+                <div style={getGridStyle('1fr 1fr 1fr')}>
+                  <div>
+                    <label style={labelStyle}>Temperature</label>
+                    <input style={inputStyle} value={csr.temperature} onChange={(event) => update('temperature', event.target.value)} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Pressure</label>
+                    <input style={inputStyle} value={csr.pressure} onChange={(event) => update('pressure', event.target.value)} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Hours</label>
+                    <input style={inputStyle} value={csr.hours} onChange={(event) => update('hours', event.target.value)} />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
         <div style={sectionStyle}>
-          <div style={sectionHead}>Parts Used</div>
+          <div style={sectionHead}>Materials Used</div>
           <div style={sectionBody}>
-            <label style={labelStyle}>Materials Used</label>
-            <textarea
-              style={{ ...inputStyle, minHeight: '80px' }}
-              value={csr.materials_used}
-              onChange={e => update('materials_used', e.target.value)}
-            />
+            <div style={getGridStyle('1fr 160px')}>
+              <div>
+                <label style={labelStyle}>Output Style</label>
+                <select
+                  style={inputStyle}
+                  value={csrMeta.materialsOutputStyle}
+                  onChange={(event) => updateMeta('materialsOutputStyle', event.target.value)}
+                >
+                  <option value="list">Enumerated List</option>
+                  <option value="comma">Comma-separated Text</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '12px' }}>
+                <thead>
+                  <tr>
+                    {['Material / Item', 'Quantity', 'Unit', ''].map((heading) => (
+                      <th key={heading} style={{ textAlign: 'left', fontSize: '11px', color: '#64748B', padding: '8px 6px' }}>{heading}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {materialsRows.map((row, index) => (
+                    <tr key={index}>
+                      <td style={{ padding: '6px' }}>
+                        <input style={inputStyle} value={row.item} onChange={(event) => updateMaterialRow(index, 'item', event.target.value)} />
+                      </td>
+                      <td style={{ padding: '6px', width: '140px' }}>
+                        <input style={inputStyle} value={row.quantity} onChange={(event) => updateMaterialRow(index, 'quantity', event.target.value)} />
+                      </td>
+                      <td style={{ padding: '6px', width: '140px' }}>
+                        <input style={inputStyle} value={row.unit} onChange={(event) => updateMaterialRow(index, 'unit', event.target.value)} />
+                      </td>
+                      <td style={{ padding: '6px', width: '60px' }}>
+                        <button
+                          type="button"
+                          onClick={() => removeMaterialRow(index)}
+                          style={{ ...inputStyle, cursor: 'pointer', padding: '8px 10px' }}
+                        >
+                          ×
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <button
+              type="button"
+              onClick={addMaterialRow}
+              style={{ ...inputStyle, width: 'auto', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+            >
+              + Add Material Row
+            </button>
           </div>
         </div>
 
         <div style={sectionStyle}>
           <div style={sectionHead}>Service Execution</div>
           <div style={sectionBody}>
-            <div style={getGridStyle('1fr 1fr')}>
+            <div style={getGridStyle('1fr 1fr 1fr 1fr')}>
               <div>
                 <label style={labelStyle}>Start Date</label>
-                <input
-                  type="date"
-                  style={inputStyle}
-                  value={csr.start_date}
-                  onChange={e => update('start_date', e.target.value)}
-                />
+                <input type="date" style={inputStyle} value={csr.start_date} onChange={(event) => update('start_date', event.target.value)} />
               </div>
               <div>
                 <label style={labelStyle}>Start Time</label>
-                <input
-                  type="date"
-                  style={inputStyle}
-                  value={csr.end_date}
-                  onChange={e => update('end_date', e.target.value)}
-                />
+                <input type="time" style={inputStyle} value={csr.start_time} onChange={(event) => update('start_time', event.target.value)} />
+              </div>
+              <div>
+                <label style={labelStyle}>End Date</label>
+                <input type="date" style={inputStyle} value={csr.end_date} onChange={(event) => update('end_date', event.target.value)} />
+              </div>
+              <div>
+                <label style={labelStyle}>End Time</label>
+                <input type="time" style={inputStyle} value={csr.end_time} onChange={(event) => update('end_time', event.target.value)} />
               </div>
             </div>
 
             <div style={getGridStyle('1fr')}>
               <div>
                 <label style={labelStyle}>Status</label>
-                <select
-                  style={inputStyle}
-                  value={csr.status}
-                  onChange={e => update('status', e.target.value)}
-                >
-                  {statusOptions.map(s => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
+                <select style={inputStyle} value={csr.status} onChange={(event) => update('status', event.target.value)}>
+                  {statusOptions.map((status) => (
+                    <option key={status} value={status}>{status}</option>
                   ))}
                 </select>
               </div>
@@ -508,43 +518,69 @@ export default function NewCSR() {
 
             <div style={{ marginBottom: '14px' }}>
               <label style={labelStyle}>Service Rendered</label>
-              <textarea
-                style={{ ...inputStyle, minHeight: '80px' }}
-                value={csr.service_rendered}
-                onChange={e => update('service_rendered', e.target.value)}
-              />
+              <textarea style={{ ...inputStyle, minHeight: '80px' }} value={csr.service_rendered} onChange={(event) => update('service_rendered', event.target.value)} />
+            </div>
+
+            <div style={getGridStyle('1fr 1fr')}>
+              <div>
+                <label style={labelStyle}>Technician Name</label>
+                <input style={inputStyle} value={csrMeta.technicianName} onChange={(event) => updateMeta('technicianName', event.target.value)} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={csrMeta.showTechnicianSignLine}
+                    onChange={(event) => updateMeta('showTechnicianSignLine', event.target.checked)}
+                  />
+                  Show optional technician sign line in PDF
+                </label>
+              </div>
             </div>
 
             <div style={{ marginBottom: '14px' }}>
-              <label style={labelStyle}>Engineer Remarks</label>
-              <textarea
-                style={{ ...inputStyle, minHeight: '80px' }}
-                value={csr.engineer_remarks}
-                onChange={e => update('engineer_remarks', e.target.value)}
-              />
+              <label style={labelStyle}>Technician Remarks</label>
+              <textarea style={{ ...inputStyle, minHeight: '80px' }} value={csr.engineer_remarks} onChange={(event) => update('engineer_remarks', event.target.value)} />
             </div>
 
             <div>
               <label style={labelStyle}>Customer Feedback</label>
-              <textarea
-                style={{ ...inputStyle, minHeight: '80px' }}
-                value={csr.customer_feedback}
-                onChange={e => update('customer_feedback', e.target.value)}
-              />
+              <textarea style={{ ...inputStyle, minHeight: '80px' }} value={csr.customer_feedback} onChange={(event) => update('customer_feedback', event.target.value)} />
             </div>
           </div>
         </div>
 
-        {/* FIXED ACKNOWLEDGEMENT FIELD */}
         <div style={sectionStyle}>
-          <div style={sectionHead}>Completion & Acknowledgement</div>
+          <div style={sectionHead}>Acknowledgement</div>
           <div style={sectionBody}>
-            <label style={labelStyle}>Customer Name (Acknowledgement)</label>
-            <input
-              style={inputStyle}
-              value={csr.acknowledgement_name}
-              onChange={e => update('acknowledgement_name', e.target.value)}
-            />
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12px', marginBottom: '12px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={csrMeta.showAcknowledgement}
+                onChange={(event) => updateMeta('showAcknowledgement', event.target.checked)}
+              />
+              Include acknowledgement section
+            </label>
+
+            {csrMeta.showAcknowledgement && (
+              <>
+                <div style={getGridStyle('1fr 1fr')}>
+                  <div>
+                    <label style={labelStyle}>Section Title</label>
+                    <input style={inputStyle} value={csrMeta.recipientTitle} onChange={(event) => updateMeta('recipientTitle', event.target.value)} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Recipient / Witness Role</label>
+                    <input style={inputStyle} value={csrMeta.recipientRole} onChange={(event) => updateMeta('recipientRole', event.target.value)} />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Recipient / Witness Name</label>
+                  <input style={inputStyle} value={csr.acknowledgement_name} onChange={(event) => update('acknowledgement_name', event.target.value)} />
+                </div>
+              </>
+            )}
           </div>
         </div>
 

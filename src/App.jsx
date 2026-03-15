@@ -116,17 +116,13 @@ function SetPasswordModal({ onComplete }) {
 }
 
 function AppShell({ session, profile, onProfileUpdate }) {
-  const [showSetPassword, setShowSetPassword] = useState(false)
-  const isMobile = useIsMobile()
-
-  useEffect(() => {
-    if (profile && !profile.has_password) setShowSetPassword(true)
-  }, [profile])
+  const provider = session?.user?.app_metadata?.provider
+  const showSetPassword = Boolean(profile && !profile.has_password && provider !== 'email')
 
   return (
     <>
       {showSetPassword && (
-        <SetPasswordModal onComplete={() => { setShowSetPassword(false); onProfileUpdate() }} />
+        <SetPasswordModal onComplete={onProfileUpdate} />
       )}
       <Suspense fallback={<PageLoader />}>
       <Routes>
@@ -163,7 +159,16 @@ function App() {
     if (!userId) return
     try {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
-      if (!error && data) setProfile(data)
+      if (!error && data) {
+        const { data: authData } = await supabase.auth.getUser()
+        const provider = authData.user?.app_metadata?.provider
+        if (provider === 'email' && !data.has_password) {
+          await supabase.from('profiles').update({ has_password: true }).eq('id', userId)
+          setProfile({ ...data, has_password: true })
+          return
+        }
+        setProfile(data)
+      }
     } catch (err) {
       console.error('Profile fetch error:', err)
     }
@@ -197,7 +202,7 @@ function App() {
     return (      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F7F5' }}>
         <div style={{ textAlign: 'center', color: '#4B5563', fontSize: '14px' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '999px', border: '3px solid #E5E7EB', borderTopColor: '#CC0000', margin: '0 auto 10px', animation: 'spin 1s linear infinite' }} />
-          Checking authentication…
+          Checking authentication...
         </div>
       </div>
     )

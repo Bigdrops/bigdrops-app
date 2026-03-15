@@ -82,8 +82,13 @@ export default function PendingApproval({ email }) {
 
               <CardContent className="p-0">
                 <p className="text-sm leading-6 text-slate-600">
-                  Your account is pending activation. Please contact the admin to activate your
-                  account and assign your device ID.
+                  Your signup was successful. You can sign in, but full access is still waiting on
+                  account approval and workspace setup.
+                </p>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  Depending on your sign-in flow, your email may already be confirmed or may still
+                  need confirmation. Once that is complete, access here still depends on approval
+                  and device or account setup for this workspace.
                 </p>
 
                 {email ? (

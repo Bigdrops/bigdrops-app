@@ -28,16 +28,6 @@ export default function CSR() {
   const [showSearch, setShowSearch] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
 
-  useEffect(() => {
-    fetchCsrs()
-  }, [])
-
-  useEffect(() => {
-    const handleOutsideClick = () => setOpenMenuId(null)
-    document.addEventListener("mousedown", handleOutsideClick)
-    return () => document.removeEventListener("mousedown", handleOutsideClick)
-  }, [])
-
   const fetchCsrs = async () => {
     setLoading(true)
 
@@ -50,6 +40,20 @@ export default function CSR() {
     setLoading(false)
   }
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void fetchCsrs()
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    const handleOutsideClick = () => setOpenMenuId(null)
+    document.addEventListener("mousedown", handleOutsideClick)
+    return () => document.removeEventListener("mousedown", handleOutsideClick)
+  }, [])
+
   const getCsrStatusKey = (status) => {
     const normalized = normalizeStatus(status)
     if (!normalized) return "draft"
@@ -58,14 +62,6 @@ export default function CSR() {
     if (normalized.includes("pending")) return "pending"
     if (normalized.includes("draft")) return "draft"
     return normalized
-  }
-
-  const getCsrStatusBadgeStyle = (status) => {
-    const key = getCsrStatusKey(status)
-    if (key === "completed") return { backgroundColor: "#DCFCE7", color: "#16A34A" }
-    if (key === "pending") return { backgroundColor: "#FEF3C7", color: "#92400E" }
-    if (key === "cancelled") return { backgroundColor: "#FEE2E2", color: "#DC2626" }
-    return { backgroundColor: "#F1F5F9", color: "#64748B" }
   }
 
   const formatStatusLabel = (status) => {
@@ -139,10 +135,39 @@ export default function CSR() {
   const handleDelete = async (csr) => {
     const confirmed = window.confirm("Delete this CSR permanently? This cannot be undone.")
     if (!confirmed) return
-    await supabase.from("csrs").delete().eq("id", csr.id)
+    const { error } = await supabase.from("csrs").delete().eq("id", csr.id)
+    if (error) {
+      alert("Unable to delete CSR right now. Please try again.")
+      return
+    }
     setOpenMenuId(null)
     await fetchCsrs()
   }
+
+  const handleView = (event, csrId) => {
+    event.stopPropagation()
+    setOpenMenuId(null)
+    navigate("/csr/" + csrId)
+  }
+
+  const handleEdit = (event, csrId) => {
+    event.stopPropagation()
+    setOpenMenuId(null)
+    navigate("/csr/edit/" + csrId)
+  }
+
+  const handleDeleteClick = async (event, csr) => {
+    event.stopPropagation()
+    await handleDelete(csr)
+  }
+
+  const renderActionMenu = (csr) => (
+    <div className="absolute right-0 top-12 z-20 w-36 rounded-2xl border border-zinc-200 bg-white p-1 shadow-xl">
+      <button onClick={(event) => handleView(event, csr.id)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">View</button>
+      <button onClick={(event) => handleEdit(event, csr.id)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">Edit</button>
+      <button onClick={(event) => void handleDeleteClick(event, csr)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">Delete</button>
+    </div>
+  )
 
   const filterSelectClass = "h-10 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 outline-none"
   const hasActiveFilters =
@@ -355,13 +380,7 @@ export default function CSR() {
                     >
                       •••
                     </button>
-                    {openMenuId === csr.id && (
-                      <div className="absolute right-0 top-12 z-20 w-36 rounded-2xl border border-zinc-200 bg-white p-1 shadow-xl">
-                        <button onClick={() => { setOpenMenuId(null); navigate("/csr/" + csr.id) }} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">View</button>
-                        <button onClick={() => { setOpenMenuId(null); navigate("/csr/edit/" + csr.id) }} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">Edit</button>
-                        <button onClick={() => handleDelete(csr)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">Delete</button>
-                      </div>
-                    )}
+                    {openMenuId === csr.id && renderActionMenu(csr)}
                   </div>
                 </div>
               ))
@@ -490,13 +509,7 @@ export default function CSR() {
                         >
                           •••
                         </button>
-                        {openMenuId === csr.id && (
-                          <div className="absolute right-0 top-12 z-20 w-36 rounded-2xl border border-zinc-200 bg-white p-1 shadow-xl">
-                            <button onClick={() => { setOpenMenuId(null); navigate("/csr/" + csr.id) }} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">View</button>
-                            <button onClick={() => { setOpenMenuId(null); navigate("/csr/edit/" + csr.id) }} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">Edit</button>
-                            <button onClick={() => handleDelete(csr)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">Delete</button>
-                          </div>
-                        )}
+                        {openMenuId === csr.id && renderActionMenu(csr)}
                       </div>
                     </div>
                   ))}

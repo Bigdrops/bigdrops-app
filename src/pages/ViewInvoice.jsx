@@ -120,6 +120,15 @@ export default function ViewInvoice() {
   if (loading)  return <Layout title="Invoice"><p style={{ padding: 30 }}>Loading...</p></Layout>
   if (!invoice) return <Layout title="Invoice"><p style={{ padding: 30 }}>Invoice not found.</p></Layout>
 
+  const companyName = settings.company_name || ''
+  const companyTagline = settings.company_tagline || ''
+  const companyCity = settings.company_city || ''
+  const companyAddress = settings.company_address || ''
+  const companyPhone = settings.company_phone || ''
+  const companyEmail = settings.company_email || ''
+  const companyIdentityLines = [companyAddress, companyCity, companyPhone, companyEmail].filter(Boolean)
+  const hasCompanyIdentity = Boolean(companyName || companyTagline || companyIdentityLines.length)
+
 
   // ── Status helpers ──────────────────────────────────────────────────────────
   const statusColor = (status) => {
@@ -363,11 +372,15 @@ export default function ViewInvoice() {
         <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: isNarrow ? '16px' : '40px', overflowX: 'auto' }}>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px', flexWrap: 'wrap', gap: '16px' }}>
-            <div>
-              <div style={{ color: '#CC0000', fontWeight: 'bold', fontSize: '22px', marginBottom: '4px' }}>SUN & SHIELD POWER SOLUTIONS</div>
-              <div style={{ color: '#555', fontSize: '12px' }}>Generator Sales | Maintenance | Installation | Rental | Facility Management</div>
-              <div style={{ color: '#555', fontSize: '12px' }}>Lagos, Nigeria</div>
-            </div>
+            {hasCompanyIdentity ? (
+              <div>
+                {companyName ? <div style={{ color: '#CC0000', fontWeight: 'bold', fontSize: '22px', marginBottom: '4px' }}>{companyName}</div> : null}
+                {companyTagline ? <div style={{ color: '#555', fontSize: '12px' }}>{companyTagline}</div> : null}
+                {companyIdentityLines.map((line) => (
+                  <div key={line} style={{ color: '#555', fontSize: '12px' }}>{line}</div>
+                ))}
+              </div>
+            ) : <div />}
             <div style={{ textAlign: 'right' }}>
               <div style={{ color: '#CC0000', fontWeight: 'bold', fontSize: '20px', marginBottom: '4px' }}>{invoice.document_type || 'INVOICE'}</div>
               <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>{invoice.invoice_number}</div>
@@ -515,13 +528,19 @@ export default function ViewInvoice() {
           {invoice.notes && (
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Notes</div>
-              <div style={{ fontSize: '13px', color: '#555', whiteSpace: 'pre-line' }}>{invoice.notes}</div>
+              <div
+                dangerouslySetInnerHTML={{ __html: invoice.notes }}
+                style={{ fontSize: 14, color: '#555', lineHeight: 1.7 }}
+              />
             </div>
           )}
           {invoice.terms && (
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Terms & Conditions</div>
-              <div style={{ fontSize: '13px', color: '#555' }}>{invoice.terms}</div>
+              <div
+                dangerouslySetInnerHTML={{ __html: invoice.terms }}
+                style={{ fontSize: 14, color: '#555', lineHeight: 1.7 }}
+              />
             </div>
           )}
 

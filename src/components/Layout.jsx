@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { useSettings } from '../hooks/useSettings'
 import { supabase } from '../supabase'
 import { QUICK_TILE_REGISTRY, DEFAULT_QUICK_TILES } from '../config/quickTiles'
 import {
   LayoutDashboard, FileText, ClipboardList, Wrench, Users,
   Settings, LogOut, FolderKanban, BarChart3, Grid2x2,
-  Package, ChevronDown, Check, Plus, Building2, X, Menu
+  Package, ChevronDown, Check, Building2, X, Menu
 } from 'lucide-react'
 
 // ── Navigation structure ─────────────────────────────────────────────────────
@@ -54,12 +55,6 @@ const bottomNav = [
   { label: 'Projects', path: '/projects', icon: FolderKanban },
   { label: 'Reports',  path: '/reports',  icon: BarChart3 },
   { label: 'More',     icon: Grid2x2,     isMore: true },
-]
-
-// Placeholder businesses — UI only, no backend yet
-const businesses = [
-  { id: 1, name: 'Sun & Shield Power Solutions', active: true },
-  { id: 2, name: 'Abisco Allied Ventures', active: false },
 ]
 
 // ── Sidebar nav item ─────────────────────────────────────────────────────────
@@ -155,8 +150,9 @@ function SidebarContent({ session, onNavigate }) {
 
 // ── Business switcher ────────────────────────────────────────────────────────
 function BusinessSwitcher() {
+  const { settings } = useSettings()
   const [open, setOpen] = useState(false)
-  const active = businesses.find(b => b.active)
+  const activeName = settings?.company_name || 'Business profile not configured'
 
   return (
     <>
@@ -168,7 +164,7 @@ function BusinessSwitcher() {
           <Building2 size={11} className="text-white" />
         </div>
         <div className="hidden sm:block min-w-0">
-          <div className="text-xs font-semibold text-slate-700 leading-tight max-w-[150px] truncate">{active?.name}</div>
+          <div className="text-xs font-semibold text-slate-700 leading-tight max-w-[150px] truncate">{activeName}</div>
         </div>
         <ChevronDown size={11} className="text-slate-400 hidden sm:block flex-shrink-0" />
       </button>
@@ -187,7 +183,7 @@ function BusinessSwitcher() {
               <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto" />
             </div>
             <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-              <div className="text-sm font-bold text-slate-800">Switch Business</div>
+              <div className="text-sm font-bold text-slate-800">Current Business</div>
               <button
                 onClick={() => setOpen(false)}
                 className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
@@ -196,32 +192,27 @@ function BusinessSwitcher() {
               </button>
             </div>
             <div className="px-4 py-2 space-y-1">
-              {businesses.map(biz => (
-                <button
-                  key={biz.id}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
-                  onClick={() => setOpen(false)}
-                >
-                  <div className="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                    {biz.name.charAt(0)}
+              <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
+                    {(settings?.company_name || 'B').charAt(0)}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-slate-800 truncate">{biz.name}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold text-slate-800">{activeName}</div>
+                    <div className="text-[11px] text-slate-400">
+                      {settings?.company_name
+                        ? 'Loaded from saved company settings'
+                        : 'Set up your company identity in Settings'}
+                    </div>
                   </div>
-                  {biz.active && <Check size={15} className="text-slate-800 flex-shrink-0" />}
-                </button>
-              ))}
+                  <Check size={15} className="shrink-0 text-slate-800" />
+                </div>
+              </div>
             </div>
             <div className="px-4 pt-1">
-              <button
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-dashed border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors"
-                onClick={() => setOpen(false)}
-              >
-                <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                  <Plus size={15} className="text-slate-400" />
-                </div>
-                <div className="text-sm font-medium text-slate-400">Create New Business</div>
-              </button>
+              <div className="w-full rounded-xl border border-dashed border-slate-200 px-3 py-3 text-sm text-slate-400">
+                Multi-business switching is not configured for this workspace yet.
+              </div>
             </div>
           </div>
         </div>
@@ -239,7 +230,7 @@ function QuickTileRail({ tiles }) {
       const savedTiles = localStorage.getItem('quick_tiles')
       const parsed = savedTiles ? JSON.parse(savedTiles) : DEFAULT_QUICK_TILES
       if (Array.isArray(parsed)) active = parsed
-    } catch (e) {
+    } catch {
       active = DEFAULT_QUICK_TILES
     }
     const allowed = new Set(active)
@@ -302,7 +293,7 @@ export default function Layout({ title, children, session }) {
     const savedTiles = localStorage.getItem('quick_tiles')
     const parsed = savedTiles ? JSON.parse(savedTiles) : DEFAULT_QUICK_TILES
     if (Array.isArray(parsed)) activeTiles = parsed
-  } catch (e) {
+  } catch {
     activeTiles = DEFAULT_QUICK_TILES
   }
 

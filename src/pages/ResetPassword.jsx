@@ -43,6 +43,14 @@ export default function ResetPassword() {
     if (err) {
       setError(err.message)
     } else {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user?.id) {
+          await supabase.from('profiles').update({ has_password: true }).eq('id', user.id)
+        }
+      } catch {
+        // Best effort sync for trust; password update already succeeded.
+      }
       setMessage('Password updated successfully. Redirecting...')
     }
   }
@@ -143,7 +151,7 @@ export default function ResetPassword() {
             style={inputStyle}
             value={password}
             onChange={e => setPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder="New password"
           />
         </div>
 
@@ -154,7 +162,7 @@ export default function ResetPassword() {
             style={inputStyle}
             value={confirmPassword}
             onChange={e => setConfirmPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder="Confirm new password"
           />
         </div>
 
@@ -163,7 +171,7 @@ export default function ResetPassword() {
           style={{ ...primaryButtonStyle, opacity: loading ? 0.7 : 1, pointerEvents: loading ? 'none' : 'auto' }}
           onClick={handleUpdatePassword}
         >
-          {loading ? 'Updating…' : 'Update Password'}
+          {loading ? 'Updating...' : 'Update Password'}
         </button>
 
         {error && <div style={errorStyle}>{error}</div>}
@@ -172,4 +180,3 @@ export default function ResetPassword() {
     </div>
   )
 }
-

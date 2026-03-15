@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { Plus, MoreHorizontal, FileText, Eye, Pencil, Copy, DollarSign, X,
          Send, Archive, Trash2, FileOutput, Truck, Wrench, Search, SlidersHorizontal } from "lucide-react"
@@ -407,7 +407,7 @@ export default function Invoices() {
                 <p className="text-xs text-zinc-400 font-bold">{activeInvoice.client_name}</p>
               </div>
               <div className="flex items-center gap-3">
-                <p className="text-xl font-black text-zinc-950">â‚¦{Number(activeInvoice.total || 0).toLocaleString()}</p>
+                <p className="text-xl font-black text-zinc-950">₦{Number(activeInvoice.total || 0).toLocaleString()}</p>
                 <button onClick={closeSheet} className="p-2 rounded-xl bg-zinc-100 text-zinc-400 hover:bg-zinc-200">
                   <X size={18} />
                 </button>
@@ -469,7 +469,7 @@ export default function Invoices() {
           </div>
           <h3 className="text-xl font-black text-zinc-950 text-center mb-2">Delete Invoice?</h3>
           <p className="text-sm text-zinc-500 text-center font-medium leading-relaxed mb-8">
-            Deleting is permanent and cannot be undone. You may choose to archive it instead â€” archived invoices remain recoverable for 30 days.
+            Deleting is permanent and cannot be undone. You may choose to archive it instead — archived invoices remain recoverable for 30 days.
           </p>
           <div className="flex gap-3">
             <button onClick={() => setShowDeleteWarn(false)}

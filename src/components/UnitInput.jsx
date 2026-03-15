@@ -6,7 +6,7 @@ const DEFAULT_UNITS = [
   'M', 'KM', 'CM', 'MM', 'IN', 'FT', 'YD', 'MI',
   'KG', 'G', 'MG', 'T', 'LB', 'OZ', 'ST',
   'L', 'ML', 'GAL', 'QT', 'PT', 'FL OZ',
-  'MÂ²', 'FTÂ²', 'MÂ³', 'FTÂ³', 'ACRE', 'HECTARE',
+  'M²', 'FT²', 'M³', 'FT³', 'ACRE', 'HECTARE',
   'PCS', 'UNIT', 'PAIR', 'DOZEN', 'GROSS', 'REAM', 'SET',
   'PACK', 'BOX', 'CARTON', 'CASE', 'BUNDLE', 'ROLL', 'SHEET',
   'HR', 'MIN', 'DAY', 'WEEK', 'MONTH', 'YEAR',
