@@ -1,4 +1,7 @@
 import { supabase } from '../supabase'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { ShieldAlert } from 'lucide-react'
 
 export default function PendingApproval({ email }) {
   const handleSignOut = async () => {
@@ -6,85 +9,104 @@ export default function PendingApproval({ email }) {
     window.location.href = '/'
   }
 
-  const containerStyle = {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F7F7F5',
-    padding: '20px',
-  }
-
-  const cardStyle = {
-    width: '100%',
-    maxWidth: '420px',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
-    padding: '28px',
-    textAlign: 'center',
-  }
-
-  const titleStyle = {
-    fontSize: '20px',
-    fontWeight: 700,
-    marginTop: '8px',
-    marginBottom: '8px',
-    color: '#111827',
-  }
-
-  const messageStyle = {
-    fontSize: '13px',
-    color: '#4B5563',
-    marginBottom: '10px',
-    lineHeight: 1.6,
-  }
-
-  // emailStyle removed per design
-
-  const buttonStyle = {
-    padding: '9px 16px',
-    borderRadius: '999px',
-    border: 'none',
-    backgroundColor: '#CC0000',
-    color: 'white',
-    fontWeight: 600,
-    fontSize: '14px',
-    cursor: 'pointer',
-    marginTop: '4px',
-  }
-
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#F7F7F5', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center' 
-    }}>
-      <div style={{ 
-        backgroundColor: 'white', 
-        borderRadius: '12px', 
-        padding: '40px', 
-        width: '100%', 
-        maxWidth: '420px', 
-        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-        textAlign: 'center'
-      }}>
-        <div style={{ fontSize: '36px' }}>⛔</div>
-        <div style={titleStyle}>Access Restricted</div>
-        <div style={messageStyle}>
-          Your account is pending activation. Please contact the Admin to activate your account and assign your device ID.
-        </div>
-        <button
-          type="button"
-          style={buttonStyle}
-          onClick={handleSignOut}
-        >
-          Sign Out
-        </button>
+    <>
+      <style>{`
+        @keyframes approvalPulse {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.45;
+          }
+          50% {
+            transform: scale(1.12);
+            opacity: 0.8;
+          }
+        }
+
+        @keyframes approvalSpin {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes approvalFloat {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-4px);
+          }
+        }
+
+        .approval-pulse {
+          animation: approvalPulse 2.2s ease-in-out infinite;
+        }
+
+        .approval-ring {
+          animation: approvalSpin 7s linear infinite;
+        }
+
+        .approval-float {
+          animation: approvalFloat 2.8s ease-in-out infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .approval-pulse,
+          .approval-ring,
+          .approval-float {
+            animation: none !important;
+          }
+        }
+      `}</style>
+
+      <div className="min-h-screen bg-stone-100 flex items-center justify-center p-6">
+        <Card className="w-full max-w-md border-0 shadow-xl shadow-black/5 rounded-2xl bg-white">
+          <CardHeader className="flex flex-col items-center text-center space-y-4 pt-8">
+            <div className="relative flex h-24 w-24 items-center justify-center approval-float">
+              <div className="approval-pulse absolute inset-0 rounded-full bg-red-500/10 blur-xl" />
+
+              <div className="approval-ring absolute inset-1 rounded-full border-2 border-dashed border-red-300/70" />
+
+              <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full border border-red-200 bg-red-50 shadow-sm">
+                <ShieldAlert className="h-8 w-8 text-red-600" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <CardTitle className="text-xl font-semibold tracking-tight text-slate-900">
+                Access Restricted
+              </CardTitle>
+
+              <CardContent className="p-0">
+                <p className="text-sm leading-6 text-slate-600">
+                  Your account is pending activation. Please contact the admin to activate your
+                  account and assign your device ID.
+                </p>
+
+                {email ? (
+                  <p className="mt-3 text-xs text-slate-500">
+                    Signed in as <span className="font-medium text-slate-700">{email}</span>
+                  </p>
+                ) : null}
+              </CardContent>
+            </div>
+          </CardHeader>
+
+          <CardFooter className="flex justify-center pb-8 pt-2">
+            <Button
+              type="button"
+              variant="destructive"
+              className="rounded-full px-6 font-semibold shadow-sm"
+              onClick={handleSignOut}
+            >
+              Sign Out
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
-    </div>
+    </>
   )
 }
-
