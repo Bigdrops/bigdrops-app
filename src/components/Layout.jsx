@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { supabase } from '../supabase'
@@ -232,20 +232,55 @@ function BusinessSwitcher() {
 
 function QuickTileRail({ tiles }) {
   const navigate = useNavigate()
-  const validTiles = tiles.filter((id) => QUICK_TILE_REGISTRY[id])
+  const location = useLocation()
+  const validTiles = useMemo(() => {
+    let active = DEFAULT_QUICK_TILES
+    try {
+      const savedTiles = localStorage.getItem('quick_tiles')
+      const parsed = savedTiles ? JSON.parse(savedTiles) : DEFAULT_QUICK_TILES
+      if (Array.isArray(parsed)) active = parsed
+    } catch (e) {
+      active = DEFAULT_QUICK_TILES
+    }
+    const allowed = new Set(active)
+    return tiles.filter((id) => allowed.has(id) && QUICK_TILE_REGISTRY[id])
+  }, [tiles])
 
   if (validTiles.length === 0) return null
 
   return (
-    <div className="flex-1 min-w-0 overflow-x-auto whitespace-nowrap">
-      <div className="inline-flex items-center gap-3 px-2">
+    <div className="flex-1 min-w-0 overflow-hidden">
+      <div
+        className="flex items-center gap-2 overflow-x-auto px-1"
+        style={{
+          scrollbarWidth: 'none',
+          WebkitOverflowScrolling: 'touch',
+          scrollSnapType: 'x mandatory',
+        }}
+      >
         {validTiles.map((id) => {
           const tile = QUICK_TILE_REGISTRY[id]
+          const isActive =
+            location.pathname === tile.path ||
+            (tile.path !== '/' && location.pathname.startsWith(tile.path))
           return (
             <button
               key={id}
               onClick={() => navigate(tile.path)}
-              className="text-xs font-semibold text-slate-700 hover:text-slate-900"
+              className="text-[13px] font-semibold whitespace-nowrap transition-all"
+              style={{
+                scrollSnapAlign: 'start',
+                flexShrink: 0,
+                paddingTop: '6px',
+                paddingBottom: '6px',
+                paddingLeft: '14px',
+                paddingRight: '14px',
+                borderRadius: '999px',
+                cursor: 'pointer',
+                backgroundColor: isActive ? '#0F172A' : 'transparent',
+                color: isActive ? 'white' : '#64748B',
+                border: isActive ? '1px solid #0F172A' : '1px solid transparent',
+              }}
             >
               {tile.label}
             </button>
@@ -344,28 +379,35 @@ export default function Layout({ title, children, session }) {
         </div>
 
         {/* More sheet — slides up full sidebar */}
-        {moreOpen && (
-          <div
-            className="fixed inset-0 z-50 flex items-end bg-black/40"
+        <div
+          className={`fixed inset-0 z-40 transition-opacity duration-300 ${moreOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onClick={() => setMoreOpen(false)}
+        />
+        <div
+          className="fixed left-0 top-0 z-50 h-screen w-[280px] bg-white"
+          style={{
+            boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
+            transform: moreOpen ? 'translateX(0)' : 'translateX(-100%)',
+            transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        >
+          <button
             onClick={() => setMoreOpen(false)}
+            className="absolute top-4 right-4 flex items-center justify-center"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              backgroundColor: '#F1F5F9',
+              color: '#64748B',
+            }}
+            aria-label="Close navigation drawer"
           >
-            <div
-              className="w-full bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between px-4 pt-3 pb-1">
-                <div className="w-10 h-1 bg-slate-200 rounded-full" />
-                <button
-                  onClick={() => setMoreOpen(false)}
-                  className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-              <SidebarContent session={session} onNavigate={() => setMoreOpen(false)} />
-            </div>
-          </div>
-        )}
+            <X size={16} />
+          </button>
+          <SidebarContent session={session} onNavigate={() => setMoreOpen(false)} />
+        </div>
       </div>
     )
   }

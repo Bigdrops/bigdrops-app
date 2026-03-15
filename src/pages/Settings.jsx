@@ -3,10 +3,12 @@ import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import { useSettings, uploadFile, saveSettings } from '../hooks/useSettings'
 import { QUICK_TILE_REGISTRY, DEFAULT_QUICK_TILES } from '../config/quickTiles'
+import { Switch } from '@/components/ui/switch'
 import {
   Building2, CreditCard, ImageIcon, FileText,
   Shield, Check, Loader2, ChevronRight, Upload, X,
-  Eye, EyeOff, UserCheck, UserX, Trash2, Smartphone, LayoutDashboard
+  Eye, EyeOff, UserCheck, UserX, Trash2, Smartphone, LayoutDashboard,
+  FolderKanban, Wrench, ClipboardList
 } from 'lucide-react'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
@@ -342,7 +344,34 @@ function UserSection({ session, onToast }) {
 }
 
 function DashboardSection() {
-  const allTiles = Object.keys(QUICK_TILE_REGISTRY)
+  const orderedTiles = ['invoices', 'projects', 'csr', 'quotations']
+  const [flashTile, setFlashTile] = useState(null)
+  const tileMeta = {
+    invoices: {
+      icon: FileText,
+      iconBg: '#EFF6FF',
+      iconColor: '#2563EB',
+      description: 'Sales invoices and billing',
+    },
+    projects: {
+      icon: FolderKanban,
+      iconBg: '#F0FDF4',
+      iconColor: '#16A34A',
+      description: 'Jobs and project trees',
+    },
+    csr: {
+      icon: Wrench,
+      iconBg: '#FFF7ED',
+      iconColor: '#EA580C',
+      description: 'Customer service reports',
+    },
+    quotations: {
+      icon: ClipboardList,
+      iconBg: '#F5F3FF',
+      iconColor: '#7C3AED',
+      description: 'Quotes and estimates',
+    },
+  }
 
   const getInitialTiles = () => {
     try {
@@ -362,71 +391,69 @@ function DashboardSection() {
   const saveTiles = (nextTiles) => {
     setActiveTiles(nextTiles)
     localStorage.setItem('quick_tiles', JSON.stringify(nextTiles))
+    setFlashTile(nextTiles[nextTiles.length - 1] || 'saved')
+    window.clearTimeout(window.__quickTilesFlashTimeout)
+    window.__quickTilesFlashTimeout = window.setTimeout(() => setFlashTile(null), 900)
   }
 
   const toggleTile = (tileId) => {
     const included = activeTiles.includes(tileId)
     if (included) {
-      saveTiles(activeTiles.filter((id) => id !== tileId))
+      saveTiles(orderedTiles.filter((id) => id !== tileId && activeTiles.includes(id)))
     } else {
-      saveTiles([...activeTiles, tileId])
+      saveTiles(orderedTiles.filter((id) => id === tileId || activeTiles.includes(id)))
+      setFlashTile(tileId)
+      window.clearTimeout(window.__quickTilesFlashTimeout)
+      window.__quickTilesFlashTimeout = window.setTimeout(() => setFlashTile(null), 900)
+      return
     }
-  }
-
-  const moveTile = (tileId, direction) => {
-    const idx = activeTiles.indexOf(tileId)
-    if (idx < 0) return
-    const target = direction === 'up' ? idx - 1 : idx + 1
-    if (target < 0 || target >= activeTiles.length) return
-    const next = [...activeTiles]
-    ;[next[idx], next[target]] = [next[target], next[idx]]
-    saveTiles(next)
+    setFlashTile(tileId)
+    window.clearTimeout(window.__quickTilesFlashTimeout)
+    window.__quickTilesFlashTimeout = window.setTimeout(() => setFlashTile(null), 900)
   }
 
   return (
-    <div className="space-y-2">
-      {allTiles.map((tileId) => {
+    <div className="rounded-2xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-100 px-5 py-4">
+        <h3 className="text-sm font-bold text-slate-900">Quick Tiles</h3>
+        <p className="mt-1 text-xs text-slate-400">
+          Choose which modules appear as quick-access chips at the top of your dashboard
+        </p>
+      </div>
+      <div className="px-5">
+      {orderedTiles.map((tileId, index) => {
         const tile = QUICK_TILE_REGISTRY[tileId]
         const included = activeTiles.includes(tileId)
-        const idx = activeTiles.indexOf(tileId)
-        const isFirst = idx === 0
-        const isLast = idx === activeTiles.length - 1
+        const meta = tileMeta[tileId]
+        const Icon = meta.icon
 
         return (
           <div
             key={tileId}
-            className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center gap-3"
+            className={`flex items-center justify-between gap-3 py-3.5 transition-colors ${
+              flashTile === tileId ? 'bg-emerald-50/70' : ''
+            } ${index < orderedTiles.length - 1 ? 'border-b border-slate-100' : ''}`}
           >
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-800">{tile.label}</p>
+            <div className="flex min-w-0 items-center gap-3">
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px]"
+                style={{ backgroundColor: meta.iconBg, color: meta.iconColor }}
+              >
+                <Icon size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-900">{tile.label}</p>
+                <p className="text-[11px] text-slate-400">{meta.description}</p>
+              </div>
             </div>
-            <button
-              onClick={() => toggleTile(tileId)}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                included
-                  ? 'border-red-200 text-red-600 hover:bg-red-50'
-                  : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
-              }`}
-            >
-              {included ? 'Exclude' : 'Include'}
-            </button>
-            <button
-              onClick={() => moveTile(tileId, 'up')}
-              disabled={!included || isFirst}
-              className="px-2 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Up
-            </button>
-            <button
-              onClick={() => moveTile(tileId, 'down')}
-              disabled={!included || isLast}
-              className="px-2 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Down
-            </button>
+            <Switch checked={included} onCheckedChange={() => toggleTile(tileId)} />
           </div>
         )
       })}
+      </div>
+      <p className="px-5 pb-4 pt-3 text-center text-[11px] text-slate-400">
+        Changes apply instantly on your dashboard
+      </p>
     </div>
   )
 }

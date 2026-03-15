@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 const DEFAULT_UNITS = [
   'M', 'KM', 'CM', 'MM', 'IN', 'FT', 'YD', 'MI',
   'KG', 'G', 'MG', 'T', 'LB', 'OZ', 'ST',
   'L', 'ML', 'GAL', 'QT', 'PT', 'FL OZ',
-  'M²', 'FT²', 'M³', 'FT³', 'ACRE', 'HECTARE',
+  'MÂ²', 'FTÂ²', 'MÂ³', 'FTÂ³', 'ACRE', 'HECTARE',
   'PCS', 'UNIT', 'PAIR', 'DOZEN', 'GROSS', 'REAM', 'SET',
   'PACK', 'BOX', 'CARTON', 'CASE', 'BUNDLE', 'ROLL', 'SHEET',
   'HR', 'MIN', 'DAY', 'WEEK', 'MONTH', 'YEAR',
@@ -47,7 +49,6 @@ export default function UnitInput({ value, onChange }) {
     const val = e.target.value
     setQuery(val)
     setOpen(true)
-    // Auto-complete if only one match
     const matches = units.filter(u => u.toLowerCase().startsWith(val.toLowerCase()))
     if (matches.length === 1) {
       onChange(matches[0])
@@ -84,13 +85,13 @@ export default function UnitInput({ value, onChange }) {
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <input
+      <Input
         value={query}
         onChange={handleInput}
         onFocus={() => setOpen(true)}
         onKeyDown={handleKeyDown}
         placeholder="Unit"
-        style={{ width: '100%', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+        className="w-full"
       />
       {open && (
         <div style={{
@@ -112,24 +113,24 @@ export default function UnitInput({ value, onChange }) {
           <div style={{ borderTop: '1px solid #eee' }}>
             {addingNew ? (
               <div style={{ padding: '8px', display: 'flex', gap: '6px' }}>
-                <input
+                <Input
                   autoFocus
                   value={newUnit}
                   onChange={e => setNewUnit(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddUnit()}
                   placeholder="New unit..."
-                  style={{ flex: 1, padding: '6px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px', outline: 'none' }}
                 />
-                <div onClick={handleAddUnit} style={{ padding: '6px 10px', backgroundColor: '#CC0000', color: 'white', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
-                  Add
-                </div>
+                <Button size="sm" onClick={handleAddUnit}>Add</Button>
               </div>
             ) : (
-              <div onClick={() => setAddingNew(true)} style={{ padding: '8px 14px', cursor: 'pointer', fontSize: '13px', color: '#CC0000', fontWeight: 'bold' }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FFF0F0'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-red-600 hover:text-red-600 hover:bg-red-50"
+                onClick={() => setAddingNew(true)}
+              >
                 + Add Unit
-              </div>
+              </Button>
             )}
           </div>
         </div>

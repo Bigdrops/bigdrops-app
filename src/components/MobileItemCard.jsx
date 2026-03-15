@@ -1,11 +1,14 @@
 /**
  * MobileItemCard.jsx
- * 
+ *
  * Renders a single invoice line item as a vertical card on mobile.
  * Drop-in replacement for the table <tr> on small screens.
- * 
+ *
  * Props match exactly what NewInvoice/EditInvoice already have per row.
  */
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 import UnitInput from './UnitInput'
 import ItemImageUpload from './ItemImageUpload'
 
@@ -16,99 +19,123 @@ export default function MobileItemCard({
   onUpdate, onRemove, onMoveUp, onMoveDown, onInsertBelow,
   isFirst, isLast,
 }) {
-  const inp = {
-    width: '100%', padding: '8px 10px', border: '1px solid #e0e0e0',
-    borderRadius: '6px', fontSize: '15px', outline: 'none',
-    boxSizing: 'border-box', color: '#1a1a1a', backgroundColor: 'white',
-  }
-  const lbl = { fontSize: '11px', fontWeight: '700', color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }
-  const row = { marginBottom: '12px' }
   const autoInstall = (() => {
     const col = getColumn('install_rate')
     return col?.formula ? parseFloat(col.formula) * Number(item.quantity || 1) * Number(item.unit_price || 0) : null
   })()
 
-  // Group header card
   if (item.row_type === 'group_header') {
     return (
-      <div style={{ backgroundColor: '#333', borderRadius: '8px', padding: '12px 14px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <input
-          style={{ ...inp, backgroundColor: 'transparent', color: 'white', fontWeight: 'bold', border: 'none', borderBottom: '1px solid #555', borderRadius: 0, flex: 1 }}
+      <div className="bg-gray-800 rounded-lg px-4 py-3 mb-3 flex items-center gap-3">
+        <Input
+          className="bg-transparent text-white font-bold border-0 border-b border-gray-600 rounded-none flex-1"
           value={item.group_name || ''}
           onChange={e => onUpdate(index, 'group_name', e.target.value)}
           placeholder="Group name"
         />
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <span onClick={() => onInsertBelow(index)} style={{ color: '#16A34A', cursor: 'pointer', fontSize: '13px', padding: '4px 8px', border: '1px solid #16A34A', borderRadius: '6px', whiteSpace: 'nowrap' }}>+ Below</span>
-          <span onClick={() => onRemove(index)} style={{ color: '#ff6b6b', cursor: 'pointer', fontSize: '22px', lineHeight: 1 }}>×</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onInsertBelow(index)}
+            className="text-green-600 border-green-600 hover:bg-green-50 text-xs"
+          >
+            + Below
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onRemove(index)}
+            className="text-red-600 hover:text-red-600 hover:bg-red-50 h-8 w-8"
+          >
+            ×
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div style={{ backgroundColor: 'white', border: '1px solid #e8e8e8', borderRadius: '10px', padding: '14px', marginBottom: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-      {/* Card header: number + reorder + delete */}
+    <div className="bg-white border border-gray-200 rounded-xl p-4 mb-3 shadow-sm">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#1a1a1a', color: 'white', fontSize: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{number}</span>
           <div style={{ display: 'flex', gap: '6px' }}>
-            <button onClick={() => onMoveUp(index)} disabled={isFirst} style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #ddd', backgroundColor: 'white', cursor: isFirst ? 'not-allowed' : 'pointer', color: isFirst ? '#ddd' : '#555', fontSize: '12px' }}>▲</button>
-            <button onClick={() => onMoveDown(index)} disabled={isLast} style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #ddd', backgroundColor: 'white', cursor: isLast ? 'not-allowed' : 'pointer', color: isLast ? '#ddd' : '#555', fontSize: '12px' }}>▼</button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => onMoveUp(index)}
+              disabled={isFirst}
+              className="h-7 w-7"
+            >
+              ▲
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => onMoveDown(index)}
+              disabled={isLast}
+              className="h-7 w-7"
+            >
+              ▼
+            </Button>
           </div>
         </div>
-        <span onClick={() => onRemove(index)} style={{ color: '#CC0000', cursor: 'pointer', fontSize: '22px', lineHeight: 1, padding: '4px' }}>×</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onRemove(index)}
+          className="text-red-600 hover:text-red-600 hover:bg-red-50 h-8 w-8"
+        >
+          ×
+        </Button>
       </div>
 
-      {/* Description */}
-      <div style={row}>
-        <label style={lbl}>Description</label>
-        <input style={inp} value={item.description || ''} onChange={e => onUpdate(index, 'description', e.target.value)} placeholder="Item description" />
-        <input style={{ ...inp, marginTop: '6px', fontSize: '13px', color: '#888' }} value={item.sub_description || ''} onChange={e => onUpdate(index, 'sub_description', e.target.value)} placeholder="Sub-description (optional)" />
+      <div className="mb-3">
+        <Label className="text-xs font-bold text-gray-400 uppercase tracking-wide">Description</Label>
+        <Input value={item.description || ''} onChange={e => onUpdate(index, 'description', e.target.value)} placeholder="Item description" />
+        <Input className="mt-1.5 text-[13px] text-gray-500" value={item.sub_description || ''} onChange={e => onUpdate(index, 'sub_description', e.target.value)} placeholder="Sub-description (optional)" />
       </div>
 
-      {/* Make */}
       {isVisible('make') && (
-        <div style={row}>
-          <label style={lbl}>Make / Brand</label>
-          <input style={inp} value={item.make || ''} onChange={e => onUpdate(index, 'make', e.target.value)} placeholder="Brand" />
+        <div className="mb-3">
+          <Label className="text-xs font-bold text-gray-400 uppercase tracking-wide">Make / Brand</Label>
+          <Input value={item.make || ''} onChange={e => onUpdate(index, 'make', e.target.value)} placeholder="Brand" />
         </div>
       )}
 
-      {/* Qty + Unit side by side */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+      <div className="grid grid-cols-2 gap-2.5 mb-3">
         <div>
-          <label style={lbl}>Quantity</label>
-          <input style={inp} type="number" min="0" value={item.quantity} onChange={e => onUpdate(index, 'quantity', Number(e.target.value))} />
+          <Label className="text-xs font-bold text-gray-400 uppercase tracking-wide">Quantity</Label>
+          <Input type="number" min="0" value={item.quantity} onChange={e => onUpdate(index, 'quantity', Number(e.target.value))} />
         </div>
         {isVisible('unit') && (
           <div>
-            <label style={lbl}>Unit</label>
+            <Label className="text-xs font-bold text-gray-400 uppercase tracking-wide">Unit</Label>
             <UnitInput value={item.unit || ''} onChange={val => onUpdate(index, 'unit', val)} />
           </div>
         )}
       </div>
 
-      {/* Rate + Amount side by side */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+      <div className="grid grid-cols-2 gap-2.5 mb-3">
         <div>
-          <label style={lbl}>Unit Rate (₦)</label>
-          <input style={inp} type="number" min="0" value={item.unit_price} onChange={e => onUpdate(index, 'unit_price', Number(e.target.value))} />
+          <Label className="text-xs font-bold text-gray-400 uppercase tracking-wide">Unit Rate (₦)</Label>
+          <Input type="number" min="0" value={item.unit_price} onChange={e => onUpdate(index, 'unit_price', Number(e.target.value))} />
         </div>
         <div>
-          <label style={lbl}>Amount</label>
-          <div style={{ padding: '8px 10px', backgroundColor: '#f5f5f5', borderRadius: '6px', fontSize: '14px', fontWeight: '700', color: '#1a1a1a', border: '1px solid #e0e0e0' }}>
+          <Label className="text-xs font-bold text-gray-400 uppercase tracking-wide">Amount</Label>
+          <div className="px-3 py-2 bg-gray-100 rounded-md text-sm font-bold text-gray-900 border border-gray-200">
             ₦{(Number(item.quantity || 0) * Number(item.unit_price || 0)).toLocaleString()}
           </div>
         </div>
       </div>
 
-      {/* Install Rate */}
       {isVisible('install_rate') && (
-        <div style={row}>
-          <label style={lbl}>Install Rate</label>
-          <input
-            style={inp} type="number" min="0"
+        <div className="mb-3">
+          <Label className="text-xs font-bold text-gray-400 uppercase tracking-wide">Install Rate</Label>
+          <Input
+            type="number"
+            min="0"
             value={item.install_rate_override ? (item.install_rate ?? '') : ''}
             placeholder={autoInstall !== null ? String(Number(autoInstall.toFixed(2))) : '0'}
             onChange={e => {
@@ -122,13 +149,14 @@ export default function MobileItemCard({
         </div>
       )}
 
-      {/* VAT Rate */}
       {isVisible('vat_rate') && (
-        <div style={row}>
-          <label style={lbl}>VAT % (blank = global {invoice.vat || 0}%)</label>
-          <input
-            style={{ ...inp, backgroundColor: item.vat_rate !== null && item.vat_rate !== undefined ? 'white' : '#f9f9f9', color: item.vat_rate === 0 ? '#CC0000' : '#1a1a1a' }}
-            type="number" min="0" max="100"
+        <div className="mb-3">
+          <Label className="text-xs font-bold text-gray-400 uppercase tracking-wide">VAT % (blank = global {invoice.vat || 0}%)</Label>
+          <Input
+            className={`${item.vat_rate !== null && item.vat_rate !== undefined ? '' : 'bg-gray-50'} ${item.vat_rate === 0 ? 'text-red-600' : ''}`}
+            type="number"
+            min="0"
+            max="100"
             value={item.vat_rate !== null && item.vat_rate !== undefined ? item.vat_rate : ''}
             placeholder={String(invoice.vat || 0)}
             onChange={e => { const val = e.target.value; onUpdate(index, 'vat_rate', val === '' ? null : Number(val)) }}
@@ -137,23 +165,24 @@ export default function MobileItemCard({
         </div>
       )}
 
-      {/* Discount Rate */}
       {isVisible('discount_rate') && (() => {
         const drVal = item.discount_rate
         const isExcluded = drVal === 0
         const hasOverride = drVal !== null && drVal !== undefined
         return (
-          <div style={row}>
-            <label style={lbl}>Discount % (blank = global)</label>
-            <input
-              style={{ ...inp, backgroundColor: isExcluded ? '#fff0f0' : hasOverride ? '#fffbe6' : '#f9f9f9', color: isExcluded ? '#CC0000' : '#1a1a1a' }}
-              type="number" min="0" max="100"
+          <div className="mb-3">
+            <Label className="text-xs font-bold text-gray-400 uppercase tracking-wide">Discount % (blank = global)</Label>
+            <Input
+              className={`${isExcluded ? 'bg-red-50 text-red-600' : hasOverride ? 'bg-yellow-50' : 'bg-gray-50'}`}
+              type="number"
+              min="0"
+              max="100"
               value={hasOverride ? drVal : ''}
               placeholder="global"
               onChange={e => { const val = e.target.value; onUpdate(index, 'discount_rate', val === '' ? null : Number(val)) }}
             />
             {isExcluded
-              ? <div style={{ fontSize: '11px', color: '#CC0000', marginTop: '3px' }}>✕ No discount on this item</div>
+              ? <div style={{ fontSize: '11px', color: '#CC0000', marginTop: '3px' }}>No discount on this item</div>
               : drVal > 0
                 ? <div style={{ fontSize: '11px', color: '#B45309', marginTop: '3px' }}>{drVal}% discount on this row</div>
                 : null
@@ -162,12 +191,10 @@ export default function MobileItemCard({
         )
       })()}
 
-      {/* Custom columns */}
       {customColumns.filter(c => c.visible).map(col => (
-        <div key={col.key} style={row}>
-          <label style={lbl}>{col.label}</label>
-          <input
-            style={inp}
+        <div key={col.key} className="mb-3">
+          <Label className="text-xs font-bold text-gray-400 uppercase tracking-wide">{col.label}</Label>
+          <Input
             type={col.type === 'number' ? 'number' : 'text'}
             value={(item.custom_data || {})[col.key] || ''}
             onChange={e => onUpdate(index, 'custom_data', { ...(item.custom_data || {}), [col.key]: col.type === 'number' ? Number(e.target.value) : e.target.value })}
@@ -175,23 +202,20 @@ export default function MobileItemCard({
         </div>
       ))}
 
-      {/* Item image */}
       {showItemImages && (
-        <div style={row}>
-          <label style={lbl}>Item Image</label>
+        <div className="mb-3">
+          <Label className="text-xs font-bold text-gray-400 uppercase tracking-wide">Item Image</Label>
           <ItemImageUpload value={item.image_url || null} onChange={url => onUpdate(index, 'image_url', url)} />
         </div>
       )}
 
-      {/* Insert below */}
-      <div
+      <Button
+        variant="outline"
         onClick={() => onInsertBelow(index)}
-        style={{ marginTop: '8px', padding: '8px', border: '1px dashed #ccc', borderRadius: '6px', textAlign: 'center', cursor: 'pointer', fontSize: '12px', color: '#888', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = '#16A34A'; e.currentTarget.style.color = '#16A34A' }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = '#ccc'; e.currentTarget.style.color = '#888' }}
+        className="w-full mt-2 border-dashed text-gray-400 hover:border-green-500 hover:text-green-600"
       >
         ＋ Insert item below
-      </div>
+      </Button>
     </div>
   )
 }

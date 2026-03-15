@@ -9,6 +9,14 @@ import ColumnManager from '../components/ColumnManager'
 import ItemImageUpload from '../components/ItemImageUpload'
 import AttachmentsPanel from '../components/AttachmentsPanel'
 import MobileItemCard from '../components/MobileItemCard'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 import {
   makeEmptyItem,
   makeEmptyGroup,
@@ -553,7 +561,7 @@ export default function NewInvoice() {
     return (
       <tr key={index} style={{ backgroundColor: '#333' }}>
         {reorderBtns}
-        <td style={{ padding: '10px 8px', textAlign: 'center', color: '#888' }}>Ã¢â‚¬â€</td>
+        <td style={{ padding: '10px 8px', textAlign: 'center', color: '#888' }}>—</td>
         <td colSpan={visCount} style={{ padding: '10px 12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <input
@@ -622,7 +630,7 @@ export default function NewInvoice() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    Ã¢â€šÂ¦{gTotal.toLocaleString()}
+                    ₦{gTotal.toLocaleString()}
                   </span>
                 )}
               </div>
@@ -634,7 +642,7 @@ export default function NewInvoice() {
             onClick={() => (g ? deleteGroup(g.id) : removeItem(index))}
             style={{ color: '#ff6b6b', cursor: 'pointer', fontSize: '18px' }}
           >
-            Ãƒâ€”
+            ×
           </span>
         </td>
       </tr>
@@ -702,7 +710,7 @@ export default function NewInvoice() {
                     lineHeight: 1,
                   }}
                 >
-                  Ãƒâ€”
+                  ×
                 </span>
               </div>
 
@@ -753,7 +761,7 @@ export default function NewInvoice() {
                       fontWeight: 'bold',
                     }}
                   >
-                    Ã¢â€šÂ¦{groupSubtotal.toLocaleString()}
+                    ₦{groupSubtotal.toLocaleString()}
                   </span>
                 )}
               </div>
@@ -857,19 +865,19 @@ export default function NewInvoice() {
   return (
     <Layout title="New Invoice">
       <div style={{ maxWidth: '1100px' }}>
-        {/* Thread context banner Ã¢â‚¬â€ shown when creating a follow-up invoice */}
+        {/* Thread context banner — shown when creating a follow-up invoice */}
         {threadDefaults && (
           <div style={{ marginBottom: '20px', padding: '14px 18px', backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#1D4ED8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
-                Job Thread Ã‚Â· Invoice {threadDefaults.thread_position} of chain
+                Job Thread · Invoice {threadDefaults.thread_position} of chain
               </div>
               <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1E3A8A' }}>
                 {threadDefaults.job_title || 'Follow-up Invoice'}
               </div>
               {threadDefaults._suggestedAmount > 0 && (
                 <div style={{ fontSize: '12px', color: '#3B82F6', marginTop: '2px' }}>
-                  Suggested amount: Ã¢â€šÂ¦{Number(threadDefaults._suggestedAmount).toLocaleString()}
+                  Suggested amount: ₦{Number(threadDefaults._suggestedAmount).toLocaleString()}
                 </div>
               )}
             </div>
@@ -897,53 +905,57 @@ export default function NewInvoice() {
           />
         )}
 
-        <div style={sec}>
-          <div style={grid('repeat(3, 1fr)')}>
+        <Card className="mb-5">
+          <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label style={lbl}>Invoice Number</label>
-              <input
-                style={{ ...inp, fontWeight: 'bold', color: '#CC0000' }}
+              <Label>Invoice Number</Label>
+              <Input
+                className="font-bold text-red-600"
                 value={invoice.invoice_number}
                 onChange={(e) => updateInvoice('invoice_number', e.target.value)}
               />
             </div>
             <div>
-              <label style={lbl}>Issue Date</label>
-              <input
+              <Label>Issue Date</Label>
+              <Input
                 type="date"
-                style={inp}
                 value={invoice.issue_date}
                 onChange={(e) => updateInvoice('issue_date', e.target.value)}
               />
             </div>
             <div>
-              <label style={lbl}>Due Date</label>
-              <input
+              <Label>Due Date</Label>
+              <Input
                 type="date"
-                style={inp}
                 value={invoice.due_date}
                 onChange={(e) => updateInvoice('due_date', e.target.value)}
               />
             </div>
           </div>
           <div style={{ marginTop: '12px' }}>
-            <label style={lbl}>
+            <Label>
               Invoice Title{' '}
               <span style={{ color: '#aaa', fontWeight: 'normal' }}>
-                (optional Ã¢â‚¬â€ shows on document when filled)
+                (optional — shows on document when filled)
               </span>
-            </label>
-            <input
-              style={inp}
+            </Label>
+            <Input
               value={invoiceTitle}
               onChange={(e) => setInvoiceTitle(e.target.value)}
               placeholder="e.g. Supply and Installation of Electrical Fittings"
             />
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div style={sec}>
-          <h3 style={secT}>Client Details</h3>
+        <Card className="mb-5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm uppercase tracking-widest text-blue-700">
+              Client Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
           <ClientSelector
             clientId={invoice.client_id}
             clientName={invoice.client_name}
@@ -953,15 +965,20 @@ export default function NewInvoice() {
               updateInvoice('client_name', name)
             }}
           />
-        </div>
+          </CardContent>
+        </Card>
 
-        <div style={sec}>
-          <h3 style={secT}>Header Fields</h3>
-          <div style={grid('1fr 1fr')}>
+        <Card className="mb-5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm uppercase tracking-widest text-blue-700">
+              Header Fields
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label style={lbl}>Work Duration</label>
-              <input
-                style={inp}
+              <Label>Work Duration</Label>
+              <Input
                 value={invoice.work_duration}
                 onChange={(e) => updateInvoice('work_duration', e.target.value)}
                 placeholder="e.g. 7 days"
@@ -977,22 +994,18 @@ export default function NewInvoice() {
                 marginBottom: '10px',
               }}
             >
-              <label style={{ ...lbl, marginBottom: 0 }}>Custom Header Fields</label>
-              <div
+              <Label className="mb-0">Custom Header Fields</Label>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setCustomFields((f) => [...f, { label: '', value: '' }])}
-                style={{
-                  cursor: 'pointer',
-                  color: '#6366F1',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                }}
               >
                 + Add Field
-              </div>
+              </Button>
             </div>
             {customFields.length === 0 && (
-              <div style={{ fontSize: '13px', color: '#bbb', fontStyle: 'italic' }}>
-                Fields like Engine No, Serial No Ã¢â‚¬â€ appear on invoice header.
+              <div className="text-sm text-gray-400 italic">
+                Fields like Engine No, Serial No, appear on invoice header.
               </div>
             )}
             {customFields.map((field, i) => (
@@ -1006,8 +1019,7 @@ export default function NewInvoice() {
                   alignItems: 'center',
                 }}
               >
-                <input
-                  style={inp}
+                <Input
                   value={field.label}
                   onChange={(e) => {
                     const u = [...customFields]
@@ -1016,8 +1028,7 @@ export default function NewInvoice() {
                   }}
                   placeholder="Label (e.g. Engine No)"
                 />
-                <input
-                  style={inp}
+                <Input
                   value={field.value}
                   onChange={(e) => {
                     const u = [...customFields]
@@ -1026,23 +1037,19 @@ export default function NewInvoice() {
                   }}
                   placeholder="Value"
                 />
-                <div
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCustomFields(customFields.filter((_, j) => j !== i))}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: '#CC0000',
-                    fontSize: '22px',
-                  }}
+                  className="text-red-600 hover:text-red-600 hover:bg-red-50"
                 >
-                  Ãƒâ€”
-                </div>
+                  ×
+                </Button>
               </div>
             ))}
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
         <div style={sec}>
           <div
@@ -1078,7 +1085,7 @@ export default function NewInvoice() {
                   fontWeight: 'bold',
                 }}
               >
-                Ã¢Å¡â„¢ Columns
+                ⚙ Columns
               </div>
 
               <div style={{ position: 'relative' }}>
@@ -1093,7 +1100,7 @@ export default function NewInvoice() {
                     fontSize: '13px',
                   }}
                 >
-                  Import CSV Ã¢â€“Â¾
+                  Import CSV ▾
                 </div>
 
                 {showCSVNote && (
@@ -1542,7 +1549,7 @@ Then paste the result here or upload the .csv file.`}
                                 padding: '2px',
                               }}
                             >
-                              Ã¢â€“Â²
+                              ▲
                             </div>
                             <div
                               onClick={() => moveItem(index, 1)}
@@ -1554,7 +1561,7 @@ Then paste the result here or upload the .csv file.`}
                                 padding: '2px',
                               }}
                             >
-                              Ã¢â€“Â¼
+                              ▼
                             </div>
                           </div>
                         </td>
@@ -1778,7 +1785,7 @@ Then paste the result here or upload the .csv file.`}
                                         fontWeight: 'bold',
                                       }}
                                     >
-                                      Ã¢Å“â€¢ no discount
+                                      ✓ no discount
                                     </div>
                                   ) : drVal > 0 ? (
                                     <div
@@ -1843,7 +1850,7 @@ Then paste the result here or upload the .csv file.`}
                               onClick={() => removeItem(index)}
                               style={{ color: '#CC0000', cursor: 'pointer', fontSize: '18px' }}
                             >
-                              Ãƒâ€”
+                              ×
                             </span>
                           </td>
                         </tr>
@@ -1868,7 +1875,7 @@ Then paste the result here or upload the .csv file.`}
           >
             <h3 style={{ ...secT, margin: 0 }}>Advanced Options</h3>
             <span style={{ fontSize: '18px', color: '#aaa' }}>
-              {showAdvanced ? 'Ã¢â€“Â²' : 'Ã¢â€“Â¾'}
+              {showAdvanced ? '▲' : '▾'}
             </span>
           </div>
           {showAdvanced && (
@@ -1969,7 +1976,7 @@ Then paste the result here or upload the .csv file.`}
                       Show item images in PDF
                     </div>
                     <div style={{ fontSize: '12px', color: '#999' }}>
-                      Adds an image column Ã¢â‚¬â€ upload images per row above
+                      Adds an image column — upload images per row above
                     </div>
                   </div>
                 </label>
@@ -2081,7 +2088,7 @@ Then paste the result here or upload the .csv file.`}
                   }
                   style={{ color: '#CC0000', cursor: 'pointer', fontSize: '18px' }}
                 >
-                  Ãƒâ€”
+                  ×
                 </span>
               </div>
             ))}
@@ -2151,7 +2158,7 @@ Then paste the result here or upload the .csv file.`}
                       onClick={() => setDiscountType('fixed')}
                       style={tog(discountType === 'fixed')}
                     >
-                      Ã¢â€šÂ¦
+                      ₦
                     </button>
                     <button
                       type="button"
@@ -2247,7 +2254,7 @@ Then paste the result here or upload the .csv file.`}
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {value < 0 ? '-' : ''}Ã¢â€šÂ¦{Math.abs(value).toLocaleString()}
+                    {value < 0 ? '-' : ''}₦{Math.abs(value).toLocaleString()}
                   </span>
                 </div>
               ))}
@@ -2271,7 +2278,7 @@ Then paste the result here or upload the .csv file.`}
                   whiteSpace: 'nowrap',
                 }}
               >
-                Ã¢â€šÂ¦{grandTotal.toLocaleString()}
+                ₦{grandTotal.toLocaleString()}
               </span>
             </div>
 
@@ -2291,11 +2298,11 @@ Then paste the result here or upload the .csv file.`}
                   Less: WHT (
                   {whtType === 'percent'
                     ? (invoice.wht || 0) + '%'
-                    : 'Ã¢â€šÂ¦' + Number(invoice.wht || 0).toLocaleString()}
+                    : '₦' + Number(invoice.wht || 0).toLocaleString()}
                   )
                 </span>
                 <span style={{ whiteSpace: 'nowrap' }}>
-                  -Ã¢â€šÂ¦{whtAmount.toLocaleString()}
+                  -₦{whtAmount.toLocaleString()}
                 </span>
               </div>
             )}
@@ -2321,7 +2328,7 @@ Then paste the result here or upload the .csv file.`}
                   whiteSpace: 'nowrap',
                 }}
               >
-                Ã¢â€šÂ¦{totalPayable.toLocaleString()}
+                ₦{totalPayable.toLocaleString()}
               </span>
             </div>
 
@@ -2415,7 +2422,7 @@ Then paste the result here or upload the .csv file.`}
                   u[i] = { text: e.target.value }
                   setBottomFields(u)
                 }}
-                placeholder="e.g. ADVANCE PAYMENT DUE (60%): Ã¢â€šÂ¦141,601"
+                placeholder="e.g. ADVANCE PAYMENT DUE (60%): ₦141,601"
               />
               <span
                 onClick={() =>
@@ -2423,7 +2430,7 @@ Then paste the result here or upload the .csv file.`}
                 }
                 style={{ color: '#CC0000', cursor: 'pointer', fontSize: '20px' }}
               >
-                Ãƒâ€”
+                ×
               </span>
             </div>
           ))}
