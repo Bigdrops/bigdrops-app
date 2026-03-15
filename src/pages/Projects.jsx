@@ -10,9 +10,6 @@ import {
   Search,
   SlidersHorizontal,
   MoreHorizontal,
-  Briefcase,
-  CircleDollarSign,
-  Building2,
   X,
 } from 'lucide-react'
 
@@ -35,32 +32,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 
 const STATUS_CONFIG = {
   active: {
     label: 'Active',
-    badgeClass:
-      'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50',
     dotClass: 'bg-emerald-500',
   },
   completed: {
     label: 'Completed',
-    badgeClass:
-      'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-50',
+    badgeClass: 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-50',
     dotClass: 'bg-sky-500',
   },
   on_hold: {
     label: 'On Hold',
-    badgeClass:
-      'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50',
+    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50',
     dotClass: 'bg-amber-500',
   },
   cancelled: {
     label: 'Cancelled',
-    badgeClass:
-      'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-50',
+    badgeClass: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-50',
     dotClass: 'bg-rose-500',
   },
 }
@@ -97,8 +89,8 @@ export default function Projects() {
   const [statusFilter, setStatusFilter] = useState('All')
   const [dateFilter, setDateFilter] = useState('All Time')
   const [sortBy, setSortBy] = useState('Newest')
-  const [showSearch, setShowSearch] = useState(true)
-  const [showFilters, setShowFilters] = useState(true)
+  const [showSearch, setShowSearch] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
   const [docCounts, setDocCounts] = useState({})
 
   useEffect(() => {
@@ -136,7 +128,6 @@ export default function Projects() {
       ;(invRes.data || []).forEach((r) => {
         counts[r.project_id] = (counts[r.project_id] || 0) + 1
       })
-
       ;(csrRes.data || []).forEach((r) => {
         counts[r.project_id] = (counts[r.project_id] || 0) + 1
       })
@@ -150,24 +141,16 @@ export default function Projects() {
   }
 
   const clientOptions = useMemo(() => {
-    return Array.from(
-      new Set(projects.map((p) => p.client_name).filter(Boolean))
-    ).sort((a, b) => a.localeCompare(b))
+    return Array.from(new Set(projects.map((p) => p.client_name).filter(Boolean))).sort((a, b) =>
+      a.localeCompare(b)
+    )
   }, [projects])
 
   const filtered = useMemo(() => {
     const now = new Date()
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    const lastMonthEnd = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      0,
-      23,
-      59,
-      59,
-      999
-    )
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)
     const currentYearStart = new Date(now.getFullYear(), 0, 1)
     const searchTerm = search.trim().toLowerCase()
 
@@ -176,8 +159,7 @@ export default function Projects() {
       const date = new Date(value || fallback || 0)
       if (Number.isNaN(date.getTime())) return false
       if (dateFilter === 'This Month') return date >= currentMonthStart
-      if (dateFilter === 'Last Month')
-        return date >= lastMonthStart && date <= lastMonthEnd
+      if (dateFilter === 'Last Month') return date >= lastMonthStart && date <= lastMonthEnd
       if (dateFilter === 'This Year') return date >= currentYearStart
       return true
     }
@@ -189,31 +171,18 @@ export default function Projects() {
         project.name?.toLowerCase().includes(searchTerm) ||
         project.client_name?.toLowerCase().includes(searchTerm)
 
-      const matchClient =
-        clientFilter === 'All' || (project.client_name || '') === clientFilter
-
+      const matchClient = clientFilter === 'All' || (project.client_name || '') === clientFilter
       const matchStatus =
-        statusFilter === 'All' ||
-        normalizedStatus === statusFilter.toLowerCase()
-
-      const matchDate = matchesDateRange(
-        project.start_date,
-        project.created_at
-      )
+        statusFilter === 'All' || normalizedStatus === statusFilter.toLowerCase()
+      const matchDate = matchesDateRange(project.start_date, project.created_at)
 
       return matchSearch && matchClient && matchStatus && matchDate
     })
 
     list.sort((a, b) => {
-      if (sortBy === 'Oldest') {
-        return new Date(a.created_at || 0) - new Date(b.created_at || 0)
-      }
-      if (sortBy === 'Highest Value') {
-        return Number(b.project_value || 0) - Number(a.project_value || 0)
-      }
-      if (sortBy === 'Lowest Value') {
-        return Number(a.project_value || 0) - Number(b.project_value || 0)
-      }
+      if (sortBy === 'Oldest') return new Date(a.created_at || 0) - new Date(b.created_at || 0)
+      if (sortBy === 'Highest Value') return Number(b.project_value || 0) - Number(a.project_value || 0)
+      if (sortBy === 'Lowest Value') return Number(a.project_value || 0) - Number(b.project_value || 0)
       return new Date(b.created_at || 0) - new Date(a.created_at || 0)
     })
 
@@ -229,9 +198,7 @@ export default function Projects() {
   }
 
   const handleDelete = async (project) => {
-    const confirmed = window.confirm(
-      'Delete this project permanently? This cannot be undone.'
-    )
+    const confirmed = window.confirm('Delete this project permanently? This cannot be undone.')
     if (!confirmed) return
 
     await supabase.from('projects').delete().eq('id', project.id)
@@ -253,10 +220,7 @@ export default function Projects() {
   }
 
   const hasActiveFilters =
-    !!search ||
-    clientFilter !== 'All' ||
-    statusFilter !== 'All' ||
-    dateFilter !== 'All Time'
+    !!search || clientFilter !== 'All' || statusFilter !== 'All' || dateFilter !== 'All Time'
 
   const formatProjectValue = (value) => {
     const amount = Number(value || 0)
@@ -265,252 +229,153 @@ export default function Projects() {
     return '\u20A6' + amount.toLocaleString()
   }
 
-  const totalValue = useMemo(() => {
-    return filtered.reduce((sum, project) => {
-      return sum + Number(project.project_value || 0)
-    }, 0)
-  }, [filtered])
+  const LoadingCard = () => (
+    <Card className="rounded-3xl border">
+      <CardContent className="space-y-5 p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-3 flex-1">
+            <div className="flex gap-2">
+              <div className="h-6 w-16 rounded-full bg-muted animate-pulse" />
+              <div className="h-6 w-24 rounded-full bg-muted animate-pulse" />
+            </div>
+            <div className="h-7 w-3/4 rounded-lg bg-muted animate-pulse" />
+            <div className="h-5 w-1/2 rounded-lg bg-muted animate-pulse" />
+          </div>
+          <div className="h-10 w-10 rounded-xl bg-muted animate-pulse" />
+        </div>
 
-  const activeCount = useMemo(() => {
-    return projects.filter((p) => p.status === 'active').length
-  }, [projects])
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="h-16 rounded-2xl bg-muted animate-pulse" />
+          <div className="h-16 rounded-2xl bg-muted animate-pulse" />
+        </div>
 
-  const uniqueClients = useMemo(() => {
-    return new Set(projects.map((p) => p.client_name).filter(Boolean)).size
-  }, [projects])
+        <Separator />
+
+        <div className="flex items-center justify-between">
+          <div className="h-8 w-28 rounded-lg bg-muted animate-pulse" />
+          <div className="h-6 w-24 rounded-full bg-muted animate-pulse" />
+        </div>
+      </CardContent>
+    </Card>
+  )
 
   return (
     <Layout title="Projects">
-      <div className="mx-auto w-full max-w-7xl space-y-6">
-        <div className="relative overflow-hidden rounded-3xl border bg-gradient-to-br from-background via-background to-muted/40 p-6 md:p-8">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_28%),radial-gradient(circle_at_left,rgba(16,185,129,0.08),transparent_25%)]" />
-
-          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-2">
-              <div className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
-                Portfolio overview
-              </div>
-
-              <div>
-                <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                  Projects
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Track active work, review progress, and manage delivery from one place.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setShowSearch((p) => !p)}
-                className="rounded-xl"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setShowFilters((p) => !p)}
-                className="rounded-xl"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-              </Button>
-
-              <Button
-                onClick={() => navigate('/projects/new')}
-                className="rounded-xl px-5"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                New Project
-              </Button>
-            </div>
+      <div className="mx-auto w-full max-w-5xl space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">Projects</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {projects.length} project{projects.length !== 1 ? 's' : ''} total
+            </p>
           </div>
 
-          <div className="relative mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
-            <Card className="rounded-2xl border bg-background/80 backdrop-blur">
-              <CardContent className="flex items-center gap-4 p-5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <Briefcase className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Total Projects
-                  </p>
-                  <p className="text-2xl font-semibold">{projects.length}</p>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowSearch((p) => !p)}
+              className="rounded-xl"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
 
-            <Card className="rounded-2xl border bg-background/80 backdrop-blur">
-              <CardContent className="flex items-center gap-4 p-5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
-                  <CircleDollarSign className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Active Projects
-                  </p>
-                  <p className="text-2xl font-semibold">{activeCount}</p>
-                </div>
-              </CardContent>
-            </Card>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowFilters((p) => !p)}
+              className="rounded-xl"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+            </Button>
 
-            <Card className="rounded-2xl border bg-background/80 backdrop-blur">
-              <CardContent className="flex items-center gap-4 p-5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600">
-                  <Building2 className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Clients
-                  </p>
-                  <p className="text-2xl font-semibold">{uniqueClients}</p>
-                </div>
-              </CardContent>
-            </Card>
+            <Button onClick={() => navigate('/projects/new')} className="rounded-xl px-4">
+              <Plus className="mr-2 h-4 w-4" />
+              New Project
+            </Button>
           </div>
         </div>
 
-        {(showSearch || showFilters) && (
-          <Card className="rounded-3xl border shadow-sm">
-            <CardContent className="space-y-4 p-4 md:p-5">
-              {showSearch && (
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search projects or clients..."
-                    className="h-11 rounded-xl pl-10"
-                  />
-                </div>
-              )}
+        {showSearch && (
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search projects or clients..."
+              className="h-11 rounded-xl pl-10"
+            />
+          </div>
+        )}
 
-              {showFilters && (
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
-                  <Select value={clientFilter} onValueChange={setClientFilter}>
-                    <SelectTrigger className="h-11 rounded-xl">
-                      <SelectValue placeholder="Client" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All Clients</SelectItem>
-                      {clientOptions.map((client) => (
-                        <SelectItem key={client} value={client}>
-                          {client}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+        {showFilters && (
+          <Card className="rounded-2xl border shadow-sm">
+            <CardContent className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2 xl:grid-cols-5">
+              <Select value={clientFilter} onValueChange={setClientFilter}>
+                <SelectTrigger className="h-11 rounded-xl">
+                  <SelectValue placeholder="Client" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Clients</SelectItem>
+                  {clientOptions.map((client) => (
+                    <SelectItem key={client} value={client}>
+                      {client}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="h-11 rounded-xl">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-11 rounded-xl">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                  <Select value={dateFilter} onValueChange={setDateFilter}>
-                    <SelectTrigger className="h-11 rounded-xl">
-                      <SelectValue placeholder="Date" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DATE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className="h-11 rounded-xl">
+                  <SelectValue placeholder="Date" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DATE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="h-11 rounded-xl">
-                      <SelectValue placeholder="Sort" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SORT_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="h-11 rounded-xl">
+                  <SelectValue placeholder="Sort" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                  <Button
-                    variant="outline"
-                    className="h-11 rounded-xl"
-                    onClick={resetFilters}
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    Clear Filters
-                  </Button>
-                </div>
-              )}
-
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <Badge variant="secondary" className="rounded-full px-3 py-1">
-                  {filtered.length} shown
-                </Badge>
-
-                <Badge variant="outline" className="rounded-full px-3 py-1">
-                  {projects.length} total
-                </Badge>
-
-                {totalValue > 0 && (
-                  <Badge variant="outline" className="rounded-full px-3 py-1">
-                    Portfolio Value: {formatProjectValue(totalValue)}
-                  </Badge>
-                )}
-
-                {hasActiveFilters && (
-                  <Badge className="rounded-full border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 hover:bg-amber-50">
-                    Filters active
-                  </Badge>
-                )}
-              </div>
+              <Button variant="outline" className="h-11 rounded-xl" onClick={resetFilters}>
+                <X className="mr-2 h-4 w-4" />
+                Clear Filters
+              </Button>
             </CardContent>
           </Card>
         )}
 
         {loading ? (
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i} className="rounded-3xl border">
-                <CardContent className="space-y-5 p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-3">
-                      <div className="flex gap-2">
-                        <Skeleton className="h-6 w-16 rounded-full" />
-                        <Skeleton className="h-6 w-24 rounded-full" />
-                      </div>
-                      <Skeleton className="h-7 w-64 rounded-lg" />
-                      <Skeleton className="h-5 w-40 rounded-lg" />
-                    </div>
-                    <Skeleton className="h-10 w-10 rounded-xl" />
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Skeleton className="h-10 w-40 rounded-xl" />
-                    <Skeleton className="h-10 w-36 rounded-xl" />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-8 w-28 rounded-lg" />
-                    <Skeleton className="h-6 w-24 rounded-full" />
-                  </div>
-                </CardContent>
-              </Card>
+              <LoadingCard key={i} />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -526,20 +391,17 @@ export default function Projects() {
 
               <p className="mt-2 max-w-md text-sm text-muted-foreground">
                 {hasActiveFilters
-                  ? 'Try adjusting your search, status, client, or date filters.'
-                  : 'Create your first project to start tracking jobs, documents, and value.'}
+                  ? 'Try adjusting your search or filters.'
+                  : 'Create your first project to get started.'}
               </p>
 
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <div className="mt-6">
                 {hasActiveFilters ? (
                   <Button variant="outline" onClick={resetFilters} className="rounded-xl">
                     Reset Filters
                   </Button>
                 ) : (
-                  <Button
-                    onClick={() => navigate('/projects/new')}
-                    className="rounded-xl"
-                  >
+                  <Button onClick={() => navigate('/projects/new')} className="rounded-xl">
                     <Plus className="mr-2 h-4 w-4" />
                     New Project
                   </Button>
@@ -548,7 +410,7 @@ export default function Projects() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4">
             {filtered.map((project) => {
               const st = STATUS_CONFIG[project.status] || STATUS_CONFIG.active
               const count = docCounts[project.id] || 0
@@ -566,19 +428,19 @@ export default function Projects() {
                 <Card
                   key={project.id}
                   onClick={() => navigate(`/projects/${project.id}`)}
-                  className="group relative cursor-pointer overflow-hidden rounded-3xl border bg-card transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+                  className="group relative cursor-pointer overflow-hidden rounded-3xl border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-sky-500 to-violet-500" />
 
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between gap-4">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="mb-3 flex flex-wrap items-center gap-2">
                           <Badge
                             variant="outline"
                             className="rounded-full border-primary/20 bg-primary/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary"
                           >
-                            Project
+                            PROJ
                           </Badge>
 
                           <Badge
@@ -589,7 +451,7 @@ export default function Projects() {
                           </Badge>
                         </div>
 
-                        <h3 className="line-clamp-2 text-xl font-semibold tracking-tight text-foreground">
+                        <h3 className="line-clamp-2 text-lg font-semibold tracking-tight text-foreground">
                           {project.name}
                         </h3>
 
@@ -605,7 +467,7 @@ export default function Projects() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-10 w-10 rounded-xl border bg-background/70"
+                            className="h-9 w-9 rounded-xl border bg-background/70"
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
@@ -660,7 +522,7 @@ export default function Projects() {
                       </DropdownMenu>
                     </div>
 
-                    <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="flex items-center gap-3 rounded-2xl border bg-muted/40 px-3 py-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-background shadow-sm">
                           <FileText className="h-4 w-4 text-muted-foreground" />
@@ -678,7 +540,7 @@ export default function Projects() {
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs text-muted-foreground">Start Date</p>
+                          <p className="text-xs text-muted-foreground">Started</p>
                           <p className="truncate text-sm font-semibold text-foreground">
                             {startedText || 'Not set'}
                           </p>
@@ -686,16 +548,11 @@ export default function Projects() {
                       </div>
                     </div>
 
-                    <Separator className="my-5" />
+                    <Separator className="my-4" />
 
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Project Value
-                        </p>
-                        <p className="text-2xl font-semibold tracking-tight text-foreground">
-                          {formattedValue || '—'}
-                        </p>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-xl font-semibold tracking-tight text-foreground">
+                        {formattedValue || '—'}
                       </div>
 
                       <div className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1.5">
