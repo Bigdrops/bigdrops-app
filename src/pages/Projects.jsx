@@ -2,17 +2,94 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
-import { Calendar, FileText, FolderKanban, Plus, Search, SlidersHorizontal } from 'lucide-react'
+import {
+  Calendar,
+  FileText,
+  FolderKanban,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  MoreHorizontal,
+  Briefcase,
+  CircleDollarSign,
+  Building2,
+  X,
+} from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Separator } from '@/components/ui/separator'
 
 const STATUS_CONFIG = {
-  active:    { label: 'Active',    bg: '#DCFCE7', color: '#16A34A' },
-  completed: { label: 'Completed', bg: '#E0F2FE', color: '#0369A1' },
-  on_hold:   { label: 'On Hold',   bg: '#FEF3C7', color: '#92400E' },
-  cancelled: { label: 'Cancelled', bg: '#FEE2E2', color: '#DC2626' },
+  active: {
+    label: 'Active',
+    badgeClass:
+      'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50',
+    dotClass: 'bg-emerald-500',
+  },
+  completed: {
+    label: 'Completed',
+    badgeClass:
+      'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-50',
+    dotClass: 'bg-sky-500',
+  },
+  on_hold: {
+    label: 'On Hold',
+    badgeClass:
+      'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50',
+    dotClass: 'bg-amber-500',
+  },
+  cancelled: {
+    label: 'Cancelled',
+    badgeClass:
+      'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-50',
+    dotClass: 'bg-rose-500',
+  },
 }
+
+const STATUS_OPTIONS = [
+  { label: 'All', value: 'All' },
+  { label: 'Active', value: 'Active' },
+  { label: 'Completed', value: 'Completed' },
+  { label: 'On Hold', value: 'On Hold' },
+  { label: 'Cancelled', value: 'Cancelled' },
+]
+
+const DATE_OPTIONS = [
+  { label: 'All Time', value: 'All Time' },
+  { label: 'This Month', value: 'This Month' },
+  { label: 'Last Month', value: 'Last Month' },
+  { label: 'This Year', value: 'This Year' },
+]
+
+const SORT_OPTIONS = [
+  { label: 'Newest', value: 'Newest' },
+  { label: 'Oldest', value: 'Oldest' },
+  { label: 'Highest Value', value: 'Highest Value' },
+  { label: 'Lowest Value', value: 'Lowest Value' },
+]
 
 export default function Projects() {
   const navigate = useNavigate()
+
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -20,54 +97,77 @@ export default function Projects() {
   const [statusFilter, setStatusFilter] = useState('All')
   const [dateFilter, setDateFilter] = useState('All Time')
   const [sortBy, setSortBy] = useState('Newest')
-  const [openMenuId, setOpenMenuId] = useState(null)
-  const [showSearch, setShowSearch] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
+  const [showSearch, setShowSearch] = useState(true)
+  const [showFilters, setShowFilters] = useState(true)
   const [docCounts, setDocCounts] = useState({})
 
-  useEffect(() => { fetchProjects() }, [])
-
   useEffect(() => {
-    const handleOutsideClick = () => setOpenMenuId(null)
-    document.addEventListener('mousedown', handleOutsideClick)
-    return () => document.removeEventListener('mousedown', handleOutsideClick)
+    fetchProjects()
   }, [])
 
   const fetchProjects = async () => {
     setLoading(true)
+
     const { data } = await supabase
       .from('projects')
       .select('*')
       .is('archived_at', null)
       .order('created_at', { ascending: false })
+
     setProjects(data || [])
 
     if (data?.length) {
-      const ids = data.map(p => p.id)
+      const ids = data.map((p) => p.id)
+
       const [invRes, csrRes] = await Promise.all([
-        supabase.from('invoices').select('project_id').in('project_id', ids).is('archived_at', null),
+        supabase
+          .from('invoices')
+          .select('project_id')
+          .in('project_id', ids)
+          .is('archived_at', null),
         supabase.from('csrs').select('project_id').in('project_id', ids),
       ])
+
       const counts = {}
-      ids.forEach(id => { counts[id] = 0 })
-      ;(invRes.data || []).forEach(r => { counts[r.project_id] = (counts[r.project_id] || 0) + 1 })
-      ;(csrRes.data || []).forEach(r => { counts[r.project_id] = (counts[r.project_id] || 0) + 1 })
+      ids.forEach((id) => {
+        counts[id] = 0
+      })
+
+      ;(invRes.data || []).forEach((r) => {
+        counts[r.project_id] = (counts[r.project_id] || 0) + 1
+      })
+
+      ;(csrRes.data || []).forEach((r) => {
+        counts[r.project_id] = (counts[r.project_id] || 0) + 1
+      })
+
       setDocCounts(counts)
     } else {
       setDocCounts({})
     }
+
     setLoading(false)
   }
 
   const clientOptions = useMemo(() => {
-    return Array.from(new Set(projects.map(p => p.client_name).filter(Boolean))).sort((a, b) => a.localeCompare(b))
+    return Array.from(
+      new Set(projects.map((p) => p.client_name).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b))
   }, [projects])
 
   const filtered = useMemo(() => {
     const now = new Date()
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)
+    const lastMonthEnd = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      0,
+      23,
+      59,
+      59,
+      999
+    )
     const currentYearStart = new Date(now.getFullYear(), 0, 1)
     const searchTerm = search.trim().toLowerCase()
 
@@ -76,26 +176,44 @@ export default function Projects() {
       const date = new Date(value || fallback || 0)
       if (Number.isNaN(date.getTime())) return false
       if (dateFilter === 'This Month') return date >= currentMonthStart
-      if (dateFilter === 'Last Month') return date >= lastMonthStart && date <= lastMonthEnd
+      if (dateFilter === 'Last Month')
+        return date >= lastMonthStart && date <= lastMonthEnd
       if (dateFilter === 'This Year') return date >= currentYearStart
       return true
     }
 
-    const list = projects.filter(project => {
+    const list = projects.filter((project) => {
       const normalizedStatus = (project.status || '').replace('_', ' ')
-      const matchSearch = !searchTerm
-        || project.name?.toLowerCase().includes(searchTerm)
-        || project.client_name?.toLowerCase().includes(searchTerm)
-      const matchClient = clientFilter === 'All' || (project.client_name || '') === clientFilter
-      const matchStatus = statusFilter === 'All' || normalizedStatus === statusFilter.toLowerCase()
-      const matchDate = matchesDateRange(project.start_date, project.created_at)
+      const matchSearch =
+        !searchTerm ||
+        project.name?.toLowerCase().includes(searchTerm) ||
+        project.client_name?.toLowerCase().includes(searchTerm)
+
+      const matchClient =
+        clientFilter === 'All' || (project.client_name || '') === clientFilter
+
+      const matchStatus =
+        statusFilter === 'All' ||
+        normalizedStatus === statusFilter.toLowerCase()
+
+      const matchDate = matchesDateRange(
+        project.start_date,
+        project.created_at
+      )
+
       return matchSearch && matchClient && matchStatus && matchDate
     })
 
     list.sort((a, b) => {
-      if (sortBy === 'Oldest') return new Date(a.created_at || 0) - new Date(b.created_at || 0)
-      if (sortBy === 'Highest Value') return Number(b.project_value || 0) - Number(a.project_value || 0)
-      if (sortBy === 'Lowest Value') return Number(a.project_value || 0) - Number(b.project_value || 0)
+      if (sortBy === 'Oldest') {
+        return new Date(a.created_at || 0) - new Date(b.created_at || 0)
+      }
+      if (sortBy === 'Highest Value') {
+        return Number(b.project_value || 0) - Number(a.project_value || 0)
+      }
+      if (sortBy === 'Lowest Value') {
+        return Number(a.project_value || 0) - Number(b.project_value || 0)
+      }
       return new Date(b.created_at || 0) - new Date(a.created_at || 0)
     })
 
@@ -111,32 +229,34 @@ export default function Projects() {
   }
 
   const handleDelete = async (project) => {
-    const confirmed = window.confirm('Delete this project permanently? This cannot be undone.')
+    const confirmed = window.confirm(
+      'Delete this project permanently? This cannot be undone.'
+    )
     if (!confirmed) return
+
     await supabase.from('projects').delete().eq('id', project.id)
-    setOpenMenuId(null)
     await fetchProjects()
   }
 
   const handleArchive = async (project) => {
-    await supabase.from('projects').update({ archived_at: new Date().toISOString() }).eq('id', project.id)
-    setOpenMenuId(null)
+    await supabase
+      .from('projects')
+      .update({ archived_at: new Date().toISOString() })
+      .eq('id', project.id)
+
     await fetchProjects()
   }
 
-  const filterControlStyle = {
-    height: 40, borderRadius: 10, border: '1px solid #E2E8F0',
-    background: 'white', padding: '0 12px', fontSize: 12,
-    fontWeight: 700, color: '#334155', outline: 'none',
+  const updateProjectStatus = async (projectId, status) => {
+    await supabase.from('projects').update({ status }).eq('id', projectId)
+    await fetchProjects()
   }
 
-  const iconButtonStyle = {
-    width: 38, height: 38, borderRadius: 10, border: '1px solid #E2E8F0',
-    background: 'white', color: '#64748B', display: 'flex',
-    alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-  }
-
-  const hasActiveFilters = !!search || clientFilter !== 'All' || statusFilter !== 'All' || dateFilter !== 'All Time'
+  const hasActiveFilters =
+    !!search ||
+    clientFilter !== 'All' ||
+    statusFilter !== 'All' ||
+    dateFilter !== 'All Time'
 
   const formatProjectValue = (value) => {
     const amount = Number(value || 0)
@@ -145,313 +265,452 @@ export default function Projects() {
     return '\u20A6' + amount.toLocaleString()
   }
 
+  const totalValue = useMemo(() => {
+    return filtered.reduce((sum, project) => {
+      return sum + Number(project.project_value || 0)
+    }, 0)
+  }, [filtered])
+
+  const activeCount = useMemo(() => {
+    return projects.filter((p) => p.status === 'active').length
+  }, [projects])
+
+  const uniqueClients = useMemo(() => {
+    return new Set(projects.map((p) => p.client_name).filter(Boolean)).size
+  }, [projects])
+
   return (
     <Layout title="Projects">
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
-        .proj-menu-item:hover { background: #F8FAFC !important; }
-        .proj-card {
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .proj-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 14px 30px rgba(15,23,42,0.12) !important;
-        }
-      `}</style>
-      <div style={{ maxWidth: 900, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <div className="mx-auto w-full max-w-7xl space-y-6">
+        <div className="relative overflow-hidden rounded-3xl border bg-gradient-to-br from-background via-background to-muted/40 p-6 md:p-8">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_28%),radial-gradient(circle_at_left,rgba(16,185,129,0.08),transparent_25%)]" />
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12 }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#0F172A' }}>Projects</h2>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#94A3B8' }}>
-              {projects.length} project{projects.length !== 1 ? 's' : ''} total
-            </p>
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-2">
+              <div className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
+                Portfolio overview
+              </div>
+
+              <div>
+                <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+                  Projects
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Track active work, review progress, and manage delivery from one place.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowSearch((p) => !p)}
+                className="rounded-xl"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowFilters((p) => !p)}
+                className="rounded-xl"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+              </Button>
+
+              <Button
+                onClick={() => navigate('/projects/new')}
+                className="rounded-xl px-5"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Project
+              </Button>
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={() => setShowSearch(p => !p)} style={iconButtonStyle}>
-              <Search size={16} />
-            </button>
-            <button onClick={() => setShowFilters(p => !p)} style={iconButtonStyle}>
-              <SlidersHorizontal size={16} />
-            </button>
-            <button
-              onClick={() => navigate('/projects/new')}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                backgroundColor: '#0F172A', color: 'white', border: 'none',
-                borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              }}
-            >
-              <Plus size={16} /> New Project
-            </button>
+
+          <div className="relative mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <Card className="rounded-2xl border bg-background/80 backdrop-blur">
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Briefcase className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Total Projects
+                  </p>
+                  <p className="text-2xl font-semibold">{projects.length}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl border bg-background/80 backdrop-blur">
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
+                  <CircleDollarSign className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Active Projects
+                  </p>
+                  <p className="text-2xl font-semibold">{activeCount}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl border bg-background/80 backdrop-blur">
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600">
+                  <Building2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Clients
+                  </p>
+                  <p className="text-2xl font-semibold">{uniqueClients}</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
-        {/* Search */}
-        {showSearch && (
-          <div style={{ position: 'relative', marginBottom: 16 }}>
-            <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search projects or clients..."
-              style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px 10px 38px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 13, color: '#1E293B', background: 'white', outline: 'none' }}
-            />
-          </div>
+        {(showSearch || showFilters) && (
+          <Card className="rounded-3xl border shadow-sm">
+            <CardContent className="space-y-4 p-4 md:p-5">
+              {showSearch && (
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search projects or clients..."
+                    className="h-11 rounded-xl pl-10"
+                  />
+                </div>
+              )}
+
+              {showFilters && (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+                  <Select value={clientFilter} onValueChange={setClientFilter}>
+                    <SelectTrigger className="h-11 rounded-xl">
+                      <SelectValue placeholder="Client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Clients</SelectItem>
+                      {clientOptions.map((client) => (
+                        <SelectItem key={client} value={client}>
+                          {client}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="h-11 rounded-xl">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={dateFilter} onValueChange={setDateFilter}>
+                    <SelectTrigger className="h-11 rounded-xl">
+                      <SelectValue placeholder="Date" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DATE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="h-11 rounded-xl">
+                      <SelectValue placeholder="Sort" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SORT_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Button
+                    variant="outline"
+                    className="h-11 rounded-xl"
+                    onClick={resetFilters}
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Clear Filters
+                  </Button>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <Badge variant="secondary" className="rounded-full px-3 py-1">
+                  {filtered.length} shown
+                </Badge>
+
+                <Badge variant="outline" className="rounded-full px-3 py-1">
+                  {projects.length} total
+                </Badge>
+
+                {totalValue > 0 && (
+                  <Badge variant="outline" className="rounded-full px-3 py-1">
+                    Portfolio Value: {formatProjectValue(totalValue)}
+                  </Badge>
+                )}
+
+                {hasActiveFilters && (
+                  <Badge className="rounded-full border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 hover:bg-amber-50">
+                    Filters active
+                  </Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         )}
 
-        {/* Filters */}
-        {showFilters && (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center', background: 'white', border: '1px solid #E2E8F0', borderRadius: 14, padding: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#94A3B8' }}>Client</span>
-              <select value={clientFilter} onChange={e => setClientFilter(e.target.value)} style={filterControlStyle}>
-                <option>All</option>
-                {clientOptions.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#94A3B8' }}>Status</span>
-              <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={filterControlStyle}>
-                {['All', 'Active', 'Completed', 'On Hold', 'Cancelled'].map(o => <option key={o}>{o}</option>)}
-              </select>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#94A3B8' }}>Date</span>
-              <select value={dateFilter} onChange={e => setDateFilter(e.target.value)} style={filterControlStyle}>
-                {['All Time', 'This Month', 'Last Month', 'This Year'].map(o => <option key={o}>{o}</option>)}
-              </select>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#94A3B8' }}>Sort</span>
-              <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={filterControlStyle}>
-                {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map(o => <option key={o}>{o}</option>)}
-              </select>
-            </div>
-            <button onClick={resetFilters} style={{ height: 40, borderRadius: 10, border: '1px solid #E2E8F0', background: 'white', padding: '0 14px', fontSize: 12, fontWeight: 700, color: '#64748B', cursor: 'pointer' }}>
-              Clear Filters
-            </button>
-          </div>
-        )}
-
-        {/* List */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 60, color: '#94A3B8', fontSize: 14 }}>Loading...</div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 80 }}>
-            <FolderKanban size={40} color="#CBD5E1" style={{ margin: '0 auto 16px' }} />
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#334155', marginBottom: 6 }}>
-              {hasActiveFilters ? 'No projects match' : 'No projects yet'}
-            </div>
-            <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 24 }}>
-              {hasActiveFilters ? 'Try a different search or filter' : 'Create your first project to get started'}
-            </div>
-            {!hasActiveFilters && (
-              <button onClick={() => navigate('/projects/new')} style={{ backgroundColor: '#0F172A', color: 'white', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                + New Project
-              </button>
-            )}
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="rounded-3xl border">
+                <CardContent className="space-y-5 p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <Skeleton className="h-6 w-16 rounded-full" />
+                        <Skeleton className="h-6 w-24 rounded-full" />
+                      </div>
+                      <Skeleton className="h-7 w-64 rounded-lg" />
+                      <Skeleton className="h-5 w-40 rounded-lg" />
+                    </div>
+                    <Skeleton className="h-10 w-10 rounded-xl" />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Skeleton className="h-10 w-40 rounded-xl" />
+                    <Skeleton className="h-10 w-36 rounded-xl" />
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-8 w-28 rounded-lg" />
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
+        ) : filtered.length === 0 ? (
+          <Card className="rounded-3xl border border-dashed">
+            <CardContent className="flex flex-col items-center justify-center px-6 py-16 text-center">
+              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-muted">
+                <FolderKanban className="h-8 w-8 text-muted-foreground" />
+              </div>
+
+              <h3 className="text-lg font-semibold tracking-tight">
+                {hasActiveFilters ? 'No projects match your filters' : 'No projects yet'}
+              </h3>
+
+              <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                {hasActiveFilters
+                  ? 'Try adjusting your search, status, client, or date filters.'
+                  : 'Create your first project to start tracking jobs, documents, and value.'}
+              </p>
+
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                {hasActiveFilters ? (
+                  <Button variant="outline" onClick={resetFilters} className="rounded-xl">
+                    Reset Filters
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => navigate('/projects/new')}
+                    className="rounded-xl"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Project
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {filtered.map(project => {
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            {filtered.map((project) => {
               const st = STATUS_CONFIG[project.status] || STATUS_CONFIG.active
               const count = docCounts[project.id] || 0
               const formattedValue = formatProjectValue(project.project_value)
+
               const startedText = project.start_date
-                ? new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                ? new Date(project.start_date).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })
                 : null
-              const isMenuOpen = openMenuId === project.id
 
               return (
-                <div
+                <Card
                   key={project.id}
-                  className="proj-card"
                   onClick={() => navigate(`/projects/${project.id}`)}
-                  style={{
-                    position: 'relative',
-                    backgroundColor: 'white',
-                    border: '1px solid #e8e8e8',
-                    borderRadius: 24,
-                    // FIX 1: NO overflow:hidden on the card — it clips the dropdown
-                    // The gradient bar uses its own borderRadius instead
-                    padding: '28px 24px 24px',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.08)',
-                  }}
+                  className="group relative cursor-pointer overflow-hidden rounded-3xl border bg-card transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
                 >
-                  {/* Gradient top bar — uses borderRadius so card doesn't need overflow:hidden */}
-                  <div style={{
-                    position: 'absolute', top: 0, left: 0, right: 0, height: 4,
-                    background: 'linear-gradient(90deg, #10b981, #3b82f6)',
-                    borderRadius: '24px 24px 0 0',
-                    pointerEvents: 'none',
-                  }} />
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-sky-500 to-violet-500" />
 
-                  {/* Header row */}
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#10b981', background: '#d1fae5', borderRadius: 999, padding: '4px 10px' }}>PROJ</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, borderRadius: 999, padding: '4px 10px', background: st.bg, color: st.color }}>{st.label}</span>
-                      </div>
-                      <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', color: '#171717', lineHeight: 1.25 }}>{project.name}</div>
-                      {project.client_name && (
-                        <div style={{ marginTop: 6, fontSize: 15, fontWeight: 600, color: '#525252', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {project.client_name}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* FIX 2: menu wrapper has high zIndex when open so it floats above sibling cards */}
-                    <div
-                      style={{ position: 'relative', flexShrink: 0, zIndex: isMenuOpen ? 300 : 1 }}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <button
-                        onClick={e => { e.stopPropagation(); setOpenMenuId(isMenuOpen ? null : project.id) }}
-                        style={{
-                          width: 36, height: 36, borderRadius: 12,
-                          border: '1px solid #E2E8F0',
-                          background: isMenuOpen ? '#F8FAFC' : 'white',
-                          color: '#737373', cursor: 'pointer', fontSize: 18, fontWeight: 700,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}
-                      >
-                        •••
-                      </button>
-
-                      {isMenuOpen && (
-                        <div
-                          style={{
-                            position: 'absolute',
-                            right: 0,
-                            top: 'calc(100% + 6px)',
-                            zIndex: 300,
-                            minWidth: 210,
-                            // FIX 3: maxHeight + scroll = menu never gets cut off at bottom of viewport
-                            maxHeight: '72vh',
-                            overflowY: 'auto',
-                            borderRadius: 14,
-                            border: '1px solid #E2E8F0',
-                            background: 'white',
-                            padding: '6px',
-                            boxShadow: '0 20px 50px rgba(15,23,42,0.18)',
-                          }}
-                          onClick={e => e.stopPropagation()}
-                        >
-                          {/* Edit */}
-                          <button
-                            className="proj-menu-item"
-                            onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate(`/projects/${project.id}`) }}
-                            style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 14, color: '#334155', cursor: 'pointer', fontWeight: 600 }}
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-3 flex flex-wrap items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className="rounded-full border-primary/20 bg-primary/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary"
                           >
+                            Project
+                          </Badge>
+
+                          <Badge
+                            variant="outline"
+                            className={`rounded-full px-3 py-1 ${st.badgeClass}`}
+                          >
+                            {st.label}
+                          </Badge>
+                        </div>
+
+                        <h3 className="line-clamp-2 text-xl font-semibold tracking-tight text-foreground">
+                          {project.name}
+                        </h3>
+
+                        {project.client_name && (
+                          <p className="mt-1 truncate text-sm font-medium text-muted-foreground">
+                            {project.client_name}
+                          </p>
+                        )}
+                      </div>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 rounded-xl border bg-background/70"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-56 rounded-2xl"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <DropdownMenuItem onClick={() => navigate(`/projects/${project.id}`)}>
                             Edit
-                          </button>
+                          </DropdownMenuItem>
 
-                          <div style={{ height: 1, background: '#F1F5F9', margin: '4px 0' }} />
-
-                          {/* Status label */}
-                          <div style={{ padding: '8px 12px 4px' }}>
-                            <span style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.08em' }}>
-                              Status
-                            </span>
-                          </div>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuLabel>Status</DropdownMenuLabel>
 
                           {[
-                            { label: 'Active',    value: 'active' },
+                            { label: 'Active', value: 'active' },
                             { label: 'Completed', value: 'completed' },
-                            { label: 'On Hold',   value: 'on_hold' },
+                            { label: 'On Hold', value: 'on_hold' },
                             { label: 'Cancelled', value: 'cancelled' },
-                          ].map(action => {
-                            const isCurrent = project.status === action.value
-                            return (
-                              <button
-                                key={action.value}
-                                className="proj-menu-item"
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  supabase.from('projects').update({ status: action.value }).eq('id', project.id)
-                                    .then(() => { setOpenMenuId(null); fetchProjects() })
-                                }}
-                                style={{
-                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                  width: '100%', border: 'none',
-                                  background: isCurrent ? '#F0FDF4' : 'transparent',
-                                  textAlign: 'left', padding: '9px 12px', borderRadius: 10,
-                                  fontSize: 13, color: '#334155', cursor: 'pointer',
-                                  fontWeight: isCurrent ? 700 : 500,
-                                }}
-                              >
-                                <span>{action.label}</span>
-                                {isCurrent && <span style={{ color: '#10b981', fontWeight: 800, fontSize: 14 }}>✓</span>}
-                              </button>
-                            )
-                          })}
+                          ].map((action) => (
+                            <DropdownMenuItem
+                              key={action.value}
+                              onClick={() => updateProjectStatus(project.id, action.value)}
+                              className="flex items-center justify-between"
+                            >
+                              <span>{action.label}</span>
+                              {project.status === action.value && (
+                                <span className="text-emerald-600">✓</span>
+                              )}
+                            </DropdownMenuItem>
+                          ))}
 
-                          <div style={{ height: 1, background: '#F1F5F9', margin: '4px 0' }} />
+                          <DropdownMenuSeparator />
 
-                          {/* Archive */}
-                          <button
-                            className="proj-menu-item"
-                            onClick={e => { e.stopPropagation(); handleArchive(project) }}
-                            style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 14, color: '#D97706', cursor: 'pointer', fontWeight: 600 }}
+                          <DropdownMenuItem
+                            onClick={() => handleArchive(project)}
+                            className="text-amber-600 focus:text-amber-700"
                           >
                             Archive
-                          </button>
+                          </DropdownMenuItem>
 
-                          {/* Delete */}
-                          <button
-                            className="proj-menu-item"
-                            onClick={e => { e.stopPropagation(); handleDelete(project) }}
-                            style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 14, color: '#CC0000', cursor: 'pointer', fontWeight: 600 }}
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(project)}
+                            className="text-destructive focus:text-destructive"
                           >
                             Delete
-                          </button>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="flex items-center gap-3 rounded-2xl border bg-muted/40 px-3 py-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-background shadow-sm">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
                         </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Stats row */}
-                  <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ width: 28, height: 28, borderRadius: 6, background: '#f5f5f5', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#737373' }}>
-                        <FileText size={14} />
-                      </span>
-                      <span style={{ fontSize: 13, color: '#737373', fontWeight: 500 }}>{count} linked doc{count !== 1 ? 's' : ''}</span>
-                    </div>
-                    {startedText && (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ width: 28, height: 28, borderRadius: 6, background: '#f5f5f5', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#737373' }}>
-                          <Calendar size={14} />
-                        </span>
-                        <span style={{ fontSize: 13, color: '#737373', fontWeight: 500 }}>Started {startedText}</span>
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted-foreground">Linked Documents</p>
+                          <p className="text-sm font-semibold text-foreground">
+                            {count} linked doc{count !== 1 ? 's' : ''}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Footer */}
-                  <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                    <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#171717' }}>
-                      {formattedValue}
+                      <div className="flex items-center gap-3 rounded-2xl border bg-muted/40 px-3 py-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-background shadow-sm">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted-foreground">Start Date</p>
+                          <p className="truncate text-sm font-semibold text-foreground">
+                            {startedText || 'Not set'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{
-                        width: 8, height: 8, borderRadius: '50%',
-                        background: st.color,
-                        boxShadow: `0 0 0 3px ${st.bg}`,
-                        animation: project.status === 'active' ? 'pulse 2s infinite' : 'none',
-                        display: 'inline-block', flexShrink: 0,
-                      }} />
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#525252' }}>{st.label}</span>
+
+                    <Separator className="my-5" />
+
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Project Value
+                        </p>
+                        <p className="text-2xl font-semibold tracking-tight text-foreground">
+                          {formattedValue || '—'}
+                        </p>
+                      </div>
+
+                      <div className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1.5">
+                        <span
+                          className={`h-2.5 w-2.5 rounded-full ${st.dotClass} ${
+                            project.status === 'active' ? 'animate-pulse' : ''
+                          }`}
+                        />
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {st.label}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               )
             })}
           </div>
