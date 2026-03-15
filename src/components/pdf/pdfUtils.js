@@ -4,7 +4,7 @@ export const stripHtml = (html) => {
     .replace(/<strong>(.*?)<\/strong>/gs, '$1')
     .replace(/<em>(.*?)<\/em>/gs, '$1')
     .replace(/<u>(.*?)<\/u>/gs, '$1')
-    .replace(/<li>(.*?)<\/li>/gs, '• $1\n')
+    .replace(/<li>(.*?)<\/li>/gs, '\u2022 $1\n')
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
@@ -36,8 +36,11 @@ export const buildRenderRows = (items, groupMeta) => {
   let currentGroupShowSubtotal = false
 
   const flushGroup = () => {
-    if (currentGroupName !== null && currentGroupShowSubtotal) {
-      rows.push({ _type: 'group_subtotal', name: currentGroupName, subtotal: currentGroupSubtotal })
+    if (currentGroupName !== null) {
+      if (currentGroupShowSubtotal) {
+        rows.push({ _type: 'group_subtotal', name: currentGroupName, subtotal: currentGroupSubtotal })
+      }
+      rows.push({ _type: 'group_end', name: currentGroupName })
     }
     currentGroupName = null
     currentGroupSubtotal = 0
@@ -97,3 +100,5 @@ export const extractInvoiceData = (invoice, items, client, settings) => {
     fixedCharges, validAttachments, renderRows,
   }
 }
+
+

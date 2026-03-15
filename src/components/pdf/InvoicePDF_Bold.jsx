@@ -105,7 +105,6 @@ export default function InvoicePDF_Bold({ invoice, items = [], client, settings 
           </View>
           <View style={s.docBlock}>
             <Text style={s.docTitle}>{invoice.document_type || 'INVOICE'}</Text>
-            {invoice.invoice_title ? <Text style={s.docSubtitle}>{invoice.invoice_title}</Text> : null}
             <Text style={s.docNumber}>{invoice.invoice_number}</Text>
             <Text style={s.docDate}>Date: {invoice.issue_date}</Text>
             {invoice.due_date ? <Text style={s.docDate}>Due: {invoice.due_date}</Text> : null}
@@ -151,9 +150,12 @@ export default function InvoicePDF_Bold({ invoice, items = [], client, settings 
               if (row._type === 'group_header') return (
                 <View key={'gh_' + ri} style={s.groupRow}><Text style={s.groupText}>{row.item.group_name}</Text></View>
               )
+              if (row._type === 'group_end') return (
+                <View key={'ge_' + ri} style={{ height: 1, backgroundColor: '#e2e8f0', marginHorizontal: 8, marginBottom: 4 }} />
+              )
               if (row._type === 'group_subtotal') return (
                 <View key={'gs_' + ri} style={s.groupSubtotalRow}>
-                  <Text style={s.groupSubtotalLabel}>{row.name} — Section Total</Text>
+                  <Text style={s.groupSubtotalLabel}>{row.name} - Section Total</Text>
                   <Text style={s.groupSubtotalValue}>NGN {row.subtotal.toLocaleString()}</Text>
                 </View>
               )
@@ -197,12 +199,12 @@ export default function InvoicePDF_Bold({ invoice, items = [], client, settings 
           {invoice.notes && stripHtml(invoice.notes) ? <View style={s.notesBox}><Text style={[s.sectionLabel, { marginBottom: 4 }]}>{d.cf.notesTitle || 'Notes'}</Text><Text style={s.notesText}>{stripHtml(invoice.notes)}</Text></View> : null}
           {invoice.terms && stripHtml(invoice.terms) ? <View style={[s.notesBox, { marginBottom: 14 }]}><Text style={[s.sectionLabel, { marginBottom: 4 }]}>{d.cf.termsTitle || 'Terms and Conditions'}</Text><Text style={s.notesText}>{stripHtml(invoice.terms)}</Text></View> : null}
 
-          {d.validAttachments.length > 0 && (
-            <View style={s.docsSection}>
-              <Text style={s.docsSectionLabel}>Supporting Documents</Text>
-              {d.validAttachments.map((att, i) => <View key={i} style={s.docItem}><Text>📎 </Text><Link src={att.url} style={s.docLink}>{att.label}</Link></View>)}
-            </View>
-          )}
+        {d.validAttachments.length > 0 && (
+          <View style={s.docsSection}>
+            <Text style={s.docsSectionLabel}>Supporting Documents</Text>
+            {d.validAttachments.map((att, i) => <View key={i} style={s.docItem}><Text>Attachment: </Text><Link src={att.url} style={s.docLink}>{att.label}</Link></View>)}
+          </View>
+        )}
           {d.footerText ? <View style={s.footer}><Text style={s.footerText}>{d.footerText}</Text></View> : null}
         </View>
 
