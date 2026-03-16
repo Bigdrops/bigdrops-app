@@ -43,10 +43,10 @@ function useIsMobile() {
 
 function SectionCard({ title, description, children }) {
   return (
-    <Card className="overflow-hidden rounded-[28px] border border-zinc-200 bg-white shadow-[0_12px_34px_rgba(15,23,42,0.06)]">
-      <CardHeader className="border-b border-zinc-100 bg-zinc-50/80 pb-4">
-        <CardTitle className="text-base font-semibold text-zinc-950">{title}</CardTitle>
-        {description ? <p className="text-sm leading-6 text-zinc-600">{description}</p> : null}
+    <Card className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.08)]">
+      <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-red-50/50 pb-4">
+        <CardTitle className="text-base font-semibold text-slate-950">{title}</CardTitle>
+        {description ? <p className="text-sm leading-6 text-slate-600">{description}</p> : null}
       </CardHeader>
       <CardContent className="space-y-4 p-4 sm:p-6">{children}</CardContent>
     </Card>
@@ -64,10 +64,10 @@ function Field({ label, children }) {
 
 function ToggleRow({ title, description, checked, onCheckedChange }) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <div className="text-sm font-semibold text-zinc-900">{title}</div>
-        <div className="text-xs leading-5 text-zinc-600">{description}</div>
+        <div className="text-sm font-semibold text-slate-900">{title}</div>
+        <div className="text-xs leading-5 text-slate-600">{description}</div>
       </div>
       <div className="flex justify-end sm:justify-start">
         <Switch checked={checked} onCheckedChange={onCheckedChange} />
@@ -206,7 +206,7 @@ export default function EditCSR() {
 
   return (
     <Layout title="Edit CSR">
-      <div className="mx-auto max-w-5xl rounded-[32px] bg-zinc-50/80 p-3 sm:p-5">
+      <div className="mx-auto max-w-5xl rounded-[32px] border border-slate-200 bg-gradient-to-b from-slate-100/90 via-slate-50 to-white p-3 shadow-[0_18px_48px_rgba(15,23,42,0.08)] sm:p-5">
         <div className="space-y-5">
         <SectionCard title="Customer Details" description="Update the customer, date, and reference number for this service report.">
           <div className="grid gap-4 md:grid-cols-2">
@@ -244,7 +244,7 @@ export default function EditCSR() {
                 update('client_name', client ? client.name : '')
                 update('address', client?.address || '')
               }}
-              className="h-11 w-full rounded-xl border border-zinc-300 bg-white px-3 text-sm text-zinc-900 shadow-sm outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100"
+              className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100"
             >
               <option value="">Select client</option>
               {clients.map((client) => (
@@ -359,24 +359,32 @@ export default function EditCSR() {
         </SectionCard>
 
         <SectionCard title="Materials Used" description="Keep the materials list structured while controlling how it appears in output.">
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
-            <Field label="Output Style">
-              <Select value={csrMeta.materialsOutputStyle} onValueChange={(value) => updateMeta('materialsOutputStyle', value)}>
-                <SelectTrigger className="h-10 w-full rounded-xl border-zinc-200 bg-white px-3 text-sm">
-                  <SelectValue placeholder="Select output style" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="list">Enumerated List</SelectItem>
-                  <SelectItem value="comma">Comma-separated Text</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
+          <div className="rounded-2xl border border-sky-100 bg-gradient-to-r from-sky-50 to-white p-4">
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px] md:items-end">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">Materials Output</div>
+                <div className="mt-1 text-xs leading-5 text-slate-600">
+                  Choose how materials should appear in the final CSR output.
+                </div>
+              </div>
+              <Field label="Output Style">
+                <Select value={csrMeta.materialsOutputStyle} onValueChange={(value) => updateMeta('materialsOutputStyle', value)}>
+                  <SelectTrigger className="h-11 w-full rounded-xl border-sky-200 bg-white px-3 text-sm shadow-sm">
+                    <SelectValue placeholder="Select output style" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="list">Enumerated List</SelectItem>
+                    <SelectItem value="comma">Comma-separated Text</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
           </div>
 
           {isMobile ? (
             <div className="space-y-3">
               {materialsRows.map((row, index) => (
-                <div key={index} className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+                <div key={index} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
                     Material Row {index + 1}
                   </div>
@@ -400,7 +408,7 @@ export default function EditCSR() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-zinc-200 bg-white">
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
               <Table>
                 <TableHeader className="bg-zinc-50">
                   <TableRow>

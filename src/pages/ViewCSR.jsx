@@ -51,6 +51,27 @@ const TEMPLATE_VARIANTS = {
   },
 }
 
+const TEMPLATE_OPTIONS = [
+  {
+    key: '1',
+    label: 'Classic',
+    blurb: 'Strong brand header with the original service-report tone.',
+    accent: TEMPLATE_VARIANTS.classic.headerBg,
+  },
+  {
+    key: '2',
+    label: 'Minimal',
+    blurb: 'Cleaner monochrome layout for straightforward field reports.',
+    accent: TEMPLATE_VARIANTS.minimal.headerBg,
+  },
+  {
+    key: '3',
+    label: 'Modern',
+    blurb: 'Structured contemporary layout with deeper contrast blocks.',
+    accent: TEMPLATE_VARIANTS.modern.headerBg,
+  },
+]
+
 function createPdfStyles(variant) {
   const palette = TEMPLATE_VARIANTS[variant]
   return StyleSheet.create({
@@ -264,7 +285,13 @@ export default function ViewCSR() {
   const [csr, setCsr] = useState(null)
   const [settings, setSettings] = useState({})
   const [loading, setLoading] = useState(true)
-  const [template, setTemplate] = useState('3')
+  const [template, setTemplate] = useState(() => {
+    try {
+      return localStorage.getItem('csr_pdf_template') || '3'
+    } catch {
+      return '3'
+    }
+  })
 
   useEffect(() => {
     supabase.from('csrs').select('*').eq('id', id).single().then(({ data }) => {
@@ -275,6 +302,14 @@ export default function ViewCSR() {
       if (data) setSettings(data)
     })
   }, [id])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('csr_pdf_template', template)
+    } catch {
+      // Ignore storage write failures and keep the in-memory selection.
+    }
+  }, [template])
 
   if (loading) return <Layout title="CSR"><p style={{ padding: 30 }}>Loading...</p></Layout>
   if (!csr) return <Layout title="CSR"><p style={{ padding: 30 }}>CSR not found.</p></Layout>
@@ -291,6 +326,7 @@ export default function ViewCSR() {
     'Field Entry Pending': { bg: '#EDE9FE', color: '#4B5563' },
   }
   const s = statusColor[d.status] || { bg: '#F5F5F5', color: '#555' }
+  const selectedTemplate = TEMPLATE_OPTIONS.find((option) => option.key === template) || TEMPLATE_OPTIONS[2]
 
   const getPDFDoc = () => {
     if (template === '1') return <Template1 csr={d} branding={branding} />
@@ -323,17 +359,72 @@ export default function ViewCSR() {
   return (
     <Layout title={d.csr_number}>
       <div style={{ maxWidth: '900px' }}>
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div onClick={() => navigate('/csr')} style={{ padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #ddd', backgroundColor: 'white' }}>Back</div>
-          <span style={{ backgroundColor: s.bg, color: s.color, padding: '5px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '600' }}>{d.status}</span>
-          <div style={{ flex: 1 }} />
-          <span style={{ color: '#555', fontWeight: '600', fontSize: '13px' }}>Template:</span>
-          {[['1', 'Classic'], ['2', 'Minimal'], ['3', 'Modern']].map(([key, label]) => (
-            <div key={key} onClick={() => setTemplate(key)} style={{ padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', backgroundColor: template === key ? '#1a1a1a' : 'white', color: template === key ? 'white' : '#555', border: '1px solid #ddd' }}>{label}</div>
-          ))}
-          <div onClick={handleDownload} style={{ padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', backgroundColor: '#0056B3', color: 'white', fontWeight: '600' }}>Download PDF</div>
-          <div onClick={() => navigate('/csr/edit/' + id)} style={{ padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', backgroundColor: '#CC0000', color: 'white', fontWeight: '600' }}>Edit CSR</div>
+        <div
+          style={{
+            background: 'linear-gradient(180deg, #F8FAFC 0%, #EEF4FF 100%)',
+            border: '1px solid #DBE5F3',
+            borderRadius: '14px',
+            padding: '16px',
+            marginBottom: '18px',
+            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)',
+          }}
+        >
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button type="button" onClick={() => navigate('/csr')} style={{ padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', border: '1px solid #d1d5db', backgroundColor: 'white', fontWeight: '600' }}>Back</button>
+            <span style={{ backgroundColor: s.bg, color: s.color, padding: '5px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '600' }}>{d.status}</span>
+            <div style={{ flex: 1 }} />
+            <button type="button" onClick={handleDownload} style={{ padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', backgroundColor: '#0056B3', color: 'white', fontWeight: '600', border: 'none' }}>Download PDF</button>
+            <button type="button" onClick={() => navigate('/csr/edit/' + id)} style={{ padding: '10px 18px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', backgroundColor: '#CC0000', color: 'white', fontWeight: '600', border: 'none' }}>Edit CSR</button>
+          </div>
+
+          <div style={{ backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '14px' }}>
+            <div style={{ fontSize: '12px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>CSR Template</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '10px' }}>
+              {TEMPLATE_OPTIONS.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => setTemplate(option.key)}
+                  style={{
+                    textAlign: 'left',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    backgroundColor: template === option.key ? '#EFF6FF' : '#fff',
+                    border: template === option.key ? `1px solid ${option.accent}` : '1px solid #E2E8F0',
+                    boxShadow: template === option.key ? '0 6px 18px rgba(37, 99, 235, 0.12)' : 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <span style={{ width: 12, height: 12, borderRadius: 999, backgroundColor: option.accent, display: 'inline-block' }} />
+                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#0F172A' }}>{option.label}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', lineHeight: '1.5', color: '#64748B' }}>{option.blurb}</div>
+                </button>
+              ))}
+            </div>
+            <div style={{ marginTop: '10px', fontSize: '12px', color: '#64748B' }}>
+              Current preview: <span style={{ fontWeight: '700', color: '#0F172A' }}>{selectedTemplate.label}</span>
+            </div>
+          </div>
         </div>
+
+        <div
+          style={{
+            background: 'linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)',
+            border: '1px solid #E2E8F0',
+            borderRadius: '16px',
+            padding: '18px',
+            boxShadow: '0 12px 34px rgba(15, 23, 42, 0.08)',
+          }}
+        >
+          <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>CSR Preview</div>
+              <div style={{ fontSize: '14px', color: '#475569' }}>Customer-facing report preview using the selected template style.</div>
+            </div>
+            <div style={{ fontSize: '12px', color: '#64748B' }}>{selectedTemplate.label} template</div>
+          </div>
 
         <div style={sec}>
           <div style={secH}>Customer Details</div>
@@ -447,6 +538,7 @@ export default function ViewCSR() {
             </div>
           </div>
         ) : null}
+        </div>
       </div>
     </Layout>
   )
