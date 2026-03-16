@@ -290,6 +290,49 @@ export default function NewInvoice() {
     })
   }
 
+  const parseCsvItems = (text) => {
+    const lines = text.split('\n').filter((l) => l.trim())
+    if (lines.length < 2) {
+      return { error: 'The CSV needs a header row and at least one item row.' }
+    }
+
+    const headers = lines[0]
+      .split(',')
+      .map((h) => h.trim().toLowerCase().replace(/"/g, ''))
+
+    const newItems = []
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',').map((c) => c.trim().replace(/"/g, ''))
+      if (!cols[0]) continue
+      const row = {}
+      headers.forEach((h, idx) => {
+        row[h] = cols[idx] || ''
+      })
+      newItems.push({
+        ...makeEmptyItem(),
+        row_type: 'standard',
+        group_id: null,
+        group_name: '',
+        description: row['description'] || cols[0],
+        sub_description: row['sub_description'] || '',
+        make: row['make'] || '',
+        quantity: Number(row['quantity'] || 1),
+        unit: row['unit'] || '',
+        unit_price: Number(row['unit_price'] || 0),
+        sort_order: newItems.length,
+      })
+    }
+
+    if (!newItems.length) {
+      return {
+        error:
+          'No valid item rows were found. Check that the file contains description values under the CSV header.',
+      }
+    }
+
+    return { newItems }
+  }
+
   const handleCSVImport = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -297,49 +340,22 @@ export default function NewInvoice() {
     const reader = new FileReader()
     reader.onload = (ev) => {
       const text = String(ev.target?.result || '')
-      const lines = text.split('\n').filter((l) => l.trim())
-      if (lines.length < 2) return
-
-      const headers = lines[0]
-        .split(',')
-        .map((h) => h.trim().toLowerCase().replace(/"/g, ''))
-
-      const newItems = []
-
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',').map((c) => c.trim().replace(/"/g, ''))
-        if (!cols[0]) continue
-        const row = {}
-        headers.forEach((h, idx) => {
-          row[h] = cols[idx] || ''
-        })
-        newItems.push({
-          ...makeEmptyItem(),
-          row_type: 'standard',
-          group_id: null,
-          group_name: '',
-          description: row['description'] || cols[0],
-          sub_description: row['sub_description'] || '',
-          make: row['make'] || '',
-          quantity: Number(row['quantity'] || 1),
-          unit: row['unit'] || '',
-          unit_price: Number(row['unit_price'] || 0),
-          sort_order: newItems.length,
-        })
+      const { newItems, error } = parseCsvItems(text)
+      if (error) {
+        alert(error)
+        return
       }
 
-      if (newItems.length > 0) {
-        setItems((prev) => [
-          ...prev.filter((i) => i.description || i.row_type === 'group_header'),
-          ...newItems,
-        ])
-        alert(newItems.length + ' items imported')
-      }
+      setItems((prev) => [
+        ...prev.filter((i) => i.description || i.row_type === 'group_header'),
+        ...newItems,
+      ])
+      alert(newItems.length + ' items imported')
+      setShowCSVNote(false)
     }
 
     reader.readAsText(file)
     e.target.value = ''
-    setShowCSVNote(false)
   }
 
   const {
@@ -1071,29 +1087,22 @@ export default function NewInvoice() {
                 ⚙ Columns
               </div>
 
-              <div style={{ position: 'relative' }}>
-                <div
+              <div style={{ position: 'relative', maxWidth: '100%' }}>
+                <Button
+                  type="button"
                   onClick={() => setShowCSVNote((p) => !p)}
-                  style={{
-                    padding: '8px 14px',
-                    backgroundColor: '#16A34A',
-                    color: 'white',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                  }}
+                  className="bg-green-600 px-3 py-2 text-xs hover:bg-green-700"
                 >
                   Import CSV ▾
-                </div>
+                </Button>
 
                 {showCSVNote && (
                   <div
                     style={{
                       position: 'absolute',
                       top: 'calc(100% + 8px)',
-                      left: 0,
-                      width: 'calc(100vw - 32px)',
-                      maxWidth: '480px',
+                      right: 0,
+                      width: 'min(420px, calc(100vw - 32px))',
                       zIndex: 100,
                       backgroundColor: 'white',
                       borderRadius: '12px',
@@ -1101,6 +1110,9 @@ export default function NewInvoice() {
                       border: '1px solid #E2E8F0',
                       overflow: 'hidden',
                       padding: '16px',
+                      boxSizing: 'border-box',
+                      maxHeight: 'min(70vh, 560px)',
+                      overflowY: 'auto',
                     }}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -1131,62 +1143,45 @@ export default function NewInvoice() {
                         whiteSpace: 'pre-line',
                       }}
                     >
-                      {`CSV Format:
-description, make, quantity, unit, unit_price
+                      {`Use a CSV with:
+Recommended header: description
+Optional: sub_description, make, quantity, unit, unit_price
 
-Paste your item list into any AI with this message:
-"Convert my list below into a CSV with these exact columns:
-description, make, quantity, unit, unit_price —
-no extra text, just the CSV"
-
-Then paste the result here or upload the .csv file.`}
+Upload a .csv file or paste raw CSV below.
+Imported rows are added as invoice items.`}
                     </div>
 
                     <div
                       style={{
                         display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '8px',
                         marginBottom: '12px',
                         borderBottom: '2px solid #eee',
+                        paddingBottom: '8px',
                       }}
                     >
                       {['Upload File', 'Paste CSV'].map((tab) => (
-                        <div
+                        <Button
                           key={tab}
+                          type="button"
                           onClick={() => setCSVTab(tab)}
-                          style={{
-                            padding: '8px 14px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: 'bold',
-                            color: csvTab === tab ? '#CC0000' : '#888',
-                            borderBottom:
-                              csvTab === tab
-                                ? '2px solid #CC0000'
-                                : '2px solid transparent',
-                            marginBottom: '-2px',
-                          }}
+                          variant={csvTab === tab ? 'default' : 'outline'}
+                          className={csvTab === tab ? 'bg-red-700 hover:bg-red-800' : ''}
                         >
                           {tab}
-                        </div>
+                        </Button>
                       ))}
                     </div>
 
                     {csvTab === 'Upload File' ? (
-                      <label
-                        htmlFor="invoice-csv-import"
-                        style={{
-                          display: 'block',
-                          padding: '8px 14px',
-                          backgroundColor: '#16A34A',
-                          color: 'white',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          textAlign: 'center',
-                        }}
+                      <Button
+                        type="button"
+                        className="w-full bg-green-600 hover:bg-green-700"
+                        onClick={() => document.getElementById('invoice-csv-import')?.click()}
                       >
-                        Choose File
-                      </label>
+                        Choose CSV File
+                      </Button>
                     ) : (
                       <div>
                         <div
@@ -1197,14 +1192,16 @@ Then paste the result here or upload the .csv file.`}
                             lineHeight: '1.6',
                           }}
                         >
-                          <strong>Required:</strong> description, quantity, unit_price
+                          <strong>Recommended:</strong> description
                           <br />
-                          <strong>Optional:</strong> sub_description, unit
+                          <strong>Optional:</strong> sub_description, make, quantity, unit, unit_price
                         </div>
                         <textarea
                           value={pasteCSV}
                           onChange={(e) => setPasteCSV(e.target.value)}
-                          placeholder={'description,quantity,unit_price\nCable tie,5,700'}
+                          placeholder={
+                            'description,quantity,unit,unit_price\nCable tie,5,PCS,700'
+                          }
                           style={{
                             width: '100%',
                             height: '100px',
@@ -1226,59 +1223,32 @@ Then paste the result here or upload the .csv file.`}
                             marginTop: '6px',
                           }}
                         >
-                          <div
+                          <Button
+                            type="button"
                             onClick={() => {
-                              if (!pasteCSV.trim()) return
-                              const lines = pasteCSV.split('\n').filter((l) => l.trim())
-                              if (lines.length < 2) return
-                              const headers = lines[0]
-                                .split(',')
-                                .map((h) => h.trim().toLowerCase())
-                              const newItems = []
-                              for (let i = 1; i < lines.length; i++) {
-                                const cols = lines[i].split(',').map((c) => c.trim())
-                                if (!cols[0]) continue
-                                const row = {}
-                                headers.forEach((h, idx) => {
-                                  row[h] = cols[idx] || ''
-                                })
-                                newItems.push({
-                                  ...makeEmptyItem(),
-                                  row_type: 'standard',
-                                  group_id: null,
-                                  group_name: '',
-                                  description: row['description'] || cols[0],
-                                  make: row['make'] || '',
-                                  quantity: Number(row['quantity'] || 1),
-                                  unit: (row['unit'] || '').toUpperCase(),
-                                  unit_price: Number(row['unit_price'] || 0),
-                                  sort_order: newItems.length,
-                                })
+                              if (!pasteCSV.trim()) {
+                                alert('Paste CSV content before importing.')
+                                return
                               }
-                              if (newItems.length > 0) {
-                                setItems((p) => [
-                                  ...p.filter(
-                                    (i) => i.description || i.row_type === 'group_header'
-                                  ),
-                                  ...newItems,
-                                ])
-                                setPasteCSV('')
-                                setShowCSVNote(false)
-                                alert(newItems.length + ' items imported')
+                              const { newItems, error } = parseCsvItems(pasteCSV)
+                              if (error) {
+                                alert(error)
+                                return
                               }
+                              setItems((p) => [
+                                ...p.filter(
+                                  (i) => i.description || i.row_type === 'group_header'
+                                ),
+                                ...newItems,
+                              ])
+                              setPasteCSV('')
+                              setShowCSVNote(false)
+                              alert(newItems.length + ' items imported')
                             }}
-                            style={{
-                              padding: '8px 14px',
-                              backgroundColor: '#16A34A',
-                              color: 'white',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              fontWeight: 'bold',
-                            }}
+                            className="bg-green-600 hover:bg-green-700"
                           >
                             Import
-                          </div>
+                          </Button>
                         </div>
                       </div>
                     )}

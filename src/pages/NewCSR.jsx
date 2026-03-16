@@ -39,14 +39,26 @@ const statusOptions = [
   'Field Entry Pending',
 ]
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640)
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  return isMobile
+}
+
 function SectionCard({ title, description, children }) {
   return (
-    <Card className="rounded-3xl border-zinc-200 shadow-sm">
-      <CardHeader className="pb-4">
+    <Card className="overflow-hidden rounded-[28px] border border-zinc-200 bg-white shadow-[0_12px_34px_rgba(15,23,42,0.06)]">
+      <CardHeader className="border-b border-zinc-100 bg-zinc-50/80 pb-4">
         <CardTitle className="text-base font-semibold text-zinc-950">{title}</CardTitle>
-        {description ? <p className="text-sm text-zinc-500">{description}</p> : null}
+        {description ? <p className="text-sm leading-6 text-zinc-600">{description}</p> : null}
       </CardHeader>
-      <CardContent className="space-y-4">{children}</CardContent>
+      <CardContent className="space-y-4 p-4 sm:p-6">{children}</CardContent>
     </Card>
   )
 }
@@ -54,8 +66,22 @@ function SectionCard({ title, description, children }) {
 function Field({ label, children }) {
   return (
     <div className="space-y-2">
-      <Label className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-500">{label}</Label>
+      <Label className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-600">{label}</Label>
       {children}
+    </div>
+  )
+}
+
+function ToggleRow({ title, description, checked, onCheckedChange }) {
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="text-sm font-semibold text-zinc-900">{title}</div>
+        <div className="text-xs leading-5 text-zinc-600">{description}</div>
+      </div>
+      <div className="flex justify-end sm:justify-start">
+        <Switch checked={checked} onCheckedChange={onCheckedChange} />
+      </div>
     </div>
   )
 }
@@ -65,6 +91,7 @@ export default function NewCSR() {
   const [searchParams] = useSearchParams()
   const type = searchParams.get('type')
   const isField = type === 'field'
+  const isMobile = useIsMobile()
 
   const [clients, setClients] = useState([])
   const [saving, setSaving] = useState(false)
@@ -89,6 +116,7 @@ export default function NewCSR() {
         .from('csrs')
         .select('csr_number')
         .order('created_at', { ascending: false })
+        .order('csr_number', { ascending: false })
         .limit(1)
 
       const latestNumber = latestRows?.[0]?.csr_number || ''
@@ -158,7 +186,11 @@ export default function NewCSR() {
     }
 
     setSaving(true)
-    const { error } = await supabase.from('csrs').insert([csrData])
+    const { data: savedCsr, error } = await supabase
+      .from('csrs')
+      .insert([csrData])
+      .select('id, csr_number')
+      .single()
 
     if (error) {
       alert('Error: ' + error.message)
@@ -183,7 +215,7 @@ export default function NewCSR() {
       }
     }
 
-    navigate('/csr')
+    navigate('/csr/' + savedCsr.id)
   }
 
   const modelFieldTitle = csrMeta.modelLabel || 'Model'
@@ -191,7 +223,8 @@ export default function NewCSR() {
 
   return (
     <Layout title="New CSR">
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="mx-auto max-w-5xl rounded-[32px] bg-zinc-50/80 p-3 sm:p-5">
+        <div className="space-y-5">
         <SectionCard title="Customer Details" description="Identify the customer, date, and reference number for this service report.">
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="CSR Number">
@@ -211,10 +244,17 @@ export default function NewCSR() {
           </div>
 
           <Field label="Select Client">
-            <Select
-              value={csr.client_id ? String(csr.client_id) : '__none'}
-              onValueChange={(selectedId) => {
+            <select
+              value={csr.client_id ? String(csr.client_id) : ''}
+              onChange={(event) => {
+                const selectedId = event.target.value
                 if (selectedId === '__none') {
+                  update('client_id', '')
+                  update('client_name', '')
+                  update('address', '')
+                  return
+                }
+                if (!selectedId) {
                   update('client_id', '')
                   update('client_name', '')
                   update('address', '')
@@ -225,19 +265,15 @@ export default function NewCSR() {
                 update('client_name', client ? client.name : '')
                 update('address', client?.address || '')
               }}
+              className="h-11 w-full rounded-xl border border-zinc-300 bg-white px-3 text-sm text-zinc-900 shadow-sm outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100"
             >
-              <SelectTrigger className="h-10 w-full rounded-xl border-zinc-200 bg-white px-3 text-sm">
-                <SelectValue placeholder="Select client" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none">Select client</SelectItem>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={String(client.id)}>
-                    {client.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <option value="">Select client</option>
+              {clients.map((client) => (
+                <option key={client.id} value={String(client.id)}>
+                  {client.name}
+                </option>
+              ))}
+            </select>
           </Field>
 
           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
@@ -257,13 +293,12 @@ export default function NewCSR() {
         </SectionCard>
 
         <SectionCard title="PO Number" description="Include a purchase order reference only when it applies to this job.">
-          <div className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-            <div>
-              <div className="text-sm font-medium text-zinc-900">Include PO Number</div>
-              <div className="text-xs text-zinc-500">Turn this on to capture a purchase order reference.</div>
-            </div>
-            <Switch checked={!!csr.show_po} onCheckedChange={(checked) => update('show_po', checked)} />
-          </div>
+          <ToggleRow
+            title="Include PO Number"
+            description="Turn this on to capture a purchase order reference."
+            checked={!!csr.show_po}
+            onCheckedChange={(checked) => update('show_po', checked)}
+          />
 
           {csr.show_po && (
             <Field label="PO Number">
@@ -321,13 +356,12 @@ export default function NewCSR() {
         </SectionCard>
 
         <SectionCard title="Operational Readings" description="Enable this only for equipment that uses measurable readings.">
-          <div className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-            <div>
-              <div className="text-sm font-medium text-zinc-900">Include operational readings</div>
-              <div className="text-xs text-zinc-500">Hide the readings section entirely when it does not apply.</div>
-            </div>
-            <Switch checked={csrMeta.showOperationalReadings} onCheckedChange={(checked) => updateMeta('showOperationalReadings', checked)} />
-          </div>
+          <ToggleRow
+            title="Include operational readings"
+            description="Hide the readings section entirely when it does not apply."
+            checked={csrMeta.showOperationalReadings}
+            onCheckedChange={(checked) => updateMeta('showOperationalReadings', checked)}
+          />
 
           {csrMeta.showOperationalReadings && (
             <>
@@ -376,38 +410,66 @@ export default function NewCSR() {
             </Field>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200">
-            <Table>
-              <TableHeader className="bg-zinc-50">
-                <TableRow>
-                  <TableHead>Material / Item</TableHead>
-                  <TableHead className="w-[160px]">Quantity</TableHead>
-                  <TableHead className="w-[160px]">Unit</TableHead>
-                  <TableHead className="w-[92px] text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {materialsRows.map((row, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
+          {isMobile ? (
+            <div className="space-y-3">
+              {materialsRows.map((row, index) => (
+                <div key={index} className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+                  <div className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                    Material Row {index + 1}
+                  </div>
+                  <div className="space-y-3">
+                    <Field label="Material / Item">
                       <Input value={row.item} onChange={(event) => updateMaterialRow(index, 'item', event.target.value)} />
-                    </TableCell>
-                    <TableCell>
-                      <Input value={row.quantity} onChange={(event) => updateMaterialRow(index, 'quantity', event.target.value)} />
-                    </TableCell>
-                    <TableCell>
-                      <Input value={row.unit} onChange={(event) => updateMaterialRow(index, 'unit', event.target.value)} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button type="button" variant="outline" size="sm" onClick={() => removeMaterialRow(index)}>
-                        Remove
-                      </Button>
-                    </TableCell>
+                    </Field>
+                    <div className="grid gap-3 grid-cols-2">
+                      <Field label="Quantity">
+                        <Input value={row.quantity} onChange={(event) => updateMaterialRow(index, 'quantity', event.target.value)} />
+                      </Field>
+                      <Field label="Unit">
+                        <Input value={row.unit} onChange={(event) => updateMaterialRow(index, 'unit', event.target.value)} />
+                      </Field>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => removeMaterialRow(index)} className="w-full">
+                      Remove Row
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-zinc-200 bg-white">
+              <Table>
+                <TableHeader className="bg-zinc-50">
+                  <TableRow>
+                    <TableHead>Material / Item</TableHead>
+                    <TableHead className="w-[160px]">Quantity</TableHead>
+                    <TableHead className="w-[160px]">Unit</TableHead>
+                    <TableHead className="w-[92px] text-right">Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {materialsRows.map((row, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <Input value={row.item} onChange={(event) => updateMaterialRow(index, 'item', event.target.value)} />
+                      </TableCell>
+                      <TableCell>
+                        <Input value={row.quantity} onChange={(event) => updateMaterialRow(index, 'quantity', event.target.value)} />
+                      </TableCell>
+                      <TableCell>
+                        <Input value={row.unit} onChange={(event) => updateMaterialRow(index, 'unit', event.target.value)} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button type="button" variant="outline" size="sm" onClick={() => removeMaterialRow(index)}>
+                          Remove
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
           <Button type="button" variant="outline" onClick={addMaterialRow}>
             Add Material Row
@@ -458,12 +520,13 @@ export default function NewCSR() {
               <Input value={csrMeta.technicianName} onChange={(event) => updateMeta('technicianName', event.target.value)} />
             </Field>
             <div className="flex items-end">
-              <div className="flex w-full items-center justify-between rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-                <div>
-                  <div className="text-sm font-medium text-zinc-900">Technician sign line</div>
-                  <div className="text-xs text-zinc-500">Show an optional technician sign line in the PDF.</div>
-                </div>
-                <Switch checked={csrMeta.showTechnicianSignLine} onCheckedChange={(checked) => updateMeta('showTechnicianSignLine', checked)} />
+              <div className="w-full">
+                <ToggleRow
+                  title="Technician sign line"
+                  description="Show an optional technician sign line in the PDF."
+                  checked={csrMeta.showTechnicianSignLine}
+                  onCheckedChange={(checked) => updateMeta('showTechnicianSignLine', checked)}
+                />
               </div>
             </div>
           </div>
@@ -486,13 +549,12 @@ export default function NewCSR() {
         </SectionCard>
 
         <SectionCard title="Acknowledgement" description="Include a recipient or witness block only when this report needs sign-off.">
-          <div className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-            <div>
-              <div className="text-sm font-medium text-zinc-900">Include acknowledgement section</div>
-              <div className="text-xs text-zinc-500">Hide the entire acknowledgement block when sign-off is not required.</div>
-            </div>
-            <Switch checked={csrMeta.showAcknowledgement} onCheckedChange={(checked) => updateMeta('showAcknowledgement', checked)} />
-          </div>
+          <ToggleRow
+            title="Include acknowledgement section"
+            description="Hide the entire acknowledgement block when sign-off is not required."
+            checked={csrMeta.showAcknowledgement}
+            onCheckedChange={(checked) => updateMeta('showAcknowledgement', checked)}
+          />
 
           {csrMeta.showAcknowledgement && (
             <>
@@ -521,6 +583,7 @@ export default function NewCSR() {
           <Button type="button" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : 'Save CSR'}
           </Button>
+        </div>
         </div>
       </div>
     </Layout>

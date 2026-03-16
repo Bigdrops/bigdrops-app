@@ -50,8 +50,8 @@ export default function CSR() {
 
   useEffect(() => {
     const handleOutsideClick = () => setOpenMenuId(null)
-    document.addEventListener("mousedown", handleOutsideClick)
-    return () => document.removeEventListener("mousedown", handleOutsideClick)
+    document.addEventListener("click", handleOutsideClick)
+    return () => document.removeEventListener("click", handleOutsideClick)
   }, [])
 
   const getCsrStatusKey = (status) => {
@@ -162,7 +162,11 @@ export default function CSR() {
   }
 
   const renderActionMenu = (csr) => (
-    <div className="absolute right-0 top-12 z-20 w-36 rounded-2xl border border-zinc-200 bg-white p-1 shadow-xl">
+    <div
+      className="absolute right-0 top-12 z-30 w-36 rounded-2xl border border-zinc-200 bg-white p-1 shadow-xl"
+      onClick={(event) => event.stopPropagation()}
+      onMouseDown={(event) => event.stopPropagation()}
+    >
       <button onClick={(event) => handleView(event, csr.id)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">View</button>
       <button onClick={(event) => handleEdit(event, csr.id)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">Edit</button>
       <button onClick={(event) => void handleDeleteClick(event, csr)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">Delete</button>

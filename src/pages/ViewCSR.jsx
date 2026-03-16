@@ -1,19 +1,13 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import { getCsrViewData } from '../components/csr/csrUtils'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 const STATUS_OPTIONS = ['Complete', 'Incomplete', 'Pending for spares', 'Under observation', 'Working solution provided', 'Field Entry Pending']
 const STATUS_OPTIONS_PDF = ['Complete', 'Incomplete', 'Pending for spares', 'Under observation', 'Working solution provided']
-const TEMPLATE_CHOICES = [['1', 'Classic'], ['2', 'Minimal'], ['3', 'Modern']]
 
 const getBranding = (settings = {}) => {
   const companyName = settings.company_name || ''
@@ -264,26 +258,6 @@ export function Template3({ csr, branding = {} }) {
   return <TemplateBase csr={csr} branding={branding} variant="modern" />
 }
 
-function SectionCard({ title, children, className = '' }) {
-  return (
-    <Card className={`rounded-3xl border-zinc-200 shadow-sm ${className}`.trim()}>
-      <CardHeader className="pb-4">
-        <CardTitle className="text-base font-semibold text-zinc-950">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">{children}</CardContent>
-    </Card>
-  )
-}
-
-function InfoField({ label, value }) {
-  return (
-    <div className="space-y-1">
-      <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-500">{label}</div>
-      <div className="text-sm text-zinc-900">{value || '-'}</div>
-    </div>
-  )
-}
-
 export default function ViewCSR() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -307,24 +281,16 @@ export default function ViewCSR() {
 
   const d = getCsrViewData(csr)
   const branding = getBranding(settings)
-  const hasCompanyIdentity = Boolean(branding.companyName || branding.companyTagline || branding.contactLine)
-  const readings = [
-    ['Voltage (V)', d.voltage],
-    ['Frequency (Hz)', d.frequency],
-    ['Battery (V)', d.battery],
-    ['Temperature (°C)', d.temperature],
-    ['Pressure (bar)', d.pressure],
-    ['Hours', d.hours],
-  ]
 
-  const statusBadgeClass = {
-    Complete: 'bg-emerald-100 text-emerald-700',
-    Incomplete: 'bg-red-100 text-red-700',
-    'Pending for spares': 'bg-amber-100 text-amber-700',
-    'Under observation': 'bg-sky-100 text-sky-700',
-    'Working solution provided': 'bg-violet-100 text-violet-700',
-    'Field Entry Pending': 'bg-zinc-200 text-zinc-700',
-  }[d.status] || 'bg-zinc-100 text-zinc-700'
+  const statusColor = {
+    Complete: { bg: '#DCFCE7', color: '#16A34A' },
+    Incomplete: { bg: '#FEE2E2', color: '#CC0000' },
+    'Pending for spares': { bg: '#FEF9C3', color: '#CA8A04' },
+    'Under observation': { bg: '#E0F2FE', color: '#0284C7' },
+    'Working solution provided': { bg: '#F3E8FF', color: '#7C3AED' },
+    'Field Entry Pending': { bg: '#EDE9FE', color: '#4B5563' },
+  }
+  const s = statusColor[d.status] || { bg: '#F5F5F5', color: '#555' }
 
   const getPDFDoc = () => {
     if (template === '1') return <Template1 csr={d} branding={branding} />
@@ -341,179 +307,146 @@ export default function ViewCSR() {
     a.click()
   }
 
+  const lbl = { fontSize: '11px', fontWeight: '700', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '0.3px', display: 'block', marginBottom: '4px' }
+  const val = { fontSize: '13px', color: '#1a1a1a' }
+  const sec = { backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: '16px', overflow: 'hidden' }
+  const secH = { backgroundColor: '#f0f0f0', padding: '8px 16px', fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid #ddd' }
+  const readings = [
+    ['Voltage (V)', d.voltage],
+    ['Frequency (Hz)', d.frequency],
+    ['Battery (V)', d.battery],
+    ['Temperature (°C)', d.temperature],
+    ['Pressure (bar)', d.pressure],
+    ['Hours', d.hours],
+  ]
+
   return (
     <Layout title={d.csr_number}>
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <Button type="button" variant="outline" onClick={() => navigate('/csr')}>
-            Back
-          </Button>
-          <Badge className={statusBadgeClass}>{d.status}</Badge>
-          <div className="ml-auto flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">Template</span>
-            {TEMPLATE_CHOICES.map(([key, label]) => (
-              <Button
-                key={key}
-                type="button"
-                variant={template === key ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setTemplate(key)}
-              >
-                {label}
-              </Button>
-            ))}
-            <Button type="button" variant="outline" onClick={handleDownload}>
-              Download PDF
-            </Button>
-            <Button type="button" onClick={() => navigate('/csr/edit/' + id)}>
-              Edit CSR
-            </Button>
+      <div style={{ maxWidth: '900px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div onClick={() => navigate('/csr')} style={{ padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #ddd', backgroundColor: 'white' }}>Back</div>
+          <span style={{ backgroundColor: s.bg, color: s.color, padding: '5px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '600' }}>{d.status}</span>
+          <div style={{ flex: 1 }} />
+          <span style={{ color: '#555', fontWeight: '600', fontSize: '13px' }}>Template:</span>
+          {[['1', 'Classic'], ['2', 'Minimal'], ['3', 'Modern']].map(([key, label]) => (
+            <div key={key} onClick={() => setTemplate(key)} style={{ padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', backgroundColor: template === key ? '#1a1a1a' : 'white', color: template === key ? 'white' : '#555', border: '1px solid #ddd' }}>{label}</div>
+          ))}
+          <div onClick={handleDownload} style={{ padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', backgroundColor: '#0056B3', color: 'white', fontWeight: '600' }}>Download PDF</div>
+          <div onClick={() => navigate('/csr/edit/' + id)} style={{ padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', backgroundColor: '#CC0000', color: 'white', fontWeight: '600' }}>Edit CSR</div>
+        </div>
+
+        <div style={sec}>
+          <div style={secH}>Customer Details</div>
+          <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+            <div><span style={lbl}>CSR No.</span><span style={{ ...val, color: '#CC0000', fontWeight: '700' }}>{d.csr_number}</span></div>
+            <div><span style={lbl}>Date</span><span style={val}>{d.date}</span></div>
+            <div><span style={lbl}>Customer</span><span style={val}>{d.client_name}</span></div>
+            {d.show_po && d.po_number ? <div><span style={lbl}>PO No.</span><span style={val}>{d.po_number}</span></div> : null}
+            <div style={{ gridColumn: '1 / -1' }}><span style={lbl}>Address</span><span style={val}>{d.address}</span></div>
           </div>
         </div>
 
-        <Card className="overflow-hidden rounded-[32px] border-zinc-200 shadow-sm">
-          <CardContent className="space-y-8 p-6 md:p-10">
-            <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-              {hasCompanyIdentity ? (
-                <div className="space-y-1">
-                  {branding.companyName ? <div className="text-2xl font-bold tracking-tight text-red-700">{branding.companyName}</div> : null}
-                  {branding.companyTagline ? <div className="text-sm text-zinc-600">{branding.companyTagline}</div> : null}
-                  {branding.contactLine ? <div className="text-sm text-zinc-500">{branding.contactLine}</div> : null}
-                </div>
-              ) : (
-                <div />
-              )}
-
-              <div className="space-y-1 text-left md:text-right">
-                <div className="text-xs font-bold uppercase tracking-[0.16em] text-red-700">Customer Service Report</div>
-                <div className="text-xl font-semibold text-zinc-950">{d.csr_number}</div>
-                <div className="text-sm text-zinc-500">Date: {d.date || '-'}</div>
-              </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+          <div style={sec}>
+            <div style={secH}>Nature of Problem</div>
+            <div style={{ padding: '16px' }}>
+              <span style={lbl}>Problem Reported</span>
+              <p style={{ ...val, lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{d.problem_reported}</p>
             </div>
-
-            <Separator />
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <SectionCard title="Customer Details">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <InfoField label="CSR No." value={d.csr_number} />
-                  <InfoField label="Date" value={d.date} />
-                  <InfoField label="Customer" value={d.client_name} />
-                  {d.show_po && d.po_number ? <InfoField label="PO No." value={d.po_number} /> : null}
-                </div>
-                <InfoField label="Address" value={d.address} />
-              </SectionCard>
-
-              <SectionCard title="Equipment Details">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <InfoField label="Type" value={d.equipment_type} />
-                  <InfoField label="Capacity" value={d.capacity} />
-                  <InfoField label="Make" value={d.make} />
-                  <InfoField label={d.modelLabel} value={d.model} />
-                  <InfoField label={d.serialLabel} value={d.serial_no} />
-                  <InfoField label="Location" value={d.equipment_location} />
-                </div>
-              </SectionCard>
+          </div>
+          <div style={sec}>
+            <div style={secH}>Equipment Details</div>
+            <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div><span style={lbl}>Type</span><span style={val}>{d.equipment_type}</span></div>
+              <div><span style={lbl}>Capacity</span><span style={val}>{d.capacity}</span></div>
+              <div><span style={lbl}>Make</span><span style={val}>{d.make}</span></div>
+              <div><span style={lbl}>{d.modelLabel}</span><span style={val}>{d.model}</span></div>
+              <div><span style={lbl}>{d.serialLabel}</span><span style={val}>{d.serial_no}</span></div>
+              <div><span style={lbl}>Location</span><span style={val}>{d.equipment_location}</span></div>
             </div>
+          </div>
+        </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <SectionCard title="Nature of Problem">
-                <div className="text-sm leading-7 whitespace-pre-wrap text-zinc-700">{d.problem_reported || '-'}</div>
-              </SectionCard>
-
-              <SectionCard title="Materials Used">
-                <div className="text-sm leading-7 whitespace-pre-wrap text-zinc-700">{d.materialsText || '-'}</div>
-              </SectionCard>
-            </div>
-
-            {d.showOperationalReadings ? (
-              <SectionCard title="Operational Readings">
-                <div className="rounded-2xl border border-zinc-200">
-                  <Table>
-                    <TableHeader className="bg-zinc-50">
-                      <TableRow>
-                        {readings.map(([heading]) => (
-                          <TableHead key={heading}>{heading}</TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow>
-                        {readings.map(([heading, value]) => (
-                          <TableCell key={heading} className="text-sm text-zinc-700">
-                            {value || '-'}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-              </SectionCard>
-            ) : null}
-
-            <SectionCard title="Service Execution">
-              <div className="grid gap-4 md:grid-cols-2">
-                <InfoField label="Start of Service" value={[d.start_date, d.start_time].filter(Boolean).join(' ') || '-'} />
-                <InfoField label="End of Service" value={[d.end_date, d.end_time].filter(Boolean).join(' ') || '-'} />
-                <InfoField label="Technician Name" value={d.technicianName} />
-                <InfoField label="Status" value={d.status} />
-              </div>
-
-              <Separator />
-
-              <div>
-                <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-500">Service Rendered</div>
-                <div className="text-sm leading-7 whitespace-pre-wrap text-zinc-700">{d.service_rendered || '-'}</div>
-              </div>
-
-              <div>
-                <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-500">Technician Remarks</div>
-                <div className="text-sm leading-7 whitespace-pre-wrap text-zinc-700">{d.technicianRemarks || '-'}</div>
-              </div>
-
-              <div>
-                <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-500">Status Checklist</div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {STATUS_OPTIONS.map((option) => (
-                    <div key={option} className="flex items-center gap-3 rounded-xl border border-zinc-200 px-3 py-2">
-                      <div className={`flex h-4 w-4 items-center justify-center rounded border text-[10px] ${d.status === option ? 'border-zinc-900 bg-zinc-900 text-white' : 'border-zinc-300 bg-white text-transparent'}`}>
-                        ✓
-                      </div>
-                      <span className={`text-sm ${d.status === option ? 'font-medium text-zinc-900' : 'text-zinc-500'}`}>{option}</span>
-                    </div>
+        {d.showOperationalReadings ? (
+          <div style={sec}>
+            <div style={secH}>Operational Readings</div>
+            <div style={{ padding: '16px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead><tr style={{ backgroundColor: '#f8f8f8' }}>
+                  {readings.map(([heading]) => (
+                    <th key={heading} style={{ padding: '8px 12px', border: '1px solid #ddd', fontWeight: '700', fontSize: '11px', color: '#333' }}>{heading}</th>
                   ))}
-                </div>
+                </tr></thead>
+                <tbody><tr>
+                  {readings.map(([heading, value]) => (
+                    <td key={heading} style={{ padding: '10px 12px', border: '1px solid #ddd', textAlign: 'center' }}>{value || '-'}</td>
+                  ))}
+                </tr></tbody>
+              </table>
+            </div>
+          </div>
+        ) : null}
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px', marginBottom: '16px' }}>
+          <div style={sec}>
+            <div style={secH}>Materials Used</div>
+            <div style={{ padding: '16px' }}>
+              <p style={{ ...val, lineHeight: '1.8', whiteSpace: 'pre-wrap' }}>{d.materialsText || '-'}</p>
+            </div>
+          </div>
+          <div style={sec}>
+            <div style={secH}>Service Execution</div>
+            <div style={{ padding: '16px' }}>
+              <div style={{ marginBottom: '14px' }}><span style={lbl}>Service Rendered</span><p style={{ ...val, lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{d.service_rendered}</p></div>
+              <div style={{ marginBottom: '14px' }}><span style={lbl}>Technician Name</span><span style={val}>{d.technicianName || '-'}</span></div>
+              <div style={{ marginBottom: '14px' }}><span style={lbl}>Technician Remarks</span><p style={{ ...val, color: '#555', whiteSpace: 'pre-wrap' }}>{d.technicianRemarks || '-'}</p></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <div><span style={lbl}>Start of Service</span><span style={val}>{[d.start_date, d.start_time].filter(Boolean).join(' ') || '-'}</span></div>
+                <div><span style={lbl}>End of Service</span><span style={val}>{[d.end_date, d.end_time].filter(Boolean).join(' ') || '-'}</span></div>
               </div>
-            </SectionCard>
-
-            <SectionCard title="Customer Feedback">
-              <div className="text-sm leading-7 whitespace-pre-wrap text-zinc-700">{d.customer_feedback || '-'}</div>
-            </SectionCard>
-
-            {d.showAcknowledgement ? (
-              <SectionCard title="Acknowledgement">
-                <div className={`grid gap-6 ${d.showTechnicianSignLine ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
-                  <div className="space-y-3">
-                    <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-500">{d.recipientTitle}</div>
-                    <div className="rounded-2xl border border-dashed border-zinc-300 px-4 py-5">
-                      <div className="text-sm font-medium text-zinc-900">{d.acknowledgement_name || '-'}</div>
-                      <div className="mt-1 text-xs text-zinc-500">{d.recipientRole || 'Name / Role'}</div>
-                    </div>
+              <div style={{ fontWeight: '700', fontSize: '12px', marginBottom: '10px' }}>Status</div>
+              {STATUS_OPTIONS.map((option) => (
+                <div key={option} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <div style={{ width: '14px', height: '14px', border: '1px solid #333', borderRadius: '2px', backgroundColor: d.status === option ? '#1a1a1a' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {d.status === option ? <span style={{ color: 'white', fontSize: '10px' }}>✓</span> : null}
                   </div>
-
-                  {d.showTechnicianSignLine ? (
-                    <div className="space-y-3">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-500">Technician Sign</div>
-                      <div className="rounded-2xl border border-dashed border-zinc-300 px-4 py-5 text-sm text-zinc-500">
-                        Optional sign
-                      </div>
-                    </div>
-                  ) : null}
+                  <span style={{ fontSize: '12px', fontWeight: d.status === option ? '600' : '400', color: d.status === option ? '#1a1a1a' : '#888' }}>{option}</span>
                 </div>
-              </SectionCard>
-            ) : null}
-          </CardContent>
-        </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div style={sec}>
+          <div style={secH}>Customer Feedback</div>
+          <div style={{ padding: '16px' }}>
+            <span style={lbl}>Feedback</span>
+            <span style={val}>{d.customer_feedback || '-'}</span>
+          </div>
+        </div>
+
+        {d.showAcknowledgement ? (
+          <div style={sec}>
+            <div style={secH}>Acknowledgement</div>
+            <div style={{ padding: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: d.showTechnicianSignLine ? '1fr 1fr' : '1fr', gap: '20px' }}>
+                <div>
+                  <span style={lbl}>{d.recipientTitle}</span>
+                  <div style={{ borderTop: '1px dashed #999', marginTop: '28px', paddingTop: '6px', fontSize: '12px', color: '#555' }}>
+                    {d.acknowledgement_name || ''}
+                    {d.recipientRole ? <div style={{ marginTop: '4px', color: '#888' }}>{d.recipientRole}</div> : null}
+                  </div>
+                </div>
+                {d.showTechnicianSignLine ? (
+                  <div>
+                    <span style={lbl}>Technician Sign</span>
+                    <div style={{ borderTop: '1px dashed #999', marginTop: '28px', paddingTop: '6px', fontSize: '12px', color: '#888' }}>Optional sign</div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </Layout>
   )
