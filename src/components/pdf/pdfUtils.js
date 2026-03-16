@@ -107,4 +107,308 @@ export const extractInvoiceData = (invoice, items, client, settings) => {
   }
 }
 
+const CLASSIC_PAGE_METRICS = {
+  contentHeight: 742,
+  footerReserve: 34,
+  firstHeaderBase: 104,
+  continuationHeader: 48,
+  tableHeader: 28,
+  finalReserveGap: 10,
+  extraPageTopGap: 12,
+}
+
+const cleanText = (value) => stripHtml(String(value || '')).replace(/\s+/g, ' ').trim()
+
+const estimateWrappedLines = (text, width, fontSize) => {
+  const normalized = cleanText(text)
+  if (!normalized) return 0
+
+  const words = normalized.split(/\s+/)
+  const avgCharWidth = fontSize * 0.5
+  const maxChars = Math.max(12, Math.floor(width / avgCharWidth))
+  let lines = 1
+  let current = 0
+
+  words.forEach((word) => {
+    const needed = word.length + (current > 0 ? 1 : 0)
+    if (current > 0 && current + needed > maxChars) {
+      lines += 1
+      current = word.length
+    } else {
+      current += needed
+    }
+  })
+
+  return lines
+}
+
+const getClassicColumnLayout = ({ hasMake, showUnit }) => ({
+  num: 22,
+  desc: hasMake ? (showUnit ? 182 : 205) : (showUnit ? 238 : 262),
+  make: hasMake ? 82 : 0,
+  qty: 38,
+  unit: showUnit ? 44 : 0,
+  price: 76,
+  amount: 88,
+})
+
+const estimateClassicHeaderHeight = (d, invoice) => {
+  const companyLines = [
+    d.companyName,
+    d.companyTagline,
+    d.companyAddress,
+    d.companyCity,
+    d.companyPhone,
+    d.companyEmail,
+  ].filter(Boolean).length || 1
+
+  const docLines = [
+    invoice.document_type || 'INVOICE',
+    invoice.invoice_number,
+    invoice.issue_date,
+    invoice.due_date,
+  ].filter(Boolean).length
+
+  const logoBoost = d.logoUrl ? 8 : 0
+  return CLASSIC_PAGE_METRICS.firstHeaderBase + Math.max(companyLines, docLines) * 8 + logoBoost
+}
+
+const estimateClassicTopContextHeight = (d, invoice, client) => {
+  const leftLines = [
+    invoice.client_name,
+    client?.address,
+    client?.city ? `${client.city}${client.state ? `, ${client.state}` : ''}` : '',
+    client?.phone,
+    client?.email,
+    client?.contact_person ? `Attn: ${client.contact_person}` : '',
+  ].filter(Boolean).length
+
+  const rightLines = [
+    invoice.payment_terms ? `Payment Terms: ${invoice.payment_terms}` : '',
+    invoice.work_duration ? `Work Duration: ${invoice.work_duration}` : '',
+    ...(d.cf.header || []).filter((f) => f.label && f.value).map((f) => `${f.label}: ${f.value}`),
+  ].filter(Boolean).length
+
+  const twoColHeight = 28 + Math.max(leftLines, rightLines, 1) * 11
+  const titleHeight = invoice.invoice_title ? 20 : 0
+  return twoColHeight + titleHeight
+}
+
+const estimateClassicRowHeight = (row, layout) => {
+  if (row._type === 'group_header') return 24
+  if (row._type === 'group_subtotal') return 20
+  if (row._type === 'group_end') return 8
+
+  const descriptionLines = Math.max(1, estimateWrappedLines(row.item.description, layout.desc, 9))
+  const subDescriptionLines = row.item.sub_description
+    ? estimateWrappedLines(row.item.sub_description, layout.desc, 7.5)
+    : 0
+
+  return 14 + descriptionLines * 11 + subDescriptionLines * 8 + (subDescriptionLines > 0 ? 2 : 0)
+}
+
+const estimateClassicTotalsReserve = (d, invoice) => {
+  const totalsLineCount =
+    2 +
+    (d.isColVisible('install_rate') && d.installTotal > 0 ? 1 : 0) +
+    d.fixedCharges.length +
+    (d.cf.extraCharges || []).filter((c) => Number(c.value) > 0).length +
+    (d.vatAmount > 0 ? 1 : 0) +
+    (d.discount > 0 ? 1 : 0) +
+    (d.whtAmount > 0 ? 2 : 0)
+
+  const totalsHeight = 30 + totalsLineCount * 12
+  const amountInWordsHeight = invoice.amount_in_words
+    ? 18 + estimateWrappedLines(invoice.amount_in_words, 360, 8.5) * 10
+    : 0
+
+  return totalsHeight + amountInWordsHeight + CLASSIC_PAGE_METRICS.footerReserve + CLASSIC_PAGE_METRICS.finalReserveGap
+}
+
+const estimateClassicExtraBlockHeight = (block) => {
+  if (block.type === 'attachments') {
+    return 28 + block.items.length * 14
+  }
+
+  const width = 500
+  const lineCount = Math.max(1, estimateWrappedLines(block.content, width, 8.5))
+  return 24 + lineCount * 10
+}
+
+const canFitRowRange = (rows, layout, budget) => {
+  let used = 0
+  for (let i = 0; i < rows.length; i += 1) {
+    used += estimateClassicRowHeight(rows[i], layout)
+    if (used > budget) return false
+  }
+  return true
+}
+
+const takeRowsForBudget = (rows, layout, budget) => {
+  const taken = []
+  let used = 0
+
+  for (let i = 0; i < rows.length; i += 1) {
+    const row = rows[i]
+    const rowHeight = estimateClassicRowHeight(row, layout)
+    let required = rowHeight
+
+    if (row._type === 'group_header' && rows[i + 1]) {
+      required += estimateClassicRowHeight(rows[i + 1], layout)
+    }
+
+    if (used + required > budget && taken.length > 0) break
+
+    taken.push(row)
+    used += rowHeight
+
+    if (used >= budget) break
+  }
+
+  if (!taken.length && rows[0]) {
+    return {
+      rows: [rows[0]],
+      usedHeight: estimateClassicRowHeight(rows[0], layout),
+    }
+  }
+
+  return { rows: taken, usedHeight: used }
+}
+
+const paginateExtraBlocks = (blocks, budget, firstBudget) => {
+  if (!blocks.length) return []
+
+  const pages = []
+  let remaining = [...blocks]
+  let currentBudget = firstBudget
+
+  while (remaining.length) {
+    let used = 0
+    const pageBlocks = []
+
+    while (remaining.length) {
+      const next = remaining[0]
+      const height = estimateClassicExtraBlockHeight(next)
+      if (pageBlocks.length && used + height > currentBudget) break
+      pageBlocks.push(next)
+      used += height
+      remaining.shift()
+      if (used >= currentBudget) break
+    }
+
+    pages.push(pageBlocks)
+    currentBudget = budget
+  }
+
+  return pages
+}
+
+export const planClassicInvoicePages = (invoice, items, client, settings) => {
+  const d = extractInvoiceData(invoice, items, client, settings)
+  const hasMake = d.isColVisible('make') && items.some((item) => item.make)
+  const showUnit = d.isColVisible('unit')
+  const layout = getClassicColumnLayout({ hasMake, showUnit })
+
+  const firstPageBudget =
+    CLASSIC_PAGE_METRICS.contentHeight -
+    estimateClassicHeaderHeight(d, invoice) -
+    estimateClassicTopContextHeight(d, invoice, client) -
+    CLASSIC_PAGE_METRICS.tableHeader -
+    CLASSIC_PAGE_METRICS.footerReserve
+
+  const continuationBudget =
+    CLASSIC_PAGE_METRICS.contentHeight -
+    CLASSIC_PAGE_METRICS.continuationHeader -
+    CLASSIC_PAGE_METRICS.tableHeader -
+    CLASSIC_PAGE_METRICS.footerReserve
+
+  const finalReserve = estimateClassicTotalsReserve(d, invoice)
+  const rowPages = []
+  let remainingRows = [...d.renderRows]
+  let isFirstPage = true
+
+  if (!remainingRows.length) {
+    rowPages.push({ rows: [], usedHeight: 0, isFirstPage: true })
+  }
+
+  while (remainingRows.length) {
+    const currentBudget = isFirstPage ? firstPageBudget : continuationBudget
+    const finalPageBudget = Math.max(80, currentBudget - finalReserve)
+
+    if (canFitRowRange(remainingRows, layout, finalPageBudget)) {
+      rowPages.push({
+        rows: [...remainingRows],
+        usedHeight: remainingRows.reduce((sum, row) => sum + estimateClassicRowHeight(row, layout), 0),
+        isFirstPage,
+      })
+      remainingRows = []
+      break
+    }
+
+    const taken = takeRowsForBudget(remainingRows, layout, currentBudget)
+    rowPages.push({ ...taken, isFirstPage })
+    remainingRows = remainingRows.slice(taken.rows.length)
+    isFirstPage = false
+  }
+
+  const extras = []
+  const notesText = cleanText(invoice.notes)
+  const termsText = cleanText(invoice.terms)
+
+  if (notesText) {
+    extras.push({ type: 'text', title: d.cf.notesTitle || 'Notes', content: notesText })
+  }
+  if (termsText) {
+    extras.push({ type: 'text', title: d.cf.termsTitle || 'Terms and Conditions', content: termsText })
+  }
+  if (d.validAttachments.length) {
+    extras.push({ type: 'attachments', title: 'Supporting Documents', items: d.validAttachments })
+  }
+
+  const lastRowPage = rowPages[rowPages.length - 1]
+  const lastRowPageBudget = lastRowPage.isFirstPage ? firstPageBudget : continuationBudget
+  const extraSpaceOnLastRowPage = Math.max(
+    0,
+    lastRowPageBudget - lastRowPage.usedHeight - finalReserve - CLASSIC_PAGE_METRICS.extraPageTopGap,
+  )
+
+  const inlineExtraBlocks = []
+  let usedInlineExtra = 0
+  while (extras.length) {
+    const next = extras[0]
+    const height = estimateClassicExtraBlockHeight(next)
+    if (inlineExtraBlocks.length && usedInlineExtra + height > extraSpaceOnLastRowPage) break
+    if (!inlineExtraBlocks.length && height > extraSpaceOnLastRowPage) break
+    inlineExtraBlocks.push(next)
+    usedInlineExtra += height
+    extras.shift()
+  }
+
+  lastRowPage.inlineExtraBlocks = inlineExtraBlocks
+  const extraPages = paginateExtraBlocks(
+    extras,
+    CLASSIC_PAGE_METRICS.contentHeight - CLASSIC_PAGE_METRICS.continuationHeader - CLASSIC_PAGE_METRICS.footerReserve,
+    CLASSIC_PAGE_METRICS.contentHeight - CLASSIC_PAGE_METRICS.continuationHeader - CLASSIC_PAGE_METRICS.footerReserve,
+  )
+
+  return {
+    d,
+    hasMake,
+    showUnit,
+    layout,
+    pages: rowPages.map((page, index) => ({
+      kind: 'rows',
+      rows: page.rows,
+      showTopContext: page.isFirstPage,
+      showTotals: index === rowPages.length - 1,
+      inlineExtraBlocks: page.inlineExtraBlocks || [],
+    })).concat(
+      extraPages.map((blocks) => ({
+        kind: 'extras',
+        blocks,
+      })),
+    ),
+  }
+}
+
 

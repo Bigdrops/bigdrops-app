@@ -3,18 +3,20 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import UnitInput from '../components/UnitInput'
-import RichTextEditor from '../components/RichTextEditor'
 import ClientSelector from '../components/ClientSelector'
 import ColumnManager from '../components/ColumnManager'
 import ItemImageUpload from '../components/ItemImageUpload'
 import AttachmentsPanel from '../components/AttachmentsPanel'
 import MobileItemCard from '../components/MobileItemCard'
+import InvoiceFormActions from '../components/invoice/InvoiceFormActions'
+import InvoicePaymentTermsSection from '../components/invoice/InvoicePaymentTermsSection'
+import InvoiceCustomBottomFieldsSection from '../components/invoice/InvoiceCustomBottomFieldsSection'
+import InvoiceNotesTermsSection from '../components/invoice/InvoiceNotesTermsSection'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
@@ -1943,152 +1945,30 @@ Imported rows are added as invoice items.`}
           </Card>
         </div>
 
-        <Card className="mb-5">
-          <CardHeader>
-            <CardTitle className="text-base">Payment Terms</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <Label>Payment Terms</Label>
-              <Select
-                value={invoice.payment_terms || ''}
-                onValueChange={(value) => updateInvoice('payment_terms', value)}
-              >
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Select payment terms" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Net 30">Net 30</SelectItem>
-                  <SelectItem value="Net 60">Net 60</SelectItem>
-                  <SelectItem value="Due on receipt">Due on receipt</SelectItem>
-                  <SelectItem value="50% advance">50% advance</SelectItem>
-                  <SelectItem value="Custom">Custom</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {invoice.payment_terms === 'Custom' && (
-              <div>
-                <Label>Specify Terms</Label>
-                <Input
-                  className="mt-2"
-                  value={invoice.custom_payment_terms || ''}
-                  onChange={(e) => updateInvoice('custom_payment_terms', e.target.value)}
-                  placeholder="e.g. 60% downpayment, 40% on delivery"
-                />
-              </div>
-            )}
-            </div>
-          </CardContent>
-        </Card>
+        <InvoicePaymentTermsSection invoice={invoice} updateInvoice={updateInvoice} />
+        <InvoiceCustomBottomFieldsSection
+          bottomFields={bottomFields}
+          setBottomFields={setBottomFields}
+          emptyStateText='Plain-text entries like "ADVANCE PAYMENT DUE (60%)" that appear below the totals.'
+          placeholder="e.g. ADVANCE PAYMENT DUE (60%): NGN 141,601"
+        />
 
-        <Card className="mb-5">
-          <CardHeader>
-            <div className="flex items-center justify-between gap-4">
-              <CardTitle className="text-base">Custom Fields</CardTitle>
-              <Button
-                type="button"
-                variant="ghost"
-                className="h-auto p-0 text-sm font-bold text-indigo-500"
-                onClick={() => setBottomFields((f) => [...f, { text: '' }])}
-              >
-              + Add Custom Field
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-          {bottomFields.length === 0 && (
-            <div className="text-sm italic text-slate-400">
-              Plain-text entries like "ADVANCE PAYMENT DUE (60%)" that appear below the
-              totals.
-            </div>
-          )}
+        <InvoiceNotesTermsSection
+          invoice={invoice}
+          updateInvoice={updateInvoice}
+          notesTitle={notesTitle}
+          setNotesTitle={setNotesTitle}
+          termsTitle={termsTitle}
+          setTermsTitle={setTermsTitle}
+        />
 
-          {bottomFields.map((field, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-2"
-            >
-              <Input
-                className="flex-1"
-                value={field.text}
-                onChange={(e) => {
-                  const u = [...bottomFields]
-                  u[i] = { text: e.target.value }
-                  setBottomFields(u)
-                }}
-                placeholder="e.g. ADVANCE PAYMENT DUE (60%): ₦141,601"
-              />
-              <Button
-                type="button"
-                onClick={() => setBottomFields(bottomFields.filter((_, j) => j !== i))}
-                variant="ghost"
-                className="h-9 px-2 text-xl text-red-700"
-              >
-                {'\u00D7'}
-              </Button>
-            </div>
-          ))}
-          </CardContent>
-        </Card>
-
-        <Card className="mb-5">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <Input
-                className="mb-3 rounded-none border-0 border-b-2 border-blue-700 px-2 py-1 text-xs font-bold uppercase tracking-[1px] text-blue-700 shadow-none focus-visible:ring-0"
-                value={notesTitle}
-                onChange={(e) => setNotesTitle(e.target.value)}
-              />
-              <RichTextEditor
-                value={invoice.notes || ''}
-                onChange={(val) => updateInvoice('notes', val)}
-                placeholder="Notes to client..."
-              />
-            </div>
-
-            <div>
-              <Input
-                className="mb-3 rounded-none border-0 border-b-2 border-blue-700 px-2 py-1 text-xs font-bold uppercase tracking-[1px] text-blue-700 shadow-none focus-visible:ring-0"
-                value={termsTitle}
-                onChange={(e) => setTermsTitle(e.target.value)}
-              />
-              <RichTextEditor
-                value={invoice.terms || ''}
-                onChange={(val) => updateInvoice('terms', val)}
-                placeholder="Terms and conditions..."
-              />
-            </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="ml-auto flex max-w-[400px] flex-col gap-2.5 pb-10">
-          <Button
-            type="button"
-            onClick={() => handleSave('sent')}
-            className="h-auto bg-red-700 px-6 py-3.5 text-[15px] font-bold hover:bg-red-800"
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => handleSave('draft')}
-            variant="secondary"
-            className="h-auto bg-slate-600 px-6 py-3.5 text-[15px] text-white hover:bg-slate-700"
-          >
-            {saving ? 'Saving...' : 'Save as Draft'}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => navigate('/invoices/' + id)}
-            variant="outline"
-            className="h-auto px-6 py-3.5 text-[15px] text-slate-600"
-          >
-            Cancel
-          </Button>
-        </div>
+        <InvoiceFormActions
+          saving={saving}
+          primaryLabel="Save Changes"
+          onSaveSent={() => handleSave('sent')}
+          onSaveDraft={() => handleSave('draft')}
+          onCancel={() => navigate('/invoices/' + id)}
+        />
       </div>
     </Layout>
   )
