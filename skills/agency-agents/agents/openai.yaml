@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agency Agents"
+  short_description: "Select and adapt roles from the agency-agents repo"
+  default_prompt: "Use $agency-agents to choose the best specialist role or small role mix from the agency-agents repository for this task, then translate it into a concrete plan or deliverable."

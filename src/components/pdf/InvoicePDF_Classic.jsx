@@ -94,13 +94,12 @@ const s = StyleSheet.create({
   groupSubtotalLabel: { fontSize: 8.5, color: '#555', fontFamily: 'Helvetica-Bold', marginRight: 12 },
   groupSubtotalValue: { fontSize: 8.5, color: '#1a1a1a', fontFamily: 'Helvetica-Bold' },
 
-  cNum: { width: 18, textAlign: 'center', fontSize: 8.5 },
-  cDesc: { flex: 2.5 },
-  cMake: { flex: 1.2, fontSize: 8.5 },
-  cQty: { flex: 0.7, textAlign: 'center', fontSize: 8.5 },
-  cUnit: { flex: 0.8, textAlign: 'center', fontSize: 8.5 },
-  cPrice: { flex: 1.5, textAlign: 'right', fontSize: 8.5 },
-  cAmt: { flex: 1.5, textAlign: 'right', fontSize: 8.5, fontFamily: 'Helvetica-Bold' },
+  cell: { fontSize: 8.5 },
+  cellMuted: { color: '#555' },
+  amountCell: { fontFamily: 'Helvetica-Bold', color: '#1a1a1a' },
+  centeredCell: { textAlign: 'center' },
+  rightCell: { textAlign: 'right' },
+  descCell: { alignSelf: 'flex-start' },
   descText: { fontSize: 9, color: '#1a1a1a', lineHeight: 1.35 },
   subDescText: { fontSize: 7.5, color: '#888', marginTop: 1, fontFamily: 'Helvetica-Oblique', lineHeight: 1.35 },
 
@@ -127,6 +126,22 @@ const s = StyleSheet.create({
   docLink: { fontSize: 8.5, color: '#0056B3', textDecoration: 'underline' },
 })
 
+const getColumnCellStyle = (column) => {
+  const styles = [s.cell, { width: column.width }]
+  if (column.align === 'center') styles.push(s.centeredCell)
+  if (column.align === 'right') styles.push(s.rightCell)
+  if (column.key === 'amount') styles.push(s.amountCell)
+  return styles
+}
+
+const formatMoney = (value) => Number(value || 0).toLocaleString()
+
+const renderRowRateValue = (value, zeroLabel) => {
+  if (value === null || value === undefined || value === '') return '-'
+  if (Number(value) === 0) return zeroLabel
+  return `${Number(value).toLocaleString()}%`
+}
+
 function PageIdentity({ d, invoice }) {
   return (
     <>
@@ -134,7 +149,7 @@ function PageIdentity({ d, invoice }) {
         fixed
         style={s.pageMeta}
         render={({ pageNumber, totalPages }) =>
-          `${d.companyName || 'Invoice'} • ${invoice.invoice_number} • Page ${pageNumber} of ${totalPages}`
+          `${d.companyName || 'Invoice'} | ${invoice.invoice_number} | Page ${pageNumber} of ${totalPages}`
         }
       />
       {d.footerText ? (
@@ -178,7 +193,6 @@ function FullHeader({ d, invoice, client }) {
           {client?.contact_person ? <Text style={s.clientDetail}>Attn: {client.contact_person}</Text> : null}
         </View>
         <View style={s.col}>
-          <Text style={s.sectionLabel}>Details</Text>
           {invoice.payment_terms ? <Text style={s.clientDetail}>Payment Terms: {invoice.payment_terms}</Text> : null}
           {invoice.work_duration ? <Text style={s.clientDetail}>Work Duration: {invoice.work_duration}</Text> : null}
           {d.cf.header && d.cf.header.filter((f) => f.label && f.value).map((f, i) => (
@@ -196,32 +210,30 @@ function CompactHeader({ d, invoice }) {
   return (
     <View style={s.continuationHeader}>
       <View>
-        <Text style={s.continuationTitle}>{invoice.document_type || 'INVOICE'} Continued</Text>
-        <Text style={s.continuationMeta}>{d.companyName || 'Company'} • {invoice.invoice_number}</Text>
+        <Text style={s.continuationTitle}>{d.companyName || invoice.document_type || 'INVOICE'}</Text>
+        <Text style={s.continuationMeta}>{invoice.document_type || 'INVOICE'}</Text>
       </View>
       <View style={s.continuationRight}>
         <Text style={s.docNumber}>{invoice.invoice_number}</Text>
-        {invoice.issue_date ? <Text style={s.docDate}>Date: {invoice.issue_date}</Text> : null}
+        {d.companyTagline ? <Text style={s.docDate}>{d.companyTagline}</Text> : null}
       </View>
     </View>
   )
 }
 
-function TableHeader({ hasMake, showUnit }) {
+function TableHeader({ columns }) {
   return (
     <View style={s.tableHeader}>
-      <Text style={[s.thText, s.cNum]}>#</Text>
-      <Text style={[s.thText, s.cDesc]}>Description</Text>
-      {hasMake ? <Text style={[s.thText, s.cMake]}>Make</Text> : null}
-      <Text style={[s.thText, s.cQty]}>Qty</Text>
-      {showUnit ? <Text style={[s.thText, s.cUnit]}>Unit</Text> : null}
-      <Text style={[s.thText, s.cPrice]}>Unit Price</Text>
-      <Text style={[s.thText, s.cAmt]}>Amount (NGN)</Text>
+      {columns.map((column) => (
+        <Text key={column.key} style={[s.thText, { width: column.width, textAlign: column.align }]}>
+          {column.label}
+        </Text>
+      ))}
     </View>
   )
 }
 
-function RowSet({ rows, hasMake, showUnit, itemCounterRef }) {
+function RowSet({ rows, columns, itemCounterRef }) {
   return rows.map((row, ri) => {
     if (row._type === 'group_header') {
       return (
@@ -254,16 +266,86 @@ function RowSet({ rows, hasMake, showUnit, itemCounterRef }) {
 
     return (
       <View key={`item_${ri}`} style={rowStyle} wrap={false}>
-        <Text style={[{ color: '#999', alignSelf: 'flex-start' }, s.cNum]}>{itemCounterRef.current}</Text>
-        <View style={[s.cDesc, { alignSelf: 'flex-start' }]}>
-          <Text style={s.descText}>{item.description}</Text>
-          {item.sub_description ? <Text style={s.subDescText}>{item.sub_description}</Text> : null}
-        </View>
-        {hasMake ? <Text style={[s.cMake, { alignSelf: 'flex-start', color: '#555' }]}>{item.make || ''}</Text> : null}
-        <Text style={[s.cQty, { alignSelf: 'flex-start' }]}>{item.quantity}</Text>
-        {showUnit ? <Text style={[s.cUnit, { alignSelf: 'flex-start', color: '#555' }]}>{item.unit || ''}</Text> : null}
-        <Text style={[s.cPrice, { alignSelf: 'flex-start' }]}>{Number(item.unit_price || 0).toLocaleString()}</Text>
-        <Text style={[s.cAmt, { alignSelf: 'flex-start' }]}>{amount.toLocaleString()}</Text>
+        {columns.map((column) => {
+          if (column.key === 'num') {
+            return (
+              <Text key={column.key} style={[getColumnCellStyle(column), { color: '#999', alignSelf: 'flex-start' }]}>
+                {itemCounterRef.current}
+              </Text>
+            )
+          }
+
+          if (column.key === 'desc') {
+            return (
+              <View key={column.key} style={[s.descCell, { width: column.width }]}>
+                <Text style={s.descText}>{item.description}</Text>
+                {item.sub_description ? <Text style={s.subDescText}>{item.sub_description}</Text> : null}
+              </View>
+            )
+          }
+
+          if (column.key === 'make') {
+            return (
+              <Text key={column.key} style={[getColumnCellStyle(column), s.cellMuted, { alignSelf: 'flex-start' }]}>
+                {item.make || ''}
+              </Text>
+            )
+          }
+
+          if (column.key === 'qty') {
+            return (
+              <Text key={column.key} style={[getColumnCellStyle(column), { alignSelf: 'flex-start' }]}>
+                {item.quantity}
+              </Text>
+            )
+          }
+
+          if (column.key === 'unit') {
+            return (
+              <Text key={column.key} style={[getColumnCellStyle(column), s.cellMuted, { alignSelf: 'flex-start' }]}>
+                {item.unit || ''}
+              </Text>
+            )
+          }
+
+          if (column.key === 'price') {
+            return (
+              <Text key={column.key} style={[getColumnCellStyle(column), { alignSelf: 'flex-start' }]}>
+                {formatMoney(item.unit_price)}
+              </Text>
+            )
+          }
+
+          if (column.key === 'install_rate') {
+            return (
+              <Text key={column.key} style={[getColumnCellStyle(column), { alignSelf: 'flex-start' }]}>
+                {item.install_rate > 0 ? formatMoney(item.install_rate) : '-'}
+              </Text>
+            )
+          }
+
+          if (column.key === 'vat_rate') {
+            return (
+              <Text key={column.key} style={[getColumnCellStyle(column), { alignSelf: 'flex-start' }]}>
+                {renderRowRateValue(item.vat_rate, 'Exempt')}
+              </Text>
+            )
+          }
+
+          if (column.key === 'discount_rate') {
+            return (
+              <Text key={column.key} style={[getColumnCellStyle(column), { alignSelf: 'flex-start' }]}>
+                {renderRowRateValue(item.discount_rate, 'No disc')}
+              </Text>
+            )
+          }
+
+          return (
+            <Text key={column.key} style={[getColumnCellStyle(column), { alignSelf: 'flex-start' }]}>
+              {formatMoney(amount)}
+            </Text>
+          )
+        })}
       </View>
     )
   })
@@ -349,7 +431,7 @@ function ExtraBlock({ block }) {
 }
 
 export default function InvoicePDF_Classic({ invoice, items = [], client, settings = {} }) {
-  const { d, hasMake, showUnit, pages } = planClassicInvoicePages(invoice, items, client, settings)
+  const { d, columns, pages } = planClassicInvoicePages(invoice, items, client, settings)
   const itemCounterRef = { current: 0 }
 
   return (
@@ -367,8 +449,8 @@ export default function InvoicePDF_Classic({ invoice, items = [], client, settin
           {page.kind === 'rows' ? (
             <>
               <View style={s.table}>
-                <TableHeader hasMake={hasMake} showUnit={showUnit} />
-                <RowSet rows={page.rows} hasMake={hasMake} showUnit={showUnit} itemCounterRef={itemCounterRef} />
+                <TableHeader columns={columns} />
+                <RowSet rows={page.rows} columns={columns} itemCounterRef={itemCounterRef} />
               </View>
 
               {page.showTotals ? <TotalsBlock d={d} invoice={invoice} /> : null}

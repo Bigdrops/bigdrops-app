@@ -34,6 +34,11 @@ export const buildRenderRows = (items, groupMeta) => {
   let currentGroupName = null
   let currentGroupSubtotal = 0
   let currentGroupShowSubtotal = false
+  const normalizeRate = (value) => {
+    if (value === '' || value === null || value === undefined) return null
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
 
   const flushGroup = () => {
     if (currentGroupName !== null) {
@@ -48,16 +53,23 @@ export const buildRenderRows = (items, groupMeta) => {
   }
 
   items.forEach((item) => {
+    const normalizedItem = {
+      ...item,
+      install_rate: normalizeRate(item.install_rate),
+      vat_rate: normalizeRate(item.vat_rate),
+      discount_rate: normalizeRate(item.discount_rate),
+    }
+
     if (item.row_type === 'group_header') {
       flushGroup()
       currentGroupName = item.group_name
       currentGroupShowSubtotal = !!(groupMeta && groupMeta[item.group_name]?.showSubtotal)
       currentGroupSubtotal = 0
-      rows.push({ _type: 'group_header', item })
+      rows.push({ _type: 'group_header', item: normalizedItem })
     } else {
       const amount = Number(item.amount || (Number(item.quantity) * Number(item.unit_price)) || 0)
       if (currentGroupName !== null) currentGroupSubtotal += amount
-      rows.push({ _type: 'item', item, amount })
+      rows.push({ _type: 'item', item: normalizedItem, amount })
     }
   })
   flushGroup()
@@ -98,12 +110,14 @@ export const extractInvoiceData = (invoice, items, client, settings) => {
 
   const validAttachments = (cf.attachments || []).filter(a => a.label && a.url)
   const renderRows = buildRenderRows(items, cf.groupMeta)
+  const getColumnConfig = (key) => columnConfig.find((col) => col.key === key)
+  const getColumnLabel = (key, fallback) => getColumnConfig(key)?.label || fallback
 
   return {
     cf, companyName, companyTagline, companyAddress, companyCity,
     companyPhone, companyEmail, logoUrl, footerText,
     subtotal, vatAmount, discount, whtAmount, totalPayable, grandTotal, installTotal,
-    fixedCharges, validAttachments, renderRows, isColVisible,
+    fixedCharges, validAttachments, renderRows, isColVisible, getColumnLabel,
   }
 }
 
@@ -142,15 +156,61 @@ const estimateWrappedLines = (text, width, fontSize) => {
   return lines
 }
 
-const getClassicColumnLayout = ({ hasMake, showUnit }) => ({
-  num: 22,
-  desc: hasMake ? (showUnit ? 182 : 205) : (showUnit ? 238 : 262),
-  make: hasMake ? 82 : 0,
-  qty: 38,
-  unit: showUnit ? 44 : 0,
-  price: 76,
-  amount: 88,
-})
+const CLASSIC_TABLE_WIDTH = 515
+
+export const getClassicTableColumns = (d, items) => {
+  const standardItems = items.filter((item) => item.row_type !== 'group_header')
+  const supportedColumns = [
+    { key: 'num', label: '#', width: 20, align: 'center', always: true },
+    { key: 'desc', label: 'Description', width: 0, align: 'left', always: true },
+    {
+      key: 'make',
+      label: d.getColumnLabel('make', 'Make'),
+      width: 48,
+      align: 'left',
+      visible: d.isColVisible('make') && standardItems.some((item) => cleanText(item.make)),
+    },
+    { key: 'qty', label: 'Qty', width: 28, align: 'center', always: true },
+    {
+      key: 'unit',
+      label: d.getColumnLabel('unit', 'Unit'),
+      width: 34,
+      align: 'center',
+      visible: d.isColVisible('unit'),
+    },
+    { key: 'price', label: 'Unit Price', width: 54, align: 'right', always: true },
+    {
+      key: 'install_rate',
+      label: d.getColumnLabel('install_rate', 'Install Rate'),
+      width: 54,
+      align: 'right',
+      visible: d.isColVisible('install_rate'),
+    },
+    {
+      key: 'vat_rate',
+      label: d.getColumnLabel('vat_rate', 'VAT %'),
+      width: 32,
+      align: 'center',
+      visible: d.isColVisible('vat_rate'),
+    },
+    {
+      key: 'discount_rate',
+      label: d.getColumnLabel('discount_rate', 'Disc %'),
+      width: 40,
+      align: 'center',
+      visible: d.isColVisible('discount_rate'),
+    },
+    { key: 'amount', label: 'Amount (NGN)', width: 62, align: 'right', always: true },
+  ]
+
+  const visibleColumns = supportedColumns.filter((column) => column.always || column.visible)
+  const reservedWidth = visibleColumns.reduce((sum, column) => sum + (column.key === 'desc' ? 0 : column.width), 0)
+  const descriptionWidth = Math.max(120, CLASSIC_TABLE_WIDTH - reservedWidth)
+
+  return visibleColumns.map((column) =>
+    column.key === 'desc' ? { ...column, width: descriptionWidth } : column,
+  )
+}
 
 const estimateClassicHeaderHeight = (d, invoice) => {
   const companyLines = [
@@ -305,9 +365,10 @@ const paginateExtraBlocks = (blocks, budget, firstBudget) => {
 
 export const planClassicInvoicePages = (invoice, items, client, settings) => {
   const d = extractInvoiceData(invoice, items, client, settings)
-  const hasMake = d.isColVisible('make') && items.some((item) => item.make)
-  const showUnit = d.isColVisible('unit')
-  const layout = getClassicColumnLayout({ hasMake, showUnit })
+  const columns = getClassicTableColumns(d, items)
+  const layout = columns.reduce((acc, column) => ({ ...acc, [column.key]: column.width }), {})
+  const hasMake = columns.some((column) => column.key === 'make')
+  const showUnit = columns.some((column) => column.key === 'unit')
 
   const firstPageBudget =
     CLASSIC_PAGE_METRICS.contentHeight -
@@ -395,6 +456,7 @@ export const planClassicInvoicePages = (invoice, items, client, settings) => {
     d,
     hasMake,
     showUnit,
+    columns,
     layout,
     pages: rowPages.map((page, index) => ({
       kind: 'rows',
