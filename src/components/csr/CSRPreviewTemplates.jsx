@@ -151,7 +151,7 @@ function createPdfStyles(variant) {
     field: { flex: 1 },
     label: { fontFamily: 'Helvetica-Bold', fontSize: palette.compact ? 6.8 : 7.5, color: palette.accent, marginBottom: 2, textTransform: 'uppercase' },
     value: { fontSize: palette.valueSize },
-    blockValue: { fontSize: palette.valueSize, lineHeight: palette.compact ? 1.25 : 1.4, minHeight: palette.compact ? 10 : 14 },
+    blockValue: { fontSize: palette.valueSize, lineHeight: palette.compact ? 1.2 : 1.4, minHeight: palette.compact ? 8 : 14 },
     readingsRow: { flexDirection: 'row' },
     readingsHeader: { flex: 1, padding: palette.compact ? '3 2' : '4 3', fontSize: palette.compact ? 6.5 : 7.5, fontFamily: 'Helvetica-Bold', textAlign: 'center', borderWidth: 1, borderColor: palette.border, backgroundColor: palette.mutedBg },
     readingsCell: { flex: 1, padding: palette.compact ? '3 2' : '4 3', fontSize: palette.compact ? 7.2 : 8.5, textAlign: 'center', borderWidth: 1, borderColor: palette.border, borderTopWidth: 0 },
@@ -160,9 +160,9 @@ function createPdfStyles(variant) {
     statusBox: { width: palette.compact ? 8 : 10, height: palette.compact ? 8 : 10, borderWidth: 1, borderColor: '#111827', marginRight: 4, alignItems: 'center', justifyContent: 'center' },
     statusBoxActive: { width: palette.compact ? 8 : 10, height: palette.compact ? 8 : 10, borderWidth: 1, borderColor: '#111827', marginRight: 4, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.headerBg },
     statusMark: { color: '#ffffff', fontSize: palette.compact ? 5 : 6 },
-    ackGrid: { flexDirection: 'row', gap: palette.compact ? 8 : 10 },
+    ackGrid: { flexDirection: 'row', gap: palette.compact ? 6 : 10 },
     ackCell: { flex: 1 },
-    line: { borderTopWidth: 1, borderTopColor: '#9CA3AF', marginTop: palette.compact ? 10 : 16, paddingTop: 3, minHeight: palette.compact ? 12 : 18 },
+    line: { borderTopWidth: 1, borderTopColor: '#9CA3AF', marginTop: palette.compact ? 8 : 16, paddingTop: palette.compact ? 2 : 3, minHeight: palette.compact ? 10 : 18 },
     footer: { marginTop: palette.compact ? 4 : 6, textAlign: 'center', fontSize: palette.compact ? 6.6 : 7.5, color: '#6B7280' },
   })
 }

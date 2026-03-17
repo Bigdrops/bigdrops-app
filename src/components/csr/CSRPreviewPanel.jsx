@@ -10,11 +10,12 @@ const statusColor = {
   'Field Entry Pending': { bg: '#EDE9FE', color: '#4B5563' },
 }
 
-export default function CSRPreviewPanel({ csr, template, onTemplateChange }) {
+export default function CSRPreviewPanel({ csr, template, onTemplateChange, branding = {} }) {
   const selectedTemplate = CSR_TEMPLATE_OPTIONS.find((option) => option.key === template) || CSR_TEMPLATE_OPTIONS[2]
   const theme = CSR_TEMPLATE_VARIANTS[getCsrTemplateVariant(template)]
   const s = statusColor[csr.status] || { bg: '#F5F5F5', color: '#555' }
   const compact = !!theme.compact
+  const hasBranding = Boolean(branding.companyName || branding.companyTagline || branding.contactLine)
   const lbl = { fontSize: compact ? '10px' : '11px', fontWeight: '700', color: theme.accent, textTransform: 'uppercase', letterSpacing: compact ? '0.24px' : '0.3px', display: 'block', marginBottom: '4px' }
   const val = { fontSize: compact ? '12px' : '13px', color: theme.pageFg || '#1a1a1a' }
   const sec = { backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: '16px', overflow: 'hidden' }
@@ -86,6 +87,34 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange }) {
           <div style={{ fontSize: '12px', color: '#64748B' }}>{selectedTemplate.label} template</div>
         </div>
 
+        {hasBranding ? (
+          <div
+            style={{
+              backgroundColor: theme.headerBg,
+              color: theme.headerFg,
+              borderRadius: '12px',
+              padding: compact ? '10px 12px' : '12px 14px',
+              marginBottom: compact ? '12px' : '14px',
+            }}
+          >
+            {branding.companyName ? (
+              <div style={{ fontSize: compact ? '14px' : '16px', fontWeight: '700', textTransform: 'uppercase' }}>
+                {branding.companyName}
+              </div>
+            ) : null}
+            {branding.companyTagline ? (
+              <div style={{ fontSize: compact ? '11px' : '12px', marginTop: '2px', opacity: 0.92 }}>
+                {branding.companyTagline}
+              </div>
+            ) : null}
+            {branding.contactLine ? (
+              <div style={{ fontSize: compact ? '10px' : '11px', marginTop: '4px', opacity: 0.9 }}>
+                {branding.contactLine}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
         <div style={sec}>
           <div style={secH}>Customer Details</div>
           <div style={{ padding: compact ? '14px' : '16px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: compact ? '12px' : '16px' }}>
@@ -102,7 +131,7 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange }) {
             <div style={secH}>Nature of Problem</div>
             <div style={{ padding: compact ? '14px' : '16px' }}>
               <span style={lbl}>Problem Reported</span>
-              <p style={{ ...val, lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{csr.problem_reported}</p>
+              <p style={{ ...val, lineHeight: compact ? '1.45' : '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>{csr.problem_reported}</p>
             </div>
           </div>
           <div style={sec}>
@@ -142,15 +171,15 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange }) {
           <div style={sec}>
             <div style={secH}>Materials Used</div>
             <div style={{ padding: compact ? '14px' : '16px' }}>
-              <p style={{ ...val, lineHeight: '1.8', whiteSpace: 'pre-wrap' }}>{csr.materialsText || '-'}</p>
+              <p style={{ ...val, lineHeight: compact ? '1.55' : '1.8', margin: 0, whiteSpace: 'pre-wrap' }}>{csr.materialsText || '-'}</p>
             </div>
           </div>
           <div style={sec}>
             <div style={secH}>Service Execution</div>
             <div style={{ padding: compact ? '14px' : '16px' }}>
-              <div style={{ marginBottom: compact ? '10px' : '14px' }}><span style={lbl}>Service Rendered</span><p style={{ ...val, lineHeight: compact ? '1.45' : '1.6', whiteSpace: 'pre-wrap' }}>{csr.service_rendered}</p></div>
+              <div style={{ marginBottom: compact ? '8px' : '14px' }}><span style={lbl}>Service Rendered</span><p style={{ ...val, lineHeight: compact ? '1.4' : '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>{csr.service_rendered}</p></div>
               <div style={{ marginBottom: compact ? '10px' : '14px' }}><span style={lbl}>Technician Name</span><span style={val}>{csr.technicianName || '-'}</span></div>
-              <div style={{ marginBottom: compact ? '10px' : '14px' }}><span style={lbl}>Technician Remarks</span><p style={{ ...val, color: '#555', whiteSpace: 'pre-wrap' }}>{csr.technicianRemarks || '-'}</p></div>
+              <div style={{ marginBottom: compact ? '8px' : '14px' }}><span style={lbl}>Technician Remarks</span><p style={{ ...val, color: '#555', lineHeight: compact ? '1.4' : '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>{csr.technicianRemarks || '-'}</p></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: compact ? '12px' : '16px', marginBottom: compact ? '12px' : '16px' }}>
                 <div><span style={lbl}>Start of Service</span><span style={val}>{[csr.start_date, csr.start_time].filter(Boolean).join(' ') || '-'}</span></div>
                 <div><span style={lbl}>End of Service</span><span style={val}>{[csr.end_date, csr.end_time].filter(Boolean).join(' ') || '-'}</span></div>
@@ -183,7 +212,7 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange }) {
               <div style={{ display: 'grid', gridTemplateColumns: csr.showTechnicianSignLine ? '1fr 1fr' : '1fr', gap: '20px' }}>
                 <div>
                   <span style={lbl}>{csr.recipientTitle}</span>
-                  <div style={{ borderTop: '1px dashed #999', marginTop: '28px', paddingTop: '6px', fontSize: '12px', color: '#555' }}>
+                  <div style={{ borderTop: '1px dashed #999', marginTop: compact ? '18px' : '28px', paddingTop: compact ? '4px' : '6px', fontSize: compact ? '11px' : '12px', color: '#555' }}>
                     {csr.acknowledgement_name || ''}
                     {csr.recipientRole ? <div style={{ marginTop: '4px', color: '#888' }}>{csr.recipientRole}</div> : null}
                   </div>
@@ -191,7 +220,7 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange }) {
                 {csr.showTechnicianSignLine ? (
                   <div>
                     <span style={lbl}>Technician Sign</span>
-                    <div style={{ borderTop: '1px dashed #999', marginTop: '28px', paddingTop: '6px', fontSize: '12px', color: '#888' }}>Optional sign</div>
+                    <div style={{ borderTop: '1px dashed #999', marginTop: compact ? '18px' : '28px', paddingTop: compact ? '4px' : '6px', fontSize: compact ? '11px' : '12px', color: '#888' }}>Optional sign</div>
                   </div>
                 ) : null}
               </div>

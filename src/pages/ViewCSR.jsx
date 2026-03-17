@@ -85,6 +85,7 @@ export default function ViewCSR() {
           csr={previewData}
           template={template}
           onTemplateChange={setTemplate}
+          branding={branding}
         />
       </div>
     </Layout>
