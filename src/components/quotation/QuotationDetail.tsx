@@ -2,10 +2,29 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/supabase'
 import { calcTotals } from '@/components/useInvoiceColumns.jsx'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import type { InvoiceItem } from '@/domain/invoice'
 import type { DbQuotation, DbQuotationItem, Quotation } from '@/domain/quotation'
 import { buildQuotationFormState } from '@/domain/quotation'
+import { buildQuotationCsv, downloadQuotationCsv } from './exportQuotationCsv'
 import { QUOTATION_STATUSES, formatQuotationStatus, quotationStatusTone } from './quotationStatus'
 
 function renderRichText(value?: string) {
@@ -13,11 +32,31 @@ function renderRichText(value?: string) {
   return <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: value }} />
 }
 
+function useIsNarrow() {
+  const [isNarrow, setIsNarrow] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.innerWidth < 768
+  })
+
+  useEffect(() => {
+    const handleResize = () => setIsNarrow(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  return isNarrow
+}
+
+function formatMoney(value: number | string | null | undefined) {
+  return `NGN ${Number(value || 0).toLocaleString()}`
+}
+
 export default function QuotationDetail({ quotationId }: { quotationId: string }) {
   const navigate = useNavigate()
+  const isNarrow = useIsNarrow()
   const [loading, setLoading] = useState(true)
   const [quotation, setQuotation] = useState<Quotation | null>(null)
-  const [items, setItems] = useState<any[]>([])
+  const [items, setItems] = useState<InvoiceItem[]>([])
   const [columns, setColumns] = useState<any[]>([])
   const [headerFields, setHeaderFields] = useState<any[]>([])
   const [bottomFields, setBottomFields] = useState<any[]>([])
@@ -26,6 +65,9 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const [whtType, setWhtType] = useState<'fixed' | 'percent'>('percent')
   const [notesTitle, setNotesTitle] = useState('Notes')
   const [termsTitle, setTermsTitle] = useState('Terms and Conditions')
+  const [client, setClient] = useState<Record<string, unknown> | null>(null)
+  const [settings, setSettings] = useState<Record<string, unknown> | null>(null)
+  const [pdfGenerating, setPdfGenerating] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -49,8 +91,19 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       setWhtType(state.whtType)
       setNotesTitle(state.notesTitle)
       setTermsTitle(state.termsTitle)
+
+      const [clientResponse, settingsResponse] = await Promise.all([
+        state.quotation.client_id
+          ? supabase.from('clients').select('*').eq('id', state.quotation.client_id).single()
+          : Promise.resolve({ data: null }),
+        supabase.from('settings').select('*').eq('id', 1).single(),
+      ])
+
+      setClient((clientResponse.data as Record<string, unknown> | null) || null)
+      setSettings((settingsResponse.data as Record<string, unknown> | null) || null)
       setLoading(false)
     }
+
     load()
   }, [quotationId])
 
@@ -61,102 +114,299 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
 
   const visibleCustomColumns = columns.filter((column: any) => column.key.startsWith('custom_') && column.visible)
 
+  const companyIdentity = useMemo(() => {
+    const companyName = String(settings?.company_name || '')
+    const companyTagline = String(settings?.company_tagline || '')
+    const companyAddress = String(settings?.company_address || '')
+    const companyCity = String(settings?.company_city || '')
+    const companyPhone = String(settings?.company_phone || '')
+    const companyEmail = String(settings?.company_email || '')
+
+    return {
+      companyName,
+      companyTagline,
+      lines: [companyAddress, companyCity, companyPhone, companyEmail].filter(Boolean),
+    }
+  }, [settings])
+
   const handleStatusChange = async (status: string) => {
     if (!quotation || quotation.status === status) return
     const { error } = await supabase.from('quotations').update({ status }).eq('id', quotationId)
-    if (!error) setQuotation((current) => (current ? { ...current, status: status as Quotation['status'] } : current))
+    if (!error) {
+      setQuotation((current) => (current ? { ...current, status: status as Quotation['status'] } : current))
+    }
+  }
+
+  const handleDownloadPdf = async () => {
+    if (!quotation || pdfGenerating) return
+    setPdfGenerating(true)
+    try {
+      const [{ pdf }, { default: QuotationPDF }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('./QuotationPDF'),
+      ])
+      const blob = await pdf(
+        <QuotationPDF quotation={quotation} items={items} client={client} settings={settings} />,
+      ).toBlob()
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `${quotation.quotation_number || 'quotation'}.pdf`
+      document.body.appendChild(anchor)
+      anchor.click()
+      setTimeout(() => {
+        document.body.removeChild(anchor)
+        URL.revokeObjectURL(url)
+      }, 100)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      alert(`PDF generation failed: ${message}`)
+    } finally {
+      setPdfGenerating(false)
+    }
+  }
+
+  const handleDownloadCsv = () => {
+    if (!quotation) return
+    const csv = buildQuotationCsv({ quotation, items, totals })
+    downloadQuotationCsv(`${quotation.quotation_number || 'quotation'}.csv`, csv)
+  }
+
+  const handleCopy = async (value: string, label: string) => {
+    if (!value) return
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      const input = document.createElement('textarea')
+      input.value = value
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      document.body.removeChild(input)
+    }
+    alert(`${label} copied.`)
   }
 
   if (loading) return <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-sm text-zinc-500 shadow-sm">Loading quotation...</div>
   if (!quotation) return <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-sm text-zinc-500 shadow-sm">Quotation not found.</div>
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-24 pt-6">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="mb-2 flex items-center gap-2">
-            <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${quotationStatusTone(quotation.status)}`}>{formatQuotationStatus(quotation.status)}</span>
-            <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Quotation</span>
+    <div className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
+      <div className="mb-5 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <Badge className={`h-auto px-3 py-1 text-[11px] font-bold uppercase ${quotationStatusTone(quotation.status)}`}>
+                {formatQuotationStatus(quotation.status)}
+              </Badge>
+              <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">Quotation</span>
+            </div>
+            <h2 className="m-0 break-words text-[24px] font-extrabold tracking-tight text-slate-900 sm:text-[30px]">
+              {quotation.quotation_number}
+            </h2>
+            {quotation.quotation_title ? (
+              <p className="mt-2 max-w-2xl text-sm text-slate-500 sm:text-[15px]">{quotation.quotation_title}</p>
+            ) : null}
           </div>
-          <h2 className="m-0 text-[28px] font-extrabold text-slate-900">{quotation.quotation_number}</h2>
-          {quotation.quotation_title ? <p className="mt-2 text-sm text-slate-500">{quotation.quotation_title}</p> : null}
+
+          <div className="grid w-full gap-2 sm:grid-cols-2 lg:w-auto lg:grid-cols-[repeat(4,minmax(0,1fr))]">
+            <Button type="button" variant="outline" className="w-full" onClick={() => navigate('/quotations')}>
+              Back to Quotations
+            </Button>
+            <Button type="button" variant="default" className="w-full" onClick={handleDownloadPdf} disabled={pdfGenerating}>
+              {pdfGenerating ? 'Generating PDF...' : 'Download PDF'}
+            </Button>
+            <Button type="button" variant="outline" className="w-full" onClick={() => navigate(`/quotations/edit/${quotationId}`)}>
+              Edit
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="outline" className="w-full">
+                  More Actions
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Quotation Actions</DropdownMenuLabel>
+                <DropdownMenuItem onSelect={handleDownloadCsv}>Export CSV</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => handleCopy(quotation.quotation_number || '', 'Quotation number')}>
+                  Copy quotation number
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleCopy(quotation.client_name || '', 'Client name')}>
+                  Copy client name
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={() => navigate('/quotations')}>Back</Button>
-          <Button type="button" variant="outline" onClick={() => navigate(`/quotations/edit/${quotationId}`)}>Edit</Button>
+
+        <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 lg:grid-cols-[minmax(0,1fr)_260px]">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Client</div>
+              <div className="mt-2 text-base font-semibold text-slate-900">{quotation.client_name || 'Unassigned'}</div>
+              {client?.contact_person ? <div className="mt-1 text-sm text-slate-500">{String(client.contact_person)}</div> : null}
+              {client?.email ? <div className="text-sm text-slate-500">{String(client.email)}</div> : null}
+              {client?.phone ? <div className="text-sm text-slate-500">{String(client.phone)}</div> : null}
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Timeline</div>
+              <div className="mt-2 space-y-1 text-sm text-slate-600">
+                <div>Issued: {quotation.issue_date || 'Not set'}</div>
+                <div>Valid until: {quotation.valid_until || 'Not set'}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-950 px-4 py-4 text-white">
+            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Document Identity</div>
+            <div className="mt-2 text-lg font-bold">{companyIdentity.companyName || 'Quotation'}</div>
+            {companyIdentity.companyTagline ? <div className="mt-1 text-sm text-slate-300">{companyIdentity.companyTagline}</div> : null}
+            {companyIdentity.lines.length > 0 ? (
+              <div className="mt-3 space-y-1 text-xs text-slate-300">
+                {companyIdentity.lines.map((line) => <div key={line}>{line}</div>)}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 
       <div className="mb-5 flex flex-wrap gap-2">
-        {QUOTATION_STATUSES.map((status) => <Button key={status} type="button" variant={quotation.status === status ? 'default' : 'outline'} onClick={() => handleStatusChange(status)}>Mark {formatQuotationStatus(status)}</Button>)}
+        {QUOTATION_STATUSES.map((status) => (
+          <Button
+            key={status}
+            type="button"
+            size={isNarrow ? 'sm' : 'default'}
+            variant={quotation.status === status ? 'default' : 'outline'}
+            onClick={() => handleStatusChange(status)}
+          >
+            Mark {formatQuotationStatus(status)}
+          </Button>
+        ))}
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-5">
-          <Card className="rounded-2xl border-zinc-200">
-            <CardContent className="grid gap-4 pt-6 md:grid-cols-2">
-              <div><div className="text-xs font-bold uppercase tracking-wide text-slate-400">Client</div><div className="mt-2 text-base font-semibold text-slate-900">{quotation.client_name || 'Unassigned'}</div></div>
-              <div><div className="text-xs font-bold uppercase tracking-wide text-slate-400">Timeline</div><div className="mt-2 space-y-1 text-sm text-slate-600"><div>Issued: {quotation.issue_date || 'Not set'}</div><div>Valid until: {quotation.valid_until || 'Not set'}</div></div></div>
-            </CardContent>
-          </Card>
-
           {headerFields.length > 0 && (
             <Card className="rounded-2xl border-zinc-200">
               <CardHeader><CardTitle className="text-base">Document Fields</CardTitle></CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">{headerFields.map((field) => <div key={field.id}><div className="text-xs font-bold uppercase tracking-wide text-slate-400">{field.label}</div><div className="mt-1 text-sm text-slate-800">{field.value}</div></div>)}</CardContent>
+              <CardContent className="grid gap-4 sm:grid-cols-2">
+                {headerFields.map((field) => (
+                  <div key={field.id}>
+                    <div className="text-xs font-bold uppercase tracking-wide text-slate-400">{field.label}</div>
+                    <div className="mt-1 break-words text-sm text-slate-800">{field.value}</div>
+                  </div>
+                ))}
+              </CardContent>
             </Card>
           )}
 
           <Card className="rounded-2xl border-zinc-200">
             <CardHeader><CardTitle className="text-base">Line Items</CardTitle></CardHeader>
-            <CardContent className="overflow-x-auto">
-              <table className="min-w-full border-collapse">
-                <thead>
-                  <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500">
-                    <th className="px-2 py-3">#</th>
-                    <th className="px-2 py-3">Description</th>
-                    {columns.find((column: any) => column.key === 'make')?.visible && <th className="px-2 py-3">Make</th>}
-                    <th className="px-2 py-3">Qty</th>
-                    {columns.find((column: any) => column.key === 'unit')?.visible && <th className="px-2 py-3">Unit</th>}
-                    <th className="px-2 py-3">Rate</th>
-                    {columns.find((column: any) => column.key === 'install_rate')?.visible && <th className="px-2 py-3">Install</th>}
-                    {columns.find((column: any) => column.key === 'vat_rate')?.visible && <th className="px-2 py-3">VAT %</th>}
-                    {columns.find((column: any) => column.key === 'discount_rate')?.visible && <th className="px-2 py-3">Disc %</th>}
-                    {visibleCustomColumns.map((column: any) => <th key={column.key} className="px-2 py-3">{column.label}</th>)}
-                    <th className="px-2 py-3">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <CardContent className="px-3 pb-4 sm:px-6">
+              {isNarrow ? (
+                <div className="space-y-3">
                   {items.map((item, index) => (
-                    <tr key={item._uiKey || item.id || index} className="border-b border-zinc-100 align-top">
-                      <td className="px-2 py-3 text-sm font-semibold text-zinc-500">{index + 1}</td>
-                      <td className="px-2 py-3"><div className="font-semibold text-slate-900">{item.description}</div>{item.sub_description ? <div className="mt-1 text-sm text-slate-500">{item.sub_description}</div> : null}</td>
-                      {columns.find((column: any) => column.key === 'make')?.visible && <td className="px-2 py-3 text-sm text-slate-600">{item.make || '—'}</td>}
-                      <td className="px-2 py-3 text-sm text-slate-600">{item.quantity || 0}</td>
-                      {columns.find((column: any) => column.key === 'unit')?.visible && <td className="px-2 py-3 text-sm text-slate-600">{item.unit || '—'}</td>}
-                      <td className="px-2 py-3 text-sm text-slate-600">₦{Number(item.unit_price || 0).toLocaleString()}</td>
-                      {columns.find((column: any) => column.key === 'install_rate')?.visible && <td className="px-2 py-3 text-sm text-slate-600">{item.install_rate ?? '—'}</td>}
-                      {columns.find((column: any) => column.key === 'vat_rate')?.visible && <td className="px-2 py-3 text-sm text-slate-600">{item.vat_rate ?? '—'}</td>}
-                      {columns.find((column: any) => column.key === 'discount_rate')?.visible && <td className="px-2 py-3 text-sm text-slate-600">{item.discount_rate ?? '—'}</td>}
-                      {visibleCustomColumns.map((column: any) => <td key={column.key} className="px-2 py-3 text-sm text-slate-600">{(item.custom_data || {})[column.key] || '—'}</td>)}
-                      <td className="px-2 py-3 text-sm font-bold text-slate-900">₦{(Number(item.quantity || 0) * Number(item.unit_price || 0)).toLocaleString()}</td>
-                    </tr>
+                    <div key={item._uiKey || item.id || index} className="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-4">
+                      <div className="mb-2 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Item {index + 1}</div>
+                          <div className="mt-1 break-words font-semibold text-slate-900">{item.description || 'Untitled item'}</div>
+                          {item.sub_description ? <div className="mt-1 break-words text-sm text-slate-500">{item.sub_description}</div> : null}
+                        </div>
+                        <div className="shrink-0 text-right text-sm font-bold text-slate-900">
+                          {formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0))}
+                        </div>
+                      </div>
+                      <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                        <div>Qty: {item.quantity || 0}</div>
+                        <div>Rate: {formatMoney(item.unit_price || 0)}</div>
+                        {columns.find((column: any) => column.key === 'unit')?.visible ? <div>Unit: {item.unit || '-'}</div> : null}
+                        {columns.find((column: any) => column.key === 'make')?.visible ? <div>Make: {item.make || '-'}</div> : null}
+                        {columns.find((column: any) => column.key === 'install_rate')?.visible ? <div>Install: {item.install_rate ?? '-'}</div> : null}
+                        {columns.find((column: any) => column.key === 'vat_rate')?.visible ? <div>VAT %: {item.vat_rate ?? '-'}</div> : null}
+                        {columns.find((column: any) => column.key === 'discount_rate')?.visible ? <div>Disc %: {item.discount_rate ?? '-'}</div> : null}
+                        {visibleCustomColumns.map((column: any) => (
+                          <div key={column.key}>
+                            {column.label}: {(item.custom_data || {})[column.key] || '-'}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500 hover:bg-transparent">
+                      <TableHead>#</TableHead>
+                      <TableHead>Description</TableHead>
+                      {columns.find((column: any) => column.key === 'make')?.visible && <TableHead>Make</TableHead>}
+                      <TableHead>Qty</TableHead>
+                      {columns.find((column: any) => column.key === 'unit')?.visible && <TableHead>Unit</TableHead>}
+                      <TableHead>Rate</TableHead>
+                      {columns.find((column: any) => column.key === 'install_rate')?.visible && <TableHead>Install</TableHead>}
+                      {columns.find((column: any) => column.key === 'vat_rate')?.visible && <TableHead>VAT %</TableHead>}
+                      {columns.find((column: any) => column.key === 'discount_rate')?.visible && <TableHead>Disc %</TableHead>}
+                      {visibleCustomColumns.map((column: any) => <TableHead key={column.key}>{column.label}</TableHead>)}
+                      <TableHead>Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((item, index) => (
+                      <TableRow key={item._uiKey || item.id || index} className="align-top">
+                        <TableCell className="font-semibold text-zinc-500">{index + 1}</TableCell>
+                        <TableCell className="whitespace-normal">
+                          <div className="font-semibold text-slate-900">{item.description}</div>
+                          {item.sub_description ? <div className="mt-1 text-sm text-slate-500">{item.sub_description}</div> : null}
+                        </TableCell>
+                        {columns.find((column: any) => column.key === 'make')?.visible && <TableCell>{item.make || '-'}</TableCell>}
+                        <TableCell>{item.quantity || 0}</TableCell>
+                        {columns.find((column: any) => column.key === 'unit')?.visible && <TableCell>{item.unit || '-'}</TableCell>}
+                        <TableCell>{formatMoney(item.unit_price || 0)}</TableCell>
+                        {columns.find((column: any) => column.key === 'install_rate')?.visible && <TableCell>{item.install_rate ?? '-'}</TableCell>}
+                        {columns.find((column: any) => column.key === 'vat_rate')?.visible && <TableCell>{item.vat_rate ?? '-'}</TableCell>}
+                        {columns.find((column: any) => column.key === 'discount_rate')?.visible && <TableCell>{item.discount_rate ?? '-'}</TableCell>}
+                        {visibleCustomColumns.map((column: any) => <TableCell key={column.key}>{(item.custom_data || {})[column.key] || '-'}</TableCell>)}
+                        <TableCell className="font-bold text-slate-900">
+                          {formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0))}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-zinc-200"><CardHeader><CardTitle className="text-base">{notesTitle}</CardTitle></CardHeader><CardContent>{renderRichText(quotation.notes)}</CardContent></Card>
-          <Card className="rounded-2xl border-zinc-200"><CardHeader><CardTitle className="text-base">{termsTitle}</CardTitle></CardHeader><CardContent>{renderRichText(quotation.terms)}</CardContent></Card>
-          {bottomFields.length > 0 && <Card className="rounded-2xl border-zinc-200"><CardHeader><CardTitle className="text-base">Additional Notes</CardTitle></CardHeader><CardContent className="space-y-2 text-sm text-slate-600">{bottomFields.map((field) => <div key={field.id}>{field.text}</div>)}</CardContent></Card>}
+          <Card className="rounded-2xl border-zinc-200">
+            <CardHeader><CardTitle className="text-base">{notesTitle}</CardTitle></CardHeader>
+            <CardContent>{renderRichText(quotation.notes)}</CardContent>
+          </Card>
+          <Card className="rounded-2xl border-zinc-200">
+            <CardHeader><CardTitle className="text-base">{termsTitle}</CardTitle></CardHeader>
+            <CardContent>{renderRichText(quotation.terms)}</CardContent>
+          </Card>
+          {bottomFields.length > 0 && (
+            <Card className="rounded-2xl border-zinc-200">
+              <CardHeader><CardTitle className="text-base">Additional Notes</CardTitle></CardHeader>
+              <CardContent className="space-y-2 text-sm text-slate-600">
+                {bottomFields.map((field) => <div key={field.id}>{field.text}</div>)}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-5 xl:sticky xl:top-6 xl:self-start">
           <Card className="rounded-2xl border-zinc-200">
             <CardHeader><CardTitle className="text-base">Summary</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              {totals && [['Subtotal', totals.rawSubtotal], ['Install Rate Total', totals.installRateTotal], ['VAT', totals.vatAmount], ['Discount', totals.discountAmount], ['WHT', totals.whtAmount], ['Total', totals.totalPayable]].map(([label, value]) => <div key={label} className="flex items-center justify-between rounded-lg border border-zinc-200 px-3 py-2 text-sm"><span className="font-medium text-zinc-600">{label}</span><span className="font-bold text-zinc-900">₦{Number(value || 0).toLocaleString()}</span></div>)}
+              {totals && [['Subtotal', totals.rawSubtotal], ['Install Rate Total', totals.installRateTotal], ['VAT', totals.vatAmount], ['Discount', totals.discountAmount], ['WHT', totals.whtAmount], ['Total', totals.totalPayable]].map(([label, value]) => (
+                <div key={label} className="flex items-center justify-between rounded-lg border border-zinc-200 px-3 py-2 text-sm">
+                  <span className="font-medium text-zinc-600">{label}</span>
+                  <span className="font-bold text-zinc-900">{formatMoney(value as number)}</span>
+                </div>
+              ))}
             </CardContent>
           </Card>
         </div>
