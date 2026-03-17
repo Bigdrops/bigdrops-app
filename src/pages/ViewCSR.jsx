@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { pdf } from '@react-pdf/renderer'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -9,7 +8,6 @@ import {
   getCsrBranding,
 } from '../components/csr/csrUtils'
 import CSRPreviewPanel from '../components/csr/CSRPreviewPanel'
-import { getCsrPdfDocument } from '../components/csr/CSRPreviewTemplates'
 
 export default function ViewCSR() {
   const { id } = useParams()
@@ -50,6 +48,10 @@ export default function ViewCSR() {
   const branding = getCsrBranding(settings)
 
   const handleDownload = async () => {
+    const [{ pdf }, { getCsrPdfDocument }] = await Promise.all([
+      import('@react-pdf/renderer'),
+      import('../components/csr/CSRPreviewTemplates'),
+    ])
     const blob = await pdf(
       getCsrPdfDocument({ csr: previewData, branding, template })
     ).toBlob()

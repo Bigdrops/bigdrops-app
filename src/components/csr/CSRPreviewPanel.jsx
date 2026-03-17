@@ -1,5 +1,11 @@
-import { CSR_TEMPLATE_OPTIONS, CSR_TEMPLATE_VARIANTS, getCsrTemplateVariant } from './CSRPreviewTemplates'
-import { CSR_READING_FIELDS, CSR_STATUS_OPTIONS } from './CSRPreviewContent'
+import { useEffect, useState } from 'react'
+import {
+  CSR_READING_FIELDS,
+  CSR_STATUS_OPTIONS,
+  CSR_TEMPLATE_OPTIONS,
+  CSR_TEMPLATE_VARIANTS,
+  getCsrTemplateVariant,
+} from './CSRPreviewContent'
 
 const statusColor = {
   Complete: { bg: '#DCFCE7', color: '#16A34A' },
@@ -11,6 +17,14 @@ const statusColor = {
 }
 
 export default function CSRPreviewPanel({ csr, template, onTemplateChange, branding = {} }) {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   const selectedTemplate = CSR_TEMPLATE_OPTIONS.find((option) => option.key === template) || CSR_TEMPLATE_OPTIONS[2]
   const theme = CSR_TEMPLATE_VARIANTS[getCsrTemplateVariant(template)]
   const s = statusColor[csr.status] || { bg: '#F5F5F5', color: '#555' }
@@ -18,7 +32,7 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
   const hasBranding = Boolean(branding.companyName || branding.companyTagline || branding.contactLine)
   const lbl = { fontSize: compact ? '10px' : '11px', fontWeight: '700', color: theme.accent, textTransform: 'uppercase', letterSpacing: compact ? '0.24px' : '0.3px', display: 'block', marginBottom: '4px' }
   const val = { fontSize: compact ? '12px' : '13px', color: theme.pageFg || '#1a1a1a' }
-  const sec = { backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: '16px', overflow: 'hidden' }
+  const sec = { backgroundColor: 'white', borderRadius: isMobile ? '6px' : '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: isMobile ? '12px' : '16px', overflow: 'hidden' }
   const secH = { backgroundColor: theme.mutedBg, padding: compact ? '7px 14px' : '8px 16px', fontWeight: '700', fontSize: compact ? '10px' : '11px', color: theme.headerBg, textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: `1px solid ${theme.border}` }
   const readings = CSR_READING_FIELDS.map(({ key, label }) => [label, csr[key]])
 
@@ -28,9 +42,9 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
         style={{
           background: theme.previewShell,
           border: '1px solid #DBE5F3',
-          borderRadius: '14px',
-          padding: compact ? '14px' : '16px',
-          marginBottom: '18px',
+          borderRadius: isMobile ? '10px' : '14px',
+          padding: isMobile ? '12px' : (compact ? '14px' : '16px'),
+          marginBottom: isMobile ? '14px' : '18px',
           boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)',
         }}
       >
@@ -74,8 +88,8 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
         style={{
           background: theme.previewSurface,
           border: `1px solid ${theme.border}`,
-          borderRadius: '16px',
-          padding: compact ? '16px' : '18px',
+          borderRadius: isMobile ? '10px' : '16px',
+          padding: isMobile ? '12px' : (compact ? '16px' : '18px'),
           boxShadow: '0 12px 34px rgba(15, 23, 42, 0.08)',
         }}
       >
@@ -117,7 +131,7 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
 
         <div style={sec}>
           <div style={secH}>Customer Details</div>
-          <div style={{ padding: compact ? '14px' : '16px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: compact ? '12px' : '16px' }}>
+          <div style={{ padding: compact ? '14px' : '16px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: compact ? '12px' : '16px' }}>
             <div><span style={lbl}>CSR No.</span><span style={{ ...val, color: '#CC0000', fontWeight: '700' }}>{csr.csr_number}</span></div>
             <div><span style={lbl}>Date</span><span style={val}>{csr.date}</span></div>
             <div><span style={lbl}>Customer</span><span style={val}>{csr.client_name}</span></div>
@@ -126,7 +140,7 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '12px' : '16px', marginBottom: isMobile ? '12px' : '16px' }}>
           <div style={sec}>
             <div style={secH}>Nature of Problem</div>
             <div style={{ padding: compact ? '14px' : '16px' }}>
@@ -136,7 +150,7 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
           </div>
           <div style={sec}>
             <div style={secH}>Equipment Details</div>
-            <div style={{ padding: compact ? '14px' : '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: compact ? '10px' : '12px' }}>
+            <div style={{ padding: compact ? '14px' : '16px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: compact ? '10px' : '12px' }}>
               <div><span style={lbl}>Type</span><span style={val}>{csr.equipment_type}</span></div>
               <div><span style={lbl}>Capacity</span><span style={val}>{csr.capacity}</span></div>
               <div><span style={lbl}>Make</span><span style={val}>{csr.make}</span></div>
@@ -151,7 +165,8 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
           <div style={sec}>
             <div style={secH}>Operational Readings</div>
             <div style={{ padding: compact ? '14px' : '16px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: compact ? '12px' : '13px' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', minWidth: isMobile ? '520px' : '100%', borderCollapse: 'collapse', fontSize: compact ? '12px' : '13px' }}>
                 <thead><tr style={{ backgroundColor: theme.mutedBg }}>
                   {readings.map(([heading]) => (
                     <th key={heading} style={{ padding: compact ? '6px 8px' : '8px 12px', border: `1px solid ${theme.border}`, fontWeight: '700', fontSize: compact ? '10px' : '11px', color: '#333' }}>{heading}</th>
@@ -162,12 +177,13 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
                     <td key={heading} style={{ padding: compact ? '8px 8px' : '10px 12px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>{value || '-'}</td>
                   ))}
                 </tr></tbody>
-              </table>
+                </table>
+              </div>
             </div>
           </div>
         ) : null}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: isMobile ? '12px' : '16px', marginBottom: isMobile ? '12px' : '16px' }}>
           <div style={sec}>
             <div style={secH}>Materials Used</div>
             <div style={{ padding: compact ? '14px' : '16px' }}>
@@ -180,12 +196,12 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
               <div style={{ marginBottom: compact ? '8px' : '14px' }}><span style={lbl}>Service Rendered</span><p style={{ ...val, lineHeight: compact ? '1.4' : '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>{csr.service_rendered}</p></div>
               <div style={{ marginBottom: compact ? '10px' : '14px' }}><span style={lbl}>Technician Name</span><span style={val}>{csr.technicianName || '-'}</span></div>
               <div style={{ marginBottom: compact ? '8px' : '14px' }}><span style={lbl}>Technician Remarks</span><p style={{ ...val, color: '#555', lineHeight: compact ? '1.4' : '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>{csr.technicianRemarks || '-'}</p></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: compact ? '12px' : '16px', marginBottom: compact ? '12px' : '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: compact ? '12px' : '16px', marginBottom: compact ? '12px' : '16px' }}>
                 <div><span style={lbl}>Start of Service</span><span style={val}>{[csr.start_date, csr.start_time].filter(Boolean).join(' ') || '-'}</span></div>
                 <div><span style={lbl}>End of Service</span><span style={val}>{[csr.end_date, csr.end_time].filter(Boolean).join(' ') || '-'}</span></div>
               </div>
               <div style={{ fontWeight: '700', fontSize: compact ? '11px' : '12px', marginBottom: '10px' }}>Status</div>
-              {STATUS_OPTIONS.map((option) => (
+              {CSR_STATUS_OPTIONS.map((option) => (
                 <div key={option} style={{ display: 'flex', alignItems: 'center', gap: compact ? '6px' : '8px', marginBottom: compact ? '6px' : '8px' }}>
                   <div style={{ width: compact ? '12px' : '14px', height: compact ? '12px' : '14px', border: '1px solid #333', borderRadius: '2px', backgroundColor: csr.status === option ? theme.headerBg : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     {csr.status === option ? <span style={{ color: 'white', fontSize: compact ? '9px' : '10px' }}>{'\u2713'}</span> : null}
@@ -207,9 +223,9 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
 
         {csr.showAcknowledgement ? (
           <div style={sec}>
-            <div style={secH}>Acknowledgement</div>
-            <div style={{ padding: compact ? '14px' : '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: csr.showTechnicianSignLine ? '1fr 1fr' : '1fr', gap: '20px' }}>
+          <div style={secH}>Acknowledgement</div>
+          <div style={{ padding: compact ? '14px' : '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: csr.showTechnicianSignLine && !isMobile ? '1fr 1fr' : '1fr', gap: isMobile ? '14px' : '20px' }}>
                 <div>
                   <span style={lbl}>{csr.recipientTitle}</span>
                   <div style={{ borderTop: '1px dashed #999', marginTop: compact ? '18px' : '28px', paddingTop: compact ? '4px' : '6px', fontSize: compact ? '11px' : '12px', color: '#555' }}>

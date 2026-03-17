@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
+import ClientSelector from '../components/ClientSelector'
 import {
   createDefaultCsr,
   DEFAULT_CSR_META,
@@ -43,8 +44,8 @@ function useIsMobile() {
 
 function SectionCard({ title, description, children }) {
   return (
-    <Card className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.08)]">
-      <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-red-50/50 pb-4">
+    <Card className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:rounded-[28px] sm:shadow-[0_14px_38px_rgba(15,23,42,0.08)]">
+      <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-red-50/50 px-4 pb-4 pt-4 sm:px-6">
         <CardTitle className="text-base font-semibold text-slate-950">{title}</CardTitle>
         {description ? <p className="text-sm leading-6 text-slate-600">{description}</p> : null}
       </CardHeader>
@@ -64,12 +65,23 @@ function Field({ label, children }) {
 
 function ToggleRow({ title, description, checked, onCheckedChange }) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onCheckedChange(!checked)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onCheckedChange(!checked)
+        }
+      }}
+      className="flex min-h-12 cursor-pointer flex-col gap-3 rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:rounded-2xl"
+    >
       <div className="min-w-0">
         <div className="text-sm font-semibold text-slate-900">{title}</div>
         <div className="text-xs leading-5 text-slate-600">{description}</div>
       </div>
-      <div className="flex justify-end sm:justify-start">
+      <div className="flex justify-end sm:justify-start" onClick={(event) => event.stopPropagation()}>
         <Switch checked={checked} onCheckedChange={onCheckedChange} />
       </div>
     </div>
@@ -81,7 +93,6 @@ export default function EditCSR() {
   const { id } = useParams()
   const isMobile = useIsMobile()
 
-  const [clients, setClients] = useState([])
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [csr, setCsr] = useState(() => createDefaultCsr(false))
@@ -92,12 +103,6 @@ export default function EditCSR() {
     const loadData = async () => {
       try {
         setLoading(true)
-
-        const { data: clientsData } = await supabase
-          .from('clients')
-          .select('id, name, address')
-          .order('name')
-        setClients(clientsData || [])
 
         const { data, error } = await supabase
           .from('csrs')
@@ -191,12 +196,17 @@ export default function EditCSR() {
 
   const modelFieldTitle = csrMeta.modelLabel || 'Model'
   const serialFieldTitle = csrMeta.serialLabel || 'Serial No.'
+  const handleClientChange = (clientId, clientName, client) => {
+    update('client_id', clientId)
+    update('client_name', clientName)
+    update('address', client?.address || '')
+  }
 
   if (loading) {
     return (
       <Layout title="Edit CSR">
         <div className="mx-auto max-w-5xl">
-          <Card className="rounded-3xl border-zinc-200 shadow-sm">
+          <Card className="rounded-xl border-zinc-200 shadow-sm sm:rounded-3xl">
             <CardContent className="p-6 text-sm text-zinc-500">Loading CSR...</CardContent>
           </Card>
         </div>
@@ -206,7 +216,7 @@ export default function EditCSR() {
 
   return (
     <Layout title="Edit CSR">
-      <div className="mx-auto max-w-5xl rounded-[32px] border border-slate-200 bg-gradient-to-b from-slate-100/90 via-slate-50 to-white p-3 shadow-[0_18px_48px_rgba(15,23,42,0.08)] sm:p-5">
+      <div className="mx-auto max-w-5xl p-0 sm:rounded-[32px] sm:border sm:border-slate-200 sm:bg-gradient-to-b sm:from-slate-100/90 sm:via-slate-50 sm:to-white sm:p-5 sm:shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
         <div className="space-y-5">
         <SectionCard title="Customer Details" description="Update the customer, date, and reference number for this service report.">
           <div className="grid gap-4 md:grid-cols-2">
@@ -222,38 +232,12 @@ export default function EditCSR() {
             </Field>
           </div>
 
-          <Field label="Select Client">
-            <select
-              value={csr.client_id ? String(csr.client_id) : ''}
-              onChange={(event) => {
-                const selectedId = event.target.value
-                if (selectedId === '__none') {
-                  update('client_id', '')
-                  update('client_name', '')
-                  update('address', '')
-                  return
-                }
-                if (!selectedId) {
-                  update('client_id', '')
-                  update('client_name', '')
-                  update('address', '')
-                  return
-                }
-                const client = clients.find((item) => String(item.id) === String(selectedId))
-                update('client_id', selectedId)
-                update('client_name', client ? client.name : '')
-                update('address', client?.address || '')
-              }}
-              className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100"
-            >
-              <option value="">Select client</option>
-              {clients.map((client) => (
-                <option key={client.id} value={String(client.id)}>
-                  {client.name}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <ClientSelector
+            clientId={csr.client_id}
+            clientName={csr.client_name}
+            onClientChange={handleClientChange}
+            isMobile={isMobile}
+          />
 
           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
             <Field label="Customer Name">
@@ -359,7 +343,7 @@ export default function EditCSR() {
         </SectionCard>
 
         <SectionCard title="Materials Used" description="Keep the materials list structured while controlling how it appears in output.">
-          <div className="rounded-2xl border border-sky-100 bg-gradient-to-r from-sky-50 to-white p-4">
+          <div className="rounded-xl border border-sky-100 bg-gradient-to-r from-sky-50 to-white p-4 sm:rounded-2xl">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px] md:items-end">
               <div>
                 <div className="text-sm font-semibold text-slate-900">Materials Output</div>
@@ -384,7 +368,7 @@ export default function EditCSR() {
           {isMobile ? (
             <div className="space-y-3">
               {materialsRows.map((row, index) => (
-                <div key={index} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div key={index} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:rounded-2xl">
                   <div className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
                     Material Row {index + 1}
                   </div>

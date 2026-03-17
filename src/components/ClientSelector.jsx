@@ -46,19 +46,22 @@ export default function ClientSelector({ clientId, clientName, onClientChange, i
   }, [clientId, clients, open])
 
   useEffect(() => {
+    if (isMobile) return undefined
+
     const handlePointerDown = (event) => {
       if (!containerRef.current?.contains(event.target)) {
         setOpen(false)
         if (selectedClient) setSearchTerm(selectedClient.name)
       }
     }
+
     document.addEventListener('mousedown', handlePointerDown)
     document.addEventListener('touchstart', handlePointerDown)
     return () => {
       document.removeEventListener('mousedown', handlePointerDown)
       document.removeEventListener('touchstart', handlePointerDown)
     }
-  }, [selectedClient])
+  }, [isMobile, selectedClient])
 
   const fetchClients = async () => {
     const { data } = await supabase.from('clients').select('*').order('name')
@@ -98,6 +101,13 @@ export default function ClientSelector({ clientId, clientName, onClientChange, i
     setSearchTerm('')
     setOpen(false)
     onClientChange('', '', null)
+  }
+
+  const closePicker = (nextOpen) => {
+    setOpen(nextOpen)
+    if (!nextOpen) {
+      setSearchTerm(selectedClient?.name || '')
+    }
   }
 
   const handleSaveNewClient = async () => {
@@ -235,59 +245,119 @@ export default function ClientSelector({ clientId, clientName, onClientChange, i
           </Button>
         </div>
 
-        <div className="relative">
-          <Input
-            value={open ? searchTerm : selectedSummary?.name || searchTerm}
-            onFocus={() => setOpen(true)}
-            onChange={(e) => {
-              setSearchTerm(e.target.value)
-              setOpen(true)
-            }}
-            placeholder={`Search ${clients.length} clients`}
-            className="h-10 bg-white pr-24"
-          />
-          <div className="pointer-events-none absolute inset-y-0 right-14 flex items-center text-xs text-slate-400">
-            Search
-          </div>
-          {selectedSummary ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500"
-              onClick={clearSelection}
-            >
-              Clear
-            </Button>
-          ) : null}
+        {isMobile ? (
+          <>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 flex-1 justify-start rounded-xl border-slate-300 bg-white px-3 text-left text-sm text-slate-900"
+                onClick={() => setOpen(true)}
+              >
+                <span className="truncate">
+                  {selectedSummary?.name || `Search ${clients.length} clients`}
+                </span>
+              </Button>
+              {selectedSummary ? (
+                <Button type="button" variant="outline" className="h-11 rounded-xl bg-white px-3" onClick={clearSelection}>
+                  Clear
+                </Button>
+              ) : null}
+            </div>
 
-          {open && (
-            <Card className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-[1000] max-h-72 overflow-hidden border border-slate-200 bg-white shadow-xl">
-              <div className="max-h-72 overflow-y-auto p-2">
-                {filteredClients.length === 0 ? (
-                  <div className="rounded-md px-3 py-6 text-center text-sm text-slate-500">
-                    No clients match &quot;{searchTerm}&quot;.
+            <Dialog open={open} onOpenChange={closePicker}>
+              <DialogContent className="max-w-[calc(100%-1rem)] rounded-2xl bg-white p-0 sm:max-w-lg">
+                <div className="max-h-[85vh] overflow-y-auto p-4">
+                  <DialogHeader className="mb-3">
+                    <DialogTitle>Select Client</DialogTitle>
+                  </DialogHeader>
+                  <Input
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={`Search ${clients.length} clients`}
+                    className="h-11 bg-white"
+                    autoFocus
+                  />
+                  <div className="mt-3 space-y-2">
+                    {filteredClients.length === 0 ? (
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
+                        No clients match &quot;{searchTerm}&quot;.
+                      </div>
+                    ) : (
+                      filteredClients.map((client) => (
+                        <button
+                          key={client.id}
+                          type="button"
+                          className="flex w-full flex-col rounded-xl border border-slate-200 bg-white px-3 py-3 text-left active:bg-slate-50"
+                          onClick={() => selectClient(client)}
+                        >
+                          <span className="text-sm font-semibold text-slate-900">{client.name}</span>
+                          <span className="text-xs text-slate-500">
+                            {[client.contact_person, client.city, client.phone].filter(Boolean).join(' • ') || 'No extra details'}
+                          </span>
+                        </button>
+                      ))
+                    )}
                   </div>
-                ) : (
-                  filteredClients.map((client) => (
-                    <button
-                      key={client.id}
-                      type="button"
-                      className="flex w-full flex-col rounded-md px-3 py-2 text-left hover:bg-slate-50"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => selectClient(client)}
-                    >
-                      <span className="text-sm font-semibold text-slate-900">{client.name}</span>
-                      <span className="text-xs text-slate-500">
-                        {[client.contact_person, client.city, client.phone].filter(Boolean).join(' • ') || 'No extra details'}
-                      </span>
-                    </button>
-                  ))
-                )}
-              </div>
-            </Card>
-          )}
-        </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </>
+        ) : (
+          <div className="relative">
+            <Input
+              value={open ? searchTerm : selectedSummary?.name || searchTerm}
+              onFocus={() => setOpen(true)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                setOpen(true)
+              }}
+              placeholder={`Search ${clients.length} clients`}
+              className="h-10 bg-white pr-24"
+            />
+            <div className="pointer-events-none absolute inset-y-0 right-14 flex items-center text-xs text-slate-400">
+              Search
+            </div>
+            {selectedSummary ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500"
+                onClick={clearSelection}
+              >
+                Clear
+              </Button>
+            ) : null}
+
+            {open && (
+              <Card className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-[1000] max-h-72 overflow-hidden border border-slate-200 bg-white shadow-xl">
+                <div className="max-h-72 overflow-y-auto p-2">
+                  {filteredClients.length === 0 ? (
+                    <div className="rounded-md px-3 py-6 text-center text-sm text-slate-500">
+                      No clients match &quot;{searchTerm}&quot;.
+                    </div>
+                  ) : (
+                    filteredClients.map((client) => (
+                      <button
+                        key={client.id}
+                        type="button"
+                        className="flex w-full flex-col rounded-md px-3 py-2 text-left hover:bg-slate-50"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => selectClient(client)}
+                      >
+                        <span className="text-sm font-semibold text-slate-900">{client.name}</span>
+                        <span className="text-xs text-slate-500">
+                          {[client.contact_person, client.city, client.phone].filter(Boolean).join(' • ') || 'No extra details'}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </Card>
+            )}
+          </div>
+        )}
 
         {selectedSummary ? (
           <Card className="border-slate-200 bg-slate-50 p-4">
