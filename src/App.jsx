@@ -12,6 +12,9 @@ import { lazy, Suspense } from 'react'
 const Dashboard      = lazy(() => import('./pages/Dashboard'))
 const Invoices       = lazy(() => import('./pages/Invoices'))
 const Quotations     = lazy(() => import('./pages/Quotations'))
+const NewQuotation   = lazy(() => import('./pages/NewQuotation'))
+const ViewQuotation  = lazy(() => import('./pages/ViewQuotation'))
+const EditQuotation  = lazy(() => import('./pages/EditQuotation'))
 const CSR            = lazy(() => import('./pages/CSR'))
 const Clients        = lazy(() => import('./pages/Clients'))
 const AddClient      = lazy(() => import('./pages/AddClient'))
@@ -132,6 +135,9 @@ function AppShell({ session, profile, onProfileUpdate }) {
         <Route path="/invoices/edit/:id" element={<EditInvoice />} />
         <Route path="/invoices/:id" element={<ViewInvoice />} />
         <Route path="/quotations" element={<Quotations />} />
+        <Route path="/quotations/new" element={<NewQuotation />} />
+        <Route path="/quotations/edit/:id" element={<EditQuotation />} />
+        <Route path="/quotations/:id" element={<ViewQuotation />} />
         <Route path="/csr" element={<CSR />} />
         <Route path="/csr/new" element={<NewCSR />} />
         <Route path="/csr/edit/:id" element={<EditCSR />} />

@@ -54,7 +54,7 @@ function PdfField({ styles, label, value }) {
   )
 }
 
-function PdfTextBlock({ styles, label, value, minHeight = 44 }) {
+function PdfTextBlock({ styles, label, value, minHeight = 34 }) {
   return (
     <View style={[styles.blockCard, { minHeight }]}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -335,9 +335,9 @@ function SharedEquipmentSection({ styles, csr }) {
 function createPulseFrameStyles() {
   return StyleSheet.create({
     page: {
-      paddingTop: 18,
-      paddingBottom: 18,
-      paddingHorizontal: 18,
+      paddingTop: 16,
+      paddingBottom: 16,
+      paddingHorizontal: 16,
       backgroundColor: '#ffffff',
       color: '#14213d',
       fontFamily: 'Helvetica',
@@ -345,9 +345,9 @@ function createPulseFrameStyles() {
     },
     topWrap: {
       backgroundColor: '#0f172a',
-      paddingTop: 14,
-      paddingBottom: 52,
-      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 40,
+      paddingHorizontal: 14,
       borderRadius: 12,
       marginBottom: 0,
     },
@@ -357,27 +357,27 @@ function createPulseFrameStyles() {
       gap: 12,
     },
     brandBlock: { flex: 1 },
-    companyName: { fontSize: 18, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
-    companyTagline: { fontSize: 8, color: '#ffffff', marginTop: 4 },
-    contactLine: { fontSize: 7, color: '#E2E8F0', marginTop: 4, lineHeight: 1.3 },
+    companyName: { fontSize: 16, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
+    companyTagline: { fontSize: 7.4, color: '#ffffff', marginTop: 2 },
+    contactLine: { fontSize: 6.6, color: '#E2E8F0', marginTop: 3, lineHeight: 1.2 },
     identityCard: {
-      width: 220,
+      width: 198,
       backgroundColor: '#ffffff20',
       borderWidth: 1,
       borderColor: '#ffffff40',
       borderRadius: 12,
-      padding: 10,
+      padding: 8,
     },
-    identityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    identityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     identityFull: { width: '100%' },
     metaLabel: { fontSize: 6.5, color: '#E2E8F0', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     metaValue: { fontSize: 9, color: '#ffffff', fontFamily: 'Helvetica-Bold', marginTop: 2 },
 
     summaryRow: {
-      marginTop: -34,
-      marginBottom: 12,
+      marginTop: -26,
+      marginBottom: 8,
       flexDirection: 'row',
-      gap: 8,
+      gap: 6,
     },
     summaryCard: {
       flex: 1,
@@ -385,21 +385,21 @@ function createPulseFrameStyles() {
       borderWidth: 1,
       borderColor: '#dbeafe',
       borderRadius: 12,
-      padding: 10,
+      padding: 8,
     },
     fieldLabel: { fontSize: 6.5, textTransform: 'uppercase', color: '#64748b', fontFamily: 'Helvetica-Bold', marginBottom: 3 },
     fieldValue: { fontSize: 9.5, color: '#0f172a', fontFamily: 'Helvetica-Bold', lineHeight: 1.2 },
     blockText: { fontSize: 8.5, color: '#1e293b', lineHeight: 1.5 },
     section: {
-      marginBottom: 10,
+      marginBottom: 8,
       borderWidth: 1,
       borderColor: '#dbe7f5',
       borderRadius: 14,
       overflow: 'hidden',
     },
     sectionTitle: {
-      paddingVertical: 7,
-      paddingHorizontal: 10,
+      paddingVertical: 5,
+      paddingHorizontal: 8,
       color: '#ffffff',
       backgroundColor: '#1d4ed8',
       fontSize: 8,
@@ -410,31 +410,31 @@ function createPulseFrameStyles() {
     grid2: { flexDirection: 'row' },
     fieldCard: {
       width: '25%',
-      paddingVertical: 8,
-      paddingHorizontal: 9,
+      paddingVertical: 6,
+      paddingHorizontal: 7,
       borderRightWidth: 1,
       borderBottomWidth: 1,
       borderColor: '#e2e8f0',
-      minHeight: 52,
+      minHeight: 42,
     },
-    blockCard: { paddingVertical: 10, paddingHorizontal: 10, minHeight: 60 },
-    readingGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 10, gap: 6 },
+    blockCard: { paddingVertical: 8, paddingHorizontal: 8, minHeight: 42 },
+    readingGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 4 },
     readingCard: {
       width: '15.5%',
       backgroundColor: '#eff6ff',
       borderWidth: 1,
       borderColor: '#bfdbfe',
       borderRadius: 10,
-      paddingVertical: 8,
-      paddingHorizontal: 6,
+      paddingVertical: 6,
+      paddingHorizontal: 5,
       alignItems: 'center',
     },
-    readingLabel: { fontSize: 6.5, color: '#475569', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 4, textAlign: 'center' },
+    readingLabel: { fontSize: 6.1, color: '#475569', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 2, textAlign: 'center' },
     readingValue: { fontSize: 10, color: '#0f172a', fontFamily: 'Helvetica-Bold' },
-    pillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, padding: 10 },
+    pillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, padding: 8 },
     pill: {
-      paddingVertical: 5,
-      paddingHorizontal: 8,
+      paddingVertical: 4,
+      paddingHorizontal: 7,
       backgroundColor: '#dbeafe',
       borderWidth: 1,
       borderColor: '#93c5fd',
@@ -444,13 +444,13 @@ function createPulseFrameStyles() {
     serviceGrid: { flexDirection: 'row' },
     serviceCard: {
       flex: 1,
-      paddingVertical: 10,
-      paddingHorizontal: 10,
+      paddingVertical: 8,
+      paddingHorizontal: 8,
       borderRightWidth: 1,
       borderColor: '#e2e8f0',
-      minHeight: 94,
+      minHeight: 70,
     },
-    statusGrid: { padding: 10, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    statusGrid: { padding: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
     statusItem: {
       width: '31%',
       flexDirection: 'row',
@@ -459,34 +459,34 @@ function createPulseFrameStyles() {
       borderWidth: 1,
       borderColor: '#dbeafe',
       borderRadius: 10,
-      paddingVertical: 7,
-      paddingHorizontal: 8,
+      paddingVertical: 5,
+      paddingHorizontal: 6,
       backgroundColor: '#f8fbff',
     },
     statusDot: { width: 8, height: 8, borderRadius: 99, borderWidth: 1.5, borderColor: '#94a3b8', backgroundColor: '#ffffff' },
     statusDotActive: { borderColor: '#1d4ed8', backgroundColor: '#1d4ed8' },
     statusText: { fontSize: 6.8, color: '#0f172a', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
-    textAreaOnly: { padding: 10, minHeight: 54 },
+    textAreaOnly: { padding: 8, minHeight: 40 },
     ackGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-    signRow: { flexDirection: 'row', gap: 10, padding: 10 },
+    signRow: { flexDirection: 'row', gap: 8, padding: 8 },
     signCard: {
       flex: 1,
       borderWidth: 1,
       borderColor: '#dbe7f5',
       borderRadius: 12,
-      padding: 10,
+      padding: 8,
     },
-    signSpace: { height: 34, borderBottomWidth: 1.5, borderBottomColor: '#93c5fd', borderStyle: 'dashed', marginBottom: 6 },
+    signSpace: { height: 20, borderBottomWidth: 1.5, borderBottomColor: '#93c5fd', borderStyle: 'dashed', marginBottom: 4 },
     signLabel: { fontSize: 7, color: '#64748b', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     footer: {
-      marginTop: 6,
+      marginTop: 4,
       backgroundColor: '#0f172a',
       color: '#ffffff',
-      paddingVertical: 8,
-      paddingHorizontal: 10,
+      paddingVertical: 5,
+      paddingHorizontal: 8,
       borderRadius: 10,
-      fontSize: 7.5,
-      lineHeight: 1.4,
+      fontSize: 6.8,
+      lineHeight: 1.2,
     },
   })
 }
@@ -558,9 +558,9 @@ function PulseFrameTemplate({ csr, branding }) {
 function createSignalBandsStyles() {
   return StyleSheet.create({
     page: {
-      paddingTop: 16,
-      paddingBottom: 16,
-      paddingHorizontal: 16,
+      paddingTop: 14,
+      paddingBottom: 14,
+      paddingHorizontal: 14,
       backgroundColor: '#fffdfa',
       color: '#231f20',
       fontFamily: 'Helvetica',
@@ -569,50 +569,50 @@ function createSignalBandsStyles() {
     headerRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      gap: 12,
+      gap: 10,
       backgroundColor: '#7f1d1d',
       borderRadius: 10,
-      paddingVertical: 12,
-      paddingHorizontal: 14,
-      marginBottom: 10,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      marginBottom: 8,
     },
     brandBlock: { flex: 1 },
-    companyName: { fontSize: 18, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
-    companyTagline: { fontSize: 8, color: '#FDE68A', marginTop: 4 },
-    contactLine: { fontSize: 7, color: '#ffffff', marginTop: 4, lineHeight: 1.3 },
+    companyName: { fontSize: 16, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
+    companyTagline: { fontSize: 7.2, color: '#FDE68A', marginTop: 2 },
+    contactLine: { fontSize: 6.6, color: '#ffffff', marginTop: 3, lineHeight: 1.2 },
     identityCard: {
-      width: 220,
+      width: 200,
       backgroundColor: '#ffffff22',
       borderWidth: 1,
       borderColor: '#ffffff33',
       borderRadius: 10,
-      padding: 10,
+      padding: 8,
     },
-    identityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    identityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     identityFull: { width: '100%' },
     metaLabel: { fontSize: 6.4, color: '#FDECEC', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     metaValue: { fontSize: 8.8, color: '#ffffff', fontFamily: 'Helvetica-Bold', marginTop: 2 },
 
     band: {
       flexDirection: 'row',
-      marginBottom: 8,
+      marginBottom: 6,
       borderWidth: 1,
       borderColor: '#e7d7c8',
       borderRadius: 12,
       overflow: 'hidden',
     },
     bandKey: {
-      width: 130,
-      paddingVertical: 10,
-      paddingHorizontal: 10,
+      width: 112,
+      paddingVertical: 8,
+      paddingHorizontal: 8,
       justifyContent: 'center',
     },
     bandKeyRed: { backgroundColor: '#991b1b' },
     bandKeyGold: { backgroundColor: '#92400e' },
     bandKeyCharcoal: { backgroundColor: '#1f2937' },
     bandKeyTeal: { backgroundColor: '#0f766e' },
-    bandKeyTitle: { color: '#ffffff', fontSize: 8, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', marginBottom: 3 },
-    bandKeySub: { color: '#ffffff', fontSize: 7, lineHeight: 1.3 },
+    bandKeyTitle: { color: '#ffffff', fontSize: 7.2, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', marginBottom: 2 },
+    bandKeySub: { color: '#ffffff', fontSize: 6.4, lineHeight: 1.15 },
     bandMain: { flex: 1, backgroundColor: '#fffdfa' },
 
     sectionTitle: { display: 'none' },
@@ -621,18 +621,18 @@ function createSignalBandsStyles() {
     grid4: { flexDirection: 'row', flexWrap: 'wrap' },
     fieldCard: {
       width: '25%',
-      paddingVertical: 9,
-      paddingHorizontal: 10,
+      paddingVertical: 7,
+      paddingHorizontal: 8,
       borderRightWidth: 1,
       borderBottomWidth: 1,
       borderColor: '#eee3d7',
-      minHeight: 54,
+      minHeight: 44,
       backgroundColor: '#fffdfa',
     },
     fieldLabel: { fontSize: 6.5, color: '#78716c', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 3 },
     fieldValue: { fontSize: 9.5, color: '#231f20', fontFamily: 'Helvetica-Bold', lineHeight: 1.2 },
-    blockCard: { paddingVertical: 10, paddingHorizontal: 12, minHeight: 56 },
-    blockText: { fontSize: 8.5, color: '#292524', lineHeight: 1.55 },
+    blockCard: { paddingVertical: 8, paddingHorizontal: 10, minHeight: 42 },
+    blockText: { fontSize: 8.5, color: '#292524', lineHeight: 1.4 },
 
     readingStrip: {
       flexDirection: 'row',
@@ -640,20 +640,20 @@ function createSignalBandsStyles() {
     },
     readingStripCell: {
       flex: 1,
-      paddingVertical: 10,
-      paddingHorizontal: 6,
+      paddingVertical: 7,
+      paddingHorizontal: 4,
       borderRightWidth: 1,
       borderColor: '#eee3d7',
       alignItems: 'center',
     },
     readingStripCellLast: { borderRightWidth: 0 },
-    readingLabel: { fontSize: 6.5, color: '#78716c', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginTop: 3, textAlign: 'center' },
+    readingLabel: { fontSize: 6.1, color: '#78716c', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginTop: 2, textAlign: 'center' },
     readingValue: { fontSize: 10, color: '#231f20', fontFamily: 'Helvetica-Bold' },
 
-    pillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, padding: 12 },
+    pillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, padding: 8 },
     pill: {
-      paddingVertical: 5,
-      paddingHorizontal: 8,
+      paddingVertical: 4,
+      paddingHorizontal: 7,
       backgroundColor: '#ffedd5',
       borderWidth: 1,
       borderColor: '#fdba74',
@@ -662,18 +662,18 @@ function createSignalBandsStyles() {
     pillText: { fontSize: 7.2, color: '#9a3412', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
 
     statusGrid: {
-      padding: 12,
+      padding: 8,
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 6,
+      gap: 4,
     },
     statusItem: {
       width: '31%',
       flexDirection: 'row',
       alignItems: 'center',
       gap: 5,
-      paddingVertical: 7,
-      paddingHorizontal: 8,
+      paddingVertical: 5,
+      paddingHorizontal: 6,
       borderRadius: 10,
       borderWidth: 1,
       borderColor: '#eadfd1',
@@ -702,35 +702,35 @@ function createSignalBandsStyles() {
     checkMark: { color: '#ffffff', fontSize: 7, fontFamily: 'Helvetica-Bold' },
     statusText: { fontSize: 6.8, color: '#231f20', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
 
-    textAreaOnly: { padding: 12, minHeight: 50 },
+    textAreaOnly: { padding: 8, minHeight: 38 },
     ackGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-    signRow: { flexDirection: 'row', gap: 10, padding: 12 },
+    signRow: { flexDirection: 'row', gap: 8, padding: 8 },
     signCard: {
       flex: 1,
       borderWidth: 1,
       borderColor: '#e7d7c8',
       borderRadius: 12,
-      padding: 10,
+      padding: 8,
       backgroundColor: '#ffffff',
     },
     signSpace: {
-      height: 34,
+      height: 20,
       borderBottomWidth: 1.5,
       borderBottomColor: '#d6bfa6',
       borderStyle: 'dashed',
-      marginBottom: 6,
+      marginBottom: 4,
     },
     signLabel: { fontSize: 7, color: '#78716c', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
 
     footer: {
-      marginTop: 6,
+      marginTop: 4,
       backgroundColor: '#1f2937',
       color: '#ffffff',
       borderRadius: 10,
-      paddingVertical: 8,
-      paddingHorizontal: 10,
-      fontSize: 7.5,
-      lineHeight: 1.4,
+      paddingVertical: 5,
+      paddingHorizontal: 8,
+      fontSize: 6.8,
+      lineHeight: 1.2,
     },
   })
 }
@@ -793,11 +793,11 @@ function SignalBandsTemplate({ csr, branding }) {
 
         <Band colorStyle={styles.bandKeyRed} title="Service" sub="Work execution and technician observations.">
           <View style={{ flexDirection: 'row' }}>
-            <View style={[styles.fieldCard, { width: '50%', minHeight: 100 }]}>
+            <View style={[styles.fieldCard, { width: '50%', minHeight: 74 }]}>
               <Text style={styles.fieldLabel}>Service Rendered</Text>
               <Text style={styles.blockText}>{safe(csr.service_rendered)}</Text>
             </View>
-            <View style={[styles.fieldCard, { width: '50%', minHeight: 100, borderRightWidth: 0 }]}>
+            <View style={[styles.fieldCard, { width: '50%', minHeight: 74, borderRightWidth: 0 }]}>
               <Text style={styles.fieldLabel}>Technician Remarks</Text>
               <Text style={styles.blockText}>{safe(csr.technicianRemarks)}</Text>
             </View>
@@ -841,9 +841,9 @@ function SignalBandsTemplate({ csr, branding }) {
 function createZincStyles() {
   return StyleSheet.create({
     page: {
-      paddingTop: 18,
-      paddingBottom: 18,
-      paddingHorizontal: 18,
+      paddingTop: 16,
+      paddingBottom: 16,
+      paddingHorizontal: 16,
       backgroundColor: '#ffffff',
       color: '#09090b',
       fontFamily: 'Helvetica',
@@ -852,7 +852,7 @@ function createZincStyles() {
     headerTop: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      marginBottom: 16,
+      marginBottom: 10,
     },
     brandBlock: { flex: 1 },
     companyName: { fontSize: 16, color: '#09090b', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
@@ -862,7 +862,7 @@ function createZincStyles() {
     idLabel: { fontSize: 6.5, color: '#71717a', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     idValue: { fontSize: 12, color: '#09090b', fontFamily: 'Courier-Bold', marginTop: 2 },
     idDate: { fontSize: 7.5, color: '#71717a', marginTop: 4 },
-    section: { marginBottom: 16 },
+    section: { marginBottom: 10 },
     sectionTitle: {
       fontSize: 7.5,
       color: '#09090b',
@@ -870,22 +870,22 @@ function createZincStyles() {
       textTransform: 'uppercase',
       borderBottomWidth: 1.5,
       borderBottomColor: '#09090b',
-      paddingBottom: 5,
-      marginBottom: 10,
+      paddingBottom: 4,
+      marginBottom: 6,
     },
-    fieldCard: { width: '33.33%', paddingRight: 10, marginBottom: 10 },
+    fieldCard: { width: '33.33%', paddingRight: 8, marginBottom: 6 },
     fieldLabel: { fontSize: 6.5, color: '#71717a', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 3 },
     fieldValue: { fontSize: 9, color: '#09090b', fontFamily: 'Helvetica-Bold', lineHeight: 1.2 },
     grid3: { flexDirection: 'row', flexWrap: 'wrap' },
     grid4: { flexDirection: 'row', flexWrap: 'wrap' },
     blockCard: {
-      paddingVertical: 9,
-      paddingHorizontal: 10,
+      paddingVertical: 7,
+      paddingHorizontal: 8,
       backgroundColor: '#ffffff',
       borderWidth: 1,
       borderColor: '#e4e4e7',
       borderRadius: 4,
-      minHeight: 44,
+      minHeight: 36,
     },
     blockText: { fontSize: 8.4, color: '#09090b', lineHeight: 1.45 },
     readingStrip: {
@@ -894,8 +894,8 @@ function createZincStyles() {
       borderWidth: 1,
       borderColor: '#e4e4e7',
       borderRadius: 6,
-      paddingVertical: 10,
-      paddingHorizontal: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 6,
     },
     readingStripCell: {
       flex: 1,
@@ -909,14 +909,14 @@ function createZincStyles() {
     lifecycleBox: {
       backgroundColor: '#09090b',
       borderRadius: 6,
-      paddingVertical: 14,
-      paddingHorizontal: 12,
-      marginTop: 6,
+      paddingVertical: 10,
+      paddingHorizontal: 10,
+      marginTop: 4,
     },
     lifecycleNodes: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      marginBottom: 14,
+      marginBottom: 10,
     },
     lifecycleNode: {
       width: '18%',
@@ -936,14 +936,14 @@ function createZincStyles() {
     lifecycleFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
     lifecycleCurrentLabel: { fontSize: 6.4, color: '#a1a1aa', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     lifecycleCurrentText: { fontSize: 8.5, color: '#ffffff', fontFamily: 'Helvetica-Bold', marginTop: 2 },
-    lifecycleBadge: { backgroundColor: '#ffffff', borderRadius: 4, paddingVertical: 3, paddingHorizontal: 8 },
+    lifecycleBadge: { backgroundColor: '#ffffff', borderRadius: 4, paddingVertical: 2, paddingHorizontal: 6 },
     lifecycleBadgeText: { fontSize: 6.6, color: '#000000', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
 
     tableHeaderRow: {
       flexDirection: 'row',
       borderBottomWidth: 1.5,
       borderBottomColor: '#e4e4e7',
-      paddingBottom: 5,
+      paddingBottom: 4,
       marginBottom: 2,
     },
     tableHead: {
@@ -951,8 +951,8 @@ function createZincStyles() {
       color: '#71717a',
       textTransform: 'uppercase',
       fontFamily: 'Helvetica-Bold',
-      paddingVertical: 4,
-      paddingHorizontal: 4,
+      paddingVertical: 3,
+      paddingHorizontal: 3,
       borderRightWidth: 1,
       borderRightColor: '#e4e4e7',
     },
@@ -965,18 +965,18 @@ function createZincStyles() {
       fontSize: 8,
       color: '#09090b',
       fontFamily: 'Helvetica-Bold',
-      paddingVertical: 6,
-      paddingHorizontal: 4,
+      paddingVertical: 5,
+      paddingHorizontal: 3,
       borderRightWidth: 1,
       borderRightColor: '#f1f1f1',
     },
     textAreaOnly: { paddingTop: 4 },
-    ackGrid: { flexDirection: 'row', gap: 20, marginTop: 18 },
-    signRow: { flexDirection: 'row', gap: 20, marginTop: 16 },
+    ackGrid: { flexDirection: 'row', gap: 10, marginTop: 10 },
+    signRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
     signCard: { flex: 1 },
-    signSpace: { height: 30, borderBottomWidth: 1.5, borderBottomColor: '#09090b', marginBottom: 6 },
+    signSpace: { height: 20, borderBottomWidth: 1.5, borderBottomColor: '#09090b', marginBottom: 4 },
     signLabel: { fontSize: 6.5, color: '#71717a', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    footer: { marginTop: 24, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#e4e4e7', fontSize: 6.8, color: '#71717a', textAlign: 'center' },
+    footer: { marginTop: 10, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#e4e4e7', fontSize: 6.4, color: '#71717a', textAlign: 'center' },
     statusGrid: { display: 'none' },
     statusItem: {},
     statusText: {},
@@ -1042,7 +1042,7 @@ function ZincTemplate({ csr, branding }) {
         </PdfSection>
 
         <PdfSection styles={styles} title="Technical Narrative">
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1 }}>
               <PdfTextBlock styles={styles} label="Problem Reported" value={csr.problem_reported} />
             </View>
@@ -1051,7 +1051,7 @@ function ZincTemplate({ csr, branding }) {
             </View>
           </View>
           {shouldRender(true, csr.technicianRemarks) ? (
-            <View style={{ marginTop: 10 }}>
+            <View style={{ marginTop: 6 }}>
               <Text style={styles.fieldLabel}>Technician Remarks</Text>
               <View style={[styles.blockCard, { backgroundColor: '#f4f4f5' }]}>
                 <Text style={styles.blockText}>{safe(csr.technicianRemarks)}</Text>
@@ -1097,7 +1097,7 @@ function ZincTemplate({ csr, branding }) {
         </PdfSection>
 
         {shouldRender(true, csr.materialsText) || shouldRender(true, csr.customer_feedback) ? (
-          <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1 }}>
               <MaterialsTable styles={styles} csr={csr} />
             </View>
@@ -1144,9 +1144,9 @@ function ZincTemplate({ csr, branding }) {
 function createCrimsonStyles() {
   return StyleSheet.create({
     page: {
-      paddingTop: 14,
-      paddingBottom: 14,
-      paddingHorizontal: 14,
+      paddingTop: 12,
+      paddingBottom: 12,
+      paddingHorizontal: 12,
       backgroundColor: '#ffffff',
       color: '#0f172a',
       fontFamily: 'Helvetica',
@@ -1157,13 +1157,13 @@ function createCrimsonStyles() {
       justifyContent: 'space-between',
       borderBottomWidth: 3,
       borderBottomColor: '#0f172a',
-      paddingBottom: 10,
-      marginBottom: 10,
+      paddingBottom: 8,
+      marginBottom: 8,
     },
-    brandBox: { flexDirection: 'row', gap: 10, alignItems: 'center', flex: 1 },
+    brandBox: { flexDirection: 'row', gap: 8, alignItems: 'center', flex: 1 },
     logoSlot: {
-      width: 34,
-      height: 34,
+      width: 30,
+      height: 30,
       backgroundColor: '#b91c1c',
       justifyContent: 'center',
       alignItems: 'center',
@@ -1178,16 +1178,16 @@ function createCrimsonStyles() {
     idValue: { fontSize: 11.5, color: '#b91c1c', fontFamily: 'Courier-Bold', marginTop: 2 },
     idDate: { fontSize: 7.2, color: '#0f172a', marginTop: 3, fontFamily: 'Helvetica-Bold' },
 
-    section: { marginBottom: 10 },
+    section: { marginBottom: 8 },
     sectionTitle: {
       fontSize: 7.2,
       color: '#ffffff',
       backgroundColor: '#0f172a',
-      borderLeftWidth: 5,
+      borderLeftWidth: 4,
       borderLeftColor: '#b91c1c',
-      paddingVertical: 4,
-      paddingHorizontal: 8,
-      marginBottom: 6,
+      paddingVertical: 3,
+      paddingHorizontal: 7,
+      marginBottom: 4,
       textTransform: 'uppercase',
       fontFamily: 'Helvetica-Bold',
     },
@@ -1203,26 +1203,26 @@ function createCrimsonStyles() {
       borderWidth: 1,
       borderColor: '#e2e8f0',
       borderRadius: 4,
-      paddingVertical: 7,
-      paddingHorizontal: 8,
-      minHeight: 44,
-      marginBottom: 6,
+      paddingVertical: 5,
+      paddingHorizontal: 6,
+      minHeight: 36,
+      marginBottom: 4,
     },
     blockCard: {
       backgroundColor: '#fffcf0',
       borderWidth: 1,
       borderColor: '#fbbf24',
       borderRadius: 4,
-      paddingVertical: 8,
-      paddingHorizontal: 8,
-      minHeight: 38,
+      paddingVertical: 6,
+      paddingHorizontal: 6,
+      minHeight: 32,
     },
 
     readingsSection: {
       backgroundColor: '#0f172a',
       borderRadius: 4,
-      paddingVertical: 8,
-      paddingHorizontal: 8,
+      paddingVertical: 6,
+      paddingHorizontal: 6,
     },
     readingStrip: { flexDirection: 'row' },
     readingStripCell: {
@@ -1248,8 +1248,8 @@ function createCrimsonStyles() {
       color: '#64748b',
       textTransform: 'uppercase',
       fontFamily: 'Helvetica-Bold',
-      paddingVertical: 6,
-      paddingHorizontal: 6,
+      paddingVertical: 5,
+      paddingHorizontal: 5,
       borderRightWidth: 1,
       borderRightColor: '#e2e8f0',
     },
@@ -1262,17 +1262,17 @@ function createCrimsonStyles() {
       fontSize: 7.8,
       color: '#1e293b',
       fontFamily: 'Helvetica-Bold',
-      paddingVertical: 6,
-      paddingHorizontal: 6,
+      paddingVertical: 4,
+      paddingHorizontal: 4,
       borderRightWidth: 1,
       borderRightColor: '#f1f5f9',
     },
 
-    statusGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 3 },
+    statusGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 2 },
     statusItem: {
       width: '24%',
-      paddingVertical: 6,
-      paddingHorizontal: 6,
+      paddingVertical: 4,
+      paddingHorizontal: 4,
       borderWidth: 1.2,
       borderColor: '#e2e8f0',
       borderRadius: 4,
@@ -1286,22 +1286,22 @@ function createCrimsonStyles() {
     statusTextActive: { color: '#ffffff' },
 
     textAreaOnly: {},
-    ackGrid: { flexDirection: 'row', gap: 16, marginTop: 14 },
+    ackGrid: { flexDirection: 'row', gap: 10, marginTop: 8 },
     signRow: { display: 'none' },
     signCard: {
       flex: 1,
       borderTopWidth: 1.5,
       borderTopColor: '#0f172a',
-      paddingTop: 6,
+      paddingTop: 5,
     },
-    signSpace: { height: 28, marginBottom: 4, backgroundColor: '#fafafa', borderRadius: 4 },
+    signSpace: { height: 20, marginBottom: 3, backgroundColor: '#fafafa', borderRadius: 4 },
     signLabel: { fontSize: 6.3, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     footer: {
-      marginTop: 16,
-      paddingTop: 8,
+      marginTop: 8,
+      paddingTop: 5,
       borderTopWidth: 1,
       borderTopColor: '#e2e8f0',
-      fontSize: 6.6,
+      fontSize: 6.2,
       color: '#94a3b8',
       textAlign: 'center',
       textTransform: 'uppercase',

@@ -56,6 +56,7 @@ export default function Dashboard({ session }) {
               d.quote_number ||
               d.quotation_no ||
               d.quote_no ||
+              d.number ||
               d.reference ||
               `Quotation ${d.id}`,
             sortKey: d.created_at || d.date,
@@ -91,7 +92,7 @@ export default function Dashboard({ session }) {
         {[
           { label: 'Invoice', icon: Plus,          path: '/invoices/new', color: 'bg-slate-900' },
           { label: 'CSR',     icon: Wrench,        path: '/csr/new',      color: 'bg-slate-800' },
-          { label: 'Quote',   icon: ClipboardList, path: null,            color: 'bg-slate-700', disabled: true },
+          { label: 'Quote',   icon: ClipboardList, path: '/quotations/new', color: 'bg-slate-700' },
         ].map((btn) => (
           <button
             key={btn.label}
