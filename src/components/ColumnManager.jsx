@@ -18,54 +18,19 @@ import { Label } from '../components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import { COLUMN_TYPES } from './useInvoiceColumns.jsx'
 
-export default function ColumnManager({
-  columns,
-  onUpdate,
-  onToggle,
-  onAddCustom,
-  onRemoveCustom,
-  onReset,
-  onMove,
-  onClose,
-  vat,
-  setVat,
-  wht,
-  setWht,
-  whtType,
-  setWhtType,
-}) {
-  const [activeTab, setActiveTab] = useState('table')
-
-  const builtinCols = columns.filter((c) => !c.key.startsWith('custom_'))
-  const customCols = columns.filter((c) => c.key.startsWith('custom_'))
-
-  const handleDragStart = (e, key) => e.dataTransfer.setData('text/plain', key)
-  const handleDragOver = (e) => e.preventDefault()
-  const handleDrop = (e, targetKey) => {
-    e.preventDefault()
-    const draggedKey = e.dataTransfer.getData('text/plain')
-    if (!draggedKey || draggedKey === targetKey || !onMove) return
-    const fromIdx = columns.findIndex((c) => c.key === draggedKey)
-    const toIdx = columns.findIndex((c) => c.key === targetKey)
-    if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return
-    onMove(draggedKey, toIdx)
-  }
-
-  const typeLabel = (t) =>
-    ({ install_rate: 'Rate', vat_rate: 'VAT%', discount_rate: 'Disc%' }[t] || t)
-
-  const RowShell = ({ children, muted = false }) => (
+function RowShell({ children, muted = false }) {
+  return (
     <div
-      className={`flex items-start gap-3 border-b border-zinc-200 py-3 ${
-        muted ? 'opacity-60' : ''
-      }`}
+      className={`flex items-start gap-3 border-b border-zinc-200 py-3 ${muted ? 'opacity-60' : ''}`}
       style={{ backgroundColor: '#ffffff' }}
     >
       {children}
     </div>
   )
+}
 
-  const VisibilityBtn = ({ visible, onClick }) => (
+function VisibilityBtn({ visible, onClick }) {
+  return (
     <Button
       type="button"
       variant="outline"
@@ -77,24 +42,27 @@ export default function ColumnManager({
       {visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
     </Button>
   )
+}
 
-  const LabelInput = ({ value, onChange, placeholder }) => (
-    <Input
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className="h-9 border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-400"
-    />
-  )
-
-  const ColRow = ({ col, isCustom }) => (
+function ColumnRow({
+  col,
+  isCustom,
+  onToggle,
+  onUpdate,
+  onRemoveCustom,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  typeLabel,
+}) {
+  return (
     <RowShell muted={!col.visible}>
       <div
         draggable
-        onDragStart={(e) => handleDragStart(e, col.key)}
-        onDragOver={handleDragOver}
-        onDrop={(e) => handleDrop(e, col.key)}
-        className="flex h-9 w-8 items-center justify-center text-zinc-400 cursor-grab"
+        onDragStart={(e) => onDragStart(e, col.key)}
+        onDragOver={onDragOver}
+        onDrop={(e) => onDrop(e, col.key)}
+        className="flex h-9 w-8 cursor-grab items-center justify-center text-zinc-400"
         title="Drag to reorder"
       >
         <GripVertical className="h-4 w-4" />
@@ -103,16 +71,17 @@ export default function ColumnManager({
       <VisibilityBtn visible={col.visible} onClick={() => onToggle(col.key)} />
 
       <div className="min-w-0 flex-1 space-y-2">
-        <LabelInput
+        <Input
           value={col.label || ''}
           onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
           placeholder="Column name"
+          className="h-9 border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-400"
         />
 
         {col.key === 'install_rate' && (
           <div className="space-y-1">
             <div className="text-xs text-zinc-500">
-              Multiplier. Example: <strong>0.1</strong> means 10% of Qty × Rate.
+              Multiplier. Example: <strong>0.1</strong> means 10% of Qty x Rate.
               Leave blank for manual row entry.
             </div>
             <Input
@@ -180,6 +149,43 @@ export default function ColumnManager({
       )}
     </RowShell>
   )
+}
+
+export default function ColumnManager({
+  columns,
+  onUpdate,
+  onToggle,
+  onAddCustom,
+  onRemoveCustom,
+  onReset,
+  onMove,
+  onClose,
+  vat,
+  setVat,
+  wht,
+  setWht,
+  whtType,
+  setWhtType,
+}) {
+  const [activeTab, setActiveTab] = useState('table')
+
+  const builtinCols = columns.filter((c) => !c.key.startsWith('custom_'))
+  const customCols = columns.filter((c) => c.key.startsWith('custom_'))
+
+  const handleDragStart = (e, key) => e.dataTransfer.setData('text/plain', key)
+  const handleDragOver = (e) => e.preventDefault()
+  const handleDrop = (e, targetKey) => {
+    e.preventDefault()
+    const draggedKey = e.dataTransfer.getData('text/plain')
+    if (!draggedKey || draggedKey === targetKey || !onMove) return
+    const fromIdx = columns.findIndex((c) => c.key === draggedKey)
+    const toIdx = columns.findIndex((c) => c.key === targetKey)
+    if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return
+    onMove(draggedKey, toIdx)
+  }
+
+  const typeLabel = (t) =>
+    ({ install_rate: 'Rate', vat_rate: 'VAT%', discount_rate: 'Disc%' }[t] || t)
 
   return (
     <div
@@ -254,7 +260,18 @@ export default function ColumnManager({
                   </div>
                   <div className="bg-white">
                     {builtinCols.map((col) => (
-                      <ColRow key={col.key} col={col} isCustom={false} />
+                      <ColumnRow
+                        key={col.key}
+                        col={col}
+                        isCustom={false}
+                        onToggle={onToggle}
+                        onUpdate={onUpdate}
+                        onRemoveCustom={onRemoveCustom}
+                        onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        typeLabel={typeLabel}
+                      />
                     ))}
                   </div>
                 </CardContent>
@@ -285,7 +302,18 @@ export default function ColumnManager({
                   ) : (
                     <div className="bg-white">
                       {customCols.map((col) => (
-                        <ColRow key={col.key} col={col} isCustom={true} />
+                        <ColumnRow
+                          key={col.key}
+                          col={col}
+                          isCustom={true}
+                          onToggle={onToggle}
+                          onUpdate={onUpdate}
+                          onRemoveCustom={onRemoveCustom}
+                          onDragStart={handleDragStart}
+                          onDragOver={handleDragOver}
+                          onDrop={handleDrop}
+                          typeLabel={typeLabel}
+                        />
                       ))}
                     </div>
                   )}
@@ -339,7 +367,7 @@ export default function ColumnManager({
                             : 'rounded-xl border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100'
                         }
                       >
-                        Fixed ₦
+                        Fixed Naira
                       </Button>
                     </div>
 
@@ -373,7 +401,7 @@ export default function ColumnManager({
             type="button"
             variant="outline"
             onClick={onReset}
-            className="flex-1 rounded-xl border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100 gap-2"
+            className="flex-1 gap-2 rounded-xl border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
           >
             <RotateCcw className="h-4 w-4" />
             Reset

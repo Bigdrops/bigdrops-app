@@ -1,23 +1,34 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../supabase'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 const CATEGORIES = ['Residential', 'Commercial', 'Industrial', 'Government', 'NGO', 'Other']
 
 const emptyClient = {
-  name: '', email: '', phone: '', address: '', address2: '',
-  city: '', state: '', contact_person: '', category: '', notes: '',
+  name: '',
+  email: '',
+  phone: '',
+  address: '',
+  address2: '',
+  city: '',
+  state: '',
+  contact_person: '',
+  category: '',
 }
 
 export default function ClientSelector({ clientId, clientName, onClientChange, isMobile }) {
   const [clients, setClients] = useState([])
   const [selectedClient, setSelectedClient] = useState(null)
+  const [open, setOpen] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [newClient, setNewClient] = useState({ ...emptyClient })
   const [saving, setSaving] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-
-  const inp = { width: '100%', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box', color: '#1a1a1a', backgroundColor: 'white' }
-  const lbl = { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#555', marginBottom: '4px' }
+  const containerRef = useRef(null)
 
   useEffect(() => {
     fetchClients()
@@ -25,165 +36,272 @@ export default function ClientSelector({ clientId, clientName, onClientChange, i
 
   useEffect(() => {
     if (clientId && clients.length > 0) {
-      const found = clients.find(c => c.id === clientId)
+      const found = clients.find((client) => String(client.id) === String(clientId))
       setSelectedClient(found || null)
+      if (found && !open) setSearchTerm(found.name)
     } else if (!clientId) {
       setSelectedClient(null)
+      if (!open) setSearchTerm('')
     }
-  }, [clientId, clients])
+  }, [clientId, clients, open])
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (!containerRef.current?.contains(event.target)) {
+        setOpen(false)
+        if (selectedClient) setSearchTerm(selectedClient.name)
+      }
+    }
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('touchstart', handlePointerDown)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('touchstart', handlePointerDown)
+    }
+  }, [selectedClient])
 
   const fetchClients = async () => {
     const { data } = await supabase.from('clients').select('*').order('name')
     setClients(data || [])
   }
 
-  const handleSelect = (e) => {
-    const id = e.target.value
-    if (!id) { onClientChange('', '', null); setSelectedClient(null); return }
-    const client = clients.find(c => c.id === id)
-    if (client) {
-      setSelectedClient(client)
-      onClientChange(client.id, client.name, client)
-    }
+  const updateNew = (field, value) => setNewClient((client) => ({ ...client, [field]: value }))
+
+  const filteredClients = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase()
+    if (!query) return clients
+    return clients.filter((client) => {
+      const haystack = [
+        client.name,
+        client.city,
+        client.state,
+        client.phone,
+        client.email,
+        client.contact_person,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+      return haystack.includes(query)
+    })
+  }, [clients, searchTerm])
+
+  const selectClient = (client) => {
+    setSelectedClient(client)
+    setSearchTerm(client?.name || '')
+    setOpen(false)
+    onClientChange(client?.id || '', client?.name || '', client || null)
   }
 
-  const updateNew = (field, val) => setNewClient(p => ({ ...p, [field]: val }))
+  const clearSelection = () => {
+    setSelectedClient(null)
+    setSearchTerm('')
+    setOpen(false)
+    onClientChange('', '', null)
+  }
 
   const handleSaveNewClient = async () => {
-    if (!newClient.name.trim()) { alert('Client name is required'); return }
+    if (!newClient.name.trim()) {
+      alert('Client name is required')
+      return
+    }
     setSaving(true)
-    const { data, error } = await supabase.from('clients').insert([{
-      name: newClient.name.trim(),
-      email: newClient.email.trim(),
-      phone: newClient.phone.trim(),
-      address: newClient.address2.trim() ? newClient.address.trim() + ', ' + newClient.address2.trim() : newClient.address.trim(),
-      city: newClient.city.trim(),
-      state: newClient.state.trim(),
-      contact_person: newClient.contact_person.trim(),
-      category: newClient.category,
-    }]).select().single()
+    const { data, error } = await supabase
+      .from('clients')
+      .insert([
+        {
+          name: newClient.name.trim(),
+          email: newClient.email.trim(),
+          phone: newClient.phone.trim(),
+          address: newClient.address2.trim()
+            ? `${newClient.address.trim()}, ${newClient.address2.trim()}`
+            : newClient.address.trim(),
+          city: newClient.city.trim(),
+          state: newClient.state.trim(),
+          contact_person: newClient.contact_person.trim(),
+          category: newClient.category,
+        },
+      ])
+      .select()
+      .single()
 
-    if (error) { alert('Error saving client: ' + error.message); setSaving(false); return }
+    if (error) {
+      alert('Error saving client: ' + error.message)
+      setSaving(false)
+      return
+    }
 
     await fetchClients()
-    setSelectedClient(data)
-    onClientChange(data.id, data.name, data)
+    selectClient(data)
     setNewClient({ ...emptyClient })
     setShowAddModal(false)
     setSaving(false)
   }
 
-  const filteredClients = clients.filter(c =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (c.city || '').toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  const grid2 = { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px', marginBottom: '12px' }
+  const selectedSummary = selectedClient || (clientId ? { name: clientName } : null)
 
   return (
     <>
-      {/* Add New Client Modal */}
-      {showAddModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', width: '100%', maxWidth: '560px', maxHeight: '90vh', overflow: 'auto', boxShadow: '0 8px 40px rgba(0,0,0,0.25)' }}>
-            <div style={{ padding: '24px 28px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
-              <h3 style={{ margin: 0, fontSize: '17px', color: '#1a1a1a' }}>Add New Client</h3>
-              <span onClick={() => setShowAddModal(false)} style={{ cursor: 'pointer', fontSize: '24px', color: '#888', lineHeight: 1 }}>×</span>
-            </div>
-            <div style={{ padding: '24px 28px' }}>
+      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+        <DialogContent className="max-w-2xl bg-white p-0 sm:max-w-2xl">
+          <div className="max-h-[85vh] overflow-y-auto p-6">
+            <DialogHeader className="mb-4">
+              <DialogTitle>Add New Client</DialogTitle>
+            </DialogHeader>
 
-              {/* Name — full width */}
-              <div style={{ marginBottom: '12px' }}>
-                <label style={lbl}>Company / Client Name *</label>
-                <input style={inp} value={newClient.name} onChange={e => updateNew('name', e.target.value)} placeholder="e.g. Coronation Power & Gas Ltd" autoFocus />
+            <div className="space-y-4">
+              <div>
+                <Label>Company / Client Name *</Label>
+                <Input
+                  className="mt-2 bg-white"
+                  value={newClient.name}
+                  onChange={(e) => updateNew('name', e.target.value)}
+                  placeholder="e.g. Coronation Power & Gas Ltd"
+                  autoFocus
+                />
               </div>
 
-              <div style={grid2}>
+              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <div>
-                  <label style={lbl}>Contact Person</label>
-                  <input style={inp} value={newClient.contact_person} onChange={e => updateNew('contact_person', e.target.value)} placeholder="Full name" />
+                  <Label>Contact Person</Label>
+                  <Input className="mt-2 bg-white" value={newClient.contact_person} onChange={(e) => updateNew('contact_person', e.target.value)} />
                 </div>
                 <div>
-                  <label style={lbl}>Category</label>
-                  <select style={inp} value={newClient.category} onChange={e => updateNew('category', e.target.value)}>
-                    <option value="">— Select —</option>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  <Label>Category</Label>
+                  <select
+                    className="mt-2 h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-slate-900"
+                    value={newClient.category}
+                    onChange={(e) => updateNew('category', e.target.value)}
+                  >
+                    <option value="">Select category</option>
+                    {CATEGORIES.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
 
-              <div style={grid2}>
+              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <div>
-                  <label style={lbl}>Phone</label>
-                  <input style={inp} value={newClient.phone} onChange={e => updateNew('phone', e.target.value)} placeholder="+234 801 234 5678" />
+                  <Label>Phone</Label>
+                  <Input className="mt-2 bg-white" value={newClient.phone} onChange={(e) => updateNew('phone', e.target.value)} />
                 </div>
                 <div>
-                  <label style={lbl}>Email</label>
-                  <input style={inp} type="email" value={newClient.email} onChange={e => updateNew('email', e.target.value)} placeholder="email@company.com" />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '12px' }}>
-                <label style={lbl}>Address Line 1</label>
-                <input style={inp} value={newClient.address} onChange={e => updateNew('address', e.target.value)} placeholder="Street address" />
-              </div>
-
-              <div style={{ marginBottom: '12px' }}>
-                <label style={lbl}>Address Line 2</label>
-                <input style={inp} value={newClient.address2} onChange={e => updateNew('address2', e.target.value)} placeholder="Suite, floor, landmark (optional)" />
-              </div>
-
-              <div style={grid2}>
-                <div>
-                  <label style={lbl}>City</label>
-                  <input style={inp} value={newClient.city} onChange={e => updateNew('city', e.target.value)} placeholder="Lagos" />
-                </div>
-                <div>
-                  <label style={lbl}>State</label>
-                  <input style={inp} value={newClient.state} onChange={e => updateNew('state', e.target.value)} placeholder="Lagos State" />
+                  <Label>Email</Label>
+                  <Input className="mt-2 bg-white" type="email" value={newClient.email} onChange={(e) => updateNew('email', e.target.value)} />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-                <button onClick={() => setShowAddModal(false)} style={{ flex: 1, padding: '12px', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', color: '#555', backgroundColor: 'white' }}>Cancel</button>
-                <button onClick={handleSaveNewClient} disabled={saving} style={{ flex: 2, padding: '12px', backgroundColor: '#CC0000', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+              <div>
+                <Label>Address Line 1</Label>
+                <Input className="mt-2 bg-white" value={newClient.address} onChange={(e) => updateNew('address', e.target.value)} />
+              </div>
+              <div>
+                <Label>Address Line 2</Label>
+                <Input className="mt-2 bg-white" value={newClient.address2} onChange={(e) => updateNew('address2', e.target.value)} />
+              </div>
+
+              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                <div>
+                  <Label>City</Label>
+                  <Input className="mt-2 bg-white" value={newClient.city} onChange={(e) => updateNew('city', e.target.value)} />
+                </div>
+                <div>
+                  <Label>State</Label>
+                  <Input className="mt-2 bg-white" value={newClient.state} onChange={(e) => updateNew('state', e.target.value)} />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" className="flex-1 bg-white" onClick={() => setShowAddModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="button" className="flex-[1.3]" onClick={handleSaveNewClient} disabled={saving}>
                   {saving ? 'Saving...' : 'Save Client'}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <div ref={containerRef} className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <Label>Select Client</Label>
+          <Button type="button" variant="link" className="h-auto p-0 text-sm font-semibold" onClick={() => setShowAddModal(true)}>
+            + New Client
+          </Button>
         </div>
-      )}
 
-      {/* Client Selector UI */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-          <label style={lbl}>Select Client</label>
-          <div onClick={() => setShowAddModal(true)} style={{ fontSize: '12px', color: '#CC0000', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '3px' }}>
-            <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span> New Client
+        <div className="relative">
+          <Input
+            value={open ? searchTerm : selectedSummary?.name || searchTerm}
+            onFocus={() => setOpen(true)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setOpen(true)
+            }}
+            placeholder={`Search ${clients.length} clients`}
+            className="h-10 bg-white pr-24"
+          />
+          <div className="pointer-events-none absolute inset-y-0 right-14 flex items-center text-xs text-slate-400">
+            Search
           </div>
+          {selectedSummary ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500"
+              onClick={clearSelection}
+            >
+              Clear
+            </Button>
+          ) : null}
+
+          {open && (
+            <Card className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-[1000] max-h-72 overflow-hidden border border-slate-200 bg-white shadow-xl">
+              <div className="max-h-72 overflow-y-auto p-2">
+                {filteredClients.length === 0 ? (
+                  <div className="rounded-md px-3 py-6 text-center text-sm text-slate-500">
+                    No clients match &quot;{searchTerm}&quot;.
+                  </div>
+                ) : (
+                  filteredClients.map((client) => (
+                    <button
+                      key={client.id}
+                      type="button"
+                      className="flex w-full flex-col rounded-md px-3 py-2 text-left hover:bg-slate-50"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => selectClient(client)}
+                    >
+                      <span className="text-sm font-semibold text-slate-900">{client.name}</span>
+                      <span className="text-xs text-slate-500">
+                        {[client.contact_person, client.city, client.phone].filter(Boolean).join(' • ') || 'No extra details'}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </Card>
+          )}
         </div>
 
-        <select style={inp} value={clientId || ''} onChange={handleSelect}>
-          <option value="">— {clients.length} clients, select one —</option>
-          {filteredClients.map(c => (
-            <option key={c.id} value={c.id}>
-              {c.name}{c.city ? ' — ' + c.city : ''}{c.category ? ' (' + c.category + ')' : ''}
-            </option>
-          ))}
-        </select>
-
-        {/* Selected client info card */}
-        {selectedClient && (
-          <div style={{ marginTop: '10px', padding: '12px 14px', backgroundColor: '#f8f8ff', border: '1px solid #e0e0f0', borderRadius: '8px', fontSize: '13px' }}>
-            <div style={{ fontWeight: 'bold', color: '#1a1a1a', marginBottom: '4px', fontSize: '14px' }}>{selectedClient.name}</div>
-            {selectedClient.contact_person && <div style={{ color: '#555', marginBottom: '2px' }}>👤 {selectedClient.contact_person}</div>}
-            {selectedClient.phone && <div style={{ color: '#555', marginBottom: '2px' }}>📞 {selectedClient.phone}</div>}
-            {selectedClient.email && <div style={{ color: '#555', marginBottom: '2px' }}>✉ {selectedClient.email}</div>}
-            {selectedClient.address && <div style={{ color: '#555', marginBottom: '2px' }}>📍 {selectedClient.address}{selectedClient.city ? ', ' + selectedClient.city : ''}{selectedClient.state ? ', ' + selectedClient.state : ''}</div>}
-            {selectedClient.category && <div style={{ marginTop: '4px' }}><span style={{ fontSize: '11px', backgroundColor: '#e8e8ff', color: '#5555cc', padding: '2px 8px', borderRadius: '10px' }}>{selectedClient.category}</span></div>}
-          </div>
-        )}
+        {selectedSummary ? (
+          <Card className="border-slate-200 bg-slate-50 p-4">
+            <div className="text-sm font-semibold text-slate-900">{selectedSummary.name}</div>
+            {selectedClient?.contact_person ? <div className="mt-1 text-sm text-slate-600">{selectedClient.contact_person}</div> : null}
+            {selectedClient?.phone ? <div className="text-sm text-slate-600">{selectedClient.phone}</div> : null}
+            {selectedClient?.email ? <div className="text-sm text-slate-600">{selectedClient.email}</div> : null}
+            {selectedClient?.address ? (
+              <div className="text-sm text-slate-600">
+                {[selectedClient.address, selectedClient.city, selectedClient.state].filter(Boolean).join(', ')}
+              </div>
+            ) : null}
+          </Card>
+        ) : null}
       </div>
     </>
   )

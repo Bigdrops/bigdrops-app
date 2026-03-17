@@ -23,10 +23,10 @@ export default function InvoicePaymentTermsSection({ invoice, updateInvoice }) {
               value={invoice.payment_terms || ''}
               onValueChange={(value) => updateInvoice('payment_terms', value)}
             >
-              <SelectTrigger className="mt-2">
+              <SelectTrigger className="mt-2 bg-white">
                 <SelectValue placeholder="Select payment terms" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" sideOffset={6} className="bg-white">
                 <SelectItem value="Net 30">Net 30</SelectItem>
                 <SelectItem value="Net 60">Net 60</SelectItem>
                 <SelectItem value="Due on receipt">Due on receipt</SelectItem>

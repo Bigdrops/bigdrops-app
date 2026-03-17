@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image, Link } from '@react-pdf/renderer'
 import { planClassicInvoicePages } from './pdfUtils'
+import { getPdfCellValue } from '../useInvoiceColumns.jsx'
 
 const A = '#0F172A'
 
@@ -134,14 +135,6 @@ const getColumnCellStyle = (column) => {
   return styles
 }
 
-const formatMoney = (value) => Number(value || 0).toLocaleString()
-
-const renderRowRateValue = (value, zeroLabel) => {
-  if (value === null || value === undefined || value === '') return '-'
-  if (Number(value) === 0) return zeroLabel
-  return `${Number(value).toLocaleString()}%`
-}
-
 function PageIdentity({ d, invoice }) {
   return (
     <>
@@ -225,7 +218,7 @@ function TableHeader({ columns }) {
   return (
     <View style={s.tableHeader}>
       {columns.map((column) => (
-        <Text key={column.key} style={[s.thText, { width: column.width, textAlign: column.align }]}>
+        <Text key={column.sourceKey || column.key} style={[s.thText, { width: column.width, textAlign: column.align }]}>
           {column.label}
         </Text>
       ))}
@@ -269,7 +262,7 @@ function RowSet({ rows, columns, itemCounterRef }) {
         {columns.map((column) => {
           if (column.key === 'num') {
             return (
-              <Text key={column.key} style={[getColumnCellStyle(column), { color: '#999', alignSelf: 'flex-start' }]}>
+              <Text key={column.sourceKey || column.key} style={[getColumnCellStyle(column), { color: '#999', alignSelf: 'flex-start' }]}>
                 {itemCounterRef.current}
               </Text>
             )
@@ -277,72 +270,23 @@ function RowSet({ rows, columns, itemCounterRef }) {
 
           if (column.key === 'desc') {
             return (
-              <View key={column.key} style={[s.descCell, { width: column.width }]}>
+              <View key={column.sourceKey || column.key} style={[s.descCell, { width: column.width }]}>
                 <Text style={s.descText}>{item.description}</Text>
                 {item.sub_description ? <Text style={s.subDescText}>{item.sub_description}</Text> : null}
               </View>
             )
           }
-
-          if (column.key === 'make') {
-            return (
-              <Text key={column.key} style={[getColumnCellStyle(column), s.cellMuted, { alignSelf: 'flex-start' }]}>
-                {item.make || ''}
-              </Text>
-            )
-          }
-
-          if (column.key === 'qty') {
-            return (
-              <Text key={column.key} style={[getColumnCellStyle(column), { alignSelf: 'flex-start' }]}>
-                {item.quantity}
-              </Text>
-            )
-          }
-
-          if (column.key === 'unit') {
-            return (
-              <Text key={column.key} style={[getColumnCellStyle(column), s.cellMuted, { alignSelf: 'flex-start' }]}>
-                {item.unit || ''}
-              </Text>
-            )
-          }
-
-          if (column.key === 'price') {
-            return (
-              <Text key={column.key} style={[getColumnCellStyle(column), { alignSelf: 'flex-start' }]}>
-                {formatMoney(item.unit_price)}
-              </Text>
-            )
-          }
-
-          if (column.key === 'install_rate') {
-            return (
-              <Text key={column.key} style={[getColumnCellStyle(column), { alignSelf: 'flex-start' }]}>
-                {item.install_rate > 0 ? formatMoney(item.install_rate) : '-'}
-              </Text>
-            )
-          }
-
-          if (column.key === 'vat_rate') {
-            return (
-              <Text key={column.key} style={[getColumnCellStyle(column), { alignSelf: 'flex-start' }]}>
-                {renderRowRateValue(item.vat_rate, 'Exempt')}
-              </Text>
-            )
-          }
-
-          if (column.key === 'discount_rate') {
-            return (
-              <Text key={column.key} style={[getColumnCellStyle(column), { alignSelf: 'flex-start' }]}>
-                {renderRowRateValue(item.discount_rate, 'No disc')}
-              </Text>
-            )
-          }
-
+          const value = getPdfCellValue(column, item, { amount, installColumn: d.installColumn })
           return (
-            <Text key={column.key} style={[getColumnCellStyle(column), { alignSelf: 'flex-start' }]}>
-              {formatMoney(amount)}
+            <Text
+              key={column.sourceKey || column.key}
+              style={[
+                getColumnCellStyle(column),
+                column.align !== 'right' && column.key !== 'amount' ? s.cellMuted : null,
+                { alignSelf: 'flex-start' },
+              ]}
+            >
+              {value}
             </Text>
           )
         })}

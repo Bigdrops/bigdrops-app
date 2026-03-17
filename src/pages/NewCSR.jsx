@@ -4,15 +4,15 @@ import { pdf } from '@react-pdf/renderer'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
-import { Template3 } from './ViewCSR'
 import {
+  buildCsrPreviewData,
   createDefaultCsr,
   DEFAULT_CSR_META,
   DEFAULT_MATERIAL_ROW,
-  getCsrViewData,
   getNextCsrNumber,
   serializeCsrMaterials,
 } from '../components/csr/csrUtils'
+import { getCsrPdfDocument } from '../components/csr/CSRPreviewTemplates'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -202,8 +202,9 @@ export default function NewCSR() {
 
     if (isField) {
       try {
+        const previewData = buildCsrPreviewData(csrData)
         const blob = await pdf(
-          <Template3 csr={getCsrViewData(csrData)} branding={EMPTY_BRANDING} />
+          getCsrPdfDocument({ csr: previewData, branding: EMPTY_BRANDING, template: '3' })
         ).toBlob()
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')

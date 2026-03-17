@@ -183,12 +183,26 @@ export function serializeCsrMaterials(rows, meta) {
   })
 }
 
-export function getCsrViewData(csr) {
-  const parsed = parseCsrMaterials(csr.materials_used, csr)
+export function buildCsrPreviewData(csr, options = {}) {
+  const parsed = options.meta || options.materialsRows
+    ? {
+        materialsRows:
+          Array.isArray(options.materialsRows) && options.materialsRows.length > 0
+            ? options.materialsRows.map((row) => ({ ...DEFAULT_MATERIAL_ROW, ...row }))
+            : [{ ...DEFAULT_MATERIAL_ROW }],
+        materialsText: options.materialsText || '',
+        meta: { ...DEFAULT_CSR_META, ...(options.meta || {}) },
+      }
+    : parseCsrMaterials(csr.materials_used, csr)
+  const materialsText =
+    options.materialsText ||
+    parsed.materialsText ||
+    formatMaterialsRows(parsed.materialsRows, parsed.meta.materialsOutputStyle)
+
   return {
     ...csr,
     materialsRows: parsed.materialsRows,
-    materialsText: parsed.materialsText,
+    materialsText,
     meta: parsed.meta,
     modelLabel: parsed.meta.modelLabel || DEFAULT_CSR_META.modelLabel,
     serialLabel: parsed.meta.serialLabel || DEFAULT_CSR_META.serialLabel,
@@ -200,4 +214,26 @@ export function getCsrViewData(csr) {
     showTechnicianSignLine: !!parsed.meta.showTechnicianSignLine,
     technicianRemarks: csr.engineer_remarks || '',
   }
+}
+
+export function getCsrBranding(settings = {}) {
+  const companyName = settings.company_name || ''
+  const companyTagline = settings.company_tagline || ''
+  const contactBits = [
+    settings.company_address,
+    settings.company_city,
+    settings.company_phone ? `Tel: ${settings.company_phone}` : '',
+    settings.company_email,
+  ].filter(Boolean)
+
+  return {
+    companyName,
+    companyTagline,
+    contactLine: contactBits.join('  |  '),
+    footerText: settings.footer_text || contactBits.join('  |  ') || '',
+  }
+}
+
+export function getCsrViewData(csr) {
+  return buildCsrPreviewData(csr)
 }

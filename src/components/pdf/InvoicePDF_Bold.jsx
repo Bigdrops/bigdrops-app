@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image, Link } from '@react-pdf/renderer'
 import { stripHtml, extractInvoiceData } from './pdfUtils'
+import { getPdfCellValue } from '../useInvoiceColumns.jsx'
 
 const BAND = '#0F172A'
 const A    = '#3B82F6' // blue accent for totals/labels
@@ -86,9 +87,15 @@ const s = StyleSheet.create({
 export default function InvoicePDF_Bold({ invoice, items = [], client, settings = {} }) {
   const d = extractInvoiceData(invoice, items, client, settings)
   let itemCount = 0
-  const hasMake =
-    d.isColVisible('make') &&
-    items.some(i => i.make)
+  const columns = d.pdfColumns.filter((column) => {
+    if (column.key === 'make') return items.some((item) => item.make)
+    return true
+  })
+  const columnStyle = (column, extra = {}) => ({
+    flex: column.pdfFlex,
+    textAlign: column.align,
+    ...extra,
+  })
 
   return (
     <Document>
@@ -140,13 +147,9 @@ export default function InvoicePDF_Bold({ invoice, items = [], client, settings 
 
           <View style={s.table}>
             <View style={s.tableHeader}>
-              <Text style={[s.thText, s.cNum]}>#</Text>
-              <Text style={[s.thText, s.cDesc]}>Description</Text>
-              {hasMake ? <Text style={[s.thText, s.cMake]}>Make</Text> : null}
-              <Text style={[s.thText, s.cQty]}>Qty</Text>
-              {d.isColVisible('unit') ? <Text style={[s.thText, s.cUnit]}>Unit</Text> : null}
-              <Text style={[s.thText, s.cPrice]}>Unit Price</Text>
-              <Text style={[s.thText, s.cAmt]}>Amount (NGN)</Text>
+              {columns.map((column) => (
+                <Text key={column.key} style={[s.thText, columnStyle(column)]}>{column.label}</Text>
+              ))}
             </View>
             {d.renderRows.map((row, ri) => {
               if (row._type === 'group_header') return (
@@ -166,16 +169,27 @@ export default function InvoicePDF_Bold({ invoice, items = [], client, settings 
               const rowStyle = itemCount % 2 === 0 ? s.tableRowAlt : s.tableRow
               return (
                 <View key={'item_' + ri} style={rowStyle} wrap={false}>
-                  <Text style={[{ color: '#999', alignSelf: 'flex-start' }, s.cNum]}>{itemCount}</Text>
-                  <View style={[s.cDesc, { alignSelf: 'flex-start' }]}>
-                    <Text style={s.descText}>{item.description}</Text>
-                    {item.sub_description ? <Text style={s.subDescText}>{item.sub_description}</Text> : null}
-                  </View>
-                  {hasMake ? <Text style={[s.cMake, { alignSelf: 'flex-start', color: '#555' }]}>{item.make || ''}</Text> : null}
-                  <Text style={[s.cQty, { alignSelf: 'flex-start' }]}>{item.quantity}</Text>
-                  {d.isColVisible('unit') ? <Text style={[s.cUnit, { alignSelf: 'flex-start', color: '#555' }]}>{item.unit || ''}</Text> : null}
-                  <Text style={[s.cPrice, { alignSelf: 'flex-start' }]}>{Number(item.unit_price || 0).toLocaleString()}</Text>
-                  <Text style={[s.cAmt, { alignSelf: 'flex-start' }]}>{amount.toLocaleString()}</Text>
+                  {columns.map((column) => {
+                    if (column.key === 'num') {
+                      return <Text key={column.key} style={[columnStyle(column, { alignSelf: 'flex-start', color: '#999' })]}>{itemCount}</Text>
+                    }
+                    if (column.key === 'description') {
+                      return (
+                        <View key={column.key} style={columnStyle(column, { alignSelf: 'flex-start' })}>
+                          <Text style={s.descText}>{item.description}</Text>
+                          {item.sub_description ? <Text style={s.subDescText}>{item.sub_description}</Text> : null}
+                        </View>
+                      )
+                    }
+                    return (
+                      <Text
+                        key={column.key}
+                        style={[columnStyle(column, { alignSelf: 'flex-start', color: column.align === 'right' ? '#1a1a1a' : '#555' })]}
+                      >
+                        {getPdfCellValue(column, item, { amount, installColumn: d.installColumn })}
+                      </Text>
+                    )
+                  })}
                 </View>
               )
             })}

@@ -23,9 +23,13 @@ import { Switch } from '@/components/ui/switch'
 import {
   makeEmptyItem,
   makeEmptyGroup,
+  makeExtraCharge,
+  makeFieldEntry,
   toDbItem,
   useInvoiceColumns,
   calcTotals,
+  buildCalculationInputs,
+  ensureUiKey,
 } from '../components/useInvoiceColumns.jsx'
 import {
   inp,
@@ -123,7 +127,7 @@ export default function NewInvoice() {
   const [items, setItems] = useState(
     prefillItems
       ? prefillItems.map((i) => ({
-          ...i,
+          ...ensureUiKey(i),
           row_type: i.row_type || 'standard',
           group_id: i.group_id || null,
           group_name: i.group_name || '',
@@ -395,6 +399,7 @@ export default function NewInvoice() {
       discountType,
       discountTiming,
       whtType,
+      calculationInputs: buildCalculationInputs({ invoice, discountType, discountTiming, whtType }),
       groupMeta,
     }
 
@@ -470,7 +475,7 @@ export default function NewInvoice() {
     )
 
     return (
-      <tr key={index} style={{ backgroundColor: '#333' }}>
+      <tr key={item._uiKey || item.id || index} style={{ backgroundColor: '#333' }}>
         {reorderBtns}
         <td style={{ padding: '10px 8px', textAlign: 'center', color: '#888' }}>—</td>
         <td colSpan={visCount} style={{ padding: '10px 12px' }}>
@@ -685,7 +690,7 @@ export default function NewInvoice() {
 
                 return (
                   <MobileItemCard
-                    key={`group_item_${group.id}_${itemIndex}`}
+                    key={item._uiKey || item.id || `group_item_${group.id}_${itemIndex}`}
                     item={groupItem}
                     index={itemIndex}
                     number={number}
@@ -739,7 +744,7 @@ export default function NewInvoice() {
         number++
         return (
           <MobileItemCard
-            key={`ungrouped_${index}`}
+            key={item._uiKey || item.id || `ungrouped_${index}`}
             item={item}
             index={index}
             number={number}
@@ -909,7 +914,7 @@ export default function NewInvoice() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCustomFields((f) => [...f, { label: '', value: '' }])}
+                onClick={() => setCustomFields((fields) => [...fields, makeFieldEntry({ label: '', value: '' })])}
               >
                 + Add Field
               </Button>
@@ -919,33 +924,39 @@ export default function NewInvoice() {
                 Fields like Engine No, Serial No, appear on invoice header.
               </div>
             )}
-            {customFields.map((field, i) => (
+            {customFields.map((field) => (
               <div
-                key={i}
+                key={field.id}
                 className="grid grid-cols-[1fr_1fr_36px] items-center gap-2"
               >
                 <Input
                   value={field.label}
                   onChange={(e) => {
-                    const u = [...customFields]
-                    u[i] = { ...u[i], label: e.target.value }
-                    setCustomFields(u)
+                    setCustomFields((fields) =>
+                      fields.map((entry) =>
+                        entry.id === field.id ? { ...entry, label: e.target.value } : entry,
+                      ),
+                    )
                   }}
                   placeholder="Label (e.g. Engine No)"
                 />
                 <Input
                   value={field.value}
                   onChange={(e) => {
-                    const u = [...customFields]
-                    u[i] = { ...u[i], value: e.target.value }
-                    setCustomFields(u)
+                    setCustomFields((fields) =>
+                      fields.map((entry) =>
+                        entry.id === field.id ? { ...entry, value: e.target.value } : entry,
+                      ),
+                    )
                   }}
                   placeholder="Value"
                 />
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setCustomFields(customFields.filter((_, j) => j !== i))}
+                  onClick={() =>
+                    setCustomFields((fields) => fields.filter((entry) => entry.id !== field.id))
+                  }
                   className="text-red-600 hover:text-red-600 hover:bg-red-50"
                 >
                   ×
@@ -1448,7 +1459,7 @@ Imported rows are added as invoice items.`}
 
                       return (
                         <tr
-                          key={index}
+                          key={item._uiKey || item.id || index}
                           style={{
                             borderBottom: '1px solid #eee',
                             backgroundColor: index % 2 === 0 ? '#fafafa' : 'white',
@@ -1833,18 +1844,20 @@ Imported rows are added as invoice items.`}
               </div>
             ))}
 
-            {extraCharges.map((charge, i) => (
+            {extraCharges.map((charge) => (
               <div
-                key={i}
+                key={charge.id}
                 className="flex items-center gap-2"
               >
                 <Input
                   className="flex-1 text-xs"
                   value={charge.label}
                   onChange={(e) => {
-                    const u = [...extraCharges]
-                    u[i] = { ...u[i], label: e.target.value }
-                    setExtraCharges(u)
+                    setExtraCharges((charges) =>
+                      charges.map((entry) =>
+                        entry.id === charge.id ? { ...entry, label: e.target.value } : entry,
+                      ),
+                    )
                   }}
                   placeholder="Charge name"
                 />
@@ -1854,17 +1867,25 @@ Imported rows are added as invoice items.`}
                   className="w-[90px] text-right"
                   value={charge.value || 0}
                   onChange={(e) => {
-                    const u = [...extraCharges]
-                    u[i] = { ...u[i], value: Number(e.target.value) }
-                    setExtraCharges(u)
+                    setExtraCharges((charges) =>
+                      charges.map((entry) =>
+                        entry.id === charge.id
+                          ? { ...entry, value: Number(e.target.value) }
+                          : entry,
+                      ),
+                    )
                   }}
                 />
                 <Button
                   type="button"
                   onClick={() => {
-                    const u = [...extraCharges]
-                    u[i] = { ...u[i], withTax: !u[i].withTax }
-                    setExtraCharges(u)
+                    setExtraCharges((charges) =>
+                      charges.map((entry) =>
+                        entry.id === charge.id
+                          ? { ...entry, withTax: !entry.withTax }
+                          : entry,
+                      ),
+                    )
                   }}
                   variant="ghost"
                   className={`h-9 px-2 text-[11px] font-bold ${charge.withTax ? 'text-blue-700' : 'text-slate-500'}`}
@@ -1874,7 +1895,7 @@ Imported rows are added as invoice items.`}
                 <Button
                   type="button"
                   onClick={() =>
-                    setExtraCharges(extraCharges.filter((_, j) => j !== i))
+                    setExtraCharges((charges) => charges.filter((entry) => entry.id !== charge.id))
                   }
                   variant="ghost"
                   className="h-9 px-2 text-lg text-red-700"
@@ -1885,24 +1906,24 @@ Imported rows are added as invoice items.`}
             ))}
 
             <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                onClick={() =>
-                  setExtraCharges([...extraCharges, { label: '', value: 0, withTax: true }])
-                }
-                variant="outline"
-                className="border-dashed border-blue-700 text-xs text-blue-700"
-              >
+                <Button
+                  type="button"
+                  onClick={() =>
+                    setExtraCharges((charges) => [...charges, makeExtraCharge({ withTax: true })])
+                  }
+                  variant="outline"
+                  className="border-dashed border-blue-700 text-xs text-blue-700"
+                >
                 + Charge (with VAT)
               </Button>
-              <Button
-                type="button"
-                onClick={() =>
-                  setExtraCharges([...extraCharges, { label: '', value: 0, withTax: false }])
-                }
-                variant="outline"
-                className="border-dashed text-xs text-slate-500"
-              >
+                <Button
+                  type="button"
+                  onClick={() =>
+                    setExtraCharges((charges) => [...charges, makeExtraCharge({ withTax: false })])
+                  }
+                  variant="outline"
+                  className="border-dashed text-xs text-slate-500"
+                >
                 + Charge (no VAT)
               </Button>
             </div>
