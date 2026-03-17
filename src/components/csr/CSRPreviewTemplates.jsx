@@ -8,27 +8,179 @@ import {
 function createPdfStyles(variant) {
   const palette = CSR_TEMPLATE_VARIANTS[variant]
   return StyleSheet.create({
-    page: { fontFamily: 'Helvetica', fontSize: palette.fontSize, padding: palette.pagePadding, backgroundColor: palette.pageBg, color: palette.pageFg },
-    header: { backgroundColor: palette.headerBg, color: palette.headerFg, padding: palette.compact ? '8 10' : '10 12', marginBottom: palette.compact ? 8 : 10 },
-    headerName: { fontSize: palette.headerNameSize, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
+    page: {
+      fontFamily: 'Helvetica',
+      fontSize: palette.fontSize,
+      padding: palette.pagePadding,
+      backgroundColor: palette.pageBg,
+      color: palette.pageFg,
+    },
+    header: {
+      backgroundColor: palette.headerBg,
+      color: palette.headerFg,
+      padding: palette.compact ? '8 10' : '10 12',
+      marginBottom: palette.compact ? 8 : 10,
+      borderRadius: palette.headerMode === 'editorialSplit' ? 12 : 8,
+    },
+    headerSplit: {
+      flexDirection: 'row',
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginBottom: 10,
+    },
+    headerSplitMain: {
+      flex: 1.5,
+      backgroundColor: palette.headerBg,
+      color: palette.headerFg,
+      padding: palette.compact ? '10 12' : '12 14',
+    },
+    headerSplitMeta: {
+      width: 118,
+      backgroundColor: palette.accent,
+      color: '#ffffff',
+      padding: palette.compact ? '10 10' : '12 12',
+      justifyContent: 'space-between',
+    },
+    ribbonCard: {
+      borderWidth: 1,
+      borderColor: palette.border,
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginBottom: 10,
+      backgroundColor: '#ffffff',
+    },
+    ribbonBand: {
+      backgroundColor: palette.headerBg,
+      color: palette.headerFg,
+      padding: palette.compact ? '8 10' : '10 12',
+    },
+    ribbonBody: {
+      padding: palette.compact ? '8 10' : '10 12',
+    },
+    headerName: {
+      fontSize: palette.headerNameSize,
+      fontFamily: 'Helvetica-Bold',
+      textTransform: 'uppercase',
+    },
     headerTagline: { fontSize: palette.compact ? 7 : 8, marginTop: 2 },
     headerContact: { fontSize: palette.compact ? 6.8 : 7.5, marginTop: 2 },
-    reportTitle: { textAlign: 'center', fontFamily: 'Helvetica-Bold', fontSize: palette.titleSize, marginBottom: palette.compact ? 8 : 10, textTransform: 'uppercase', color: palette.headerBg },
-    section: { borderWidth: 1, borderColor: palette.border, marginBottom: palette.compact ? 6 : 8 },
-    sectionTitle: { backgroundColor: palette.mutedBg, color: palette.headerBg, fontFamily: 'Helvetica-Bold', fontSize: palette.sectionTitleSize, padding: palette.compact ? '3 5' : '4 6', textTransform: 'uppercase' },
+    metaLabel: {
+      fontSize: palette.compact ? 6.4 : 7,
+      fontFamily: 'Helvetica-Bold',
+      textTransform: 'uppercase',
+      opacity: 0.9,
+    },
+    metaValue: {
+      fontSize: palette.compact ? 8.8 : 10.2,
+      fontFamily: 'Helvetica-Bold',
+      marginTop: 2,
+    },
+    reportTitle: {
+      textAlign: palette.headerMode === 'compactRibbon' ? 'left' : 'center',
+      fontFamily: 'Helvetica-Bold',
+      fontSize: palette.titleSize,
+      marginBottom: palette.compact ? 8 : 10,
+      textTransform: 'uppercase',
+      color: palette.headerBg,
+      letterSpacing: palette.headerMode === 'editorialSplit' ? 1 : 0.3,
+    },
+    reportSubtitle: {
+      fontSize: palette.compact ? 6.8 : 7.4,
+      color: '#64748B',
+      marginTop: 3,
+    },
+    section: {
+      borderWidth: 1,
+      borderColor: palette.border,
+      marginBottom: palette.compact ? 6 : 8,
+      borderRadius: palette.compact ? 8 : 10,
+      overflow: 'hidden',
+      backgroundColor: palette.sectionBg || '#ffffff',
+    },
+    sectionTitle: {
+      backgroundColor: palette.sectionTitleBg || palette.mutedBg,
+      color: palette.sectionTitleFg || palette.headerBg,
+      fontFamily: 'Helvetica-Bold',
+      fontSize: palette.sectionTitleSize,
+      padding: palette.compact ? '3 5' : '4 6',
+      textTransform: 'uppercase',
+      letterSpacing: 0.4,
+    },
     sectionBody: { padding: palette.compact ? '5 6' : '6 8' },
     row: { flexDirection: 'row', gap: palette.compact ? 6 : 8, marginBottom: palette.compact ? 4 : 6 },
     field: { flex: 1 },
-    label: { fontFamily: 'Helvetica-Bold', fontSize: palette.compact ? 6.8 : 7.5, color: palette.accent, marginBottom: 2, textTransform: 'uppercase' },
+    label: {
+      fontFamily: 'Helvetica-Bold',
+      fontSize: palette.compact ? 6.8 : 7.5,
+      color: palette.accent,
+      marginBottom: 2,
+      textTransform: 'uppercase',
+    },
     value: { fontSize: palette.valueSize },
     blockValue: { fontSize: palette.valueSize, lineHeight: palette.compact ? 1.2 : 1.4, minHeight: palette.compact ? 8 : 14 },
     readingsRow: { flexDirection: 'row' },
-    readingsHeader: { flex: 1, padding: palette.compact ? '3 2' : '4 3', fontSize: palette.compact ? 6.5 : 7.5, fontFamily: 'Helvetica-Bold', textAlign: 'center', borderWidth: 1, borderColor: palette.border, backgroundColor: palette.mutedBg },
-    readingsCell: { flex: 1, padding: palette.compact ? '3 2' : '4 3', fontSize: palette.compact ? 7.2 : 8.5, textAlign: 'center', borderWidth: 1, borderColor: palette.border, borderTopWidth: 0 },
+    readingsHeader: {
+      flex: 1,
+      padding: palette.compact ? '3 2' : '4 3',
+      fontSize: palette.compact ? 6.5 : 7.5,
+      fontFamily: 'Helvetica-Bold',
+      textAlign: 'center',
+      borderWidth: 1,
+      borderColor: palette.border,
+      backgroundColor: palette.mutedBg,
+    },
+    readingsCell: {
+      flex: 1,
+      padding: palette.compact ? '3 2' : '4 3',
+      fontSize: palette.compact ? 7.2 : 8.5,
+      textAlign: 'center',
+      borderWidth: 1,
+      borderColor: palette.border,
+      borderTopWidth: 0,
+    },
     statusWrap: { marginTop: palette.compact ? 2 : 4 },
     statusRow: { flexDirection: 'row', alignItems: 'center', marginBottom: palette.compact ? 2 : 3 },
-    statusBox: { width: palette.compact ? 8 : 10, height: palette.compact ? 8 : 10, borderWidth: 1, borderColor: '#111827', marginRight: 4, alignItems: 'center', justifyContent: 'center' },
-    statusBoxActive: { width: palette.compact ? 8 : 10, height: palette.compact ? 8 : 10, borderWidth: 1, borderColor: '#111827', marginRight: 4, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.headerBg },
+    statusBox: {
+      width: palette.compact ? 8 : 10,
+      height: palette.compact ? 8 : 10,
+      borderWidth: 1,
+      borderColor: '#111827',
+      marginRight: 4,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    statusBoxActive: {
+      width: palette.compact ? 8 : 10,
+      height: palette.compact ? 8 : 10,
+      borderWidth: 1,
+      borderColor: '#111827',
+      marginRight: 4,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: palette.headerBg,
+    },
+    statusCapsule: {
+      minWidth: palette.compact ? 24 : 28,
+      padding: palette.compact ? '2 5' : '3 6',
+      marginRight: 5,
+      borderRadius: 999,
+      textAlign: 'center',
+      fontSize: palette.compact ? 5.8 : 6.2,
+      fontFamily: 'Helvetica-Bold',
+      backgroundColor: palette.mutedBg,
+      color: '#64748B',
+    },
+    statusCapsuleActive: {
+      minWidth: palette.compact ? 24 : 28,
+      padding: palette.compact ? '2 5' : '3 6',
+      marginRight: 5,
+      borderRadius: 999,
+      textAlign: 'center',
+      fontSize: palette.compact ? 5.8 : 6.2,
+      fontFamily: 'Helvetica-Bold',
+      backgroundColor: palette.headerBg,
+      color: palette.headerFg,
+    },
     statusMark: { color: '#ffffff', fontSize: palette.compact ? 5 : 6 },
     ackGrid: { flexDirection: 'row', gap: palette.compact ? 6 : 10 },
     ackCell: { flex: 1 },
@@ -55,22 +207,96 @@ function PdfField({ styles, label, value, block }) {
   )
 }
 
+function PdfStatusRow({ styles, csr, option, variant }) {
+  const active = csr.status === option
+  const capsule = CSR_TEMPLATE_VARIANTS[variant].statusStyle === 'capsule'
+
+  return (
+    <View style={styles.statusRow}>
+      {capsule ? (
+        <Text style={active ? styles.statusCapsuleActive : styles.statusCapsule}>
+          {active ? 'Yes' : 'No'}
+        </Text>
+      ) : (
+        <View style={active ? styles.statusBoxActive : styles.statusBox}>
+          {active ? <Text style={styles.statusMark}>{'\u2713'}</Text> : null}
+        </View>
+      )}
+      <Text style={styles.value}>{option}</Text>
+    </View>
+  )
+}
+
+function PdfHeader({ styles, csr, branding, variant }) {
+  const palette = CSR_TEMPLATE_VARIANTS[variant]
+  const hasBranding = branding.companyName || branding.companyTagline || branding.contactLine
+  const needsStructuredHeader = palette.headerMode === 'editorialSplit' || palette.headerMode === 'compactRibbon'
+
+  if (!hasBranding && !needsStructuredHeader) return null
+
+  if (palette.headerMode === 'editorialSplit') {
+    return (
+      <View style={styles.headerSplit}>
+        <View style={styles.headerSplitMain}>
+          {branding.companyName ? <Text style={styles.headerName}>{branding.companyName}</Text> : null}
+          {branding.companyTagline ? <Text style={styles.headerTagline}>{branding.companyTagline}</Text> : null}
+          {branding.contactLine ? <Text style={styles.headerContact}>{branding.contactLine}</Text> : null}
+          <Text style={{ marginTop: palette.compact ? 10 : 12, fontSize: palette.compact ? 12 : 14, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 1.1 }}>Customer Service Report</Text>
+        </View>
+        <View style={styles.headerSplitMeta}>
+          <View>
+            <Text style={styles.metaLabel}>CSR No.</Text>
+            <Text style={styles.metaValue}>{csr.csr_number}</Text>
+          </View>
+          <View>
+            <Text style={styles.metaLabel}>Issued</Text>
+            <Text style={styles.metaValue}>{csr.date}</Text>
+          </View>
+        </View>
+      </View>
+    )
+  }
+
+  if (palette.headerMode === 'compactRibbon') {
+    return (
+      <View style={styles.ribbonCard}>
+        <View style={styles.ribbonBand}>
+          {branding.companyName ? <Text style={styles.headerName}>{branding.companyName}</Text> : null}
+          {branding.companyTagline ? <Text style={styles.headerTagline}>{branding.companyTagline}</Text> : null}
+          {branding.contactLine ? <Text style={styles.headerContact}>{branding.contactLine}</Text> : null}
+        </View>
+        <View style={styles.ribbonBody}>
+          <Text style={styles.reportTitle}>Customer Service Report</Text>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            <Text style={{ fontSize: palette.compact ? 7 : 8, fontFamily: 'Helvetica-Bold', color: palette.accent }}>{csr.csr_number}</Text>
+            <Text style={{ fontSize: palette.compact ? 7 : 8, color: '#64748B' }}>{csr.date}</Text>
+          </View>
+        </View>
+      </View>
+    )
+  }
+
+  return (
+    <View style={styles.header}>
+      {branding.companyName ? <Text style={styles.headerName}>{branding.companyName}</Text> : null}
+      {branding.companyTagline ? <Text style={styles.headerTagline}>{branding.companyTagline}</Text> : null}
+      {branding.contactLine ? <Text style={styles.headerContact}>{branding.contactLine}</Text> : null}
+    </View>
+  )
+}
+
 function TemplateBase({ csr, branding, variant }) {
   const styles = createPdfStyles(variant)
+  const palette = CSR_TEMPLATE_VARIANTS[variant]
   const readings = CSR_READING_FIELDS.map(({ key, label }) => [label, csr[key]])
+  const showStandaloneTitle = palette.headerMode !== 'compactRibbon' && palette.headerMode !== 'editorialSplit'
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {(branding.companyName || branding.companyTagline || branding.contactLine) ? (
-          <View style={styles.header}>
-            {branding.companyName ? <Text style={styles.headerName}>{branding.companyName}</Text> : null}
-            {branding.companyTagline ? <Text style={styles.headerTagline}>{branding.companyTagline}</Text> : null}
-            {branding.contactLine ? <Text style={styles.headerContact}>{branding.contactLine}</Text> : null}
-          </View>
-        ) : null}
+        <PdfHeader styles={styles} csr={csr} branding={branding} variant={variant} />
 
-        <Text style={styles.reportTitle}>Customer Service Report</Text>
+        {showStandaloneTitle ? <Text style={styles.reportTitle}>Customer Service Report</Text> : null}
 
         <PdfSection styles={styles} title="Customer Details">
           <View style={styles.row}>
@@ -147,12 +373,7 @@ function TemplateBase({ csr, branding, variant }) {
               <View style={styles.statusWrap}>
                 <Text style={styles.label}>Status After Service</Text>
                 {CSR_STATUS_OPTIONS_PDF.map((option) => (
-                  <View key={option} style={styles.statusRow}>
-                    <View style={csr.status === option ? styles.statusBoxActive : styles.statusBox}>
-                      {csr.status === option ? <Text style={styles.statusMark}>{'\u2713'}</Text> : null}
-                    </View>
-                    <Text style={styles.value}>{option}</Text>
-                  </View>
+                  <PdfStatusRow key={option} styles={styles} csr={csr} option={option} variant={variant} />
                 ))}
               </View>
             </PdfSection>

@@ -85,14 +85,26 @@ function ToggleRow({ title, description, checked, onCheckedChange }) {
           onCheckedChange(!checked)
         }
       }}
-      className="flex min-h-12 cursor-pointer flex-col gap-3 rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:rounded-2xl"
+      className={`flex min-h-12 cursor-pointer flex-col gap-3 rounded-xl border px-4 py-3 shadow-sm transition-colors sm:flex-row sm:items-center sm:justify-between sm:rounded-2xl ${
+        checked
+          ? 'border-red-200 bg-gradient-to-r from-red-50 via-white to-amber-50'
+          : 'border-slate-200 bg-gradient-to-r from-slate-50 to-white'
+      }`}
     >
       <div className="min-w-0">
-        <div className="text-sm font-semibold text-slate-900">{title}</div>
+        <div className="flex items-center gap-2">
+          <div className={`h-2.5 w-2.5 rounded-full ${checked ? 'bg-red-500' : 'bg-slate-300'}`} />
+          <div className="text-sm font-semibold text-slate-900">{title}</div>
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] ${checked ? 'bg-red-100 text-red-700' : 'bg-slate-200 text-slate-600'}`}>
+            {checked ? 'On' : 'Off'}
+          </span>
+        </div>
         <div className="text-xs leading-5 text-slate-600">{description}</div>
       </div>
       <div className="flex justify-end sm:justify-start" onClick={(event) => event.stopPropagation()}>
-        <Switch checked={checked} onCheckedChange={onCheckedChange} />
+        <div className={`rounded-full border px-2 py-1 ${checked ? 'border-red-200 bg-white shadow-[0_0_0_4px_rgba(254,226,226,0.8)]' : 'border-slate-200 bg-white'}`}>
+          <Switch checked={checked} onCheckedChange={onCheckedChange} />
+        </div>
       </div>
     </div>
   )
