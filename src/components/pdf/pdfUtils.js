@@ -1,4 +1,4 @@
-import { BUILTIN_COLUMNS, getPdfColumns, getPdfCellValue } from '../useInvoiceColumns.jsx'
+import { BUILTIN_COLUMNS, getPdfColumns } from '../useInvoiceColumns.jsx'
 
 export const stripHtml = (html) => {
   if (!html) return ''
@@ -49,57 +49,46 @@ export const getInvoiceReferenceMeta = (invoice, cf, poNumber) => [
   ...getHeaderFields(cf).map((field) => ({ label: field.label, value: field.value })),
 ].filter((entry) => hasDisplayValue(entry.value))
 
-export const buildRenderRows = (items, groupMeta) => {
+export const buildRenderRows = (items, computedItems = [], groups = [], groupMeta = {}) => {
   const rows = []
+  const groupTotals = new Map(groups.map((group) => [group.group_id, group]))
+  let currentGroupId = null
   let currentGroupName = null
-  let currentGroupSubtotal = 0
-  let currentGroupShowSubtotal = false
-  const normalizeRate = (value) => {
-    if (value === '' || value === null || value === undefined) return null
-    const parsed = Number(value)
-    return Number.isFinite(parsed) ? parsed : null
-  }
 
   const flushGroup = () => {
-    if (currentGroupName !== null) {
-      if (currentGroupShowSubtotal) {
-        rows.push({ _type: 'group_subtotal', name: currentGroupName, subtotal: currentGroupSubtotal })
+    if (currentGroupId !== null) {
+      const groupConfig = groupMeta[currentGroupId] || groupMeta[currentGroupName] || {}
+      const groupTotalsRow = groupTotals.get(currentGroupId)
+      if (groupConfig.showSubtotal && groupTotalsRow) {
+        rows.push({ _type: 'group_subtotal', name: currentGroupName, subtotal: Number(groupTotalsRow.subtotal || 0) })
       }
       rows.push({ _type: 'group_end', name: currentGroupName })
     }
+    currentGroupId = null
     currentGroupName = null
-    currentGroupSubtotal = 0
-    currentGroupShowSubtotal = false
   }
 
-  items.forEach((item) => {
-    const normalizedItem = {
-      ...item,
-      install_rate: normalizeRate(item.install_rate),
-      vat_rate: normalizeRate(item.vat_rate),
-      discount_rate: normalizeRate(item.discount_rate),
-    }
-
+  items.forEach((item, index) => {
     if (item.row_type === 'group_header') {
       flushGroup()
+      currentGroupId = item.group_id || null
       currentGroupName = item.group_name
-      currentGroupShowSubtotal = !!(
-        groupMeta &&
-        (groupMeta[item.group_id]?.showSubtotal || groupMeta[item.group_name]?.showSubtotal)
-      )
-      currentGroupSubtotal = 0
-      rows.push({ _type: 'group_header', item: normalizedItem })
+      rows.push({ _type: 'group_header', item })
     } else {
-      const amount = Number(item.amount || (Number(item.quantity) * Number(item.unit_price)) || 0)
-      if (currentGroupName !== null) currentGroupSubtotal += amount
-      rows.push({ _type: 'item', item: normalizedItem, amount })
+      const computed = computedItems[index]
+      rows.push({
+        _type: 'item',
+        item,
+        amount: computed?.line_subtotal ?? 0,
+        installValue: computed?.line_install ?? 0,
+      })
     }
   })
   flushGroup()
   return rows
 }
 
-export const extractInvoiceData = (invoice, items, client, settings) => {
+export const extractInvoiceData = (invoice, items, client, settings, result) => {
   const cf = parseCF(invoice.custom_fields)
   const columnConfig = cf.columnConfig?.length ? cf.columnConfig : BUILTIN_COLUMNS
   const isColVisible = (key) => {
@@ -116,23 +105,10 @@ export const extractInvoiceData = (invoice, items, client, settings) => {
   const logoUrl        = settings.logo_url         || ''
   const footerText     = settings.footer_text      || ''
 
-  const subtotal     = Number(invoice.subtotal  || 0)
-  const vatAmount    = Number(invoice.vat       || 0)
-  const discount     = Number(invoice.discount  || 0)
-  const whtAmount    = Number(invoice.wht       || 0)
-  const totalPayable = Number(invoice.total     || 0)
-  const grandTotal   = whtAmount > 0 ? totalPayable + whtAmount : totalPayable
-  const installTotal = Number(invoice.install_rate_total || 0)
   const poNumber = String(invoice.po_number || '').trim()
 
-  const fixedCharges = [
-    { label: cf.chargeLabels?.workmanship    || 'Workmanship',   value: Number(invoice.workmanship   || 0) },
-    { label: cf.chargeLabels?.transportation || 'Transportation', value: Number(invoice.transportation || 0) },
-    { label: cf.chargeLabels?.shipping       || 'Shipping',       value: Number(invoice.shipping      || 0) },
-  ].filter(e => e.value > 0)
-
   const validAttachments = (cf.attachments || []).filter(a => a.label && a.url)
-  const renderRows = buildRenderRows(items, cf.groupMeta)
+  const renderRows = buildRenderRows(items, result?.items || [], result?.groups || [], cf.groupMeta)
   const getColumnConfig = (key) => columnConfig.find((col) => col.key === key)
   const getColumnLabel = (key, fallback) => getColumnConfig(key)?.label || fallback
   const pdfColumns = getPdfColumns(columnConfig)
@@ -144,9 +120,8 @@ export const extractInvoiceData = (invoice, items, client, settings) => {
   return {
     cf, companyName, companyTagline, companyAddress, companyCity,
     companyPhone, companyEmail, logoUrl, footerText, poNumber,
-    subtotal, vatAmount, discount, whtAmount, totalPayable, grandTotal, installTotal,
-    fixedCharges, validAttachments, renderRows, isColVisible, getColumnLabel,
-    pdfColumns, installColumn, headerFields, documentMeta, referenceMeta,
+    validAttachments, renderRows, isColVisible, getColumnLabel,
+    pdfColumns, headerFields, documentMeta, referenceMeta,
   }
 }
 
@@ -188,11 +163,7 @@ const estimateWrappedLines = (text, width, fontSize) => {
 const CLASSIC_TABLE_WIDTH = 515
 
 export const getClassicTableColumns = (d, items) => {
-  const standardItems = items.filter((item) => item.row_type !== 'group_header')
-  const visibleColumns = d.pdfColumns.filter((column) => {
-    if (column.key === 'make') return standardItems.some((item) => cleanText(item.make))
-    return true
-  }).map((column) => ({
+  const visibleColumns = d.pdfColumns.map((column) => ({
     key: column.key === 'description' ? 'desc' : column.key,
     label: column.label,
     width: column.pdfWidth,
@@ -264,15 +235,14 @@ const estimateClassicRowHeight = (row, layout) => {
   return 14 + descriptionLines * 11 + subDescriptionLines * 8 + (subDescriptionLines > 0 ? 2 : 0)
 }
 
-const estimateClassicTotalsReserve = (d, invoice) => {
+const estimateClassicTotalsReserve = (d, invoice, result) => {
   const totalsLineCount =
     2 +
-    (d.isColVisible('install_rate') && d.installTotal > 0 ? 1 : 0) +
-    d.fixedCharges.length +
-    (d.cf.extraCharges || []).filter((c) => Number(c.value) > 0).length +
-    (d.vatAmount > 0 ? 1 : 0) +
-    (d.discount > 0 ? 1 : 0) +
-    (d.whtAmount > 0 ? 2 : 0)
+    (d.isColVisible('install_rate') && Number(result?.installRateTotal || 0) > 0 ? 1 : 0) +
+    (Number(result?.extraChargesTotal || 0) > 0 ? 1 : 0) +
+    (Number(result?.vat || 0) > 0 ? 1 : 0) +
+    (Number(result?.discount || 0) > 0 ? 1 : 0) +
+    (Number(result?.wht || 0) > 0 ? 2 : 0)
 
   const totalsHeight = 30 + totalsLineCount * 12
   const amountInWordsHeight = invoice.amount_in_words
@@ -360,8 +330,8 @@ const paginateExtraBlocks = (blocks, budget, firstBudget) => {
   return pages
 }
 
-export const planClassicInvoicePages = (invoice, items, client, settings) => {
-  const d = extractInvoiceData(invoice, items, client, settings)
+export const planClassicInvoicePages = (invoice, items, client, settings, result) => {
+  const d = extractInvoiceData(invoice, items, client, settings, result)
   const columns = getClassicTableColumns(d, items)
   const layout = columns.reduce((acc, column) => ({ ...acc, [column.key]: column.width }), {})
   const hasMake = columns.some((column) => column.key === 'make')
@@ -380,7 +350,7 @@ export const planClassicInvoicePages = (invoice, items, client, settings) => {
     CLASSIC_PAGE_METRICS.tableHeader -
     CLASSIC_PAGE_METRICS.footerReserve
 
-  const finalReserve = estimateClassicTotalsReserve(d, invoice)
+  const finalReserve = estimateClassicTotalsReserve(d, invoice, result)
   const rowPages = []
   let remainingRows = [...d.renderRows]
   let isFirstPage = true

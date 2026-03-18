@@ -1,19 +1,19 @@
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import {
   BUILTIN_COLUMNS,
-  calcTotals,
-  extractCalculationInputs,
-  resolveInstallRate,
 } from '@/domain/invoice'
 import type { ColumnConfig, InvoiceCustomFields, InvoiceItem } from '@/domain/invoice'
 import type { Quotation } from '@/domain/quotation'
+import type { PdfDocumentProps } from '@/components/pdf/base/PdfTypes'
+import type { DocumentResult } from '@/lib/Calculations'
 
 type QuotationPdfProps = {
   quotation: Quotation
   items: InvoiceItem[]
   client?: Record<string, unknown> | null
   settings?: Record<string, unknown> | null
-}
+  result: DocumentResult
+} & Partial<PdfDocumentProps<Quotation, InvoiceItem, Record<string, unknown> | null, Record<string, unknown> | null>>
 
 const styles = StyleSheet.create({
   page: {
@@ -338,6 +338,7 @@ export default function QuotationPDF({
   items,
   client = null,
   settings = null,
+  result,
 }: QuotationPdfProps) {
   const customFields = (quotation.custom_fields || {}) as InvoiceCustomFields & {
     columnConfig?: ColumnConfig[]
@@ -351,21 +352,17 @@ export default function QuotationPDF({
     Array.isArray(customFields.columnConfig) && customFields.columnConfig.length
       ? customFields.columnConfig
       : BUILTIN_COLUMNS
-  const installColumn = columns.find((column) => column.key === 'install_rate')
-  const showMake = Boolean(columns.find((column) => column.key === 'make')?.visible)
-  const showVatRate = Boolean(columns.find((column) => column.key === 'vat_rate')?.visible)
-  const showDiscountRate = Boolean(columns.find((column) => column.key === 'discount_rate')?.visible)
-  const calculationInputs = extractCalculationInputs(quotation, customFields)
-  const totals = calcTotals({
-    items,
-    columns,
-    invoice: quotation,
-    discountType: calculationInputs.discountType,
-    discountTiming: calculationInputs.discountTiming,
-    whtType: calculationInputs.whtType,
-  })
-
-  const standardItems = items.filter((item) => item.row_type === 'standard')
+  const isVisible = (key: string) => {
+    if (!columns?.length) return true
+    const col = columns.find((column) => column.key === key)
+    return col ? col.visible !== false : true
+  }
+  const showMake = isVisible('make')
+  const showVatRate = isVisible('vat_rate')
+  const showDiscountRate = isVisible('discount_rate')
+  const computedItems = result.items
+  const standardComputedItems = computedItems.filter((item) => item.row_type === 'standard')
+  const hasInstallColumn = isVisible('install_rate') && result.installRateTotal > 0
   const bottomFields = Array.isArray(customFields.bottom) ? customFields.bottom : []
   const headerFields = pickHeaderFields(Array.isArray(customFields.header) ? customFields.header : [])
 
@@ -376,10 +373,6 @@ export default function QuotationPDF({
   const companyPhone = String(settings?.company_phone || '')
   const companyEmail = String(settings?.company_email || '')
   const logoUrl = String(settings?.company_logo_url || settings?.logo_url || '')
-
-  const hasInstallColumn =
-    Boolean(installColumn?.visible) &&
-    standardItems.some((item) => resolveInstallRate(item, installColumn) > 0)
 
   return (
     <Document>
@@ -476,8 +469,9 @@ export default function QuotationPDF({
             }
 
             rowNumber += 1
-            const rowAmount = toMoneyNumber(item.quantity) * toMoneyNumber(item.unit_price)
-            const installRate = resolveInstallRate(item, installColumn)
+            const computedItem = computedItems[index]
+            const rowAmount = Number(computedItem?.line_subtotal || 0)
+            const installRate = Number(computedItem?.line_install || 0)
             const quantityLabel = cleanUnit(item.unit)
               ? `${toMoneyNumber(item.quantity).toLocaleString('en-NG')} ${cleanUnit(item.unit)}`
               : toMoneyNumber(item.quantity).toLocaleString('en-NG')
@@ -518,35 +512,41 @@ export default function QuotationPDF({
             <Text style={styles.totalsTitle}>Totals</Text>
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Subtotal</Text>
-              <Text style={styles.totalValue}>{formatNaira(totals.rawSubtotal)}</Text>
+              <Text style={styles.totalValue}>{formatNaira(result.subtotal)}</Text>
             </View>
-            {hasInstallColumn && totals.installRateTotal > 0 ? (
+            {hasInstallColumn ? (
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Install Rate Total</Text>
-                <Text style={styles.totalValue}>{formatNaira(totals.installRateTotal)}</Text>
+                <Text style={styles.totalValue}>{formatNaira(result.installRateTotal)}</Text>
               </View>
             ) : null}
-            {totals.vatAmount > 0 ? (
+            {result.extraChargesTotal > 0 ? (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Extra Charges</Text>
+                <Text style={styles.totalValue}>{formatNaira(result.extraChargesTotal)}</Text>
+              </View>
+            ) : null}
+            {result.vat > 0 ? (
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>VAT</Text>
-                <Text style={styles.totalValue}>{formatNaira(totals.vatAmount)}</Text>
+                <Text style={styles.totalValue}>{formatNaira(result.vat)}</Text>
               </View>
             ) : null}
-            {totals.discountAmount > 0 ? (
+            {result.discount > 0 ? (
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Discount</Text>
-                <Text style={[styles.totalValue, styles.totalNegative]}>- {formatNaira(totals.discountAmount)}</Text>
+                <Text style={[styles.totalValue, styles.totalNegative]}>- {formatNaira(result.discount)}</Text>
               </View>
             ) : null}
-            {totals.whtAmount > 0 ? (
+            {result.wht > 0 ? (
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>WHT</Text>
-                <Text style={[styles.totalValue, styles.totalNegative]}>- {formatNaira(totals.whtAmount)}</Text>
+                <Text style={[styles.totalValue, styles.totalNegative]}>- {formatNaira(result.wht)}</Text>
               </View>
             ) : null}
             <View style={styles.totalRowStrong}>
               <Text style={styles.totalLabelStrong}>Total Payable</Text>
-              <Text style={styles.totalValueStrong}>{formatNaira(totals.totalPayable)}</Text>
+              <Text style={styles.totalValueStrong}>{formatNaira(result.totalPayable)}</Text>
             </View>
           </View>
         </View>

@@ -94,7 +94,10 @@ export function getPdfCellValue(column: PdfColumnDefinition, item: InvoiceItem, 
   if (column.key === 'unit_price') return Number(item.unit_price || 0).toLocaleString()
   if (column.key === 'amount') return Number(helpers.amount || 0).toLocaleString()
   if (column.key === 'install_rate') {
-    const installValue = resolveInstallRate(item, helpers.installColumn)
+    const installValue =
+      helpers.installValue !== undefined
+        ? Number(helpers.installValue || 0)
+        : resolveInstallRate(item, helpers.installColumn)
     return installValue > 0 ? installValue.toLocaleString() : '-'
   }
   if (column.key === 'vat_rate') return formatPdfPercentValue(item.vat_rate, 'Exempt')

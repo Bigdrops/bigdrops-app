@@ -18,38 +18,312 @@ export default function MobileItemCard({
   invoice,
   onUpdate, onRemove, onMoveUp, onMoveDown, onInsertBelow,
   isFirst, isLast,
+  computedAmount,
+  showInsertBelow = true,
+  variant = 'default',
 }) {
   const autoInstall = (() => {
     const col = getColumn('install_rate')
-    return col?.formula ? parseFloat(col.formula) * Number(item.quantity || 1) * Number(item.unit_price || 0) : null
+    return col?.formula
+      ? parseFloat(col.formula) * Number(item.quantity || 1) * Number(item.unit_price || 0)
+      : null
   })()
 
   if (item.row_type === 'group_header') {
     return (
-      <div className="bg-gray-800 rounded-lg px-4 py-3 mb-3 flex items-center gap-3">
-        <Input
-          className="bg-transparent text-white font-bold border-0 border-b border-gray-600 rounded-none flex-1"
-          value={item.group_name || ''}
-          onChange={e => onUpdate(index, 'group_name', e.target.value)}
-          placeholder="Group name"
-        />
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onInsertBelow(index)}
-            className="text-green-600 border-green-600 hover:bg-green-50 text-xs"
-          >
-            + Below
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onRemove(index)}
-            className="text-red-600 hover:text-red-600 hover:bg-red-50 h-8 w-8"
-          >
-            ×
-          </Button>
+      <div className={variant === 'quotation'
+        ? 'mb-4 rounded-2xl border border-slate-200 bg-slate-900 p-4 shadow-sm'
+        : 'mb-3 flex items-center gap-3 rounded-lg bg-gray-800 px-4 py-3'}
+      >
+        {variant === 'quotation' ? (
+          <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
+            Group Header
+          </div>
+        ) : null}
+
+        <div className={variant === 'quotation' ? 'flex items-start gap-3' : 'flex items-center gap-3'}>
+          <Input
+            className={variant === 'quotation'
+              ? 'flex-1 border-slate-600 bg-slate-800 text-base font-semibold text-white placeholder:text-slate-400'
+              : 'flex-1 rounded-none border-0 border-b border-gray-600 bg-transparent font-bold text-white'}
+            value={item.group_name || ''}
+            onChange={e => onUpdate(index, 'group_name', e.target.value)}
+            placeholder="Group name"
+          />
+
+          <div className="flex items-center gap-2">
+            {showInsertBelow ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onInsertBelow(index)}
+                className="border-green-600 text-xs text-green-600 hover:bg-green-50"
+              >
+                + Below
+              </Button>
+            ) : null}
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onRemove(index)}
+              className={variant === 'quotation'
+                ? 'h-9 w-9 text-red-300 hover:bg-slate-800 hover:text-red-200'
+                : 'h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-600'}
+            >
+              ×
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (variant === 'quotation') {
+    const amount = Number(
+      computedAmount ?? Number(item.quantity || 0) * Number(item.unit_price || 0)
+    )
+    const drVal = item.discount_rate
+    const isDiscountExcluded = drVal === 0
+    const hasDiscountOverride = drVal !== null && drVal !== undefined
+
+    return (
+      <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
+              Line Item
+            </div>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
+                {number}
+              </span>
+              <span className="truncate text-sm font-semibold text-slate-900">
+                {item.description?.trim() || 'New item'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => onMoveUp(index)}
+              disabled={isFirst}
+              className="h-8 w-8 rounded-full border-slate-200 text-slate-600"
+              aria-label="Move item up"
+            >
+              ▲
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => onMoveDown(index)}
+              disabled={isLast}
+              className="h-8 w-8 rounded-full border-slate-200 text-slate-600"
+              aria-label="Move item down"
+            >
+              ▼
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onRemove(index)}
+              className="h-8 w-8 rounded-full text-red-600 hover:bg-red-50 hover:text-red-600"
+              aria-label="Remove item"
+            >
+              ×
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <Label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+              Description
+            </Label>
+            <Input
+              value={item.description || ''}
+              onChange={e => onUpdate(index, 'description', e.target.value)}
+              placeholder="Item description"
+              className="h-11 rounded-xl border-slate-200"
+            />
+          </div>
+
+          <div>
+            <Label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+              Sub-description
+            </Label>
+            <Input
+              value={item.sub_description || ''}
+              onChange={e => onUpdate(index, 'sub_description', e.target.value)}
+              placeholder="Add more context if needed"
+              className="h-11 rounded-xl border-slate-200 text-sm"
+            />
+          </div>
+
+          {isVisible('make') ? (
+            <div>
+              <Label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                Make / Brand
+              </Label>
+              <Input
+                value={item.make || ''}
+                onChange={e => onUpdate(index, 'make', e.target.value)}
+                placeholder="Brand or manufacturer"
+                className="h-11 rounded-xl border-slate-200"
+              />
+            </div>
+          ) : null}
+
+          <div>
+            <Label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+              Quantity
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              value={item.quantity}
+              onChange={e => onUpdate(index, 'quantity', Number(e.target.value))}
+              className="h-11 rounded-xl border-slate-200"
+            />
+          </div>
+
+          {isVisible('unit') ? (
+            <div>
+              <Label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                Unit
+              </Label>
+              <UnitInput value={item.unit || ''} onChange={val => onUpdate(index, 'unit', val)} />
+            </div>
+          ) : null}
+
+          <div>
+            <Label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+              Unit Rate (₦)
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              value={item.unit_price}
+              onChange={e => onUpdate(index, 'unit_price', Number(e.target.value))}
+              className="h-11 rounded-xl border-slate-200"
+            />
+          </div>
+
+          {isVisible('install_rate') ? (
+            <div>
+              <Label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                Install Rate
+              </Label>
+              <Input
+                type="number"
+                min="0"
+                value={item.install_rate_override ? (item.install_rate ?? '') : ''}
+                placeholder={autoInstall !== null ? String(Number(autoInstall.toFixed(2))) : '0'}
+                onChange={e => {
+                  const val = e.target.value
+                  onUpdate(index, '__install_rate_override', val === ''
+                    ? { install_rate_override: false, install_rate: null }
+                    : { install_rate_override: true, install_rate: Number(val) }
+                  )
+                }}
+                className="h-11 rounded-xl border-slate-200"
+              />
+            </div>
+          ) : null}
+
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3">
+            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-700">
+              Computed Amount
+            </div>
+            <div className="mt-1 text-xl font-bold text-slate-900">
+              ₦{amount.toLocaleString()}
+            </div>
+            <div className="mt-1 text-xs text-slate-500">
+              Updates automatically from quantity and unit rate.
+            </div>
+          </div>
+
+          {isVisible('vat_rate') ? (
+            <div>
+              <Label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                VAT %
+              </Label>
+              <Input
+                className={`${item.vat_rate !== null && item.vat_rate !== undefined ? 'bg-white' : 'bg-slate-50'} ${item.vat_rate === 0 ? 'text-red-600' : ''} h-11 rounded-xl border-slate-200`}
+                type="number"
+                min="0"
+                max="100"
+                value={item.vat_rate !== null && item.vat_rate !== undefined ? item.vat_rate : ''}
+                placeholder={String(invoice.vat || 0)}
+                onChange={e => {
+                  const val = e.target.value
+                  onUpdate(index, 'vat_rate', val === '' ? null : Number(val))
+                }}
+              />
+              <div className="mt-1 text-xs text-slate-500">
+                Leave blank to use global VAT ({invoice.vat || 0}%).
+              </div>
+              {item.vat_rate === 0 ? (
+                <div className="mt-1 text-[11px] text-red-600">VAT excluded for this item</div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {isVisible('discount_rate') ? (
+            <div>
+              <Label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                Discount %
+              </Label>
+              <Input
+                className={`${isDiscountExcluded ? 'bg-red-50 text-red-600' : hasDiscountOverride ? 'bg-amber-50' : 'bg-slate-50'} h-11 rounded-xl border-slate-200`}
+                type="number"
+                min="0"
+                max="100"
+                value={hasDiscountOverride ? drVal : ''}
+                placeholder="global"
+                onChange={e => {
+                  const val = e.target.value
+                  onUpdate(index, 'discount_rate', val === '' ? null : Number(val))
+                }}
+              />
+              <div className="mt-1 text-xs text-slate-500">
+                Leave blank to use the global discount.
+              </div>
+              {isDiscountExcluded ? (
+                <div className="mt-1 text-[11px] text-red-600">No discount on this item</div>
+              ) : drVal > 0 ? (
+                <div className="mt-1 text-[11px] text-amber-700">{drVal}% discount on this row</div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {customColumns.filter(c => c.visible).map(col => (
+            <div key={col.key}>
+              <Label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                {col.label}
+              </Label>
+              <Input
+                type={col.type === 'number' ? 'number' : 'text'}
+                value={(item.custom_data || {})[col.key] || ''}
+                onChange={e => onUpdate(index, 'custom_data', {
+                  ...(item.custom_data || {}),
+                  [col.key]: col.type === 'number' ? Number(e.target.value) : e.target.value,
+                })}
+                className="h-11 rounded-xl border-slate-200"
+              />
+            </div>
+          ))}
+
+          {showItemImages ? (
+            <div>
+              <Label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                Item Image
+              </Label>
+              <ItemImageUpload value={item.image_url || null} onChange={url => onUpdate(index, 'image_url', url)} />
+            </div>
+          ) : null}
         </div>
       </div>
     )
@@ -209,13 +483,15 @@ export default function MobileItemCard({
         </div>
       )}
 
-      <Button
-        variant="outline"
-        onClick={() => onInsertBelow(index)}
-        className="w-full mt-2 border-dashed text-gray-400 hover:border-green-500 hover:text-green-600"
-      >
-        ＋ Insert item below
-      </Button>
+      {showInsertBelow ? (
+        <Button
+          variant="outline"
+          onClick={() => onInsertBelow(index)}
+          className="w-full mt-2 border-dashed text-gray-400 hover:border-green-500 hover:text-green-600"
+        >
+          ＋ Insert item below
+        </Button>
+      ) : null}
     </div>
   )
 }

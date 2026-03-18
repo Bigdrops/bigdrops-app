@@ -199,6 +199,7 @@ export interface PdfColumnDefinition {
 
 export interface CalculationInputs {
   vatRate: number
+  vatPercent?: number
   discountValue: number
   whtValue: number
   discountType: DiscountType
@@ -256,4 +257,5 @@ export interface InvoiceCustomFields {
 export interface PdfCellValueHelpers {
   amount?: number
   installColumn?: ColumnConfig | undefined
+  installValue?: number
 }

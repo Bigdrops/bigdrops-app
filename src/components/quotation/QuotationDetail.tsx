@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/supabase'
 import { calcTotals } from '@/components/useInvoiceColumns.jsx'
+import { computeDocument } from '@/lib/Calculations'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -165,12 +166,17 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     if (!quotation || pdfGenerating) return
     setPdfGenerating(true)
     try {
+      const result = computeDocument({
+        items,
+        document: quotation,
+        cf: quotation.custom_fields || {},
+      })
       const [{ pdf }, { default: QuotationPDF }] = await Promise.all([
         import('@react-pdf/renderer'),
         import('./QuotationPDF'),
       ])
       const blob = await pdf(
-        <QuotationPDF quotation={quotation} items={items} client={client} settings={settings} />,
+        <QuotationPDF quotation={quotation} items={items} client={client} settings={settings} result={result} />,
       ).toBlob()
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')

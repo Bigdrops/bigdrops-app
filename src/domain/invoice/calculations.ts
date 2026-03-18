@@ -21,8 +21,10 @@ export function buildCalculationInputs({
   discountTiming?: CalculationInputs['discountTiming']
   whtType?: CalculationInputs['whtType']
 }): CalculationInputs {
+  const vatRate = Number(invoice?.vat || 0)
   return {
-    vatRate: Number(invoice?.vat || 0),
+    vatRate,
+    vatPercent: vatRate,
     discountValue: Number(invoice?.discount || 0),
     whtValue: Number(invoice?.wht || 0),
     discountType: discountType || 'fixed',
@@ -36,8 +38,10 @@ export function extractCalculationInputs(
   customFields: InvoiceCustomFields = {},
 ): CalculationInputs {
   const saved = customFields?.calculationInputs || {}
+  const savedVatRate = Number(saved.vatPercent ?? saved.vatRate ?? invoice?.vat ?? 0)
   return {
-    vatRate: Number(saved.vatRate ?? invoice?.vat ?? 0),
+    vatRate: savedVatRate,
+    vatPercent: savedVatRate,
     discountValue: Number(saved.discountValue ?? invoice?.discount ?? 0),
     whtValue: Number(saved.whtValue ?? invoice?.wht ?? 0),
     discountType: saved.discountType || customFields?.discountType || 'fixed',
@@ -59,6 +63,7 @@ export function buildEditableCalculationInputs(
   return {
     ...calculationInputs,
     vatRate: useGlobalVatInput ? calculationInputs.vatRate : 0,
+    vatPercent: useGlobalVatInput ? calculationInputs.vatRate : 0,
     discountValue: useGlobalDiscountInput ? calculationInputs.discountValue : 0,
   }
 }
@@ -117,6 +122,7 @@ export function inferLegacyCalculationInputs({
 
   return {
     vatRate: Number.isFinite(vatRate) ? Number(vatRate.toFixed(4)) : 0,
+    vatPercent: Number.isFinite(vatRate) ? Number(vatRate.toFixed(4)) : 0,
     discountValue: Number.isFinite(discountValue) ? Number(discountValue.toFixed(4)) : 0,
     whtValue: Number.isFinite(whtValue) ? Number(whtValue.toFixed(4)) : 0,
     discountType,

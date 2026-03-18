@@ -11,6 +11,7 @@ import {
   withSourceTrail,
 } from '@/domain/documentConversion'
 import { getNextQuotationNumber } from '@/domain/quotation'
+import { computeDocument } from '@/lib/Calculations'
 
 const TEMPLATES = [
   { id: 'classic',  label: 'Classic',  description: 'Navy · Minimal' },
@@ -158,12 +159,18 @@ export default function ViewInvoice() {
     if (pdfGenerating) return
     setPdfGenerating(true)
     try {
+      const cf = parseDocumentCustomFields(invoice.custom_fields || customFieldObject)
+      const result = computeDocument({
+        items,
+        document: invoice,
+        cf,
+      })
       const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
         import('@react-pdf/renderer'),
         import('../components/InvoicePDF'),
       ])
       const blob = await pdf(
-        <InvoicePDF invoice={invoice} items={items} client={client} settings={settings} />
+        <InvoicePDF invoice={invoice} items={items} client={client} settings={settings} result={result} />
       ).toBlob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')

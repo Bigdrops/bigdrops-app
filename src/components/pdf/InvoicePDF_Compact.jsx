@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, StyleSheet, Image, Link } from '@react-pdf/renderer'
 import { stripHtml, extractInvoiceData } from './pdfUtils'
-import { getPdfCellValue } from '../useInvoiceColumns.jsx'
+import { renderTotals } from './base/renderTotals'
+import { renderItemsTable } from './base/renderItems'
 
 const A = '#1E293B'
 
@@ -76,13 +77,9 @@ const s = StyleSheet.create({
   footerText: { fontSize: 7, color: '#888', textAlign: 'center', lineHeight: 1.5 },
 })
 
-export default function InvoicePDF_Compact({ invoice, items = [], client, settings = {} }) {
-  const d = extractInvoiceData(invoice, items, client, settings)
-  let itemCount = 0
-  const columns = d.pdfColumns.filter((column) => {
-    if (column.key === 'make') return items.some((item) => item.make)
-    return true
-  })
+export default function InvoicePDF_Compact({ invoice, items = [], client, settings = {}, result }) {
+  const d = extractInvoiceData(invoice, items, client, settings, result)
+  const columns = d.pdfColumns
   const columnStyle = (column, extra = {}) => ({
     flex: column.pdfFlex,
     textAlign: column.align,
@@ -135,75 +132,20 @@ export default function InvoicePDF_Compact({ invoice, items = [], client, settin
         {/* TITLE ABOVE TABLE */}
         {invoice.invoice_title ? <Text style={s.invoiceTitle}>{invoice.invoice_title}</Text> : null}
 
-        {/* TABLE */}
-        <View style={s.table}>
-          <View style={s.tableHeader}>
-            {columns.map((column) => (
-              <Text key={column.key} style={[s.thText, columnStyle(column)]}>{column.label}</Text>
-            ))}
-          </View>
-          {d.renderRows.map((row, ri) => {
-            if (row._type === 'group_header') return (
-              <View key={'gh_' + ri} style={s.groupRow}><Text style={s.groupText}>{row.item.group_name}</Text></View>
-            )
-            if (row._type === 'group_end') return (
-              <View key={'ge_' + ri} style={{ height: 1, backgroundColor: '#e2e8f0', marginHorizontal: 8, marginBottom: 4 }} />
-            )
-            if (row._type === 'group_subtotal') return (
-              <View key={'gs_' + ri} style={s.groupSubtotalRow}>
-                <Text style={s.groupSubtotalLabel}>{row.name} - Section Total</Text>
-                <Text style={s.groupSubtotalValue}>NGN {row.subtotal.toLocaleString()}</Text>
-              </View>
-            )
-            itemCount++
-            const { item, amount } = row
-            const rowStyle = itemCount % 2 === 0 ? s.tableRowAlt : s.tableRow
-            return (
-              <View key={'item_' + ri} style={rowStyle} wrap={false}>
-                {columns.map((column) => {
-                  if (column.key === 'num') {
-                    return <Text key={column.key} style={[columnStyle(column, { alignSelf: 'flex-start', color: '#999' })]}>{itemCount}</Text>
-                  }
-                  if (column.key === 'description') {
-                    return (
-                      <View key={column.key} style={columnStyle(column, { alignSelf: 'flex-start' })}>
-                        <Text style={s.descText}>{item.description}</Text>
-                        {item.sub_description ? <Text style={s.subDescText}>{item.sub_description}</Text> : null}
-                      </View>
-                    )
-                  }
-                  return (
-                    <Text
-                      key={column.key}
-                      style={[columnStyle(column, { alignSelf: 'flex-start', color: column.align === 'right' ? '#1a1a1a' : '#555' })]}
-                    >
-                      {getPdfCellValue(column, item, { amount, installColumn: d.installColumn })}
-                    </Text>
-                  )
-                })}
-              </View>
-            )
-          })}
-        </View>
+        {renderItemsTable({
+          rows: d.renderRows,
+          columns,
+          styles: s,
+          getColumnStyle: columnStyle,
+        })}
 
         {/* TOTALS */}
-        <View style={[s.totalsSection, { marginTop: 8 }]} wrap={false}>
-          <View style={s.totalsBox}>
-            <View style={s.totalRow}><Text style={s.totalLabel}>Subtotal</Text><Text style={s.totalValue}>NGN {d.subtotal.toLocaleString()}</Text></View>
-            {d.isColVisible('install_rate') && d.installTotal > 0 && <View style={s.totalRow}><Text style={s.totalLabel}>Install Rate</Text><Text style={s.totalValue}>NGN {d.installTotal.toLocaleString()}</Text></View>}
-            {d.fixedCharges.map(e => <View key={e.label} style={s.totalRow}><Text style={s.totalLabel}>{e.label}</Text><Text style={s.totalValue}>NGN {e.value.toLocaleString()}</Text></View>)}
-            {d.cf.extraCharges && d.cf.extraCharges.filter(c => Number(c.value) > 0).map((c, i) => <View key={i} style={s.totalRow}><Text style={s.totalLabel}>{c.label}</Text><Text style={s.totalValue}>NGN {Number(c.value).toLocaleString()}</Text></View>)}
-            {d.vatAmount > 0 && <View style={s.totalRow}><Text style={s.totalLabel}>VAT</Text><Text style={s.totalValue}>NGN {d.vatAmount.toLocaleString()}</Text></View>}
-            {d.discount > 0 && <View style={s.totalRow}><Text style={s.totalLabel}>Discount</Text><Text style={[s.totalValue, { color: '#CC0000' }]}>- NGN {d.discount.toLocaleString()}</Text></View>}
-            <View style={s.grandTotalRow}><Text style={s.grandLabel}>Grand Total</Text><Text style={s.grandValue}>NGN {d.grandTotal.toLocaleString()}</Text></View>
-            {d.whtAmount > 0 && <>
-              <View style={s.whtRow}><Text style={[s.totalLabel, { color: '#CC0000' }]}>Less: WHT</Text><Text style={[s.totalValue, { color: '#CC0000' }]}>- NGN {d.whtAmount.toLocaleString()}</Text></View>
-              <View style={s.payableRow}><Text style={s.payableLabel}>Total Payable</Text><Text style={s.payableValue}>NGN {d.totalPayable.toLocaleString()}</Text></View>
-            </>}
-          </View>
-        </View>
-
-        {invoice.amount_in_words ? <View style={s.amountWords}><Text style={s.amountWordsText}>{invoice.amount_in_words}</Text></View> : null}
+        {renderTotals({
+          result,
+          styles: s,
+          showInstallRate: d.isColVisible('install_rate'),
+          amountInWords: invoice.amount_in_words,
+        })}
         {invoice.notes && stripHtml(invoice.notes) ? <View style={s.notesBox}><Text style={[s.sectionLabel, { marginBottom: 3 }]}>{d.cf.notesTitle || 'Notes'}</Text><Text style={s.notesText}>{stripHtml(invoice.notes)}</Text></View> : null}
         {invoice.terms && stripHtml(invoice.terms) ? <View style={[s.notesBox, { marginBottom: 10 }]}><Text style={[s.sectionLabel, { marginBottom: 3 }]}>{d.cf.termsTitle || 'Terms and Conditions'}</Text><Text style={s.notesText}>{stripHtml(invoice.terms)}</Text></View> : null}
 

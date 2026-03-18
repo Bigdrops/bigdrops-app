@@ -27,10 +27,10 @@ import {
   makeFieldEntry,
   toDbItem,
   useInvoiceColumns,
-  calcTotals,
   buildCalculationInputs,
   ensureUiKey,
 } from '../components/useInvoiceColumns.jsx'
+import { computeDocument } from '../lib/Calculations'
 import {
   inp,
   makeGroupId,
@@ -361,22 +361,38 @@ export default function NewInvoice() {
     e.target.value = ''
   }
 
-  const {
-    rawSubtotal,
-    installRateTotal,
-    vatAmount,
-    discountAmount,
-    grandTotal,
-    whtAmount,
-    totalPayable,
-  } = calcTotals({
-    items,
-    columns,
-    invoice: { ...invoice, _extraCharges: extraCharges },
+  const calculationInputs = buildCalculationInputs({
+    invoice,
     discountType,
     discountTiming,
     whtType,
   })
+
+  const documentTotals = computeDocument({
+    items,
+    document: {
+      ...invoice,
+      workmanship: Number(invoice.workmanship || 0),
+      transportation: Number(invoice.transportation || 0),
+      shipping: Number(invoice.shipping || 0),
+    },
+    cf: {
+      extraCharges,
+      calculationInputs,
+    },
+  })
+
+  const computedItems = documentTotals.items
+  const computedGroups = new Map(
+    documentTotals.groups.map((group) => [group.group_id, group])
+  )
+  const rawSubtotal = documentTotals.subtotal
+  const installRateTotal = documentTotals.installRateTotal
+  const vatAmount = documentTotals.vat
+  const discountAmount = documentTotals.discount
+  const grandTotal = documentTotals.grandTotal
+  const whtAmount = documentTotals.wht
+  const totalPayable = documentTotals.totalPayable
 
   const handleSave = async (status) => {
     setSaving(true)
@@ -400,7 +416,7 @@ export default function NewInvoice() {
       discountType,
       discountTiming,
       whtType,
-      calculationInputs: buildCalculationInputs({ invoice, discountType, discountTiming, whtType }),
+      calculationInputs,
       groupMeta,
     }
 
@@ -466,15 +482,7 @@ export default function NewInvoice() {
 
   const renderGroupHeaderRow = (item, index, reorderBtns, visCount) => {
     const g = groups.find((group) => group.id === item.group_id)
-    const gItems = g
-      ? items.filter(
-          (it) => it.row_type === 'standard' && it.group_id === g.id
-        )
-      : []
-    const gTotal = gItems.reduce(
-      (s, it) => s + Number(it.quantity || 0) * Number(it.unit_price || 0),
-      0
-    )
+    const gTotal = g ? computedGroups.get(g.id)?.subtotal || 0 : 0
 
     return (
       <tr key={item._uiKey || item.id || index} style={{ backgroundColor: '#333' }}>
@@ -578,11 +586,7 @@ export default function NewInvoice() {
         const groupItems = items.filter(
           (it) => it.row_type === 'standard' && it.group_id === group.id
         )
-
-        const groupSubtotal = groupItems.reduce(
-          (sum, it) => sum + Number(it.quantity || 0) * Number(it.unit_price || 0),
-          0
-        )
+        const groupSubtotal = computedGroups.get(group.id)?.subtotal || 0
 
         return (
           <div
@@ -1554,8 +1558,8 @@ Imported rows are added as invoice items.`}
                             }}
                           >
                             NGN{' '}
-                            {(
-                              Number(item.quantity) * Number(item.unit_price)
+                            {Number(
+                              computedItems[index]?.line_subtotal || 0
                             ).toLocaleString()}
                           </td>
                           {isVisible('install_rate') && (

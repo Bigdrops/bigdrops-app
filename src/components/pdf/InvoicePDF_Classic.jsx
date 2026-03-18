@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, StyleSheet, Image, Link } from '@react-pdf/renderer'
 import { planClassicInvoicePages } from './pdfUtils'
-import { getPdfCellValue } from '../useInvoiceColumns.jsx'
+import { renderTotals } from './base/renderTotals'
+import { renderItemsTable } from './base/renderItems'
 
 const A = '#0F172A'
 
@@ -213,143 +214,6 @@ function CompactHeader({ d, invoice }) {
   )
 }
 
-function TableHeader({ columns }) {
-  return (
-    <View style={s.tableHeader}>
-      {columns.map((column) => (
-        <Text key={column.sourceKey || column.key} style={[s.thText, { width: column.width, textAlign: column.align }]}>
-          {column.label}
-        </Text>
-      ))}
-    </View>
-  )
-}
-
-function RowSet({ rows, columns, itemCounterRef }) {
-  return rows.map((row, ri) => {
-    if (row._type === 'group_header') {
-      return (
-        <View key={`gh_${ri}`} style={s.groupRow} wrap={false}>
-          <Text style={s.groupText}>{row.item.group_name}</Text>
-        </View>
-      )
-    }
-    if (row._type === 'group_end') {
-      return (
-        <View
-          key={`ge_${ri}`}
-          style={{ height: 1, backgroundColor: '#e2e8f0', marginHorizontal: 8, marginBottom: 4 }}
-          wrap={false}
-        />
-      )
-    }
-    if (row._type === 'group_subtotal') {
-      return (
-        <View key={`gs_${ri}`} style={s.groupSubtotalRow} wrap={false}>
-          <Text style={s.groupSubtotalLabel}>{row.name} - Section Total</Text>
-          <Text style={s.groupSubtotalValue}>NGN {row.subtotal.toLocaleString()}</Text>
-        </View>
-      )
-    }
-
-    itemCounterRef.current += 1
-    const { item, amount } = row
-    const rowStyle = itemCounterRef.current % 2 === 0 ? s.tableRowAlt : s.tableRow
-
-    return (
-      <View key={`item_${ri}`} style={rowStyle} wrap={false}>
-        {columns.map((column) => {
-          if (column.key === 'num') {
-            return (
-              <Text key={column.sourceKey || column.key} style={[getColumnCellStyle(column), { color: '#999', alignSelf: 'flex-start' }]}>
-                {itemCounterRef.current}
-              </Text>
-            )
-          }
-
-          if (column.key === 'desc') {
-            return (
-              <View key={column.sourceKey || column.key} style={[s.descCell, { width: column.width }]}>
-                <Text style={s.descText}>{item.description}</Text>
-                {item.sub_description ? <Text style={s.subDescText}>{item.sub_description}</Text> : null}
-              </View>
-            )
-          }
-          const value = getPdfCellValue(column, item, { amount, installColumn: d.installColumn })
-          return (
-            <Text
-              key={column.sourceKey || column.key}
-              style={[
-                getColumnCellStyle(column),
-                column.align !== 'right' && column.key !== 'amount' ? s.cellMuted : null,
-                { alignSelf: 'flex-start' },
-              ]}
-            >
-              {value}
-            </Text>
-          )
-        })}
-      </View>
-    )
-  })
-}
-
-function TotalsBlock({ d, invoice }) {
-  return (
-    <>
-      <View style={[s.totalsSection, { marginTop: 10 }]} wrap={false}>
-        <View style={s.totalsBox}>
-          <View style={s.totalRow}><Text style={s.totalLabel}>Subtotal</Text><Text style={s.totalValue}>NGN {d.subtotal.toLocaleString()}</Text></View>
-          {d.isColVisible('install_rate') && d.installTotal > 0 ? (
-            <View style={s.totalRow}><Text style={s.totalLabel}>Install Rate</Text><Text style={s.totalValue}>NGN {d.installTotal.toLocaleString()}</Text></View>
-          ) : null}
-          {d.fixedCharges.map((entry) => (
-            <View key={entry.label} style={s.totalRow}>
-              <Text style={s.totalLabel}>{entry.label}</Text>
-              <Text style={s.totalValue}>NGN {entry.value.toLocaleString()}</Text>
-            </View>
-          ))}
-          {d.cf.extraCharges && d.cf.extraCharges.filter((charge) => Number(charge.value) > 0).map((charge, i) => (
-            <View key={i} style={s.totalRow}>
-              <Text style={s.totalLabel}>{charge.label}</Text>
-              <Text style={s.totalValue}>NGN {Number(charge.value).toLocaleString()}</Text>
-            </View>
-          ))}
-          {d.vatAmount > 0 ? <View style={s.totalRow}><Text style={s.totalLabel}>VAT</Text><Text style={s.totalValue}>NGN {d.vatAmount.toLocaleString()}</Text></View> : null}
-          {d.discount > 0 ? (
-            <View style={s.totalRow}>
-              <Text style={s.totalLabel}>Discount</Text>
-              <Text style={[s.totalValue, { color: '#CC0000' }]}>- NGN {d.discount.toLocaleString()}</Text>
-            </View>
-          ) : null}
-          <View style={s.grandTotalRow}>
-            <Text style={s.grandLabel}>Grand Total</Text>
-            <Text style={s.grandValue}>NGN {d.grandTotal.toLocaleString()}</Text>
-          </View>
-          {d.whtAmount > 0 ? (
-            <>
-              <View style={s.whtRow}>
-                <Text style={[s.totalLabel, { color: '#CC0000' }]}>Less: WHT</Text>
-                <Text style={[s.totalValue, { color: '#CC0000' }]}>- NGN {d.whtAmount.toLocaleString()}</Text>
-              </View>
-              <View style={s.payableRow}>
-                <Text style={s.payableLabel}>Total Payable</Text>
-                <Text style={s.payableValue}>NGN {d.totalPayable.toLocaleString()}</Text>
-              </View>
-            </>
-          ) : null}
-        </View>
-      </View>
-
-      {invoice.amount_in_words ? (
-        <View style={s.amountWords} wrap={false}>
-          <Text style={s.amountWordsText}>{invoice.amount_in_words}</Text>
-        </View>
-      ) : null}
-    </>
-  )
-}
-
 function ExtraBlock({ block }) {
   if (block.type === 'attachments') {
     return (
@@ -373,8 +237,8 @@ function ExtraBlock({ block }) {
   )
 }
 
-export default function InvoicePDF_Classic({ invoice, items = [], client, settings = {} }) {
-  const { d, columns, pages } = planClassicInvoicePages(invoice, items, client, settings)
+export default function InvoicePDF_Classic({ invoice, items = [], client, settings = {}, result }) {
+  const { d, columns, pages } = planClassicInvoicePages(invoice, items, client, settings, result)
   const itemCounterRef = { current: 0 }
 
   return (
@@ -391,12 +255,35 @@ export default function InvoicePDF_Classic({ invoice, items = [], client, settin
 
           {page.kind === 'rows' ? (
             <>
-              <View style={s.table}>
-                <TableHeader columns={columns} />
-                <RowSet rows={page.rows} columns={columns} itemCounterRef={itemCounterRef} />
-              </View>
+              {renderItemsTable({
+                rows: page.rows,
+                columns: columns.map((column) => ({
+                  key: column.sourceKey || (column.key === 'desc' ? 'description' : column.key),
+                  label: column.label,
+                  kind: 'builtin',
+                  align: column.align,
+                  pdfWidth: column.width,
+                  pdfFlex: 0,
+                })),
+                styles: {
+                  ...s,
+                },
+                getColumnStyle: (column, extra = {}) => {
+                  const sourceColumn = columns.find((candidate) => (candidate.sourceKey || candidate.key) === column.key)
+                  return {
+                    ...getColumnCellStyle(sourceColumn || { ...column, width: column.pdfWidth }),
+                    ...extra,
+                  }
+                },
+                itemCounterRef,
+              })}
 
-              {page.showTotals ? <TotalsBlock d={d} invoice={invoice} /> : null}
+              {page.showTotals ? renderTotals({
+                result,
+                styles: s,
+                showInstallRate: d.isColVisible('install_rate'),
+                amountInWords: invoice.amount_in_words,
+              }) : null}
               {page.inlineExtraBlocks?.map((block, blockIndex) => (
                 <ExtraBlock key={`inline_extra_${blockIndex}`} block={block} />
               ))}

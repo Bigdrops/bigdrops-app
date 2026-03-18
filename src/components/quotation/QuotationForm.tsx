@@ -23,13 +23,13 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import {
   buildCalculationInputs,
-  calcTotals,
   inferLegacyCalculationState,
   makeEmptyItem,
   makeFieldEntry,
   useInvoiceColumns,
 } from '@/components/useInvoiceColumns.jsx'
 import { toDbItem } from '@/domain/invoice'
+import { computeDocument } from '@/lib/Calculations'
 import type { ColumnConfig, InvoiceFieldEntry, InvoiceItem } from '@/domain/invoice'
 import {
   buildQuotationFormState,
@@ -309,17 +309,32 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     event.target.value = ''
   }
 
-  const totals = useMemo(
+  const calculationInputs = useMemo(
     () =>
-      calcTotals({
-        items,
-        columns,
+      buildCalculationInputs({
         invoice: quotation,
         discountType,
         discountTiming,
         whtType,
       }),
-    [columns, discountTiming, discountType, items, quotation, whtType],
+    [discountTiming, discountType, quotation, whtType],
+  )
+
+  const totals = useMemo(
+    () =>
+      computeDocument({
+        items,
+        document: {
+          ...quotation,
+          workmanship: Number(quotation.workmanship || 0),
+          transportation: Number(quotation.transportation || 0),
+          shipping: Number(quotation.shipping || 0),
+        },
+        cf: {
+          calculationInputs,
+        },
+      }),
+    [calculationInputs, items, quotation],
   )
 
   const calculationState = useMemo(
@@ -374,10 +389,10 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       workmanship: Number(quotation.workmanship || 0),
       transportation: Number(quotation.transportation || 0),
       shipping: Number(quotation.shipping || 0),
-      discount: totals.discountAmount,
-      vat: totals.vatAmount,
-      wht: totals.whtAmount,
-      subtotal: totals.rawSubtotal,
+      discount: totals.discount,
+      vat: totals.vat,
+      wht: totals.wht,
+      subtotal: totals.subtotal,
       install_rate_total: totals.installRateTotal,
       total: totals.totalPayable,
       amount_in_words: quotation.amount_in_words || '',
@@ -778,18 +793,21 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                     return items.map((item, index) => {
                     if (item.row_type === 'group_header') {
                       return (
-                        <div key={item._uiKey || item.id || `quotation_group_${index}`} className="mb-3 rounded-2xl bg-slate-900 p-4 text-white">
-                          <div className="flex items-center gap-3">
+                        <div key={item._uiKey || item.id || `quotation_group_${index}`} className="mb-4 rounded-2xl border border-slate-200 bg-slate-900 p-4 text-white shadow-sm">
+                          <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
+                            Group Header
+                          </div>
+                          <div className="flex items-start gap-3">
                             <Input
                               value={item.group_name || ''}
                               onChange={(e) => updateItem(index, 'group_name', e.target.value)}
                               placeholder="Group name"
-                              className="border-slate-600 bg-slate-800 text-white"
+                              className="flex-1 border-slate-600 bg-slate-800 text-base font-semibold text-white"
                             />
                             <Button
                               type="button"
                               variant="ghost"
-                              className="text-red-300 hover:bg-slate-800 hover:text-red-200"
+                              className="h-9 w-9 text-red-300 hover:bg-slate-800 hover:text-red-200"
                               onClick={() =>
                                 setItems((current) =>
                                   current.filter((_, entryIndex) => entryIndex !== index).map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex })),
@@ -815,6 +833,9 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                         customColumns={visibleCustomColumns}
                         showItemImages={showItemImages}
                         invoice={quotation}
+                        computedAmount={totals.items[index]?.line_subtotal || 0}
+                        showInsertBelow={false}
+                        variant="quotation"
                         isFirst={itemNumber === 1}
                         isLast={index === items.length - 1}
                         onUpdate={(itemIndex: number, field: string, value: unknown) => {
@@ -843,11 +864,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                             return next.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
                           })
                         }}
-                        onInsertBelow={(itemIndex: number) => setItems((current) => {
-                          const next = [...current]
-                          next.splice(itemIndex + 1, 0, { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '', sort_order: itemIndex + 1 })
-                          return next.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
-                        })}
+                        onInsertBelow={() => {}}
                       />
                     )
                     })
@@ -914,7 +931,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                               {isVisible('vat_rate') && <td className="px-2 py-3 min-w-[90px]"><Input type="number" min="0" max="100" value={item.vat_rate ?? ''} placeholder={String(quotation.vat || 0)} onChange={(e) => updateItem(index, 'vat_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
                               {isVisible('discount_rate') && <td className="px-2 py-3 min-w-[90px]"><Input type="number" min="0" max="100" value={item.discount_rate ?? ''} placeholder="global" onChange={(e) => updateItem(index, 'discount_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
                               {visibleCustomColumns.map((column) => <td key={column.key} className="px-2 py-3 min-w-[110px]"><Input type={column.type === 'number' ? 'number' : 'text'} value={(item.custom_data || {})[column.key] || ''} onChange={(e) => updateItem(index, 'custom_data', { ...(item.custom_data || {}), [column.key]: column.type === 'number' ? Number(e.target.value || 0) : e.target.value })} /></td>)}
-                              <td className="px-2 py-3 text-sm font-bold text-zinc-900">₦{(Number(item.quantity || 0) * Number(item.unit_price || 0)).toLocaleString()}</td>
+                              <td className="px-2 py-3 text-sm font-bold text-zinc-900">₦{Number(totals.items[index]?.line_subtotal || 0).toLocaleString()}</td>
                               <td className="px-2 py-3"><Button type="button" variant="ghost" size="sm" className="text-red-700" onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index).map((entry, itemIndex) => ({ ...entry, sort_order: itemIndex })))}>×</Button></td>
                             </tr>
                           )
@@ -997,11 +1014,11 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
             <CardHeader><CardTitle className="text-base">Totals</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               {[
-                ['Subtotal', totals.rawSubtotal],
+                ['Subtotal', totals.subtotal],
                 ['Install Rate Total', totals.installRateTotal],
-                ['VAT', totals.vatAmount],
-                ['Discount', totals.discountAmount],
-                ['WHT', totals.whtAmount],
+                ['VAT', totals.vat],
+                ['Discount', totals.discount],
+                ['WHT', totals.wht],
                 ['Total Payable', totals.totalPayable],
               ].map(([label, value]) => <div key={label} className="flex items-center justify-between rounded-lg border border-zinc-200 px-3 py-2"><span className="font-medium text-zinc-600">{label}</span><span className="font-bold text-zinc-900">₦{Number(value || 0).toLocaleString()}</span></div>)}
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3"><div className="flex items-center justify-between"><div><div className="text-sm font-semibold text-zinc-800">Merge Qty + Unit in output</div><div className="text-xs text-zinc-500">Keep quantity and unit together in generated document output.</div></div><Switch checked={mergeQtyUnit} onCheckedChange={setMergeQtyUnit} /></div></div>
