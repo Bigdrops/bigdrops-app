@@ -3,10 +3,9 @@ import {
   BUILTIN_COLUMNS,
   calcTotals,
   extractCalculationInputs,
-  getPdfCellValue,
-  getPdfColumns,
+  resolveInstallRate,
 } from '@/domain/invoice'
-import type { ColumnConfig, InvoiceItem, InvoiceCustomFields } from '@/domain/invoice'
+import type { ColumnConfig, InvoiceCustomFields, InvoiceItem } from '@/domain/invoice'
 import type { Quotation } from '@/domain/quotation'
 
 type QuotationPdfProps = {
@@ -16,51 +15,274 @@ type QuotationPdfProps = {
   settings?: Record<string, unknown> | null
 }
 
-const s = StyleSheet.create({
-  page: { fontFamily: 'Helvetica', fontSize: 10, padding: 34, backgroundColor: 'white' },
-  header: {
+const styles = StyleSheet.create({
+  page: {
+    fontFamily: 'Helvetica',
+    fontSize: 10,
+    paddingTop: 32,
+    paddingRight: 34,
+    paddingBottom: 28,
+    paddingLeft: 34,
+    backgroundColor: 'white',
+  },
+  topBand: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingBottom: 14,
-    marginBottom: 18,
-    borderBottomWidth: 2,
+    borderBottomWidth: 1.5,
     borderBottomColor: '#0f172a',
   },
-  companyBlock: { flex: 1, marginRight: 16 },
-  logo: { maxWidth: 108, maxHeight: 52, marginBottom: 6, objectFit: 'contain' },
-  companyName: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: '#0f172a', marginBottom: 2 },
-  companyDetail: { fontSize: 8.5, color: '#475569', marginBottom: 1.5 },
-  docBlock: { alignItems: 'flex-end' },
-  docTitle: { fontSize: 22, fontFamily: 'Helvetica-Bold', color: '#0f172a', marginBottom: 4, letterSpacing: 0.8 },
-  docNumber: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#0f172a', marginBottom: 2 },
-  docMeta: { fontSize: 9, color: '#475569', marginBottom: 1.5 },
-  twoCol: { flexDirection: 'row', gap: 14, marginBottom: 16 },
-  card: { flex: 1, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 6, padding: 10, backgroundColor: '#f8fafc' },
-  sectionLabel: { fontSize: 8, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 1, color: '#475569', marginBottom: 5 },
-  clientName: { fontSize: 10.5, fontFamily: 'Helvetica-Bold', color: '#111827', marginBottom: 2 },
-  cardText: { fontSize: 8.5, color: '#475569', marginBottom: 2 },
-  quotationTitle: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#0f172a', marginBottom: 8 },
-  tableHeader: { flexDirection: 'row', backgroundColor: '#0f172a', paddingVertical: 6, paddingHorizontal: 8 },
-  thText: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: 'white' },
-  row: { flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-  rowAlt: { flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#e5e7eb', backgroundColor: '#f8fafc' },
-  descText: { fontSize: 8.5, color: '#111827', lineHeight: 1.35 },
-  subDescText: { fontSize: 7.2, color: '#6b7280', marginTop: 1.5, lineHeight: 1.35 },
-  cell: { fontSize: 8, color: '#334155' },
-  amountCell: { fontSize: 8, color: '#111827', fontFamily: 'Helvetica-Bold' },
-  totalsWrap: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 14, marginBottom: 10 },
-  totalsBox: { width: 250 },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  totalLabel: { fontSize: 8.5, color: '#475569' },
-  totalValue: { fontSize: 8.5, color: '#0f172a' },
-  grandRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 2, borderTopColor: '#0f172a', paddingTop: 6, marginTop: 4 },
-  grandLabel: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#0f172a' },
-  grandValue: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#0f172a' },
-  notesSection: { marginTop: 10 },
-  notesText: { fontSize: 8.5, color: '#475569', lineHeight: 1.45 },
-  footer: { marginTop: 12, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#e2e8f0' },
-  footerText: { fontSize: 7.5, color: '#64748b', textAlign: 'center' },
+  companyBlock: {
+    flex: 1,
+    marginRight: 18,
+  },
+  logo: {
+    maxWidth: 120,
+    maxHeight: 48,
+    marginBottom: 6,
+    objectFit: 'contain',
+  },
+  companyName: {
+    fontSize: 14,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+    marginBottom: 2,
+  },
+  companyText: {
+    fontSize: 8.2,
+    color: '#475569',
+    marginBottom: 1.5,
+    lineHeight: 1.35,
+  },
+  metaBlock: {
+    width: 190,
+    alignItems: 'flex-end',
+  },
+  metaKicker: {
+    fontSize: 8,
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: 4,
+  },
+  metaNumber: {
+    fontSize: 17,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+    marginBottom: 8,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 3,
+  },
+  metaLabel: {
+    fontSize: 8.2,
+    color: '#64748b',
+    marginRight: 8,
+  },
+  metaValue: {
+    fontSize: 8.6,
+    color: '#0f172a',
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'right',
+    flexShrink: 1,
+  },
+  preparedWrap: {
+    marginTop: 14,
+    marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 14,
+  },
+  preparedCard: {
+    flex: 1.25,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 6,
+    padding: 10,
+    backgroundColor: '#f8fafc',
+  },
+  infoCard: {
+    flex: 0.95,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 6,
+    padding: 10,
+    backgroundColor: 'white',
+  },
+  blockLabel: {
+    fontSize: 7.8,
+    fontFamily: 'Helvetica-Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1.15,
+    color: '#64748b',
+    marginBottom: 5,
+  },
+  clientName: {
+    fontSize: 10.4,
+    fontFamily: 'Helvetica-Bold',
+    color: '#111827',
+    marginBottom: 2,
+  },
+  bodyText: {
+    fontSize: 8.5,
+    color: '#475569',
+    marginBottom: 1.5,
+    lineHeight: 1.35,
+  },
+  titleWrap: {
+    marginBottom: 10,
+  },
+  titleText: {
+    fontSize: 13,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+    lineHeight: 1.3,
+  },
+  table: {
+    marginTop: 4,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    borderTopWidth: 1.4,
+    borderBottomWidth: 1,
+    borderTopColor: '#0f172a',
+    borderBottomColor: '#cbd5e1',
+    paddingTop: 7,
+    paddingBottom: 6,
+  },
+  th: {
+    fontSize: 7.6,
+    fontFamily: 'Helvetica-Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+    color: '#475569',
+  },
+  row: {
+    flexDirection: 'row',
+    paddingTop: 7,
+    paddingBottom: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  colNum: { width: 22, textAlign: 'center' },
+  colDesc: { flex: 1.85, paddingRight: 10 },
+  colQty: { width: 54, textAlign: 'center' },
+  colRate: { width: 82, textAlign: 'right' },
+  colInstall: { width: 78, textAlign: 'right' },
+  colAmount: { width: 92, textAlign: 'right' },
+  descMain: {
+    fontSize: 8.8,
+    color: '#111827',
+    fontFamily: 'Helvetica-Bold',
+    lineHeight: 1.35,
+  },
+  descSub: {
+    fontSize: 7.4,
+    color: '#64748b',
+    marginTop: 2,
+    lineHeight: 1.35,
+  },
+  cell: {
+    fontSize: 8.3,
+    color: '#334155',
+    lineHeight: 1.3,
+  },
+  amountCell: {
+    fontSize: 8.3,
+    color: '#111827',
+    fontFamily: 'Helvetica-Bold',
+    lineHeight: 1.3,
+  },
+  totalsWrap: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 14,
+  },
+  totalsBox: {
+    width: 248,
+  },
+  totalsTitle: {
+    fontSize: 7.8,
+    fontFamily: 'Helvetica-Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1.1,
+    color: '#64748b',
+    marginBottom: 7,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  totalLabel: {
+    fontSize: 8.5,
+    color: '#475569',
+  },
+  totalValue: {
+    fontSize: 8.5,
+    color: '#0f172a',
+    textAlign: 'right',
+  },
+  totalNegative: {
+    color: '#b91c1c',
+  },
+  grossRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#cbd5e1',
+    paddingTop: 6,
+    marginTop: 4,
+  },
+  grossLabel: {
+    fontSize: 9.2,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+  },
+  grossValue: {
+    fontSize: 9.2,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+  },
+  netRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopWidth: 2,
+    borderTopColor: '#0f172a',
+    paddingTop: 7,
+    marginTop: 6,
+  },
+  netLabel: {
+    fontSize: 11,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+  },
+  netValue: {
+    fontSize: 12,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+  },
+  notesSection: {
+    marginTop: 12,
+  },
+  notesTitle: {
+    fontSize: 7.8,
+    fontFamily: 'Helvetica-Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1.1,
+    color: '#64748b',
+    marginBottom: 4,
+  },
+  notesText: {
+    fontSize: 8.4,
+    color: '#475569',
+    lineHeight: 1.45,
+    marginBottom: 3,
+  },
 })
 
 function stripHtml(value?: string) {
@@ -75,8 +297,30 @@ function textOrDash(value: unknown) {
   return value === null || value === undefined || value === '' ? '-' : String(value)
 }
 
-function money(value: number | string | null | undefined) {
-  return `NGN ${Number(value || 0).toLocaleString()}`
+function formatPercent(value: unknown) {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return '-'
+  return `${num.toLocaleString('en-NG', { maximumFractionDigits: 2 })}%`
+}
+
+function formatNaira(value: number | string | null | undefined) {
+  const num = Number(value || 0)
+  const hasFraction = Math.abs(num % 1) > 0.000001
+  return `₦${num.toLocaleString('en-NG', {
+    minimumFractionDigits: hasFraction ? 2 : 0,
+    maximumFractionDigits: hasFraction ? 2 : 0,
+  })}`
+}
+
+function cleanUnit(value: unknown) {
+  const text = String(value || '').trim()
+  return text ? text.toUpperCase() : ''
+}
+
+function pickHeaderFields(header: Array<Record<string, unknown>>) {
+  return header
+    .filter((field) => field.label && field.value)
+    .slice(0, 4)
 }
 
 export default function QuotationPDF({
@@ -92,10 +336,11 @@ export default function QuotationPDF({
     notesTitle?: string
     termsTitle?: string
   }
-  const columns = Array.isArray(customFields.columnConfig) && customFields.columnConfig.length
-    ? customFields.columnConfig
-    : BUILTIN_COLUMNS
-  const pdfColumns = getPdfColumns(columns)
+
+  const columns =
+    Array.isArray(customFields.columnConfig) && customFields.columnConfig.length
+      ? customFields.columnConfig
+      : BUILTIN_COLUMNS
   const installColumn = columns.find((column) => column.key === 'install_rate')
   const calculationInputs = extractCalculationInputs(quotation, customFields)
   const totals = calcTotals({
@@ -107,6 +352,10 @@ export default function QuotationPDF({
     whtType: calculationInputs.whtType,
   })
 
+  const standardItems = items.filter((item) => item.row_type === 'standard')
+  const bottomFields = Array.isArray(customFields.bottom) ? customFields.bottom : []
+  const headerFields = pickHeaderFields(Array.isArray(customFields.header) ? customFields.header : [])
+
   const companyName = String(settings?.company_name || '')
   const companyTagline = String(settings?.company_tagline || '')
   const companyAddress = String(settings?.company_address || '')
@@ -114,152 +363,199 @@ export default function QuotationPDF({
   const companyPhone = String(settings?.company_phone || '')
   const companyEmail = String(settings?.company_email || '')
   const logoUrl = String(settings?.company_logo_url || settings?.logo_url || '')
-  const bottomFields = Array.isArray(customFields.bottom) ? customFields.bottom : []
-  const headerFields = Array.isArray(customFields.header) ? customFields.header : []
-  const standardItems = items.filter((item) => item.row_type !== 'group_header')
+
+  const hasInstallColumn =
+    Boolean(installColumn?.visible) &&
+    standardItems.some((item) => resolveInstallRate(item, installColumn) > 0)
+
+  const grossTotal = totals.totalPayable + totals.whtAmount
 
   return (
     <Document>
-      <Page size="A4" style={s.page}>
-        <View style={s.header}>
-          <View style={s.companyBlock}>
-            {logoUrl ? <Image src={logoUrl} style={s.logo} /> : null}
-            {companyName ? <Text style={s.companyName}>{companyName}</Text> : null}
-            {companyTagline ? <Text style={s.companyDetail}>{companyTagline}</Text> : null}
-            {companyAddress ? <Text style={s.companyDetail}>{companyAddress}</Text> : null}
-            {companyCity ? <Text style={s.companyDetail}>{companyCity}</Text> : null}
-            {companyPhone ? <Text style={s.companyDetail}>{companyPhone}</Text> : null}
-            {companyEmail ? <Text style={s.companyDetail}>{companyEmail}</Text> : null}
+      <Page size="A4" style={styles.page}>
+        <View style={styles.topBand}>
+          <View style={styles.companyBlock}>
+            {logoUrl ? <Image src={logoUrl} style={styles.logo} /> : null}
+            {companyName ? <Text style={styles.companyName}>{companyName}</Text> : null}
+            {companyTagline ? <Text style={styles.companyText}>{companyTagline}</Text> : null}
+            {companyAddress ? <Text style={styles.companyText}>{companyAddress}</Text> : null}
+            {companyCity ? <Text style={styles.companyText}>{companyCity}</Text> : null}
+            {companyPhone ? <Text style={styles.companyText}>{companyPhone}</Text> : null}
+            {companyEmail ? <Text style={styles.companyText}>{companyEmail}</Text> : null}
           </View>
-          <View style={s.docBlock}>
-            <Text style={s.docTitle}>QUOTATION</Text>
-            <Text style={s.docNumber}>{quotation.quotation_number || 'Quotation'}</Text>
-            <Text style={s.docMeta}>Issue Date: {textOrDash(quotation.issue_date)}</Text>
-            <Text style={s.docMeta}>Valid Until: {textOrDash(quotation.valid_until)}</Text>
-            <Text style={s.docMeta}>Status: {textOrDash(quotation.status)}</Text>
-          </View>
-        </View>
 
-        <View style={s.twoCol}>
-          <View style={s.card}>
-            <Text style={s.sectionLabel}>Prepared For</Text>
-            <Text style={s.clientName}>{quotation.client_name || 'Unassigned client'}</Text>
-            {client?.address ? <Text style={s.cardText}>{String(client.address)}</Text> : null}
-            {client?.city ? <Text style={s.cardText}>{String(client.city)}{client?.state ? `, ${String(client.state)}` : ''}</Text> : null}
-            {client?.phone ? <Text style={s.cardText}>{String(client.phone)}</Text> : null}
-            {client?.email ? <Text style={s.cardText}>{String(client.email)}</Text> : null}
-            {client?.contact_person ? <Text style={s.cardText}>Attn: {String(client.contact_person)}</Text> : null}
-          </View>
-          <View style={s.card}>
-            <Text style={s.sectionLabel}>Quotation Details</Text>
-            {quotation.quotation_title ? <Text style={s.cardText}>Title: {quotation.quotation_title}</Text> : null}
-            {headerFields
-              .filter((field) => field.label && field.value)
-              .map((field, index) => (
-                <Text key={`${field.label || 'field'}_${index}`} style={s.cardText}>
-                  {String(field.label)}: {String(field.value)}
-                </Text>
-              ))}
-          </View>
-        </View>
-
-        {quotation.quotation_title ? <Text style={s.quotationTitle}>{quotation.quotation_title}</Text> : null}
-
-        <View style={s.tableHeader}>
-          {pdfColumns.map((column) => (
-            <Text
-              key={column.key}
-              style={[
-                s.thText,
-                { flexGrow: column.pdfFlex, flexBasis: 0, textAlign: column.align },
-              ]}
-            >
-              {column.label}
-            </Text>
-          ))}
-        </View>
-
-        {standardItems.map((item, index) => {
-          const rowStyle = index % 2 === 0 ? s.row : s.rowAlt
-          const amount = Number(item.quantity || 0) * Number(item.unit_price || 0)
-          return (
-            <View key={item._uiKey || item.id || index} style={rowStyle} wrap={false}>
-              {pdfColumns.map((column) => {
-                let value: string | number = getPdfCellValue(column, item, { amount, installColumn })
-                if (column.key === 'num') value = index + 1
-                if (column.key === 'description') {
-                  return (
-                    <View key={column.key} style={{ flexGrow: column.pdfFlex, flexBasis: 0 }}>
-                      <Text style={s.descText}>{item.description || ''}</Text>
-                      {item.sub_description ? <Text style={s.subDescText}>{item.sub_description}</Text> : null}
-                    </View>
-                  )
-                }
-                return (
-                  <Text
-                    key={column.key}
-                    style={[
-                      column.key === 'amount' ? s.amountCell : s.cell,
-                      { flexGrow: column.pdfFlex, flexBasis: 0, textAlign: column.align },
-                    ]}
-                  >
-                    {String(value)}
-                  </Text>
-                )
-              })}
+          <View style={styles.metaBlock}>
+            <Text style={styles.metaKicker}>Quotation</Text>
+            <Text style={styles.metaNumber}>{quotation.quotation_number || 'Quotation'}</Text>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>Issue Date</Text>
+              <Text style={styles.metaValue}>{textOrDash(quotation.issue_date)}</Text>
             </View>
-          )
-        })}
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>Valid Until</Text>
+              <Text style={styles.metaValue}>{textOrDash(quotation.valid_until)}</Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>Status</Text>
+              <Text style={styles.metaValue}>{textOrDash(quotation.status)}</Text>
+            </View>
+          </View>
+        </View>
 
-        <View style={s.totalsWrap}>
-          <View style={s.totalsBox}>
-            {[
-              ['Subtotal', totals.rawSubtotal],
-              ['Install Rate Total', totals.installRateTotal],
-              ['VAT', totals.vatAmount],
-              ['Discount', totals.discountAmount],
-              ['WHT', totals.whtAmount],
-            ].map(([label, value]) => (
-              <View key={String(label)} style={s.totalRow}>
-                <Text style={s.totalLabel}>{label}</Text>
-                <Text style={s.totalValue}>{money(value as number)}</Text>
+        <View style={styles.preparedWrap}>
+          <View style={styles.preparedCard}>
+            <Text style={styles.blockLabel}>Prepared For</Text>
+            <Text style={styles.clientName}>{quotation.client_name || 'Unassigned client'}</Text>
+            {client?.contact_person ? <Text style={styles.bodyText}>Attn: {String(client.contact_person)}</Text> : null}
+            {client?.address ? <Text style={styles.bodyText}>{String(client.address)}</Text> : null}
+            {client?.city ? (
+              <Text style={styles.bodyText}>
+                {String(client.city)}
+                {client?.state ? `, ${String(client.state)}` : ''}
+              </Text>
+            ) : null}
+            {client?.phone ? <Text style={styles.bodyText}>{String(client.phone)}</Text> : null}
+            {client?.email ? <Text style={styles.bodyText}>{String(client.email)}</Text> : null}
+          </View>
+
+          {headerFields.length > 0 ? (
+            <View style={styles.infoCard}>
+              <Text style={styles.blockLabel}>Reference</Text>
+              {headerFields.map((field, index) => (
+                <View key={`header_${index}`} style={styles.metaRow}>
+                  <Text style={styles.metaLabel}>{String(field.label)}</Text>
+                  <Text style={styles.metaValue}>{String(field.value)}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+        </View>
+
+        {quotation.quotation_title ? (
+          <View style={styles.titleWrap}>
+            <Text style={styles.titleText}>{quotation.quotation_title}</Text>
+          </View>
+        ) : null}
+
+        <View style={styles.table}>
+          <View style={styles.tableHeader}>
+            <Text style={[styles.th, styles.colNum]}>#</Text>
+            <Text style={[styles.th, styles.colDesc]}>Description</Text>
+            <Text style={[styles.th, styles.colQty]}>Qty</Text>
+            <Text style={[styles.th, styles.colRate]}>Rate</Text>
+            {hasInstallColumn ? <Text style={[styles.th, styles.colInstall]}>Install</Text> : null}
+            <Text style={[styles.th, styles.colAmount]}>Amount</Text>
+          </View>
+
+          {standardItems.map((item, index) => {
+            const rowAmount = Number(item.quantity || 0) * Number(item.unit_price || 0)
+            const installRate = resolveInstallRate(item, installColumn)
+            const quantityLabel = cleanUnit(item.unit)
+              ? `${Number(item.quantity || 0).toLocaleString('en-NG')} ${cleanUnit(item.unit)}`
+              : Number(item.quantity || 0).toLocaleString('en-NG')
+
+            const subLines = [
+              item.sub_description ? String(item.sub_description).trim() : '',
+              item.make ? `Make: ${String(item.make).trim()}` : '',
+              item.vat_rate !== null && item.vat_rate !== undefined ? `VAT ${formatPercent(item.vat_rate)}` : '',
+              item.discount_rate !== null && item.discount_rate !== undefined ? `Discount ${formatPercent(item.discount_rate)}` : '',
+            ].filter(Boolean)
+
+            return (
+              <View key={item._uiKey || item.id || index} style={styles.row} wrap={false}>
+                <Text style={[styles.cell, styles.colNum]}>{index + 1}</Text>
+                <View style={styles.colDesc}>
+                  <Text style={styles.descMain}>{item.description || ''}</Text>
+                  {subLines.map((line, lineIndex) => (
+                    <Text key={`sub_${lineIndex}`} style={styles.descSub}>
+                      {line}
+                    </Text>
+                  ))}
+                </View>
+                <Text style={[styles.cell, styles.colQty]}>{quantityLabel}</Text>
+                <Text style={[styles.cell, styles.colRate]}>{formatNaira(item.unit_price || 0)}</Text>
+                {hasInstallColumn ? (
+                  <Text style={[styles.cell, styles.colInstall]}>
+                    {installRate > 0 ? formatNaira(installRate) : '-'}
+                  </Text>
+                ) : null}
+                <Text style={[styles.amountCell, styles.colAmount]}>{formatNaira(rowAmount)}</Text>
               </View>
-            ))}
-            <View style={s.grandRow}>
-              <Text style={s.grandLabel}>Total Quotation</Text>
-              <Text style={s.grandValue}>{money(totals.totalPayable)}</Text>
+            )
+          })}
+        </View>
+
+        <View style={styles.totalsWrap}>
+          <View style={styles.totalsBox}>
+            <Text style={styles.totalsTitle}>Totals</Text>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Subtotal</Text>
+              <Text style={styles.totalValue}>{formatNaira(totals.rawSubtotal)}</Text>
+            </View>
+            {hasInstallColumn && totals.installRateTotal > 0 ? (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Install Rate Total</Text>
+                <Text style={styles.totalValue}>{formatNaira(totals.installRateTotal)}</Text>
+              </View>
+            ) : null}
+            {totals.vatAmount > 0 ? (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>VAT</Text>
+                <Text style={styles.totalValue}>{formatNaira(totals.vatAmount)}</Text>
+              </View>
+            ) : null}
+            {totals.discountAmount > 0 ? (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Discount</Text>
+                <Text style={[styles.totalValue, styles.totalNegative]}>- {formatNaira(totals.discountAmount)}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.grossRow}>
+              <Text style={styles.grossLabel}>Gross Total</Text>
+              <Text style={styles.grossValue}>{formatNaira(grossTotal)}</Text>
+            </View>
+
+            {totals.whtAmount > 0 ? (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Less WHT</Text>
+                <Text style={[styles.totalValue, styles.totalNegative]}>- {formatNaira(totals.whtAmount)}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.netRow}>
+              <Text style={styles.netLabel}>Net Quotation</Text>
+              <Text style={styles.netValue}>{formatNaira(totals.totalPayable)}</Text>
             </View>
           </View>
         </View>
 
         {stripHtml(quotation.notes) ? (
-          <View style={s.notesSection}>
-            <Text style={s.sectionLabel}>{String(customFields.notesTitle || 'Notes')}</Text>
-            <Text style={s.notesText}>{stripHtml(quotation.notes)}</Text>
+          <View style={styles.notesSection}>
+            <Text style={styles.notesTitle}>{String(customFields.notesTitle || 'Notes')}</Text>
+            <Text style={styles.notesText}>{stripHtml(quotation.notes)}</Text>
           </View>
         ) : null}
 
         {stripHtml(quotation.terms) ? (
-          <View style={s.notesSection}>
-            <Text style={s.sectionLabel}>{String(customFields.termsTitle || 'Terms and Conditions')}</Text>
-            <Text style={s.notesText}>{stripHtml(quotation.terms)}</Text>
+          <View style={styles.notesSection}>
+            <Text style={styles.notesTitle}>{String(customFields.termsTitle || 'Terms and Conditions')}</Text>
+            <Text style={styles.notesText}>{stripHtml(quotation.terms)}</Text>
           </View>
         ) : null}
 
-        {bottomFields.length > 0 ? (
-          <View style={s.notesSection}>
-            <Text style={s.sectionLabel}>Additional Notes</Text>
+        {bottomFields.filter((field) => field.text).length > 0 ? (
+          <View style={styles.notesSection}>
+            <Text style={styles.notesTitle}>Additional Notes</Text>
             {bottomFields
               .filter((field) => field.text)
               .map((field, index) => (
-                <Text key={`bottom_${index}`} style={s.notesText}>{String(field.text)}</Text>
+                <Text key={`bottom_${index}`} style={styles.notesText}>
+                  {String(field.text)}
+                </Text>
               ))}
           </View>
         ) : null}
-
-        <View style={s.footer}>
-          <Text style={s.footerText}>Quotation generated from the quotation module.</Text>
-        </View>
       </Page>
     </Document>
   )
