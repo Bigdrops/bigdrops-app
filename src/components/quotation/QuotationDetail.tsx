@@ -213,7 +213,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
 
   const handleArchive = async () => {
     if (!quotation) return
-    if (!window.confirm('This quotation will be hidden from your list until it is restored later.')) return
+    if (!window.confirm('This quotation will be hidden from your list until you restore it from Settings > Archives.')) return
     const { error } = await supabase
       .from('quotations')
       .update({ archived_at: new Date().toISOString() })

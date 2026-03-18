@@ -445,7 +445,7 @@ export default function Invoices() {
           </div>
           <h3 className="text-xl font-black text-zinc-950 text-center mb-2">Archive Invoice?</h3>
           <p className="text-sm text-zinc-500 text-center font-medium leading-relaxed mb-8">
-            This invoice will be hidden from your list and automatically deleted after 30 days if not restored. You can restore it from Settings anytime before then.
+            This invoice will be hidden from your active list until you restore it from Settings &gt; Archives.
           </p>
           <div className="flex gap-3">
             <button onClick={() => setShowArchiveWarn(false)}

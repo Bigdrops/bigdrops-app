@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, Search, SlidersHorizontal } from 'lucide-react'
+import { Archive, ClipboardList, Loader2, Pencil, Search, SlidersHorizontal, Trash2 } from 'lucide-react'
 import { supabase } from '@/supabase'
 import type { DbQuotation } from '@/domain/quotation'
 import { mapDbQuotation } from '@/domain/quotation'
@@ -14,12 +14,50 @@ export default function QuotationList() {
   const [sortBy, setSortBy] = useState('Newest')
   const [showSearch, setShowSearch] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [busyAction, setBusyAction] = useState<string | null>(null)
+
+  const loadQuotations = async () => {
+    const { data } = await supabase
+      .from('quotations')
+      .select('*')
+      .is('archived_at', null)
+      .order('created_at', { ascending: false })
+    setQuotations((data || []) as DbQuotation[])
+  }
 
   useEffect(() => {
-    supabase.from('quotations').select('*').is('archived_at', null).order('created_at', { ascending: false }).then(({ data }) => {
-      setQuotations((data || []) as DbQuotation[])
-    })
+    loadQuotations()
   }, [])
+
+  const handleArchive = async (id: string) => {
+    if (!window.confirm('Archive this quotation? You can restore it later from Settings > Archives.')) return
+    setBusyAction(`archive:${id}`)
+    const { error } = await supabase.from('quotations').update({ archived_at: new Date().toISOString() }).eq('id', id)
+    setBusyAction(null)
+    if (error) {
+      alert(`Archive failed: ${error.message}`)
+      return
+    }
+    await loadQuotations()
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Deleting this quotation is permanent and cannot be undone.')) return
+    setBusyAction(`delete:${id}`)
+    const { error: itemError } = await supabase.from('quotation_items').delete().eq('quotation_id', id)
+    if (itemError) {
+      setBusyAction(null)
+      alert(`Delete failed: ${itemError.message}`)
+      return
+    }
+    const { error } = await supabase.from('quotations').delete().eq('id', id)
+    setBusyAction(null)
+    if (error) {
+      alert(`Delete failed: ${error.message}`)
+      return
+    }
+    await loadQuotations()
+  }
 
   const filteredQuotations = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -93,6 +131,9 @@ export default function QuotationList() {
         ) : (
           filteredQuotations.map((row, index) => {
             const quotation = mapDbQuotation(row)
+            const isArchiving = busyAction === `archive:${quotation.id}`
+            const isDeleting = busyAction === `delete:${quotation.id}`
+
             return (
               <div
                 key={quotation.id}
@@ -122,7 +163,44 @@ export default function QuotationList() {
                   <div className={`rounded-full px-3 py-1 text-[11px] font-extrabold uppercase ${quotationStatusTone(quotation.status)}`}>
                     {formatQuotationStatus(quotation.status)}
                   </div>
-                  <div className="text-[15px] font-black text-slate-900">₦{Number(quotation.total || 0).toLocaleString()}</div>
+                  <div className="text-[15px] font-black text-slate-900">{`₦${Number(quotation.total || 0).toLocaleString()}`}</div>
+                  <div className="flex w-full flex-wrap justify-start gap-2 pt-1 sm:w-auto sm:justify-end">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        navigate(`/quotations/edit/${quotation.id}`)
+                      }}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-700 hover:bg-slate-100"
+                    >
+                      <Pencil size={13} />
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isArchiving || isDeleting}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        handleArchive(quotation.id)
+                      }}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 text-[11px] font-bold text-amber-700 hover:bg-amber-100 disabled:opacity-60"
+                    >
+                      {isArchiving ? <Loader2 size={13} className="animate-spin" /> : <Archive size={13} />}
+                      Archive
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isArchiving || isDeleting}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        handleDelete(quotation.id)
+                      }}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-[11px] font-bold text-red-700 hover:bg-red-100 disabled:opacity-60"
+                    >
+                      {isDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             )

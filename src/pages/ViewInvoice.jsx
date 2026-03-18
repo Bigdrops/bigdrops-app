@@ -369,7 +369,7 @@ export default function ViewInvoice() {
   // ── Delete invoice ──────────────────────────────────────────────────────────
   const handleDelete = async () => {
     setShowMore(false)
-    if (!window.confirm('Deleting is permanent and cannot be undone. You may choose to archive it instead. Archived invoices remain recoverable for 30 days.')) return
+    if (!window.confirm('Deleting is permanent and cannot be undone. You can archive it instead and restore it later from Settings > Archives.')) return
     await supabase.from('invoice_items').delete().eq('invoice_id', id)
     await supabase.from('invoices').delete().eq('id', id)
     navigate('/invoices')
@@ -378,7 +378,7 @@ export default function ViewInvoice() {
   // ── Archive invoice ─────────────────────────────────────────────────────────
   const handleArchive = async () => {
     setShowMore(false)
-    if (!window.confirm('This invoice will be hidden from your list and automatically deleted after 30 days if not restored. You can restore it from Settings anytime before then.')) return
+    if (!window.confirm('This invoice will be hidden from your active list until you restore it from Settings > Archives.')) return
     await supabase.from('invoices').update({ archived_at: new Date().toISOString() }).eq('id', id)
     navigate('/invoices')
   }
