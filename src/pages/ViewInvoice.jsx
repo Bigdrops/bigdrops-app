@@ -2,6 +2,15 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
+import { buildInvoiceCsv, downloadInvoiceCsv } from '../components/invoice/exportInvoiceCsv'
+import { toDbItem } from '@/domain/invoice'
+import {
+  buildTrailLink,
+  parseDocumentCustomFields,
+  toQuotationItemRow,
+  withSourceTrail,
+} from '@/domain/documentConversion'
+import { getNextQuotationNumber } from '@/domain/quotation'
 
 const TEMPLATES = [
   { id: 'classic',  label: 'Classic',  description: 'Navy · Minimal' },
@@ -77,6 +86,7 @@ export default function ViewInvoice() {
 
   // PDF
   const [pdfGenerating, setPdfGenerating] = useState(false)
+  const [converting, setConverting] = useState(false)
 
   // Project linking modal
   const [showProjectModal, setShowProjectModal] = useState(false)
@@ -128,6 +138,10 @@ export default function ViewInvoice() {
   const companyEmail = settings.company_email || ''
   const companyIdentityLines = [companyAddress, companyCity, companyPhone, companyEmail].filter(Boolean)
   const hasCompanyIdentity = Boolean(companyName || companyTagline || companyIdentityLines.length)
+  const poNumber = String(invoice.po_number || '').trim()
+  const statusLabel = String(invoice.status || 'draft')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
 
 
   // ── Status helpers ──────────────────────────────────────────────────────────
@@ -163,6 +177,23 @@ export default function ViewInvoice() {
     } finally {
       setPdfGenerating(false)
     }
+  }
+
+  const handleDownloadCsv = () => {
+    const csv = buildInvoiceCsv({
+      invoice,
+      items,
+      totals: {
+        rawSubtotal: Number(invoice.subtotal || 0),
+        installRateTotal: Number(invoice.install_rate_total || 0),
+        vatAmount: Number(invoice.vat || 0),
+        discountAmount: Number(invoice.discount || 0),
+        whtAmount: Number(invoice.wht || 0),
+        totalPayable: Number(invoice.total || 0),
+      },
+    })
+    downloadInvoiceCsv(`${invoice.invoice_number || 'invoice'}.csv`, csv)
+    setShowMore(false)
   }
 
   // ── Status change ───────────────────────────────────────────────────────────
@@ -222,7 +253,117 @@ export default function ViewInvoice() {
 
 
   // ── Misc More menu actions ──────────────────────────────────────────────────
-  const handleConvertToQuote = () => { setShowMore(false); alert('Quotations module coming soon.') }
+  const handleConvertToQuote = async () => {
+    if (converting) return
+    setShowMore(false)
+    setConverting(true)
+    try {
+      const [{ data: quotationRows }, { data: latestInvoice }] = await Promise.all([
+        supabase.from('quotations').select('quotation_number'),
+        supabase.from('invoices').select('custom_fields').eq('id', id).single(),
+      ])
+
+      const nextQuotationNumber = getNextQuotationNumber((quotationRows || []))
+      const sourceInvoiceFields = parseDocumentCustomFields(latestInvoice?.custom_fields || customFieldObject)
+      const poValue = poNumber || null
+      const sourceLink = buildTrailLink({
+        id: invoice.id,
+        type: 'invoice',
+        number: invoice.invoice_number,
+        project_id: invoice.project_id || null,
+        po_number: poValue,
+      })
+
+      const quotationCustomFields = withSourceTrail(
+        {
+          ...sourceInvoiceFields,
+          quotationTitle: invoice.invoice_title || '',
+          clientName: invoice.client_name || '',
+          notesHtml: invoice.notes || '',
+          termsHtml: invoice.terms || '',
+        },
+        sourceLink,
+      )
+
+      const quotationPayload = {
+        quotation_number: nextQuotationNumber,
+        po_number: poValue,
+        quotation_title: invoice.invoice_title || null,
+        client_id: invoice.client_id || null,
+        client_name: invoice.client_name || '',
+        project_id: invoice.project_id || null,
+        issue_date: invoice.issue_date || new Date().toISOString().split('T')[0],
+        valid_until: invoice.due_date || null,
+        status: 'draft',
+        notes: invoice.notes || '',
+        terms: invoice.terms || '',
+        workmanship: Number(invoice.workmanship || 0),
+        transportation: Number(invoice.transportation || 0),
+        shipping: Number(invoice.shipping || 0),
+        discount: Number(invoice.discount || 0),
+        vat: Number(invoice.vat || 0),
+        wht: Number(invoice.wht || 0),
+        subtotal: Number(invoice.subtotal || 0),
+        install_rate_total: Number(invoice.install_rate_total || 0),
+        total: Number(invoice.total || 0),
+        amount_in_words: invoice.amount_in_words || '',
+        custom_fields: JSON.stringify(quotationCustomFields),
+      }
+
+      const { data: createdQuotation, error: quotationError } = await supabase
+        .from('quotations')
+        .insert([quotationPayload])
+        .select()
+        .single()
+
+      if (quotationError || !createdQuotation) throw new Error(quotationError?.message || 'Failed to create quotation')
+
+      const itemRows = items
+        .filter((item) =>
+          item.row_type === 'group_header'
+            ? item.group_name?.trim()
+            : item.description?.trim(),
+        )
+        .map((item, index) => toQuotationItemRow(item, createdQuotation.id, index))
+
+      if (itemRows.length > 0) {
+        const { error: itemError } = await supabase.from('quotation_items').insert(itemRows)
+        if (itemError) {
+          await supabase.from('quotations').delete().eq('id', createdQuotation.id)
+          throw new Error(itemError.message)
+        }
+      }
+
+      const { error: deleteItemsError } = await supabase.from('invoice_items').delete().eq('invoice_id', id)
+      if (deleteItemsError) {
+        await supabase.from('quotation_items').delete().eq('quotation_id', createdQuotation.id)
+        await supabase.from('quotations').delete().eq('id', createdQuotation.id)
+        throw new Error(deleteItemsError.message)
+      }
+
+      const { error: deleteInvoiceError } = await supabase.from('invoices').delete().eq('id', id)
+      if (deleteInvoiceError) {
+        await supabase.from('invoice_items').insert(
+          items
+            .filter((item) =>
+              item.row_type === 'group_header'
+                ? item.group_name?.trim()
+                : item.description?.trim(),
+            )
+            .map((item, index) => toDbItem(item, id, index)),
+        )
+        await supabase.from('quotation_items').delete().eq('quotation_id', createdQuotation.id)
+        await supabase.from('quotations').delete().eq('id', createdQuotation.id)
+        throw new Error(deleteInvoiceError.message)
+      }
+
+      navigate(`/quotations/${createdQuotation.id}`)
+    } catch (err) {
+      alert('Convert to quotation failed: ' + ((err && err.message) || 'Unknown error'))
+    } finally {
+      setConverting(false)
+    }
+  }
   const handleMarkSent       = () => { handleStatusChange('sent'); setShowMore(false) }
 
   // ── Delete invoice ──────────────────────────────────────────────────────────
@@ -245,11 +386,15 @@ export default function ViewInvoice() {
 
   // ── Custom fields ───────────────────────────────────────────────────────────
   let customFields = [], bottomFields = [], attachments = []
+  let customFieldObject = {}
   try {
     const _cf = JSON.parse(invoice.custom_fields || '{}')
+    customFieldObject = Array.isArray(_cf) ? { header: _cf } : (_cf || {})
     if (Array.isArray(_cf)) { customFields = _cf }
     else { customFields = _cf.header || []; bottomFields = _cf.bottom || []; attachments = _cf.attachments || [] }
-  } catch (e) { customFields = []; bottomFields = []; attachments = [] }
+  } catch (e) { customFields = []; bottomFields = []; attachments = []; customFieldObject = {} }
+  const topHeaderFields = customFields.filter(f => f.label && f.value)
+  const conversionTrail = customFieldObject.conversionTrail || {}
 
   const inputStyle = { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '16px', outline: 'none', boxSizing: 'border-box', backgroundColor: 'white', color: '#1a1a1a' }
   const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#555', marginBottom: '4px' }
@@ -347,8 +492,9 @@ export default function ViewInvoice() {
               <div style={{ position: 'absolute', top: '100%', right: 0, left: 'auto', marginTop: '6px', backgroundColor: 'white', borderRadius: '10px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', border: '1px solid #eee', zIndex: 200, minWidth: '230px', overflow: 'hidden' }}>
                 {[
                   { label: '💳 Record Payment',        action: () => { setShowMore(false); setShowPaymentModal(true) },           show: invoice.status !== 'paid' },
+                  { label: '📄 Export CSV',            action: handleDownloadCsv,                                                show: true },
                   { label: '📋 Clone Invoice',          action: handleClone,                                                      show: true },
-                  { label: '📄 Convert to Quotation',  action: handleConvertToQuote,                                             show: true },
+                  { label: converting ? '⏳ Converting to Quotation...' : '📄 Convert to Quotation',  action: handleConvertToQuote, show: true },
                   { label: '🔧 Generate CSR',          action: () => { setShowMore(false); alert('Coming soon') },               show: true },
                   { label: '🚚 Generate Waybill',      action: () => { setShowMore(false); alert('Coming soon') },               show: true },
                   { label: invoice.status === 'draft' ? '✅ Mark as Sent' : null, action: handleMarkSent,                      show: invoice.status === 'draft' },
@@ -356,7 +502,7 @@ export default function ViewInvoice() {
                   { label: '🗑 Delete Invoice',        action: handleDelete,                                                     show: true, danger: true },
                 ].filter(m => m.show && m.label).map((item, i) => (
                   <div key={i} onClick={item.action}
-                    style={{ padding: '13px 18px', cursor: 'pointer', fontSize: '14px', color: item.danger ? '#CC0000' : '#1a1a1a', borderBottom: '1px solid #f5f5f5', transition: 'background 0.1s' }}
+                    style={{ padding: '13px 18px', cursor: converting && item.label.includes('Converting') ? 'default' : 'pointer', fontSize: '14px', color: item.danger ? '#CC0000' : '#1a1a1a', borderBottom: '1px solid #f5f5f5', transition: 'background 0.1s', opacity: converting && item.label.includes('Converting') ? 0.7 : 1 }}
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f9f9f9'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
                     {item.label}
@@ -367,6 +513,71 @@ export default function ViewInvoice() {
           </div>
         </div>
 
+
+        <div style={{ backgroundColor: 'white', borderRadius: '18px', border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: isNarrow ? '16px' : '20px', marginBottom: '24px' }}>
+          <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: isNarrow ? '1fr' : 'minmax(0,1fr) 260px' }}>
+            <div style={{ display: 'grid', gap: '12px', gridTemplateColumns: isNarrow ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '16px', backgroundColor: '#f8fafc', padding: '16px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.18em' }}>Client</div>
+                <div style={{ marginTop: '8px', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>{invoice.client_name || 'Unassigned'}</div>
+                {client?.contact_person && <div style={{ marginTop: '4px', fontSize: '14px', color: '#64748b' }}>{client.contact_person}</div>}
+                {client?.email && <div style={{ fontSize: '14px', color: '#64748b' }}>{client.email}</div>}
+                {client?.phone && <div style={{ fontSize: '14px', color: '#64748b' }}>{client.phone}</div>}
+              </div>
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '16px', backgroundColor: '#f8fafc', padding: '16px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.18em' }}>Invoice Summary</div>
+                <div style={{ marginTop: '8px', display: 'grid', gap: '4px', fontSize: '14px', color: '#475569' }}>
+                  <div>Status: {statusLabel}</div>
+                  <div>Issued: {invoice.issue_date || 'Not set'}</div>
+                  {invoice.due_date ? <div>Due: {invoice.due_date}</div> : null}
+                  {poNumber ? <div>P.O. Number: {poNumber}</div> : null}
+                  {invoice.payment_terms ? <div>Payment Terms: {invoice.payment_terms}</div> : null}
+                  {invoice.work_duration ? <div>Work Duration: {invoice.work_duration}</div> : null}
+                </div>
+              </div>
+              {topHeaderFields.length > 0 && (
+                <div style={{ border: '1px solid #e2e8f0', borderRadius: '16px', backgroundColor: '#f8fafc', padding: '16px', gridColumn: isNarrow ? 'auto' : '1 / span 2' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.18em' }}>Reference Fields</div>
+                  <div style={{ marginTop: '10px', display: 'grid', gap: '12px', gridTemplateColumns: isNarrow ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
+                    {topHeaderFields.map((field, index) => (
+                      <div key={`${field.label}-${index}`}>
+                        <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{field.label}</div>
+                        <div style={{ marginTop: '4px', fontSize: '14px', color: '#0f172a', wordBreak: 'break-word' }}>{field.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(conversionTrail?.source?.number || (conversionTrail?.derived || []).length > 0) && (
+                <div style={{ border: '1px solid #e2e8f0', borderRadius: '16px', backgroundColor: '#f8fafc', padding: '16px', gridColumn: isNarrow ? 'auto' : '1 / span 2' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.18em' }}>Conversion Trail</div>
+                  <div style={{ marginTop: '10px', display: 'grid', gap: '8px', fontSize: '14px', color: '#475569' }}>
+                    {conversionTrail?.source?.number ? (
+                      <button
+                        type="button"
+                        onClick={() => conversionTrail.source.id ? navigate(`/quotations/${conversionTrail.source.id}`) : null}
+                        style={{ textAlign: 'left', color: '#1d4ed8', background: 'transparent', border: 'none', padding: 0, cursor: conversionTrail.source.id ? 'pointer' : 'default', fontSize: '14px', fontWeight: '600' }}
+                      >
+                        Source Quotation: {conversionTrail.source.number}
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ border: '1px solid #0f172a', borderRadius: '16px', backgroundColor: '#0f172a', padding: '16px', color: 'white' }}>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.18em' }}>Document Identity</div>
+              <div style={{ marginTop: '8px', fontSize: '20px', fontWeight: '700' }}>{companyName || (invoice.document_type || 'INVOICE')}</div>
+              {companyTagline ? <div style={{ marginTop: '4px', fontSize: '14px', color: '#cbd5e1' }}>{companyTagline}</div> : null}
+              {companyIdentityLines.length > 0 && (
+                <div style={{ marginTop: '12px', display: 'grid', gap: '4px', fontSize: '12px', color: '#cbd5e1' }}>
+                  {companyIdentityLines.map((line) => <div key={line}>{line}</div>)}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* ── Invoice Preview ── */}
         <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: isNarrow ? '16px' : '40px', overflowX: 'auto' }}>
@@ -405,9 +616,6 @@ export default function ViewInvoice() {
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Details</div>
               {invoice.payment_terms && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>Payment Terms: {invoice.payment_terms}</div>}
               {invoice.work_duration && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>Work Duration: {invoice.work_duration}</div>}
-              {customFields.filter(f => f.label && f.value).map((f, i) => (
-                <div key={i} style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>{f.label}: {f.value}</div>
-              ))}
             </div>
           </div>
 

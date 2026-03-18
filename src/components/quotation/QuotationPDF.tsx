@@ -168,6 +168,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
+  groupRow: {
+    flexDirection: 'row',
+    paddingTop: 6,
+    paddingBottom: 6,
+    paddingLeft: 8,
+    paddingRight: 8,
+    backgroundColor: '#0f172a',
+    borderBottomWidth: 1,
+    borderBottomColor: '#0f172a',
+  },
+  groupText: {
+    fontSize: 8.5,
+    color: 'white',
+    fontFamily: 'Helvetica-Bold',
+  },
   colNum: { width: 22, textAlign: 'center' },
   colDesc: { flex: 1.85, paddingRight: 10 },
   colQty: { width: 54, textAlign: 'center' },
@@ -230,25 +245,7 @@ const styles = StyleSheet.create({
   totalNegative: {
     color: '#b91c1c',
   },
-  grossRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: '#cbd5e1',
-    paddingTop: 6,
-    marginTop: 4,
-  },
-  grossLabel: {
-    fontSize: 9.2,
-    fontFamily: 'Helvetica-Bold',
-    color: '#0f172a',
-  },
-  grossValue: {
-    fontSize: 9.2,
-    fontFamily: 'Helvetica-Bold',
-    color: '#0f172a',
-  },
-  netRow: {
+  totalRowStrong: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderTopWidth: 2,
@@ -256,12 +253,12 @@ const styles = StyleSheet.create({
     paddingTop: 7,
     marginTop: 6,
   },
-  netLabel: {
+  totalLabelStrong: {
     fontSize: 11,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
   },
-  netValue: {
+  totalValueStrong: {
     fontSize: 12,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
@@ -297,14 +294,27 @@ function textOrDash(value: unknown) {
   return value === null || value === undefined || value === '' ? '-' : String(value)
 }
 
+function toMoneyNumber(value: unknown) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[^0-9.-]/g, '')
+    if (!cleaned) return 0
+    const parsed = Number(cleaned)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+  if (value === null || value === undefined || value === '') return 0
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
 function formatPercent(value: unknown) {
-  const num = Number(value)
+  const num = toMoneyNumber(value)
   if (!Number.isFinite(num)) return '-'
   return `${num.toLocaleString('en-NG', { maximumFractionDigits: 2 })}%`
 }
 
 function formatNaira(value: number | string | null | undefined) {
-  const num = Number(value || 0)
+  const num = toMoneyNumber(value)
   const hasFraction = Math.abs(num % 1) > 0.000001
   return `₦${num.toLocaleString('en-NG', {
     minimumFractionDigits: hasFraction ? 2 : 0,
@@ -342,6 +352,9 @@ export default function QuotationPDF({
       ? customFields.columnConfig
       : BUILTIN_COLUMNS
   const installColumn = columns.find((column) => column.key === 'install_rate')
+  const showMake = Boolean(columns.find((column) => column.key === 'make')?.visible)
+  const showVatRate = Boolean(columns.find((column) => column.key === 'vat_rate')?.visible)
+  const showDiscountRate = Boolean(columns.find((column) => column.key === 'discount_rate')?.visible)
   const calculationInputs = extractCalculationInputs(quotation, customFields)
   const totals = calcTotals({
     items,
@@ -367,8 +380,6 @@ export default function QuotationPDF({
   const hasInstallColumn =
     Boolean(installColumn?.visible) &&
     standardItems.some((item) => resolveInstallRate(item, installColumn) > 0)
-
-  const grossTotal = totals.totalPayable + totals.whtAmount
 
   return (
     <Document>
@@ -399,6 +410,12 @@ export default function QuotationPDF({
               <Text style={styles.metaLabel}>Status</Text>
               <Text style={styles.metaValue}>{textOrDash(quotation.status)}</Text>
             </View>
+            {String(quotation.po_number || '').trim() ? (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>P.O. Number</Text>
+                <Text style={styles.metaValue}>{textOrDash(String(quotation.po_number || '').trim())}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
 
@@ -447,23 +464,34 @@ export default function QuotationPDF({
             <Text style={[styles.th, styles.colAmount]}>Amount</Text>
           </View>
 
-          {standardItems.map((item, index) => {
-            const rowAmount = Number(item.quantity || 0) * Number(item.unit_price || 0)
+          {(() => {
+            let rowNumber = 0
+            return items.map((item, index) => {
+            if (item.row_type === 'group_header') {
+              return (
+                <View key={item._uiKey || item.id || `group_${index}`} style={styles.groupRow} wrap={false}>
+                  <Text style={styles.groupText}>{item.group_name || `Group ${index + 1}`}</Text>
+                </View>
+              )
+            }
+
+            rowNumber += 1
+            const rowAmount = toMoneyNumber(item.quantity) * toMoneyNumber(item.unit_price)
             const installRate = resolveInstallRate(item, installColumn)
             const quantityLabel = cleanUnit(item.unit)
-              ? `${Number(item.quantity || 0).toLocaleString('en-NG')} ${cleanUnit(item.unit)}`
-              : Number(item.quantity || 0).toLocaleString('en-NG')
+              ? `${toMoneyNumber(item.quantity).toLocaleString('en-NG')} ${cleanUnit(item.unit)}`
+              : toMoneyNumber(item.quantity).toLocaleString('en-NG')
 
             const subLines = [
               item.sub_description ? String(item.sub_description).trim() : '',
-              item.make ? `Make: ${String(item.make).trim()}` : '',
-              item.vat_rate !== null && item.vat_rate !== undefined ? `VAT ${formatPercent(item.vat_rate)}` : '',
-              item.discount_rate !== null && item.discount_rate !== undefined ? `Discount ${formatPercent(item.discount_rate)}` : '',
+              showMake && item.make ? `Make: ${String(item.make).trim()}` : '',
+              showVatRate && item.vat_rate !== null && item.vat_rate !== undefined ? `VAT ${formatPercent(item.vat_rate)}` : '',
+              showDiscountRate && item.discount_rate !== null && item.discount_rate !== undefined ? `Discount ${formatPercent(item.discount_rate)}` : '',
             ].filter(Boolean)
 
             return (
               <View key={item._uiKey || item.id || index} style={styles.row} wrap={false}>
-                <Text style={[styles.cell, styles.colNum]}>{index + 1}</Text>
+                <Text style={[styles.cell, styles.colNum]}>{rowNumber}</Text>
                 <View style={styles.colDesc}>
                   <Text style={styles.descMain}>{item.description || ''}</Text>
                   {subLines.map((line, lineIndex) => (
@@ -482,7 +510,7 @@ export default function QuotationPDF({
                 <Text style={[styles.amountCell, styles.colAmount]}>{formatNaira(rowAmount)}</Text>
               </View>
             )
-          })}
+          })})()}
         </View>
 
         <View style={styles.totalsWrap}>
@@ -510,22 +538,15 @@ export default function QuotationPDF({
                 <Text style={[styles.totalValue, styles.totalNegative]}>- {formatNaira(totals.discountAmount)}</Text>
               </View>
             ) : null}
-
-            <View style={styles.grossRow}>
-              <Text style={styles.grossLabel}>Gross Total</Text>
-              <Text style={styles.grossValue}>{formatNaira(grossTotal)}</Text>
-            </View>
-
             {totals.whtAmount > 0 ? (
               <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Less WHT</Text>
+                <Text style={styles.totalLabel}>WHT</Text>
                 <Text style={[styles.totalValue, styles.totalNegative]}>- {formatNaira(totals.whtAmount)}</Text>
               </View>
             ) : null}
-
-            <View style={styles.netRow}>
-              <Text style={styles.netLabel}>Net Quotation</Text>
-              <Text style={styles.netValue}>{formatNaira(totals.totalPayable)}</Text>
+            <View style={styles.totalRowStrong}>
+              <Text style={styles.totalLabelStrong}>Total Payable</Text>
+              <Text style={styles.totalValueStrong}>{formatNaira(totals.totalPayable)}</Text>
             </View>
           </View>
         </View>

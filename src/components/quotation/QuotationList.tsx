@@ -27,18 +27,20 @@ export default function QuotationList() {
       const quotation = mapDbQuotation(row)
       const number = String(quotation.quotation_number || '').toLowerCase()
       const clientName = String(quotation.client_name || '').toLowerCase()
+      const poNumber = String(quotation.po_number || '').toLowerCase()
       const status = String(quotation.status || 'draft').toLowerCase()
-      const matchesSearch = !query || number.includes(query) || clientName.includes(query)
+      const matchesSearch =
+        !query || number.includes(query) || clientName.includes(query) || poNumber.includes(query)
       const matchesStatus = statusFilter === 'All' || status === statusFilter.toLowerCase()
       return matchesSearch && matchesStatus
     })
 
     next.sort((a, b) => {
-      const left = mapDbQuotation(a)
-      const right = mapDbQuotation(b)
-      if (sortBy === 'Oldest') return new Date(a.created_at || a.issue_date || 0).getTime() - new Date(b.created_at || b.issue_date || 0).getTime()
-      if (sortBy === 'Highest Value') return Number(right.total || 0) - Number(left.total || 0)
-      if (sortBy === 'Lowest Value') return Number(left.total || 0) - Number(right.total || 0)
+      if (sortBy === 'Oldest') {
+        return new Date(a.created_at || a.issue_date || 0).getTime() - new Date(b.created_at || b.issue_date || 0).getTime()
+      }
+      if (sortBy === 'Highest Value') return Number(b.total || 0) - Number(a.total || 0)
+      if (sortBy === 'Lowest Value') return Number(a.total || 0) - Number(b.total || 0)
       return new Date(b.created_at || b.issue_date || 0).getTime() - new Date(a.created_at || a.issue_date || 0).getTime()
     })
 
@@ -46,10 +48,10 @@ export default function QuotationList() {
   }, [quotations, search, sortBy, statusFilter])
 
   const filterSelectClass = 'h-10 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 outline-none'
-  const iconButtonClass = 'h-10 w-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center text-zinc-500'
+  const iconButtonClass = 'flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-500'
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-32 pt-6" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="mx-auto max-w-6xl px-3 pb-32 pt-6 sm:px-4" style={{ fontFamily: "'Inter', sans-serif" }}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 className="m-0 text-[22px] font-extrabold text-slate-900">Quotations</h2>
@@ -64,12 +66,12 @@ export default function QuotationList() {
 
       {showSearch && (
         <div className="mb-4">
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search quotations or clients..." className="h-11 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 outline-none" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search quotations, clients, or P.O. numbers..." className="h-11 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 outline-none" />
         </div>
       )}
 
       {showFilters && (
-        <div className="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
+        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-black uppercase text-zinc-400">Status</span>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterSelectClass}>
@@ -87,7 +89,7 @@ export default function QuotationList() {
 
       <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
         {filteredQuotations.length === 0 ? (
-          <div className="px-6 py-12 text-center text-sm text-slate-500">No quotations yet. Create the first one to start the quote to invoice flow.</div>
+          <div className="px-6 py-12 text-center text-sm text-slate-500">No quotations yet. Create the first one when you are ready to send a quote.</div>
         ) : (
           filteredQuotations.map((row, index) => {
             const quotation = mapDbQuotation(row)
@@ -95,20 +97,32 @@ export default function QuotationList() {
               <div
                 key={quotation.id}
                 onClick={() => navigate(`/quotations/${quotation.id}`)}
-                style={{ display: 'grid', gridTemplateColumns: '48px 1fr auto', gap: 14, padding: '16px 18px', alignItems: 'center', borderBottom: index === filteredQuotations.length - 1 ? 'none' : '1px solid #f1f5f9', cursor: 'pointer' }}
+                className="grid cursor-pointer gap-3 border-b border-slate-100 px-4 py-4 transition-colors hover:bg-slate-50 sm:grid-cols-[48px_minmax(0,1fr)_auto] sm:gap-4 sm:px-5"
+                style={{ borderBottom: index === filteredQuotations.length - 1 ? 'none' : undefined }}
               >
-                <div style={{ width: 44, height: 44, borderRadius: 14, background: '#f5f3ff', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ClipboardList size={18} /></div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                    <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 900, textTransform: 'uppercase' }}>QUO</span>
-                    <span style={{ fontSize: 16, fontWeight: 900, letterSpacing: '-0.02em', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{quotation.quotation_number}</span>
-                  </div>
-                  <div className="mt-1 text-sm text-slate-500">{quotation.client_name || 'No client selected'}</div>
-                  <div className="mt-1 text-xs text-slate-400">Issue date: {quotation.issue_date || 'Not set'}</div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                  <ClipboardList size={18} />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-                  <div className={`rounded-full px-3 py-1 text-[11px] font-extrabold uppercase ${quotationStatusTone(quotation.status)}`}>{formatQuotationStatus(quotation.status)}</div>
-                  <div style={{ fontSize: 15, fontWeight: 900, color: '#0f172a' }}>₦{Number(quotation.total || 0).toLocaleString()}</div>
+
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Quotation</span>
+                    <span className="break-all text-base font-black tracking-[-0.02em] text-slate-900 sm:text-[17px]">
+                      {quotation.quotation_number}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-sm font-medium text-slate-600">{quotation.client_name || 'No client selected'}</div>
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
+                    <span>Issue date: {quotation.issue_date || 'Not set'}</span>
+                    {String(quotation.po_number || '').trim() ? <span>P.O.: {String(quotation.po_number || '').trim()}</span> : null}
+                  </div>
+                </div>
+
+                <div className="flex flex-row items-start justify-between gap-3 sm:flex-col sm:items-end">
+                  <div className={`rounded-full px-3 py-1 text-[11px] font-extrabold uppercase ${quotationStatusTone(quotation.status)}`}>
+                    {formatQuotationStatus(quotation.status)}
+                  </div>
+                  <div className="text-[15px] font-black text-slate-900">₦{Number(quotation.total || 0).toLocaleString()}</div>
                 </div>
               </div>
             )

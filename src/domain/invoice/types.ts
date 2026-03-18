@@ -17,6 +17,20 @@ export interface InvoiceAttachment {
   [key: string]: unknown
 }
 
+export interface DocumentTrailLink {
+  id?: string | null
+  type?: 'invoice' | 'quotation'
+  number?: string
+  project_id?: string | null
+  po_number?: string | null
+  created_at?: string | null
+}
+
+export interface DocumentConversionTrail {
+  source?: DocumentTrailLink | null
+  derived?: DocumentTrailLink[]
+}
+
 export interface InvoiceFieldEntry {
   id?: string
   label?: string
@@ -28,6 +42,7 @@ export interface InvoiceFieldEntry {
 export interface DbInvoice {
   id?: string | null
   invoice_number?: string | null
+  po_number?: string | null
   client_id?: string | null
   client_name?: string | null
   issue_date?: string | null
@@ -111,6 +126,7 @@ export interface InvoiceItem {
 export interface Invoice extends InvoiceTotalsSource {
   id?: string | null
   invoice_number?: string
+  po_number?: string
   client_id?: string | null
   client_name?: string
   issue_date?: string | null
@@ -233,6 +249,7 @@ export interface InvoiceCustomFields {
   attachments?: InvoiceAttachment[]
   header?: Array<Record<string, unknown>>
   bottom?: Array<Record<string, unknown>>
+  conversionTrail?: DocumentConversionTrail
   [key: string]: unknown
 }
 

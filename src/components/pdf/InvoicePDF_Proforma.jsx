@@ -117,9 +117,18 @@ export default function InvoicePDF_Proforma({ invoice, items = [], client, setti
           </View>
           <View style={s.metaBlock}>
             <View style={s.metaRow}><Text style={s.metaLabel}>Invoice No</Text><Text style={s.metaValue}>{invoice.invoice_number}</Text></View>
-            <View style={s.metaRow}><Text style={s.metaLabel}>Date</Text><Text style={s.metaValue}>{invoice.issue_date}</Text></View>
-            {invoice.due_date ? <View style={s.metaRow}><Text style={s.metaLabel}>Due Date</Text><Text style={s.metaValue}>{invoice.due_date}</Text></View> : null}
-            {invoice.payment_terms ? <View style={s.metaRow}><Text style={s.metaLabel}>Payment Terms</Text><Text style={s.metaValue}>{invoice.payment_terms}</Text></View> : null}
+            {d.documentMeta.map((entry) => (
+              <View key={entry.label} style={s.metaRow}>
+                <Text style={s.metaLabel}>{entry.label}</Text>
+                <Text style={s.metaValue}>{entry.value}</Text>
+              </View>
+            ))}
+            {d.referenceMeta.map((entry) => (
+              <View key={`ref_${entry.label}`} style={s.metaRow}>
+                <Text style={s.metaLabel}>{entry.label}</Text>
+                <Text style={s.metaValue}>{entry.value}</Text>
+              </View>
+            ))}
           </View>
         </View>
 

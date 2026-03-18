@@ -24,6 +24,7 @@ export function buildQuotationCsv(params: {
   const { quotation, items, totals } = params
   const rows: string[][] = [
     ['Quotation Number', quotation.quotation_number || ''],
+    ['P.O. Number', quotation.po_number || ''],
     ['Quotation Title', quotation.quotation_title || ''],
     ['Status', quotation.status || 'draft'],
     ['Client', quotation.client_name || ''],

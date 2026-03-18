@@ -44,6 +44,7 @@ export function mapDbQuotation(row: DbQuotation): Quotation {
     ...row,
     id: row.id ?? null,
     quotation_number: row.quotation_number || '',
+    po_number: row.po_number || '',
     quotation_title: row.quotation_title || customFields.quotationTitle || '',
     client_id: row.client_id ?? null,
     client_name: row.client_name || customFields.clientName || '',

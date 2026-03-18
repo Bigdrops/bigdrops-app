@@ -31,6 +31,24 @@ export const parseCF = (raw) => {
   } catch { return defaults }
 }
 
+export const hasDisplayValue = (value) => String(value ?? '').trim().length > 0
+
+export const getHeaderFields = (cf) =>
+  (cf?.header || []).filter((field) => hasDisplayValue(field?.label) && hasDisplayValue(field?.value))
+
+export const getInvoiceDocumentMeta = (invoice) => [
+  { label: 'Date', value: invoice.issue_date },
+  { label: 'Due', value: invoice.due_date },
+  { label: 'Status', value: invoice.status ? String(invoice.status).replace(/_/g, ' ') : '' },
+].filter((entry) => hasDisplayValue(entry.value))
+
+export const getInvoiceReferenceMeta = (invoice, cf, poNumber) => [
+  { label: 'P.O. Number', value: poNumber },
+  { label: 'Payment Terms', value: invoice.payment_terms },
+  { label: 'Work Duration', value: invoice.work_duration },
+  ...getHeaderFields(cf).map((field) => ({ label: field.label, value: field.value })),
+].filter((entry) => hasDisplayValue(entry.value))
+
 export const buildRenderRows = (items, groupMeta) => {
   const rows = []
   let currentGroupName = null
@@ -105,6 +123,7 @@ export const extractInvoiceData = (invoice, items, client, settings) => {
   const totalPayable = Number(invoice.total     || 0)
   const grandTotal   = whtAmount > 0 ? totalPayable + whtAmount : totalPayable
   const installTotal = Number(invoice.install_rate_total || 0)
+  const poNumber = String(invoice.po_number || '').trim()
 
   const fixedCharges = [
     { label: cf.chargeLabels?.workmanship    || 'Workmanship',   value: Number(invoice.workmanship   || 0) },
@@ -118,13 +137,16 @@ export const extractInvoiceData = (invoice, items, client, settings) => {
   const getColumnLabel = (key, fallback) => getColumnConfig(key)?.label || fallback
   const pdfColumns = getPdfColumns(columnConfig)
   const installColumn = getColumnConfig('install_rate')
+  const headerFields = getHeaderFields(cf)
+  const documentMeta = getInvoiceDocumentMeta(invoice)
+  const referenceMeta = getInvoiceReferenceMeta(invoice, cf, poNumber)
 
   return {
     cf, companyName, companyTagline, companyAddress, companyCity,
-    companyPhone, companyEmail, logoUrl, footerText,
+    companyPhone, companyEmail, logoUrl, footerText, poNumber,
     subtotal, vatAmount, discount, whtAmount, totalPayable, grandTotal, installTotal,
     fixedCharges, validAttachments, renderRows, isColVisible, getColumnLabel,
-    pdfColumns, installColumn,
+    pdfColumns, installColumn, headerFields, documentMeta, referenceMeta,
   }
 }
 
@@ -218,6 +240,7 @@ const estimateClassicTopContextHeight = (d, invoice, client) => {
   ].filter(Boolean).length
 
   const rightLines = [
+    d.poNumber ? `P.O. Number: ${d.poNumber}` : '',
     invoice.payment_terms ? `Payment Terms: ${invoice.payment_terms}` : '',
     invoice.work_duration ? `Work Duration: ${invoice.work_duration}` : '',
     ...(d.cf.header || []).filter((f) => f.label && f.value).map((f) => `${f.label}: ${f.value}`),

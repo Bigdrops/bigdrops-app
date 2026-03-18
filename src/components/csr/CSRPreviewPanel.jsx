@@ -293,7 +293,7 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
             <div><span style={lbl}>CSR No.</span><span style={{ ...val, color: theme.headerBg, fontWeight: '700' }}>{csr.csr_number}</span></div>
             <div><span style={lbl}>Date</span><span style={val}>{csr.date}</span></div>
             <div><span style={lbl}>Customer</span><span style={val}>{csr.client_name}</span></div>
-            {csr.show_po && csr.po_number ? <div><span style={lbl}>PO No.</span><span style={val}>{csr.po_number}</span></div> : null}
+            {csr.show_po && String(csr.po_number || '').trim() ? <div><span style={lbl}>PO No.</span><span style={val}>{String(csr.po_number || '').trim()}</span></div> : null}
             <div style={{ gridColumn: '1 / -1' }}><span style={lbl}>Address</span><span style={val}>{csr.address}</span></div>
           </div>
         </div>

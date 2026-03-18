@@ -21,7 +21,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import type { InvoiceItem } from '@/domain/invoice'
+import { toDbItem, type InvoiceItem } from '@/domain/invoice'
+import {
+  appendDerivedTrail,
+  buildTrailLink,
+  getNextInvoiceNumber,
+  parseDocumentCustomFields,
+  withSourceTrail,
+} from '@/domain/documentConversion'
 import type { DbQuotation, DbQuotationItem, Quotation } from '@/domain/quotation'
 import { buildQuotationFormState } from '@/domain/quotation'
 import { buildQuotationCsv, downloadQuotationCsv } from './exportQuotationCsv'
@@ -48,7 +55,15 @@ function useIsNarrow() {
 }
 
 function formatMoney(value: number | string | null | undefined) {
-  return `NGN ${Number(value || 0).toLocaleString()}`
+  const parsed =
+    typeof value === 'string'
+      ? Number(value.replace(/[^0-9.-]/g, '') || 0)
+      : Number(value || 0)
+  const safe = Number.isFinite(parsed) ? parsed : 0
+  return `₦${safe.toLocaleString('en-NG', {
+    minimumFractionDigits: Math.abs(safe % 1) > 0.000001 ? 2 : 0,
+    maximumFractionDigits: Math.abs(safe % 1) > 0.000001 ? 2 : 0,
+  })}`
 }
 
 export default function QuotationDetail({ quotationId }: { quotationId: string }) {
@@ -68,6 +83,8 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const [client, setClient] = useState<Record<string, unknown> | null>(null)
   const [settings, setSettings] = useState<Record<string, unknown> | null>(null)
   const [pdfGenerating, setPdfGenerating] = useState(false)
+  const [converting, setConverting] = useState(false)
+  const hasText = (value: unknown) => String(value || '').trim().length > 0
 
   useEffect(() => {
     const load = async () => {
@@ -113,6 +130,13 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   }, [columns, discountTiming, discountType, items, quotation, whtType])
 
   const visibleCustomColumns = columns.filter((column: any) => column.key.startsWith('custom_') && column.visible)
+  const topHeaderFields = headerFields.filter((field: any) => field.label && field.value)
+  const poNumber = String(quotation?.po_number || '').trim()
+  const conversionTrail = (quotation?.custom_fields?.conversionTrail || {}) as {
+    source?: { id?: string | null; type?: 'invoice' | 'quotation'; number?: string }
+    derived?: Array<{ id?: string | null; type?: 'invoice' | 'quotation'; number?: string }>
+  }
+  const derivedInvoices = (conversionTrail.derived || []).filter((entry) => entry.type === 'invoice' && entry.id)
 
   const companyIdentity = useMemo(() => {
     const companyName = String(settings?.company_name || '')
@@ -187,6 +211,131 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     alert(`${label} copied.`)
   }
 
+  const handleArchive = async () => {
+    if (!quotation) return
+    if (!window.confirm('This quotation will be hidden from your list until it is restored later.')) return
+    const { error } = await supabase
+      .from('quotations')
+      .update({ archived_at: new Date().toISOString() })
+      .eq('id', quotationId)
+    if (error) {
+      alert(`Archive failed: ${error.message}`)
+      return
+    }
+    navigate('/quotations')
+  }
+
+  const handleDelete = async () => {
+    if (!quotation) return
+    if (!window.confirm('Deleting this quotation is permanent and cannot be undone.')) return
+    const { error: itemError } = await supabase.from('quotation_items').delete().eq('quotation_id', quotationId)
+    if (itemError) {
+      alert(`Delete failed: ${itemError.message}`)
+      return
+    }
+    const { error } = await supabase.from('quotations').delete().eq('id', quotationId)
+    if (error) {
+      alert(`Delete failed: ${error.message}`)
+      return
+    }
+    navigate('/quotations')
+  }
+
+  const handleConvertToInvoice = async () => {
+    if (!quotation || converting) return
+    setConverting(true)
+    try {
+      const [{ data: invoiceRows }, { data: latestQuotation }] = await Promise.all([
+        supabase.from('invoices').select('invoice_number'),
+        supabase.from('quotations').select('custom_fields').eq('id', quotationId).single(),
+      ])
+
+      const nextInvoiceNumber = getNextInvoiceNumber((invoiceRows || []) as Array<{ invoice_number?: string | null }>)
+      const quotationCustomFields = parseDocumentCustomFields(latestQuotation?.custom_fields || quotation.custom_fields)
+      const sourceLink = buildTrailLink({
+        id: quotation.id,
+        type: 'quotation',
+        number: quotation.quotation_number,
+        project_id: quotation.project_id ?? null,
+        po_number: poNumber || null,
+      })
+
+      const invoiceCustomFields = withSourceTrail(quotationCustomFields, sourceLink)
+      const invoicePayload = {
+        invoice_number: nextInvoiceNumber,
+        po_number: poNumber || null,
+        invoice_title: quotation.quotation_title || null,
+        client_id: quotation.client_id || null,
+        client_name: quotation.client_name || '',
+        project_id: quotation.project_id || null,
+        issue_date: quotation.issue_date || new Date().toISOString().split('T')[0],
+        due_date: quotation.valid_until || null,
+        status: 'draft',
+        document_type: 'INVOICE',
+        payment_terms: null,
+        notes: quotation.notes || '',
+        terms: quotation.terms || '',
+        workmanship: Number(quotation.workmanship || 0),
+        transportation: Number(quotation.transportation || 0),
+        shipping: Number(quotation.shipping || 0),
+        discount: Number(quotation.discount || 0),
+        vat: Number(quotation.vat || 0),
+        wht: Number(quotation.wht || 0),
+        subtotal: Number(quotation.subtotal || 0),
+        install_rate_total: Number(quotation.install_rate_total || 0),
+        total: Number(quotation.total || 0),
+        amount_in_words: quotation.amount_in_words || '',
+        custom_fields: JSON.stringify(invoiceCustomFields),
+      }
+
+      const { data: createdInvoice, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert([invoicePayload])
+        .select()
+        .single()
+
+      if (invoiceError || !createdInvoice) throw new Error(invoiceError?.message || 'Failed to create invoice')
+
+      const itemRows = items
+        .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
+        .map((item, index) => toDbItem(item, createdInvoice.id, index))
+
+      if (itemRows.length > 0) {
+        const { error: itemError } = await supabase.from('invoice_items').insert(itemRows)
+        if (itemError) {
+          await supabase.from('invoices').delete().eq('id', createdInvoice.id)
+          throw new Error(itemError.message)
+        }
+      }
+
+      const derivedLink = buildTrailLink({
+        id: createdInvoice.id,
+        type: 'invoice',
+        number: createdInvoice.invoice_number,
+        project_id: createdInvoice.project_id ?? quotation.project_id ?? null,
+        po_number: createdInvoice.po_number ?? poNumber ?? null,
+      })
+      const updatedQuotationFields = appendDerivedTrail(quotationCustomFields, derivedLink)
+      const { error: trailError } = await supabase
+        .from('quotations')
+        .update({ custom_fields: JSON.stringify(updatedQuotationFields) })
+        .eq('id', quotationId)
+
+      if (trailError) {
+        await supabase.from('invoice_items').delete().eq('invoice_id', createdInvoice.id)
+        await supabase.from('invoices').delete().eq('id', createdInvoice.id)
+        throw new Error(trailError.message)
+      }
+
+      navigate(`/invoices/${createdInvoice.id}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Conversion failed'
+      alert(`Convert to invoice failed: ${message}`)
+    } finally {
+      setConverting(false)
+    }
+  }
+
   if (loading) return <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-sm text-zinc-500 shadow-sm">Loading quotation...</div>
   if (!quotation) return <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-sm text-zinc-500 shadow-sm">Quotation not found.</div>
 
@@ -228,12 +377,25 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Quotation Actions</DropdownMenuLabel>
                 <DropdownMenuItem onSelect={handleDownloadCsv}>Export CSV</DropdownMenuItem>
+                <DropdownMenuItem onSelect={handleConvertToInvoice} disabled={converting}>
+                  {converting ? 'Converting...' : 'Convert to Invoice'}
+                </DropdownMenuItem>
+                {quotation.status === 'draft' ? (
+                  <DropdownMenuItem onSelect={() => handleStatusChange('sent')}>
+                    Mark Sent
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => handleCopy(quotation.quotation_number || '', 'Quotation number')}>
                   Copy quotation number
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => handleCopy(quotation.client_name || '', 'Client name')}>
                   Copy client name
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={handleArchive}>Archive Quotation</DropdownMenuItem>
+                <DropdownMenuItem onSelect={handleDelete} className="text-red-700 focus:text-red-700">
+                  Delete Quotation
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -245,17 +407,59 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
               <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Client</div>
               <div className="mt-2 text-base font-semibold text-slate-900">{quotation.client_name || 'Unassigned'}</div>
-              {client?.contact_person ? <div className="mt-1 text-sm text-slate-500">{String(client.contact_person)}</div> : null}
-              {client?.email ? <div className="text-sm text-slate-500">{String(client.email)}</div> : null}
-              {client?.phone ? <div className="text-sm text-slate-500">{String(client.phone)}</div> : null}
+              {hasText(client?.contact_person) ? <div className="mt-1 text-sm text-slate-500">{String(client?.contact_person)}</div> : null}
+              {hasText(client?.email) ? <div className="text-sm text-slate-500">{String(client?.email)}</div> : null}
+              {hasText(client?.phone) ? <div className="text-sm text-slate-500">{String(client?.phone)}</div> : null}
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Timeline</div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Quotation Summary</div>
               <div className="mt-2 space-y-1 text-sm text-slate-600">
+                <div>Status: {formatQuotationStatus(quotation.status)}</div>
                 <div>Issued: {quotation.issue_date || 'Not set'}</div>
                 <div>Valid until: {quotation.valid_until || 'Not set'}</div>
+                {poNumber ? <div>P.O. Number: {poNumber}</div> : null}
               </div>
             </div>
+            {topHeaderFields.length > 0 ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:col-span-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Reference Fields</div>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  {topHeaderFields.map((field: any) => (
+                    <div key={field.id || field.label}>
+                      <div className="text-xs font-bold uppercase tracking-wide text-slate-400">{field.label}</div>
+                      <div className="mt-1 break-words text-sm text-slate-800">{field.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {(conversionTrail.source?.number || derivedInvoices.length > 0) ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:col-span-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Conversion Trail</div>
+                <div className="mt-2 space-y-2 text-sm text-slate-700">
+                  {conversionTrail.source?.number ? (
+                    <div>
+                      Source: {conversionTrail.source.type === 'invoice' ? 'Invoice' : 'Quotation'} {conversionTrail.source.number}
+                    </div>
+                  ) : null}
+                  {derivedInvoices.length > 0 ? (
+                    <div className="space-y-1">
+                      <div>Created invoices:</div>
+                      {derivedInvoices.map((entry) => (
+                        <button
+                          key={entry.id || entry.number}
+                          type="button"
+                          onClick={() => navigate(`/invoices/${entry.id}`)}
+                          className="block text-left text-sm font-medium text-blue-700 hover:underline"
+                        >
+                          {entry.number || 'Open invoice'}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-950 px-4 py-4 text-white">
@@ -287,53 +491,52 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-5">
-          {headerFields.length > 0 && (
-            <Card className="rounded-2xl border-zinc-200">
-              <CardHeader><CardTitle className="text-base">Document Fields</CardTitle></CardHeader>
-              <CardContent className="grid gap-4 sm:grid-cols-2">
-                {headerFields.map((field) => (
-                  <div key={field.id}>
-                    <div className="text-xs font-bold uppercase tracking-wide text-slate-400">{field.label}</div>
-                    <div className="mt-1 break-words text-sm text-slate-800">{field.value}</div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
           <Card className="rounded-2xl border-zinc-200">
             <CardHeader><CardTitle className="text-base">Line Items</CardTitle></CardHeader>
             <CardContent className="px-3 pb-4 sm:px-6">
               {isNarrow ? (
                 <div className="space-y-3">
-                  {items.map((item, index) => (
-                    <div key={item._uiKey || item.id || index} className="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-4">
-                      <div className="mb-2 flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Item {index + 1}</div>
-                          <div className="mt-1 break-words font-semibold text-slate-900">{item.description || 'Untitled item'}</div>
-                          {item.sub_description ? <div className="mt-1 break-words text-sm text-slate-500">{item.sub_description}</div> : null}
-                        </div>
-                        <div className="shrink-0 text-right text-sm font-bold text-slate-900">
-                          {formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0))}
-                        </div>
-                      </div>
-                      <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
-                        <div>Qty: {item.quantity || 0}</div>
-                        <div>Rate: {formatMoney(item.unit_price || 0)}</div>
-                        {columns.find((column: any) => column.key === 'unit')?.visible ? <div>Unit: {item.unit || '-'}</div> : null}
-                        {columns.find((column: any) => column.key === 'make')?.visible ? <div>Make: {item.make || '-'}</div> : null}
-                        {columns.find((column: any) => column.key === 'install_rate')?.visible ? <div>Install: {item.install_rate ?? '-'}</div> : null}
-                        {columns.find((column: any) => column.key === 'vat_rate')?.visible ? <div>VAT %: {item.vat_rate ?? '-'}</div> : null}
-                        {columns.find((column: any) => column.key === 'discount_rate')?.visible ? <div>Disc %: {item.discount_rate ?? '-'}</div> : null}
-                        {visibleCustomColumns.map((column: any) => (
-                          <div key={column.key}>
-                            {column.label}: {(item.custom_data || {})[column.key] || '-'}
+                  {(() => {
+                    let itemNumber = 0
+                    return items.map((item, index) => {
+                      if (item.row_type === 'group_header') {
+                        return (
+                          <div key={item._uiKey || item.id || index} className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white">
+                            {item.group_name || `Group ${index + 1}`}
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                        )
+                      }
+                      itemNumber += 1
+                      return (
+                        <div key={item._uiKey || item.id || index} className="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-4">
+                          <div className="mb-2 flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Item {itemNumber}</div>
+                              <div className="mt-1 break-words font-semibold text-slate-900">{item.description || 'Untitled item'}</div>
+                              {item.sub_description ? <div className="mt-1 break-words text-sm text-slate-500">{item.sub_description}</div> : null}
+                            </div>
+                            <div className="shrink-0 text-right text-sm font-bold text-slate-900">
+                              {formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0))}
+                            </div>
+                          </div>
+                          <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                            <div>Qty: {item.quantity || 0}</div>
+                            <div>Rate: {formatMoney(item.unit_price || 0)}</div>
+                            {columns.find((column: any) => column.key === 'unit')?.visible ? <div>Unit: {item.unit || '-'}</div> : null}
+                            {columns.find((column: any) => column.key === 'make')?.visible ? <div>Make: {item.make || '-'}</div> : null}
+                            {columns.find((column: any) => column.key === 'install_rate')?.visible ? <div>Install: {item.install_rate ?? '-'}</div> : null}
+                            {columns.find((column: any) => column.key === 'vat_rate')?.visible ? <div>VAT %: {item.vat_rate ?? '-'}</div> : null}
+                            {columns.find((column: any) => column.key === 'discount_rate')?.visible ? <div>Disc %: {item.discount_rate ?? '-'}</div> : null}
+                            {visibleCustomColumns.map((column: any) => (
+                              <div key={column.key}>
+                                {column.label}: {(item.custom_data || {})[column.key] || '-'}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })
+                  })()}
                 </div>
               ) : (
                 <Table>
@@ -352,27 +555,43 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
                       <TableHead>Amount</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {items.map((item, index) => (
-                      <TableRow key={item._uiKey || item.id || index} className="align-top">
-                        <TableCell className="font-semibold text-zinc-500">{index + 1}</TableCell>
-                        <TableCell className="whitespace-normal">
-                          <div className="font-semibold text-slate-900">{item.description}</div>
-                          {item.sub_description ? <div className="mt-1 text-sm text-slate-500">{item.sub_description}</div> : null}
-                        </TableCell>
-                        {columns.find((column: any) => column.key === 'make')?.visible && <TableCell>{item.make || '-'}</TableCell>}
-                        <TableCell>{item.quantity || 0}</TableCell>
-                        {columns.find((column: any) => column.key === 'unit')?.visible && <TableCell>{item.unit || '-'}</TableCell>}
-                        <TableCell>{formatMoney(item.unit_price || 0)}</TableCell>
-                        {columns.find((column: any) => column.key === 'install_rate')?.visible && <TableCell>{item.install_rate ?? '-'}</TableCell>}
-                        {columns.find((column: any) => column.key === 'vat_rate')?.visible && <TableCell>{item.vat_rate ?? '-'}</TableCell>}
-                        {columns.find((column: any) => column.key === 'discount_rate')?.visible && <TableCell>{item.discount_rate ?? '-'}</TableCell>}
-                        {visibleCustomColumns.map((column: any) => <TableCell key={column.key}>{(item.custom_data || {})[column.key] || '-'}</TableCell>)}
-                        <TableCell className="font-bold text-slate-900">
-                          {formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0))}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    <TableBody>
+                    {(() => {
+                      let itemNumber = 0
+                      return items.map((item, index) => {
+                        if (item.row_type === 'group_header') {
+                          return (
+                            <TableRow key={item._uiKey || item.id || index} className="bg-slate-900 hover:bg-slate-900">
+                              <TableCell className="font-semibold text-slate-400">-</TableCell>
+                              <TableCell colSpan={6 + (columns.find((column: any) => column.key === 'make')?.visible ? 1 : 0) + (columns.find((column: any) => column.key === 'unit')?.visible ? 1 : 0) + (columns.find((column: any) => column.key === 'install_rate')?.visible ? 1 : 0) + (columns.find((column: any) => column.key === 'vat_rate')?.visible ? 1 : 0) + (columns.find((column: any) => column.key === 'discount_rate')?.visible ? 1 : 0) + visibleCustomColumns.length} className="font-bold text-white">
+                                {item.group_name || `Group ${index + 1}`}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        }
+                        itemNumber += 1
+                        return (
+                          <TableRow key={item._uiKey || item.id || index} className="align-top">
+                            <TableCell className="font-semibold text-zinc-500">{itemNumber}</TableCell>
+                            <TableCell className="whitespace-normal">
+                              <div className="font-semibold text-slate-900">{item.description}</div>
+                              {item.sub_description ? <div className="mt-1 text-sm text-slate-500">{item.sub_description}</div> : null}
+                            </TableCell>
+                            {columns.find((column: any) => column.key === 'make')?.visible && <TableCell>{item.make || '-'}</TableCell>}
+                            <TableCell>{item.quantity || 0}</TableCell>
+                            {columns.find((column: any) => column.key === 'unit')?.visible && <TableCell>{item.unit || '-'}</TableCell>}
+                            <TableCell>{formatMoney(item.unit_price || 0)}</TableCell>
+                            {columns.find((column: any) => column.key === 'install_rate')?.visible && <TableCell>{item.install_rate ?? '-'}</TableCell>}
+                            {columns.find((column: any) => column.key === 'vat_rate')?.visible && <TableCell>{item.vat_rate ?? '-'}</TableCell>}
+                            {columns.find((column: any) => column.key === 'discount_rate')?.visible && <TableCell>{item.discount_rate ?? '-'}</TableCell>}
+                            {visibleCustomColumns.map((column: any) => <TableCell key={column.key}>{(item.custom_data || {})[column.key] || '-'}</TableCell>)}
+                            <TableCell className="font-bold text-slate-900">
+                              {formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0))}
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })
+                    })()}
                   </TableBody>
                 </Table>
               )}
@@ -401,7 +620,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
           <Card className="rounded-2xl border-zinc-200">
             <CardHeader><CardTitle className="text-base">Summary</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              {totals && [['Subtotal', totals.rawSubtotal], ['Install Rate Total', totals.installRateTotal], ['VAT', totals.vatAmount], ['Discount', totals.discountAmount], ['WHT', totals.whtAmount], ['Total', totals.totalPayable]].map(([label, value]) => (
+              {totals && [['Subtotal', totals.rawSubtotal], ['Install Rate Total', totals.installRateTotal], ['VAT', totals.vatAmount], ['Discount', totals.discountAmount], ['WHT', totals.whtAmount], ['Total Payable', totals.totalPayable]].map(([label, value]) => (
                 <div key={label} className="flex items-center justify-between rounded-lg border border-zinc-200 px-3 py-2 text-sm">
                   <span className="font-medium text-zinc-600">{label}</span>
                   <span className="font-bold text-zinc-900">{formatMoney(value as number)}</span>

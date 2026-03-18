@@ -1,5 +1,6 @@
 import type {
   ColumnConfig,
+  DocumentConversionTrail,
   InvoiceCustomFields,
   InvoiceFieldEntry,
   InvoiceItem,
@@ -11,6 +12,7 @@ export type QuotationStatus = 'draft' | 'sent' | 'accepted' | 'rejected'
 export interface DbQuotation {
   id?: string | null
   quotation_number?: string | null
+  po_number?: string | null
   quotation_title?: string | null
   client_id?: string | null
   client_name?: string | null
@@ -69,11 +71,13 @@ export interface QuotationCustomFields extends InvoiceCustomFields {
   columnConfig?: ColumnConfig[]
   header?: InvoiceFieldEntry[]
   bottom?: InvoiceFieldEntry[]
+  conversionTrail?: DocumentConversionTrail
 }
 
 export interface Quotation extends InvoiceTotalsSource {
   id?: string | null
   quotation_number?: string
+  po_number?: string
   quotation_title?: string
   client_id?: string | null
   client_name?: string

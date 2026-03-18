@@ -92,7 +92,7 @@ export default function Dashboard({ session }) {
         {[
           { label: 'Invoice', icon: Plus,          path: '/invoices/new', color: 'bg-slate-900' },
           { label: 'CSR',     icon: Wrench,        path: '/csr/new',      color: 'bg-slate-800' },
-          { label: 'Quote',   icon: ClipboardList, path: '/quotations/new', color: 'bg-slate-700' },
+          { label: 'Quote',   icon: ClipboardList, path: '/quotations/new', color: 'bg-violet-600' },
         ].map((btn) => (
           <button
             key={btn.label}

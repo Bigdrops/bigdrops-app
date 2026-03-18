@@ -99,8 +99,9 @@ export default function NewInvoice() {
   const [invoice, setInvoice] = useState(
     prefill
       ? { ...prefill }
-      : {
+        : {
           invoice_number: '',
+          po_number: '',
           client_id: '',
           client_name: '',
           issue_date: new Date().toISOString().split('T')[0],
@@ -413,6 +414,7 @@ export default function NewInvoice() {
       .insert([
         {
           invoice_number: invoice.invoice_number,
+          po_number: String(invoice.po_number || '').trim() || null,
           invoice_title: invoiceTitle || null,
           client_id: invoice.client_id || null,
           client_name: invoice.client_name,
@@ -898,6 +900,14 @@ export default function NewInvoice() {
                 value={invoice.work_duration}
                 onChange={(e) => updateInvoice('work_duration', e.target.value)}
                 placeholder="e.g. 7 days"
+              />
+            </div>
+            <div>
+              <Label>P.O. Number</Label>
+              <Input
+                value={invoice.po_number || ''}
+                onChange={(e) => updateInvoice('po_number', e.target.value)}
+                placeholder="Optional purchase order number"
               />
             </div>
           </div>

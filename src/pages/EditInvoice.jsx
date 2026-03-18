@@ -472,6 +472,7 @@ export default function EditInvoice() {
       .from('invoices')
       .update({
         invoice_title: invoiceTitle || null,
+        po_number: String(invoice.po_number || '').trim() || null,
         client_id: invoice.client_id || null,
         client_name: invoice.client_name,
         issue_date: invoice.issue_date,
@@ -957,6 +958,14 @@ export default function EditInvoice() {
                 value={invoice.work_duration || ''}
                 onChange={(e) => updateInvoice('work_duration', e.target.value)}
                 placeholder="e.g. 7 days"
+              />
+            </div>
+            <div>
+              <Label>P.O. Number</Label>
+              <Input
+                value={invoice.po_number || ''}
+                onChange={(e) => updateInvoice('po_number', e.target.value)}
+                placeholder="Optional purchase order number"
               />
             </div>
           </div>

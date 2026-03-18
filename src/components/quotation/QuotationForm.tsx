@@ -12,7 +12,15 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
 import {
   buildCalculationInputs,
   calcTotals,
@@ -40,6 +48,10 @@ function useIsMobile() {
     return () => window.removeEventListener('resize', handler)
   }, [])
   return isMobile
+}
+
+function makeQuotationGroupId() {
+  return `quo_group_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
 function buildCustomFields({
@@ -109,6 +121,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const [showColumnManager, setShowColumnManager] = useState(false)
   const [quotation, setQuotation] = useState<Quotation>({
     quotation_number: '',
+    po_number: '',
     client_id: '',
     client_name: '',
     issue_date: new Date().toISOString().split('T')[0],
@@ -204,6 +217,25 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         return { ...item, [field]: value }
       }),
     )
+
+  const addQuotationItem = () =>
+    setItems((current) => [
+      ...current,
+      { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '', sort_order: current.length },
+    ])
+
+  const addQuotationGroup = () =>
+    setItems((current) => [
+      ...current,
+      {
+        ...makeEmptyItem(),
+        row_type: 'group_header',
+        group_id: makeQuotationGroupId(),
+        group_name: `Group ${current.filter((item) => item.row_type === 'group_header').length + 1}`,
+        description: '',
+        sort_order: current.length,
+      },
+    ])
 
   const parseCsvItems = (text: string) => {
     const lines = text.split('\n').filter((line) => line.trim())
@@ -327,8 +359,10 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
   const handleSave = async (status: Quotation['status']) => {
     setSaving(true)
+    const poNumber = String(quotation.po_number || '').trim()
     const payload = {
       quotation_number: quotation.quotation_number || '',
+      po_number: poNumber || null,
       quotation_title: quotation.quotation_title || null,
       client_id: quotation.client_id || null,
       client_name: quotation.client_name || '',
@@ -375,7 +409,11 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     }
     const resolvedId = String(savedQuotation.id)
     const itemRows = items
-      .filter((item) => item.description?.trim())
+      .filter((item) =>
+        item.row_type === 'group_header'
+          ? item.group_name?.trim()
+          : item.description?.trim(),
+      )
       .map((item, index) => toQuotationItem(item, resolvedId, index))
     const { error: deleteError } = await supabase.from('quotation_items').delete().eq('quotation_id', resolvedId)
     if (deleteError) {
@@ -400,15 +438,16 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   }
 
   const visibleCustomColumns = customColumns.filter((column: ColumnConfig) => column.visible)
+  const summaryHeaderFields = headerFields.filter((field) => field.label && field.value)
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-24 pt-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="m-0 text-[24px] font-extrabold text-slate-900">{isEdit ? 'Edit Quotation' : 'New Quotation'}</h2>
-          <p className="mt-1 text-sm text-slate-500">Real Supabase quotation flow using the shared invoice domain underneath.</p>
+          <p className="mt-1 text-sm text-slate-500">Build a client-ready quotation, review the line items, then save normally.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <input
             id="quotation-csv-import"
             type="file"
@@ -416,7 +455,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
             hidden
             onChange={handleCSVImport}
           />
-          <div style={{ position: 'relative', maxWidth: '100%' }}>
+          <div className="hidden">
             <Button
               type="button"
               onClick={() => setShowCSVNote((current) => !current)}
@@ -459,7 +498,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Import quotation items</div>
                   <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
-                    Reuses the invoice CSV import pattern. Imported rows become editable quotation line items before normal save.
+                    Upload a CSV file or paste CSV text. Imported rows become editable quotation line items before you save.
                   </div>
                 </div>
 
@@ -535,10 +574,99 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
               </div>
             )}
           </div>
-          <Button type="button" variant="outline" onClick={() => setShowColumnManager(true)}>Table & Tax Settings</Button>
-          <Button type="button" variant="outline" onClick={() => navigate('/quotations')}>Back to Quotations</Button>
+          <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/quotations')}>Back to Quotations</Button>
         </div>
       </div>
+
+      <Sheet open={showCSVNote} onOpenChange={setShowCSVNote}>
+        <SheetContent
+          side={isMobile ? 'bottom' : 'right'}
+          className={isMobile ? 'max-h-[88vh] rounded-t-3xl px-0' : 'w-full max-w-md px-0'}
+        >
+          <SheetHeader className="border-b border-slate-200 px-5 pb-4 pt-5">
+            <SheetTitle className="text-base font-bold text-slate-900">Import quotation items</SheetTitle>
+            <SheetDescription>
+              Upload a CSV file or paste CSV text. Imported rows become editable quotation line items before you save.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="flex h-full flex-col overflow-hidden">
+            <div className="overflow-y-auto px-5 py-4">
+              <div className="mb-4 flex flex-wrap gap-2">
+                {['Upload File', 'Paste Text'].map((tab) => (
+                  <Button
+                    key={tab}
+                    type="button"
+                    onClick={() => setCSVTab(tab)}
+                    variant={csvTab === tab ? 'default' : 'outline'}
+                    className={csvTab === tab ? 'bg-green-600 hover:bg-green-700' : ''}
+                  >
+                    {tab}
+                  </Button>
+                ))}
+              </div>
+
+              {csvTab === 'Upload File' ? (
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    <div><strong>Required:</strong> description</div>
+                    <div><strong>Optional:</strong> sub_description, make, quantity, unit, unit_price</div>
+                  </div>
+                  <Button
+                    type="button"
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    onClick={() => document.getElementById('quotation-csv-import')?.click()}
+                  >
+                    Choose CSV File
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-xs text-slate-500">
+                    <div><strong>Required:</strong> description</div>
+                    <div><strong>Optional:</strong> sub_description, make, quantity, unit, unit_price</div>
+                  </div>
+                  <Textarea
+                    value={pasteCSV}
+                    onChange={(event) => setPasteCSV(event.target.value)}
+                    placeholder={'description,quantity,unit,unit_price\nCable tie,5,PCS,700'}
+                    className="min-h-[180px] resize-y bg-white text-sm"
+                  />
+                </div>
+              )}
+            </div>
+
+            {csvTab === 'Paste Text' ? (
+              <div className="border-t border-slate-200 px-5 py-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                  <Button type="button" variant="outline" onClick={() => setPasteCSV('')}>
+                    Clear
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      if (!pasteCSV.trim()) {
+                        alert('Paste CSV content before importing.')
+                        return
+                      }
+                      const { newItems, error } = parseCsvItems(pasteCSV)
+                      if (error) {
+                        alert(error)
+                        return
+                      }
+                      applyImportedItems(newItems)
+                      setPasteCSV('')
+                    }}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Import
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {showColumnManager && (
         <ColumnManager
@@ -566,6 +694,10 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
               <div>
                 <Label>Quotation Number</Label>
                 <Input className="mt-2" value={quotation.quotation_number || ''} onChange={(e) => updateQuotation('quotation_number', e.target.value)} />
+              </div>
+              <div>
+                <Label>P.O. Number</Label>
+                <Input className="mt-2" value={quotation.po_number || ''} onChange={(e) => updateQuotation('po_number', e.target.value)} placeholder="Optional purchase order number" />
               </div>
               <div>
                 <Label>Status</Label>
@@ -620,59 +752,115 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
           <Card className="rounded-2xl border-zinc-200">
             <CardHeader>
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <CardTitle className="text-base">Line Items</CardTitle>
-                <Button type="button" onClick={() => setItems((current) => [...current, { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '', sort_order: current.length }])}>+ Add Item</Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" onClick={() => setShowColumnManager(true)}>
+                    Table & Tax Settings
+                  </Button>
+                  <Button type="button" className="bg-green-600 hover:bg-green-700" onClick={() => setShowCSVNote(true)}>
+                    Import CSV
+                  </Button>
+                  <Button type="button" variant="outline" onClick={addQuotationGroup}>
+                    + Group
+                  </Button>
+                  <Button type="button" onClick={addQuotationItem}>
+                    + Add Item
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
               {isMobile ? (
-                items.map((item, index) => (
-                  <MobileItemCard
-                    key={item._uiKey || item.id || `quotation_item_${index}`}
-                    item={item}
-                    index={index}
-                    number={index + 1}
-                    isVisible={isVisible}
-                    getColumn={getColumn}
-                    customColumns={visibleCustomColumns}
-                    showItemImages={showItemImages}
-                    invoice={quotation}
-                    isFirst={index === 0}
-                    isLast={index === items.length - 1}
-                    onUpdate={(itemIndex: number, field: string, value: unknown) => {
-                      if (field === '__install_rate_override') {
-                        setItems((current) => current.map((entry, entryIndex) => entryIndex === itemIndex ? { ...entry, ...(value as object) } : entry))
-                        return
-                      }
-                      updateItem(itemIndex, field, value)
-                    }}
-                    onRemove={(itemIndex: number) => setItems((current) => current.filter((_, entryIndex) => entryIndex !== itemIndex).map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex })))}
-                    onMoveUp={(itemIndex: number) => {
-                      const newIndex = itemIndex - 1
-                      if (newIndex < 0) return
-                      setItems((current) => {
-                        const next = [...current]
-                        ;[next[itemIndex], next[newIndex]] = [next[newIndex], next[itemIndex]]
-                        return next.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
-                      })
-                    }}
-                    onMoveDown={(itemIndex: number) => {
-                      const newIndex = itemIndex + 1
-                      if (newIndex >= items.length) return
-                      setItems((current) => {
-                        const next = [...current]
-                        ;[next[itemIndex], next[newIndex]] = [next[newIndex], next[itemIndex]]
-                        return next.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
-                      })
-                    }}
-                    onInsertBelow={(itemIndex: number) => setItems((current) => {
-                      const next = [...current]
-                      next.splice(itemIndex + 1, 0, { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '', sort_order: itemIndex + 1 })
-                      return next.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
-                    })}
-                  />
-                ))
+                <div className="space-y-3">
+                  {(() => {
+                    let itemNumber = 0
+                    return items.map((item, index) => {
+                    if (item.row_type === 'group_header') {
+                      return (
+                        <div key={item._uiKey || item.id || `quotation_group_${index}`} className="mb-3 rounded-2xl bg-slate-900 p-4 text-white">
+                          <div className="flex items-center gap-3">
+                            <Input
+                              value={item.group_name || ''}
+                              onChange={(e) => updateItem(index, 'group_name', e.target.value)}
+                              placeholder="Group name"
+                              className="border-slate-600 bg-slate-800 text-white"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="text-red-300 hover:bg-slate-800 hover:text-red-200"
+                              onClick={() =>
+                                setItems((current) =>
+                                  current.filter((_, entryIndex) => entryIndex !== index).map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex })),
+                                )
+                              }
+                            >
+                              ×
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    itemNumber += 1
+                    return (
+                      <MobileItemCard
+                        key={item._uiKey || item.id || `quotation_item_${index}`}
+                        item={item}
+                        index={index}
+                        number={itemNumber}
+                        isVisible={isVisible}
+                        getColumn={getColumn}
+                        customColumns={visibleCustomColumns}
+                        showItemImages={showItemImages}
+                        invoice={quotation}
+                        isFirst={itemNumber === 1}
+                        isLast={index === items.length - 1}
+                        onUpdate={(itemIndex: number, field: string, value: unknown) => {
+                          if (field === '__install_rate_override') {
+                            setItems((current) => current.map((entry, entryIndex) => entryIndex === itemIndex ? { ...entry, ...(value as object) } : entry))
+                            return
+                          }
+                          updateItem(itemIndex, field, value)
+                        }}
+                        onRemove={(itemIndex: number) => setItems((current) => current.filter((_, entryIndex) => entryIndex !== itemIndex).map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex })))}
+                        onMoveUp={(itemIndex: number) => {
+                          const newIndex = itemIndex - 1
+                          if (newIndex < 0) return
+                          setItems((current) => {
+                            const next = [...current]
+                            ;[next[itemIndex], next[newIndex]] = [next[newIndex], next[itemIndex]]
+                            return next.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
+                          })
+                        }}
+                        onMoveDown={(itemIndex: number) => {
+                          const newIndex = itemIndex + 1
+                          if (newIndex >= items.length) return
+                          setItems((current) => {
+                            const next = [...current]
+                            ;[next[itemIndex], next[newIndex]] = [next[newIndex], next[itemIndex]]
+                            return next.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
+                          })
+                        }}
+                        onInsertBelow={(itemIndex: number) => setItems((current) => {
+                          const next = [...current]
+                          next.splice(itemIndex + 1, 0, { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '', sort_order: itemIndex + 1 })
+                          return next.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
+                        })}
+                      />
+                    )
+                    })
+                  })()}
+                  <div className="grid gap-2 pt-2">
+                    <Button type="button" onClick={addQuotationItem} className="w-full">
+                      + Add Item
+                    </Button>
+                    <Button type="button" variant="outline" onClick={addQuotationGroup} className="w-full">
+                      + Group
+                    </Button>
+                  </div>
+                </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full border-collapse">
@@ -693,25 +881,45 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                       </tr>
                     </thead>
                     <tbody>
-                      {items.map((item, index) => (
-                        <tr key={item._uiKey || item.id || index} className="border-b border-zinc-100 align-top">
-                          <td className="px-2 py-3 text-sm font-semibold text-zinc-500">{index + 1}</td>
-                          <td className="px-2 py-3 min-w-[260px]">
-                            <Input value={item.description || ''} onChange={(e) => updateItem(index, 'description', e.target.value)} placeholder="Item description" />
-                            <Input className="mt-2" value={item.sub_description || ''} onChange={(e) => updateItem(index, 'sub_description', e.target.value)} placeholder="Sub-description" />
-                          </td>
-                          {isVisible('make') && <td className="px-2 py-3"><Input value={item.make || ''} onChange={(e) => updateItem(index, 'make', e.target.value)} /></td>}
-                          <td className="px-2 py-3 min-w-[88px]"><Input type="number" min="0" value={item.quantity || 0} onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))} /></td>
-                          {isVisible('unit') && <td className="px-2 py-3 min-w-[120px]"><UnitInput value={item.unit || ''} onChange={(value: string) => updateItem(index, 'unit', value)} /></td>}
-                          <td className="px-2 py-3 min-w-[110px]"><Input type="number" min="0" value={item.unit_price || 0} onChange={(e) => updateItem(index, 'unit_price', Number(e.target.value))} /></td>
-                          {isVisible('install_rate') && <td className="px-2 py-3 min-w-[110px]"><Input type="number" min="0" value={item.install_rate_override ? item.install_rate ?? '' : ''} onChange={(e) => { const value = e.target.value; updateItem(index, 'install_rate_override', value !== ''); updateItem(index, 'install_rate', value === '' ? null : Number(value)) }} /></td>}
-                          {isVisible('vat_rate') && <td className="px-2 py-3 min-w-[90px]"><Input type="number" min="0" max="100" value={item.vat_rate ?? ''} placeholder={String(quotation.vat || 0)} onChange={(e) => updateItem(index, 'vat_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
-                          {isVisible('discount_rate') && <td className="px-2 py-3 min-w-[90px]"><Input type="number" min="0" max="100" value={item.discount_rate ?? ''} placeholder="global" onChange={(e) => updateItem(index, 'discount_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
-                          {visibleCustomColumns.map((column) => <td key={column.key} className="px-2 py-3 min-w-[110px]"><Input type={column.type === 'number' ? 'number' : 'text'} value={(item.custom_data || {})[column.key] || ''} onChange={(e) => updateItem(index, 'custom_data', { ...(item.custom_data || {}), [column.key]: column.type === 'number' ? Number(e.target.value || 0) : e.target.value })} /></td>)}
-                          <td className="px-2 py-3 text-sm font-bold text-zinc-900">₦{(Number(item.quantity || 0) * Number(item.unit_price || 0)).toLocaleString()}</td>
-                          <td className="px-2 py-3"><Button type="button" variant="ghost" size="sm" className="text-red-700" onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index).map((entry, itemIndex) => ({ ...entry, sort_order: itemIndex })))}>×</Button></td>
-                        </tr>
-                      ))}
+                      {(() => {
+                        let itemNumber = 0
+                        return items.map((item, index) => {
+                          if (item.row_type === 'group_header') {
+                            return (
+                              <tr key={item._uiKey || item.id || index} className="border-b border-zinc-100 bg-slate-900 align-top">
+                                <td className="px-2 py-3 text-sm font-semibold text-slate-400">-</td>
+                                <td colSpan={8 + (isVisible('make') ? 1 : 0) + (isVisible('unit') ? 1 : 0) + (isVisible('install_rate') ? 1 : 0) + (isVisible('vat_rate') ? 1 : 0) + (isVisible('discount_rate') ? 1 : 0) + visibleCustomColumns.length} className="px-2 py-3">
+                                  <Input value={item.group_name || ''} onChange={(e) => updateItem(index, 'group_name', e.target.value)} placeholder="Group name" className="border-slate-600 bg-slate-800 text-white" />
+                                </td>
+                                <td className="px-2 py-3">
+                                  <Button type="button" variant="ghost" size="sm" className="text-red-300 hover:bg-slate-800 hover:text-red-200" onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index).map((entry, itemIndex) => ({ ...entry, sort_order: itemIndex })))}>×</Button>
+                                </td>
+                              </tr>
+                            )
+                          }
+
+                          itemNumber += 1
+                          return (
+                            <tr key={item._uiKey || item.id || index} className="border-b border-zinc-100 align-top">
+                              <td className="px-2 py-3 text-sm font-semibold text-zinc-500">{itemNumber}</td>
+                              <td className="px-2 py-3 min-w-[260px]">
+                                <Input value={item.description || ''} onChange={(e) => updateItem(index, 'description', e.target.value)} placeholder="Item description" />
+                                <Input className="mt-2" value={item.sub_description || ''} onChange={(e) => updateItem(index, 'sub_description', e.target.value)} placeholder="Sub-description" />
+                              </td>
+                              {isVisible('make') && <td className="px-2 py-3"><Input value={item.make || ''} onChange={(e) => updateItem(index, 'make', e.target.value)} /></td>}
+                              <td className="px-2 py-3 min-w-[88px]"><Input type="number" min="0" value={item.quantity || 0} onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))} /></td>
+                              {isVisible('unit') && <td className="px-2 py-3 min-w-[120px]"><UnitInput value={item.unit || ''} onChange={(value: string) => updateItem(index, 'unit', value)} /></td>}
+                              <td className="px-2 py-3 min-w-[110px]"><Input type="number" min="0" value={item.unit_price || 0} onChange={(e) => updateItem(index, 'unit_price', Number(e.target.value))} /></td>
+                              {isVisible('install_rate') && <td className="px-2 py-3 min-w-[110px]"><Input type="number" min="0" value={item.install_rate_override ? item.install_rate ?? '' : ''} onChange={(e) => { const value = e.target.value; updateItem(index, 'install_rate_override', value !== ''); updateItem(index, 'install_rate', value === '' ? null : Number(value)) }} /></td>}
+                              {isVisible('vat_rate') && <td className="px-2 py-3 min-w-[90px]"><Input type="number" min="0" max="100" value={item.vat_rate ?? ''} placeholder={String(quotation.vat || 0)} onChange={(e) => updateItem(index, 'vat_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
+                              {isVisible('discount_rate') && <td className="px-2 py-3 min-w-[90px]"><Input type="number" min="0" max="100" value={item.discount_rate ?? ''} placeholder="global" onChange={(e) => updateItem(index, 'discount_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
+                              {visibleCustomColumns.map((column) => <td key={column.key} className="px-2 py-3 min-w-[110px]"><Input type={column.type === 'number' ? 'number' : 'text'} value={(item.custom_data || {})[column.key] || ''} onChange={(e) => updateItem(index, 'custom_data', { ...(item.custom_data || {}), [column.key]: column.type === 'number' ? Number(e.target.value || 0) : e.target.value })} /></td>)}
+                              <td className="px-2 py-3 text-sm font-bold text-zinc-900">₦{(Number(item.quantity || 0) * Number(item.unit_price || 0)).toLocaleString()}</td>
+                              <td className="px-2 py-3"><Button type="button" variant="ghost" size="sm" className="text-red-700" onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index).map((entry, itemIndex) => ({ ...entry, sort_order: itemIndex })))}>×</Button></td>
+                            </tr>
+                          )
+                        })
+                      })()}
                     </tbody>
                   </table>
                 </div>
@@ -737,6 +945,38 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         </div>
 
         <div className="space-y-5">
+          <Card className="rounded-2xl border-zinc-200">
+            <CardHeader><CardTitle className="text-base">Quotation Summary</CardTitle></CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              {[
+                ['Status', formatQuotationStatus(quotation.status || 'draft')],
+                ['Issue Date', quotation.issue_date || 'Not set'],
+                ['Valid Until', quotation.valid_until || 'Not set'],
+                ...(String(quotation.po_number || '').trim()
+                  ? [['P.O. Number', String(quotation.po_number || '').trim()]]
+                  : []),
+              ].map(([label, value]) => (
+                <div key={label} className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2">
+                  <span className="font-medium text-zinc-600">{label}</span>
+                  <span className="text-right font-semibold text-zinc-900">{value}</span>
+                </div>
+              ))}
+              {summaryHeaderFields.length > 0 ? (
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                  <div className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">Header Fields</div>
+                  <div className="space-y-2">
+                    {summaryHeaderFields.map((field) => (
+                      <div key={field.id} className="flex items-start justify-between gap-3 text-sm">
+                        <span className="font-medium text-zinc-600">{field.label}</span>
+                        <span className="text-right text-zinc-900">{field.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
+
           <Card className="rounded-2xl border-zinc-200">
             <CardHeader><CardTitle className="text-base">Totals Settings</CardTitle></CardHeader>
             <CardContent className="space-y-4">
@@ -764,8 +1004,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                 ['WHT', totals.whtAmount],
                 ['Total Payable', totals.totalPayable],
               ].map(([label, value]) => <div key={label} className="flex items-center justify-between rounded-lg border border-zinc-200 px-3 py-2"><span className="font-medium text-zinc-600">{label}</span><span className="font-bold text-zinc-900">₦{Number(value || 0).toLocaleString()}</span></div>)}
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3"><div className="flex items-center justify-between"><div><div className="text-sm font-semibold text-zinc-800">Merge Qty + Unit in output</div><div className="text-xs text-zinc-500">Stored with quotation custom fields for consistent rendering.</div></div><Switch checked={mergeQtyUnit} onCheckedChange={setMergeQtyUnit} /></div></div>
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3"><div className="flex items-center justify-between"><div><div className="text-sm font-semibold text-zinc-800">Show item images in output</div><div className="text-xs text-zinc-500">Prepared for shared document rendering behavior.</div></div><Switch checked={showItemImages} onCheckedChange={setShowItemImages} /></div></div>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3"><div className="flex items-center justify-between"><div><div className="text-sm font-semibold text-zinc-800">Merge Qty + Unit in output</div><div className="text-xs text-zinc-500">Keep quantity and unit together in generated document output.</div></div><Switch checked={mergeQtyUnit} onCheckedChange={setMergeQtyUnit} /></div></div>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3"><div className="flex items-center justify-between"><div><div className="text-sm font-semibold text-zinc-800">Show item images in output</div><div className="text-xs text-zinc-500">Include saved item images when a document output uses them.</div></div><Switch checked={showItemImages} onCheckedChange={setShowItemImages} /></div></div>
             </CardContent>
           </Card>
 

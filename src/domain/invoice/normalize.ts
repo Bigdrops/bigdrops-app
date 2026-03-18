@@ -91,6 +91,7 @@ export function mapDbInvoice(row: DbInvoice): Invoice {
     ...row,
     id: row.id ?? null,
     invoice_number: row.invoice_number || '',
+    po_number: row.po_number || '',
     client_id: row.client_id ?? null,
     client_name: row.client_name || '',
     issue_date: row.issue_date ?? null,

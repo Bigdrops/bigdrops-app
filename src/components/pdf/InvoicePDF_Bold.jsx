@@ -115,8 +115,9 @@ export default function InvoicePDF_Bold({ invoice, items = [], client, settings 
           <View style={s.docBlock}>
             <Text style={s.docTitle}>{invoice.document_type || 'INVOICE'}</Text>
             <Text style={s.docNumber}>{invoice.invoice_number}</Text>
-            <Text style={s.docDate}>Date: {invoice.issue_date}</Text>
-            {invoice.due_date ? <Text style={s.docDate}>Due: {invoice.due_date}</Text> : null}
+            {d.documentMeta.map((entry) => (
+              <Text key={entry.label} style={s.docDate}>{entry.label}: {entry.value}</Text>
+            ))}
           </View>
         </View>
         <View style={s.accentStrip} />
@@ -135,10 +136,8 @@ export default function InvoicePDF_Bold({ invoice, items = [], client, settings 
             </View>
             <View style={s.col}>
               <Text style={s.sectionLabel}>Details</Text>
-              {invoice.payment_terms ? <Text style={s.clientDetail}>Payment Terms: {invoice.payment_terms}</Text> : null}
-              {invoice.work_duration ? <Text style={s.clientDetail}>Work Duration: {invoice.work_duration}</Text> : null}
-              {d.cf.header && d.cf.header.filter(f => f.label && f.value).map((f, i) => (
-                <Text key={i} style={s.clientDetail}>{f.label}: {f.value}</Text>
+              {d.referenceMeta.map((entry) => (
+                <Text key={entry.label} style={s.clientDetail}>{entry.label}: {entry.value}</Text>
               ))}
             </View>
           </View>

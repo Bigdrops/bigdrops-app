@@ -174,9 +174,9 @@ export default function ProjectDetail() {
                       📍 {project.location}
                     </span>
                   )}
-                  {project.po_number && (
+                  {String(project.po_number || '').trim() && (
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <Hash size={12} />PO: <strong style={{ color: '#334155' }}>{project.po_number}</strong>
+                      <Hash size={12} />PO: <strong style={{ color: '#334155' }}>{String(project.po_number || '').trim()}</strong>
                     </span>
                   )}
                   {project.project_value && (
