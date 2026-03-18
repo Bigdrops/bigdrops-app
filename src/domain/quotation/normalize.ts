@@ -1,6 +1,7 @@
 import {
   BUILTIN_COLUMNS,
   ensureUiKey,
+  inferLegacyCalculationState,
   normalizeFieldEntries,
   parseCustomFields,
   toNumber,
@@ -17,6 +18,23 @@ import type {
 
 export function getQuotationNumber(row: Partial<DbQuotation> | null | undefined): string {
   return String(row?.quotation_number || '')
+}
+
+export function getNextQuotationNumber(
+  rows: Array<Pick<DbQuotation, 'quotation_number'>>,
+  prefix = 'SASIQUO',
+): string {
+  const maxNumber = rows
+    .map((row) => String(row.quotation_number || '').trim().toUpperCase())
+    .filter((value) => value.startsWith(`${prefix}-`))
+    .map((value) => {
+      const match = value.match(/-(\d+)$/)
+      return match ? Number(match[1]) : null
+    })
+    .filter((value): value is number => Number.isFinite(value))
+    .reduce((max, value) => Math.max(max, value), 0)
+
+  return `${prefix}-${String(maxNumber + 1).padStart(3, '0')}`
 }
 
 export function mapDbQuotation(row: DbQuotation): Quotation {
@@ -107,8 +125,19 @@ export function buildQuotationFormState(
 ): QuotationFormState {
   const quotation = mapDbQuotation(quotationRow)
   const customFields = quotation.custom_fields || {}
+  const hasSavedCalculationInputs = Boolean(customFields.calculationInputs)
   const items = (itemRows || []).length
-    ? itemRows.map(mapDbQuotationItem)
+    ? itemRows.map((row) => {
+        const item = mapDbQuotationItem(row)
+        if (!hasSavedCalculationInputs) {
+          return {
+            ...item,
+            vat_rate: item.vat_rate === 0 ? null : item.vat_rate,
+            discount_rate: item.discount_rate === 0 ? null : item.discount_rate,
+          }
+        }
+        return item
+      })
     : [ensureUiKey({ description: '', quantity: 1, unit_price: 0, row_type: 'standard', custom_data: {} })]
 
   const columns = Array.isArray(customFields.columnConfig)
@@ -118,15 +147,27 @@ export function buildQuotationFormState(
       })
     : BUILTIN_COLUMNS.map((column) => ({ ...column }))
 
+  const legacyCalculationState = inferLegacyCalculationState({
+    invoice: quotationRow,
+    items,
+    customFields,
+  })
+  const { calculationInputs, editableInputs } = legacyCalculationState
+
   return {
-    quotation,
+    quotation: {
+      ...quotation,
+      vat: editableInputs.vatRate,
+      discount: editableInputs.discountValue,
+      wht: calculationInputs.whtValue,
+    },
     items,
     columns,
     headerFields: normalizeFieldEntries(customFields.header, 'value'),
     bottomFields: normalizeFieldEntries(customFields.bottom, 'text'),
-    discountType: customFields.discountType || 'fixed',
-    discountTiming: customFields.discountTiming || 'after',
-    whtType: customFields.whtType || 'percent',
+    discountType: calculationInputs.discountType,
+    discountTiming: calculationInputs.discountTiming,
+    whtType: calculationInputs.whtType,
     notesTitle: String(customFields.notesTitle || 'Notes'),
     termsTitle: String(customFields.termsTitle || 'Terms and Conditions'),
     mergeQtyUnit: Boolean(customFields.mergeQtyUnit),

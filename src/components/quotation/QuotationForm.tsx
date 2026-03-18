@@ -16,13 +16,20 @@ import { Switch } from '@/components/ui/switch'
 import {
   buildCalculationInputs,
   calcTotals,
+  inferLegacyCalculationState,
   makeEmptyItem,
   makeFieldEntry,
   useInvoiceColumns,
 } from '@/components/useInvoiceColumns.jsx'
 import { toDbItem } from '@/domain/invoice'
 import type { ColumnConfig, InvoiceFieldEntry, InvoiceItem } from '@/domain/invoice'
-import { buildQuotationFormState, type DbQuotation, type DbQuotationItem, type Quotation } from '@/domain/quotation'
+import {
+  buildQuotationFormState,
+  getNextQuotationNumber,
+  type DbQuotation,
+  type DbQuotationItem,
+  type Quotation,
+} from '@/domain/quotation'
 import { QUOTATION_STATUSES, formatQuotationStatus } from './quotationStatus'
 
 function useIsMobile() {
@@ -33,19 +40,6 @@ function useIsMobile() {
     return () => window.removeEventListener('resize', handler)
   }, [])
   return isMobile
-}
-
-function nextQuotationNumber(rows: Array<Pick<DbQuotation, 'quotation_number'>>) {
-  const next =
-    rows
-      .map((row) => String(row.quotation_number || ''))
-      .map((value) => {
-        const match = value.match(/(\d+)(?!.*\d)/)
-        return match ? Number(match[1]) : null
-      })
-      .filter((value): value is number => Number.isFinite(value))
-      .reduce((max, value) => Math.max(max, value), 0) + 1
-  return `QUO-${String(next).padStart(3, '0')}`
 }
 
 function buildCustomFields({
@@ -188,10 +182,9 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         .from('quotations')
         .select('quotation_number')
         .order('created_at', { ascending: false })
-        .limit(100)
       setQuotation((current) => ({
         ...current,
-        quotation_number: nextQuotationNumber((data || []) as Array<Pick<DbQuotation, 'quotation_number'>>),
+        quotation_number: getNextQuotationNumber((data || []) as Array<Pick<DbQuotation, 'quotation_number'>>),
       }))
     }
     load()
@@ -220,6 +213,41 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         whtType,
       }),
     [columns, discountTiming, discountType, items, quotation, whtType],
+  )
+
+  const calculationState = useMemo(
+    () =>
+      inferLegacyCalculationState({
+        invoice: quotation,
+        items,
+        customFields: buildCustomFields({
+          quotation,
+          columns,
+          headerFields,
+          bottomFields,
+          discountType,
+          discountTiming,
+          whtType,
+          notesTitle,
+          termsTitle,
+          mergeQtyUnit,
+          showItemImages,
+        }),
+      }),
+    [
+      bottomFields,
+      columns,
+      discountTiming,
+      discountType,
+      headerFields,
+      items,
+      mergeQtyUnit,
+      notesTitle,
+      quotation,
+      showItemImages,
+      termsTitle,
+      whtType,
+    ],
   )
 
   const handleSave = async (status: Quotation['status']) => {
@@ -519,6 +547,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                 <div><Label>WHT</Label><Input className="mt-2" type="number" min="0" value={quotation.wht || 0} onChange={(e) => updateQuotation('wht', Number(e.target.value))} /></div>
                 <div><Label>WHT Type</Label><select className="mt-2 h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-slate-900" value={whtType} onChange={(e) => setWhtType(e.target.value as 'fixed' | 'percent')}><option value="percent">Percent</option><option value="fixed">Fixed</option></select></div>
               </div>
+              {!calculationState.useGlobalVatInput ? <div className="text-xs text-slate-500">Global VAT is neutral because this quotation uses row-level VAT overrides.</div> : null}
+              {!calculationState.useGlobalDiscountInput ? <div className="text-xs text-slate-500">Global discount is neutral because this quotation uses row-level discount overrides.</div> : null}
             </CardContent>
           </Card>
 
