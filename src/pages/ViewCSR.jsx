@@ -112,7 +112,7 @@ export default function ViewCSR() {
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button type="button" onClick={() => navigate('/csr')} style={{ padding: '9px 16px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', border: '1px solid #d1d5db', backgroundColor: 'white', fontWeight: '600', color: '#0F172A' }}>Back</button>
               <button type="button" onClick={handleDownload} style={{ padding: '10px 18px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', backgroundColor: '#0056B3', color: 'white', fontWeight: '700', border: 'none', boxShadow: '0 10px 24px rgba(0, 86, 179, 0.18)' }}>Download PDF</button>
-              <button type="button" onClick={() => navigate('/csr/edit/' + id)} style={{ padding: '10px 18px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', backgroundColor: '#B42318', color: 'white', fontWeight: '700', border: 'none', boxShadow: '0 10px 24px rgba(180, 35, 24, 0.18)' }}>Edit CSR</button>
+              <button type="button" onClick={() => navigate('/csr/edit/' + id)} style={{ display: 'none' }}>Edit CSR</button>
               <div ref={moreRef} style={{ position: 'relative' }}>
                 <button type="button" onClick={() => setShowMore((open) => !open)} style={{ padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', border: '1px solid #CBD5E1', backgroundColor: 'white', fontWeight: '700', color: '#0F172A' }}>
                   More actions

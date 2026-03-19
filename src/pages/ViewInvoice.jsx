@@ -472,7 +472,7 @@ export default function ViewInvoice() {
           {/* Linked Documents */}
           <div
             onClick={() => invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectModal(true)}
-            style={{ padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #BFDBFE', backgroundColor: invoice.project_id ? '#EFF6FF' : 'white', color: invoice.project_id ? '#1D4ED8' : '#64748B', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
+            style={{ display: 'none' }}
           >
             🔗 {invoice.project_id ? 'Linked Documents' : 'Link to Project'}
           </div>
@@ -480,7 +480,7 @@ export default function ViewInvoice() {
             {invoice.status || 'draft'}
           </span>
           {invoice.status === 'draft' && (
-            <div onClick={() => handleStatusChange('sent')} style={{ padding: '8px 14px', borderRadius: '6px', backgroundColor: '#0056B3', color: 'white', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}>
+            <div onClick={() => handleStatusChange('sent')} style={{ display: 'none' }}>
               Mark as Sent
             </div>
           )}
@@ -498,6 +498,7 @@ export default function ViewInvoice() {
             {showMore && (
               <div style={{ position: 'absolute', top: '100%', right: 0, left: 'auto', marginTop: '6px', backgroundColor: 'white', borderRadius: '10px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', border: '1px solid #eee', zIndex: 200, minWidth: '230px', overflow: 'hidden' }}>
                 {[
+                  { label: invoice.project_id ? 'Open Linked Documents' : 'Link to Project', action: () => { setShowMore(false); invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectModal(true) }, show: true },
                   { label: '💳 Record Payment',        action: () => { setShowMore(false); setShowPaymentModal(true) },           show: invoice.status !== 'paid' },
                   { label: '📄 Export CSV',            action: handleDownloadCsv,                                                show: true },
                   { label: '📋 Clone Invoice',          action: handleClone,                                                      show: true },

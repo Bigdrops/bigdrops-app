@@ -33,6 +33,7 @@ import {
   buildCalculationInputs,
   inferLegacyCalculationState,
   makeEmptyItem,
+  makeEmptyGroup,
   makeFieldEntry,
   useInvoiceColumns,
 } from '@/components/useInvoiceColumns.jsx'
@@ -74,6 +75,7 @@ function buildCustomFields({
   termsTitle,
   mergeQtyUnit,
   showItemImages,
+  groups,
 }: {
   quotation: Quotation
   columns: ColumnConfig[]
@@ -86,7 +88,12 @@ function buildCustomFields({
   termsTitle: string
   mergeQtyUnit: boolean
   showItemImages: boolean
+  groups: Array<{ id: string; name: string; showSubtotal?: boolean }>
 }) {
+  const groupMeta = Object.fromEntries(
+    groups.map((group) => [group.id, { name: group.name, showSubtotal: !!group.showSubtotal }]),
+  )
+
   return {
     quotationTitle: quotation.quotation_title || '',
     clientName: quotation.client_name || '',
@@ -102,6 +109,7 @@ function buildCustomFields({
     discountType,
     discountTiming,
     whtType,
+    groupMeta,
     calculationInputs: buildCalculationInputs({
       invoice: quotation,
       discountType,
@@ -154,6 +162,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const [termsTitle, setTermsTitle] = useState('Terms and Conditions')
   const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
   const [showItemImages, setShowItemImages] = useState(false)
+  const [groups, setGroups] = useState<Array<{ id: string; name: string; showSubtotal: boolean }>>([])
   const [items, setItems] = useState<InvoiceItem[]>([
     { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' },
   ])
@@ -199,6 +208,22 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         setTermsTitle(state.termsTitle)
         setMergeQtyUnit(state.mergeQtyUnit)
         setShowItemImages(state.showItemImages)
+        const savedGroupMeta = state.quotation.custom_fields?.groupMeta || {}
+        const discoveredGroups: Array<{ id: string; name: string; showSubtotal: boolean }> = []
+        const seenGroupIds = new Set<string>()
+        state.items.forEach((item) => {
+          if (item.row_type !== 'group_header') return
+          const groupId = item.group_id || makeQuotationGroupId()
+          if (seenGroupIds.has(groupId)) return
+          seenGroupIds.add(groupId)
+          const meta = savedGroupMeta[groupId] || savedGroupMeta[item.group_name || ''] || {}
+          discoveredGroups.push({
+            id: groupId,
+            name: item.group_name || `Group ${discoveredGroups.length + 1}`,
+            showSubtotal: !!meta.showSubtotal,
+          })
+        })
+        setGroups(discoveredGroups)
         setLoading(false)
         return
       }
@@ -210,6 +235,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         ...current,
         quotation_number: getNextQuotationNumber((data || []) as Array<Pick<DbQuotation, 'quotation_number'>>),
       }))
+      setGroups([])
     }
     load()
   }, [isEdit, navigate, quotationId, setColumns])
@@ -226,24 +252,105 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       }),
     )
 
-  const addQuotationItem = () =>
-    setItems((current) => [
-      ...current,
-      { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '', sort_order: current.length },
-    ])
+  const addUngroupedItem = (insertAt: number | null = null) => {
+    setItems((current) => {
+      const newItem = {
+        ...makeEmptyItem(),
+        row_type: 'standard',
+        group_id: null,
+        group_name: '',
+      }
+      if (insertAt === null || insertAt >= current.length) {
+        return [...current, { ...newItem, sort_order: current.length }]
+      }
+      const next = [...current]
+      next.splice(insertAt, 0, { ...newItem, sort_order: insertAt })
+      return next.map((item, index) => ({ ...item, sort_order: index }))
+    })
+  }
 
-  const addQuotationGroup = () =>
+  const addQuotationItem = () => addUngroupedItem()
+
+  const insertItemAfter = (index: number) => addUngroupedItem(index + 1)
+
+  const addQuotationGroup = () => {
+    const base = makeEmptyGroup()
+    const groupId = base.id || makeQuotationGroupId()
+    const group = {
+      ...base,
+      id: groupId,
+      name: base.name || `Group ${groups.length + 1}`,
+      showSubtotal: !!base.showSubtotal,
+    }
+
+    setGroups((current) => [...current, group])
     setItems((current) => [
-      ...current,
+      ...current.map((item, index) => ({ ...item, sort_order: index })),
       {
         ...makeEmptyItem(),
         row_type: 'group_header',
-        group_id: makeQuotationGroupId(),
-        group_name: `Group ${current.filter((item) => item.row_type === 'group_header').length + 1}`,
+        group_id: group.id,
+        group_name: group.name,
         description: '',
         sort_order: current.length,
       },
     ])
+  }
+
+  const updateGroupName = (groupId: string, newName: string) => {
+    setGroups((current) => current.map((group) => (group.id === groupId ? { ...group, name: newName } : group)))
+    setItems((current) =>
+      current.map((item) => (item.group_id === groupId ? { ...item, group_name: newName } : item)),
+    )
+  }
+
+  const toggleGroupSubtotal = (groupId: string) => {
+    setGroups((current) =>
+      current.map((group) =>
+        group.id === groupId ? { ...group, showSubtotal: !group.showSubtotal } : group,
+      ),
+    )
+  }
+
+  const deleteGroup = (groupId: string) => {
+    setGroups((current) => current.filter((group) => group.id !== groupId))
+    setItems((current) =>
+      current
+        .filter((item) => !(item.row_type === 'group_header' && item.group_id === groupId))
+        .map((item, index) =>
+          item.group_id === groupId
+            ? { ...item, group_id: null, group_name: '', sort_order: index }
+            : { ...item, sort_order: index },
+        ),
+    )
+  }
+
+  const addItemToGroup = (groupId: string) => {
+    const group = groups.find((entry) => entry.id === groupId)
+    if (!group) return
+
+    setItems((current) => {
+      let insertAt = current.findIndex(
+        (item) => item.row_type === 'group_header' && item.group_id === groupId,
+      )
+
+      if (insertAt === -1) insertAt = current.length - 1
+
+      for (let index = insertAt + 1; index < current.length; index += 1) {
+        if (current[index].row_type === 'group_header') break
+        if (current[index].group_id === groupId) insertAt = index
+      }
+
+      const next = [...current]
+      next.splice(insertAt + 1, 0, {
+        ...makeEmptyItem(),
+        row_type: 'standard',
+        group_id: groupId,
+        group_name: group.name,
+      })
+      return next.map((item, index) => ({ ...item, sort_order: index }))
+    })
+  }
 
   const parseCsvItems = (text: string) => {
     const lines = text.split('\n').filter((line) => line.trim())
@@ -290,7 +397,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
   const applyImportedItems = (newItems: InvoiceItem[]) => {
     setItems((current) => [
-      ...current.filter((item) => item.description?.trim()),
+      ...current.filter((item) => item.description?.trim() || item.row_type === 'group_header'),
       ...newItems,
     ])
     alert(`${newItems.length} items imported`)
@@ -345,6 +452,11 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     [calculationInputs, items, quotation],
   )
 
+  const computedGroups = useMemo(
+    () => new Map(totals.groups.map((group) => [group.group_id, group])),
+    [totals.groups],
+  )
+
   const calculationState = useMemo(
     () =>
       inferLegacyCalculationState({
@@ -362,6 +474,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           termsTitle,
           mergeQtyUnit,
           showItemImages,
+          groups,
         }),
       }),
     [
@@ -377,6 +490,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       showItemImages,
       termsTitle,
       whtType,
+      groups,
     ],
   )
 
@@ -417,6 +531,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           termsTitle,
           mergeQtyUnit,
           showItemImages,
+          groups,
         }),
       ),
     }
@@ -462,6 +577,147 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
   const visibleCustomColumns = customColumns.filter((column: ColumnConfig) => column.visible)
   const summaryHeaderFields = headerFields.filter((field) => field.label && field.value)
+  const removeItemAt = (itemIndex: number) =>
+    setItems((current) =>
+      current.filter((_, entryIndex) => entryIndex !== itemIndex).map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex })),
+    )
+  const moveItemBy = (itemIndex: number, direction: number) => {
+    const nextIndex = itemIndex + direction
+    if (nextIndex < 0 || nextIndex >= items.length) return
+    setItems((current) => {
+      const next = [...current]
+      ;[next[itemIndex], next[nextIndex]] = [next[nextIndex], next[itemIndex]]
+      return next.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
+    })
+  }
+
+  const renderMobileRows = () => {
+    let itemNumber = 0
+
+    return items.map((item, index) => {
+      if (item.row_type === 'group_header') {
+        const group = groups.find((entry) => entry.id === item.group_id)
+        if (!group) return null
+
+        const groupItems = items.filter((entry) => entry.row_type === 'standard' && entry.group_id === group.id)
+        const groupSubtotal = computedGroups.get(group.id)?.subtotal || 0
+
+        return (
+          <div key={item._uiKey || item.id || `quotation_group_${index}`} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 text-white shadow-sm">
+            <div className="border-b border-slate-800 px-4 py-4">
+              <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
+                Group
+              </div>
+              <div className="flex items-start gap-3">
+                <Input
+                  value={group.name || item.group_name || ''}
+                  onChange={(e) => updateGroupName(group.id, e.target.value)}
+                  placeholder="Group name"
+                  className="h-10 flex-1 border-slate-600 bg-slate-800 text-sm font-semibold text-white placeholder:text-slate-400"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-9 w-9 shrink-0 text-red-300 hover:bg-slate-800 hover:text-red-200"
+                  onClick={() => deleteGroup(group.id)}
+                >
+                  ×
+                </Button>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Button type="button" size="sm" className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => addItemToGroup(group.id)}>
+                  + Add Item
+                </Button>
+                <Button type="button" size="sm" variant="outline" className="border-slate-600 text-slate-200 hover:bg-slate-800" onClick={() => toggleGroupSubtotal(group.id)}>
+                  {group.showSubtotal ? 'Hide Subtotal' : 'Show Subtotal'}
+                </Button>
+                {group.showSubtotal ? (
+                  <span className="ml-auto text-xs font-semibold text-emerald-300">
+                    Subtotal: N{Number(groupSubtotal || 0).toLocaleString()}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="space-y-3 bg-slate-50/50 px-3 py-3">
+              {groupItems.map((groupItem, groupIndex) => {
+                itemNumber += 1
+                const itemIndex = items.indexOf(groupItem)
+
+                return (
+                  <MobileItemCard
+                    key={groupItem._uiKey || groupItem.id || `quotation_group_item_${group.id}_${itemIndex}`}
+                    item={groupItem}
+                    index={itemIndex}
+                    number={itemNumber}
+                    isVisible={isVisible}
+                    getColumn={getColumn}
+                    customColumns={visibleCustomColumns}
+                    showItemImages={showItemImages}
+                    invoice={quotation}
+                    computedAmount={totals.items[itemIndex]?.line_subtotal || 0}
+                    showInsertBelow={false}
+                    variant="quotation"
+                    groupName={group.name || item.group_name || ''}
+                    isFirst={groupIndex === 0}
+                    isLast={groupIndex === groupItems.length - 1}
+                    onUpdate={(itemIndex: number, field: string, value: unknown) => {
+                      if (field === '__install_rate_override') {
+                        setItems((current) => current.map((entry, entryIndex) => entryIndex === itemIndex ? { ...entry, ...(value as object) } : entry))
+                        return
+                      }
+                      updateItem(itemIndex, field, value)
+                    }}
+                    onRemove={removeItemAt}
+                    onMoveUp={(itemIndex: number) => moveItemBy(itemIndex, -1)}
+                    onMoveDown={(itemIndex: number) => moveItemBy(itemIndex, 1)}
+                    onInsertBelow={() => addItemToGroup(group.id)}
+                  />
+                )
+              })}
+
+              <Button type="button" variant="outline" className="w-full border-dashed border-slate-300 bg-white text-slate-700 hover:bg-slate-100" onClick={() => addItemToGroup(group.id)}>
+                + Add item to {group.name || 'group'}
+              </Button>
+            </div>
+          </div>
+        )
+      }
+
+      if (item.row_type !== 'standard' || item.group_id) return null
+
+      itemNumber += 1
+      return (
+        <MobileItemCard
+          key={item._uiKey || item.id || `quotation_item_${index}`}
+          item={item}
+          index={index}
+          number={itemNumber}
+          isVisible={isVisible}
+          getColumn={getColumn}
+          customColumns={visibleCustomColumns}
+          showItemImages={showItemImages}
+          invoice={quotation}
+          computedAmount={totals.items[index]?.line_subtotal || 0}
+          showInsertBelow={false}
+          variant="quotation"
+          isFirst={itemNumber === 1}
+          isLast={index === items.length - 1}
+          onUpdate={(itemIndex: number, field: string, value: unknown) => {
+            if (field === '__install_rate_override') {
+              setItems((current) => current.map((entry, entryIndex) => entryIndex === itemIndex ? { ...entry, ...(value as object) } : entry))
+              return
+            }
+            updateItem(itemIndex, field, value)
+          }}
+          onRemove={removeItemAt}
+          onMoveUp={(itemIndex: number) => moveItemBy(itemIndex, -1)}
+          onMoveDown={(itemIndex: number) => moveItemBy(itemIndex, 1)}
+          onInsertBelow={(itemIndex: number) => insertItemAfter(itemIndex)}
+        />
+      )
+    })
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-24 pt-6">
@@ -791,14 +1047,14 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
             <CardContent>
               {isMobile ? (
                 <div className="space-y-3">
-                  {(() => {
+                  {false ? (() => {
                     let itemNumber = 0
                     return items.map((item, index) => {
                     if (item.row_type === 'group_header') {
                       return (
                         <div key={item._uiKey || item.id || `quotation_group_${index}`} className="mb-4 rounded-2xl border border-slate-200 bg-slate-900 p-4 text-white shadow-sm">
                           <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
-                            Group Header
+                            Group
                           </div>
                           <div className="flex items-start gap-3">
                             <Input
@@ -871,7 +1127,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                       />
                     )
                     })
-                  })()}
+                  })() : renderMobileRows()}
                   <div className="grid gap-2 pt-2">
                     <Button type="button" onClick={addQuotationItem} className="w-full">
                       + Add Item
@@ -905,14 +1161,29 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                         let itemNumber = 0
                         return items.map((item, index) => {
                           if (item.row_type === 'group_header') {
+                            const group = groups.find((entry) => entry.id === item.group_id)
+                            const groupSubtotal = group ? computedGroups.get(group.id)?.subtotal || 0 : 0
                             return (
                               <tr key={item._uiKey || item.id || index} className="border-b border-zinc-100 bg-slate-900 align-top">
                                 <td className="px-2 py-3 text-sm font-semibold text-slate-400">-</td>
                                 <td colSpan={8 + (isVisible('make') ? 1 : 0) + (isVisible('unit') ? 1 : 0) + (isVisible('install_rate') ? 1 : 0) + (isVisible('vat_rate') ? 1 : 0) + (isVisible('discount_rate') ? 1 : 0) + visibleCustomColumns.length} className="px-2 py-3">
-                                  <Input value={item.group_name || ''} onChange={(e) => updateItem(index, 'group_name', e.target.value)} placeholder="Group name" className="border-slate-600 bg-slate-800 text-white" />
+                                  <div className="flex flex-wrap items-center gap-3">
+                                    <Input value={item.group_name || ''} onChange={(e) => group ? updateGroupName(group.id, e.target.value) : updateItem(index, 'group_name', e.target.value)} placeholder="Group name" className="max-w-sm border-slate-600 bg-slate-800 text-white" />
+                                    {group ? (
+                                      <>
+                                        <Button type="button" size="sm" className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => addItemToGroup(group.id)}>
+                                          + Add Item
+                                        </Button>
+                                        <Button type="button" size="sm" variant="outline" className="border-slate-600 text-slate-200 hover:bg-slate-800" onClick={() => toggleGroupSubtotal(group.id)}>
+                                          {group.showSubtotal ? 'Hide Subtotal' : 'Show Subtotal'}
+                                        </Button>
+                                        {group.showSubtotal ? <span className="text-xs font-semibold text-emerald-300">Subtotal: N{Number(groupSubtotal || 0).toLocaleString()}</span> : null}
+                                      </>
+                                    ) : null}
+                                  </div>
                                 </td>
                                 <td className="px-2 py-3">
-                                  <Button type="button" variant="ghost" size="sm" className="text-red-300 hover:bg-slate-800 hover:text-red-200" onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index).map((entry, itemIndex) => ({ ...entry, sort_order: itemIndex })))}>×</Button>
+                                  <Button type="button" variant="ghost" size="sm" className="text-red-300 hover:bg-slate-800 hover:text-red-200" onClick={() => group ? deleteGroup(group.id) : removeItemAt(index)}>×</Button>
                                 </td>
                               </tr>
                             )

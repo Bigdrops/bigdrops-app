@@ -21,6 +21,7 @@ export default function MobileItemCard({
   computedAmount,
   showInsertBelow = true,
   variant = 'default',
+  groupName = '',
 }) {
   const autoInstall = (() => {
     const col = getColumn('install_rate')
@@ -51,7 +52,15 @@ export default function MobileItemCard({
             placeholder="Group name"
           />
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-2">
+            {showItemImages ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-2 py-2">
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                  Picture
+                </div>
+                <ItemImageUpload value={item.image_url || null} onChange={url => onUpdate(index, 'image_url', url)} />
+              </div>
+            ) : null}
             {showInsertBelow ? (
               <Button
                 variant="outline"
@@ -88,8 +97,8 @@ export default function MobileItemCard({
     const hasDiscountOverride = drVal !== null && drVal !== undefined
 
     return (
-      <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-4 flex items-start justify-between gap-3">
+      <div className="mb-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
+        <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
               Line Item
@@ -102,6 +111,11 @@ export default function MobileItemCard({
                 {item.description?.trim() || 'New item'}
               </span>
             </div>
+            {groupName ? (
+              <div className="mt-2 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                {groupName}
+              </div>
+            ) : null}
           </div>
 
           <div className="flex items-center gap-2">
@@ -110,7 +124,7 @@ export default function MobileItemCard({
               size="icon"
               onClick={() => onMoveUp(index)}
               disabled={isFirst}
-              className="h-8 w-8 rounded-full border-slate-200 text-slate-600"
+              className="h-7 w-7 rounded-full border-slate-200 text-slate-600"
               aria-label="Move item up"
             >
               ▲
@@ -120,7 +134,7 @@ export default function MobileItemCard({
               size="icon"
               onClick={() => onMoveDown(index)}
               disabled={isLast}
-              className="h-8 w-8 rounded-full border-slate-200 text-slate-600"
+              className="h-7 w-7 rounded-full border-slate-200 text-slate-600"
               aria-label="Move item down"
             >
               ▼
@@ -129,7 +143,7 @@ export default function MobileItemCard({
               variant="ghost"
               size="icon"
               onClick={() => onRemove(index)}
-              className="h-8 w-8 rounded-full text-red-600 hover:bg-red-50 hover:text-red-600"
+              className="h-7 w-7 rounded-full text-red-600 hover:bg-red-50 hover:text-red-600"
               aria-label="Remove item"
             >
               ×
@@ -137,7 +151,7 @@ export default function MobileItemCard({
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
             <Label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
               Description
@@ -146,7 +160,7 @@ export default function MobileItemCard({
               value={item.description || ''}
               onChange={e => onUpdate(index, 'description', e.target.value)}
               placeholder="Item description"
-              className="h-11 rounded-xl border-slate-200"
+              className="h-10 rounded-xl border-slate-200"
             />
           </div>
 
@@ -158,7 +172,7 @@ export default function MobileItemCard({
               value={item.sub_description || ''}
               onChange={e => onUpdate(index, 'sub_description', e.target.value)}
               placeholder="Add more context if needed"
-              className="h-11 rounded-xl border-slate-200 text-sm"
+              className="h-10 rounded-xl border-slate-200 text-sm"
             />
           </div>
 
@@ -171,7 +185,7 @@ export default function MobileItemCard({
                 value={item.make || ''}
                 onChange={e => onUpdate(index, 'make', e.target.value)}
                 placeholder="Brand or manufacturer"
-                className="h-11 rounded-xl border-slate-200"
+                className="h-10 rounded-xl border-slate-200"
               />
             </div>
           ) : null}
@@ -185,7 +199,7 @@ export default function MobileItemCard({
               min="0"
               value={item.quantity}
               onChange={e => onUpdate(index, 'quantity', Number(e.target.value))}
-              className="h-11 rounded-xl border-slate-200"
+              className="h-10 rounded-xl border-slate-200"
             />
           </div>
 
@@ -207,7 +221,7 @@ export default function MobileItemCard({
               min="0"
               value={item.unit_price}
               onChange={e => onUpdate(index, 'unit_price', Number(e.target.value))}
-              className="h-11 rounded-xl border-slate-200"
+              className="h-10 rounded-xl border-slate-200"
             />
           </div>
 
@@ -228,16 +242,16 @@ export default function MobileItemCard({
                     : { install_rate_override: true, install_rate: Number(val) }
                   )
                 }}
-                className="h-11 rounded-xl border-slate-200"
+                className="h-10 rounded-xl border-slate-200"
               />
             </div>
           ) : null}
 
-          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-3.5 py-2.5">
             <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-700">
               Computed Amount
             </div>
-            <div className="mt-1 text-xl font-bold text-slate-900">
+            <div className="mt-1 text-lg font-bold text-slate-900">
               ₦{amount.toLocaleString()}
             </div>
             <div className="mt-1 text-xs text-slate-500">
@@ -251,7 +265,7 @@ export default function MobileItemCard({
                 VAT %
               </Label>
               <Input
-                className={`${item.vat_rate !== null && item.vat_rate !== undefined ? 'bg-white' : 'bg-slate-50'} ${item.vat_rate === 0 ? 'text-red-600' : ''} h-11 rounded-xl border-slate-200`}
+                className={`${item.vat_rate !== null && item.vat_rate !== undefined ? 'bg-white' : 'bg-slate-50'} ${item.vat_rate === 0 ? 'text-red-600' : ''} h-10 rounded-xl border-slate-200`}
                 type="number"
                 min="0"
                 max="100"
@@ -277,7 +291,7 @@ export default function MobileItemCard({
                 Discount %
               </Label>
               <Input
-                className={`${isDiscountExcluded ? 'bg-red-50 text-red-600' : hasDiscountOverride ? 'bg-amber-50' : 'bg-slate-50'} h-11 rounded-xl border-slate-200`}
+                className={`${isDiscountExcluded ? 'bg-red-50 text-red-600' : hasDiscountOverride ? 'bg-amber-50' : 'bg-slate-50'} h-10 rounded-xl border-slate-200`}
                 type="number"
                 min="0"
                 max="100"
@@ -311,19 +325,11 @@ export default function MobileItemCard({
                   ...(item.custom_data || {}),
                   [col.key]: col.type === 'number' ? Number(e.target.value) : e.target.value,
                 })}
-                className="h-11 rounded-xl border-slate-200"
+                className="h-10 rounded-xl border-slate-200"
               />
             </div>
           ))}
 
-          {showItemImages ? (
-            <div>
-              <Label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
-                Item Image
-              </Label>
-              <ItemImageUpload value={item.image_url || null} onChange={url => onUpdate(index, 'image_url', url)} />
-            </div>
-          ) : null}
         </div>
       </div>
     )
