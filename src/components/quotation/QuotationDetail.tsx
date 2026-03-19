@@ -15,6 +15,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
   Table,
   TableBody,
   TableCell,
@@ -85,6 +93,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const [settings, setSettings] = useState<Record<string, unknown> | null>(null)
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [converting, setConverting] = useState(false)
+  const [showMobileActions, setShowMobileActions] = useState(false)
   const hasText = (value: unknown) => String(value || '').trim().length > 0
 
   useEffect(() => {
@@ -374,110 +383,126 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             <Button type="button" variant="outline" className="w-full" onClick={() => navigate(`/quotations/edit/${quotationId}`)}>
               Edit
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button type="button" variant="outline" className="w-full">
-                  More Actions
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Quotation Actions</DropdownMenuLabel>
-                <DropdownMenuItem onSelect={handleDownloadCsv}>Export CSV</DropdownMenuItem>
-                <DropdownMenuItem onSelect={handleConvertToInvoice} disabled={converting}>
-                  {converting ? 'Converting...' : 'Convert to Invoice'}
-                </DropdownMenuItem>
-                {quotation.status === 'draft' ? (
-                  <DropdownMenuItem onSelect={() => handleStatusChange('sent')}>
-                    Mark Sent
+            {isNarrow ? (
+              <Button type="button" variant="outline" className="w-full" onClick={() => setShowMobileActions(true)}>
+                More Actions
+              </Button>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="outline" className="w-full">
+                    More Actions
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" sideOffset={8} className="w-56 max-w-[calc(100vw-2rem)]">
+                  <DropdownMenuLabel>Quotation Actions</DropdownMenuLabel>
+                  <DropdownMenuItem onSelect={handleDownloadCsv}>Export CSV</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={handleConvertToInvoice} disabled={converting}>
+                    {converting ? 'Converting...' : 'Convert to Invoice'}
                   </DropdownMenuItem>
-                ) : null}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => handleCopy(quotation.quotation_number || '', 'Quotation number')}>
-                  Copy quotation number
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => handleCopy(quotation.client_name || '', 'Client name')}>
-                  Copy client name
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={handleArchive}>Archive Quotation</DropdownMenuItem>
-                <DropdownMenuItem onSelect={handleDelete} className="text-red-700 focus:text-red-700">
-                  Delete Quotation
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {quotation.status === 'draft' ? (
+                    <DropdownMenuItem onSelect={() => handleStatusChange('sent')}>
+                      Mark Sent
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => handleCopy(quotation.quotation_number || '', 'Quotation number')}>
+                    Copy quotation number
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleCopy(quotation.client_name || '', 'Client name')}>
+                    Copy client name
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={handleArchive}>Archive Quotation</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={handleDelete} className="text-red-700 focus:text-red-700">
+                    Delete Quotation
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 
         <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 lg:grid-cols-[minmax(0,1fr)_260px]">
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Client</div>
-              <div className="mt-2 text-base font-semibold text-slate-900">{quotation.client_name || 'Unassigned'}</div>
-              {hasText(client?.contact_person) ? <div className="mt-1 text-sm text-slate-500">{String(client?.contact_person)}</div> : null}
-              {hasText(client?.email) ? <div className="text-sm text-slate-500">{String(client?.email)}</div> : null}
-              {hasText(client?.phone) ? <div className="text-sm text-slate-500">{String(client?.phone)}</div> : null}
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Quotation Summary</div>
-              <div className="mt-2 space-y-1 text-sm text-slate-600">
-                <div>Status: {formatQuotationStatus(quotation.status)}</div>
-                <div>Issued: {quotation.issue_date || 'Not set'}</div>
-                <div>Valid until: {quotation.valid_until || 'Not set'}</div>
-                {poNumber ? <div>P.O. Number: {poNumber}</div> : null}
-              </div>
-            </div>
-            {topHeaderFields.length > 0 ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:col-span-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Reference Fields</div>
-                <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                  {topHeaderFields.map((field: any) => (
-                    <div key={field.id || field.label}>
-                      <div className="text-xs font-bold uppercase tracking-wide text-slate-400">{field.label}</div>
-                      <div className="mt-1 break-words text-sm text-slate-800">{field.value}</div>
-                    </div>
-                  ))}
+            <Card className="border-slate-200 bg-white shadow-none">
+              <CardContent className="p-4">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Client</div>
+                <div className="mt-2 text-base font-semibold text-slate-900">{quotation.client_name || 'Unassigned'}</div>
+                {hasText(client?.contact_person) ? <div className="mt-1 text-sm text-slate-500">{String(client?.contact_person)}</div> : null}
+                {hasText(client?.email) ? <div className="text-sm text-slate-500">{String(client?.email)}</div> : null}
+                {hasText(client?.phone) ? <div className="text-sm text-slate-500">{String(client?.phone)}</div> : null}
+              </CardContent>
+            </Card>
+            <Card className="border-slate-200 bg-white shadow-none">
+              <CardContent className="p-4">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Quotation Summary</div>
+                <div className="mt-2 space-y-1 text-sm text-slate-600">
+                  <div>Status: {formatQuotationStatus(quotation.status)}</div>
+                  <div>Issued: {quotation.issue_date || 'Not set'}</div>
+                  <div>Valid until: {quotation.valid_until || 'Not set'}</div>
+                  {poNumber ? <div>P.O. Number: {poNumber}</div> : null}
                 </div>
-              </div>
+              </CardContent>
+            </Card>
+            {topHeaderFields.length > 0 ? (
+              <Card className="border-slate-200 bg-white shadow-none sm:col-span-2">
+                <CardContent className="p-4">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Reference Fields</div>
+                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                    {topHeaderFields.map((field: any) => (
+                      <div key={field.id || field.label}>
+                        <div className="text-xs font-bold uppercase tracking-wide text-slate-400">{field.label}</div>
+                        <div className="mt-1 break-words text-sm text-slate-800">{field.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             ) : null}
             {(conversionTrail.source?.number || derivedInvoices.length > 0) ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:col-span-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Conversion Trail</div>
-                <div className="mt-2 space-y-2 text-sm text-slate-700">
-                  {conversionTrail.source?.number ? (
-                    <div>
-                      Source: {conversionTrail.source.type === 'invoice' ? 'Invoice' : 'Quotation'} {conversionTrail.source.number}
-                    </div>
-                  ) : null}
-                  {derivedInvoices.length > 0 ? (
-                    <div className="space-y-1">
-                      <div>Created invoices:</div>
-                      {derivedInvoices.map((entry) => (
-                        <button
-                          key={entry.id || entry.number}
-                          type="button"
-                          onClick={() => navigate(`/invoices/${entry.id}`)}
-                          className="block text-left text-sm font-medium text-blue-700 hover:underline"
-                        >
-                          {entry.number || 'Open invoice'}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
+              <Card className="border-slate-200 bg-white shadow-none sm:col-span-2">
+                <CardContent className="p-4">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Conversion Trail</div>
+                  <div className="mt-2 space-y-2 text-sm text-slate-700">
+                    {conversionTrail.source?.number ? (
+                      <div>
+                        Source: {conversionTrail.source.type === 'invoice' ? 'Invoice' : 'Quotation'} {conversionTrail.source.number}
+                      </div>
+                    ) : null}
+                    {derivedInvoices.length > 0 ? (
+                      <div className="space-y-1">
+                        <div>Created invoices:</div>
+                        {derivedInvoices.map((entry) => (
+                          <button
+                            key={entry.id || entry.number}
+                            type="button"
+                            onClick={() => navigate(`/invoices/${entry.id}`)}
+                            className="block text-left text-sm font-medium text-blue-700 hover:underline"
+                          >
+                            {entry.number || 'Open invoice'}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </CardContent>
+              </Card>
             ) : null}
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-950 px-4 py-4 text-white">
-            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Document Identity</div>
-            <div className="mt-2 text-lg font-bold">{companyIdentity.companyName || 'Quotation'}</div>
-            {companyIdentity.companyTagline ? <div className="mt-1 text-sm text-slate-300">{companyIdentity.companyTagline}</div> : null}
-            {companyIdentity.lines.length > 0 ? (
-              <div className="mt-3 space-y-1 text-xs text-slate-300">
-                {companyIdentity.lines.map((line) => <div key={line}>{line}</div>)}
-              </div>
-            ) : null}
-          </div>
+          <Card className="border-slate-200 bg-slate-950 text-white shadow-none">
+            <CardContent className="px-4 py-4">
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Document Identity</div>
+              <div className="mt-2 text-lg font-bold">{companyIdentity.companyName || 'Quotation'}</div>
+              {companyIdentity.companyTagline ? <div className="mt-1 text-sm text-slate-300">{companyIdentity.companyTagline}</div> : null}
+              {companyIdentity.lines.length > 0 ? (
+                <div className="mt-3 space-y-1 text-xs text-slate-300">
+                  {companyIdentity.lines.map((line) => <div key={line}>{line}</div>)}
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -494,6 +519,42 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
           </Button>
         ))}
       </div>
+
+      <Sheet open={showMobileActions} onOpenChange={setShowMobileActions}>
+        <SheetContent side="bottom" className="max-h-[88vh] rounded-t-3xl px-0">
+          <SheetHeader className="border-b border-slate-200 px-5 pb-4 pt-5">
+            <SheetTitle className="text-base font-bold text-slate-900">Quotation Actions</SheetTitle>
+            <SheetDescription>
+              Quick actions for this quotation, optimized for smaller screens.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="grid gap-2 px-5 py-4">
+            <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowMobileActions(false); handleDownloadCsv() }}>
+              Export CSV
+            </Button>
+            <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowMobileActions(false); void handleConvertToInvoice() }} disabled={converting}>
+              {converting ? 'Converting...' : 'Convert to Invoice'}
+            </Button>
+            {quotation.status === 'draft' ? (
+              <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowMobileActions(false); void handleStatusChange('sent') }}>
+                Mark Sent
+              </Button>
+            ) : null}
+            <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowMobileActions(false); void handleCopy(quotation.quotation_number || '', 'Quotation number') }}>
+              Copy quotation number
+            </Button>
+            <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowMobileActions(false); void handleCopy(quotation.client_name || '', 'Client name') }}>
+              Copy client name
+            </Button>
+            <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowMobileActions(false); void handleArchive() }}>
+              Archive Quotation
+            </Button>
+            <Button type="button" variant="destructive" className="justify-start" onClick={() => { setShowMobileActions(false); void handleDelete() }}>
+              Delete Quotation
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-5">
@@ -514,7 +575,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
                       }
                       itemNumber += 1
                       return (
-                        <div key={item._uiKey || item.id || index} className="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-4">
+                        <div key={item._uiKey || item.id || index} className="rounded-2xl border border-zinc-200 bg-white p-4">
                           <div className="mb-2 flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Item {itemNumber}</div>
@@ -605,21 +666,26 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
           </Card>
 
           <Card className="rounded-2xl border-zinc-200">
-            <CardHeader><CardTitle className="text-base">{notesTitle}</CardTitle></CardHeader>
-            <CardContent>{renderRichText(quotation.notes)}</CardContent>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Document Notes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="notes" className="w-full">
+                <TabsList className="mb-4 h-auto flex-wrap justify-start rounded-xl bg-slate-100 p-1">
+                  <TabsTrigger value="notes">{notesTitle}</TabsTrigger>
+                  <TabsTrigger value="terms">{termsTitle}</TabsTrigger>
+                  {bottomFields.length > 0 ? <TabsTrigger value="additional">Additional Notes</TabsTrigger> : null}
+                </TabsList>
+                <TabsContent value="notes">{renderRichText(quotation.notes)}</TabsContent>
+                <TabsContent value="terms">{renderRichText(quotation.terms)}</TabsContent>
+                {bottomFields.length > 0 ? (
+                  <TabsContent value="additional" className="space-y-2 text-sm text-slate-600">
+                    {bottomFields.map((field) => <div key={field.id}>{field.text}</div>)}
+                  </TabsContent>
+                ) : null}
+              </Tabs>
+            </CardContent>
           </Card>
-          <Card className="rounded-2xl border-zinc-200">
-            <CardHeader><CardTitle className="text-base">{termsTitle}</CardTitle></CardHeader>
-            <CardContent>{renderRichText(quotation.terms)}</CardContent>
-          </Card>
-          {bottomFields.length > 0 && (
-            <Card className="rounded-2xl border-zinc-200">
-              <CardHeader><CardTitle className="text-base">Additional Notes</CardTitle></CardHeader>
-              <CardContent className="space-y-2 text-sm text-slate-600">
-                {bottomFields.map((field) => <div key={field.id}>{field.text}</div>)}
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         <div className="space-y-5 xl:sticky xl:top-6 xl:self-start">

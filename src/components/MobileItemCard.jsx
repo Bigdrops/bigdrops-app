@@ -233,7 +233,7 @@ export default function MobileItemCard({
             </div>
           ) : null}
 
-          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3">
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
             <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-700">
               Computed Amount
             </div>

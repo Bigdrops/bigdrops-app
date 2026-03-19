@@ -13,6 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -20,6 +27,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import {
   buildCalculationInputs,
@@ -607,22 +615,17 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
           <div className="flex h-full flex-col overflow-hidden">
             <div className="overflow-y-auto px-5 py-4">
-              <div className="mb-4 flex flex-wrap gap-2">
-                {['Upload File', 'Paste Text'].map((tab) => (
-                  <Button
-                    key={tab}
-                    type="button"
-                    onClick={() => setCSVTab(tab)}
-                    variant={csvTab === tab ? 'default' : 'outline'}
-                    className={csvTab === tab ? 'bg-green-600 hover:bg-green-700' : ''}
-                  >
-                    {tab}
-                  </Button>
-                ))}
-              </div>
+              <Tabs
+                value={csvTab}
+                onValueChange={setCSVTab}
+                className="w-full"
+              >
+                <TabsList className="mb-4 grid h-auto w-full grid-cols-2 rounded-xl bg-slate-100 p-1">
+                  <TabsTrigger value="Upload File">Upload File</TabsTrigger>
+                  <TabsTrigger value="Paste Text">Paste Text</TabsTrigger>
+                </TabsList>
 
-              {csvTab === 'Upload File' ? (
-                <div className="space-y-4">
+                <TabsContent value="Upload File" className="space-y-4">
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
                     <div><strong>Required:</strong> description</div>
                     <div><strong>Optional:</strong> sub_description, make, quantity, unit, unit_price</div>
@@ -634,9 +637,9 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                   >
                     Choose CSV File
                   </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
+                </TabsContent>
+
+                <TabsContent value="Paste Text" className="space-y-4">
                   <div className="text-xs text-slate-500">
                     <div><strong>Required:</strong> description</div>
                     <div><strong>Optional:</strong> sub_description, make, quantity, unit, unit_price</div>
@@ -647,8 +650,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                     placeholder={'description,quantity,unit,unit_price\nCable tie,5,PCS,700'}
                     className="min-h-[180px] resize-y bg-white text-sm"
                   />
-                </div>
-              )}
+                </TabsContent>
+              </Tabs>
             </div>
 
             {csvTab === 'Paste Text' ? (
@@ -1000,10 +1003,43 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
               <div className="grid gap-3 sm:grid-cols-2">
                 <div><Label>Global VAT</Label><Input className="mt-2" type="number" min="0" value={quotation.vat || 0} onChange={(e) => updateQuotation('vat', Number(e.target.value))} /></div>
                 <div><Label>Discount</Label><Input className="mt-2" type="number" min="0" value={quotation.discount || 0} onChange={(e) => updateQuotation('discount', Number(e.target.value))} /></div>
-                <div><Label>Discount Type</Label><select className="mt-2 h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-slate-900" value={discountType} onChange={(e) => setDiscountType(e.target.value as 'fixed' | 'percent')}><option value="fixed">Fixed</option><option value="percent">Percent</option></select></div>
-                <div><Label>Discount Timing</Label><select className="mt-2 h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-slate-900" value={discountTiming} onChange={(e) => setDiscountTiming(e.target.value as 'before' | 'after')}><option value="after">After Tax</option><option value="before">Before Tax</option></select></div>
+                <div>
+                  <Label>Discount Type</Label>
+                  <Select value={discountType} onValueChange={(value) => setDiscountType(value as 'fixed' | 'percent')}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Choose discount type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fixed">Fixed</SelectItem>
+                      <SelectItem value="percent">Percent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Discount Timing</Label>
+                  <Select value={discountTiming} onValueChange={(value) => setDiscountTiming(value as 'before' | 'after')}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Choose discount timing" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="after">After Tax</SelectItem>
+                      <SelectItem value="before">Before Tax</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div><Label>WHT</Label><Input className="mt-2" type="number" min="0" value={quotation.wht || 0} onChange={(e) => updateQuotation('wht', Number(e.target.value))} /></div>
-                <div><Label>WHT Type</Label><select className="mt-2 h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-slate-900" value={whtType} onChange={(e) => setWhtType(e.target.value as 'fixed' | 'percent')}><option value="percent">Percent</option><option value="fixed">Fixed</option></select></div>
+                <div>
+                  <Label>WHT Type</Label>
+                  <Select value={whtType} onValueChange={(value) => setWhtType(value as 'fixed' | 'percent')}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Choose WHT type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="percent">Percent</SelectItem>
+                      <SelectItem value="fixed">Fixed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               {!calculationState.useGlobalVatInput ? <div className="text-xs text-slate-500">Global VAT is neutral because this quotation uses row-level VAT overrides.</div> : null}
               {!calculationState.useGlobalDiscountInput ? <div className="text-xs text-slate-500">Global discount is neutral because this quotation uses row-level discount overrides.</div> : null}
@@ -1021,8 +1057,24 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                 ['WHT', totals.wht],
                 ['Total Payable', totals.totalPayable],
               ].map(([label, value]) => <div key={label} className="flex items-center justify-between rounded-lg border border-zinc-200 px-3 py-2"><span className="font-medium text-zinc-600">{label}</span><span className="font-bold text-zinc-900">₦{Number(value || 0).toLocaleString()}</span></div>)}
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3"><div className="flex items-center justify-between"><div><div className="text-sm font-semibold text-zinc-800">Merge Qty + Unit in output</div><div className="text-xs text-zinc-500">Keep quantity and unit together in generated document output.</div></div><Switch checked={mergeQtyUnit} onCheckedChange={setMergeQtyUnit} /></div></div>
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3"><div className="flex items-center justify-between"><div><div className="text-sm font-semibold text-zinc-800">Show item images in output</div><div className="text-xs text-zinc-500">Include saved item images when a document output uses them.</div></div><Switch checked={showItemImages} onCheckedChange={setShowItemImages} /></div></div>
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-sm font-semibold text-zinc-800">Merge Qty + Unit in output</div>
+                    <div className="text-xs text-zinc-500">Keep quantity and unit together in generated document output.</div>
+                  </div>
+                  <Switch checked={mergeQtyUnit} onCheckedChange={setMergeQtyUnit} />
+                </div>
+              </div>
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-sm font-semibold text-zinc-800">Show item images in output</div>
+                    <div className="text-xs text-zinc-500">Include saved item images when a document output uses them.</div>
+                  </div>
+                  <Switch checked={showItemImages} onCheckedChange={setShowItemImages} />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
