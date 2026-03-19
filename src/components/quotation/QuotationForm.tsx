@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/supabase'
 import ClientSelector from '@/components/ClientSelector'
@@ -63,6 +63,95 @@ function makeQuotationGroupId() {
   return `quo_group_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
+function toGroupMetaMap(groups: Array<{ id: string; name: string; showSubtotal?: boolean }>) {
+  return Object.fromEntries(
+    groups.map((group) => [group.id, { name: group.name, showSubtotal: !!group.showSubtotal }]),
+  )
+}
+
+function normalizeQuotationGrouping(
+  items: InvoiceItem[],
+  groupMeta: Record<string, { name?: string; showSubtotal?: boolean }> = {},
+) {
+  const headerOrder: string[] = []
+  const headerById = new Map<string, { id: string; name: string; showSubtotal: boolean }>()
+  const rawToCanonical = new Map<string, string>()
+  const seenCanonical = new Set<string>()
+
+  items.forEach((item) => {
+    if (item.row_type !== 'group_header') return
+    const rawId = String(item.group_id || '').trim()
+    let canonicalId =
+      rawId && !seenCanonical.has(rawId) ? rawId : makeQuotationGroupId()
+
+    while (seenCanonical.has(canonicalId)) {
+      canonicalId = makeQuotationGroupId()
+    }
+
+    seenCanonical.add(canonicalId)
+    if (rawId && !rawToCanonical.has(rawId)) rawToCanonical.set(rawId, canonicalId)
+
+    const meta = (rawId && groupMeta[rawId]) || groupMeta[canonicalId] || {}
+    const name =
+      String(item.group_name || '').trim() ||
+      String(meta.name || '').trim() ||
+      `Group ${headerOrder.length + 1}`
+
+    headerOrder.push(canonicalId)
+    headerById.set(canonicalId, {
+      id: canonicalId,
+      name,
+      showSubtotal: !!meta.showSubtotal,
+    })
+  })
+
+  const normalizedItems = items.map((item, index) => {
+    if (item.row_type === 'group_header') {
+      const rawId = String(item.group_id || '').trim()
+      const canonicalId =
+        (rawId && rawToCanonical.get(rawId)) ||
+        headerOrder.find((groupId) => {
+          const group = headerById.get(groupId)
+          return group && group.name === item.group_name
+        }) ||
+        makeQuotationGroupId()
+      const group = headerById.get(canonicalId) || {
+        id: canonicalId,
+        name: String(item.group_name || '').trim() || `Group ${index + 1}`,
+        showSubtotal: false,
+      }
+
+      return {
+        ...item,
+        row_type: 'group_header' as const,
+        group_id: canonicalId,
+        group_name: group.name,
+        sort_order: index,
+      }
+    }
+
+    const rawId = String(item.group_id || '').trim()
+    const canonicalId = rawId ? rawToCanonical.get(rawId) : null
+
+    return {
+      ...item,
+      row_type: 'standard' as const,
+      group_id: canonicalId || null,
+      group_name: canonicalId ? item.group_name || '' : '',
+      sort_order: index,
+    }
+  })
+
+  return {
+    items: normalizedItems,
+    groups: headerOrder.map((groupId) => headerById.get(groupId)).filter(Boolean) as Array<{
+      id: string
+      name: string
+      showSubtotal: boolean
+    }>,
+  }
+}
+
 function buildCustomFields({
   quotation,
   columns,
@@ -90,9 +179,7 @@ function buildCustomFields({
   showItemImages: boolean
   groups: Array<{ id: string; name: string; showSubtotal?: boolean }>
 }) {
-  const groupMeta = Object.fromEntries(
-    groups.map((group) => [group.id, { name: group.name, showSubtotal: !!group.showSubtotal }]),
-  )
+  const groupMeta = toGroupMetaMap(groups)
 
   return {
     quotationTitle: quotation.quotation_title || '',
@@ -124,6 +211,8 @@ function toQuotationItem(item: InvoiceItem, quotationId: string, sortOrder: numb
   delete row.invoice_id
   return { ...row, quotation_id: quotationId }
 }
+
+type QuotationGroupState = { id: string; name: string; showSubtotal: boolean }
 
 export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'edit'; quotationId?: string }) {
   const navigate = useNavigate()
@@ -162,10 +251,12 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const [termsTitle, setTermsTitle] = useState('Terms and Conditions')
   const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
   const [showItemImages, setShowItemImages] = useState(false)
-  const [groups, setGroups] = useState<Array<{ id: string; name: string; showSubtotal: boolean }>>([])
+  const [groups, setGroups] = useState<QuotationGroupState[]>([])
   const [items, setItems] = useState<InvoiceItem[]>([
     { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' },
   ])
+  const itemsRef = useRef(items)
+  const groupsRef = useRef(groups)
   const {
     columns,
     setColumns,
@@ -179,6 +270,14 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     moveColumn,
     customColumns,
   } = useInvoiceColumns()
+
+  useEffect(() => {
+    itemsRef.current = items
+  }, [items])
+
+  useEffect(() => {
+    groupsRef.current = groups
+  }, [groups])
 
   useEffect(() => {
     const load = async () => {
@@ -196,8 +295,12 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           quotationRow as DbQuotation,
           (itemRows || []) as DbQuotationItem[],
         )
+        const normalizedGrouping = normalizeQuotationGrouping(
+          state.items,
+          state.quotation.custom_fields?.groupMeta || {},
+        )
         setQuotation(state.quotation)
-        setItems(state.items)
+        setItems(normalizedGrouping.items)
         setColumns(state.columns)
         setHeaderFields(state.headerFields)
         setBottomFields(state.bottomFields)
@@ -208,22 +311,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         setTermsTitle(state.termsTitle)
         setMergeQtyUnit(state.mergeQtyUnit)
         setShowItemImages(state.showItemImages)
-        const savedGroupMeta = state.quotation.custom_fields?.groupMeta || {}
-        const discoveredGroups: Array<{ id: string; name: string; showSubtotal: boolean }> = []
-        const seenGroupIds = new Set<string>()
-        state.items.forEach((item) => {
-          if (item.row_type !== 'group_header') return
-          const groupId = item.group_id || makeQuotationGroupId()
-          if (seenGroupIds.has(groupId)) return
-          seenGroupIds.add(groupId)
-          const meta = savedGroupMeta[groupId] || savedGroupMeta[item.group_name || ''] || {}
-          discoveredGroups.push({
-            id: groupId,
-            name: item.group_name || `Group ${discoveredGroups.length + 1}`,
-            showSubtotal: !!meta.showSubtotal,
-          })
-        })
-        setGroups(discoveredGroups)
+        setGroups(normalizedGrouping.groups)
         setLoading(false)
         return
       }
@@ -240,11 +328,35 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     load()
   }, [isEdit, navigate, quotationId, setColumns])
 
+  const commitGrouping = (
+    nextItemsInput: InvoiceItem[] | ((current: InvoiceItem[]) => InvoiceItem[]),
+    nextGroupsInput?:
+      | QuotationGroupState[]
+      | ((current: QuotationGroupState[]) => QuotationGroupState[]),
+  ) => {
+    const baseItems = itemsRef.current
+    const baseGroups = groupsRef.current
+    const nextItems =
+      typeof nextItemsInput === 'function'
+        ? nextItemsInput(baseItems)
+        : nextItemsInput
+    const nextGroups =
+      typeof nextGroupsInput === 'function'
+        ? nextGroupsInput(baseGroups)
+        : nextGroupsInput ?? baseGroups
+
+    const normalized = normalizeQuotationGrouping(nextItems, toGroupMetaMap(nextGroups))
+    itemsRef.current = normalized.items
+    groupsRef.current = normalized.groups
+    setItems(normalized.items)
+    setGroups(normalized.groups)
+  }
+
   const updateQuotation = <K extends keyof Quotation>(field: K, value: Quotation[K]) =>
     setQuotation((current) => ({ ...current, [field]: value }))
 
   const updateItem = (index: number, field: string, value: unknown) =>
-    setItems((current) =>
+    commitGrouping((current) =>
       current.map((item, itemIndex) => {
         if (itemIndex !== index) return item
         if (field === 'custom_data') return { ...item, custom_data: value as InvoiceItem['custom_data'] }
@@ -252,8 +364,22 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       }),
     )
 
+  const applyRowPatch = (itemIndex: number, patch: Partial<InvoiceItem>) =>
+    commitGrouping((current) =>
+      current.map((item, index) => (index === itemIndex ? { ...item, ...patch } : item)),
+    )
+
+  const updateInstallRateOverride = (itemIndex: number, rawValue: string) => {
+    applyRowPatch(
+      itemIndex,
+      rawValue === ''
+        ? { install_rate_override: false, install_rate: null }
+        : { install_rate_override: true, install_rate: Number(rawValue) },
+    )
+  }
+
   const addUngroupedItem = (insertAt: number | null = null) => {
-    setItems((current) => {
+    commitGrouping((current) => {
       const newItem = {
         ...makeEmptyItem(),
         row_type: 'standard',
@@ -283,38 +409,45 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       showSubtotal: !!base.showSubtotal,
     }
 
-    setGroups((current) => [...current, group])
-    setItems((current) => [
-      ...current.map((item, index) => ({ ...item, sort_order: index })),
-      {
-        ...makeEmptyItem(),
-        row_type: 'group_header',
-        group_id: group.id,
-        group_name: group.name,
-        description: '',
-        sort_order: current.length,
-      },
-    ])
+    commitGrouping(
+      (current) => [
+        ...current.map((item, index) => ({ ...item, sort_order: index })),
+        {
+          ...makeEmptyItem(),
+          row_type: 'group_header',
+          group_id: group.id,
+          group_name: group.name,
+          description: '',
+          sort_order: current.length,
+        },
+      ],
+      (current) => [...current, group],
+    )
   }
 
   const updateGroupName = (groupId: string, newName: string) => {
-    setGroups((current) => current.map((group) => (group.id === groupId ? { ...group, name: newName } : group)))
-    setItems((current) =>
-      current.map((item) => (item.group_id === groupId ? { ...item, group_name: newName } : item)),
+    commitGrouping((current) =>
+      current.map((item) =>
+        item.row_type === 'group_header' && item.group_id === groupId
+          ? { ...item, group_name: newName }
+          : item,
+      ),
+      (current) => current.map((group) => (group.id === groupId ? { ...group, name: newName } : group)),
     )
   }
 
   const toggleGroupSubtotal = (groupId: string) => {
-    setGroups((current) =>
-      current.map((group) =>
-        group.id === groupId ? { ...group, showSubtotal: !group.showSubtotal } : group,
-      ),
+    commitGrouping(
+      (current) => current,
+      (current) =>
+        current.map((group) =>
+          group.id === groupId ? { ...group, showSubtotal: !group.showSubtotal } : group,
+        ),
     )
   }
 
   const deleteGroup = (groupId: string) => {
-    setGroups((current) => current.filter((group) => group.id !== groupId))
-    setItems((current) =>
+    commitGrouping((current) =>
       current
         .filter((item) => !(item.row_type === 'group_header' && item.group_id === groupId))
         .map((item, index) =>
@@ -322,14 +455,15 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
             ? { ...item, group_id: null, group_name: '', sort_order: index }
             : { ...item, sort_order: index },
         ),
+      (current) => current.filter((group) => group.id !== groupId),
     )
   }
 
   const addItemToGroup = (groupId: string) => {
-    const group = groups.find((entry) => entry.id === groupId)
+    const group = normalizedGroups.find((entry) => entry.id === groupId)
     if (!group) return
 
-    setItems((current) => {
+    commitGrouping((current) => {
       let insertAt = current.findIndex(
         (item) => item.row_type === 'group_header' && item.group_id === groupId,
       )
@@ -346,7 +480,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         ...makeEmptyItem(),
         row_type: 'standard',
         group_id: groupId,
-        group_name: group.name,
+        group_name: '',
       })
       return next.map((item, index) => ({ ...item, sort_order: index }))
     })
@@ -396,7 +530,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   }
 
   const applyImportedItems = (newItems: InvoiceItem[]) => {
-    setItems((current) => [
+    commitGrouping((current) => [
       ...current.filter((item) => item.description?.trim() || item.row_type === 'group_header'),
       ...newItems,
     ])
@@ -424,6 +558,14 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     event.target.value = ''
   }
 
+  const normalizedGroupMeta = useMemo(() => toGroupMetaMap(groups), [groups])
+  const normalizedGrouping = useMemo(
+    () => normalizeQuotationGrouping(items, normalizedGroupMeta),
+    [items, normalizedGroupMeta],
+  )
+  const normalizedItems = normalizedGrouping.items
+  const normalizedGroups = normalizedGrouping.groups
+
   const calculationInputs = useMemo(
     () =>
       buildCalculationInputs({
@@ -438,7 +580,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const totals = useMemo(
     () =>
       computeDocument({
-        items,
+        items: normalizedItems,
         document: {
           ...quotation,
           workmanship: Number(quotation.workmanship || 0),
@@ -449,7 +591,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           calculationInputs,
         },
       }),
-    [calculationInputs, items, quotation],
+    [calculationInputs, normalizedItems, quotation],
   )
 
   const computedGroups = useMemo(
@@ -461,7 +603,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     () =>
       inferLegacyCalculationState({
         invoice: quotation,
-        items,
+        items: normalizedItems,
         customFields: buildCustomFields({
           quotation,
           columns,
@@ -474,7 +616,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           termsTitle,
           mergeQtyUnit,
           showItemImages,
-          groups,
+          groups: normalizedGroups,
         }),
       }),
     [
@@ -483,14 +625,14 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       discountTiming,
       discountType,
       headerFields,
-      items,
+      normalizedItems,
       mergeQtyUnit,
       notesTitle,
       quotation,
       showItemImages,
       termsTitle,
       whtType,
-      groups,
+      normalizedGroups,
     ],
   )
 
@@ -531,7 +673,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           termsTitle,
           mergeQtyUnit,
           showItemImages,
-          groups,
+          groups: normalizedGroups,
         }),
       ),
     }
@@ -546,7 +688,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       return
     }
     const resolvedId = String(savedQuotation.id)
-    const itemRows = items
+    const itemRows = normalizedItems
       .filter((item) =>
         item.row_type === 'group_header'
           ? item.group_name?.trim()
@@ -578,33 +720,114 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const visibleCustomColumns = customColumns.filter((column: ColumnConfig) => column.visible)
   const summaryHeaderFields = headerFields.filter((field) => field.label && field.value)
   const removeItemAt = (itemIndex: number) =>
-    setItems((current) =>
+    commitGrouping((current) =>
       current.filter((_, entryIndex) => entryIndex !== itemIndex).map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex })),
     )
   const moveItemBy = (itemIndex: number, direction: number) => {
-    const nextIndex = itemIndex + direction
-    if (nextIndex < 0 || nextIndex >= items.length) return
-    setItems((current) => {
-      const next = [...current]
-      ;[next[itemIndex], next[nextIndex]] = [next[nextIndex], next[itemIndex]]
-      return next.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
+    commitGrouping((current) => {
+      const snapshot = normalizeQuotationGrouping(current, toGroupMetaMap(groupsRef.current))
+      const rows = [...snapshot.items]
+      const row = rows[itemIndex]
+      if (!row) return rows
+
+      const getGroupBlockEnd = (startIndex: number) => {
+        let endIndex = startIndex
+        for (let cursor = startIndex + 1; cursor < rows.length; cursor += 1) {
+          if (rows[cursor].row_type === 'group_header') break
+          if (rows[cursor].group_id === rows[startIndex].group_id) {
+            endIndex = cursor
+          }
+        }
+        return endIndex
+      }
+
+      const getBlockRange = (startIndex: number) => {
+        const target = rows[startIndex]
+        if (!target) return { start: startIndex, end: startIndex }
+        if (target.row_type === 'group_header') {
+          return { start: startIndex, end: getGroupBlockEnd(startIndex) }
+        }
+        return { start: startIndex, end: startIndex }
+      }
+
+      if (row.row_type === 'group_header') {
+        const block = rows.slice(itemIndex, getGroupBlockEnd(itemIndex) + 1)
+        const remainder = [...rows.slice(0, itemIndex), ...rows.slice(itemIndex + block.length)]
+        let insertAt = itemIndex
+
+        if (direction < 0) {
+          if (itemIndex === 0) return rows
+          const previousBlockStart = (() => {
+            if (remainder[itemIndex - 1]?.row_type !== 'group_header') return itemIndex - 1
+            for (let cursor = itemIndex - 1; cursor >= 0; cursor -= 1) {
+              if (remainder[cursor].row_type === 'group_header') return cursor
+            }
+            return 0
+          })()
+          insertAt = previousBlockStart
+        } else {
+          const nextBlockStart = itemIndex
+          if (nextBlockStart >= remainder.length) {
+            insertAt = remainder.length
+          } else {
+            insertAt = getBlockRange(nextBlockStart).end + 1
+          }
+        }
+
+        remainder.splice(insertAt, 0, ...block)
+        return remainder.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
+      }
+
+      const nextIndex = itemIndex + direction
+      if (nextIndex < 0 || nextIndex >= rows.length) return rows
+
+      const moving = { ...row }
+      const remainder = rows.filter((_, index) => index !== itemIndex)
+
+      if (direction < 0) {
+        const anchor = rows[nextIndex]
+        if (!anchor) return rows
+        if (anchor.row_type === 'group_header') {
+          moving.group_id = anchor.group_id || null
+          moving.group_name = ''
+          remainder.splice(nextIndex + 1, 0, moving)
+        } else {
+          moving.group_id = anchor.group_id || null
+          moving.group_name = ''
+          remainder.splice(nextIndex, 0, moving)
+        }
+      } else {
+        const anchor = rows[nextIndex]
+        if (!anchor) return rows
+        if (anchor.row_type === 'group_header') {
+          moving.group_id = null
+          moving.group_name = ''
+          remainder.splice(nextIndex, 0, moving)
+        } else {
+          moving.group_id = anchor.group_id || null
+          moving.group_name = ''
+          remainder.splice(nextIndex, 0, moving)
+        }
+      }
+
+      return remainder.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
     })
   }
 
   const renderMobileRows = () => {
     let itemNumber = 0
 
-    return items.map((item, index) => {
+    return normalizedItems.map((item, index) => {
       if (item.row_type === 'group_header') {
-        const group = groups.find((entry) => entry.id === item.group_id)
+        const group = normalizedGroups.find((entry) => entry.id === item.group_id)
         if (!group) return null
 
-        const groupItems = items.filter((entry) => entry.row_type === 'standard' && entry.group_id === group.id)
+        const groupItems = normalizedItems.filter((entry) => entry.row_type === 'standard' && entry.group_id === group.id)
         const groupSubtotal = computedGroups.get(group.id)?.subtotal || 0
 
         return (
-          <div key={item._uiKey || item.id || `quotation_group_${index}`} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 text-white shadow-sm">
-            <div className="border-b border-slate-800 px-4 py-4">
+          <div key={item._uiKey || item.id || `quotation_group_${index}`} className="overflow-hidden border border-slate-200 bg-[#f4f4f4] shadow-sm">
+            <div className="border-l-[3px] border-l-[#0f62fe] px-3 py-3">
               <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
                 Group
               </div>
@@ -618,31 +841,34 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-9 w-9 shrink-0 text-red-300 hover:bg-slate-800 hover:text-red-200"
+                  className="h-8 w-8 shrink-0 rounded-none text-red-500 hover:bg-white hover:text-red-600"
                   onClick={() => deleteGroup(group.id)}
                 >
-                  ×
+                  x
                 </Button>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Button type="button" size="sm" className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => addItemToGroup(group.id)}>
-                  + Add Item
+                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                  Group container
+                </div>
+                <Button type="button" size="sm" variant="ghost" className="h-8 rounded-none px-2 text-[11px] font-semibold text-[#0f62fe] hover:bg-blue-50" onClick={() => addItemToGroup(group.id)}>
+                  Add item
                 </Button>
-                <Button type="button" size="sm" variant="outline" className="border-slate-600 text-slate-200 hover:bg-slate-800" onClick={() => toggleGroupSubtotal(group.id)}>
+                <Button type="button" size="sm" variant="outline" className="h-8 rounded-none border-slate-300 bg-white text-[11px] text-slate-700 hover:bg-slate-50" onClick={() => toggleGroupSubtotal(group.id)}>
                   {group.showSubtotal ? 'Hide Subtotal' : 'Show Subtotal'}
                 </Button>
                 {group.showSubtotal ? (
-                  <span className="ml-auto text-xs font-semibold text-emerald-300">
-                    Subtotal: N{Number(groupSubtotal || 0).toLocaleString()}
+                  <span className="ml-auto text-xs font-semibold text-slate-700">
+                    N{Number(groupSubtotal || 0).toLocaleString()}
                   </span>
                 ) : null}
               </div>
             </div>
 
-            <div className="space-y-3 bg-slate-50/50 px-3 py-3">
+            <div className="space-y-3 px-3 py-3">
               {groupItems.map((groupItem, groupIndex) => {
                 itemNumber += 1
-                const itemIndex = items.indexOf(groupItem)
+                const itemIndex = normalizedItems.indexOf(groupItem)
 
                 return (
                   <MobileItemCard
@@ -663,7 +889,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                     isLast={groupIndex === groupItems.length - 1}
                     onUpdate={(itemIndex: number, field: string, value: unknown) => {
                       if (field === '__install_rate_override') {
-                        setItems((current) => current.map((entry, entryIndex) => entryIndex === itemIndex ? { ...entry, ...(value as object) } : entry))
+                        applyRowPatch(itemIndex, value as Partial<InvoiceItem>)
                         return
                       }
                       updateItem(itemIndex, field, value)
@@ -676,7 +902,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                 )
               })}
 
-              <Button type="button" variant="outline" className="w-full border-dashed border-slate-300 bg-white text-slate-700 hover:bg-slate-100" onClick={() => addItemToGroup(group.id)}>
+              <Button type="button" variant="outline" className="h-9 w-full rounded-none border-dashed border-slate-300 bg-white text-[11px] font-semibold text-[#0f62fe] hover:bg-blue-50" onClick={() => addItemToGroup(group.id)}>
                 + Add item to {group.name || 'group'}
               </Button>
             </div>
@@ -702,10 +928,10 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           showInsertBelow={false}
           variant="quotation"
           isFirst={itemNumber === 1}
-          isLast={index === items.length - 1}
+          isLast={index === normalizedItems.length - 1}
           onUpdate={(itemIndex: number, field: string, value: unknown) => {
             if (field === '__install_rate_override') {
-              setItems((current) => current.map((entry, entryIndex) => entryIndex === itemIndex ? { ...entry, ...(value as object) } : entry))
+              applyRowPatch(itemIndex, value as Partial<InvoiceItem>)
               return
             }
             updateItem(itemIndex, field, value)
@@ -720,11 +946,12 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-24 pt-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="m-0 text-[24px] font-extrabold text-slate-900">{isEdit ? 'Edit Quotation' : 'New Quotation'}</h2>
-          <p className="mt-1 text-sm text-slate-500">Build a client-ready quotation, review the line items, then save normally.</p>
+          <h2 className="m-0 text-[22px] font-semibold tracking-tight text-slate-900">{isEdit ? 'Edit Quotation' : 'New Quotation'}</h2>
+          <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#0f62fe]">{formatQuotationStatus(quotation.status || 'draft')} quotation</p>
+          <p className="mt-2 max-w-2xl text-sm text-slate-500">Use the existing grouping and totals engine, then save normally.</p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <input
@@ -734,126 +961,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
             hidden
             onChange={handleCSVImport}
           />
-          <div className="hidden">
-            <Button
-              type="button"
-              onClick={() => setShowCSVNote((current) => !current)}
-              className="bg-green-600 px-3 py-2 text-xs hover:bg-green-700"
-            >
-              Import CSV ▾
-            </Button>
-
-            {showCSVNote && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  right: 0,
-                  width: 'min(420px, calc(100vw - 32px))',
-                  zIndex: 100,
-                  backgroundColor: 'white',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '14px',
-                  boxShadow: '0 20px 45px rgba(15, 23, 42, 0.14)',
-                  padding: '18px',
-                }}
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div
-                  onClick={() => setShowCSVNote(false)}
-                  style={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 12,
-                    fontSize: 20,
-                    cursor: 'pointer',
-                    color: '#94A3B8',
-                    lineHeight: 1,
-                  }}
-                >
-                  ×
-                </div>
-
-                <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Import quotation items</div>
-                  <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
-                    Upload a CSV file or paste CSV text. Imported rows become editable quotation line items before you save.
-                  </div>
-                </div>
-
-                <div className="mb-3 flex gap-2">
-                  {['Upload File', 'Paste Text'].map((tab) => (
-                    <Button
-                      key={tab}
-                      type="button"
-                      onClick={() => setCSVTab(tab)}
-                      variant={csvTab === tab ? 'default' : 'outline'}
-                      className={csvTab === tab ? 'bg-green-600 hover:bg-green-700' : ''}
-                    >
-                      {tab}
-                    </Button>
-                  ))}
-                </div>
-
-                {csvTab === 'Upload File' ? (
-                  <Button
-                    type="button"
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    onClick={() => document.getElementById('quotation-csv-import')?.click()}
-                  >
-                    Choose CSV File
-                  </Button>
-                ) : (
-                  <div>
-                    <div style={{ fontSize: 12, color: '#475569', marginBottom: 8 }}>
-                      <div><strong>Required:</strong> description</div>
-                      <div><strong>Optional:</strong> sub_description, make, quantity, unit, unit_price</div>
-                    </div>
-                    <textarea
-                      value={pasteCSV}
-                      onChange={(event) => setPasteCSV(event.target.value)}
-                      placeholder={'description,quantity,unit,unit_price\nCable tie,5,PCS,700'}
-                      style={{
-                        width: '100%',
-                        height: '100px',
-                        padding: '8px',
-                        border: '1px solid #ddd',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        resize: 'vertical',
-                        outline: 'none',
-                      }}
-                    />
-                    <div className="mt-3 flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setPasteCSV('')}>
-                        Clear
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          if (!pasteCSV.trim()) {
-                            alert('Paste CSV content before importing.')
-                            return
-                          }
-                          const { newItems, error } = parseCsvItems(pasteCSV)
-                          if (error) {
-                            alert(error)
-                            return
-                          }
-                          applyImportedItems(newItems)
-                          setPasteCSV('')
-                        }}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        Import
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/quotations')}>Back to Quotations</Button>
+          <Button type="button" variant="outline" className="h-10 rounded-none border-slate-300 bg-white text-slate-700 w-full sm:w-auto" onClick={() => navigate('/quotations')}>Back to Quotations</Button>
         </div>
       </div>
 
@@ -961,51 +1069,63 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         />
       )}
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-5">
         <div className="space-y-5">
-          <Card className="rounded-2xl border-zinc-200">
-            <CardContent className="grid gap-4 pt-6 md:grid-cols-2">
-              <div>
-                <Label>Quotation Number</Label>
-                <Input className="mt-2" value={quotation.quotation_number || ''} onChange={(e) => updateQuotation('quotation_number', e.target.value)} />
+          <Card className="rounded-none border-slate-200 bg-white shadow-sm">
+            <CardContent className="grid gap-4 pt-5 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Client Name</Label>
+                <div className="mt-2">
+                  <ClientSelector
+                    clientId={quotation.client_id}
+                    clientName={quotation.client_name}
+                    isMobile={isMobile}
+                    onClientChange={(clientId: string, clientName: string) => {
+                      updateQuotation('client_id', clientId)
+                      updateQuotation('client_name', clientName)
+                    }}
+                  />
+                </div>
               </div>
               <div>
-                <Label>P.O. Number</Label>
-                <Input className="mt-2" value={quotation.po_number || ''} onChange={(e) => updateQuotation('po_number', e.target.value)} placeholder="Optional purchase order number" />
+                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Issue Date</Label>
+                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" type="date" value={quotation.issue_date || ''} onChange={(e) => updateQuotation('issue_date', e.target.value)} />
               </div>
               <div>
-                <Label>Status</Label>
-                <select className="mt-2 h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-slate-900" value={quotation.status || 'draft'} onChange={(e) => updateQuotation('status', e.target.value as Quotation['status'])}>
-                  {QUOTATION_STATUSES.map((status) => <option key={status} value={status}>{formatQuotationStatus(status)}</option>)}
-                </select>
+                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Valid Until</Label>
+                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" type="date" value={quotation.valid_until || ''} onChange={(e) => updateQuotation('valid_until', e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Quotation Number</Label>
+                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" value={quotation.quotation_number || ''} onChange={(e) => updateQuotation('quotation_number', e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">P.O. Number</Label>
+                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" value={quotation.po_number || ''} onChange={(e) => updateQuotation('po_number', e.target.value)} placeholder="Optional purchase order number" />
+              </div>
+              <div>
+                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Status</Label>
+                <Select value={quotation.status || 'draft'} onValueChange={(value) => updateQuotation('status', value as Quotation['status'])}>
+                  <SelectTrigger className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]">
+                    <SelectValue placeholder="Choose status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {QUOTATION_STATUSES.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {formatQuotationStatus(status)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="md:col-span-2">
-                <Label>Quotation Title</Label>
-                <Input className="mt-2" value={quotation.quotation_title || ''} onChange={(e) => updateQuotation('quotation_title', e.target.value)} />
-              </div>
-              <div className="md:col-span-2">
-                <ClientSelector
-                  clientId={quotation.client_id}
-                  clientName={quotation.client_name}
-                  isMobile={isMobile}
-                  onClientChange={(clientId: string, clientName: string) => {
-                    updateQuotation('client_id', clientId)
-                    updateQuotation('client_name', clientName)
-                  }}
-                />
-              </div>
-              <div>
-                <Label>Issue Date</Label>
-                <Input className="mt-2" type="date" value={quotation.issue_date || ''} onChange={(e) => updateQuotation('issue_date', e.target.value)} />
-              </div>
-              <div>
-                <Label>Valid Until</Label>
-                <Input className="mt-2" type="date" value={quotation.valid_until || ''} onChange={(e) => updateQuotation('valid_until', e.target.value)} />
+                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Scope Title</Label>
+                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" value={quotation.quotation_title || ''} onChange={(e) => updateQuotation('quotation_title', e.target.value)} />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-zinc-200">
+          <Card className="rounded-none border-slate-200 bg-white shadow-sm">
             <CardHeader>
               <div className="flex items-center justify-between gap-3">
                 <CardTitle className="text-base">Header Fields</CardTitle>
@@ -1024,21 +1144,24 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-zinc-200">
+          <Card className="rounded-none border-slate-200 bg-white shadow-sm">
             <CardHeader>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <CardTitle className="text-base">Line Items</CardTitle>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+                <div>
+                  <CardTitle className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-700">Scope of Work</CardTitle>
+                  <div className="mt-1 text-xs text-slate-500">Groups stay structural; this is only a visual refresh.</div>
+                </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" onClick={() => setShowColumnManager(true)}>
+                  <Button type="button" variant="outline" className="h-9 rounded-none border-slate-300 bg-white text-slate-700" onClick={() => setShowColumnManager(true)}>
                     Table & Tax Settings
                   </Button>
-                  <Button type="button" className="bg-green-600 hover:bg-green-700" onClick={() => setShowCSVNote(true)}>
+                  <Button type="button" className="h-9 rounded-none bg-slate-900 hover:bg-slate-800" onClick={() => setShowCSVNote(true)}>
                     Import CSV
                   </Button>
-                  <Button type="button" variant="outline" onClick={addQuotationGroup}>
+                  <Button type="button" variant="ghost" className="h-9 rounded-none text-[#0f62fe] hover:bg-blue-50" onClick={addQuotationGroup}>
                     + Group
                   </Button>
-                  <Button type="button" onClick={addQuotationItem}>
+                  <Button type="button" variant="ghost" className="h-9 rounded-none text-[#0f62fe] hover:bg-blue-50" onClick={addQuotationItem}>
                     + Add Item
                   </Button>
                 </div>
@@ -1047,92 +1170,12 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
             <CardContent>
               {isMobile ? (
                 <div className="space-y-3">
-                  {false ? (() => {
-                    let itemNumber = 0
-                    return items.map((item, index) => {
-                    if (item.row_type === 'group_header') {
-                      return (
-                        <div key={item._uiKey || item.id || `quotation_group_${index}`} className="mb-4 rounded-2xl border border-slate-200 bg-slate-900 p-4 text-white shadow-sm">
-                          <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
-                            Group
-                          </div>
-                          <div className="flex items-start gap-3">
-                            <Input
-                              value={item.group_name || ''}
-                              onChange={(e) => updateItem(index, 'group_name', e.target.value)}
-                              placeholder="Group name"
-                              className="flex-1 border-slate-600 bg-slate-800 text-base font-semibold text-white"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              className="h-9 w-9 text-red-300 hover:bg-slate-800 hover:text-red-200"
-                              onClick={() =>
-                                setItems((current) =>
-                                  current.filter((_, entryIndex) => entryIndex !== index).map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex })),
-                                )
-                              }
-                            >
-                              ×
-                            </Button>
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    itemNumber += 1
-                    return (
-                      <MobileItemCard
-                        key={item._uiKey || item.id || `quotation_item_${index}`}
-                        item={item}
-                        index={index}
-                        number={itemNumber}
-                        isVisible={isVisible}
-                        getColumn={getColumn}
-                        customColumns={visibleCustomColumns}
-                        showItemImages={showItemImages}
-                        invoice={quotation}
-                        computedAmount={totals.items[index]?.line_subtotal || 0}
-                        showInsertBelow={false}
-                        variant="quotation"
-                        isFirst={itemNumber === 1}
-                        isLast={index === items.length - 1}
-                        onUpdate={(itemIndex: number, field: string, value: unknown) => {
-                          if (field === '__install_rate_override') {
-                            setItems((current) => current.map((entry, entryIndex) => entryIndex === itemIndex ? { ...entry, ...(value as object) } : entry))
-                            return
-                          }
-                          updateItem(itemIndex, field, value)
-                        }}
-                        onRemove={(itemIndex: number) => setItems((current) => current.filter((_, entryIndex) => entryIndex !== itemIndex).map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex })))}
-                        onMoveUp={(itemIndex: number) => {
-                          const newIndex = itemIndex - 1
-                          if (newIndex < 0) return
-                          setItems((current) => {
-                            const next = [...current]
-                            ;[next[itemIndex], next[newIndex]] = [next[newIndex], next[itemIndex]]
-                            return next.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
-                          })
-                        }}
-                        onMoveDown={(itemIndex: number) => {
-                          const newIndex = itemIndex + 1
-                          if (newIndex >= items.length) return
-                          setItems((current) => {
-                            const next = [...current]
-                            ;[next[itemIndex], next[newIndex]] = [next[newIndex], next[itemIndex]]
-                            return next.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
-                          })
-                        }}
-                        onInsertBelow={() => {}}
-                      />
-                    )
-                    })
-                  })() : renderMobileRows()}
+                  {renderMobileRows()}
                   <div className="grid gap-2 pt-2">
-                    <Button type="button" onClick={addQuotationItem} className="w-full">
+                    <Button type="button" onClick={addQuotationItem} className="h-10 w-full rounded-none bg-[#0f62fe] hover:bg-[#0353e9]">
                       + Add Item
                     </Button>
-                    <Button type="button" variant="outline" onClick={addQuotationGroup} className="w-full">
+                    <Button type="button" variant="outline" onClick={addQuotationGroup} className="h-10 w-full rounded-none border-slate-300 bg-white text-[#0f62fe]">
                       + Group
                     </Button>
                   </div>
@@ -1159,31 +1202,31 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                     <tbody>
                       {(() => {
                         let itemNumber = 0
-                        return items.map((item, index) => {
+                        return normalizedItems.map((item, index) => {
                           if (item.row_type === 'group_header') {
-                            const group = groups.find((entry) => entry.id === item.group_id)
+                            const group = normalizedGroups.find((entry) => entry.id === item.group_id)
                             const groupSubtotal = group ? computedGroups.get(group.id)?.subtotal || 0 : 0
                             return (
-                              <tr key={item._uiKey || item.id || index} className="border-b border-zinc-100 bg-slate-900 align-top">
+                              <tr key={item._uiKey || item.id || index} className="border-b border-zinc-100 bg-[#f4f4f4] align-top">
                                 <td className="px-2 py-3 text-sm font-semibold text-slate-400">-</td>
                                 <td colSpan={8 + (isVisible('make') ? 1 : 0) + (isVisible('unit') ? 1 : 0) + (isVisible('install_rate') ? 1 : 0) + (isVisible('vat_rate') ? 1 : 0) + (isVisible('discount_rate') ? 1 : 0) + visibleCustomColumns.length} className="px-2 py-3">
-                                  <div className="flex flex-wrap items-center gap-3">
-                                    <Input value={item.group_name || ''} onChange={(e) => group ? updateGroupName(group.id, e.target.value) : updateItem(index, 'group_name', e.target.value)} placeholder="Group name" className="max-w-sm border-slate-600 bg-slate-800 text-white" />
+                                  <div className="flex flex-wrap items-center gap-3 border-l-[3px] border-l-[#0f62fe] pl-3">
+                                    <Input value={item.group_name || ''} onChange={(e) => group ? updateGroupName(group.id, e.target.value) : updateItem(index, 'group_name', e.target.value)} placeholder="Group name" className="max-w-sm rounded-none border-0 border-b border-slate-300 bg-white text-slate-900" />
                                     {group ? (
                                       <>
-                                        <Button type="button" size="sm" className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => addItemToGroup(group.id)}>
+                                        <Button type="button" size="sm" variant="ghost" className="rounded-none text-[#0f62fe] hover:bg-blue-50" onClick={() => addItemToGroup(group.id)}>
                                           + Add Item
                                         </Button>
-                                        <Button type="button" size="sm" variant="outline" className="border-slate-600 text-slate-200 hover:bg-slate-800" onClick={() => toggleGroupSubtotal(group.id)}>
+                                        <Button type="button" size="sm" variant="outline" className="rounded-none border-slate-300 bg-white text-slate-700 hover:bg-slate-50" onClick={() => toggleGroupSubtotal(group.id)}>
                                           {group.showSubtotal ? 'Hide Subtotal' : 'Show Subtotal'}
                                         </Button>
-                                        {group.showSubtotal ? <span className="text-xs font-semibold text-emerald-300">Subtotal: N{Number(groupSubtotal || 0).toLocaleString()}</span> : null}
+                                        {group.showSubtotal ? <span className="text-xs font-semibold text-slate-700">Subtotal: N{Number(groupSubtotal || 0).toLocaleString()}</span> : null}
                                       </>
                                     ) : null}
                                   </div>
                                 </td>
                                 <td className="px-2 py-3">
-                                  <Button type="button" variant="ghost" size="sm" className="text-red-300 hover:bg-slate-800 hover:text-red-200" onClick={() => group ? deleteGroup(group.id) : removeItemAt(index)}>×</Button>
+                                  <Button type="button" variant="ghost" size="sm" className="rounded-none text-red-500 hover:bg-white hover:text-red-600" onClick={() => group ? deleteGroup(group.id) : removeItemAt(index)}>x</Button>
                                 </td>
                               </tr>
                             )
@@ -1201,12 +1244,12 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                               <td className="px-2 py-3 min-w-[88px]"><Input type="number" min="0" value={item.quantity || 0} onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))} /></td>
                               {isVisible('unit') && <td className="px-2 py-3 min-w-[120px]"><UnitInput value={item.unit || ''} onChange={(value: string) => updateItem(index, 'unit', value)} /></td>}
                               <td className="px-2 py-3 min-w-[110px]"><Input type="number" min="0" value={item.unit_price || 0} onChange={(e) => updateItem(index, 'unit_price', Number(e.target.value))} /></td>
-                              {isVisible('install_rate') && <td className="px-2 py-3 min-w-[110px]"><Input type="number" min="0" value={item.install_rate_override ? item.install_rate ?? '' : ''} onChange={(e) => { const value = e.target.value; updateItem(index, 'install_rate_override', value !== ''); updateItem(index, 'install_rate', value === '' ? null : Number(value)) }} /></td>}
+                              {isVisible('install_rate') && <td className="px-2 py-3 min-w-[110px]"><Input type="number" min="0" value={item.install_rate_override ? item.install_rate ?? '' : ''} onChange={(e) => updateInstallRateOverride(index, e.target.value)} /></td>}
                               {isVisible('vat_rate') && <td className="px-2 py-3 min-w-[90px]"><Input type="number" min="0" max="100" value={item.vat_rate ?? ''} placeholder={String(quotation.vat || 0)} onChange={(e) => updateItem(index, 'vat_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
                               {isVisible('discount_rate') && <td className="px-2 py-3 min-w-[90px]"><Input type="number" min="0" max="100" value={item.discount_rate ?? ''} placeholder="global" onChange={(e) => updateItem(index, 'discount_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
                               {visibleCustomColumns.map((column) => <td key={column.key} className="px-2 py-3 min-w-[110px]"><Input type={column.type === 'number' ? 'number' : 'text'} value={(item.custom_data || {})[column.key] || ''} onChange={(e) => updateItem(index, 'custom_data', { ...(item.custom_data || {}), [column.key]: column.type === 'number' ? Number(e.target.value || 0) : e.target.value })} /></td>)}
                               <td className="px-2 py-3 text-sm font-bold text-zinc-900">₦{Number(totals.items[index]?.line_subtotal || 0).toLocaleString()}</td>
-                              <td className="px-2 py-3"><Button type="button" variant="ghost" size="sm" className="text-red-700" onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index).map((entry, itemIndex) => ({ ...entry, sort_order: itemIndex })))}>×</Button></td>
+                              <td className="px-2 py-3"><Button type="button" variant="ghost" size="sm" className="rounded-none text-red-700" onClick={() => removeItemAt(index)}>x</Button></td>
                             </tr>
                           )
                         })
@@ -1236,7 +1279,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         </div>
 
         <div className="space-y-5">
-          <Card className="rounded-2xl border-zinc-200">
+          <Card className="rounded-none border-slate-200 bg-white shadow-sm">
             <CardHeader><CardTitle className="text-base">Quotation Summary</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               {[
@@ -1268,7 +1311,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-zinc-200">
+          <Card className="rounded-none border-slate-200 bg-white shadow-sm">
             <CardHeader><CardTitle className="text-base">Totals Settings</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
@@ -1317,7 +1360,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-zinc-200">
+          <Card className="rounded-none border-slate-200 bg-white shadow-sm">
             <CardHeader><CardTitle className="text-base">Totals</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               {[
@@ -1327,8 +1370,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                 ['Discount', totals.discount],
                 ['WHT', totals.wht],
                 ['Total Payable', totals.totalPayable],
-              ].map(([label, value]) => <div key={label} className="flex items-center justify-between rounded-lg border border-zinc-200 px-3 py-2"><span className="font-medium text-zinc-600">{label}</span><span className="font-bold text-zinc-900">₦{Number(value || 0).toLocaleString()}</span></div>)}
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+              ].map(([label, value]) => <div key={label} className="flex items-center justify-between border-b border-slate-200 px-0 py-2 last:border-b-0"><span className="font-medium text-zinc-600">{label}</span><span className={`font-bold ${label === 'Total Payable' ? 'text-[#0f62fe]' : 'text-zinc-900'}`}>N{Number(value || 0).toLocaleString()}</span></div>)}
+              <div className="rounded-none border border-zinc-200 bg-white p-4 shadow-sm">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <div className="text-sm font-semibold text-zinc-800">Merge Qty + Unit in output</div>
@@ -1337,7 +1380,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                   <Switch checked={mergeQtyUnit} onCheckedChange={setMergeQtyUnit} />
                 </div>
               </div>
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+              <div className="rounded-none border border-zinc-200 bg-white p-4 shadow-sm">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <div className="text-sm font-semibold text-zinc-800">Show item images in output</div>
@@ -1361,3 +1404,5 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     </div>
   )
 }
+
+
