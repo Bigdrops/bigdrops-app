@@ -160,7 +160,7 @@ export default function ViewInvoice() {
     setPdfGenerating(true)
     try {
       const cf = parseDocumentCustomFields(invoice.custom_fields || customFieldObject)
-      const result = computeDocument({
+      const computedResult = computeDocument({
         items,
         document: invoice,
         cf,
@@ -170,7 +170,7 @@ export default function ViewInvoice() {
         import('../components/InvoicePDF'),
       ])
       const blob = await pdf(
-        <InvoicePDF invoice={invoice} items={items} client={client} settings={settings} result={result} />
+        <InvoicePDF document={invoice} items={items} client={client} settings={settings} computedResult={computedResult} />
       ).toBlob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')

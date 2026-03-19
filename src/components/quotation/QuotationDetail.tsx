@@ -166,7 +166,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     if (!quotation || pdfGenerating) return
     setPdfGenerating(true)
     try {
-      const result = computeDocument({
+      const computedResult = computeDocument({
         items,
         document: quotation,
         cf: quotation.custom_fields || {},
@@ -176,7 +176,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         import('./QuotationPDF'),
       ])
       const blob = await pdf(
-        <QuotationPDF quotation={quotation} items={items} client={client} settings={settings} result={result} />,
+        <QuotationPDF document={quotation} items={items} client={client} settings={settings} computedResult={computedResult} />,
       ).toBlob()
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')

@@ -5,5 +5,5 @@ export interface PdfDocumentProps<TDocument, TItem, TClient, TSettings> {
   items: TItem[]
   client: TClient
   settings: TSettings
-  result: DocumentResult
+  computedResult: DocumentResult
 }

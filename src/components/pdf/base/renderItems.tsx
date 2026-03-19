@@ -89,6 +89,7 @@ type RenderItemsTableArgs = {
   styles: Record<string, any>
   getColumnStyle?: (column: PdfColumnDefinition, extra?: Record<string, unknown>) => Record<string, unknown>
   itemCounterRef?: { current: number }
+  getDescriptionExtras?: (rawItem: InvoiceItem) => string[]
 }
 
 export function renderItemsTable({
@@ -103,6 +104,7 @@ export function renderItemsTable({
   styles,
   getColumnStyle,
   itemCounterRef,
+  getDescriptionExtras,
 }: RenderItemsTableArgs) {
   const resolvedColumns = columns || getPdfColumns(columnConfig)
   const resolvedRows = rows || buildRenderRows({ rawItems, computedItems, groups, groupMeta })
@@ -200,6 +202,13 @@ export function renderItemsTable({
                     {rawItem.sub_description ? (
                       <React.Text style={styles.subDescText}>{rawItem.sub_description}</React.Text>
                     ) : null}
+                    {getDescriptionExtras
+                      ? getDescriptionExtras(rawItem).map((line, lineIndex) => (
+                          <React.Text key={`${column.key}_extra_${lineIndex}`} style={styles.subDescText}>
+                            {line}
+                          </React.Text>
+                        ))
+                      : null}
                   </React.View>
                 )
               }

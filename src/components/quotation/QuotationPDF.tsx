@@ -1,18 +1,21 @@
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import {
   BUILTIN_COLUMNS,
+  getPdfColumns,
 } from '@/domain/invoice'
 import type { ColumnConfig, InvoiceCustomFields, InvoiceItem } from '@/domain/invoice'
 import type { Quotation } from '@/domain/quotation'
 import type { PdfDocumentProps } from '@/components/pdf/base/PdfTypes'
 import type { DocumentResult } from '@/lib/Calculations'
+import { buildRenderRows, renderItemsTable } from '@/components/pdf/base/renderItems'
+import { renderTotals } from '@/components/pdf/base/renderTotals'
 
 type QuotationPdfProps = {
-  quotation: Quotation
+  document: Quotation
   items: InvoiceItem[]
   client?: Record<string, unknown> | null
   settings?: Record<string, unknown> | null
-  result: DocumentResult
+  computedResult: DocumentResult
 } & Partial<PdfDocumentProps<Quotation, InvoiceItem, Record<string, unknown> | null, Record<string, unknown> | null>>
 
 const styles = StyleSheet.create({
@@ -154,14 +157,21 @@ const styles = StyleSheet.create({
     paddingTop: 7,
     paddingBottom: 6,
   },
-  th: {
+  thText: {
     fontSize: 7.6,
     fontFamily: 'Helvetica-Bold',
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     color: '#475569',
   },
-  row: {
+  tableRow: {
+    flexDirection: 'row',
+    paddingTop: 7,
+    paddingBottom: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  tableRowAlt: {
     flexDirection: 'row',
     paddingTop: 7,
     paddingBottom: 7,
@@ -212,21 +222,13 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     lineHeight: 1.3,
   },
-  totalsWrap: {
+  totalsSection: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 14,
   },
   totalsBox: {
     width: 248,
-  },
-  totalsTitle: {
-    fontSize: 7.8,
-    fontFamily: 'Helvetica-Bold',
-    textTransform: 'uppercase',
-    letterSpacing: 1.1,
-    color: '#64748b',
-    marginBottom: 7,
   },
   totalRow: {
     flexDirection: 'row',
@@ -245,7 +247,7 @@ const styles = StyleSheet.create({
   totalNegative: {
     color: '#b91c1c',
   },
-  totalRowStrong: {
+  payableRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderTopWidth: 2,
@@ -253,12 +255,12 @@ const styles = StyleSheet.create({
     paddingTop: 7,
     marginTop: 6,
   },
-  totalLabelStrong: {
+  payableLabel: {
     fontSize: 11,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
   },
-  totalValueStrong: {
+  payableValue: {
     fontSize: 12,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
@@ -334,12 +336,13 @@ function pickHeaderFields(header: Array<Record<string, unknown>>) {
 }
 
 export default function QuotationPDF({
-  quotation,
+  document,
   items,
   client = null,
   settings = null,
-  result,
+  computedResult,
 }: QuotationPdfProps) {
+  const quotation = document
   const customFields = (quotation.custom_fields || {}) as InvoiceCustomFields & {
     columnConfig?: ColumnConfig[]
     header?: Array<Record<string, unknown>>
@@ -360,11 +363,27 @@ export default function QuotationPDF({
   const showMake = isVisible('make')
   const showVatRate = isVisible('vat_rate')
   const showDiscountRate = isVisible('discount_rate')
-  const computedItems = result.items
-  const standardComputedItems = computedItems.filter((item) => item.row_type === 'standard')
-  const hasInstallColumn = isVisible('install_rate') && result.installRateTotal > 0
+  const hasInstallColumn = isVisible('install_rate') && computedResult.installRateTotal > 0
   const bottomFields = Array.isArray(customFields.bottom) ? customFields.bottom : []
   const headerFields = pickHeaderFields(Array.isArray(customFields.header) ? customFields.header : [])
+  const renderRows = buildRenderRows({
+    rawItems: items,
+    computedItems: computedResult.items,
+    groups: computedResult.groups,
+    groupMeta: customFields.groupMeta || {},
+  })
+  const itemColumns = getPdfColumns(columns)
+    .filter((column) => ['num', 'description', 'quantity', 'unit', 'unit_price', 'amount', 'install_rate'].includes(column.key))
+    .filter((column) => (column.key === 'install_rate' ? hasInstallColumn : true))
+  const columnStyle = (column: { key: string }, extra: Record<string, unknown> = {}) => {
+    if (column.key === 'num') return { ...styles.colNum, ...styles.cell, ...extra }
+    if (column.key === 'description') return { ...styles.colDesc, ...extra }
+    if (column.key === 'quantity') return { ...styles.colQty, ...styles.cell, ...extra }
+    if (column.key === 'unit_price') return { ...styles.colRate, ...styles.cell, ...extra }
+    if (column.key === 'install_rate') return { ...styles.colInstall, ...styles.cell, ...extra }
+    if (column.key === 'amount') return { ...styles.colAmount, ...styles.amountCell, ...extra }
+    return { ...styles.cell, ...extra }
+  }
 
   const companyName = String(settings?.company_name || '')
   const companyTagline = String(settings?.company_tagline || '')
@@ -447,109 +466,30 @@ export default function QuotationPDF({
           </View>
         ) : null}
 
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.th, styles.colNum]}>#</Text>
-            <Text style={[styles.th, styles.colDesc]}>Description</Text>
-            <Text style={[styles.th, styles.colQty]}>Qty</Text>
-            <Text style={[styles.th, styles.colRate]}>Rate</Text>
-            {hasInstallColumn ? <Text style={[styles.th, styles.colInstall]}>Install</Text> : null}
-            <Text style={[styles.th, styles.colAmount]}>Amount</Text>
-          </View>
+        {renderItemsTable({
+          rows: renderRows,
+          columns: itemColumns,
+          mergeQtyUnit: true,
+          styles: {
+            ...styles,
+            descText: styles.descMain,
+            subDescText: styles.descSub,
+          },
+          getColumnStyle: columnStyle,
+          getDescriptionExtras: (item) => [
+            showMake && item.make ? `Make: ${String(item.make).trim()}` : '',
+            showVatRate && item.vat_rate !== null && item.vat_rate !== undefined ? `VAT ${formatPercent(item.vat_rate)}` : '',
+            showDiscountRate && item.discount_rate !== null && item.discount_rate !== undefined ? `Discount ${formatPercent(item.discount_rate)}` : '',
+          ].filter(Boolean),
+        })}
 
-          {(() => {
-            let rowNumber = 0
-            return items.map((item, index) => {
-            if (item.row_type === 'group_header') {
-              return (
-                <View key={item._uiKey || item.id || `group_${index}`} style={styles.groupRow} wrap={false}>
-                  <Text style={styles.groupText}>{item.group_name || `Group ${index + 1}`}</Text>
-                </View>
-              )
-            }
-
-            rowNumber += 1
-            const computedItem = computedItems[index]
-            const rowAmount = Number(computedItem?.line_subtotal || 0)
-            const installRate = Number(computedItem?.line_install || 0)
-            const quantityLabel = cleanUnit(item.unit)
-              ? `${toMoneyNumber(item.quantity).toLocaleString('en-NG')} ${cleanUnit(item.unit)}`
-              : toMoneyNumber(item.quantity).toLocaleString('en-NG')
-
-            const subLines = [
-              item.sub_description ? String(item.sub_description).trim() : '',
-              showMake && item.make ? `Make: ${String(item.make).trim()}` : '',
-              showVatRate && item.vat_rate !== null && item.vat_rate !== undefined ? `VAT ${formatPercent(item.vat_rate)}` : '',
-              showDiscountRate && item.discount_rate !== null && item.discount_rate !== undefined ? `Discount ${formatPercent(item.discount_rate)}` : '',
-            ].filter(Boolean)
-
-            return (
-              <View key={item._uiKey || item.id || index} style={styles.row} wrap={false}>
-                <Text style={[styles.cell, styles.colNum]}>{rowNumber}</Text>
-                <View style={styles.colDesc}>
-                  <Text style={styles.descMain}>{item.description || ''}</Text>
-                  {subLines.map((line, lineIndex) => (
-                    <Text key={`sub_${lineIndex}`} style={styles.descSub}>
-                      {line}
-                    </Text>
-                  ))}
-                </View>
-                <Text style={[styles.cell, styles.colQty]}>{quantityLabel}</Text>
-                <Text style={[styles.cell, styles.colRate]}>{formatNaira(item.unit_price || 0)}</Text>
-                {hasInstallColumn ? (
-                  <Text style={[styles.cell, styles.colInstall]}>
-                    {installRate > 0 ? formatNaira(installRate) : '-'}
-                  </Text>
-                ) : null}
-                <Text style={[styles.amountCell, styles.colAmount]}>{formatNaira(rowAmount)}</Text>
-              </View>
-            )
-          })})()}
-        </View>
-
-        <View style={styles.totalsWrap}>
-          <View style={styles.totalsBox}>
-            <Text style={styles.totalsTitle}>Totals</Text>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Subtotal</Text>
-              <Text style={styles.totalValue}>{formatNaira(result.subtotal)}</Text>
-            </View>
-            {hasInstallColumn ? (
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Install Rate Total</Text>
-                <Text style={styles.totalValue}>{formatNaira(result.installRateTotal)}</Text>
-              </View>
-            ) : null}
-            {result.extraChargesTotal > 0 ? (
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Extra Charges</Text>
-                <Text style={styles.totalValue}>{formatNaira(result.extraChargesTotal)}</Text>
-              </View>
-            ) : null}
-            {result.vat > 0 ? (
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>VAT</Text>
-                <Text style={styles.totalValue}>{formatNaira(result.vat)}</Text>
-              </View>
-            ) : null}
-            {result.discount > 0 ? (
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Discount</Text>
-                <Text style={[styles.totalValue, styles.totalNegative]}>- {formatNaira(result.discount)}</Text>
-              </View>
-            ) : null}
-            {result.wht > 0 ? (
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>WHT</Text>
-                <Text style={[styles.totalValue, styles.totalNegative]}>- {formatNaira(result.wht)}</Text>
-              </View>
-            ) : null}
-            <View style={styles.totalRowStrong}>
-              <Text style={styles.totalLabelStrong}>Total Payable</Text>
-              <Text style={styles.totalValueStrong}>{formatNaira(result.totalPayable)}</Text>
-            </View>
-          </View>
-        </View>
+        {renderTotals({
+          result: computedResult,
+          styles,
+          showInstallRate: hasInstallColumn,
+          totalLabel: 'Total Payable',
+          includeGrandTotal: false,
+        })}
 
         {stripHtml(quotation.notes) ? (
           <View style={styles.notesSection}>

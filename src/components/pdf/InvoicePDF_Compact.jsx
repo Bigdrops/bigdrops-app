@@ -77,8 +77,9 @@ const s = StyleSheet.create({
   footerText: { fontSize: 7, color: '#888', textAlign: 'center', lineHeight: 1.5 },
 })
 
-export default function InvoicePDF_Compact({ invoice, items = [], client, settings = {}, result }) {
-  const d = extractInvoiceData(invoice, items, client, settings, result)
+export default function InvoicePDF_Compact({ document, items = [], client, settings = {}, computedResult }) {
+  const invoice = document
+  const d = extractInvoiceData(document, items, client, settings, computedResult)
   const columns = d.pdfColumns
   const columnStyle = (column, extra = {}) => ({
     flex: column.pdfFlex,
@@ -141,7 +142,7 @@ export default function InvoicePDF_Compact({ invoice, items = [], client, settin
 
         {/* TOTALS */}
         {renderTotals({
-          result,
+          result: computedResult,
           styles: s,
           showInstallRate: d.isColVisible('install_rate'),
           amountInWords: invoice.amount_in_words,

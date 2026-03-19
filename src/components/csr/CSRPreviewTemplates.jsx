@@ -1144,57 +1144,98 @@ function ZincTemplate({ csr, branding }) {
 function createCrimsonStyles() {
   return StyleSheet.create({
     page: {
-      paddingTop: 12,
-      paddingBottom: 12,
-      paddingHorizontal: 12,
+      paddingTop: 14,
+      paddingBottom: 14,
+      paddingHorizontal: 14,
       backgroundColor: '#ffffff',
       color: '#0f172a',
       fontFamily: 'Helvetica',
       fontSize: 8.3,
     },
     header: {
+      backgroundColor: '#0f172a',
+      borderRadius: 10,
+      overflow: 'hidden',
+      marginBottom: 10,
+    },
+    headerTop: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      borderBottomWidth: 3,
-      borderBottomColor: '#0f172a',
-      paddingBottom: 8,
-      marginBottom: 8,
+      gap: 10,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+    },
+    headerBottom: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: 8,
+      backgroundColor: '#f8fafc',
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderTopWidth: 1,
+      borderTopColor: '#1e293b',
     },
     brandBox: { flexDirection: 'row', gap: 8, alignItems: 'center', flex: 1 },
     logoSlot: {
-      width: 30,
-      height: 30,
+      width: 34,
+      height: 34,
       backgroundColor: '#b91c1c',
       justifyContent: 'center',
       alignItems: 'center',
+      borderRadius: 6,
     },
     logoSlotText: { color: '#ffffff', fontSize: 14, fontFamily: 'Helvetica-Bold' },
     brandBlock: { flex: 1 },
-    companyName: { fontSize: 14, color: '#0f172a', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
-    companyTagline: { fontSize: 6.8, color: '#b91c1c', textTransform: 'uppercase', marginTop: 2 },
-    contactLine: { fontSize: 6.8, color: '#64748b', marginTop: 2, lineHeight: 1.3 },
-    idBox: { alignItems: 'flex-end', width: 120 },
-    idLabel: { fontSize: 6.3, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    idValue: { fontSize: 11.5, color: '#b91c1c', fontFamily: 'Courier-Bold', marginTop: 2 },
-    idDate: { fontSize: 7.2, color: '#0f172a', marginTop: 3, fontFamily: 'Helvetica-Bold' },
+    companyName: { fontSize: 15, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.4 },
+    companyTagline: { fontSize: 6.8, color: '#e2e8f0', textTransform: 'uppercase', marginTop: 2 },
+    contactLine: { fontSize: 6.7, color: '#cbd5e1', marginTop: 3, lineHeight: 1.35 },
+    idBox: {
+      width: 148,
+      backgroundColor: '#111827',
+      borderWidth: 1,
+      borderColor: '#334155',
+      borderRadius: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 9,
+      alignItems: 'flex-end',
+    },
+    idLabel: { fontSize: 6.1, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
+    idValue: { fontSize: 12.2, color: '#ffffff', fontFamily: 'Courier-Bold', marginTop: 2 },
+    idDate: { fontSize: 7, color: '#e2e8f0', marginTop: 3, fontFamily: 'Helvetica-Bold' },
+    docKicker: { fontSize: 6.3, color: '#64748b', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', letterSpacing: 0.5 },
+    docTitle: { fontSize: 11.5, color: '#0f172a', fontFamily: 'Helvetica-Bold', marginTop: 3, textTransform: 'uppercase' },
+    docSubtext: { fontSize: 7, color: '#475569', marginTop: 2, lineHeight: 1.3 },
+    summaryPillRow: { flexDirection: 'row', gap: 6 },
+    summaryPill: {
+      flex: 1,
+      backgroundColor: '#ffffff',
+      borderWidth: 1,
+      borderColor: '#e2e8f0',
+      borderRadius: 999,
+      paddingVertical: 5,
+      paddingHorizontal: 8,
+    },
+    summaryPillLabel: { fontSize: 5.8, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
+    summaryPillValue: { fontSize: 7.3, color: '#0f172a', fontFamily: 'Helvetica-Bold', marginTop: 2 },
 
-    section: { marginBottom: 8 },
+    section: { marginBottom: 9 },
     sectionTitle: {
       fontSize: 7.2,
       color: '#ffffff',
       backgroundColor: '#0f172a',
       borderLeftWidth: 4,
       borderLeftColor: '#b91c1c',
-      paddingVertical: 3,
-      paddingHorizontal: 7,
-      marginBottom: 4,
+      paddingVertical: 4,
+      paddingHorizontal: 8,
+      marginBottom: 5,
       textTransform: 'uppercase',
       fontFamily: 'Helvetica-Bold',
+      letterSpacing: 0.4,
     },
 
-    fieldLabel: { fontSize: 6.2, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 2 },
-    fieldValue: { fontSize: 8.8, color: '#1e293b', fontFamily: 'Helvetica-Bold', lineHeight: 1.2 },
-    blockText: { fontSize: 8.2, color: '#444444', lineHeight: 1.45 },
+    fieldLabel: { fontSize: 6.1, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 2 },
+    fieldValue: { fontSize: 8.6, color: '#1e293b', fontFamily: 'Helvetica-Bold', lineHeight: 1.25 },
+    blockText: { fontSize: 8.1, color: '#334155', lineHeight: 1.48 },
 
     grid4: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     fieldCard: {
@@ -1202,27 +1243,36 @@ function createCrimsonStyles() {
       backgroundColor: '#f8fafc',
       borderWidth: 1,
       borderColor: '#e2e8f0',
-      borderRadius: 4,
-      paddingVertical: 5,
-      paddingHorizontal: 6,
-      minHeight: 36,
+      borderRadius: 6,
+      paddingVertical: 6,
+      paddingHorizontal: 7,
+      minHeight: 40,
       marginBottom: 4,
     },
     blockCard: {
-      backgroundColor: '#fffcf0',
+      backgroundColor: '#ffffff',
       borderWidth: 1,
-      borderColor: '#fbbf24',
-      borderRadius: 4,
-      paddingVertical: 6,
-      paddingHorizontal: 6,
-      minHeight: 32,
+      borderColor: '#e2e8f0',
+      borderRadius: 6,
+      paddingVertical: 7,
+      paddingHorizontal: 8,
+      minHeight: 40,
+    },
+    heroBlockCard: {
+      backgroundColor: '#fff7ed',
+      borderColor: '#fdba74',
+    },
+    mutedBlockCard: {
+      backgroundColor: '#f8fafc',
+      borderColor: '#e2e8f0',
     },
 
     readingsSection: {
       backgroundColor: '#0f172a',
-      borderRadius: 4,
-      paddingVertical: 6,
-      paddingHorizontal: 6,
+      borderRadius: 6,
+      paddingVertical: 7,
+      paddingHorizontal: 7,
+      marginTop: 2,
     },
     readingStrip: { flexDirection: 'row' },
     readingStripCell: {
@@ -1230,10 +1280,10 @@ function createCrimsonStyles() {
       alignItems: 'center',
       borderRightWidth: 1,
       borderRightColor: '#ffffff20',
-      paddingVertical: 4,
+      paddingVertical: 5,
     },
     readingStripCellLast: { borderRightWidth: 0 },
-    readingLabel: { fontSize: 5.8, color: '#ffffff99', textTransform: 'uppercase', marginTop: 2, fontFamily: 'Helvetica-Bold' },
+    readingLabel: { fontSize: 5.7, color: '#cbd5e1', textTransform: 'uppercase', marginTop: 2, fontFamily: 'Helvetica-Bold' },
     readingValue: { fontSize: 8.8, color: '#ffffff', fontFamily: 'Courier-Bold' },
 
     tableHeaderRow: {
@@ -1241,15 +1291,15 @@ function createCrimsonStyles() {
       backgroundColor: '#f1f5f9',
       borderBottomWidth: 1.5,
       borderBottomColor: '#e2e8f0',
-      marginTop: 2,
+      marginTop: 3,
     },
     tableHead: {
       fontSize: 6.3,
       color: '#64748b',
       textTransform: 'uppercase',
       fontFamily: 'Helvetica-Bold',
-      paddingVertical: 5,
-      paddingHorizontal: 5,
+      paddingVertical: 6,
+      paddingHorizontal: 6,
       borderRightWidth: 1,
       borderRightColor: '#e2e8f0',
     },
@@ -1262,21 +1312,24 @@ function createCrimsonStyles() {
       fontSize: 7.8,
       color: '#1e293b',
       fontFamily: 'Helvetica-Bold',
-      paddingVertical: 4,
-      paddingHorizontal: 4,
+      paddingVertical: 5,
+      paddingHorizontal: 6,
       borderRightWidth: 1,
       borderRightColor: '#f1f5f9',
     },
 
-    statusGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 2 },
+    statusGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 2 },
     statusItem: {
       width: '24%',
-      paddingVertical: 4,
-      paddingHorizontal: 4,
+      paddingVertical: 5,
+      paddingHorizontal: 5,
       borderWidth: 1.2,
       borderColor: '#e2e8f0',
-      borderRadius: 4,
+      borderRadius: 6,
       alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 28,
+      backgroundColor: '#f8fafc',
     },
     statusItemActive: {
       backgroundColor: '#15803d',
@@ -1286,19 +1339,28 @@ function createCrimsonStyles() {
     statusTextActive: { color: '#ffffff' },
 
     textAreaOnly: {},
-    ackGrid: { flexDirection: 'row', gap: 10, marginTop: 8 },
+    ackGrid: { flexDirection: 'row', gap: 10, marginTop: 9 },
     signRow: { display: 'none' },
     signCard: {
       flex: 1,
-      borderTopWidth: 1.5,
-      borderTopColor: '#0f172a',
-      paddingTop: 5,
+      borderWidth: 1,
+      borderColor: '#e2e8f0',
+      borderRadius: 6,
+      paddingVertical: 7,
+      paddingHorizontal: 8,
+      backgroundColor: '#f8fafc',
     },
-    signSpace: { height: 20, marginBottom: 3, backgroundColor: '#fafafa', borderRadius: 4 },
+    signSpace: {
+      height: 20,
+      marginBottom: 4,
+      borderBottomWidth: 1,
+      borderBottomColor: '#94a3b8',
+      borderStyle: 'dashed',
+    },
     signLabel: { fontSize: 6.3, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     footer: {
-      marginTop: 8,
-      paddingTop: 5,
+      marginTop: 10,
+      paddingTop: 6,
       borderTopWidth: 1,
       borderTopColor: '#e2e8f0',
       fontSize: 6.2,
@@ -1312,23 +1374,44 @@ function createCrimsonStyles() {
 function CrimsonTemplate({ csr, branding }) {
   const styles = createCrimsonStyles()
   const status = getStatusValue(csr)
+  const serviceStart = [safe(csr.start_date), safe(csr.start_time)].filter(Boolean).join(' / ')
+  const serviceEnd = [safe(csr.end_date), safe(csr.end_time)].filter(Boolean).join(' / ')
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <View style={styles.brandBox}>
-            <PdfLogoSlot styles={styles} branding={branding} fallback="L" />
-            <PdfBrandBlock styles={styles} branding={branding} />
+          <View style={styles.headerTop}>
+            <View style={styles.brandBox}>
+              <PdfLogoSlot styles={styles} branding={branding} fallback="L" />
+              <PdfBrandBlock styles={styles} branding={branding} />
+            </View>
+            <View style={styles.idBox}>
+              <Text style={styles.idLabel}>Service Report Number</Text>
+              <Text style={styles.idValue}>{safe(csr.csr_number)}</Text>
+              <Text style={styles.idDate}>{safe(csr.date)}</Text>
+            </View>
           </View>
-          <View style={styles.idBox}>
-            <Text style={styles.idLabel}>Service Report Number</Text>
-            <Text style={styles.idValue}>{safe(csr.csr_number)}</Text>
-            <Text style={styles.idDate}>{safe(csr.date)}</Text>
+          <View style={styles.headerBottom}>
+            <View>
+              <Text style={styles.docKicker}>Corporate Service Documentation</Text>
+              <Text style={styles.docTitle}>Customer Service Report</Text>
+              <Text style={styles.docSubtext}>Structured field record for customer communication, technician reference, and sign-off.</Text>
+            </View>
+            <View style={styles.summaryPillRow}>
+              <View style={styles.summaryPill}>
+                <Text style={styles.summaryPillLabel}>Status</Text>
+                <Text style={styles.summaryPillValue}>{status || 'Pending'}</Text>
+              </View>
+              <View style={styles.summaryPill}>
+                <Text style={styles.summaryPillLabel}>Issue Date</Text>
+                <Text style={styles.summaryPillValue}>{safe(csr.date) || 'Not set'}</Text>
+              </View>
+            </View>
           </View>
         </View>
 
-        <PdfSection styles={styles} title="Client Information & Authorization">
+        <PdfSection styles={styles} title="Customer & Job Details">
           <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
             <View style={[styles.fieldCard, { width: '32%' }]}>
               <Text style={styles.fieldLabel}>Client Name</Text>
@@ -1346,16 +1429,22 @@ function CrimsonTemplate({ csr, branding }) {
             ) : null}
             <View style={[styles.fieldCard, { width: csr.show_po && hasText(csr.po_number) ? '32%' : '49%' }]}>
               <Text style={styles.fieldLabel}>Service Start (Date/Time)</Text>
-              <Text style={styles.fieldValue}>{[safe(csr.start_date), safe(csr.start_time)].filter(Boolean).join(' / ')}</Text>
+              <Text style={styles.fieldValue}>{serviceStart || 'Not recorded'}</Text>
             </View>
             <View style={[styles.fieldCard, { width: csr.show_po && hasText(csr.po_number) ? '32%' : '49%' }]}>
               <Text style={styles.fieldLabel}>Service End (Date/Time)</Text>
-              <Text style={styles.fieldValue}>{[safe(csr.end_date), safe(csr.end_time)].filter(Boolean).join(' / ')}</Text>
+              <Text style={styles.fieldValue}>{serviceEnd || 'Not recorded'}</Text>
             </View>
           </View>
         </PdfSection>
 
-        <PdfSection styles={styles} title="Asset Identification & Telemetry">
+        <PdfSection styles={styles} title="Problem Reported">
+          <View style={[styles.blockCard, styles.heroBlockCard]}>
+            <Text style={styles.blockText}>{safe(csr.problem_reported) || ' '}</Text>
+          </View>
+        </PdfSection>
+
+        <PdfSection styles={styles} title="Equipment Details">
           <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
             <View style={[styles.fieldCard, { width: '24%' }]}><Text style={styles.fieldLabel}>Equipment Type</Text><Text style={styles.fieldValue}>{safe(csr.equipment_type)}</Text></View>
             <View style={[styles.fieldCard, { width: '24%' }]}><Text style={styles.fieldLabel}>Make</Text><Text style={styles.fieldValue}>{safe(csr.make)}</Text></View>
@@ -1372,25 +1461,14 @@ function CrimsonTemplate({ csr, branding }) {
           ) : null}
         </PdfSection>
 
-        <PdfSection styles={styles} title="Technical Problem & Execution">
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.fieldLabel}>Problem Reported</Text>
-              <View style={styles.blockCard}>
-                <Text style={styles.blockText}>{safe(csr.problem_reported)}</Text>
-              </View>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.fieldLabel}>Service Rendered</Text>
-              <View style={styles.blockCard}>
-                <Text style={styles.blockText}>{safe(csr.service_rendered)}</Text>
-              </View>
-            </View>
+        <PdfSection styles={styles} title="Service Rendered">
+          <View style={styles.blockCard}>
+            <Text style={styles.blockText}>{safe(csr.service_rendered) || ' '}</Text>
           </View>
           {shouldRender(true, csr.technicianRemarks) ? (
             <View style={{ marginTop: 8 }}>
               <Text style={styles.fieldLabel}>Technician Remarks</Text>
-              <View style={[styles.blockCard, { backgroundColor: '#f1f5f9', borderColor: '#e2e8f0' }]}>
+              <View style={[styles.blockCard, styles.mutedBlockCard]}>
                 <Text style={styles.blockText}>{safe(csr.technicianRemarks)}</Text>
               </View>
             </View>
@@ -1401,7 +1479,7 @@ function CrimsonTemplate({ csr, branding }) {
           <MaterialsTable styles={styles} csr={csr} />
         ) : null}
 
-        <PdfSection styles={styles} title="Current Service Status">
+        <PdfSection styles={styles} title="Status & Acknowledgement">
           <View style={styles.statusGrid}>
             {CSR_STATUS_OPTIONS_PDF.map((option) => {
               const active = status === option || (option === 'Complete' && status === 'Working solution provided')
@@ -1412,29 +1490,31 @@ function CrimsonTemplate({ csr, branding }) {
               )
             })}
           </View>
+
+          {csr.showTechnicianSignLine || csr.showAcknowledgement ? (
+            <View style={styles.ackGrid}>
+              {csr.showTechnicianSignLine ? (
+                <View style={styles.signCard}>
+                  <View style={styles.signSpace} />
+                  <Text style={styles.signLabel}>Technician Name</Text>
+                  <Text style={styles.fieldValue}>{safe(csr.technicianName)}</Text>
+                </View>
+              ) : null}
+
+              {csr.showAcknowledgement ? (
+                <View style={styles.signCard}>
+                  <View style={styles.signSpace} />
+                  <Text style={styles.signLabel}>Recipient Name / Role</Text>
+                  <Text style={styles.fieldValue}>
+                    {[safe(csr.acknowledgement_name), safe(csr.recipientRole)].filter(Boolean).join(' / ')}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
         </PdfSection>
 
         <CustomerFeedbackSection styles={styles} csr={csr} />
-
-        <View style={styles.ackGrid}>
-          {csr.showTechnicianSignLine ? (
-            <View style={styles.signCard}>
-              <View style={styles.signSpace} />
-              <Text style={styles.signLabel}>Technician Name</Text>
-              <Text style={styles.fieldValue}>{safe(csr.technicianName)}</Text>
-            </View>
-          ) : null}
-
-          {csr.showAcknowledgement ? (
-            <View style={styles.signCard}>
-              <View style={styles.signSpace} />
-              <Text style={styles.signLabel}>Recipient Name / Role</Text>
-              <Text style={styles.fieldValue}>
-                {[safe(csr.acknowledgement_name), safe(csr.recipientRole)].filter(Boolean).join(' • ')}
-              </Text>
-            </View>
-          ) : null}
-        </View>
 
         {branding.footerText ? <Text style={styles.footer}>{branding.footerText}</Text> : null}
       </Page>

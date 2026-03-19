@@ -237,8 +237,9 @@ function ExtraBlock({ block }) {
   )
 }
 
-export default function InvoicePDF_Classic({ invoice, items = [], client, settings = {}, result }) {
-  const { d, columns, pages } = planClassicInvoicePages(invoice, items, client, settings, result)
+export default function InvoicePDF_Classic({ document, items = [], client, settings = {}, computedResult }) {
+  const invoice = document
+  const { d, columns, pages } = planClassicInvoicePages(document, items, client, settings, computedResult)
   const itemCounterRef = { current: 0 }
 
   return (
@@ -279,7 +280,7 @@ export default function InvoicePDF_Classic({ invoice, items = [], client, settin
               })}
 
               {page.showTotals ? renderTotals({
-                result,
+                result: computedResult,
                 styles: s,
                 showInstallRate: d.isColVisible('install_rate'),
                 amountInWords: invoice.amount_in_words,

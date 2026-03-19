@@ -190,7 +190,7 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const selectedTemplate = CSR_TEMPLATE_OPTIONS.find((option) => option.key === template) || CSR_TEMPLATE_OPTIONS[2]
+  const selectedTemplate = CSR_TEMPLATE_OPTIONS.find((option) => option.key === template) || CSR_TEMPLATE_OPTIONS[3]
   const theme = CSR_TEMPLATE_VARIANTS[getCsrTemplateVariant(template)]
   const s = statusColor[csr.status] || { bg: '#F5F5F5', color: '#555' }
   const compact = !!theme.compact

@@ -18,9 +18,9 @@ export default function ViewCSR() {
   const [showMore, setShowMore] = useState(false)
   const [template, setTemplate] = useState(() => {
     try {
-      return localStorage.getItem('csr_pdf_template') || '3'
+      return localStorage.getItem('csr_pdf_template') || '4'
     } catch {
-      return '3'
+      return '4'
     }
   })
 
