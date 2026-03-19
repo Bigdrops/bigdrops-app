@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { supabase } from './supabase'
+import { supabase, mockSession, mockUser } from './supabase'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -30,8 +30,6 @@ const Projects       = lazy(() => import('./pages/Projects'))        // ← Adde
 const NewProject     = lazy(() => import('./pages/NewProject'))      // ← Added
 const ProjectDetail  = lazy(() => import('./pages/ProjectDetail'))   // ← Added
 const Reports        = lazy(() => import('./pages/Reports'))         // ← Added
-const Login          = lazy(() => import('./pages/Login'))
-const PendingApproval = lazy(() => import('./pages/PendingApproval'))
 const ResetPassword  = lazy(() => import('./pages/ResetPassword'))
 
 const PageLoader = () => (
@@ -157,9 +155,14 @@ function AppShell({ session, profile, onProfileUpdate }) {
 
 function App() {
   const [authLoading, setAuthLoading] = useState(true)
-  const [session, setSession] = useState(null)
-  const [profile, setProfile] = useState(null)
-  const loadingRef = useRef(false)
+  const [session, setSession] = useState(mockSession)
+  const [profile, setProfile] = useState({
+    id: mockUser.id,
+    email: mockUser.email,
+    role: mockUser.role,
+    is_approved: true,
+    has_password: true,
+  })
 
   const loadProfile = async (userId) => {
     if (!userId) return
@@ -174,9 +177,24 @@ function App() {
           return
         }
         setProfile(data)
+        return
       }
+      setProfile({
+        id: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role,
+        is_approved: true,
+        has_password: true,
+      })
     } catch (err) {
       console.error('Profile fetch error:', err)
+      setProfile({
+        id: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role,
+        is_approved: true,
+        has_password: true,
+      })
     }
   }
 
@@ -184,18 +202,24 @@ function App() {
     let subscription = null
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      setSession(session)
-      if (session?.user?.id && !loadingRef.current) {
-        loadingRef.current = true
-        await loadProfile(session.user.id)
-      }
+      setSession(session || mockSession)
+      await loadProfile((session || mockSession).user.id)
       setAuthLoading(false)
       const { data } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN') {
-          setSession(session)
-          if (session?.user?.id) { loadingRef.current = true; loadProfile(session.user.id) }
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          const nextSession = session || mockSession
+          setSession(nextSession)
+          loadProfile(nextSession.user.id)
         } else if (event === 'SIGNED_OUT') {
-          setSession(null); setProfile(null); loadingRef.current = false; setAuthLoading(false)
+          setSession(mockSession)
+          setProfile({
+            id: mockUser.id,
+            email: mockUser.email,
+            role: mockUser.role,
+            is_approved: true,
+            has_password: true,
+          })
+          setAuthLoading(false)
         }
       })
       subscription = data.subscription
@@ -214,20 +238,15 @@ function App() {
     )
   }
 
-  const approved = profile?.is_approved === true
-
   return (
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/*" element={
-          !session
-            ? <Login />
-            : !approved
-            ? <PendingApproval email={session?.user?.email || ''} />
-            : <AppShell session={session} profile={profile} onProfileUpdate={() => loadProfile(session.user.id)} />
-        } />
+        <Route
+          path="/*"
+          element={<AppShell session={session || mockSession} profile={profile} onProfileUpdate={() => loadProfile((session || mockSession).user.id)} />}
+        />
       </Routes>
       </Suspense>
     </BrowserRouter>
