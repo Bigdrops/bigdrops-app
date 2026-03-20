@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import DOMPurify from 'dompurify'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '../components/invoice/exportInvoiceCsv'
@@ -140,6 +141,8 @@ export default function ViewInvoice() {
   const companyIdentityLines = [companyAddress, companyCity, companyPhone, companyEmail].filter(Boolean)
   const hasCompanyIdentity = Boolean(companyName || companyTagline || companyIdentityLines.length)
   const poNumber = String(invoice.po_number || '').trim()
+  const safeInvoiceNotes = invoice.notes ? DOMPurify.sanitize(invoice.notes) : ''
+  const safeInvoiceTerms = invoice.terms ? DOMPurify.sanitize(invoice.terms) : ''
   const statusLabel = String(invoice.status || 'draft')
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase())
@@ -745,7 +748,7 @@ export default function ViewInvoice() {
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Notes</div>
               <div
-                dangerouslySetInnerHTML={{ __html: invoice.notes }}
+                dangerouslySetInnerHTML={{ __html: safeInvoiceNotes }}
                 style={{ fontSize: 14, color: '#555', lineHeight: 1.7 }}
               />
             </div>
@@ -754,7 +757,7 @@ export default function ViewInvoice() {
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Terms & Conditions</div>
               <div
-                dangerouslySetInnerHTML={{ __html: invoice.terms }}
+                dangerouslySetInnerHTML={{ __html: safeInvoiceTerms }}
                 style={{ fontSize: 14, color: '#555', lineHeight: 1.7 }}
               />
             </div>

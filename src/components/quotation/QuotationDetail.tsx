@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import DOMPurify from 'dompurify'
 import { supabase } from '@/supabase'
 import { calcTotals } from '@/components/useInvoiceColumns.jsx'
 import { computeDocument } from '@/lib/Calculations'
@@ -45,7 +46,8 @@ import { QUOTATION_STATUSES, formatQuotationStatus, quotationStatusTone } from '
 
 function renderRichText(value?: string) {
   if (!value) return <span className="text-slate-400">Not provided</span>
-  return <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: value }} />
+  const clean = DOMPurify.sanitize(value)
+  return <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: clean }} />
 }
 
 function useIsNarrow() {
