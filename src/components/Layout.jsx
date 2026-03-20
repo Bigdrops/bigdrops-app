@@ -28,6 +28,7 @@ const navGroups = [
     group: 'Sales',
     items: [
       { label: 'Invoices',   path: '/invoices',   icon: FileText },
+      { label: 'Proforma',   path: '/proforma/new', icon: FileText },
       { label: 'Quotations', path: '/quotations', icon: ClipboardList },
       { label: 'CSR',        path: '/csr',        icon: Wrench },
       { label: 'Clients',    path: '/clients',    icon: Users },

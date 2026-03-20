@@ -22,6 +22,8 @@ const EditClient     = lazy(() => import('./pages/EditClient'))
 const NewInvoice     = lazy(() => import('./pages/NewInvoice'))
 const ViewInvoice    = lazy(() => import('./pages/ViewInvoice'))
 const EditInvoice    = lazy(() => import('./pages/EditInvoice'))
+const NewProformaInvoice = lazy(() => import('./pages/NewProformaInvoice'))
+const EditProformaInvoice = lazy(() => import('./pages/EditProformaInvoice'))
 const NewCSR         = lazy(() => import('./pages/NewCSR'))
 const ViewCSR        = lazy(() => import('./pages/ViewCSR'))
 const EditCSR        = lazy(() => import('./pages/EditCSR'))
@@ -134,6 +136,8 @@ function AppShell({ session, profile, onProfileUpdate }) {
         <Route path="/invoices/new" element={<NewInvoice />} />
         <Route path="/invoices/edit/:id" element={<EditInvoice />} />
         <Route path="/invoices/:id" element={<ViewInvoice />} />
+        <Route path="/proforma/new" element={<NewProformaInvoice />} />
+        <Route path="/proforma/:id/edit" element={<EditProformaInvoice />} />
         <Route path="/quotations" element={<Quotations />} />
         <Route path="/quotations/new" element={<NewQuotation />} />
         <Route path="/quotations/edit/:id" element={<EditQuotation />} />
