@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/supabase'
+import { FileSpreadsheet, Layers, Plus, Settings2, Upload } from 'lucide-react'
 import ClientSelector from '@/components/ClientSelector'
 import ColumnManager from '@/components/ColumnManager'
+import ItemImageUpload from '@/components/ItemImageUpload'
 import MobileItemCard from '@/components/MobileItemCard'
 import UnitInput from '@/components/UnitInput'
 import InvoiceFormActions from '@/components/invoice/InvoiceFormActions'
@@ -719,6 +721,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
   const visibleCustomColumns = customColumns.filter((column: ColumnConfig) => column.visible)
   const summaryHeaderFields = headerFields.filter((field) => field.label && field.value)
+  const formatCurrency = (value: number) => `N${Number(value || 0).toLocaleString()}`
   const removeItemAt = (itemIndex: number) =>
     commitGrouping((current) =>
       current.filter((_, entryIndex) => entryIndex !== itemIndex).map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex })),
@@ -946,12 +949,20 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <div>
-          <h2 className="m-0 text-[22px] font-semibold tracking-tight text-slate-900">{isEdit ? 'Edit Quotation' : 'New Quotation'}</h2>
-          <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#0f62fe]">{formatQuotationStatus(quotation.status || 'draft')} quotation</p>
-          <p className="mt-2 max-w-2xl text-sm text-slate-500">Use the existing grouping and totals engine, then save normally.</p>
+    <div className="mx-auto max-w-[1440px] px-3 pb-20 pt-4 sm:px-4 sm:pt-5">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-3">
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="m-0 text-[22px] font-semibold tracking-tight text-slate-950">{isEdit ? 'Edit Quotation' : 'New Quotation'}</h2>
+            <span className="inline-flex h-6 items-center border border-blue-200 bg-blue-50 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-700">
+              {formatQuotationStatus(quotation.status || 'draft')}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+            <span>Quotation #{quotation.quotation_number || 'Pending'}</span>
+            <span>Client: {quotation.client_name || 'Unassigned'}</span>
+          </div>
+          <p className="max-w-2xl text-sm text-slate-500">UI refresh only. Existing grouping, calculations, imports, and save flow remain unchanged.</p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <input
@@ -961,7 +972,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
             hidden
             onChange={handleCSVImport}
           />
-          <Button type="button" variant="outline" className="h-10 rounded-none border-slate-300 bg-white text-slate-700 w-full sm:w-auto" onClick={() => navigate('/quotations')}>Back to Quotations</Button>
+          <Button type="button" variant="outline" className="h-9 w-full rounded-none border-slate-300 bg-white px-3 text-slate-700 sm:w-auto" onClick={() => navigate('/quotations')}>Back to Quotations</Button>
         </div>
       </div>
 
@@ -1069,13 +1080,16 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         />
       )}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-5">
-        <div className="space-y-5">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_350px] xl:items-start">
+        <div className="space-y-4">
           <Card className="rounded-none border-slate-200 bg-white shadow-sm">
-            <CardContent className="grid gap-4 pt-5 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Client Name</Label>
-                <div className="mt-2">
+            <CardHeader className="border-b border-slate-200 bg-slate-50/70 px-4 py-3">
+              <CardTitle className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">Quotation Details</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3 px-4 py-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="md:col-span-2 xl:col-span-3">
+                <Label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Client Name</Label>
+                <div className="mt-1.5">
                   <ClientSelector
                     clientId={quotation.client_id}
                     clientName={quotation.client_name}
@@ -1088,25 +1102,25 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                 </div>
               </div>
               <div>
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Issue Date</Label>
-                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" type="date" value={quotation.issue_date || ''} onChange={(e) => updateQuotation('issue_date', e.target.value)} />
+                <Label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Issue Date</Label>
+                <Input className="mt-1.5 h-9 rounded-none border-slate-300 bg-slate-50" type="date" value={quotation.issue_date || ''} onChange={(e) => updateQuotation('issue_date', e.target.value)} />
               </div>
               <div>
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Valid Until</Label>
-                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" type="date" value={quotation.valid_until || ''} onChange={(e) => updateQuotation('valid_until', e.target.value)} />
+                <Label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Valid Until</Label>
+                <Input className="mt-1.5 h-9 rounded-none border-slate-300 bg-slate-50" type="date" value={quotation.valid_until || ''} onChange={(e) => updateQuotation('valid_until', e.target.value)} />
               </div>
               <div>
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Quotation Number</Label>
-                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" value={quotation.quotation_number || ''} onChange={(e) => updateQuotation('quotation_number', e.target.value)} />
+                <Label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Quotation Number</Label>
+                <Input className="mt-1.5 h-9 rounded-none border-slate-300 bg-slate-50" value={quotation.quotation_number || ''} onChange={(e) => updateQuotation('quotation_number', e.target.value)} />
               </div>
               <div>
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">P.O. Number</Label>
-                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" value={quotation.po_number || ''} onChange={(e) => updateQuotation('po_number', e.target.value)} placeholder="Optional purchase order number" />
+                <Label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">P.O. Number</Label>
+                <Input className="mt-1.5 h-9 rounded-none border-slate-300 bg-slate-50" value={quotation.po_number || ''} onChange={(e) => updateQuotation('po_number', e.target.value)} placeholder="Optional purchase order number" />
               </div>
               <div>
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Status</Label>
+                <Label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Status</Label>
                 <Select value={quotation.status || 'draft'} onValueChange={(value) => updateQuotation('status', value as Quotation['status'])}>
-                  <SelectTrigger className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]">
+                  <SelectTrigger className="mt-1.5 h-9 rounded-none border-slate-300 bg-slate-50">
                     <SelectValue placeholder="Choose status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1118,26 +1132,26 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                   </SelectContent>
                 </Select>
               </div>
-              <div className="md:col-span-2">
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Scope Title</Label>
-                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" value={quotation.quotation_title || ''} onChange={(e) => updateQuotation('quotation_title', e.target.value)} />
+              <div className="md:col-span-2 xl:col-span-3">
+                <Label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Scope Title</Label>
+                <Input className="mt-1.5 h-9 rounded-none border-slate-300 bg-slate-50" value={quotation.quotation_title || ''} onChange={(e) => updateQuotation('quotation_title', e.target.value)} />
               </div>
             </CardContent>
           </Card>
 
           <Card className="rounded-none border-slate-200 bg-white shadow-sm">
-            <CardHeader>
+            <CardHeader className="border-b border-slate-200 bg-slate-50/70 px-4 py-3">
               <div className="flex items-center justify-between gap-3">
-                <CardTitle className="text-base">Header Fields</CardTitle>
-                <Button type="button" variant="ghost" className="h-auto p-0 text-sm font-bold text-indigo-500" onClick={() => setHeaderFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])}>+ Add Header Field</Button>
+                <CardTitle className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">Header Fields</CardTitle>
+                <Button type="button" variant="ghost" className="h-7 rounded-none px-2 text-xs font-semibold text-blue-700 hover:bg-blue-50" onClick={() => setHeaderFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])}>+ Add Header Field</Button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2 px-4 py-4">
               {headerFields.length === 0 && <div className="text-sm italic text-slate-400">No custom header fields yet.</div>}
               {headerFields.map((field) => (
-                <div key={field.id} className="grid gap-2 md:grid-cols-[160px_minmax(0,1fr)_40px]">
-                  <Input value={field.label || ''} onChange={(e) => setHeaderFields((current) => current.map((entry) => entry.id === field.id ? { ...entry, label: e.target.value } : entry))} placeholder="Label" />
-                  <Input value={field.value || ''} onChange={(e) => setHeaderFields((current) => current.map((entry) => entry.id === field.id ? { ...entry, value: e.target.value } : entry))} placeholder="Value" />
+                <div key={field.id} className="grid gap-2 md:grid-cols-[160px_minmax(0,1fr)_36px]">
+                  <Input className="h-8 rounded-none border-slate-300 bg-slate-50" value={field.label || ''} onChange={(e) => setHeaderFields((current) => current.map((entry) => entry.id === field.id ? { ...entry, label: e.target.value } : entry))} placeholder="Label" />
+                  <Input className="h-8 rounded-none border-slate-300 bg-slate-50" value={field.value || ''} onChange={(e) => setHeaderFields((current) => current.map((entry) => entry.id === field.id ? { ...entry, value: e.target.value } : entry))} placeholder="Value" />
                   <Button type="button" variant="ghost" className="h-10 px-2 text-xl text-red-700" onClick={() => setHeaderFields((current) => current.filter((entry) => entry.id !== field.id))}>×</Button>
                 </div>
               ))}
@@ -1145,58 +1159,62 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           </Card>
 
           <Card className="rounded-none border-slate-200 bg-white shadow-sm">
-            <CardHeader>
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-                <div>
-                  <CardTitle className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-700">Scope of Work</CardTitle>
-                  <div className="mt-1 text-xs text-slate-500">Groups stay structural; this is only a visual refresh.</div>
+            <CardHeader className="space-y-0 border-b border-slate-200 bg-slate-50/70 px-4 py-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <CardTitle className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">Scope of Work</CardTitle>
+                  <div className="text-xs text-slate-500">Borrowing Bugd visual rhythm while preserving all quotation behavior.</div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" className="h-9 rounded-none border-slate-300 bg-white text-slate-700" onClick={() => setShowColumnManager(true)}>
-                    Table & Tax Settings
+                <div className="flex flex-wrap gap-1.5">
+                  <Button type="button" variant="outline" className="h-8 rounded-none border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-700" onClick={() => setShowColumnManager(true)}>
+                    <Settings2 className="mr-1.5 h-3.5 w-3.5" />
+                    Table & Tax
                   </Button>
-                  <Button type="button" className="h-9 rounded-none bg-slate-900 hover:bg-slate-800" onClick={() => setShowCSVNote(true)}>
+                  <Button type="button" variant="outline" className="h-8 rounded-none border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-700" onClick={() => setShowCSVNote(true)}>
+                    <Upload className="mr-1.5 h-3.5 w-3.5" />
                     Import CSV
                   </Button>
-                  <Button type="button" variant="ghost" className="h-9 rounded-none text-[#0f62fe] hover:bg-blue-50" onClick={addQuotationGroup}>
-                    + Group
+                  <Button type="button" variant="ghost" className="h-8 rounded-none px-2.5 text-xs font-semibold text-blue-700 hover:bg-blue-50" onClick={addQuotationGroup}>
+                    <Layers className="mr-1.5 h-3.5 w-3.5" />
+                    Add Group
                   </Button>
-                  <Button type="button" variant="ghost" className="h-9 rounded-none text-[#0f62fe] hover:bg-blue-50" onClick={addQuotationItem}>
-                    + Add Item
+                  <Button type="button" variant="ghost" className="h-8 rounded-none px-2.5 text-xs font-semibold text-blue-700 hover:bg-blue-50" onClick={addQuotationItem}>
+                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                    Add Item
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-0 py-0">
               {isMobile ? (
-                <div className="space-y-3">
+                <div className="space-y-3 px-3 py-3">
                   {renderMobileRows()}
                   <div className="grid gap-2 pt-2">
-                    <Button type="button" onClick={addQuotationItem} className="h-10 w-full rounded-none bg-[#0f62fe] hover:bg-[#0353e9]">
+                    <Button type="button" onClick={addQuotationItem} className="h-9 w-full rounded-none bg-slate-900 text-xs font-semibold hover:bg-slate-800">
                       + Add Item
                     </Button>
-                    <Button type="button" variant="outline" onClick={addQuotationGroup} className="h-10 w-full rounded-none border-slate-300 bg-white text-[#0f62fe]">
+                    <Button type="button" variant="outline" onClick={addQuotationGroup} className="h-9 w-full rounded-none border-slate-300 bg-white text-xs font-semibold text-blue-700">
                       + Group
                     </Button>
                   </div>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full border-collapse">
+                  <table className="min-w-full border-collapse text-sm">
                     <thead>
-                      <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500">
-                        <th className="px-2 py-3">#</th>
-                        <th className="px-2 py-3">Description</th>
-                        {isVisible('make') && <th className="px-2 py-3">Make</th>}
-                        <th className="px-2 py-3">Qty</th>
-                        {isVisible('unit') && <th className="px-2 py-3">Unit</th>}
-                        <th className="px-2 py-3">Rate</th>
-                        {isVisible('install_rate') && <th className="px-2 py-3">Install</th>}
-                        {isVisible('vat_rate') && <th className="px-2 py-3">VAT %</th>}
-                        {isVisible('discount_rate') && <th className="px-2 py-3">Disc %</th>}
-                        {visibleCustomColumns.map((column) => <th key={column.key} className="px-2 py-3">{column.label}</th>)}
-                        <th className="px-2 py-3">Amount</th>
-                        <th className="px-2 py-3" />
+                      <tr className="border-b border-slate-200 bg-slate-50 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        <th className="w-10 px-2 py-2.5">#</th>
+                        <th className="min-w-[300px] px-2 py-2.5">Description</th>
+                        {isVisible('make') && <th className="px-2 py-2.5">Make</th>}
+                        <th className="w-[86px] px-2 py-2.5">Qty</th>
+                        {isVisible('unit') && <th className="w-[96px] px-2 py-2.5">Unit</th>}
+                        <th className="w-[112px] px-2 py-2.5">Rate</th>
+                        {isVisible('install_rate') && <th className="w-[112px] px-2 py-2.5">Install</th>}
+                        {isVisible('vat_rate') && <th className="w-[88px] px-2 py-2.5">VAT%</th>}
+                        {isVisible('discount_rate') && <th className="w-[88px] px-2 py-2.5">Disc%</th>}
+                        {visibleCustomColumns.map((column) => <th key={column.key} className="px-2 py-2.5">{column.label}</th>)}
+                        <th className="w-[132px] px-2 py-2.5">Amount</th>
+                        <th className="w-[54px] px-2 py-2.5" />
                       </tr>
                     </thead>
                     <tbody>
@@ -1206,50 +1224,68 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                           if (item.row_type === 'group_header') {
                             const group = normalizedGroups.find((entry) => entry.id === item.group_id)
                             const groupSubtotal = group ? computedGroups.get(group.id)?.subtotal || 0 : 0
+                            const groupItemCount = group ? normalizedItems.filter((entry) => entry.row_type === 'standard' && entry.group_id === group.id).length : 0
                             return (
-                              <tr key={item._uiKey || item.id || index} className="border-b border-zinc-100 bg-[#f4f4f4] align-top">
-                                <td className="px-2 py-3 text-sm font-semibold text-slate-400">-</td>
+                              <tr key={item._uiKey || item.id || index} className="border-b border-slate-200 bg-slate-50/70 align-top">
+                                <td className="px-2 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Grp</td>
                                 <td colSpan={8 + (isVisible('make') ? 1 : 0) + (isVisible('unit') ? 1 : 0) + (isVisible('install_rate') ? 1 : 0) + (isVisible('vat_rate') ? 1 : 0) + (isVisible('discount_rate') ? 1 : 0) + visibleCustomColumns.length} className="px-2 py-3">
-                                  <div className="flex flex-wrap items-center gap-3 border-l-[3px] border-l-[#0f62fe] pl-3">
-                                    <Input value={item.group_name || ''} onChange={(e) => group ? updateGroupName(group.id, e.target.value) : updateItem(index, 'group_name', e.target.value)} placeholder="Group name" className="max-w-sm rounded-none border-0 border-b border-slate-300 bg-white text-slate-900" />
+                                  <div className="flex flex-wrap items-center gap-2 border-l-2 border-l-blue-600 bg-white px-3 py-2 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.18)]">
+                                    <Input value={item.group_name || ''} onChange={(e) => group ? updateGroupName(group.id, e.target.value) : updateItem(index, 'group_name', e.target.value)} placeholder="Group name" className="h-7 max-w-sm rounded-none border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 shadow-none focus-visible:ring-0" />
+                                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">{groupItemCount} item{groupItemCount === 1 ? '' : 's'}</span>
                                     {group ? (
                                       <>
-                                        <Button type="button" size="sm" variant="ghost" className="rounded-none text-[#0f62fe] hover:bg-blue-50" onClick={() => addItemToGroup(group.id)}>
-                                          + Add Item
+                                        <Button type="button" size="sm" variant="ghost" className="h-7 rounded-none px-2 text-[11px] font-semibold text-blue-700 hover:bg-blue-50" onClick={() => addItemToGroup(group.id)}>
+                                          <Plus className="mr-1 h-3 w-3" />
+                                          Add Item
                                         </Button>
-                                        <Button type="button" size="sm" variant="outline" className="rounded-none border-slate-300 bg-white text-slate-700 hover:bg-slate-50" onClick={() => toggleGroupSubtotal(group.id)}>
+                                        <Button type="button" size="sm" variant="outline" className="h-7 rounded-none border-slate-300 bg-white px-2 text-[11px] text-slate-700 hover:bg-slate-50" onClick={() => toggleGroupSubtotal(group.id)}>
                                           {group.showSubtotal ? 'Hide Subtotal' : 'Show Subtotal'}
                                         </Button>
-                                        {group.showSubtotal ? <span className="text-xs font-semibold text-slate-700">Subtotal: N{Number(groupSubtotal || 0).toLocaleString()}</span> : null}
+                                        {group.showSubtotal ? <span className="ml-auto border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700">Subtotal {formatCurrency(groupSubtotal)}</span> : null}
                                       </>
                                     ) : null}
                                   </div>
                                 </td>
-                                <td className="px-2 py-3">
-                                  <Button type="button" variant="ghost" size="sm" className="rounded-none text-red-500 hover:bg-white hover:text-red-600" onClick={() => group ? deleteGroup(group.id) : removeItemAt(index)}>x</Button>
+                                <td className="px-2 py-2">
+                                  <Button type="button" variant="ghost" size="sm" className="h-7 rounded-none px-2 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => group ? deleteGroup(group.id) : removeItemAt(index)}>×</Button>
                                 </td>
                               </tr>
                             )
                           }
 
                           itemNumber += 1
+                          const rowAmount = totals.items[index]?.line_subtotal || 0
+                          const groupName = item.group_id ? normalizedGroups.find((entry) => entry.id === item.group_id)?.name || 'Grouped item' : ''
                           return (
-                            <tr key={item._uiKey || item.id || index} className="border-b border-zinc-100 align-top">
-                              <td className="px-2 py-3 text-sm font-semibold text-zinc-500">{itemNumber}</td>
-                              <td className="px-2 py-3 min-w-[260px]">
-                                <Input value={item.description || ''} onChange={(e) => updateItem(index, 'description', e.target.value)} placeholder="Item description" />
-                                <Input className="mt-2" value={item.sub_description || ''} onChange={(e) => updateItem(index, 'sub_description', e.target.value)} placeholder="Sub-description" />
+                            <tr key={item._uiKey || item.id || index} className={`border-b border-slate-200 align-top ${item.group_id ? 'bg-slate-50/30' : 'bg-white'}`}>
+                              <td className="px-2 py-2.5 text-sm font-semibold text-slate-500">{itemNumber}</td>
+                              <td className={`min-w-[260px] px-2 py-2.5 ${item.group_id ? 'border-l-2 border-l-blue-100' : ''}`}>
+                                <div className="space-y-2">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0 flex-1">
+                                      <Input className="h-7 rounded-none border-0 bg-transparent px-0 text-sm font-medium shadow-none placeholder:text-slate-400 focus-visible:ring-0" value={item.description || ''} onChange={(e) => updateItem(index, 'description', e.target.value)} placeholder="Item description" />
+                                      <Input className="mt-0.5 h-6 rounded-none border-0 bg-transparent px-0 text-xs text-slate-500 shadow-none placeholder:text-slate-400 focus-visible:ring-0" value={item.sub_description || ''} onChange={(e) => updateItem(index, 'sub_description', e.target.value)} placeholder="Sub-description" />
+                                    </div>
+                                    {showItemImages ? (
+                                      <div className="w-[88px] shrink-0 border border-slate-200 bg-slate-50 px-2 py-1.5">
+                                        <div className="mb-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-400">Image</div>
+                                        <ItemImageUpload value={item.image_url || null} onChange={(url) => updateItem(index, 'image_url', url)} />
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                  {item.group_id ? <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">{groupName}</div> : null}
+                                </div>
                               </td>
-                              {isVisible('make') && <td className="px-2 py-3"><Input value={item.make || ''} onChange={(e) => updateItem(index, 'make', e.target.value)} /></td>}
-                              <td className="px-2 py-3 min-w-[88px]"><Input type="number" min="0" value={item.quantity || 0} onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))} /></td>
-                              {isVisible('unit') && <td className="px-2 py-3 min-w-[120px]"><UnitInput value={item.unit || ''} onChange={(value: string) => updateItem(index, 'unit', value)} /></td>}
-                              <td className="px-2 py-3 min-w-[110px]"><Input type="number" min="0" value={item.unit_price || 0} onChange={(e) => updateItem(index, 'unit_price', Number(e.target.value))} /></td>
-                              {isVisible('install_rate') && <td className="px-2 py-3 min-w-[110px]"><Input type="number" min="0" value={item.install_rate_override ? item.install_rate ?? '' : ''} onChange={(e) => updateInstallRateOverride(index, e.target.value)} /></td>}
-                              {isVisible('vat_rate') && <td className="px-2 py-3 min-w-[90px]"><Input type="number" min="0" max="100" value={item.vat_rate ?? ''} placeholder={String(quotation.vat || 0)} onChange={(e) => updateItem(index, 'vat_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
-                              {isVisible('discount_rate') && <td className="px-2 py-3 min-w-[90px]"><Input type="number" min="0" max="100" value={item.discount_rate ?? ''} placeholder="global" onChange={(e) => updateItem(index, 'discount_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
-                              {visibleCustomColumns.map((column) => <td key={column.key} className="px-2 py-3 min-w-[110px]"><Input type={column.type === 'number' ? 'number' : 'text'} value={(item.custom_data || {})[column.key] || ''} onChange={(e) => updateItem(index, 'custom_data', { ...(item.custom_data || {}), [column.key]: column.type === 'number' ? Number(e.target.value || 0) : e.target.value })} /></td>)}
+                              {isVisible('make') && <td className="px-2 py-2.5 align-top"><Input className="h-8 rounded-none border-slate-300 bg-white text-sm" value={item.make || ''} onChange={(e) => updateItem(index, 'make', e.target.value)} /></td>}
+                              <td className="px-2 py-2.5 min-w-[88px] align-top"><Input className="h-8 rounded-none border-slate-300 bg-white text-sm" type="number" min="0" value={item.quantity || 0} onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))} /></td>
+                              {isVisible('unit') && <td className="px-2 py-2.5 min-w-[120px] align-top"><UnitInput className="h-8 text-sm" value={item.unit || ''} onChange={(value: string) => updateItem(index, 'unit', value)} /></td>}
+                              <td className="px-2 py-2.5 min-w-[110px] align-top"><Input className="h-8 rounded-none border-slate-300 bg-white text-sm" type="number" min="0" value={item.unit_price || 0} onChange={(e) => updateItem(index, 'unit_price', Number(e.target.value))} /></td>
+                              {isVisible('install_rate') && <td className="px-2 py-2.5 min-w-[110px] align-top"><Input className="h-8 rounded-none border-slate-300 bg-white text-sm" type="number" min="0" value={item.install_rate_override ? item.install_rate ?? '' : ''} onChange={(e) => updateInstallRateOverride(index, e.target.value)} /></td>}
+                              {isVisible('vat_rate') && <td className="px-2 py-2.5 min-w-[90px] align-top"><Input className="h-8 rounded-none border-slate-300 bg-white text-sm" type="number" min="0" max="100" value={item.vat_rate ?? ''} placeholder={String(quotation.vat || 0)} onChange={(e) => updateItem(index, 'vat_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
+                              {isVisible('discount_rate') && <td className="px-2 py-2.5 min-w-[90px] align-top"><Input className="h-8 rounded-none border-slate-300 bg-white text-sm" type="number" min="0" max="100" value={item.discount_rate ?? ''} placeholder="global" onChange={(e) => updateItem(index, 'discount_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
+                              {visibleCustomColumns.map((column) => <td key={column.key} className="px-2 py-2.5 min-w-[110px] align-top"><Input className="h-8 rounded-none border-slate-300 bg-white text-sm" type={column.type === 'number' ? 'number' : 'text'} value={(item.custom_data || {})[column.key] || ''} onChange={(e) => updateItem(index, 'custom_data', { ...(item.custom_data || {}), [column.key]: column.type === 'number' ? Number(e.target.value || 0) : e.target.value })} /></td>)}
                               <td className="px-2 py-3 text-sm font-bold text-zinc-900">₦{Number(totals.items[index]?.line_subtotal || 0).toLocaleString()}</td>
-                              <td className="px-2 py-3"><Button type="button" variant="ghost" size="sm" className="rounded-none text-red-700" onClick={() => removeItemAt(index)}>x</Button></td>
+                              <td className="px-2 py-2.5 align-top"><Button type="button" variant="ghost" size="sm" className="h-8 rounded-none px-2 text-red-700 hover:bg-red-50" onClick={() => removeItemAt(index)}>x</Button></td>
                             </tr>
                           )
                         })
@@ -1278,10 +1314,10 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           />
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-4">
           <Card className="rounded-none border-slate-200 bg-white shadow-sm">
-            <CardHeader><CardTitle className="text-base">Quotation Summary</CardTitle></CardHeader>
-            <CardContent className="space-y-3 text-sm">
+            <CardHeader className="border-b border-slate-200 bg-slate-50/70 px-4 py-3"><CardTitle className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">Quotation Summary</CardTitle></CardHeader>
+            <CardContent className="space-y-0 px-4 py-3 text-sm">
               {[
                 ['Status', formatQuotationStatus(quotation.status || 'draft')],
                 ['Issue Date', quotation.issue_date || 'Not set'],
@@ -1290,18 +1326,18 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                   ? [['P.O. Number', String(quotation.po_number || '').trim()]]
                   : []),
               ].map(([label, value]) => (
-                <div key={label} className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2">
-                  <span className="font-medium text-zinc-600">{label}</span>
+                <div key={label} className="flex items-start justify-between gap-3 border-b border-slate-200 py-2 last:border-b-0">
+                  <span className="font-medium text-slate-500">{label}</span>
                   <span className="text-right font-semibold text-zinc-900">{value}</span>
                 </div>
               ))}
               {summaryHeaderFields.length > 0 ? (
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-                  <div className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">Header Fields</div>
+                <div className="mt-3 border border-slate-200 bg-slate-50 p-3">
+                  <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Header Fields</div>
                   <div className="space-y-2">
                     {summaryHeaderFields.map((field) => (
                       <div key={field.id} className="flex items-start justify-between gap-3 text-sm">
-                        <span className="font-medium text-zinc-600">{field.label}</span>
+                        <span className="font-medium text-slate-500">{field.label}</span>
                         <span className="text-right text-zinc-900">{field.value}</span>
                       </div>
                     ))}
@@ -1312,15 +1348,15 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           </Card>
 
           <Card className="rounded-none border-slate-200 bg-white shadow-sm">
-            <CardHeader><CardTitle className="text-base">Totals Settings</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
+            <CardHeader className="border-b border-slate-200 bg-slate-50/70 px-4 py-3"><CardTitle className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">Totals Settings</CardTitle></CardHeader>
+            <CardContent className="space-y-3 px-4 py-4">
               <div className="grid gap-3 sm:grid-cols-2">
-                <div><Label>Global VAT</Label><Input className="mt-2" type="number" min="0" value={quotation.vat || 0} onChange={(e) => updateQuotation('vat', Number(e.target.value))} /></div>
-                <div><Label>Discount</Label><Input className="mt-2" type="number" min="0" value={quotation.discount || 0} onChange={(e) => updateQuotation('discount', Number(e.target.value))} /></div>
+                <div><Label className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Global VAT</Label><Input className="mt-1.5 h-8 rounded-none border-slate-300 bg-white text-sm" type="number" min="0" value={quotation.vat || 0} onChange={(e) => updateQuotation('vat', Number(e.target.value))} /></div>
+                <div><Label className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Discount</Label><Input className="mt-1.5 h-8 rounded-none border-slate-300 bg-white text-sm" type="number" min="0" value={quotation.discount || 0} onChange={(e) => updateQuotation('discount', Number(e.target.value))} /></div>
                 <div>
-                  <Label>Discount Type</Label>
+                  <Label className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Discount Type</Label>
                   <Select value={discountType} onValueChange={(value) => setDiscountType(value as 'fixed' | 'percent')}>
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger className="mt-1.5 h-8 rounded-none border-slate-300 bg-white text-sm">
                       <SelectValue placeholder="Choose discount type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1330,9 +1366,9 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                   </Select>
                 </div>
                 <div>
-                  <Label>Discount Timing</Label>
+                  <Label className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Discount Timing</Label>
                   <Select value={discountTiming} onValueChange={(value) => setDiscountTiming(value as 'before' | 'after')}>
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger className="mt-1.5 h-8 rounded-none border-slate-300 bg-white text-sm">
                       <SelectValue placeholder="Choose discount timing" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1341,11 +1377,11 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>WHT</Label><Input className="mt-2" type="number" min="0" value={quotation.wht || 0} onChange={(e) => updateQuotation('wht', Number(e.target.value))} /></div>
+                <div><Label className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">WHT</Label><Input className="mt-1.5 h-8 rounded-none border-slate-300 bg-white text-sm" type="number" min="0" value={quotation.wht || 0} onChange={(e) => updateQuotation('wht', Number(e.target.value))} /></div>
                 <div>
-                  <Label>WHT Type</Label>
+                  <Label className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">WHT Type</Label>
                   <Select value={whtType} onValueChange={(value) => setWhtType(value as 'fixed' | 'percent')}>
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger className="mt-1.5 h-8 rounded-none border-slate-300 bg-white text-sm">
                       <SelectValue placeholder="Choose WHT type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1361,8 +1397,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           </Card>
 
           <Card className="rounded-none border-slate-200 bg-white shadow-sm">
-            <CardHeader><CardTitle className="text-base">Totals</CardTitle></CardHeader>
-            <CardContent className="space-y-3 text-sm">
+            <CardHeader className="border-b border-slate-200 bg-slate-50/70 px-4 py-3"><CardTitle className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">Totals</CardTitle></CardHeader>
+            <CardContent className="space-y-3 px-4 py-4 text-sm">
               {[
                 ['Subtotal', totals.subtotal],
                 ['Install Rate Total', totals.installRateTotal],
@@ -1371,7 +1407,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                 ['WHT', totals.wht],
                 ['Total Payable', totals.totalPayable],
               ].map(([label, value]) => <div key={label} className="flex items-center justify-between border-b border-slate-200 px-0 py-2 last:border-b-0"><span className="font-medium text-zinc-600">{label}</span><span className={`font-bold ${label === 'Total Payable' ? 'text-[#0f62fe]' : 'text-zinc-900'}`}>N{Number(value || 0).toLocaleString()}</span></div>)}
-              <div className="rounded-none border border-zinc-200 bg-white p-4 shadow-sm">
+              <div className="border border-slate-200 bg-slate-50 px-3 py-2.5 shadow-sm">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <div className="text-sm font-semibold text-zinc-800">Merge Qty + Unit in output</div>
@@ -1380,7 +1416,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                   <Switch checked={mergeQtyUnit} onCheckedChange={setMergeQtyUnit} />
                 </div>
               </div>
-              <div className="rounded-none border border-zinc-200 bg-white p-4 shadow-sm">
+              <div className="border border-slate-200 bg-slate-50 px-3 py-2.5 shadow-sm">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <div className="text-sm font-semibold text-zinc-800">Show item images in output</div>
@@ -1392,13 +1428,19 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
             </CardContent>
           </Card>
 
-          <InvoiceFormActions
-            saving={saving}
-            primaryLabel={isEdit ? 'Save Quotation' : 'Create Quotation'}
-            onSaveSent={() => handleSave('sent')}
-            onSaveDraft={() => handleSave('draft')}
-            onCancel={() => navigate('/quotations')}
-          />
+          <div className="border border-slate-200 bg-white p-3 shadow-sm">
+            <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <FileSpreadsheet className="h-3.5 w-3.5" />
+              Save Actions
+            </div>
+            <InvoiceFormActions
+              saving={saving}
+              primaryLabel={isEdit ? 'Save Quotation' : 'Create Quotation'}
+              onSaveSent={() => handleSave('sent')}
+              onSaveDraft={() => handleSave('draft')}
+              onCancel={() => navigate('/quotations')}
+            />
+          </div>
         </div>
       </div>
     </div>
