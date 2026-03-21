@@ -166,11 +166,18 @@ export default function ColumnManager({
   setWht,
   whtType,
   setWhtType,
+  items = [],
+  onResetItemOverrides,
 }) {
   const [activeTab, setActiveTab] = useState('table')
 
   const builtinCols = columns.filter((c) => !c.key.startsWith('custom_'))
   const customCols = columns.filter((c) => c.key.startsWith('custom_'))
+
+  const standardItems = items.filter((i) => i.row_type === 'standard')
+  const vatOverrideCount      = standardItems.filter((i) => i.vat_rate      != null).length
+  const discountOverrideCount = standardItems.filter((i) => i.discount_rate  != null).length
+  const installOverrideCount  = standardItems.filter((i) => i.install_rate_override === true).length
 
   const handleDragStart = (e, key) => e.dataTransfer.setData('text/plain', key)
   const handleDragOver = (e) => e.preventDefault()
@@ -319,6 +326,49 @@ export default function ColumnManager({
                   )}
                 </CardContent>
               </Card>
+              {onResetItemOverrides && (
+                <Card className="rounded-2xl border-zinc-200 bg-white shadow-none">
+                  <CardContent className="p-4">
+                    <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                      Reset Row Overrides
+                    </div>
+                    <div className="space-y-2">
+                      {[
+                        { label: 'VAT overrides', count: vatOverrideCount,      fields: { vat: true } },
+                        { label: 'Discount overrides', count: discountOverrideCount, fields: { discount: true } },
+                        { label: 'Install rate overrides', count: installOverrideCount, fields: { install: true } },
+                      ].map(({ label, count, fields }) => (
+                        <div key={label} className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                          <div className="flex items-center gap-2 text-sm text-zinc-700">
+                            <span>{label}</span>
+                            <span className="rounded-md bg-zinc-200 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-600">{count}</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={count === 0}
+                            onClick={() => onResetItemOverrides(fields)}
+                            className="h-7 rounded-lg border-zinc-300 bg-white px-2.5 text-xs text-zinc-700 hover:bg-zinc-100 disabled:opacity-40"
+                          >
+                            Reset
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={vatOverrideCount + discountOverrideCount + installOverrideCount === 0}
+                        onClick={() => onResetItemOverrides({ vat: true, discount: true, install: true })}
+                        className="mt-1 w-full rounded-xl border-zinc-300 bg-white text-xs text-zinc-800 hover:bg-zinc-100 disabled:opacity-40"
+                      >
+                        Reset all row overrides
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="tax" className="mt-0">

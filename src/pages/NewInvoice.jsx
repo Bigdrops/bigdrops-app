@@ -137,6 +137,18 @@ export default function NewInvoice() {
       }),
     )
 
+  const resetItemOverrides = (fields) =>
+    setItems((current) =>
+      current.map((item) => {
+        if (item.row_type !== 'standard') return item
+        const patch = {}
+        if (fields.vat)      patch.vat_rate = null
+        if (fields.discount) patch.discount_rate = null
+        if (fields.install)  patch.install_rate = null, patch.install_rate_override = false
+        return { ...item, ...patch }
+      }),
+    )
+
   const addUngroupedItem = (insertAt = null) => {
     setItems((current) => {
       const newItem = { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }
@@ -447,6 +459,7 @@ export default function NewInvoice() {
         onAddGroup={addGroup}
         onAddItemToGroup={addItemToGroup}
         onUpdateItem={updateItem}
+        onResetItemOverrides={resetItemOverrides}
         onRemoveItem={removeItem}
         onMoveItem={moveItem}
         onInsertItemAfter={insertItemAfter}

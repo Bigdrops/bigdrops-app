@@ -77,6 +77,7 @@ export default function MobileInvoiceForm(props) {
     onAddGroup,
     onAddItemToGroup,
     onUpdateItem,
+    onResetItemOverrides,
     onRemoveItem,
     onMoveItem,
     onInsertItemAfter,
@@ -724,6 +725,8 @@ export default function MobileInvoiceForm(props) {
           setWht={(value) => updateInvoice('wht', value)}
           whtType={whtType}
           setWhtType={setWhtType}
+          items={items}
+          onResetItemOverrides={onResetItemOverrides}
         />
       ) : null}
     </>
