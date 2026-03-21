@@ -243,13 +243,13 @@ export default function ClientSelector({ clientId, clientName, onClientChange, i
         </DialogContent>
       </Dialog>
 
-      <div ref={containerRef} className={compact ? 'space-y-2' : 'space-y-3'}>
-        <div className="flex items-center justify-between gap-3">
+      <div ref={containerRef} className={compact ? 'space-y-1.5' : 'space-y-3'}>
+        <div className="flex items-center justify-between gap-2">
           <Label className={compact ? 'text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500' : ''}>Client</Label>
           <Button
             type="button"
             variant={compact ? 'outline' : 'link'}
-            className={compact ? 'h-8 rounded-xl border-zinc-200 bg-white px-2.5 text-[11px] font-semibold text-zinc-700' : 'h-auto p-0 text-sm font-semibold'}
+            className={compact ? 'h-7 rounded-xl border-zinc-200 bg-white px-2 text-[10px] font-semibold text-zinc-700' : 'h-auto p-0 text-sm font-semibold'}
             onClick={() => setShowAddModal(true)}
           >
             + New Client
@@ -370,15 +370,15 @@ export default function ClientSelector({ clientId, clientName, onClientChange, i
           </div>
         )}
 
-        {selectedSummary ? (
-          <Card className={compact ? 'border-zinc-200 bg-zinc-50 px-3 py-2.5 ring-0 shadow-none' : 'border-slate-200 bg-slate-50 p-4'}>
-            <div className={compact ? 'space-y-1' : ''}>
-              <div className={compact ? 'text-sm font-semibold text-zinc-900' : 'text-sm font-semibold text-slate-900'}>{selectedSummary.name}</div>
-              {selectedClient?.contact_person ? <div className={compact ? 'text-xs text-zinc-500' : 'mt-1 text-sm text-slate-600'}>{selectedClient.contact_person}</div> : null}
-              {selectedClient?.phone ? <div className={compact ? 'text-xs text-zinc-500' : 'text-sm text-slate-600'}>{selectedClient.phone}</div> : null}
-              {selectedClient?.email ? <div className={compact ? 'text-xs text-zinc-500' : 'text-sm text-slate-600'}>{selectedClient.email}</div> : null}
+        {!compact && selectedSummary ? (
+          <Card className="border-slate-200 bg-slate-50 p-4">
+            <div>
+              <div className="text-sm font-semibold text-slate-900">{selectedSummary.name}</div>
+              {selectedClient?.contact_person ? <div className="mt-1 text-sm text-slate-600">{selectedClient.contact_person}</div> : null}
+              {selectedClient?.phone ? <div className="text-sm text-slate-600">{selectedClient.phone}</div> : null}
+              {selectedClient?.email ? <div className="text-sm text-slate-600">{selectedClient.email}</div> : null}
               {selectedClient?.address ? (
-                <div className={compact ? 'text-xs text-zinc-500' : 'text-sm text-slate-600'}>
+                <div className="text-sm text-slate-600">
                   {[selectedClient.address, selectedClient.city, selectedClient.state].filter(Boolean).join(', ')}
                 </div>
               ) : null}

@@ -14,8 +14,8 @@ import MobileItemCard from './MobileItemCard'
 import MobileGroupCard from './MobileGroupCard'
 import TotalsPanel from './TotalsPanel'
 
-const cardCls = 'rounded-[24px] border border-zinc-200 bg-white ring-0 shadow-none'
-const inputCls = 'mt-1 h-10 rounded-xl border-zinc-200 bg-white text-sm text-zinc-900'
+const cardCls = 'rounded-2xl border border-zinc-200 bg-white ring-0 shadow-none'
+const inputCls = 'h-9 rounded-lg border-zinc-200 bg-white text-sm text-zinc-900'
 const labelCls = 'text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500'
 
 export default function MobileInvoiceForm(props) {
@@ -220,11 +220,9 @@ export default function MobileInvoiceForm(props) {
           </Button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Card className={cardCls}>
-            <CardContent className="space-y-3 p-3.5">
-              <h2 className="text-sm font-semibold text-zinc-900">Invoice Details</h2>
-
+            <CardContent className="space-y-2 p-3">
               <ClientSelector
                 clientId={invoice.client_id || null}
                 clientName={invoice.client_name || ''}
@@ -236,15 +234,15 @@ export default function MobileInvoiceForm(props) {
                 }}
               />
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 <div>
                   <label className={labelCls}>Invoice Number</label>
                   <div className="relative">
-                    <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                    <Hash className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
                     <Input
                       value={invoice.invoice_number || ''}
                       onChange={(e) => updateInvoice('invoice_number', e.target.value)}
-                      className={`${inputCls} pl-10`}
+                      className={`${inputCls} pl-8`}
                     />
                   </div>
                 </div>
@@ -259,28 +257,28 @@ export default function MobileInvoiceForm(props) {
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 <div>
                   <label className={labelCls}>Issue Date</label>
                   <div className="relative">
-                    <Calendar className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                    <Calendar className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
                     <Input
                       type="date"
                       value={invoice.issue_date || ''}
                       onChange={(e) => updateInvoice('issue_date', e.target.value)}
-                      className={`${inputCls} pl-10`}
+                      className={`${inputCls} pl-8`}
                     />
                   </div>
                 </div>
                 <div>
                   <label className={labelCls}>Due Date</label>
                   <div className="relative">
-                    <Calendar className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                    <Calendar className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
                     <Input
                       type="date"
                       value={invoice.due_date || ''}
                       onChange={(e) => updateInvoice('due_date', e.target.value)}
-                      className={`${inputCls} pl-10`}
+                      className={`${inputCls} pl-8`}
                     />
                   </div>
                 </div>
@@ -289,12 +287,12 @@ export default function MobileInvoiceForm(props) {
               <div>
                 <label className={labelCls}>Invoice Title</label>
                 <div className="relative">
-                  <FileText className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                  <FileText className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
                   <Input
                     value={invoiceTitle || ''}
                     onChange={(e) => setInvoiceTitle(e.target.value)}
                     placeholder="e.g. Solar installation"
-                    className={`${inputCls} pl-10`}
+                    className={`${inputCls} pl-8`}
                   />
                 </div>
               </div>
