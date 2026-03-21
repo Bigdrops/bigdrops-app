@@ -515,7 +515,7 @@ export default function ViewInvoice() {
 
 
         <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: isNarrow ? '1fr' : 'minmax(0,1fr) 240px', marginBottom: '16px' }}>
-          <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: isNarrow ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
+          <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr' }}>
 
             {/* Client */}
             <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px 12px' }}>
@@ -524,28 +524,6 @@ export default function ViewInvoice() {
               {client?.contact_person && <div style={{ marginTop: '3px', fontSize: '12px', color: '#64748b' }}>{client.contact_person}</div>}
               {client?.email && <div style={{ fontSize: '12px', color: '#64748b' }}>{client.email}</div>}
               {client?.phone && <div style={{ fontSize: '12px', color: '#64748b' }}>{client.phone}</div>}
-            </div>
-
-            {/* Invoice Details — core metadata + reference fields merged */}
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px 12px' }}>
-              <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '6px' }}>Invoice Details</div>
-              <div style={{ display: 'grid', gap: '3px', fontSize: '12px', color: '#475569' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Issued</span><span>{invoice.issue_date || '—'}</span></div>
-                {invoice.due_date ? <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Due</span><span>{invoice.due_date}</span></div> : null}
-                {poNumber ? <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>P.O.</span><span>{poNumber}</span></div> : null}
-                {invoice.payment_terms ? <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Terms</span><span>{invoice.payment_terms}</span></div> : null}
-                {invoice.work_duration ? <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Duration</span><span>{invoice.work_duration}</span></div> : null}
-              </div>
-              {topHeaderFields.length > 0 && (
-                <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #f1f5f9', display: 'grid', gap: '5px' }}>
-                  {topHeaderFields.map((field, index) => (
-                    <div key={`${field.label}-${index}`} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '12px' }}>
-                      <span style={{ color: '#94a3b8', flexShrink: 0 }}>{field.label}</span>
-                      <span style={{ color: '#0f172a', fontWeight: '500', wordBreak: 'break-word', textAlign: 'right' }}>{field.value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Conversion Trail */}
@@ -615,8 +593,15 @@ export default function ViewInvoice() {
             </div>
             <div style={{ flex: 1, minWidth: '160px' }}>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Details</div>
+              {invoice.issue_date && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>Issued: {invoice.issue_date}</div>}
+              {poNumber && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>P.O.: {poNumber}</div>}
               {invoice.payment_terms && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>Payment Terms: {invoice.payment_terms}</div>}
               {invoice.work_duration && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>Work Duration: {invoice.work_duration}</div>}
+              {topHeaderFields.map((field, index) => (
+                field.label && field.value
+                  ? <div key={`${field.label}-${index}`} style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>{field.label}: {field.value}</div>
+                  : null
+              ))}
             </div>
           </div>
 
