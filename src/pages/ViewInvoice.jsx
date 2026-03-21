@@ -468,38 +468,27 @@ export default function ViewInvoice() {
 
 
         {/* ── Action Bar ── */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div onClick={() => navigate('/invoices')} style={{ padding: '10px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', border: '1px solid #ddd', backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
-            ← Invoices
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', alignItems: 'center', overflowX: 'auto', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div onClick={() => navigate('/invoices')} style={{ flexShrink: 0, padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>
+            ← Back
           </div>
-          {/* Linked Documents */}
-          <div
-            onClick={() => invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectModal(true)}
-            style={{ display: 'none' }}
-          >
-            🔗 {invoice.project_id ? 'Linked Documents' : 'Link to Project'}
-          </div>
-          <span style={{ backgroundColor: s.bg, color: s.color, padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', textTransform: 'capitalize' }}>
+          <span style={{ flexShrink: 0, fontSize: '13px', fontWeight: '700', color: '#111827', whiteSpace: 'nowrap' }}>{invoice.invoice_number}</span>
+          <span style={{ flexShrink: 0, backgroundColor: s.bg, color: s.color, padding: '3px 9px', borderRadius: '20px', fontSize: '11px', fontWeight: '700', textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
             {invoice.status || 'draft'}
           </span>
-          {invoice.status === 'draft' && (
-            <div onClick={() => handleStatusChange('sent')} style={{ display: 'none' }}>
-              Mark as Sent
-            </div>
-          )}
-          <div style={{ flex: 1 }} />
-          <div onClick={handleDownloadPDF} style={{ padding: '10px 16px', borderRadius: '6px', cursor: pdfGenerating ? 'default' : 'pointer', fontSize: '14px', backgroundColor: '#0056B3', color: 'white', fontWeight: 'bold', opacity: pdfGenerating ? 0.7 : 1 }}>
-            {pdfGenerating ? 'Preparing...' : '⬇ Download PDF'}
+          <div style={{ flex: 1, minWidth: 4 }} />
+          <div onClick={handleDownloadPDF} style={{ flexShrink: 0, padding: '6px 12px', borderRadius: '6px', cursor: pdfGenerating ? 'default' : 'pointer', fontSize: '13px', backgroundColor: '#0F172A', color: 'white', fontWeight: '600', opacity: pdfGenerating ? 0.7 : 1, whiteSpace: 'nowrap' }}>
+            {pdfGenerating ? 'Preparing…' : '↓ PDF'}
           </div>
-          <div onClick={() => navigate('/invoices/edit/' + id)} style={{ padding: '10px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', backgroundColor: '#CC0000', color: 'white', fontWeight: 'bold' }}>
+          <div onClick={() => navigate('/invoices/edit/' + id)} style={{ flexShrink: 0, padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>
             Edit
           </div>
-          <div ref={moreRef} style={{ position: 'relative' }}>
-            <div onClick={() => setShowMore(p => !p)} style={{ padding: '10px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', border: '1px solid #ddd', backgroundColor: 'white', fontWeight: '600', userSelect: 'none' }}>
-              ••• More
+          <div ref={moreRef} style={{ position: 'relative', flexShrink: 0 }}>
+            <div onClick={() => setShowMore(p => !p)} style={{ padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', fontWeight: '600', userSelect: 'none', color: '#374151', letterSpacing: '0.05em' }}>
+              ···
             </div>
             {showMore && (
-              <div style={{ position: 'absolute', top: '100%', right: 0, left: 'auto', marginTop: '6px', backgroundColor: 'white', borderRadius: '10px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', border: '1px solid #eee', zIndex: 200, minWidth: '230px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: '100%', right: 0, left: 'auto', marginTop: '4px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', border: '1px solid #e2e8f0', zIndex: 200, minWidth: '220px', overflow: 'hidden' }}>
                 {[
                   { label: invoice.project_id ? 'Open Linked Documents' : 'Link to Project', action: () => { setShowMore(false); invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectModal(true) }, show: true },
                   { label: '💳 Record Payment',        action: () => { setShowMore(false); setShowPaymentModal(true) },           show: invoice.status !== 'paid' },
@@ -513,7 +502,7 @@ export default function ViewInvoice() {
                   { label: '🗑 Delete Invoice',        action: handleDelete,                                                     show: true, danger: true },
                 ].filter(m => m.show && m.label).map((item, i) => (
                   <div key={i} onClick={item.action}
-                    style={{ padding: '13px 18px', cursor: converting && item.label.includes('Converting') ? 'default' : 'pointer', fontSize: '14px', color: item.danger ? '#CC0000' : '#1a1a1a', borderBottom: '1px solid #f5f5f5', transition: 'background 0.1s', opacity: converting && item.label.includes('Converting') ? 0.7 : 1 }}
+                    style={{ padding: '10px 16px', cursor: converting && item.label.includes('Converting') ? 'default' : 'pointer', fontSize: '13px', color: item.danger ? '#CC0000' : '#1a1a1a', borderBottom: '1px solid #f5f5f5', transition: 'background 0.1s', opacity: converting && item.label.includes('Converting') ? 0.7 : 1 }}
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f9f9f9'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
                     {item.label}
@@ -525,68 +514,66 @@ export default function ViewInvoice() {
         </div>
 
 
-        <div style={{ backgroundColor: 'white', borderRadius: '18px', border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: isNarrow ? '16px' : '20px', marginBottom: '24px' }}>
-          <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: isNarrow ? '1fr' : 'minmax(0,1fr) 260px' }}>
-            <div style={{ display: 'grid', gap: '12px', gridTemplateColumns: isNarrow ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
-              <div style={{ border: '1px solid #e2e8f0', borderRadius: '16px', backgroundColor: '#f8fafc', padding: '16px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.18em' }}>Client</div>
-                <div style={{ marginTop: '8px', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>{invoice.client_name || 'Unassigned'}</div>
-                {client?.contact_person && <div style={{ marginTop: '4px', fontSize: '14px', color: '#64748b' }}>{client.contact_person}</div>}
-                {client?.email && <div style={{ fontSize: '14px', color: '#64748b' }}>{client.email}</div>}
-                {client?.phone && <div style={{ fontSize: '14px', color: '#64748b' }}>{client.phone}</div>}
-              </div>
-              <div style={{ border: '1px solid #e2e8f0', borderRadius: '16px', backgroundColor: '#f8fafc', padding: '16px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.18em' }}>Invoice Summary</div>
-                <div style={{ marginTop: '8px', display: 'grid', gap: '4px', fontSize: '14px', color: '#475569' }}>
-                  <div>Status: {statusLabel}</div>
-                  <div>Issued: {invoice.issue_date || 'Not set'}</div>
-                  {invoice.due_date ? <div>Due: {invoice.due_date}</div> : null}
-                  {poNumber ? <div>P.O. Number: {poNumber}</div> : null}
-                  {invoice.payment_terms ? <div>Payment Terms: {invoice.payment_terms}</div> : null}
-                  {invoice.work_duration ? <div>Work Duration: {invoice.work_duration}</div> : null}
-                </div>
-              </div>
-              {topHeaderFields.length > 0 && (
-                <div style={{ border: '1px solid #e2e8f0', borderRadius: '16px', backgroundColor: '#f8fafc', padding: '16px', gridColumn: isNarrow ? 'auto' : '1 / span 2' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.18em' }}>Reference Fields</div>
-                  <div style={{ marginTop: '10px', display: 'grid', gap: '12px', gridTemplateColumns: isNarrow ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
-                    {topHeaderFields.map((field, index) => (
-                      <div key={`${field.label}-${index}`}>
-                        <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{field.label}</div>
-                        <div style={{ marginTop: '4px', fontSize: '14px', color: '#0f172a', wordBreak: 'break-word' }}>{field.value}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {(conversionTrail?.source?.number || (conversionTrail?.derived || []).length > 0) && (
-                <div style={{ border: '1px solid #e2e8f0', borderRadius: '16px', backgroundColor: '#f8fafc', padding: '16px', gridColumn: isNarrow ? 'auto' : '1 / span 2' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.18em' }}>Conversion Trail</div>
-                  <div style={{ marginTop: '10px', display: 'grid', gap: '8px', fontSize: '14px', color: '#475569' }}>
-                    {conversionTrail?.source?.number ? (
-                      <button
-                        type="button"
-                        onClick={() => conversionTrail.source.id ? navigate(`/quotations/${conversionTrail.source.id}`) : null}
-                        style={{ textAlign: 'left', color: '#1d4ed8', background: 'transparent', border: 'none', padding: 0, cursor: conversionTrail.source.id ? 'pointer' : 'default', fontSize: '14px', fontWeight: '600' }}
-                      >
-                        Source Quotation: {conversionTrail.source.number}
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              )}
+        <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: isNarrow ? '1fr' : 'minmax(0,1fr) 240px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: isNarrow ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
+            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px 12px' }}>
+              <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '6px' }}>Client</div>
+              <div style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', lineHeight: 1.3 }}>{invoice.client_name || 'Unassigned'}</div>
+              {client?.contact_person && <div style={{ marginTop: '3px', fontSize: '12px', color: '#64748b' }}>{client.contact_person}</div>}
+              {client?.email && <div style={{ fontSize: '12px', color: '#64748b' }}>{client.email}</div>}
+              {client?.phone && <div style={{ fontSize: '12px', color: '#64748b' }}>{client.phone}</div>}
             </div>
+            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px 12px' }}>
+              <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '6px' }}>Summary</div>
+              <div style={{ display: 'grid', gap: '3px', fontSize: '12px', color: '#475569' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Status</span><span style={{ fontWeight: '600', color: s.color }}>{statusLabel}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Issued</span><span>{invoice.issue_date || '—'}</span></div>
+                {invoice.due_date ? <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Due</span><span>{invoice.due_date}</span></div> : null}
+                {poNumber ? <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>P.O.</span><span>{poNumber}</span></div> : null}
+                {invoice.payment_terms ? <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Terms</span><span>{invoice.payment_terms}</span></div> : null}
+                {invoice.work_duration ? <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Duration</span><span>{invoice.work_duration}</span></div> : null}
+              </div>
+            </div>
+            {topHeaderFields.length > 0 && (
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px 12px', gridColumn: isNarrow ? 'auto' : '1 / span 2' }}>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '8px' }}>Reference Fields</div>
+                <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: isNarrow ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
+                  {topHeaderFields.map((field, index) => (
+                    <div key={`${field.label}-${index}`}>
+                      <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{field.label}</div>
+                      <div style={{ marginTop: '2px', fontSize: '13px', color: '#0f172a', wordBreak: 'break-word' }}>{field.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {(conversionTrail?.source?.number || (conversionTrail?.derived || []).length > 0) && (
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px 12px', gridColumn: isNarrow ? 'auto' : '1 / span 2' }}>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '6px' }}>Conversion Trail</div>
+                <div style={{ display: 'grid', gap: '4px', fontSize: '12px', color: '#475569' }}>
+                  {conversionTrail?.source?.number ? (
+                    <button
+                      type="button"
+                      onClick={() => conversionTrail.source.id ? navigate(`/quotations/${conversionTrail.source.id}`) : null}
+                      style={{ textAlign: 'left', color: '#1d4ed8', background: 'transparent', border: 'none', padding: 0, cursor: conversionTrail.source.id ? 'pointer' : 'default', fontSize: '12px', fontWeight: '600' }}
+                    >
+                      Source Quotation: {conversionTrail.source.number}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            )}
+          </div>
 
-            <div style={{ border: '1px solid #0f172a', borderRadius: '16px', backgroundColor: '#0f172a', padding: '16px', color: 'white' }}>
-              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.18em' }}>Document Identity</div>
-              <div style={{ marginTop: '8px', fontSize: '20px', fontWeight: '700' }}>{companyName || (invoice.document_type || 'INVOICE')}</div>
-              {companyTagline ? <div style={{ marginTop: '4px', fontSize: '14px', color: '#cbd5e1' }}>{companyTagline}</div> : null}
-              {companyIdentityLines.length > 0 && (
-                <div style={{ marginTop: '12px', display: 'grid', gap: '4px', fontSize: '12px', color: '#cbd5e1' }}>
-                  {companyIdentityLines.map((line) => <div key={line}>{line}</div>)}
-                </div>
-              )}
-            </div>
+          <div style={{ border: '1px solid #0f172a', borderRadius: '8px', backgroundColor: '#0f172a', padding: '11px 12px', color: 'white' }}>
+            <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '6px' }}>Document Identity</div>
+            <div style={{ fontSize: '17px', fontWeight: '700', lineHeight: 1.3 }}>{companyName || (invoice.document_type || 'INVOICE')}</div>
+            {companyTagline ? <div style={{ marginTop: '3px', fontSize: '12px', color: '#cbd5e1' }}>{companyTagline}</div> : null}
+            {companyIdentityLines.length > 0 && (
+              <div style={{ marginTop: '8px', display: 'grid', gap: '2px', fontSize: '11px', color: '#94a3b8' }}>
+                {companyIdentityLines.map((line) => <div key={line}>{line}</div>)}
+              </div>
+            )}
           </div>
         </div>
 
