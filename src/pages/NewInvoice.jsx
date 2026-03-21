@@ -16,6 +16,8 @@ import {
 import { computeDocument } from '../lib/Calculations'
 import { numberToWords } from '../hooks/useInvoiceForm'
 
+const invoicePageClassName = 'p-0 max-w-none'
+
 export default function NewInvoice() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -66,7 +68,7 @@ export default function NewInvoice() {
           due_date: '',
           status: 'draft',
           document_type: 'INVOICE',
-          payment_terms: 'Net 30',
+          payment_terms: 'Custom',
           custom_payment_terms: '',
           notes: '',
           terms: '',
@@ -274,18 +276,22 @@ export default function NewInvoice() {
     const reader = new FileReader()
     reader.onload = (loadEvent) => {
       const text = String(loadEvent.target?.result || '')
-      const { newItems, error } = parseCsvItems(text)
-      if (error) {
-        alert(error)
-        return
-      }
-
-      setItems((current) => [...current.filter((item) => item.description || item.row_type === 'group_header'), ...newItems])
-      alert(newItems.length + ' items imported')
+      handleCSVTextImport(text)
     }
 
     reader.readAsText(file)
     event.target.value = ''
+  }
+
+  const handleCSVTextImport = (text) => {
+    const { newItems, error } = parseCsvItems(text)
+    if (error) {
+      alert(error)
+      return
+    }
+
+    setItems((current) => [...current.filter((item) => item.description || item.row_type === 'group_header'), ...newItems])
+    alert(newItems.length + ' items imported')
   }
 
   const calculationInputs = buildCalculationInputs({ invoice, discountType, discountTiming, whtType })
@@ -382,7 +388,7 @@ export default function NewInvoice() {
   }
 
   return (
-    <Layout title="Create Invoice">
+    <Layout title="Create Invoice" hidePageHeader contentClassName={invoicePageClassName}>
       <MobileInvoiceForm
         title="Create Invoice"
         modeLabel="New Invoice"
@@ -436,6 +442,7 @@ export default function NewInvoice() {
         onSaveDraft={() => handleSave('draft')}
         onCancel={() => navigate('/invoices')}
         onImportFileChange={handleCSVImport}
+        onImportText={handleCSVTextImport}
         onAddItem={addItem}
         onAddGroup={addGroup}
         onAddItemToGroup={addItemToGroup}

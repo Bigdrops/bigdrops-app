@@ -283,7 +283,7 @@ function QuickTileRail({ tiles }) {
 }
 
 // ── Main Layout ──────────────────────────────────────────────────────────────
-export default function Layout({ title, children, session }) {
+export default function Layout({ title, children, session, hidePageHeader = false, contentClassName = '' }) {
   const isMobile = useIsMobile()
   const location = useLocation()
   const isDashboard = location.pathname === '/'
@@ -314,7 +314,7 @@ export default function Layout({ title, children, session }) {
             <QuickTileRail tiles={activeTiles} />
             <BusinessSwitcher />
           </header>
-        ) : (
+        ) : hidePageHeader ? null : (
           <header className="sticky top-0 z-20 h-14 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 flex items-center justify-between gap-3">
             <button
               onClick={() => setMoreOpen(true)}
@@ -329,7 +329,7 @@ export default function Layout({ title, children, session }) {
         )}
 
         {/* Mobile Content */}
-        <main className="flex-1 p-4 pb-24 w-full max-w-5xl mx-auto">
+        <main className={`flex-1 w-full mx-auto ${contentClassName || 'p-4 pb-24 max-w-5xl'}`}>
           {children}
         </main>
 
@@ -414,11 +414,13 @@ export default function Layout({ title, children, session }) {
       </aside>
 
       <div className="flex flex-col col-start-2">
-        <header className="sticky top-0 z-20 h-14 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 flex items-center justify-between">
-          <h1 className="text-sm font-bold text-slate-900 uppercase tracking-tight">{title}</h1>
-          <BusinessSwitcher />
-        </header>
-        <main className="flex-1 p-8 w-full max-w-5xl mx-auto">
+        {hidePageHeader ? null : (
+          <header className="sticky top-0 z-20 h-14 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 flex items-center justify-between">
+            <h1 className="text-sm font-bold text-slate-900 uppercase tracking-tight">{title}</h1>
+            <BusinessSwitcher />
+          </header>
+        )}
+        <main className={`flex-1 w-full mx-auto ${contentClassName || 'p-8 max-w-5xl'}`}>
           {children}
         </main>
       </div>

@@ -45,8 +45,8 @@ export default function MobileItemCard({
   const discountExcluded = discountValue === 0
 
   return (
-    <Card className="overflow-hidden rounded-[22px] border-zinc-200 bg-white shadow-sm">
-      <div className="flex items-center gap-2 border-b border-zinc-100 bg-zinc-50 px-3 py-2.5">
+    <Card className="overflow-hidden rounded-[22px] border border-zinc-200 bg-white ring-0 shadow-none">
+      <div className="flex items-center gap-2 border-b border-zinc-200 bg-zinc-50 px-3 py-2.5">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[11px] font-bold text-white">
           {number}
         </span>
@@ -181,14 +181,14 @@ export default function MobileItemCard({
             </div>
 
             <div className="flex flex-col justify-end">
-              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-3 text-right">
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 px-3 py-3 text-right">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Amount</div>
                 <div className="mt-1 text-sm font-bold text-zinc-900">NGN {Number(computedAmount || 0).toLocaleString()}</div>
               </div>
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-3">
+          <div className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-zinc-50/80 px-3 py-3">
             <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Amount</span>
             <span className="text-sm font-bold text-zinc-900">NGN {Number(computedAmount || 0).toLocaleString()}</span>
           </div>
@@ -258,7 +258,7 @@ export default function MobileItemCard({
         ) : null}
 
         {showImageSlot || item.image_url ? (
-          <div className="rounded-[20px] border border-zinc-200 bg-zinc-50 p-3">
+          <div className="rounded-[20px] border border-zinc-200 bg-zinc-50/80 p-3">
             <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Item Image</div>
             <ItemImageUpload value={item.image_url || null} onChange={(url) => onUpdate(index, 'image_url', url)} />
           </div>
@@ -278,7 +278,7 @@ export default function MobileItemCard({
       <button
         type="button"
         onClick={() => onInsertBelow(index)}
-        className="flex w-full items-center justify-center gap-1.5 border-t border-dashed border-zinc-200 bg-zinc-50 py-2.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
+        className="flex w-full items-center justify-center gap-1.5 border-t border-zinc-200 bg-zinc-50 py-2.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
       >
         <Plus className="h-3.5 w-3.5" />
         Add item below

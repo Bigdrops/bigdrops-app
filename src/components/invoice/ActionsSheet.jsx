@@ -13,7 +13,7 @@ export default function ActionsSheet({
     {
       icon: Settings2,
       label: 'Settings',
-      description: 'Columns, VAT and WHT',
+      description: 'Columns and taxes',
       onClick: onOpenColumnManager,
     },
     {
@@ -31,13 +31,13 @@ export default function ActionsSheet({
     {
       icon: FileText,
       label: 'Notes & Terms',
-      description: 'Jump to the rich text section',
+      description: 'Open the text section',
       onClick: onScrollToAdditionalInfo,
     },
     {
       icon: Paperclip,
       label: 'Attachments',
-      description: 'Jump to supporting documents',
+      description: 'Open attachments',
       onClick: onScrollToAdditionalInfo,
     },
   ]
@@ -58,9 +58,9 @@ export default function ActionsSheet({
                 action.onClick?.()
                 onOpenChange(false)
               }}
-              className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-zinc-50"
+              className="flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-zinc-50 active:bg-zinc-100"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-700">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-900 text-white">
                 <action.icon className="h-5 w-5" />
               </div>
               <div className="min-w-0 flex-1">

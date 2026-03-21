@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from 'react'
-import { Calendar, FileText, GripHorizontal, Hash, Layers, MoreHorizontal, Plus, Settings2, Upload } from 'lucide-react'
+import { Calendar, ChevronDown, ChevronUp, FileText, Hash, Layers, MoreHorizontal, Plus, Settings2, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Textarea } from '@/components/ui/textarea'
 import ClientSelector from '@/components/ClientSelector'
 import ColumnManager from '@/components/ColumnManager'
 import RichTextEditor from '@/components/RichTextEditor'
@@ -13,8 +14,8 @@ import MobileItemCard from './MobileItemCard'
 import MobileGroupCard from './MobileGroupCard'
 import TotalsPanel from './TotalsPanel'
 
-const cardCls = 'rounded-[24px] border-zinc-200 bg-white shadow-sm'
-const inputCls = 'mt-1 h-11 rounded-2xl border-zinc-200 bg-white text-sm text-zinc-900'
+const cardCls = 'rounded-[24px] border border-zinc-200 bg-white ring-0 shadow-none'
+const inputCls = 'mt-1 h-10 rounded-xl border-zinc-200 bg-white text-sm text-zinc-900'
 const labelCls = 'text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500'
 
 export default function MobileInvoiceForm(props) {
@@ -71,6 +72,7 @@ export default function MobileInvoiceForm(props) {
     onSaveDraft,
     onCancel,
     onImportFileChange,
+    onImportText,
     onAddItem,
     onAddGroup,
     onAddItemToGroup,
@@ -97,36 +99,14 @@ export default function MobileInvoiceForm(props) {
   } = props
 
   const [showActionsSheet, setShowActionsSheet] = useState(false)
+  const [showImportSheet, setShowImportSheet] = useState(false)
+  const [showNotesTerms, setShowNotesTerms] = useState(false)
+  const [showAttachments, setShowAttachments] = useState(false)
+  const [csvTab, setCsvTab] = useState('upload')
+  const [pasteCSV, setPasteCSV] = useState('')
   const importInputRef = useRef(null)
   const additionalInfoRef = useRef(null)
-
-  const orderedGroups = useMemo(() => {
-    const seen = new Set()
-    const groupMap = new Map(groups.map((group) => [group.id, group]))
-
-    return items
-      .filter((item) => item.row_type === 'group_header')
-      .map((header, index) => {
-        const fallbackId = header.group_id || `group_${index}`
-        const group = groupMap.get(fallbackId) || {
-          id: fallbackId,
-          name: header.group_name || `Group ${index + 1}`,
-          showSubtotal: false,
-        }
-        if (seen.has(group.id)) return null
-        seen.add(group.id)
-        return {
-          group,
-          items: items.filter((item) => item.row_type === 'standard' && item.group_id === group.id),
-        }
-      })
-      .filter(Boolean)
-  }, [groups, items])
-
-  const ungroupedItems = useMemo(
-    () => items.filter((item) => item.row_type === 'standard' && !item.group_id),
-    [items],
-  )
+  const groupMap = useMemo(() => new Map(groups.map((group) => [group.id, group])), [groups])
 
   const lineItemsCount = useMemo(
     () => items.filter((item) => item.row_type === 'standard').length,
@@ -147,17 +127,83 @@ export default function MobileInvoiceForm(props) {
     [computedGroups],
   )
 
-  const getItemIndex = (uiKey) => items.findIndex((item) => (item._uiKey || item.id) === uiKey)
   const getItemNumber = (index) =>
     items.slice(0, index + 1).filter((item) => item.row_type === 'standard').length
   const getComputedAmount = (item) =>
     computedAmountMap.get(item._uiKey || item.id) ?? Number(item.quantity || 0) * Number(item.unit_price || 0)
 
-  const rowImagesEnabled = items.some((item) => item.row_type === 'standard' && item.image_url)
+  const openImportSheet = () => {
+    setCsvTab('upload')
+    setShowImportSheet(true)
+  }
+
+  const lineItemRows = useMemo(() => {
+    const rows = []
+
+    for (let index = 0; index < items.length; index += 1) {
+      const item = items[index]
+
+      if (item.row_type === 'group_header') {
+        const groupId = item.group_id || `group_${index}`
+        const group = groupMap.get(groupId) || {
+          id: groupId,
+          name: item.group_name || `Group ${rows.length + 1}`,
+          showSubtotal: false,
+        }
+        const groupItems = []
+        let cursor = index + 1
+
+        while (cursor < items.length) {
+          const nextItem = items[cursor]
+          if (nextItem.row_type === 'group_header') break
+          if (nextItem.row_type === 'standard' && nextItem.group_id === groupId) {
+            groupItems.push({
+              item: nextItem,
+              index: cursor,
+              number: getItemNumber(cursor),
+              isFirst: groupItems.length === 0,
+              isLast: false,
+            })
+            index = cursor
+            cursor += 1
+            continue
+          }
+          break
+        }
+
+        if (groupItems.length > 0) {
+          groupItems[groupItems.length - 1].isLast = true
+        }
+
+        rows.push({
+          type: 'group',
+          key: item._uiKey || item.id || groupId,
+          group,
+          items: groupItems,
+        })
+        continue
+      }
+
+      if (item.row_type === 'standard') {
+        rows.push({
+          type: 'item',
+          key: item._uiKey || item.id || index,
+          item,
+          index,
+          number: getItemNumber(index),
+          groupName: item.group_id ? groupMap.get(item.group_id)?.name || item.group_name || '' : '',
+          isFirst: index === 0 || items[index - 1]?.row_type === 'group_header',
+          isLast: index === items.length - 1 || items[index + 1]?.row_type === 'group_header',
+        })
+      }
+    }
+
+    return rows
+  }, [getItemNumber, groupMap, items])
 
   return (
     <>
-      <div className="mx-auto max-w-5xl px-3 pb-12 pt-4 sm:px-4 sm:pt-6">
+      <div className="mx-auto max-w-5xl px-3 pb-24 pt-4 sm:px-4 sm:pb-12 sm:pt-6">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">{modeLabel}</div>
@@ -176,16 +222,14 @@ export default function MobileInvoiceForm(props) {
 
         <div className="space-y-4">
           <Card className={cardCls}>
-            <CardContent className="space-y-4 p-4">
-              <div>
-                <h2 className="text-sm font-semibold text-zinc-900">Invoice Details</h2>
-                <p className="text-xs text-zinc-500">Core invoice metadata stays at the top of the shell.</p>
-              </div>
+            <CardContent className="space-y-3 p-3.5">
+              <h2 className="text-sm font-semibold text-zinc-900">Invoice Details</h2>
 
               <ClientSelector
                 clientId={invoice.client_id || null}
                 clientName={invoice.client_name || ''}
                 isMobile={isMobile}
+                compact
                 onClientChange={(id, name) => {
                   updateInvoice('client_id', id)
                   updateInvoice('client_name', name)
@@ -255,39 +299,20 @@ export default function MobileInvoiceForm(props) {
                 </div>
               </div>
 
-              <div>
-                <label className={labelCls}>Work Duration</label>
-                <Input
-                  value={invoice.work_duration || ''}
-                  onChange={(e) => updateInvoice('work_duration', e.target.value)}
-                  placeholder="e.g. 2 weeks"
-                  className={inputCls}
-                />
-              </div>
             </CardContent>
           </Card>
 
           <Card className={cardCls}>
-            <CardContent className="space-y-3 p-4">
+            <CardContent className="space-y-2 p-3.5">
               <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-sm font-semibold text-zinc-900">Custom Fields</h2>
-                  <p className="text-xs text-zinc-500">Repeatable header fields live between invoice details and line items.</p>
-                </div>
-                <Button type="button" variant="outline" size="sm" className="h-9 rounded-2xl border-zinc-200 bg-white px-3 text-xs" onClick={onAddHeaderField}>
+                <h2 className="text-sm font-semibold text-zinc-900">Custom Fields</h2>
+                <Button type="button" variant="outline" size="sm" className="h-8 rounded-xl border-zinc-200 bg-zinc-900 px-3 text-[11px] text-white hover:bg-zinc-800 hover:text-white" onClick={onAddHeaderField}>
                   <Plus className="mr-1 h-3.5 w-3.5" />
                   Add Field
                 </Button>
               </div>
 
-              {customFields.length === 0 ? (
-                <div className="rounded-[20px] border border-dashed border-zinc-300 bg-zinc-50 px-4 py-5 text-sm text-zinc-500">
-                  <div className="flex items-center gap-2">
-                    <GripHorizontal className="h-4 w-4" />
-                    Add compact label/value rows for invoice header metadata.
-                  </div>
-                </div>
-              ) : (
+              {customFields.length === 0 ? null : (
                 <div className="space-y-2">
                   {customFields.map((field) => (
                     <div key={field.id} className="grid grid-cols-[minmax(0,160px)_minmax(0,1fr)_auto] gap-2">
@@ -325,67 +350,61 @@ export default function MobileInvoiceForm(props) {
               <p className="text-xs text-zinc-500">{lineItemsCount} {lineItemsCount === 1 ? 'item' : 'items'} in the current invoice</p>
             </div>
 
-            <div className="rounded-[24px] border border-zinc-200 bg-white p-2">
+            <div className="rounded-[24px] border border-zinc-200 bg-white p-2 shadow-none">
               <div className="grid grid-cols-4 gap-2">
-                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border-zinc-200 bg-white text-xs" onClick={() => setShowColumnManager(true)}>
+                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border-zinc-200 bg-zinc-900 text-xs text-white hover:bg-zinc-800 hover:text-white" onClick={() => setShowColumnManager(true)}>
                   <Settings2 className="mr-1.5 h-4 w-4" />
                   Settings
                 </Button>
-                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border-zinc-200 bg-white text-xs" onClick={() => importInputRef.current?.click()}>
+                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border-zinc-200 bg-zinc-900 text-xs text-white hover:bg-zinc-800 hover:text-white" onClick={openImportSheet}>
                   <Upload className="mr-1.5 h-4 w-4" />
                   Import
                 </Button>
-                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border-zinc-200 bg-white text-xs" onClick={onAddGroup}>
+                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border-zinc-200 bg-zinc-900 text-xs text-white hover:bg-zinc-800 hover:text-white" onClick={onAddGroup}>
                   <Layers className="mr-1.5 h-4 w-4" />
                   Group
                 </Button>
-                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border-zinc-200 bg-white text-xs" onClick={onAddItem}>
+                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border-zinc-200 bg-zinc-900 text-xs text-white hover:bg-zinc-800 hover:text-white" onClick={onAddItem}>
                   <Plus className="mr-1.5 h-4 w-4" />
                   Item
                 </Button>
               </div>
-              <input ref={importInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={onImportFileChange} />
             </div>
 
             <div className="space-y-3">
-              {orderedGroups.map(({ group, items: groupItems }) => (
-                <MobileGroupCard
-                  key={group.id}
-                  group={group}
-                  items={groupItems}
-                  allItems={items}
-                  invoice={invoice}
-                  customColumns={customColumns}
-                  groupSubtotal={computedGroupMap.get(group.id)?.subtotal || 0}
-                  getItemIndex={getItemIndex}
-                  getItemNumber={getItemNumber}
-                  onUpdateGroupName={onUpdateGroupName}
-                  onToggleGroupSubtotal={onToggleGroupSubtotal}
-                  onDeleteGroup={onDeleteGroup}
-                  onAddItemToGroup={onAddItemToGroup}
-                  onUpdateItem={onUpdateItem}
-                  onRemoveItem={onRemoveItem}
-                  onMoveItem={onMoveItem}
-                  onInsertItemAfter={onInsertItemAfter}
-                  isVisible={isVisible}
-                  getColumn={getColumn}
-                  getComputedAmount={getComputedAmount}
-                />
-              ))}
-
-              {ungroupedItems.map((item) => {
-                const index = getItemIndex(item._uiKey || item.id)
-                return (
-                  <MobileItemCard
-                    key={item._uiKey || item.id || index}
-                    item={item}
-                    index={index}
-                    number={getItemNumber(index)}
+              {lineItemRows.map((row) =>
+                row.type === 'group' ? (
+                  <MobileGroupCard
+                    key={row.key}
+                    group={row.group}
+                    items={row.items}
                     invoice={invoice}
                     customColumns={customColumns}
-                    computedAmount={getComputedAmount(item)}
-                    isFirst={index === 0 || items[index - 1]?.row_type === 'group_header'}
-                    isLast={index === items.length - 1 || items[index + 1]?.row_type === 'group_header'}
+                    groupSubtotal={computedGroupMap.get(row.group.id)?.subtotal || 0}
+                    onUpdateGroupName={onUpdateGroupName}
+                    onToggleGroupSubtotal={onToggleGroupSubtotal}
+                    onDeleteGroup={onDeleteGroup}
+                    onAddItemToGroup={onAddItemToGroup}
+                    onUpdateItem={onUpdateItem}
+                    onRemoveItem={onRemoveItem}
+                    onMoveItem={onMoveItem}
+                    onInsertItemAfter={onInsertItemAfter}
+                    isVisible={isVisible}
+                    getColumn={getColumn}
+                    getComputedAmount={getComputedAmount}
+                  />
+                ) : (
+                  <MobileItemCard
+                    key={row.key}
+                    item={row.item}
+                    index={row.index}
+                    number={row.number}
+                    invoice={invoice}
+                    customColumns={customColumns}
+                    computedAmount={getComputedAmount(row.item)}
+                    groupName={row.groupName}
+                    isFirst={row.isFirst}
+                    isLast={row.isLast}
                     onUpdate={onUpdateItem}
                     onRemove={onRemoveItem}
                     onMoveUp={(itemIndex) => onMoveItem(itemIndex, -1)}
@@ -394,17 +413,17 @@ export default function MobileInvoiceForm(props) {
                     isVisible={isVisible}
                     getColumn={getColumn}
                   />
-                )
-              })}
+                ),
+              )}
             </div>
 
-            <div className="rounded-[24px] border border-zinc-200 bg-white p-2">
+            <div className="rounded-[24px] border border-zinc-200 bg-white p-2 shadow-none">
               <div className="grid grid-cols-2 gap-2">
-                <Button type="button" variant="outline" className="h-12 rounded-2xl border-zinc-200 bg-white" onClick={onAddItem}>
+                <Button type="button" variant="outline" className="h-12 rounded-2xl border-zinc-200 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white" onClick={onAddItem}>
                   <Plus className="mr-1.5 h-4 w-4" />
                   + Add Item
                 </Button>
-                <Button type="button" variant="outline" className="h-12 rounded-2xl border-zinc-200 bg-white" onClick={onAddGroup}>
+                <Button type="button" variant="outline" className="h-12 rounded-2xl border-zinc-200 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white" onClick={onAddGroup}>
                   <Layers className="mr-1.5 h-4 w-4" />
                   + Add Group
                 </Button>
@@ -415,10 +434,7 @@ export default function MobileInvoiceForm(props) {
           <section ref={additionalInfoRef} className="space-y-4">
             <Card className={cardCls}>
               <CardContent className="space-y-4 p-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-zinc-900">Commercial Terms</h3>
-                  <p className="text-xs text-zinc-500">Payment terms and lower document details stay in the additional-info flow.</p>
-                </div>
+                <h3 className="text-sm font-semibold text-zinc-900">Commercial Terms</h3>
 
                 <div>
                   <label className={labelCls}>Payment Terms</label>
@@ -447,19 +463,16 @@ export default function MobileInvoiceForm(props) {
 
                 <div>
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <div>
-                      <h4 className="text-sm font-semibold text-zinc-900">Additional Notes</h4>
-                      <p className="text-xs text-zinc-500">Plain-text lines that render below totals.</p>
-                    </div>
-                    <Button type="button" variant="outline" size="sm" className="h-9 rounded-2xl border-zinc-200 bg-white px-3 text-xs" onClick={onAddBottomField}>
+                    <h4 className="text-sm font-semibold text-zinc-900">Additional Notes</h4>
+                    <Button type="button" variant="outline" size="sm" className="h-9 rounded-2xl border-zinc-200 bg-zinc-900 px-3 text-xs text-white hover:bg-zinc-800 hover:text-white" onClick={onAddBottomField}>
                       <Plus className="mr-1 h-3.5 w-3.5" />
                       Add Row
                     </Button>
                   </div>
                   <div className="space-y-2">
                     {bottomFields.length === 0 ? (
-                      <div className="rounded-[20px] border border-dashed border-zinc-300 bg-zinc-50 px-4 py-4 text-sm text-zinc-500">
-                        Add optional lower notes like advance-payment reminders or delivery terms.
+                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
+                        No extra rows yet.
                       </div>
                     ) : (
                       bottomFields.map((field) => (
@@ -488,48 +501,66 @@ export default function MobileInvoiceForm(props) {
             </Card>
 
             <Card className={cardCls}>
-              <CardContent className="space-y-4 p-4">
-                <div>
+              <CardContent className="p-0">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between px-4 py-3 text-left"
+                  onClick={() => setShowNotesTerms((current) => !current)}
+                >
                   <h3 className="text-sm font-semibold text-zinc-900">Notes & Terms</h3>
-                  <p className="text-xs text-zinc-500">TipTap stays intact, just mounted inside the new shell.</p>
-                </div>
+                  {showNotesTerms ? <ChevronUp className="h-4 w-4 text-zinc-400" /> : <ChevronDown className="h-4 w-4 text-zinc-400" />}
+                </button>
 
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <div>
-                    <Input
-                      value={notesTitle}
-                      onChange={(e) => setNotesTitle(e.target.value)}
-                      className="mb-2 h-9 rounded-2xl border-zinc-200 bg-zinc-50 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-600"
-                    />
-                    <RichTextEditor
-                      value={invoice.notes || ''}
-                      onChange={(value) => updateInvoice('notes', value)}
-                      placeholder="Notes to client..."
-                    />
+                {showNotesTerms ? (
+                  <div className="grid gap-4 border-t border-zinc-200 px-4 py-4 lg:grid-cols-2">
+                    <div>
+                      <Input
+                        value={notesTitle}
+                        onChange={(e) => setNotesTitle(e.target.value)}
+                        className="mb-2 h-9 rounded-2xl border-zinc-200 bg-zinc-50 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-600"
+                      />
+                      <RichTextEditor
+                        value={invoice.notes || ''}
+                        onChange={(value) => updateInvoice('notes', value)}
+                        placeholder="Notes to client..."
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        value={termsTitle}
+                        onChange={(e) => setTermsTitle(e.target.value)}
+                        className="mb-2 h-9 rounded-2xl border-zinc-200 bg-zinc-50 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-600"
+                      />
+                      <RichTextEditor
+                        value={invoice.terms || ''}
+                        onChange={(value) => updateInvoice('terms', value)}
+                        placeholder="Terms and conditions..."
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Input
-                      value={termsTitle}
-                      onChange={(e) => setTermsTitle(e.target.value)}
-                      className="mb-2 h-9 rounded-2xl border-zinc-200 bg-zinc-50 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-600"
-                    />
-                    <RichTextEditor
-                      value={invoice.terms || ''}
-                      onChange={(value) => updateInvoice('terms', value)}
-                      placeholder="Terms and conditions..."
-                    />
-                  </div>
-                </div>
+                ) : null}
               </CardContent>
             </Card>
 
             <Card className={cardCls}>
-              <CardContent className="space-y-4 p-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-zinc-900">Attachments</h3>
-                  <p className="text-xs text-zinc-500">Supporting documents stay embedded in the lower additional-info flow.</p>
-                </div>
-                <AttachmentsPanel attachments={attachments} onChange={setAttachments} />
+              <CardContent className="p-0">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between px-4 py-3 text-left"
+                  onClick={() => setShowAttachments((current) => !current)}
+                >
+                  <div>
+                    <h3 className="text-sm font-semibold text-zinc-900">Attachments</h3>
+                    {attachments.length > 0 ? <div className="text-xs text-zinc-500">{attachments.length} linked</div> : null}
+                  </div>
+                  {showAttachments ? <ChevronUp className="h-4 w-4 text-zinc-400" /> : <ChevronDown className="h-4 w-4 text-zinc-400" />}
+                </button>
+
+                {showAttachments ? (
+                  <div className="border-t border-zinc-200 px-4 py-4">
+                    <AttachmentsPanel attachments={attachments} onChange={setAttachments} />
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
           </section>
@@ -571,54 +602,7 @@ export default function MobileInvoiceForm(props) {
 
           <Card className={cardCls}>
             <CardContent className="space-y-4 p-4">
-              <div>
-                <h3 className="text-sm font-semibold text-zinc-900">Output Settings</h3>
-                <p className="text-xs text-zinc-500">Document output controls now live beside the totals stack.</p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between rounded-[20px] border border-zinc-200 bg-zinc-50 px-4 py-3">
-                  <div>
-                    <div className="text-sm font-medium text-zinc-900">Merge Qty + Unit on PDF</div>
-                    <div className="text-xs text-zinc-500">Shows values like “5 Sets” in a single PDF cell.</div>
-                  </div>
-                  <Switch checked={mergeQtyUnit} onCheckedChange={setMergeQtyUnit} />
-                </div>
-
-                <div className="flex items-center justify-between rounded-[20px] border border-zinc-200 bg-zinc-50 px-4 py-3">
-                  <div>
-                    <div className="text-sm font-medium text-zinc-900">Row Image Output</div>
-                    <div className="text-xs text-zinc-500">Row-level image actions drive this automatically. No global toggle required.</div>
-                  </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${rowImagesEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-200 text-zinc-600'}`}>
-                    {rowImagesEnabled ? 'Enabled' : 'Inactive'}
-                  </span>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-[20px] border border-zinc-200 bg-zinc-50 px-4 py-3">
-                    <div className="text-sm font-medium text-zinc-900">Notes & Terms</div>
-                    <div className="mt-1 text-xs text-zinc-500">
-                      {invoice.notes || invoice.terms ? 'Ready to render with current content.' : 'Fill the rich text editors to include content.'}
-                    </div>
-                  </div>
-                  <div className="rounded-[20px] border border-zinc-200 bg-zinc-50 px-4 py-3">
-                    <div className="text-sm font-medium text-zinc-900">Attachments</div>
-                    <div className="mt-1 text-xs text-zinc-500">
-                      {attachments.length > 0 ? `${attachments.length} supporting document${attachments.length === 1 ? '' : 's'} linked.` : 'No supporting documents linked yet.'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className={cardCls}>
-            <CardContent className="space-y-4 p-4">
-              <div>
-                <h3 className="text-sm font-semibold text-zinc-900">Save Actions</h3>
-                <p className="text-xs text-zinc-500">The save handlers are unchanged; only the surrounding shell was transplanted.</p>
-              </div>
+              <h3 className="text-sm font-semibold text-zinc-900">Save Actions</h3>
               <div className="grid gap-3 sm:grid-cols-3">
                 <Button type="button" variant="outline" className="h-12 rounded-2xl border-zinc-300 bg-white" onClick={onCancel}>
                   Cancel
@@ -639,10 +623,92 @@ export default function MobileInvoiceForm(props) {
         open={showActionsSheet}
         onOpenChange={setShowActionsSheet}
         onOpenColumnManager={() => setShowColumnManager(true)}
-        onImport={() => importInputRef.current?.click()}
+        onImport={openImportSheet}
         onAddGroup={onAddGroup}
         onScrollToAdditionalInfo={() => additionalInfoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
       />
+
+      <Sheet open={showImportSheet} onOpenChange={setShowImportSheet}>
+        <SheetContent side="bottom" className="rounded-t-[28px] bg-white p-0 sm:mx-auto sm:max-w-2xl [&>[data-slot=sheet-close]]:hidden">
+          <SheetHeader className="border-b border-zinc-200 px-5 py-4 text-left">
+            <SheetTitle className="text-base font-semibold text-zinc-900">Import invoice items</SheetTitle>
+          </SheetHeader>
+
+          <div className="space-y-4 p-5">
+            <div className="flex rounded-2xl border border-zinc-200 bg-zinc-50 p-1">
+              <button
+                type="button"
+                onClick={() => setCsvTab('upload')}
+                className={`flex-1 rounded-[14px] px-3 py-2 text-sm font-medium transition-colors ${csvTab === 'upload' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
+              >
+                Upload File
+              </button>
+              <button
+                type="button"
+                onClick={() => setCsvTab('paste')}
+                className={`flex-1 rounded-[14px] px-3 py-2 text-sm font-medium transition-colors ${csvTab === 'paste' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
+              >
+                Paste Text
+              </button>
+            </div>
+
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(event) => {
+                onImportFileChange(event)
+                setShowImportSheet(false)
+              }}
+            />
+
+            {csvTab === 'upload' ? (
+              <div className="rounded-[24px] border border-dashed border-zinc-300 bg-zinc-50 px-4 py-5">
+                <div className="space-y-3 text-center">
+                  <Button type="button" variant="outline" className="h-11 rounded-2xl border-zinc-200 bg-white" onClick={() => importInputRef.current?.click()}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Choose CSV File
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="rounded-[20px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-xs text-zinc-600">
+                  <div>Format: description, quantity, unit, unit_price</div>
+                  <div>Example: Solar Panel,4,PCS,125000</div>
+                </div>
+                <Textarea
+                  value={pasteCSV}
+                  onChange={(event) => setPasteCSV(event.target.value)}
+                  placeholder={'description,quantity,unit,unit_price\nSolar Panel,4,PCS,125000'}
+                  className="min-h-48 rounded-[24px] border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900"
+                />
+                <div className="flex items-center justify-end gap-2">
+                  <Button type="button" variant="outline" className="h-10 rounded-2xl border-zinc-200 bg-white" onClick={() => setPasteCSV('')}>
+                    Clear
+                  </Button>
+                  <Button
+                    type="button"
+                    className="h-10 rounded-2xl bg-zinc-900 text-white hover:bg-zinc-800"
+                    onClick={() => {
+                      if (!pasteCSV.trim()) {
+                        alert('Paste CSV content before importing.')
+                        return
+                      }
+                      onImportText(pasteCSV)
+                      setPasteCSV('')
+                      setShowImportSheet(false)
+                    }}
+                  >
+                    Import
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {showColumnManager ? (
         <ColumnManager

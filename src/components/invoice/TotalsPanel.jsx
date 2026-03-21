@@ -30,8 +30,6 @@ export default function TotalsPanel({
   onDiscountTypeChange,
   onDiscountTimingChange,
   discountAmount,
-  vatPercent,
-  onVatPercentChange,
   vatAmount,
   whtValue,
   whtType,
@@ -54,14 +52,13 @@ export default function TotalsPanel({
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-[24px] border-zinc-200 bg-white shadow-sm">
+      <Card className="rounded-[24px] border border-zinc-200 bg-white ring-0 shadow-none">
         <CardContent className="space-y-4 p-4">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900">Totals</h3>
-            <p className="text-xs text-zinc-500">The saved values still come from the existing invoice calculation logic.</p>
           </div>
 
-          <div className="space-y-1 rounded-[20px] border border-zinc-200 bg-zinc-50 p-3">
+          <div className="space-y-1 rounded-[20px] border border-zinc-200 bg-zinc-50/80 p-3">
             {summaryRows.map((row) => (
               <div key={row.label} className="flex items-center justify-between py-1.5 text-sm">
                 <span className="text-zinc-600">{row.label}</span>
@@ -88,14 +85,13 @@ export default function TotalsPanel({
         </CardContent>
       </Card>
 
-      <Card className="rounded-[24px] border-zinc-200 bg-white shadow-sm">
+      <Card className="rounded-[24px] border border-zinc-200 bg-white ring-0 shadow-none">
         <CardContent className="space-y-4 p-4">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900">Tax & Discount Settings</h3>
-            <p className="text-xs text-zinc-500">Charges, discount, VAT and WHT stay grouped in the lower summary flow.</p>
           </div>
 
-          <div className="overflow-hidden rounded-[20px] border border-zinc-200">
+          <div className="overflow-hidden rounded-[20px] border border-zinc-200 bg-zinc-50/40">
             <button
               type="button"
               onClick={() => setShowCharges((current) => !current)}
@@ -106,7 +102,7 @@ export default function TotalsPanel({
             </button>
 
             {showCharges ? (
-              <div className="space-y-3 border-t border-zinc-200 p-4">
+              <div className="space-y-3 border-t border-zinc-200 bg-white p-4">
                 {[
                   ['workmanship', workmanship, onWorkmanshipChange],
                   ['transportation', transportation, onTransportationChange],
@@ -132,28 +128,16 @@ export default function TotalsPanel({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className={labelCls}>Extra Charges</span>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8 rounded-xl border-zinc-200 px-3 text-xs"
-                        onClick={() => onAddExtraCharge(true)}
-                      >
-                        <Plus className="mr-1 h-3.5 w-3.5" />
-                        With VAT
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8 rounded-xl border-zinc-200 px-3 text-xs"
-                        onClick={() => onAddExtraCharge(false)}
-                      >
-                        <Plus className="mr-1 h-3.5 w-3.5" />
-                        No VAT
-                      </Button>
-                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 rounded-xl border-zinc-200 bg-zinc-900 px-3 text-xs text-white hover:bg-zinc-800 hover:text-white"
+                      onClick={() => onAddExtraCharge(true)}
+                    >
+                      <Plus className="mr-1 h-3.5 w-3.5" />
+                      Add Charge
+                    </Button>
                   </div>
 
                   {extraCharges.map((charge) => (
@@ -171,12 +155,12 @@ export default function TotalsPanel({
                         onChange={(e) => onUpdateExtraCharge(charge.id, 'value', Number(e.target.value))}
                         className={inputCls}
                       />
-                      <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 px-3 py-2">
+                      <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2">
                         <Switch
                           checked={charge.withTax !== false}
                           onCheckedChange={(value) => onUpdateExtraCharge(charge.id, 'withTax', value)}
                         />
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">+ VAT</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">VAT</span>
                       </div>
                       <Button
                         type="button"
@@ -194,21 +178,21 @@ export default function TotalsPanel({
             ) : null}
           </div>
 
-          <div className="rounded-[20px] border border-zinc-200 p-4">
+          <div className="rounded-[20px] border border-zinc-200 bg-zinc-50/40 p-4">
             <div className="flex items-center justify-between gap-3">
               <span className={labelCls}>Discount</span>
               <div className="flex overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-0.5">
                 <button
                   type="button"
                   onClick={() => onDiscountTypeChange('percent')}
-                  className={`rounded-[10px] px-3 py-1.5 text-[11px] font-medium ${discountType === 'percent' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+                  className={`rounded-[10px] px-3 py-1.5 text-[11px] font-medium transition-colors ${discountType === 'percent' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
                 >
                   %
                 </button>
                 <button
                   type="button"
                   onClick={() => onDiscountTypeChange('fixed')}
-                  className={`rounded-[10px] px-3 py-1.5 text-[11px] font-medium ${discountType === 'fixed' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+                  className={`rounded-[10px] px-3 py-1.5 text-[11px] font-medium transition-colors ${discountType === 'fixed' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
                 >
                   NGN
                 </button>
@@ -219,14 +203,14 @@ export default function TotalsPanel({
               <button
                 type="button"
                 onClick={() => onDiscountTimingChange('before')}
-                className={`flex-1 rounded-[10px] px-3 py-2 text-[11px] font-medium ${discountTiming === 'before' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+                className={`flex-1 rounded-[10px] px-3 py-2 text-[11px] font-medium transition-colors ${discountTiming === 'before' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
               >
                 Before Tax
               </button>
               <button
                 type="button"
                 onClick={() => onDiscountTimingChange('after')}
-                className={`flex-1 rounded-[10px] px-3 py-2 text-[11px] font-medium ${discountTiming === 'after' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+                className={`flex-1 rounded-[10px] px-3 py-2 text-[11px] font-medium transition-colors ${discountTiming === 'after' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
               >
                 After Tax
               </button>
@@ -244,36 +228,21 @@ export default function TotalsPanel({
             </div>
           </div>
 
-          <div className="rounded-[20px] border border-zinc-200 p-4">
-            <label className={labelCls}>VAT %</label>
-            <div className="mt-3 flex items-center gap-3">
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                value={vatPercent}
-                onChange={(e) => onVatPercentChange(Number(e.target.value))}
-                className={inputCls}
-              />
-              <span className="text-xs text-zinc-500">+NGN {Number(vatAmount || 0).toLocaleString()}</span>
-            </div>
-          </div>
-
-          <div className="rounded-[20px] border border-zinc-200 p-4">
+          <div className="rounded-[20px] border border-zinc-200 bg-zinc-50/40 p-4">
             <div className="flex items-center justify-between gap-3">
               <span className={labelCls}>WHT</span>
               <div className="flex overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-0.5">
                 <button
                   type="button"
                   onClick={() => onWhtTypeChange('percent')}
-                  className={`rounded-[10px] px-3 py-1.5 text-[11px] font-medium ${whtType === 'percent' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+                  className={`rounded-[10px] px-3 py-1.5 text-[11px] font-medium transition-colors ${whtType === 'percent' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
                 >
                   %
                 </button>
                 <button
                   type="button"
                   onClick={() => onWhtTypeChange('fixed')}
-                  className={`rounded-[10px] px-3 py-1.5 text-[11px] font-medium ${whtType === 'fixed' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+                  className={`rounded-[10px] px-3 py-1.5 text-[11px] font-medium transition-colors ${whtType === 'fixed' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
                 >
                   NGN
                 </button>

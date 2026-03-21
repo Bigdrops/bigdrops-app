@@ -20,7 +20,7 @@ const emptyClient = {
   category: '',
 }
 
-export default function ClientSelector({ clientId, clientName, onClientChange, isMobile }) {
+export default function ClientSelector({ clientId, clientName, onClientChange, isMobile, compact = false }) {
   const [clients, setClients] = useState([])
   const [selectedClient, setSelectedClient] = useState(null)
   const [open, setOpen] = useState(false)
@@ -149,6 +149,12 @@ export default function ClientSelector({ clientId, clientName, onClientChange, i
   }
 
   const selectedSummary = selectedClient || (clientId ? { name: clientName } : null)
+  const triggerClassName = compact
+    ? 'h-10 flex-1 justify-start rounded-2xl border-zinc-200 bg-white px-3 text-left text-sm text-zinc-900'
+    : 'h-11 flex-1 justify-start rounded-xl border-slate-300 bg-white px-3 text-left text-sm text-slate-900'
+  const clearClassName = compact
+    ? 'h-10 rounded-2xl border-zinc-200 bg-white px-3 text-sm text-zinc-700'
+    : 'h-11 rounded-xl bg-white px-3'
 
   return (
     <>
@@ -237,10 +243,15 @@ export default function ClientSelector({ clientId, clientName, onClientChange, i
         </DialogContent>
       </Dialog>
 
-      <div ref={containerRef} className="space-y-3">
+      <div ref={containerRef} className={compact ? 'space-y-2' : 'space-y-3'}>
         <div className="flex items-center justify-between gap-3">
-          <Label>Select Client</Label>
-          <Button type="button" variant="link" className="h-auto p-0 text-sm font-semibold" onClick={() => setShowAddModal(true)}>
+          <Label className={compact ? 'text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500' : ''}>Client</Label>
+          <Button
+            type="button"
+            variant={compact ? 'outline' : 'link'}
+            className={compact ? 'h-8 rounded-xl border-zinc-200 bg-white px-2.5 text-[11px] font-semibold text-zinc-700' : 'h-auto p-0 text-sm font-semibold'}
+            onClick={() => setShowAddModal(true)}
+          >
             + New Client
           </Button>
         </div>
@@ -251,7 +262,7 @@ export default function ClientSelector({ clientId, clientName, onClientChange, i
               <Button
                 type="button"
                 variant="outline"
-                className="h-11 flex-1 justify-start rounded-xl border-slate-300 bg-white px-3 text-left text-sm text-slate-900"
+                className={triggerClassName}
                 onClick={() => setOpen(true)}
               >
                 <span className="truncate">
@@ -259,7 +270,7 @@ export default function ClientSelector({ clientId, clientName, onClientChange, i
                 </span>
               </Button>
               {selectedSummary ? (
-                <Button type="button" variant="outline" className="h-11 rounded-xl bg-white px-3" onClick={clearSelection}>
+                <Button type="button" variant="outline" className={clearClassName} onClick={clearSelection}>
                   Clear
                 </Button>
               ) : null}
@@ -360,16 +371,18 @@ export default function ClientSelector({ clientId, clientName, onClientChange, i
         )}
 
         {selectedSummary ? (
-          <Card className="border-slate-200 bg-slate-50 p-4">
-            <div className="text-sm font-semibold text-slate-900">{selectedSummary.name}</div>
-            {selectedClient?.contact_person ? <div className="mt-1 text-sm text-slate-600">{selectedClient.contact_person}</div> : null}
-            {selectedClient?.phone ? <div className="text-sm text-slate-600">{selectedClient.phone}</div> : null}
-            {selectedClient?.email ? <div className="text-sm text-slate-600">{selectedClient.email}</div> : null}
-            {selectedClient?.address ? (
-              <div className="text-sm text-slate-600">
-                {[selectedClient.address, selectedClient.city, selectedClient.state].filter(Boolean).join(', ')}
-              </div>
-            ) : null}
+          <Card className={compact ? 'border-zinc-200 bg-zinc-50 px-3 py-2.5 ring-0 shadow-none' : 'border-slate-200 bg-slate-50 p-4'}>
+            <div className={compact ? 'space-y-1' : ''}>
+              <div className={compact ? 'text-sm font-semibold text-zinc-900' : 'text-sm font-semibold text-slate-900'}>{selectedSummary.name}</div>
+              {selectedClient?.contact_person ? <div className={compact ? 'text-xs text-zinc-500' : 'mt-1 text-sm text-slate-600'}>{selectedClient.contact_person}</div> : null}
+              {selectedClient?.phone ? <div className={compact ? 'text-xs text-zinc-500' : 'text-sm text-slate-600'}>{selectedClient.phone}</div> : null}
+              {selectedClient?.email ? <div className={compact ? 'text-xs text-zinc-500' : 'text-sm text-slate-600'}>{selectedClient.email}</div> : null}
+              {selectedClient?.address ? (
+                <div className={compact ? 'text-xs text-zinc-500' : 'text-sm text-slate-600'}>
+                  {[selectedClient.address, selectedClient.city, selectedClient.state].filter(Boolean).join(', ')}
+                </div>
+              ) : null}
+            </div>
           </Card>
         ) : null}
       </div>

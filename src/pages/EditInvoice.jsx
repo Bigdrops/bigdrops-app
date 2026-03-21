@@ -20,6 +20,8 @@ import {
 import { computeDocument } from '../lib/Calculations'
 import { numberToWords } from '../hooks/useInvoiceForm'
 
+const invoicePageClassName = 'p-0 max-w-none'
+
 export default function EditInvoice() {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -311,24 +313,30 @@ export default function EditInvoice() {
     const reader = new FileReader()
     reader.onload = (loadEvent) => {
       const text = String(loadEvent.target?.result || '')
-      const { newItems, error } = parseCsvItems(text)
-      if (error) {
-        alert(error)
-        return
-      }
-
-      setItems((current) => [...current.filter((item) => item.description || item.row_type === 'group_header'), ...newItems])
-      alert(newItems.length + ' items imported')
+      handleCSVTextImport(text)
     }
 
     reader.readAsText(file)
     event.target.value = ''
   }
 
+  const handleCSVTextImport = (text) => {
+    const { newItems, error } = parseCsvItems(text)
+    if (error) {
+      alert(error)
+      return
+    }
+
+    setItems((current) => [...current.filter((item) => item.description || item.row_type === 'group_header'), ...newItems])
+    alert(newItems.length + ' items imported')
+  }
+
   if (loading || !invoice) {
     return (
-      <Layout title="Edit Invoice">
-        <div className="px-4 py-10 text-sm text-zinc-500">Loading invoice...</div>
+      <Layout title="Edit Invoice" hidePageHeader contentClassName={invoicePageClassName}>
+        <div className="mx-auto max-w-5xl px-3 pb-24 pt-4 text-sm text-zinc-500 sm:px-4 sm:pb-12 sm:pt-6">
+          Loading invoice...
+        </div>
       </Layout>
     )
   }
@@ -434,7 +442,7 @@ export default function EditInvoice() {
   }
 
   return (
-    <Layout title="Edit Invoice">
+    <Layout title="Edit Invoice" hidePageHeader contentClassName={invoicePageClassName}>
       <MobileInvoiceForm
         title="Edit Invoice"
         modeLabel="Edit Invoice"
@@ -488,6 +496,7 @@ export default function EditInvoice() {
         onSaveDraft={() => handleSave('draft')}
         onCancel={() => navigate('/invoices/' + id)}
         onImportFileChange={handleCSVImport}
+        onImportText={handleCSVTextImport}
         onAddItem={addItem}
         onAddGroup={addGroup}
         onAddItemToGroup={addItemToGroup}
