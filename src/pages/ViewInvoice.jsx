@@ -468,7 +468,7 @@ export default function ViewInvoice() {
 
 
         {/* ── Action Bar ── */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', alignItems: 'center', overflowX: 'auto', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', alignItems: 'center', overflowX: 'auto', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none', paddingBottom: '2px' }}>
           <div onClick={() => navigate('/invoices')} style={{ flexShrink: 0, padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>
             ← Back
           </div>
@@ -516,6 +516,8 @@ export default function ViewInvoice() {
 
         <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: isNarrow ? '1fr' : 'minmax(0,1fr) 240px', marginBottom: '16px' }}>
           <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: isNarrow ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
+
+            {/* Client */}
             <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px 12px' }}>
               <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '6px' }}>Client</div>
               <div style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', lineHeight: 1.3 }}>{invoice.client_name || 'Unassigned'}</div>
@@ -523,30 +525,30 @@ export default function ViewInvoice() {
               {client?.email && <div style={{ fontSize: '12px', color: '#64748b' }}>{client.email}</div>}
               {client?.phone && <div style={{ fontSize: '12px', color: '#64748b' }}>{client.phone}</div>}
             </div>
+
+            {/* Invoice Details — core metadata + reference fields merged */}
             <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px 12px' }}>
-              <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '6px' }}>Summary</div>
+              <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '6px' }}>Invoice Details</div>
               <div style={{ display: 'grid', gap: '3px', fontSize: '12px', color: '#475569' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Status</span><span style={{ fontWeight: '600', color: s.color }}>{statusLabel}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Issued</span><span>{invoice.issue_date || '—'}</span></div>
                 {invoice.due_date ? <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Due</span><span>{invoice.due_date}</span></div> : null}
                 {poNumber ? <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>P.O.</span><span>{poNumber}</span></div> : null}
                 {invoice.payment_terms ? <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Terms</span><span>{invoice.payment_terms}</span></div> : null}
                 {invoice.work_duration ? <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><span style={{ color: '#94a3b8' }}>Duration</span><span>{invoice.work_duration}</span></div> : null}
               </div>
-            </div>
-            {topHeaderFields.length > 0 && (
-              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px 12px', gridColumn: isNarrow ? 'auto' : '1 / span 2' }}>
-                <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '8px' }}>Reference Fields</div>
-                <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: isNarrow ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
+              {topHeaderFields.length > 0 && (
+                <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #f1f5f9', display: 'grid', gap: '5px' }}>
                   {topHeaderFields.map((field, index) => (
-                    <div key={`${field.label}-${index}`}>
-                      <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{field.label}</div>
-                      <div style={{ marginTop: '2px', fontSize: '13px', color: '#0f172a', wordBreak: 'break-word' }}>{field.value}</div>
+                    <div key={`${field.label}-${index}`} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '12px' }}>
+                      <span style={{ color: '#94a3b8', flexShrink: 0 }}>{field.label}</span>
+                      <span style={{ color: '#0f172a', fontWeight: '500', wordBreak: 'break-word', textAlign: 'right' }}>{field.value}</span>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Conversion Trail */}
             {(conversionTrail?.source?.number || (conversionTrail?.derived || []).length > 0) && (
               <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px 12px', gridColumn: isNarrow ? 'auto' : '1 / span 2' }}>
                 <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '6px' }}>Conversion Trail</div>
@@ -565,6 +567,7 @@ export default function ViewInvoice() {
             )}
           </div>
 
+          {/* Document Identity */}
           <div style={{ border: '1px solid #0f172a', borderRadius: '8px', backgroundColor: '#0f172a', padding: '11px 12px', color: 'white' }}>
             <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '6px' }}>Document Identity</div>
             <div style={{ fontSize: '17px', fontWeight: '700', lineHeight: 1.3 }}>{companyName || (invoice.document_type || 'INVOICE')}</div>
