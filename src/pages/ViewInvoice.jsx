@@ -30,8 +30,7 @@ function TemplateSelector() {
     try { localStorage.setItem('invoice_pdf_template', id) } catch {}
   }
   return (
-    <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid #E2E8F0' }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>PDF Template</div>
+    <div style={{ marginTop: 10 }}>
       <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
         {TEMPLATES.map(t => {
           const on = active === t.id
@@ -755,21 +754,9 @@ export default function ViewInvoice() {
             </div>
           )}
 
-          <div style={{ borderTop: '1px solid #eee', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#333', marginBottom: '4px' }}>Payment Terms</div>
-              <div style={{ fontSize: '12px', color: '#555' }}>{invoice.payment_terms || 'Net 30'}</div>
-            </div>
-            {settings.signature_url ? (
-              <div style={{ textAlign: 'center' }}>
-                <img src={settings.signature_url} alt="Signature" style={{ height: '50px', maxWidth: '160px', objectFit: 'contain', display: 'block', marginBottom: '4px' }} />
-                <div style={{ borderTop: '1px solid #333', paddingTop: '4px', fontSize: '11px', color: '#555', width: '160px' }}>Authorised Signature</div>
-              </div>
-            ) : (
-              <div style={{ width: '200px', borderTop: '1px solid #333', paddingTop: '6px', marginTop: '30px', textAlign: 'center' }}>
-                <div style={{ fontSize: '11px', color: '#555' }}>Authorised Signature</div>
-              </div>
-            )}
+          <div style={{ borderTop: '1px solid #eee', paddingTop: '14px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#333', marginBottom: '4px' }}>Payment Terms</div>
+            <div style={{ fontSize: '12px', color: '#555' }}>{invoice.payment_terms || 'Net 30'}</div>
           </div>
         </div>
 
@@ -819,7 +806,16 @@ export default function ViewInvoice() {
           </div>
         )}
 
-        {/* ── PDF Template Selector ── */}
+        {/* ── PDF Download + Template Selector ── */}
+        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+          <div style={{ fontSize: '12px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em' }}>PDF Template</div>
+          <div
+            onClick={handleDownloadPDF}
+            style={{ flexShrink: 0, padding: '7px 14px', borderRadius: '6px', cursor: pdfGenerating ? 'default' : 'pointer', fontSize: '13px', backgroundColor: '#0F172A', color: 'white', fontWeight: '600', opacity: pdfGenerating ? 0.7 : 1, whiteSpace: 'nowrap' }}
+          >
+            {pdfGenerating ? 'Preparing…' : '↓ Download PDF'}
+          </div>
+        </div>
         <TemplateSelector />
 
       </div>
