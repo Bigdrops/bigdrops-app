@@ -4,6 +4,7 @@ import DOMPurify from 'dompurify'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '../components/invoice/exportInvoiceCsv'
+import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import { toDbItem } from '@/domain/invoice'
 import {
   buildTrailLink,
@@ -20,6 +21,22 @@ const TEMPLATES = [
   { id: 'bold', label: 'Bold', description: 'Dark band · Strong' },
   { id: 'compact', label: 'Compact', description: 'Tight · Dense' },
 ]
+
+const DEFAULT_PDF_OUTPUT = {
+  showBankDetails: false,
+  bankAccountId: null,
+  showFooter: true,
+  showTagline: true,
+}
+
+function parseInvoiceCustomFields(value) {
+  try {
+    const parsed = JSON.parse(value || '{}')
+    return Array.isArray(parsed) ? { header: parsed } : parsed || {}
+  } catch {
+    return {}
+  }
+}
 
 function TemplateSelector() {
   const [active, setActive] = useState(() => {
@@ -144,6 +161,8 @@ export default function ViewInvoice() {
   const [items, setItems] = useState([])
   const [client, setClient] = useState(null)
   const [settings, setSettings] = useState({})
+  const [bankAccounts, setBankAccounts] = useState([])
+  const [pdfOutput, setPdfOutput] = useState(DEFAULT_PDF_OUTPUT)
   const [loading, setLoading] = useState(true)
   const [showMore, setShowMore] = useState(false)
 
@@ -206,6 +225,13 @@ export default function ViewInvoice() {
       .then(({ data }) => {
         if (data) setSettings(data)
       })
+    supabase
+      .from('bank_accounts')
+      .select('*')
+      .order('is_default', { ascending: false })
+      .then(({ data }) => {
+        setBankAccounts(data || [])
+      })
   }, [id])
 
   useEffect(() => {
@@ -217,6 +243,12 @@ export default function ViewInvoice() {
     document.addEventListener('mousedown', handleOutside)
     return () => document.removeEventListener('mousedown', handleOutside)
   }, [])
+
+  const customFieldObject = parseInvoiceCustomFields(invoice?.custom_fields)
+
+  useEffect(() => {
+    setPdfOutput(customFieldObject.pdfOutput || DEFAULT_PDF_OUTPUT)
+  }, [invoice?.custom_fields])
 
   if (loading) return <Layout title="Invoice"><p style={{ padding: 30 }}>Loading...</p></Layout>
   if (!invoice) return <Layout title="Invoice"><p style={{ padding: 30 }}>Invoice not found.</p></Layout>
@@ -492,25 +524,32 @@ export default function ViewInvoice() {
   let customFields = [],
     bottomFields = [],
     attachments = []
-  let customFieldObject = {}
-  try {
-    const _cf = JSON.parse(invoice.custom_fields || '{}')
-    customFieldObject = Array.isArray(_cf) ? { header: _cf } : _cf || {}
-    if (Array.isArray(_cf)) {
-      customFields = _cf
-    } else {
-      customFields = _cf.header || []
-      bottomFields = _cf.bottom || []
-      attachments = _cf.attachments || []
-    }
-  } catch (e) {
-    customFields = []
-    bottomFields = []
-    attachments = []
-    customFieldObject = {}
+  if (Array.isArray(customFieldObject.header) && Object.keys(customFieldObject).length === 1) {
+    customFields = customFieldObject.header
+  } else {
+    customFields = customFieldObject.header || []
+    bottomFields = customFieldObject.bottom || []
+    attachments = customFieldObject.attachments || []
   }
   const topHeaderFields = customFields.filter((f) => f.label && f.value)
   const conversionTrail = customFieldObject.conversionTrail || {}
+
+  const handlePdfOutputChange = async (next) => {
+    setPdfOutput(next)
+    const updatedCf = {
+      ...customFieldObject,
+      pdfOutput: next,
+    }
+    const customFieldsJson = JSON.stringify(updatedCf)
+    await supabase
+      .from('invoices')
+      .update({
+        custom_fields: customFieldsJson,
+      })
+      .eq('id', id)
+    setInvoice((current) => (current ? { ...current, custom_fields: customFieldsJson } : current))
+  }
+
   const moreMenuItems = [
     {
       label: invoice.project_id ? 'Open Linked Documents' : 'Link to Project',
@@ -1421,6 +1460,23 @@ export default function ViewInvoice() {
             </div>
           </div>
         )}
+
+        <div style={{ marginTop: '20px' }}>
+          <PdfOutputSettings
+            value={pdfOutput}
+            onChange={handlePdfOutputChange}
+            bankAccounts={bankAccounts.map((b) => ({
+              id: b.id,
+              bankName: b.bank_name,
+              accountName: b.account_name,
+              accountNumber: b.account_number,
+              sortCode: b.sort_code,
+              isDefault: b.is_default,
+            }))}
+            companyTagline={settings.company_tagline || ''}
+            footerText={settings.footer_text || ''}
+          />
+        </div>
 
         {/* ── PDF Download + Template Selector ── */}
         <div

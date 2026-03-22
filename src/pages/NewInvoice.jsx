@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
 import MobileInvoiceForm from '@/components/invoice/MobileInvoiceForm'
+import { InvoiceSignatoryPicker } from '@/components/SignatoryPicker'
 import {
   makeEmptyGroup,
   makeEmptyItem,
@@ -19,11 +20,21 @@ import { numberToWords } from '../hooks/useInvoiceForm'
 
 const invoicePageClassName = 'w-full p-0 max-w-none'
 
+const parseCustomFieldsObject = (value) => {
+  try {
+    const parsed = JSON.parse(value || '{}')
+    return Array.isArray(parsed) ? { header: parsed } : parsed || {}
+  } catch {
+    return {}
+  }
+}
+
 export default function NewInvoice() {
   const navigate = useNavigate()
   const location = useLocation()
   const prefill = location.state?.prefill
   const prefillItems = location.state?.prefillItems
+  const prefillCustomFields = parseCustomFieldsObject(prefill?.custom_fields)
 
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
   const [saving, setSaving] = useState(false)
@@ -44,6 +55,8 @@ export default function NewInvoice() {
   const [termsTitle, setTermsTitle] = useState('Terms and Conditions')
   const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
   const [invoiceTitle, setInvoiceTitle] = useState(prefill?.invoice_title || '')
+  const [signatories, setSignatories] = useState([])
+  const [signatoryId, setSignatoryId] = useState(prefillCustomFields.signatoryId || null)
   const {
     columns,
     setColumns,
@@ -103,6 +116,16 @@ export default function NewInvoice() {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  useEffect(() => {
+    supabase
+      .from('signatories')
+      .select('*')
+      .order('name')
+      .then(({ data }) => {
+        setSignatories(data || [])
+      })
   }, [])
 
   useEffect(() => {
@@ -320,6 +343,7 @@ export default function NewInvoice() {
       whtType,
       calculationInputs,
       groupMeta,
+      signatoryId,
     }
 
     const { data: invoiceRow, error } = await supabase
@@ -458,6 +482,18 @@ export default function NewInvoice() {
         showColumnManager={showColumnManager}
         setShowColumnManager={setShowColumnManager}
         isMobile={isMobile}
+        beforeNotesTermsSlot={
+          <InvoiceSignatoryPicker
+            value={signatoryId}
+            onChange={setSignatoryId}
+            signatories={signatories.map((s) => ({
+              id: s.id,
+              name: s.name,
+              role: s.role,
+              signatureUrl: s.signature_url,
+            }))}
+          />
+        }
       />
     </Layout>
   )

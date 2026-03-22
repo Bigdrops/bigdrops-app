@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
 import MobileInvoiceForm from '@/components/invoice/MobileInvoiceForm'
+import { InvoiceSignatoryPicker } from '@/components/SignatoryPicker'
 import {
   BUILTIN_COLUMNS,
   buildCalculationInputs,
@@ -48,6 +49,8 @@ export default function EditInvoice() {
   const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
   const [invoiceTitle, setInvoiceTitle] = useState('')
   const [invoice, setInvoice] = useState(null)
+  const [signatories, setSignatories] = useState([])
+  const [signatoryId, setSignatoryId] = useState(null)
   const [items, setItems] = useState([{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }])
   const [groups, setGroups] = useState([])
   const {
@@ -72,11 +75,16 @@ export default function EditInvoice() {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.from('invoices').select('*').eq('id', id).single()
+      const [{ data }, { data: signatoryRows }] = await Promise.all([
+        supabase.from('invoices').select('*').eq('id', id).single(),
+        supabase.from('signatories').select('*').order('name'),
+      ])
       if (!data) {
         navigate('/invoices')
         return
       }
+
+      setSignatories(signatoryRows || [])
 
       let savedGroupMeta = {}
       let parsedCustomFields = null
@@ -104,8 +112,10 @@ export default function EditInvoice() {
           if (parsed.discountTiming) setDiscountTiming(parsed.discountTiming)
           if (parsed.whtType) setWhtType(parsed.whtType)
           if (parsed.groupMeta) savedGroupMeta = parsed.groupMeta
+          setSignatoryId(parsed.signatoryId || null)
         } else if (Array.isArray(parsed)) {
           setCustomFields(normalizeFieldEntries(parsed, 'value'))
+          setSignatoryId(null)
         }
       } catch {}
 
@@ -366,6 +376,7 @@ export default function EditInvoice() {
       whtType,
       calculationInputs,
       groupMeta,
+      signatoryId,
     }
 
     const { error } = await supabase
@@ -511,6 +522,18 @@ export default function EditInvoice() {
         showColumnManager={showColumnManager}
         setShowColumnManager={setShowColumnManager}
         isMobile={isMobile}
+        beforeNotesTermsSlot={
+          <InvoiceSignatoryPicker
+            value={signatoryId}
+            onChange={setSignatoryId}
+            signatories={signatories.map((s) => ({
+              id: s.id,
+              name: s.name,
+              role: s.role,
+              signatureUrl: s.signature_url,
+            }))}
+          />
+        }
       />
     </Layout>
   )
