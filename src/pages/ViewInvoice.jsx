@@ -537,10 +537,11 @@ export default function ViewInvoice() {
   }
   const handleMobileMenuItemClick = (action) => (event) => {
     event.stopPropagation()
-    event.nativeEvent.stopImmediatePropagation()
-    const fn = action
+    if (event.nativeEvent?.stopImmediatePropagation) {
+      event.nativeEvent.stopImmediatePropagation()
+    }
     setShowMore(false)
-    setTimeout(() => fn(), 50)
+    setTimeout(() => action(), 10)
   }
 
   const inputStyle = {
@@ -702,7 +703,7 @@ export default function ViewInvoice() {
         {showMore && isNarrow && (
           <div
             style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15,23,42,0.35)', zIndex: 1200, display: 'flex', alignItems: 'flex-end' }}
-            onMouseDown={() => setShowMore(false)}
+            onClick={() => setShowMore(false)}
           >
             <div
               style={{
@@ -712,6 +713,9 @@ export default function ViewInvoice() {
                 borderTopRightRadius: '18px',
                 padding: '10px 0 calc(18px + env(safe-area-inset-bottom, 0px))',
                 boxShadow: '0 -18px 48px rgba(15,23,42,0.22)',
+                position: 'relative',
+                zIndex: 1250,
+                pointerEvents: 'auto',
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -734,7 +738,7 @@ export default function ViewInvoice() {
                     key={item.label}
                     type="button"
                     disabled={item.disabled}
-                    onClick={item.disabled ? undefined : handleMobileMenuItemClick(item.action)}
+                    onPointerUp={item.disabled ? undefined : handleMobileMenuItemClick(item.action)}
                     style={{
                       width: '100%',
                       textAlign: 'left',
@@ -747,6 +751,10 @@ export default function ViewInvoice() {
                       fontWeight: '600',
                       cursor: item.disabled ? 'default' : 'pointer',
                       opacity: item.disabled ? 0.65 : 1,
+                      touchAction: 'manipulation',
+                      pointerEvents: 'auto',
+                      position: 'relative',
+                      zIndex: 1300,
                     }}
                   >
                     {item.label}
