@@ -96,14 +96,14 @@ const s = StyleSheet.create({
   groupSubtotalLabel: { fontSize: 8.5, color: '#555', fontFamily: 'Helvetica-Bold', marginRight: 12 },
   groupSubtotalValue: { fontSize: 8.5, color: '#1a1a1a', fontFamily: 'Helvetica-Bold' },
 
-  cell: { fontSize: 8.5 },
+  cell: { fontSize: 8 },
   cellMuted: { color: '#555' },
   amountCell: { fontFamily: 'Helvetica-Bold', color: '#1a1a1a' },
   centeredCell: { textAlign: 'center' },
   rightCell: { textAlign: 'right' },
   descCell: { alignSelf: 'flex-start' },
-  descText: { fontSize: 9, color: '#1a1a1a', lineHeight: 1.35 },
-  subDescText: { fontSize: 7.5, color: '#888', marginTop: 1, fontFamily: 'Helvetica-Oblique', lineHeight: 1.35 },
+  descText: { fontSize: 8.25, color: '#1a1a1a', lineHeight: 1.3 },
+  subDescText: { fontSize: 7, color: '#888', marginTop: 1, fontFamily: 'Helvetica-Oblique', lineHeight: 1.3 },
 
   totalsSection: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 12 },
   totalsBox: { width: 260 },
@@ -241,6 +241,23 @@ export default function InvoicePDF_Classic({ document, items = [], client, setti
   const invoice = document
   const { d, columns, pages } = planClassicInvoicePages(document, items, client, settings, computedResult)
   const itemCounterRef = { current: 0 }
+  const customDescriptionColumns = d.pdfColumns.filter((column) => column.kind === 'custom')
+
+  const getDescriptionExtras = (rawItem) => {
+    const extras = []
+
+    if (d.isColVisible('make') && String(rawItem.make || '').trim()) {
+      extras.push(`Make: ${rawItem.make}`)
+    }
+
+    customDescriptionColumns.forEach((column) => {
+      const value = rawItem.custom_data?.[column.key]
+      if (value === null || value === undefined || value === '') return
+      extras.push(`${column.label}: ${value}`)
+    })
+
+    return extras
+  }
 
   return (
     <Document>
@@ -276,7 +293,9 @@ export default function InvoicePDF_Classic({ document, items = [], client, setti
                     ...extra,
                   }
                 },
+                mergeQtyUnit: true,
                 itemCounterRef,
+                getDescriptionExtras,
               })}
 
               {page.showTotals ? renderTotals({

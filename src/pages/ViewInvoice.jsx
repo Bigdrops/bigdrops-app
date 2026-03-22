@@ -191,8 +191,8 @@ export default function ViewInvoice() {
           ...item,
           custom_data: typeof item.custom_data === 'string' ? JSON.parse(item.custom_data || '{}') : item.custom_data || {},
           install_rate_override: !!(item.install_rate !== null && item.install_rate !== undefined && item.install_rate !== 0),
-          vat_rate: item.vat_rate === 0 || item.vat_rate === null ? null : item.vat_rate,
-          discount_rate: item.discount_rate === 0 || item.discount_rate === null ? null : item.discount_rate,
+          vat_rate: item.vat_rate === null || item.vat_rate === undefined ? null : item.vat_rate,
+          discount_rate: item.discount_rate === null || item.discount_rate === undefined ? null : item.discount_rate,
           image_url: item.image_url || null,
         }))
         setItems(loaded)

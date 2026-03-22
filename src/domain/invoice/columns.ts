@@ -10,8 +10,8 @@ export const BUILTIN_COLUMNS: ColumnConfig[] = [
   { key: 'make', label: 'Make', visible: true, removable: false },
   { key: 'unit', label: 'Unit', visible: true, removable: false },
   { key: 'install_rate', label: 'Install Rate', type: 'install_rate', visible: true, removable: false, includeInTotal: true, formula: '' },
-  { key: 'vat_rate', label: 'VAT Rate', type: 'vat_rate', visible: false, removable: false },
-  { key: 'discount_rate', label: 'Discount Rate', type: 'discount_rate', visible: false, removable: false },
+  { key: 'vat_rate', label: 'VAT Rate', type: 'vat_rate', visible: true, removable: false },
+  { key: 'discount_rate', label: 'Discount Rate', type: 'discount_rate', visible: true, removable: false },
 ]
 
 export const COLUMN_TYPES: ColumnTypeOption[] = [
@@ -81,7 +81,7 @@ export function getPdfColumns(columns: ColumnConfig[] = []): PdfColumnDefinition
 }
 
 function formatPdfPercentValue(value: number | string | null | undefined, zeroLabel: string): string {
-  if (value === null || value === undefined || value === '') return '-'
+  if (value === null || value === undefined || value === '') return ''
   if (Number(value) === 0) return zeroLabel
   return `${Number(value).toLocaleString()}%`
 }
@@ -98,13 +98,13 @@ export function getPdfCellValue(column: PdfColumnDefinition, item: InvoiceItem, 
       helpers.installValue !== undefined
         ? Number(helpers.installValue || 0)
         : resolveInstallRate(item, helpers.installColumn)
-    return installValue > 0 ? installValue.toLocaleString() : '-'
+    return installValue > 0 ? installValue.toLocaleString() : ''
   }
-  if (column.key === 'vat_rate') return formatPdfPercentValue(item.vat_rate, 'Exempt')
-  if (column.key === 'discount_rate') return formatPdfPercentValue(item.discount_rate, 'No disc')
+  if (column.key === 'vat_rate') return formatPdfPercentValue(item.vat_rate, '0%')
+  if (column.key === 'discount_rate') return formatPdfPercentValue(item.discount_rate, '0%')
   if (column.kind === 'custom') {
     const value = (item.custom_data || {})[column.key]
-    if (value === null || value === undefined || value === '') return '-'
+    if (value === null || value === undefined || value === '') return ''
     return column.type === 'number' ? Number(value).toLocaleString() : String(value)
   }
   return ''

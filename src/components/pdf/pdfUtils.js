@@ -163,14 +163,22 @@ const estimateWrappedLines = (text, width, fontSize) => {
 const CLASSIC_TABLE_WIDTH = 515
 
 export const getClassicTableColumns = (d, items) => {
-  const visibleColumns = d.pdfColumns.map((column) => ({
-    key: column.key === 'description' ? 'desc' : column.key,
-    label: column.label,
-    width: column.pdfWidth,
-    align: column.align,
-    type: column.type,
-    sourceKey: column.key,
-  }))
+  const visibleColumns = [
+    { key: 'num', label: '#', width: 18, align: 'center', sourceKey: 'num' },
+    { key: 'desc', label: 'Description', width: 0, align: 'left', sourceKey: 'description' },
+    { key: 'quantity', label: 'Qty/Unit', width: 52, align: 'center', sourceKey: 'quantity' },
+    { key: 'unit_price', label: 'Price', width: 50, align: 'right', sourceKey: 'unit_price' },
+    { key: 'amount', label: 'Amount', width: 58, align: 'right', sourceKey: 'amount' },
+    ...(d.isColVisible('install_rate')
+      ? [{ key: 'install_rate', label: 'Install', width: 42, align: 'right', sourceKey: 'install_rate' }]
+      : []),
+    ...(d.isColVisible('vat_rate')
+      ? [{ key: 'vat_rate', label: 'VAT', width: 26, align: 'center', sourceKey: 'vat_rate' }]
+      : []),
+    ...(d.isColVisible('discount_rate')
+      ? [{ key: 'discount_rate', label: 'Disc', width: 28, align: 'center', sourceKey: 'discount_rate' }]
+      : []),
+  ]
   const reservedWidth = visibleColumns.reduce((sum, column) => sum + (column.key === 'desc' ? 0 : column.width), 0)
   const descriptionWidth = Math.max(120, CLASSIC_TABLE_WIDTH - reservedWidth)
 
@@ -222,7 +230,26 @@ const estimateClassicTopContextHeight = (d, invoice, client) => {
   return twoColHeight + titleHeight
 }
 
-const estimateClassicRowHeight = (row, layout) => {
+const estimateClassicDescriptionExtras = (row, d, layout) => {
+  if (row._type !== 'item') return 0
+
+  const extras = []
+  if (d.isColVisible('make') && cleanText(row.item.make)) {
+    extras.push(`Make: ${row.item.make}`)
+  }
+
+  d.pdfColumns
+    .filter((column) => column.kind === 'custom')
+    .forEach((column) => {
+      const value = row.item.custom_data?.[column.key]
+      if (value === null || value === undefined || value === '') return
+      extras.push(`${column.label}: ${value}`)
+    })
+
+  return extras.reduce((sum, line) => sum + Math.max(1, estimateWrappedLines(line, layout.desc, 7)), 0)
+}
+
+const estimateClassicRowHeight = (row, layout, d) => {
   if (row._type === 'group_header') return 24
   if (row._type === 'group_subtotal') return 20
   if (row._type === 'group_end') return 8
@@ -231,8 +258,9 @@ const estimateClassicRowHeight = (row, layout) => {
   const subDescriptionLines = row.item.sub_description
     ? estimateWrappedLines(row.item.sub_description, layout.desc, 7.5)
     : 0
+  const extraLines = estimateClassicDescriptionExtras(row, d, layout)
 
-  return 14 + descriptionLines * 11 + subDescriptionLines * 8 + (subDescriptionLines > 0 ? 2 : 0)
+  return 14 + descriptionLines * 11 + subDescriptionLines * 8 + extraLines * 8 + (subDescriptionLines > 0 || extraLines > 0 ? 2 : 0)
 }
 
 const estimateClassicTotalsReserve = (d, invoice, result) => {
@@ -262,26 +290,26 @@ const estimateClassicExtraBlockHeight = (block) => {
   return 24 + lineCount * 10
 }
 
-const canFitRowRange = (rows, layout, budget) => {
+const canFitRowRange = (rows, layout, budget, d) => {
   let used = 0
   for (let i = 0; i < rows.length; i += 1) {
-    used += estimateClassicRowHeight(rows[i], layout)
+    used += estimateClassicRowHeight(rows[i], layout, d)
     if (used > budget) return false
   }
   return true
 }
 
-const takeRowsForBudget = (rows, layout, budget) => {
+const takeRowsForBudget = (rows, layout, budget, d) => {
   const taken = []
   let used = 0
 
   for (let i = 0; i < rows.length; i += 1) {
     const row = rows[i]
-    const rowHeight = estimateClassicRowHeight(row, layout)
+    const rowHeight = estimateClassicRowHeight(row, layout, d)
     let required = rowHeight
 
     if (row._type === 'group_header' && rows[i + 1]) {
-      required += estimateClassicRowHeight(rows[i + 1], layout)
+      required += estimateClassicRowHeight(rows[i + 1], layout, d)
     }
 
     if (used + required > budget && taken.length > 0) break
@@ -295,7 +323,7 @@ const takeRowsForBudget = (rows, layout, budget) => {
   if (!taken.length && rows[0]) {
     return {
       rows: [rows[0]],
-      usedHeight: estimateClassicRowHeight(rows[0], layout),
+      usedHeight: estimateClassicRowHeight(rows[0], layout, d),
     }
   }
 
@@ -363,17 +391,17 @@ export const planClassicInvoicePages = (invoice, items, client, settings, result
     const currentBudget = isFirstPage ? firstPageBudget : continuationBudget
     const finalPageBudget = Math.max(80, currentBudget - finalReserve)
 
-    if (canFitRowRange(remainingRows, layout, finalPageBudget)) {
+    if (canFitRowRange(remainingRows, layout, finalPageBudget, d)) {
       rowPages.push({
         rows: [...remainingRows],
-        usedHeight: remainingRows.reduce((sum, row) => sum + estimateClassicRowHeight(row, layout), 0),
+        usedHeight: remainingRows.reduce((sum, row) => sum + estimateClassicRowHeight(row, layout, d), 0),
         isFirstPage,
       })
       remainingRows = []
       break
     }
 
-    const taken = takeRowsForBudget(remainingRows, layout, currentBudget)
+    const taken = takeRowsForBudget(remainingRows, layout, currentBudget, d)
     rowPages.push({ ...taken, isFirstPage })
     remainingRows = remainingRows.slice(taken.rows.length)
     isFirstPage = false

@@ -123,7 +123,6 @@ export default function InvoicePDF_Compact({ document, items = [], client, setti
             {client?.contact_person ? <Text style={s.clientDetail}>Attn: {client.contact_person}</Text> : null}
           </View>
           <View style={s.col}>
-            <Text style={s.sectionLabel}>Details</Text>
             {d.referenceMeta.map((entry) => (
               <Text key={entry.label} style={s.clientDetail}>{entry.label}: {entry.value}</Text>
             ))}
