@@ -425,6 +425,12 @@ export default function ViewInvoice() {
     action()
     setShowMore(false)
   }
+  const handleMobileMenuItemClick = (action) => (event) => {
+    event.stopPropagation()
+    event.preventDefault()
+    setShowMore(false)
+    action()
+  }
 
   const inputStyle = { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '16px', outline: 'none', boxSizing: 'border-box', backgroundColor: 'white', color: '#1a1a1a' }
   const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#555', marginBottom: '4px' }
@@ -507,7 +513,7 @@ export default function ViewInvoice() {
                     key={item.label}
                     type="button"
                     disabled={item.disabled}
-                    onClick={item.disabled ? undefined : handleMenuItemClick(item.action)}
+                    onClick={item.disabled ? undefined : handleMobileMenuItemClick(item.action)}
                     style={{ width: '100%', textAlign: 'left', padding: '14px 16px', border: 'none', borderTop: '1px solid #F1F5F9', backgroundColor: 'white', color: item.danger ? '#CC0000' : '#0F172A', fontSize: '14px', fontWeight: '600', cursor: item.disabled ? 'default' : 'pointer', opacity: item.disabled ? 0.65 : 1 }}
                   >
                     {item.label}
