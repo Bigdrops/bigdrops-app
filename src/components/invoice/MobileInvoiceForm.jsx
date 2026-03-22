@@ -200,7 +200,7 @@ export default function MobileInvoiceForm(props) {
 
   return (
     <>
-      <div className="mx-auto max-w-5xl px-3 pb-24 pt-4 sm:px-4 sm:pb-12 sm:pt-6">
+      <div className="w-full px-3 pb-24 pt-4 md:mx-auto md:max-w-2xl md:px-4 md:pb-12 md:pt-6">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">{modeLabel}</div>

@@ -17,7 +17,7 @@ import { computeDocument } from '../lib/Calculations'
 import { importJsonItems } from '../lib/itemJsonImport'
 import { numberToWords } from '../hooks/useInvoiceForm'
 
-const invoicePageClassName = 'p-0 max-w-none'
+const invoicePageClassName = 'w-full p-0 max-w-none'
 
 export default function NewInvoice() {
   const navigate = useNavigate()

@@ -94,7 +94,7 @@ export default function ViewInvoice() {
   const [projectLinkId, setProjectLinkId] = useState('')
   const [projectLinking, setProjectLinking] = useState(false)
 
-  const moreRef = useRef()
+  const menuRef = useRef()
 
   const fetchInvoice = async () => {
     const { data } = await supabase.from('invoices').select('*').eq('id', id).single()
@@ -123,9 +123,13 @@ export default function ViewInvoice() {
   }, [id])
 
   useEffect(() => {
-    const handler = (e) => { if (moreRef.current && !moreRef.current.contains(e.target)) setShowMore(false) }
-    document.addEventListener('pointerdown', handler)
-    return () => document.removeEventListener('pointerdown', handler)
+    const handleOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMore(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
   }, [])
 
   if (loading)  return <Layout title="Invoice"><p style={{ padding: 30 }}>Loading...</p></Layout>
@@ -416,6 +420,11 @@ export default function ViewInvoice() {
     { label: 'Archive Invoice', action: handleArchive, show: true },
     { label: 'Delete Invoice', action: handleDelete, show: true, danger: true },
   ].filter((item) => item.show && item.label)
+  const handleMenuItemClick = (action) => (event) => {
+    event.stopPropagation()
+    action()
+    setShowMore(false)
+  }
 
   const inputStyle = { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '16px', outline: 'none', boxSizing: 'border-box', backgroundColor: 'white', color: '#1a1a1a' }
   const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#555', marginBottom: '4px' }
@@ -498,7 +507,7 @@ export default function ViewInvoice() {
                     key={item.label}
                     type="button"
                     disabled={item.disabled}
-                    onClick={item.action}
+                    onClick={item.disabled ? undefined : handleMenuItemClick(item.action)}
                     style={{ width: '100%', textAlign: 'left', padding: '14px 16px', border: 'none', borderTop: '1px solid #F1F5F9', backgroundColor: 'white', color: item.danger ? '#CC0000' : '#0F172A', fontSize: '14px', fontWeight: '600', cursor: item.disabled ? 'default' : 'pointer', opacity: item.disabled ? 0.65 : 1 }}
                   >
                     {item.label}
@@ -524,8 +533,8 @@ export default function ViewInvoice() {
           <div onClick={() => navigate('/invoices/edit/' + id)} style={{ flexShrink: 0, padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>
             Edit
           </div>
-          <div ref={moreRef} style={{ position: 'relative', flexShrink: 0, zIndex: 6 }}>
-            <button type="button" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); setShowMore((open) => !open) }} style={{ padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', fontWeight: '600', userSelect: 'none', color: '#374151', letterSpacing: '0.05em', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', position: 'relative', zIndex: 20 }}>
+          <div ref={menuRef} style={{ position: 'relative', flexShrink: 0, zIndex: 6 }}>
+            <button type="button" onClick={() => setShowMore((open) => !open)} style={{ padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', fontWeight: '600', userSelect: 'none', color: '#374151', letterSpacing: '0.05em', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', position: 'relative', zIndex: 20 }}>
               ···
             </button>
             {showMore && !isNarrow && (
@@ -542,7 +551,7 @@ export default function ViewInvoice() {
                   { label: '📦 Archive Invoice',       action: handleArchive,                                                    show: true },
                   { label: '🗑 Delete Invoice',        action: handleDelete,                                                     show: true, danger: true },
                 ].filter(m => m.show && m.label).map((item, i) => (
-                  <div key={i} onClick={item.action}
+                  <div key={i} onClick={handleMenuItemClick(item.action)}
                     style={{ padding: '10px 16px', cursor: converting && item.label.includes('Converting') ? 'default' : 'pointer', fontSize: '13px', color: item.danger ? '#CC0000' : '#1a1a1a', borderBottom: '1px solid #f5f5f5', transition: 'background 0.1s', opacity: converting && item.label.includes('Converting') ? 0.7 : 1 }}
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f9f9f9'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>

@@ -21,7 +21,7 @@ import { computeDocument } from '../lib/Calculations'
 import { importJsonItems } from '../lib/itemJsonImport'
 import { numberToWords } from '../hooks/useInvoiceForm'
 
-const invoicePageClassName = 'p-0 max-w-none'
+const invoicePageClassName = 'w-full p-0 max-w-none'
 
 export default function EditInvoice() {
   const navigate = useNavigate()
@@ -319,7 +319,7 @@ export default function EditInvoice() {
   if (loading || !invoice) {
     return (
       <Layout title="Edit Invoice" hidePageHeader contentClassName={invoicePageClassName}>
-        <div className="mx-auto max-w-5xl px-3 pb-24 pt-4 text-sm text-zinc-500 sm:px-4 sm:pb-12 sm:pt-6">
+        <div className="w-full px-3 pb-24 pt-4 text-sm text-zinc-500 md:mx-auto md:max-w-2xl md:px-4 md:pb-12 md:pt-6">
           Loading invoice...
         </div>
       </Layout>
