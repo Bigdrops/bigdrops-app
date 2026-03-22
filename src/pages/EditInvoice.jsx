@@ -35,7 +35,9 @@ export default function EditInvoice() {
   const [discountTiming, setDiscountTiming] = useState('after')
   const [whtType, setWhtType] = useState('percent')
   const [attachments, setAttachments] = useState([])
+  const [signatories, setSignatories] = useState([])
   const [customFields, setCustomFields] = useState([])
+  const [signatoryId, setSignatoryId] = useState(null)
   const [bottomFields, setBottomFields] = useState([])
   const [extraCharges, setExtraCharges] = useState([])
   const [chargeLabels, setChargeLabels] = useState({
@@ -72,6 +74,10 @@ export default function EditInvoice() {
 
   useEffect(() => {
     const load = async () => {
+      const { data: signatoryRows } = await supabase
+        .from('signatories').select('*').order('name')
+      setSignatories(signatoryRows || [])
+
       const { data } = await supabase.from('invoices').select('*').eq('id', id).single()
       if (!data) {
         navigate('/invoices')
@@ -84,6 +90,8 @@ export default function EditInvoice() {
       try {
         const parsed = JSON.parse(data.custom_fields || '{}')
         parsedCustomFields = parsed
+        const signatoryId = parsed.signatoryId || null
+        setSignatoryId(signatoryId)
         if (parsed && !Array.isArray(parsed)) {
           setCustomFields(normalizeFieldEntries(parsed.header, 'value'))
           setBottomFields(normalizeFieldEntries(parsed.bottom, 'text'))
@@ -366,6 +374,7 @@ export default function EditInvoice() {
       whtType,
       calculationInputs,
       groupMeta,
+      signatoryId: signatoryId,
     }
 
     const { error } = await supabase
@@ -447,6 +456,9 @@ export default function EditInvoice() {
         setTermsTitle={setTermsTitle}
         attachments={attachments}
         setAttachments={setAttachments}
+        signatories={signatories}
+        signatoryId={signatoryId}
+        onSignatoryChange={setSignatoryId}
         mergeQtyUnit={mergeQtyUnit}
         setMergeQtyUnit={setMergeQtyUnit}
         columns={columns}

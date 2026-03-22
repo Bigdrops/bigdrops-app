@@ -32,7 +32,9 @@ export default function NewInvoice() {
   const [discountTiming, setDiscountTiming] = useState('after')
   const [whtType, setWhtType] = useState('percent')
   const [attachments, setAttachments] = useState([])
+  const [signatories, setSignatories] = useState([])
   const [customFields, setCustomFields] = useState([])
+  const [signatoryId, setSignatoryId] = useState(null)
   const [bottomFields, setBottomFields] = useState([])
   const [extraCharges, setExtraCharges] = useState([])
   const [chargeLabels, setChargeLabels] = useState({
@@ -124,6 +126,26 @@ export default function NewInvoice() {
           setInvoice((current) => ({ ...current, invoice_number: 'SASINV-B001' }))
         }
       })
+  }, [prefill])
+
+  useEffect(() => {
+    const loadSignatories = async () => {
+      const { data } = await supabase
+        .from('signatories').select('*').order('name')
+      setSignatories(data || [])
+    }
+
+    loadSignatories()
+  }, [])
+
+  useEffect(() => {
+    if (!prefill?.custom_fields) return
+    try {
+      const parsedCf = JSON.parse(prefill.custom_fields || '{}')
+      setSignatoryId(parsedCf.signatoryId || null)
+    } catch {
+      setSignatoryId(null)
+    }
   }, [prefill])
 
   const updateInvoice = (field, value) => setInvoice((current) => ({ ...current, [field]: value }))
@@ -320,6 +342,7 @@ export default function NewInvoice() {
       whtType,
       calculationInputs,
       groupMeta,
+      signatoryId: signatoryId,
     }
 
     const { data: invoiceRow, error } = await supabase
@@ -394,6 +417,9 @@ export default function NewInvoice() {
         setTermsTitle={setTermsTitle}
         attachments={attachments}
         setAttachments={setAttachments}
+        signatories={signatories}
+        signatoryId={signatoryId}
+        onSignatoryChange={setSignatoryId}
         mergeQtyUnit={mergeQtyUnit}
         setMergeQtyUnit={setMergeQtyUnit}
         columns={columns}

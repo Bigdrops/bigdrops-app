@@ -9,6 +9,7 @@ import ClientSelector from '@/components/ClientSelector'
 import ColumnManager from '@/components/ColumnManager'
 import RichTextEditor from '@/components/RichTextEditor'
 import AttachmentsPanel from '@/components/AttachmentsPanel'
+import SignatoryPicker from '@/components/SignatoryPicker'
 import ActionsSheet from './ActionsSheet'
 import MobileItemCard from './MobileItemCard'
 import MobileGroupCard from './MobileGroupCard'
@@ -39,6 +40,9 @@ export default function MobileInvoiceForm(props) {
     setTermsTitle,
     attachments,
     setAttachments,
+    signatories,
+    signatoryId,
+    onSignatoryChange,
     mergeQtyUnit,
     setMergeQtyUnit,
     columns,
@@ -537,6 +541,17 @@ export default function MobileInvoiceForm(props) {
                 ) : null}
               </CardContent>
             </Card>
+
+            <SignatoryPicker
+              value={signatoryId}
+              onChange={onSignatoryChange}
+              signatories={signatories.map(s => ({
+                id: s.id,
+                name: s.name,
+                role: s.role,
+                signatureUrl: s.signature_url,
+              }))}
+            />
 
             <Card className={cardCls}>
               <CardContent className="p-0">
