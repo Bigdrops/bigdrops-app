@@ -231,8 +231,8 @@ export default function Invoices() {
     setSortBy("Newest")
   }
 
-  const filterSelectClass = "h-10 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 outline-none"
-  const iconButtonClass = "h-10 w-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center text-zinc-500"
+  const filterSelectClass = "h-10 rounded-xl border border-border bg-background px-3 text-xs font-bold text-zinc-700 outline-none"
+  const iconButtonClass = "h-10 w-10 rounded-xl border border-border bg-background flex items-center justify-center text-muted-foreground"
 
   return (
     <Layout title="Invoices">
@@ -267,15 +267,15 @@ export default function Invoices() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search invoices or clients..."
-              className="w-full h-11 rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 outline-none"
+              className="w-full h-11 rounded-2xl border border-border bg-background px-4 text-sm font-medium text-zinc-800 outline-none"
             />
           </div>
         )}
 
         {showFilters && (
-          <div className="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
+          <div className="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-background p-3">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black uppercase text-zinc-400">Client</span>
+              <span className="text-[11px] font-black uppercase text-muted-foreground">Client</span>
               <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className={filterSelectClass}>
                 <option>All</option>
                 {clientOptions.map((client) => (
@@ -284,7 +284,7 @@ export default function Invoices() {
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black uppercase text-zinc-400">Status</span>
+              <span className="text-[11px] font-black uppercase text-muted-foreground">Status</span>
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterSelectClass}>
                 {["All", "Draft", "Sent", "Paid", "Overdue", "Partial"].map((option) => (
                   <option key={option}>{option}</option>
@@ -292,7 +292,7 @@ export default function Invoices() {
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black uppercase text-zinc-400">Date</span>
+              <span className="text-[11px] font-black uppercase text-muted-foreground">Date</span>
               <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className={filterSelectClass}>
                 {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
                   <option key={option}>{option}</option>
@@ -300,7 +300,7 @@ export default function Invoices() {
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black uppercase text-zinc-400">Sort</span>
+              <span className="text-[11px] font-black uppercase text-muted-foreground">Sort</span>
               <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={filterSelectClass}>
                 {["Newest", "Oldest", "Highest Value", "Lowest Value"].map((option) => (
                   <option key={option}>{option}</option>
@@ -309,7 +309,7 @@ export default function Invoices() {
             </div>
             <button
               onClick={resetFilters}
-              className="h-10 rounded-xl border border-zinc-200 px-4 text-xs font-black uppercase text-zinc-500 transition hover:bg-zinc-50"
+              className="h-10 rounded-xl border border-border px-4 text-xs font-black uppercase text-muted-foreground transition hover:bg-muted/50"
             >
               Clear Filters
             </button>
@@ -379,7 +379,7 @@ export default function Invoices() {
 
               <button
                 onClick={(e) => { e.stopPropagation(); setActiveInvoice(inv) }}
-                className="absolute right-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-500"
+                className="absolute right-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground"
               >
                 <MoreHorizontal size={18} />
               </button>
@@ -387,7 +387,7 @@ export default function Invoices() {
           ))}
 
           {invoices.length === 0 && (
-            <div className="text-center py-20 text-zinc-400 font-bold text-sm uppercase tracking-widest">
+            <div className="text-center py-20 text-muted-foreground font-bold text-sm uppercase tracking-widest">
               No invoices match the current filters
             </div>
           )}
@@ -399,7 +399,7 @@ export default function Invoices() {
               type="button"
               onClick={() => fetchInvoices(page + 1, false)}
               disabled={loadingMore}
-              className="h-11 rounded-2xl border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-700 disabled:opacity-60"
+              className="h-11 rounded-2xl border border-border bg-background px-5 text-sm font-bold text-zinc-700 disabled:opacity-60"
             >
               {loadingMore ? "Loading..." : "Load more"}
             </button>
@@ -425,18 +425,18 @@ export default function Invoices() {
 
       {/* Action sheet */}
       {activeInvoice && !showArchiveWarn && !showDeleteWarn && (
-        <div className="fixed inset-x-0 bottom-0 z-[110] bg-white rounded-t-[40px] shadow-2xl">
+        <div className="fixed inset-x-0 bottom-0 z-[110] bg-background rounded-t-[40px] shadow-2xl">
           <div className="px-8 pt-6 pb-4">
-            <div className="w-12 h-1.5 bg-zinc-200 rounded-full mx-auto mb-5" />
+            <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-5" />
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Invoice</p>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Invoice</p>
                 <h2 className="text-xl font-black text-zinc-950">{activeInvoice.invoice_number}</h2>
                 <p className="text-xs text-zinc-400 font-bold">{activeInvoice.client_name}</p>
               </div>
               <div className="flex items-center gap-3">
                 <p className="text-xl font-black text-zinc-950">â‚¦{Number(activeInvoice.total || 0).toLocaleString()}</p>
-                <button onClick={closeSheet} className="p-2 rounded-xl bg-zinc-100 text-zinc-400 hover:bg-zinc-200">
+                <button onClick={closeSheet} className="p-2 rounded-xl bg-muted text-muted-foreground hover:bg-muted">
                   <X size={18} />
                 </button>
               </div>
@@ -466,18 +466,18 @@ export default function Invoices() {
 
       {/* Archive warning sheet */}
       {showArchiveWarn && activeInvoice && (
-        <div className="fixed inset-x-0 bottom-0 z-[130] bg-white rounded-t-[40px] p-8 shadow-2xl">
-          <div className="w-12 h-1.5 bg-zinc-200 rounded-full mx-auto mb-6" />
+        <div className="fixed inset-x-0 bottom-0 z-[130] bg-background rounded-t-[40px] p-8 shadow-2xl">
+          <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-6" />
           <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Archive size={24} className="text-amber-600" />
           </div>
           <h3 className="text-xl font-black text-zinc-950 text-center mb-2">Archive Invoice?</h3>
-          <p className="text-sm text-zinc-500 text-center font-medium leading-relaxed mb-8">
+          <p className="text-sm text-muted-foreground text-center font-medium leading-relaxed mb-8">
             This invoice will be hidden from your active list until you restore it from Settings &gt; Archives.
           </p>
           <div className="flex gap-3">
             <button onClick={() => setShowArchiveWarn(false)}
-              className="flex-1 py-4 rounded-2xl border-2 border-zinc-200 text-sm font-black text-zinc-500 hover:bg-zinc-50">
+              className="flex-1 py-4 rounded-2xl border-2 border-border text-sm font-black text-muted-foreground hover:bg-muted/50">
               Cancel
             </button>
             <button onClick={handleArchive}
@@ -490,18 +490,18 @@ export default function Invoices() {
 
       {/* Delete warning sheet */}
       {showDeleteWarn && activeInvoice && (
-        <div className="fixed inset-x-0 bottom-0 z-[130] bg-white rounded-t-[40px] p-8 shadow-2xl">
-          <div className="w-12 h-1.5 bg-zinc-200 rounded-full mx-auto mb-6" />
+        <div className="fixed inset-x-0 bottom-0 z-[130] bg-background rounded-t-[40px] p-8 shadow-2xl">
+          <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-6" />
           <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Trash2 size={24} className="text-red-600" />
           </div>
           <h3 className="text-xl font-black text-zinc-950 text-center mb-2">Delete Invoice?</h3>
-          <p className="text-sm text-zinc-500 text-center font-medium leading-relaxed mb-8">
+          <p className="text-sm text-muted-foreground text-center font-medium leading-relaxed mb-8">
             Deleting is permanent and cannot be undone. You may choose to archive it instead â€” archived invoices remain recoverable for 30 days.
           </p>
           <div className="flex gap-3">
             <button onClick={() => setShowDeleteWarn(false)}
-              className="flex-1 py-4 rounded-2xl border-2 border-zinc-200 text-sm font-black text-zinc-500 hover:bg-zinc-50">
+              className="flex-1 py-4 rounded-2xl border-2 border-border text-sm font-black text-muted-foreground hover:bg-muted/50">
               Cancel
             </button>
             <button onClick={handleDelete}

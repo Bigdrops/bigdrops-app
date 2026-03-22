@@ -81,17 +81,17 @@ const getStatusClasses = (status: string | null | undefined) => {
     case 'overdue':
       return 'bg-red-100 text-red-600'
     case 'cancelled':
-      return 'bg-zinc-200 text-zinc-500'
+      return 'bg-muted text-muted-foreground'
     default:
-      return 'bg-zinc-100 text-zinc-600'
+      return 'bg-muted text-zinc-600'
   }
 }
 
 function SummaryMetric({ label, value, tone = 'default' }: SummaryMetricProps) {
   return (
-    <div className={`aspect-square rounded-xl p-4 ${tone === 'danger' ? 'bg-red-50 text-red-600' : 'bg-zinc-50 text-zinc-900'}`}>
+    <div className={`aspect-square rounded-xl p-4 ${tone === 'danger' ? 'bg-red-50 text-red-600' : 'bg-muted/50 text-foreground'}`}>
       <div className="flex h-full flex-col justify-between">
-        <div className={`text-[10px] font-bold uppercase tracking-wider ${tone === 'danger' ? 'text-red-500' : 'text-zinc-500'}`}>
+        <div className={`text-[10px] font-bold uppercase tracking-wider ${tone === 'danger' ? 'text-red-500' : 'text-muted-foreground'}`}>
           {label}
         </div>
         <div className="text-lg font-black tracking-tighter">{value}</div>
@@ -103,12 +103,12 @@ function SummaryMetric({ label, value, tone = 'default' }: SummaryMetricProps) {
 function ContactRow({ icon: Icon, label, value }: ContactRowProps) {
   return (
     <div className="flex items-start gap-3">
-      <div className="rounded-lg bg-zinc-100 p-2 text-zinc-600">
+      <div className="rounded-lg bg-muted p-2 text-zinc-600">
         <Icon className="size-4" />
       </div>
       <div className="min-w-0">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{label}</div>
-        <div className="mt-1 break-words text-sm font-semibold text-zinc-900">{value}</div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="mt-1 break-words text-sm font-semibold text-foreground">{value}</div>
       </div>
     </div>
   )
@@ -119,12 +119,12 @@ function DocumentRow({ number, date, amount, status, onClick }: DocumentRowProps
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center justify-between gap-4 rounded-xl bg-zinc-50 p-4 text-left transition hover:bg-zinc-100"
+      className="flex w-full items-center justify-between gap-4 rounded-xl bg-muted/50 p-4 text-left transition hover:bg-muted"
     >
       <div className="min-w-0">
-        <div className="truncate text-xs font-bold text-zinc-500">{number}</div>
-        <div className="mt-1 text-[10px] text-zinc-400">{date}</div>
-        {amount != null ? <div className="mt-2 text-base font-bold text-zinc-900">{formatMoney(amount)}</div> : null}
+        <div className="truncate text-xs font-bold text-muted-foreground">{number}</div>
+        <div className="mt-1 text-[10px] text-muted-foreground">{date}</div>
+        {amount != null ? <div className="mt-2 text-base font-bold text-foreground">{formatMoney(amount)}</div> : null}
       </div>
       <Badge className={`rounded-full px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest ${getStatusClasses(status)}`}>
         {status || 'draft'}
@@ -197,7 +197,7 @@ export default function ClientDetail() {
   if (loading) {
     return (
       <Layout title="Client" hidePageHeader contentClassName="w-full max-w-none p-0 pb-24 md:max-w-2xl md:px-4 md:pb-10">
-        <div className="w-full px-4 py-8 text-sm text-zinc-400">Loading client...</div>
+        <div className="w-full px-4 py-8 text-sm text-muted-foreground">Loading client...</div>
       </Layout>
     )
   }
@@ -217,11 +217,11 @@ export default function ClientDetail() {
   return (
     <Layout title={client.name || 'Client'} hidePageHeader contentClassName="w-full max-w-none p-0 pb-24 md:max-w-2xl md:px-4 md:pb-10">
       <div className="w-full">
-        <div className="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3">
+        <div className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background px-4 py-3">
           <Button type="button" variant="ghost" size="icon-sm" className="rounded-full" onClick={() => navigate('/clients')}>
             <ArrowLeft className="size-4" />
           </Button>
-          <div className="truncate text-sm font-bold text-zinc-900">Client</div>
+          <div className="truncate text-sm font-bold text-foreground">Client</div>
           <Button type="button" variant="ghost" size="icon-sm" className="rounded-full" onClick={() => navigate(`/clients/edit/${id}`)}>
             <Pencil className="size-4" />
           </Button>
@@ -231,17 +231,17 @@ export default function ClientDetail() {
           <section>
             {client.category ? (
               <div className="mb-3">
-                <Badge className="rounded-full bg-zinc-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] text-zinc-600">
+                <Badge className="rounded-full bg-muted px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] text-zinc-600">
                   {client.category}
                 </Badge>
               </div>
             ) : null}
             <h1 className="text-2xl font-black tracking-tighter text-zinc-950">{client.name}</h1>
-            {client.contact_person ? <div className="mt-2 text-sm font-medium text-zinc-500">{client.contact_person}</div> : null}
+            {client.contact_person ? <div className="mt-2 text-sm font-medium text-muted-foreground">{client.contact_person}</div> : null}
             {error ? <div className="mt-2 text-xs text-amber-600">{error}</div> : null}
           </section>
 
-          <section className="rounded-xl bg-zinc-50 p-5">
+          <section className="rounded-xl bg-muted/50 p-5">
             <div className="space-y-4">
               <ContactRow icon={User} label="Contact Person" value={client.contact_person || 'No contact person'} />
               <ContactRow icon={Phone} label="Phone" value={client.phone || 'No phone'} />
@@ -261,21 +261,21 @@ export default function ClientDetail() {
 
           <section>
             <Tabs defaultValue="invoices" className="w-full">
-              <TabsList className="flex h-auto w-full rounded-none border-b border-zinc-200 bg-transparent p-0">
-                <TabsTrigger value="invoices" className="flex-1 rounded-none border-b-2 border-transparent px-0 py-3 text-xs font-bold uppercase tracking-wide text-zinc-400 data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent data-[state=active]:text-zinc-900">
+              <TabsList className="flex h-auto w-full rounded-none border-b border-border bg-transparent p-0">
+                <TabsTrigger value="invoices" className="flex-1 rounded-none border-b-2 border-transparent px-0 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent data-[state=active]:text-zinc-900">
                   Invoices
                 </TabsTrigger>
-                <TabsTrigger value="quotations" className="flex-1 rounded-none border-b-2 border-transparent px-0 py-3 text-xs font-bold uppercase tracking-wide text-zinc-400 data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent data-[state=active]:text-zinc-900">
+                <TabsTrigger value="quotations" className="flex-1 rounded-none border-b-2 border-transparent px-0 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent data-[state=active]:text-zinc-900">
                   Quotations
                 </TabsTrigger>
-                <TabsTrigger value="csrs" className="flex-1 rounded-none border-b-2 border-transparent px-0 py-3 text-xs font-bold uppercase tracking-wide text-zinc-400 data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent data-[state=active]:text-zinc-900">
+                <TabsTrigger value="csrs" className="flex-1 rounded-none border-b-2 border-transparent px-0 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent data-[state=active]:text-zinc-900">
                   CSRs
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="invoices" className="space-y-3 pt-4">
                 {invoices.length === 0 ? (
-                  <div className="py-8 text-center text-sm text-zinc-400">No invoices yet</div>
+                  <div className="py-8 text-center text-sm text-muted-foreground">No invoices yet</div>
                 ) : (
                   invoices.map((invoice) => (
                     <DocumentRow
@@ -292,7 +292,7 @@ export default function ClientDetail() {
 
               <TabsContent value="quotations" className="space-y-3 pt-4">
                 {quotations.length === 0 ? (
-                  <div className="py-8 text-center text-sm text-zinc-400">No quotations yet</div>
+                  <div className="py-8 text-center text-sm text-muted-foreground">No quotations yet</div>
                 ) : (
                   quotations.map((quotation) => (
                     <DocumentRow
@@ -309,7 +309,7 @@ export default function ClientDetail() {
 
               <TabsContent value="csrs" className="space-y-3 pt-4">
                 {csrs.length === 0 ? (
-                  <div className="py-8 text-center text-sm text-zinc-400">No CSRs yet</div>
+                  <div className="py-8 text-center text-sm text-muted-foreground">No CSRs yet</div>
                 ) : (
                   csrs.map((csr) => (
                     <DocumentRow
