@@ -233,4 +233,4 @@ function SignatoryPickerSheet({
   )
 }
 
-export default SignatoryPicker
+export default InvoiceSignatoryPicker
