@@ -97,7 +97,6 @@ export default function MobileInvoiceForm(props) {
     showColumnManager,
     setShowColumnManager,
     isMobile,
-    beforeNotesTermsSlot,
   } = props
 
   const [showActionsSheet, setShowActionsSheet] = useState(false)
@@ -496,8 +495,6 @@ export default function MobileInvoiceForm(props) {
                 </div>
               </CardContent>
             </Card>
-
-            {beforeNotesTermsSlot || null}
 
             <Card className={cardCls}>
               <CardContent className="p-0">
