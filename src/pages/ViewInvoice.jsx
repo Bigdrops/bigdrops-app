@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
+import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '../components/invoice/exportInvoiceCsv'
 import { toDbItem } from '@/domain/invoice'
 import {
@@ -144,8 +145,15 @@ export default function ViewInvoice() {
   const [items, setItems] = useState([])
   const [client, setClient] = useState(null)
   const [settings, setSettings] = useState({})
+  const [bankAccounts, setBankAccounts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showMore, setShowMore] = useState(false)
+  const [pdfOutput, setPdfOutput] = useState({
+    showBankDetails: false,
+    bankAccountId: null,
+    showFooter: true,
+    showTagline: true,
+  })
 
   // Payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -182,6 +190,13 @@ export default function ViewInvoice() {
   useEffect(() => {
     fetchInvoice()
     supabase
+      .from('bank_accounts')
+      .select('*')
+      .order('is_default', { ascending: false })
+      .then(({ data }) => {
+        setBankAccounts(data || [])
+      })
+    supabase
       .from('invoice_items')
       .select('*')
       .eq('invoice_id', id)
@@ -217,6 +232,27 @@ export default function ViewInvoice() {
     document.addEventListener('mousedown', handleOutside)
     return () => document.removeEventListener('mousedown', handleOutside)
   }, [])
+
+  useEffect(() => {
+    try {
+      const _cf = JSON.parse(invoice?.custom_fields || '{}')
+      const customFieldObject = Array.isArray(_cf) ? { header: _cf } : _cf || {}
+      const nextPdfOutput = customFieldObject.pdfOutput || {
+        showBankDetails: false,
+        bankAccountId: null,
+        showFooter: true,
+        showTagline: true,
+      }
+      setPdfOutput(nextPdfOutput)
+    } catch {
+      setPdfOutput({
+        showBankDetails: false,
+        bankAccountId: null,
+        showFooter: true,
+        showTagline: true,
+      })
+    }
+  }, [invoice?.custom_fields])
 
   if (loading) return <Layout title="Invoice"><p style={{ padding: 30 }}>Loading...</p></Layout>
   if (!invoice) return <Layout title="Invoice"><p style={{ padding: 30 }}>Invoice not found.</p></Layout>
@@ -511,6 +547,19 @@ export default function ViewInvoice() {
   }
   const topHeaderFields = customFields.filter((f) => f.label && f.value)
   const conversionTrail = customFieldObject.conversionTrail || {}
+  const handlePdfOutputChange = async (next) => {
+    setPdfOutput(next)
+    const updatedCf = {
+      ...customFieldObject,
+      pdfOutput: next,
+    }
+    await supabase
+      .from('invoices')
+      .update({
+        custom_fields: JSON.stringify(updatedCf)
+      })
+      .eq('id', id)
+  }
   const moreMenuItems = [
     {
       label: invoice.project_id ? 'Open Linked Documents' : 'Link to Project',
@@ -1431,6 +1480,20 @@ export default function ViewInvoice() {
         )}
 
         {/* ── PDF Download + Template Selector ── */}
+        <PdfOutputSettings
+          value={pdfOutput}
+          onChange={handlePdfOutputChange}
+          bankAccounts={bankAccounts.map(b => ({
+            id: b.id,
+            bankName: b.bank_name,
+            accountName: b.account_name,
+            accountNumber: b.account_number,
+            sortCode: b.sort_code,
+            isDefault: b.is_default,
+          }))}
+          companyTagline={settings.company_tagline || ''}
+          footerText={settings.footer_text || ''}
+        />
         <div
           style={{
             marginTop: '20px',

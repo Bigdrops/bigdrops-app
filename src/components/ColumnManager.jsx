@@ -38,6 +38,7 @@ function VisibilityBtn({ visible, onClick }) {
       onClick={onClick}
       className="h-9 w-9 rounded-xl border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100"
       title={visible ? 'Hide column' : 'Show column'}
+      aria-pressed={visible}
     >
       {visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
     </Button>

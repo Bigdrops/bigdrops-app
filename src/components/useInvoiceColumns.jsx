@@ -29,9 +29,17 @@ import {
 
 export function useInvoiceColumns(initial) {
   const [columns, setColumns] = useState(initial || BUILTIN_COLUMNS.map(c => ({ ...c })))
-  const isVisible = (key) => !!(columns.find(c => c.key === key) || {}).visible
   const getColumn = (key) => columns.find(c => c.key === key)
-  const toggleVisible = (key) => setColumns(cols => cols.map(c => c.key === key ? { ...c, visible: !c.visible } : c))
+  const isVisible = (key) => {
+    const column = getColumn(key)
+    return column ? column.visible !== false : false
+  }
+  const toggleVisible = (key) =>
+    setColumns((cols) =>
+      cols.map((column) =>
+        column.key === key ? { ...column, visible: column.visible === false ? true : false } : column,
+      ),
+    )
   const updateColumn = (key, field, value) => setColumns(cols => cols.map(c => c.key === key ? { ...c, [field]: value } : c))
   const addCustomColumn = () => setColumns(cols => [...cols, { key: 'custom_' + Date.now(), label: 'New Column', type: 'text', visible: true, removable: true, includeInTotal: false }])
   const removeCustomColumn = (key) => setColumns(cols => cols.filter(c => c.key !== key))

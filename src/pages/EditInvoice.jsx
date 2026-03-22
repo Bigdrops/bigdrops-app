@@ -131,9 +131,15 @@ export default function EditInvoice() {
         row_type: item.row_type || 'standard',
         group_id: item.group_id || null,
         group_name: item.group_name || '',
-        custom_data: typeof item.custom_data === 'string' ? JSON.parse(item.custom_data || '{}') : item.custom_data || {},
+        custom_data:
+          typeof item.custom_data === 'string'
+            ? JSON.parse(item.custom_data || '{}')
+            : item.custom_data && typeof item.custom_data === 'object'
+              ? item.custom_data
+              : {},
         vat_rate: item.vat_rate === undefined ? null : item.vat_rate,
         discount_rate: item.discount_rate === undefined ? null : item.discount_rate,
+        install_rate: item.install_rate === undefined ? null : item.install_rate,
         install_rate_override: item.install_rate_override === true,
         image_url: item.image_url || null,
       }))

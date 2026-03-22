@@ -98,8 +98,10 @@ export function toDbItem(
     sort_order: sortOrder,
     amount: Number(item.quantity || 1) * Number(item.unit_price || 0),
     custom_data: JSON.stringify(item.custom_data || {}),
-    vat_rate: item.vat_rate ?? 0,
-    discount_rate: item.discount_rate ?? 0,
+    install_rate: item.install_rate ?? null,
+    install_rate_override: item.install_rate_override === true,
+    vat_rate: item.vat_rate ?? null,
+    discount_rate: item.discount_rate ?? null,
     image_url: item.image_url || null,
   }
 }
