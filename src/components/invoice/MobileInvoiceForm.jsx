@@ -13,6 +13,7 @@ import ActionsSheet from './ActionsSheet'
 import MobileItemCard from './MobileItemCard'
 import MobileGroupCard from './MobileGroupCard'
 import TotalsPanel from './TotalsPanel'
+import JsonItemsImportSheet from '@/components/items/JsonItemsImportSheet'
 
 const cardCls = 'rounded-2xl border border-zinc-200 bg-white ring-0 shadow-none'
 const inputCls = 'h-9 rounded-lg border-zinc-200 bg-white text-sm text-zinc-900'
@@ -71,7 +72,6 @@ export default function MobileInvoiceForm(props) {
     onSaveSent,
     onSaveDraft,
     onCancel,
-    onImportFileChange,
     onImportText,
     onAddItem,
     onAddGroup,
@@ -103,9 +103,6 @@ export default function MobileInvoiceForm(props) {
   const [showImportSheet, setShowImportSheet] = useState(false)
   const [showNotesTerms, setShowNotesTerms] = useState(false)
   const [showAttachments, setShowAttachments] = useState(false)
-  const [csvTab, setCsvTab] = useState('upload')
-  const [pasteCSV, setPasteCSV] = useState('')
-  const importInputRef = useRef(null)
   const additionalInfoRef = useRef(null)
   const groupMap = useMemo(() => new Map(groups.map((group) => [group.id, group])), [groups])
 
@@ -134,7 +131,6 @@ export default function MobileInvoiceForm(props) {
     computedAmountMap.get(item._uiKey || item.id) ?? Number(item.quantity || 0) * Number(item.unit_price || 0)
 
   const openImportSheet = () => {
-    setCsvTab('upload')
     setShowImportSheet(true)
   }
 
@@ -627,87 +623,14 @@ export default function MobileInvoiceForm(props) {
         onScrollToAdditionalInfo={() => additionalInfoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
       />
 
-      <Sheet open={showImportSheet} onOpenChange={setShowImportSheet}>
-        <SheetContent side="bottom" className="rounded-t-[28px] bg-white p-0 sm:mx-auto sm:max-w-2xl [&>[data-slot=sheet-close]]:hidden">
-          <SheetHeader className="border-b border-zinc-200 px-5 py-4 text-left">
-            <SheetTitle className="text-base font-semibold text-zinc-900">Import invoice items</SheetTitle>
-          </SheetHeader>
-
-          <div className="space-y-4 p-5">
-            <div className="flex rounded-2xl border border-zinc-200 bg-zinc-50 p-1">
-              <button
-                type="button"
-                onClick={() => setCsvTab('upload')}
-                className={`flex-1 rounded-[14px] px-3 py-2 text-sm font-medium transition-colors ${csvTab === 'upload' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
-              >
-                Upload File
-              </button>
-              <button
-                type="button"
-                onClick={() => setCsvTab('paste')}
-                className={`flex-1 rounded-[14px] px-3 py-2 text-sm font-medium transition-colors ${csvTab === 'paste' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
-              >
-                Paste Text
-              </button>
-            </div>
-
-            <input
-              ref={importInputRef}
-              type="file"
-              accept=".csv,text/csv"
-              className="hidden"
-              onChange={(event) => {
-                onImportFileChange(event)
-                setShowImportSheet(false)
-              }}
-            />
-
-            {csvTab === 'upload' ? (
-              <div className="rounded-[24px] border border-dashed border-zinc-300 bg-zinc-50 px-4 py-5">
-                <div className="space-y-3 text-center">
-                  <Button type="button" variant="outline" className="h-11 rounded-2xl border-zinc-200 bg-white" onClick={() => importInputRef.current?.click()}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Choose CSV File
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="rounded-[20px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-xs text-zinc-600">
-                  <div>Format: description, quantity, unit, unit_price</div>
-                  <div>Example: Solar Panel,4,PCS,125000</div>
-                </div>
-                <Textarea
-                  value={pasteCSV}
-                  onChange={(event) => setPasteCSV(event.target.value)}
-                  placeholder={'description,quantity,unit,unit_price\nSolar Panel,4,PCS,125000'}
-                  className="min-h-48 rounded-[24px] border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900"
-                />
-                <div className="flex items-center justify-end gap-2">
-                  <Button type="button" variant="outline" className="h-10 rounded-2xl border-zinc-200 bg-white" onClick={() => setPasteCSV('')}>
-                    Clear
-                  </Button>
-                  <Button
-                    type="button"
-                    className="h-10 rounded-2xl bg-zinc-900 text-white hover:bg-zinc-800"
-                    onClick={() => {
-                      if (!pasteCSV.trim()) {
-                        alert('Paste CSV content before importing.')
-                        return
-                      }
-                      onImportText(pasteCSV)
-                      setPasteCSV('')
-                      setShowImportSheet(false)
-                    }}
-                  >
-                    Import
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+      <JsonItemsImportSheet
+        open={showImportSheet}
+        onOpenChange={setShowImportSheet}
+        onImportText={onImportText}
+        title="Import Items"
+        side="bottom"
+        contentClassName="sm:mx-auto sm:max-w-2xl"
+      />
 
       {showColumnManager ? (
         <ColumnManager

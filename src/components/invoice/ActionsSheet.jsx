@@ -19,7 +19,7 @@ export default function ActionsSheet({
     {
       icon: Upload,
       label: 'Import',
-      description: 'Import line items from CSV',
+      description: 'Import line items from JSON',
       onClick: onImport,
     },
     {

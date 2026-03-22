@@ -14,6 +14,7 @@ import {
   ensureUiKey,
 } from '../components/useInvoiceColumns.jsx'
 import { computeDocument } from '../lib/Calculations'
+import { importJsonItems } from '../lib/itemJsonImport'
 import { numberToWords } from '../hooks/useInvoiceForm'
 
 const invoicePageClassName = 'p-0 max-w-none'
@@ -45,6 +46,7 @@ export default function NewInvoice() {
   const [invoiceTitle, setInvoiceTitle] = useState(prefill?.invoice_title || '')
   const {
     columns,
+    setColumns,
     isVisible,
     getColumn,
     toggleVisible,
@@ -243,67 +245,39 @@ export default function NewInvoice() {
     })
   }
 
-  const parseCsvItems = (text) => {
-    const lines = text.split('\n').filter((line) => line.trim())
-    if (lines.length < 2) return { error: 'The CSV needs a header row and at least one item row.' }
-
-    const headers = lines[0].split(',').map((header) => header.trim().toLowerCase().replace(/"/g, ''))
-    const newItems = []
-
-    for (let lineIndex = 1; lineIndex < lines.length; lineIndex += 1) {
-      const columnsInRow = lines[lineIndex].split(',').map((cell) => cell.trim().replace(/"/g, ''))
-      if (!columnsInRow[0]) continue
-
-      const row = {}
-      headers.forEach((header, headerIndex) => {
-        row[header] = columnsInRow[headerIndex] || ''
-      })
-
-      newItems.push({
-        ...makeEmptyItem(),
-        row_type: 'standard',
-        group_id: null,
-        group_name: '',
-        description: row.description || columnsInRow[0],
-        sub_description: row.sub_description || '',
-        make: row.make || '',
-        quantity: Number(row.quantity || 1),
-        unit: row.unit || '',
-        unit_price: Number(row.unit_price || 0),
-        sort_order: newItems.length,
-      })
-    }
-
-    if (!newItems.length) {
-      return { error: 'No valid item rows were found. Check that the file contains description values under the CSV header.' }
-    }
-
-    return { newItems }
+  const hasMeaningfulItemContent = (item) => {
+    if (item.row_type === 'group_header') return true
+    if (String(item.description || '').trim()) return true
+    if (String(item.sub_description || '').trim()) return true
+    if (String(item.make || '').trim()) return true
+    if (String(item.unit || '').trim()) return true
+    if (item.quantity !== undefined && Number(item.quantity) !== 1) return true
+    if (item.unit_price !== undefined && Number(item.unit_price) !== 0) return true
+    if (item.install_rate_override && item.install_rate !== null && item.install_rate !== undefined) return true
+    return Object.values(item.custom_data || {}).some((value) => String(value ?? '').trim() !== '')
   }
 
-  const handleCSVImport = (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  const handleJsonImport = (text) => {
+    const { items: importedItems, columns: importedColumns, error } = importJsonItems({
+      text,
+      columns,
+      createItem: makeEmptyItem,
+    })
 
-    const reader = new FileReader()
-    reader.onload = (loadEvent) => {
-      const text = String(loadEvent.target?.result || '')
-      handleCSVTextImport(text)
-    }
-
-    reader.readAsText(file)
-    event.target.value = ''
-  }
-
-  const handleCSVTextImport = (text) => {
-    const { newItems, error } = parseCsvItems(text)
     if (error) {
       alert(error)
-      return
+      return false
     }
 
-    setItems((current) => [...current.filter((item) => item.description || item.row_type === 'group_header'), ...newItems])
-    alert(newItems.length + ' items imported')
+    setColumns(importedColumns)
+    setItems((current) =>
+      [...current.filter(hasMeaningfulItemContent), ...importedItems].map((item, itemIndex) => ({
+        ...item,
+        sort_order: itemIndex,
+      })),
+    )
+    alert(importedItems.length + ' items imported')
+    return true
   }
 
   const calculationInputs = buildCalculationInputs({ invoice, discountType, discountTiming, whtType })
@@ -453,8 +427,7 @@ export default function NewInvoice() {
         onSaveSent={() => handleSave('sent')}
         onSaveDraft={() => handleSave('draft')}
         onCancel={() => navigate('/invoices')}
-        onImportFileChange={handleCSVImport}
-        onImportText={handleCSVTextImport}
+        onImportText={handleJsonImport}
         onAddItem={addItem}
         onAddGroup={addGroup}
         onAddItemToGroup={addItemToGroup}

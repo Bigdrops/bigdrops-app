@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/supabase'
 import ClientSelector from '@/components/ClientSelector'
@@ -8,6 +8,7 @@ import UnitInput from '@/components/UnitInput'
 import InvoiceFormActions from '@/components/invoice/InvoiceFormActions'
 import InvoiceNotesTermsSection from '@/components/invoice/InvoiceNotesTermsSection'
 import InvoiceCustomBottomFieldsSection from '@/components/invoice/InvoiceCustomBottomFieldsSection'
+import JsonItemsImportSheet from '@/components/items/JsonItemsImportSheet'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -19,15 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
 import { Switch } from '@/components/ui/switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import {
   buildCalculationInputs,
@@ -47,6 +40,7 @@ import {
   type DbQuotationItem,
   type Quotation,
 } from '@/domain/quotation'
+import { importJsonItems } from '@/lib/itemJsonImport'
 import { QUOTATION_STATUSES, formatQuotationStatus } from './quotationStatus'
 
 function useIsMobile() {
@@ -220,9 +214,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const isEdit = mode === 'edit'
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
-  const [showCSVNote, setShowCSVNote] = useState(false)
-  const [csvTab, setCSVTab] = useState('Upload File')
-  const [pasteCSV, setPasteCSV] = useState('')
+  const [showImportSheet, setShowImportSheet] = useState(false)
   const [showColumnManager, setShowColumnManager] = useState(false)
   const [quotation, setQuotation] = useState<Quotation>({
     quotation_number: '',
@@ -486,76 +478,42 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     })
   }
 
-  const parseCsvItems = (text: string) => {
-    const lines = text.split('\n').filter((line) => line.trim())
-    if (lines.length < 2) {
-      return { error: 'The CSV needs a header row and at least one item row.' }
-    }
-
-    const headers = lines[0]
-      .split(',')
-      .map((header) => header.trim().toLowerCase().replace(/"/g, ''))
-
-    const newItems: InvoiceItem[] = []
-    for (let i = 1; i < lines.length; i += 1) {
-      const cols = lines[i].split(',').map((cell) => cell.trim().replace(/"/g, ''))
-      if (!cols[0]) continue
-      const row: Record<string, string> = {}
-      headers.forEach((header, index) => {
-        row[header] = cols[index] || ''
-      })
-      newItems.push({
-        ...makeEmptyItem(),
-        row_type: 'standard',
-        group_id: null,
-        group_name: '',
-        description: row.description || cols[0],
-        sub_description: row.sub_description || '',
-        make: row.make || '',
-        quantity: Number(row.quantity || 1),
-        unit: (row.unit || '').toUpperCase(),
-        unit_price: Number(row.unit_price || 0),
-        sort_order: newItems.length,
-      })
-    }
-
-    if (!newItems.length) {
-      return {
-        error:
-          'No valid item rows were found. Check that the file contains description values under the CSV header.',
-      }
-    }
-
-    return { newItems }
+  const hasMeaningfulItemContent = (item: InvoiceItem) => {
+    if (item.row_type === 'group_header') return true
+    if (String(item.description || '').trim()) return true
+    if (String(item.sub_description || '').trim()) return true
+    if (String(item.make || '').trim()) return true
+    if (String(item.unit || '').trim()) return true
+    if (item.quantity !== undefined && Number(item.quantity) !== 1) return true
+    if (item.unit_price !== undefined && Number(item.unit_price) !== 0) return true
+    if (item.install_rate_override && item.install_rate !== null && item.install_rate !== undefined) return true
+    return Object.values(item.custom_data || {}).some((value) => String(value ?? '').trim() !== '')
   }
 
   const applyImportedItems = (newItems: InvoiceItem[]) => {
     commitGrouping((current) => [
-      ...current.filter((item) => item.description?.trim() || item.row_type === 'group_header'),
+      ...current.filter(hasMeaningfulItemContent),
       ...newItems,
     ])
     alert(`${newItems.length} items imported`)
-    setShowCSVNote(false)
+    setShowImportSheet(false)
   }
 
-  const handleCSVImport = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  const handleJsonImport = (text: string) => {
+    const { items: importedItems, columns: importedColumns, error } = importJsonItems({
+      text,
+      columns,
+      createItem: makeEmptyItem,
+    })
 
-    const reader = new FileReader()
-    reader.onload = (loadEvent) => {
-      const text = String(loadEvent.target?.result || '')
-      const { newItems, error } = parseCsvItems(text)
-      if (error) {
-        alert(error)
-        return
-      }
-
-      applyImportedItems(newItems)
+    if (error) {
+      alert(error)
+      return false
     }
 
-    reader.readAsText(file)
-    event.target.value = ''
+    setColumns(importedColumns || columns)
+    applyImportedItems(importedItems || [])
+    return true
   }
 
   const normalizedGroupMeta = useMemo(() => toGroupMetaMap(groups), [groups])
@@ -954,101 +912,18 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           <p className="mt-2 max-w-2xl text-sm text-slate-500">Use the existing grouping and totals engine, then save normally.</p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <input
-            id="quotation-csv-import"
-            type="file"
-            accept=".csv"
-            hidden
-            onChange={handleCSVImport}
-          />
           <Button type="button" variant="outline" className="h-10 rounded-none border-slate-300 bg-white text-slate-700 w-full sm:w-auto" onClick={() => navigate('/quotations')}>Back to Quotations</Button>
         </div>
       </div>
 
-      <Sheet open={showCSVNote} onOpenChange={setShowCSVNote}>
-        <SheetContent
-          side={isMobile ? 'bottom' : 'right'}
-          className={isMobile ? 'max-h-[88vh] rounded-t-3xl px-0' : 'w-full max-w-md px-0'}
-        >
-          <SheetHeader className="border-b border-slate-200 px-5 pb-4 pt-5">
-            <SheetTitle className="text-base font-bold text-slate-900">Import quotation items</SheetTitle>
-            <SheetDescription>
-              Upload a CSV file or paste CSV text. Imported rows become editable quotation line items before you save.
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="flex h-full flex-col overflow-hidden">
-            <div className="overflow-y-auto px-5 py-4">
-              <Tabs
-                value={csvTab}
-                onValueChange={setCSVTab}
-                className="w-full"
-              >
-                <TabsList className="mb-4 grid h-auto w-full grid-cols-2 rounded-xl bg-slate-100 p-1">
-                  <TabsTrigger value="Upload File">Upload File</TabsTrigger>
-                  <TabsTrigger value="Paste Text">Paste Text</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="Upload File" className="space-y-4">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                    <div><strong>Required:</strong> description</div>
-                    <div><strong>Optional:</strong> sub_description, make, quantity, unit, unit_price</div>
-                  </div>
-                  <Button
-                    type="button"
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    onClick={() => document.getElementById('quotation-csv-import')?.click()}
-                  >
-                    Choose CSV File
-                  </Button>
-                </TabsContent>
-
-                <TabsContent value="Paste Text" className="space-y-4">
-                  <div className="text-xs text-slate-500">
-                    <div><strong>Required:</strong> description</div>
-                    <div><strong>Optional:</strong> sub_description, make, quantity, unit, unit_price</div>
-                  </div>
-                  <Textarea
-                    value={pasteCSV}
-                    onChange={(event) => setPasteCSV(event.target.value)}
-                    placeholder={'description,quantity,unit,unit_price\nCable tie,5,PCS,700'}
-                    className="min-h-[180px] resize-y bg-white text-sm"
-                  />
-                </TabsContent>
-              </Tabs>
-            </div>
-
-            {csvTab === 'Paste Text' ? (
-              <div className="border-t border-slate-200 px-5 py-4">
-                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                  <Button type="button" variant="outline" onClick={() => setPasteCSV('')}>
-                    Clear
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      if (!pasteCSV.trim()) {
-                        alert('Paste CSV content before importing.')
-                        return
-                      }
-                      const { newItems, error } = parseCsvItems(pasteCSV)
-                      if (error) {
-                        alert(error)
-                        return
-                      }
-                      applyImportedItems(newItems)
-                      setPasteCSV('')
-                    }}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    Import
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </SheetContent>
-      </Sheet>
+      <JsonItemsImportSheet
+        open={showImportSheet}
+        onOpenChange={setShowImportSheet}
+        onImportText={handleJsonImport}
+        title="Import Items"
+        side={isMobile ? 'bottom' : 'right'}
+        contentClassName={isMobile ? 'max-h-[88vh] rounded-t-3xl' : 'w-full max-w-md'}
+      />
 
       {showColumnManager && (
         <ColumnManager
@@ -1155,8 +1030,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
                   <Button type="button" variant="outline" className="h-9 rounded-none border-slate-300 bg-white text-slate-700" onClick={() => setShowColumnManager(true)}>
                     Table & Tax Settings
                   </Button>
-                  <Button type="button" className="h-9 rounded-none bg-slate-900 hover:bg-slate-800" onClick={() => setShowCSVNote(true)}>
-                    Import CSV
+                  <Button type="button" className="h-9 rounded-none bg-slate-900 hover:bg-slate-800" onClick={() => setShowImportSheet(true)}>
+                    Import JSON
                   </Button>
                   <Button type="button" variant="ghost" className="h-9 rounded-none text-[#0f62fe] hover:bg-blue-50" onClick={addQuotationGroup}>
                     + Group
