@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch'
 import {
   Building2, CreditCard, ImageIcon, FileText,
   Shield, Check, Loader2, ChevronRight, Upload, X,
-  Eye, EyeOff, UserCheck, UserX, Trash2, Smartphone, LayoutDashboard,
+  Pencil, Plus, UserCheck, UserX, Trash2, Smartphone, LayoutDashboard,
   FolderKanban, Wrench, ArchiveRestore, ClipboardList
 } from 'lucide-react'
 
@@ -240,11 +240,258 @@ function CompanySection({ onToast }) {
 }
 
 function BankingSection({ onToast }) {
+  const emptyForm = { bank_name: '', account_name: '', account_number: '', sort_code: '', is_default: false }
+  const [accounts, setAccounts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState(null)
+  const [formOpen, setFormOpen] = useState(false)
+  const [form, setForm] = useState(emptyForm)
+  const [saving, setSaving] = useState(false)
+  const [actionId, setActionId] = useState(null)
+
+  const loadAccounts = useCallback(async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('bank_accounts')
+      .select('id, bank_name, account_name, account_number, sort_code, is_default')
+      .order('is_default', { ascending: false })
+      .order('bank_name', { ascending: true })
+
+    if (error) {
+      alert(`Failed to load bank accounts: ${error.message}`)
+      setAccounts([])
+    } else {
+      setAccounts(data || [])
+    }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    loadAccounts()
+  }, [loadAccounts])
+
+  const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }))
+
+  const openAdd = () => {
+    setEditingId(null)
+    setForm(emptyForm)
+    setFormOpen(true)
+  }
+
+  const openEdit = (account) => {
+    setEditingId(account.id)
+    setForm({
+      bank_name: account.bank_name || '',
+      account_name: account.account_name || '',
+      account_number: account.account_number || '',
+      sort_code: account.sort_code || '',
+      is_default: !!account.is_default,
+    })
+    setFormOpen(true)
+  }
+
+  const closeForm = () => {
+    setEditingId(null)
+    setForm(emptyForm)
+    setFormOpen(false)
+  }
+
+  const saveAccount = async () => {
+    if (!form.bank_name || !form.account_name || !form.account_number) {
+      alert('Bank name, account name, and account number are required')
+      return
+    }
+
+    setSaving(true)
+    try {
+      if (form.is_default) {
+        const resetQuery = supabase.from('bank_accounts').update({ is_default: false })
+        const resetResult = editingId
+          ? await resetQuery.neq('id', editingId)
+          : await resetQuery.not('id', 'is', null)
+        if (resetResult.error) throw resetResult.error
+      }
+
+      const payload = {
+        bank_name: form.bank_name,
+        account_name: form.account_name,
+        account_number: form.account_number,
+        sort_code: form.sort_code,
+        is_default: !!form.is_default,
+      }
+
+      const result = editingId
+        ? await supabase.from('bank_accounts').update(payload).eq('id', editingId)
+        : await supabase.from('bank_accounts').insert(payload)
+
+      if (result.error) throw result.error
+
+      await loadAccounts()
+      closeForm()
+      onToast(editingId ? 'Bank account updated' : 'Bank account added')
+    } catch (e) {
+      alert(e.message)
+    }
+    setSaving(false)
+  }
+
+  const removeAccount = async (id) => {
+    setActionId(`delete:${id}`)
+    const { error } = await supabase.from('bank_accounts').delete().eq('id', id)
+    if (error) {
+      alert(`Delete failed: ${error.message}`)
+      setActionId(null)
+      return
+    }
+    await loadAccounts()
+    setActionId(null)
+    onToast('Bank account deleted')
+  }
+
+  const setDefault = async (id) => {
+    setActionId(`default:${id}`)
+    const { error: resetError } = await supabase.from('bank_accounts').update({ is_default: false }).neq('id', id)
+    if (resetError) {
+      alert(`Default update failed: ${resetError.message}`)
+      setActionId(null)
+      return
+    }
+
+    const { error } = await supabase.from('bank_accounts').update({ is_default: true }).eq('id', id)
+    if (error) {
+      alert(`Default update failed: ${error.message}`)
+      setActionId(null)
+      return
+    }
+
+    await loadAccounts()
+    setActionId(null)
+    onToast('Default bank account updated')
+  }
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-slate-300" /></div>
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+        <div className="text-sm font-bold text-slate-900">Bank accounts</div>
+        <div className="mt-1 text-xs text-slate-500">
+          Manage the payment accounts available across invoices and other payment instructions.
+        </div>
+      </div>
+
+      {accounts.length === 0 ? (
+        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-10 text-center text-sm text-slate-500">
+          No bank accounts added yet.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {accounts.map((account) => {
+            const busy = actionId && actionId.includes(account.id)
+            return (
+              <div key={account.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="text-sm font-bold text-slate-900">{account.bank_name || 'Unnamed bank'}</div>
+                      {account.is_default ? (
+                        <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-600">
+                          Default
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-1 text-sm text-slate-700">{account.account_name || 'No account name'}</div>
+                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-400">
+                      <span>Account No: {account.account_number || 'Not set'}</span>
+                      <span>Sort Code: {account.sort_code || 'Not set'}</span>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      onClick={() => openEdit(account)}
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                    >
+                      <span className="inline-flex items-center gap-1.5"><Pencil size={12} />Edit</span>
+                    </button>
+                    <button
+                      onClick={() => removeAccount(account.id)}
+                      disabled={busy}
+                      className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      <span className="inline-flex items-center gap-1.5"><Trash2 size={12} />Delete</span>
+                    </button>
+                  </div>
+                </div>
+                {!account.is_default ? (
+                  <button
+                    onClick={() => setDefault(account.id)}
+                    disabled={busy}
+                    className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                  >
+                    {actionId === `default:${account.id}` ? 'Updating...' : 'Set as Default'}
+                  </button>
+                ) : null}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {formOpen ? (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-sm font-bold text-slate-900">{editingId ? 'Edit bank account' : 'Add bank account'}</div>
+              <div className="mt-1 text-xs text-slate-500">
+                Save the exact account details you want available inside the app.
+              </div>
+            </div>
+            <button
+              onClick={closeForm}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+            >
+              Cancel
+            </button>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Bank Name"><Input value={form.bank_name} onChange={(v) => updateForm('bank_name', v)} placeholder="First Bank of Nigeria" /></Field>
+            <Field label="Account Name"><Input value={form.account_name} onChange={(v) => updateForm('account_name', v)} placeholder="Sun & Shield Power Solutions" /></Field>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Account Number"><Input value={form.account_number} onChange={(v) => updateForm('account_number', v)} placeholder="0123456789" /></Field>
+            <Field label="Sort Code"><Input value={form.sort_code} onChange={(v) => updateForm('sort_code', v)} placeholder="011-152-383" /></Field>
+          </div>
+          <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">Default account</div>
+                <div className="mt-1 text-xs text-slate-500">Use this bank account as the primary payment destination.</div>
+              </div>
+              <Switch checked={!!form.is_default} onCheckedChange={(value) => updateForm('is_default', value)} />
+            </div>
+          </div>
+          <SaveBtn saving={saving} saved={false} onClick={saveAccount} />
+        </div>
+      ) : null}
+
+      <button
+        onClick={openAdd}
+        className="w-full rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+      >
+        <span className="inline-flex items-center gap-2"><Plus size={14} />Add Bank Account</span>
+      </button>
+    </div>
+  )
+}
+
+function BrandingSection({ onToast }) {
   const { settings, loading } = useSettings()
-  const [form, setForm] = useState({ bank_name: '', bank_account_name: '', bank_account_number: '', bank_sort_code: '' })
+  const [form, setForm] = useState({ logo_url: '', footer_text: '' })
+  const [uploading, setUploading] = useState({ logo: false })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [editing, setEditing] = useState(false)
+  const logoRef = useRef()
 
   useEffect(() => {
     if (!loading && settings) setForm(f => ({ ...f, ...settings }))
@@ -252,114 +499,19 @@ function BankingSection({ onToast }) {
 
   useEffect(() => {
     if (!loading) {
-      const hasSavedData = [
-        settings?.bank_name,
-        settings?.bank_account_name,
-        settings?.bank_account_number,
-        settings?.bank_sort_code,
-      ].some(Boolean)
+      const hasSavedData = [settings?.logo_url, settings?.footer_text].some(Boolean)
       setEditing(!hasSavedData)
     }
   }, [loading, settings])
 
   const u = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  const restoreSavedBankingState = () => {
+  const restoreSavedBrandingState = () => {
     setForm({
-      bank_name: settings?.bank_name || '',
-      bank_account_name: settings?.bank_account_name || '',
-      bank_account_number: settings?.bank_account_number || '',
-      bank_sort_code: settings?.bank_sort_code || '',
+      logo_url: settings?.logo_url || '',
+      footer_text: settings?.footer_text || '',
     })
   }
-
-  const save = async () => {
-    setSaving(true)
-    try {
-      await saveSettings(form)
-      setSaved(true)
-      setEditing(false)
-      onToast('Banking details saved')
-      setTimeout(() => setSaved(false), 2500)
-    } catch (e) { alert(e.message) }
-    setSaving(false)
-  }
-
-  if (loading) return <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-slate-300" /></div>
-
-  if (!editing) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-          <div>
-            <div className="text-sm font-bold text-slate-900">Saved payment details</div>
-            <div className="mt-1 text-xs text-slate-500">
-              This workspace currently supports one saved bank account.
-            </div>
-          </div>
-          <button
-            onClick={() => setEditing(true)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
-          >
-            Edit
-          </button>
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <SummaryField label="Bank Name" value={form.bank_name} />
-          <SummaryField label="Account Name" value={form.bank_account_name} />
-          <SummaryField label="Account Number" value={form.bank_account_number} />
-          <SummaryField label="Sort Code / SWIFT" value={form.bank_sort_code} />
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-        <div>
-          <div className="text-sm font-bold text-slate-900">Edit payment details</div>
-          <div className="mt-1 text-xs text-slate-500">
-            Update the single bank account currently stored for invoices and payment instructions.
-          </div>
-        </div>
-        <button
-          onClick={() => {
-            restoreSavedBankingState()
-            setEditing(false)
-          }}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
-        >
-          Cancel
-        </button>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Bank Name"><Input value={form.bank_name} onChange={v => u('bank_name', v)} placeholder="First Bank of Nigeria" /></Field>
-        <Field label="Account Name"><Input value={form.bank_account_name} onChange={v => u('bank_account_name', v)} placeholder="Sun & Shield Power Solutions" /></Field>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Account Number"><Input value={form.bank_account_number} onChange={v => u('bank_account_number', v)} placeholder="0123456789" /></Field>
-        <Field label="Sort Code / SWIFT"><Input value={form.bank_sort_code} onChange={v => u('bank_sort_code', v)} placeholder="011-152-383" /></Field>
-      </div>
-      <SaveBtn saving={saving} saved={saved} onClick={save} />
-    </div>
-  )
-}
-
-function BrandingSection({ onToast }) {
-  const { settings, loading } = useSettings()
-  const [form, setForm] = useState({ logo_url: '', signature_url: '', footer_text: '' })
-  const [uploading, setUploading] = useState({ logo: false, signature: false })
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const logoRef = useRef()
-  const sigRef = useRef()
-
-  useEffect(() => {
-    if (!loading && settings) setForm(f => ({ ...f, ...settings }))
-  }, [loading, settings])
-
-  const u = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const handleUpload = async (type, file) => {
     if (!file) return
@@ -367,9 +519,9 @@ function BrandingSection({ onToast }) {
     try {
       const ext = file.name.split('.').pop()
       const path = `${type}/${Date.now()}.${ext}`
-      const url = await uploadFile('company-assets', path, file)
+      const url = await uploadFile('logos', path, file)
       u(type + '_url', url)
-      onToast(`${type === 'logo' ? 'Logo' : 'Signature'} uploaded`)
+      onToast('Logo uploaded')
     } catch (e) { alert('Upload failed: ' + e.message) }
     setUploading(p => ({ ...p, [type]: false }))
   }
@@ -379,6 +531,7 @@ function BrandingSection({ onToast }) {
     try {
       await saveSettings(form)
       setSaved(true)
+      setEditing(false)
       onToast('Branding saved')
       setTimeout(() => setSaved(false), 2500)
     } catch (e) { alert(e.message) }
@@ -413,11 +566,63 @@ function BrandingSection({ onToast }) {
     </Field>
   )
 
+  const footerPreview = (form.footer_text || '').split('\n').find(Boolean) || ''
+
+  if (!editing) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div>
+            <div className="text-sm font-bold text-slate-900">Saved branding</div>
+            <div className="mt-1 text-xs text-slate-500">
+              Review your logo and footer text before editing branding assets.
+            </div>
+          </div>
+          <button
+            onClick={() => setEditing(true)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+          >
+            Edit
+          </button>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Logo</div>
+            <div className="mt-2">
+              {form.logo_url ? (
+                <img src={form.logo_url} alt="Company logo" className="h-14 w-14 rounded-lg border border-slate-200 bg-white object-contain" />
+              ) : (
+                <div className="text-sm font-medium text-slate-800">No logo</div>
+              )}
+            </div>
+          </div>
+          <SummaryField label="Footer Text" value={footerPreview || 'Not set'} />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+        <div>
+          <div className="text-sm font-bold text-slate-900">Edit branding</div>
+          <div className="mt-1 text-xs text-slate-500">
+            Update the company logo and footer text used in generated documents.
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            restoreSavedBrandingState()
+            setEditing(false)
+          }}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+        >
+          Cancel
+        </button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <UploadBox type="logo" label="Company Logo" inputRef={logoRef} />
-        <UploadBox type="signature" label="Signature" inputRef={sigRef} />
       </div>
       <Field label="PDF Footer Text">
         <textarea
@@ -433,59 +638,383 @@ function BrandingSection({ onToast }) {
   )
 }
 
-function UserSection({ session, onToast }) {
-  const [form, setForm] = useState({ password: '', confirm: '' })
-  const [showPass, setShowPass] = useState(false)
+function SignatoriesSection({ onToast }) {
+  const emptyForm = { name: '', role: '', signature_url: '' }
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState(null)
+  const [formOpen, setFormOpen] = useState(false)
+  const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [actionId, setActionId] = useState(null)
+  const fileRef = useRef()
+
+  const loadSignatories = useCallback(async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('signatories')
+      .select('id, name, role, signature_url')
+      .order('name', { ascending: true })
+
+    if (error) {
+      alert(`Failed to load signatories: ${error.message}`)
+      setItems([])
+    } else {
+      setItems(data || [])
+    }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    loadSignatories()
+  }, [loadSignatories])
+
+  const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }))
+
+  const openAdd = () => {
+    setEditingId(null)
+    setForm(emptyForm)
+    setFormOpen(true)
+  }
+
+  const openEdit = (item) => {
+    setEditingId(item.id)
+    setForm({
+      name: item.name || '',
+      role: item.role || '',
+      signature_url: item.signature_url || '',
+    })
+    setFormOpen(true)
+  }
+
+  const closeForm = () => {
+    setEditingId(null)
+    setForm(emptyForm)
+    setFormOpen(false)
+  }
+
+  const handleUpload = async (file) => {
+    if (!file) return
+    setUploading(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `signature/${Date.now()}.${ext}`
+      const url = await uploadFile('signatures', path, file)
+      updateForm('signature_url', url)
+      onToast('Signature uploaded')
+    } catch (e) {
+      alert(`Upload failed: ${e.message}`)
+    }
+    setUploading(false)
+  }
+
+  const saveSignatory = async () => {
+    if (!form.name.trim()) {
+      alert('Name is required')
+      return
+    }
+
+    setSaving(true)
+    const payload = {
+      name: form.name.trim(),
+      role: form.role.trim(),
+      signature_url: form.signature_url || null,
+    }
+    const result = editingId
+      ? await supabase.from('signatories').update(payload).eq('id', editingId)
+      : await supabase.from('signatories').insert(payload)
+
+    if (result.error) {
+      alert(`Save failed: ${result.error.message}`)
+      setSaving(false)
+      return
+    }
+
+    await loadSignatories()
+    closeForm()
+    setSaving(false)
+    onToast(editingId ? 'Signatory updated' : 'Signatory added')
+  }
+
+  const removeSignatory = async (id) => {
+    setActionId(id)
+    const { error } = await supabase.from('signatories').delete().eq('id', id)
+    if (error) {
+      alert(`Delete failed: ${error.message}`)
+      setActionId(null)
+      return
+    }
+    await loadSignatories()
+    setActionId(null)
+    onToast('Signatory deleted')
+  }
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-slate-300" /></div>
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+        <div className="text-sm font-bold text-slate-900">Document signatories</div>
+        <div className="mt-1 text-xs text-slate-500">
+          Manage the people and signature images used across invoices and other documents.
+        </div>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-10 text-center text-sm text-slate-500">
+          No signatories added yet.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <div key={item.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                    {item.signature_url ? (
+                      <img src={item.signature_url} alt={item.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <UserCheck size={20} className="text-slate-300" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-slate-900">{item.name}</div>
+                    <div className="mt-1 text-xs text-slate-500">{item.role || 'No role'}</div>
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    onClick={() => openEdit(item)}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                  >
+                    <span className="inline-flex items-center gap-1.5"><Pencil size={12} />Edit</span>
+                  </button>
+                  <button
+                    onClick={() => removeSignatory(item.id)}
+                    disabled={actionId === item.id}
+                    className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    <span className="inline-flex items-center gap-1.5"><Trash2 size={12} />Delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {formOpen ? (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-sm font-bold text-slate-900">{editingId ? 'Edit signatory' : 'Add signatory'}</div>
+              <div className="mt-1 text-xs text-slate-500">
+                Save signer details and the signature image used in documents.
+              </div>
+            </div>
+            <button
+              onClick={closeForm}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+            >
+              Cancel
+            </button>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Name"><Input value={form.name} onChange={(v) => updateForm('name', v)} placeholder="Adewale Musa" /></Field>
+            <Field label="Role"><Input value={form.role} onChange={(v) => updateForm('role', v)} placeholder="Finance Manager" /></Field>
+          </div>
+          <div className="mt-4">
+            <Field label="Signature Image">
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload(e.target.files[0])} />
+              {form.signature_url ? (
+                <div className="relative inline-flex flex-col gap-2">
+                  <img src={form.signature_url} alt="Signature" className="max-h-20 max-w-[180px] rounded-lg border border-slate-200 object-contain" />
+                  <div className="flex gap-3">
+                    <button onClick={() => fileRef.current?.click()} className="text-xs font-semibold text-blue-600 hover:underline">Change</button>
+                    <button onClick={() => updateForm('signature_url', '')} className="text-xs font-semibold text-red-500 hover:underline">Remove</button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileRef.current?.click()}
+                  className="cursor-pointer rounded-xl border-2 border-dashed border-slate-200 p-6 text-center transition-colors hover:border-slate-400 hover:bg-slate-50"
+                >
+                  {uploading ? (
+                    <Loader2 size={20} className="mx-auto mb-1 animate-spin text-slate-400" />
+                  ) : (
+                    <Upload size={20} className="mx-auto mb-1 text-slate-300" />
+                  )}
+                  <p className="text-xs font-medium text-slate-400">{uploading ? 'Uploading...' : 'Click to upload'}</p>
+                </div>
+              )}
+            </Field>
+          </div>
+          <SaveBtn saving={saving} saved={false} onClick={saveSignatory} />
+        </div>
+      ) : null}
+
+      <button
+        onClick={openAdd}
+        className="w-full rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+      >
+        <span className="inline-flex items-center gap-2"><Plus size={14} />Add Signatory</span>
+      </button>
+    </div>
+  )
+}
+
+function UserSection({ session, onToast }) {
+  const [open, setOpen] = useState(false)
+  const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const email = session?.user?.email || ''
+  const requirements = {
+    length: form.newPassword.length >= 8,
+    uppercase: /[A-Z]/.test(form.newPassword),
+    number: /\d/.test(form.newPassword),
+  }
+  const meetsRequirements = Object.values(requirements).every(Boolean)
+  const passwordsMatch = form.newPassword.length > 0 && form.newPassword === form.confirmPassword
+  const strengthScore = [requirements.length, requirements.uppercase, requirements.number].filter(Boolean).length
+  const strength = strengthScore <= 1 ? 'Weak' : strengthScore === 2 ? 'Fair' : 'Strong'
+  const strengthClass = strength === 'Strong' ? 'bg-emerald-500' : strength === 'Fair' ? 'bg-amber-500' : 'bg-red-500'
 
   const save = async () => {
     setError('')
-    if (form.password.length < 6) { setError('Minimum 6 characters'); return }
-    if (form.password !== form.confirm) { setError('Passwords do not match'); return }
+    if (!email) { setError('No signed-in user found'); return }
+    if (!form.currentPassword) { setError('Enter your current password'); return }
+    if (!meetsRequirements) { setError('Password does not meet requirements'); return }
+    if (!passwordsMatch) { setError('Passwords do not match'); return }
     setSaving(true)
-    const { error: e } = await supabase.auth.updateUser({ password: form.password })
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email,
+      password: form.currentPassword
+    })
+    if (verifyError) { setError('Current password incorrect'); setSaving(false); return }
+    const { error: e } = await supabase.auth.updateUser({ password: form.newPassword })
     if (e) { setError(e.message); setSaving(false); return }
     await supabase.from('profiles').update({ has_password: true }).eq('id', session.user.id)
     setSaving(false)
-    setSaved(true)
-    setForm({ password: '', confirm: '' })
+    setForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    setOpen(false)
     onToast('Password updated')
-    setTimeout(() => setSaved(false), 2500)
   }
 
   return (
     <div className="space-y-4">
-      <div className="bg-slate-50 rounded-xl px-4 py-3 border border-slate-200">
-        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Signed in as</p>
-        <p className="text-sm font-bold text-slate-800">{session?.user?.email}</p>
-      </div>
-      <Field label="New Password">
-        <div className="relative">
-          <input
-            type={showPass ? 'text' : 'password'}
-            value={form.password}
-            onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-            placeholder="Min. 6 characters"
-            className="w-full px-3 py-2.5 pr-10 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-colors"
-          />
-          <button onClick={() => setShowPass(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-            {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
-          </button>
+      <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+        <div className="min-w-0">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Signed-in email</div>
+          <div className="mt-1 break-all text-sm font-bold text-slate-800">{email || 'No user email'}</div>
+          <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Password</div>
+          <div className="mt-1 text-sm font-medium text-slate-800">••••••••</div>
         </div>
-      </Field>
-      <Field label="Confirm Password">
-        <input
-          type="password"
-          value={form.confirm}
-          onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))}
-          placeholder="Repeat password"
-          className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-colors"
-        />
-      </Field>
-      {error && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
-      <SaveBtn saving={saving} saved={saved} onClick={save} />
+        <button
+          onClick={() => {
+            setError('')
+            setOpen(true)
+          }}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+        >
+          Change Password
+        </button>
+      </div>
+
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-bold text-slate-900">Change password</div>
+                <div className="mt-1 text-xs text-slate-500">
+                  Verify your current password before saving a new one.
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setOpen(false)
+                  setError('')
+                  setForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+                }}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                aria-label="Close password modal"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <Field label="Current Password">
+                <input
+                  type="password"
+                  value={form.currentPassword}
+                  onChange={e => setForm(f => ({ ...f, currentPassword: e.target.value }))}
+                  placeholder="Enter current password"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm transition-colors focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                />
+              </Field>
+
+              <Field label="New Password">
+                <input
+                  type="password"
+                  value={form.newPassword}
+                  onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))}
+                  placeholder="8+ chars, 1 uppercase, 1 number"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm transition-colors focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                />
+                <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Strength</span>
+                    <span className={`text-xs font-bold ${strength === 'Strong' ? 'text-emerald-600' : strength === 'Fair' ? 'text-amber-600' : 'text-red-600'}`}>{strength}</span>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+                    <div className={`h-full rounded-full transition-all ${strengthClass}`} style={{ width: `${(strengthScore / 3) * 100}%` }} />
+                  </div>
+                  <div className="mt-3 space-y-1 text-xs text-slate-500">
+                    <div className={requirements.length ? 'text-emerald-600' : ''}>8+ characters</div>
+                    <div className={requirements.uppercase ? 'text-emerald-600' : ''}>At least 1 uppercase letter</div>
+                    <div className={requirements.number ? 'text-emerald-600' : ''}>At least 1 number</div>
+                  </div>
+                </div>
+              </Field>
+
+              <Field label="Confirm New Password">
+                <input
+                  type="password"
+                  value={form.confirmPassword}
+                  onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
+                  placeholder="Repeat new password"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm transition-colors focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                />
+              </Field>
+
+              {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setOpen(false)
+                    setError('')
+                    setForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+                  }}
+                  className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={save}
+                  disabled={saving || !form.currentPassword || !meetsRequirements || !passwordsMatch}
+                  className="flex-1 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+                >
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -1066,7 +1595,8 @@ function AdminSection({ onToast, session }) {
 const SECTIONS = [
   { id: 'company',  label: 'Company Info',    icon: Building2,  desc: 'Name, address, contact' },
   { id: 'banking',  label: 'Banking',          icon: CreditCard, desc: 'Account & bank details' },
-  { id: 'branding', label: 'Logo & Branding',  icon: ImageIcon,  desc: 'Logo, signature, footer' },
+  { id: 'branding', label: 'Logo & Branding',  icon: ImageIcon,  desc: 'Logo and footer text' },
+  { id: 'signatories', label: 'Signatories', icon: UserCheck, desc: 'Manage document signatories' },
   { id: 'dashboard', label: 'Dashboard',       icon: LayoutDashboard, desc: 'Quick tiles on dashboard header' },
   { id: 'archives', label: 'Archives',         icon: ArchiveRestore, desc: 'Restore archived invoices, quotations, and projects' },
   { id: 'user',     label: 'User Settings',    icon: FileText,   desc: 'Change your password' },
@@ -1093,6 +1623,7 @@ export default function Settings() {
       case 'company':  return <CompanySection onToast={showToast} />
       case 'banking':  return <BankingSection onToast={showToast} />
       case 'branding': return <BrandingSection onToast={showToast} />
+      case 'signatories': return <SignatoriesSection onToast={showToast} />
       case 'dashboard': return <DashboardSection />
       case 'archives': return <ArchivesSection onToast={showToast} />
       case 'user':     return <UserSection session={session} onToast={showToast} />
