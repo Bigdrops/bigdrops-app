@@ -3,6 +3,7 @@ import { Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
+import { useToast } from '@/hooks/use-toast'
 
 type JsonItemsImportSheetProps = {
   open: boolean
@@ -39,6 +40,7 @@ export default function JsonItemsImportSheet({
   const [tab, setTab] = useState<'upload' | 'paste'>('upload')
   const [pastedText, setPastedText] = useState('')
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const { toast } = useToast()
 
   const tip = useMemo(
     () => 'Return JSON only\n{ "items": [ { "description": "", "quantity": 1, "unit_price": 0 } ] }',
@@ -84,7 +86,7 @@ export default function JsonItemsImportSheet({
   const copyPrompt = async () => {
     try {
       await navigator.clipboard.writeText(AI_PROMPT)
-      alert('AI prompt copied.')
+      toast({ title: 'Copied', description: 'AI prompt copied to clipboard' })
     } catch {
       alert('Could not copy prompt.')
     }

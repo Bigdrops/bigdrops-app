@@ -225,13 +225,14 @@ export default function MobileInvoiceForm(props) {
                 clientName={invoice.client_name || ''}
                 isMobile={isMobile}
                 compact
+                dense
                 onClientChange={(id, name) => {
                   updateInvoice('client_id', id)
                   updateInvoice('client_name', name)
                 }}
               />
 
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className={labelCls}>Invoice Number</label>
                   <div className="relative">
@@ -254,7 +255,7 @@ export default function MobileInvoiceForm(props) {
                 </div>
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className={labelCls}>Issue Date</label>
                   <div className="relative">

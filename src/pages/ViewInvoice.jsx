@@ -467,7 +467,7 @@ export default function ViewInvoice() {
 
 
         {/* ── Action Bar ── */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', alignItems: 'center', overflowX: 'auto', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none', paddingBottom: '2px' }}>
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', alignItems: 'center', overflowX: 'auto', overflowY: 'visible', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none', paddingBottom: '2px', position: 'relative', zIndex: 5 }}>
           <div onClick={() => navigate('/invoices')} style={{ flexShrink: 0, padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>
             ← Back
           </div>
@@ -482,10 +482,10 @@ export default function ViewInvoice() {
           <div onClick={() => navigate('/invoices/edit/' + id)} style={{ flexShrink: 0, padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>
             Edit
           </div>
-          <div ref={moreRef} style={{ position: 'relative', flexShrink: 0 }}>
-            <div onClick={() => setShowMore(p => !p)} style={{ padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', fontWeight: '600', userSelect: 'none', color: '#374151', letterSpacing: '0.05em' }}>
+          <div ref={moreRef} style={{ position: 'relative', flexShrink: 0, zIndex: 6 }}>
+            <button type="button" onClick={() => setShowMore(p => !p)} style={{ padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', fontWeight: '600', userSelect: 'none', color: '#374151', letterSpacing: '0.05em', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}>
               ···
-            </div>
+            </button>
             {showMore && (
               <div style={{ position: 'absolute', top: '100%', right: 0, left: 'auto', marginTop: '4px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', border: '1px solid #e2e8f0', zIndex: 200, minWidth: '220px', overflow: 'hidden' }}>
                 {[

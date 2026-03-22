@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo } from "react"
+﻿import { useEffect, useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
-import { Plus, MoreHorizontal, FileText, Eye, Pencil, Copy, DollarSign, X,
+import { Plus, MoreHorizontal, Eye, Pencil, Copy, DollarSign, X,
          Send, Archive, Trash2, FileOutput, Truck, Wrench, Search, SlidersHorizontal } from "lucide-react"
 import { supabase } from "../supabase"
 import Layout from "../components/Layout"
@@ -79,7 +79,7 @@ export default function Invoices() {
     setShowDeleteWarn(false)
   }
 
-  // â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Actions Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
   const handleView  = () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) }
   const handleEdit  = () => { closeSheet(); navigate(`/invoices/edit/${activeInvoice.id}`) }
@@ -286,64 +286,46 @@ export default function Invoices() {
             <div
               key={inv.id}
               onClick={() => navigate(`/invoices/${inv.id}`)}
+              className="relative px-4 py-3"
               style={{
-                display: "grid",
-                gridTemplateColumns: "48px 1fr auto 38px",
-                gap: 14,
-                padding: "16px 18px",
-                alignItems: "center",
                 borderBottom: idx === filteredInvoices.length - 1 ? "none" : "1px solid #f1f5f9",
                 cursor: "pointer",
               }}
             >
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 14,
-                  background: "#eff6ff",
-                  color: "#2563eb",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <FileText size={18} />
-              </div>
 
-              <div style={{ minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 900, textTransform: "uppercase" }}>INV</span>
-                  <span style={{ fontSize: 16, fontWeight: 900, letterSpacing: "-0.02em", color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {inv.invoice_number}
-                  </span>
+              <div className="pr-12">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0 truncate whitespace-nowrap text-sm font-bold text-slate-900">
+                    {inv.client_name || "No client"}
+                  </div>
+                  <div className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-slate-900">
+                    NGN {Number(inv.total || 0).toLocaleString()}
+                  </div>
                 </div>
-                <div style={{ fontSize: 13, color: "#64748b", fontWeight: 700, marginTop: 2 }}>
-                  {inv.client_name || "No client"}
-                </div>
-                <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 700, marginTop: 2 }}>
-                  {formatInvoiceDate(inv.issue_date) || "No date"}
-                </div>
-              </div>
 
-              <div style={{ justifySelf: "end", textAlign: "right" }}>
-                <span
-                  style={{
-                    ...getInvoiceStatusStyle(inv.status),
-                    borderRadius: 999,
-                    padding: "6px 10px",
-                    fontSize: 11,
-                    fontWeight: 900,
-                    display: "inline-block",
-                  }}
-                >
-                  {formatStatusLabel(inv.status)}
-                </span>
-                <div style={{ marginTop: 6, fontSize: 15, fontWeight: 900, letterSpacing: "-0.03em", color: "#0f172a" }}>
-                  ₦{Number(inv.total || 0).toLocaleString()}
+                <div className="mt-1 flex items-center justify-between gap-3">
+                  <div className="min-w-0 whitespace-nowrap text-xs font-bold text-slate-400">
+                    {inv.invoice_number}{formatInvoiceDate(inv.issue_date) ? ` • ${formatInvoiceDate(inv.issue_date)}` : ""}
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span
+                      style={{
+                        ...getInvoiceStatusStyle(inv.status),
+                        borderRadius: 999,
+                        padding: "4px 8px",
+                        fontSize: 10,
+                        fontWeight: 900,
+                        display: "inline-block",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {formatStatusLabel(inv.status)}
+                    </span>
+                  </div>
                 </div>
+
                 {inv.thread_role && (
-                  <div style={{ marginTop: 4 }}>
+                  <div className="mt-1 text-right">
                     <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase ${roleColor(inv.thread_role)}`}>
                       {inv.thread_role}
                     </span>
@@ -353,18 +335,7 @@ export default function Invoices() {
 
               <button
                 onClick={(e) => { e.stopPropagation(); setActiveInvoice(inv) }}
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 12,
-                  border: "1px solid #e2e8f0",
-                  background: "white",
-                  color: "#64748b",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                }}
+                className="absolute right-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-500"
               >
                 <MoreHorizontal size={18} />
               </button>
@@ -407,7 +378,7 @@ export default function Invoices() {
                 <p className="text-xs text-zinc-400 font-bold">{activeInvoice.client_name}</p>
               </div>
               <div className="flex items-center gap-3">
-                <p className="text-xl font-black text-zinc-950">₦{Number(activeInvoice.total || 0).toLocaleString()}</p>
+                <p className="text-xl font-black text-zinc-950">â‚¦{Number(activeInvoice.total || 0).toLocaleString()}</p>
                 <button onClick={closeSheet} className="p-2 rounded-xl bg-zinc-100 text-zinc-400 hover:bg-zinc-200">
                   <X size={18} />
                 </button>
@@ -469,7 +440,7 @@ export default function Invoices() {
           </div>
           <h3 className="text-xl font-black text-zinc-950 text-center mb-2">Delete Invoice?</h3>
           <p className="text-sm text-zinc-500 text-center font-medium leading-relaxed mb-8">
-            Deleting is permanent and cannot be undone. You may choose to archive it instead — archived invoices remain recoverable for 30 days.
+            Deleting is permanent and cannot be undone. You may choose to archive it instead â€” archived invoices remain recoverable for 30 days.
           </p>
           <div className="flex gap-3">
             <button onClick={() => setShowDeleteWarn(false)}
@@ -500,3 +471,5 @@ function MenuBtn({ icon, label, onClick, danger, amber }) {
     </button>
   )
 }
+
+

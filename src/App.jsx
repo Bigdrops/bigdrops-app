@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input'
 import { useIsMobile } from './hooks/useIsMobile'
 import { lazy, Suspense } from 'react'
+import { Toaster } from '@/components/ui/toaster'
 
 // Lazy-loaded routes — each page loads only when first visited, not upfront
 const Dashboard      = lazy(() => import('./pages/Dashboard'))
@@ -218,6 +219,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <Toaster />
       <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/reset-password" element={<ResetPassword />} />

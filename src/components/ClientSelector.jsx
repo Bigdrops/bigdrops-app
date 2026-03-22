@@ -20,7 +20,15 @@ const emptyClient = {
   category: '',
 }
 
-export default function ClientSelector({ clientId, clientName, onClientChange, isMobile, compact = false }) {
+export default function ClientSelector({
+  clientId,
+  clientName,
+  onClientChange,
+  isMobile,
+  compact = false,
+  hideHeader = false,
+  dense = false,
+}) {
   const [clients, setClients] = useState([])
   const [selectedClient, setSelectedClient] = useState(null)
   const [open, setOpen] = useState(false)
@@ -150,10 +158,10 @@ export default function ClientSelector({ clientId, clientName, onClientChange, i
 
   const selectedSummary = selectedClient || (clientId ? { name: clientName } : null)
   const triggerClassName = compact
-    ? 'h-10 flex-1 justify-start rounded-2xl border-zinc-200 bg-white px-3 text-left text-sm text-zinc-900'
+    ? `${dense ? 'h-9' : 'h-10'} flex-1 justify-start rounded-2xl border-zinc-200 bg-white px-3 text-left text-sm text-zinc-900`
     : 'h-11 flex-1 justify-start rounded-xl border-slate-300 bg-white px-3 text-left text-sm text-slate-900'
   const clearClassName = compact
-    ? 'h-10 rounded-2xl border-zinc-200 bg-white px-3 text-sm text-zinc-700'
+    ? `${dense ? 'h-9' : 'h-10'} rounded-2xl border-zinc-200 bg-white px-3 text-sm text-zinc-700`
     : 'h-11 rounded-xl bg-white px-3'
 
   return (
@@ -244,17 +252,19 @@ export default function ClientSelector({ clientId, clientName, onClientChange, i
       </Dialog>
 
       <div ref={containerRef} className={compact ? 'space-y-1.5' : 'space-y-3'}>
-        <div className="flex items-center justify-between gap-2">
-          <Label className={compact ? 'text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500' : ''}>Client</Label>
-          <Button
-            type="button"
-            variant={compact ? 'outline' : 'link'}
-            className={compact ? 'h-7 rounded-xl border-zinc-200 bg-white px-2 text-[10px] font-semibold text-zinc-700' : 'h-auto p-0 text-sm font-semibold'}
-            onClick={() => setShowAddModal(true)}
-          >
-            + New Client
-          </Button>
-        </div>
+        {!hideHeader ? (
+          <div className="flex items-center justify-between gap-2">
+            <Label className={compact ? 'text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500' : ''}>Client</Label>
+            <Button
+              type="button"
+              variant={compact ? 'outline' : 'link'}
+              className={compact ? 'h-7 rounded-xl border-zinc-200 bg-white px-2 text-[10px] font-semibold text-zinc-700' : 'h-auto p-0 text-sm font-semibold'}
+              onClick={() => setShowAddModal(true)}
+            >
+              + New Client
+            </Button>
+          </div>
+        ) : null}
 
         {isMobile ? (
           <>
