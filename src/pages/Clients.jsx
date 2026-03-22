@@ -2,14 +2,12 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
-import { useIsMobile } from '../hooks/useIsMobile'
 import { User } from 'lucide-react'
 
 export default function Clients() {
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
   const [openMenuId, setOpenMenuId] = useState(null)
-  const isMobile = useIsMobile()
   const navigate = useNavigate()
   const menuRef = useRef(null)
 
@@ -102,6 +100,7 @@ export default function Clients() {
               return (
                 <div
                   key={client.id}
+                  onClick={() => navigate('/clients/' + client.id)}
                   style={{
                     display: 'grid',
                     gridTemplateColumns: '44px 1fr auto 38px',
@@ -111,16 +110,14 @@ export default function Clients() {
                     borderBottom: index === clients.length - 1 ? 'none' : '1px solid #F1F5F9',
                     background: 'white',
                     position: 'relative',
+                    cursor: 'pointer',
                   }}
                 >
                   <div style={{ width: 44, height: 44, borderRadius: 14, background: '#F5F3FF', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <User size={18} />
                   </div>
 
-                  <div
-                    style={{ minWidth: 0, cursor: 'pointer' }}
-                    onClick={() => navigate('/clients/' + client.id)}
-                  >
+                  <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {client.name}
                     </div>

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { useIsMobile } from './hooks/useIsMobile'
 import { lazy, Suspense } from 'react'
 import { Toaster } from '@/components/ui/toaster'
+import ErrorBoundary from '@/components/ErrorBoundary'
 
 // Lazy-loaded routes — each page loads only when first visited, not upfront
 const Dashboard      = lazy(() => import('./pages/Dashboard'))
@@ -20,6 +21,7 @@ const CSR            = lazy(() => import('./pages/CSR'))
 const Clients        = lazy(() => import('./pages/Clients'))
 const AddClient      = lazy(() => import('./pages/AddClient'))
 const EditClient     = lazy(() => import('./pages/EditClient'))
+const ClientDetail   = lazy(() => import('./pages/ClientDetail'))
 const NewInvoice     = lazy(() => import('./pages/NewInvoice'))
 const ViewInvoice    = lazy(() => import('./pages/ViewInvoice'))
 const EditInvoice    = lazy(() => import('./pages/EditInvoice'))
@@ -40,6 +42,8 @@ const PageLoader = () => (
     <div style={{ width: '28px', height: '28px', borderRadius: '999px', border: '3px solid #E5E7EB', borderTopColor: '#CC0000', animation: 'spin 1s linear infinite' }} />
   </div>
 )
+
+const withBoundary = (element) => <ErrorBoundary>{element}</ErrorBoundary>
 
 function SetPasswordModal({ onComplete }) {
   const [password, setPassword] = useState('')
@@ -130,26 +134,27 @@ function AppShell({ session, profile, onProfileUpdate }) {
       )}
       <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/" element={<Dashboard session={session} />} />
-        <Route path="/invoices" element={<Invoices />} />
-        <Route path="/invoices/new" element={<NewInvoice />} />
-        <Route path="/invoices/edit/:id" element={<EditInvoice />} />
-        <Route path="/invoices/:id" element={<ViewInvoice />} />
-        <Route path="/quotations" element={<Quotations />} />
-        <Route path="/quotations/new" element={<NewQuotation />} />
-        <Route path="/quotations/edit/:id" element={<EditQuotation />} />
-        <Route path="/quotations/:id" element={<ViewQuotation />} />
-        <Route path="/csr" element={<CSR />} />
-        <Route path="/csr/new" element={<NewCSR />} />
-        <Route path="/csr/edit/:id" element={<EditCSR />} />
-        <Route path="/csr/:id" element={<ViewCSR />} />
-        <Route path="/clients" element={<Clients />} />
-        <Route path="/clients/new" element={<AddClient />} />
-        <Route path="/clients/edit/:id" element={<EditClient />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/projects" element={<Projects />} />              {/* ← Added */}
-        <Route path="/projects/new" element={<NewProject />} />        {/* ← Added */}        <Route path="/projects/:id" element={<ProjectDetail />} />     {/* ← Added */}
-        <Route path="/reports" element={<Reports />} />                {/* ← Added */}
+        <Route path="/" element={withBoundary(<Dashboard session={session} />)} />
+        <Route path="/invoices" element={withBoundary(<Invoices />)} />
+        <Route path="/invoices/new" element={withBoundary(<NewInvoice />)} />
+        <Route path="/invoices/edit/:id" element={withBoundary(<EditInvoice />)} />
+        <Route path="/invoices/:id" element={withBoundary(<ViewInvoice />)} />
+        <Route path="/quotations" element={withBoundary(<Quotations />)} />
+        <Route path="/quotations/new" element={withBoundary(<NewQuotation />)} />
+        <Route path="/quotations/edit/:id" element={withBoundary(<EditQuotation />)} />
+        <Route path="/quotations/:id" element={withBoundary(<ViewQuotation />)} />
+        <Route path="/csr" element={withBoundary(<CSR />)} />
+        <Route path="/csr/new" element={withBoundary(<NewCSR />)} />
+        <Route path="/csr/edit/:id" element={withBoundary(<EditCSR />)} />
+        <Route path="/csr/:id" element={withBoundary(<ViewCSR />)} />
+        <Route path="/clients" element={withBoundary(<Clients />)} />
+        <Route path="/clients/new" element={withBoundary(<AddClient />)} />
+        <Route path="/clients/edit/:id" element={withBoundary(<EditClient />)} />
+        <Route path="/clients/:id" element={withBoundary(<ClientDetail />)} />
+        <Route path="/settings" element={withBoundary(<Settings />)} />
+        <Route path="/projects" element={withBoundary(<Projects />)} />              {/* ← Added */}
+        <Route path="/projects/new" element={withBoundary(<NewProject />)} />        {/* ← Added */}        <Route path="/projects/:id" element={withBoundary(<ProjectDetail />)} />     {/* ← Added */}
+        <Route path="/reports" element={withBoundary(<Reports />)} />                {/* ← Added */}
       </Routes>
       </Suspense>
     </>
@@ -222,13 +227,13 @@ function App() {
       <Toaster />
       <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/reset-password" element={withBoundary(<ResetPassword />)} />
         <Route path="/*" element={
           !session
-            ? <Login />
+            ? withBoundary(<Login />)
             : !approved
-            ? <PendingApproval email={session?.user?.email || ''} />
-            : <AppShell session={session} profile={profile} onProfileUpdate={() => loadProfile(session.user.id)} />
+            ? withBoundary(<PendingApproval email={session?.user?.email || ''} />)
+            : withBoundary(<AppShell session={session} profile={profile} onProfileUpdate={() => loadProfile(session.user.id)} />)
         } />
       </Routes>
       </Suspense>
@@ -238,3 +243,4 @@ function App() {
 
 export default App
 export { useIsMobile }
+

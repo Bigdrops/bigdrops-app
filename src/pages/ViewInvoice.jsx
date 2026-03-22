@@ -124,8 +124,8 @@ export default function ViewInvoice() {
 
   useEffect(() => {
     const handler = (e) => { if (moreRef.current && !moreRef.current.contains(e.target)) setShowMore(false) }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('pointerdown', handler)
+    return () => document.removeEventListener('pointerdown', handler)
   }, [])
 
   if (loading)  return <Layout title="Invoice"><p style={{ padding: 30 }}>Loading...</p></Layout>
@@ -404,6 +404,18 @@ export default function ViewInvoice() {
   } catch (e) { customFields = []; bottomFields = []; attachments = []; customFieldObject = {} }
   const topHeaderFields = customFields.filter(f => f.label && f.value)
   const conversionTrail = customFieldObject.conversionTrail || {}
+  const moreMenuItems = [
+    { label: invoice.project_id ? 'Open Linked Documents' : 'Link to Project', action: () => { setShowMore(false); invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectModal(true) }, show: true },
+    { label: 'Record Payment', action: () => { setShowMore(false); setShowPaymentModal(true) }, show: invoice.status !== 'paid' },
+    { label: 'Export CSV', action: handleDownloadCsv, show: true },
+    { label: 'Clone Invoice', action: handleClone, show: true },
+    { label: converting ? 'Converting to Quotation...' : 'Convert to Quotation', action: handleConvertToQuote, show: true, disabled: converting },
+    { label: 'Generate CSR', action: () => { setShowMore(false); alert('Coming soon') }, show: true },
+    { label: 'Generate Waybill', action: () => { setShowMore(false); alert('Coming soon') }, show: true },
+    { label: invoice.status === 'draft' ? 'Mark as Sent' : null, action: handleMarkSent, show: invoice.status === 'draft' },
+    { label: 'Archive Invoice', action: handleArchive, show: true },
+    { label: 'Delete Invoice', action: handleDelete, show: true, danger: true },
+  ].filter((item) => item.show && item.label)
 
   const inputStyle = { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '16px', outline: 'none', boxSizing: 'border-box', backgroundColor: 'white', color: '#1a1a1a' }
   const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#555', marginBottom: '4px' }
@@ -467,6 +479,36 @@ export default function ViewInvoice() {
 
 
         {/* ── Action Bar ── */}
+        {showMore && isNarrow && (
+          <div
+            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15,23,42,0.35)', zIndex: 1200, display: 'flex', alignItems: 'flex-end' }}
+            onClick={() => setShowMore(false)}
+          >
+            <div
+              style={{ width: '100%', backgroundColor: 'white', borderTopLeftRadius: '18px', borderTopRightRadius: '18px', padding: '10px 0 calc(18px + env(safe-area-inset-bottom, 0px))', boxShadow: '0 -18px 48px rgba(15,23,42,0.22)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ width: '42px', height: '4px', borderRadius: '999px', backgroundColor: '#CBD5E1', margin: '0 auto 10px' }} />
+              <div style={{ padding: '0 16px 8px', fontSize: '12px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Invoice actions
+              </div>
+              <div style={{ display: 'grid' }}>
+                {moreMenuItems.map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    disabled={item.disabled}
+                    onClick={item.action}
+                    style={{ width: '100%', textAlign: 'left', padding: '14px 16px', border: 'none', borderTop: '1px solid #F1F5F9', backgroundColor: 'white', color: item.danger ? '#CC0000' : '#0F172A', fontSize: '14px', fontWeight: '600', cursor: item.disabled ? 'default' : 'pointer', opacity: item.disabled ? 0.65 : 1 }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', alignItems: 'center', overflowX: 'auto', overflowY: 'visible', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none', paddingBottom: '2px', position: 'relative', zIndex: 5 }}>
           <div onClick={() => navigate('/invoices')} style={{ flexShrink: 0, padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600', color: '#374151', whiteSpace: 'nowrap' }}>
             ← Back
@@ -483,10 +525,10 @@ export default function ViewInvoice() {
             Edit
           </div>
           <div ref={moreRef} style={{ position: 'relative', flexShrink: 0, zIndex: 6 }}>
-            <button type="button" onClick={() => setShowMore(p => !p)} style={{ padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', fontWeight: '600', userSelect: 'none', color: '#374151', letterSpacing: '0.05em', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}>
+            <button type="button" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); setShowMore((open) => !open) }} style={{ padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', border: '1px solid #e2e8f0', backgroundColor: 'white', fontWeight: '600', userSelect: 'none', color: '#374151', letterSpacing: '0.05em', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', position: 'relative', zIndex: 20 }}>
               ···
             </button>
-            {showMore && (
+            {showMore && !isNarrow && (
               <div style={{ position: 'absolute', top: '100%', right: 0, left: 'auto', marginTop: '4px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', border: '1px solid #e2e8f0', zIndex: 200, minWidth: '220px', overflow: 'hidden' }}>
                 {[
                   { label: invoice.project_id ? 'Open Linked Documents' : 'Link to Project', action: () => { setShowMore(false); invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectModal(true) }, show: true },

@@ -1,9 +1,11 @@
-﻿import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Plus, MoreHorizontal, Eye, Pencil, Copy, DollarSign, X,
          Send, Archive, Trash2, FileOutput, Truck, Wrench, Search, SlidersHorizontal } from "lucide-react"
 import { supabase } from "../supabase"
 import Layout from "../components/Layout"
+
+const PAGE_SIZE = 25
 
 export default function Invoices() {
   const [invoices, setInvoices]           = useState([])
@@ -17,61 +19,103 @@ export default function Invoices() {
   const [showFilters, setShowFilters]     = useState(false)
   const [showArchiveWarn, setShowArchiveWarn] = useState(false)
   const [showDeleteWarn,  setShowDeleteWarn]  = useState(false)
+  const [clientOptions, setClientOptions] = useState([])
+  const [totalCount, setTotalCount]       = useState(0)
+  const [page, setPage]                   = useState(0)
+  const [hasMore, setHasMore]             = useState(false)
+  const [loadingMore, setLoadingMore]     = useState(false)
   const navigate = useNavigate()
 
-  const fetchInvoices = async () => {
-    const { data } = await supabase
+  const buildInvoiceQuery = () => {
+    let query = supabase
       .from("invoices")
-      .select("*")
+      .select("*", { count: "exact" })
       .is("archived_at", null)
-      .order("created_at", { ascending: false })
-    setInvoices(data || [])
-  }
 
-  useEffect(() => { fetchInvoices() }, [])
-
-  const clientOptions = useMemo(() => {
-    return Array.from(new Set(invoices.map(inv => inv.client_name).filter(Boolean))).sort((a, b) => a.localeCompare(b))
-  }, [invoices])
-
-  const filteredInvoices = useMemo(() => {
-    const now = new Date()
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)
-    const currentYearStart = new Date(now.getFullYear(), 0, 1)
-    const searchTerm = search.trim().toLowerCase()
-
-    const matchesDateRange = (value) => {
-      if (dateFilter === "All Time") return true
-      const date = value ? new Date(value) : null
-      if (!date || Number.isNaN(date.getTime())) return false
-      if (dateFilter === "This Month") return date >= currentMonthStart
-      if (dateFilter === "Last Month") return date >= lastMonthStart && date <= lastMonthEnd
-      if (dateFilter === "This Year") return date >= currentYearStart
-      return true
+    const searchTerm = search.trim()
+    if (searchTerm) {
+      const escapedTerm = searchTerm.replace(/,/g, " ")
+      query = query.or(`invoice_number.ilike.%${escapedTerm}%,client_name.ilike.%${escapedTerm}%`)
     }
 
-    const sorted = invoices.filter((inv) => {
-      const normalizedStatus = (inv.status || "draft").toLowerCase()
-      const matchesSearch = !searchTerm
-        || inv.invoice_number?.toLowerCase().includes(searchTerm)
-        || inv.client_name?.toLowerCase().includes(searchTerm)
-      const matchesClient = clientFilter === "All" || (inv.client_name || "") === clientFilter
-      const matchesStatus = statusFilter === "All" || normalizedStatus === statusFilter.toLowerCase()
-      const matchesDate = matchesDateRange(inv.issue_date || inv.created_at)
-      return matchesSearch && matchesClient && matchesStatus && matchesDate
-    })
+    if (clientFilter !== "All") {
+      query = query.eq("client_name", clientFilter)
+    }
 
-    sorted.sort((a, b) => {
-      if (sortBy === "Oldest") return new Date(a.created_at || a.issue_date || 0) - new Date(b.created_at || b.issue_date || 0)
-      if (sortBy === "Highest Value") return Number(b.total || 0) - Number(a.total || 0)
-      if (sortBy === "Lowest Value") return Number(a.total || 0) - Number(b.total || 0)
-      return new Date(b.created_at || b.issue_date || 0) - new Date(a.created_at || a.issue_date || 0)
-    })
+    if (statusFilter !== "All") {
+      query = query.eq("status", statusFilter.toLowerCase())
+    }
 
-    return sorted
-  }, [clientFilter, dateFilter, invoices, search, sortBy, statusFilter])
+    if (dateFilter !== "All Time") {
+      const now = new Date()
+      if (dateFilter === "This Month") {
+        const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+        query = query.gte("issue_date", from)
+      }
+      if (dateFilter === "Last Month") {
+        const from = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10)
+        const to = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10)
+        query = query.gte("issue_date", from).lte("issue_date", to)
+      }
+      if (dateFilter === "This Year") {
+        const from = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10)
+        query = query.gte("issue_date", from)
+      }
+    }
+
+    if (sortBy === "Oldest") {
+      return query.order("created_at", { ascending: true, nullsFirst: false })
+    }
+    if (sortBy === "Highest Value") {
+      return query
+        .order("total", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false, nullsFirst: false })
+    }
+    if (sortBy === "Lowest Value") {
+      return query
+        .order("total", { ascending: true, nullsFirst: false })
+        .order("created_at", { ascending: false, nullsFirst: false })
+    }
+    return query.order("created_at", { ascending: false, nullsFirst: false })
+  }
+
+  const fetchInvoices = async (pageIndex = 0, replace = false) => {
+    setLoadingMore(true)
+    const from = pageIndex * PAGE_SIZE
+    const to = from + PAGE_SIZE - 1
+    const { data, count } = await buildInvoiceQuery().range(from, to)
+    const nextRows = data || []
+
+    setInvoices((current) => (replace ? nextRows : [...current, ...nextRows]))
+    setTotalCount(count || 0)
+    setPage(pageIndex)
+    setHasMore(count !== null ? to + 1 < count : nextRows.length === PAGE_SIZE)
+    setLoadingMore(false)
+  }
+
+  const fetchClientOptions = async () => {
+    const { data } = await supabase
+      .from("invoices")
+      .select("client_name")
+      .is("archived_at", null)
+
+    const nextOptions = Array.from(
+      new Set((data || []).map((row) => row.client_name).filter(Boolean)),
+    ).sort((a, b) => a.localeCompare(b))
+
+    setClientOptions(nextOptions)
+  }
+
+  useEffect(() => {
+    fetchClientOptions()
+  }, [])
+
+  useEffect(() => {
+    setInvoices([])
+    setPage(0)
+    setHasMore(false)
+    fetchInvoices(0, true)
+  }, [clientFilter, dateFilter, search, sortBy, statusFilter])
 
   const closeSheet = () => {
     setActiveInvoice(null)
@@ -125,7 +169,7 @@ export default function Invoices() {
     const inv = activeInvoice
     closeSheet()
     await supabase.from("invoices").update({ status: "sent" }).eq("id", inv.id)
-    await fetchInvoices()
+    await fetchInvoices(0, true)
   }
 
   const handleArchive = async () => {
@@ -133,7 +177,7 @@ export default function Invoices() {
     setShowArchiveWarn(false)
     await supabase.from("invoices").update({ archived_at: new Date().toISOString() }).eq("id", inv.id)
     closeSheet()
-    await fetchInvoices()
+    await fetchInvoices(0, true)
   }
 
   const handleDelete = async () => {
@@ -142,7 +186,7 @@ export default function Invoices() {
     await supabase.from("invoice_items").delete().eq("invoice_id", inv.id)
     await supabase.from("invoices").delete().eq("id", inv.id)
     closeSheet()
-    await fetchInvoices()
+    await fetchInvoices(0, true)
   }
 
   const isStandalone = activeInvoice && !activeInvoice.thread_id
@@ -198,7 +242,7 @@ export default function Invoices() {
           <div>
             <h2 className="m-0 text-[22px] font-extrabold text-slate-900">Invoices</h2>
             <p className="mt-1 text-[13px] text-slate-400">
-              {invoices.length} invoice{invoices.length !== 1 ? "s" : ""} total
+              {totalCount} invoice{totalCount !== 1 ? "s" : ""} total
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -282,13 +326,13 @@ export default function Invoices() {
             boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
           }}
         >
-          {filteredInvoices.map((inv, idx) => (
+          {invoices.map((inv, idx) => (
             <div
               key={inv.id}
               onClick={() => navigate(`/invoices/${inv.id}`)}
               className="relative px-4 py-3"
               style={{
-                borderBottom: idx === filteredInvoices.length - 1 ? "none" : "1px solid #f1f5f9",
+                borderBottom: idx === invoices.length - 1 ? "none" : "1px solid #f1f5f9",
                 cursor: "pointer",
               }}
             >
@@ -342,12 +386,25 @@ export default function Invoices() {
             </div>
           ))}
 
-          {filteredInvoices.length === 0 && (
+          {invoices.length === 0 && (
             <div className="text-center py-20 text-zinc-400 font-bold text-sm uppercase tracking-widest">
               No invoices match the current filters
             </div>
           )}
         </div>
+
+        {hasMore ? (
+          <div className="mt-4 flex justify-center">
+            <button
+              type="button"
+              onClick={() => fetchInvoices(page + 1, false)}
+              disabled={loadingMore}
+              className="h-11 rounded-2xl border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-700 disabled:opacity-60"
+            >
+              {loadingMore ? "Loading..." : "Load more"}
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {/* FAB */}
@@ -471,5 +528,6 @@ function MenuBtn({ icon, label, onClick, danger, amber }) {
     </button>
   )
 }
+
 
 
