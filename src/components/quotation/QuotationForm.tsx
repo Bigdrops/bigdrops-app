@@ -1,37 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+
+import MobileInvoiceForm from '@/components/invoice/MobileInvoiceForm'
+import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import { supabase } from '@/supabase'
-import ClientSelector from '@/components/ClientSelector'
-import ColumnManager from '@/components/ColumnManager'
-import MobileItemCard from '@/components/MobileItemCard'
-import UnitInput from '@/components/UnitInput'
-import InvoiceFormActions from '@/components/invoice/InvoiceFormActions'
-import InvoiceNotesTermsSection from '@/components/invoice/InvoiceNotesTermsSection'
-import InvoiceCustomBottomFieldsSection from '@/components/invoice/InvoiceCustomBottomFieldsSection'
-import JsonItemsImportSheet from '@/components/items/JsonItemsImportSheet'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { Textarea } from '@/components/ui/textarea'
 import {
   buildCalculationInputs,
-  inferLegacyCalculationState,
-  makeEmptyItem,
   makeEmptyGroup,
+  makeEmptyItem,
+  makeExtraCharge,
   makeFieldEntry,
+  normalizeExtraCharges,
   useInvoiceColumns,
 } from '@/components/useInvoiceColumns.jsx'
 import { toDbItem } from '@/domain/invoice'
-import { computeDocument } from '@/lib/Calculations'
 import type { ColumnConfig, InvoiceFieldEntry, InvoiceItem } from '@/domain/invoice'
 import {
   buildQuotationFormState,
@@ -40,8 +22,9 @@ import {
   type DbQuotationItem,
   type Quotation,
 } from '@/domain/quotation'
+import { computeDocument } from '@/lib/Calculations'
 import { importJsonItems } from '@/lib/itemJsonImport'
-import { QUOTATION_STATUSES, formatQuotationStatus } from './quotationStatus'
+import { formatQuotationStatus } from './quotationStatus'
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640)
@@ -58,9 +41,7 @@ function makeQuotationGroupId() {
 }
 
 function toGroupMetaMap(groups: Array<{ id: string; name: string; showSubtotal?: boolean }>) {
-  return Object.fromEntries(
-    groups.map((group) => [group.id, { name: group.name, showSubtotal: !!group.showSubtotal }]),
-  )
+  return Object.fromEntries(groups.map((group) => [group.id, { name: group.name, showSubtotal: !!group.showSubtotal }]))
 }
 
 function normalizeQuotationGrouping(
@@ -75,21 +56,14 @@ function normalizeQuotationGrouping(
   items.forEach((item) => {
     if (item.row_type !== 'group_header') return
     const rawId = String(item.group_id || '').trim()
-    let canonicalId =
-      rawId && !seenCanonical.has(rawId) ? rawId : makeQuotationGroupId()
-
-    while (seenCanonical.has(canonicalId)) {
-      canonicalId = makeQuotationGroupId()
-    }
+    let canonicalId = rawId && !seenCanonical.has(rawId) ? rawId : makeQuotationGroupId()
+    while (seenCanonical.has(canonicalId)) canonicalId = makeQuotationGroupId()
 
     seenCanonical.add(canonicalId)
     if (rawId && !rawToCanonical.has(rawId)) rawToCanonical.set(rawId, canonicalId)
 
     const meta = (rawId && groupMeta[rawId]) || groupMeta[canonicalId] || {}
-    const name =
-      String(item.group_name || '').trim() ||
-      String(meta.name || '').trim() ||
-      `Group ${headerOrder.length + 1}`
+    const name = String(item.group_name || '').trim() || String(meta.name || '').trim() || `Group ${headerOrder.length + 1}`
 
     headerOrder.push(canonicalId)
     headerById.set(canonicalId, {
@@ -104,11 +78,9 @@ function normalizeQuotationGrouping(
       const rawId = String(item.group_id || '').trim()
       const canonicalId =
         (rawId && rawToCanonical.get(rawId)) ||
-        headerOrder.find((groupId) => {
-          const group = headerById.get(groupId)
-          return group && group.name === item.group_name
-        }) ||
+        headerOrder.find((groupId) => headerById.get(groupId)?.name === item.group_name) ||
         makeQuotationGroupId()
+
       const group = headerById.get(canonicalId) || {
         id: canonicalId,
         name: String(item.group_name || '').trim() || `Group ${index + 1}`,
@@ -159,8 +131,11 @@ function buildCustomFields({
   mergeQtyUnit,
   showItemImages,
   groups,
+  attachments,
+  extraCharges,
+  chargeLabels,
 }: {
-  quotation: Quotation
+  quotation: QuotationEditorState
   columns: ColumnConfig[]
   headerFields: InvoiceFieldEntry[]
   bottomFields: InvoiceFieldEntry[]
@@ -172,6 +147,9 @@ function buildCustomFields({
   mergeQtyUnit: boolean
   showItemImages: boolean
   groups: Array<{ id: string; name: string; showSubtotal?: boolean }>
+  attachments: Array<Record<string, unknown>>
+  extraCharges: Array<Record<string, unknown>>
+  chargeLabels: Record<string, string>
 }) {
   const groupMeta = toGroupMetaMap(groups)
 
@@ -187,6 +165,11 @@ function buildCustomFields({
     termsTitle,
     mergeQtyUnit,
     showItemImages,
+    attachments,
+    extraCharges: extraCharges.filter((charge) => String(charge.label || '').trim()),
+    chargeLabels,
+    payment_terms: quotation.payment_terms || '',
+    custom_payment_terms: quotation.custom_payment_terms || '',
     discountType,
     discountTiming,
     whtType,
@@ -207,6 +190,10 @@ function toQuotationItem(item: InvoiceItem, quotationId: string, sortOrder: numb
 }
 
 type QuotationGroupState = { id: string; name: string; showSubtotal: boolean }
+type QuotationEditorState = Quotation & {
+  payment_terms?: string
+  custom_payment_terms?: string
+}
 
 export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'edit'; quotationId?: string }) {
   const navigate = useNavigate()
@@ -214,9 +201,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const isEdit = mode === 'edit'
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
-  const [showImportSheet, setShowImportSheet] = useState(false)
   const [showColumnManager, setShowColumnManager] = useState(false)
-  const [quotation, setQuotation] = useState<Quotation>({
+  const [quotation, setQuotation] = useState<QuotationEditorState>({
     quotation_number: '',
     po_number: '',
     client_id: '',
@@ -233,6 +219,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     discount: 0,
     vat: 7.5,
     wht: 0,
+    payment_terms: 'Custom',
+    custom_payment_terms: '',
   })
   const [headerFields, setHeaderFields] = useState<InvoiceFieldEntry[]>([])
   const [bottomFields, setBottomFields] = useState<InvoiceFieldEntry[]>([])
@@ -241,6 +229,13 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const [whtType, setWhtType] = useState<'fixed' | 'percent'>('percent')
   const [notesTitle, setNotesTitle] = useState('Notes')
   const [termsTitle, setTermsTitle] = useState('Terms and Conditions')
+  const [attachments, setAttachments] = useState<Array<Record<string, unknown>>>([])
+  const [extraCharges, setExtraCharges] = useState<Array<Record<string, unknown>>>([])
+  const [chargeLabels, setChargeLabels] = useState({
+    workmanship: 'Workmanship',
+    transportation: 'Transportation',
+    shipping: 'Shipping',
+  })
   const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
   const [showItemImages, setShowItemImages] = useState(false)
   const [groups, setGroups] = useState<QuotationGroupState[]>([])
@@ -278,20 +273,21 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           supabase.from('quotations').select('*').eq('id', quotationId).single(),
           supabase.from('quotation_items').select('*').eq('quotation_id', quotationId).order('sort_order'),
         ])
+
         if (error || !quotationRow) {
           alert('Quotation not found.')
           navigate('/quotations')
           return
         }
-        const state = buildQuotationFormState(
-          quotationRow as DbQuotation,
-          (itemRows || []) as DbQuotationItem[],
-        )
-        const normalizedGrouping = normalizeQuotationGrouping(
-          state.items,
-          state.quotation.custom_fields?.groupMeta || {},
-        )
-        setQuotation(state.quotation)
+
+        const state = buildQuotationFormState(quotationRow as DbQuotation, (itemRows || []) as DbQuotationItem[])
+        const normalizedGrouping = normalizeQuotationGrouping(state.items, state.quotation.custom_fields?.groupMeta || {})
+
+        setQuotation({
+          ...state.quotation,
+          payment_terms: String(state.quotation.custom_fields?.payment_terms || 'Custom'),
+          custom_payment_terms: String(state.quotation.custom_fields?.custom_payment_terms || ''),
+        })
         setItems(normalizedGrouping.items)
         setColumns(state.columns)
         setHeaderFields(state.headerFields)
@@ -303,39 +299,41 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         setTermsTitle(state.termsTitle)
         setMergeQtyUnit(state.mergeQtyUnit)
         setShowItemImages(state.showItemImages)
+        setAttachments(Array.isArray(state.quotation.custom_fields?.attachments) ? (state.quotation.custom_fields?.attachments as Array<Record<string, unknown>>) : [])
+        setExtraCharges(
+          normalizeExtraCharges(Array.isArray(state.quotation.custom_fields?.extraCharges) ? state.quotation.custom_fields?.extraCharges : []) as Array<Record<string, unknown>>,
+        )
+        setChargeLabels((current) => ({
+          ...current,
+          ...(state.quotation.custom_fields?.chargeLabels || {}),
+        }))
         setGroups(normalizedGrouping.groups)
         setLoading(false)
         return
       }
-      const { data } = await supabase
-        .from('quotations')
-        .select('quotation_number')
-        .order('created_at', { ascending: false })
+
+      const { data } = await supabase.from('quotations').select('quotation_number').order('created_at', { ascending: false })
       setQuotation((current) => ({
         ...current,
         quotation_number: getNextQuotationNumber((data || []) as Array<Pick<DbQuotation, 'quotation_number'>>),
       }))
+      setAttachments([])
+      setExtraCharges([])
       setGroups([])
+      setLoading(false)
     }
-    load()
+
+    void load()
   }, [isEdit, navigate, quotationId, setColumns])
 
   const commitGrouping = (
     nextItemsInput: InvoiceItem[] | ((current: InvoiceItem[]) => InvoiceItem[]),
-    nextGroupsInput?:
-      | QuotationGroupState[]
-      | ((current: QuotationGroupState[]) => QuotationGroupState[]),
+    nextGroupsInput?: QuotationGroupState[] | ((current: QuotationGroupState[]) => QuotationGroupState[]),
   ) => {
     const baseItems = itemsRef.current
     const baseGroups = groupsRef.current
-    const nextItems =
-      typeof nextItemsInput === 'function'
-        ? nextItemsInput(baseItems)
-        : nextItemsInput
-    const nextGroups =
-      typeof nextGroupsInput === 'function'
-        ? nextGroupsInput(baseGroups)
-        : nextGroupsInput ?? baseGroups
+    const nextItems = typeof nextItemsInput === 'function' ? nextItemsInput(baseItems) : nextItemsInput
+    const nextGroups = typeof nextGroupsInput === 'function' ? nextGroupsInput(baseGroups) : nextGroupsInput ?? baseGroups
 
     const normalized = normalizeQuotationGrouping(nextItems, toGroupMetaMap(nextGroups))
     itemsRef.current = normalized.items
@@ -344,7 +342,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     setGroups(normalized.groups)
   }
 
-  const updateQuotation = <K extends keyof Quotation>(field: K, value: Quotation[K]) =>
+  const updateQuotation = <K extends keyof QuotationEditorState>(field: K, value: QuotationEditorState[K]) =>
     setQuotation((current) => ({ ...current, [field]: value }))
 
   const updateItem = (index: number, field: string, value: unknown) =>
@@ -357,30 +355,27 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     )
 
   const applyRowPatch = (itemIndex: number, patch: Partial<InvoiceItem>) =>
-    commitGrouping((current) =>
-      current.map((item, index) => (index === itemIndex ? { ...item, ...patch } : item)),
-    )
+    commitGrouping((current) => current.map((item, index) => (index === itemIndex ? { ...item, ...patch } : item)))
 
-  const updateInstallRateOverride = (itemIndex: number, rawValue: string) => {
-    applyRowPatch(
-      itemIndex,
-      rawValue === ''
-        ? { install_rate_override: false, install_rate: null }
-        : { install_rate_override: true, install_rate: Number(rawValue) },
+  const resetItemOverrides = (fields: { vat?: boolean; discount?: boolean; install?: boolean }) =>
+    commitGrouping((current) =>
+      current.map((item) => {
+        if (item.row_type !== 'standard') return item
+        const patch: Partial<InvoiceItem> = {}
+        if (fields.vat) patch.vat_rate = null
+        if (fields.discount) patch.discount_rate = null
+        if (fields.install) {
+          patch.install_rate = null
+          patch.install_rate_override = false
+        }
+        return { ...item, ...patch }
+      }),
     )
-  }
 
   const addUngroupedItem = (insertAt: number | null = null) => {
     commitGrouping((current) => {
-      const newItem = {
-        ...makeEmptyItem(),
-        row_type: 'standard',
-        group_id: null,
-        group_name: '',
-      }
-      if (insertAt === null || insertAt >= current.length) {
-        return [...current, { ...newItem, sort_order: current.length }]
-      }
+      const newItem = { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }
+      if (insertAt === null || insertAt >= current.length) return [...current, { ...newItem, sort_order: current.length }]
       const next = [...current]
       next.splice(insertAt, 0, { ...newItem, sort_order: insertAt })
       return next.map((item, index) => ({ ...item, sort_order: index }))
@@ -388,78 +383,54 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   }
 
   const addQuotationItem = () => addUngroupedItem()
-
   const insertItemAfter = (index: number) => addUngroupedItem(index + 1)
 
   const addQuotationGroup = () => {
     const base = makeEmptyGroup()
     const groupId = base.id || makeQuotationGroupId()
-    const group = {
-      ...base,
-      id: groupId,
-      name: base.name || `Group ${groups.length + 1}`,
-      showSubtotal: !!base.showSubtotal,
-    }
+    const group = { ...base, id: groupId, name: base.name || `Group ${groups.length + 1}`, showSubtotal: !!base.showSubtotal }
 
     commitGrouping(
       (current) => [
         ...current.map((item, index) => ({ ...item, sort_order: index })),
-        {
-          ...makeEmptyItem(),
-          row_type: 'group_header',
-          group_id: group.id,
-          group_name: group.name,
-          description: '',
-          sort_order: current.length,
-        },
+        { ...makeEmptyItem(), row_type: 'group_header', group_id: group.id, group_name: group.name, description: '', sort_order: current.length },
       ],
       (current) => [...current, group],
     )
   }
 
-  const updateGroupName = (groupId: string, newName: string) => {
-    commitGrouping((current) =>
-      current.map((item) =>
-        item.row_type === 'group_header' && item.group_id === groupId
-          ? { ...item, group_name: newName }
-          : item,
-      ),
+  const updateGroupName = (groupId: string, newName: string) =>
+    commitGrouping(
+      (current) => current.map((item) => (item.row_type === 'group_header' && item.group_id === groupId ? { ...item, group_name: newName } : item)),
       (current) => current.map((group) => (group.id === groupId ? { ...group, name: newName } : group)),
     )
-  }
 
-  const toggleGroupSubtotal = (groupId: string) => {
+  const toggleGroupSubtotal = (groupId: string) =>
     commitGrouping(
       (current) => current,
-      (current) =>
-        current.map((group) =>
-          group.id === groupId ? { ...group, showSubtotal: !group.showSubtotal } : group,
-        ),
+      (current) => current.map((group) => (group.id === groupId ? { ...group, showSubtotal: !group.showSubtotal } : group)),
     )
-  }
 
-  const deleteGroup = (groupId: string) => {
-    commitGrouping((current) =>
-      current
-        .filter((item) => !(item.row_type === 'group_header' && item.group_id === groupId))
-        .map((item, index) =>
-          item.group_id === groupId
-            ? { ...item, group_id: null, group_name: '', sort_order: index }
-            : { ...item, sort_order: index },
-        ),
+  const deleteGroup = (groupId: string) =>
+    commitGrouping(
+      (current) =>
+        current
+          .filter((item) => !(item.row_type === 'group_header' && item.group_id === groupId))
+          .map((item, index) => (item.group_id === groupId ? { ...item, group_id: null, group_name: '', sort_order: index } : { ...item, sort_order: index })),
       (current) => current.filter((group) => group.id !== groupId),
     )
-  }
+
+  const normalizedGroupMeta = useMemo(() => toGroupMetaMap(groups), [groups])
+  const normalizedGrouping = useMemo(() => normalizeQuotationGrouping(items, normalizedGroupMeta), [items, normalizedGroupMeta])
+  const normalizedItems = normalizedGrouping.items
+  const normalizedGroups = normalizedGrouping.groups
 
   const addItemToGroup = (groupId: string) => {
     const group = normalizedGroups.find((entry) => entry.id === groupId)
     if (!group) return
 
     commitGrouping((current) => {
-      let insertAt = current.findIndex(
-        (item) => item.row_type === 'group_header' && item.group_id === groupId,
-      )
-
+      let insertAt = current.findIndex((item) => item.row_type === 'group_header' && item.group_id === groupId)
       if (insertAt === -1) insertAt = current.length - 1
 
       for (let index = insertAt + 1; index < current.length; index += 1) {
@@ -468,70 +439,25 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       }
 
       const next = [...current]
-      next.splice(insertAt + 1, 0, {
-        ...makeEmptyItem(),
-        row_type: 'standard',
-        group_id: groupId,
-        group_name: '',
-      })
+      next.splice(insertAt + 1, 0, { ...makeEmptyItem(), row_type: 'standard', group_id: groupId, group_name: '' })
       return next.map((item, index) => ({ ...item, sort_order: index }))
     })
   }
 
-  const hasMeaningfulItemContent = (item: InvoiceItem) => {
-    if (item.row_type === 'group_header') return true
-    if (String(item.description || '').trim()) return true
-    if (String(item.sub_description || '').trim()) return true
-    if (String(item.make || '').trim()) return true
-    if (String(item.unit || '').trim()) return true
-    if (item.quantity !== undefined && Number(item.quantity) !== 1) return true
-    if (item.unit_price !== undefined && Number(item.unit_price) !== 0) return true
-    if (item.install_rate_override && item.install_rate !== null && item.install_rate !== undefined) return true
-    return Object.values(item.custom_data || {}).some((value) => String(value ?? '').trim() !== '')
-  }
-
-  const applyImportedItems = (newItems: InvoiceItem[]) => {
-    commitGrouping((current) => [
-      ...current.filter(hasMeaningfulItemContent),
-      ...newItems,
-    ])
-    alert(`${newItems.length} items imported`)
-    setShowImportSheet(false)
-  }
-
   const handleJsonImport = (text: string) => {
-    const { items: importedItems, columns: importedColumns, error } = importJsonItems({
-      text,
-      columns,
-      createItem: makeEmptyItem,
-    })
-
+    const { items: importedItems, columns: importedColumns, error } = importJsonItems({ text, columns, createItem: makeEmptyItem })
     if (error) {
       alert(error)
       return false
     }
-
     setColumns(importedColumns || columns)
-    applyImportedItems(importedItems || [])
+    commitGrouping((current) => [...current.filter((item) => item.row_type === 'group_header' || String(item.description || item.make || '').trim()), ...(importedItems || [])])
+    alert(`${(importedItems || []).length} items imported`)
     return true
   }
 
-  const normalizedGroupMeta = useMemo(() => toGroupMetaMap(groups), [groups])
-  const normalizedGrouping = useMemo(
-    () => normalizeQuotationGrouping(items, normalizedGroupMeta),
-    [items, normalizedGroupMeta],
-  )
-  const normalizedItems = normalizedGrouping.items
-  const normalizedGroups = normalizedGrouping.groups
-
   const calculationInputs = useMemo(
-    () =>
-      buildCalculationInputs({
-        invoice: quotation,
-        discountType,
-        discountTiming,
-        whtType,
-      }),
+    () => buildCalculationInputs({ invoice: quotation, discountType, discountTiming, whtType }),
     [discountTiming, discountType, quotation, whtType],
   )
 
@@ -546,52 +472,11 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           shipping: Number(quotation.shipping || 0),
         },
         cf: {
+          extraCharges,
           calculationInputs,
         },
       }),
-    [calculationInputs, normalizedItems, quotation],
-  )
-
-  const computedGroups = useMemo(
-    () => new Map(totals.groups.map((group) => [group.group_id, group])),
-    [totals.groups],
-  )
-
-  const calculationState = useMemo(
-    () =>
-      inferLegacyCalculationState({
-        invoice: quotation,
-        items: normalizedItems,
-        customFields: buildCustomFields({
-          quotation,
-          columns,
-          headerFields,
-          bottomFields,
-          discountType,
-          discountTiming,
-          whtType,
-          notesTitle,
-          termsTitle,
-          mergeQtyUnit,
-          showItemImages,
-          groups: normalizedGroups,
-        }),
-      }),
-    [
-      bottomFields,
-      columns,
-      discountTiming,
-      discountType,
-      headerFields,
-      normalizedItems,
-      mergeQtyUnit,
-      notesTitle,
-      quotation,
-      showItemImages,
-      termsTitle,
-      whtType,
-      normalizedGroups,
-    ],
+    [calculationInputs, extraCharges, normalizedItems, quotation],
   )
 
   const handleSave = async (status: Quotation['status']) => {
@@ -632,55 +517,57 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           mergeQtyUnit,
           showItemImages,
           groups: normalizedGroups,
+          attachments,
+          extraCharges,
+          chargeLabels,
         }),
       ),
     }
+
     const quoteQuery =
       isEdit && quotationId
         ? supabase.from('quotations').update(payload).eq('id', quotationId).select().single()
         : supabase.from('quotations').insert([payload]).select().single()
+
     const { data: savedQuotation, error } = await quoteQuery
     if (error || !savedQuotation) {
-      alert('Error saving quotation: ' + (error?.message || 'Unknown error'))
+      alert(`Error saving quotation: ${error?.message || 'Unknown error'}`)
       setSaving(false)
       return
     }
+
     const resolvedId = String(savedQuotation.id)
     const itemRows = normalizedItems
-      .filter((item) =>
-        item.row_type === 'group_header'
-          ? item.group_name?.trim()
-          : item.description?.trim(),
-      )
+      .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
       .map((item, index) => toQuotationItem(item, resolvedId, index))
+
     const { error: deleteError } = await supabase.from('quotation_items').delete().eq('quotation_id', resolvedId)
     if (deleteError) {
-      alert('Error clearing quotation items: ' + deleteError.message)
+      alert(`Error clearing quotation items: ${deleteError.message}`)
       setSaving(false)
       return
     }
+
     if (itemRows.length > 0) {
       const { error: itemError } = await supabase.from('quotation_items').insert(itemRows)
       if (itemError) {
-        alert('Error saving quotation items: ' + itemError.message)
+        alert(`Error saving quotation items: ${itemError.message}`)
         setSaving(false)
         return
       }
     }
+
     setSaving(false)
     navigate(`/quotations/${resolvedId}`)
   }
 
   if (loading) {
-    return <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-sm text-zinc-500 shadow-sm">Loading quotation...</div>
+    return <div className="rounded-2xl border-l-4 border-l-blue-500 border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">Loading quotation...</div>
   }
 
-  const visibleCustomColumns = customColumns.filter((column: ColumnConfig) => column.visible)
-  const summaryHeaderFields = headerFields.filter((field) => field.label && field.value)
   const removeItemAt = (itemIndex: number) =>
-    commitGrouping((current) =>
-      current.filter((_, entryIndex) => entryIndex !== itemIndex).map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex })),
-    )
+    commitGrouping((current) => current.filter((_, entryIndex) => entryIndex !== itemIndex).map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex })))
+
   const moveItemBy = (itemIndex: number, direction: number) => {
     commitGrouping((current) => {
       const snapshot = normalizeQuotationGrouping(current, toGroupMetaMap(groupsRef.current))
@@ -692,9 +579,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         let endIndex = startIndex
         for (let cursor = startIndex + 1; cursor < rows.length; cursor += 1) {
           if (rows[cursor].row_type === 'group_header') break
-          if (rows[cursor].group_id === rows[startIndex].group_id) {
-            endIndex = cursor
-          }
+          if (rows[cursor].group_id === rows[startIndex].group_id) endIndex = cursor
         }
         return endIndex
       }
@@ -702,9 +587,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       const getBlockRange = (startIndex: number) => {
         const target = rows[startIndex]
         if (!target) return { start: startIndex, end: startIndex }
-        if (target.row_type === 'group_header') {
-          return { start: startIndex, end: getGroupBlockEnd(startIndex) }
-        }
+        if (target.row_type === 'group_header') return { start: startIndex, end: getGroupBlockEnd(startIndex) }
         return { start: startIndex, end: startIndex }
       }
 
@@ -725,11 +608,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           insertAt = previousBlockStart
         } else {
           const nextBlockStart = itemIndex
-          if (nextBlockStart >= remainder.length) {
-            insertAt = remainder.length
-          } else {
-            insertAt = getBlockRange(nextBlockStart).end + 1
-          }
+          insertAt = nextBlockStart >= remainder.length ? remainder.length : getBlockRange(nextBlockStart).end + 1
         }
 
         remainder.splice(insertAt, 0, ...block)
@@ -740,544 +619,142 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       if (nextIndex < 0 || nextIndex >= rows.length) return rows
 
       const moving = { ...row }
+      const anchor = rows[nextIndex]
+      if (!anchor) return rows
       const remainder = rows.filter((_, index) => index !== itemIndex)
 
       if (direction < 0) {
-        const anchor = rows[nextIndex]
-        if (!anchor) return rows
-        if (anchor.row_type === 'group_header') {
-          moving.group_id = anchor.group_id || null
-          moving.group_name = ''
-          remainder.splice(nextIndex + 1, 0, moving)
-        } else {
-          moving.group_id = anchor.group_id || null
-          moving.group_name = ''
-          remainder.splice(nextIndex, 0, moving)
-        }
+        moving.group_id = anchor.row_type === 'group_header' ? anchor.group_id || null : anchor.group_id || null
+        moving.group_name = ''
+        remainder.splice(anchor.row_type === 'group_header' ? nextIndex + 1 : nextIndex, 0, moving)
       } else {
-        const anchor = rows[nextIndex]
-        if (!anchor) return rows
-        if (anchor.row_type === 'group_header') {
-          moving.group_id = null
-          moving.group_name = ''
-          remainder.splice(nextIndex, 0, moving)
-        } else {
-          moving.group_id = anchor.group_id || null
-          moving.group_name = ''
-          remainder.splice(nextIndex, 0, moving)
-        }
+        moving.group_id = anchor.row_type === 'group_header' ? null : anchor.group_id || null
+        moving.group_name = ''
+        remainder.splice(nextIndex, 0, moving)
       }
 
       return remainder.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
     })
   }
 
-  const renderMobileRows = () => {
-    let itemNumber = 0
+  const invoiceLikeQuotation = {
+    ...quotation,
+    invoice_number: quotation.quotation_number || '',
+    due_date: quotation.valid_until || '',
+    invoice_title: quotation.quotation_title || '',
+  }
 
-    return normalizedItems.map((item, index) => {
-      if (item.row_type === 'group_header') {
-        const group = normalizedGroups.find((entry) => entry.id === item.group_id)
-        if (!group) return null
-
-        const groupItems = normalizedItems.filter((entry) => entry.row_type === 'standard' && entry.group_id === group.id)
-        const groupSubtotal = computedGroups.get(group.id)?.subtotal || 0
-
-        return (
-          <div key={item._uiKey || item.id || `quotation_group_${index}`} className="overflow-hidden border border-slate-200 bg-[#f4f4f4] shadow-sm">
-            <div className="border-l-[3px] border-l-[#0f62fe] px-3 py-3">
-              <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
-                Group
-              </div>
-              <div className="flex items-start gap-3">
-                <Input
-                  value={group.name || item.group_name || ''}
-                  onChange={(e) => updateGroupName(group.id, e.target.value)}
-                  placeholder="Group name"
-                  className="h-10 flex-1 border-slate-600 bg-slate-800 text-sm font-semibold text-white placeholder:text-slate-400"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-8 w-8 shrink-0 rounded-none text-red-500 hover:bg-white hover:text-red-600"
-                  onClick={() => deleteGroup(group.id)}
-                >
-                  x
-                </Button>
-              </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
-                  Group container
-                </div>
-                <Button type="button" size="sm" variant="ghost" className="h-8 rounded-none px-2 text-[11px] font-semibold text-[#0f62fe] hover:bg-blue-50" onClick={() => addItemToGroup(group.id)}>
-                  Add item
-                </Button>
-                <Button type="button" size="sm" variant="outline" className="h-8 rounded-none border-slate-300 bg-white text-[11px] text-slate-700 hover:bg-slate-50" onClick={() => toggleGroupSubtotal(group.id)}>
-                  {group.showSubtotal ? 'Hide Subtotal' : 'Show Subtotal'}
-                </Button>
-                {group.showSubtotal ? (
-                  <span className="ml-auto text-xs font-semibold text-slate-700">
-                    N{Number(groupSubtotal || 0).toLocaleString()}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="space-y-3 px-3 py-3">
-              {groupItems.map((groupItem, groupIndex) => {
-                itemNumber += 1
-                const itemIndex = normalizedItems.indexOf(groupItem)
-
-                return (
-                  <MobileItemCard
-                    key={groupItem._uiKey || groupItem.id || `quotation_group_item_${group.id}_${itemIndex}`}
-                    item={groupItem}
-                    index={itemIndex}
-                    number={itemNumber}
-                    isVisible={isVisible}
-                    getColumn={getColumn}
-                    customColumns={visibleCustomColumns}
-                    showItemImages={showItemImages}
-                    invoice={quotation}
-                    computedAmount={totals.items[itemIndex]?.line_subtotal || 0}
-                    showInsertBelow={false}
-                    variant="quotation"
-                    groupName={group.name || item.group_name || ''}
-                    isFirst={groupIndex === 0}
-                    isLast={groupIndex === groupItems.length - 1}
-                    onUpdate={(itemIndex: number, field: string, value: unknown) => {
-                      if (field === '__install_rate_override') {
-                        applyRowPatch(itemIndex, value as Partial<InvoiceItem>)
-                        return
-                      }
-                      updateItem(itemIndex, field, value)
-                    }}
-                    onRemove={removeItemAt}
-                    onMoveUp={(itemIndex: number) => moveItemBy(itemIndex, -1)}
-                    onMoveDown={(itemIndex: number) => moveItemBy(itemIndex, 1)}
-                    onInsertBelow={() => addItemToGroup(group.id)}
-                  />
-                )
-              })}
-
-              <Button type="button" variant="outline" className="h-9 w-full rounded-none border-dashed border-slate-300 bg-white text-[11px] font-semibold text-[#0f62fe] hover:bg-blue-50" onClick={() => addItemToGroup(group.id)}>
-                + Add item to {group.name || 'group'}
-              </Button>
-            </div>
-          </div>
-        )
-      }
-
-      if (item.row_type !== 'standard' || item.group_id) return null
-
-      itemNumber += 1
-      return (
-        <MobileItemCard
-          key={item._uiKey || item.id || `quotation_item_${index}`}
-          item={item}
-          index={index}
-          number={itemNumber}
-          isVisible={isVisible}
-          getColumn={getColumn}
-          customColumns={visibleCustomColumns}
-          showItemImages={showItemImages}
-          invoice={quotation}
-          computedAmount={totals.items[index]?.line_subtotal || 0}
-          showInsertBelow={false}
-          variant="quotation"
-          isFirst={itemNumber === 1}
-          isLast={index === normalizedItems.length - 1}
-          onUpdate={(itemIndex: number, field: string, value: unknown) => {
-            if (field === '__install_rate_override') {
-              applyRowPatch(itemIndex, value as Partial<InvoiceItem>)
-              return
-            }
-            updateItem(itemIndex, field, value)
-          }}
-          onRemove={removeItemAt}
-          onMoveUp={(itemIndex: number) => moveItemBy(itemIndex, -1)}
-          onMoveDown={(itemIndex: number) => moveItemBy(itemIndex, 1)}
-          onInsertBelow={(itemIndex: number) => insertItemAfter(itemIndex)}
-        />
-      )
-    })
+  const handleInvoiceLikeUpdate = (field: string, value: unknown) => {
+    if (field === 'invoice_number') return updateQuotation('quotation_number', String(value || ''))
+    if (field === 'due_date') return updateQuotation('valid_until', String(value || ''))
+    if (field === 'invoice_title') return updateQuotation('quotation_title', String(value || ''))
+    setQuotation((current) => ({ ...current, [field]: value }))
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <div>
-          <h2 className="m-0 text-[22px] font-semibold tracking-tight text-slate-900">{isEdit ? 'Edit Quotation' : 'New Quotation'}</h2>
-          <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#0f62fe]">{formatQuotationStatus(quotation.status || 'draft')} quotation</p>
-          <p className="mt-2 max-w-2xl text-sm text-slate-500">Use the existing grouping and totals engine, then save normally.</p>
-        </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <Button type="button" variant="outline" className="h-10 rounded-none border-slate-300 bg-white text-slate-700 w-full sm:w-auto" onClick={() => navigate('/quotations')}>Back to Quotations</Button>
-        </div>
-      </div>
-
-      <JsonItemsImportSheet
-        open={showImportSheet}
-        onOpenChange={setShowImportSheet}
+    <div className="space-y-4">
+      <MobileInvoiceForm
+        title={isEdit ? 'Edit Quotation' : 'Create Quotation'}
+        modeLabel={formatQuotationStatus(quotation.status || 'draft')}
+        invoice={invoiceLikeQuotation}
+        invoiceTitle={quotation.quotation_title || ''}
+        setInvoiceTitle={(value: string) => updateQuotation('quotation_title', value)}
+        updateInvoice={handleInvoiceLikeUpdate}
+        items={normalizedItems}
+        groups={normalizedGroups}
+        customFields={headerFields}
+        bottomFields={bottomFields}
+        extraCharges={extraCharges}
+        chargeLabels={chargeLabels}
+        notesTitle={notesTitle}
+        setNotesTitle={setNotesTitle}
+        termsTitle={termsTitle}
+        setTermsTitle={setTermsTitle}
+        attachments={attachments}
+        setAttachments={setAttachments}
+        signatories={[]}
+        signatoryId={null}
+        onSignatoryChange={() => {}}
+        mergeQtyUnit={mergeQtyUnit}
+        setMergeQtyUnit={setMergeQtyUnit}
+        columns={columns}
+        isVisible={isVisible}
+        getColumn={getColumn}
+        toggleVisible={toggleVisible}
+        updateColumn={updateColumn}
+        addCustomColumn={addCustomColumn}
+        removeCustomColumn={removeCustomColumn}
+        resetColumns={resetColumns}
+        moveColumn={moveColumn}
+        customColumns={customColumns}
+        computedItems={totals.items}
+        computedGroups={totals.groups}
+        rawSubtotal={totals.subtotal}
+        installRateTotal={totals.installRateTotal}
+        vatAmount={totals.vat}
+        discountAmount={totals.discount}
+        grandTotal={totals.grandTotal}
+        whtAmount={totals.wht}
+        totalPayable={totals.totalPayable}
+        amountInWords={quotation.amount_in_words || ''}
+        discountType={discountType}
+        setDiscountType={setDiscountType}
+        discountTiming={discountTiming}
+        setDiscountTiming={setDiscountTiming}
+        whtType={whtType}
+        setWhtType={setWhtType}
+        saving={saving}
+        primaryLabel={isEdit ? 'Save Quotation' : 'Create Quotation'}
+        onSaveSent={() => handleSave('sent')}
+        onSaveDraft={() => handleSave('draft')}
+        onCancel={() => navigate('/quotations')}
         onImportText={handleJsonImport}
-        title="Import Items"
-        side={isMobile ? 'bottom' : 'right'}
-        contentClassName={isMobile ? 'max-h-[88vh] rounded-t-3xl' : 'w-full max-w-md'}
+        onAddItem={addQuotationItem}
+        onAddGroup={addQuotationGroup}
+        onAddItemToGroup={addItemToGroup}
+        onUpdateItem={(itemIndex: number, field: string, value: unknown) => {
+          if (field === '__install_rate_override') return applyRowPatch(itemIndex, value as Partial<InvoiceItem>)
+          updateItem(itemIndex, field, value)
+        }}
+        onResetItemOverrides={resetItemOverrides}
+        onRemoveItem={removeItemAt}
+        onMoveItem={moveItemBy}
+        onInsertItemAfter={insertItemAfter}
+        onUpdateGroupName={updateGroupName}
+        onToggleGroupSubtotal={toggleGroupSubtotal}
+        onDeleteGroup={deleteGroup}
+        onAddHeaderField={() => setHeaderFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])}
+        onUpdateHeaderField={(id: string, field: 'label' | 'value', value: string) =>
+          setHeaderFields((current) => current.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry)))
+        }
+        onRemoveHeaderField={(id: string) => setHeaderFields((current) => current.filter((entry) => entry.id !== id))}
+        onAddBottomField={() =>
+          setBottomFields((current) => [...current, { id: `bottom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, text: '' }])
+        }
+        onUpdateBottomField={(id: string, text: string) =>
+          setBottomFields((current) => current.map((field) => (field.id === id ? { ...field, text } : field)))
+        }
+        onRemoveBottomField={(id: string) => setBottomFields((current) => current.filter((field) => field.id !== id))}
+        onChargeLabelChange={(key: string, value: string) => setChargeLabels((current) => ({ ...current, [key]: value }))}
+        onAddExtraCharge={(withTax: boolean) => setExtraCharges((current) => [...current, makeExtraCharge({ withTax })])}
+        onUpdateExtraCharge={(id: string, field: string, value: unknown) =>
+          setExtraCharges((current) => current.map((charge) => (charge.id === id ? { ...charge, [field]: value } : charge)))
+        }
+        onRemoveExtraCharge={(id: string) => setExtraCharges((current) => current.filter((charge) => charge.id !== id))}
+        showColumnManager={showColumnManager}
+        setShowColumnManager={setShowColumnManager}
+        isMobile={isMobile}
       />
 
-      {showColumnManager && (
-        <ColumnManager
-          columns={columns}
-          onUpdate={updateColumn}
-          onToggle={toggleVisible}
-          onAddCustom={addCustomColumn}
-          onRemoveCustom={removeCustomColumn}
-          onReset={resetColumns}
-          onMove={moveColumn}
-          onClose={() => setShowColumnManager(false)}
-          vat={quotation.vat}
-          setVat={(value: number) => updateQuotation('vat', value)}
-          wht={quotation.wht}
-          setWht={(value: number) => updateQuotation('wht', value)}
-          whtType={whtType}
-          setWhtType={setWhtType}
+      <div className="mx-auto w-full max-w-2xl px-3 pb-6 md:px-4">
+        <PdfOutputSettings
+          value={{ showBankDetails: false, bankAccountId: null, showFooter: true, showTagline: true }}
+          onChange={() => {}}
+          bankAccounts={[]}
+          companyTagline=""
+          footerText=""
         />
-      )}
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-5">
-        <div className="space-y-5">
-          <Card className="rounded-none border-slate-200 bg-white shadow-sm">
-            <CardContent className="grid gap-4 pt-5 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Client Name</Label>
-                <div className="mt-2">
-                  <ClientSelector
-                    clientId={quotation.client_id}
-                    clientName={quotation.client_name}
-                    isMobile={isMobile}
-                    onClientChange={(clientId: string, clientName: string) => {
-                      updateQuotation('client_id', clientId)
-                      updateQuotation('client_name', clientName)
-                    }}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Issue Date</Label>
-                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" type="date" value={quotation.issue_date || ''} onChange={(e) => updateQuotation('issue_date', e.target.value)} />
-              </div>
-              <div>
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Valid Until</Label>
-                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" type="date" value={quotation.valid_until || ''} onChange={(e) => updateQuotation('valid_until', e.target.value)} />
-              </div>
-              <div>
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Quotation Number</Label>
-                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" value={quotation.quotation_number || ''} onChange={(e) => updateQuotation('quotation_number', e.target.value)} />
-              </div>
-              <div>
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">P.O. Number</Label>
-                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" value={quotation.po_number || ''} onChange={(e) => updateQuotation('po_number', e.target.value)} placeholder="Optional purchase order number" />
-              </div>
-              <div>
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Status</Label>
-                <Select value={quotation.status || 'draft'} onValueChange={(value) => updateQuotation('status', value as Quotation['status'])}>
-                  <SelectTrigger className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]">
-                    <SelectValue placeholder="Choose status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {QUOTATION_STATUSES.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {formatQuotationStatus(status)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="md:col-span-2">
-                <Label className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Scope Title</Label>
-                <Input className="mt-2 rounded-none border-slate-300 bg-[#f4f4f4]" value={quotation.quotation_title || ''} onChange={(e) => updateQuotation('quotation_title', e.target.value)} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-none border-slate-200 bg-white shadow-sm">
-            <CardHeader>
-              <div className="flex items-center justify-between gap-3">
-                <CardTitle className="text-base">Header Fields</CardTitle>
-                <Button type="button" variant="ghost" className="h-auto p-0 text-sm font-bold text-indigo-500" onClick={() => setHeaderFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])}>+ Add Header Field</Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {headerFields.length === 0 && <div className="text-sm italic text-slate-400">No custom header fields yet.</div>}
-              {headerFields.map((field) => (
-                <div key={field.id} className="grid gap-2 md:grid-cols-[160px_minmax(0,1fr)_40px]">
-                  <Input value={field.label || ''} onChange={(e) => setHeaderFields((current) => current.map((entry) => entry.id === field.id ? { ...entry, label: e.target.value } : entry))} placeholder="Label" />
-                  <Input value={field.value || ''} onChange={(e) => setHeaderFields((current) => current.map((entry) => entry.id === field.id ? { ...entry, value: e.target.value } : entry))} placeholder="Value" />
-                  <Button type="button" variant="ghost" className="h-10 px-2 text-xl text-red-700" onClick={() => setHeaderFields((current) => current.filter((entry) => entry.id !== field.id))}>×</Button>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-none border-slate-200 bg-white shadow-sm">
-            <CardHeader>
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-                <div>
-                  <CardTitle className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-700">Scope of Work</CardTitle>
-                  <div className="mt-1 text-xs text-slate-500">Groups stay structural; this is only a visual refresh.</div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" className="h-9 rounded-none border-slate-300 bg-white text-slate-700" onClick={() => setShowColumnManager(true)}>
-                    Table & Tax Settings
-                  </Button>
-                  <Button type="button" className="h-9 rounded-none bg-slate-900 hover:bg-slate-800" onClick={() => setShowImportSheet(true)}>
-                    Import JSON
-                  </Button>
-                  <Button type="button" variant="ghost" className="h-9 rounded-none text-[#0f62fe] hover:bg-blue-50" onClick={addQuotationGroup}>
-                    + Group
-                  </Button>
-                  <Button type="button" variant="ghost" className="h-9 rounded-none text-[#0f62fe] hover:bg-blue-50" onClick={addQuotationItem}>
-                    + Add Item
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {isMobile ? (
-                <div className="space-y-3">
-                  {renderMobileRows()}
-                  <div className="grid gap-2 pt-2">
-                    <Button type="button" onClick={addQuotationItem} className="h-10 w-full rounded-none bg-[#0f62fe] hover:bg-[#0353e9]">
-                      + Add Item
-                    </Button>
-                    <Button type="button" variant="outline" onClick={addQuotationGroup} className="h-10 w-full rounded-none border-slate-300 bg-white text-[#0f62fe]">
-                      + Group
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border-collapse">
-                    <thead>
-                      <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500">
-                        <th className="px-2 py-3">#</th>
-                        <th className="px-2 py-3">Description</th>
-                        {isVisible('make') && <th className="px-2 py-3">Make</th>}
-                        <th className="px-2 py-3">Qty</th>
-                        {isVisible('unit') && <th className="px-2 py-3">Unit</th>}
-                        <th className="px-2 py-3">Rate</th>
-                        {isVisible('install_rate') && <th className="px-2 py-3">Install</th>}
-                        {isVisible('vat_rate') && <th className="px-2 py-3">VAT %</th>}
-                        {isVisible('discount_rate') && <th className="px-2 py-3">Disc %</th>}
-                        {visibleCustomColumns.map((column) => <th key={column.key} className="px-2 py-3">{column.label}</th>)}
-                        <th className="px-2 py-3">Amount</th>
-                        <th className="px-2 py-3" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(() => {
-                        let itemNumber = 0
-                        return normalizedItems.map((item, index) => {
-                          if (item.row_type === 'group_header') {
-                            const group = normalizedGroups.find((entry) => entry.id === item.group_id)
-                            const groupSubtotal = group ? computedGroups.get(group.id)?.subtotal || 0 : 0
-                            return (
-                              <tr key={item._uiKey || item.id || index} className="border-b border-zinc-100 bg-[#f4f4f4] align-top">
-                                <td className="px-2 py-3 text-sm font-semibold text-slate-400">-</td>
-                                <td colSpan={8 + (isVisible('make') ? 1 : 0) + (isVisible('unit') ? 1 : 0) + (isVisible('install_rate') ? 1 : 0) + (isVisible('vat_rate') ? 1 : 0) + (isVisible('discount_rate') ? 1 : 0) + visibleCustomColumns.length} className="px-2 py-3">
-                                  <div className="flex flex-wrap items-center gap-3 border-l-[3px] border-l-[#0f62fe] pl-3">
-                                    <Input value={item.group_name || ''} onChange={(e) => group ? updateGroupName(group.id, e.target.value) : updateItem(index, 'group_name', e.target.value)} placeholder="Group name" className="max-w-sm rounded-none border-0 border-b border-slate-300 bg-white text-slate-900" />
-                                    {group ? (
-                                      <>
-                                        <Button type="button" size="sm" variant="ghost" className="rounded-none text-[#0f62fe] hover:bg-blue-50" onClick={() => addItemToGroup(group.id)}>
-                                          + Add Item
-                                        </Button>
-                                        <Button type="button" size="sm" variant="outline" className="rounded-none border-slate-300 bg-white text-slate-700 hover:bg-slate-50" onClick={() => toggleGroupSubtotal(group.id)}>
-                                          {group.showSubtotal ? 'Hide Subtotal' : 'Show Subtotal'}
-                                        </Button>
-                                        {group.showSubtotal ? <span className="text-xs font-semibold text-slate-700">Subtotal: N{Number(groupSubtotal || 0).toLocaleString()}</span> : null}
-                                      </>
-                                    ) : null}
-                                  </div>
-                                </td>
-                                <td className="px-2 py-3">
-                                  <Button type="button" variant="ghost" size="sm" className="rounded-none text-red-500 hover:bg-white hover:text-red-600" onClick={() => group ? deleteGroup(group.id) : removeItemAt(index)}>x</Button>
-                                </td>
-                              </tr>
-                            )
-                          }
-
-                          itemNumber += 1
-                          return (
-                            <tr key={item._uiKey || item.id || index} className="border-b border-zinc-100 align-top">
-                              <td className="px-2 py-3 text-sm font-semibold text-zinc-500">{itemNumber}</td>
-                              <td className="px-2 py-3 min-w-[260px]">
-                                <Input value={item.description || ''} onChange={(e) => updateItem(index, 'description', e.target.value)} placeholder="Item description" />
-                                <Input className="mt-2" value={item.sub_description || ''} onChange={(e) => updateItem(index, 'sub_description', e.target.value)} placeholder="Sub-description" />
-                              </td>
-                              {isVisible('make') && <td className="px-2 py-3"><Input value={item.make || ''} onChange={(e) => updateItem(index, 'make', e.target.value)} /></td>}
-                              <td className="px-2 py-3 min-w-[88px]"><Input type="number" min="0" value={item.quantity || 0} onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))} /></td>
-                              {isVisible('unit') && <td className="px-2 py-3 min-w-[120px]"><UnitInput value={item.unit || ''} onChange={(value: string) => updateItem(index, 'unit', value)} /></td>}
-                              <td className="px-2 py-3 min-w-[110px]"><Input type="number" min="0" value={item.unit_price || 0} onChange={(e) => updateItem(index, 'unit_price', Number(e.target.value))} /></td>
-                              {isVisible('install_rate') && <td className="px-2 py-3 min-w-[110px]"><Input type="number" min="0" value={item.install_rate_override ? item.install_rate ?? '' : ''} onChange={(e) => updateInstallRateOverride(index, e.target.value)} /></td>}
-                              {isVisible('vat_rate') && <td className="px-2 py-3 min-w-[90px]"><Input type="number" min="0" max="100" value={item.vat_rate ?? ''} placeholder={String(quotation.vat || 0)} onChange={(e) => updateItem(index, 'vat_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
-                              {isVisible('discount_rate') && <td className="px-2 py-3 min-w-[90px]"><Input type="number" min="0" max="100" value={item.discount_rate ?? ''} placeholder="global" onChange={(e) => updateItem(index, 'discount_rate', e.target.value === '' ? null : Number(e.target.value))} /></td>}
-                              {visibleCustomColumns.map((column) => <td key={column.key} className="px-2 py-3 min-w-[110px]"><Input type={column.type === 'number' ? 'number' : 'text'} value={(item.custom_data || {})[column.key] || ''} onChange={(e) => updateItem(index, 'custom_data', { ...(item.custom_data || {}), [column.key]: column.type === 'number' ? Number(e.target.value || 0) : e.target.value })} /></td>)}
-                              <td className="px-2 py-3 text-sm font-bold text-zinc-900">₦{Number(totals.items[index]?.line_subtotal || 0).toLocaleString()}</td>
-                              <td className="px-2 py-3"><Button type="button" variant="ghost" size="sm" className="rounded-none text-red-700" onClick={() => removeItemAt(index)}>x</Button></td>
-                            </tr>
-                          )
-                        })
-                      })()}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <InvoiceNotesTermsSection
-            invoice={quotation}
-            updateInvoice={updateQuotation}
-            notesTitle={notesTitle}
-            setNotesTitle={setNotesTitle}
-            termsTitle={termsTitle}
-            setTermsTitle={setTermsTitle}
-          />
-
-          <InvoiceCustomBottomFieldsSection
-            bottomFields={bottomFields}
-            setBottomFields={setBottomFields}
-            emptyStateText="No custom footer fields yet."
-            placeholder="Add a footer field"
-          />
-        </div>
-
-        <div className="space-y-5">
-          <Card className="rounded-none border-slate-200 bg-white shadow-sm">
-            <CardHeader><CardTitle className="text-base">Quotation Summary</CardTitle></CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              {[
-                ['Status', formatQuotationStatus(quotation.status || 'draft')],
-                ['Issue Date', quotation.issue_date || 'Not set'],
-                ['Valid Until', quotation.valid_until || 'Not set'],
-                ...(String(quotation.po_number || '').trim()
-                  ? [['P.O. Number', String(quotation.po_number || '').trim()]]
-                  : []),
-              ].map(([label, value]) => (
-                <div key={label} className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2">
-                  <span className="font-medium text-zinc-600">{label}</span>
-                  <span className="text-right font-semibold text-zinc-900">{value}</span>
-                </div>
-              ))}
-              {summaryHeaderFields.length > 0 ? (
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-                  <div className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">Header Fields</div>
-                  <div className="space-y-2">
-                    {summaryHeaderFields.map((field) => (
-                      <div key={field.id} className="flex items-start justify-between gap-3 text-sm">
-                        <span className="font-medium text-zinc-600">{field.label}</span>
-                        <span className="text-right text-zinc-900">{field.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-none border-slate-200 bg-white shadow-sm">
-            <CardHeader><CardTitle className="text-base">Totals Settings</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div><Label>Global VAT</Label><Input className="mt-2" type="number" min="0" value={quotation.vat || 0} onChange={(e) => updateQuotation('vat', Number(e.target.value))} /></div>
-                <div><Label>Discount</Label><Input className="mt-2" type="number" min="0" value={quotation.discount || 0} onChange={(e) => updateQuotation('discount', Number(e.target.value))} /></div>
-                <div>
-                  <Label>Discount Type</Label>
-                  <Select value={discountType} onValueChange={(value) => setDiscountType(value as 'fixed' | 'percent')}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Choose discount type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="fixed">Fixed</SelectItem>
-                      <SelectItem value="percent">Percent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Discount Timing</Label>
-                  <Select value={discountTiming} onValueChange={(value) => setDiscountTiming(value as 'before' | 'after')}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Choose discount timing" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="after">After Tax</SelectItem>
-                      <SelectItem value="before">Before Tax</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div><Label>WHT</Label><Input className="mt-2" type="number" min="0" value={quotation.wht || 0} onChange={(e) => updateQuotation('wht', Number(e.target.value))} /></div>
-                <div>
-                  <Label>WHT Type</Label>
-                  <Select value={whtType} onValueChange={(value) => setWhtType(value as 'fixed' | 'percent')}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Choose WHT type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="percent">Percent</SelectItem>
-                      <SelectItem value="fixed">Fixed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              {!calculationState.useGlobalVatInput ? <div className="text-xs text-slate-500">Global VAT is neutral because this quotation uses row-level VAT overrides.</div> : null}
-              {!calculationState.useGlobalDiscountInput ? <div className="text-xs text-slate-500">Global discount is neutral because this quotation uses row-level discount overrides.</div> : null}
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-none border-slate-200 bg-white shadow-sm">
-            <CardHeader><CardTitle className="text-base">Totals</CardTitle></CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              {[
-                ['Subtotal', totals.subtotal],
-                ['Install Rate Total', totals.installRateTotal],
-                ['VAT', totals.vat],
-                ['Discount', totals.discount],
-                ['WHT', totals.wht],
-                ['Total Payable', totals.totalPayable],
-              ].map(([label, value]) => <div key={label} className="flex items-center justify-between border-b border-slate-200 px-0 py-2 last:border-b-0"><span className="font-medium text-zinc-600">{label}</span><span className={`font-bold ${label === 'Total Payable' ? 'text-[#0f62fe]' : 'text-zinc-900'}`}>N{Number(value || 0).toLocaleString()}</span></div>)}
-              <div className="rounded-none border border-zinc-200 bg-white p-4 shadow-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <div className="text-sm font-semibold text-zinc-800">Merge Qty + Unit in output</div>
-                    <div className="text-xs text-zinc-500">Keep quantity and unit together in generated document output.</div>
-                  </div>
-                  <Switch checked={mergeQtyUnit} onCheckedChange={setMergeQtyUnit} />
-                </div>
-              </div>
-              <div className="rounded-none border border-zinc-200 bg-white p-4 shadow-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <div className="text-sm font-semibold text-zinc-800">Show item images in output</div>
-                    <div className="text-xs text-zinc-500">Include saved item images when a document output uses them.</div>
-                  </div>
-                  <Switch checked={showItemImages} onCheckedChange={setShowItemImages} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <InvoiceFormActions
-            saving={saving}
-            primaryLabel={isEdit ? 'Save Quotation' : 'Create Quotation'}
-            onSaveSent={() => handleSave('sent')}
-            onSaveDraft={() => handleSave('draft')}
-            onCancel={() => navigate('/quotations')}
-          />
-        </div>
       </div>
     </div>
   )
 }
-
-
