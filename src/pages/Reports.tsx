@@ -1,10 +1,23 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  ArrowRight,
+  Banknote,
+  BriefcaseBusiness,
+  CalendarDays,
+  CreditCard,
+  FileSpreadsheet,
+  Filter,
+  Landmark,
+  Receipt,
+  Search,
+  Wallet,
+} from 'lucide-react'
+
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -13,11 +26,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-type ReportTab = 'receivables' | 'collections' | 'projects'
+type ReportTab = 'receivables' | 'collections' | 'projects' | 'tax'
 type DatePreset = 'this_month' | 'last_month' | 'this_quarter' | 'custom'
+type ReceivablesFilter = 'all' | 'unpaid' | 'paid' | 'overdue'
+type MetricTone = 'green' | 'red' | 'amber' | 'blue'
 
 type InvoiceFinancialRow = {
   id: string
@@ -46,6 +60,7 @@ type CollectionRow = {
   reference?: string | null
   cash_amount?: number | null
   wht_amount?: number | null
+  voided_at?: string | null
   invoices?: CollectionInvoiceInfo | CollectionInvoiceInfo[] | null
   invoice_number?: string | null
   client_name?: string | null
@@ -73,6 +88,20 @@ type ProjectFinancialRow = {
   outstanding?: number | null
 }
 
+type Metric = {
+  label: string
+  value: string
+  tone: MetricTone
+  icon: ReactNode
+}
+
+const dateChips: Array<{ label: string; value: DatePreset }> = [
+  { label: 'This Month', value: 'this_month' },
+  { label: 'Last Month', value: 'last_month' },
+  { label: 'This Quarter', value: 'this_quarter' },
+  { label: 'Custom', value: 'custom' },
+]
+
 const formatMoney = (value: number | null | undefined) => `₦${Number(value || 0).toLocaleString()}`
 
 const formatDate = (value: string | null | undefined) => {
@@ -97,25 +126,12 @@ const safeDate = (val: string | null | undefined) => (val && val.trim() !== '' ?
 
 const getPresetRange = (preset: DatePreset, customStart: string, customEnd: string) => {
   const now = new Date()
-  if (preset === 'this_month') {
-    return {
-      start: toDateInput(startOfMonth(now)),
-      end: toDateInput(endOfMonth(now)),
-    }
-  }
+  if (preset === 'this_month') return { start: toDateInput(startOfMonth(now)), end: toDateInput(endOfMonth(now)) }
   if (preset === 'last_month') {
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    return {
-      start: toDateInput(startOfMonth(lastMonth)),
-      end: toDateInput(endOfMonth(lastMonth)),
-    }
+    return { start: toDateInput(startOfMonth(lastMonth)), end: toDateInput(endOfMonth(lastMonth)) }
   }
-  if (preset === 'this_quarter') {
-    return {
-      start: toDateInput(startOfQuarter(now)),
-      end: toDateInput(now),
-    }
-  }
+  if (preset === 'this_quarter') return { start: toDateInput(startOfQuarter(now)), end: toDateInput(now) }
   return { start: customStart || '', end: customEnd || '' }
 }
 
@@ -134,9 +150,9 @@ const getAgingBucket = (dueDate: string | null | undefined) => {
   due.setHours(0, 0, 0, 0)
   const diff = Math.floor((today.getTime() - due.getTime()) / 86400000)
   if (diff <= 0) return 'Current'
-  if (diff <= 30) return '1-30 days overdue'
-  if (diff <= 60) return '31-60 days overdue'
-  return '61+ days overdue'
+  if (diff <= 30) return '1–30'
+  if (diff <= 60) return '31–60'
+  return '61+'
 }
 
 const getStatusClass = (status: string | null | undefined) => {
@@ -147,62 +163,488 @@ const getStatusClass = (status: string | null | undefined) => {
       return 'bg-red-500 text-white'
     case 'partial':
       return 'bg-amber-500 text-white'
+    case 'active':
     case 'sent':
+    case 'current':
       return 'bg-blue-500 text-white'
+    case 'completed':
     case 'draft':
-      return 'bg-slate-400 text-white'
+      return 'bg-slate-500 text-white'
     default:
-      return 'bg-slate-400 text-white'
+      return 'bg-slate-500 text-white'
   }
 }
 
-function SummaryMetric({
-  label,
-  value,
-  tone = 'default',
-}: {
-  label: string
-  value: string
-  tone?: 'default' | 'danger' | 'success'
-}) {
-  const toneClass =
-    tone === 'danger'
-      ? 'border-l-4 border-red-500 bg-red-50 text-red-600'
-      : tone === 'success'
-        ? 'border-l-4 border-emerald-500 bg-emerald-50 text-emerald-700'
-        : 'border-l-4 border-blue-500 bg-blue-50 text-foreground'
+const getMetricToneClasses = (tone: MetricTone) => {
+  switch (tone) {
+    case 'green':
+      return { card: 'border-emerald-200 bg-emerald-50/60', icon: 'bg-emerald-100 text-emerald-700', value: 'text-emerald-700' }
+    case 'red':
+      return { card: 'border-red-200 bg-red-50/60', icon: 'bg-red-100 text-red-700', value: 'text-red-700' }
+    case 'amber':
+      return { card: 'border-amber-200 bg-amber-50/70', icon: 'bg-amber-100 text-amber-700', value: 'text-amber-700' }
+    default:
+      return { card: 'border-blue-200 bg-blue-50/60', icon: 'bg-blue-100 text-blue-700', value: 'text-blue-700' }
+  }
+}
 
-  const labelToneClass =
-    tone === 'danger'
-      ? 'text-red-500'
-      : tone === 'success'
-        ? 'text-emerald-600'
-        : 'text-muted-foreground'
+const getAgingBadgeClass = (aging: string) => {
+  switch (aging) {
+    case 'Current':
+      return 'bg-blue-500 text-white'
+    case '1–30':
+      return 'bg-amber-500 text-white'
+    case '31–60':
+      return 'bg-orange-500 text-white'
+    case '61+':
+      return 'bg-red-500 text-white'
+    default:
+      return 'bg-slate-500 text-white'
+  }
+}
 
+const getLeftBorderClass = (status: string | null | undefined) => {
+  switch (String(status || '').toLowerCase()) {
+    case 'paid':
+      return 'border-l-4 border-l-emerald-500'
+    case 'overdue':
+      return 'border-l-4 border-l-red-500'
+    case 'partial':
+      return 'border-l-4 border-l-amber-500'
+    case 'active':
+    case 'sent':
+    case 'current':
+      return 'border-l-4 border-l-blue-500'
+    case 'completed':
+    case 'draft':
+      return 'border-l-4 border-l-slate-500'
+    default:
+      return 'border-l-4 border-l-slate-300'
+  }
+}
+
+function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className={`rounded-xl p-4 ${toneClass}`}>
-      <div className={`text-[10px] font-bold uppercase tracking-[0.16em] ${labelToneClass}`}>{label}</div>
-      <div className="mt-2 text-lg font-black tracking-tight">{value}</div>
+    <div className="rounded-2xl border border-slate-800 bg-[#0F172A] p-4 text-white shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-bold">{title}</h1>
+          <p className="mt-1 text-xs text-slate-300">{subtitle}</p>
+        </div>
+        <div className="rounded-full border border-slate-700 bg-slate-800/80 p-2">
+          <FileSpreadsheet className="h-4 w-4 text-blue-300" />
+        </div>
+      </div>
     </div>
   )
 }
 
-function TableShell({
+function MetricStrip({ metrics }: { metrics: Metric[] }) {
+  return (
+    <div className="overflow-x-auto pb-1">
+      <div className="flex min-w-max gap-3">
+        {metrics.map((metric) => {
+          const tone = getMetricToneClasses(metric.tone)
+          return (
+            <Card key={metric.label} className={`min-w-[168px] border shadow-sm ${tone.card}`}>
+              <CardContent className="p-3">
+                <div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/70 shadow-sm ${tone.icon}`}>
+                  {metric.icon}
+                </div>
+                <div className={`text-2xl font-black tracking-tight ${tone.value}`}>{metric.value}</div>
+                <p className="mt-1 text-xs font-medium text-slate-600">{metric.label}</p>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function Filters({
+  activeDate,
+  setActiveDate,
+  statusFilter,
+  setStatusFilter,
+  clientFilter,
+  setClientFilter,
+  clientOptions,
+  search,
+  setSearch,
+  showStatus,
+}: {
+  activeDate: DatePreset
+  setActiveDate: (value: DatePreset) => void
+  statusFilter: ReceivablesFilter
+  setStatusFilter: (value: ReceivablesFilter) => void
+  clientFilter: string
+  setClientFilter: (value: string) => void
+  clientOptions: string[]
+  search: string
+  setSearch: (value: string) => void
+  showStatus: boolean
+}) {
+  return (
+    <Card className="border-blue-200 bg-white shadow-sm">
+      <CardContent className="space-y-3 p-3">
+        <div className="overflow-x-auto pb-1">
+          <div className="flex min-w-max gap-2">
+            {dateChips.map((chip) => {
+              const active = activeDate === chip.value
+              return (
+                <button
+                  key={chip.value}
+                  type="button"
+                  onClick={() => setActiveDate(chip.value)}
+                  className={
+                    active
+                      ? 'h-8 rounded-full border border-blue-300 bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-600'
+                      : 'h-8 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100'
+                  }
+                >
+                  {chip.label}
+                </button>
+              )
+            })}
+
+            {showStatus ? (
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ReceivablesFilter)}>
+                <SelectTrigger className="h-8 w-[120px] rounded-full border-slate-200 bg-slate-50 text-xs font-semibold">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="unpaid">Unpaid</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : null}
+
+            <Select value={clientFilter} onValueChange={setClientFilter}>
+              <SelectTrigger className="h-8 w-[160px] rounded-full border-slate-200 bg-slate-50 text-xs font-semibold">
+                <SelectValue placeholder="Client" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Clients</SelectItem>
+                {clientOptions.map((client) => (
+                  <SelectItem key={client} value={client}>
+                    {client}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search client, invoice or project..."
+            className="border-slate-200 bg-slate-50 pl-9 text-sm"
+          />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function LoadingState({ label }: { label: string }) {
+  return (
+    <Card className="border-slate-200 bg-white shadow-sm">
+      <CardContent className="p-6 text-sm text-slate-500">Loading {label}...</CardContent>
+    </Card>
+  )
+}
+
+function EmptyState({ title, description, tone }: { title: string; description: string; tone: 'red' | 'green' | 'blue' | 'amber' }) {
+  const toneClasses =
+    tone === 'red'
+      ? 'border-red-200 bg-red-50/50'
+      : tone === 'green'
+        ? 'border-emerald-200 bg-emerald-50/50'
+        : tone === 'amber'
+          ? 'border-amber-200 bg-amber-50/60'
+          : 'border-blue-200 bg-blue-50/50'
+
+  return (
+    <Card className={`shadow-sm ${toneClasses}`}>
+      <CardContent className="p-6">
+        <div className="rounded-2xl border border-white/80 bg-white p-5 text-center shadow-sm">
+          <div className="text-sm font-semibold text-slate-700">{title}</div>
+          <div className="mt-2 text-sm text-slate-500">{description}</div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function ErrorBanner({ message }: { message: string }) {
+  if (!message) return null
+  return <div className="rounded-2xl bg-red-500 px-4 py-3 text-sm font-medium text-white shadow-sm">{message}</div>
+}
+
+function TaxPlaceholder() {
+  return (
+    <Card className="border-amber-200 bg-amber-50/40 shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-sm font-semibold text-slate-900">VAT & WHT Summary</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-2xl border border-amber-200 bg-white p-6 text-center shadow-sm">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-200 bg-amber-100 text-amber-700">
+            <Receipt className="h-6 w-6" />
+          </div>
+          <h3 className="mt-4 text-base font-bold text-slate-900">Tax Summary Coming Soon</h3>
+          <p className="mt-2 text-sm text-slate-600">
+            Placeholder for VAT charged, WHT deductions and net tax position by period.
+          </p>
+          <div className="mt-5 grid gap-3 text-left">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-amber-700">Period</div>
+              <div className="mt-1 text-sm font-semibold text-slate-900">Current reporting period</div>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <div className="text-xs text-slate-500">Total VAT Charged</div>
+                <div className="mt-1 text-lg font-bold text-slate-900">₦0.00</div>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <div className="text-xs text-slate-500">Total WHT</div>
+                <div className="mt-1 text-lg font-bold text-slate-900">₦0.00</div>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <div className="text-xs text-slate-500">Net Tax Position</div>
+                <div className="mt-1 text-lg font-bold text-blue-700">₦0.00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function ReceivablesList({
   loading,
-  empty,
-  children,
+  error,
+  rows,
 }: {
   loading: boolean
-  empty: boolean
-  children: ReactNode
+  error: string
+  rows: InvoiceFinancialRow[]
 }) {
-  if (loading) {
-    return <div className="rounded-xl border border-border bg-card px-4 py-8 text-sm text-muted-foreground">Loading report...</div>
-  }
-  if (empty) {
-    return <div className="rounded-xl border border-dashed border-border bg-card px-4 py-8 text-sm text-muted-foreground">No records found for this filter.</div>
-  }
-  return <div className="overflow-x-auto rounded-xl border border-border bg-card">{children}</div>
+  if (loading) return <LoadingState label="receivables" />
+
+  return (
+    <div className="space-y-4">
+      <ErrorBanner message={error} />
+      {rows.length === 0 ? (
+        <EmptyState title="No receivables found" description="Try another date range, status, client, or search term." tone="red" />
+      ) : (
+        <Card className="border-red-200 bg-white shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-slate-900">Outstanding Invoices</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-3">
+              {rows.map((row) => {
+                const aging = getAgingBucket(row.due_date)
+                return (
+                  <div key={row.id} className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${getLeftBorderClass(row.computed_status)}`}>
+                    <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">
+                          <Link to={`/invoices/${row.id}`} className="hover:text-blue-700 hover:underline">
+                            {row.invoice_number || '—'}
+                          </Link>
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">{row.client_name || '—'}</div>
+                      </div>
+                      <Badge className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusClass(row.computed_status)}`}>
+                        {row.computed_status || 'draft'}
+                      </Badge>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                      <div>
+                        <div className="text-[11px] text-slate-500">Total</div>
+                        <div className="text-sm font-semibold text-slate-900">{formatMoney(row.total)}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-slate-500">Received</div>
+                        <div className="text-sm font-semibold text-emerald-700">{formatMoney(row.cash_received)}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-slate-500">Balance Due</div>
+                        <div className="text-lg font-black text-red-600">{formatMoney(row.balance_due)}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-slate-500">Due Date</div>
+                        <div className="text-sm font-semibold text-slate-900">{formatDate(row.due_date)}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-slate-500">Aging</div>
+                        <Badge className={`mt-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${getAgingBadgeClass(aging)}`}>{aging}</Badge>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+function CollectionsList({
+  loading,
+  error,
+  rows,
+}: {
+  loading: boolean
+  error: string
+  rows: CollectionRow[]
+}) {
+  if (loading) return <LoadingState label="collections" />
+
+  return (
+    <div className="space-y-4">
+      <ErrorBanner message={error} />
+      {rows.length === 0 ? (
+        <EmptyState title="No collections found" description="Try another date range, client, or search term." tone="green" />
+      ) : (
+        <Card className="border-emerald-200 bg-white shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-slate-900">Payments Received</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-3">
+              {rows.map((row) => (
+                <div key={row.id} className="rounded-2xl border border-slate-200 border-l-4 border-l-emerald-500 bg-white p-4 shadow-sm">
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+                    <div>
+                      <div className="text-[11px] text-slate-500">Date</div>
+                      <div className="text-sm font-semibold text-slate-900">{formatDate(row.date)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-slate-500">Invoice #</div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        {row.invoice_id ? (
+                          <Link to={`/invoices/${row.invoice_id}`} className="hover:text-blue-700 hover:underline">
+                            {row.invoice_number || '—'}
+                          </Link>
+                        ) : (
+                          row.invoice_number || '—'
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-slate-500">Client</div>
+                      <div className="text-sm font-semibold text-slate-900">{row.client_name || '—'}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-slate-500">Amount</div>
+                      <div className="text-lg font-black text-emerald-700">{formatMoney(row.cash_amount)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-slate-500">Settlement</div>
+                      <div className="text-sm font-semibold text-slate-900">{formatMoney(Number(row.cash_amount || 0) + Number(row.wht_amount || 0))}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-slate-500">Account</div>
+                      <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+                        <Landmark className="h-3.5 w-3.5 text-emerald-600" />
+                        {row.account_label || row.method || '—'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                    <span>Method: <span className="font-semibold text-slate-700">{row.method || '—'}</span></span>
+                    <span>Reference: <span className="font-semibold text-slate-700">{row.reference || '—'}</span></span>
+                    <Badge className="rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold text-white">PAID</Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+function ProjectsList({
+  loading,
+  error,
+  rows,
+}: {
+  loading: boolean
+  error: string
+  rows: ProjectFinancialRow[]
+}) {
+  if (loading) return <LoadingState label="projects" />
+
+  return (
+    <div className="space-y-4">
+      <ErrorBanner message={error} />
+      {rows.length === 0 ? (
+        <EmptyState title="No projects found" description="Try another client filter or search term." tone="blue" />
+      ) : (
+        <Card className="border-blue-200 bg-white shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-slate-900">Project Financial Summaries</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-3">
+              {rows.map((row) => (
+                <Link
+                  key={row.id}
+                  to={row.project_id ? `/projects/${row.project_id}` : '#'}
+                  className={`block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${getLeftBorderClass(row.status)} ${row.project_id ? '' : 'pointer-events-none'}`}
+                >
+                  <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-bold text-slate-900">{row.project_name || row.name || 'Untitled project'}</div>
+                      <div className="mt-1 text-xs text-slate-500">{row.client_name || '—'}</div>
+                    </div>
+                    <Badge className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusClass(row.status)}`}>
+                      {row.status || 'unknown'}
+                    </Badge>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div>
+                      <div className="text-[11px] text-slate-500">Total Invoiced</div>
+                      <div className="text-sm font-semibold text-slate-900">{formatMoney(row.total_invoiced)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-slate-500">Collected</div>
+                      <div className="text-sm font-semibold text-emerald-700">{formatMoney(row.cash_collected)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-slate-500">Outstanding</div>
+                      <div className="text-lg font-black text-red-600">{formatMoney(row.outstanding)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-slate-500">Invoice Count</div>
+                      <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+                        {Number(row.invoice_count || 0)}
+                        {row.project_id ? <ArrowRight className="h-3.5 w-3.5 text-blue-600" /> : null}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
 }
 
 export default function Reports() {
@@ -210,9 +652,9 @@ export default function Reports() {
   const [datePreset, setDatePreset] = useState<DatePreset>('this_month')
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
-  const [receivablesFilter, setReceivablesFilter] = useState<'all' | 'unpaid' | 'paid'>('all')
-  const [methodFilter, setMethodFilter] = useState('all')
+  const [receivablesFilter, setReceivablesFilter] = useState<ReceivablesFilter>('all')
   const [clientFilter, setClientFilter] = useState('all')
+  const [search, setSearch] = useState('')
   const [receivables, setReceivables] = useState<InvoiceFinancialRow[]>([])
   const [collections, setCollections] = useState<CollectionRow[]>([])
   const [projects, setProjects] = useState<ProjectFinancialRow[]>([])
@@ -230,6 +672,7 @@ export default function Reports() {
   const { start, end } = useMemo(() => getPresetRange(datePreset, customStart, customEnd), [datePreset, customStart, customEnd])
   const queryStart = useMemo(() => safeDate(start), [start])
   const queryEnd = useMemo(() => safeDate(end), [end])
+  const searchTerm = search.trim().toLowerCase()
 
   useEffect(() => {
     let cancelled = false
@@ -337,335 +780,134 @@ export default function Reports() {
     }
   }, [queryEnd, queryStart])
 
+  const clientOptions = useMemo(() => {
+    const allClients = new Set<string>()
+    receivables.forEach((row) => {
+      if (row.client_name) allClients.add(row.client_name)
+    })
+    collections.forEach((row) => {
+      if (row.client_name) allClients.add(row.client_name)
+    })
+    projects.forEach((row) => {
+      if (row.client_name) allClients.add(row.client_name)
+    })
+    return Array.from(allClients).sort((a, b) => a.localeCompare(b))
+  }, [receivables, collections, projects])
+
   const filteredReceivables = useMemo(() => {
     return receivables
       .filter((row) => isWithinRange(row.issue_date || null, start, end))
       .filter((row) => {
         if (receivablesFilter === 'unpaid') return Number(row.balance_due || 0) > 0
-        if (receivablesFilter === 'paid') return Number(row.balance_due || 0) <= 0
+        if (receivablesFilter === 'paid') return Number(row.balance_due || 0) <= 0 || String(row.computed_status || '').toLowerCase() === 'paid'
+        if (receivablesFilter === 'overdue') return String(row.computed_status || '').toLowerCase() === 'overdue'
         return true
       })
-  }, [receivables, start, end, receivablesFilter])
-
-  const receivablesSummary = useMemo(() => {
-    const totalOutstanding = filteredReceivables.reduce((sum, row) => sum + Number(row.balance_due || 0), 0)
-    const overdueOutstanding = filteredReceivables
-      .filter((row) => getAgingBucket(row.due_date) !== 'Current')
-      .reduce((sum, row) => sum + Number(row.balance_due || 0), 0)
-    return {
-      totalOutstanding,
-      overdueOutstanding,
-      count: filteredReceivables.length,
-    }
-  }, [filteredReceivables])
-
-  const collectionClients = useMemo(
-    () => Array.from(new Set(collections.map((row) => row.client_name || '—').filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-    [collections],
-  )
+      .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
+      .filter((row) => !searchTerm || [row.invoice_number, row.client_name].some((value) => String(value || '').toLowerCase().includes(searchTerm)))
+  }, [receivables, start, end, receivablesFilter, clientFilter, searchTerm])
 
   const filteredCollections = useMemo(() => {
     return collections
       .filter((row) => isWithinRange(row.date || null, start, end))
-      .filter((row) => (methodFilter === 'all' ? true : String(row.method || '').toLowerCase() === methodFilter))
       .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
-  }, [collections, start, end, methodFilter, clientFilter])
+      .filter((row) => !searchTerm || [row.invoice_number, row.client_name].some((value) => String(value || '').toLowerCase().includes(searchTerm)))
+  }, [collections, start, end, clientFilter, searchTerm])
 
-  const collectionsSummary = useMemo(() => {
+  const filteredProjects = useMemo(() => {
+    return projects
+      .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
+      .filter((row) => !searchTerm || [row.project_name, row.name, row.client_name].some((value) => String(value || '').toLowerCase().includes(searchTerm)))
+  }, [projects, clientFilter, searchTerm])
+
+  const receivablesMetrics = useMemo<Metric[]>(() => {
+    const outstanding = filteredReceivables.reduce((sum, row) => {
+      const balance = Number(row.balance_due || 0)
+      return balance > 0 ? sum + balance : sum
+    }, 0)
+    const overdue = filteredReceivables.reduce((sum, row) => String(row.computed_status || '').toLowerCase() === 'overdue' ? sum + Number(row.balance_due || 0) : sum, 0)
+    const collected = filteredReceivables.reduce((sum, row) => sum + Number(row.cash_received || 0), 0)
+    return [
+      { label: 'Outstanding', value: formatMoney(outstanding), tone: 'red', icon: <Receipt className="h-4 w-4" /> },
+      { label: 'Overdue', value: formatMoney(overdue), tone: 'red', icon: <CalendarDays className="h-4 w-4" /> },
+      { label: 'Collected', value: formatMoney(collected), tone: 'green', icon: <Wallet className="h-4 w-4" /> },
+      { label: 'Open Invoices', value: String(filteredReceivables.length), tone: 'blue', icon: <FileSpreadsheet className="h-4 w-4" /> },
+    ]
+  }, [filteredReceivables])
+
+  const collectionMetrics = useMemo<Metric[]>(() => {
     const totalCash = filteredCollections.reduce((sum, row) => sum + Number(row.cash_amount || 0), 0)
-    const totalWht = filteredCollections.reduce((sum, row) => sum + Number(row.wht_amount || 0), 0)
-    return {
-      totalCash,
-      totalWht,
-      totalSettled: totalCash + totalWht,
-      count: filteredCollections.length,
-    }
+    const totalSettlements = filteredCollections.reduce((sum, row) => sum + Number(row.cash_amount || 0) + Number(row.wht_amount || 0), 0)
+    const pending = filteredCollections.filter((row) => row.voided_at == null).length
+    return [
+      { label: 'Total Cash', value: formatMoney(totalCash), tone: 'green', icon: <Banknote className="h-4 w-4" /> },
+      { label: 'Settlements', value: formatMoney(totalSettlements), tone: 'blue', icon: <Landmark className="h-4 w-4" /> },
+      { label: 'Transactions', value: String(filteredCollections.length), tone: 'green', icon: <CreditCard className="h-4 w-4" /> },
+      { label: 'Pending', value: String(pending), tone: 'amber', icon: <Filter className="h-4 w-4" /> },
+    ]
   }, [filteredCollections])
 
-  const projectsSummary = useMemo(() => {
-    return {
-      totalInvoiced: projects.reduce((sum, row) => sum + Number(row.total_invoiced || 0), 0),
-      totalCollected: projects.reduce((sum, row) => sum + Number(row.total_collected || 0), 0),
-      totalOutstanding: projects.reduce((sum, row) => sum + Number(row.outstanding || 0), 0),
-    }
-  }, [projects])
+  const projectMetrics = useMemo<Metric[]>(() => {
+    const totalInvoiced = filteredProjects.reduce((sum, row) => sum + Number(row.total_invoiced || 0), 0)
+    const collected = filteredProjects.reduce((sum, row) => sum + Number(row.cash_collected || 0), 0)
+    const outstanding = filteredProjects.reduce((sum, row) => sum + Number(row.outstanding || 0), 0)
+    return [
+      { label: 'Total Invoiced', value: formatMoney(totalInvoiced), tone: 'blue', icon: <BriefcaseBusiness className="h-4 w-4" /> },
+      { label: 'Collected', value: formatMoney(collected), tone: 'green', icon: <Wallet className="h-4 w-4" /> },
+      { label: 'Outstanding', value: formatMoney(outstanding), tone: 'red', icon: <Receipt className="h-4 w-4" /> },
+      { label: 'Projects', value: String(filteredProjects.length), tone: 'blue', icon: <FileSpreadsheet className="h-4 w-4" /> },
+    ]
+  }, [filteredProjects])
+
+  const taxMetrics = useMemo<Metric[]>(() => [
+    { label: 'VAT Charged', value: '₦0.00', tone: 'amber', icon: <Receipt className="h-4 w-4" /> },
+    { label: 'WHT', value: '₦0.00', tone: 'amber', icon: <FileSpreadsheet className="h-4 w-4" /> },
+    { label: 'Net Position', value: '₦0.00', tone: 'blue', icon: <Wallet className="h-4 w-4" /> },
+  ], [])
 
   return (
-    <Layout title="Reports" hidePageHeader contentClassName="w-full max-w-none p-0 pb-24 md:px-4 md:pb-10">
-      <div className="w-full px-4 py-4 md:px-0">
-        <div className="mb-4">
-          <div className="text-2xl font-black tracking-tight text-foreground">Reports</div>
-          <div className="mt-1 text-sm text-muted-foreground">Receivables, collections, and project finance snapshots built from your live views.</div>
+    <Layout title="Reports" hidePageHeader contentClassName="w-full max-w-none bg-slate-50 p-0 pb-24 md:px-4 md:pb-10">
+      <div className="mx-auto w-full max-w-6xl px-4 py-4 md:px-0">
+        <div className="space-y-4">
+          <SectionHeader title="Reports" subtitle="Live receivables, collections, project finance snapshots, and a tax placeholder for the next phase." />
+          <Tabs value={tab} onValueChange={(value) => setTab(value as ReportTab)} className="w-full">
+            <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+              <div className="overflow-x-auto">
+                <TabsList className="inline-flex h-auto w-max gap-2 bg-transparent p-0">
+                  <TabsTrigger value="receivables" className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-700 data-[state=active]:border-red-500 data-[state=active]:bg-red-500 data-[state=active]:text-white">Receivables</TabsTrigger>
+                  <TabsTrigger value="collections" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Collections</TabsTrigger>
+                  <TabsTrigger value="projects" className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 data-[state=active]:border-blue-500 data-[state=active]:bg-blue-500 data-[state=active]:text-white">Projects</TabsTrigger>
+                  <TabsTrigger value="tax" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 data-[state=active]:border-amber-500 data-[state=active]:bg-amber-500 data-[state=active]:text-white">Tax</TabsTrigger>
+                </TabsList>
+              </div>
+            </div>
+            <div className="mt-4 space-y-4">
+              <TabsContent value="receivables" className="mt-0 space-y-4">
+                <MetricStrip metrics={receivablesMetrics} />
+                <Filters activeDate={datePreset} setActiveDate={setDatePreset} statusFilter={receivablesFilter} setStatusFilter={setReceivablesFilter} clientFilter={clientFilter} setClientFilter={setClientFilter} clientOptions={clientOptions} search={search} setSearch={setSearch} showStatus />
+                {datePreset === 'custom' ? <Card className="border-blue-200 bg-white shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
+                <ReceivablesList loading={loading.receivables} error={error.receivables} rows={filteredReceivables} />
+              </TabsContent>
+              <TabsContent value="collections" className="mt-0 space-y-4">
+                <MetricStrip metrics={collectionMetrics} />
+                <Filters activeDate={datePreset} setActiveDate={setDatePreset} statusFilter={receivablesFilter} setStatusFilter={setReceivablesFilter} clientFilter={clientFilter} setClientFilter={setClientFilter} clientOptions={clientOptions} search={search} setSearch={setSearch} showStatus={false} />
+                {datePreset === 'custom' ? <Card className="border-emerald-200 bg-white shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
+                <CollectionsList loading={loading.collections} error={error.collections} rows={filteredCollections} />
+              </TabsContent>
+              <TabsContent value="projects" className="mt-0 space-y-4">
+                <MetricStrip metrics={projectMetrics} />
+                <Filters activeDate={datePreset} setActiveDate={setDatePreset} statusFilter={receivablesFilter} setStatusFilter={setReceivablesFilter} clientFilter={clientFilter} setClientFilter={setClientFilter} clientOptions={clientOptions} search={search} setSearch={setSearch} showStatus={false} />
+                <ProjectsList loading={loading.projects} error={error.projects} rows={filteredProjects} />
+              </TabsContent>
+              <TabsContent value="tax" className="mt-0 space-y-4">
+                <MetricStrip metrics={taxMetrics} />
+                <Filters activeDate={datePreset} setActiveDate={setDatePreset} statusFilter={receivablesFilter} setStatusFilter={setReceivablesFilter} clientFilter={clientFilter} setClientFilter={setClientFilter} clientOptions={clientOptions} search={search} setSearch={setSearch} showStatus={false} />
+                {datePreset === 'custom' ? <Card className="border-amber-200 bg-white shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
+                <TaxPlaceholder />
+              </TabsContent>
+            </div>
+          </Tabs>
         </div>
-
-        <Card className="mb-4 border-border shadow-none">
-          <CardContent className="grid gap-3 p-4 md:grid-cols-[minmax(0,220px)_minmax(0,220px)_minmax(0,220px)_1fr]">
-            <div>
-              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Date Range</div>
-              <Select value={datePreset} onValueChange={(value) => setDatePreset(value as DatePreset)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="this_month">This month</SelectItem>
-                  <SelectItem value="last_month">Last month</SelectItem>
-                  <SelectItem value="this_quarter">This quarter</SelectItem>
-                  <SelectItem value="custom">Custom</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {datePreset === 'custom' ? (
-              <>
-                <div>
-                  <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Start</div>
-                  <Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} />
-                </div>
-                <div>
-                  <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">End</div>
-                  <Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} />
-                </div>
-              </>
-            ) : (
-              <div className="md:col-span-2">
-                <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Applied Window</div>
-                <div className="rounded-xl border border-border bg-muted/50 px-3 py-2 text-sm text-foreground">
-                  {formatDate(start)} to {formatDate(end)}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Tabs value={tab} onValueChange={(value) => setTab(value as ReportTab)} className="w-full">
-          <TabsList className="mb-4 grid w-full grid-cols-3">
-            <TabsTrigger value="receivables">Receivables</TabsTrigger>
-            <TabsTrigger value="collections">Collections</TabsTrigger>
-            <TabsTrigger value="projects">Projects</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="receivables" className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant={receivablesFilter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                className={receivablesFilter === 'all' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'border-blue-200 bg-white text-blue-700 hover:bg-blue-50'}
-                onClick={() => setReceivablesFilter('all')}
-              >
-                All
-              </Button>
-              <Button
-                type="button"
-                variant={receivablesFilter === 'unpaid' ? 'default' : 'outline'}
-                size="sm"
-                className={receivablesFilter === 'unpaid' ? 'bg-amber-500 text-white hover:bg-amber-600' : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'}
-                onClick={() => setReceivablesFilter('unpaid')}
-              >
-                Unpaid
-              </Button>
-              <Button
-                type="button"
-                variant={receivablesFilter === 'paid' ? 'default' : 'outline'}
-                size="sm"
-                className={receivablesFilter === 'paid' ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'}
-                onClick={() => setReceivablesFilter('paid')}
-              >
-                Paid
-              </Button>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-3">
-              <SummaryMetric label="Total Outstanding" value={formatMoney(receivablesSummary.totalOutstanding)} tone="danger" />
-              <SummaryMetric label="Total Overdue" value={formatMoney(receivablesSummary.overdueOutstanding)} tone="danger" />
-              <SummaryMetric label="Invoices" value={String(receivablesSummary.count)} />
-            </div>
-
-            {error.receivables ? <div className="rounded-xl bg-red-600 px-4 py-3 text-sm text-white">{error.receivables}</div> : null}
-
-            <TableShell loading={loading.receivables} empty={filteredReceivables.length === 0}>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Issue Date</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead className="text-right">Cash Received</TableHead>
-                    <TableHead className="text-right">WHT Received</TableHead>
-                    <TableHead className="text-right">Balance Due</TableHead>
-                    <TableHead>Aging</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredReceivables.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="font-semibold text-slate-900">
-                        <Link to={`/invoices/${row.id}`} className="text-blue-700 hover:underline">
-                          {row.invoice_number || '—'}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{row.client_name || '—'}</TableCell>
-                      <TableCell>{formatDate(row.issue_date)}</TableCell>
-                      <TableCell>{formatDate(row.due_date)}</TableCell>
-                      <TableCell className="text-right">{formatMoney(row.total)}</TableCell>
-                      <TableCell className="text-right">{formatMoney(row.cash_received)}</TableCell>
-                      <TableCell className="text-right">{formatMoney(row.wht_received)}</TableCell>
-                      <TableCell className="text-right font-semibold text-red-600">{formatMoney(row.balance_due)}</TableCell>
-                      <TableCell>{getAgingBucket(row.due_date)}</TableCell>
-                      <TableCell>
-                        <Badge className={`capitalize ${getStatusClass(row.computed_status)}`}>{row.computed_status || 'draft'}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableShell>
-          </TabsContent>
-
-          <TabsContent value="collections" className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-3">
-              <div>
-                <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Payment Method</div>
-                <Select value={methodFilter} onValueChange={setMethodFilter}>
-                  <SelectTrigger className="w-full border-blue-200 bg-white">
-                    <SelectValue placeholder="All Methods" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All methods</SelectItem>
-                    <SelectItem value="transfer">Transfer</SelectItem>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="pos">POS</SelectItem>
-                    <SelectItem value="cheque">Cheque</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Client</div>
-                <Select value={clientFilter} onValueChange={setClientFilter}>
-                  <SelectTrigger className="w-full border-emerald-200 bg-white">
-                    <SelectValue placeholder="All Clients" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Clients</SelectItem>
-                    {collectionClients.map((client) => (
-                      <SelectItem key={client} value={client}>
-                        {client}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-4">
-              <SummaryMetric label="Cash Received" value={formatMoney(collectionsSummary.totalCash)} />
-              <SummaryMetric label="WHT Received" value={formatMoney(collectionsSummary.totalWht)} />
-              <SummaryMetric label="Total Settled" value={formatMoney(collectionsSummary.totalSettled)} tone="success" />
-              <SummaryMetric label="Payments" value={String(collectionsSummary.count)} />
-            </div>
-
-            {error.collections ? <div className="rounded-xl bg-red-600 px-4 py-3 text-sm text-white">{error.collections}</div> : null}
-
-            <TableShell loading={loading.collections} empty={filteredCollections.length === 0}>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead className="text-right">Cash</TableHead>
-                    <TableHead className="text-right">WHT</TableHead>
-                    <TableHead className="text-right">Settlement</TableHead>
-                    <TableHead>Account</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Reference</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCollections.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>{formatDate(row.date)}</TableCell>
-                      <TableCell className="font-semibold text-slate-900">
-                        {row.invoice_id ? (
-                          <Link to={`/invoices/${row.invoice_id}`} className="text-blue-700 hover:underline">
-                            {row.invoice_number || '—'}
-                          </Link>
-                        ) : (
-                          row.invoice_number || '—'
-                        )}
-                      </TableCell>
-                      <TableCell>{row.client_name || '—'}</TableCell>
-                      <TableCell className="text-right">{formatMoney(row.cash_amount)}</TableCell>
-                      <TableCell className="text-right">{formatMoney(row.wht_amount)}</TableCell>
-                      <TableCell className="text-right font-semibold">{formatMoney(Number(row.cash_amount || 0) + Number(row.wht_amount || 0))}</TableCell>
-                      <TableCell>{row.account_label || row.method || '—'}</TableCell>
-                      <TableCell>{row.method || '—'}</TableCell>
-                      <TableCell>{row.reference || '—'}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableShell>
-          </TabsContent>
-
-          <TabsContent value="projects" className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-3">
-              <SummaryMetric label="Total Invoiced" value={formatMoney(projectsSummary.totalInvoiced)} />
-              <SummaryMetric label="Total Collected" value={formatMoney(projectsSummary.totalCollected)} tone="success" />
-              <SummaryMetric label="Total Outstanding" value={formatMoney(projectsSummary.totalOutstanding)} tone="danger" />
-            </div>
-
-            {error.projects ? <div className="rounded-xl bg-red-600 px-4 py-3 text-sm text-white">{error.projects}</div> : null}
-
-            <TableShell loading={loading.projects} empty={projects.length === 0}>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Project Name</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Invoice Count</TableHead>
-                    <TableHead className="text-right">Total Invoiced</TableHead>
-                    <TableHead className="text-right">Cash Collected</TableHead>
-                    <TableHead className="text-right">WHT Collected</TableHead>
-                    <TableHead className="text-right">Total Collected</TableHead>
-                    <TableHead className="text-right">Outstanding</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {projects.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="font-semibold text-slate-900">
-                        {row.project_id ? (
-                          <Link to={`/projects/${row.project_id}`} className="text-blue-700 hover:underline">
-                            {row.project_name || row.name || 'Untitled project'}
-                          </Link>
-                        ) : (
-                          row.project_name || row.name || 'Untitled project'
-                        )}
-                      </TableCell>
-                      <TableCell>{row.client_name || '—'}</TableCell>
-                      <TableCell>
-                        <Badge className={`capitalize ${getStatusClass(row.status)}`}>{row.status || 'unknown'}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">{Number(row.invoice_count || 0)}</TableCell>
-                      <TableCell className="text-right">{formatMoney(row.total_invoiced)}</TableCell>
-                      <TableCell className="text-right">{formatMoney(row.cash_collected)}</TableCell>
-                      <TableCell className="text-right">{formatMoney(row.wht_collected)}</TableCell>
-                      <TableCell className="text-right font-semibold">{formatMoney(row.total_collected)}</TableCell>
-                      <TableCell className={`text-right font-semibold ${Number(row.outstanding || 0) > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                        {formatMoney(row.outstanding)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableShell>
-          </TabsContent>
-        </Tabs>
       </div>
     </Layout>
   )
