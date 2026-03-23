@@ -84,6 +84,8 @@ const toDateInput = (date: Date) => {
   return `${year}-${month}-${day}`
 }
 
+const normalizeDateParam = (value: string) => (value.trim() === '' ? null : value)
+
 const getPresetRange = (preset: DatePreset, customStart: string, customEnd: string) => {
   const now = new Date()
   if (preset === 'this_month') {
@@ -213,6 +215,8 @@ export default function Reports() {
   })
 
   const { start, end } = useMemo(() => getPresetRange(datePreset, customStart, customEnd), [datePreset, customStart, customEnd])
+  const queryStart = useMemo(() => normalizeDateParam(start), [start])
+  const queryEnd = useMemo(() => normalizeDateParam(end), [end])
 
   useEffect(() => {
     let cancelled = false
@@ -229,9 +233,21 @@ export default function Reports() {
         projects: '',
       })
 
+      let receivablesQuery = supabase.from('invoice_financials_v').select('*').order('issue_date', { ascending: false })
+      let paymentsQuery = supabase.from('payments').select('*').is('voided_at', null).order('date', { ascending: false })
+
+      if (queryStart) {
+        receivablesQuery = receivablesQuery.gte('issue_date', queryStart)
+        paymentsQuery = paymentsQuery.gte('date', queryStart)
+      }
+      if (queryEnd) {
+        receivablesQuery = receivablesQuery.lte('issue_date', queryEnd)
+        paymentsQuery = paymentsQuery.lte('date', queryEnd)
+      }
+
       const [receivablesResult, paymentsResult, invoicesResult, projectsResult] = await Promise.all([
-        supabase.from('invoice_financials_v').select('*').order('issue_date', { ascending: false }),
-        supabase.from('payments').select('*').is('voided_at', null).order('date', { ascending: false }),
+        receivablesQuery,
+        paymentsQuery,
         supabase.from('invoices').select('id, invoice_number, client_name'),
         supabase.from('project_financials_v').select('*').order('outstanding', { ascending: false }),
       ])
@@ -279,7 +295,7 @@ export default function Reports() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [queryEnd, queryStart])
 
   const filteredReceivables = useMemo(() => {
     return receivables

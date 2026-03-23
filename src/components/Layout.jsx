@@ -89,7 +89,7 @@ function NavItem({ item, onNavigate }) {
 }
 
 // ── Sidebar content ──────────────────────────────────────────────────────────
-function SidebarContent({ session, onNavigate }) {
+function SidebarContent({ session, onNavigate, hideReports = false }) {
   return (
     <div className="flex flex-col h-full bg-white border-r border-slate-200">
       {/* Logo */}
@@ -102,7 +102,10 @@ function SidebarContent({ session, onNavigate }) {
 
       {/* Nav groups */}
       <nav className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
-        {navGroups.map(({ group, items, placeholder }) => (
+        {navGroups.map(({ group, items, placeholder }) => {
+          const visibleItems = items.filter((item) => !(hideReports && item.path === '/reports'))
+          if (visibleItems.length === 0) return null
+          return (
           <div key={group}>
             <div className={`px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 ${placeholder ? 'text-slate-300' : 'text-slate-400'}`}>
               {group}
@@ -111,12 +114,13 @@ function SidebarContent({ session, onNavigate }) {
               )}
             </div>
             <div className="space-y-0.5">
-              {items.map(item => (
+              {visibleItems.map(item => (
                 <NavItem key={item.path} item={item} onNavigate={onNavigate} />
               ))}
             </div>
           </div>
-        ))}
+          )
+        })}
       </nav>
 
       {/* Footer */}
@@ -397,7 +401,7 @@ export default function Layout({ title, children, session, hidePageHeader = fals
           >
             <X size={16} />
           </button>
-          <SidebarContent session={session} onNavigate={() => setMoreOpen(false)} />
+          <SidebarContent session={session} onNavigate={() => setMoreOpen(false)} hideReports />
         </div>
       </div>
     )
