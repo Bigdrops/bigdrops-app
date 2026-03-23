@@ -17,6 +17,24 @@ export interface InvoiceAttachment {
   [key: string]: unknown
 }
 
+export interface Payment {
+  id: string
+  invoice_id: string
+  cash_amount: number
+  wht_amount: number
+  wht_rate?: number
+  wht_type?: string
+  amount: number
+  date: string
+  method: string
+  reference?: string
+  notes?: string
+  voided_at?: string | null
+  void_reason?: string | null
+  source?: string
+  created_at: string
+}
+
 export interface DocumentTrailLink {
   id?: string | null
   type?: 'invoice' | 'quotation'
