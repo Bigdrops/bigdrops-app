@@ -1,100 +1,212 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
-import Layout from '../components/Layout'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
-  FolderKanban, FileText, Wrench, Plus, Link2, ChevronRight,
-  MoreHorizontal, Pencil, Check, X, Calendar, Building2, Hash,
-  DollarSign, AlertCircle, ExternalLink
+  AlertCircle,
+  Building2,
+  Calendar,
+  ChevronRight,
+  ClipboardList,
+  DollarSign,
+  FileText,
+  FolderKanban,
+  Hash,
+  Link2,
+  MapPin,
+  Pencil,
+  Wrench,
+  X,
 } from 'lucide-react'
 
-const STATUS_CONFIG = {
-  active:    { label: 'Active',    bg: '#DCFCE7', color: '#16A34A' },
-  completed: { label: 'Completed', bg: '#E0F2FE', color: '#0369A1' },
-  on_hold:   { label: 'On Hold',   bg: '#FEF3C7', color: '#92400E' },
-  cancelled: { label: 'Cancelled', bg: '#FEE2E2', color: '#DC2626' },
+import Layout from '../components/Layout'
+import { supabase } from '../supabase'
+
+const PROJECT_STATUS_CONFIG = {
+  active: { label: 'Active', className: 'bg-blue-500 text-white' },
+  completed: { label: 'Completed', className: 'bg-slate-500 text-white' },
+  on_hold: { label: 'On Hold', className: 'bg-amber-500 text-white' },
+  cancelled: { label: 'Cancelled', className: 'bg-red-500 text-white' },
+}
+
+const PAYMENT_STATUS_CONFIG = {
+  paid: { label: 'Paid', className: 'bg-emerald-500 text-white' },
+  overdue: { label: 'Overdue', className: 'bg-red-500 text-white' },
+  partial: { label: 'Partial', className: 'bg-amber-500 text-white' },
+  active: { label: 'Active', className: 'bg-blue-500 text-white' },
+  completed: { label: 'Completed', className: 'bg-slate-500 text-white' },
 }
 
 const DOC_TYPE = {
-  invoice: { label: 'Invoice',  icon: FileText, bg: '#EFF6FF', color: '#1D4ED8' },
-  csr:     { label: 'CSR',      icon: Wrench,   bg: '#F0FDF4', color: '#16A34A' },
+  invoice: {
+    label: 'Invoice',
+    icon: FileText,
+    iconWrapClassName: 'bg-blue-50 text-blue-700 ring-1 ring-blue-100',
+    labelClassName: 'text-blue-700',
+  },
+  csr: {
+    label: 'CSR',
+    icon: Wrench,
+    iconWrapClassName: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100',
+    labelClassName: 'text-emerald-700',
+  },
+  quotation: {
+    label: 'Quotation',
+    icon: ClipboardList,
+    iconWrapClassName: 'bg-violet-50 text-violet-700 ring-1 ring-violet-100',
+    labelClassName: 'text-violet-700',
+  },
 }
 
-const inputStyle = {
-  width: '100%', boxSizing: 'border-box',
-  padding: '9px 13px', border: '1px solid #E2E8F0',
-  borderRadius: 8, fontSize: 13, color: '#1E293B',
-  background: 'white', outline: 'none',
+const inputClassName =
+  'w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+
+const cardClassName = 'rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-100'
+
+function formatCurrency(value) {
+  return `₦${Number(value || 0).toLocaleString()}`
+}
+
+function formatDate(value) {
+  if (!value) return ''
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+function getPaymentStatusConfig(status) {
+  return PAYMENT_STATUS_CONFIG[status] || {
+    label: status ? status.replace(/_/g, ' ') : 'Open',
+    className: 'bg-slate-500 text-white',
+  }
 }
 
 export default function ProjectDetail() {
-  const { id }   = useParams()
+  const { id } = useParams()
   const navigate = useNavigate()
 
-  const [project,  setProject]   = useState(null)
-  const [invoices, setInvoices]  = useState([])
-  const [csrs,     setCsrs]      = useState([])
-  const [loading,  setLoading]   = useState(true)
-  const [editing,  setEditing]   = useState(false)
-  const [saving,   setSaving]    = useState(false)
+  const [project, setProject] = useState(null)
+  const [financials, setFinancials] = useState(null)
+  const [invoices, setInvoices] = useState([])
+  const [csrs, setCsrs] = useState([])
+  const [quotations, setQuotations] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
 
-  // Link existing doc modal
-  const [showLink,    setShowLink]    = useState(false)
-  const [linkDocId,   setLinkDocId]   = useState('')
-  const [linkType,    setLinkType]    = useState('invoice')
-  const [linking,     setLinking]     = useState(false)
-  const [linkError,   setLinkError]   = useState('')
+  const [showLink, setShowLink] = useState(false)
+  const [linkDocId, setLinkDocId] = useState('')
+  const [linkType, setLinkType] = useState('invoice')
+  const [linking, setLinking] = useState(false)
+  const [linkError, setLinkError] = useState('')
 
-  // Edit form
   const [editForm, setEditForm] = useState({})
 
-  useEffect(() => { fetchAll() }, [id])
+  useEffect(() => {
+    fetchAll()
+  }, [id])
 
   const fetchAll = async () => {
     setLoading(true)
-    const { data: p } = await supabase.from('projects').select('*').eq('id', id).single()
-    setProject(p)
-    setEditForm({
-      name: p?.name || '',
-      status: p?.status || 'active',
-      project_value: p?.project_value || '',
-      po_number: p?.po_number || '',
-      start_date: p?.start_date || '',
-      notes: p?.notes || '',
-    location: p?.location || '',
-    })
 
-    const [invRes, csrRes] = await Promise.all([
-      supabase.from('invoices').select('id, invoice_number, invoice_title, status, total, issue_date, document_type').eq('project_id', id).is('archived_at', null).order('issue_date', { ascending: false }),
-      supabase.from('csrs').select('id, csr_number, title, status, created_at').eq('project_id', id).order('created_at', { ascending: false }),
+    const [projectRes, invoiceRes, csrRes, quotationRes, financialsRes] = await Promise.all([
+      supabase.from('projects').select('*').eq('id', id).single(),
+      supabase
+        .from('invoices')
+        .select('id, invoice_number, invoice_title, status, total, issue_date, document_type')
+        .eq('project_id', id)
+        .is('archived_at', null)
+        .order('issue_date', { ascending: false }),
+      supabase
+        .from('csrs')
+        .select('id, csr_number, title, status, created_at')
+        .eq('project_id', id)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('quotations')
+        .select('id, quotation_number, status, total, issue_date')
+        .eq('project_id', id)
+        .order('issue_date', { ascending: false }),
+      supabase.from('project_financials_v').select('*').eq('project_id', id).single(),
     ])
-    setInvoices(invRes.data || [])
+
+    const projectData = projectRes.data
+    const invoiceRows = invoiceRes.data || []
+    const invoiceIds = invoiceRows.map((invoice) => invoice.id)
+
+    let invoiceFinancialsById = {}
+    if (invoiceIds.length > 0) {
+      const { data: invoiceFinancialsRows } = await supabase
+        .from('invoice_financials_v')
+        .select('id, balance_due, computed_status, cash_received')
+        .in('id', invoiceIds)
+
+      invoiceFinancialsById = (invoiceFinancialsRows || []).reduce((acc, row) => {
+        acc[row.id] = row
+        return acc
+      }, {})
+    }
+
+    const enrichedInvoices = invoiceRows.map((invoice) => ({
+      ...invoice,
+      invoiceFinancials: invoiceFinancialsById[invoice.id] || null,
+    }))
+
+    setProject(projectData)
+    setFinancials(financialsRes.data || null)
+    setInvoices(enrichedInvoices)
     setCsrs(csrRes.data || [])
+    setQuotations(quotationRes.data || [])
+    setEditForm({
+      name: projectData?.name || '',
+      status: projectData?.status || 'active',
+      project_value: projectData?.project_value || '',
+      po_number: projectData?.po_number || '',
+      start_date: projectData?.start_date || '',
+      notes: projectData?.notes || '',
+      location: projectData?.location || '',
+    })
     setLoading(false)
   }
 
   const handleSaveEdit = async () => {
     setSaving(true)
-    const { error } = await supabase.from('projects').update({
-      name:          editForm.name.trim(),
-      status:        editForm.status,
-      project_value: editForm.project_value ? parseFloat(editForm.project_value) : null,
-      po_number:     editForm.po_number.trim() || null,
-      start_date:    editForm.start_date,
-      notes:         editForm.notes.trim() || null,
-      location:      editForm.location.trim() || null,
-    }).eq('id', id)
+
+    const { error } = await supabase
+      .from('projects')
+      .update({
+        name: editForm.name.trim(),
+        status: editForm.status,
+        project_value: editForm.project_value ? parseFloat(editForm.project_value) : null,
+        po_number: editForm.po_number.trim() || null,
+        start_date: editForm.start_date,
+        notes: editForm.notes.trim() || null,
+        location: editForm.location.trim() || null,
+      })
+      .eq('id', id)
+
     setSaving(false)
-    if (error) { alert('Failed to save: ' + error.message); return }
+    if (error) {
+      alert(`Failed to save: ${error.message}`)
+      return
+    }
+
     setEditing(false)
     fetchAll()
   }
 
-  // Link existing document by ID
   const handleLink = async () => {
     setLinkError('')
     const val = linkDocId.trim()
-    if (!val) { setLinkError('Enter a document number or ID'); return }
+    if (!val) {
+      setLinkError('Enter a document number or ID')
+      return
+    }
+
     setLinking(true)
 
     let found = false
@@ -102,7 +214,7 @@ export default function ProjectDetail() {
       const isUUID = /^[0-9a-f-]{36}$/i.test(val)
       let query = supabase.from('invoices').select('id, invoice_number').is('project_id', null)
       query = isUUID ? query.eq('id', val) : query.ilike('invoice_number', val)
-      const { data, error } = await query.maybeSingle()
+      const { data } = await query.maybeSingle()
       if (data) {
         await supabase.from('invoices').update({ project_id: id }).eq('id', data.id)
         found = true
@@ -111,7 +223,7 @@ export default function ProjectDetail() {
       const isUUID = /^[0-9a-f-]{36}$/i.test(val)
       let query = supabase.from('csrs').select('id, csr_number').is('project_id', null)
       query = isUUID ? query.eq('id', val) : query.ilike('csr_number', val)
-      const { data, error } = await query.maybeSingle()
+      const { data } = await query.maybeSingle()
       if (data) {
         await supabase.from('csrs').update({ project_id: id }).eq('id', data.id)
         found = true
@@ -120,128 +232,295 @@ export default function ProjectDetail() {
 
     setLinking(false)
     if (!found) {
-      setLinkError(`No unlinked ${linkType} found with that number. Check the document number and make sure it is not already linked to another project.`)
+      setLinkError(
+        `No unlinked ${linkType} found with that number. Check the document number and make sure it is not already linked to another project.`
+      )
       return
     }
+
     setLinkDocId('')
     setShowLink(false)
     fetchAll()
   }
 
-  // Build unified timeline
   const timeline = [
-    ...invoices.map(inv => ({ ...inv, _type: 'invoice', _date: inv.issue_date })),
-    ...csrs.map(csr =>     ({ ...csr, _type: 'csr',     _date: csr.created_at })),
+    ...invoices.map((invoice) => ({
+      ...invoice,
+      _type: 'invoice',
+      _date: invoice.issue_date,
+    })),
+    ...csrs.map((csr) => ({
+      ...csr,
+      _type: 'csr',
+      _date: csr.created_at,
+    })),
+    ...quotations.map((quotation) => ({
+      ...quotation,
+      _type: 'quotation',
+      _date: quotation.issue_date,
+    })),
   ].sort((a, b) => new Date(b._date) - new Date(a._date))
 
-  // Summary numbers from invoices
-  const totalInvoiced = invoices.reduce((s, i) => s + Number(i.total || 0), 0)
-  const totalReceived = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + Number(i.total || 0), 0)
-  const outstanding   = Math.max(0, totalInvoiced - totalReceived)
-  const docCount      = invoices.length + csrs.length
+  const docCount = timeline.length
 
-  if (loading) return <Layout title="Project"><div style={{ padding: 40, color: '#94A3B8' }}>Loading...</div></Layout>
-  if (!project) return <Layout title="Project"><div style={{ padding: 40, color: '#94A3B8' }}>Project not found.</div></Layout>
+  if (loading) {
+    return (
+      <Layout title="Project">
+        <div className="px-6 py-10 text-sm text-slate-400">Loading...</div>
+      </Layout>
+    )
+  }
 
-  const st = STATUS_CONFIG[project.status] || STATUS_CONFIG.active
+  if (!project) {
+    return (
+      <Layout title="Project">
+        <div className="px-6 py-10 text-sm text-slate-400">Project not found.</div>
+      </Layout>
+    )
+  }
+
+  const projectStatus = PROJECT_STATUS_CONFIG[project.status] || PROJECT_STATUS_CONFIG.active
+  const summaryCards = [
+    {
+      label: 'Total Invoiced',
+      value: formatCurrency(financials?.total_invoiced),
+      valueClassName: 'text-slate-900',
+      accentClassName: 'border-blue-200',
+    },
+    {
+      label: 'Cash Collected',
+      value: formatCurrency(financials?.cash_collected),
+      valueClassName: 'text-emerald-600',
+      accentClassName: 'border-emerald-200',
+    },
+    {
+      label: 'WHT Collected',
+      value: formatCurrency(financials?.wht_collected),
+      valueClassName: 'text-emerald-600',
+      accentClassName: 'border-emerald-200',
+    },
+    {
+      label: 'Outstanding',
+      value: formatCurrency(financials?.outstanding),
+      valueClassName: Number(financials?.outstanding || 0) > 0 ? 'text-red-600' : 'text-slate-900',
+      accentClassName: Number(financials?.outstanding || 0) > 0 ? 'border-red-200' : 'border-slate-200',
+    },
+    {
+      label: 'Invoice Count',
+      value: Number(financials?.invoice_count || 0).toLocaleString(),
+      valueClassName: 'text-slate-900',
+      accentClassName: 'border-violet-200',
+    },
+  ]
+
+  const quickActions = [
+    {
+      label: '+ New Invoice',
+      path: '/invoices/new',
+      className: 'bg-emerald-600 text-white hover:bg-emerald-700',
+      state: {
+        projectId: id,
+        projectName: project.name,
+        clientId: project.client_id,
+        clientName: project.client_name,
+      },
+    },
+    {
+      label: '+ New Quotation',
+      path: '/quotations/new',
+      className: 'bg-blue-600 text-white hover:bg-blue-700',
+      state: {
+        projectId: id,
+        projectName: project.name,
+        clientId: project.client_id,
+        clientName: project.client_name,
+      },
+    },
+    {
+      label: '+ New CSR',
+      path: '/csr/new',
+      className: 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
+      state: {
+        projectId: id,
+        projectName: project.name,
+      },
+    },
+  ]
 
   return (
     <Layout title={project.name}>
-      <div style={{ maxWidth: 960 }}>
-
-        {/* ── Header block ──────────────────────────────────────────────── */}
-        <div style={{ backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: 14, padding: 24, marginBottom: 16 }}>
+      <div className="mx-auto max-w-6xl space-y-4">
+        <div className={`${cardClassName} border-l-4 border-l-emerald-500 p-5 sm:p-6`}>
           {!editing ? (
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <FolderKanban size={22} color="#475569" />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <FolderKanban size={22} />
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
-                  <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0F172A' }}>{project.name}</h1>
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, backgroundColor: st.bg, color: st.color }}>{st.label}</span>
-                </div>
 
-                {/* All project info inline */}
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 12, color: '#64748B', marginBottom: 6 }}>
-                  {project.client_name && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <Building2 size={12} /><strong style={{ color: '#334155' }}>{project.client_name}</strong>
-                    </span>
-                  )}
-                  {project.location && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      📍 {project.location}
-                    </span>
-                  )}
-                  {String(project.po_number || '').trim() && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <Hash size={12} />PO: <strong style={{ color: '#334155' }}>{String(project.po_number || '').trim()}</strong>
-                    </span>
-                  )}
-                  {project.project_value && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <DollarSign size={12} />₦{Number(project.project_value).toLocaleString()}
-                    </span>
-                  )}
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Calendar size={12} />
-                    Started {new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+              <div className="min-w-0 flex-1">
+                <div className="mb-3 flex flex-wrap items-center gap-3">
+                  <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{project.name}</h1>
+                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${projectStatus.className}`}>
+                    {projectStatus.label}
                   </span>
                 </div>
 
-                {project.notes && (
-                  <div style={{ fontSize: 12, color: '#94A3B8', fontStyle: 'italic' }}>{project.notes}</div>
-                )}
+                <div className="mb-2 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-600">
+                  {project.client_name ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Building2 size={14} className="text-slate-400" />
+                      <span className="font-medium text-slate-700">{project.client_name}</span>
+                    </span>
+                  ) : null}
+
+                  {project.location ? (
+                    <span className="inline-flex items-center gap-2">
+                      <MapPin size={14} className="text-slate-400" />
+                      <span>{project.location}</span>
+                    </span>
+                  ) : null}
+
+                  {String(project.po_number || '').trim() ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Hash size={14} className="text-slate-400" />
+                      <span>
+                        PO: <span className="font-medium text-slate-700">{String(project.po_number || '').trim()}</span>
+                      </span>
+                    </span>
+                  ) : null}
+
+                  {project.project_value ? (
+                    <span className="inline-flex items-center gap-2">
+                      <DollarSign size={14} className="text-slate-400" />
+                      <span>{formatCurrency(project.project_value)}</span>
+                    </span>
+                  ) : null}
+
+                  {project.start_date ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Calendar size={14} className="text-slate-400" />
+                      <span>Started {formatDate(project.start_date)}</span>
+                    </span>
+                  ) : null}
+                </div>
+
+                {project.notes ? <p className="text-sm italic text-slate-500">{project.notes}</p> : null}
               </div>
+
               <button
+                type="button"
                 onClick={() => setEditing(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid #E2E8F0', borderRadius: 8, background: 'white', fontSize: 12, color: '#64748B', cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
               >
-                <Pencil size={13} /> Edit
+                <Pencil size={14} />
+                Edit
               </button>
             </div>
           ) : (
-            // Edit mode
-            <div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 5, textTransform: 'uppercase' }}>Project Name</label>
-                  <input style={inputStyle} value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Project Name
+                  </label>
+                  <input
+                    className={inputClassName}
+                    value={editForm.name}
+                    onChange={(e) => setEditForm((form) => ({ ...form, name: e.target.value }))}
+                  />
                 </div>
+
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 5, textTransform: 'uppercase' }}>Status</label>
-                  <select style={{ ...inputStyle, cursor: 'pointer' }} value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))}>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Status
+                  </label>
+                  <select
+                    className={`${inputClassName} cursor-pointer`}
+                    value={editForm.status}
+                    onChange={(e) => setEditForm((form) => ({ ...form, status: e.target.value }))}
+                  >
                     <option value="active">Active</option>
                     <option value="completed">Completed</option>
                     <option value="on_hold">On Hold</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
+
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 5, textTransform: 'uppercase' }}>Start Date</label>
-                  <input type="date" style={inputStyle} value={editForm.start_date} onChange={e => setEditForm(f => ({ ...f, start_date: e.target.value }))} />
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    className={inputClassName}
+                    value={editForm.start_date}
+                    onChange={(e) => setEditForm((form) => ({ ...form, start_date: e.target.value }))}
+                  />
                 </div>
+
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 5, textTransform: 'uppercase' }}>Project Value (₦)</label>
-                  <input type="number" style={inputStyle} value={editForm.project_value} onChange={e => setEditForm(f => ({ ...f, project_value: e.target.value }))} placeholder="Optional" />
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Project Value (₦)
+                  </label>
+                  <input
+                    type="number"
+                    className={inputClassName}
+                    value={editForm.project_value}
+                    onChange={(e) => setEditForm((form) => ({ ...form, project_value: e.target.value }))}
+                    placeholder="Optional"
+                  />
                 </div>
+
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 5, textTransform: 'uppercase' }}>P.O. Number</label>
-                  <input style={inputStyle} value={editForm.po_number} onChange={e => setEditForm(f => ({ ...f, po_number: e.target.value }))} placeholder="Optional" />
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    P.O. Number
+                  </label>
+                  <input
+                    className={inputClassName}
+                    value={editForm.po_number}
+                    onChange={(e) => setEditForm((form) => ({ ...form, po_number: e.target.value }))}
+                    placeholder="Optional"
+                  />
                 </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 5, textTransform: 'uppercase' }}>Site / Location</label>
-                  <input style={inputStyle} value={editForm.location} onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} placeholder="Optional" />
+
+                <div className="md:col-span-2">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Site / Location
+                  </label>
+                  <input
+                    className={inputClassName}
+                    value={editForm.location}
+                    onChange={(e) => setEditForm((form) => ({ ...form, location: e.target.value }))}
+                    placeholder="Optional"
+                  />
                 </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 5, textTransform: 'uppercase' }}>Notes</label>
-                  <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} value={editForm.notes} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} />
+
+                <div className="md:col-span-2">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Notes
+                  </label>
+                  <textarea
+                    className={`${inputClassName} min-h-[96px] resize-y`}
+                    value={editForm.notes}
+                    onChange={(e) => setEditForm((form) => ({ ...form, notes: e.target.value }))}
+                  />
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={() => setEditing(false)} style={{ flex: 1, padding: '9px', border: '1px solid #E2E8F0', borderRadius: 8, background: 'white', fontSize: 13, color: '#64748B', cursor: 'pointer' }}>Cancel</button>
-                <button onClick={handleSaveEdit} disabled={saving} style={{ flex: 2, padding: '9px', border: 'none', borderRadius: 8, background: saving ? '#94A3B8' : '#0F172A', fontSize: 13, color: 'white', cursor: saving ? 'not-allowed' : 'pointer', fontWeight: 700 }}>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  disabled={saving}
+                  className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+                >
                   {saving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
@@ -249,207 +528,245 @@ export default function ProjectDetail() {
           )}
         </div>
 
-        {/* ── Summary strip ─────────────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
-          {[
-            { label: 'Documents',      value: docCount,                                       suffix: '' },
-            { label: 'Total Invoiced', value: `₦${totalInvoiced.toLocaleString()}`,           suffix: '' },
-            { label: 'Total Received', value: `₦${totalReceived.toLocaleString()}`,           suffix: '' },
-            { label: 'Outstanding',    value: `₦${outstanding.toLocaleString()}`,             suffix: '', highlight: outstanding > 0 },
-          ].map(card => (
-            <div
-              key={card.label}
-              style={{
-                backgroundColor: 'white', border: `1px solid ${card.highlight ? '#FEE2E2' : '#E2E8F0'}`,
-                borderRadius: 12, padding: '14px 16px',
-              }}
-            >
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{card.label}</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: card.highlight ? '#DC2626' : '#0F172A' }}>{card.value}</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          {summaryCards.map((card) => (
+            <div key={card.label} className={`${cardClassName} border-l-4 ${card.accentClassName} p-4`}>
+              <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                {card.label}
+              </div>
+              <div className={`text-2xl font-extrabold tracking-tight ${card.valueClassName}`}>{card.value}</div>
             </div>
           ))}
         </div>
 
-        {/* ── Main content ───────────────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 16, alignItems: 'start' }}>
-
-          {/* LEFT — Document timeline */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_280px] md:items-start">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Documents ({docCount})</div>
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm font-semibold text-slate-700">Documents ({docCount})</div>
               <button
+                type="button"
                 onClick={() => setShowLink(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', border: '1px solid #E2E8F0', borderRadius: 8, background: 'white', fontSize: 12, color: '#64748B', cursor: 'pointer', fontWeight: 600 }}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
               >
-                <Link2 size={13} /> Link Existing
+                <Link2 size={14} />
+                Link Existing
               </button>
             </div>
 
             {timeline.length === 0 ? (
-              <div style={{ backgroundColor: 'white', border: '1px dashed #E2E8F0', borderRadius: 12, padding: 40, textAlign: 'center' }}>
-                <FolderKanban size={32} color="#CBD5E1" style={{ margin: '0 auto 12px' }} />
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#94A3B8', marginBottom: 6 }}>No documents yet</div>
-                <div style={{ fontSize: 12, color: '#CBD5E1' }}>Create a document from the quick actions panel, or link an existing one.</div>
+              <div className="rounded-2xl border border-dashed border-emerald-200 bg-white p-10 text-center shadow-sm ring-1 ring-emerald-50">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                  <FolderKanban size={24} />
+                </div>
+                <div className="mb-1 text-sm font-semibold text-slate-700">No documents yet</div>
+                <div className="text-sm text-slate-500">
+                  Create a document from the quick actions panel, or link an existing one.
+                </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {timeline.map(doc => {
+              <div className="space-y-3">
+                {timeline.map((doc) => {
                   const cfg = DOC_TYPE[doc._type] || DOC_TYPE.invoice
                   const Icon = cfg.icon
-                  const docNumber = doc.invoice_number || doc.csr_number || '—'
-                  const docTitle  = doc.invoice_title || doc.title || ''
-                  const docDate   = doc._date ? new Date(doc._date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
-                  const docPath   = doc._type === 'invoice' ? `/invoices/${doc.id}` : `/csr/${doc.id}`
+                  const docNumber = doc.invoice_number || doc.csr_number || doc.quotation_number || '—'
+                  const docTitle = doc.invoice_title || doc.title || ''
+                  const docDate = formatDate(doc._date)
+                  const docPath =
+                    doc._type === 'invoice'
+                      ? `/invoices/${doc.id}`
+                      : doc._type === 'quotation'
+                        ? `/quotations/${doc.id}`
+                        : `/csr/${doc.id}`
+
+                  const invoiceFinancials = doc.invoiceFinancials
+                  const paymentStatus = doc._type === 'invoice' ? getPaymentStatusConfig(invoiceFinancials?.computed_status) : null
+                  const balanceDue = Number(invoiceFinancials?.balance_due || 0)
 
                   return (
-                    <div
-                      key={doc.id}
-                      style={{
-                        backgroundColor: 'white', border: '1px solid #E2E8F0',
-                        borderRadius: 12, padding: '14px 16px',
-                        display: 'flex', alignItems: 'center', gap: 14,
-                        cursor: 'pointer', transition: 'border-color 0.15s',
-                      }}
+                    <button
+                      key={`${doc._type}-${doc.id}`}
+                      type="button"
                       onClick={() => navigate(docPath)}
-                      onMouseEnter={e => e.currentTarget.style.borderColor = '#94A3B8'}
-                      onMouseLeave={e => e.currentTarget.style.borderColor = '#E2E8F0'}
+                      className="group flex w-full items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm ring-1 ring-slate-100 transition hover:border-slate-300 hover:shadow-md"
                     >
-                      <div style={{ width: 36, height: 36, borderRadius: 9, backgroundColor: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Icon size={16} color={cfg.color} />
+                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${cfg.iconWrapClassName}`}>
+                        <Icon size={18} />
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: cfg.color, textTransform: 'uppercase' }}>{cfg.label}</span>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>{docNumber}</span>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          <span className={`text-xs font-semibold uppercase tracking-wide ${cfg.labelClassName}`}>
+                            {cfg.label}
+                          </span>
+                          <span className="text-sm font-bold text-slate-900">{docNumber}</span>
+                          {paymentStatus ? (
+                            <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${paymentStatus.className}`}>
+                              {paymentStatus.label}
+                            </span>
+                          ) : null}
                         </div>
-                        <div style={{ fontSize: 12, color: '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {docTitle && <span style={{ marginRight: 8 }}>{docTitle}</span>}
-                          <span style={{ color: '#CBD5E1' }}>{docDate}</span>
+
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
+                          {docTitle ? <span className="truncate text-slate-600">{docTitle}</span> : null}
+                          {docDate ? <span>{docDate}</span> : null}
                         </div>
+
+                        {doc._type === 'invoice' ? (
+                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                            {balanceDue > 0 ? (
+                              <span className="font-semibold text-red-600">{formatCurrency(balanceDue)} outstanding</span>
+                            ) : (
+                              <span className="font-semibold text-emerald-600">Paid</span>
+                            )}
+                            {invoiceFinancials?.cash_received ? (
+                              <span className="text-emerald-600">
+                                Collected {formatCurrency(invoiceFinancials.cash_received)}
+                              </span>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
-                      {doc.total && (
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#334155', flexShrink: 0 }}>
-                          ₦{Number(doc.total).toLocaleString()}
-                        </div>
-                      )}
-                      <ChevronRight size={15} color="#CBD5E1" style={{ flexShrink: 0 }} />
-                    </div>
+
+                      <div className="flex shrink-0 items-center gap-3">
+                        {doc.total ? (
+                          <div className={`text-sm font-bold ${doc._type === 'invoice' && balanceDue > 0 ? 'text-red-600' : 'text-slate-700'}`}>
+                            {formatCurrency(doc.total)}
+                          </div>
+                        ) : null}
+                        <ChevronRight size={16} className="text-slate-300 transition group-hover:text-slate-500" />
+                      </div>
+                    </button>
                   )
                 })}
               </div>
             )}
           </div>
 
-          {/* RIGHT — Side panel */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-            {/* Quick Actions */}
-            <div style={{ backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: 12, padding: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Quick Actions</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  { label: '+ New Invoice', path: `/invoices/new`, state: { projectId: id, projectName: project.name, clientId: project.client_id, clientName: project.client_name } },
-                  { label: '+ New CSR',     path: `/csr/new`,      state: { projectId: id, projectName: project.name } },
-                ].map(action => (
+          <div className="space-y-4">
+            <div className={`${cardClassName} border-t-4 border-t-blue-500 p-4`}>
+              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Quick Actions</div>
+              <div className="space-y-2">
+                {quickActions.map((action) => (
                   <button
                     key={action.label}
+                    type="button"
                     onClick={() => navigate(action.path, { state: action.state })}
-                    style={{
-                      width: '100%', padding: '9px 14px', border: '1px solid #E2E8F0',
-                      borderRadius: 8, background: 'white', fontSize: 13, color: '#334155',
-                      cursor: 'pointer', fontWeight: 600, textAlign: 'left',
-                      transition: 'background 0.12s',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'white'}
+                    className={`w-full rounded-lg px-4 py-2.5 text-left text-sm font-semibold transition ${action.className}`}
                   >
                     {action.label}
                   </button>
                 ))}
               </div>
             </div>
-
           </div>
         </div>
 
-        {/* ── Link Existing Document Modal ──────────────────────────────── */}
-        {showLink && (
+        {showLink ? (
           <div
-            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-            onClick={() => { setShowLink(false); setLinkDocId(''); setLinkError('') }}
+            className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950/55 p-5"
+            onClick={() => {
+              setShowLink(false)
+              setLinkDocId('')
+              setLinkError('')
+            }}
           >
             <div
-              style={{ backgroundColor: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420, boxShadow: '0 12px 50px rgba(0,0,0,0.2)' }}
-              onClick={e => e.stopPropagation()}
+              className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl ring-1 ring-slate-100"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0F172A' }}>Link Existing Document</h3>
-                <button onClick={() => { setShowLink(false); setLinkDocId(''); setLinkError('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: 20, lineHeight: 1 }}>×</button>
-              </div>
-              <p style={{ margin: '0 0 20px', fontSize: 13, color: '#64748B', lineHeight: 1.5 }}>
-                Type the document number exactly as it appears on the document — e.g. <strong>SASINV-B021</strong> for an invoice or <strong>CSR-004</strong> for a CSR.
-              </p>
-
-              {/* Type selector */}
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 6 }}>Document Type</div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {['invoice', 'csr'].map(t => (
-                    <button
-                      key={t}
-                      onClick={() => setLinkType(t)}
-                      style={{
-                        flex: 1, padding: '8px', border: '1px solid',
-                        borderColor: linkType === t ? '#0F172A' : '#E2E8F0',
-                        borderRadius: 8, background: linkType === t ? '#0F172A' : 'white',
-                        color: linkType === t ? 'white' : '#64748B',
-                        fontSize: 13, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize',
-                      }}
-                    >
-                      {t.toUpperCase()}
-                    </button>
-                  ))}
+              <div className="mb-2 flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-extrabold tracking-tight text-slate-900">Link Existing Document</h3>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                    Type the document number exactly as it appears on the document, like <strong>SASINV-B021</strong> or{' '}
+                    <strong>CSR-004</strong>.
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowLink(false)
+                    setLinkDocId('')
+                    setLinkError('')
+                  }}
+                  className="rounded-full border border-slate-200 bg-slate-50 p-2 text-slate-500 transition hover:bg-slate-100"
+                >
+                  <X size={16} />
+                </button>
               </div>
 
-              {/* Document ID input */}
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 6 }}>Document Number or ID</div>
-                <input
-                  style={inputStyle}
-                  value={linkDocId}
-                  onChange={e => { setLinkDocId(e.target.value); setLinkError('') }}
-                  placeholder={linkType === 'invoice' ? 'e.g. SASINV-B021' : 'e.g. CSR-004'}
-                  autoFocus
-                  onKeyDown={e => e.key === 'Enter' && handleLink()}
-                />
-                {linkError && (
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 8, padding: '8px 10px', backgroundColor: '#FEF2F2', border: '1px solid #FEE2E2', borderRadius: 8 }}>
-                    <AlertCircle size={13} color="#DC2626" style={{ flexShrink: 0, marginTop: 1 }} />
-                    <span style={{ fontSize: 12, color: '#DC2626' }}>{linkError}</span>
+              <div className="mt-5 space-y-4">
+                <div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Document Type</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['invoice', 'csr'].map((type) => {
+                      const active = linkType === type
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setLinkType(type)}
+                          className={`rounded-lg px-3 py-2 text-sm font-semibold capitalize transition ${
+                            active
+                              ? 'bg-blue-600 text-white'
+                              : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      )
+                    })}
                   </div>
-                )}
-              </div>
+                </div>
 
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button
-                  onClick={() => { setShowLink(false); setLinkDocId(''); setLinkError('') }}
-                  style={{ flex: 1, padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, background: 'white', fontSize: 13, color: '#64748B', cursor: 'pointer' }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleLink}
-                  disabled={linking}
-                  style={{ flex: 2, padding: '10px', border: 'none', borderRadius: 8, background: linking ? '#94A3B8' : '#0F172A', fontSize: 13, color: 'white', cursor: linking ? 'not-allowed' : 'pointer', fontWeight: 700 }}
-                >
-                  {linking ? 'Linking...' : 'Link Document'}
-                </button>
+                <div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Document Number or ID
+                  </div>
+                  <input
+                    className={inputClassName}
+                    value={linkDocId}
+                    onChange={(e) => {
+                      setLinkDocId(e.target.value)
+                      setLinkError('')
+                    }}
+                    placeholder={linkType === 'invoice' ? 'e.g. SASINV-B021' : 'e.g. CSR-004'}
+                    autoFocus
+                    onKeyDown={(e) => e.key === 'Enter' && handleLink()}
+                  />
+                  {linkError ? (
+                    <div className="mt-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-600">
+                      <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                      <span>{linkError}</span>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowLink(false)
+                      setLinkDocId('')
+                      setLinkError('')
+                    }}
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLink}
+                    disabled={linking}
+                    className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+                  >
+                    {linking ? 'Linking...' : 'Link Document'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        )}
-
+        ) : null}
       </div>
     </Layout>
   )
