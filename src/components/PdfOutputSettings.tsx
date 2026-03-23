@@ -2,9 +2,8 @@ import * as React from "react"
 import { ChevronDown, ChevronUp, Landmark, FileText } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
 import {
   Sheet,
   SheetContent,
@@ -97,6 +96,7 @@ export function PdfOutputSettings({
 
   const [state, setState] = React.useState<PdfOutputSettingsValue>(initialState)
   const [bankSheetOpen, setBankSheetOpen] = React.useState(false)
+  const [expanded, setExpanded] = React.useState(false)
 
   React.useEffect(() => {
     setState(initialState)
@@ -122,146 +122,134 @@ export function PdfOutputSettings({
     })
   }
 
+  function ToggleRow({
+    label,
+    checked,
+    onCheckedChange,
+    children,
+  }: {
+    label: string
+    checked: boolean
+    onCheckedChange: (checked: boolean) => void
+    children?: React.ReactNode
+  }) {
+    return (
+      <div className="rounded-lg border border-slate-200 bg-slate-50/50">
+        <div className="flex items-center justify-between gap-3 px-3 py-3">
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-slate-900">{label}</div>
+            <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              {checked ? "ON" : "OFF"}
+            </div>
+          </div>
+          <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={label} />
+        </div>
+        {children}
+      </div>
+    )
+  }
+
   return (
     <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
-      <CardHeader className="space-y-1 pb-3">
-        <CardTitle className="text-sm font-semibold tracking-tight text-slate-900">
-          PDF Output Settings
-        </CardTitle>
-        <CardDescription className="text-xs text-slate-500">
-          Control what appears in the generated PDF without changing invoice data.
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {/* BANK DETAILS */}
-        <div className="rounded-lg border border-slate-200 bg-slate-50/40">
-          <div className="flex items-center justify-between gap-3 px-3 py-3">
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-900">Bank Details</div>
-              <div className="mt-0.5 text-xs text-slate-500">
-                Show a payment account block on the PDF
-              </div>
+      <CardContent className="p-0">
+        <button
+          type="button"
+          onClick={() => setExpanded((open) => !open)}
+          className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left"
+        >
+          <div>
+            <div className="text-sm font-semibold tracking-tight text-slate-900">Document Options</div>
+            <div className="mt-1 text-xs text-slate-500">
+              Control what appears in the generated document.
             </div>
-
-            <Switch
-              checked={state.showBankDetails}
-              onCheckedChange={handleToggleBankDetails}
-              aria-label="Toggle bank details in PDF"
-            />
           </div>
+          {expanded ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
+        </button>
 
-          {state.showBankDetails && selectedBank ? (
-            <>
-              <Separator />
-
-              <div className="space-y-3 px-3 py-3">
-                <div className="rounded-md border border-slate-200 bg-white p-3">
-                  <div className="mb-2 flex items-center gap-2">
-                    <Landmark className="h-4 w-4 text-slate-500" />
-                    <p className="text-sm font-medium text-slate-900">
-                      Selected Account
-                    </p>
-                  </div>
-
-                  <div className="space-y-1.5 text-sm text-slate-700">
-                    <div>
-                      <span className="text-slate-500">Bank:</span>{" "}
-                      <span className="font-medium text-slate-900">{selectedBank.bankName}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500">Account Name:</span>{" "}
-                      <span className="text-slate-900">{selectedBank.accountName}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500">Account Number:</span>{" "}
-                      <span className="font-mono text-slate-900">{selectedBank.accountNumber}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500">Sort Code:</span>{" "}
-                      <span className="font-mono text-slate-900">{selectedBank.sortCode}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-between"
-                  onClick={() => setBankSheetOpen(true)}
-                >
-                  <span>Select another account</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </div>
-            </>
-          ) : null}
-        </div>
-
-        {/* SHOW FOOTER */}
-        <div className="rounded-lg border border-slate-200 bg-slate-50/40">
-          <div className="flex items-center justify-between gap-3 px-3 py-3">
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-900">Show Footer</div>
-              <div className="mt-0.5 text-xs text-slate-500">
-                Use the saved global footer text in the PDF
-              </div>
-            </div>
-
-            <Switch
-              checked={state.showFooter}
-              onCheckedChange={(checked) => update({ showFooter: checked })}
-              aria-label="Toggle footer in PDF"
-            />
-          </div>
-
-          {state.showFooter ? (
-            <>
-              <Separator />
-              <div className="px-3 py-3">
-                <div className="rounded-md border border-slate-200 bg-white p-3">
-                  <div className="mb-2 flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-slate-500" />
-                    <p className="text-sm font-medium text-slate-900">Footer Preview</p>
-                  </div>
-                  <p className="line-clamp-2 text-sm text-slate-600">{footerText || "No footer text found."}</p>
-                </div>
-              </div>
-            </>
-          ) : null}
-        </div>
-
-        {/* SHOW TAGLINE */}
-        <div className="rounded-lg border border-slate-200 bg-slate-50/40">
-          <div className="flex items-center justify-between gap-3 px-3 py-3">
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-900">Show Tagline</div>
-              <div className="mt-0.5 text-xs text-slate-500">
-                Use the saved company tagline in the PDF header
-              </div>
-            </div>
-
-            <Switch
+        {expanded ? (
+          <div className="space-y-3 border-t border-slate-100 px-4 py-4">
+            <ToggleRow
+              label="Show Tagline"
               checked={state.showTagline}
               onCheckedChange={(checked) => update({ showTagline: checked })}
-              aria-label="Toggle tagline in PDF"
-            />
-          </div>
-
-          {state.showTagline ? (
-            <>
-              <Separator />
-              <div className="px-3 py-3">
-                <div className="rounded-md border border-slate-200 bg-white p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-900">Tagline Preview</p>
-                  <p className="line-clamp-2 text-sm text-slate-600">
-                    {companyTagline || "No company tagline found."}
-                  </p>
+            >
+              {state.showTagline ? (
+                <div className="px-3 pb-3">
+                  <div className="rounded-md border border-slate-200 bg-white p-3">
+                    <p className="mb-1 text-sm font-medium text-slate-900">Tagline Preview</p>
+                    <p className="line-clamp-2 text-sm text-slate-600">
+                      {companyTagline || "No company tagline found."}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </>
-          ) : null}
-        </div>
+              ) : null}
+            </ToggleRow>
+
+            <ToggleRow
+              label="Show Footer"
+              checked={state.showFooter}
+              onCheckedChange={(checked) => update({ showFooter: checked })}
+            >
+              {state.showFooter ? (
+                <div className="px-3 pb-3">
+                  <div className="rounded-md border border-slate-200 bg-white p-3">
+                    <div className="mb-2 flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-slate-500" />
+                      <p className="text-sm font-medium text-slate-900">Footer Preview</p>
+                    </div>
+                    <p className="line-clamp-2 text-sm text-slate-600">{footerText || "No footer text found."}</p>
+                  </div>
+                </div>
+              ) : null}
+            </ToggleRow>
+
+            <ToggleRow
+              label="Bank Details"
+              checked={state.showBankDetails}
+              onCheckedChange={handleToggleBankDetails}
+            >
+              {state.showBankDetails && selectedBank ? (
+                <div className="space-y-3 px-3 pb-3">
+                  <div className="rounded-md border border-slate-200 bg-white p-3">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Landmark className="h-4 w-4 text-slate-500" />
+                      <p className="text-sm font-medium text-slate-900">Selected Account</p>
+                    </div>
+
+                    <div className="space-y-1.5 text-sm text-slate-700">
+                      <div>
+                        <span className="text-slate-500">Bank:</span>{" "}
+                        <span className="font-medium text-slate-900">{selectedBank.bankName}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Account Name:</span>{" "}
+                        <span className="text-slate-900">{selectedBank.accountName}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Account Number:</span>{" "}
+                        <span className="font-mono text-slate-900">{selectedBank.accountNumber}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Sort Code:</span>{" "}
+                        <span className="font-mono text-slate-900">{selectedBank.sortCode}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-between"
+                    onClick={() => setBankSheetOpen(true)}
+                  >
+                    <span>Select another account</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : null}
+            </ToggleRow>
+          </div>
+        ) : null}
       </CardContent>
 
       <BankAccountPickerSheet

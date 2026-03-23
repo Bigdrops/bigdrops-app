@@ -52,6 +52,7 @@ type CollectionRow = {
 
 type ProjectFinancialRow = {
   id: string
+  project_id?: string | null
   project_name?: string | null
   name?: string | null
   client_name?: string | null
@@ -84,7 +85,7 @@ const toDateInput = (date: Date) => {
   return `${year}-${month}-${day}`
 }
 
-const normalizeDateParam = (value: string) => (value.trim() === '' ? null : value)
+const safeDate = (val: string | null) => (val && val.trim() !== '' ? val : null)
 
 const getPresetRange = (preset: DatePreset, customStart: string, customEnd: string) => {
   const now = new Date()
@@ -215,8 +216,8 @@ export default function Reports() {
   })
 
   const { start, end } = useMemo(() => getPresetRange(datePreset, customStart, customEnd), [datePreset, customStart, customEnd])
-  const queryStart = useMemo(() => normalizeDateParam(start), [start])
-  const queryEnd = useMemo(() => normalizeDateParam(end), [end])
+  const queryStart = useMemo(() => safeDate(start), [start])
+  const queryEnd = useMemo(() => safeDate(end), [end])
 
   useEffect(() => {
     let cancelled = false
@@ -236,13 +237,13 @@ export default function Reports() {
       let receivablesQuery = supabase.from('invoice_financials_v').select('*').order('issue_date', { ascending: false })
       let paymentsQuery = supabase.from('payments').select('*').is('voided_at', null).order('date', { ascending: false })
 
-      if (queryStart) {
-        receivablesQuery = receivablesQuery.gte('issue_date', queryStart)
-        paymentsQuery = paymentsQuery.gte('date', queryStart)
+      if (safeDate(queryStart)) {
+        receivablesQuery = receivablesQuery.gte('issue_date', safeDate(queryStart))
+        paymentsQuery = paymentsQuery.gte('date', safeDate(queryStart))
       }
-      if (queryEnd) {
-        receivablesQuery = receivablesQuery.lte('issue_date', queryEnd)
-        paymentsQuery = paymentsQuery.lte('date', queryEnd)
+      if (safeDate(queryEnd)) {
+        receivablesQuery = receivablesQuery.lte('issue_date', safeDate(queryEnd))
+        paymentsQuery = paymentsQuery.lte('date', safeDate(queryEnd))
       }
 
       const [receivablesResult, paymentsResult, invoicesResult, projectsResult] = await Promise.all([
@@ -573,9 +574,13 @@ export default function Reports() {
                   {projects.map((row) => (
                     <TableRow key={row.id}>
                       <TableCell className="font-semibold text-slate-900">
-                        <Link to={`/projects/${row.id}`} className="text-blue-700 hover:underline">
-                          {row.project_name || row.name || 'Untitled project'}
-                        </Link>
+                        {row.project_id ? (
+                          <Link to={`/projects/${row.project_id}`} className="text-blue-700 hover:underline">
+                            {row.project_name || row.name || 'Untitled project'}
+                          </Link>
+                        ) : (
+                          row.project_name || row.name || 'Untitled project'
+                        )}
                       </TableCell>
                       <TableCell>{row.client_name || '—'}</TableCell>
                       <TableCell>

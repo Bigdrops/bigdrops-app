@@ -346,22 +346,19 @@ export default function ViewInvoice() {
   const computedStatus = invoiceFinancials?.computed_status || invoice.status || 'draft'
   const invoiceTotal = Number(invoice.total || 0)
   const cashReceived = Number(invoiceFinancials?.cash_received || 0)
-  const whtReceived = Number(invoiceFinancials?.wht_received || 0)
-  const settledTotal = Number(invoiceFinancials?.settled_total || cashReceived + whtReceived)
+  const settledTotal = Number(invoiceFinancials?.settled_total || cashReceived)
   const balanceDue = Math.max(0, Number(invoiceFinancials?.balance_due ?? invoiceTotal - settledTotal))
   const paymentHistory = (() => {
     let runningBalance = invoiceTotal
     return payments.map((payment) => {
       const cash = Number(payment.cash_amount || 0)
-      const wht = Number(payment.wht_amount || 0)
-      const total = cash + wht
+      const total = cash + Number(payment.wht_amount || 0)
       if (!payment.voided_at) {
         runningBalance = Math.max(0, runningBalance - total)
       }
       return {
         ...payment,
         cash,
-        wht,
         total,
         runningBalance,
       }
@@ -1248,7 +1245,7 @@ export default function ViewInvoice() {
 
           <Card className="mb-6 border-slate-200 shadow-none">
             <CardContent className="space-y-4 p-4">
-              <div className="grid gap-3 sm:grid-cols-5">
+              <div className="grid gap-3 sm:grid-cols-4">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Invoice Total</div>
                   <div className="mt-1 text-sm font-bold text-slate-900">{formatMoney(invoiceTotal)}</div>
@@ -1256,10 +1253,6 @@ export default function ViewInvoice() {
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Cash Received</div>
                   <div className="mt-1 text-sm font-bold text-slate-900">{formatMoney(cashReceived)}</div>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">WHT Received</div>
-                  <div className="mt-1 text-sm font-bold text-slate-900">{formatMoney(whtReceived)}</div>
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Balance Due</div>
@@ -1297,8 +1290,7 @@ export default function ViewInvoice() {
                         <TableHead>Date</TableHead>
                         <TableHead>Method</TableHead>
                         <TableHead>Reference</TableHead>
-                        <TableHead className="text-right">Cash</TableHead>
-                        <TableHead className="text-right">WHT</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
                         <TableHead className="text-right">Settlement</TableHead>
                         <TableHead className="text-right">Balance</TableHead>
                         <TableHead className="text-right">Action</TableHead>
@@ -1317,8 +1309,7 @@ export default function ViewInvoice() {
                             </TableCell>
                             <TableCell className={rowClassName}>{payment.method || '-'}</TableCell>
                             <TableCell className={rowClassName}>{payment.reference || '-'}</TableCell>
-                            <TableCell className={`text-right ${rowClassName}`}>{formatMoney(payment.cash)}</TableCell>
-                            <TableCell className={`text-right ${rowClassName}`}>{formatMoney(payment.wht)}</TableCell>
+                            <TableCell className={`text-right ${rowClassName}`}>{formatMoney(payment.total)}</TableCell>
                             <TableCell className={`text-right font-semibold ${rowClassName}`}>{formatMoney(payment.total)}</TableCell>
                             <TableCell className={`text-right font-semibold ${payment.runningBalance > 0 ? 'text-red-600' : 'text-emerald-600'} ${rowClassName}`}>{formatMoney(payment.runningBalance)}</TableCell>
                             <TableCell className="text-right">
