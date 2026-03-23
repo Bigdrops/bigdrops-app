@@ -1,432 +1,456 @@
-import { useMemo, useState } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { useIsMobile } from '../hooks/useIsMobile'
-import { useSettings } from '../hooks/useSettings'
-import { supabase } from '../supabase'
-import { QUICK_TILE_REGISTRY, DEFAULT_QUICK_TILES } from '../config/quickTiles'
+import * as React from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, FileText, ClipboardList, Wrench, Users,
-  Settings, LogOut, FolderKanban, BarChart3, Grid2x2,
-  Package, ChevronDown, Check, Building2, X, Menu
+  Home,
+  FolderKanban,
+  Users,
+  MoreHorizontal,
+  Menu,
+  X,
+  ChevronRight,
+  Receipt,
+  FileSignature,
+  ClipboardCheck,
+  BarChart3,
+  Settings,
+  LogOut,
+  LayoutDashboard,
+  ChevronDown,
+  Check,
+  Building2,
 } from 'lucide-react'
 
-// ── Navigation structure ─────────────────────────────────────────────────────
-const navGroups = [
-  {
-    group: 'Dashboard',
-    items: [
-      { label: 'Home', path: '/', icon: LayoutDashboard, exact: true },
-    ]
-  },
-  {
-    group: 'Projects',
-    items: [
-      { label: 'Projects', path: '/projects', icon: FolderKanban },
-    ]
-  },
-  {
-    group: 'Sales',
-    items: [
-      { label: 'Invoices',   path: '/invoices',   icon: FileText },
-      { label: 'Quotations', path: '/quotations', icon: ClipboardList },
-      { label: 'CSR',        path: '/csr',        icon: Wrench },
-      { label: 'Clients',    path: '/clients',    icon: Users },
-    ]
-  },
-  {
-    group: 'Inventory',
-    placeholder: true,
-    items: [
-      { label: 'Inventory', path: '/inventory', icon: Package, disabled: true },
-    ]
-  },
-  {
-    group: 'Reports',
-    placeholder: true,
-    items: [
-      { label: 'Reports', path: '/reports', icon: BarChart3 },
-    ]
-  },
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Separator } from '@/components/ui/separator'
+import { QUICK_TILE_REGISTRY, DEFAULT_QUICK_TILES } from '../config/quickTiles'
+import { useSettings } from '../hooks/useSettings'
+import { supabase } from '../supabase'
+
+const APP_NAME = 'BIGDROPS'
+
+const tabs = [
+  { key: 'home', label: 'Home', icon: Home },
+  { key: 'projects', label: 'Projects', icon: FolderKanban },
+  { key: 'sales', label: 'Sales', icon: Receipt },
+  { key: 'clients', label: 'Clients', icon: Users },
+  { key: 'more', label: 'More', icon: MoreHorizontal },
 ]
 
-// Bottom nav — 4 structural items only
-const bottomNav = [
-  { label: 'Home',     path: '/',         icon: LayoutDashboard, exact: true },
-  { label: 'Projects', path: '/projects', icon: FolderKanban },
-  { label: 'Reports',  path: '/reports',  icon: BarChart3 },
-  { label: 'More',     icon: Grid2x2,     isMore: true },
+const salesPicker = [
+  { key: 'invoices', label: 'Invoices', icon: Receipt, tint: 'bg-blue-50 border-blue-200', iconBg: 'bg-blue-600' },
+  { key: 'quotations', label: 'Quotations', icon: FileSignature, tint: 'bg-violet-50 border-violet-200', iconBg: 'bg-violet-600' },
+  { key: 'csr', label: 'CSR', icon: ClipboardCheck, tint: 'bg-orange-50 border-orange-200', iconBg: 'bg-orange-600' },
 ]
 
-// ── Sidebar nav item ─────────────────────────────────────────────────────────
-function NavItem({ item, onNavigate }) {
-  const Icon = item.icon
-  if (item.disabled) {
-    return (
-      <div className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 cursor-not-allowed select-none">
-        <Icon size={16} />
-        <span className="flex-1">{item.label}</span>
-        <span className="text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-300 px-1.5 py-0.5 rounded">Soon</span>
-      </div>
-    )
+const moreGroups = [
+  { group: 'Finance', items: [{ key: 'reports', label: 'Reports', icon: BarChart3 }] },
+  { group: 'System', items: [{ key: 'settings', label: 'Settings', icon: Settings }, { key: 'signout', label: 'Sign Out', icon: LogOut }] },
+]
+
+const desktopNav = [
+  { key: 'home', label: 'Dashboard', icon: LayoutDashboard },
+  { key: 'projects', label: 'Projects', icon: FolderKanban },
+  { key: 'clients', label: 'Clients', icon: Users },
+]
+
+function getStoredQuickTiles() {
+  try {
+    const savedTiles = localStorage.getItem('quick_tiles')
+    const parsed = savedTiles ? JSON.parse(savedTiles) : DEFAULT_QUICK_TILES
+    return Array.isArray(parsed) ? parsed : DEFAULT_QUICK_TILES
+  } catch {
+    return DEFAULT_QUICK_TILES
   }
-  return (
-    <NavLink
-      to={item.path}
-      end={item.exact}
-      onClick={onNavigate}
-      className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
-          isActive
-            ? 'bg-slate-900 text-white font-semibold'
-            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-        }`
-      }
-    >
-      <Icon size={16} />
-      <span className="flex-1">{item.label}</span>
-    </NavLink>
-  )
 }
 
-// ── Sidebar content ──────────────────────────────────────────────────────────
-function SidebarContent({ session, onNavigate, hideReports = false }) {
-  return (
-    <div className="flex flex-col h-full bg-white border-r border-slate-200">
-      {/* Logo */}
-      <div className="px-5 py-5 border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center font-black text-white text-sm">B</div>
-          <div className="text-slate-900 font-bold text-sm tracking-tight uppercase">BIGDROPS</div>
-        </div>
-      </div>
-
-      {/* Nav groups */}
-      <nav className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
-        {navGroups.map(({ group, items, placeholder }) => {
-          const visibleItems = items.filter((item) => !(hideReports && item.path === '/reports'))
-          if (visibleItems.length === 0) return null
-          return (
-          <div key={group}>
-            <div className={`px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 ${placeholder ? 'text-slate-300' : 'text-slate-400'}`}>
-              {group}
-              {placeholder && (
-                <span className="text-[8px] bg-slate-100 text-slate-300 px-1.5 py-0.5 rounded font-bold">SOON</span>
-              )}
-            </div>
-            <div className="space-y-0.5">
-              {visibleItems.map(item => (
-                <NavItem key={item.path} item={item} onNavigate={onNavigate} />
-              ))}
-            </div>
-          </div>
-          )
-        })}
-      </nav>
-
-      {/* Footer */}
-      <div className="p-3 border-t border-slate-100 space-y-0.5">
-        <NavLink
-          to="/settings"
-          onClick={onNavigate}
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
-              isActive ? 'bg-slate-900 text-white font-semibold' : 'text-slate-500 hover:bg-slate-50'
-            }`
-          }
-        >
-          <Settings size={16} />
-          <span>Settings</span>
-        </NavLink>
-        {session?.user?.email && (
-          <div className="text-xs text-slate-400 truncate px-3 py-1">{session.user.email}</div>
-        )}
-        <button
-          onClick={() => supabase.auth.signOut()}
-          className="flex items-center gap-2 text-slate-400 text-xs hover:text-red-500 w-full px-3 py-2 transition-colors rounded-lg hover:bg-red-50"
-        >
-          <LogOut size={14} />
-          Sign Out
-        </button>
-      </div>
-    </div>
-  )
+function getActiveTab(pathname) {
+  if (pathname === '/') return 'home'
+  if (pathname.startsWith('/projects')) return 'projects'
+  if (pathname.startsWith('/clients')) return 'clients'
+  if (pathname.startsWith('/invoices') || pathname.startsWith('/quotations') || pathname.startsWith('/csr')) return 'sales'
+  if (pathname.startsWith('/reports') || pathname.startsWith('/settings')) return 'more'
+  return 'home'
 }
 
-// ── Business switcher ────────────────────────────────────────────────────────
-function BusinessSwitcher() {
+export function BusinessSwitcher() {
   const { settings } = useSettings()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = React.useState(false)
   const activeName = settings?.company_name || 'Business profile not configured'
 
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 text-left"
+        className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-sm"
       >
-        <div className="w-6 h-6 rounded bg-slate-800 flex items-center justify-center flex-shrink-0">
-          <Building2 size={11} className="text-white" />
-        </div>
-        <div className="hidden sm:block min-w-0">
-          <div className="text-xs font-semibold text-slate-700 leading-tight max-w-[150px] truncate">{activeName}</div>
-        </div>
-        <ChevronDown size={11} className="text-slate-400 hidden sm:block flex-shrink-0" />
+        <span className="grid h-6 w-6 place-items-center rounded-full bg-slate-900 text-white">
+          <Building2 className="h-3.5 w-3.5" />
+        </span>
+        <span className="max-w-[140px] truncate">{activeName}</span>
+        <ChevronDown className="h-4 w-4 text-slate-500" />
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="w-full max-w-md bg-white rounded-t-2xl shadow-2xl pb-8"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Handle + close */}
-            <div className="flex items-center justify-between px-4 pt-3 pb-2">
-              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto" />
-            </div>
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-              <div className="text-sm font-bold text-slate-800">Current Business</div>
-              <button
-                onClick={() => setOpen(false)}
-                className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
-              >
-                <X size={14} />
+      {open ? (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-4" onClick={() => setOpen(false)}>
+          <div className="w-full max-w-md rounded-t-3xl border border-slate-200 bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div>
+                <div className="text-sm font-bold text-slate-900">Current Business</div>
+                <div className="text-xs text-slate-500">Loaded from settings</div>
+              </div>
+              <button type="button" onClick={() => setOpen(false)} className="grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-slate-600">
+                <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="px-4 py-2 space-y-1">
-              <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+            <div className="p-5">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
+                  <div className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-900 text-white">
                     {(settings?.company_name || 'B').charAt(0)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-slate-800">{activeName}</div>
-                    <div className="text-[11px] text-slate-400">
-                      {settings?.company_name
-                        ? 'Loaded from saved company settings'
-                        : 'Set up your company identity in Settings'}
-                    </div>
+                    <div className="truncate text-sm font-semibold text-slate-900">{activeName}</div>
+                    <div className="text-xs text-slate-500">Multi-business switching is not configured yet.</div>
                   </div>
-                  <Check size={15} className="shrink-0 text-slate-800" />
+                  <Check className="h-4 w-4 text-slate-900" />
                 </div>
-              </div>
-            </div>
-            <div className="px-4 pt-1">
-              <div className="w-full rounded-xl border border-dashed border-slate-200 px-3 py-3 text-sm text-slate-400">
-                Multi-business switching is not configured for this workspace yet.
               </div>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </>
   )
 }
 
-function QuickTileRail({ tiles }) {
+export function QuickTileRail({ tiles }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const validTiles = useMemo(() => {
-    let active = DEFAULT_QUICK_TILES
-    try {
-      const savedTiles = localStorage.getItem('quick_tiles')
-      const parsed = savedTiles ? JSON.parse(savedTiles) : DEFAULT_QUICK_TILES
-      if (Array.isArray(parsed)) active = parsed
-    } catch {
-      active = DEFAULT_QUICK_TILES
-    }
-    const allowed = new Set(active)
-    return tiles.filter((id) => allowed.has(id) && QUICK_TILE_REGISTRY[id])
+  const validTiles = React.useMemo(() => {
+    const activeTiles = Array.isArray(tiles) && tiles.length > 0 ? tiles : getStoredQuickTiles()
+    const allowed = new Set(activeTiles)
+    return activeTiles.filter((id) => allowed.has(id) && QUICK_TILE_REGISTRY[id])
   }, [tiles])
 
   if (validTiles.length === 0) return null
 
   return (
-    <div className="flex-1 min-w-0 overflow-hidden">
-      <div
-        className="flex items-center gap-2 overflow-x-auto px-1"
-        style={{
-          scrollbarWidth: 'none',
-          WebkitOverflowScrolling: 'touch',
-          scrollSnapType: 'x mandatory',
-        }}
-      >
-        {validTiles.map((id) => {
-          const tile = QUICK_TILE_REGISTRY[id]
-          const isActive =
-            location.pathname === tile.path ||
-            (tile.path !== '/' && location.pathname.startsWith(tile.path))
-          return (
-            <button
-              key={id}
-              onClick={() => navigate(tile.path)}
-              className="text-[13px] font-semibold whitespace-nowrap transition-all"
-              style={{
-                scrollSnapAlign: 'start',
-                flexShrink: 0,
-                paddingTop: '6px',
-                paddingBottom: '6px',
-                paddingLeft: '14px',
-                paddingRight: '14px',
-                borderRadius: '999px',
-                cursor: 'pointer',
-                backgroundColor: isActive ? '#0F172A' : 'transparent',
-                color: isActive ? 'white' : '#64748B',
-                border: isActive ? '1px solid #0F172A' : '1px solid transparent',
-              }}
-            >
-              {tile.label}
-            </button>
-          )
-        })}
-      </div>
+    <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+      {validTiles.map((id) => {
+        const tile = QUICK_TILE_REGISTRY[id]
+        const isActive = location.pathname === tile.path || (tile.path !== '/' && location.pathname.startsWith(tile.path))
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => navigate(tile.path)}
+            className={cn(
+              'shrink-0 rounded-full border px-4 py-2 text-xs font-semibold shadow-sm transition',
+              isActive ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+            )}
+          >
+            {tile.label}
+          </button>
+        )
+      })}
     </div>
   )
 }
 
-// ── Main Layout ──────────────────────────────────────────────────────────────
 export default function Layout({ title, children, session, hidePageHeader = false, contentClassName = '' }) {
-  const isMobile = useIsMobile()
+  const navigate = useNavigate()
   const location = useLocation()
-  const isDashboard = location.pathname === '/'
-  const [moreOpen, setMoreOpen] = useState(false)
-  let activeTiles = DEFAULT_QUICK_TILES
-  try {
-    const savedTiles = localStorage.getItem('quick_tiles')
-    const parsed = savedTiles ? JSON.parse(savedTiles) : DEFAULT_QUICK_TILES
-    if (Array.isArray(parsed)) activeTiles = parsed
-  } catch {
-    activeTiles = DEFAULT_QUICK_TILES
+  const [sidebarOpen, setSidebarOpen] = React.useState(false)
+  const [salesOpen, setSalesOpen] = React.useState(false)
+  const [moreOpen, setMoreOpen] = React.useState(false)
+  const activeTab = getActiveTab(location.pathname)
+  const isHome = location.pathname === '/'
+
+  const handleSalesPick = (key) => {
+    const pathByKey = {
+      invoices: '/invoices',
+      quotations: '/quotations',
+      csr: '/csr',
+    }
+    setSalesOpen(false)
+    navigate(pathByKey[key] || '/')
   }
 
-  if (isMobile) {
-    return (
-      <div className="flex flex-col min-h-screen bg-slate-50 font-sans antialiased text-slate-900">
+  const handleMorePick = async (key) => {
+    if (key === 'signout') {
+      await supabase.auth.signOut()
+      navigate('/login')
+      setMoreOpen(false)
+      setSidebarOpen(false)
+      return
+    }
 
-        {/* Mobile Header */}
-        {isDashboard ? (
-          <header className="sticky top-0 z-20 h-14 bg-white/90 backdrop-blur-md border-b border-slate-200 px-2 flex items-center gap-2">
-            <button
-              onClick={() => setMoreOpen(true)}
-              className="w-9 h-9 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-700 shrink-0"
-              aria-label="Open navigation menu"
-            >
-              <Menu size={18} />
-            </button>
-            <QuickTileRail tiles={activeTiles} />
-            <BusinessSwitcher />
-          </header>
-        ) : hidePageHeader ? null : (
-          <header className="sticky top-0 z-20 h-14 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 flex items-center justify-between gap-3">
-            <button
-              onClick={() => setMoreOpen(true)}
-              className="w-9 h-9 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-700 shrink-0"
-              aria-label="Open navigation menu"
-            >
-              <Menu size={18} />
-            </button>
-            <h1 className="text-sm font-bold text-slate-900 uppercase tracking-tight truncate">{title}</h1>
-            <BusinessSwitcher />
-          </header>
-        )}
+    const pathByKey = {
+      reports: '/reports',
+      settings: '/settings',
+    }
+    setMoreOpen(false)
+    setSidebarOpen(false)
+    navigate(pathByKey[key] || '/')
+  }
 
-        {/* Mobile Content */}
-        <main className={`flex-1 w-full mx-auto ${contentClassName || 'p-4 pb-24 max-w-5xl'}`}>
-          {children}
+  const onTabClick = (key) => {
+    if (key === 'sales') return setSalesOpen(true)
+    if (key === 'more') return setMoreOpen(true)
+    const pathByKey = { home: '/', projects: '/projects', clients: '/clients' }
+    navigate(pathByKey[key] || '/')
+  }
+
+  const desktopContentClassName = contentClassName || 'mx-auto w-full max-w-5xl px-6 py-6'
+  const mobileContentClassName = contentClassName || 'mx-auto w-full max-w-md px-4 pb-24 pt-4'
+
+  return (
+    <div className="min-h-dvh bg-slate-50 text-slate-900">
+      <div className="hidden md:flex">
+        <aside className="w-72 border-r border-slate-200 bg-white">
+          <div className="px-5 py-5">
+            <div className="text-sm font-black tracking-tight text-slate-900">{APP_NAME}</div>
+            <div className="text-xs text-slate-500">Invoicing and Projects</div>
+            {session?.user?.email ? <div className="mt-2 truncate text-xs text-slate-400">{session.user.email}</div> : null}
+          </div>
+
+          <div className="space-y-4 px-4 pb-6">
+            <div>
+              <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Navigation</div>
+              <div className="space-y-2">
+                {desktopNav.map((item) => {
+                  const Icon = item.icon
+                  const isActive = activeTab === item.key
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => onTabClick(item.key)}
+                      className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100')}
+                    >
+                      <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-slate-100')}>
+                        <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
+                      </span>
+                      <span className="font-semibold">{item.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div>
+              <Separator className="my-3" />
+              <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Sales</div>
+              <div className="space-y-2">
+                {salesPicker.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <button key={item.key} type="button" onClick={() => handleSalesPick(item.key)} className={cn('flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left shadow-sm transition hover:brightness-[0.99]', item.tint)}>
+                      <div className="flex items-center gap-3">
+                        <span className={cn('grid h-9 w-9 place-items-center rounded-xl', item.iconBg)}>
+                          <Icon className="h-5 w-5 text-white" />
+                        </span>
+                        <span className="font-semibold text-slate-900">{item.label}</span>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-slate-400" />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {moreGroups.map((group) => (
+              <div key={group.group}>
+                <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-slate-500">{group.group}</div>
+                <div className="space-y-2">
+                  {group.items.map((item) => {
+                    const Icon = item.icon
+                    return (
+                      <button key={item.key} type="button" onClick={() => handleMorePick(item.key)} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition hover:bg-slate-50">
+                        <div className="flex items-center gap-3">
+                          <span className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100">
+                            <Icon className="h-5 w-5 text-slate-700" />
+                          </span>
+                          <span className="font-semibold text-slate-900">{item.label}</span>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-slate-400" />
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
+
+        <main className="flex-1">
+          {!isHome && !hidePageHeader ? (
+            <div className="mx-auto w-full max-w-5xl px-6 pt-6">
+              <div className="rounded-2xl border-l-4 border-l-blue-500 border border-slate-200 bg-white px-5 py-4 shadow-sm">
+                <div className="text-lg font-bold text-slate-900">{title}</div>
+              </div>
+            </div>
+          ) : null}
+          <div className={desktopContentClassName}>{children}</div>
         </main>
+      </div>
 
-        {/* Mobile Bottom Nav */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-2 z-20 shadow-lg">
-          {bottomNav.map((item) => {
-            const Icon = item.icon
-            if (item.isMore) {
+      <div className="md:hidden">
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(true)}
+          className="fixed left-3 top-3 z-50 grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 bg-white/95 shadow-sm backdrop-blur"
+          aria-label="Open navigation menu"
+        >
+          <Menu className="h-5 w-5 text-slate-700" />
+        </button>
+
+        {!isHome && !hidePageHeader ? (
+          <div className="mx-auto w-full max-w-md px-4 pt-4">
+            <div className="rounded-2xl border-l-4 border-l-blue-500 border border-slate-200 bg-white px-5 py-4 shadow-sm">
+              <div className="text-base font-bold text-slate-900">{title}</div>
+            </div>
+          </div>
+        ) : null}
+
+        <main className={mobileContentClassName}>{children}</main>
+
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+          <div className="mx-auto grid max-w-md grid-cols-5 px-2 py-2 shadow-[0_-10px_30px_-20px_rgba(15,23,42,0.35)]">
+            {tabs.map((tab) => {
+              const Icon = tab.icon
+              const isActive = activeTab === tab.key
               return (
-                <button
-                  key="more"
-                  onClick={() => setMoreOpen(true)}
-                  className="flex flex-col items-center gap-1 text-slate-400 px-4 py-1"
-                >
-                  <Icon size={20} strokeWidth={1.5} />
-                  <span className="text-[10px] font-bold uppercase">More</span>
+                <button key={tab.key} type="button" onClick={() => onTabClick(tab.key)} className={cn('group flex flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 transition', isActive ? 'bg-slate-900/5' : 'hover:bg-slate-50')}>
+                  <span className={cn('grid h-9 w-9 place-items-center rounded-2xl transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-700')}>
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span className={cn('text-[11px] font-semibold', isActive ? 'text-slate-900' : 'text-slate-500')}>{tab.label}</span>
                 </button>
               )
-            }
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.exact}
-                className={({ isActive }) =>
-                  `flex flex-col items-center gap-1 px-4 py-1 ${isActive ? 'text-slate-900' : 'text-slate-400'}`
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
-                    <span className="text-[10px] font-bold uppercase">{item.label}</span>
-                  </>
-                )}
-              </NavLink>
-            )
-          })}
-        </div>
+            })}
+          </div>
+        </nav>
 
-        {/* More sheet — slides up full sidebar */}
-        <div
-          className={`fixed inset-0 z-40 transition-opacity duration-300 ${moreOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-          onClick={() => setMoreOpen(false)}
-        />
-        <div
-          className="fixed left-0 top-0 z-50 h-screen w-[280px] bg-white"
-          style={{
-            boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
-            transform: moreOpen ? 'translateX(0)' : 'translateX(-100%)',
-            transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        >
-          <button
-            onClick={() => setMoreOpen(false)}
-            className="absolute top-4 right-4 flex items-center justify-center"
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: '#F1F5F9',
-              color: '#64748B',
-            }}
-            aria-label="Close navigation drawer"
-          >
-            <X size={16} />
+        <div className={cn('fixed inset-0 z-50 transition-opacity duration-300', sidebarOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0')} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setSidebarOpen(false)} />
+        <div className="fixed left-0 top-0 z-[60] h-dvh w-[280px] bg-white" style={{ boxShadow: '4px 0 24px rgba(0,0,0,0.15)', transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+          <button type="button" onClick={() => setSidebarOpen(false)} className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-600" aria-label="Close navigation menu">
+            <X className="h-5 w-5" />
           </button>
-          <SidebarContent session={session} onNavigate={() => setMoreOpen(false)} hideReports />
+
+          <div className="px-5 pb-5 pt-6">
+            <div className="text-sm font-black tracking-tight text-slate-900">{APP_NAME}</div>
+            <div className="mt-1 text-xs text-slate-500">Navigation</div>
+          </div>
+
+          <div className="space-y-2 px-4 pb-6">
+            {desktopNav.map((item) => {
+              const Icon = item.icon
+              const isActive = activeTab === item.key
+              return (
+                <button key={item.key} type="button" onClick={() => { onTabClick(item.key); setSidebarOpen(false) }} className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100')}>
+                  <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-slate-100')}>
+                    <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
+                  </span>
+                  <span className="font-semibold">{item.label}</span>
+                </button>
+              )
+            })}
+
+            <Separator className="my-3" />
+
+            <button type="button" onClick={() => { setSidebarOpen(false); setSalesOpen(true) }} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition hover:bg-slate-50">
+              <div className="flex items-center gap-3">
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100">
+                  <Receipt className="h-5 w-5 text-slate-700" />
+                </span>
+                <span className="font-semibold text-slate-900">Sales</span>
+              </div>
+              <ChevronRight className="h-5 w-5 text-slate-400" />
+            </button>
+
+            <button type="button" onClick={() => { setSidebarOpen(false); setMoreOpen(true) }} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition hover:bg-slate-50">
+              <div className="flex items-center gap-3">
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100">
+                  <MoreHorizontal className="h-5 w-5 text-slate-700" />
+                </span>
+                <span className="font-semibold text-slate-900">More</span>
+              </div>
+              <ChevronRight className="h-5 w-5 text-slate-400" />
+            </button>
+          </div>
         </div>
-      </div>
-    )
-  }
 
-  // ── Desktop ────────────────────────────────────────────────────────────────
-  return (
-    <div
-      className="min-h-screen bg-slate-50 font-sans antialiased text-slate-900"
-      style={{ display: 'grid', gridTemplateColumns: '240px 1fr' }}
-    >
-      <aside className="fixed left-0 top-0 w-60 h-full z-30">
-        <SidebarContent session={session} />
-      </aside>
+        <Sheet open={salesOpen} onOpenChange={setSalesOpen}>
+          <SheetContent side="bottom" className="p-0">
+            <div className="rounded-t-3xl">
+              <SheetHeader className="rounded-t-3xl bg-slate-900 px-5 py-4 text-white">
+                <SheetTitle className="text-base font-black tracking-tight">Sales</SheetTitle>
+              </SheetHeader>
+              <div className="bg-slate-50 px-4 py-4">
+                <div className="space-y-2">
+                  {salesPicker.map((item) => {
+                    const Icon = item.icon
+                    return (
+                      <button key={item.key} type="button" onClick={() => handleSalesPick(item.key)} className={cn('flex w-full items-center justify-between rounded-2xl border px-4 py-4 text-left shadow-sm transition hover:brightness-[0.99]', item.tint)}>
+                        <div className="flex items-center gap-3">
+                          <span className={cn('grid h-11 w-11 place-items-center rounded-2xl shadow-sm', item.iconBg)}>
+                            <Icon className="h-6 w-6 text-white" />
+                          </span>
+                          <div>
+                            <div className="text-sm font-bold text-slate-900">{item.label}</div>
+                            <div className="text-xs text-slate-600">Open</div>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-slate-400" />
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="mt-4">
+                  <Button variant="outline" className="w-full rounded-2xl border-slate-200 bg-white" onClick={() => setSalesOpen(false)}>Close</Button>
+                </div>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
 
-      <div className="flex flex-col col-start-2">
-        {hidePageHeader ? null : (
-          <header className="sticky top-0 z-20 h-14 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 flex items-center justify-between">
-            <h1 className="text-sm font-bold text-slate-900 uppercase tracking-tight">{title}</h1>
-            <BusinessSwitcher />
-          </header>
-        )}
-        <main className={`flex-1 w-full mx-auto ${contentClassName || 'p-8 max-w-5xl'}`}>
-          {children}
-        </main>
+        <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+          <SheetContent side="bottom" className="p-0">
+            <div className="rounded-t-3xl">
+              <SheetHeader className="rounded-t-3xl bg-slate-900 px-5 py-4 text-white">
+                <SheetTitle className="text-base font-black tracking-tight">{APP_NAME}</SheetTitle>
+              </SheetHeader>
+              <div className="bg-slate-50 px-4 py-4">
+                {moreGroups.map((group) => (
+                  <div key={group.group} className="mb-4">
+                    <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">{group.group}</div>
+                    <div className="space-y-2">
+                      {group.items.map((item) => {
+                        const Icon = item.icon
+                        return (
+                          <button key={item.key} type="button" onClick={() => handleMorePick(item.key)} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition hover:bg-slate-50">
+                            <div className="flex items-center gap-3">
+                              <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-100">
+                                <Icon className="h-5 w-5 text-slate-700" />
+                              </span>
+                              <div className="text-sm font-semibold text-slate-900">{item.label}</div>
+                            </div>
+                            <ChevronRight className="h-5 w-5 text-slate-400" />
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+                <Button variant="outline" className="w-full rounded-2xl border-slate-200 bg-white" onClick={() => setMoreOpen(false)}>Close</Button>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   )
