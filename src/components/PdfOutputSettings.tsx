@@ -3,7 +3,6 @@ import { ChevronDown, ChevronUp, Landmark, FileText } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch"
 import {
   Sheet,
   SheetContent,
@@ -113,15 +112,6 @@ export function PdfOutputSettings({
     })
   }
 
-  function handleToggleBankDetails(checked: boolean) {
-    update({
-      showBankDetails: checked,
-      bankAccountId: checked
-        ? state.bankAccountId || defaultBank?.id || null
-        : state.bankAccountId,
-    })
-  }
-
   return (
     <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
       <CardContent className="p-0">
@@ -141,12 +131,28 @@ export function PdfOutputSettings({
 
         {expanded ? (
           <div className="space-y-0 border-t border-slate-100 px-4 py-4">
-            <div className="flex items-center justify-between border-b border-slate-100 py-3">
+            <div className="flex w-full items-center justify-between py-3 border-b border-slate-100 last:border-0">
               <span className="text-sm font-medium text-slate-700">Bank Details</span>
-              <Switch
-                checked={state.showBankDetails}
-                onCheckedChange={handleToggleBankDetails}
-              />
+              <button
+                type="button"
+                onClick={() =>
+                  update({
+                    showBankDetails: !state.showBankDetails,
+                    bankAccountId: !state.showBankDetails
+                      ? state.bankAccountId || defaultBank?.id || null
+                      : state.bankAccountId,
+                  })
+                }
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
+                  state.showBankDetails ? "bg-emerald-500" : "bg-slate-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                    state.showBankDetails ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
             </div>
             {state.showBankDetails && selectedBank ? (
               <div className="space-y-3 border-b border-slate-100 bg-emerald-50 px-3 py-3">
@@ -190,12 +196,21 @@ export function PdfOutputSettings({
               </div>
             ) : null}
 
-            <div className="flex items-center justify-between border-b border-slate-100 py-3">
+            <div className="flex w-full items-center justify-between py-3 border-b border-slate-100 last:border-0">
               <span className="text-sm font-medium text-slate-700">Show Tagline</span>
-              <Switch
-                checked={state.showTagline}
-                onCheckedChange={(checked) => update({ showTagline: checked })}
-              />
+              <button
+                type="button"
+                onClick={() => update({ showTagline: !state.showTagline })}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
+                  state.showTagline ? "bg-emerald-500" : "bg-slate-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                    state.showTagline ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
             </div>
             {state.showTagline ? (
               <div className="border-b border-slate-100 bg-blue-50 px-3 py-3">
@@ -208,12 +223,21 @@ export function PdfOutputSettings({
               </div>
             ) : null}
 
-            <div className="flex items-center justify-between py-3 border-b border-slate-100">
+            <div className="flex w-full items-center justify-between py-3 border-b border-slate-100 last:border-0">
               <span className="text-sm font-medium text-slate-700">Show Footer</span>
-              <Switch
-                checked={state.showFooter}
-                onCheckedChange={(checked) => update({ showFooter: checked })}
-              />
+              <button
+                type="button"
+                onClick={() => update({ showFooter: !state.showFooter })}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
+                  state.showFooter ? "bg-emerald-500" : "bg-slate-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                    state.showFooter ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
             </div>
             {state.showFooter ? (
               <div className="bg-amber-50 px-3 py-3">
