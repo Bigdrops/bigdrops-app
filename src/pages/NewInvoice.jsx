@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
 import MobileInvoiceForm from '@/components/invoice/MobileInvoiceForm'
+import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import {
   makeEmptyGroup,
   makeEmptyItem,
@@ -420,6 +421,20 @@ export default function NewInvoice() {
         signatories={signatories}
         signatoryId={signatoryId}
         onSignatoryChange={setSignatoryId}
+        afterSignatorySlot={
+          <PdfOutputSettings
+            value={{
+              showBankDetails: false,
+              bankAccountId: null,
+              showFooter: true,
+              showTagline: true,
+            }}
+            onChange={() => {}}
+            bankAccounts={[]}
+            companyTagline=""
+            footerText=""
+          />
+        }
         mergeQtyUnit={mergeQtyUnit}
         setMergeQtyUnit={setMergeQtyUnit}
         columns={columns}

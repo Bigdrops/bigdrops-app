@@ -134,6 +134,8 @@ function buildCustomFields({
   attachments,
   extraCharges,
   chargeLabels,
+  signatoryId,
+  pdfOutput,
 }: {
   quotation: QuotationEditorState
   columns: ColumnConfig[]
@@ -150,6 +152,8 @@ function buildCustomFields({
   attachments: Array<Record<string, unknown>>
   extraCharges: Array<Record<string, unknown>>
   chargeLabels: Record<string, string>
+  signatoryId: string | null
+  pdfOutput: PdfOutputState
 }) {
   const groupMeta = toGroupMetaMap(groups)
 
@@ -168,6 +172,8 @@ function buildCustomFields({
     attachments,
     extraCharges: extraCharges.filter((charge) => String(charge.label || '').trim()),
     chargeLabels,
+    signatoryId,
+    pdfOutput,
     payment_terms: quotation.payment_terms || '',
     custom_payment_terms: quotation.custom_payment_terms || '',
     discountType,
@@ -193,6 +199,28 @@ type QuotationGroupState = { id: string; name: string; showSubtotal: boolean }
 type QuotationEditorState = Quotation & {
   payment_terms?: string
   custom_payment_terms?: string
+}
+type SignatoryRow = { id: string; name: string; role?: string | null; signature_url?: string | null }
+type BankAccountRow = {
+  id: string
+  bank_name?: string | null
+  account_name?: string | null
+  account_number?: string | null
+  sort_code?: string | null
+  is_default?: boolean | null
+}
+type PdfOutputState = {
+  showBankDetails: boolean
+  bankAccountId: string | null
+  showFooter: boolean
+  showTagline: boolean
+}
+
+const defaultPdfOutput: PdfOutputState = {
+  showBankDetails: false,
+  bankAccountId: null,
+  showFooter: true,
+  showTagline: true,
 }
 
 export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'edit'; quotationId?: string }) {
@@ -236,6 +264,11 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     transportation: 'Transportation',
     shipping: 'Shipping',
   })
+  const [signatories, setSignatories] = useState<SignatoryRow[]>([])
+  const [signatoryId, setSignatoryId] = useState<string | null>(null)
+  const [bankAccounts, setBankAccounts] = useState<BankAccountRow[]>([])
+  const [settingsData, setSettingsData] = useState<{ company_tagline?: string | null; footer_text?: string | null } | null>(null)
+  const [pdfOutput, setPdfOutput] = useState<PdfOutputState>(defaultPdfOutput)
   const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
   const [showItemImages, setShowItemImages] = useState(false)
   const [groups, setGroups] = useState<QuotationGroupState[]>([])
@@ -268,6 +301,16 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
   useEffect(() => {
     const load = async () => {
+      const [signatoriesResult, bankAccountsResult, settingsResult] = await Promise.all([
+        supabase.from('signatories').select('*').order('name'),
+        supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
+        supabase.from('settings').select('company_tagline, footer_text').eq('id', 1).single(),
+      ])
+
+      setSignatories((signatoriesResult.data || []) as SignatoryRow[])
+      setBankAccounts((bankAccountsResult.data || []) as BankAccountRow[])
+      setSettingsData(settingsResult.data || null)
+
       if (isEdit && quotationId) {
         const [{ data: quotationRow, error }, { data: itemRows }] = await Promise.all([
           supabase.from('quotations').select('*').eq('id', quotationId).single(),
@@ -300,6 +343,15 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         setMergeQtyUnit(state.mergeQtyUnit)
         setShowItemImages(state.showItemImages)
         setAttachments(Array.isArray(state.quotation.custom_fields?.attachments) ? (state.quotation.custom_fields?.attachments as Array<Record<string, unknown>>) : [])
+        setSignatoryId(typeof state.quotation.custom_fields?.signatoryId === 'string' ? state.quotation.custom_fields.signatoryId : null)
+        setPdfOutput(
+          state.quotation.custom_fields?.pdfOutput && typeof state.quotation.custom_fields.pdfOutput === 'object'
+            ? {
+                ...defaultPdfOutput,
+                ...(state.quotation.custom_fields.pdfOutput as Partial<PdfOutputState>),
+              }
+            : defaultPdfOutput,
+        )
         setExtraCharges(
           normalizeExtraCharges(Array.isArray(state.quotation.custom_fields?.extraCharges) ? state.quotation.custom_fields?.extraCharges : []) as Array<Record<string, unknown>>,
         )
@@ -320,6 +372,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       setAttachments([])
       setExtraCharges([])
       setGroups([])
+      setSignatoryId(null)
+      setPdfOutput(defaultPdfOutput)
       setLoading(false)
     }
 
@@ -479,6 +533,43 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     [calculationInputs, extraCharges, normalizedItems, quotation],
   )
 
+  const handlePdfOutputChange = async (next: PdfOutputState) => {
+    setPdfOutput(next)
+
+    if (!isEdit || !quotationId) return
+
+    const existingCustomFields = buildCustomFields({
+      quotation,
+      columns,
+      headerFields,
+      bottomFields,
+      discountType,
+      discountTiming,
+      whtType,
+      notesTitle,
+      termsTitle,
+      mergeQtyUnit,
+      showItemImages,
+      groups: normalizedGroups,
+      attachments,
+      extraCharges,
+      chargeLabels,
+      signatoryId,
+      pdfOutput: next,
+    })
+
+    const { error } = await supabase
+      .from('quotations')
+      .update({
+        custom_fields: JSON.stringify(existingCustomFields),
+      })
+      .eq('id', quotationId)
+
+    if (error) {
+      alert(`Error saving document options: ${error.message}`)
+    }
+  }
+
   const handleSave = async (status: Quotation['status']) => {
     setSaving(true)
     const poNumber = String(quotation.po_number || '').trim()
@@ -520,6 +611,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           attachments,
           extraCharges,
           chargeLabels,
+          signatoryId,
+          pdfOutput,
         }),
       ),
     }
@@ -672,9 +765,14 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         setTermsTitle={setTermsTitle}
         attachments={attachments}
         setAttachments={setAttachments}
-        signatories={[]}
-        signatoryId={null}
-        onSignatoryChange={() => {}}
+        signatories={signatories.map((signatory) => ({
+          id: signatory.id,
+          name: signatory.name,
+          role: signatory.role || undefined,
+          signatureUrl: signatory.signature_url || undefined,
+        }))}
+        signatoryId={signatoryId}
+        onSignatoryChange={setSignatoryId}
         mergeQtyUnit={mergeQtyUnit}
         setMergeQtyUnit={setMergeQtyUnit}
         columns={columns}
@@ -748,11 +846,18 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
       <div className="mx-auto w-full max-w-2xl px-3 pb-6 md:px-4">
         <PdfOutputSettings
-          value={{ showBankDetails: false, bankAccountId: null, showFooter: true, showTagline: true }}
-          onChange={() => {}}
-          bankAccounts={[]}
-          companyTagline=""
-          footerText=""
+          value={pdfOutput}
+          onChange={handlePdfOutputChange}
+          bankAccounts={bankAccounts.map((account) => ({
+            id: account.id,
+            bankName: account.bank_name || '',
+            accountName: account.account_name || '',
+            accountNumber: account.account_number || '',
+            sortCode: account.sort_code || '',
+            isDefault: !!account.is_default,
+          }))}
+          companyTagline={settingsData?.company_tagline || ''}
+          footerText={settingsData?.footer_text || ''}
         />
       </div>
     </div>

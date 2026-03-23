@@ -20,6 +20,7 @@ import JsonItemsImportSheet from '@/components/items/JsonItemsImportSheet'
 const cardCls = 'rounded-2xl border border-zinc-200 bg-white ring-0 shadow-none'
 const inputCls = 'h-9 rounded-lg border-zinc-200 bg-white text-sm text-zinc-900'
 const labelCls = 'text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500'
+const neutralActionBtnCls = 'h-8 gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-700 hover:bg-zinc-50'
 
 export default function MobileInvoiceForm(props) {
   const {
@@ -44,6 +45,7 @@ export default function MobileInvoiceForm(props) {
     signatories,
     signatoryId,
     onSignatoryChange,
+    afterSignatorySlot,
     mergeQtyUnit,
     setMergeQtyUnit,
     columns,
@@ -307,7 +309,7 @@ export default function MobileInvoiceForm(props) {
             <CardContent className="space-y-2 p-3.5">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-sm font-semibold text-zinc-900">Custom Fields</h2>
-                <Button type="button" variant="outline" size="sm" className="h-8 rounded-xl border-zinc-200 bg-zinc-900 px-3 text-[11px] text-white hover:bg-zinc-800 hover:text-white" onClick={onAddHeaderField}>
+                <Button type="button" variant="outline" size="sm" className={neutralActionBtnCls} onClick={onAddHeaderField}>
                   <Plus className="mr-1 h-3.5 w-3.5" />
                   Add Field
                 </Button>
@@ -353,19 +355,19 @@ export default function MobileInvoiceForm(props) {
 
             <div className="rounded-[24px] border border-zinc-200 bg-white p-2 shadow-none">
               <div className="grid grid-cols-4 gap-2">
-                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border-zinc-200 bg-zinc-900 text-xs text-white hover:bg-zinc-800 hover:text-white" onClick={() => setShowColumnManager(true)}>
+                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border border-zinc-200 bg-white text-xs font-medium text-zinc-700 hover:bg-zinc-50" onClick={() => setShowColumnManager(true)}>
                   <Settings2 className="mr-1.5 h-4 w-4" />
                   Settings
                 </Button>
-                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border-zinc-200 bg-zinc-900 text-xs text-white hover:bg-zinc-800 hover:text-white" onClick={openImportSheet}>
+                <Button type="button" variant="outline" size="sm" className={`${neutralActionBtnCls} h-11 justify-center`} onClick={openImportSheet}>
                   <Upload className="mr-1.5 h-4 w-4" />
                   Import
                 </Button>
-                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border-zinc-200 bg-zinc-900 text-xs text-white hover:bg-zinc-800 hover:text-white" onClick={onAddGroup}>
+                <Button type="button" variant="outline" size="sm" className={`${neutralActionBtnCls} h-11 justify-center`} onClick={onAddGroup}>
                   <Layers className="mr-1.5 h-4 w-4" />
                   Group
                 </Button>
-                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border-zinc-200 bg-zinc-900 text-xs text-white hover:bg-zinc-800 hover:text-white" onClick={onAddItem}>
+                <Button type="button" variant="outline" size="sm" className={`${neutralActionBtnCls} h-11 justify-center`} onClick={onAddItem}>
                   <Plus className="mr-1.5 h-4 w-4" />
                   Item
                 </Button>
@@ -420,11 +422,11 @@ export default function MobileInvoiceForm(props) {
 
             <div className="rounded-[24px] border-l-4 border-emerald-500 border border-zinc-200 bg-white p-2 shadow-none">
               <div className="grid grid-cols-2 gap-2">
-                <Button type="button" variant="outline" className="h-12 rounded-2xl border-emerald-200 bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white" onClick={onAddItem}>
+                <Button type="button" variant="outline" className={`${neutralActionBtnCls} h-12 justify-center text-sm`} onClick={onAddItem}>
                   <Plus className="mr-1.5 h-4 w-4" />
                   + Add Item
                 </Button>
-                <Button type="button" variant="outline" className="h-12 rounded-2xl border-blue-200 bg-blue-600 text-white hover:bg-blue-700 hover:text-white" onClick={onAddGroup}>
+                <Button type="button" variant="outline" className={`${neutralActionBtnCls} h-12 justify-center text-sm`} onClick={onAddGroup}>
                   <Layers className="mr-1.5 h-4 w-4" />
                   + Add Group
                 </Button>
@@ -465,7 +467,7 @@ export default function MobileInvoiceForm(props) {
                 <div>
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <h4 className="text-sm font-semibold text-zinc-900">Additional Notes</h4>
-                    <Button type="button" variant="outline" size="sm" className="h-9 rounded-2xl border-blue-200 bg-blue-600 px-3 text-xs text-white hover:bg-blue-700 hover:text-white" onClick={onAddBottomField}>
+                    <Button type="button" variant="outline" size="sm" className={neutralActionBtnCls} onClick={onAddBottomField}>
                       <Plus className="mr-1 h-3.5 w-3.5" />
                       Add Row
                     </Button>
@@ -550,9 +552,11 @@ export default function MobileInvoiceForm(props) {
                 id: s.id,
                 name: s.name,
                 role: s.role,
-                signatureUrl: s.signature_url,
+                signatureUrl: s.signature_url || s.signatureUrl,
               }))}
             />
+
+            {afterSignatorySlot ? afterSignatorySlot : null}
 
             <Card className={cardCls}>
               <CardContent className="p-0">
@@ -622,7 +626,7 @@ export default function MobileInvoiceForm(props) {
                 <Button type="button" variant="outline" className="h-12 rounded-2xl border-zinc-300 bg-white" onClick={onSaveDraft} disabled={saving}>
                   {saving ? 'Saving...' : 'Save Draft'}
                 </Button>
-                <Button type="button" className="h-12 rounded-2xl bg-zinc-900 text-white hover:bg-zinc-800" onClick={onSaveSent} disabled={saving}>
+                <Button type="button" className="h-12 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700" onClick={onSaveSent} disabled={saving}>
                   {saving ? 'Saving...' : primaryLabel}
                 </Button>
               </div>

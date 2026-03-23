@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp, ImagePlus, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import UnitInput from '@/components/UnitInput'
-import ItemImageUpload from '@/components/ItemImageUpload'
 
 const labelCls = 'text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500'
 const inputCls = 'mt-1 h-10 rounded-2xl border-zinc-200 bg-white text-sm text-zinc-900'
+const CLOUD_NAME = 'ddhqvv77g'
+const UPLOAD_PRESET = 'ml_default'
 
 export default function MobileItemCard({
   item,
@@ -28,6 +29,8 @@ export default function MobileItemCard({
   getColumn,
 }) {
   const [showImageSlot, setShowImageSlot] = useState(Boolean(item.image_url))
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     if (item.image_url) setShowImageSlot(true)
@@ -43,6 +46,34 @@ export default function MobileItemCard({
   const discountValue = item.discount_rate
   const hasDiscountOverride = discountValue !== null && discountValue !== undefined
   const discountExcluded = discountValue === 0
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('upload_preset', UPLOAD_PRESET)
+
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) throw new Error('Upload failed')
+      const data = await response.json()
+      onUpdate(index, 'image_url', data.secure_url)
+      setShowImageSlot(true)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      alert(`Image upload failed: ${message}`)
+    } finally {
+      setUploading(false)
+      if (event.target) event.target.value = ''
+    }
+  }
 
   return (
     <Card className="overflow-hidden rounded-[22px] border border-zinc-200 bg-white ring-0 shadow-none">
@@ -75,14 +106,25 @@ export default function MobileItemCard({
         </div>
 
         <div className="ml-auto flex items-center gap-1">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageUpload}
+          />
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className={`h-8 w-8 rounded-xl ${item.image_url ? 'text-emerald-600' : 'text-zinc-500'}`}
-            onClick={() => setShowImageSlot((current) => !current)}
+            className={`h-8 w-8 overflow-hidden rounded-xl ${item.image_url ? 'border border-emerald-200 bg-emerald-50 text-emerald-600' : 'text-zinc-500'}`}
+            onClick={() => fileInputRef.current?.click()}
           >
-            <ImagePlus className="h-4 w-4" />
+            {item.image_url ? (
+              <img src={item.image_url} alt="Item thumbnail" className="h-full w-full object-cover" />
+            ) : (
+              <ImagePlus className="h-4 w-4" />
+            )}
           </Button>
           <Button
             type="button"
@@ -259,8 +301,39 @@ export default function MobileItemCard({
 
         {showImageSlot || item.image_url ? (
           <div className="rounded-[20px] border border-zinc-200 bg-zinc-50/80 p-3">
-            <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Item Image</div>
-            <ItemImageUpload value={item.image_url || null} onChange={(url) => onUpdate(index, 'image_url', url)} />
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Item Image</div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                >
+                  {item.image_url ? 'Change' : uploading ? 'Uploading...' : 'Upload'}
+                </button>
+                {item.image_url ? (
+                  <button
+                    type="button"
+                    onClick={() => onUpdate(index, 'image_url', null)}
+                    className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                  >
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            {item.image_url ? (
+              <img src={item.image_url} alt="Item preview" className="h-20 w-20 rounded-xl border border-zinc-200 object-cover" />
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-white text-zinc-400 hover:bg-zinc-50"
+              >
+                {uploading ? '...' : <ImagePlus className="h-5 w-5" />}
+              </button>
+            )}
           </div>
         ) : null}
 
