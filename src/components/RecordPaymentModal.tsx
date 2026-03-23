@@ -20,6 +20,13 @@ type InvoiceSummary = {
   total: number
 }
 
+type BankAccount = {
+  id: string
+  bank_name?: string | null
+  account_number?: string | null
+  is_default?: boolean | null
+}
+
 type PaymentMethod = "Transfer" | "Cash" | "POS" | "Cheque" | "Other"
 type PaymentType = "full" | "partial"
 
@@ -67,6 +74,8 @@ export default function RecordPaymentModal({
   const controlledOpen = open ?? true
   const [form, setForm] = React.useState<FormState>(DEFAULT_FORM)
   const [previousSettled, setPreviousSettled] = React.useState(0)
+  const [bankAccounts, setBankAccounts] = React.useState<BankAccount[]>([])
+  const [selectedBankId, setSelectedBankId] = React.useState("")
   const [loadingBalance, setLoadingBalance] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState("")
@@ -80,13 +89,19 @@ export default function RecordPaymentModal({
     if (!controlledOpen || !invoice?.id) return
 
     let cancelled = false
-    const loadPreviousSettled = async () => {
+    const loadModalData = async () => {
       setLoadingBalance(true)
-      const { data, error } = await supabase
-        .from("payments")
-        .select("cash_amount,wht_amount")
-        .eq("invoice_id", invoice.id)
-        .is("voided_at", null)
+      const [{ data, error }, { data: bankData, error: bankError }] = await Promise.all([
+        supabase
+          .from("payments")
+          .select("cash_amount,wht_amount")
+          .eq("invoice_id", invoice.id)
+          .is("voided_at", null),
+        supabase
+          .from("bank_accounts")
+          .select("*")
+          .order("is_default", { ascending: false }),
+      ])
 
       if (cancelled) return
 
@@ -100,12 +115,21 @@ export default function RecordPaymentModal({
         )
         setPreviousSettled(total)
       }
+      if (bankError) {
+        setError((current) => current || bankError.message)
+        setBankAccounts([])
+        setSelectedBankId("")
+      } else {
+        const nextBanks = (bankData || []) as BankAccount[]
+        setBankAccounts(nextBanks)
+        setSelectedBankId(nextBanks[0]?.id || "")
+      }
       setLoadingBalance(false)
     }
 
     setForm(DEFAULT_FORM())
     setError("")
-    void loadPreviousSettled()
+    void loadModalData()
 
     return () => {
       cancelled = true
@@ -150,6 +174,7 @@ export default function RecordPaymentModal({
       reference: form.reference || null,
       notes: form.notes || null,
       source: "live",
+      bank_account_id: form.method === "Transfer" && selectedBankId ? selectedBankId : null,
     }
 
     const { error: insertError } = await supabase.from("payments").insert(payload)
@@ -192,7 +217,7 @@ export default function RecordPaymentModal({
     <Dialog open={controlledOpen} onOpenChange={(next) => (next ? onOpenChange?.(next) : close())}>
       <DialogContent className="max-h-[85vh] max-w-[440px] overflow-y-auto rounded-2xl bg-white p-0 sm:max-w-[440px]">
         <DialogHeader className="border-b border-slate-100 px-5 py-4">
-          <DialogTitle className="text-[17px] text-slate-900">Record Payment</DialogTitle>
+          <DialogTitle className="border-l-4 border-emerald-500 pl-3 text-[17px] text-slate-900">Record Payment</DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
             Save a payment for {invoice.invoice_number}.
           </DialogDescription>
@@ -219,7 +244,8 @@ export default function RecordPaymentModal({
 
           <div
             style={{
-              backgroundColor: "#F8FAFC",
+              backgroundColor: "#EFF6FF",
+              borderLeft: "4px solid #2563EB",
               borderRadius: "10px",
               padding: "12px 16px",
               display: "flex",
@@ -303,6 +329,31 @@ export default function RecordPaymentModal({
             </div>
           </div>
 
+          {form.method === "Transfer" ? (
+            <div className="space-y-1.5 rounded-lg border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3">
+              <label className="text-sm font-medium text-slate-700">Received Into Account</label>
+              <select
+                value={selectedBankId}
+                onChange={(e) => setSelectedBankId(e.target.value)}
+                style={{
+                  width: "100%",
+                  border: "1px solid #a7f3d0",
+                  borderRadius: "10px",
+                  padding: "10px 12px",
+                  fontSize: "14px",
+                  backgroundColor: "white",
+                  color: "#0f172a",
+                }}
+              >
+                {bankAccounts.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.bank_name || "Bank"} — {b.account_number || "No account"}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
           <div>
             <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Reference</div>
             <Input value={form.reference} onChange={(e) => setField("reference", e.target.value)} placeholder="Optional reference" />
@@ -318,7 +369,7 @@ export default function RecordPaymentModal({
             />
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+          <div className="rounded-lg border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3">
             <div className="flex items-center justify-between gap-2 text-sm">
               <span className="font-medium text-slate-500">Settlement</span>
               <span className="font-bold text-slate-900">{formatMoney(amountPaid)}</span>
@@ -332,7 +383,7 @@ export default function RecordPaymentModal({
           </div>
 
           {error ? (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+            <div className="rounded-xl bg-red-600 px-3 py-2 text-xs text-white">
               {error}
             </div>
           ) : null}

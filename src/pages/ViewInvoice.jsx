@@ -364,12 +364,16 @@ export default function ViewInvoice() {
       }
     })
   })()
-  const statusBadgeVariant =
+  const statusBadgeClass =
     computedStatus === 'paid'
-      ? 'default'
+      ? 'bg-emerald-500 text-white'
       : computedStatus === 'overdue'
-        ? 'destructive'
-        : 'outline'
+        ? 'bg-red-500 text-white'
+        : computedStatus === 'sent'
+          ? 'bg-blue-500 text-white'
+          : computedStatus === 'partial'
+            ? 'bg-amber-500 text-white'
+            : 'bg-slate-400 text-white'
 
   const handleDownloadPDF = async () => {
     if (pdfGenerating) return
@@ -1261,7 +1265,7 @@ export default function ViewInvoice() {
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Status</div>
                   <div className="mt-2">
-                    <Badge variant={statusBadgeVariant} className="capitalize">{String(computedStatus).replace(/_/g, ' ')}</Badge>
+                    <Badge className={`capitalize ${statusBadgeClass}`}>{String(computedStatus).replace(/_/g, ' ')}</Badge>
                   </div>
                 </div>
               </div>
@@ -1272,7 +1276,7 @@ export default function ViewInvoice() {
                   <div className="text-xs text-slate-500">Running balance reflects non-voided settlements in date order.</div>
                 </div>
                 {computedStatus !== 'paid' ? (
-                  <Button type="button" size="sm" onClick={() => setShowPaymentModal(true)}>
+                  <Button type="button" size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => setShowPaymentModal(true)}>
                     Record Payment
                   </Button>
                 ) : null}

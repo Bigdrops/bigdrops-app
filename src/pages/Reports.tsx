@@ -46,8 +46,10 @@ type CollectionRow = {
   cash_amount?: number | null
   wht_amount?: number | null
   invoices?: CollectionInvoiceInfo | CollectionInvoiceInfo[] | null
+  bank_accounts?: { bank_name?: string | null; account_number?: string | null } | null
   invoice_number?: string | null
   client_name?: string | null
+  account_label?: string | null
 }
 
 type ProjectFinancialRow = {
@@ -134,13 +136,17 @@ const getAgingBucket = (dueDate: string | null | undefined) => {
 const getStatusClass = (status: string | null | undefined) => {
   switch (String(status || '').toLowerCase()) {
     case 'paid':
-      return 'bg-emerald-100 text-emerald-700'
+      return 'bg-emerald-500 text-white'
     case 'overdue':
-      return 'bg-red-100 text-red-600'
+      return 'bg-red-500 text-white'
+    case 'partial':
+      return 'bg-amber-500 text-white'
     case 'sent':
-      return 'bg-blue-100 text-blue-700'
+      return 'bg-blue-500 text-white'
+    case 'draft':
+      return 'bg-slate-400 text-white'
     default:
-      return 'bg-muted text-muted-foreground'
+      return 'bg-slate-400 text-white'
   }
 }
 
@@ -155,10 +161,10 @@ function SummaryMetric({
 }) {
   const toneClass =
     tone === 'danger'
-      ? 'bg-red-50 text-red-600'
+      ? 'border-l-4 border-red-500 bg-red-50 text-red-600'
       : tone === 'success'
-        ? 'bg-emerald-50 text-emerald-700'
-        : 'bg-muted/60 text-foreground'
+        ? 'border-l-4 border-emerald-500 bg-emerald-50 text-emerald-700'
+        : 'border-l-4 border-blue-500 bg-blue-50 text-foreground'
 
   const labelToneClass =
     tone === 'danger'
@@ -235,7 +241,11 @@ export default function Reports() {
       })
 
       let receivablesQuery = supabase.from('invoice_financials_v').select('*').order('issue_date', { ascending: false })
-      let paymentsQuery = supabase.from('payments').select('*').is('voided_at', null).order('date', { ascending: false })
+      let paymentsQuery = supabase
+        .from('payments')
+        .select(`*, invoices(invoice_number, client_name), bank_accounts(bank_name, account_number)`)
+        .is('voided_at', null)
+        .order('date', { ascending: false })
 
       if (safeDate(queryStart)) {
         receivablesQuery = receivablesQuery.gte('issue_date', safeDate(queryStart))
@@ -246,10 +256,9 @@ export default function Reports() {
         paymentsQuery = paymentsQuery.lte('date', safeDate(queryEnd))
       }
 
-      const [receivablesResult, paymentsResult, invoicesResult, projectsResult] = await Promise.all([
+      const [receivablesResult, paymentsResult, projectsResult] = await Promise.all([
         receivablesQuery,
         paymentsQuery,
-        supabase.from('invoices').select('id, invoice_number, client_name'),
         supabase.from('project_financials_v').select('*').order('outstanding', { ascending: false }),
       ])
 
@@ -258,22 +267,16 @@ export default function Reports() {
       setReceivables((receivablesResult.data || []) as InvoiceFinancialRow[])
       setProjects((projectsResult.data || []) as ProjectFinancialRow[])
 
-      const invoiceLookup = new Map<string, CollectionInvoiceInfo>(
-        ((invoicesResult.data || []) as Array<{ id: string; invoice_number?: string | null; client_name?: string | null }>).map((invoice) => [
-          invoice.id,
-          {
-            invoice_number: invoice.invoice_number,
-            client_name: invoice.client_name,
-          },
-        ]),
-      )
-
       const collectionRows = ((paymentsResult.data || []) as CollectionRow[]).map((payment) => {
-        const joinedInvoice = invoiceLookup.get(String(payment.invoice_id || ''))
+        const joinedInvoice = Array.isArray(payment.invoices) ? payment.invoices[0] : payment.invoices
+        const linkedAccount = payment.bank_accounts
         return {
           ...payment,
           invoice_number: joinedInvoice?.invoice_number || '—',
           client_name: joinedInvoice?.client_name || '—',
+          account_label: linkedAccount?.bank_name
+            ? `${linkedAccount.bank_name} — ${linkedAccount.account_number || 'No account'}`
+            : payment.method || '—',
         }
       })
       setCollections(collectionRows)
@@ -286,7 +289,7 @@ export default function Reports() {
 
       setError({
         receivables: receivablesResult.error?.message || '',
-        collections: paymentsResult.error?.message || invoicesResult.error?.message || '',
+        collections: paymentsResult.error?.message || '',
         projects: projectsResult.error?.message || '',
       })
     }
@@ -417,7 +420,7 @@ export default function Reports() {
               <SummaryMetric label="Invoices" value={String(receivablesSummary.count)} />
             </div>
 
-            {error.receivables ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error.receivables}</div> : null}
+            {error.receivables ? <div className="rounded-xl bg-red-600 px-4 py-3 text-sm text-white">{error.receivables}</div> : null}
 
             <TableShell loading={loading.receivables} empty={filteredReceivables.length === 0}>
               <Table>
@@ -504,7 +507,7 @@ export default function Reports() {
               <SummaryMetric label="Payments" value={String(collectionsSummary.count)} />
             </div>
 
-            {error.collections ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error.collections}</div> : null}
+            {error.collections ? <div className="rounded-xl bg-red-600 px-4 py-3 text-sm text-white">{error.collections}</div> : null}
 
             <TableShell loading={loading.collections} empty={filteredCollections.length === 0}>
               <Table>
@@ -516,6 +519,7 @@ export default function Reports() {
                     <TableHead className="text-right">Cash</TableHead>
                     <TableHead className="text-right">WHT</TableHead>
                     <TableHead className="text-right">Settlement</TableHead>
+                    <TableHead>Account</TableHead>
                     <TableHead>Method</TableHead>
                     <TableHead>Reference</TableHead>
                   </TableRow>
@@ -537,6 +541,7 @@ export default function Reports() {
                       <TableCell className="text-right">{formatMoney(row.cash_amount)}</TableCell>
                       <TableCell className="text-right">{formatMoney(row.wht_amount)}</TableCell>
                       <TableCell className="text-right font-semibold">{formatMoney(Number(row.cash_amount || 0) + Number(row.wht_amount || 0))}</TableCell>
+                      <TableCell>{row.account_label || row.method || '—'}</TableCell>
                       <TableCell>{row.method || '—'}</TableCell>
                       <TableCell>{row.reference || '—'}</TableCell>
                     </TableRow>
@@ -553,7 +558,7 @@ export default function Reports() {
               <SummaryMetric label="Total Outstanding" value={formatMoney(projectsSummary.totalOutstanding)} tone="danger" />
             </div>
 
-            {error.projects ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error.projects}</div> : null}
+            {error.projects ? <div className="rounded-xl bg-red-600 px-4 py-3 text-sm text-white">{error.projects}</div> : null}
 
             <TableShell loading={loading.projects} empty={projects.length === 0}>
               <Table>
