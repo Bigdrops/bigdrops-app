@@ -18,6 +18,8 @@ import {
 } from 'lucide-react'
 
 import Layout from '../components/Layout'
+import ProjectDocumentCard from '@/components/project/ProjectDocumentCard'
+import ProjectDocumentSheet from '@/components/project/ProjectDocumentSheet'
 import { supabase } from '../supabase'
 
 const PROJECT_STATUS_CONFIG = {
@@ -94,11 +96,13 @@ export default function ProjectDetail() {
   const [invoices, setInvoices] = useState([])
   const [csrs, setCsrs] = useState([])
   const [quotations, setQuotations] = useState([])
+  const [projectDocs, setProjectDocs] = useState([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const [showLink, setShowLink] = useState(false)
+  const [showProjectDocumentSheet, setShowProjectDocumentSheet] = useState(false)
   const [linkDocId, setLinkDocId] = useState('')
   const [linkType, setLinkType] = useState('invoice')
   const [linking, setLinking] = useState(false)
@@ -113,7 +117,7 @@ export default function ProjectDetail() {
   const fetchAll = async () => {
     setLoading(true)
 
-    const [projectRes, invoiceRes, csrRes, quotationRes, financialsRes] = await Promise.all([
+    const [projectRes, invoiceRes, csrRes, quotationRes, financialsRes, projectDocsRes] = await Promise.all([
       supabase.from('projects').select('*').eq('id', id).single(),
       supabase
         .from('invoices')
@@ -132,6 +136,7 @@ export default function ProjectDetail() {
         .eq('project_id', id)
         .order('issue_date', { ascending: false }),
       supabase.from('project_financials_v').select('*').eq('project_id', id).single(),
+      supabase.from('project_documents').select('*').eq('project_id', id).order('created_at', { ascending: false }),
     ])
 
     const projectData = projectRes.data
@@ -161,6 +166,7 @@ export default function ProjectDetail() {
     setInvoices(enrichedInvoices)
     setCsrs(csrRes.data || [])
     setQuotations(quotationRes.data || [])
+    setProjectDocs(projectDocsRes.data || [])
     setEditForm({
       name: projectData?.name || '',
       status: projectData?.status || 'active',
@@ -240,6 +246,19 @@ export default function ProjectDetail() {
 
     setLinkDocId('')
     setShowLink(false)
+    fetchAll()
+  }
+
+  const handleDeleteProjectDocument = async (docId) => {
+    const confirmed = window.confirm('Delete this external document?')
+    if (!confirmed) return
+
+    const { error } = await supabase.from('project_documents').delete().eq('id', docId)
+    if (error) {
+      alert(`Delete failed: ${error.message}`)
+      return
+    }
+
     fetchAll()
   }
 
@@ -640,6 +659,35 @@ export default function ProjectDetail() {
                 })}
               </div>
             )}
+
+            <div className="mt-5 rounded-2xl border-l-4 border-l-amber-500 border border-slate-200 bg-white p-4 shadow-sm ring-1 ring-amber-50">
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-slate-700">External Documents ({projectDocs.length})</div>
+                  <div className="mt-1 text-sm text-slate-500">POs, receipts, waybills, and other third-party project records.</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowProjectDocumentSheet(true)}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
+                >
+                  + Add Document
+                </button>
+              </div>
+
+              {projectDocs.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50 px-4 py-8 text-center">
+                  <div className="text-sm font-semibold text-slate-700">No external documents yet</div>
+                  <div className="mt-1 text-sm text-slate-500">Paste AI-parsed JSON to store purchase orders, receipts, waybills, and other project files.</div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {projectDocs.map((document) => (
+                    <ProjectDocumentCard key={document.id} document={document} onDelete={handleDeleteProjectDocument} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -660,6 +708,13 @@ export default function ProjectDetail() {
             </div>
           </div>
         </div>
+
+        <ProjectDocumentSheet
+          open={showProjectDocumentSheet}
+          onOpenChange={setShowProjectDocumentSheet}
+          projectId={id}
+          onSuccess={fetchAll}
+        />
 
         {showLink ? (
           <div
