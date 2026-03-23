@@ -11,6 +11,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 
 type InvoiceSummary = {
@@ -227,6 +234,7 @@ export default function RecordPaymentModal({
           <div
             style={{
               backgroundColor: "#F0FDF4",
+              borderLeft: "4px solid #16A34A",
               borderRadius: "10px",
               padding: "12px 16px",
               display: "flex",
@@ -307,50 +315,36 @@ export default function RecordPaymentModal({
             </div>
             <div>
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Payment Mode</div>
-              <select
-                value={form.method}
-                onChange={(e) => setField("method", e.target.value as PaymentMethod)}
-                style={{
-                  width: "100%",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "10px",
-                  padding: "10px 12px",
-                  fontSize: "14px",
-                  backgroundColor: "white",
-                  color: "#0f172a",
-                }}
-              >
-                <option value="Transfer">Transfer</option>
-                <option value="Cash">Cash</option>
-                <option value="POS">POS</option>
-                <option value="Cheque">Cheque</option>
-                <option value="Other">Other</option>
-              </select>
+              <Select value={form.method} onValueChange={(value) => setField("method", value as PaymentMethod)}>
+                <SelectTrigger className="w-full border-blue-200 bg-white">
+                  <SelectValue placeholder="Select payment mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Transfer">Transfer</SelectItem>
+                  <SelectItem value="Cash">Cash</SelectItem>
+                  <SelectItem value="POS">POS</SelectItem>
+                  <SelectItem value="Cheque">Cheque</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           {form.method === "Transfer" ? (
             <div className="space-y-1.5 rounded-lg border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3">
               <label className="text-sm font-medium text-slate-700">Received Into Account</label>
-              <select
-                value={selectedBankId}
-                onChange={(e) => setSelectedBankId(e.target.value)}
-                style={{
-                  width: "100%",
-                  border: "1px solid #a7f3d0",
-                  borderRadius: "10px",
-                  padding: "10px 12px",
-                  fontSize: "14px",
-                  backgroundColor: "white",
-                  color: "#0f172a",
-                }}
-              >
-                {bankAccounts.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.bank_name || "Bank"} — {b.account_number || "No account"}
-                  </option>
-                ))}
-              </select>
+              <Select value={selectedBankId} onValueChange={setSelectedBankId}>
+                <SelectTrigger className="w-full border-emerald-200 bg-white">
+                  <SelectValue placeholder="Select account" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bankAccounts.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {(b.bank_name || "Bank") + " — " + (b.account_number || "No account")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           ) : null}
 

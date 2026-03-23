@@ -40,16 +40,22 @@ type CollectionInvoiceInfo = {
 type CollectionRow = {
   id: string
   invoice_id?: string | null
+  bank_account_id?: string | null
   date?: string | null
   method?: string | null
   reference?: string | null
   cash_amount?: number | null
   wht_amount?: number | null
   invoices?: CollectionInvoiceInfo | CollectionInvoiceInfo[] | null
-  bank_accounts?: { bank_name?: string | null; account_number?: string | null } | null
   invoice_number?: string | null
   client_name?: string | null
   account_label?: string | null
+}
+
+type BankAccountLookupRow = {
+  id: string
+  bank_name?: string | null
+  account_number?: string | null
 }
 
 type ProjectFinancialRow = {
@@ -67,7 +73,7 @@ type ProjectFinancialRow = {
   outstanding?: number | null
 }
 
-const formatMoney = (value: number | null | undefined) => `\u20A6${Number(value || 0).toLocaleString()}`
+const formatMoney = (value: number | null | undefined) => `₦${Number(value || 0).toLocaleString()}`
 
 const formatDate = (value: string | null | undefined) => {
   if (!value) return '—'
@@ -87,7 +93,7 @@ const toDateInput = (date: Date) => {
   return `${year}-${month}-${day}`
 }
 
-const safeDate = (val: string | null) => (val && val.trim() !== '' ? val : null)
+const safeDate = (val: string | null | undefined) => (val && val.trim() !== '' ? val : null)
 
 const getPresetRange = (preset: DatePreset, customStart: string, customEnd: string) => {
   const now = new Date()
@@ -204,7 +210,7 @@ export default function Reports() {
   const [datePreset, setDatePreset] = useState<DatePreset>('this_month')
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
-  const [overdueOnly, setOverdueOnly] = useState(false)
+  const [receivablesFilter, setReceivablesFilter] = useState<'all' | 'unpaid' | 'paid'>('all')
   const [methodFilter, setMethodFilter] = useState('all')
   const [clientFilter, setClientFilter] = useState('all')
   const [receivables, setReceivables] = useState<InvoiceFinancialRow[]>([])
@@ -243,17 +249,20 @@ export default function Reports() {
       let receivablesQuery = supabase.from('invoice_financials_v').select('*').order('issue_date', { ascending: false })
       let paymentsQuery = supabase
         .from('payments')
-        .select(`*, invoices(invoice_number, client_name), bank_accounts(bank_name, account_number)`)
+        .select('*, invoices(invoice_number, client_name)')
         .is('voided_at', null)
         .order('date', { ascending: false })
 
-      if (safeDate(queryStart)) {
-        receivablesQuery = receivablesQuery.gte('issue_date', safeDate(queryStart))
-        paymentsQuery = paymentsQuery.gte('date', safeDate(queryStart))
+      const startDate = safeDate(queryStart)
+      const endDate = safeDate(queryEnd)
+
+      if (startDate) {
+        receivablesQuery = receivablesQuery.gte('issue_date', startDate)
+        paymentsQuery = paymentsQuery.gte('date', startDate)
       }
-      if (safeDate(queryEnd)) {
-        receivablesQuery = receivablesQuery.lte('issue_date', safeDate(queryEnd))
-        paymentsQuery = paymentsQuery.lte('date', safeDate(queryEnd))
+      if (endDate) {
+        receivablesQuery = receivablesQuery.lte('issue_date', endDate)
+        paymentsQuery = paymentsQuery.lte('date', endDate)
       }
 
       const [receivablesResult, paymentsResult, projectsResult] = await Promise.all([
@@ -267,9 +276,36 @@ export default function Reports() {
       setReceivables((receivablesResult.data || []) as InvoiceFinancialRow[])
       setProjects((projectsResult.data || []) as ProjectFinancialRow[])
 
+      const bankAccountIds = Array.from(
+        new Set(
+          ((paymentsResult.data || []) as CollectionRow[])
+            .map((payment) => payment.bank_account_id)
+            .filter((value): value is string => Boolean(value)),
+        ),
+      )
+
+      let bankAccountsMap = new Map<string, BankAccountLookupRow>()
+      if (bankAccountIds.length > 0) {
+        const { data: bankAccountRows, error: bankAccountsError } = await supabase
+          .from('bank_accounts')
+          .select('id, bank_name, account_number')
+          .in('id', bankAccountIds)
+
+        if (bankAccountsError && !cancelled) {
+          setError((current) => ({
+            ...current,
+            collections: bankAccountsError.message,
+          }))
+        } else {
+          bankAccountsMap = new Map(
+            ((bankAccountRows || []) as BankAccountLookupRow[]).map((bankAccount) => [bankAccount.id, bankAccount]),
+          )
+        }
+      }
+
       const collectionRows = ((paymentsResult.data || []) as CollectionRow[]).map((payment) => {
         const joinedInvoice = Array.isArray(payment.invoices) ? payment.invoices[0] : payment.invoices
-        const linkedAccount = payment.bank_accounts
+        const linkedAccount = payment.bank_account_id ? bankAccountsMap.get(payment.bank_account_id) : null
         return {
           ...payment,
           invoice_number: joinedInvoice?.invoice_number || '—',
@@ -303,10 +339,13 @@ export default function Reports() {
 
   const filteredReceivables = useMemo(() => {
     return receivables
-      .filter((row) => Number(row.balance_due || 0) > 0)
       .filter((row) => isWithinRange(row.issue_date || null, start, end))
-      .filter((row) => (overdueOnly ? Number(row.balance_due || 0) > 0 && getAgingBucket(row.due_date) !== 'Current' : true))
-  }, [receivables, start, end, overdueOnly])
+      .filter((row) => {
+        if (receivablesFilter === 'unpaid') return Number(row.balance_due || 0) > 0
+        if (receivablesFilter === 'paid') return Number(row.balance_due || 0) <= 0
+        return true
+      })
+  }, [receivables, start, end, receivablesFilter])
 
   const receivablesSummary = useMemo(() => {
     const totalOutstanding = filteredReceivables.reduce((sum, row) => sum + Number(row.balance_due || 0), 0)
@@ -406,11 +445,32 @@ export default function Reports() {
 
           <TabsContent value="receivables" className="space-y-4">
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant={overdueOnly ? 'outline' : 'default'} size="sm" onClick={() => setOverdueOnly(false)}>
+              <Button
+                type="button"
+                variant={receivablesFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                className={receivablesFilter === 'all' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'border-blue-200 bg-white text-blue-700 hover:bg-blue-50'}
+                onClick={() => setReceivablesFilter('all')}
+              >
                 All
               </Button>
-              <Button type="button" variant={overdueOnly ? 'default' : 'outline'} size="sm" onClick={() => setOverdueOnly(true)}>
-                Overdue only
+              <Button
+                type="button"
+                variant={receivablesFilter === 'unpaid' ? 'default' : 'outline'}
+                size="sm"
+                className={receivablesFilter === 'unpaid' ? 'bg-amber-500 text-white hover:bg-amber-600' : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'}
+                onClick={() => setReceivablesFilter('unpaid')}
+              >
+                Unpaid
+              </Button>
+              <Button
+                type="button"
+                variant={receivablesFilter === 'paid' ? 'default' : 'outline'}
+                size="sm"
+                className={receivablesFilter === 'paid' ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'}
+                onClick={() => setReceivablesFilter('paid')}
+              >
+                Paid
               </Button>
             </div>
 
@@ -469,8 +529,8 @@ export default function Reports() {
               <div>
                 <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Payment Method</div>
                 <Select value={methodFilter} onValueChange={setMethodFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
+                  <SelectTrigger className="w-full border-blue-200 bg-white">
+                    <SelectValue placeholder="All Methods" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All methods</SelectItem>
@@ -485,11 +545,11 @@ export default function Reports() {
               <div>
                 <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Client</div>
                 <Select value={clientFilter} onValueChange={setClientFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
+                  <SelectTrigger className="w-full border-emerald-200 bg-white">
+                    <SelectValue placeholder="All Clients" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All clients</SelectItem>
+                    <SelectItem value="all">All Clients</SelectItem>
                     {collectionClients.map((client) => (
                       <SelectItem key={client} value={client}>
                         {client}

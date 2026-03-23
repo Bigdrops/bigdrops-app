@@ -3,6 +3,7 @@ import { Calendar, ChevronDown, ChevronUp, FileText, Hash, Layers, MoreHorizonta
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
 import ClientSelector from '@/components/ClientSelector'
@@ -417,13 +418,13 @@ export default function MobileInvoiceForm(props) {
               )}
             </div>
 
-            <div className="rounded-[24px] border border-zinc-200 bg-white p-2 shadow-none">
+            <div className="rounded-[24px] border-l-4 border-emerald-500 border border-zinc-200 bg-white p-2 shadow-none">
               <div className="grid grid-cols-2 gap-2">
-                <Button type="button" variant="outline" className="h-12 rounded-2xl border-zinc-200 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white" onClick={onAddItem}>
+                <Button type="button" variant="outline" className="h-12 rounded-2xl border-emerald-200 bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white" onClick={onAddItem}>
                   <Plus className="mr-1.5 h-4 w-4" />
                   + Add Item
                 </Button>
-                <Button type="button" variant="outline" className="h-12 rounded-2xl border-zinc-200 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white" onClick={onAddGroup}>
+                <Button type="button" variant="outline" className="h-12 rounded-2xl border-blue-200 bg-blue-600 text-white hover:bg-blue-700 hover:text-white" onClick={onAddGroup}>
                   <Layers className="mr-1.5 h-4 w-4" />
                   + Add Group
                 </Button>
@@ -433,24 +434,24 @@ export default function MobileInvoiceForm(props) {
 
           <section ref={additionalInfoRef} className="space-y-4">
             <Card className={cardCls}>
-              <CardContent className="space-y-4 p-4">
+              <CardContent className="space-y-4 border-l-4 border-blue-500 p-4">
                 <h3 className="text-sm font-semibold text-zinc-900">Commercial Terms</h3>
 
                 <div>
                   <label className={labelCls}>Payment Terms</label>
-                  <select
-                    value={invoice.payment_terms || ''}
-                    onChange={(e) => updateInvoice('payment_terms', e.target.value)}
-                    className="mt-1 h-11 w-full rounded-2xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
-                  >
-                    <option value="">Select terms</option>
-                    <option value="Due on Receipt">Due on Receipt</option>
-                    <option value="Net 15">Net 15</option>
-                    <option value="Net 30">Net 30</option>
-                    <option value="Net 45">Net 45</option>
-                    <option value="Net 60">Net 60</option>
-                    <option value="Custom">Custom</option>
-                  </select>
+                  <Select value={invoice.payment_terms || ''} onValueChange={(value) => updateInvoice('payment_terms', value)}>
+                    <SelectTrigger className="mt-1 h-11 w-full rounded-2xl border-blue-200 bg-white text-sm text-zinc-900">
+                      <SelectValue placeholder="Select terms" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
+                      <SelectItem value="Net 15">Net 15</SelectItem>
+                      <SelectItem value="Net 30">Net 30</SelectItem>
+                      <SelectItem value="Net 45">Net 45</SelectItem>
+                      <SelectItem value="Net 60">Net 60</SelectItem>
+                      <SelectItem value="Custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
                   {invoice.payment_terms === 'Custom' ? (
                     <Input
                       value={invoice.custom_payment_terms || ''}
@@ -464,7 +465,7 @@ export default function MobileInvoiceForm(props) {
                 <div>
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <h4 className="text-sm font-semibold text-zinc-900">Additional Notes</h4>
-                    <Button type="button" variant="outline" size="sm" className="h-9 rounded-2xl border-zinc-200 bg-zinc-900 px-3 text-xs text-white hover:bg-zinc-800 hover:text-white" onClick={onAddBottomField}>
+                    <Button type="button" variant="outline" size="sm" className="h-9 rounded-2xl border-blue-200 bg-blue-600 px-3 text-xs text-white hover:bg-blue-700 hover:text-white" onClick={onAddBottomField}>
                       <Plus className="mr-1 h-3.5 w-3.5" />
                       Add Row
                     </Button>
