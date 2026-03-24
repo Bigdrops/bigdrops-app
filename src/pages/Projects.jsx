@@ -891,6 +891,13 @@ export default function Projects() {
           </div>
         )}
       </div>
+
+      <button
+        onClick={() => navigate('/projects/new')}
+        className="fixed bottom-28 right-8 z-50 flex h-16 w-16 items-center justify-center rounded-[24px] border border-white/20 bg-zinc-950 text-white shadow-2xl transition-transform hover:scale-110"
+      >
+        <Plus size={32} />
+      </button>
     </Layout>
   )
 }

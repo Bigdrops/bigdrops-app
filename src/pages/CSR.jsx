@@ -523,14 +523,12 @@ export default function CSR() {
           </Card>
         )}
 
-        {isMobile && (
-          <button
-            onClick={() => navigate("/csr/new")}
-            className="fixed bottom-20 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 text-white shadow-[0_16px_40px_rgba(0,0,0,0.25)] transition hover:bg-black"
-          >
-            <Plus className="h-5 w-5" />
-          </button>
-        )}
+        <button
+          onClick={() => navigate("/csr/new")}
+          className="fixed bottom-28 right-8 z-50 flex h-16 w-16 items-center justify-center rounded-[24px] border border-white/20 bg-zinc-950 text-white shadow-2xl transition-transform hover:scale-110"
+        >
+          <Plus size={32} />
+        </button>
       </div>
     </Layout>
   )
