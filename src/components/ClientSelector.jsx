@@ -309,7 +309,7 @@ export default function ClientSelector({
                         <button
                           key={client.id}
                           type="button"
-                          className="flex w-full flex-col rounded-xl border border-border bg-card px-3 py-3 text-left active:bg-slate-50"
+                          className="flex w-full flex-col rounded-xl border border-border bg-card px-3 py-3 text-left active:bg-muted/50"
                           onClick={() => selectClient(client)}
                         >
                           <span className="text-sm font-semibold text-foreground">{client.name}</span>

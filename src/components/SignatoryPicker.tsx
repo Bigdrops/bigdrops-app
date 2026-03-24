@@ -86,7 +86,7 @@ export function InvoiceSignatoryPicker({
 
         <CardContent className="space-y-4">
           {!selected ? (
-            <div className="rounded-lg border border-border bg-slate-50/40 p-3">
+            <div className="rounded-lg border border-border bg-muted/40 p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-sm font-medium text-foreground">
@@ -111,7 +111,7 @@ export function InvoiceSignatoryPicker({
               </div>
             </div>
           ) : (
-            <div className="rounded-lg border border-border bg-slate-50/40">
+            <div className="rounded-lg border border-border bg-muted/40">
               <div className="px-3 py-3">
                 <div className="mb-3 flex items-start gap-3">
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
