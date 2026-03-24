@@ -17,7 +17,6 @@ import { toDbItem } from '@/domain/invoice'
 import type { ColumnConfig, InvoiceFieldEntry, InvoiceItem } from '@/domain/invoice'
 import {
   buildQuotationFormState,
-  getNextQuotationNumber,
   type DbQuotation,
   type DbQuotationItem,
   type Quotation,
@@ -364,10 +363,16 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         return
       }
 
-      const { data } = await supabase.from('quotations').select('quotation_number').order('created_at', { ascending: false })
+      const { data } = await supabase.from('quotations').select('quotation_number')
+      const nums = (data || []).map((q: { quotation_number?: string | null }) => {
+        const match = q.quotation_number?.match(/(\d+)$/)
+        return match ? parseInt(match[1], 10) : 0
+      })
+      const next = Math.max(0, ...nums) + 1
+      const nextQuotationNumber = `SASQ-${String(next).padStart(4, '0')}`
       setQuotation((current) => ({
         ...current,
-        quotation_number: getNextQuotationNumber((data || []) as Array<Pick<DbQuotation, 'quotation_number'>>),
+        quotation_number: nextQuotationNumber,
       }))
       setAttachments([])
       setExtraCharges([])
@@ -615,6 +620,22 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           pdfOutput,
         }),
       ),
+    }
+
+    if (!isEdit) {
+      let candidateNumber = payload.quotation_number
+      const { data: existing } = await supabase
+        .from('quotations')
+        .select('id')
+        .eq('quotation_number', candidateNumber)
+        .maybeSingle()
+      if (existing) {
+        const match = candidateNumber.match(/(\d+)$/)
+        const num = match ? parseInt(match[1], 10) : 0
+        candidateNumber = `SASQ-${String(num + 1).padStart(4, '0')}`
+        payload.quotation_number = candidateNumber
+        setQuotation((current) => ({ ...current, quotation_number: candidateNumber }))
+      }
     }
 
     const quoteQuery =
