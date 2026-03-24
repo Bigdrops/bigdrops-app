@@ -2,8 +2,14 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import { useSettings, uploadFile, saveSettings } from '../hooks/useSettings'
-import { ALL_QUICK_TILE_IDS, QUICK_TILE_REGISTRY, loadStoredQuickTiles, saveStoredQuickTiles } from '../config/quickTiles'
-import { Switch } from '@/components/ui/switch'
+import { ALL_QUICK_TILE_IDS, QUICK_TILE_COUNT, QUICK_TILE_REGISTRY, loadStoredQuickTiles, saveStoredQuickTiles } from '../config/quickTiles'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Building2, CreditCard, ImageIcon, FileText,
   Shield, Check, Loader2, ChevronRight, Upload, X,
@@ -1031,62 +1037,53 @@ function DashboardSection() {
     window.__quickTilesFlashTimeout = window.setTimeout(() => setFlashTile(null), 900)
   }
 
-  const toggleTile = (tileId) => {
-    const included = activeTiles.includes(tileId)
-    if (included) {
-      saveTiles(activeTiles.filter((id) => id !== tileId))
-    } else {
-      saveTiles([...activeTiles, tileId])
-      setFlashTile(tileId)
-      window.clearTimeout(window.__quickTilesFlashTimeout)
-      window.__quickTilesFlashTimeout = window.setTimeout(() => setFlashTile(null), 900)
-      return
+  const updateTileAt = (tileIndex, nextTileId) => {
+    const currentTileId = activeTiles[tileIndex]
+    if (!nextTileId || currentTileId === nextTileId) return
+
+    const existingIndex = activeTiles.indexOf(nextTileId)
+    const nextTiles = [...activeTiles]
+
+    if (existingIndex >= 0) {
+      nextTiles[existingIndex] = currentTileId
     }
-    setFlashTile(tileId)
+
+    nextTiles[tileIndex] = nextTileId
+    saveTiles(nextTiles)
+    setFlashTile(nextTileId)
     window.clearTimeout(window.__quickTilesFlashTimeout)
     window.__quickTilesFlashTimeout = window.setTimeout(() => setFlashTile(null), 900)
   }
 
-  const moveTile = (tileId, direction) => {
-    const currentIndex = activeTiles.indexOf(tileId)
-    if (currentIndex === -1) return
-
-    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+  const moveTile = (tileIndex, direction) => {
+    const targetIndex = direction === 'up' ? tileIndex - 1 : tileIndex + 1
     if (targetIndex < 0 || targetIndex >= activeTiles.length) return
-
     const nextTiles = [...activeTiles]
-    const [movedTile] = nextTiles.splice(currentIndex, 1)
+    const [movedTile] = nextTiles.splice(tileIndex, 1)
     nextTiles.splice(targetIndex, 0, movedTile)
     saveTiles(nextTiles)
-    setFlashTile(tileId)
+    setFlashTile(movedTile)
   }
-
-  const orderedTiles = [
-    ...activeTiles,
-    ...ALL_QUICK_TILE_IDS.filter((tileId) => !activeTiles.includes(tileId)),
-  ]
 
   return (
     <div className="rounded-2xl border border-border bg-card">
       <div className="border-b border-border px-5 py-4">
         <h3 className="text-sm font-bold text-foreground">Quick Tiles</h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          Local mobile preference only. Choose which action cards appear on this device and arrange their order for the dashboard.
+          Local mobile preference only. Keep exactly four dashboard tiles on this device and swap each slot to the feature or create-action you want.
         </p>
       </div>
       <div className="px-5">
-      {orderedTiles.map((tileId, index) => {
+      {activeTiles.slice(0, QUICK_TILE_COUNT).map((tileId, index) => {
         const tile = QUICK_TILE_REGISTRY[tileId]
-        const included = activeTiles.includes(tileId)
         const Icon = tile.icon
-        const activeIndex = activeTiles.indexOf(tileId)
 
         return (
           <div
             key={tileId}
             className={`flex items-center justify-between gap-3 py-3.5 transition-colors ${
               flashTile === tileId ? 'bg-emerald-50/70' : ''
-            } ${index < orderedTiles.length - 1 ? 'border-b border-slate-100' : ''}`}
+            } ${index < QUICK_TILE_COUNT - 1 ? 'border-b border-slate-100' : ''}`}
           >
             <div className="flex min-w-0 items-center gap-3">
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] ${tile.iconBg}`}>
@@ -1094,45 +1091,55 @@ function DashboardSection() {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-foreground">{tile.label}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${included ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                    {included ? `Tile ${activeIndex + 1}` : 'Hidden'}
+                  <p className="text-sm font-semibold text-foreground">Tile {index + 1}</p>
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                    {tile.label}
                   </span>
                 </div>
                 <p className="text-[11px] text-muted-foreground">{tile.description}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {included ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => moveTile(tileId, 'up')}
-                    disabled={activeIndex <= 0}
-                    className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-card text-slate-700 transition hover:bg-muted/50 disabled:opacity-40"
-                    aria-label={`Move ${tile.label} up`}
-                  >
-                    <ArrowUp size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => moveTile(tileId, 'down')}
-                    disabled={activeIndex === -1 || activeIndex >= activeTiles.length - 1}
-                    className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-card text-slate-700 transition hover:bg-muted/50 disabled:opacity-40"
-                    aria-label={`Move ${tile.label} down`}
-                  >
-                    <ArrowDown size={15} />
-                  </button>
-                </>
-              ) : null}
-              <Switch checked={included} onCheckedChange={() => toggleTile(tileId)} />
+              <Select value={tileId} onValueChange={(nextValue) => updateTileAt(index, nextValue)}>
+                <SelectTrigger className="h-10 w-[170px] rounded-xl border-border bg-card text-sm">
+                  <SelectValue placeholder="Choose tile" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ALL_QUICK_TILE_IDS.map((optionId) => {
+                    const option = QUICK_TILE_REGISTRY[optionId]
+                    return (
+                      <SelectItem key={optionId} value={optionId}>
+                        {option.label}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+              <button
+                type="button"
+                onClick={() => moveTile(index, 'up')}
+                disabled={index <= 0}
+                className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-card text-slate-700 transition hover:bg-muted/50 disabled:opacity-40"
+                aria-label={`Move tile ${index + 1} up`}
+              >
+                <ArrowUp size={15} />
+              </button>
+              <button
+                type="button"
+                onClick={() => moveTile(index, 'down')}
+                disabled={index >= activeTiles.length - 1}
+                className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-card text-slate-700 transition hover:bg-muted/50 disabled:opacity-40"
+                aria-label={`Move tile ${index + 1} down`}
+              >
+                <ArrowDown size={15} />
+              </button>
             </div>
           </div>
         )
       })}
       </div>
       <p className="px-5 pb-4 pt-3 text-center text-[11px] text-muted-foreground">
-        Saved only on this device. Desktop navigation and other pages stay unchanged.
+        Exactly four tiles stay visible. Saved only on this device, and desktop navigation stays unchanged.
       </p>
     </div>
   )

@@ -1,16 +1,16 @@
 import * as React from 'react'
 import {
-  Bell,
-  FileText,
-  FileSignature,
-  ClipboardCheck,
-  ChevronRight,
-  ChevronDown,
-  Users,
-  FolderOpen,
   Archive,
   BadgeCheck,
+  Bell,
+  ChevronDown,
+  ChevronRight,
+  ClipboardCheck,
   Clock,
+  FileSignature,
+  FileText,
+  FolderOpen,
+  Truck,
   AlertCircle,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -19,7 +19,6 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import Layout from '../components/Layout'
 import { getQuickTiles, loadStoredQuickTiles } from '../config/quickTiles'
@@ -31,6 +30,7 @@ const typeStyle = {
   Invoice: { badge: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-600', icon: FileText, path: 'invoices' },
   Quotation: { badge: 'bg-violet-50 text-violet-700 border-violet-200', dot: 'bg-violet-600', icon: FileSignature, path: 'quotations' },
   CSR: { badge: 'bg-orange-50 text-orange-700 border-orange-200', dot: 'bg-orange-600', icon: ClipboardCheck, path: 'csr' },
+  Waybill: { badge: 'bg-slate-50 text-slate-700 border-slate-200', dot: 'bg-slate-700', icon: Truck, path: 'waybills' },
 }
 
 function getGreeting() {
@@ -53,10 +53,7 @@ function getUserDisplayName(session) {
   if (candidates.length > 0) return candidates[0]
 
   const emailName = user?.email?.split('@')[0]?.replace(/[._-]+/g, ' ')?.trim()
-  if (emailName) {
-    return emailName.replace(/\b\w/g, (char) => char.toUpperCase())
-  }
-
+  if (emailName) return emailName.replace(/\b\w/g, (char) => char.toUpperCase())
   return 'there'
 }
 
@@ -67,10 +64,10 @@ function formatStatus(status) {
 
 function getStatusStyle(status) {
   const label = formatStatus(status)
-  if (label === 'Paid' || label === 'Approved') return { badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: BadgeCheck, label }
+  if (label === 'Paid' || label === 'Approved' || label === 'Delivered') return { badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: BadgeCheck, label }
   if (label === 'Overdue') return { badge: 'bg-red-50 text-red-700 border-red-200', icon: AlertCircle, label }
   if (label === 'In progress') return { badge: 'bg-slate-50 text-slate-700 border-slate-200', icon: Clock, label: 'In Progress' }
-  if (label === 'Sent') return { badge: 'bg-blue-50 text-blue-700 border-blue-200', icon: BadgeCheck, label }
+  if (label === 'Sent' || label === 'Dispatched') return { badge: 'bg-blue-50 text-blue-700 border-blue-200', icon: BadgeCheck, label }
   return { badge: 'bg-slate-50 text-slate-700 border-slate-200', icon: Clock, label }
 }
 
@@ -79,9 +76,8 @@ export default function Dashboard({ session }) {
   const [quickAccessOpen, setQuickAccessOpen] = React.useState(false)
   const [loading, setLoading] = React.useState(true)
   const [recentDocs, setRecentDocs] = React.useState([])
-  const [recentClients, setRecentClients] = React.useState([])
   const [recentProjects, setRecentProjects] = React.useState([])
-  const [summary, setSummary] = React.useState({ outstandingReceivables: 0, thisMonthCollections: 0 })
+  const [summary, setSummary] = React.useState({ overdue: 0, dueThisWeek: 0, thisMonthCollections: 0, pendingFollowUp: 0 })
   const quickTiles = React.useMemo(() => getQuickTiles(loadStoredQuickTiles()), [])
 
   React.useEffect(() => {
@@ -92,43 +88,62 @@ export default function Dashboard({ session }) {
       startOfMonth.setDate(1)
       startOfMonth.setHours(0, 0, 0, 0)
 
-      const [invoiceRes, quotationRes, csrRes, financialsRes, clientsRes, projectsRes] = await Promise.all([
-        supabase.from('invoices').select('id, invoice_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
-        supabase.from('quotations').select('id, quotation_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
+      const now = new Date()
+      const endOfWeek = new Date(now)
+      endOfWeek.setDate(now.getDate() + 7)
+      endOfWeek.setHours(23, 59, 59, 999)
+
+      const [invoiceRes, quotationRes, csrRes, waybillRes, financialsRes, projectsRes] = await Promise.all([
+        supabase.from('invoices').select('id, invoice_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
+        supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
         supabase.from('csrs').select('id, csr_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
-        supabase.from('invoice_financials_v').select('balance_due, cash_received, issue_date'),
-        supabase.from('clients').select('id, name').order('created_at', { ascending: false }).limit(3),
+        supabase.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
+        supabase.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
         supabase.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
       ])
 
       const mergedDocs = [
-        ...(invoiceRes.data || []).map((doc) => ({ id: doc.id, type: 'Invoice', number: doc.invoice_number, client: doc.client_name || 'Walking Client', date: doc.created_at, status: doc.status })),
-        ...(quotationRes.data || []).map((doc) => ({ id: doc.id, type: 'Quotation', number: doc.quotation_number, client: doc.client_name || 'Walking Client', date: doc.created_at, status: doc.status })),
-        ...(csrRes.data || []).map((doc) => ({ id: doc.id, type: 'CSR', number: doc.csr_number, client: doc.client_name || 'Walking Client', date: doc.created_at, status: doc.status })),
+        ...(invoiceRes.data || []).map((doc) => ({ id: doc.id, type: 'Invoice', number: doc.invoice_number, client: doc.client_name || 'Walking Client', date: doc.created_at, status: doc.status, amount: doc.total })),
+        ...(quotationRes.data || []).map((doc) => ({ id: doc.id, type: 'Quotation', number: doc.quotation_number, client: doc.client_name || 'Walking Client', date: doc.created_at, status: doc.status, amount: doc.total })),
+        ...(csrRes.data || []).map((doc) => ({ id: doc.id, type: 'CSR', number: doc.csr_number, client: doc.client_name || 'Walking Client', date: doc.created_at, status: doc.status, amount: null })),
+        ...(waybillRes.data || []).map((doc) => ({ id: doc.id, type: 'Waybill', number: doc.waybill_number || 'Waybill', client: doc.client_name || 'No client', date: doc.created_at || doc.date, status: doc.status, amount: null, meta: doc.vehicle_plate || formatStatus(doc.type) })),
       ]
         .filter((doc) => doc.date)
         .sort((a, b) => new Date(b.date) - new Date(a.date))
         .slice(0, 5)
 
       const invoiceFinancials = financialsRes.data || []
-      const outstandingReceivables = invoiceFinancials.reduce((sum, row) => sum + (Number(row.balance_due || 0) > 0 ? Number(row.balance_due || 0) : 0), 0)
+      const overdue = invoiceFinancials.reduce((sum, row) => String(row.computed_status || '').toLowerCase() === 'overdue' ? sum + Number(row.balance_due || 0) : sum, 0)
+      const dueThisWeek = invoiceFinancials.reduce((sum, row) => {
+        const dueDate = row.due_date ? new Date(row.due_date) : null
+        const balance = Number(row.balance_due || 0)
+        if (!dueDate || Number.isNaN(dueDate.getTime()) || balance <= 0) return sum
+        if (dueDate < now || dueDate > endOfWeek) return sum
+        return sum + balance
+      }, 0)
       const thisMonthCollections = invoiceFinancials.reduce((sum, row) => {
         const issueDate = row.issue_date ? new Date(row.issue_date) : null
         if (!issueDate || Number.isNaN(issueDate.getTime()) || issueDate < startOfMonth) return sum
         return sum + Number(row.cash_received || 0)
       }, 0)
+      const pendingFollowUp = invoiceFinancials.filter((row) => {
+        const balance = Number(row.balance_due || 0)
+        if (balance <= 0) return false
+        if (String(row.computed_status || '').toLowerCase() === 'overdue') return true
+        const dueDate = row.due_date ? new Date(row.due_date) : null
+        if (!dueDate || Number.isNaN(dueDate.getTime())) return false
+        return dueDate >= now && dueDate <= endOfWeek
+      }).length
 
       setRecentDocs(mergedDocs)
-      setRecentClients(clientsRes.data || [])
       setRecentProjects(projectsRes.data || [])
-      setSummary({ outstandingReceivables, thisMonthCollections })
+      setSummary({ overdue, dueThisWeek, thisMonthCollections, pendingFollowUp })
       setLoading(false)
     }
 
     void load()
   }, [])
 
-  const greeting = getGreeting()
   const userName = getUserDisplayName(session)
   const dateLabel = new Date().toLocaleDateString('en-GB', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
 
@@ -136,15 +151,16 @@ export default function Dashboard({ session }) {
     <Layout title="Dashboard" session={session}>
       <div className="space-y-3">
         <Card className="rounded-2xl border-border bg-card shadow-sm">
-          <div className="flex items-start justify-between gap-3 px-4 py-4">
-            <div className="min-w-0">
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{greeting}</div>
-              <div className="mt-1 truncate text-lg font-black text-foreground">{userName}</div>
-              <div className="mt-1 text-xs text-muted-foreground">{dateLabel}</div>
+          <div className="flex items-center justify-between gap-2 px-3.5 py-3">
+            <div className="min-w-0 flex-1 pr-1">
+              <div className="truncate text-base font-black text-foreground">
+                {getGreeting()}, {userName}
+              </div>
+              <div className="mt-0.5 text-xs text-muted-foreground">{dateLabel}</div>
             </div>
 
-            <Button variant="outline" size="icon" className="rounded-2xl border-border bg-muted/50" onClick={() => {}}>
-              <Bell className="h-5 w-5 text-slate-700" />
+            <Button variant="outline" size="icon" className="h-9 w-9 rounded-2xl border-border bg-muted/50" onClick={() => {}}>
+              <Bell className="h-4.5 w-4.5 text-slate-700" />
             </Button>
           </div>
         </Card>
@@ -171,12 +187,7 @@ export default function Dashboard({ session }) {
         </section>
 
         <section className="space-y-2">
-          <div className="flex items-center justify-between px-1">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent activity</div>
-            <button type="button" className="text-xs font-semibold text-foreground underline-offset-4 hover:underline" onClick={() => navigate('/invoices')}>
-              View all
-            </button>
-          </div>
+          <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent activity</div>
 
           <Card className="rounded-2xl border-border bg-card shadow-sm">
             <div className="divide-y divide-border">
@@ -191,10 +202,10 @@ export default function Dashboard({ session }) {
                   const TypeIcon = type.icon
                   const StatusIcon = status.icon
                   return (
-                    <button key={`${doc.type}-${doc.id}`} type="button" onClick={() => navigate(`/${type.path}/${doc.id}`)} className="w-full px-4 py-3 text-left transition hover:bg-muted/50">
+                    <button key={`${doc.type}-${doc.id}`} type="button" onClick={() => navigate(`/${type.path}/${doc.id}`)} className="w-full px-4 py-4 text-left transition hover:bg-muted/50">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-start gap-3">
-                          <span className="mt-0.5 grid h-10 w-10 place-items-center rounded-2xl bg-muted">
+                          <span className="mt-0.5 grid h-11 w-11 place-items-center rounded-2xl bg-muted">
                             <TypeIcon className="h-5 w-5 text-slate-700" />
                           </span>
                           <div className="min-w-0">
@@ -205,9 +216,11 @@ export default function Dashboard({ session }) {
                               </Badge>
                               <div className="text-sm font-bold text-foreground">{doc.number}</div>
                             </div>
-                            <div className="mt-1 truncate text-xs text-muted-foreground">
+                            <div className="mt-1 text-xs text-muted-foreground">
                               {doc.client} • {new Date(doc.date).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}
                             </div>
+                            {doc.meta ? <div className="mt-1 text-xs text-muted-foreground">{doc.meta}</div> : null}
+                            {doc.amount != null ? <div className="mt-2 text-sm font-black text-foreground">{naira(doc.amount)}</div> : null}
                           </div>
                         </div>
 
@@ -224,28 +237,31 @@ export default function Dashboard({ session }) {
                 })
               )}
             </div>
-
-            <div className="px-4 py-3">
-              <Separator className="mb-3" />
-              <button type="button" className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-muted/50 px-4 py-3 text-sm font-semibold text-foreground shadow-sm" onClick={() => navigate('/invoices')}>
-                View document lists <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
           </Card>
         </section>
 
         <section className="space-y-2">
-          <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Outstanding summary</div>
+          <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Action summary</div>
           <div className="grid grid-cols-2 gap-3">
             <button type="button" onClick={() => navigate('/reports')} className="rounded-2xl border border-red-200 bg-red-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
-              <div className="text-xs font-semibold uppercase tracking-wider text-red-700">Receivables</div>
-              <div className="mt-2 text-xl font-black text-foreground">{naira(summary.outstandingReceivables)}</div>
-              <div className="mt-1 text-xs text-muted-foreground">Tap to open Reports</div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-red-700">Overdue</div>
+              <div className="mt-2 text-lg font-black text-foreground">{naira(summary.overdue)}</div>
+              <div className="mt-1 text-xs text-muted-foreground">Unpaid past due</div>
+            </button>
+            <button type="button" onClick={() => navigate('/reports')} className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
+              <div className="text-xs font-semibold uppercase tracking-wider text-amber-700">Due this week</div>
+              <div className="mt-2 text-lg font-black text-foreground">{naira(summary.dueThisWeek)}</div>
+              <div className="mt-1 text-xs text-muted-foreground">Upcoming receivables</div>
             </button>
             <button type="button" onClick={() => navigate('/reports')} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
               <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Collected</div>
-              <div className="mt-2 text-xl font-black text-foreground">{naira(summary.thisMonthCollections)}</div>
+              <div className="mt-2 text-lg font-black text-foreground">{naira(summary.thisMonthCollections)}</div>
               <div className="mt-1 text-xs text-muted-foreground">This month</div>
+            </button>
+            <button type="button" onClick={() => navigate('/reports')} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-700">Pending follow-up</div>
+              <div className="mt-2 text-lg font-black text-foreground">{summary.pendingFollowUp}</div>
+              <div className="mt-1 text-xs text-muted-foreground">Invoices needing attention</div>
             </button>
           </div>
         </section>
@@ -258,36 +274,16 @@ export default function Dashboard({ session }) {
           <Sheet open={quickAccessOpen} onOpenChange={setQuickAccessOpen}>
             <SheetContent side="bottom" className="p-0">
               <div className="rounded-t-3xl">
-                <SheetHeader className="rounded-t-3xl bg-slate-900 px-5 py-4 text-white">
+                <SheetHeader className="rounded-t-3xl bg-slate-900 px-5 py-4 text-white shadow-none">
                   <SheetTitle className="text-base font-black tracking-tight">Quick Access</SheetTitle>
                 </SheetHeader>
 
                 <div className="bg-muted/50 px-4 py-4">
                   <div className="mb-4">
-                    <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent clients</div>
-                    <div className="space-y-2">
-                      {recentClients.map((client) => (
-                        <button key={client.id} type="button" onClick={() => { navigate(`/clients/${client.id}`); setQuickAccessOpen(false) }} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm transition hover:bg-muted/50">
-                          <div className="flex items-center gap-3">
-                            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-muted">
-                              <Users className="h-5 w-5 text-slate-700" />
-                            </span>
-                            <div>
-                              <div className="text-sm font-semibold text-foreground">{client.name}</div>
-                              <div className="text-xs text-muted-foreground">Open client</div>
-                            </div>
-                          </div>
-                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
                     <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent projects</div>
                     <div className="space-y-2">
                       {recentProjects.map((project) => (
-                        <button key={project.id} type="button" onClick={() => { navigate(`/projects/${project.id}`); setQuickAccessOpen(false) }} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm transition hover:bg-muted/50">
+                        <button key={project.id} type="button" onClick={() => { navigate(`/projects/${project.id}`); setQuickAccessOpen(false) }} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-left transition hover:bg-muted/50">
                           <div className="flex items-center gap-3">
                             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-muted">
                               <FolderOpen className="h-5 w-5 text-slate-700" />
@@ -305,7 +301,7 @@ export default function Dashboard({ session }) {
 
                   <div className="mb-4">
                     <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Archive</div>
-                    <button type="button" onClick={() => { navigate('/settings'); setQuickAccessOpen(false) }} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm transition hover:bg-muted/50">
+                    <button type="button" onClick={() => { navigate('/settings'); setQuickAccessOpen(false) }} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-left transition hover:bg-muted/50">
                       <div className="flex items-center gap-3">
                         <span className="grid h-10 w-10 place-items-center rounded-2xl bg-muted">
                           <Archive className="h-5 w-5 text-slate-700" />
@@ -318,17 +314,6 @@ export default function Dashboard({ session }) {
                       <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </button>
                   </div>
-
-                  <Card className="rounded-2xl border-border bg-card p-4 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs text-muted-foreground">Workspace</div>
-                      <div className="text-xs font-semibold text-foreground">Main workspace</div>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <div className="text-xs text-muted-foreground">Notifications</div>
-                      <div className="text-xs font-semibold text-foreground">Placeholder</div>
-                    </div>
-                  </Card>
 
                   <div className="mt-4">
                     <Button variant="outline" className="w-full rounded-2xl border-border bg-card" onClick={() => setQuickAccessOpen(false)}>
