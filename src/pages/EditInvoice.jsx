@@ -3,6 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
 import MobileInvoiceForm from '@/components/invoice/MobileInvoiceForm'
+import { PdfOutputSettings } from '@/components/PdfOutputSettings'
+import {
+  DEFAULT_INVOICE_PDF_OUTPUT,
+  getInvoicePdfOutput,
+  getInvoiceSignatoryId,
+  parseCustomFields,
+} from '@/domain/invoice'
 import {
   BUILTIN_COLUMNS,
   buildCalculationInputs,
@@ -36,8 +43,11 @@ export default function EditInvoice() {
   const [whtType, setWhtType] = useState('percent')
   const [attachments, setAttachments] = useState([])
   const [signatories, setSignatories] = useState([])
+  const [bankAccounts, setBankAccounts] = useState([])
+  const [settingsData, setSettingsData] = useState(null)
   const [customFields, setCustomFields] = useState([])
   const [signatoryId, setSignatoryId] = useState(null)
+  const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
   const [bottomFields, setBottomFields] = useState([])
   const [extraCharges, setExtraCharges] = useState([])
   const [chargeLabels, setChargeLabels] = useState({
@@ -50,6 +60,7 @@ export default function EditInvoice() {
   const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
   const [invoiceTitle, setInvoiceTitle] = useState('')
   const [invoice, setInvoice] = useState(null)
+  const [baseCustomFields, setBaseCustomFields] = useState({})
   const [items, setItems] = useState([{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }])
   const [groups, setGroups] = useState([])
   const {
@@ -74,11 +85,17 @@ export default function EditInvoice() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: signatoryRows } = await supabase
-        .from('signatories').select('*').order('name')
-      setSignatories(signatoryRows || [])
+      const [signatoryRows, bankAccountRows, settingsRows, invoiceResult] = await Promise.all([
+        supabase.from('signatories').select('*').order('name'),
+        supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
+        supabase.from('settings').select('company_tagline, footer_text').eq('id', 1).single(),
+        supabase.from('invoices').select('*').eq('id', id).single(),
+      ])
+      setSignatories(signatoryRows.data || [])
+      setBankAccounts(bankAccountRows.data || [])
+      setSettingsData(settingsRows.data || null)
 
-      const { data } = await supabase.from('invoices').select('*').eq('id', id).single()
+      const data = invoiceResult.data
       if (!data) {
         navigate('/invoices')
         return
@@ -88,10 +105,11 @@ export default function EditInvoice() {
       let parsedCustomFields = null
 
       try {
-        const parsed = JSON.parse(data.custom_fields || '{}')
+        const parsed = parseCustomFields(data.custom_fields)
         parsedCustomFields = parsed
-        const signatoryId = parsed.signatoryId || null
-        setSignatoryId(signatoryId)
+        setBaseCustomFields(parsed)
+        setSignatoryId(getInvoiceSignatoryId(parsed))
+        setPdfOutput(getInvoicePdfOutput(parsed))
         if (parsed && !Array.isArray(parsed)) {
           setCustomFields(normalizeFieldEntries(parsed.header, 'value'))
           setBottomFields(normalizeFieldEntries(parsed.bottom, 'text'))
@@ -367,6 +385,7 @@ export default function EditInvoice() {
 
     const paymentTermsValue = invoice.payment_terms === 'Custom' ? invoice.custom_payment_terms : invoice.payment_terms
     const customFieldsData = {
+      ...baseCustomFields,
       header: customFields.filter((field) => field.label && field.value),
       bottom: bottomFields.filter((field) => field.text),
       extraCharges: extraCharges.filter((charge) => charge.label),
@@ -382,7 +401,8 @@ export default function EditInvoice() {
       whtType,
       calculationInputs,
       groupMeta,
-      signatoryId: signatoryId,
+      signatoryId,
+      pdfOutput,
     }
 
     const { error } = await supabase
@@ -467,6 +487,22 @@ export default function EditInvoice() {
         signatories={signatories}
         signatoryId={signatoryId}
         onSignatoryChange={setSignatoryId}
+        afterSignatorySlot={
+          <PdfOutputSettings
+            value={pdfOutput}
+            onChange={setPdfOutput}
+            bankAccounts={bankAccounts.map((account) => ({
+              id: account.id,
+              bankName: account.bank_name || '',
+              accountName: account.account_name || '',
+              accountNumber: account.account_number || '',
+              sortCode: account.sort_code || '',
+              isDefault: !!account.is_default,
+            }))}
+            companyTagline={settingsData?.company_tagline || ''}
+            footerText={settingsData?.footer_text || ''}
+          />
+        }
         mergeQtyUnit={mergeQtyUnit}
         setMergeQtyUnit={setMergeQtyUnit}
         columns={columns}

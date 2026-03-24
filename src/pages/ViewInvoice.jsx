@@ -6,7 +6,13 @@ import Layout from '../components/Layout'
 import RecordPaymentModal from '@/components/RecordPaymentModal'
 import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '../components/invoice/exportInvoiceCsv'
-import { toDbItem } from '@/domain/invoice'
+import {
+  DEFAULT_INVOICE_PDF_OUTPUT,
+  getInvoicePdfOutput,
+  getInvoiceSignatoryId,
+  parseCustomFields,
+  toDbItem,
+} from '@/domain/invoice'
 import {
   buildTrailLink,
   parseDocumentCustomFields,
@@ -155,15 +161,11 @@ export default function ViewInvoice() {
   const [client, setClient] = useState(null)
   const [settings, setSettings] = useState({})
   const [bankAccounts, setBankAccounts] = useState([])
+  const [signatories, setSignatories] = useState([])
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showMore, setShowMore] = useState(false)
-  const [pdfOutput, setPdfOutput] = useState({
-    showBankDetails: false,
-    bankAccountId: null,
-    showFooter: true,
-    showTagline: true,
-  })
+  const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
 
   // Payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -255,6 +257,13 @@ export default function ViewInvoice() {
       fetchPayments(),
       fetchInvoiceFinancials(),
       supabase
+        .from('signatories')
+        .select('*')
+        .order('name')
+        .then(({ data }) => {
+          setSignatories(data || [])
+        }),
+      supabase
         .from('bank_accounts')
         .select('*')
         .order('is_default', { ascending: false })
@@ -289,24 +298,7 @@ export default function ViewInvoice() {
   }, [])
 
   useEffect(() => {
-    try {
-      const _cf = JSON.parse(invoice?.custom_fields || '{}')
-      const customFieldObject = Array.isArray(_cf) ? { header: _cf } : _cf || {}
-      const nextPdfOutput = customFieldObject.pdfOutput || {
-        showBankDetails: false,
-        bankAccountId: null,
-        showFooter: true,
-        showTagline: true,
-      }
-      setPdfOutput(nextPdfOutput)
-    } catch {
-      setPdfOutput({
-        showBankDetails: false,
-        bankAccountId: null,
-        showFooter: true,
-        showTagline: true,
-      })
-    }
+    setPdfOutput(getInvoicePdfOutput(invoice?.custom_fields))
   }, [invoice?.custom_fields])
 
   if (loading) return <Layout title="Invoice"><p style={{ padding: 30 }}>Loading...</p></Layout>
@@ -598,28 +590,13 @@ export default function ViewInvoice() {
   }
 
   // ── Custom fields ───────────────────────────────────────────────────────────
-  let customFields = [],
-    bottomFields = [],
-    attachments = []
-  let customFieldObject = {}
-  try {
-    const _cf = JSON.parse(invoice.custom_fields || '{}')
-    customFieldObject = Array.isArray(_cf) ? { header: _cf } : _cf || {}
-    if (Array.isArray(_cf)) {
-      customFields = _cf
-    } else {
-      customFields = _cf.header || []
-      bottomFields = _cf.bottom || []
-      attachments = _cf.attachments || []
-    }
-  } catch (e) {
-    customFields = []
-    bottomFields = []
-    attachments = []
-    customFieldObject = {}
-  }
+  const customFieldObject = parseCustomFields(invoice.custom_fields)
+  const customFields = Array.isArray(customFieldObject.header) ? customFieldObject.header : []
+  const bottomFields = Array.isArray(customFieldObject.bottom) ? customFieldObject.bottom : []
+  const attachments = Array.isArray(customFieldObject.attachments) ? customFieldObject.attachments : []
   const topHeaderFields = customFields.filter((f) => f.label && f.value)
   const conversionTrail = customFieldObject.conversionTrail || {}
+  const selectedSignatory = signatories.find((signatory) => signatory.id === getInvoiceSignatoryId(customFieldObject)) || null
   const handlePdfOutputChange = async (next) => {
     setPdfOutput(next)
     const updatedCf = {
@@ -1422,6 +1399,25 @@ export default function ViewInvoice() {
             <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#333', marginBottom: '4px' }}>Payment Terms</div>
             <div style={{ fontSize: '12px', color: '#555' }}>{invoice.payment_terms || 'Net 30'}</div>
           </div>
+
+          {selectedSignatory && (
+            <Card className="mt-6 border-border shadow-none">
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
+                  {selectedSignatory.signature_url ? (
+                    <img src={selectedSignatory.signature_url} alt={`${selectedSignatory.name} signature`} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-bold text-muted-foreground">SIG</span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Signatory</div>
+                  <div className="mt-1 text-sm font-bold text-foreground">{selectedSignatory.name}</div>
+                  <div className="text-xs text-muted-foreground">{selectedSignatory.role || 'Saved signatory'}</div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* ── Link to Project Modal ── */}

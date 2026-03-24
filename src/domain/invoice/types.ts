@@ -17,6 +17,13 @@ export interface InvoiceAttachment {
   [key: string]: unknown
 }
 
+export interface InvoicePdfOutput {
+  showBankDetails: boolean
+  bankAccountId: string | null
+  showFooter: boolean
+  showTagline: boolean
+}
+
 export interface Payment {
   id: string
   invoice_id: string
@@ -264,6 +271,8 @@ export interface InvoiceCustomFields {
   discountType?: DiscountType
   discountTiming?: DiscountTiming
   whtType?: WhtType
+  pdfOutput?: Partial<InvoicePdfOutput>
+  signatoryId?: string | null
   extraCharges?: ExtraCharge[]
   attachments?: InvoiceAttachment[]
   header?: Array<Record<string, unknown>>

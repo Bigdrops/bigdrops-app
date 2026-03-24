@@ -1,9 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
 import MobileInvoiceForm from '@/components/invoice/MobileInvoiceForm'
 import { PdfOutputSettings } from '@/components/PdfOutputSettings'
+import {
+  DEFAULT_INVOICE_PDF_OUTPUT,
+  getInvoicePdfOutput,
+  getInvoiceSignatoryId,
+  parseCustomFields,
+} from '@/domain/invoice'
 import {
   makeEmptyGroup,
   makeEmptyItem,
@@ -34,8 +40,11 @@ export default function NewInvoice() {
   const [whtType, setWhtType] = useState('percent')
   const [attachments, setAttachments] = useState([])
   const [signatories, setSignatories] = useState([])
+  const [bankAccounts, setBankAccounts] = useState([])
+  const [settingsData, setSettingsData] = useState(null)
   const [customFields, setCustomFields] = useState([])
   const [signatoryId, setSignatoryId] = useState(null)
+  const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
   const [bottomFields, setBottomFields] = useState([])
   const [extraCharges, setExtraCharges] = useState([])
   const [chargeLabels, setChargeLabels] = useState({
@@ -101,6 +110,7 @@ export default function NewInvoice() {
       : [{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }],
   )
   const [groups, setGroups] = useState([])
+  const initialCustomFields = useMemo(() => parseCustomFields(prefill?.custom_fields), [prefill?.custom_fields])
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
@@ -131,23 +141,23 @@ export default function NewInvoice() {
 
   useEffect(() => {
     const loadSignatories = async () => {
-      const { data } = await supabase
-        .from('signatories').select('*').order('name')
-      setSignatories(data || [])
+      const [signatoriesResult, bankAccountsResult, settingsResult] = await Promise.all([
+        supabase.from('signatories').select('*').order('name'),
+        supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
+        supabase.from('settings').select('company_tagline, footer_text').eq('id', 1).single(),
+      ])
+      setSignatories(signatoriesResult.data || [])
+      setBankAccounts(bankAccountsResult.data || [])
+      setSettingsData(settingsResult.data || null)
     }
 
-    loadSignatories()
+    void loadSignatories()
   }, [])
 
   useEffect(() => {
-    if (!prefill?.custom_fields) return
-    try {
-      const parsedCf = JSON.parse(prefill.custom_fields || '{}')
-      setSignatoryId(parsedCf.signatoryId || null)
-    } catch {
-      setSignatoryId(null)
-    }
-  }, [prefill])
+    setSignatoryId(getInvoiceSignatoryId(prefill?.custom_fields))
+    setPdfOutput(getInvoicePdfOutput(prefill?.custom_fields))
+  }, [prefill?.custom_fields])
 
   const updateInvoice = (field, value) => setInvoice((current) => ({ ...current, [field]: value }))
 
@@ -328,6 +338,7 @@ export default function NewInvoice() {
 
     const paymentTermsValue = invoice.payment_terms === 'Custom' ? invoice.custom_payment_terms : invoice.payment_terms
     const customFieldsData = {
+      ...initialCustomFields,
       header: customFields.filter((field) => field.label && field.value),
       bottom: bottomFields.filter((field) => field.text),
       extraCharges: extraCharges.filter((charge) => charge.label),
@@ -343,7 +354,8 @@ export default function NewInvoice() {
       whtType,
       calculationInputs,
       groupMeta,
-      signatoryId: signatoryId,
+      signatoryId,
+      pdfOutput,
     }
 
     const { data: invoiceRow, error } = await supabase
@@ -423,16 +435,18 @@ export default function NewInvoice() {
         onSignatoryChange={setSignatoryId}
         afterSignatorySlot={
           <PdfOutputSettings
-            value={{
-              showBankDetails: false,
-              bankAccountId: null,
-              showFooter: true,
-              showTagline: true,
-            }}
-            onChange={() => {}}
-            bankAccounts={[]}
-            companyTagline=""
-            footerText=""
+            value={pdfOutput}
+            onChange={setPdfOutput}
+            bankAccounts={bankAccounts.map((account) => ({
+              id: account.id,
+              bankName: account.bank_name || '',
+              accountName: account.account_name || '',
+              accountNumber: account.account_number || '',
+              sortCode: account.sort_code || '',
+              isDefault: !!account.is_default,
+            }))}
+            companyTagline={settingsData?.company_tagline || ''}
+            footerText={settingsData?.footer_text || ''}
           />
         }
         mergeQtyUnit={mergeQtyUnit}

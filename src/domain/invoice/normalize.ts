@@ -6,7 +6,15 @@ import type {
   InvoiceAttachment,
   InvoiceCustomFields,
   InvoiceItem,
+  InvoicePdfOutput,
 } from './types'
+
+export const DEFAULT_INVOICE_PDF_OUTPUT: InvoicePdfOutput = {
+  showBankDetails: false,
+  bankAccountId: null,
+  showFooter: true,
+  showTagline: true,
+}
 
 export function toNumber(value: unknown, fallback = 0): number {
   if (value === null || value === undefined || value === '') return fallback
@@ -62,6 +70,26 @@ export function parseCustomFields(value: unknown): InvoiceCustomFields {
   } catch {
     return {}
   }
+}
+
+export function getInvoicePdfOutput(value: unknown): InvoicePdfOutput {
+  const customFields = parseCustomFields(value)
+  const savedPdfOutput = customFields.pdfOutput
+  if (!savedPdfOutput || typeof savedPdfOutput !== 'object' || Array.isArray(savedPdfOutput)) {
+    return { ...DEFAULT_INVOICE_PDF_OUTPUT }
+  }
+
+  return {
+    showBankDetails: typeof savedPdfOutput.showBankDetails === 'boolean' ? savedPdfOutput.showBankDetails : DEFAULT_INVOICE_PDF_OUTPUT.showBankDetails,
+    bankAccountId: typeof savedPdfOutput.bankAccountId === 'string' ? savedPdfOutput.bankAccountId : DEFAULT_INVOICE_PDF_OUTPUT.bankAccountId,
+    showFooter: typeof savedPdfOutput.showFooter === 'boolean' ? savedPdfOutput.showFooter : DEFAULT_INVOICE_PDF_OUTPUT.showFooter,
+    showTagline: typeof savedPdfOutput.showTagline === 'boolean' ? savedPdfOutput.showTagline : DEFAULT_INVOICE_PDF_OUTPUT.showTagline,
+  }
+}
+
+export function getInvoiceSignatoryId(value: unknown): string | null {
+  const customFields = parseCustomFields(value)
+  return typeof customFields.signatoryId === 'string' ? customFields.signatoryId : null
 }
 
 function parseCustomData(value: unknown): CustomDataMap {
