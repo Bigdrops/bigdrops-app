@@ -236,16 +236,16 @@ export default function Invoices() {
 
   return (
     <Layout title="Invoices">
-      <div className="max-w-6xl mx-auto px-4 pb-32 pt-6" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <div className="mx-auto max-w-6xl px-4 py-6 pb-32 sm:px-6 lg:px-8" style={{ fontFamily: "'Inter', sans-serif" }}>
 
-        <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="m-0 text-[22px] font-extrabold text-foreground">Invoices</h2>
-            <p className="mt-1 text-[13px] text-muted-foreground">
+            <h2 className="m-0 text-xl font-semibold text-foreground">Invoices</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               {totalCount} invoice{totalCount !== 1 ? "s" : ""} total
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-start sm:self-auto">
             <button onClick={() => setShowSearch((prev) => !prev)} className={iconButtonClass} aria-label="Toggle search">
               <Search size={16} />
             </button>
@@ -267,13 +267,13 @@ export default function Invoices() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search invoices or clients..."
-              className="w-full h-11 rounded-2xl border border-border bg-background px-4 text-sm font-medium text-zinc-800 outline-none"
+              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm font-medium text-foreground outline-none"
             />
           </div>
         )}
 
         {showFilters && (
-          <div className="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-background p-3">
+          <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-black uppercase text-muted-foreground">Client</span>
               <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className={filterSelectClass}>
@@ -330,7 +330,7 @@ export default function Invoices() {
             <div
               key={inv.id}
               onClick={() => navigate(`/invoices/${inv.id}`)}
-              className="relative px-4 py-3"
+              className="relative px-4 py-3 transition-colors hover:bg-muted/50"
               style={{
                 borderBottom: idx === invoices.length - 1 ? "none" : "1px solid #f1f5f9",
                 cursor: "pointer",
@@ -387,7 +387,7 @@ export default function Invoices() {
           ))}
 
           {invoices.length === 0 && (
-            <div className="text-center py-20 text-muted-foreground font-bold text-sm uppercase tracking-widest">
+            <div className="px-6 py-20 text-center text-sm font-medium text-muted-foreground">
               No invoices match the current filters
             </div>
           )}

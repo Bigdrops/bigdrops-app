@@ -163,12 +163,12 @@ export default function CSR() {
 
   const renderActionMenu = (csr) => (
     <div
-      className="absolute right-0 top-12 z-30 w-36 rounded-2xl border border-zinc-200 bg-background p-1 shadow-xl"
+      className="absolute right-0 top-12 z-30 w-36 rounded-2xl border border-border bg-card p-1 shadow-xl"
       onClick={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
     >
-      <button onClick={(event) => handleView(event, csr.id)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">View</button>
-      <button onClick={(event) => handleEdit(event, csr.id)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">Edit</button>
+      <button onClick={(event) => handleView(event, csr.id)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted/50">View</button>
+      <button onClick={(event) => handleEdit(event, csr.id)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted/50">Edit</button>
       <button onClick={(event) => void handleDeleteClick(event, csr)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">Delete</button>
     </div>
   )
@@ -180,7 +180,7 @@ export default function CSR() {
 
   return (
     <Layout title="Customer Service Reports">
-      <div className="space-y-5" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6 lg:px-8" style={{ fontFamily: "'Inter', sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, gap: 12 }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#0F172A" }}>Customer Service Reports</h2>
@@ -219,15 +219,15 @@ export default function CSR() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search CSRs, clients, or equipment..."
-              className="h-11 w-full rounded-2xl border border-zinc-200 bg-background px-4 text-sm font-medium text-zinc-800 outline-none"
+              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm font-medium text-foreground outline-none"
             />
           </div>
         )}
 
         {showFilters && (
-          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-card p-3">
+          <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase text-zinc-400">Client</span>
+              <span className="text-[11px] font-bold uppercase text-muted-foreground">Client</span>
               <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className={filterSelectClass}>
                 <option>All</option>
                 {clientOptions.map((client) => (
@@ -236,7 +236,7 @@ export default function CSR() {
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase text-zinc-400">Status</span>
+              <span className="text-[11px] font-bold uppercase text-muted-foreground">Status</span>
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterSelectClass}>
                 {["All", "Draft", "Completed", "Pending", "Cancelled"].map((option) => (
                   <option key={option}>{option}</option>
@@ -244,7 +244,7 @@ export default function CSR() {
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase text-zinc-400">Date</span>
+              <span className="text-[11px] font-bold uppercase text-muted-foreground">Date</span>
               <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className={filterSelectClass}>
                 {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
                   <option key={option}>{option}</option>
@@ -252,7 +252,7 @@ export default function CSR() {
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase text-zinc-400">Sort</span>
+              <span className="text-[11px] font-bold uppercase text-muted-foreground">Sort</span>
               <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={filterSelectClass}>
                 {["Newest", "Oldest"].map((option) => (
                   <option key={option}>{option}</option>
@@ -261,7 +261,7 @@ export default function CSR() {
             </div>
             <button
               onClick={resetFilters}
-              className="h-10 rounded-xl border border-zinc-200 px-4 text-xs font-bold uppercase text-zinc-500 transition hover:bg-zinc-50"
+              className="h-10 rounded-xl border border-border px-4 text-xs font-bold uppercase text-muted-foreground transition hover:bg-muted/50"
             >
               Clear Filters
             </button>
@@ -271,21 +271,21 @@ export default function CSR() {
         {isMobile ? (
           <div className="space-y-3 pb-24">
             {loading ? (
-              <Card className="rounded-3xl border-zinc-200 bg-zinc-50">
-                <CardContent className="p-5 text-sm text-zinc-500">
+              <Card className="rounded-3xl border border-border bg-card">
+                <CardContent className="p-5 text-sm text-muted-foreground">
                   Loading service reports...
                 </CardContent>
               </Card>
             ) : filteredCsrs.length === 0 ? (
-              <Card className="rounded-3xl border-zinc-200 bg-zinc-50">
+              <Card className="rounded-3xl border border-border bg-card">
                 <CardContent className="p-5 text-center">
                   <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-zinc-900 text-white">
                     <ClipboardList className="h-5 w-5" />
                   </div>
-                  <div className="text-base font-semibold text-zinc-900">
+                  <div className="text-base font-semibold text-foreground">
                     {hasActiveFilters ? "No service reports found" : "No service reports yet"}
                   </div>
-                  <div className="mt-1 text-sm text-zinc-500">
+                  <div className="mt-1 text-sm text-muted-foreground">
                     {hasActiveFilters ? "Try a different search or filter." : "Create your first CSR to start tracking service activity."}
                   </div>
                 </CardContent>
@@ -391,19 +391,19 @@ export default function CSR() {
             )}
           </div>
         ) : (
-          <Card className="overflow-hidden rounded-[28px] border border-zinc-200 bg-card shadow-sm">
+          <Card className="overflow-hidden rounded-[28px] border border-border bg-card shadow-sm">
             <CardContent className="p-0">
-              <div className="border-b border-zinc-200 bg-zinc-50 px-5 py-4">
-                <div className="text-sm font-semibold text-zinc-900">
+              <div className="border-b border-border bg-muted/50 px-5 py-4">
+                <div className="text-sm font-semibold text-foreground">
                   CSR List
                 </div>
-                <div className="text-xs text-zinc-500">
+                <div className="text-xs text-muted-foreground">
                   {filteredCsrs.length} record{filteredCsrs.length === 1 ? "" : "s"}
                 </div>
               </div>
 
               {loading ? (
-                <div className="p-6 text-sm text-zinc-500">
+                <div className="p-6 text-sm text-muted-foreground">
                   Loading service reports...
                 </div>
               ) : filteredCsrs.length === 0 ? (
@@ -411,10 +411,10 @@ export default function CSR() {
                   <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 text-white">
                     <ClipboardList className="h-5 w-5" />
                   </div>
-                  <div className="text-base font-semibold text-zinc-900">
+                  <div className="text-base font-semibold text-foreground">
                     No service reports found
                   </div>
-                  <div className="mt-1 text-sm text-zinc-500">
+                  <div className="mt-1 text-sm text-muted-foreground">
                     Try a different search or filter.
                   </div>
                 </div>
