@@ -53,9 +53,9 @@ export default function TotalsPanel({
   return (
     <div className="space-y-4">
       <Card className="rounded-[24px] border border-zinc-200 bg-card ring-0 shadow-none">
-        <CardContent className="space-y-4 p-4">
+        <CardContent className="space-y-3 p-4 sm:p-6">
           <div>
-            <h3 className="text-sm font-semibold text-zinc-900">Totals</h3>
+            <h3 className="text-sm font-medium text-foreground">Totals</h3>
           </div>
 
           <div className="space-y-1 rounded-[20px] border border-zinc-200 bg-zinc-50/80 p-3">
@@ -86,9 +86,9 @@ export default function TotalsPanel({
       </Card>
 
       <Card className="rounded-[24px] border border-zinc-200 bg-card ring-0 shadow-none">
-        <CardContent className="space-y-4 p-4">
+        <CardContent className="space-y-4 p-4 sm:p-6">
           <div>
-            <h3 className="text-sm font-semibold text-zinc-900">Tax & Discount Settings</h3>
+            <h3 className="text-sm font-medium text-foreground">Tax & Discount Settings</h3>
           </div>
 
           <div className="overflow-hidden rounded-[20px] border border-zinc-200 bg-zinc-50/40">
@@ -258,7 +258,7 @@ export default function TotalsPanel({
               />
               {whtAmount > 0 ? <span className="text-xs text-zinc-500">-NGN {Number(whtAmount).toLocaleString()}</span> : null}
             </div>
-            <p className="mt-2 text-[10px] text-zinc-400">WHT is deducted from the payable amount, not added to the total.</p>
+            <p className="mt-2 text-xs text-muted-foreground">WHT is deducted from the payable amount, not added to the total.</p>
           </div>
         </CardContent>
       </Card>

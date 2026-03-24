@@ -44,10 +44,10 @@ function useIsMobile() {
 
 function SectionCard({ title, description, children }) {
   return (
-    <Card className="overflow-hidden rounded-xl border border-border bg-card shadow-sm sm:rounded-[28px] sm:shadow-[0_14px_38px_rgba(15,23,42,0.08)]">
-      <CardHeader className="border-b border-border bg-gradient-to-r from-slate-50 via-white to-red-50/50 px-4 pb-4 pt-4 sm:px-6">
-        <CardTitle className="text-base font-semibold text-foreground">{title}</CardTitle>
-        {description ? <p className="text-sm leading-6 text-muted-foreground">{description}</p> : null}
+    <Card className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <CardHeader className="border-b border-border bg-muted/50 px-4 py-4 sm:px-6">
+        <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>
+        {description ? <p className="text-xs leading-5 text-muted-foreground">{description}</p> : null}
       </CardHeader>
       <CardContent className="space-y-4 p-4 sm:p-6">{children}</CardContent>
     </Card>
@@ -57,7 +57,7 @@ function SectionCard({ title, description, children }) {
 function Field({ label, children }) {
   return (
     <div className="space-y-2">
-      <Label className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-600">{label}</Label>
+      <Label className="text-sm font-medium text-foreground">{label}</Label>
       {children}
     </div>
   )
@@ -92,10 +92,10 @@ function ToggleRow({ title, description, checked, onCheckedChange }) {
         <div className="text-xs leading-5 text-muted-foreground">{description}</div>
       </div>
       <div className="flex justify-end sm:justify-start" onClick={(event) => event.stopPropagation()}>
-        <div className={`rounded-full border px-2 py-1 ${checked ? 'border-red-200 bg-white shadow-[0_0_0_4px_rgba(254,226,226,0.8)]' : 'border-slate-200 bg-white'}`}>
-          <Switch checked={checked} onCheckedChange={onCheckedChange} />
-        </div>
+      <div className={`rounded-full border px-2 py-1 ${checked ? 'border-red-200 bg-background shadow-[0_0_0_4px_rgba(254,226,226,0.8)]' : 'border-slate-200 bg-background'}`}>
+        <Switch checked={checked} onCheckedChange={onCheckedChange} />
       </div>
+    </div>
     </div>
   )
 }
@@ -218,8 +218,8 @@ export default function EditCSR() {
     return (
       <Layout title="Edit CSR">
         <div className="mx-auto max-w-5xl">
-          <Card className="rounded-xl border-zinc-200 shadow-sm sm:rounded-3xl">
-            <CardContent className="p-6 text-sm text-zinc-500">Loading CSR...</CardContent>
+          <Card className="rounded-xl border border-border bg-card shadow-sm">
+            <CardContent className="p-6 text-sm text-muted-foreground">Loading CSR...</CardContent>
           </Card>
         </div>
       </Layout>
@@ -228,8 +228,8 @@ export default function EditCSR() {
 
   return (
     <Layout title="Edit CSR">
-      <div className="mx-auto max-w-5xl p-0 sm:rounded-[32px] sm:border sm:border-border sm:bg-gradient-to-b sm:from-slate-100/90 sm:via-slate-50 sm:to-white sm:p-5 sm:shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
-        <div className="space-y-5">
+      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="space-y-6">
         <SectionCard title="Customer Details" description="Update the customer, date, and reference number for this service report.">
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="CSR Number">
@@ -355,7 +355,7 @@ export default function EditCSR() {
         </SectionCard>
 
         <SectionCard title="Materials Used" description="Keep the materials list structured while controlling how it appears in output.">
-          <div className="rounded-xl border border-sky-100 bg-gradient-to-r from-sky-50 to-white p-4 sm:rounded-2xl">
+          <div className="rounded-xl border border-border bg-muted/50 p-4">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px] md:items-end">
               <div>
                 <div className="text-sm font-semibold text-foreground">Materials Output</div>
@@ -365,7 +365,7 @@ export default function EditCSR() {
               </div>
               <Field label="Output Style">
                 <Select value={csrMeta.materialsOutputStyle} onValueChange={(value) => updateMeta('materialsOutputStyle', value)}>
-                  <SelectTrigger className="h-11 w-full rounded-xl border-sky-200 bg-background px-3 text-sm shadow-sm">
+                  <SelectTrigger className="h-11 w-full rounded-xl border-border bg-background px-3 text-sm shadow-sm">
                     <SelectValue placeholder="Select output style" />
                   </SelectTrigger>
                   <SelectContent>
@@ -380,8 +380,8 @@ export default function EditCSR() {
           {isMobile ? (
             <div className="space-y-3">
               {materialsRows.map((row, index) => (
-                <div key={index} className="rounded-xl border border-border bg-card p-4 shadow-sm sm:rounded-2xl">
-                  <div className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                <div key={index} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                  <div className="mb-3 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
                     Material Row {index + 1}
                   </div>
                   <div className="space-y-3">
@@ -406,7 +406,7 @@ export default function EditCSR() {
           ) : (
             <div className="rounded-2xl border border-border bg-card shadow-sm">
               <Table>
-                <TableHeader className="bg-zinc-50">
+                <TableHeader className="bg-muted/50">
                   <TableRow>
                     <TableHead>Material / Item</TableHead>
                     <TableHead className="w-[160px]">Quantity</TableHead>
@@ -461,7 +461,7 @@ export default function EditCSR() {
 
           <Field label="Status">
             <Select value={csr.status} onValueChange={(value) => update('status', value)}>
-              <SelectTrigger className="h-10 w-full rounded-xl border-zinc-200 bg-background px-3 text-sm">
+              <SelectTrigger className="h-10 w-full rounded-xl border-border bg-background px-3 text-sm">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
@@ -531,7 +531,7 @@ export default function EditCSR() {
 
         <Separator />
 
-        <div className="flex flex-col-reverse gap-3 pb-4 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" onClick={() => navigate('/csr/' + id)}>
             Cancel
           </Button>

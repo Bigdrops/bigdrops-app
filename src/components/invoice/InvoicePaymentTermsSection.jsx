@@ -11,14 +11,14 @@ import {
 
 export default function InvoicePaymentTermsSection({ invoice, updateInvoice }) {
   return (
-    <Card className="mb-5">
-      <CardHeader>
-        <CardTitle className="text-base">Payment Terms</CardTitle>
+    <Card className="mb-5 rounded-xl border border-border bg-card shadow-sm">
+      <CardHeader className="space-y-1 px-6 pb-0 pt-6">
+        <CardTitle className="text-sm font-medium text-foreground">Payment Terms</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-6 pb-6 pt-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <Label>Payment Terms</Label>
+            <Label className="text-sm font-medium text-foreground">Payment Terms</Label>
             <Select
               value={invoice.payment_terms || ''}
               onValueChange={(value) => updateInvoice('payment_terms', value)}
@@ -37,7 +37,7 @@ export default function InvoicePaymentTermsSection({ invoice, updateInvoice }) {
           </div>
           {invoice.payment_terms === 'Custom' && (
             <div>
-              <Label>Specify Terms</Label>
+              <Label className="text-sm font-medium text-foreground">Specify Terms</Label>
               <Input
                 className="mt-2"
                 value={invoice.custom_payment_terms || ''}

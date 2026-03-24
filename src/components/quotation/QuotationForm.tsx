@@ -655,7 +655,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   }
 
   if (loading) {
-    return <div className="rounded-2xl border-l-4 border-l-blue-500 border border-border bg-card p-8 text-sm text-muted-foreground shadow-sm">Loading quotation...</div>
+    return <div className="rounded-xl border border-border bg-card px-4 py-6 text-sm text-muted-foreground shadow-sm sm:px-6">Loading quotation...</div>
   }
 
   const removeItemAt = (itemIndex: number) =>
@@ -745,7 +745,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <MobileInvoiceForm
         title={isEdit ? 'Edit Quotation' : 'Create Quotation'}
         modeLabel={formatQuotationStatus(quotation.status || 'draft')}
@@ -844,7 +844,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         isMobile={isMobile}
       />
 
-      <div className="mx-auto w-full max-w-2xl px-3 pb-6 md:px-4">
+      <div className="mx-auto w-full max-w-2xl px-4 pb-6 sm:px-6">
         <PdfOutputSettings
           value={pdfOutput}
           onChange={handlePdfOutputChange}

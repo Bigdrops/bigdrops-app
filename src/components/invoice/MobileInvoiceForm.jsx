@@ -207,11 +207,11 @@ export default function MobileInvoiceForm(props) {
 
   return (
     <>
-      <div className="w-full px-3 pb-24 pt-4 md:mx-auto md:max-w-2xl md:px-4 md:pb-12 md:pt-6">
-        <div className="mb-4 flex items-start justify-between gap-3">
+      <div className="w-full px-4 py-6 pb-24 sm:px-6 md:mx-auto md:max-w-2xl md:pb-12 lg:px-8">
+        <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">{modeLabel}</div>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-[30px]">{title}</h1>
+            <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{modeLabel}</div>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight text-foreground sm:text-3xl">{title}</h1>
           </div>
           <Button
             type="button"
@@ -224,7 +224,7 @@ export default function MobileInvoiceForm(props) {
           </Button>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <Card className={cardCls}>
             <CardContent className="space-y-2 p-3">
               <ClientSelector
@@ -308,7 +308,7 @@ export default function MobileInvoiceForm(props) {
           <Card className={cardCls}>
             <CardContent className="space-y-2 p-3.5">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-zinc-900">Custom Fields</h2>
+                <h2 className="text-sm font-medium text-foreground">Custom Fields</h2>
                 <Button type="button" variant="outline" size="sm" className={neutralActionBtnCls} onClick={onAddHeaderField}>
                   <Plus className="mr-1 h-3.5 w-3.5" />
                   Add Field
@@ -347,10 +347,10 @@ export default function MobileInvoiceForm(props) {
             </CardContent>
           </Card>
 
-          <section className="space-y-3">
+          <section className="space-y-4">
             <div>
-              <h2 className="text-sm font-semibold text-zinc-900">Line Items</h2>
-              <p className="text-xs text-zinc-500">{lineItemsCount} {lineItemsCount === 1 ? 'item' : 'items'} in the current invoice</p>
+              <h2 className="text-sm font-medium text-foreground">Line Items</h2>
+              <p className="text-xs text-muted-foreground">{lineItemsCount} {lineItemsCount === 1 ? 'item' : 'items'} in the current invoice</p>
             </div>
 
             <div className="rounded-[24px] border border-zinc-200 bg-card p-2 shadow-none">
@@ -436,8 +436,8 @@ export default function MobileInvoiceForm(props) {
 
           <section ref={additionalInfoRef} className="space-y-4">
             <Card className={cardCls}>
-              <CardContent className="space-y-4 border-l-4 border-blue-500 p-4">
-                <h3 className="text-sm font-semibold text-zinc-900">Commercial Terms</h3>
+              <CardContent className="space-y-4 border-l-4 border-blue-500 p-4 sm:p-6">
+                <h3 className="text-sm font-medium text-foreground">Commercial Terms</h3>
 
                 <div>
                   <label className={labelCls}>Payment Terms</label>
@@ -466,7 +466,7 @@ export default function MobileInvoiceForm(props) {
 
                 <div>
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <h4 className="text-sm font-semibold text-zinc-900">Additional Notes</h4>
+                    <h4 className="text-sm font-medium text-foreground">Additional Notes</h4>
                     <Button type="button" variant="outline" size="sm" className={neutralActionBtnCls} onClick={onAddBottomField}>
                       <Plus className="mr-1 h-3.5 w-3.5" />
                       Add Row
@@ -474,7 +474,7 @@ export default function MobileInvoiceForm(props) {
                   </div>
                   <div className="space-y-2">
                     {bottomFields.length === 0 ? (
-                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
+                      <div className="rounded-2xl border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
                         No extra rows yet.
                       </div>
                     ) : (
@@ -510,18 +510,18 @@ export default function MobileInvoiceForm(props) {
                   className="flex w-full items-center justify-between px-4 py-3 text-left"
                   onClick={() => setShowNotesTerms((current) => !current)}
                 >
-                  <h3 className="text-sm font-semibold text-zinc-900">Notes & Terms</h3>
+                  <h3 className="text-sm font-medium text-foreground">Notes & Terms</h3>
                   {showNotesTerms ? <ChevronUp className="h-4 w-4 text-zinc-400" /> : <ChevronDown className="h-4 w-4 text-zinc-400" />}
                 </button>
 
                 {showNotesTerms ? (
                   <div className="grid gap-4 border-t border-zinc-200 px-4 py-4 lg:grid-cols-2">
                     <div>
-                      <Input
-                        value={notesTitle}
-                        onChange={(e) => setNotesTitle(e.target.value)}
-                        className="mb-2 h-9 rounded-2xl border-zinc-200 bg-zinc-50 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-600"
-                      />
+                    <Input
+                      value={notesTitle}
+                      onChange={(e) => setNotesTitle(e.target.value)}
+                      className="mb-2 h-9 rounded-2xl border-border bg-muted/50 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground"
+                    />
                       <RichTextEditor
                         value={invoice.notes || ''}
                         onChange={(value) => updateInvoice('notes', value)}
@@ -529,11 +529,11 @@ export default function MobileInvoiceForm(props) {
                       />
                     </div>
                     <div>
-                      <Input
-                        value={termsTitle}
-                        onChange={(e) => setTermsTitle(e.target.value)}
-                        className="mb-2 h-9 rounded-2xl border-zinc-200 bg-zinc-50 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-600"
-                      />
+                    <Input
+                      value={termsTitle}
+                      onChange={(e) => setTermsTitle(e.target.value)}
+                      className="mb-2 h-9 rounded-2xl border-border bg-muted/50 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground"
+                    />
                       <RichTextEditor
                         value={invoice.terms || ''}
                         onChange={(value) => updateInvoice('terms', value)}
@@ -566,8 +566,8 @@ export default function MobileInvoiceForm(props) {
                   onClick={() => setShowAttachments((current) => !current)}
                 >
                   <div>
-                    <h3 className="text-sm font-semibold text-zinc-900">Attachments</h3>
-                    {attachments.length > 0 ? <div className="text-xs text-zinc-500">{attachments.length} linked</div> : null}
+                    <h3 className="text-sm font-medium text-foreground">Attachments</h3>
+                    {attachments.length > 0 ? <div className="text-xs text-muted-foreground">{attachments.length} linked</div> : null}
                   </div>
                   {showAttachments ? <ChevronUp className="h-4 w-4 text-zinc-400" /> : <ChevronDown className="h-4 w-4 text-zinc-400" />}
                 </button>
@@ -616,10 +616,10 @@ export default function MobileInvoiceForm(props) {
             amountInWords={amountInWords}
           />
 
-          <Card className={cardCls}>
-            <CardContent className="space-y-4 p-4">
-              <h3 className="text-sm font-semibold text-zinc-900">Save Actions</h3>
-              <div className="grid gap-3 sm:grid-cols-3">
+            <Card className={cardCls}>
+              <CardContent className="space-y-4 p-4 sm:p-6">
+                <h3 className="text-sm font-medium text-foreground">Save Actions</h3>
+                <div className="grid gap-3 sm:grid-cols-3">
                 <Button type="button" variant="outline" className="h-12 rounded-2xl border-zinc-300 bg-card" onClick={onCancel}>
                   Cancel
                 </Button>

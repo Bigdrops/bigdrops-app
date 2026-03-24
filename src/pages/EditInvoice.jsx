@@ -335,7 +335,7 @@ export default function EditInvoice() {
   if (loading || !invoice) {
     return (
       <Layout title="Edit Invoice" hidePageHeader contentClassName={invoicePageClassName}>
-        <div className="w-full px-3 pb-24 pt-4 text-sm text-zinc-500 md:mx-auto md:max-w-2xl md:px-4 md:pb-12 md:pt-6">
+        <div className="w-full px-4 py-6 pb-24 text-sm text-muted-foreground sm:px-6 md:mx-auto md:max-w-2xl md:pb-12 lg:px-8">
           Loading invoice...
         </div>
       </Layout>
