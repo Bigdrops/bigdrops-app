@@ -122,7 +122,7 @@ export default function Clients(): JSX.Element {
 
   return (
     <Layout title="Clients">
-      <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="w-full py-6">
         {/* Header */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">

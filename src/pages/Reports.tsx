@@ -867,7 +867,7 @@ export default function Reports() {
 
   return (
     <Layout title="Reports" hidePageHeader contentClassName="w-full max-w-none bg-slate-50 p-0 pb-24 md:px-4 md:pb-10">
-      <div className="mx-auto w-full max-w-6xl px-4 py-4 md:px-0">
+      <div className="w-full py-4">
         <div className="space-y-4">
           <SectionHeader title="Reports" subtitle="Live receivables, collections, project finance snapshots, and a tax placeholder for the next phase." />
           <Tabs value={tab} onValueChange={(value) => setTab(value as ReportTab)} className="w-full">

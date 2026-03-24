@@ -180,7 +180,7 @@ export default function CSR() {
 
   return (
     <Layout title="Customer Service Reports">
-      <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6 lg:px-8" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <div className="w-full space-y-5 py-6" style={{ fontFamily: "'Inter', sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, gap: 12 }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#0F172A" }}>Customer Service Reports</h2>

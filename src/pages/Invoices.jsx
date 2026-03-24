@@ -236,7 +236,7 @@ export default function Invoices() {
 
   return (
     <Layout title="Invoices">
-      <div className="mx-auto max-w-6xl px-4 py-6 pb-32 sm:px-6 lg:px-8" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <div className="w-full py-6 pb-32" style={{ fontFamily: "'Inter', sans-serif" }}>
 
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

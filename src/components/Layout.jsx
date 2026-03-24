@@ -205,7 +205,7 @@ export default function Layout({ title, children, session, hidePageHeader = fals
   }
 
   const desktopContentClassName = contentClassName || 'mx-auto w-full max-w-5xl px-6 py-6'
-  const mobileContentClassName = contentClassName || 'mx-auto w-full max-w-md px-4 pb-24 pt-4'
+  const mobileContentClassName = contentClassName || 'w-full px-4 pb-24 pt-4'
 
   return (
     <div className="min-h-dvh bg-muted/50 text-foreground">
@@ -309,7 +309,7 @@ export default function Layout({ title, children, session, hidePageHeader = fals
         </button>
 
         {!isHome && !hidePageHeader ? (
-          <div className="mx-auto w-full max-w-md px-4 pt-4">
+          <div className="w-full px-4 pt-4">
             <div className="rounded-2xl border-l-4 border-l-blue-500 border border-border bg-card px-5 py-4 shadow-sm">
               <div className="text-base font-bold text-foreground">{title}</div>
             </div>
@@ -319,7 +319,7 @@ export default function Layout({ title, children, session, hidePageHeader = fals
         <main className={mobileContentClassName}>{children}</main>
 
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card">
-          <div className="mx-auto grid max-w-md grid-cols-5 px-2 py-2 shadow-[0_-10px_30px_-20px_rgba(15,23,42,0.35)]">
+          <div className="grid w-full grid-cols-5 px-2 py-2 shadow-[0_-10px_30px_-20px_rgba(15,23,42,0.35)]">
             {tabs.map((tab) => {
               const Icon = tab.icon
               const isActive = activeTab === tab.key
