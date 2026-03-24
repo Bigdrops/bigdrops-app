@@ -1247,23 +1247,23 @@ export default function ViewInvoice() {
             </div>
           </div>
 
-          <Card className="mb-6 border-slate-200 shadow-none">
+          <Card className="mb-6 border-border shadow-none">
             <CardContent className="space-y-4 p-4">
               <div className="grid gap-3 sm:grid-cols-4">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Invoice Total</div>
-                  <div className="mt-1 text-sm font-bold text-slate-900">{formatMoney(invoiceTotal)}</div>
+                <div className="rounded-xl border border-border bg-muted/50 p-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Invoice Total</div>
+                  <div className="mt-1 text-sm font-bold text-foreground">{formatMoney(invoiceTotal)}</div>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Cash Received</div>
-                  <div className="mt-1 text-sm font-bold text-slate-900">{formatMoney(cashReceived)}</div>
+                <div className="rounded-xl border border-border bg-muted/50 p-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Cash Received</div>
+                  <div className="mt-1 text-sm font-bold text-foreground">{formatMoney(cashReceived)}</div>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Balance Due</div>
+                <div className="rounded-xl border border-border bg-muted/50 p-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Balance Due</div>
                   <div className={`mt-1 text-sm font-bold ${balanceDue > 0 ? 'text-red-600' : 'text-emerald-600'}`}>{formatMoney(balanceDue)}</div>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Status</div>
+                <div className="rounded-xl border border-border bg-muted/50 p-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Status</div>
                   <div className="mt-2">
                     <Badge className={`capitalize ${statusBadgeClass}`}>{String(computedStatus).replace(/_/g, ' ')}</Badge>
                   </div>
@@ -1272,8 +1272,8 @@ export default function ViewInvoice() {
 
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">Payment History</div>
-                  <div className="text-xs text-slate-500">Running balance reflects non-voided settlements in date order.</div>
+                  <div className="text-sm font-semibold text-foreground">Payment History</div>
+                  <div className="text-xs text-muted-foreground">Running balance reflects non-voided settlements in date order.</div>
                 </div>
                 {computedStatus !== 'paid' ? (
                   <Button type="button" size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => setShowPaymentModal(true)}>
@@ -1283,7 +1283,7 @@ export default function ViewInvoice() {
               </div>
 
               {paymentHistory.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                <div className="rounded-xl border border-dashed border-border bg-muted/50 px-4 py-6 text-sm text-muted-foreground">
                   No payments recorded yet.
                 </div>
               ) : (

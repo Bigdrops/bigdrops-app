@@ -96,7 +96,7 @@ export default function JsonItemsImportSheet({
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent
         side={side}
-        className={`rounded-t-[28px] bg-white p-0 [&>[data-slot=sheet-close]]:hidden ${contentClassName}`.trim()}
+        className={`rounded-t-[28px] bg-card p-0 [&>[data-slot=sheet-close]]:hidden ${contentClassName}`.trim()}
       >
         <SheetHeader className="border-b border-zinc-200 px-5 py-4 text-left">
           <SheetTitle className="text-base font-semibold text-zinc-900">{title}</SheetTitle>
@@ -149,7 +149,7 @@ export default function JsonItemsImportSheet({
               <Button
                 type="button"
                 variant="outline"
-                className="h-11 w-full rounded-2xl border-zinc-200 bg-white"
+                className="h-11 w-full rounded-2xl border-zinc-200 bg-card"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload className="mr-2 h-4 w-4" />
@@ -168,7 +168,7 @@ export default function JsonItemsImportSheet({
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-10 rounded-2xl border-zinc-200 bg-white"
+                  className="h-10 rounded-2xl border-zinc-200 bg-card"
                   onClick={() => setPastedText('')}
                 >
                   Clear

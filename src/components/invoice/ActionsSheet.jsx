@@ -44,7 +44,7 @@ export default function ActionsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-[28px] bg-white p-0 [&>[data-slot=sheet-close]]:hidden">
+      <SheetContent side="bottom" className="rounded-t-[28px] bg-card p-0 [&>[data-slot=sheet-close]]:hidden">
         <SheetHeader className="border-b border-zinc-200 px-5 py-4 text-left">
           <SheetTitle className="text-base font-semibold text-zinc-900">More Actions</SheetTitle>
         </SheetHeader>

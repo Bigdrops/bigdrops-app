@@ -240,8 +240,8 @@ export default function Invoices() {
 
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>
-            <h2 className="m-0 text-[22px] font-extrabold text-slate-900">Invoices</h2>
-            <p className="mt-1 text-[13px] text-slate-400">
+            <h2 className="m-0 text-[22px] font-extrabold text-foreground">Invoices</h2>
+            <p className="mt-1 text-[13px] text-muted-foreground">
               {totalCount} invoice{totalCount !== 1 ? "s" : ""} total
             </p>
           </div>
@@ -339,16 +339,16 @@ export default function Invoices() {
 
               <div className="pr-12">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0 truncate whitespace-nowrap text-sm font-bold text-slate-900">
+                  <div className="min-w-0 truncate whitespace-nowrap text-sm font-bold text-foreground">
                     {inv.client_name || "No client"}
                   </div>
-                  <div className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-slate-900">
+                  <div className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-foreground">
                     NGN {Number(inv.total || 0).toLocaleString()}
                   </div>
                 </div>
 
                 <div className="mt-1 flex items-center justify-between gap-3">
-                  <div className="min-w-0 whitespace-nowrap text-xs font-bold text-slate-400">
+                  <div className="min-w-0 whitespace-nowrap text-xs font-bold text-muted-foreground">
                     {inv.invoice_number}{formatInvoiceDate(inv.issue_date) ? ` • ${formatInvoiceDate(inv.issue_date)}` : ""}
                   </div>
                   <div className="shrink-0 text-right">

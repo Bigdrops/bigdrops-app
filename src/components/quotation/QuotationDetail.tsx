@@ -45,7 +45,7 @@ import { buildQuotationCsv, downloadQuotationCsv } from './exportQuotationCsv'
 import { QUOTATION_STATUSES, formatQuotationStatus, quotationStatusTone } from './quotationStatus'
 
 function renderRichText(value?: string) {
-  if (!value) return <span className="text-slate-400">Not provided</span>
+  if (!value) return <span className="text-muted-foreground">Not provided</span>
   const clean = DOMPurify.sanitize(value)
   return <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: clean }} />
 }
@@ -353,25 +353,25 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     }
   }
 
-  if (loading) return <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-sm text-zinc-500 shadow-sm">Loading quotation...</div>
-  if (!quotation) return <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-sm text-zinc-500 shadow-sm">Quotation not found.</div>
+  if (loading) return <div className="rounded-2xl border border-zinc-200 bg-card p-8 text-sm text-zinc-500 shadow-sm">Loading quotation...</div>
+  if (!quotation) return <div className="rounded-2xl border border-zinc-200 bg-card p-8 text-sm text-zinc-500 shadow-sm">Quotation not found.</div>
 
   return (
     <div className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
-      <div className="mb-5 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className="mb-5 rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <Badge className={`h-auto px-3 py-1 text-[11px] font-bold uppercase ${quotationStatusTone(quotation.status)}`}>
                 {formatQuotationStatus(quotation.status)}
               </Badge>
-              <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">Quotation</span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">Quotation</span>
             </div>
-            <h2 className="m-0 break-words text-[24px] font-extrabold tracking-tight text-slate-900 sm:text-[30px]">
+            <h2 className="m-0 break-words text-[24px] font-extrabold tracking-tight text-foreground sm:text-[30px]">
               {quotation.quotation_number}
             </h2>
             {quotation.quotation_title ? (
-              <p className="mt-2 max-w-2xl text-sm text-slate-500 sm:text-[15px]">{quotation.quotation_title}</p>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-[15px]">{quotation.quotation_title}</p>
             ) : null}
           </div>
 
@@ -425,21 +425,21 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 lg:grid-cols-[minmax(0,1fr)_260px]">
+        <div className="mt-5 grid gap-4 border-t border-border pt-5 lg:grid-cols-[minmax(0,1fr)_260px]">
           <div className="grid gap-3 sm:grid-cols-2">
-            <Card className="border-slate-200 bg-white shadow-none">
+            <Card className="border-border bg-card shadow-none">
               <CardContent className="p-4">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Client</div>
-                <div className="mt-2 text-base font-semibold text-slate-900">{quotation.client_name || 'Unassigned'}</div>
-                {hasText(client?.contact_person) ? <div className="mt-1 text-sm text-slate-500">{String(client?.contact_person)}</div> : null}
-                {hasText(client?.email) ? <div className="text-sm text-slate-500">{String(client?.email)}</div> : null}
-                {hasText(client?.phone) ? <div className="text-sm text-slate-500">{String(client?.phone)}</div> : null}
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Client</div>
+                <div className="mt-2 text-base font-semibold text-foreground">{quotation.client_name || 'Unassigned'}</div>
+                {hasText(client?.contact_person) ? <div className="mt-1 text-sm text-muted-foreground">{String(client?.contact_person)}</div> : null}
+                {hasText(client?.email) ? <div className="text-sm text-muted-foreground">{String(client?.email)}</div> : null}
+                {hasText(client?.phone) ? <div className="text-sm text-muted-foreground">{String(client?.phone)}</div> : null}
               </CardContent>
             </Card>
-            <Card className="border-slate-200 bg-white shadow-none">
+            <Card className="border-border bg-card shadow-none">
               <CardContent className="p-4">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Quotation Summary</div>
-                <div className="mt-2 space-y-1 text-sm text-slate-600">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Quotation Summary</div>
+                <div className="mt-2 space-y-1 text-sm text-muted-foreground">
                   <div>Status: {formatQuotationStatus(quotation.status)}</div>
                   <div>Issued: {quotation.issue_date || 'Not set'}</div>
                   <div>Valid until: {quotation.valid_until || 'Not set'}</div>
@@ -448,14 +448,14 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
               </CardContent>
             </Card>
             {topHeaderFields.length > 0 ? (
-              <Card className="border-slate-200 bg-white shadow-none sm:col-span-2">
+              <Card className="border-border bg-card shadow-none sm:col-span-2">
                 <CardContent className="p-4">
-                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Reference Fields</div>
+                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Reference Fields</div>
                   <div className="mt-2 grid gap-3 sm:grid-cols-2">
                     {topHeaderFields.map((field: any) => (
                       <div key={field.id || field.label}>
-                        <div className="text-xs font-bold uppercase tracking-wide text-slate-400">{field.label}</div>
-                        <div className="mt-1 break-words text-sm text-slate-800">{field.value}</div>
+                        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{field.label}</div>
+                        <div className="mt-1 break-words text-sm text-foreground">{field.value}</div>
                       </div>
                     ))}
                   </div>
@@ -463,9 +463,9 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
               </Card>
             ) : null}
             {(conversionTrail.source?.number || derivedInvoices.length > 0) ? (
-              <Card className="border-slate-200 bg-white shadow-none sm:col-span-2">
+              <Card className="border-border bg-card shadow-none sm:col-span-2">
                 <CardContent className="p-4">
-                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Conversion Trail</div>
+                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Conversion Trail</div>
                   <div className="mt-2 space-y-2 text-sm text-slate-700">
                     {conversionTrail.source?.number ? (
                       <div>
@@ -493,9 +493,9 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             ) : null}
           </div>
 
-          <Card className="border-slate-200 bg-slate-950 text-white shadow-none">
+          <Card className="border-border bg-slate-950 text-white shadow-none">
             <CardContent className="px-4 py-4">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Document Identity</div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Document Identity</div>
               <div className="mt-2 text-lg font-bold">{companyIdentity.companyName || 'Quotation'}</div>
               {companyIdentity.companyTagline ? <div className="mt-1 text-sm text-slate-300">{companyIdentity.companyTagline}</div> : null}
               {companyIdentity.lines.length > 0 ? (
@@ -524,8 +524,8 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
 
       <Sheet open={showMobileActions} onOpenChange={setShowMobileActions}>
         <SheetContent side="bottom" className="max-h-[88vh] rounded-t-3xl px-0">
-          <SheetHeader className="border-b border-slate-200 px-5 pb-4 pt-5">
-            <SheetTitle className="text-base font-bold text-slate-900">Quotation Actions</SheetTitle>
+          <SheetHeader className="border-b border-border px-5 pb-4 pt-5">
+            <SheetTitle className="text-base font-bold text-foreground">Quotation Actions</SheetTitle>
             <SheetDescription>
               Quick actions for this quotation, optimized for smaller screens.
             </SheetDescription>
@@ -577,18 +577,18 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
                       }
                       itemNumber += 1
                       return (
-                        <div key={item._uiKey || item.id || index} className="rounded-2xl border border-zinc-200 bg-white p-4">
+                        <div key={item._uiKey || item.id || index} className="rounded-2xl border border-zinc-200 bg-card p-4">
                           <div className="mb-2 flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Item {itemNumber}</div>
-                              <div className="mt-1 break-words font-semibold text-slate-900">{item.description || 'Untitled item'}</div>
-                              {item.sub_description ? <div className="mt-1 break-words text-sm text-slate-500">{item.sub_description}</div> : null}
+                              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Item {itemNumber}</div>
+                              <div className="mt-1 break-words font-semibold text-foreground">{item.description || 'Untitled item'}</div>
+                              {item.sub_description ? <div className="mt-1 break-words text-sm text-muted-foreground">{item.sub_description}</div> : null}
                             </div>
-                            <div className="shrink-0 text-right text-sm font-bold text-slate-900">
+                            <div className="shrink-0 text-right text-sm font-bold text-foreground">
                               {formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0))}
                             </div>
                           </div>
-                          <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                          <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
                             <div>Qty: {item.quantity || 0}</div>
                             <div>Rate: {formatMoney(item.unit_price || 0)}</div>
                             {columns.find((column: any) => column.key === 'unit')?.visible ? <div>Unit: {item.unit || '-'}</div> : null}
@@ -631,7 +631,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
                         if (item.row_type === 'group_header') {
                           return (
                             <TableRow key={item._uiKey || item.id || index} className="bg-slate-900 hover:bg-slate-900">
-                              <TableCell className="font-semibold text-slate-400">-</TableCell>
+                              <TableCell className="font-semibold text-muted-foreground">-</TableCell>
                               <TableCell colSpan={6 + (columns.find((column: any) => column.key === 'make')?.visible ? 1 : 0) + (columns.find((column: any) => column.key === 'unit')?.visible ? 1 : 0) + (columns.find((column: any) => column.key === 'install_rate')?.visible ? 1 : 0) + (columns.find((column: any) => column.key === 'vat_rate')?.visible ? 1 : 0) + (columns.find((column: any) => column.key === 'discount_rate')?.visible ? 1 : 0) + visibleCustomColumns.length} className="font-bold text-white">
                                 {item.group_name || `Group ${index + 1}`}
                               </TableCell>
@@ -643,8 +643,8 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
                           <TableRow key={item._uiKey || item.id || index} className="align-top">
                             <TableCell className="font-semibold text-zinc-500">{itemNumber}</TableCell>
                             <TableCell className="whitespace-normal">
-                              <div className="font-semibold text-slate-900">{item.description}</div>
-                              {item.sub_description ? <div className="mt-1 text-sm text-slate-500">{item.sub_description}</div> : null}
+                              <div className="font-semibold text-foreground">{item.description}</div>
+                              {item.sub_description ? <div className="mt-1 text-sm text-muted-foreground">{item.sub_description}</div> : null}
                             </TableCell>
                             {columns.find((column: any) => column.key === 'make')?.visible && <TableCell>{item.make || '-'}</TableCell>}
                             <TableCell>{item.quantity || 0}</TableCell>
@@ -654,7 +654,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
                             {columns.find((column: any) => column.key === 'vat_rate')?.visible && <TableCell>{item.vat_rate ?? '-'}</TableCell>}
                             {columns.find((column: any) => column.key === 'discount_rate')?.visible && <TableCell>{item.discount_rate ?? '-'}</TableCell>}
                             {visibleCustomColumns.map((column: any) => <TableCell key={column.key}>{(item.custom_data || {})[column.key] || '-'}</TableCell>)}
-                            <TableCell className="font-bold text-slate-900">
+                            <TableCell className="font-bold text-foreground">
                               {formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0))}
                             </TableCell>
                           </TableRow>
@@ -673,7 +673,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="notes" className="w-full">
-                <TabsList className="mb-4 h-auto flex-wrap justify-start rounded-xl bg-slate-100 p-1">
+                <TabsList className="mb-4 h-auto flex-wrap justify-start rounded-xl bg-muted p-1">
                   <TabsTrigger value="notes">{notesTitle}</TabsTrigger>
                   <TabsTrigger value="terms">{termsTitle}</TabsTrigger>
                   {bottomFields.length > 0 ? <TabsTrigger value="additional">Additional Notes</TabsTrigger> : null}
@@ -681,7 +681,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
                 <TabsContent value="notes">{renderRichText(quotation.notes)}</TabsContent>
                 <TabsContent value="terms">{renderRichText(quotation.terms)}</TabsContent>
                 {bottomFields.length > 0 ? (
-                  <TabsContent value="additional" className="space-y-2 text-sm text-slate-600">
+                  <TabsContent value="additional" className="space-y-2 text-sm text-muted-foreground">
                     {bottomFields.map((field) => <div key={field.id}>{field.text}</div>)}
                   </TabsContent>
                 ) : null}

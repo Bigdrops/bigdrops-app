@@ -217,7 +217,7 @@ export default function MobileInvoiceForm(props) {
             type="button"
             variant="outline"
             size="icon"
-            className="h-11 w-11 rounded-2xl border-zinc-200 bg-white"
+            className="h-11 w-11 rounded-2xl border-zinc-200 bg-card"
             onClick={() => setShowActionsSheet(true)}
           >
             <MoreHorizontal className="h-5 w-5" />
@@ -323,13 +323,13 @@ export default function MobileInvoiceForm(props) {
                         value={field.label || ''}
                         onChange={(e) => onUpdateHeaderField(field.id, 'label', e.target.value)}
                         placeholder="Label"
-                        className="h-11 rounded-2xl border-zinc-200 bg-white text-sm"
+                        className="h-11 rounded-2xl border-zinc-200 bg-background text-sm"
                       />
                       <Input
                         value={field.value || ''}
                         onChange={(e) => onUpdateHeaderField(field.id, 'value', e.target.value)}
                         placeholder="Value"
-                        className="h-11 rounded-2xl border-zinc-200 bg-white text-sm"
+                        className="h-11 rounded-2xl border-zinc-200 bg-background text-sm"
                       />
                       <Button
                         type="button"
@@ -353,9 +353,9 @@ export default function MobileInvoiceForm(props) {
               <p className="text-xs text-zinc-500">{lineItemsCount} {lineItemsCount === 1 ? 'item' : 'items'} in the current invoice</p>
             </div>
 
-            <div className="rounded-[24px] border border-zinc-200 bg-white p-2 shadow-none">
+            <div className="rounded-[24px] border border-zinc-200 bg-card p-2 shadow-none">
               <div className="grid grid-cols-4 gap-2">
-                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border border-zinc-200 bg-white text-xs font-medium text-zinc-700 hover:bg-zinc-50" onClick={() => setShowColumnManager(true)}>
+                <Button type="button" variant="outline" size="sm" className="h-11 rounded-2xl border border-zinc-200 bg-card text-xs font-medium text-zinc-700 hover:bg-zinc-50" onClick={() => setShowColumnManager(true)}>
                   <Settings2 className="mr-1.5 h-4 w-4" />
                   Settings
                 </Button>
@@ -420,7 +420,7 @@ export default function MobileInvoiceForm(props) {
               )}
             </div>
 
-            <div className="rounded-[24px] border-l-4 border-emerald-500 border border-zinc-200 bg-white p-2 shadow-none">
+            <div className="rounded-[24px] border-l-4 border-emerald-500 border border-zinc-200 bg-card p-2 shadow-none">
               <div className="grid grid-cols-2 gap-2">
                 <Button type="button" variant="outline" className={`${neutralActionBtnCls} h-12 justify-center text-sm`} onClick={onAddItem}>
                   <Plus className="mr-1.5 h-4 w-4" />
@@ -442,7 +442,7 @@ export default function MobileInvoiceForm(props) {
                 <div>
                   <label className={labelCls}>Payment Terms</label>
                   <Select value={invoice.payment_terms || ''} onValueChange={(value) => updateInvoice('payment_terms', value)}>
-                    <SelectTrigger className="mt-1 h-11 w-full rounded-2xl border-blue-200 bg-white text-sm text-zinc-900">
+                    <SelectTrigger className="mt-1 h-11 w-full rounded-2xl border-blue-200 bg-background text-sm text-zinc-900">
                       <SelectValue placeholder="Select terms" />
                     </SelectTrigger>
                     <SelectContent>
@@ -484,7 +484,7 @@ export default function MobileInvoiceForm(props) {
                             value={field.text || ''}
                             onChange={(e) => onUpdateBottomField(field.id, e.target.value)}
                             placeholder="e.g. ADVANCE PAYMENT DUE (60%): NGN 141,601"
-                            className="h-11 rounded-2xl border-zinc-200 bg-white text-sm"
+                            className="h-11 rounded-2xl border-zinc-200 bg-background text-sm"
                           />
                           <Button
                             type="button"
@@ -620,10 +620,10 @@ export default function MobileInvoiceForm(props) {
             <CardContent className="space-y-4 p-4">
               <h3 className="text-sm font-semibold text-zinc-900">Save Actions</h3>
               <div className="grid gap-3 sm:grid-cols-3">
-                <Button type="button" variant="outline" className="h-12 rounded-2xl border-zinc-300 bg-white" onClick={onCancel}>
+                <Button type="button" variant="outline" className="h-12 rounded-2xl border-zinc-300 bg-card" onClick={onCancel}>
                   Cancel
                 </Button>
-                <Button type="button" variant="outline" className="h-12 rounded-2xl border-zinc-300 bg-white" onClick={onSaveDraft} disabled={saving}>
+                <Button type="button" variant="outline" className="h-12 rounded-2xl border-zinc-300 bg-card" onClick={onSaveDraft} disabled={saving}>
                   {saving ? 'Saving...' : 'Save Draft'}
                 </Button>
                 <Button type="button" className="h-12 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700" onClick={onSaveSent} disabled={saving}>

@@ -74,25 +74,25 @@ export function InvoiceSignatoryPicker({
 
   return (
     <>
-      <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
+      <Card className="rounded-xl border-border bg-card shadow-sm">
         <CardHeader className="space-y-1 pb-3">
-          <CardTitle className="text-sm font-semibold tracking-tight text-slate-900">
+          <CardTitle className="text-sm font-semibold tracking-tight text-foreground">
             Signature
           </CardTitle>
-          <CardDescription className="text-xs text-slate-500">
+          <CardDescription className="text-xs text-muted-foreground">
             Assign one saved signatory to this invoice.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
           {!selected ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50/40 p-3">
+            <div className="rounded-lg border border-border bg-slate-50/40 p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-sm font-medium text-slate-900">
+                  <div className="text-sm font-medium text-foreground">
                     No signatory selected
                   </div>
-                  <div className="mt-0.5 text-xs text-slate-500">
+                  <div className="mt-0.5 text-xs text-muted-foreground">
                     Pick a saved signatory to include a signature on this invoice.
                   </div>
                 </div>
@@ -111,10 +111,10 @@ export function InvoiceSignatoryPicker({
               </div>
             </div>
           ) : (
-            <div className="rounded-lg border border-slate-200 bg-slate-50/40">
+            <div className="rounded-lg border border-border bg-slate-50/40">
               <div className="px-3 py-3">
                 <div className="mb-3 flex items-start gap-3">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
                     {selected.signatureUrl ? (
                       <img
                         src={selected.signatureUrl}
@@ -122,15 +122,15 @@ export function InvoiceSignatoryPicker({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <UserSquare2 className="h-5 w-5 text-slate-400" />
+                      <UserSquare2 className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-900">
+                    <p className="text-sm font-medium text-foreground">
                       {selected.name}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       {selected.role || "No role"}
                     </p>
                   </div>
@@ -212,7 +212,7 @@ function SignatoryPickerSheet({
                   "w-full rounded-xl border p-3 text-left transition",
                   active
                     ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
+                    : "border-border bg-card text-foreground hover:bg-muted/50",
                 ].join(" ")}
               >
                 <div className="flex items-center justify-between gap-3">

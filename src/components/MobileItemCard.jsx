@@ -25,10 +25,10 @@ export default function MobileItemCard({
   if (item.row_type === 'group_header') {
     if (variant === 'quotation') {
       return (
-        <div className="mb-3 border border-slate-200 bg-[#f4f4f4] shadow-sm">
+        <div className="mb-3 border border-border bg-[#f4f4f4] shadow-sm">
           <div className="border-l-[3px] border-l-blue-600 px-3 py-3">
             <div className="mb-2 flex items-center justify-between gap-3">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                 Group
               </div>
               <Button
@@ -42,7 +42,7 @@ export default function MobileItemCard({
             </div>
 
             <Input
-              className="h-10 rounded-none border-0 border-b border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
+              className="h-10 rounded-none border-0 border-b border-input bg-background px-3 text-sm font-semibold text-foreground placeholder:text-muted-foreground"
               value={item.group_name || ''}
               onChange={e => onUpdate(index, 'group_name', e.target.value)}
               placeholder="Group name"
@@ -61,8 +61,8 @@ export default function MobileItemCard({
               ) : null}
 
               {showItemImages ? (
-                <div className="ml-auto flex items-center gap-2 border border-slate-200 bg-white px-2 py-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                <div className="ml-auto flex items-center gap-2 border border-border bg-card px-2 py-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                     Image
                   </span>
                   <ItemImageUpload value={item.image_url || null} onChange={url => onUpdate(index, 'image_url', url)} />
@@ -85,8 +85,8 @@ export default function MobileItemCard({
 
         <div className="flex items-start gap-2">
           {showItemImages ? (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-2 py-2">
-              <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+            <div className="rounded-xl border border-border bg-muted/50 px-2 py-2">
+              <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
                 Picture
               </div>
               <ItemImageUpload value={item.image_url || null} onChange={url => onUpdate(index, 'image_url', url)} />
@@ -127,24 +127,24 @@ export default function MobileItemCard({
     const compactInput = 'h-9 rounded-none border-0 border-b border-slate-300 bg-white px-2 text-sm shadow-none focus-visible:ring-0'
 
     return (
-      <div className="mb-3 border border-slate-200 bg-[#f4f4f4] shadow-sm">
+      <div className="mb-3 border border-border bg-[#f4f4f4] shadow-sm">
         <div className="border-l-[3px] border-l-blue-600 px-3 py-3">
           <div className="mb-2 flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">
+              <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                 Item {number}
               </div>
               <Input
                 value={item.description || ''}
                 onChange={e => onUpdate(index, 'description', e.target.value)}
                 placeholder="Item description"
-                className="h-10 rounded-none border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 shadow-none focus-visible:ring-0"
+                className="h-10 rounded-none border-0 bg-transparent px-0 text-sm font-semibold text-foreground shadow-none focus-visible:ring-0"
               />
               <Input
                 value={item.sub_description || ''}
                 onChange={e => onUpdate(index, 'sub_description', e.target.value)}
                 placeholder="Add more context if needed"
-                className="mt-1 h-7 rounded-none border-0 bg-transparent px-0 text-xs text-slate-500 shadow-none focus-visible:ring-0"
+                className="mt-1 h-7 rounded-none border-0 bg-transparent px-0 text-xs text-muted-foreground shadow-none focus-visible:ring-0"
               />
             </div>
 
@@ -154,7 +154,7 @@ export default function MobileItemCard({
                 size="icon"
                 onClick={() => onMoveUp(index)}
                 disabled={isFirst}
-                className="h-7 w-7 rounded-none border border-slate-200 bg-white px-0 text-[10px] text-slate-600 hover:bg-slate-50"
+                className="h-7 w-7 rounded-none border border-border bg-card px-0 text-[10px] text-muted-foreground hover:bg-muted/50"
                 aria-label="Move item up"
               >
                 Up
@@ -164,7 +164,7 @@ export default function MobileItemCard({
                 size="icon"
                 onClick={() => onMoveDown(index)}
                 disabled={isLast}
-                className="h-7 w-7 rounded-none border border-slate-200 bg-white px-0 text-[10px] text-slate-600 hover:bg-slate-50"
+                className="h-7 w-7 rounded-none border border-border bg-card px-0 text-[10px] text-muted-foreground hover:bg-muted/50"
                 aria-label="Move item down"
               >
                 Dn
@@ -301,7 +301,7 @@ export default function MobileItemCard({
           <div className="mt-3 flex items-end justify-between gap-3">
             <div className="space-y-1">
               {groupName ? (
-                <div className="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500">
+                <div className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
                   {groupName}
                 </div>
               ) : null}
@@ -316,14 +316,14 @@ export default function MobileItemCard({
             </div>
 
             <div className="text-right">
-              <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Amount</div>
-              <div className="text-sm font-bold text-slate-900">N{amount.toLocaleString()}</div>
+              <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Amount</div>
+              <div className="text-sm font-bold text-foreground">N{amount.toLocaleString()}</div>
             </div>
           </div>
 
           {showItemImages ? (
-            <div className="mt-3 border border-slate-200 bg-white px-2 py-2">
-              <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500">
+            <div className="mt-3 border border-border bg-card px-2 py-2">
+              <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 Item image
               </div>
               <ItemImageUpload value={item.image_url || null} onChange={url => onUpdate(index, 'image_url', url)} />
@@ -334,7 +334,7 @@ export default function MobileItemCard({
             <Button
               variant="ghost"
               onClick={() => onInsertBelow(index)}
-              className="mt-3 h-8 w-full rounded-none border border-dashed border-slate-300 bg-white text-[11px] font-semibold text-blue-600 hover:bg-blue-50"
+              className="mt-3 h-8 w-full rounded-none border border-dashed border-border bg-card text-[11px] font-semibold text-blue-600 hover:bg-blue-50"
             >
               + Add line item below
             </Button>
@@ -345,7 +345,7 @@ export default function MobileItemCard({
   }
 
   return (
-    <div className="mb-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="mb-3 rounded-xl border border-gray-200 bg-card p-4 shadow-sm">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#1a1a1a', color: 'white', fontSize: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{number}</span>

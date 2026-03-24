@@ -126,8 +126,8 @@ export default function QuotationList() {
         <CardHeader className="gap-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <CardTitle className="text-[22px] font-extrabold text-slate-900">Quotations</CardTitle>
-              <p className="mt-1 text-[13px] text-slate-500">
+              <CardTitle className="text-[22px] font-extrabold text-foreground">Quotations</CardTitle>
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 {quotations.length} quotation{quotations.length !== 1 ? 's' : ''} total
               </p>
             </div>
@@ -147,7 +147,7 @@ export default function QuotationList() {
 
           {showSearch ? (
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -158,7 +158,7 @@ export default function QuotationList() {
           ) : null}
 
           {showFilters ? (
-            <div className="grid gap-3 rounded-2xl border border-zinc-200 bg-white p-3 sm:grid-cols-2">
+            <div className="grid gap-3 rounded-2xl border border-zinc-200 bg-card p-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -196,7 +196,7 @@ export default function QuotationList() {
 
       {filteredQuotations.length === 0 ? (
         <Card className="mt-5 border-dashed border-zinc-300">
-          <CardContent className="px-6 py-12 text-center text-sm text-slate-500">
+          <CardContent className="px-6 py-12 text-center text-sm text-muted-foreground">
             No quotations yet. Create the first one when you are ready to send a quote.
           </CardContent>
         </Card>
@@ -220,8 +220,8 @@ export default function QuotationList() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Quotation</span>
-                        <span className="break-all text-base font-extrabold tracking-[-0.02em] text-slate-900 sm:text-[17px]">
+                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Quotation</span>
+                        <span className="break-all text-base font-extrabold tracking-[-0.02em] text-foreground sm:text-[17px]">
                           {quotation.quotation_number}
                         </span>
                         <Badge className={`h-auto px-2.5 py-1 text-[10px] font-bold uppercase ${quotationStatusTone(quotation.status)}`}>
@@ -229,7 +229,7 @@ export default function QuotationList() {
                         </Badge>
                       </div>
                       <div className="mt-2 text-sm font-medium text-slate-700">{quotation.client_name || 'No client selected'}</div>
-                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                         <span>Issue date: {quotation.issue_date || 'Not set'}</span>
                         {String(quotation.po_number || '').trim() ? <span>P.O.: {String(quotation.po_number || '').trim()}</span> : null}
                       </div>
@@ -238,8 +238,8 @@ export default function QuotationList() {
 
                   <div className="flex flex-col gap-3 lg:items-end">
                     <div className="text-right">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Amount</div>
-                      <div className="mt-1 text-lg font-extrabold text-slate-900">{formatMoney(quotation.total || 0)}</div>
+                      <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Amount</div>
+                      <div className="mt-1 text-lg font-extrabold text-foreground">{formatMoney(quotation.total || 0)}</div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 lg:justify-end">

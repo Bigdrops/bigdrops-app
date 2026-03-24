@@ -36,7 +36,7 @@ function VisibilityBtn({ visible, onClick }) {
       variant="outline"
       size="icon"
       onClick={onClick}
-      className="h-9 w-9 rounded-xl border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100"
+      className="h-9 w-9 rounded-xl border-zinc-300 bg-card text-zinc-700 hover:bg-zinc-100"
       title={visible ? 'Hide column' : 'Show column'}
       aria-pressed={visible}
     >
@@ -76,7 +76,7 @@ function ColumnRow({
           value={col.label || ''}
           onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
           placeholder="Column name"
-          className="h-9 border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-400"
+          className="h-9 border-zinc-300 bg-background text-zinc-900 placeholder:text-zinc-400"
         />
 
         {col.key === 'install_rate' && (
@@ -92,7 +92,7 @@ function ColumnRow({
               value={col.formula || ''}
               onChange={(e) => onUpdate(col.key, 'formula', e.target.value)}
               placeholder="e.g. 0.1"
-              className="h-9 border-zinc-300 bg-white text-zinc-900"
+              className="h-9 border-zinc-300 bg-background text-zinc-900"
             />
           </div>
         )}
@@ -106,7 +106,7 @@ function ColumnRow({
         {isCustom && (
           <div className="flex flex-wrap items-center gap-2">
             <select
-              className="h-9 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900"
+              className="h-9 rounded-md border border-zinc-300 bg-background px-3 text-sm text-zinc-900"
               value={col.type}
               onChange={(e) => onUpdate(col.key, 'type', e.target.value)}
             >
@@ -261,12 +261,12 @@ export default function ColumnManager({
             </TabsList>
 
             <TabsContent value="table" className="mt-0 space-y-5">
-              <Card className="rounded-2xl border-zinc-200 bg-white shadow-none">
+              <Card className="rounded-2xl border-zinc-200 bg-card shadow-none">
                 <CardContent className="p-4">
                   <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
                     Standard Columns
                   </div>
-                  <div className="bg-white">
+                  <div className="bg-card">
                     {builtinCols.map((col) => (
                       <ColumnRow
                         key={col.key}
@@ -285,7 +285,7 @@ export default function ColumnManager({
                 </CardContent>
               </Card>
 
-              <Card className="rounded-2xl border-zinc-200 bg-white shadow-none">
+              <Card className="rounded-2xl border-zinc-200 bg-card shadow-none">
                 <CardContent className="p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
@@ -296,7 +296,7 @@ export default function ColumnManager({
                       variant="outline"
                       size="sm"
                       onClick={onAddCustom}
-                      className="gap-2 rounded-xl border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+                      className="gap-2 rounded-xl border-zinc-300 bg-card text-zinc-800 hover:bg-zinc-100"
                     >
                       <Plus className="h-4 w-4" />
                       Add Custom Column
@@ -308,7 +308,7 @@ export default function ColumnManager({
                       No custom columns yet.
                     </div>
                   ) : (
-                    <div className="bg-white">
+                    <div className="bg-card">
                       {customCols.map((col) => (
                         <ColumnRow
                           key={col.key}
@@ -328,7 +328,7 @@ export default function ColumnManager({
                 </CardContent>
               </Card>
               {onResetItemOverrides && (
-                <Card className="rounded-2xl border-zinc-200 bg-white shadow-none">
+                <Card className="rounded-2xl border-zinc-200 bg-card shadow-none">
                   <CardContent className="p-4">
                     <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
                       Reset Row Overrides
@@ -350,7 +350,7 @@ export default function ColumnManager({
                             size="sm"
                             disabled={count === 0}
                             onClick={() => onResetItemOverrides(fields)}
-                            className="h-7 rounded-lg border-zinc-300 bg-white px-2.5 text-xs text-zinc-700 hover:bg-zinc-100 disabled:opacity-40"
+                            className="h-7 rounded-lg border-zinc-300 bg-card px-2.5 text-xs text-zinc-700 hover:bg-zinc-100 disabled:opacity-40"
                           >
                             Reset
                           </Button>
@@ -362,7 +362,7 @@ export default function ColumnManager({
                         size="sm"
                         disabled={vatOverrideCount + discountOverrideCount + installOverrideCount === 0}
                         onClick={() => onResetItemOverrides({ vat: true, discount: true, install: true })}
-                        className="mt-1 w-full rounded-xl border-zinc-300 bg-white text-xs text-zinc-800 hover:bg-zinc-100 disabled:opacity-40"
+                        className="mt-1 w-full rounded-xl border-zinc-300 bg-card text-xs text-zinc-800 hover:bg-zinc-100 disabled:opacity-40"
                       >
                         Reset all row overrides
                       </Button>
@@ -373,7 +373,7 @@ export default function ColumnManager({
             </TabsContent>
 
             <TabsContent value="tax" className="mt-0">
-              <Card className="rounded-2xl border-zinc-200 bg-white shadow-none">
+              <Card className="rounded-2xl border-zinc-200 bg-card shadow-none">
                 <CardContent className="space-y-5 p-4">
                   <div className="space-y-2">
                     <Label htmlFor="global-vat" className="text-zinc-800">
@@ -385,7 +385,7 @@ export default function ColumnManager({
                       min="0"
                       value={vat ?? 0}
                       onChange={(e) => setVat(Number(e.target.value))}
-                      className="border-zinc-300 bg-white text-zinc-900"
+                      className="border-zinc-300 bg-background text-zinc-900"
                     />
                     <div className="text-xs text-zinc-500">
                       Standard Nigerian VAT rate can be set here for the invoice.
@@ -403,7 +403,7 @@ export default function ColumnManager({
                         className={
                           whtType === 'percent'
                             ? 'rounded-xl bg-zinc-900 text-white hover:bg-black'
-                            : 'rounded-xl border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100'
+                            : 'rounded-xl border-zinc-300 bg-card text-zinc-800 hover:bg-zinc-100'
                         }
                       >
                         Percent %
@@ -415,7 +415,7 @@ export default function ColumnManager({
                         className={
                           whtType === 'fixed'
                             ? 'rounded-xl bg-zinc-900 text-white hover:bg-black'
-                            : 'rounded-xl border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100'
+                            : 'rounded-xl border-zinc-300 bg-card text-zinc-800 hover:bg-zinc-100'
                         }
                       >
                         Fixed Naira
@@ -427,7 +427,7 @@ export default function ColumnManager({
                       min="0"
                       value={wht ?? 0}
                       onChange={(e) => setWht(Number(e.target.value))}
-                      className="border-zinc-300 bg-white text-zinc-900"
+                      className="border-zinc-300 bg-background text-zinc-900"
                     />
 
                     <div className="text-xs text-zinc-500">
@@ -452,7 +452,7 @@ export default function ColumnManager({
             type="button"
             variant="outline"
             onClick={onReset}
-            className="flex-1 gap-2 rounded-xl border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+            className="flex-1 gap-2 rounded-xl border-zinc-300 bg-card text-zinc-800 hover:bg-zinc-100"
           >
             <RotateCcw className="h-4 w-4" />
             Reset

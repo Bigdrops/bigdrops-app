@@ -63,7 +63,7 @@ export default function PendingApproval({ email }) {
       `}</style>
 
       <div className="min-h-screen bg-stone-100 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md border-0 shadow-xl shadow-black/5 rounded-2xl bg-white">
+        <Card className="w-full max-w-md border-0 shadow-xl shadow-black/5 rounded-2xl bg-card">
           <CardHeader className="flex flex-col items-center text-center space-y-4 pt-8">
             <div className="relative flex h-24 w-24 items-center justify-center approval-float">
               <div className="approval-pulse absolute inset-0 rounded-full bg-red-500/10 blur-xl" />
@@ -76,23 +76,23 @@ export default function PendingApproval({ email }) {
             </div>
 
             <div className="space-y-2">
-              <CardTitle className="text-xl font-semibold tracking-tight text-slate-900">
+              <CardTitle className="text-xl font-semibold tracking-tight text-foreground">
                 Access Restricted
               </CardTitle>
 
               <CardContent className="p-0">
-                <p className="text-sm leading-6 text-slate-600">
+                <p className="text-sm leading-6 text-muted-foreground">
                   Your signup was successful. You can sign in, but full access is still waiting on
                   account approval and workspace setup.
                 </p>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
                   Depending on your sign-in flow, your email may already be confirmed or may still
                   need confirmation. Once that is complete, access here still depends on approval
                   and device or account setup for this workspace.
                 </p>
 
                 {email ? (
-                  <p className="mt-3 text-xs text-slate-500">
+                  <p className="mt-3 text-xs text-muted-foreground">
                     Signed in as <span className="font-medium text-slate-700">{email}</span>
                   </p>
                 ) : null}

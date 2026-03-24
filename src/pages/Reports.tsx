@@ -252,7 +252,7 @@ function MetricStrip({ metrics }: { metrics: Metric[] }) {
                   {metric.icon}
                 </div>
                 <div className={`text-2xl font-black tracking-tight ${tone.value}`}>{metric.value}</div>
-                <p className="mt-1 text-xs font-medium text-slate-600">{metric.label}</p>
+                <p className="mt-1 text-xs font-medium text-muted-foreground">{metric.label}</p>
               </CardContent>
             </Card>
           )
@@ -286,7 +286,7 @@ function Filters({
   showStatus: boolean
 }) {
   return (
-    <Card className="border-blue-200 bg-white shadow-sm">
+    <Card className="border-blue-200 bg-card shadow-sm">
       <CardContent className="space-y-3 p-3">
         <div className="overflow-x-auto pb-1">
           <div className="flex min-w-max gap-2">
@@ -300,7 +300,7 @@ function Filters({
                   className={
                     active
                       ? 'h-8 rounded-full border border-blue-300 bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-600'
-                      : 'h-8 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100'
+                      : 'h-8 rounded-full border border-border bg-muted/50 px-3 text-xs font-semibold text-slate-700 hover:bg-muted/50'
                   }
                 >
                   {chip.label}
@@ -310,7 +310,7 @@ function Filters({
 
             {showStatus ? (
               <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ReceivablesFilter)}>
-                <SelectTrigger className="h-8 w-[120px] rounded-full border-slate-200 bg-slate-50 text-xs font-semibold">
+                <SelectTrigger className="h-8 w-[120px] rounded-full border-input bg-muted/50 text-xs font-semibold">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -323,7 +323,7 @@ function Filters({
             ) : null}
 
             <Select value={clientFilter} onValueChange={setClientFilter}>
-              <SelectTrigger className="h-8 w-[160px] rounded-full border-slate-200 bg-slate-50 text-xs font-semibold">
+              <SelectTrigger className="h-8 w-[160px] rounded-full border-input bg-muted/50 text-xs font-semibold">
                 <SelectValue placeholder="Client" />
               </SelectTrigger>
               <SelectContent>
@@ -339,12 +339,12 @@ function Filters({
         </div>
 
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search client, invoice or project..."
-            className="border-slate-200 bg-slate-50 pl-9 text-sm"
+            className="border-input bg-muted/50 pl-9 text-sm"
           />
         </div>
       </CardContent>
@@ -354,8 +354,8 @@ function Filters({
 
 function LoadingState({ label }: { label: string }) {
   return (
-    <Card className="border-slate-200 bg-white shadow-sm">
-      <CardContent className="p-6 text-sm text-slate-500">Loading {label}...</CardContent>
+    <Card className="border-border bg-card shadow-sm">
+      <CardContent className="p-6 text-sm text-muted-foreground">Loading {label}...</CardContent>
     </Card>
   )
 }
@@ -373,9 +373,9 @@ function EmptyState({ title, description, tone }: { title: string; description: 
   return (
     <Card className={`shadow-sm ${toneClasses}`}>
       <CardContent className="p-6">
-        <div className="rounded-2xl border border-white/80 bg-white p-5 text-center shadow-sm">
+        <div className="rounded-2xl border border-white/80 bg-card p-5 text-center shadow-sm">
           <div className="text-sm font-semibold text-slate-700">{title}</div>
-          <div className="mt-2 text-sm text-slate-500">{description}</div>
+          <div className="mt-2 text-sm text-muted-foreground">{description}</div>
         </div>
       </CardContent>
     </Card>
@@ -391,33 +391,33 @@ function TaxPlaceholder() {
   return (
     <Card className="border-amber-200 bg-amber-50/40 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-sm font-semibold text-slate-900">VAT & WHT Summary</CardTitle>
+        <CardTitle className="text-sm font-semibold text-foreground">VAT & WHT Summary</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="rounded-2xl border border-amber-200 bg-white p-6 text-center shadow-sm">
+        <div className="rounded-2xl border border-amber-200 bg-card p-6 text-center shadow-sm">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-200 bg-amber-100 text-amber-700">
             <Receipt className="h-6 w-6" />
           </div>
-          <h3 className="mt-4 text-base font-bold text-slate-900">Tax Summary Coming Soon</h3>
-          <p className="mt-2 text-sm text-slate-600">
+          <h3 className="mt-4 text-base font-bold text-foreground">Tax Summary Coming Soon</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
             Placeholder for VAT charged, WHT deductions and net tax position by period.
           </p>
           <div className="mt-5 grid gap-3 text-left">
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
               <div className="text-xs font-semibold uppercase tracking-wide text-amber-700">Period</div>
-              <div className="mt-1 text-sm font-semibold text-slate-900">Current reporting period</div>
+              <div className="mt-1 text-sm font-semibold text-foreground">Current reporting period</div>
             </div>
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-xl border border-slate-200 bg-white p-3">
-                <div className="text-xs text-slate-500">Total VAT Charged</div>
-                <div className="mt-1 text-lg font-bold text-slate-900">₦0.00</div>
+              <div className="rounded-xl border border-border bg-card p-3">
+                <div className="text-xs text-muted-foreground">Total VAT Charged</div>
+                <div className="mt-1 text-lg font-bold text-foreground">₦0.00</div>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-3">
-                <div className="text-xs text-slate-500">Total WHT</div>
-                <div className="mt-1 text-lg font-bold text-slate-900">₦0.00</div>
+              <div className="rounded-xl border border-border bg-card p-3">
+                <div className="text-xs text-muted-foreground">Total WHT</div>
+                <div className="mt-1 text-lg font-bold text-foreground">₦0.00</div>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-3">
-                <div className="text-xs text-slate-500">Net Tax Position</div>
+              <div className="rounded-xl border border-border bg-card p-3">
+                <div className="text-xs text-muted-foreground">Net Tax Position</div>
                 <div className="mt-1 text-lg font-bold text-blue-700">₦0.00</div>
               </div>
             </div>
@@ -445,24 +445,24 @@ function ReceivablesList({
       {rows.length === 0 ? (
         <EmptyState title="No receivables found" description="Try another date range, status, client, or search term." tone="red" />
       ) : (
-        <Card className="border-red-200 bg-white shadow-sm">
+        <Card className="border-red-200 bg-card shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-slate-900">Outstanding Invoices</CardTitle>
+            <CardTitle className="text-sm font-semibold text-foreground">Outstanding Invoices</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="space-y-3">
               {rows.map((row) => {
                 const aging = getAgingBucket(row.due_date)
                 return (
-                  <div key={row.id} className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${getLeftBorderClass(row.computed_status)}`}>
+                  <div key={row.id} className={`rounded-2xl border border-border bg-card p-4 shadow-sm ${getLeftBorderClass(row.computed_status)}`}>
                     <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm font-bold text-slate-900">
+                        <div className="text-sm font-bold text-foreground">
                           <Link to={`/invoices/${row.id}`} className="hover:text-blue-700 hover:underline">
                             {row.invoice_number || '—'}
                           </Link>
                         </div>
-                        <div className="mt-1 text-xs text-slate-500">{row.client_name || '—'}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">{row.client_name || '—'}</div>
                       </div>
                       <Badge className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusClass(row.computed_status)}`}>
                         {row.computed_status || 'draft'}
@@ -470,23 +470,23 @@ function ReceivablesList({
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                       <div>
-                        <div className="text-[11px] text-slate-500">Total</div>
-                        <div className="text-sm font-semibold text-slate-900">{formatMoney(row.total)}</div>
+                        <div className="text-[11px] text-muted-foreground">Total</div>
+                        <div className="text-sm font-semibold text-foreground">{formatMoney(row.total)}</div>
                       </div>
                       <div>
-                        <div className="text-[11px] text-slate-500">Received</div>
+                        <div className="text-[11px] text-muted-foreground">Received</div>
                         <div className="text-sm font-semibold text-emerald-700">{formatMoney(row.cash_received)}</div>
                       </div>
                       <div>
-                        <div className="text-[11px] text-slate-500">Balance Due</div>
+                        <div className="text-[11px] text-muted-foreground">Balance Due</div>
                         <div className="text-lg font-black text-red-600">{formatMoney(row.balance_due)}</div>
                       </div>
                       <div>
-                        <div className="text-[11px] text-slate-500">Due Date</div>
-                        <div className="text-sm font-semibold text-slate-900">{formatDate(row.due_date)}</div>
+                        <div className="text-[11px] text-muted-foreground">Due Date</div>
+                        <div className="text-sm font-semibold text-foreground">{formatDate(row.due_date)}</div>
                       </div>
                       <div>
-                        <div className="text-[11px] text-slate-500">Aging</div>
+                        <div className="text-[11px] text-muted-foreground">Aging</div>
                         <Badge className={`mt-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${getAgingBadgeClass(aging)}`}>{aging}</Badge>
                       </div>
                     </div>
@@ -518,22 +518,22 @@ function CollectionsList({
       {rows.length === 0 ? (
         <EmptyState title="No collections found" description="Try another date range, client, or search term." tone="green" />
       ) : (
-        <Card className="border-emerald-200 bg-white shadow-sm">
+        <Card className="border-emerald-200 bg-card shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-slate-900">Payments Received</CardTitle>
+            <CardTitle className="text-sm font-semibold text-foreground">Payments Received</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="space-y-3">
               {rows.map((row) => (
-                <div key={row.id} className="rounded-2xl border border-slate-200 border-l-4 border-l-emerald-500 bg-white p-4 shadow-sm">
+                <div key={row.id} className="rounded-2xl border border-border border-l-4 border-l-emerald-500 bg-card p-4 shadow-sm">
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
                     <div>
-                      <div className="text-[11px] text-slate-500">Date</div>
-                      <div className="text-sm font-semibold text-slate-900">{formatDate(row.date)}</div>
+                      <div className="text-[11px] text-muted-foreground">Date</div>
+                      <div className="text-sm font-semibold text-foreground">{formatDate(row.date)}</div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-slate-500">Invoice #</div>
-                      <div className="text-sm font-semibold text-slate-900">
+                      <div className="text-[11px] text-muted-foreground">Invoice #</div>
+                      <div className="text-sm font-semibold text-foreground">
                         {row.invoice_id ? (
                           <Link to={`/invoices/${row.invoice_id}`} className="hover:text-blue-700 hover:underline">
                             {row.invoice_number || '—'}
@@ -544,26 +544,26 @@ function CollectionsList({
                       </div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-slate-500">Client</div>
-                      <div className="text-sm font-semibold text-slate-900">{row.client_name || '—'}</div>
+                      <div className="text-[11px] text-muted-foreground">Client</div>
+                      <div className="text-sm font-semibold text-foreground">{row.client_name || '—'}</div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-slate-500">Amount</div>
+                      <div className="text-[11px] text-muted-foreground">Amount</div>
                       <div className="text-lg font-black text-emerald-700">{formatMoney(row.cash_amount)}</div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-slate-500">Settlement</div>
-                      <div className="text-sm font-semibold text-slate-900">{formatMoney(Number(row.cash_amount || 0) + Number(row.wht_amount || 0))}</div>
+                      <div className="text-[11px] text-muted-foreground">Settlement</div>
+                      <div className="text-sm font-semibold text-foreground">{formatMoney(Number(row.cash_amount || 0) + Number(row.wht_amount || 0))}</div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-slate-500">Account</div>
-                      <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+                      <div className="text-[11px] text-muted-foreground">Account</div>
+                      <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
                         <Landmark className="h-3.5 w-3.5 text-emerald-600" />
                         {row.account_label || row.method || '—'}
                       </div>
                     </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span>Method: <span className="font-semibold text-slate-700">{row.method || '—'}</span></span>
                     <span>Reference: <span className="font-semibold text-slate-700">{row.reference || '—'}</span></span>
                     <Badge className="rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold text-white">PAID</Badge>
@@ -595,9 +595,9 @@ function ProjectsList({
       {rows.length === 0 ? (
         <EmptyState title="No projects found" description="Try another client filter or search term." tone="blue" />
       ) : (
-        <Card className="border-blue-200 bg-white shadow-sm">
+        <Card className="border-blue-200 bg-card shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-slate-900">Project Financial Summaries</CardTitle>
+            <CardTitle className="text-sm font-semibold text-foreground">Project Financial Summaries</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="space-y-3">
@@ -605,12 +605,12 @@ function ProjectsList({
                 <Link
                   key={row.id}
                   to={row.project_id ? `/projects/${row.project_id}` : '#'}
-                  className={`block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${getLeftBorderClass(row.status)} ${row.project_id ? '' : 'pointer-events-none'}`}
+                  className={`block rounded-2xl border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${getLeftBorderClass(row.status)} ${row.project_id ? '' : 'pointer-events-none'}`}
                 >
                   <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <div className="text-sm font-bold text-slate-900">{row.project_name || row.name || 'Untitled project'}</div>
-                      <div className="mt-1 text-xs text-slate-500">{row.client_name || '—'}</div>
+                      <div className="text-sm font-bold text-foreground">{row.project_name || row.name || 'Untitled project'}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">{row.client_name || '—'}</div>
                     </div>
                     <Badge className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusClass(row.status)}`}>
                       {row.status || 'unknown'}
@@ -618,20 +618,20 @@ function ProjectsList({
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <div>
-                      <div className="text-[11px] text-slate-500">Total Invoiced</div>
-                      <div className="text-sm font-semibold text-slate-900">{formatMoney(row.total_invoiced)}</div>
+                      <div className="text-[11px] text-muted-foreground">Total Invoiced</div>
+                      <div className="text-sm font-semibold text-foreground">{formatMoney(row.total_invoiced)}</div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-slate-500">Collected</div>
+                      <div className="text-[11px] text-muted-foreground">Collected</div>
                       <div className="text-sm font-semibold text-emerald-700">{formatMoney(row.cash_collected)}</div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-slate-500">Outstanding</div>
+                      <div className="text-[11px] text-muted-foreground">Outstanding</div>
                       <div className="text-lg font-black text-red-600">{formatMoney(row.outstanding)}</div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-slate-500">Invoice Count</div>
-                      <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+                      <div className="text-[11px] text-muted-foreground">Invoice Count</div>
+                      <div className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
                         {Number(row.invoice_count || 0)}
                         {row.project_id ? <ArrowRight className="h-3.5 w-3.5 text-blue-600" /> : null}
                       </div>
@@ -871,7 +871,7 @@ export default function Reports() {
         <div className="space-y-4">
           <SectionHeader title="Reports" subtitle="Live receivables, collections, project finance snapshots, and a tax placeholder for the next phase." />
           <Tabs value={tab} onValueChange={(value) => setTab(value as ReportTab)} className="w-full">
-            <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+            <div className="rounded-2xl border border-border bg-card p-2 shadow-sm">
               <div className="overflow-x-auto">
                 <TabsList className="inline-flex h-auto w-max gap-2 bg-transparent p-0">
                   <TabsTrigger value="receivables" className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-700 data-[state=active]:border-red-500 data-[state=active]:bg-red-500 data-[state=active]:text-white">Receivables</TabsTrigger>
@@ -885,13 +885,13 @@ export default function Reports() {
               <TabsContent value="receivables" className="mt-0 space-y-4">
                 <MetricStrip metrics={receivablesMetrics} />
                 <Filters activeDate={datePreset} setActiveDate={setDatePreset} statusFilter={receivablesFilter} setStatusFilter={setReceivablesFilter} clientFilter={clientFilter} setClientFilter={setClientFilter} clientOptions={clientOptions} search={search} setSearch={setSearch} showStatus />
-                {datePreset === 'custom' ? <Card className="border-blue-200 bg-white shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
+                {datePreset === 'custom' ? <Card className="border-blue-200 bg-card shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
                 <ReceivablesList loading={loading.receivables} error={error.receivables} rows={filteredReceivables} />
               </TabsContent>
               <TabsContent value="collections" className="mt-0 space-y-4">
                 <MetricStrip metrics={collectionMetrics} />
                 <Filters activeDate={datePreset} setActiveDate={setDatePreset} statusFilter={receivablesFilter} setStatusFilter={setReceivablesFilter} clientFilter={clientFilter} setClientFilter={setClientFilter} clientOptions={clientOptions} search={search} setSearch={setSearch} showStatus={false} />
-                {datePreset === 'custom' ? <Card className="border-emerald-200 bg-white shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
+                {datePreset === 'custom' ? <Card className="border-emerald-200 bg-card shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
                 <CollectionsList loading={loading.collections} error={error.collections} rows={filteredCollections} />
               </TabsContent>
               <TabsContent value="projects" className="mt-0 space-y-4">
@@ -902,7 +902,7 @@ export default function Reports() {
               <TabsContent value="tax" className="mt-0 space-y-4">
                 <MetricStrip metrics={taxMetrics} />
                 <Filters activeDate={datePreset} setActiveDate={setDatePreset} statusFilter={receivablesFilter} setStatusFilter={setReceivablesFilter} clientFilter={clientFilter} setClientFilter={setClientFilter} clientOptions={clientOptions} search={search} setSearch={setSearch} showStatus={false} />
-                {datePreset === 'custom' ? <Card className="border-amber-200 bg-white shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
+                {datePreset === 'custom' ? <Card className="border-amber-200 bg-card shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
                 <TaxPlaceholder />
               </TabsContent>
             </div>

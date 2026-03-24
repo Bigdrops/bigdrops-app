@@ -163,7 +163,7 @@ export default function CSR() {
 
   const renderActionMenu = (csr) => (
     <div
-      className="absolute right-0 top-12 z-30 w-36 rounded-2xl border border-zinc-200 bg-white p-1 shadow-xl"
+      className="absolute right-0 top-12 z-30 w-36 rounded-2xl border border-zinc-200 bg-background p-1 shadow-xl"
       onClick={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
     >
@@ -219,13 +219,13 @@ export default function CSR() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search CSRs, clients, or equipment..."
-              className="h-11 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 outline-none"
+              className="h-11 w-full rounded-2xl border border-zinc-200 bg-background px-4 text-sm font-medium text-zinc-800 outline-none"
             />
           </div>
         )}
 
         {showFilters && (
-          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-card p-3">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold uppercase text-zinc-400">Client</span>
               <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className={filterSelectClass}>
@@ -391,7 +391,7 @@ export default function CSR() {
             )}
           </div>
         ) : (
-          <Card className="overflow-hidden rounded-[28px] border border-zinc-200 bg-white shadow-sm">
+          <Card className="overflow-hidden rounded-[28px] border border-zinc-200 bg-card shadow-sm">
             <CardContent className="p-0">
               <div className="border-b border-zinc-200 bg-zinc-50 px-5 py-4">
                 <div className="text-sm font-semibold text-zinc-900">

@@ -76,7 +76,7 @@ export default function MobileItemCard({
   }
 
   return (
-    <Card className="overflow-hidden rounded-[22px] border border-zinc-200 bg-white ring-0 shadow-none">
+    <Card className="overflow-hidden rounded-[22px] border border-zinc-200 bg-card ring-0 shadow-none">
       <div className="flex items-center gap-2 border-b border-zinc-200 bg-zinc-50 px-3 py-2.5">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[11px] font-bold text-white">
           {number}
@@ -144,7 +144,7 @@ export default function MobileItemCard({
             value={item.description || ''}
             onChange={(e) => onUpdate(index, 'description', e.target.value)}
             placeholder="Item description"
-            className="h-11 rounded-2xl border-zinc-200 bg-white text-sm font-semibold"
+            className="h-11 rounded-2xl border-zinc-200 bg-background text-sm font-semibold"
           />
           <Input
             value={item.sub_description || ''}
@@ -307,7 +307,7 @@ export default function MobileItemCard({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                  className="rounded-lg border border-zinc-200 bg-card px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
                 >
                   {item.image_url ? 'Change' : uploading ? 'Uploading...' : 'Upload'}
                 </button>
@@ -315,7 +315,7 @@ export default function MobileItemCard({
                   <button
                     type="button"
                     onClick={() => onUpdate(index, 'image_url', null)}
-                    className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                    className="rounded-lg border border-zinc-200 bg-card px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
                   >
                     Remove
                   </button>
@@ -329,7 +329,7 @@ export default function MobileItemCard({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-white text-zinc-400 hover:bg-zinc-50"
+                className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-card text-zinc-400 hover:bg-zinc-50"
               >
                 {uploading ? '...' : <ImagePlus className="h-5 w-5" />}
               </button>

@@ -39,7 +39,7 @@ export default function InvoiceCustomBottomFieldsSection({
       </CardHeader>
       <CardContent className="space-y-3">
         {bottomFields.length === 0 && (
-          <div className="text-sm italic text-slate-400">{emptyStateText}</div>
+          <div className="text-sm italic text-muted-foreground">{emptyStateText}</div>
         )}
         {bottomFields.map((field) => (
           <div key={field.id} className="flex items-center gap-2">

@@ -52,7 +52,7 @@ export default function TotalsPanel({
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-[24px] border border-zinc-200 bg-white ring-0 shadow-none">
+      <Card className="rounded-[24px] border border-zinc-200 bg-card ring-0 shadow-none">
         <CardContent className="space-y-4 p-4">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900">Totals</h3>
@@ -85,7 +85,7 @@ export default function TotalsPanel({
         </CardContent>
       </Card>
 
-      <Card className="rounded-[24px] border border-zinc-200 bg-white ring-0 shadow-none">
+      <Card className="rounded-[24px] border border-zinc-200 bg-card ring-0 shadow-none">
         <CardContent className="space-y-4 p-4">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900">Tax & Discount Settings</h3>
@@ -102,7 +102,7 @@ export default function TotalsPanel({
             </button>
 
             {showCharges ? (
-              <div className="space-y-3 border-t border-zinc-200 bg-white p-4">
+              <div className="space-y-3 border-t border-zinc-200 bg-card p-4">
                 {[
                   ['workmanship', workmanship, onWorkmanshipChange],
                   ['transportation', transportation, onTransportationChange],
