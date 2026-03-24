@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Check,
   Building2,
+  Truck,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -39,9 +40,10 @@ const tabs = [
 ]
 
 const salesPicker = [
-  { key: 'invoices', label: 'Invoices', icon: Receipt, tint: 'bg-blue-50 border-blue-200', iconBg: 'bg-blue-600' },
+  { key: 'invoices',   label: 'Invoices',   icon: Receipt,       tint: 'bg-blue-50 border-blue-200',   iconBg: 'bg-blue-600' },
   { key: 'quotations', label: 'Quotations', icon: FileSignature, tint: 'bg-violet-50 border-violet-200', iconBg: 'bg-violet-600' },
-  { key: 'csr', label: 'CSR', icon: ClipboardCheck, tint: 'bg-orange-50 border-orange-200', iconBg: 'bg-orange-600' },
+  { key: 'csr',        label: 'CSR',        icon: ClipboardCheck, tint: 'bg-orange-50 border-orange-200', iconBg: 'bg-orange-600' },
+  { key: 'waybills',   label: 'Waybills',   icon: Truck,          tint: 'bg-slate-50 border-slate-200',  iconBg: 'bg-slate-700' },
 ]
 
 const moreGroups = [
@@ -69,7 +71,7 @@ function getActiveTab(pathname) {
   if (pathname === '/') return 'home'
   if (pathname.startsWith('/projects')) return 'projects'
   if (pathname.startsWith('/clients')) return 'clients'
-  if (pathname.startsWith('/invoices') || pathname.startsWith('/quotations') || pathname.startsWith('/csr')) return 'sales'
+  if (pathname.startsWith('/invoices') || pathname.startsWith('/quotations') || pathname.startsWith('/csr') || pathname.startsWith('/waybills')) return 'sales'
   if (pathname.startsWith('/reports') || pathname.startsWith('/settings')) return 'more'
   return 'home'
 }
@@ -174,6 +176,7 @@ export default function Layout({ title, children, session, hidePageHeader = fals
       invoices: '/invoices',
       quotations: '/quotations',
       csr: '/csr',
+      waybills: '/waybills',
     }
     setSalesOpen(false)
     navigate(pathByKey[key] || '/')
