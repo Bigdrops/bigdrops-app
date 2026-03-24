@@ -235,7 +235,7 @@ export default function Invoices() {
   const iconButtonClass = "h-10 w-10 rounded-xl border border-border bg-background flex items-center justify-center text-muted-foreground"
 
   return (
-    <Layout title="Invoices">
+    <Layout title="Invoices" hidePageHeader>
       <div className="w-full py-6 pb-32" style={{ fontFamily: "'Inter', sans-serif" }}>
 
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

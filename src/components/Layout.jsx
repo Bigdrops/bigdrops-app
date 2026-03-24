@@ -56,6 +56,33 @@ const desktopNav = [
   { key: 'clients', label: 'Clients', icon: Users },
 ]
 
+const mobileDrawerPrimaryNav = [
+  { key: 'home', label: 'Dashboard', icon: LayoutDashboard, path: '/' },
+  { key: 'projects', label: 'Projects', icon: FolderKanban, path: '/projects' },
+  { key: 'clients', label: 'Clients', icon: Users, path: '/clients' },
+]
+
+const mobileDrawerUtilityNav = [
+  { key: 'reports', label: 'Reports', icon: BarChart3, path: '/reports' },
+  { key: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
+]
+
+function getSalesPath(key) {
+  const pathByKey = {
+    invoices: '/invoices',
+    quotations: '/quotations',
+    csr: '/csr',
+    waybills: '/waybills',
+  }
+
+  return pathByKey[key] || '/'
+}
+
+function isPathActive(pathname, path) {
+  if (path === '/') return pathname === '/'
+  return pathname === path || pathname.startsWith(`${path}/`)
+}
+
 function getActiveTab(pathname) {
   if (pathname === '/') return 'home'
   if (pathname.startsWith('/projects')) return 'projects'
@@ -123,18 +150,15 @@ export default function Layout({ title, children, session, hidePageHeader = fals
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
   const [salesOpen, setSalesOpen] = React.useState(false)
   const [moreOpen, setMoreOpen] = React.useState(false)
+  const [drawerSalesOpen, setDrawerSalesOpen] = React.useState(false)
   const activeTab = getActiveTab(location.pathname)
   const isHome = location.pathname === '/'
+  const salesRouteActive = activeTab === 'sales'
 
   const handleSalesPick = (key) => {
-    const pathByKey = {
-      invoices: '/invoices',
-      quotations: '/quotations',
-      csr: '/csr',
-      waybills: '/waybills',
-    }
     setSalesOpen(false)
-    navigate(pathByKey[key] || '/')
+    setSidebarOpen(false)
+    navigate(getSalesPath(key))
   }
 
   const handleMorePick = async (key) => {
@@ -161,6 +185,12 @@ export default function Layout({ title, children, session, hidePageHeader = fals
     const pathByKey = { home: '/', projects: '/projects', clients: '/clients' }
     navigate(pathByKey[key] || '/')
   }
+
+  React.useEffect(() => {
+    if (salesRouteActive) {
+      setDrawerSalesOpen(true)
+    }
+  }, [salesRouteActive])
 
   const desktopContentClassName = contentClassName || 'mx-auto w-full max-w-5xl px-6 py-6'
   const mobileContentClassName = contentClassName || 'w-full px-4 pb-24 pt-4'
@@ -310,11 +340,11 @@ export default function Layout({ title, children, session, hidePageHeader = fals
               <BusinessSwitcher />
             </div>
 
-            {desktopNav.map((item) => {
+            {mobileDrawerPrimaryNav.map((item) => {
               const Icon = item.icon
-              const isActive = activeTab === item.key
+              const isActive = isPathActive(location.pathname, item.path)
               return (
-                <button key={item.key} type="button" onClick={() => { onTabClick(item.key); setSidebarOpen(false) }} className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}>
+                <button key={item.key} type="button" onClick={() => { navigate(item.path); setSidebarOpen(false) }} className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}>
                   <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-muted')}>
                     <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
                   </span>
@@ -325,22 +355,71 @@ export default function Layout({ title, children, session, hidePageHeader = fals
 
             <Separator className="my-3" />
 
-            <button type="button" onClick={() => { setSidebarOpen(false); setSalesOpen(true) }} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-3 py-2 text-sm shadow-sm transition hover:bg-muted/50">
-              <div className="flex items-center gap-3">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-muted">
-                  <Receipt className="h-5 w-5 text-slate-700" />
-                </span>
-                <span className="font-semibold text-foreground">Sales</span>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </button>
+            <div className="rounded-2xl border border-border bg-card p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setDrawerSalesOpen((open) => !open)}
+                className={cn('flex w-full items-center justify-between rounded-[18px] px-2 py-2 text-sm transition', salesRouteActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}
+              >
+                <div className="flex items-center gap-3">
+                  <span className={cn('grid h-9 w-9 place-items-center rounded-xl', salesRouteActive ? 'bg-white/10' : 'bg-muted')}>
+                    <Receipt className={cn('h-5 w-5', salesRouteActive ? 'text-white' : 'text-slate-700')} />
+                  </span>
+                  <span className="font-semibold">Sales</span>
+                </div>
+                <ChevronDown className={cn('h-5 w-5 transition-transform', drawerSalesOpen ? 'rotate-180' : '')} />
+              </button>
 
-            <button type="button" onClick={() => { setSidebarOpen(false); setMoreOpen(true) }} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-3 py-2 text-sm shadow-sm transition hover:bg-muted/50">
+              {drawerSalesOpen ? (
+                <div className="mt-1 space-y-1 pb-1 pl-2">
+                  {salesPicker.map((item) => {
+                    const Icon = item.icon
+                    const isActive = isPathActive(location.pathname, getSalesPath(item.key))
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => handleSalesPick(item.key)}
+                        className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}
+                      >
+                        <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-muted')}>
+                          <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
+                        </span>
+                        <span className="font-semibold">{item.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : null}
+            </div>
+
+            {mobileDrawerUtilityNav.map((item) => {
+              const Icon = item.icon
+              const isActive = isPathActive(location.pathname, item.path)
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    navigate(item.path)
+                    setSidebarOpen(false)
+                  }}
+                  className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}
+                >
+                  <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-muted')}>
+                    <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
+                  </span>
+                  <span className="font-semibold">{item.label}</span>
+                </button>
+              )
+            })}
+
+            <button type="button" onClick={() => handleMorePick('signout')} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-3 py-2 text-sm shadow-sm transition hover:bg-muted/50">
               <div className="flex items-center gap-3">
                 <span className="grid h-9 w-9 place-items-center rounded-xl bg-muted">
-                  <MoreHorizontal className="h-5 w-5 text-slate-700" />
+                  <LogOut className="h-5 w-5 text-slate-700" />
                 </span>
-                <span className="font-semibold text-foreground">More</span>
+                <span className="font-semibold text-foreground">Sign Out</span>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>

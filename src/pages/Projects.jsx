@@ -140,7 +140,7 @@ export default function Projects() {
   }
 
   return (
-    <Layout title="Projects">
+    <Layout title="Projects" hidePageHeader>
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }

@@ -179,7 +179,7 @@ export default function CSR() {
   const iconButtonClass = "h-10 w-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center text-zinc-500"
 
   return (
-    <Layout title="Customer Service Reports">
+    <Layout title="Customer Service Reports" hidePageHeader>
       <div className="w-full space-y-5 py-6" style={{ fontFamily: "'Inter', sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, gap: 12 }}>
           <div>

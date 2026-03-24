@@ -62,7 +62,7 @@ export default function Waybills() {
   ]
 
   return (
-    <Layout title="Waybills">
+    <Layout title="Waybills" hidePageHeader>
       <div className="w-full py-4 pb-32">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
@@ -76,6 +76,14 @@ export default function Waybills() {
               className="grid h-10 w-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition hover:bg-muted/50"
             >
               <Search className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/waybills/new')}
+              className="flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            >
+              <Plus className="h-4 w-4" />
+              New Waybill
             </button>
           </div>
         </div>
