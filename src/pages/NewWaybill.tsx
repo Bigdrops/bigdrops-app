@@ -94,15 +94,19 @@ export default function NewWaybill() {
   const handleSigUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
     setSigUploading(true)
     const ext = file.name.split('.').pop()
     const path = `sig_${Date.now()}.${ext}`
+
     const { error: upErr } = await supabase.storage.from('signatures').upload(path, file, { upsert: true })
+
     if (upErr) {
       alert('Upload failed: ' + upErr.message)
       setSigUploading(false)
       return
     }
+
     const { data } = supabase.storage.from('signatures').getPublicUrl(path)
     update('receiver_signature_url', data.publicUrl)
     setSigUploading(false)
@@ -111,38 +115,94 @@ export default function NewWaybill() {
 
   const searchInvoices = async (q: string) => {
     setInvoiceSearch(q)
-    if (!q.trim()) { setInvoiceSuggestions([]); return }
-    const { data } = await supabase.from('invoices').select('id, invoice_number').ilike('invoice_number', `%${q}%`).limit(6)
+    if (!q.trim()) {
+      setInvoiceSuggestions([])
+      return
+    }
+
+    const { data } = await supabase
+      .from('invoices')
+      .select('id, invoice_number')
+      .ilike('invoice_number', `%${q}%`)
+      .limit(6)
+
     setInvoiceSuggestions((data as { id: string; invoice_number: string }[]) || [])
   }
 
   const searchProjects = async (q: string) => {
     setProjectSearch(q)
-    if (!q.trim()) { setProjectSuggestions([]); return }
-    const { data } = await supabase.from('projects').select('id, name').ilike('name', `%${q}%`).limit(6)
+    if (!q.trim()) {
+      setProjectSuggestions([])
+      return
+    }
+
+    const { data } = await supabase
+      .from('projects')
+      .select('id, name')
+      .ilike('name', `%${q}%`)
+      .limit(6)
+
     setProjectSuggestions((data as { id: string; name: string }[]) || [])
   }
 
   const handleSave = async () => {
     setError('')
-    if (!waybill.date) { setError('Date is required.'); return }
-    const validItems = items.filter((i) => i.description.trim())
-    if (!validItems.length) { setError('At least one item with a description is required.'); return }
+
+    if (!waybill.date) {
+      setError('Date is required.')
+      return
+    }
+
+    const validItems = items
+      .map((item) => ({
+        description: item.description?.trim() || '',
+        quantity: Number(item.quantity) || 0,
+        unit: item.unit?.trim() || '',
+        condition: item.condition,
+      }))
+      .filter((item) => item.description)
+
+    if (!validItems.length) {
+      setError('At least one item with a description is required.')
+      return
+    }
 
     setSaving(true)
+
     const payload = {
-      ...waybill,
-      items: items,
+      waybill_number: waybill.waybill_number || null,
+      type: waybill.type || 'internal',
+      date: waybill.date,
+      time: waybill.time || null,
+      sender_name: waybill.sender_name?.trim() || null,
+      receiver_name: waybill.receiver_name?.trim() || null,
+      receiver_signature_url: waybill.receiver_signature_url || null,
+      receiver_description: waybill.receiver_description?.trim() || null,
       client_id: waybill.client_id || null,
-      invoice_id: waybill.invoice_id || null,
+      client_name: waybill.client_name?.trim() || null,
       project_id: waybill.project_id || null,
+      invoice_id: waybill.invoice_id || null,
+      po_number: waybill.po_number?.trim() || null,
+      vehicle_plate: waybill.vehicle_plate?.trim() || null,
+      delivery_location: waybill.delivery_location?.trim() || null,
+      items: validItems,
+      notes: waybill.notes?.trim() || null,
+      status: waybill.status || 'draft',
+      created_by: waybill.created_by || null,
     }
-    const { data, error: dbErr } = await supabase.from('waybills').insert([payload]).select('id').single()
+
+    const { data, error: dbErr } = await supabase
+      .from('waybills')
+      .insert([payload])
+      .select('id')
+      .single()
+
     if (dbErr) {
       setError(dbErr.message)
       setSaving(false)
       return
     }
+
     navigate(`/waybills/${data.id}`)
   }
 
@@ -150,7 +210,6 @@ export default function NewWaybill() {
     <Layout title="New Waybill">
       <div className="mx-auto max-w-2xl py-4 pb-28">
         <div className="space-y-4">
-
           <SectionCard title="Waybill Details" accent="bg-gradient-to-r from-emerald-50 to-white">
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
@@ -171,18 +230,28 @@ export default function NewWaybill() {
                   </div>
                 </Field>
               </div>
+
               <Field label="Waybill Number">
-                <Input value={waybill.waybill_number} readOnly className="bg-muted/50 font-mono font-semibold text-emerald-700" />
+                <Input
+                  value={waybill.waybill_number}
+                  readOnly
+                  className="bg-muted/50 font-mono font-semibold text-emerald-700"
+                />
               </Field>
+
               <Field label="Date" required>
                 <Input type="date" value={waybill.date} onChange={(e) => update('date', e.target.value)} />
               </Field>
+
               <Field label="Time">
                 <Input type="time" value={waybill.time} onChange={(e) => update('time', e.target.value)} />
               </Field>
+
               <Field label="Status">
                 <Select value={waybill.status} onValueChange={(v) => update('status', v as WaybillStatus)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="dispatched">Dispatched</SelectItem>
@@ -198,27 +267,43 @@ export default function NewWaybill() {
               <Field label="Sender Name">
                 <Input value={waybill.sender_name} onChange={(e) => update('sender_name', e.target.value)} placeholder="From" />
               </Field>
+
               <Field label="Receiver Name">
                 <Input value={waybill.receiver_name} onChange={(e) => update('receiver_name', e.target.value)} placeholder="To" />
               </Field>
+
               <div className="col-span-2">
                 <ClientSelector
                   clientId={waybill.client_id}
                   clientName={waybill.client_name}
-                  onClientChange={(id, name) => { update('client_id', id); update('client_name', name) }}
+                  onClientChange={(id, name) => {
+                    update('client_id', id)
+                    update('client_name', name)
+                  }}
                   isMobile={false}
                   compact
                 />
               </div>
+
               <Field label="Vehicle Plate">
-                <Input value={waybill.vehicle_plate} onChange={(e) => update('vehicle_plate', e.target.value)} placeholder="e.g. ABC 1234" />
+                <Input
+                  value={waybill.vehicle_plate}
+                  onChange={(e) => update('vehicle_plate', e.target.value)}
+                  placeholder="e.g. ABC 1234"
+                />
               </Field>
+
               <Field label="PO Number">
                 <Input value={waybill.po_number} onChange={(e) => update('po_number', e.target.value)} placeholder="Optional" />
               </Field>
+
               <div className="col-span-2">
                 <Field label="Delivery Location">
-                  <Input value={waybill.delivery_location} onChange={(e) => update('delivery_location', e.target.value)} placeholder="Address or site name" />
+                  <Input
+                    value={waybill.delivery_location}
+                    onChange={(e) => update('delivery_location', e.target.value)}
+                    placeholder="Address or site name"
+                  />
                 </Field>
               </div>
             </div>
@@ -229,8 +314,12 @@ export default function NewWaybill() {
               <Field label="Link to Invoice">
                 <div className="relative">
                   <Input
-                    value={invoiceSearch || waybill.invoice_id}
-                    onChange={(e) => { update('invoice_id', ''); void searchInvoices(e.target.value) }}
+                    value={invoiceSearch}
+                    onChange={(e) => {
+                      update('invoice_id', null)
+                      setInvoiceSearch(e.target.value)
+                      void searchInvoices(e.target.value)
+                    }}
                     placeholder="Search invoice number…"
                   />
                   {invoiceSuggestions.length > 0 && (
@@ -240,7 +329,11 @@ export default function NewWaybill() {
                           key={inv.id}
                           type="button"
                           className="w-full px-4 py-2.5 text-left text-sm hover:bg-muted/50"
-                          onClick={() => { update('invoice_id', inv.id); setInvoiceSearch(inv.invoice_number); setInvoiceSuggestions([]) }}
+                          onClick={() => {
+                            update('invoice_id', inv.id)
+                            setInvoiceSearch(inv.invoice_number)
+                            setInvoiceSuggestions([])
+                          }}
                         >
                           {inv.invoice_number}
                         </button>
@@ -249,11 +342,16 @@ export default function NewWaybill() {
                   )}
                 </div>
               </Field>
+
               <Field label="Link to Project">
                 <div className="relative">
                   <Input
-                    value={projectSearch || waybill.project_id}
-                    onChange={(e) => { update('project_id', ''); void searchProjects(e.target.value) }}
+                    value={projectSearch}
+                    onChange={(e) => {
+                      update('project_id', null)
+                      setProjectSearch(e.target.value)
+                      void searchProjects(e.target.value)
+                    }}
                     placeholder="Search project name…"
                   />
                   {projectSuggestions.length > 0 && (
@@ -263,7 +361,11 @@ export default function NewWaybill() {
                           key={proj.id}
                           type="button"
                           className="w-full px-4 py-2.5 text-left text-sm hover:bg-muted/50"
-                          onClick={() => { update('project_id', proj.id); setProjectSearch(proj.name); setProjectSuggestions([]) }}
+                          onClick={() => {
+                            update('project_id', proj.id)
+                            setProjectSearch(proj.name)
+                            setProjectSuggestions([])
+                          }}
                         >
                           {proj.name}
                         </button>
@@ -280,11 +382,11 @@ export default function NewWaybill() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-xs text-muted-foreground">
-                    <th className="pb-2 pr-2 text-left font-semibold">Description</th>
-                    <th className="pb-2 pr-2 text-left font-semibold w-16">Qty</th>
-                    <th className="pb-2 pr-2 text-left font-semibold w-20">Unit</th>
-                    <th className="pb-2 pr-2 text-left font-semibold w-28">Condition</th>
-                    <th className="pb-2 w-8" />
+                    <th className="w-auto pb-2 pr-2 text-left font-semibold">Description</th>
+                    <th className="w-16 pb-2 pr-2 text-left font-semibold">Qty</th>
+                    <th className="w-20 pb-2 pr-2 text-left font-semibold">Unit</th>
+                    <th className="w-28 pb-2 pr-2 text-left font-semibold">Condition</th>
+                    <th className="w-8 pb-2" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -298,6 +400,7 @@ export default function NewWaybill() {
                           className="h-8 text-xs"
                         />
                       </td>
+
                       <td className="py-1.5 pr-2">
                         <Input
                           type="number"
@@ -306,6 +409,7 @@ export default function NewWaybill() {
                           className="h-8 w-16 text-xs"
                         />
                       </td>
+
                       <td className="py-1.5 pr-2">
                         <Input
                           value={item.unit}
@@ -314,18 +418,22 @@ export default function NewWaybill() {
                           className="h-8 w-20 text-xs"
                         />
                       </td>
+
                       <td className="py-1.5 pr-2">
                         <Select value={item.condition} onValueChange={(v) => updateItem(i, 'condition', v)}>
-                          <SelectTrigger className="h-8 text-xs w-28">
+                          <SelectTrigger className="h-8 w-28 text-xs">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             {CONDITION_OPTIONS.map((o) => (
-                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                              <SelectItem key={o.value} value={o.value}>
+                                {o.label}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </td>
+
                       <td className="py-1.5">
                         <button
                           type="button"
@@ -340,7 +448,14 @@ export default function NewWaybill() {
                 </tbody>
               </table>
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={addItem} className="mt-2 gap-2 rounded-xl border-dashed border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addItem}
+              className="mt-2 gap-2 rounded-xl border-dashed border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+            >
               <Plus className="h-3.5 w-3.5" />
               Add Item
             </Button>
@@ -348,39 +463,75 @@ export default function NewWaybill() {
 
           <SectionCard title="Additional Info" accent="bg-gradient-to-r from-slate-50 to-white">
             <Field label="Notes">
-              <Textarea value={waybill.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Any notes about this delivery…" rows={3} />
+              <Textarea
+                value={waybill.notes}
+                onChange={(e) => update('notes', e.target.value)}
+                placeholder="Any notes about this delivery…"
+                rows={3}
+              />
             </Field>
+
             <Field label="Receiver Description">
-              <Input value={waybill.receiver_description} onChange={(e) => update('receiver_description', e.target.value)} placeholder="Name, role, witness notes (internal waybills)" />
+              <Input
+                value={waybill.receiver_description}
+                onChange={(e) => update('receiver_description', e.target.value)}
+                placeholder="Name, role, witness notes (internal waybills)"
+              />
             </Field>
+
             <Field label="Receiver Signature">
               <div className="flex items-center gap-3">
                 {waybill.receiver_signature_url ? (
                   <div className="relative">
-                    <img src={waybill.receiver_signature_url} alt="Signature" className="h-16 rounded-lg border border-border object-contain" />
-                    <button type="button" onClick={() => update('receiver_signature_url', '')} className="absolute -right-2 -top-2 grid h-5 w-5 place-items-center rounded-full bg-red-500 text-white">
+                    <img
+                      src={waybill.receiver_signature_url}
+                      alt="Signature"
+                      className="h-16 rounded-lg border border-border object-contain"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => update('receiver_signature_url', '')}
+                      className="absolute -right-2 -top-2 grid h-5 w-5 place-items-center rounded-full bg-red-500 text-white"
+                    >
                       <X className="h-3 w-3" />
                     </button>
                   </div>
                 ) : null}
-                <Button type="button" variant="outline" size="sm" onClick={() => sigInputRef.current?.click()} disabled={sigUploading} className="gap-2 rounded-xl">
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => sigInputRef.current?.click()}
+                  disabled={sigUploading}
+                  className="gap-2 rounded-xl"
+                >
                   <Upload className="h-3.5 w-3.5" />
                   {sigUploading ? 'Uploading…' : 'Upload Signature'}
                 </Button>
+
                 <input ref={sigInputRef} type="file" accept="image/*" className="hidden" onChange={handleSigUpload} />
               </div>
             </Field>
           </SectionCard>
 
           {error && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
           )}
 
           <div className="flex gap-3">
             <Button type="button" variant="outline" onClick={() => navigate('/waybills')} className="flex-1 rounded-xl">
               Cancel
             </Button>
-            <Button type="button" onClick={handleSave} disabled={saving} className="flex-1 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">
+
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
+            >
               {saving ? 'Saving…' : 'Save Waybill'}
             </Button>
           </div>
