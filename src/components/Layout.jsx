@@ -302,7 +302,7 @@ export default function Layout({ title, children, session, hidePageHeader = fals
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
-          className="fixed left-3 top-3 z-50 grid h-10 w-10 place-items-center rounded-2xl border border-border bg-white/95 shadow-sm backdrop-blur"
+          className="fixed left-3 top-3 z-50 grid h-10 w-10 place-items-center rounded-2xl border border-border bg-card shadow-sm"
           aria-label="Open navigation menu"
         >
           <Menu className="h-5 w-5 text-slate-700" />
@@ -318,7 +318,7 @@ export default function Layout({ title, children, session, hidePageHeader = fals
 
         <main className={mobileContentClassName}>{children}</main>
 
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card">
           <div className="mx-auto grid max-w-md grid-cols-5 px-2 py-2 shadow-[0_-10px_30px_-20px_rgba(15,23,42,0.35)]">
             {tabs.map((tab) => {
               const Icon = tab.icon
