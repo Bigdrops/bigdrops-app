@@ -25,7 +25,6 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
-import { QUICK_TILE_REGISTRY, DEFAULT_QUICK_TILES } from '../config/quickTiles'
 import { useSettings } from '../hooks/useSettings'
 import { supabase } from '../supabase'
 
@@ -56,16 +55,6 @@ const desktopNav = [
   { key: 'projects', label: 'Projects', icon: FolderKanban },
   { key: 'clients', label: 'Clients', icon: Users },
 ]
-
-function getStoredQuickTiles() {
-  try {
-    const savedTiles = localStorage.getItem('quick_tiles')
-    const parsed = savedTiles ? JSON.parse(savedTiles) : DEFAULT_QUICK_TILES
-    return Array.isArray(parsed) ? parsed : DEFAULT_QUICK_TILES
-  } catch {
-    return DEFAULT_QUICK_TILES
-  }
-}
 
 function getActiveTab(pathname) {
   if (pathname === '/') return 'home'
@@ -125,40 +114,6 @@ export function BusinessSwitcher() {
         </div>
       ) : null}
     </>
-  )
-}
-
-export function QuickTileRail({ tiles }) {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const validTiles = React.useMemo(() => {
-    const activeTiles = Array.isArray(tiles) && tiles.length > 0 ? tiles : getStoredQuickTiles()
-    const allowed = new Set(activeTiles)
-    return activeTiles.filter((id) => allowed.has(id) && QUICK_TILE_REGISTRY[id])
-  }, [tiles])
-
-  if (validTiles.length === 0) return null
-
-  return (
-    <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-      {validTiles.map((id) => {
-        const tile = QUICK_TILE_REGISTRY[id]
-        const isActive = location.pathname === tile.path || (tile.path !== '/' && location.pathname.startsWith(tile.path))
-        return (
-          <button
-            key={id}
-            type="button"
-            onClick={() => navigate(tile.path)}
-            className={cn(
-              'shrink-0 rounded-full border px-4 py-2 text-xs font-semibold shadow-sm transition',
-              isActive ? 'border-slate-900 bg-slate-900 text-white' : 'border-border bg-card text-slate-700 hover:bg-muted/50',
-            )}
-          >
-            {tile.label}
-          </button>
-        )
-      })}
-    </div>
   )
 }
 
@@ -350,6 +305,11 @@ export default function Layout({ title, children, session, hidePageHeader = fals
           </div>
 
           <div className="space-y-2 px-4 pb-6">
+            <div className="rounded-2xl border border-border bg-card px-3 py-3 shadow-sm">
+              <div className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Business</div>
+              <BusinessSwitcher />
+            </div>
+
             {desktopNav.map((item) => {
               const Icon = item.icon
               const isActive = activeTab === item.key

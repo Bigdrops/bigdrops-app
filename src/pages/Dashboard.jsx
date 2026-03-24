@@ -4,7 +4,6 @@ import {
   FileText,
   FileSignature,
   ClipboardCheck,
-  FolderKanban,
   ChevronRight,
   ChevronDown,
   Users,
@@ -22,7 +21,8 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import Layout, { BusinessSwitcher, QuickTileRail } from '../components/Layout'
+import Layout from '../components/Layout'
+import { getQuickTiles, loadStoredQuickTiles } from '../config/quickTiles'
 import { supabase } from '../supabase'
 
 const naira = (amount) => `₦${Math.round(Number(amount || 0)).toLocaleString()}`
@@ -38,6 +38,26 @@ function getGreeting() {
   if (hour < 12) return 'Good morning'
   if (hour < 17) return 'Good afternoon'
   return 'Good evening'
+}
+
+function getUserDisplayName(session) {
+  const user = session?.user
+  const metadata = user?.user_metadata || {}
+  const candidates = [
+    metadata.full_name,
+    metadata.name,
+    metadata.display_name,
+    [metadata.first_name, metadata.last_name].filter(Boolean).join(' ').trim(),
+  ].filter(Boolean)
+
+  if (candidates.length > 0) return candidates[0]
+
+  const emailName = user?.email?.split('@')[0]?.replace(/[._-]+/g, ' ')?.trim()
+  if (emailName) {
+    return emailName.replace(/\b\w/g, (char) => char.toUpperCase())
+  }
+
+  return 'there'
 }
 
 function formatStatus(status) {
@@ -58,11 +78,11 @@ export default function Dashboard({ session }) {
   const navigate = useNavigate()
   const [quickAccessOpen, setQuickAccessOpen] = React.useState(false)
   const [loading, setLoading] = React.useState(true)
-  const [companyName, setCompanyName] = React.useState('BIGDROPS')
   const [recentDocs, setRecentDocs] = React.useState([])
   const [recentClients, setRecentClients] = React.useState([])
   const [recentProjects, setRecentProjects] = React.useState([])
   const [summary, setSummary] = React.useState({ outstandingReceivables: 0, thisMonthCollections: 0 })
+  const quickTiles = React.useMemo(() => getQuickTiles(loadStoredQuickTiles()), [])
 
   React.useEffect(() => {
     const load = async () => {
@@ -72,14 +92,13 @@ export default function Dashboard({ session }) {
       startOfMonth.setDate(1)
       startOfMonth.setHours(0, 0, 0, 0)
 
-      const [invoiceRes, quotationRes, csrRes, financialsRes, clientsRes, projectsRes, settingsRes] = await Promise.all([
+      const [invoiceRes, quotationRes, csrRes, financialsRes, clientsRes, projectsRes] = await Promise.all([
         supabase.from('invoices').select('id, invoice_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
         supabase.from('quotations').select('id, quotation_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
         supabase.from('csrs').select('id, csr_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
         supabase.from('invoice_financials_v').select('balance_due, cash_received, issue_date'),
         supabase.from('clients').select('id, name').order('created_at', { ascending: false }).limit(3),
         supabase.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
-        supabase.from('settings').select('company_name').eq('id', 1).single(),
       ])
 
       const mergedDocs = [
@@ -99,7 +118,6 @@ export default function Dashboard({ session }) {
         return sum + Number(row.cash_received || 0)
       }, 0)
 
-      setCompanyName(settingsRes.data?.company_name || 'BIGDROPS')
       setRecentDocs(mergedDocs)
       setRecentClients(clientsRes.data || [])
       setRecentProjects(projectsRes.data || [])
@@ -111,14 +129,8 @@ export default function Dashboard({ session }) {
   }, [])
 
   const greeting = getGreeting()
+  const userName = getUserDisplayName(session)
   const dateLabel = new Date().toLocaleDateString('en-GB', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
-
-  const quickActions = [
-    { key: 'invoice', label: 'New Invoice', icon: FileText, tint: 'bg-blue-50 border-blue-200', iconBg: 'bg-blue-600', onClick: () => navigate('/invoices/new') },
-    { key: 'quotation', label: 'New Quotation', icon: FileSignature, tint: 'bg-violet-50 border-violet-200', iconBg: 'bg-violet-600', onClick: () => navigate('/quotations/new') },
-    { key: 'csr', label: 'New CSR', icon: ClipboardCheck, tint: 'bg-orange-50 border-orange-200', iconBg: 'bg-orange-600', onClick: () => navigate('/csr/new') },
-    { key: 'project', label: 'New Project', icon: FolderKanban, tint: 'bg-emerald-50 border-emerald-200', iconBg: 'bg-emerald-600', onClick: () => navigate('/projects/new') },
-  ]
 
   return (
     <Layout title="Dashboard" session={session}>
@@ -127,51 +139,35 @@ export default function Dashboard({ session }) {
           <div className="flex items-start justify-between gap-3 px-4 py-4">
             <div className="min-w-0">
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{greeting}</div>
-              <div className="mt-1 truncate text-lg font-black text-foreground">{companyName}</div>
+              <div className="mt-1 truncate text-lg font-black text-foreground">{userName}</div>
               <div className="mt-1 text-xs text-muted-foreground">{dateLabel}</div>
-              <div className="mt-3">
-                <BusinessSwitcher />
-              </div>
             </div>
 
             <Button variant="outline" size="icon" className="rounded-2xl border-border bg-muted/50" onClick={() => {}}>
               <Bell className="h-5 w-5 text-slate-700" />
             </Button>
           </div>
-
-          <div className="px-4 pb-4">
-            <div className="rounded-2xl border border-border bg-muted/50 px-4 py-3">
-              <div className="text-xs text-muted-foreground">
-                Focus: <span className="font-semibold text-foreground">create documents fast</span> and keep collections moving.
-              </div>
-            </div>
-          </div>
         </Card>
 
         <section className="space-y-2">
-          <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quick actions</div>
+          <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quick tiles</div>
           <div className="grid grid-cols-2 gap-3">
-            {quickActions.map((action) => {
-              const Icon = action.icon
+            {quickTiles.map((tile) => {
+              const Icon = tile.icon
               return (
-                <button key={action.key} type="button" onClick={action.onClick} className={cn('group rounded-2xl border p-4 text-left shadow-sm transition active:scale-[0.99]', action.tint)}>
+                <button key={tile.id} type="button" onClick={() => navigate(tile.path)} className={cn('group rounded-2xl border p-4 text-left shadow-sm transition active:scale-[0.99]', tile.tint)}>
                   <div className="flex items-start justify-between gap-3">
-                    <span className={cn('grid h-11 w-11 place-items-center rounded-2xl shadow-sm', action.iconBg)}>
+                    <span className={cn('grid h-11 w-11 place-items-center rounded-2xl shadow-sm', tile.iconBg)}>
                       <Icon className="h-6 w-6 text-white" />
                     </span>
                     <ChevronRight className="h-5 w-5 text-muted-foreground opacity-70 transition group-hover:opacity-100" />
                   </div>
-                  <div className="mt-3 text-sm font-bold text-foreground">{action.label}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">Tap to start</div>
+                  <div className="mt-3 text-sm font-bold text-foreground">{tile.label}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">{tile.tileHint || tile.description}</div>
                 </button>
               )
             })}
           </div>
-        </section>
-
-        <section className="space-y-2">
-          <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shortcuts</div>
-          <QuickTileRail />
         </section>
 
         <section className="space-y-2">

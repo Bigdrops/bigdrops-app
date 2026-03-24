@@ -2,13 +2,13 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import { useSettings, uploadFile, saveSettings } from '../hooks/useSettings'
-import { QUICK_TILE_REGISTRY, DEFAULT_QUICK_TILES } from '../config/quickTiles'
+import { ALL_QUICK_TILE_IDS, QUICK_TILE_REGISTRY, loadStoredQuickTiles, saveStoredQuickTiles } from '../config/quickTiles'
 import { Switch } from '@/components/ui/switch'
 import {
   Building2, CreditCard, ImageIcon, FileText,
   Shield, Check, Loader2, ChevronRight, Upload, X,
   Pencil, Plus, UserCheck, UserX, Trash2, Smartphone, LayoutDashboard,
-  FolderKanban, Wrench, ArchiveRestore, ClipboardList
+  ArchiveRestore, ClipboardList, ArrowUp, ArrowDown
 } from 'lucide-react'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
@@ -1020,48 +1020,13 @@ function UserSection({ session, onToast }) {
 }
 
 function DashboardSection() {
-  const orderedTiles = ['invoices', 'projects', 'csr']
   const [flashTile, setFlashTile] = useState(null)
-  const tileMeta = {
-    invoices: {
-      icon: FileText,
-      iconBg: '#EFF6FF',
-      iconColor: '#2563EB',
-      description: 'Sales invoices and billing',
-    },
-    projects: {
-      icon: FolderKanban,
-      iconBg: '#F0FDF4',
-      iconColor: '#16A34A',
-      description: 'Jobs and project trees',
-    },
-    csr: {
-      icon: Wrench,
-      iconBg: '#FFF7ED',
-      iconColor: '#EA580C',
-      description: 'Customer service reports',
-    },
-  }
-
-  const getInitialTiles = () => {
-    try {
-      const saved = localStorage.getItem('quick_tiles')
-      if (!saved) return DEFAULT_QUICK_TILES
-      const parsed = JSON.parse(saved)
-      if (!Array.isArray(parsed)) return DEFAULT_QUICK_TILES
-      const validSaved = parsed.filter((id) => QUICK_TILE_REGISTRY[id])
-      return validSaved.length > 0 ? validSaved : DEFAULT_QUICK_TILES
-    } catch (e) {
-      return DEFAULT_QUICK_TILES
-    }
-  }
-
-  const [activeTiles, setActiveTiles] = useState(getInitialTiles)
+  const [activeTiles, setActiveTiles] = useState(() => loadStoredQuickTiles())
 
   const saveTiles = (nextTiles) => {
-    setActiveTiles(nextTiles)
-    localStorage.setItem('quick_tiles', JSON.stringify(nextTiles))
-    setFlashTile(nextTiles[nextTiles.length - 1] || 'saved')
+    const savedTiles = saveStoredQuickTiles(nextTiles)
+    setActiveTiles(savedTiles)
+    setFlashTile(savedTiles[savedTiles.length - 1] || 'saved')
     window.clearTimeout(window.__quickTilesFlashTimeout)
     window.__quickTilesFlashTimeout = window.setTimeout(() => setFlashTile(null), 900)
   }
@@ -1069,9 +1034,9 @@ function DashboardSection() {
   const toggleTile = (tileId) => {
     const included = activeTiles.includes(tileId)
     if (included) {
-      saveTiles(orderedTiles.filter((id) => id !== tileId && activeTiles.includes(id)))
+      saveTiles(activeTiles.filter((id) => id !== tileId))
     } else {
-      saveTiles(orderedTiles.filter((id) => id === tileId || activeTiles.includes(id)))
+      saveTiles([...activeTiles, tileId])
       setFlashTile(tileId)
       window.clearTimeout(window.__quickTilesFlashTimeout)
       window.__quickTilesFlashTimeout = window.setTimeout(() => setFlashTile(null), 900)
@@ -1082,20 +1047,39 @@ function DashboardSection() {
     window.__quickTilesFlashTimeout = window.setTimeout(() => setFlashTile(null), 900)
   }
 
+  const moveTile = (tileId, direction) => {
+    const currentIndex = activeTiles.indexOf(tileId)
+    if (currentIndex === -1) return
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+    if (targetIndex < 0 || targetIndex >= activeTiles.length) return
+
+    const nextTiles = [...activeTiles]
+    const [movedTile] = nextTiles.splice(currentIndex, 1)
+    nextTiles.splice(targetIndex, 0, movedTile)
+    saveTiles(nextTiles)
+    setFlashTile(tileId)
+  }
+
+  const orderedTiles = [
+    ...activeTiles,
+    ...ALL_QUICK_TILE_IDS.filter((tileId) => !activeTiles.includes(tileId)),
+  ]
+
   return (
     <div className="rounded-2xl border border-border bg-card">
       <div className="border-b border-border px-5 py-4">
         <h3 className="text-sm font-bold text-foreground">Quick Tiles</h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          Local mobile preference only. These quick-access chips appear on this device at the top of the mobile dashboard.
+          Local mobile preference only. Choose which action cards appear on this device and arrange their order for the dashboard.
         </p>
       </div>
       <div className="px-5">
       {orderedTiles.map((tileId, index) => {
         const tile = QUICK_TILE_REGISTRY[tileId]
         const included = activeTiles.includes(tileId)
-        const meta = tileMeta[tileId]
-        const Icon = meta.icon
+        const Icon = tile.icon
+        const activeIndex = activeTiles.indexOf(tileId)
 
         return (
           <div
@@ -1105,24 +1089,50 @@ function DashboardSection() {
             } ${index < orderedTiles.length - 1 ? 'border-b border-slate-100' : ''}`}
           >
             <div className="flex min-w-0 items-center gap-3">
-              <div
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px]"
-                style={{ backgroundColor: meta.iconBg, color: meta.iconColor }}
-              >
-                <Icon size={18} />
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] ${tile.iconBg}`}>
+                <Icon size={18} className="text-white" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">{tile.label}</p>
-                <p className="text-[11px] text-muted-foreground">{meta.description}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-foreground">{tile.label}</p>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${included ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                    {included ? `Tile ${activeIndex + 1}` : 'Hidden'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">{tile.description}</p>
               </div>
             </div>
-            <Switch checked={included} onCheckedChange={() => toggleTile(tileId)} />
+            <div className="flex items-center gap-2">
+              {included ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => moveTile(tileId, 'up')}
+                    disabled={activeIndex <= 0}
+                    className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-card text-slate-700 transition hover:bg-muted/50 disabled:opacity-40"
+                    aria-label={`Move ${tile.label} up`}
+                  >
+                    <ArrowUp size={15} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveTile(tileId, 'down')}
+                    disabled={activeIndex === -1 || activeIndex >= activeTiles.length - 1}
+                    className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-card text-slate-700 transition hover:bg-muted/50 disabled:opacity-40"
+                    aria-label={`Move ${tile.label} down`}
+                  >
+                    <ArrowDown size={15} />
+                  </button>
+                </>
+              ) : null}
+              <Switch checked={included} onCheckedChange={() => toggleTile(tileId)} />
+            </div>
           </div>
         )
       })}
       </div>
       <p className="px-5 pb-4 pt-3 text-center text-[11px] text-muted-foreground">
-        Saved only on this device. Desktop navigation is unchanged.
+        Saved only on this device. Desktop navigation and other pages stay unchanged.
       </p>
     </div>
   )
