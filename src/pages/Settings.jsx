@@ -29,7 +29,7 @@ function Toast({ message, onDone }) {
 function Field({ label, children }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">{label}</label>
+      <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider">{label}</label>
       {children}
     </div>
   )
@@ -42,7 +42,7 @@ function Input({ value, onChange, placeholder, type = 'text' }) {
       value={value || ''}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-colors placeholder:text-slate-300"
+      className="w-full px-3 py-2.5 border border-input rounded-lg text-sm text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-ring/10 focus:border-slate-400 transition-colors placeholder:text-slate-300"
     />
   )
 }
@@ -137,16 +137,16 @@ function CompanySection({ onToast }) {
   if (!editing) {
     return (
       <div className="space-y-4">
-        <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+        <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-4">
           <div>
-            <div className="text-sm font-bold text-slate-900">Saved business identity</div>
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="text-sm font-bold text-foreground">Saved business identity</div>
+            <div className="mt-1 text-xs text-muted-foreground">
               These details appear anywhere the app needs your company identity.
             </div>
           </div>
           <button
             onClick={() => setEditing(true)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+            className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-muted/50"
           >
             Edit
           </button>
@@ -166,10 +166,10 @@ function CompanySection({ onToast }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+      <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-4">
         <div>
-          <div className="text-sm font-bold text-slate-900">Edit business identity</div>
-          <div className="mt-1 text-xs text-slate-500">
+          <div className="text-sm font-bold text-foreground">Edit business identity</div>
+          <div className="mt-1 text-xs text-muted-foreground">
             Save changes to update the company details used across the workspace.
           </div>
         </div>
@@ -178,7 +178,7 @@ function CompanySection({ onToast }) {
             restoreSavedCompanyState()
             setEditing(false)
           }}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+          className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-muted/50"
         >
           Cancel
         </button>
@@ -198,11 +198,11 @@ function CompanySection({ onToast }) {
       </div>
 
       {/* ── Additional Info Fields ── */}
-      <div className="pt-2 border-t border-slate-100">
+      <div className="pt-2 border-t border-border">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Additional Info</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Extra fields that appear on your invoice header (e.g. RC Number, Tax ID)</p>
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Additional Info</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Extra fields that appear on your invoice header (e.g. RC Number, Tax ID)</p>
           </div>
           <button
             onClick={() => setCustomInfo(p => [...p, { title: '', content: '' }])}
@@ -215,20 +215,20 @@ function CompanySection({ onToast }) {
         {customInfo.map((item, i) => (
           <div key={i} className="flex gap-2 mb-2 items-center">
             <input
-              className="w-2/5 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 placeholder:text-slate-300"
+              className="w-2/5 px-3 py-2 border border-input rounded-lg text-sm text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-ring/10 placeholder:text-slate-300"
               value={item.title}
               onChange={e => setCustomInfo(p => p.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
               placeholder="Title (e.g. RC Number)"
             />
             <input
-              className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 placeholder:text-slate-300"
+              className="flex-1 px-3 py-2 border border-input rounded-lg text-sm text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-ring/10 placeholder:text-slate-300"
               value={item.content}
               onChange={e => setCustomInfo(p => p.map((x, j) => j === i ? { ...x, content: e.target.value } : x))}
               placeholder="Value"
             />
             <button
               onClick={() => setCustomInfo(p => p.filter((_, j) => j !== i))}
-              className="text-slate-400 hover:text-red-500 text-xl leading-none px-1 flex-shrink-0"
+              className="text-muted-foreground hover:text-red-500 text-xl leading-none px-1 flex-shrink-0"
             >×</button>
           </div>
         ))}
@@ -373,15 +373,15 @@ function BankingSection({ onToast }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-        <div className="text-sm font-bold text-slate-900">Bank accounts</div>
-        <div className="mt-1 text-xs text-slate-500">
+      <div className="rounded-2xl border border-border bg-muted/50 px-4 py-4">
+        <div className="text-sm font-bold text-foreground">Bank accounts</div>
+        <div className="mt-1 text-xs text-muted-foreground">
           Manage the payment accounts available across invoices and other payment instructions.
         </div>
       </div>
 
       {accounts.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-10 text-center text-sm text-slate-500">
+        <div className="rounded-2xl border border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">
           No bank accounts added yet.
         </div>
       ) : (
@@ -389,11 +389,11 @@ function BankingSection({ onToast }) {
           {accounts.map((account) => {
             const busy = actionId && actionId.includes(account.id)
             return (
-              <div key={account.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+              <div key={account.id} className="rounded-2xl border border-border bg-card px-4 py-4 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="text-sm font-bold text-slate-900">{account.bank_name || 'Unnamed bank'}</div>
+                      <div className="text-sm font-bold text-foreground">{account.bank_name || 'Unnamed bank'}</div>
                       {account.is_default ? (
                         <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-600">
                           Default
@@ -401,7 +401,7 @@ function BankingSection({ onToast }) {
                       ) : null}
                     </div>
                     <div className="mt-1 text-sm text-slate-700">{account.account_name || 'No account name'}</div>
-                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-400">
+                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                       <span>Account No: {account.account_number || 'Not set'}</span>
                       <span>Sort Code: {account.sort_code || 'Not set'}</span>
                     </div>
@@ -409,14 +409,14 @@ function BankingSection({ onToast }) {
                   <div className="flex shrink-0 items-center gap-2">
                     <button
                       onClick={() => openEdit(account)}
-                      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                      className="rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold text-slate-700 hover:bg-muted/50"
                     >
                       <span className="inline-flex items-center gap-1.5"><Pencil size={12} />Edit</span>
                     </button>
                     <button
                       onClick={() => removeAccount(account.id)}
                       disabled={busy}
-                      className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      className="rounded-xl border border-red-200 bg-card px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
                     >
                       <span className="inline-flex items-center gap-1.5"><Trash2 size={12} />Delete</span>
                     </button>
@@ -426,7 +426,7 @@ function BankingSection({ onToast }) {
                   <button
                     onClick={() => setDefault(account.id)}
                     disabled={busy}
-                    className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                    className="mt-4 rounded-xl border border-border bg-muted/50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-muted/50 disabled:opacity-50"
                   >
                     {actionId === `default:${account.id}` ? 'Updating...' : 'Set as Default'}
                   </button>
@@ -438,17 +438,17 @@ function BankingSection({ onToast }) {
       )}
 
       {formOpen ? (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+        <div className="rounded-2xl border border-border bg-muted/50 px-4 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-sm font-bold text-slate-900">{editingId ? 'Edit bank account' : 'Add bank account'}</div>
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="text-sm font-bold text-foreground">{editingId ? 'Edit bank account' : 'Add bank account'}</div>
+              <div className="mt-1 text-xs text-muted-foreground">
                 Save the exact account details you want available inside the app.
               </div>
             </div>
             <button
               onClick={closeForm}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+              className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-muted/50"
             >
               Cancel
             </button>
@@ -461,11 +461,11 @@ function BankingSection({ onToast }) {
             <Field label="Account Number"><Input value={form.account_number} onChange={(v) => updateForm('account_number', v)} placeholder="0123456789" /></Field>
             <Field label="Sort Code"><Input value={form.sort_code} onChange={(v) => updateForm('sort_code', v)} placeholder="011-152-383" /></Field>
           </div>
-          <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3">
+          <div className="mt-4 rounded-xl border border-border bg-card px-4 py-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-slate-900">Default account</div>
-                <div className="mt-1 text-xs text-slate-500">Use this bank account as the primary payment destination.</div>
+                <div className="text-sm font-semibold text-foreground">Default account</div>
+                <div className="mt-1 text-xs text-muted-foreground">Use this bank account as the primary payment destination.</div>
               </div>
               <Switch checked={!!form.is_default} onCheckedChange={(value) => updateForm('is_default', value)} />
             </div>
@@ -476,7 +476,7 @@ function BankingSection({ onToast }) {
 
       <button
         onClick={openAdd}
-        className="w-full rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+        className="w-full rounded-2xl border border-dashed border-border bg-card px-4 py-3 text-sm font-bold text-slate-700 hover:border-slate-400 hover:bg-muted/50"
       >
         <span className="inline-flex items-center gap-2"><Plus size={14} />Add Bank Account</span>
       </button>
@@ -545,7 +545,7 @@ function BrandingSection({ onToast }) {
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => handleUpload(type, e.target.files[0])} />
       {form[type + '_url'] ? (
         <div className="relative inline-flex flex-col gap-2">
-          <img src={form[type + '_url']} alt={label} className="max-h-20 max-w-[180px] rounded-lg border border-slate-200 object-contain" />
+          <img src={form[type + '_url']} alt={label} className="max-h-20 max-w-[180px] rounded-lg border border-border object-contain" />
           <div className="flex gap-3">
             <button onClick={() => inputRef.current.click()} className="text-xs text-blue-600 font-semibold hover:underline">Change</button>
             <button onClick={() => u(type + '_url', '')} className="text-xs text-red-500 font-semibold hover:underline">Remove</button>
@@ -554,13 +554,13 @@ function BrandingSection({ onToast }) {
       ) : (
         <div
           onClick={() => inputRef.current.click()}
-          className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-slate-400 hover:bg-slate-50 transition-colors"
+          className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-slate-400 hover:bg-muted/50 transition-colors"
         >
           {uploading[type]
-            ? <Loader2 size={20} className="animate-spin text-slate-400 mx-auto mb-1" />
+            ? <Loader2 size={20} className="animate-spin text-muted-foreground mx-auto mb-1" />
             : <Upload size={20} className="text-slate-300 mx-auto mb-1" />
           }
-          <p className="text-xs text-slate-400 font-medium">{uploading[type] ? 'Uploading…' : 'Click to upload'}</p>
+          <p className="text-xs text-muted-foreground font-medium">{uploading[type] ? 'Uploading…' : 'Click to upload'}</p>
         </div>
       )}
     </Field>
@@ -571,28 +571,28 @@ function BrandingSection({ onToast }) {
   if (!editing) {
     return (
       <div className="space-y-4">
-        <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+        <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-4">
           <div>
-            <div className="text-sm font-bold text-slate-900">Saved branding</div>
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="text-sm font-bold text-foreground">Saved branding</div>
+            <div className="mt-1 text-xs text-muted-foreground">
               Review your logo and footer text before editing branding assets.
             </div>
           </div>
           <button
             onClick={() => setEditing(true)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+            className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-muted/50"
           >
             Edit
           </button>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Logo</div>
+          <div className="rounded-xl border border-border bg-muted/50 px-4 py-3">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Logo</div>
             <div className="mt-2">
               {form.logo_url ? (
-                <img src={form.logo_url} alt="Company logo" className="h-14 w-14 rounded-lg border border-slate-200 bg-white object-contain" />
+                <img src={form.logo_url} alt="Company logo" className="h-14 w-14 rounded-lg border border-border bg-card object-contain" />
               ) : (
-                <div className="text-sm font-medium text-slate-800">No logo</div>
+                <div className="text-sm font-medium text-foreground">No logo</div>
               )}
             </div>
           </div>
@@ -604,10 +604,10 @@ function BrandingSection({ onToast }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+      <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-4">
         <div>
-          <div className="text-sm font-bold text-slate-900">Edit branding</div>
-          <div className="mt-1 text-xs text-slate-500">
+          <div className="text-sm font-bold text-foreground">Edit branding</div>
+          <div className="mt-1 text-xs text-muted-foreground">
             Update the company logo and footer text used in generated documents.
           </div>
         </div>
@@ -616,7 +616,7 @@ function BrandingSection({ onToast }) {
             restoreSavedBrandingState()
             setEditing(false)
           }}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+          className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-muted/50"
         >
           Cancel
         </button>
@@ -630,7 +630,7 @@ function BrandingSection({ onToast }) {
           onChange={e => u('footer_text', e.target.value)}
           placeholder={'Bank: First Bank | Account: Sun & Shield Power Solutions | No: 0123456789\nAll prices in NGN. Payment within 30 days.'}
           rows={4}
-          className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-colors resize-none placeholder:text-slate-300"
+          className="w-full px-3 py-2.5 border border-input rounded-lg text-sm text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-ring/10 focus:border-slate-400 transition-colors resize-none placeholder:text-slate-300"
         />
       </Field>
       <SaveBtn saving={saving} saved={saved} onClick={save} />
@@ -754,24 +754,24 @@ function SignatoriesSection({ onToast }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-        <div className="text-sm font-bold text-slate-900">Document signatories</div>
-        <div className="mt-1 text-xs text-slate-500">
+      <div className="rounded-2xl border border-border bg-muted/50 px-4 py-4">
+        <div className="text-sm font-bold text-foreground">Document signatories</div>
+        <div className="mt-1 text-xs text-muted-foreground">
           Manage the people and signature images used across invoices and other documents.
         </div>
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-10 text-center text-sm text-slate-500">
+        <div className="rounded-2xl border border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">
           No signatories added yet.
         </div>
       ) : (
         <div className="space-y-3">
           {items.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+            <div key={item.id} className="rounded-2xl border border-border bg-card px-4 py-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/50">
                     {item.signature_url ? (
                       <img src={item.signature_url} alt={item.name} className="h-full w-full object-cover" />
                     ) : (
@@ -779,21 +779,21 @@ function SignatoriesSection({ onToast }) {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-bold text-slate-900">{item.name}</div>
-                    <div className="mt-1 text-xs text-slate-500">{item.role || 'No role'}</div>
+                    <div className="text-sm font-bold text-foreground">{item.name}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">{item.role || 'No role'}</div>
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <button
                     onClick={() => openEdit(item)}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                    className="rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold text-slate-700 hover:bg-muted/50"
                   >
                     <span className="inline-flex items-center gap-1.5"><Pencil size={12} />Edit</span>
                   </button>
                   <button
                     onClick={() => removeSignatory(item.id)}
                     disabled={actionId === item.id}
-                    className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    className="rounded-xl border border-red-200 bg-card px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
                   >
                     <span className="inline-flex items-center gap-1.5"><Trash2 size={12} />Delete</span>
                   </button>
@@ -805,17 +805,17 @@ function SignatoriesSection({ onToast }) {
       )}
 
       {formOpen ? (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+        <div className="rounded-2xl border border-border bg-muted/50 px-4 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-sm font-bold text-slate-900">{editingId ? 'Edit signatory' : 'Add signatory'}</div>
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="text-sm font-bold text-foreground">{editingId ? 'Edit signatory' : 'Add signatory'}</div>
+              <div className="mt-1 text-xs text-muted-foreground">
                 Save signer details and the signature image used in documents.
               </div>
             </div>
             <button
               onClick={closeForm}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+              className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-muted/50"
             >
               Cancel
             </button>
@@ -829,7 +829,7 @@ function SignatoriesSection({ onToast }) {
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload(e.target.files[0])} />
               {form.signature_url ? (
                 <div className="relative inline-flex flex-col gap-2">
-                  <img src={form.signature_url} alt="Signature" className="max-h-20 max-w-[180px] rounded-lg border border-slate-200 object-contain" />
+                  <img src={form.signature_url} alt="Signature" className="max-h-20 max-w-[180px] rounded-lg border border-border object-contain" />
                   <div className="flex gap-3">
                     <button onClick={() => fileRef.current?.click()} className="text-xs font-semibold text-blue-600 hover:underline">Change</button>
                     <button onClick={() => updateForm('signature_url', '')} className="text-xs font-semibold text-red-500 hover:underline">Remove</button>
@@ -838,14 +838,14 @@ function SignatoriesSection({ onToast }) {
               ) : (
                 <div
                   onClick={() => fileRef.current?.click()}
-                  className="cursor-pointer rounded-xl border-2 border-dashed border-slate-200 p-6 text-center transition-colors hover:border-slate-400 hover:bg-slate-50"
+                  className="cursor-pointer rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors hover:border-slate-400 hover:bg-muted/50"
                 >
                   {uploading ? (
-                    <Loader2 size={20} className="mx-auto mb-1 animate-spin text-slate-400" />
+                    <Loader2 size={20} className="mx-auto mb-1 animate-spin text-muted-foreground" />
                   ) : (
                     <Upload size={20} className="mx-auto mb-1 text-slate-300" />
                   )}
-                  <p className="text-xs font-medium text-slate-400">{uploading ? 'Uploading...' : 'Click to upload'}</p>
+                  <p className="text-xs font-medium text-muted-foreground">{uploading ? 'Uploading...' : 'Click to upload'}</p>
                 </div>
               )}
             </Field>
@@ -856,7 +856,7 @@ function SignatoriesSection({ onToast }) {
 
       <button
         onClick={openAdd}
-        className="w-full rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+        className="w-full rounded-2xl border border-dashed border-border bg-card px-4 py-3 text-sm font-bold text-slate-700 hover:border-slate-400 hover:bg-muted/50"
       >
         <span className="inline-flex items-center gap-2"><Plus size={14} />Add Signatory</span>
       </button>
@@ -904,19 +904,19 @@ function UserSection({ session, onToast }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+      <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-4">
         <div className="min-w-0">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Signed-in email</div>
-          <div className="mt-1 break-all text-sm font-bold text-slate-800">{email || 'No user email'}</div>
-          <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Password</div>
-          <div className="mt-1 text-sm font-medium text-slate-800">••••••••</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Signed-in email</div>
+          <div className="mt-1 break-all text-sm font-bold text-foreground">{email || 'No user email'}</div>
+          <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Password</div>
+          <div className="mt-1 text-sm font-medium text-foreground">••••••••</div>
         </div>
         <button
           onClick={() => {
             setError('')
             setOpen(true)
           }}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+          className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-muted/50"
         >
           Change Password
         </button>
@@ -924,11 +924,11 @@ function UserSection({ session, onToast }) {
 
       {open ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-xl">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-bold text-slate-900">Change password</div>
-                <div className="mt-1 text-xs text-slate-500">
+                <div className="text-sm font-bold text-foreground">Change password</div>
+                <div className="mt-1 text-xs text-muted-foreground">
                   Verify your current password before saving a new one.
                 </div>
               </div>
@@ -938,7 +938,7 @@ function UserSection({ session, onToast }) {
                   setError('')
                   setForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
                 }}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="rounded-lg p-1 text-muted-foreground hover:bg-muted/50 hover:text-muted-foreground"
                 aria-label="Close password modal"
               >
                 <X size={16} />
@@ -952,7 +952,7 @@ function UserSection({ session, onToast }) {
                   value={form.currentPassword}
                   onChange={e => setForm(f => ({ ...f, currentPassword: e.target.value }))}
                   placeholder="Enter current password"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm transition-colors focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                  className="w-full rounded-lg border border-input px-3 py-2.5 text-sm transition-colors focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-ring/10"
                 />
               </Field>
 
@@ -962,17 +962,17 @@ function UserSection({ session, onToast }) {
                   value={form.newPassword}
                   onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))}
                   placeholder="8+ chars, 1 uppercase, 1 number"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm transition-colors focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                  className="w-full rounded-lg border border-input px-3 py-2.5 text-sm transition-colors focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-ring/10"
                 />
-                <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                <div className="mt-2 rounded-xl border border-border bg-muted/50 px-3 py-3">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Strength</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Strength</span>
                     <span className={`text-xs font-bold ${strength === 'Strong' ? 'text-emerald-600' : strength === 'Fair' ? 'text-amber-600' : 'text-red-600'}`}>{strength}</span>
                   </div>
                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
                     <div className={`h-full rounded-full transition-all ${strengthClass}`} style={{ width: `${(strengthScore / 3) * 100}%` }} />
                   </div>
-                  <div className="mt-3 space-y-1 text-xs text-slate-500">
+                  <div className="mt-3 space-y-1 text-xs text-muted-foreground">
                     <div className={requirements.length ? 'text-emerald-600' : ''}>8+ characters</div>
                     <div className={requirements.uppercase ? 'text-emerald-600' : ''}>At least 1 uppercase letter</div>
                     <div className={requirements.number ? 'text-emerald-600' : ''}>At least 1 number</div>
@@ -986,7 +986,7 @@ function UserSection({ session, onToast }) {
                   value={form.confirmPassword}
                   onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
                   placeholder="Repeat new password"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm transition-colors focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                  className="w-full rounded-lg border border-input px-3 py-2.5 text-sm transition-colors focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-ring/10"
                 />
               </Field>
 
@@ -999,7 +999,7 @@ function UserSection({ session, onToast }) {
                     setError('')
                     setForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
                   }}
-                  className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                  className="flex-1 rounded-xl border border-border bg-card px-4 py-3 text-sm font-bold text-slate-700 hover:bg-muted/50"
                 >
                   Cancel
                 </button>
@@ -1083,10 +1083,10 @@ function DashboardSection() {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white">
-      <div className="border-b border-slate-100 px-5 py-4">
-        <h3 className="text-sm font-bold text-slate-900">Quick Tiles</h3>
-        <p className="mt-1 text-xs text-slate-400">
+    <div className="rounded-2xl border border-border bg-card">
+      <div className="border-b border-border px-5 py-4">
+        <h3 className="text-sm font-bold text-foreground">Quick Tiles</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
           Local mobile preference only. These quick-access chips appear on this device at the top of the mobile dashboard.
         </p>
       </div>
@@ -1112,8 +1112,8 @@ function DashboardSection() {
                 <Icon size={18} />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-900">{tile.label}</p>
-                <p className="text-[11px] text-slate-400">{meta.description}</p>
+                <p className="text-sm font-semibold text-foreground">{tile.label}</p>
+                <p className="text-[11px] text-muted-foreground">{meta.description}</p>
               </div>
             </div>
             <Switch checked={included} onCheckedChange={() => toggleTile(tileId)} />
@@ -1121,7 +1121,7 @@ function DashboardSection() {
         )
       })}
       </div>
-      <p className="px-5 pb-4 pt-3 text-center text-[11px] text-slate-400">
+      <p className="px-5 pb-4 pt-3 text-center text-[11px] text-muted-foreground">
         Saved only on this device. Desktop navigation is unchanged.
       </p>
     </div>
@@ -1130,9 +1130,9 @@ function DashboardSection() {
 
 function SummaryField({ label, value }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
-      <div className="mt-1 text-sm font-medium text-slate-800">{value || 'Not set'}</div>
+    <div className="rounded-xl border border-border bg-muted/50 px-4 py-3">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mt-1 text-sm font-medium text-foreground">{value || 'Not set'}</div>
     </div>
   )
 }
@@ -1198,9 +1198,9 @@ function ArchivesSection({ onToast }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-        <div className="text-sm font-bold text-slate-900">Archived records</div>
-        <div className="mt-1 text-xs text-slate-500">
+      <div className="rounded-2xl border border-border bg-muted/50 px-4 py-4">
+        <div className="text-sm font-bold text-foreground">Archived records</div>
+        <div className="mt-1 text-xs text-muted-foreground">
           Restore archived invoices, quotations, and projects here by clearing their archive state.
         </div>
       </div>
@@ -1227,7 +1227,7 @@ function ArchivesSection({ onToast }) {
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-slate-300" /></div>
       ) : activeItems.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-10 text-center text-sm text-slate-500">
+        <div className="rounded-2xl border border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">
           No archived {tab}.
         </div>
       ) : (
@@ -1244,12 +1244,12 @@ function ArchivesSection({ onToast }) {
                 : item.client_name || 'No client'
 
             return (
-              <div key={item.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+              <div key={item.id} className="rounded-2xl border border-border bg-card px-4 py-4 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="break-words text-sm font-bold text-slate-900">{title}</div>
-                    <div className="mt-1 text-xs text-slate-500">{subline}</div>
-                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-400">
+                    <div className="break-words text-sm font-bold text-foreground">{title}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">{subline}</div>
+                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                       <span>Archived: {formatDate(item.archived_at)}</span>
                       {tab === 'projects'
                         ? <span>Start: {formatDate(item.start_date)}</span>
@@ -1262,7 +1262,7 @@ function ArchivesSection({ onToast }) {
                   <button
                     onClick={() => restoreRecord(tab, item.id)}
                     disabled={restoring}
-                    className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    className="shrink-0 rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold text-slate-700 hover:bg-muted/50 disabled:opacity-50"
                   >
                     {restoring ? 'Restoring...' : 'Restore'}
                   </button>
@@ -1306,9 +1306,9 @@ function ConfirmModal({ type, user, onConfirm, onCancel, loading }) {
       body: (
         <>
           <p className="text-sm text-slate-700 leading-relaxed">
-            You are about to grant <span className="font-bold text-slate-900">{user.email}</span> full access to BIGDROPS.
+            You are about to grant <span className="font-bold text-foreground">{user.email}</span> full access to BIGDROPS.
           </p>
-          <p className="text-xs text-slate-400 mt-2">They will be able to create invoices, CSRs, and view all client data immediately.</p>
+          <p className="text-xs text-muted-foreground mt-2">They will be able to create invoices, CSRs, and view all client data immediately.</p>
         </>
       ),
       confirmLabel: 'Yes, Grant Access',
@@ -1322,9 +1322,9 @@ function ConfirmModal({ type, user, onConfirm, onCancel, loading }) {
       body: (
         <>
           <p className="text-sm text-slate-700 leading-relaxed">
-            <span className="font-bold text-slate-900">{user.email}</span> will be <span className="font-bold text-amber-700">locked out immediately.</span>
+            <span className="font-bold text-foreground">{user.email}</span> will be <span className="font-bold text-amber-700">locked out immediately.</span>
           </p>
-          <p className="text-xs text-slate-400 mt-2">Their data is preserved. You can reactivate them at any time.</p>
+          <p className="text-xs text-muted-foreground mt-2">Their data is preserved. You can reactivate them at any time.</p>
           <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex gap-2 items-start">
             <span className="text-amber-500 text-sm mt-0.5">⚠️</span>
             <p className="text-xs text-amber-700 font-semibold">If they are currently logged in, they will be blocked on their next action.</p>
@@ -1342,9 +1342,9 @@ function ConfirmModal({ type, user, onConfirm, onCancel, loading }) {
       body: (
         <>
           <p className="text-sm text-slate-700 leading-relaxed">
-            This will <span className="font-bold text-red-700">permanently remove</span> <span className="font-bold text-slate-900">{user.email}</span> from BIGDROPS.
+            This will <span className="font-bold text-red-700">permanently remove</span> <span className="font-bold text-foreground">{user.email}</span> from BIGDROPS.
           </p>
-          <p className="text-xs text-slate-400 mt-2">Their invoice and CSR history is preserved, but their login access is gone forever.</p>
+          <p className="text-xs text-muted-foreground mt-2">Their invoice and CSR history is preserved, but their login access is gone forever.</p>
           <div className="mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex gap-2 items-start">
             <span className="text-red-500 text-sm mt-0.5">🚨</span>
             <p className="text-xs text-red-700 font-semibold">This cannot be undone. Type the email address below to confirm.</p>
@@ -1354,7 +1354,7 @@ function ConfirmModal({ type, user, onConfirm, onCancel, loading }) {
             value={emailInput}
             onChange={e => setEmailInput(e.target.value)}
             placeholder={user.email}
-            className="mt-3 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition-colors font-mono"
+            className="mt-3 w-full px-3 py-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition-colors font-mono"
           />
           {emailInput && !emailMatch && (
             <p className="text-[11px] text-red-500 font-bold mt-1">Email doesn't match</p>
@@ -1374,13 +1374,13 @@ function ConfirmModal({ type, user, onConfirm, onCancel, loading }) {
       className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
       onClick={e => { if (e.target === e.currentTarget) onCancel() }}
     >
-      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+      <div className="bg-card rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="px-5 pt-5 pb-4 flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${c.iconBg}`}>
             {c.icon}
           </div>
-          <h3 className="text-base font-black text-slate-900">{c.title}</h3>
+          <h3 className="text-base font-black text-foreground">{c.title}</h3>
         </div>
 
         {/* Body */}
@@ -1394,7 +1394,7 @@ function ConfirmModal({ type, user, onConfirm, onCancel, loading }) {
             ref={cancelRef}
             onClick={onCancel}
             disabled={loading}
-            className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="flex-1 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
@@ -1508,16 +1508,16 @@ function AdminSection({ onToast, session }) {
           {users.map(u => {
             const isSelf = u.id === session?.user?.id
             return (
-            <div key={u.id} className={`bg-white rounded-xl border p-4 ${isSelf ? 'border-blue-200 bg-blue-50/30' : 'border-slate-200'}`}>
+            <div key={u.id} className={`bg-card rounded-xl border p-4 ${isSelf ? 'border-blue-200 bg-blue-50/30' : 'border-slate-200'}`}>
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-slate-800 truncate">{u.email}</p>
+                    <p className="text-sm font-bold text-foreground truncate">{u.email}</p>
                     {isSelf && <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full shrink-0">YOU</span>}
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
                     {new Date(u.created_at).toLocaleDateString()}
-                    {u.assigned_device_code && <span className="ml-2 font-bold text-slate-600">· {u.assigned_device_code}</span>}
+                    {u.assigned_device_code && <span className="ml-2 font-bold text-muted-foreground">· {u.assigned_device_code}</span>}
                   </p>
                 </div>
                 <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full shrink-0 ${u.is_approved ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-600'}`}>
@@ -1553,21 +1553,21 @@ function AdminSection({ onToast, session }) {
             </div>
           )})
           }
-          {users.length === 0 && <p className="text-center text-slate-400 text-xs font-bold py-8">NO USERS FOUND</p>}
+          {users.length === 0 && <p className="text-center text-muted-foreground text-xs font-bold py-8">NO USERS FOUND</p>}
         </div>
       ) : (
         <div className="space-y-3">
           {DEVICE_CODES.map(code => {
             const device = devices.find(d => d.device_code === code)
             return (
-              <div key={code} className="bg-white rounded-xl border border-slate-200 p-4">
+              <div key={code} className="bg-card rounded-xl border border-border p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                    <Smartphone size={15} className="text-slate-500" />
+                  <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <Smartphone size={15} className="text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-slate-800">Device {code}</p>
-                    <p className="text-[11px] text-slate-400">{device?.profiles?.email || 'Unassigned'}</p>
+                    <p className="text-sm font-black text-foreground">Device {code}</p>
+                    <p className="text-[11px] text-muted-foreground">{device?.profiles?.email || 'Unassigned'}</p>
                   </div>
                   {device?.profiles && (
                     <span className="ml-auto text-[10px] font-black bg-blue-50 text-blue-600 px-2 py-1 rounded-full">Assigned</span>
@@ -1577,7 +1577,7 @@ function AdminSection({ onToast, session }) {
                   value={device?.user_id || ''}
                   onChange={e => assignDevice(code, e.target.value)}
                   disabled={actionId === code}
-                  className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                  className="w-full text-sm border border-input rounded-lg px-3 py-2 text-slate-700 bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring/10"
                 >
                   <option value="">— Unassign —</option>
                   {users.map(u => <option key={u.id} value={u.id}>{u.email}</option>)}
@@ -1646,18 +1646,18 @@ export default function Settings() {
               <button
                 key={id}
                 onClick={() => setActive(id)}
-                className={`w-full flex items-center gap-4 px-4 py-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all group text-left
+                className={`w-full flex items-center gap-4 px-4 py-4 bg-card rounded-xl border border-border hover:border-border hover:shadow-sm transition-all group text-left
                   ${id === 'admin' ? 'border-red-100 hover:border-red-300' : ''}`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0
                   ${id === 'admin' ? 'bg-red-50' : 'bg-slate-100'}`}>
-                  <Icon size={17} className={id === 'admin' ? 'text-red-600' : 'text-slate-600'} />
+                  <Icon size={17} className={id === 'admin' ? 'text-red-600' : 'text-muted-foreground'} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-bold ${id === 'admin' ? 'text-red-600' : 'text-slate-800'}`}>{label}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
                 </div>
-                <ChevronRight size={15} className="text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
+                <ChevronRight size={15} className="text-slate-300 group-hover:text-muted-foreground transition-colors shrink-0" />
               </button>
             ))}
           </div>
@@ -1667,16 +1667,16 @@ export default function Settings() {
             <div className="flex items-center gap-3 mb-6">
               <button
                 onClick={() => setActive(null)}
-                className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors shadow-sm"
+                className="w-8 h-8 rounded-lg bg-card border border-border flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors shadow-sm"
                 aria-label="Back to settings"
               >
                 ←
               </button>
-              <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+              <h2 className="text-sm font-black text-foreground uppercase tracking-wider">
                 {activeSection?.label}
               </h2>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-5">
               {renderSection()}
             </div>
           </div>

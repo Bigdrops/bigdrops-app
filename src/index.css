@@ -2,6 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Minimalist neutral theme tokens (shadcn-style) */
+:root {
+  --background: 210 35% 96%;
+  --foreground: 222 25% 12%;
+
+  --card: 210 30% 98%;
+  --card-foreground: 222 25% 12%;
+
+  --popover: 210 30% 98%;
+  --popover-foreground: 222 25% 12%;
+
+  /* A calm, minimalist ???ink??? primary (neutral-first UI) */
+  --primary: 235 70% 45%;
+  --primary-foreground: 0 0% 98%;
+
+  --secondary: 210 28% 92%;
+  --secondary-foreground: 222 25% 12%;
+
+  --muted: 210 28% 92%;
+  --muted-foreground: 220 10% 38%;
+
+  --accent: 210 28% 92%;
+  --accent-foreground: 222 25% 12%;
+
+  --destructive: 0 70% 48%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* Minimal borders: present but quiet */
+  --border: 215 16% 84%;
+  --input: 215 16% 84%;
+
+  /* Focus ring should be visible (minimal ??? faint) */
+  --ring: 235 70% 45%;
+
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: 222 25% 8%;
+  --foreground: 210 35% 96%;
+
+  --card: 222 25% 10%;
+  --card-foreground: 210 35% 96%;
+
+  --popover: 222 25% 10%;
+  --popover-foreground: 210 35% 96%;
+
+  --primary: 235 70% 60%;
+  --primary-foreground: 222 25% 10%;
+
+  --secondary: 220 18% 16%;
+  --secondary-foreground: 210 35% 96%;
+
+  --muted: 220 18% 16%;
+  --muted-foreground: 215 15% 70%;
+
+  --accent: 220 18% 16%;
+  --accent-foreground: 210 35% 96%;
+
+  --destructive: 0 62% 35%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 220 18% 18%;
+  --input: 220 18% 18%;
+  --ring: 235 70% 60%;
+}
+
 @layer base {
   * {
     @apply border-border;

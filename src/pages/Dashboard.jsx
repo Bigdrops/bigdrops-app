@@ -123,33 +123,33 @@ export default function Dashboard({ session }) {
   return (
     <Layout title="Dashboard" session={session}>
       <div className="space-y-3">
-        <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
+        <Card className="rounded-2xl border-border bg-card shadow-sm">
           <div className="flex items-start justify-between gap-3 px-4 py-4">
             <div className="min-w-0">
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">{greeting}</div>
-              <div className="mt-1 truncate text-lg font-black text-slate-900">{companyName}</div>
-              <div className="mt-1 text-xs text-slate-500">{dateLabel}</div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{greeting}</div>
+              <div className="mt-1 truncate text-lg font-black text-foreground">{companyName}</div>
+              <div className="mt-1 text-xs text-muted-foreground">{dateLabel}</div>
               <div className="mt-3">
                 <BusinessSwitcher />
               </div>
             </div>
 
-            <Button variant="outline" size="icon" className="rounded-2xl border-slate-200 bg-slate-50" onClick={() => {}}>
+            <Button variant="outline" size="icon" className="rounded-2xl border-border bg-muted/50" onClick={() => {}}>
               <Bell className="h-5 w-5 text-slate-700" />
             </Button>
           </div>
 
           <div className="px-4 pb-4">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <div className="text-xs text-slate-600">
-                Focus: <span className="font-semibold text-slate-900">create documents fast</span> and keep collections moving.
+            <div className="rounded-2xl border border-border bg-muted/50 px-4 py-3">
+              <div className="text-xs text-muted-foreground">
+                Focus: <span className="font-semibold text-foreground">create documents fast</span> and keep collections moving.
               </div>
             </div>
           </div>
         </Card>
 
         <section className="space-y-2">
-          <div className="px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Quick actions</div>
+          <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quick actions</div>
           <div className="grid grid-cols-2 gap-3">
             {quickActions.map((action) => {
               const Icon = action.icon
@@ -159,10 +159,10 @@ export default function Dashboard({ session }) {
                     <span className={cn('grid h-11 w-11 place-items-center rounded-2xl shadow-sm', action.iconBg)}>
                       <Icon className="h-6 w-6 text-white" />
                     </span>
-                    <ChevronRight className="h-5 w-5 text-slate-400 opacity-70 transition group-hover:opacity-100" />
+                    <ChevronRight className="h-5 w-5 text-muted-foreground opacity-70 transition group-hover:opacity-100" />
                   </div>
-                  <div className="mt-3 text-sm font-bold text-slate-900">{action.label}</div>
-                  <div className="mt-1 text-xs text-slate-600">Tap to start</div>
+                  <div className="mt-3 text-sm font-bold text-foreground">{action.label}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">Tap to start</div>
                 </button>
               )
             })}
@@ -170,24 +170,24 @@ export default function Dashboard({ session }) {
         </section>
 
         <section className="space-y-2">
-          <div className="px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Shortcuts</div>
+          <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shortcuts</div>
           <QuickTileRail />
         </section>
 
         <section className="space-y-2">
           <div className="flex items-center justify-between px-1">
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Recent activity</div>
-            <button type="button" className="text-xs font-semibold text-slate-900 underline-offset-4 hover:underline" onClick={() => navigate('/invoices')}>
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent activity</div>
+            <button type="button" className="text-xs font-semibold text-foreground underline-offset-4 hover:underline" onClick={() => navigate('/invoices')}>
               View all
             </button>
           </div>
 
-          <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
-            <div className="divide-y divide-slate-100">
+          <Card className="rounded-2xl border-border bg-card shadow-sm">
+            <div className="divide-y divide-border">
               {loading ? (
-                <div className="px-4 py-8 text-center text-sm text-slate-400">Loading activity...</div>
+                <div className="px-4 py-8 text-center text-sm text-muted-foreground">Loading activity...</div>
               ) : recentDocs.length === 0 ? (
-                <div className="px-4 py-8 text-center text-sm text-slate-500">No recent documents yet.</div>
+                <div className="px-4 py-8 text-center text-sm text-muted-foreground">No recent documents yet.</div>
               ) : (
                 recentDocs.map((doc) => {
                   const type = typeStyle[doc.type]
@@ -195,10 +195,10 @@ export default function Dashboard({ session }) {
                   const TypeIcon = type.icon
                   const StatusIcon = status.icon
                   return (
-                    <button key={`${doc.type}-${doc.id}`} type="button" onClick={() => navigate(`/${type.path}/${doc.id}`)} className="w-full px-4 py-3 text-left transition hover:bg-slate-50">
+                    <button key={`${doc.type}-${doc.id}`} type="button" onClick={() => navigate(`/${type.path}/${doc.id}`)} className="w-full px-4 py-3 text-left transition hover:bg-muted/50">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-start gap-3">
-                          <span className="mt-0.5 grid h-10 w-10 place-items-center rounded-2xl bg-slate-100">
+                          <span className="mt-0.5 grid h-10 w-10 place-items-center rounded-2xl bg-muted">
                             <TypeIcon className="h-5 w-5 text-slate-700" />
                           </span>
                           <div className="min-w-0">
@@ -207,9 +207,9 @@ export default function Dashboard({ session }) {
                                 <span className={cn('mr-2 inline-block h-1.5 w-1.5 rounded-full', type.dot)} />
                                 {doc.type}
                               </Badge>
-                              <div className="text-sm font-bold text-slate-900">{doc.number}</div>
+                              <div className="text-sm font-bold text-foreground">{doc.number}</div>
                             </div>
-                            <div className="mt-1 truncate text-xs text-slate-500">
+                            <div className="mt-1 truncate text-xs text-muted-foreground">
                               {doc.client} • {new Date(doc.date).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}
                             </div>
                           </div>
@@ -231,7 +231,7 @@ export default function Dashboard({ session }) {
 
             <div className="px-4 py-3">
               <Separator className="mb-3" />
-              <button type="button" className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm" onClick={() => navigate('/invoices')}>
+              <button type="button" className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-muted/50 px-4 py-3 text-sm font-semibold text-foreground shadow-sm" onClick={() => navigate('/invoices')}>
                 View document lists <ChevronRight className="h-4 w-4" />
               </button>
             </div>
@@ -239,23 +239,23 @@ export default function Dashboard({ session }) {
         </section>
 
         <section className="space-y-2">
-          <div className="px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Outstanding summary</div>
+          <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Outstanding summary</div>
           <div className="grid grid-cols-2 gap-3">
             <button type="button" onClick={() => navigate('/reports')} className="rounded-2xl border border-red-200 bg-red-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
               <div className="text-xs font-semibold uppercase tracking-wider text-red-700">Receivables</div>
-              <div className="mt-2 text-xl font-black text-slate-900">{naira(summary.outstandingReceivables)}</div>
-              <div className="mt-1 text-xs text-slate-600">Tap to open Reports</div>
+              <div className="mt-2 text-xl font-black text-foreground">{naira(summary.outstandingReceivables)}</div>
+              <div className="mt-1 text-xs text-muted-foreground">Tap to open Reports</div>
             </button>
             <button type="button" onClick={() => navigate('/reports')} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
               <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Collected</div>
-              <div className="mt-2 text-xl font-black text-slate-900">{naira(summary.thisMonthCollections)}</div>
-              <div className="mt-1 text-xs text-slate-600">This month</div>
+              <div className="mt-2 text-xl font-black text-foreground">{naira(summary.thisMonthCollections)}</div>
+              <div className="mt-1 text-xs text-muted-foreground">This month</div>
             </button>
           </div>
         </section>
 
         <section className="pt-1">
-          <Button variant="outline" className="w-full rounded-2xl border-zinc-200 bg-white shadow-sm" onClick={() => setQuickAccessOpen(true)}>
+          <Button variant="outline" className="w-full rounded-2xl border-zinc-200 bg-card shadow-sm" onClick={() => setQuickAccessOpen(true)}>
             More <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
 
@@ -266,76 +266,76 @@ export default function Dashboard({ session }) {
                   <SheetTitle className="text-base font-black tracking-tight">Quick Access</SheetTitle>
                 </SheetHeader>
 
-                <div className="bg-slate-50 px-4 py-4">
+                <div className="bg-muted/50 px-4 py-4">
                   <div className="mb-4">
-                    <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Recent clients</div>
+                    <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent clients</div>
                     <div className="space-y-2">
                       {recentClients.map((client) => (
-                        <button key={client.id} type="button" onClick={() => { navigate(`/clients/${client.id}`); setQuickAccessOpen(false) }} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition hover:bg-slate-50">
+                        <button key={client.id} type="button" onClick={() => { navigate(`/clients/${client.id}`); setQuickAccessOpen(false) }} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm transition hover:bg-muted/50">
                           <div className="flex items-center gap-3">
-                            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-100">
+                            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-muted">
                               <Users className="h-5 w-5 text-slate-700" />
                             </span>
                             <div>
-                              <div className="text-sm font-semibold text-slate-900">{client.name}</div>
-                              <div className="text-xs text-slate-500">Open client</div>
+                              <div className="text-sm font-semibold text-foreground">{client.name}</div>
+                              <div className="text-xs text-muted-foreground">Open client</div>
                             </div>
                           </div>
-                          <ChevronRight className="h-5 w-5 text-slate-400" />
+                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         </button>
                       ))}
                     </div>
                   </div>
 
                   <div className="mb-4">
-                    <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Recent projects</div>
+                    <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent projects</div>
                     <div className="space-y-2">
                       {recentProjects.map((project) => (
-                        <button key={project.id} type="button" onClick={() => { navigate(`/projects/${project.id}`); setQuickAccessOpen(false) }} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition hover:bg-slate-50">
+                        <button key={project.id} type="button" onClick={() => { navigate(`/projects/${project.id}`); setQuickAccessOpen(false) }} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm transition hover:bg-muted/50">
                           <div className="flex items-center gap-3">
-                            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-100">
+                            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-muted">
                               <FolderOpen className="h-5 w-5 text-slate-700" />
                             </span>
                             <div className="min-w-0">
-                              <div className="truncate text-sm font-semibold text-slate-900">{project.name}</div>
-                              <div className="text-xs text-slate-500">{project.client_name || 'Open project'}</div>
+                              <div className="truncate text-sm font-semibold text-foreground">{project.name}</div>
+                              <div className="text-xs text-muted-foreground">{project.client_name || 'Open project'}</div>
                             </div>
                           </div>
-                          <ChevronRight className="h-5 w-5 text-slate-400" />
+                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         </button>
                       ))}
                     </div>
                   </div>
 
                   <div className="mb-4">
-                    <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Archive</div>
-                    <button type="button" onClick={() => { navigate('/settings'); setQuickAccessOpen(false) }} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition hover:bg-slate-50">
+                    <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Archive</div>
+                    <button type="button" onClick={() => { navigate('/settings'); setQuickAccessOpen(false) }} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm transition hover:bg-muted/50">
                       <div className="flex items-center gap-3">
-                        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-100">
+                        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-muted">
                           <Archive className="h-5 w-5 text-slate-700" />
                         </span>
                         <div>
-                          <div className="text-sm font-semibold text-slate-900">Archived items</div>
-                          <div className="text-xs text-slate-500">Open settings archive tools</div>
+                          <div className="text-sm font-semibold text-foreground">Archived items</div>
+                          <div className="text-xs text-muted-foreground">Open settings archive tools</div>
                         </div>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-slate-400" />
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </button>
                   </div>
 
-                  <Card className="rounded-2xl border-slate-200 bg-white p-4 shadow-sm">
+                  <Card className="rounded-2xl border-border bg-card p-4 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <div className="text-xs text-slate-500">Workspace</div>
-                      <div className="text-xs font-semibold text-slate-900">Main workspace</div>
+                      <div className="text-xs text-muted-foreground">Workspace</div>
+                      <div className="text-xs font-semibold text-foreground">Main workspace</div>
                     </div>
                     <div className="mt-2 flex items-center justify-between">
-                      <div className="text-xs text-slate-500">Notifications</div>
-                      <div className="text-xs font-semibold text-slate-900">Placeholder</div>
+                      <div className="text-xs text-muted-foreground">Notifications</div>
+                      <div className="text-xs font-semibold text-foreground">Placeholder</div>
                     </div>
                   </Card>
 
                   <div className="mt-4">
-                    <Button variant="outline" className="w-full rounded-2xl border-slate-200 bg-white" onClick={() => setQuickAccessOpen(false)}>
+                    <Button variant="outline" className="w-full rounded-2xl border-border bg-card" onClick={() => setQuickAccessOpen(false)}>
                       Close
                     </Button>
                   </div>

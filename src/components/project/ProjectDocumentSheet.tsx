@@ -407,34 +407,34 @@ export default function ProjectDocumentSheet({
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
       <div className="md:col-span-2">
         <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Title</label>
-        <Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-white text-sm" />
+        <Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
       </div>
       <div>
         <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Reference Number</label>
-        <Input value={form.reference_number} onChange={(event) => setForm((current) => ({ ...current, reference_number: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-white text-sm" />
+        <Input value={form.reference_number} onChange={(event) => setForm((current) => ({ ...current, reference_number: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
       </div>
       <div>
         <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Date</label>
-        <Input type="date" value={form.date} onChange={(event) => setForm((current) => ({ ...current, date: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-white text-sm" />
+        <Input type="date" value={form.date} onChange={(event) => setForm((current) => ({ ...current, date: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
       </div>
       <div>
         <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">From Party</label>
-        <Input value={form.from_party} onChange={(event) => setForm((current) => ({ ...current, from_party: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-white text-sm" />
+        <Input value={form.from_party} onChange={(event) => setForm((current) => ({ ...current, from_party: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
       </div>
       <div>
         <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">To Party</label>
-        <Input value={form.to_party} onChange={(event) => setForm((current) => ({ ...current, to_party: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-white text-sm" />
+        <Input value={form.to_party} onChange={(event) => setForm((current) => ({ ...current, to_party: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
       </div>
       <div className="md:col-span-2">
         <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Notes</label>
-        <Textarea value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} className="min-h-28 rounded-2xl border-zinc-200 bg-white text-sm" />
+        <Textarea value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} className="min-h-28 rounded-2xl border-zinc-200 bg-background text-sm" />
       </div>
     </div>
   )
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[94vh] rounded-t-[28px] bg-white p-0 [&>[data-slot=sheet-close]]:hidden">
+      <SheetContent side="bottom" className="max-h-[94vh] rounded-t-[28px] bg-card p-0 [&>[data-slot=sheet-close]]:hidden">
         <SheetHeader className="border-b border-zinc-200 bg-zinc-50 px-5 py-4 text-left">
           <SheetTitle className="text-base font-semibold text-zinc-900">Add Project Document</SheetTitle>
           <SheetDescription className="text-sm text-zinc-500">
@@ -495,7 +495,7 @@ export default function ProjectDocumentSheet({
 
           {step === 2 ? (
             <div className="space-y-4">
-              <div className={`rounded-[24px] border-l-4 border ${config.accent} border-zinc-200 bg-white p-4 shadow-sm`}>
+              <div className={`rounded-[24px] border-l-4 border ${config.accent} border-zinc-200 bg-card p-4 shadow-sm`}>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-semibold text-zinc-900">Step 2: Copy AI prompt and paste JSON</div>
@@ -509,12 +509,12 @@ export default function ProjectDocumentSheet({
 
               <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Prompt Preview</div>
-                <div className="whitespace-pre-wrap rounded-2xl border border-zinc-200 bg-white p-3 text-xs leading-6 text-zinc-700">
+                <div className="whitespace-pre-wrap rounded-2xl border border-zinc-200 bg-card p-3 text-xs leading-6 text-zinc-700">
                   {config.prompt}
                 </div>
               </div>
 
-              <div className="rounded-[24px] border-l-4 border-l-emerald-500 border border-zinc-200 bg-white p-4 shadow-sm">
+              <div className="rounded-[24px] border-l-4 border-l-emerald-500 border border-zinc-200 bg-card p-4 shadow-sm">
                 <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Paste JSON</label>
                 <Textarea
                   value={rawInput}
@@ -542,7 +542,7 @@ export default function ProjectDocumentSheet({
 
           {step === 3 ? (
             <div className="space-y-4">
-              <div className={`rounded-[24px] border-l-4 border ${config.accent} border-zinc-200 bg-white p-4 shadow-sm`}>
+              <div className={`rounded-[24px] border-l-4 border ${config.accent} border-zinc-200 bg-card p-4 shadow-sm`}>
                 <div className="text-sm font-semibold text-zinc-900">Step 3: Review and edit</div>
                 <div className="mt-1 text-sm text-zinc-500">Adjust the parsed values before saving the document to this project.</div>
               </div>
@@ -550,19 +550,19 @@ export default function ProjectDocumentSheet({
               <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">{renderSharedFields()}</div>
 
               {docType === 'purchase_order' ? (
-                <div className="space-y-4 rounded-[24px] border-l-4 border-l-blue-500 border border-zinc-200 bg-white p-4 shadow-sm">
+                <div className="space-y-4 rounded-[24px] border-l-4 border-l-blue-500 border border-zinc-200 bg-card p-4 shadow-sm">
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
                     <div>
                       <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Voucher Number</label>
-                      <Input value={form.voucher_number} onChange={(event) => setForm((current) => ({ ...current, voucher_number: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-white text-sm" />
+                      <Input value={form.voucher_number} onChange={(event) => setForm((current) => ({ ...current, voucher_number: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
                     </div>
                     <div>
                       <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">VAT (₦)</label>
-                      <Input type="number" value={form.vat} onChange={(event) => setForm((current) => ({ ...current, vat: toNumber(event.target.value) }))} className="h-10 rounded-xl border-zinc-200 bg-white text-sm" />
+                      <Input type="number" value={form.vat} onChange={(event) => setForm((current) => ({ ...current, vat: toNumber(event.target.value) }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
                     </div>
                     <div>
                       <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">WHT (₦)</label>
-                      <Input type="number" value={form.wht} onChange={(event) => setForm((current) => ({ ...current, wht: toNumber(event.target.value) }))} className="h-10 rounded-xl border-zinc-200 bg-white text-sm" />
+                      <Input type="number" value={form.wht} onChange={(event) => setForm((current) => ({ ...current, wht: toNumber(event.target.value) }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
                     </div>
                     <div>
                       <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Total (₦)</label>
@@ -581,7 +581,7 @@ export default function ProjectDocumentSheet({
 
                     <div className="space-y-3">
                       {form.purchaseOrderItems.map((item, index) => (
-                        <div key={`po-item-${index}`} className="rounded-2xl border border-zinc-200 bg-white p-3">
+                        <div key={`po-item-${index}`} className="rounded-2xl border border-zinc-200 bg-card p-3">
                           <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
                             <Input value={item.description} onChange={(event) => setForm((current) => ({ ...current, purchaseOrderItems: current.purchaseOrderItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, description: event.target.value } : entry) }))} placeholder="Description" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm md:col-span-2" />
                             <Input type="number" value={item.quantity} onChange={(event) => setForm((current) => ({ ...current, purchaseOrderItems: current.purchaseOrderItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, quantity: toNumber(event.target.value) } : entry) }))} placeholder="Qty" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm" />
@@ -604,31 +604,31 @@ export default function ProjectDocumentSheet({
               ) : null}
 
               {docType === 'receipt' ? (
-                <div className="grid grid-cols-1 gap-3 rounded-[24px] border-l-4 border-l-emerald-500 border border-zinc-200 bg-white p-4 shadow-sm md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 rounded-[24px] border-l-4 border-l-emerald-500 border border-zinc-200 bg-card p-4 shadow-sm md:grid-cols-2">
                   <div>
                     <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Amount (₦)</label>
-                    <Input type="number" value={form.amount} onChange={(event) => setForm((current) => ({ ...current, amount: toNumber(event.target.value) }))} className="h-10 rounded-xl border-zinc-200 bg-white text-sm" />
+                    <Input type="number" value={form.amount} onChange={(event) => setForm((current) => ({ ...current, amount: toNumber(event.target.value) }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
                   </div>
                   <div>
                     <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Payment Method</label>
-                    <Input value={form.payment_method} onChange={(event) => setForm((current) => ({ ...current, payment_method: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-white text-sm" />
+                    <Input value={form.payment_method} onChange={(event) => setForm((current) => ({ ...current, payment_method: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
                   </div>
                   <div>
                     <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">VAT (₦)</label>
-                    <Input type="number" value={form.vat} onChange={(event) => setForm((current) => ({ ...current, vat: toNumber(event.target.value) }))} className="h-10 rounded-xl border-zinc-200 bg-white text-sm" />
+                    <Input type="number" value={form.vat} onChange={(event) => setForm((current) => ({ ...current, vat: toNumber(event.target.value) }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
                   </div>
                   <div>
                     <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">WHT (₦)</label>
-                    <Input type="number" value={form.wht} onChange={(event) => setForm((current) => ({ ...current, wht: toNumber(event.target.value) }))} className="h-10 rounded-xl border-zinc-200 bg-white text-sm" />
+                    <Input type="number" value={form.wht} onChange={(event) => setForm((current) => ({ ...current, wht: toNumber(event.target.value) }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
                   </div>
                 </div>
               ) : null}
 
               {docType === 'receiving_waybill' ? (
-                <div className="space-y-4 rounded-[24px] border-l-4 border-l-orange-500 border border-zinc-200 bg-white p-4 shadow-sm">
+                <div className="space-y-4 rounded-[24px] border-l-4 border-l-orange-500 border border-zinc-200 bg-card p-4 shadow-sm">
                   <div>
                     <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Received By</label>
-                    <Input value={form.received_by} onChange={(event) => setForm((current) => ({ ...current, received_by: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-white text-sm" />
+                    <Input value={form.received_by} onChange={(event) => setForm((current) => ({ ...current, received_by: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
                   </div>
                   <div className="rounded-[20px] border border-zinc-200 bg-zinc-50 p-3">
                     <div className="mb-3 flex items-center justify-between gap-3">
@@ -640,7 +640,7 @@ export default function ProjectDocumentSheet({
                     </div>
                     <div className="space-y-3">
                       {form.waybillItems.map((item, index) => (
-                        <div key={`waybill-item-${index}`} className="rounded-2xl border border-zinc-200 bg-white p-3">
+                        <div key={`waybill-item-${index}`} className="rounded-2xl border border-zinc-200 bg-card p-3">
                           <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
                             <Input value={item.description} onChange={(event) => setForm((current) => ({ ...current, waybillItems: current.waybillItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, description: event.target.value } : entry) }))} placeholder="Description" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm" />
                             <Input type="number" value={item.quantity} onChange={(event) => setForm((current) => ({ ...current, waybillItems: current.waybillItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, quantity: toNumber(event.target.value) } : entry) }))} placeholder="Qty" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm" />

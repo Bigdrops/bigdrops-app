@@ -167,7 +167,7 @@ export default function ClientSelector({
   return (
     <>
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-2xl bg-white p-0 sm:max-w-2xl">
+        <DialogContent className="max-w-2xl bg-card p-0 sm:max-w-2xl">
           <div className="max-h-[85vh] overflow-y-auto p-6">
             <DialogHeader className="mb-4">
               <DialogTitle>Add New Client</DialogTitle>
@@ -177,7 +177,7 @@ export default function ClientSelector({
               <div>
                 <Label>Company / Client Name *</Label>
                 <Input
-                  className="mt-2 bg-white"
+                  className="mt-2 bg-background"
                   value={newClient.name}
                   onChange={(e) => updateNew('name', e.target.value)}
                   placeholder="e.g. Coronation Power & Gas Ltd"
@@ -188,12 +188,12 @@ export default function ClientSelector({
               <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <div>
                   <Label>Contact Person</Label>
-                  <Input className="mt-2 bg-white" value={newClient.contact_person} onChange={(e) => updateNew('contact_person', e.target.value)} />
+                  <Input className="mt-2 bg-background" value={newClient.contact_person} onChange={(e) => updateNew('contact_person', e.target.value)} />
                 </div>
                 <div>
                   <Label>Category</Label>
                   <select
-                    className="mt-2 h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-slate-900"
+                    className="mt-2 h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"
                     value={newClient.category}
                     onChange={(e) => updateNew('category', e.target.value)}
                   >
@@ -210,36 +210,36 @@ export default function ClientSelector({
               <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <div>
                   <Label>Phone</Label>
-                  <Input className="mt-2 bg-white" value={newClient.phone} onChange={(e) => updateNew('phone', e.target.value)} />
+                  <Input className="mt-2 bg-background" value={newClient.phone} onChange={(e) => updateNew('phone', e.target.value)} />
                 </div>
                 <div>
                   <Label>Email</Label>
-                  <Input className="mt-2 bg-white" type="email" value={newClient.email} onChange={(e) => updateNew('email', e.target.value)} />
+                  <Input className="mt-2 bg-background" type="email" value={newClient.email} onChange={(e) => updateNew('email', e.target.value)} />
                 </div>
               </div>
 
               <div>
                 <Label>Address Line 1</Label>
-                <Input className="mt-2 bg-white" value={newClient.address} onChange={(e) => updateNew('address', e.target.value)} />
+                <Input className="mt-2 bg-background" value={newClient.address} onChange={(e) => updateNew('address', e.target.value)} />
               </div>
               <div>
                 <Label>Address Line 2</Label>
-                <Input className="mt-2 bg-white" value={newClient.address2} onChange={(e) => updateNew('address2', e.target.value)} />
+                <Input className="mt-2 bg-background" value={newClient.address2} onChange={(e) => updateNew('address2', e.target.value)} />
               </div>
 
               <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <div>
                   <Label>City</Label>
-                  <Input className="mt-2 bg-white" value={newClient.city} onChange={(e) => updateNew('city', e.target.value)} />
+                  <Input className="mt-2 bg-background" value={newClient.city} onChange={(e) => updateNew('city', e.target.value)} />
                 </div>
                 <div>
                   <Label>State</Label>
-                  <Input className="mt-2 bg-white" value={newClient.state} onChange={(e) => updateNew('state', e.target.value)} />
+                  <Input className="mt-2 bg-background" value={newClient.state} onChange={(e) => updateNew('state', e.target.value)} />
                 </div>
               </div>
 
               <div className="flex gap-3 pt-2">
-                <Button type="button" variant="outline" className="flex-1 bg-white" onClick={() => setShowAddModal(false)}>
+                <Button type="button" variant="outline" className="flex-1 bg-card" onClick={() => setShowAddModal(false)}>
                   Cancel
                 </Button>
                 <Button type="button" className="flex-[1.3]" onClick={handleSaveNewClient} disabled={saving}>
@@ -258,7 +258,7 @@ export default function ClientSelector({
             <Button
               type="button"
               variant={compact ? 'outline' : 'link'}
-              className={compact ? 'h-7 rounded-xl border-zinc-200 bg-white px-2 text-[10px] font-semibold text-zinc-700' : 'h-auto p-0 text-sm font-semibold'}
+              className={compact ? 'h-7 rounded-xl border-zinc-200 bg-card px-2 text-[10px] font-semibold text-zinc-700' : 'h-auto p-0 text-sm font-semibold'}
               onClick={() => setShowAddModal(true)}
             >
               + New Client
@@ -287,7 +287,7 @@ export default function ClientSelector({
             </div>
 
             <Dialog open={open} onOpenChange={closePicker}>
-              <DialogContent className="max-w-[calc(100%-1rem)] rounded-2xl bg-white p-0 sm:max-w-lg">
+              <DialogContent className="max-w-[calc(100%-1rem)] rounded-2xl bg-card p-0 sm:max-w-lg">
                 <div className="max-h-[85vh] overflow-y-auto p-4">
                   <DialogHeader className="mb-3">
                     <DialogTitle>Select Client</DialogTitle>
@@ -296,12 +296,12 @@ export default function ClientSelector({
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder={`Search ${clients.length} clients`}
-                    className="h-11 bg-white"
+                    className="h-11 bg-background"
                     autoFocus
                   />
                   <div className="mt-3 space-y-2">
                     {filteredClients.length === 0 ? (
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
+                      <div className="rounded-xl border border-border bg-muted/50 px-3 py-6 text-center text-sm text-muted-foreground">
                         No clients match &quot;{searchTerm}&quot;.
                       </div>
                     ) : (
@@ -309,11 +309,11 @@ export default function ClientSelector({
                         <button
                           key={client.id}
                           type="button"
-                          className="flex w-full flex-col rounded-xl border border-slate-200 bg-white px-3 py-3 text-left active:bg-slate-50"
+                          className="flex w-full flex-col rounded-xl border border-border bg-card px-3 py-3 text-left active:bg-muted/50"
                           onClick={() => selectClient(client)}
                         >
-                          <span className="text-sm font-semibold text-slate-900">{client.name}</span>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-sm font-semibold text-foreground">{client.name}</span>
+                          <span className="text-xs text-muted-foreground">
                             {[client.contact_person, client.city, client.phone].filter(Boolean).join(' • ') || 'No extra details'}
                           </span>
                         </button>
@@ -334,9 +334,9 @@ export default function ClientSelector({
                 setOpen(true)
               }}
               placeholder={`Search ${clients.length} clients`}
-              className="h-10 bg-white pr-24"
+              className="h-10 bg-background pr-24"
             />
-            <div className="pointer-events-none absolute inset-y-0 right-14 flex items-center text-xs text-slate-400">
+            <div className="pointer-events-none absolute inset-y-0 right-14 flex items-center text-xs text-muted-foreground">
               Search
             </div>
             {selectedSummary ? (
@@ -344,7 +344,7 @@ export default function ClientSelector({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
                 onClick={clearSelection}
               >
                 Clear
@@ -352,10 +352,10 @@ export default function ClientSelector({
             ) : null}
 
             {open && (
-              <Card className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-[1000] max-h-72 overflow-hidden border border-slate-200 bg-white shadow-xl">
+              <Card className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-[1000] max-h-72 overflow-hidden border border-border bg-background shadow-xl">
                 <div className="max-h-72 overflow-y-auto p-2">
                   {filteredClients.length === 0 ? (
-                    <div className="rounded-md px-3 py-6 text-center text-sm text-slate-500">
+                    <div className="rounded-md px-3 py-6 text-center text-sm text-muted-foreground">
                       No clients match &quot;{searchTerm}&quot;.
                     </div>
                   ) : (
@@ -363,12 +363,12 @@ export default function ClientSelector({
                       <button
                         key={client.id}
                         type="button"
-                        className="flex w-full flex-col rounded-md px-3 py-2 text-left hover:bg-slate-50"
+                        className="flex w-full flex-col rounded-md px-3 py-2 text-left hover:bg-muted/50"
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => selectClient(client)}
                       >
-                        <span className="text-sm font-semibold text-slate-900">{client.name}</span>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-sm font-semibold text-foreground">{client.name}</span>
+                        <span className="text-xs text-muted-foreground">
                           {[client.contact_person, client.city, client.phone].filter(Boolean).join(' • ') || 'No extra details'}
                         </span>
                       </button>
@@ -381,14 +381,14 @@ export default function ClientSelector({
         )}
 
         {!compact && selectedSummary ? (
-          <Card className="border-slate-200 bg-slate-50 p-4">
+          <Card className="border-border bg-muted/50 p-4">
             <div>
-              <div className="text-sm font-semibold text-slate-900">{selectedSummary.name}</div>
-              {selectedClient?.contact_person ? <div className="mt-1 text-sm text-slate-600">{selectedClient.contact_person}</div> : null}
-              {selectedClient?.phone ? <div className="text-sm text-slate-600">{selectedClient.phone}</div> : null}
-              {selectedClient?.email ? <div className="text-sm text-slate-600">{selectedClient.email}</div> : null}
+              <div className="text-sm font-semibold text-foreground">{selectedSummary.name}</div>
+              {selectedClient?.contact_person ? <div className="mt-1 text-sm text-muted-foreground">{selectedClient.contact_person}</div> : null}
+              {selectedClient?.phone ? <div className="text-sm text-muted-foreground">{selectedClient.phone}</div> : null}
+              {selectedClient?.email ? <div className="text-sm text-muted-foreground">{selectedClient.email}</div> : null}
               {selectedClient?.address ? (
-                <div className="text-sm text-slate-600">
+                <div className="text-sm text-muted-foreground">
                   {[selectedClient.address, selectedClient.city, selectedClient.state].filter(Boolean).join(', ')}
                 </div>
               ) : null}

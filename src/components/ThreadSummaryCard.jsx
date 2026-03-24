@@ -90,7 +90,7 @@ export default function ThreadSummaryCard({ threadId, currentInvoiceId, onCreate
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden mb-6">
+    <div className="bg-card rounded-2xl border border-zinc-200 shadow-sm overflow-hidden mb-6">
 
       {/* ── Layer 1: Contract context ── */}
       <div className="px-5 py-4 border-b border-zinc-100 bg-zinc-50">

@@ -285,7 +285,7 @@ export default function ProjectDetail() {
   if (loading) {
     return (
       <Layout title="Project">
-        <div className="px-6 py-10 text-sm text-slate-400">Loading...</div>
+        <div className="px-6 py-10 text-sm text-muted-foreground">Loading...</div>
       </Layout>
     )
   }
@@ -293,7 +293,7 @@ export default function ProjectDetail() {
   if (!project) {
     return (
       <Layout title="Project">
-        <div className="px-6 py-10 text-sm text-slate-400">Project not found.</div>
+        <div className="px-6 py-10 text-sm text-muted-foreground">Project not found.</div>
       </Layout>
     )
   }
@@ -378,30 +378,30 @@ export default function ProjectDetail() {
 
               <div className="min-w-0 flex-1">
                 <div className="mb-3 flex flex-wrap items-center gap-3">
-                  <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{project.name}</h1>
+                  <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{project.name}</h1>
                   <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${projectStatus.className}`}>
                     {projectStatus.label}
                   </span>
                 </div>
 
-                <div className="mb-2 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-600">
+                <div className="mb-2 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
                   {project.client_name ? (
                     <span className="inline-flex items-center gap-2">
-                      <Building2 size={14} className="text-slate-400" />
+                      <Building2 size={14} className="text-muted-foreground" />
                       <span className="font-medium text-slate-700">{project.client_name}</span>
                     </span>
                   ) : null}
 
                   {project.location ? (
                     <span className="inline-flex items-center gap-2">
-                      <MapPin size={14} className="text-slate-400" />
+                      <MapPin size={14} className="text-muted-foreground" />
                       <span>{project.location}</span>
                     </span>
                   ) : null}
 
                   {String(project.po_number || '').trim() ? (
                     <span className="inline-flex items-center gap-2">
-                      <Hash size={14} className="text-slate-400" />
+                      <Hash size={14} className="text-muted-foreground" />
                       <span>
                         PO: <span className="font-medium text-slate-700">{String(project.po_number || '').trim()}</span>
                       </span>
@@ -410,20 +410,20 @@ export default function ProjectDetail() {
 
                   {project.project_value ? (
                     <span className="inline-flex items-center gap-2">
-                      <DollarSign size={14} className="text-slate-400" />
+                      <DollarSign size={14} className="text-muted-foreground" />
                       <span>{formatCurrency(project.project_value)}</span>
                     </span>
                   ) : null}
 
                   {project.start_date ? (
                     <span className="inline-flex items-center gap-2">
-                      <Calendar size={14} className="text-slate-400" />
+                      <Calendar size={14} className="text-muted-foreground" />
                       <span>Started {formatDate(project.start_date)}</span>
                     </span>
                   ) : null}
                 </div>
 
-                {project.notes ? <p className="text-sm italic text-slate-500">{project.notes}</p> : null}
+                {project.notes ? <p className="text-sm italic text-muted-foreground">{project.notes}</p> : null}
               </div>
 
               <button
@@ -439,7 +439,7 @@ export default function ProjectDetail() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="md:col-span-2">
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Project Name
                   </label>
                   <input
@@ -450,7 +450,7 @@ export default function ProjectDetail() {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Status
                   </label>
                   <select
@@ -466,7 +466,7 @@ export default function ProjectDetail() {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Start Date
                   </label>
                   <input
@@ -478,7 +478,7 @@ export default function ProjectDetail() {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Project Value (₦)
                   </label>
                   <input
@@ -491,7 +491,7 @@ export default function ProjectDetail() {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     P.O. Number
                   </label>
                   <input
@@ -503,7 +503,7 @@ export default function ProjectDetail() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Site / Location
                   </label>
                   <input
@@ -515,7 +515,7 @@ export default function ProjectDetail() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Notes
                   </label>
                   <textarea
@@ -530,7 +530,7 @@ export default function ProjectDetail() {
                 <button
                   type="button"
                   onClick={() => setEditing(false)}
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  className="rounded-lg border border-border bg-muted/50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-muted/50"
                 >
                   Cancel
                 </button>
@@ -550,7 +550,7 @@ export default function ProjectDetail() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {summaryCards.map((card) => (
             <div key={card.label} className={`${cardClassName} border-l-4 ${card.accentClassName} p-4`}>
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {card.label}
               </div>
               <div className={`text-2xl font-extrabold tracking-tight ${card.valueClassName}`}>{card.value}</div>
@@ -573,12 +573,12 @@ export default function ProjectDetail() {
             </div>
 
             {timeline.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-emerald-200 bg-white p-10 text-center shadow-sm ring-1 ring-emerald-50">
+              <div className="rounded-2xl border border-dashed border-emerald-200 bg-card p-10 text-center shadow-sm ring-1 ring-emerald-50">
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
                   <FolderKanban size={24} />
                 </div>
                 <div className="mb-1 text-sm font-semibold text-slate-700">No documents yet</div>
-                <div className="text-sm text-slate-500">
+                <div className="text-sm text-muted-foreground">
                   Create a document from the quick actions panel, or link an existing one.
                 </div>
               </div>
@@ -606,7 +606,7 @@ export default function ProjectDetail() {
                       key={`${doc._type}-${doc.id}`}
                       type="button"
                       onClick={() => navigate(docPath)}
-                      className="group flex w-full items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm ring-1 ring-slate-100 transition hover:border-slate-300 hover:shadow-md"
+                      className="group flex w-full items-start gap-4 rounded-2xl border border-border bg-card p-4 text-left shadow-sm ring-1 ring-ring transition hover:border-border hover:shadow-md"
                     >
                       <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${cfg.iconWrapClassName}`}>
                         <Icon size={18} />
@@ -617,7 +617,7 @@ export default function ProjectDetail() {
                           <span className={`text-xs font-semibold uppercase tracking-wide ${cfg.labelClassName}`}>
                             {cfg.label}
                           </span>
-                          <span className="text-sm font-bold text-slate-900">{docNumber}</span>
+                          <span className="text-sm font-bold text-foreground">{docNumber}</span>
                           {paymentStatus ? (
                             <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${paymentStatus.className}`}>
                               {paymentStatus.label}
@@ -625,8 +625,8 @@ export default function ProjectDetail() {
                           ) : null}
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
-                          {docTitle ? <span className="truncate text-slate-600">{docTitle}</span> : null}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                          {docTitle ? <span className="truncate text-muted-foreground">{docTitle}</span> : null}
                           {docDate ? <span>{docDate}</span> : null}
                         </div>
 
@@ -652,7 +652,7 @@ export default function ProjectDetail() {
                             {formatCurrency(doc.total)}
                           </div>
                         ) : null}
-                        <ChevronRight size={16} className="text-slate-300 transition group-hover:text-slate-500" />
+                        <ChevronRight size={16} className="text-slate-300 transition group-hover:text-muted-foreground" />
                       </div>
                     </button>
                   )
@@ -660,11 +660,11 @@ export default function ProjectDetail() {
               </div>
             )}
 
-            <div className="mt-5 rounded-2xl border-l-4 border-l-amber-500 border border-slate-200 bg-white p-4 shadow-sm ring-1 ring-amber-50">
+            <div className="mt-5 rounded-2xl border-l-4 border-l-amber-500 border border-border bg-card p-4 shadow-sm ring-1 ring-amber-50">
               <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="text-sm font-semibold text-slate-700">External Documents ({projectDocs.length})</div>
-                  <div className="mt-1 text-sm text-slate-500">POs, receipts, waybills, and other third-party project records.</div>
+                  <div className="mt-1 text-sm text-muted-foreground">POs, receipts, waybills, and other third-party project records.</div>
                 </div>
                 <button
                   type="button"
@@ -678,7 +678,7 @@ export default function ProjectDetail() {
               {projectDocs.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50 px-4 py-8 text-center">
                   <div className="text-sm font-semibold text-slate-700">No external documents yet</div>
-                  <div className="mt-1 text-sm text-slate-500">Paste AI-parsed JSON to store purchase orders, receipts, waybills, and other project files.</div>
+                  <div className="mt-1 text-sm text-muted-foreground">Paste AI-parsed JSON to store purchase orders, receipts, waybills, and other project files.</div>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -692,7 +692,7 @@ export default function ProjectDetail() {
 
           <div className="space-y-4">
             <div className={`${cardClassName} border-t-4 border-t-blue-500 p-4`}>
-              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Quick Actions</div>
+              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Quick Actions</div>
               <div className="space-y-2">
                 {quickActions.map((action) => (
                   <button
@@ -726,13 +726,13 @@ export default function ProjectDetail() {
             }}
           >
             <div
-              className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl ring-1 ring-slate-100"
+              className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl ring-1 ring-ring"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-2 flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-extrabold tracking-tight text-slate-900">Link Existing Document</h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                  <h3 className="text-lg font-extrabold tracking-tight text-foreground">Link Existing Document</h3>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
                     Type the document number exactly as it appears on the document, like <strong>SASINV-B021</strong> or{' '}
                     <strong>CSR-004</strong>.
                   </p>
@@ -744,7 +744,7 @@ export default function ProjectDetail() {
                     setLinkDocId('')
                     setLinkError('')
                   }}
-                  className="rounded-full border border-slate-200 bg-slate-50 p-2 text-slate-500 transition hover:bg-slate-100"
+                  className="rounded-full border border-border bg-muted/50 p-2 text-muted-foreground transition hover:bg-muted/50"
                 >
                   <X size={16} />
                 </button>
@@ -752,7 +752,7 @@ export default function ProjectDetail() {
 
               <div className="mt-5 space-y-4">
                 <div>
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Document Type</div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Document Type</div>
                   <div className="grid grid-cols-2 gap-2">
                     {['invoice', 'csr'].map((type) => {
                       const active = linkType === type
@@ -775,7 +775,7 @@ export default function ProjectDetail() {
                 </div>
 
                 <div>
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Document Number or ID
                   </div>
                   <input
@@ -805,7 +805,7 @@ export default function ProjectDetail() {
                       setLinkDocId('')
                       setLinkError('')
                     }}
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                    className="rounded-lg border border-border bg-muted/50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-muted/50"
                   >
                     Cancel
                   </button>

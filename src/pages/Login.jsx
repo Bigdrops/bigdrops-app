@@ -140,7 +140,7 @@ export default function Login() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#f6f6f4] text-slate-950">
+    <div className="relative min-h-screen overflow-hidden bg-[#f6f6f4] text-foreground">
       {/* floating background forms */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-16 top-24 h-40 w-40 rounded-[2.5rem] bg-white shadow-[0_30px_80px_rgba(0,0,0,0.08)] md:-left-10 md:top-20 md:h-56 md:w-56" />
@@ -154,21 +154,21 @@ export default function Login() {
         {/* left content */}
         <div className="mb-8 hidden lg:block">
           <div className="max-w-xl">
-            <div className="mb-4 inline-flex rounded-full border border-black/10 bg-white/70 px-4 py-1 text-xs font-medium uppercase tracking-[0.28em] text-slate-600 backdrop-blur">
+            <div className="mb-4 inline-flex rounded-full border border-black/10 bg-white/70 px-4 py-1 text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground backdrop-blur">
               BigDrops ERP
             </div>
 
-            <h1 className="max-w-lg text-5xl font-semibold leading-[1.05] tracking-tight text-slate-950">
+            <h1 className="max-w-lg text-5xl font-semibold leading-[1.05] tracking-tight text-foreground">
               Run operations in one controlled workspace.
             </h1>
 
-            <p className="mt-5 max-w-md text-base leading-7 text-slate-600">
+            <p className="mt-5 max-w-md text-base leading-7 text-muted-foreground">
               Invoices, quotations, reports and workflow tools in one controlled workspace.
             </p>
 
             <div className="mt-10 grid max-w-md grid-cols-2 gap-4">
               <div className="rounded-3xl border border-black/10 bg-white/80 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.06)] backdrop-blur">
-                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Workspace</div>
+                <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Workspace</div>
                 <div className="mt-2 text-2xl font-semibold">Business ops</div>
               </div>
 
@@ -187,14 +187,14 @@ export default function Login() {
               {signupCompleteEmail ? (
                 <div className="space-y-5">
                   <div className="text-center lg:text-left">
-                    <div className="text-xs font-medium uppercase tracking-[0.28em] text-slate-500">
+                    <div className="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">
                       Account Created
                     </div>
-                    <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                    <h2 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
                       Check your email
                     </h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      We sent a confirmation link to <span className="font-semibold text-slate-900">{signupCompleteEmail}</span>.
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      We sent a confirmation link to <span className="font-semibold text-foreground">{signupCompleteEmail}</span>.
                     </p>
                   </div>
 
@@ -205,7 +205,7 @@ export default function Login() {
                     <div>3. Return here and sign in.</div>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                  <div className="rounded-2xl border border-border bg-muted/50 px-4 py-4 text-sm text-muted-foreground">
                     If you already confirmed your email, you can go straight back to sign in.
                   </div>
 
@@ -224,13 +224,13 @@ export default function Login() {
               ) : (
                 <>
                   <div className="mb-6 text-center lg:text-left">
-                    <div className="text-xs font-medium uppercase tracking-[0.28em] text-slate-500">
+                    <div className="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">
                       BigDrops ERP
                     </div>
-                    <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                    <h2 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
                       {isSignup ? 'Create your account' : 'Sign in to continue'}
                     </h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
                       {isSignup
                         ? 'Set up your account and access your workspace.'
                         : 'Access your business workspace from one place.'}
@@ -243,14 +243,14 @@ export default function Login() {
                         Email
                       </Label>
                       <div className="relative">
-                        <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                           id="email"
                           type="email"
                           value={email}
                           onChange={e => setEmail(e.target.value)}
                           placeholder="you@example.com"
-                          className="h-12 rounded-xl border-black/10 bg-white pl-9 text-base shadow-none"
+                          className="h-12 rounded-xl border-black/10 bg-background pl-9 text-base shadow-none"
                         />
                       </div>
                     </div>
@@ -260,14 +260,14 @@ export default function Login() {
                         Password
                       </Label>
                       <div className="relative">
-                        <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                           id="password"
                           type="password"
                           value={password}
                           onChange={e => setPassword(e.target.value)}
                           placeholder="Password"
-                          className="h-12 rounded-xl border-black/10 bg-white pl-9 text-base shadow-none"
+                          className="h-12 rounded-xl border-black/10 bg-background pl-9 text-base shadow-none"
                         />
                       </div>
                     </div>
@@ -278,14 +278,14 @@ export default function Login() {
                           Confirm Password
                         </Label>
                         <div className="relative">
-                          <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                          <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                           <Input
                             id="confirmPassword"
                             type="password"
                             value={confirmPassword}
                             onChange={e => setConfirmPassword(e.target.value)}
                             placeholder="Confirm password"
-                            className="h-12 rounded-xl border-black/10 bg-white pl-9 text-base shadow-none"
+                            className="h-12 rounded-xl border-black/10 bg-background pl-9 text-base shadow-none"
                           />
                         </div>
                       </div>
@@ -296,7 +296,7 @@ export default function Login() {
                         <button
                           type="button"
                           onClick={handleForgotPassword}
-                          className="text-sm font-medium text-slate-600 transition hover:text-slate-950"
+                          className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
                         >
                           Forgot Password?
                         </button>
@@ -318,7 +318,7 @@ export default function Login() {
                       variant="outline"
                       onClick={handleGoogleSignIn}
                       disabled={loading}
-                      className="h-12 w-full rounded-xl border-black/10 bg-white text-slate-900 hover:bg-slate-50"
+                      className="h-12 w-full rounded-xl border-black/10 bg-card text-foreground hover:bg-muted/50"
                     >
                       <GoogleIcon className="mr-2 h-4 w-4" />
                       Continue with Google
@@ -327,11 +327,11 @@ export default function Login() {
                     {error && <Notice kind="error">{error}</Notice>}
                     {message && <Notice kind="success">{message}</Notice>}
 
-                    <div className="pt-2 text-center text-sm text-slate-600">
+                    <div className="pt-2 text-center text-sm text-muted-foreground">
                       {isSignup ? 'Already have an account? ' : "Don't have an account? "}
                       <button
                         type="button"
-                        className="font-semibold text-slate-950 underline underline-offset-4"
+                        className="font-semibold text-foreground underline underline-offset-4"
                         onClick={() => {
                           setMode(isSignup ? 'signin' : 'signup')
                           resetFeedback()
@@ -349,7 +349,7 @@ export default function Login() {
           {/* mobile support copy */}
           <div className="mx-auto mt-6 max-w-md lg:hidden">
             <div className="rounded-3xl border border-black/10 bg-white/70 px-5 py-4 text-center shadow-[0_20px_50px_rgba(0,0,0,0.06)] backdrop-blur">
-              <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
+              <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
                 One workspace
               </div>
               <p className="mt-2 text-sm leading-6 text-slate-700">

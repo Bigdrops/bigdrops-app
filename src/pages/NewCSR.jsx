@@ -54,10 +54,10 @@ function useIsMobile() {
 
 function SectionCard({ title, description, children }) {
   return (
-    <Card className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:rounded-[28px] sm:shadow-[0_14px_38px_rgba(15,23,42,0.08)]">
-      <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-red-50/50 px-4 pb-4 pt-4 sm:px-6">
-        <CardTitle className="text-base font-semibold text-slate-950">{title}</CardTitle>
-        {description ? <p className="text-sm leading-6 text-slate-600">{description}</p> : null}
+    <Card className="overflow-hidden rounded-xl border border-border bg-card shadow-sm sm:rounded-[28px] sm:shadow-[0_14px_38px_rgba(15,23,42,0.08)]">
+      <CardHeader className="border-b border-border bg-gradient-to-r from-slate-50 via-white to-red-50/50 px-4 pb-4 pt-4 sm:px-6">
+        <CardTitle className="text-base font-semibold text-foreground">{title}</CardTitle>
+        {description ? <p className="text-sm leading-6 text-muted-foreground">{description}</p> : null}
       </CardHeader>
       <CardContent className="space-y-4 p-4 sm:p-6">{children}</CardContent>
     </Card>
@@ -94,12 +94,12 @@ function ToggleRow({ title, description, checked, onCheckedChange }) {
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <div className={`h-2.5 w-2.5 rounded-full ${checked ? 'bg-red-500' : 'bg-slate-300'}`} />
-          <div className="text-sm font-semibold text-slate-900">{title}</div>
+          <div className="text-sm font-semibold text-foreground">{title}</div>
           <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] ${checked ? 'bg-red-100 text-red-700' : 'bg-slate-200 text-slate-600'}`}>
             {checked ? 'On' : 'Off'}
           </span>
         </div>
-        <div className="text-xs leading-5 text-slate-600">{description}</div>
+        <div className="text-xs leading-5 text-muted-foreground">{description}</div>
       </div>
       <div className="flex justify-end sm:justify-start" onClick={(event) => event.stopPropagation()}>
         <div className={`rounded-full border px-2 py-1 ${checked ? 'border-red-200 bg-white shadow-[0_0_0_4px_rgba(254,226,226,0.8)]' : 'border-slate-200 bg-white'}`}>
@@ -243,7 +243,7 @@ export default function NewCSR() {
 
   return (
     <Layout title="New CSR">
-      <div className="mx-auto max-w-5xl p-0 sm:rounded-[32px] sm:border sm:border-slate-200 sm:bg-gradient-to-b sm:from-slate-100/90 sm:via-slate-50 sm:to-white sm:p-5 sm:shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
+      <div className="mx-auto max-w-5xl p-0 sm:rounded-[32px] sm:border sm:border-border sm:bg-gradient-to-b sm:from-slate-100/90 sm:via-slate-50 sm:to-white sm:p-5 sm:shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
         <div className="space-y-5">
         <SectionCard title="Customer Details" description="Identify the customer, date, and reference number for this service report.">
           <div className="grid gap-4 md:grid-cols-2">
@@ -390,8 +390,8 @@ export default function NewCSR() {
           <div className="rounded-xl border border-sky-100 bg-gradient-to-r from-sky-50 to-white p-4 sm:rounded-2xl">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px] md:items-end">
               <div>
-                <div className="text-sm font-semibold text-slate-900">Materials Output</div>
-                <div className="mt-1 text-xs leading-5 text-slate-600">
+                <div className="text-sm font-semibold text-foreground">Materials Output</div>
+                <div className="mt-1 text-xs leading-5 text-muted-foreground">
                   Choose how materials should appear in the final CSR output.
                 </div>
               </div>
@@ -400,7 +400,7 @@ export default function NewCSR() {
                   value={csrMeta.materialsOutputStyle}
                   onValueChange={(value) => updateMeta('materialsOutputStyle', value)}
                 >
-                  <SelectTrigger className="h-11 w-full rounded-xl border-sky-200 bg-white px-3 text-sm shadow-sm">
+                  <SelectTrigger className="h-11 w-full rounded-xl border-sky-200 bg-background px-3 text-sm shadow-sm">
                     <SelectValue placeholder="Select output style" />
                   </SelectTrigger>
                   <SelectContent>
@@ -415,7 +415,7 @@ export default function NewCSR() {
           {isMobile ? (
             <div className="space-y-3">
               {materialsRows.map((row, index) => (
-                <div key={index} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:rounded-2xl">
+                <div key={index} className="rounded-xl border border-border bg-card p-4 shadow-sm sm:rounded-2xl">
                   <div className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
                     Material Row {index + 1}
                   </div>
@@ -439,7 +439,7 @@ export default function NewCSR() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="rounded-2xl border border-border bg-card shadow-sm">
               <Table>
                 <TableHeader className="bg-zinc-50">
                   <TableRow>
@@ -496,7 +496,7 @@ export default function NewCSR() {
 
           <Field label="Status">
             <Select value={csr.status} onValueChange={(value) => update('status', value)}>
-              <SelectTrigger className="h-10 w-full rounded-xl border-zinc-200 bg-white px-3 text-sm">
+              <SelectTrigger className="h-10 w-full rounded-xl border-zinc-200 bg-background px-3 text-sm">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>

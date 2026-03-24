@@ -655,7 +655,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   }
 
   if (loading) {
-    return <div className="rounded-2xl border-l-4 border-l-blue-500 border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">Loading quotation...</div>
+    return <div className="rounded-2xl border-l-4 border-l-blue-500 border border-border bg-card p-8 text-sm text-muted-foreground shadow-sm">Loading quotation...</div>
   }
 
   const removeItemAt = (itemIndex: number) =>

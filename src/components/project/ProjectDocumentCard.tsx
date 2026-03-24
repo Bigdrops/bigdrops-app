@@ -49,7 +49,7 @@ function JsonValue({ value }: { value: unknown }) {
     return (
       <div className="space-y-2">
         {value.map((entry, index) => (
-          <div key={index} className="rounded-xl border border-zinc-200 bg-white p-3">
+          <div key={index} className="rounded-xl border border-zinc-200 bg-card p-3">
             <JsonValue value={entry} />
           </div>
         ))}
@@ -102,7 +102,7 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
   }
 
   return (
-    <div className={`rounded-[24px] border-l-4 border border-zinc-200 bg-white p-4 shadow-sm ${config.border}`}>
+    <div className={`rounded-[24px] border-l-4 border border-zinc-200 bg-card p-4 shadow-sm ${config.border}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -130,15 +130,15 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button type="button" variant="outline" className="h-9 rounded-xl border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50" onClick={() => setExpanded((current) => !current)}>
+        <Button type="button" variant="outline" className="h-9 rounded-xl border-zinc-200 bg-card text-zinc-700 hover:bg-zinc-50" onClick={() => setExpanded((current) => !current)}>
           {expanded ? <ChevronUp className="mr-1.5 h-4 w-4" /> : <ChevronDown className="mr-1.5 h-4 w-4" />}
           View Details
         </Button>
-        <Button type="button" variant="outline" className="h-9 rounded-xl border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50" onClick={handleCopyJson}>
+        <Button type="button" variant="outline" className="h-9 rounded-xl border-zinc-200 bg-card text-zinc-700 hover:bg-zinc-50" onClick={handleCopyJson}>
           <Copy className="mr-1.5 h-4 w-4" />
           Copy JSON
         </Button>
-        <Button type="button" variant="outline" className="h-9 rounded-xl border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50" onClick={handleExport}>
+        <Button type="button" variant="outline" className="h-9 rounded-xl border-zinc-200 bg-card text-zinc-700 hover:bg-zinc-50" onClick={handleExport}>
           <Download className="mr-1.5 h-4 w-4" />
           Export
         </Button>

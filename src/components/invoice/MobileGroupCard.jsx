@@ -23,18 +23,18 @@ export default function MobileGroupCard({
   getComputedAmount,
 }) {
   return (
-    <div className="overflow-hidden rounded-[24px] border border-zinc-200 bg-white shadow-none">
+    <div className="overflow-hidden rounded-[24px] border border-zinc-200 bg-card shadow-none">
       <div className="border-b border-zinc-200 bg-zinc-100/70 px-3.5 py-3">
         <div className="flex items-center gap-3">
           <Input
             value={group.name || ''}
             onChange={(e) => onUpdateGroupName(group.id, e.target.value)}
             placeholder="Group name"
-            className="h-10 flex-1 rounded-2xl border-zinc-200 bg-white text-sm font-semibold text-zinc-900 placeholder:text-zinc-400"
+            className="h-10 flex-1 rounded-2xl border-zinc-200 bg-background text-sm font-semibold text-zinc-900 placeholder:text-zinc-400"
           />
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2">
+            <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-card px-3 py-2">
               <Switch checked={!!group.showSubtotal} onCheckedChange={() => onToggleGroupSubtotal(group.id)} />
               <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Subtotal</span>
             </div>
@@ -60,7 +60,7 @@ export default function MobileGroupCard({
 
       <div className="space-y-3 bg-zinc-50/60 p-3">
         {items.length === 0 ? (
-          <div className="rounded-[20px] border border-dashed border-zinc-300 bg-white px-4 py-6 text-center text-sm text-zinc-500">
+          <div className="rounded-[20px] border border-dashed border-zinc-300 bg-card px-4 py-6 text-center text-sm text-zinc-500">
             No items in this group yet.
           </div>
         ) : (

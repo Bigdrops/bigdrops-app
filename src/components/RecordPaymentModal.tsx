@@ -222,10 +222,10 @@ export default function RecordPaymentModal({
 
   return (
     <Dialog open={controlledOpen} onOpenChange={(next) => (next ? onOpenChange?.(next) : close())}>
-      <DialogContent className="max-h-[85vh] max-w-[440px] overflow-y-auto rounded-2xl bg-white p-0 sm:max-w-[440px]">
-        <DialogHeader className="border-b border-slate-100 px-5 py-4">
-          <DialogTitle className="border-l-4 border-emerald-500 pl-3 text-[17px] text-slate-900">Record Payment</DialogTitle>
-          <DialogDescription className="text-xs text-slate-500">
+      <DialogContent className="max-h-[85vh] max-w-[440px] overflow-y-auto rounded-2xl bg-card p-0 sm:max-w-[440px]">
+        <DialogHeader className="border-b border-border px-5 py-4">
+          <DialogTitle className="border-l-4 border-emerald-500 pl-3 text-[17px] text-foreground">Record Payment</DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
             Save a payment for {invoice.invoice_number}.
           </DialogDescription>
         </DialogHeader>
@@ -244,8 +244,8 @@ export default function RecordPaymentModal({
             }}
           >
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Invoice Total</div>
-              <div className="mt-1 text-sm font-semibold text-slate-900">{invoice.client_name || "No client name"}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Invoice Total</div>
+              <div className="mt-1 text-sm font-semibold text-foreground">{invoice.client_name || "No client name"}</div>
             </div>
             <div className="text-right text-base font-bold text-green-600">{formatMoney(invoice.total)}</div>
           </div>
@@ -262,16 +262,16 @@ export default function RecordPaymentModal({
               gap: "12px",
             }}
           >
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Current Balance</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Current Balance</div>
             <div className="flex items-center gap-2 text-sm font-bold text-red-600">
-              {loadingBalance ? <Loader2 className="h-4 w-4 animate-spin text-slate-400" /> : null}
+              {loadingBalance ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : null}
               {formatMoney(currentBalance)}
             </div>
           </div>
 
           <div>
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Payment Type</div>
-            <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-slate-200">
+            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Payment Type</div>
+            <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-border">
               {(["full", "partial"] as PaymentType[]).map((type) => {
                 const active = form.type === type
                 return (
@@ -297,7 +297,7 @@ export default function RecordPaymentModal({
 
           {form.type === "partial" ? (
             <div>
-              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Amount (₦)</div>
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Amount (₦)</div>
               <Input
                 type="number"
                 min="0"
@@ -310,13 +310,13 @@ export default function RecordPaymentModal({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Date</div>
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Date</div>
               <Input type="date" value={form.date} onChange={(e) => setField("date", e.target.value)} />
             </div>
             <div>
-              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Payment Mode</div>
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Payment Mode</div>
               <Select value={form.method} onValueChange={(value) => setField("method", value as PaymentMethod)}>
-                <SelectTrigger className="w-full border-blue-200 bg-white">
+                <SelectTrigger className="w-full border-blue-200 bg-background">
                   <SelectValue placeholder="Select payment mode" />
                 </SelectTrigger>
                 <SelectContent>
@@ -334,7 +334,7 @@ export default function RecordPaymentModal({
             <div className="space-y-1.5 rounded-lg border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3">
               <label className="text-sm font-medium text-slate-700">Received Into Account</label>
               <Select value={selectedBankId} onValueChange={setSelectedBankId}>
-                <SelectTrigger className="w-full border-emerald-200 bg-white">
+                <SelectTrigger className="w-full border-emerald-200 bg-background">
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
                 <SelectContent>
@@ -349,12 +349,12 @@ export default function RecordPaymentModal({
           ) : null}
 
           <div>
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Reference</div>
+            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Reference</div>
             <Input value={form.reference} onChange={(e) => setField("reference", e.target.value)} placeholder="Optional reference" />
           </div>
 
           <div>
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Notes</div>
+            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Notes</div>
             <Textarea
               rows={3}
               value={form.notes}
@@ -365,11 +365,11 @@ export default function RecordPaymentModal({
 
           <div className="rounded-lg border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3">
             <div className="flex items-center justify-between gap-2 text-sm">
-              <span className="font-medium text-slate-500">Settlement</span>
-              <span className="font-bold text-slate-900">{formatMoney(amountPaid)}</span>
+              <span className="font-medium text-muted-foreground">Settlement</span>
+              <span className="font-bold text-foreground">{formatMoney(amountPaid)}</span>
             </div>
             <div className="mt-2 flex items-center justify-between gap-2 text-sm">
-              <span className="font-medium text-slate-500">Remaining Balance</span>
+              <span className="font-medium text-muted-foreground">Remaining Balance</span>
               <span className={remainingBalance > 0 ? "font-bold text-red-600" : "font-bold text-green-600"}>
                 {formatMoney(remainingBalance)}
               </span>
