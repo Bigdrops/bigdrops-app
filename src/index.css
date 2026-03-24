@@ -4,37 +4,37 @@
 
 /* Minimalist neutral theme tokens (shadcn-style) */
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+  --background: 210 35% 96%;
+  --foreground: 222 25% 12%;
 
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
+  --card: 210 30% 98%;
+  --card-foreground: 222 25% 12%;
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
+  --popover: 210 30% 98%;
+  --popover-foreground: 222 25% 12%;
 
-  /* A calm, minimalist “ink” primary (neutral-first UI) */
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
+  /* A calm, minimalist ???ink??? primary (neutral-first UI) */
+  --primary: 235 70% 45%;
+  --primary-foreground: 0 0% 98%;
 
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 210 28% 92%;
+  --secondary-foreground: 222 25% 12%;
 
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
+  --muted: 210 28% 92%;
+  --muted-foreground: 220 10% 38%;
 
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
+  --accent: 210 28% 92%;
+  --accent-foreground: 222 25% 12%;
 
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 70% 48%;
+  --destructive-foreground: 0 0% 98%;
 
   /* Minimal borders: present but quiet */
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
+  --border: 215 16% 84%;
+  --input: 215 16% 84%;
 
-  /* Focus ring should be visible (minimal ≠ faint) */
-  --ring: 222.2 84% 4.9%;
+  /* Focus ring should be visible (minimal ??? faint) */
+  --ring: 235 70% 45%;
 
   --radius: 0.75rem;
 }
