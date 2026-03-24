@@ -4,23 +4,43 @@ import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import { User } from 'lucide-react'
 
-export default function Clients() {
-  const [clients, setClients] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [openMenuId, setOpenMenuId] = useState(null)
+type Client = {
+  id: string | number
+  name: string
+  phone?: string | null
+  city?: string | null
+  state?: string | null
+  category?: string | null
+}
+
+export default function Clients(): JSX.Element {
+  const [clients, setClients] = useState<Client[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [openMenuId, setOpenMenuId] = useState<string | number | null>(null)
+
   const navigate = useNavigate()
-  const menuRef = useRef(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
 
   const loadClients = () => {
     let mounted = true
-    supabase.from('clients').select('*').order('name').then(({ data, error }) => {
-      if (mounted) {
-        if (error) console.error('Error:', error)
-        setClients(data || [])
-        setLoading(false)
-      }
-    })
-    return () => { mounted = false }
+
+    supabase
+      .from('clients')
+      .select('*')
+      .order('name')
+      .then(({ data, error }) => {
+        if (mounted) {
+          if (error) console.error('Error:', error)
+
+          // safe fallback instead of trusting API blindly
+          setClients((data as Client[]) || [])
+          setLoading(false)
+        }
+      })
+
+    return () => {
+      mounted = false
+    }
   }
 
   useEffect(() => {
@@ -29,16 +49,17 @@ export default function Clients() {
   }, [])
 
   useEffect(() => {
-    const handleOutsideClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setOpenMenuId(null)
       }
     }
+
     document.addEventListener('mousedown', handleOutsideClick)
     return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [])
 
-  const addButtonStyle = {
+  const addButtonStyle: React.CSSProperties = {
     backgroundColor: '#0F172A',
     color: 'white',
     borderRadius: 10,
@@ -49,7 +70,7 @@ export default function Clients() {
     cursor: 'pointer',
   }
 
-  const rowWrapStyle = {
+  const rowWrapStyle: React.CSSProperties = {
     background: 'white',
     border: '1px solid #E2E8F0',
     borderRadius: 24,
@@ -60,9 +81,10 @@ export default function Clients() {
 
   const closeMenu = () => setOpenMenuId(null)
 
-  const handleDelete = async (clientId) => {
+  const handleDelete = async (clientId: string | number): Promise<void> => {
     const confirmed = window.confirm('Delete this client? This cannot be undone.')
     if (!confirmed) return
+
     await supabase.from('clients').delete().eq('id', clientId)
     closeMenu()
     loadClients()
@@ -73,22 +95,29 @@ export default function Clients() {
       <div style={{ maxWidth: 960, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#0F172A' }}>Clients</h2>
+            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#0F172A' }}>
+              Clients
+            </h2>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: '#94A3B8' }}>
               {clients.length} client{clients.length !== 1 ? 's' : ''} total
             </p>
           </div>
+
           <button onClick={() => navigate('/clients/new')} style={addButtonStyle}>
             + Add Client
           </button>
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', color: '#94A3B8', padding: '60px 20px' }}>Loading...</div>
+          <div style={{ textAlign: 'center', color: '#94A3B8', padding: '60px 20px' }}>
+            Loading...
+          </div>
         ) : clients.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
             <User size={36} color="#CBD5E1" style={{ marginBottom: 12 }} />
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#334155', marginBottom: 20 }}>No clients yet</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#334155', marginBottom: 20 }}>
+              No clients yet
+            </div>
             <button onClick={() => navigate('/clients/new')} style={addButtonStyle}>
               + Add Client
             </button>
@@ -97,6 +126,7 @@ export default function Clients() {
           <div style={rowWrapStyle}>
             {clients.map((client, index) => {
               const isOpen = openMenuId === client.id
+
               return (
                 <div
                   key={client.id}
@@ -113,17 +143,40 @@ export default function Clients() {
                     cursor: 'pointer',
                   }}
                 >
-                  <div style={{ width: 44, height: 44, borderRadius: 14, background: '#F5F3FF', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 14,
+                      background: '#F5F3FF',
+                      color: '#7C3AED',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     <User size={18} />
                   </div>
 
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 800,
+                        color: '#0F172A',
+                        letterSpacing: '-0.02em',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
                       {client.name}
                     </div>
+
                     <div style={{ fontSize: 13, color: '#64748B', fontWeight: 600, marginTop: 2 }}>
                       {client.phone || '-'}
                     </div>
+
                     <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, marginTop: 2 }}>
                       {[client.city, client.state].filter(Boolean).join(', ') || '-'}
                     </div>
@@ -131,13 +184,25 @@ export default function Clients() {
 
                   <div style={{ justifySelf: 'end' }}>
                     {client.category ? (
-                      <span style={{ borderRadius: 999, padding: '5px 12px', background: '#EDE9FE', color: '#7C3AED', fontSize: 11, fontWeight: 800 }}>
+                      <span
+                        style={{
+                          borderRadius: 999,
+                          padding: '5px 12px',
+                          background: '#EDE9FE',
+                          color: '#7C3AED',
+                          fontSize: 11,
+                          fontWeight: 800,
+                        }}
+                      >
                         {client.category}
                       </span>
                     ) : null}
                   </div>
 
-                  <div style={{ justifySelf: 'end', position: 'relative' }} ref={isOpen ? menuRef : null}>
+                  <div
+                    style={{ justifySelf: 'end', position: 'relative' }}
+                    ref={isOpen ? menuRef : null}
+                  >
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
@@ -174,10 +239,35 @@ export default function Clients() {
                         }}
                       >
                         {[
-                          { label: 'Edit', color: '#334155', onClick: () => { closeMenu(); navigate('/clients/edit/' + client.id) } },
-                          { label: 'Delete', color: '#DC2626', onClick: () => handleDelete(client.id) },
-                          { label: 'Archive', color: '#334155', onClick: () => { closeMenu(); alert('Archive coming soon') } },
-                          { label: 'Merge', color: '#334155', onClick: () => { closeMenu(); alert('Merge coming soon') } },
+                          {
+                            label: 'Edit',
+                            color: '#334155',
+                            onClick: () => {
+                              closeMenu()
+                              navigate('/clients/edit/' + client.id)
+                            },
+                          },
+                          {
+                            label: 'Delete',
+                            color: '#DC2626',
+                            onClick: () => handleDelete(client.id),
+                          },
+                          {
+                            label: 'Archive',
+                            color: '#334155',
+                            onClick: () => {
+                              closeMenu()
+                              alert('Archive coming soon')
+                            },
+                          },
+                          {
+                            label: 'Merge',
+                            color: '#334155',
+                            onClick: () => {
+                              closeMenu()
+                              alert('Merge coming soon')
+                            },
+                          },
                         ].map((item) => (
                           <button
                             key={item.label}
@@ -197,8 +287,12 @@ export default function Clients() {
                               background: 'white',
                               color: item.color,
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = '#F8FAFC' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'white' }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#F8FAFC'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'white'
+                            }}
                           >
                             {item.label}
                           </button>
