@@ -4,7 +4,7 @@ import { Plus, Search, Truck } from 'lucide-react'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
-import { formatWaybillDate, getStatusMeta, getTypeMeta } from '../components/waybill/waybillUtils'
+import { formatWaybillDate, getStatusMeta, getTypeMeta, getWaybillTypeContent, mapDbWaybill } from '../components/waybill/waybillUtils'
 import type { Waybill } from '../components/waybill/waybillUtils'
 
 type FilterTab = 'all' | 'internal' | 'external'
@@ -32,7 +32,7 @@ export default function Waybills() {
         .select('*')
         .order('created_at', { ascending: false })
         .then(({ data }) => {
-          setWaybills((data as Waybill[]) || [])
+          setWaybills(((data as Record<string, unknown>[]) || []).map((row) => mapDbWaybill(row)) as Waybill[])
           setLoading(false)
         })
     }, 0)
@@ -49,7 +49,9 @@ export default function Waybills() {
           w.waybill_number?.toLowerCase().includes(q) ||
           w.client_name?.toLowerCase().includes(q) ||
           w.vehicle_plate?.toLowerCase().includes(q) ||
-          w.delivery_location?.toLowerCase().includes(q),
+          w.delivery_location?.toLowerCase().includes(q) ||
+          w.sender_name?.toLowerCase().includes(q) ||
+          w.receiver_name?.toLowerCase().includes(q),
       )
     }
     return list
@@ -147,6 +149,7 @@ export default function Waybills() {
             {filtered.map((w) => {
               const statusMeta = getStatusMeta(w.status)
               const typeMeta = getTypeMeta(w.type)
+              const typeContent = getWaybillTypeContent(w.type)
               return (
                 <button
                   key={w.id}
@@ -157,7 +160,7 @@ export default function Waybills() {
                   <div className="mb-2 flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-bold text-foreground">{w.waybill_number || '—'}</div>
-                      <div className="mt-0.5 truncate text-xs text-muted-foreground">{w.client_name || 'No client'}</div>
+                      <div className="mt-0.5 truncate text-xs text-muted-foreground">{w.client_name || 'No client / internal movement'}</div>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
                       <Badge className={typeMeta.className} label={typeMeta.label} />
@@ -172,17 +175,18 @@ export default function Waybills() {
                     )}
                   </div>
 
-                  {w.delivery_location && (
-                    <div className="mb-2 text-xs text-muted-foreground">
-                      📍 {w.delivery_location}
-                    </div>
-                  )}
+                  <div className="mb-2 text-xs text-muted-foreground">
+                    {typeContent.locationLabel}: {w.delivery_location || '—'}
+                  </div>
 
                   <div className="flex items-center gap-1 text-xs text-slate-500">
                     <span className="font-medium text-slate-700">{w.sender_name || '—'}</span>
                     <span>→</span>
                     <span className="font-medium text-slate-700">{w.receiver_name || '—'}</span>
                   </div>
+                  {!w.project_id ? (
+                    <div className="mt-2 text-[11px] font-medium text-amber-700">Project link pending</div>
+                  ) : null}
                 </button>
               )
             })}

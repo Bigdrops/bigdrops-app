@@ -13,6 +13,7 @@ import {
   Link2,
   MapPin,
   Pencil,
+  Truck,
   Wrench,
   X,
 } from 'lucide-react'
@@ -56,6 +57,12 @@ const DOC_TYPE = {
     iconWrapClassName: 'bg-violet-50 text-violet-700 ring-1 ring-violet-100',
     labelClassName: 'text-violet-700',
   },
+  waybill: {
+    label: 'Waybill',
+    icon: Truck,
+    iconWrapClassName: 'bg-orange-50 text-orange-700 ring-1 ring-orange-100',
+    labelClassName: 'text-orange-700',
+  },
 }
 
 const inputClassName =
@@ -96,6 +103,7 @@ export default function ProjectDetail() {
   const [invoices, setInvoices] = useState([])
   const [csrs, setCsrs] = useState([])
   const [quotations, setQuotations] = useState([])
+  const [waybills, setWaybills] = useState([])
   const [projectDocs, setProjectDocs] = useState([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -117,7 +125,7 @@ export default function ProjectDetail() {
   const fetchAll = async () => {
     setLoading(true)
 
-    const [projectRes, invoiceRes, csrRes, quotationRes, financialsRes, projectDocsRes] = await Promise.all([
+    const [projectRes, invoiceRes, csrRes, quotationRes, waybillRes, financialsRes, projectDocsRes] = await Promise.all([
       supabase.from('projects').select('*').eq('id', id).single(),
       supabase
         .from('invoices')
@@ -135,6 +143,11 @@ export default function ProjectDetail() {
         .select('id, quotation_number, status, total, issue_date')
         .eq('project_id', id)
         .order('issue_date', { ascending: false }),
+      supabase
+        .from('waybills')
+        .select('id, waybill_number, status, date, created_at, type')
+        .eq('project_id', id)
+        .order('created_at', { ascending: false }),
       supabase.from('project_financials_v').select('*').eq('project_id', id).single(),
       supabase.from('project_documents').select('*').eq('project_id', id).order('created_at', { ascending: false }),
     ])
@@ -166,6 +179,7 @@ export default function ProjectDetail() {
     setInvoices(enrichedInvoices)
     setCsrs(csrRes.data || [])
     setQuotations(quotationRes.data || [])
+    setWaybills(waybillRes.data || [])
     setProjectDocs(projectDocsRes.data || [])
     setEditForm({
       name: projectData?.name || '',
@@ -234,6 +248,15 @@ export default function ProjectDetail() {
         await supabase.from('csrs').update({ project_id: id }).eq('id', data.id)
         found = true
       }
+    } else if (linkType === 'waybill') {
+      const isUUID = /^[0-9a-f-]{36}$/i.test(val)
+      let query = supabase.from('waybills').select('id, waybill_number').is('project_id', null)
+      query = isUUID ? query.eq('id', val) : query.ilike('waybill_number', val)
+      const { data } = await query.maybeSingle()
+      if (data) {
+        await supabase.from('waybills').update({ project_id: id }).eq('id', data.id)
+        found = true
+      }
     }
 
     setLinking(false)
@@ -277,6 +300,11 @@ export default function ProjectDetail() {
       ...quotation,
       _type: 'quotation',
       _date: quotation.issue_date,
+    })),
+    ...waybills.map((waybill) => ({
+      ...waybill,
+      _type: 'waybill',
+      _date: waybill.date || waybill.created_at,
     })),
   ].sort((a, b) => new Date(b._date) - new Date(a._date))
 
@@ -362,6 +390,17 @@ export default function ProjectDetail() {
       state: {
         projectId: id,
         projectName: project.name,
+      },
+    },
+    {
+      label: '+ New Waybill',
+      path: '/waybills/new',
+      className: 'border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100',
+      state: {
+        projectId: id,
+        projectName: project.name,
+        clientId: project.client_id,
+        clientName: project.client_name,
       },
     },
   ]
@@ -595,6 +634,8 @@ export default function ProjectDetail() {
                       ? `/invoices/${doc.id}`
                       : doc._type === 'quotation'
                         ? `/quotations/${doc.id}`
+                      : doc._type === 'waybill'
+                        ? `/waybills/${doc.id}`
                         : `/csr/${doc.id}`
 
                   const invoiceFinancials = doc.invoiceFinancials
@@ -754,7 +795,7 @@ export default function ProjectDetail() {
                 <div>
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Document Type</div>
                   <div className="grid grid-cols-2 gap-2">
-                    {['invoice', 'csr'].map((type) => {
+                    {['invoice', 'csr', 'waybill'].map((type) => {
                       const active = linkType === type
                       return (
                         <button
@@ -785,7 +826,7 @@ export default function ProjectDetail() {
                       setLinkDocId(e.target.value)
                       setLinkError('')
                     }}
-                    placeholder={linkType === 'invoice' ? 'e.g. SASINV-B021' : 'e.g. CSR-004'}
+                    placeholder={linkType === 'invoice' ? 'e.g. SASINV-B021' : linkType === 'csr' ? 'e.g. CSR-004' : 'e.g. SASWB-E003'}
                     autoFocus
                     onKeyDown={(e) => e.key === 'Enter' && handleLink()}
                   />

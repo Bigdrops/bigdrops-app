@@ -1,4 +1,12 @@
-import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+
+import {
+  formatWaybillDate,
+  formatWaybillTime,
+  getWaybillSignature,
+  getWaybillTypeContent,
+  mapDbWaybill,
+} from './waybillUtils'
 import type { Waybill } from './waybillUtils'
 
 interface Settings {
@@ -15,199 +23,152 @@ interface WaybillPDFProps {
 }
 
 const S = StyleSheet.create({
-  page: {
-    fontFamily: 'Helvetica',
-    fontSize: 9,
-    color: '#111827',
-    backgroundColor: '#ffffff',
-    paddingTop: 36,
-    paddingBottom: 52,
-    paddingHorizontal: 40,
-  },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 },
-  logo: { width: 52, height: 52, objectFit: 'contain' },
-  companyBlock: { flex: 1, paddingLeft: 12 },
-  companyName: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: '#0f172a', marginBottom: 2 },
-  companyLine: { fontSize: 8, color: '#4b5563', marginBottom: 1 },
-  docTitle: { fontSize: 22, fontFamily: 'Helvetica-Bold', color: '#0f172a', textAlign: 'right' },
-  docSubtitle: { fontSize: 8, color: '#6b7280', textAlign: 'right', marginTop: 2 },
-  divider: { borderBottom: '1pt solid #d1d5db', marginVertical: 10 },
-  thinDivider: { borderBottom: '0.5pt solid #e5e7eb', marginVertical: 6 },
-  metaRow: { flexDirection: 'row', gap: 0, marginBottom: 14 },
-  metaCol: { flex: 1 },
-  metaLabel: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
-  metaValue: { fontSize: 9, color: '#111827' },
-  partiesRow: { flexDirection: 'row', gap: 12, marginBottom: 14 },
-  partyBox: {
-    flex: 1,
-    border: '1pt solid #d1d5db',
-    borderRadius: 4,
-    padding: 10,
-    backgroundColor: '#f9fafb',
-  },
-  partyLabel: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
-  partyName: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#0f172a' },
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#1e293b',
-    paddingVertical: 5,
-    paddingHorizontal: 6,
-    borderRadius: 3,
-    marginBottom: 0,
-  },
-  tableHeaderCell: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#ffffff', textTransform: 'uppercase', letterSpacing: 0.4 },
-  tableRow: { flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 6, borderBottom: '0.5pt solid #e5e7eb' },
-  tableRowAlt: { flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 6, borderBottom: '0.5pt solid #e5e7eb', backgroundColor: '#f9fafb' },
-  tableCell: { fontSize: 8.5, color: '#111827' },
-  colNum:  { width: 22 },
-  colDesc: { flex: 1 },
-  colQty:  { width: 36, textAlign: 'center' },
-  colUnit: { width: 44 },
-  colCond: { width: 52 },
-  notesBox: { marginTop: 10, padding: 10, backgroundColor: '#f9fafb', border: '0.5pt solid #e5e7eb', borderRadius: 3 },
-  notesLabel: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
-  notesText: { fontSize: 8.5, color: '#111827', lineHeight: 1.5 },
-  sigRow: { flexDirection: 'row', gap: 20, marginTop: 20 },
-  sigBox: { flex: 1, borderTop: '1pt solid #374151', paddingTop: 8 },
-  sigLabel: { fontSize: 7, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 },
-  sigImage: { width: 100, height: 50, objectFit: 'contain', marginBottom: 4 },
-  sigName: { fontSize: 8, color: '#111827', marginTop: 4 },
-  footer: { position: 'absolute', bottom: 24, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between', borderTop: '0.5pt solid #d1d5db', paddingTop: 6 },
-  footerText: { fontSize: 7, color: '#9ca3af' },
-  sectionTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#374151', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  page: { fontFamily: 'Helvetica', fontSize: 9, color: '#0f172a', paddingTop: 32, paddingBottom: 40, paddingHorizontal: 34, backgroundColor: '#ffffff' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
+  companyBlock: { flex: 1, paddingRight: 12 },
+  logo: { width: 48, height: 48, objectFit: 'contain', marginBottom: 8 },
+  companyName: { fontSize: 14, fontFamily: 'Helvetica-Bold', marginBottom: 2 },
+  companyLine: { fontSize: 8, color: '#475569', marginBottom: 1 },
+  docTitle: { fontSize: 18, fontFamily: 'Helvetica-Bold', textAlign: 'right' },
+  docNumber: { fontSize: 10, textAlign: 'right', marginTop: 4 },
+  divider: { borderBottom: '1pt solid #cbd5e1', marginBottom: 12 },
+  metaGrid: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
+  metaCard: { width: '25%', paddingRight: 8, marginBottom: 8 },
+  metaLabel: { fontSize: 7, color: '#64748b', textTransform: 'uppercase', marginBottom: 2 },
+  metaValue: { fontSize: 9, fontFamily: 'Helvetica-Bold' },
+  sectionTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', marginBottom: 6, textTransform: 'uppercase', color: '#334155' },
+  partyRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+  partyBox: { flex: 1, border: '1pt solid #cbd5e1', borderRadius: 4, padding: 8, backgroundColor: '#f8fafc' },
+  partyLabel: { fontSize: 7, textTransform: 'uppercase', color: '#475569', marginBottom: 4 },
+  partyValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 2 },
+  partyNote: { fontSize: 8, color: '#334155' },
+  tableHeader: { flexDirection: 'row', backgroundColor: '#0f172a', paddingVertical: 5, paddingHorizontal: 6 },
+  tableRow: { flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 6, borderBottom: '0.5pt solid #e2e8f0' },
+  tableRowAlt: { flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 6, borderBottom: '0.5pt solid #e2e8f0', backgroundColor: '#f8fafc' },
+  cell: { fontSize: 8 },
+  numberCol: { width: 20 },
+  descCol: { flex: 1.8, paddingRight: 6 },
+  qtyCol: { width: 32, textAlign: 'right' },
+  unitCol: { width: 40, paddingLeft: 6 },
+  conditionCol: { width: 48, paddingLeft: 6 },
+  customCol: { width: 54, paddingLeft: 6 },
+  notesBox: { marginTop: 10, border: '1pt solid #e2e8f0', borderRadius: 4, padding: 8, backgroundColor: '#f8fafc' },
+  signatureRow: { flexDirection: 'row', gap: 12, marginTop: 12 },
+  signatureBox: { flex: 1, border: '1pt solid #cbd5e1', borderRadius: 4, padding: 8 },
+  signatureImage: { width: 110, height: 42, objectFit: 'contain', marginBottom: 6 },
+  signatureTitle: { fontSize: 7, textTransform: 'uppercase', color: '#475569', marginBottom: 4 },
+  signatureText: { fontSize: 8, color: '#334155', marginBottom: 2 },
+  footer: { position: 'absolute', bottom: 18, left: 34, right: 34, borderTop: '0.5pt solid #cbd5e1', paddingTop: 6, flexDirection: 'row', justifyContent: 'space-between' },
+  footerText: { fontSize: 7, color: '#94a3b8' },
 })
 
-function conditionLabel(c: string) {
-  return c ? c.charAt(0).toUpperCase() + c.slice(1) : '—'
-}
-
 export default function WaybillPDF({ waybill, settings }: WaybillPDFProps) {
-  const items = Array.isArray(waybill.items) ? waybill.items : []
-  const formattedDate = waybill.date
-    ? new Date(waybill.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-    : '—'
-
+  const mapped = mapDbWaybill(waybill)
+  const customFields = mapped.custom_fields && typeof mapped.custom_fields === 'object' ? mapped.custom_fields : {}
+  const customColumns = customFields.customColumns || []
+  const senderSignature = getWaybillSignature(mapped, 'sender')
+  const receiverSignature = getWaybillSignature(mapped, 'receiver')
+  const typeContent = getWaybillTypeContent(mapped.type)
   const footerContact = [settings.company_phone, settings.company_email].filter(Boolean).join('  |  ')
 
   return (
     <Document>
       <Page size="A4" style={S.page}>
-        <View style={S.headerRow}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={S.header}>
+          <View style={S.companyBlock}>
             {settings.logo_url ? <Image src={settings.logo_url} style={S.logo} /> : null}
-            <View style={S.companyBlock}>
-              <Text style={S.companyName}>{settings.company_name || 'Company Name'}</Text>
-              {settings.company_address ? <Text style={S.companyLine}>{settings.company_address}</Text> : null}
-              {settings.company_phone  ? <Text style={S.companyLine}>{settings.company_phone}</Text>  : null}
-              {settings.company_email  ? <Text style={S.companyLine}>{settings.company_email}</Text>  : null}
-            </View>
+            <Text style={S.companyName}>{settings.company_name || 'Company Name'}</Text>
+            {settings.company_address ? <Text style={S.companyLine}>{settings.company_address}</Text> : null}
+            {settings.company_phone ? <Text style={S.companyLine}>{settings.company_phone}</Text> : null}
+            {settings.company_email ? <Text style={S.companyLine}>{settings.company_email}</Text> : null}
           </View>
           <View>
-            <Text style={S.docTitle}>WAYBILL</Text>
-            <Text style={S.docSubtitle}>{waybill.waybill_number}</Text>
-            <Text style={S.docSubtitle}>{waybill.type === 'internal' ? 'Internal' : 'External'}</Text>
+            <Text style={S.docTitle}>{typeContent.pdfTitle}</Text>
+            <Text style={S.docNumber}>{mapped.waybill_number || '—'}</Text>
           </View>
         </View>
 
         <View style={S.divider} />
 
-        <View style={S.metaRow}>
-          <View style={S.metaCol}>
-            <Text style={S.metaLabel}>Waybill No.</Text>
-            <Text style={S.metaValue}>{waybill.waybill_number || '—'}</Text>
-          </View>
-          <View style={S.metaCol}>
-            <Text style={S.metaLabel}>Date</Text>
-            <Text style={S.metaValue}>{formattedDate}</Text>
-          </View>
-          <View style={S.metaCol}>
-            <Text style={S.metaLabel}>Time</Text>
-            <Text style={S.metaValue}>{waybill.time || '—'}</Text>
-          </View>
-          <View style={S.metaCol}>
-            <Text style={S.metaLabel}>Vehicle Plate</Text>
-            <Text style={S.metaValue}>{waybill.vehicle_plate || '—'}</Text>
-          </View>
-          {waybill.po_number ? (
-            <View style={S.metaCol}>
-              <Text style={S.metaLabel}>PO Number</Text>
-              <Text style={S.metaValue}>{waybill.po_number}</Text>
+        <View style={S.metaGrid}>
+          {[
+            { label: 'Date', value: formatWaybillDate(mapped.date) },
+            { label: 'Time', value: formatWaybillTime(mapped.time) },
+            { label: 'Vehicle Plate', value: mapped.vehicle_plate || '—' },
+            { label: typeContent.locationLabel, value: mapped.delivery_location || '—' },
+            { label: typeContent.clientLabel, value: mapped.client_name || '—' },
+            { label: 'P.O. Number', value: mapped.po_number || '—' },
+            { label: 'Invoice Ref', value: customFields.references?.linkedInvoiceNumber || '—' },
+            { label: 'Project Ref', value: customFields.references?.linkedProjectName || '—' },
+          ].map((entry) => (
+            <View key={entry.label} style={S.metaCard}>
+              <Text style={S.metaLabel}>{entry.label}</Text>
+              <Text style={S.metaValue}>{entry.value}</Text>
             </View>
-          ) : null}
+          ))}
         </View>
 
-        <View style={S.metaRow}>
-          <View style={S.metaCol}>
-            <Text style={S.metaLabel}>Delivery Location</Text>
-            <Text style={S.metaValue}>{waybill.delivery_location || '—'}</Text>
-          </View>
-          {waybill.client_name ? (
-            <View style={S.metaCol}>
-              <Text style={S.metaLabel}>Client</Text>
-              <Text style={S.metaValue}>{waybill.client_name}</Text>
-            </View>
-          ) : null}
-        </View>
-
-        <View style={S.thinDivider} />
-
-        <View style={S.partiesRow}>
+        <View style={S.partyRow}>
           <View style={S.partyBox}>
-            <Text style={S.partyLabel}>Sender</Text>
-            <Text style={S.partyName}>{waybill.sender_name || '—'}</Text>
+            <Text style={S.partyLabel}>{typeContent.senderPdfLabel}</Text>
+            <Text style={S.partyValue}>{mapped.sender_name || '—'}</Text>
+            {customFields.partyNotes?.sender ? <Text style={S.partyNote}>{customFields.partyNotes.sender}</Text> : null}
           </View>
           <View style={S.partyBox}>
-            <Text style={S.partyLabel}>Receiver</Text>
-            <Text style={S.partyName}>{waybill.receiver_name || '—'}</Text>
+            <Text style={S.partyLabel}>{typeContent.receiverPdfLabel}</Text>
+            <Text style={S.partyValue}>{mapped.receiver_name || '—'}</Text>
+            {customFields.partyNotes?.receiver ? <Text style={S.partyNote}>{customFields.partyNotes.receiver}</Text> : null}
           </View>
         </View>
 
         <Text style={S.sectionTitle}>Items</Text>
-
         <View style={S.tableHeader}>
-          <Text style={[S.tableHeaderCell, S.colNum]}>#</Text>
-          <Text style={[S.tableHeaderCell, S.colDesc]}>Description</Text>
-          <Text style={[S.tableHeaderCell, S.colQty]}>Qty</Text>
-          <Text style={[S.tableHeaderCell, S.colUnit]}>Unit</Text>
-          <Text style={[S.tableHeaderCell, S.colCond]}>Condition</Text>
+          <Text style={[S.cell, S.numberCol]}>#</Text>
+          <Text style={[S.cell, S.descCol]}>Description</Text>
+          <Text style={[S.cell, S.qtyCol]}>Qty</Text>
+          <Text style={[S.cell, S.unitCol]}>Unit</Text>
+          <Text style={[S.cell, S.conditionCol]}>Condition</Text>
+          {customColumns.map((column) => (
+            <Text key={column.key} style={[S.cell, S.customCol]}>{column.label}</Text>
+          ))}
         </View>
 
-        {items.map((item, i) => (
-          <View key={i} style={i % 2 === 0 ? S.tableRow : S.tableRowAlt}>
-            <Text style={[S.tableCell, S.colNum]}>{i + 1}</Text>
-            <Text style={[S.tableCell, S.colDesc]}>{item.description || '—'}</Text>
-            <Text style={[S.tableCell, S.colQty]}>{item.quantity ?? '—'}</Text>
-            <Text style={[S.tableCell, S.colUnit]}>{item.unit || '—'}</Text>
-            <Text style={[S.tableCell, S.colCond]}>{conditionLabel(item.condition)}</Text>
+        {mapped.items.map((item, index) => (
+          <View key={`${item.description}-${index}`} style={index % 2 === 0 ? S.tableRow : S.tableRowAlt}>
+            <Text style={[S.cell, S.numberCol]}>{index + 1}</Text>
+            <Text style={[S.cell, S.descCol]}>{item.description || '—'}</Text>
+            <Text style={[S.cell, S.qtyCol]}>{String(item.quantity ?? '—')}</Text>
+            <Text style={[S.cell, S.unitCol]}>{item.unit || '—'}</Text>
+            <Text style={[S.cell, S.conditionCol]}>{item.condition || '—'}</Text>
+            {customColumns.map((column) => (
+              <Text key={column.key} style={[S.cell, S.customCol]}>{String(item.custom_data?.[column.key] || '—')}</Text>
+            ))}
           </View>
         ))}
 
-        {waybill.notes ? (
+        {mapped.notes ? (
           <View style={S.notesBox}>
-            <Text style={S.notesLabel}>Notes</Text>
-            <Text style={S.notesText}>{waybill.notes}</Text>
+            <Text style={S.sectionTitle}>Operational Notes</Text>
+            <Text style={S.cell}>{mapped.notes}</Text>
           </View>
         ) : null}
 
-        <View style={S.sigRow}>
-          <View style={S.sigBox}>
-            {waybill.receiver_signature_url ? (
-              <Image src={waybill.receiver_signature_url} style={S.sigImage} />
-            ) : null}
-            <Text style={S.sigLabel}>Receiver Signature</Text>
-            {waybill.receiver_name ? <Text style={S.sigName}>{waybill.receiver_name}</Text> : null}
-            {waybill.receiver_description ? <Text style={S.sigName}>{waybill.receiver_description}</Text> : null}
-          </View>
-          <View style={S.sigBox}>
-            <View style={{ height: 50 }} />
-            <Text style={S.sigLabel}>Authorised Signature</Text>
-          </View>
+        <View style={S.signatureRow}>
+          {[{ title: typeContent.senderSignatureLabel, signature: senderSignature, fallback: mapped.sender_name || '—' }, { title: typeContent.receiverSignatureLabel, signature: receiverSignature, fallback: mapped.receiver_name || 'Acknowledgement pending' }].map((entry) => (
+            <View key={entry.title} style={S.signatureBox}>
+              <Text style={S.signatureTitle}>{entry.title}</Text>
+              {entry.signature.image_url || entry.signature.drawn_data_url ? <Image src={entry.signature.image_url || entry.signature.drawn_data_url || ''} style={S.signatureImage} /> : null}
+              <Text style={S.signatureText}>{entry.signature.present === false ? 'Pending acknowledgement' : entry.fallback}</Text>
+              {entry.signature.description ? <Text style={S.signatureText}>{entry.signature.description}</Text> : null}
+              {entry.signature.confidence ? <Text style={S.signatureText}>Confidence: {entry.signature.confidence}</Text> : null}
+            </View>
+          ))}
         </View>
 
         <View style={S.footer}>
           <Text style={S.footerText}>{settings.company_name || ''}</Text>
           <Text style={S.footerText}>{footerContact}</Text>
-          <Text style={S.footerText}>Waybill: {waybill.waybill_number}</Text>
+          <Text style={S.footerText}>Waybill: {mapped.waybill_number}</Text>
         </View>
       </Page>
     </Document>
