@@ -8,6 +8,7 @@ import {
   DEFAULT_INVOICE_PDF_OUTPUT,
   getInvoicePdfOutput,
   getInvoiceSignatoryId,
+  invoiceImportAdapter,
   parseCustomFields,
 } from '@/domain/invoice'
 import {
@@ -25,7 +26,6 @@ import {
   useInvoiceColumns,
 } from '../components/useInvoiceColumns.jsx'
 import { computeDocument } from '../lib/Calculations'
-import { importJsonItems } from '../lib/itemJsonImport'
 import { numberToWords } from '../hooks/useInvoiceForm'
 
 const invoicePageClassName = 'w-full p-0 max-w-none'
@@ -315,39 +315,14 @@ export default function EditInvoice() {
     })
   }
 
-  const hasMeaningfulItemContent = (item) => {
-    if (item.row_type === 'group_header') return true
-    if (String(item.description || '').trim()) return true
-    if (String(item.sub_description || '').trim()) return true
-    if (String(item.make || '').trim()) return true
-    if (String(item.unit || '').trim()) return true
-    if (item.quantity !== undefined && Number(item.quantity) !== 1) return true
-    if (item.unit_price !== undefined && Number(item.unit_price) !== 0) return true
-    if (item.install_rate_override && item.install_rate !== null && item.install_rate !== undefined) return true
-    return Object.values(item.custom_data || {}).some((value) => String(value ?? '').trim() !== '')
-  }
-
-  const handleJsonImport = (text) => {
-    const { items: importedItems, columns: importedColumns, error } = importJsonItems({
-      text,
-      columns,
-      createItem: makeEmptyItem,
+  const handleImportApply = (result) => {
+    invoiceImportAdapter.applyResult({
+      result,
+      setColumns,
+      setItems,
+      updateTopLevelField: (field, value) => updateInvoice(field, value),
+      setExtraCharges,
     })
-
-    if (error) {
-      alert(error)
-      return false
-    }
-
-    setColumns(importedColumns)
-    setItems((current) =>
-      [...current.filter(hasMeaningfulItemContent), ...importedItems].map((item, itemIndex) => ({
-        ...item,
-        sort_order: itemIndex,
-      })),
-    )
-    alert(importedItems.length + ' items imported')
-    return true
   }
 
   if (loading || !invoice) {
@@ -536,7 +511,8 @@ export default function EditInvoice() {
         onSaveSent={() => handleSave('sent')}
         onSaveDraft={() => handleSave('draft')}
         onCancel={() => navigate('/invoices/' + id)}
-        onImportText={handleJsonImport}
+        onApplyImport={handleImportApply}
+        importAdapter={invoiceImportAdapter}
         onAddItem={addItem}
         onAddGroup={addGroup}
         onAddItemToGroup={addItemToGroup}

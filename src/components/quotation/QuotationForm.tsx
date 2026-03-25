@@ -20,9 +20,10 @@ import {
   type DbQuotation,
   type DbQuotationItem,
   type Quotation,
+  quotationImportAdapter,
 } from '@/domain/quotation'
+import type { ApplyImportResult } from '@/domain/import/types'
 import { computeDocument } from '@/lib/Calculations'
-import { importJsonItems } from '@/lib/itemJsonImport'
 import { formatQuotationStatus } from './quotationStatus'
 
 function useIsMobile() {
@@ -503,16 +504,14 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     })
   }
 
-  const handleJsonImport = (text: string) => {
-    const { items: importedItems, columns: importedColumns, error } = importJsonItems({ text, columns, createItem: makeEmptyItem })
-    if (error) {
-      alert(error)
-      return false
-    }
-    setColumns(importedColumns || columns)
-    commitGrouping((current) => [...current.filter((item) => item.row_type === 'group_header' || String(item.description || item.make || '').trim()), ...(importedItems || [])])
-    alert(`${(importedItems || []).length} items imported`)
-    return true
+  const handleImportApply = (result: ApplyImportResult) => {
+    quotationImportAdapter.applyResult({
+      result,
+      setColumns,
+      setItems: (nextItems) => commitGrouping(nextItems),
+      updateTopLevelField: (field, value) => updateQuotation(field, value),
+      setExtraCharges: (charges) => setExtraCharges(charges as Array<Record<string, unknown>>),
+    })
   }
 
   const calculationInputs = useMemo(
@@ -827,7 +826,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         onSaveSent={() => handleSave('sent')}
         onSaveDraft={() => handleSave('draft')}
         onCancel={() => navigate('/quotations')}
-        onImportText={handleJsonImport}
+        onApplyImport={handleImportApply}
+        importAdapter={quotationImportAdapter}
         onAddItem={addQuotationItem}
         onAddGroup={addQuotationGroup}
         onAddItemToGroup={addItemToGroup}

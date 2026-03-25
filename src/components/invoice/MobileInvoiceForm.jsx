@@ -79,7 +79,8 @@ export default function MobileInvoiceForm(props) {
     onSaveSent,
     onSaveDraft,
     onCancel,
-    onImportText,
+    onApplyImport,
+    importAdapter,
     onAddItem,
     onAddGroup,
     onAddItemToGroup,
@@ -669,8 +670,11 @@ export default function MobileInvoiceForm(props) {
       <JsonItemsImportSheet
         open={showImportSheet}
         onOpenChange={setShowImportSheet}
-        onImportText={onImportText}
-        title="Import Items"
+        onApplyImport={onApplyImport}
+        items={items}
+        columns={columns}
+        adapter={importAdapter}
+        title="Import JSON"
         side="bottom"
         contentClassName="sm:mx-auto sm:max-w-2xl"
       />
