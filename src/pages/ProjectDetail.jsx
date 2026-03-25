@@ -719,7 +719,9 @@ export default function ProjectDetail() {
               {projectDocs.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50 px-4 py-8 text-center">
                   <div className="text-sm font-semibold text-slate-700">No external documents yet</div>
-                  <div className="mt-1 text-sm text-muted-foreground">Paste AI-parsed JSON to store purchase orders, receipts, waybills, and other project files.</div>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    Use the AI prompt to extract JSON, then save a readable project record for purchase orders, receipts, waybills, and other files.
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">

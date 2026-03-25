@@ -1,11 +1,21 @@
-import { useMemo, useState } from 'react'
-import { ChevronDown, ChevronUp, Copy, Download, Trash2 } from 'lucide-react'
+import { Copy, Download, Eye, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
+import {
+  formatProjectDocumentCurrency,
+  getProjectDocumentFileName,
+  getProjectDocumentKeyFields,
+  getProjectDocumentMainLabel,
+  getProjectDocumentRawJson,
+  getProjectDocumentSummaryParts,
+  getProjectDocumentTypeMeta,
+  type ProjectDocumentRecord,
+} from '@/domain/projectDocuments'
 import { useToast } from '@/hooks/use-toast'
 
 type ProjectDocumentCardProps = {
-  document: Record<string, any>
+  document: ProjectDocumentRecord
   onDelete: (id: string) => void
 }
 
@@ -32,60 +42,17 @@ const typeConfig = {
   },
 }
 
-function formatCurrency(value: unknown) {
-  const amount = Number(value || 0)
-  return `₦${amount.toLocaleString()}`
-}
-
-function formatDate(value: unknown) {
-  if (!value) return ''
-  const date = new Date(String(value))
-  if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
-function JsonValue({ value }: { value: unknown }) {
-  if (Array.isArray(value)) {
-    return (
-      <div className="space-y-2">
-        {value.map((entry, index) => (
-          <div key={index} className="rounded-xl border border-zinc-200 bg-card p-3">
-            <JsonValue value={entry} />
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  if (value && typeof value === 'object') {
-    return (
-      <div className="space-y-2">
-        {Object.entries(value as Record<string, unknown>).map(([key, entry]) => (
-          <div key={key} className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{key.replace(/_/g, ' ')}</div>
-            <div className="mt-1 text-sm text-zinc-700">
-              <JsonValue value={entry} />
-            </div>
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  return <span>{String(value ?? '—')}</span>
-}
-
 export default function ProjectDocumentCard({ document, onDelete }: ProjectDocumentCardProps) {
-  const [expanded, setExpanded] = useState(false)
+  const navigate = useNavigate()
   const { toast } = useToast()
 
   const config = typeConfig[document.type as keyof typeof typeConfig] || typeConfig.other
-  const itemCount = Array.isArray(document.data?.items) ? document.data.items.length : 0
-  const total = Number(document.total || document.data?.total || 0)
-  const rawJson = useMemo(
-    () => document.raw_input || JSON.stringify(document.data || {}, null, 2),
-    [document.data, document.raw_input],
-  )
+  const summaryParts = getProjectDocumentSummaryParts(document)
+  const keyFields = getProjectDocumentKeyFields(document)
+  const mainLabel = getProjectDocumentMainLabel(document)
+  const rawJson = getProjectDocumentRawJson(document)
+  const totalField = keyFields.find((field) => field.label === 'Total' || field.label === 'Amount')
+  const meta = getProjectDocumentTypeMeta(document)
 
   const handleCopyJson = async () => {
     try {
@@ -97,8 +64,27 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
   }
 
   const handleExport = async () => {
-    await handleCopyJson()
-    toast({ title: 'Export', description: 'PDF export coming soon.' })
+    try {
+      const [{ pdf }, { default: ProjectDocumentPDF }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('@/components/project/ProjectDocumentPDF'),
+      ])
+      const blob = await pdf(<ProjectDocumentPDF document={document} />).toBlob()
+      const url = URL.createObjectURL(blob)
+      const anchor = window.document.createElement('a')
+      anchor.href = url
+      anchor.download = getProjectDocumentFileName(document)
+      window.document.body.appendChild(anchor)
+      anchor.click()
+      setTimeout(() => {
+        window.document.body.removeChild(anchor)
+        URL.revokeObjectURL(url)
+      }, 100)
+      toast({ title: 'PDF ready', description: `${meta.label} exported for internal use.` })
+    } catch (error) {
+      console.error(error)
+      toast({ title: 'Export failed', description: 'Could not generate the PDF for this document.' })
+    }
   }
 
   return (
@@ -109,12 +95,9 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
             <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase ${config.badge}`}>
               {config.label}
             </span>
-            <span className="text-sm font-bold text-zinc-900">{document.reference_number || document.title || 'Untitled'}</span>
-            {document.date ? <span className="text-xs text-zinc-500">{formatDate(document.date)}</span> : null}
+            <span className="text-sm font-bold text-zinc-900">{mainLabel}</span>
           </div>
-          <div className="mt-2 text-sm text-zinc-600">
-            {[document.from_party || '—', document.to_party || '—'].join(' → ')}
-          </div>
+          {summaryParts.length > 0 ? <div className="mt-2 text-sm text-zinc-600">{summaryParts.join('  |  ')}</div> : null}
         </div>
 
         <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => onDelete(document.id)}>
@@ -122,17 +105,37 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
         </Button>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-        {total > 0 ? <span className="font-bold text-zinc-900">{formatCurrency(total)}</span> : null}
-        {Number(document.vat || 0) > 0 ? <span className="text-zinc-500">VAT {formatCurrency(document.vat)}</span> : null}
-        {Number(document.wht || 0) > 0 ? <span className="text-zinc-500">WHT {formatCurrency(document.wht)}</span> : null}
-        {itemCount > 0 ? <span className="text-zinc-500">{itemCount} items</span> : null}
-      </div>
+      {keyFields.length > 0 ? (
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {keyFields.slice(0, 4).map((field) => (
+            <div key={`${field.label}-${field.value}`} className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{field.label}</div>
+              <div className="mt-1 text-sm font-medium text-zinc-900">{field.value}</div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {totalField?.value ? (
+        <div className="mt-3 text-sm font-semibold text-zinc-700">
+          {totalField.label}: {totalField.value}
+        </div>
+      ) : Number(document.vat || 0) > 0 || Number(document.wht || 0) > 0 ? (
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-500">
+          {Number(document.vat || 0) > 0 ? <span>VAT {formatProjectDocumentCurrency(document.vat)}</span> : null}
+          {Number(document.wht || 0) > 0 ? <span>WHT {formatProjectDocumentCurrency(document.wht)}</span> : null}
+        </div>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button type="button" variant="outline" className="h-9 rounded-xl border-zinc-200 bg-card text-zinc-700 hover:bg-zinc-50" onClick={() => setExpanded((current) => !current)}>
-          {expanded ? <ChevronUp className="mr-1.5 h-4 w-4" /> : <ChevronDown className="mr-1.5 h-4 w-4" />}
-          View Details
+        <Button
+          type="button"
+          variant="outline"
+          className="h-9 rounded-xl border-zinc-200 bg-card text-zinc-700 hover:bg-zinc-50"
+          onClick={() => navigate(`/projects/${document.project_id}/documents/${document.id}`)}
+        >
+          <Eye className="mr-1.5 h-4 w-4" />
+          View Document
         </Button>
         <Button type="button" variant="outline" className="h-9 rounded-xl border-zinc-200 bg-card text-zinc-700 hover:bg-zinc-50" onClick={handleCopyJson}>
           <Copy className="mr-1.5 h-4 w-4" />
@@ -140,15 +143,9 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
         </Button>
         <Button type="button" variant="outline" className="h-9 rounded-xl border-zinc-200 bg-card text-zinc-700 hover:bg-zinc-50" onClick={handleExport}>
           <Download className="mr-1.5 h-4 w-4" />
-          Export
+          Export PDF
         </Button>
       </div>
-
-      {expanded ? (
-        <div className="mt-4 rounded-[20px] border border-zinc-200 bg-zinc-50 p-3">
-          <JsonValue value={document.data || {}} />
-        </div>
-      ) : null}
     </div>
   )
 }

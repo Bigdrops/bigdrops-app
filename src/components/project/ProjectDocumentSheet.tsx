@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
+import { getProjectDocumentMainLabel } from '@/domain/projectDocuments'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/supabase'
 
@@ -184,6 +185,9 @@ function makeInitialForm(): DocumentFormState {
 }
 
 function buildTitle(type: ProjectDocumentType, parsed: Record<string, unknown>) {
+  if (type === 'other') {
+    return String(parsed.title || '').trim()
+  }
   const ref = String(parsed.reference_number || '').trim()
   return ref ? `${typeConfig[type].label} ${ref}` : typeConfig[type].label
 }
@@ -360,6 +364,12 @@ export default function ProjectDocumentSheet({
   }
 
   const handleSave = async () => {
+    const normalizedTitle = form.title.trim()
+    if (docType === 'other' && !normalizedTitle) {
+      toast({ title: 'Title required', description: 'Add a title for Other documents before saving.' })
+      return
+    }
+
     const data = buildDataFromForm(docType, form)
     const computedTotal =
       docType === 'purchase_order'
@@ -377,7 +387,7 @@ export default function ProjectDocumentSheet({
       {
         project_id: projectId,
         type: docType,
-        title: form.title || config.label,
+        title: normalizedTitle || config.label,
         reference_number: form.reference_number || null,
         voucher_number: docType === 'purchase_order' ? form.voucher_number || null : null,
         date: form.date || null,
@@ -398,7 +408,10 @@ export default function ProjectDocumentSheet({
       return
     }
 
-    toast({ title: 'Saved', description: `${config.label} added to this project.` })
+    toast({
+      title: `${config.label} saved`,
+      description: `${getProjectDocumentMainLabel({ type: docType, title: normalizedTitle, reference_number: form.reference_number, date: form.date, data })} is now ready to view or export.`,
+    })
     onOpenChange(false)
     onSuccess()
   }
@@ -406,8 +419,15 @@ export default function ProjectDocumentSheet({
   const renderSharedFields = () => (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
       <div className="md:col-span-2">
-        <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Title</label>
-        <Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
+        <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Title{docType === 'other' ? ' *' : ''}
+        </label>
+        <Input
+          value={form.title}
+          onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+          placeholder={docType === 'other' ? 'Required for Other documents' : ''}
+          className="h-10 rounded-xl border-zinc-200 bg-background text-sm"
+        />
       </div>
       <div>
         <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Reference Number</label>
@@ -438,7 +458,7 @@ export default function ProjectDocumentSheet({
         <SheetHeader className="border-b border-zinc-200 bg-zinc-50 px-5 py-4 text-left">
           <SheetTitle className="text-base font-semibold text-zinc-900">Add Project Document</SheetTitle>
           <SheetDescription className="text-sm text-zinc-500">
-            Paste AI-parsed JSON for external project files like POs, receipts, and waybills.
+            Use the AI prompt to extract structured JSON, then paste only the JSON object here for review before saving.
           </SheetDescription>
         </SheetHeader>
 
@@ -499,7 +519,7 @@ export default function ProjectDocumentSheet({
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-semibold text-zinc-900">Step 2: Copy AI prompt and paste JSON</div>
-                    <div className="mt-1 text-sm text-zinc-500">{config.label} parser prompt and pasted JSON input.</div>
+                    <div className="mt-1 text-sm text-zinc-500">Run the prompt on the source document, then paste the returned JSON object exactly as-is.</div>
                   </div>
                   <Button type="button" className="h-9 rounded-xl bg-blue-600 text-white hover:bg-blue-700" onClick={handleCopyPrompt}>
                     Copy AI Prompt
@@ -522,11 +542,16 @@ export default function ProjectDocumentSheet({
                     setRawInput(event.target.value)
                     setParseError('')
                   }}
-                  placeholder='{"reference_number":"","date":"YYYY-MM-DD"}'
+                  placeholder='{"reference_number":"","date":"YYYY-MM-DD","notes":""}'
                   className="min-h-52 rounded-2xl border-zinc-200 bg-zinc-50 font-mono text-sm"
                 />
                 {parseError ? (
                   <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{parseError}</div>
+                ) : null}
+                {!parseError ? (
+                  <div className="mt-3 text-xs text-zinc-500">
+                    Readable fields come first after parsing. Raw JSON stays available, but it is no longer the primary view.
+                  </div>
                 ) : null}
                 <div className="mt-4 flex flex-wrap justify-between gap-2">
                   <Button type="button" variant="outline" className={neutralButtonClassName} onClick={() => setStep(1)}>

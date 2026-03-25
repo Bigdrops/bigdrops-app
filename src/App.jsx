@@ -32,6 +32,7 @@ const Settings       = lazy(() => import('./pages/Settings'))
 const Projects       = lazy(() => import('./pages/Projects'))        // ← Added
 const NewProject     = lazy(() => import('./pages/NewProject'))      // ← Added
 const ProjectDetail  = lazy(() => import('./pages/ProjectDetail'))   // ← Added
+const ProjectDocumentView = lazy(() => import('./pages/ProjectDocumentView.tsx'))
 const Reports        = lazy(() => import('./pages/Reports'))         // ← Added
 const Waybills       = lazy(() => import('./pages/Waybills'))
 const NewWaybill     = lazy(() => import('./pages/NewWaybill'))
@@ -157,7 +158,9 @@ function AppShell({ session, profile, onProfileUpdate }) {
         <Route path="/clients/:id" element={withBoundary(<ClientDetail />)} />
         <Route path="/settings" element={withBoundary(<Settings />)} />
         <Route path="/projects" element={withBoundary(<Projects />)} />              {/* ← Added */}
-        <Route path="/projects/new" element={withBoundary(<NewProject />)} />        {/* ← Added */}        <Route path="/projects/:id" element={withBoundary(<ProjectDetail />)} />     {/* ← Added */}
+        <Route path="/projects/new" element={withBoundary(<NewProject />)} />        {/* ← Added */}
+        <Route path="/projects/:projectId/documents/:documentId" element={withBoundary(<ProjectDocumentView />)} />
+        <Route path="/projects/:id" element={withBoundary(<ProjectDetail />)} />     {/* ← Added */}
         <Route path="/reports" element={withBoundary(<Reports />)} />                {/* ← Added */}
         <Route path="/waybills" element={withBoundary(<Waybills />)} />
         <Route path="/waybills/new" element={withBoundary(<NewWaybill />)} />
