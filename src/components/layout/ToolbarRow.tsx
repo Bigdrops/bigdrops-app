@@ -9,6 +9,7 @@ type ToolbarRowProps = {
 export function ToolbarRow({ children, className }: ToolbarRowProps) {
   return (
     <div
+      data-slot="toolbar-row"
       className={cn(
         'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between',
         className,

@@ -23,17 +23,17 @@ Inline styles are still acceptable when they are:
 
 ## Default Migration Rules
 
-- Replace static spacing, borders, radii, typography, colors, shadows, and non-dynamic gradients with class-based styling.
+- Replace static spacing, borders, radii, typography, colors, shadows, and other neutral structural styles with class-based styling.
 - Prefer shared presentational wrappers over repeating utility strings.
 - Decompose dense files before migrating styling if layout and behavior are tightly coupled.
 - Do not mix styling migration with logic refactors in the same PR.
+- Do not introduce new visual direction in foundation PRs.
 
 ## Foundation Primitives
 
 The following presentation-only primitives are the approved starting point for migration work:
 
 - `PageShell`
-- `PageIntro`
 - `SectionCard`
 - `SurfacePanel`
 - `ToolbarRow`

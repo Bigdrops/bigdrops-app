@@ -20,6 +20,7 @@ export function ActionBar({
 }: ActionBarProps) {
   return (
     <div
+      data-slot="action-bar"
       className={cn(
         'flex flex-col gap-3 sm:flex-row sm:items-center',
         alignClassName[align],

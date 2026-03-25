@@ -20,7 +20,10 @@ export function SectionCard({
   headerClassName,
 }: SectionCardProps) {
   return (
-    <Card className={cn('overflow-hidden rounded-2xl border-border bg-card shadow-sm', className)}>
+    <Card
+      data-slot="section-card"
+      className={cn('overflow-hidden rounded-2xl border-border bg-card shadow-sm', className)}
+    >
       {title || description ? (
         <CardHeader className={cn('border-b border-border bg-muted/40 px-4 py-4 sm:px-5', headerClassName)}>
           {title ? <CardTitle className="text-sm font-semibold text-foreground">{title}</CardTitle> : null}

@@ -23,6 +23,7 @@ export function PageShell({
 }: PageShellProps) {
   return (
     <div
+      data-slot="page-shell"
       className={cn(
         widthClassName[width],
         padded ? 'px-4 py-6 pb-24 sm:px-6 md:pb-10' : '',
