@@ -353,7 +353,10 @@ function SetPasswordModal({ onComplete }) {
       return
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
     await supabase.from('profiles').update({ has_password: true }).eq('id', user.id)
     setDone(true)
     setTimeout(() => onComplete(), 1500)
@@ -379,13 +382,13 @@ function SetPasswordModal({ onComplete }) {
               type="password"
               placeholder="New password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <Input
               type="password"
               placeholder="Confirm password"
               value={confirm}
-              onChange={e => setConfirm(e.target.value)}
+              onChange={(e) => setConfirm(e.target.value)}
             />
             {error && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -544,7 +547,7 @@ function App() {
 
   useEffect(() => {
     const id = setInterval(() => {
-      setTipIndex(prev => (prev + 1) % SPLASH_TIPS.length)
+      setTipIndex((prev) => (prev + 1) % SPLASH_TIPS.length)
     }, 2200)
 
     return () => clearInterval(id)
@@ -557,7 +560,10 @@ function App() {
       splashStartRef.current = Date.now()
       setAuthLoading(true)
 
-      const { data: { session } } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
       setSession(session)
 
       if (session?.user?.id) {
@@ -596,7 +602,10 @@ function App() {
     }
 
     init()
-    return () => subscription?.unsubscribe() }
+
+    return () => {
+      subscription?.unsubscribe()
+    }
   }, [])
 
   useEffect(() => {
