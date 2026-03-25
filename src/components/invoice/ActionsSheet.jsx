@@ -1,4 +1,4 @@
-import { FileText, Layers, Paperclip, Settings2, Upload } from 'lucide-react'
+import { FileText, Layers, Paperclip, Settings2 } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
 export default function ActionsSheet({
@@ -17,9 +17,9 @@ export default function ActionsSheet({
       onClick: onOpenColumnManager,
     },
     {
-      icon: Upload,
+      icon: FileText,
       label: 'Import',
-      description: 'Import line items from JSON',
+      description: 'Paste JSON into the import flow',
       onClick: onImport,
     },
     {

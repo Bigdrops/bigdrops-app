@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { Calendar, ChevronDown, ChevronUp, FileText, Hash, Layers, MoreHorizontal, Plus, Settings2, Upload } from 'lucide-react'
+import { Calendar, ChevronDown, ChevronUp, FileText, Hash, Layers, MoreHorizontal, Plus, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -383,7 +383,7 @@ export default function MobileInvoiceForm(props) {
                   Settings
                 </Button>
                 <Button type="button" variant="outline" size="sm" className={`${neutralActionBtnCls} h-11 justify-center`} onClick={openImportSheet}>
-                  <Upload className="mr-1.5 h-4 w-4" />
+                  <FileText className="mr-1.5 h-4 w-4" />
                   Import
                 </Button>
                 <Button type="button" variant="outline" size="sm" className={`${neutralActionBtnCls} h-11 justify-center`} onClick={onAddGroup}>

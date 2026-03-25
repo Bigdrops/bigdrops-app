@@ -17,7 +17,7 @@ import type { ColumnConfig, InvoiceItem } from '@/domain/invoice'
 
 type ImportAdapter = {
   documentType: 'invoice' | 'quotation'
-  prompt: string
+  prompts: Record<ImportMode, string>
   createItem: () => InvoiceItem
 }
 
@@ -95,7 +95,7 @@ export default function JsonItemsImportSheet({
 
   const copyPrompt = async () => {
     try {
-      await navigator.clipboard.writeText(adapter.prompt)
+      await navigator.clipboard.writeText(adapter.prompts[mode])
       toast({ title: 'Copied', description: `${adapter.documentType === 'invoice' ? 'Invoice' : 'Quotation'} prompt copied.` })
     } catch {
       alert('Could not copy prompt.')
@@ -153,8 +153,13 @@ export default function JsonItemsImportSheet({
       return
     }
 
-    const normalized = normalizeImportData(parsed.data)
-    const validatedResult = validateImportData(mode, normalized, items)
+    const normalized = normalizeImportData(parsed.data, mode)
+    if (normalized.ok === false) {
+      alert(normalized.message)
+      return
+    }
+
+    const validatedResult = validateImportData(mode, normalized.data, items)
     if (validatedResult.ok === false) {
       alert(validatedResult.message)
       return

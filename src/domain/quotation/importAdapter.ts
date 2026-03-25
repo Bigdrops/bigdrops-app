@@ -24,21 +24,70 @@ Return JSON only.
 }
 
 Rules:
-- Extract main table -> items
+- Extract main table → items
+- Keep rows in the same order as the source
 - description is required
-- sub_description = extra details under same item (if any)
-- Include quantity, unit, unit_price only if present
-- Put charges outside table -> extra_charges (label + value only)
+- sub_description = extra details under the same item
+- Include quantity, unit, unit_price only if clearly present
+- Normalize obvious unit spellings where clear (e.g. kilometer → km)
+- Include extra item fields only if clearly labeled as separate columns in the source
+- Do not invent or rename fields
+- Put standalone charges outside table → extra_charges (label + value only)
+- Do not include totals, VAT, or summary values
+- Extract PO reference → po_number
+- Put remarks → notes
+- Put conditions / payment terms → terms
 - Ignore VAT, totals, discount, client, dates, title
-- Extract PO reference -> po_number (any similar label)
-- Put remarks -> notes
-- Put conditions -> terms
-- Allow extra item fields if clearly present
-- Do not guess`
+- Do not guess missing values
+- Do not add top-level fields outside this structure`
+
+export const quotationUpdateTablePrompt = `Convert the source content into JSON for quotation table update.
+
+Return JSON only.
+
+{
+  "po_number": "",
+  "notes": "",
+  "terms": "",
+  "extra_charges": [
+    { "label": "", "value": 0 }
+  ],
+  "items": [
+    {
+      "row_number": 1,
+      "description": "",
+      "sub_description": "",
+      "quantity": 0,
+      "unit": "",
+      "unit_price": 0
+    }
+  ]
+}
+
+Rules:
+- Use row_number to target existing rows
+- Keep rows in the same order as the source
+- Include only rows that should be updated
+- Include only fields that should be updated
+- Do not create new rows
+- Normalize obvious unit spellings where clear (e.g. kilometer → km)
+- Include extra item fields only if clearly labeled as separate columns in the source
+- Do not invent or rename fields
+- Put standalone charges outside table → extra_charges (label + value only)
+- Do not include totals, VAT, or summary values
+- Extract PO reference → po_number
+- Put remarks → notes
+- Put conditions / payment terms → terms
+- Ignore VAT, totals, discount, client, dates, title
+- Do not guess missing values
+- Do not add top-level fields outside this structure`
 
 export const quotationImportAdapter = {
   documentType: 'quotation' as const,
-  prompt: quotationImportPrompt,
+  prompts: {
+    'Create Rows': quotationImportPrompt,
+    'Update Table': quotationUpdateTablePrompt,
+  },
   createItem: () => makeEmptyItem(),
   applyResult({
     result,

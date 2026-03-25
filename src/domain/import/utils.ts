@@ -3,6 +3,39 @@ import type { ColumnConfig, InvoiceItem } from '@/domain/invoice'
 export const MAX_IMPORT_BYTES = 200_000
 export const MAX_IMPORTED_ROWS = 200
 export const MAX_NEW_COLUMNS = 10
+export const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+export const STANDARD_UNITS = new Set(['km', 'm', 'pcs', 'nos', 'prs', 'set', 'lot', 'kg', 'l'])
+export const UNIT_ALIASES: Record<string, string> = {
+  kilometer: 'km',
+  kilometres: 'km',
+  kilometre: 'km',
+  'km.': 'km',
+  meter: 'm',
+  metres: 'm',
+  metre: 'm',
+  mtr: 'm',
+  pieces: 'pcs',
+  piece: 'pcs',
+  pcs: 'pcs',
+  numbers: 'nos',
+  nos: 'nos',
+  no: 'nos',
+  pair: 'prs',
+  pairs: 'prs',
+  prs: 'prs',
+  set: 'set',
+  sets: 'set',
+  lot: 'lot',
+  'lump sum': 'lot',
+  kilogram: 'kg',
+  kilograms: 'kg',
+  kg: 'kg',
+  litre: 'l',
+  litres: 'l',
+  liters: 'l',
+  liter: 'l',
+  ltr: 'l',
+}
 
 export function toSnakeCase(value: string) {
   return String(value || '')
@@ -28,6 +61,10 @@ export function normalizeObjectKeys<T>(value: T): T {
   ) as T
 }
 
+export function isDangerousKey(value: string) {
+  return DANGEROUS_KEYS.has(String(value || '').trim().toLowerCase())
+}
+
 export function parseNumberish(value: unknown): number | null {
   if (typeof value === 'number') return Number.isFinite(value) ? value : null
   if (typeof value !== 'string') return null
@@ -41,6 +78,16 @@ export function normalizeText(value: unknown): string | undefined {
   if (value === null || value === undefined) return undefined
   if (typeof value === 'string') return value.trim()
   return String(value).trim()
+}
+
+export function normalizeUnitValue(value: unknown) {
+  const raw = normalizeText(value)
+  if (!raw) return raw
+  const lower = raw.toLowerCase()
+  const aliasMatch = UNIT_ALIASES[lower]
+  if (aliasMatch && STANDARD_UNITS.has(aliasMatch)) return aliasMatch
+  if (STANDARD_UNITS.has(lower)) return lower
+  return raw
 }
 
 export function normalizeScalar(value: unknown): unknown {

@@ -1,7 +1,6 @@
 import { z } from 'zod'
 
 import type { ImportMode, ParsedImportRoot } from './types'
-import { normalizeObjectKeys } from './utils'
 
 const unknownRecordSchema = z.record(z.string(), z.unknown())
 
@@ -23,16 +22,13 @@ function buildItemSchema(mode: ImportMode) {
 }
 
 export function buildImportSchema(mode: ImportMode) {
-  return z.preprocess(
-    (value) => normalizeObjectKeys(value),
-    z
-      .object({
-        po_number: z.unknown().optional(),
-        notes: z.unknown().optional(),
-        terms: z.unknown().optional(),
-        extra_charges: z.array(extraChargeSchema).optional(),
-        items: z.array(buildItemSchema(mode)).default([]),
-      })
-      .passthrough(),
-  ) as z.ZodType<ParsedImportRoot>
+  return z
+    .object({
+      po_number: z.unknown().optional(),
+      notes: z.unknown().optional(),
+      terms: z.unknown().optional(),
+      extra_charges: z.array(extraChargeSchema).optional(),
+      items: z.array(buildItemSchema(mode)).default([]),
+    })
+    .passthrough() as z.ZodType<ParsedImportRoot>
 }
