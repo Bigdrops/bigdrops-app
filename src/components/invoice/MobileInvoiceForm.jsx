@@ -207,22 +207,44 @@ export default function MobileInvoiceForm(props) {
 
   return (
     <>
-      <div className="w-full px-4 py-6 pb-24 sm:px-6 md:mx-auto md:max-w-2xl md:pb-12 lg:px-8">
-        <div className="mb-6 flex items-start justify-between gap-3">
-          <div>
-            <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{modeLabel}</div>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight text-foreground sm:text-3xl">{title}</h1>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-11 w-11 rounded-2xl border-zinc-200 bg-card"
-            onClick={() => setShowActionsSheet(true)}
-          >
-            <MoreHorizontal className="h-5 w-5" />
-          </Button>
-        </div>
+      <div className="w-full bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.04),transparent_48%)] px-4 py-6 pb-24 sm:px-6 md:mx-auto md:max-w-3xl md:pb-12 lg:px-8">
+        <Card className="mb-6 overflow-hidden border-zinc-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,247,252,0.98))] shadow-sm">
+          <CardContent className="space-y-4 p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">{modeLabel}</div>
+                <h1 className="mt-1 text-[24px] font-extrabold tracking-[-0.03em] text-foreground sm:text-[30px]">{title}</h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Keep the document clear, operational, and easy to finish from a phone.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-11 w-11 rounded-2xl border-zinc-200 bg-card"
+                onClick={() => setShowActionsSheet(true)}
+              >
+                <MoreHorizontal className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-3">
+              <div className="rounded-2xl border border-zinc-200 bg-white/85 px-3 py-2">
+                <div className={labelCls}>Document Number</div>
+                <div className="mt-1 truncate text-sm font-semibold text-foreground">{invoice.invoice_number || 'Pending number'}</div>
+              </div>
+              <div className="rounded-2xl border border-zinc-200 bg-white/85 px-3 py-2">
+                <div className={labelCls}>Client</div>
+                <div className="mt-1 truncate text-sm font-semibold text-foreground">{invoice.client_name || 'Select a client'}</div>
+              </div>
+              <div className="rounded-2xl border border-zinc-200 bg-white/85 px-3 py-2">
+                <div className={labelCls}>Line Items</div>
+                <div className="mt-1 text-sm font-semibold text-foreground">{lineItemsCount} item{lineItemsCount === 1 ? '' : 's'}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="space-y-4">
           <Card className={cardCls}>

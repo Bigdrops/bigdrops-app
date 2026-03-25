@@ -181,7 +181,7 @@ export default function Projects() {
           padding: '16px 0 20px',
           position: 'sticky',
           top: 0,
-          background: '#FAFAFA',
+          background: 'linear-gradient(180deg, rgba(250,250,250,0.98) 0%, rgba(245,247,250,0.98) 100%)',
           zIndex: 10,
           marginLeft: -16,
           marginRight: -16,
@@ -196,6 +196,23 @@ export default function Projects() {
             gap: 12 
           }}>
             <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                borderRadius: 999,
+                padding: '5px 10px',
+                background: '#FFFFFF',
+                border: '1px solid #E2E8F0',
+                color: '#475569',
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                marginBottom: 10
+              }}>
+                Project Directory
+              </div>
               <h2 style={{ 
                 margin: 0, 
                 fontSize: 24, 
@@ -578,9 +595,10 @@ export default function Projects() {
                     borderRadius: 20,
                     padding: '18px 16px',
                     cursor: 'pointer',
-                    boxShadow: '0 1px 3px rgba(15,23,42,0.08)',
-                  }}
-                >
+                  boxShadow: '0 6px 18px rgba(15,23,42,0.08)',
+                  backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,1), rgba(248,250,252,1))',
+                }}
+              >
                   {/* Top accent */}
                   <div style={{
                     position: 'absolute',

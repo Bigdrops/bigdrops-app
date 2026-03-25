@@ -14,7 +14,7 @@ import {
 import { supabase } from '@/supabase'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +34,7 @@ import {
 import type { DbQuotation } from '@/domain/quotation'
 import { mapDbQuotation } from '@/domain/quotation'
 import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
+import PageIntro from '@/components/layout/PageIntro'
 
 function formatMoney(value: number | string | null | undefined) {
   const parsed = Number(value || 0)
@@ -122,77 +123,76 @@ export default function QuotationList() {
 
   return (
     <div className="mx-auto max-w-6xl px-3 pb-32 pt-6 sm:px-4">
-      <Card className="border-zinc-200 shadow-sm">
-        <CardHeader className="gap-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <CardTitle className="text-[22px] font-extrabold text-foreground">Quotations</CardTitle>
-              <p className="mt-1 text-[13px] text-muted-foreground">
-                {quotations.length} quotation{quotations.length !== 1 ? 's' : ''} total
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button type="button" variant="outline" size="icon" onClick={() => setShowSearch((prev) => !prev)} aria-label="Toggle search">
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button type="button" variant="outline" size="icon" onClick={() => setShowFilters((prev) => !prev)} aria-label="Toggle filters">
-                <SlidersHorizontal className="h-4 w-4" />
-              </Button>
-              <Button type="button" onClick={() => navigate('/quotations/new')}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Quotation
-              </Button>
-            </div>
+      <PageIntro
+        eyebrow="Documents"
+        title="Quotations"
+        description="Prepare quotes quickly, keep statuses readable, and keep the next action close on mobile."
+        meta={`${filteredQuotations.length} of ${quotations.length} quotation${quotations.length === 1 ? '' : 's'}`}
+        actions={
+          <>
+            <Button type="button" variant="outline" size="icon" onClick={() => setShowSearch((prev) => !prev)} aria-label="Toggle search">
+              <Search className="h-4 w-4" />
+            </Button>
+            <Button type="button" variant="outline" size="icon" onClick={() => setShowFilters((prev) => !prev)} aria-label="Toggle filters">
+              <SlidersHorizontal className="h-4 w-4" />
+            </Button>
+            <Button type="button" className="hidden sm:inline-flex" onClick={() => navigate('/quotations/new')}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Quotation
+            </Button>
+          </>
+        }
+        toolbar={
+          <div className="space-y-3">
+            {showSearch ? (
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search quotations, clients, or P.O. numbers..."
+                  className="h-11 rounded-xl border-zinc-200 bg-white pl-9"
+                />
+              </div>
+            ) : null}
+
+            {showFilters ? (
+              <div className="grid gap-3 rounded-2xl border border-zinc-200 bg-white/90 p-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['All', 'Draft', 'Sent', 'Accepted', 'Rejected'].map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Sort</div>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sort quotations" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            ) : null}
           </div>
-
-          {showSearch ? (
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search quotations, clients, or P.O. numbers..."
-                className="h-11 rounded-xl pl-9"
-              />
-            </div>
-          ) : null}
-
-          {showFilters ? (
-            <div className="grid gap-3 rounded-2xl border border-zinc-200 bg-card p-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {['All', 'Draft', 'Sent', 'Accepted', 'Rejected'].map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Sort</div>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort quotations" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          ) : null}
-        </CardHeader>
-      </Card>
+        }
+      />
 
       {filteredQuotations.length === 0 ? (
         <Card className="mt-5 border-dashed border-zinc-300">
@@ -210,7 +210,7 @@ export default function QuotationList() {
             return (
               <Card
                 key={quotation.id}
-                className="cursor-pointer border-zinc-200 shadow-sm transition-shadow hover:shadow-md"
+                className="cursor-pointer border-zinc-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,1))] shadow-sm transition-shadow hover:shadow-md"
                 onClick={() => navigate(`/quotations/${quotation.id}`)}
               >
                 <CardContent className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-start lg:justify-between">
@@ -295,6 +295,15 @@ export default function QuotationList() {
           })}
         </div>
       )}
+
+      <Button
+        type="button"
+        onClick={() => navigate('/quotations/new')}
+        className="fixed bottom-28 right-8 z-50 h-16 w-16 rounded-[24px] border border-white/20 bg-zinc-950 p-0 text-white shadow-2xl transition-transform hover:scale-105 sm:hidden"
+        aria-label="Create quotation"
+      >
+        <Plus className="h-7 w-7" />
+      </Button>
     </div>
   )
 }

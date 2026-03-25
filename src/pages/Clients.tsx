@@ -24,6 +24,7 @@ import {
 } from "../components/ui/table"
 import { Skeleton } from "../components/ui/skeleton"
 import { Avatar, AvatarFallback } from "../components/ui/avatar"
+import PageIntro from "../components/layout/PageIntro"
 
 import { MoreHorizontal, Plus, Search, User } from "lucide-react"
 
@@ -123,26 +124,18 @@ export default function Clients(): JSX.Element {
   return (
     <Layout title="Clients">
       <div className="w-full py-6">
-        {/* Header */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="text-xl font-semibold text-foreground">Clients</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Manage client profiles and quickly access their documents.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button onClick={() => navigate("/clients/new")}>
+        <PageIntro
+          eyebrow="Directory"
+          title="Clients"
+          description="Keep contacts tidy and make document lookups faster when you are working from the phone."
+          meta={loading ? "Loading clients..." : `${filtered.length} of ${clients.length} client${clients.length === 1 ? "" : "s"}`}
+          actions={
+            <Button onClick={() => navigate("/clients/new")} className="hidden sm:inline-flex">
               <Plus className="mr-2 h-4 w-4" />
               Add client
             </Button>
-          </div>
-        </div>
-
-        {/* Toolbar */}
-        <Card className="mb-4 rounded-xl border border-border bg-card">
-          <CardContent className="p-4 sm:p-5">
+          }
+          toolbar={
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-1 items-center gap-2">
                 <div className="relative w-full">
@@ -151,11 +144,10 @@ export default function Clients(): JSX.Element {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search clients…"
-                    className="pl-9"
+                    className="border-zinc-200 bg-white pl-9"
                   />
                 </div>
 
-                {/* Category filter (simple dropdown via DropdownMenu to avoid adding Select dependency issues) */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="shrink-0">
@@ -177,16 +169,13 @@ export default function Clients(): JSX.Element {
               </div>
 
               <div className="flex items-center justify-between gap-2 sm:justify-end">
-                <p className="text-xs text-muted-foreground">
-                  {loading ? "Loading…" : `${filtered.length} shown`}
-                </p>
                 <Button variant="ghost" onClick={reload}>
                   Refresh
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          }
+        />
 
         {/* Content */}
         {loading ? (
@@ -400,7 +389,7 @@ export default function Clients(): JSX.Element {
                 return (
                   <Card
                     key={client.id}
-                    className="rounded-xl border border-border bg-card hover:bg-muted/50"
+                    className="rounded-2xl border border-border bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,1))] hover:bg-muted/50"
                     onClick={() => navigate(`/clients/${client.id}`)}
                   >
                     <CardContent className="p-4">
@@ -465,6 +454,14 @@ export default function Clients(): JSX.Element {
             </div>
           </>
         )}
+
+        <Button
+          onClick={() => navigate("/clients/new")}
+          className="fixed bottom-28 right-8 z-50 h-16 w-16 rounded-[24px] border border-white/20 bg-zinc-950 p-0 text-white shadow-2xl transition-transform hover:scale-105 md:hidden"
+          aria-label="Add client"
+        >
+          <Plus className="h-7 w-7" />
+        </Button>
       </div>
     </Layout>
   )
