@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useEffect, useState, useRef, lazy, Suspense } from 'react'
-import { Loader2 } from 'lucide-react'
 import { supabase } from './supabase'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -42,10 +41,9 @@ const PendingApproval = lazy(() => import('./pages/PendingApproval'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 
 const SPLASH_TIPS = [
-  'Tracking projects, invoices, and quotations...',
-  'Preparing your client workspace...',
-  'Getting your reports and waybills ready...',
-  'Syncing business records for a smoother start...',
+  'Arranging your papers and records...',
+  'Preparing your workspace...',
+  'Getting documents and projects in order...',
 ]
 
 const PageLoader = () => (
@@ -55,40 +53,19 @@ const PageLoader = () => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background:
-        'radial-gradient(circle at top, rgba(204, 0, 0, 0.05), transparent 35%), #F7F7F5',
+      backgroundColor: '#fafaf9',
     }}
   >
-    <div style={{ textAlign: 'center' }}>
-      <div
-        style={{
-          position: 'relative',
-          width: '64px',
-          height: '64px',
-          margin: '0 auto',
-        }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: '999px',
-            border: '4px solid #E5E7EB',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: '999px',
-            border: '4px solid transparent',
-            borderTopColor: '#CC0000',
-            borderRightColor: '#CC0000',
-            animation: 'spin 0.9s linear infinite',
-          }}
-        />
-      </div>
-    </div>
+    <div
+      style={{
+        width: 56,
+        height: 56,
+        borderRadius: 18,
+        background: '#ffffff',
+        border: '1px solid rgba(24,24,27,0.08)',
+        boxShadow: '0 6px 18px rgba(24,24,27,0.05)',
+      }}
+    />
   </div>
 )
 
@@ -105,84 +82,230 @@ function SplashOverlay({ visible, tip }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background:
-          'radial-gradient(circle at top, rgba(204, 0, 0, 0.06), transparent 35%), linear-gradient(180deg, #F8F8F6 0%, #F3F3EF 100%)',
+        background: 'linear-gradient(180deg, #fafaf9 0%, #f5f5f4 100%)',
         opacity: visible ? 1 : 0,
         visibility: visible ? 'visible' : 'hidden',
         pointerEvents: visible ? 'auto' : 'none',
-        transition: 'opacity 280ms ease, visibility 280ms ease',
+        transition: 'opacity 260ms ease, visibility 260ms ease',
       }}
     >
       <div
         style={{
-          width: '100%',
-          maxWidth: '360px',
-          padding: '32px 24px',
+          width: 'min(92vw, 390px)',
+          padding: '28px 24px 24px',
+          borderRadius: '28px',
+          background: 'rgba(255,255,255,0.84)',
+          border: '1px solid rgba(24,24,27,0.06)',
+          boxShadow: '0 18px 50px rgba(24,24,27,0.07)',
+          backdropFilter: 'blur(10px)',
           textAlign: 'center',
         }}
       >
         <div
           style={{
             position: 'relative',
-            width: '84px',
-            height: '84px',
-            margin: '0 auto 22px',
+            height: '148px',
+            marginBottom: '18px',
+            overflow: 'hidden',
+            borderRadius: '22px',
+            background: 'linear-gradient(180deg, #ffffff 0%, #f8f8f7 100%)',
+            border: '1px solid rgba(24,24,27,0.05)',
           }}
         >
           <div
             style={{
               position: 'absolute',
-              inset: 0,
-              borderRadius: '999px',
-              background: 'rgba(204, 0, 0, 0.05)',
-              transform: 'scale(1)',
-              animation: 'pulseRing 1.8s ease-out infinite',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              inset: '10px',
-              borderRadius: '999px',
-              border: '4px solid #E5E7EB',
-              background: '#FAFAF8',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              inset: '10px',
-              borderRadius: '999px',
-              border: '4px solid transparent',
-              borderTopColor: '#CC0000',
-              borderRightColor: '#CC0000',
-              animation: 'spin 1s linear infinite',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '14px',
-              fontWeight: 700,
-              color: '#991B1B',
-              letterSpacing: '0.08em',
+              top: '22px',
+              left: '52px',
+              width: '74px',
+              height: '92px',
+              borderRadius: '14px',
+              background: '#ffffff',
+              border: '1px solid rgba(24,24,27,0.08)',
+              boxShadow: '0 10px 20px rgba(24,24,27,0.05)',
+              transform: 'rotate(-10deg)',
+              animation: 'paperFloatA 3.2s ease-in-out infinite',
             }}
           >
-            BD
+            <div style={{ padding: '14px 12px' }}>
+              <div style={{ height: 8, width: '70%', borderRadius: 999, background: '#e7e5e4', marginBottom: 8 }} />
+              <div style={{ height: 6, width: '100%', borderRadius: 999, background: '#f0eeeb', marginBottom: 6 }} />
+              <div style={{ height: 6, width: '82%', borderRadius: 999, background: '#f0eeeb' }} />
+            </div>
+          </div>
+
+          <div
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '54px',
+              width: '78px',
+              height: '96px',
+              borderRadius: '14px',
+              background: '#ffffff',
+              border: '1px solid rgba(24,24,27,0.08)',
+              boxShadow: '0 10px 20px rgba(24,24,27,0.05)',
+              transform: 'rotate(8deg)',
+              animation: 'paperFloatB 3.6s ease-in-out infinite',
+            }}
+          >
+            <div style={{ padding: '14px 12px' }}>
+              <div style={{ height: 8, width: '62%', borderRadius: 999, background: '#e7e5e4', marginBottom: 8 }} />
+              <div style={{ height: 6, width: '100%', borderRadius: 999, background: '#f0eeeb', marginBottom: 6 }} />
+              <div style={{ height: 6, width: '75%', borderRadius: 999, background: '#f0eeeb' }} />
+            </div>
+          </div>
+
+          <div
+            style={{
+              position: 'absolute',
+              left: 20,
+              right: 20,
+              bottom: 22,
+              height: 10,
+              borderRadius: 999,
+              background: 'rgba(24,24,27,0.06)',
+            }}
+          />
+
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              bottom: 28,
+              width: 96,
+              height: 72,
+              animation: 'runnerMove 2.4s ease-in-out infinite',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                left: 24,
+                bottom: -2,
+                width: 42,
+                height: 10,
+                borderRadius: 999,
+                background: 'rgba(24,24,27,0.10)',
+                filter: 'blur(1px)',
+                animation: 'shadowPulse 0.7s ease-in-out infinite',
+              }}
+            />
+
+            <div
+              style={{
+                position: 'absolute',
+                left: 18,
+                bottom: 10,
+                width: 58,
+                height: 58,
+                animation: 'runnerBounce 0.7s ease-in-out infinite',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 18,
+                  width: 20,
+                  height: 20,
+                  borderRadius: '999px',
+                  background: '#27272a',
+                }}
+              />
+
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 18,
+                  left: 20,
+                  width: 18,
+                  height: 22,
+                  borderRadius: 10,
+                  background: '#57534e',
+                }}
+              />
+
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 20,
+                  left: 36,
+                  width: 16,
+                  height: 20,
+                  borderRadius: 5,
+                  background: '#d6d3d1',
+                  border: '1px solid rgba(24,24,27,0.08)',
+                  transform: 'rotate(14deg)',
+                }}
+              />
+
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 22,
+                  left: 12,
+                  width: 18,
+                  height: 6,
+                  borderRadius: 999,
+                  background: '#44403c',
+                  transformOrigin: 'right center',
+                  animation: 'armSwingLeft 0.7s ease-in-out infinite',
+                }}
+              />
+
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 24,
+                  left: 34,
+                  width: 18,
+                  height: 6,
+                  borderRadius: 999,
+                  background: '#44403c',
+                  transformOrigin: 'left center',
+                  animation: 'armSwingRight 0.7s ease-in-out infinite',
+                }}
+              />
+
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 38,
+                  left: 16,
+                  width: 22,
+                  height: 6,
+                  borderRadius: 999,
+                  background: '#292524',
+                  transformOrigin: 'right center',
+                  animation: 'legSwingLeft 0.7s ease-in-out infinite',
+                }}
+              />
+
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 40,
+                  left: 28,
+                  width: 22,
+                  height: 6,
+                  borderRadius: 999,
+                  background: '#292524',
+                  transformOrigin: 'left center',
+                  animation: 'legSwingRight 0.7s ease-in-out infinite',
+                }}
+              />
+            </div>
           </div>
         </div>
 
         <div
           style={{
-            fontSize: '26px',
-            fontWeight: 700,
-            color: '#111827',
+            fontSize: 24,
+            fontWeight: 650,
             letterSpacing: '-0.02em',
-            marginBottom: '8px',
+            color: '#18181b',
+            marginBottom: 8,
           }}
         >
           BigDrops
@@ -190,54 +313,15 @@ function SplashOverlay({ visible, tip }) {
 
         <div
           style={{
-            fontSize: '14px',
-            color: '#6B7280',
+            fontSize: 13,
             lineHeight: 1.6,
-            minHeight: '44px',
-            maxWidth: '280px',
-            margin: '0 auto 18px',
+            color: '#71717a',
+            minHeight: 42,
+            maxWidth: 260,
+            margin: '0 auto',
           }}
         >
           {tip}
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '8px',
-          }}
-        >
-          <span
-            style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '999px',
-              background: '#CC0000',
-              opacity: 0.95,
-              animation: 'dotPulse 1.2s ease-in-out infinite',
-            }}
-          />
-          <span
-            style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '999px',
-              background: '#CC0000',
-              opacity: 0.65,
-              animation: 'dotPulse 1.2s ease-in-out 0.2s infinite',
-            }}
-          />
-          <span
-            style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '999px',
-              background: '#CC0000',
-              opacity: 0.4,
-              animation: 'dotPulse 1.2s ease-in-out 0.4s infinite',
-            }}
-          />
         </div>
       </div>
     </div>
@@ -256,7 +340,6 @@ function SetPasswordModal({ onComplete }) {
       setError('Password must be at least 6 characters')
       return
     }
-
     if (password !== confirm) {
       setError('Passwords do not match')
       return
@@ -264,17 +347,13 @@ function SetPasswordModal({ onComplete }) {
 
     setLoading(true)
     const { error: updateError } = await supabase.auth.updateUser({ password })
-
     if (updateError) {
       setError(updateError.message)
       setLoading(false)
       return
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
+    const { data: { user } } = await supabase.auth.getUser()
     await supabase.from('profiles').update({ has_password: true }).eq('id', user.id)
     setDone(true)
     setTimeout(() => onComplete(), 1500)
@@ -284,7 +363,7 @@ function SetPasswordModal({ onComplete }) {
     <Dialog open>
       <DialogContent className="sm:max-w-md" hideClose>
         <DialogHeader>
-          <DialogTitle className="text-red-700">Set System Password</DialogTitle>
+          <DialogTitle>Set System Password</DialogTitle>
           <DialogDescription>
             Set a password to sign in with email. You only need to do this once.
           </DialogDescription>
@@ -300,13 +379,13 @@ function SetPasswordModal({ onComplete }) {
               type="password"
               placeholder="New password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
             />
             <Input
               type="password"
               placeholder="Confirm password"
               value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
+              onChange={e => setConfirm(e.target.value)}
             />
             {error && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -317,13 +396,7 @@ function SetPasswordModal({ onComplete }) {
               <Button type="button" variant="outline" className="flex-1" onClick={onComplete}>
                 Skip for now
               </Button>
-              <Button
-                type="button"
-                className="flex-1 bg-red-700 hover:bg-red-800"
-                onClick={handleSubmit}
-                disabled={loading}
-              >
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="button" className="flex-1" onClick={handleSubmit} disabled={loading}>
                 {loading ? 'Setting...' : 'Set Password'}
               </Button>
             </div>
@@ -363,10 +436,7 @@ function AppShell({ session, profile, onProfileUpdate }) {
           <Route path="/settings" element={withBoundary(<Settings />)} />
           <Route path="/projects" element={withBoundary(<Projects />)} />
           <Route path="/projects/new" element={withBoundary(<NewProject />)} />
-          <Route
-            path="/projects/:projectId/documents/:documentId"
-            element={withBoundary(<ProjectDocumentView />)}
-          />
+          <Route path="/projects/:projectId/documents/:documentId" element={withBoundary(<ProjectDocumentView />)} />
           <Route path="/projects/:id" element={withBoundary(<ProjectDetail />)} />
           <Route path="/reports" element={withBoundary(<Reports />)} />
           <Route path="/waybills" element={withBoundary(<Waybills />)} />
@@ -397,7 +467,6 @@ function App() {
 
     try {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
-
       if (!error && data) {
         const { data: authData } = await supabase.auth.getUser()
         const provider = authData.user?.app_metadata?.provider
@@ -420,18 +489,50 @@ function App() {
   useEffect(() => {
     const style = document.createElement('style')
     style.innerHTML = `
-      @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+      @keyframes paperFloatA {
+        0%, 100% { transform: rotate(-10deg) translateY(0px); }
+        50% { transform: rotate(-8deg) translateY(-6px); }
       }
-      @keyframes pulseRing {
-        0% { transform: scale(0.9); opacity: 0.45; }
-        70% { transform: scale(1.15); opacity: 0; }
-        100% { transform: scale(1.15); opacity: 0; }
+
+      @keyframes paperFloatB {
+        0%, 100% { transform: rotate(8deg) translateY(0px); }
+        50% { transform: rotate(10deg) translateY(-8px); }
       }
-      @keyframes dotPulse {
-        0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
-        40% { transform: translateY(-4px); opacity: 1; }
+
+      @keyframes runnerMove {
+        0% { transform: translateX(4px); }
+        50% { transform: translateX(250px); }
+        100% { transform: translateX(4px); }
+      }
+
+      @keyframes runnerBounce {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
+      }
+
+      @keyframes shadowPulse {
+        0%, 100% { transform: scaleX(1); opacity: 0.18; }
+        50% { transform: scaleX(0.82); opacity: 0.1; }
+      }
+
+      @keyframes armSwingLeft {
+        0%, 100% { transform: rotate(26deg); }
+        50% { transform: rotate(-18deg); }
+      }
+
+      @keyframes armSwingRight {
+        0%, 100% { transform: rotate(-22deg); }
+        50% { transform: rotate(18deg); }
+      }
+
+      @keyframes legSwingLeft {
+        0%, 100% { transform: rotate(-28deg); }
+        50% { transform: rotate(22deg); }
+      }
+
+      @keyframes legSwingRight {
+        0%, 100% { transform: rotate(24deg); }
+        50% { transform: rotate(-18deg); }
       }
     `
     document.head.appendChild(style)
@@ -443,7 +544,7 @@ function App() {
 
   useEffect(() => {
     const id = setInterval(() => {
-      setTipIndex((prev) => (prev + 1) % SPLASH_TIPS.length)
+      setTipIndex(prev => (prev + 1) % SPLASH_TIPS.length)
     }, 2200)
 
     return () => clearInterval(id)
@@ -456,10 +557,7 @@ function App() {
       splashStartRef.current = Date.now()
       setAuthLoading(true)
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
+      const { data: { session } } = await supabase.auth.getSession()
       setSession(session)
 
       if (session?.user?.id) {
@@ -498,10 +596,7 @@ function App() {
     }
 
     init()
-
-    return () => {
-      subscription?.unsubscribe()
-    }
+    return () => subscription?.unsubscribe() }
   }, [])
 
   useEffect(() => {
