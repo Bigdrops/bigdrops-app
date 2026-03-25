@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DOMPurify from 'dompurify'
+import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import { supabase } from '@/supabase'
 import { calcTotals } from '@/components/useInvoiceColumns.jsx'
 import { computeDocument } from '@/lib/Calculations'
@@ -37,12 +38,36 @@ import {
   buildTrailLink,
   getNextInvoiceNumber,
   parseDocumentCustomFields,
+  toQuotationItemRow,
   withSourceTrail,
 } from '@/domain/documentConversion'
 import type { DbQuotation, DbQuotationItem, Quotation } from '@/domain/quotation'
-import { buildQuotationFormState } from '@/domain/quotation'
+import { buildQuotationFormState, getNextQuotationNumber } from '@/domain/quotation'
 import { buildQuotationCsv, downloadQuotationCsv } from './exportQuotationCsv'
 import { QUOTATION_STATUSES, formatQuotationStatus, quotationStatusTone } from './quotationStatus'
+
+type BankAccountRow = {
+  id: string
+  bank_name?: string | null
+  account_name?: string | null
+  account_number?: string | null
+  sort_code?: string | null
+  is_default?: boolean | null
+}
+
+type PdfOutputState = {
+  showBankDetails: boolean
+  bankAccountId: string | null
+  showFooter: boolean
+  showTagline: boolean
+}
+
+const defaultPdfOutput: PdfOutputState = {
+  showBankDetails: false,
+  bankAccountId: null,
+  showFooter: true,
+  showTagline: true,
+}
 
 function renderRichText(value?: string) {
   if (!value) return <span className="text-muted-foreground">Not provided</span>
@@ -93,16 +118,21 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const [termsTitle, setTermsTitle] = useState('Terms and Conditions')
   const [client, setClient] = useState<Record<string, unknown> | null>(null)
   const [settings, setSettings] = useState<Record<string, unknown> | null>(null)
+  const [bankAccounts, setBankAccounts] = useState<BankAccountRow[]>([])
   const [pdfGenerating, setPdfGenerating] = useState(false)
+  const [pdfOutput, setPdfOutput] = useState<PdfOutputState>(defaultPdfOutput)
   const [converting, setConverting] = useState(false)
   const [showMobileActions, setShowMobileActions] = useState(false)
+  const [showPdfSettings, setShowPdfSettings] = useState(false)
   const hasText = (value: unknown) => String(value || '').trim().length > 0
 
   useEffect(() => {
     const load = async () => {
-      const [{ data: quotationRow, error }, { data: itemRows }] = await Promise.all([
+      const [{ data: quotationRow, error }, { data: itemRows }, { data: bankAccountRows }, settingsResponse] = await Promise.all([
         supabase.from('quotations').select('*').eq('id', quotationId).single(),
         supabase.from('quotation_items').select('*').eq('quotation_id', quotationId).order('sort_order'),
+        supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
+        supabase.from('settings').select('*').eq('id', 1).single(),
       ])
       if (error || !quotationRow) {
         setQuotation(null)
@@ -120,12 +150,20 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       setWhtType(state.whtType)
       setNotesTitle(state.notesTitle)
       setTermsTitle(state.termsTitle)
+      setPdfOutput(
+        state.quotation.custom_fields?.pdfOutput && typeof state.quotation.custom_fields.pdfOutput === 'object'
+          ? {
+              ...defaultPdfOutput,
+              ...(state.quotation.custom_fields.pdfOutput as Partial<PdfOutputState>),
+            }
+          : defaultPdfOutput,
+      )
+      setBankAccounts((bankAccountRows as BankAccountRow[] | null) || [])
 
-      const [clientResponse, settingsResponse] = await Promise.all([
+      const [clientResponse] = await Promise.all([
         state.quotation.client_id
           ? supabase.from('clients').select('*').eq('id', state.quotation.client_id).single()
           : Promise.resolve({ data: null }),
-        supabase.from('settings').select('*').eq('id', 1).single(),
       ])
 
       setClient((clientResponse.data as Record<string, unknown> | null) || null)
@@ -228,6 +266,26 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     alert(`${label} copied.`)
   }
 
+  const handlePdfOutputChange = async (next: PdfOutputState) => {
+    if (!quotation) return
+    setPdfOutput(next)
+    const nextCustomFields = {
+      ...(quotation.custom_fields || {}),
+      pdfOutput: next,
+    }
+    const { error } = await supabase
+      .from('quotations')
+      .update({ custom_fields: JSON.stringify(nextCustomFields) })
+      .eq('id', quotationId)
+
+    if (error) {
+      alert(`Error saving document options: ${error.message}`)
+      return
+    }
+
+    setQuotation((current) => (current ? { ...current, custom_fields: nextCustomFields } : current))
+  }
+
   const handleArchive = async () => {
     if (!quotation) return
     if (!window.confirm('This quotation will be hidden from your list until you restore it from Settings > Archives.')) return
@@ -256,6 +314,75 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       return
     }
     navigate('/quotations')
+  }
+
+  const handleClone = async () => {
+    if (!quotation) return
+    try {
+      const { data: quotationRows } = await supabase.from('quotations').select('quotation_number')
+      const nextQuotationNumber = getNextQuotationNumber((quotationRows || []) as Array<{ quotation_number?: string | null }>)
+      const customFields = parseDocumentCustomFields(quotation.custom_fields || {})
+      const { conversionTrail: _ignoredTrail, ...restCustomFields } = customFields
+      const payload = {
+        quotation_number: nextQuotationNumber,
+        po_number: poNumber || null,
+        quotation_title: quotation.quotation_title || null,
+        client_id: quotation.client_id || null,
+        client_name: quotation.client_name || '',
+        project_id: quotation.project_id || null,
+        issue_date: new Date().toISOString().split('T')[0],
+        valid_until: quotation.valid_until || null,
+        status: 'draft',
+        notes: quotation.notes || '',
+        terms: quotation.terms || '',
+        workmanship: Number(quotation.workmanship || 0),
+        transportation: Number(quotation.transportation || 0),
+        shipping: Number(quotation.shipping || 0),
+        discount: Number(quotation.discount || 0),
+        vat: Number(quotation.vat || 0),
+        wht: Number(quotation.wht || 0),
+        subtotal: Number(quotation.subtotal || 0),
+        install_rate_total: Number(quotation.install_rate_total || 0),
+        total: Number(quotation.total || 0),
+        amount_in_words: quotation.amount_in_words || '',
+        custom_fields: JSON.stringify({
+          ...restCustomFields,
+          quotationTitle: quotation.quotation_title || '',
+          clientName: quotation.client_name || '',
+          notesHtml: quotation.notes || '',
+          termsHtml: quotation.terms || '',
+        }),
+      }
+
+      const { data: createdQuotation, error: quotationError } = await supabase
+        .from('quotations')
+        .insert([payload])
+        .select()
+        .single()
+
+      if (quotationError || !createdQuotation) throw new Error(quotationError?.message || 'Failed to clone quotation')
+
+      const itemRows = items
+        .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
+        .map((item, index) => toQuotationItemRow(item, String(createdQuotation.id), index))
+
+      if (itemRows.length > 0) {
+        const { error: itemError } = await supabase.from('quotation_items').insert(itemRows)
+        if (itemError) {
+          await supabase.from('quotations').delete().eq('id', createdQuotation.id)
+          throw new Error(itemError.message)
+        }
+      }
+
+      navigate(`/quotations/${createdQuotation.id}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Clone failed'
+      alert(`Clone failed: ${message}`)
+    }
+  }
+
+  const handleRecordPaymentPlaceholder = () => {
+    alert('Convert this quotation to an invoice first before recording payment.')
   }
 
   const handleConvertToInvoice = async () => {
@@ -356,6 +483,34 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   if (loading) return <div className="rounded-2xl border border-zinc-200 bg-card p-8 text-sm text-zinc-500 shadow-sm">Loading quotation...</div>
   if (!quotation) return <div className="rounded-2xl border border-zinc-200 bg-card p-8 text-sm text-zinc-500 shadow-sm">Quotation not found.</div>
 
+  const actionItems = [
+    { key: 'export-csv', label: 'Export CSV', action: () => handleDownloadCsv() },
+    { key: 'clone-quotation', label: 'Clone Quotation', action: () => void handleClone() },
+    { key: 'pdf-output-settings', label: 'PDF Output Settings', action: () => setShowPdfSettings(true) },
+    {
+      key: 'convert-to-invoice',
+      label: converting ? 'Converting...' : 'Convert to Invoice',
+      action: () => void handleConvertToInvoice(),
+      disabled: converting,
+    },
+    ...(quotation.status === 'draft'
+      ? [{ key: 'mark-sent', label: 'Mark Sent', action: () => void handleStatusChange('sent') }]
+      : []),
+    { key: 'record-payment', label: 'Record Payment', action: handleRecordPaymentPlaceholder },
+    { key: 'separator-copy', separator: true },
+    {
+      key: 'copy-quotation-number',
+      label: 'Copy quotation number',
+      action: () => void handleCopy(quotation.quotation_number || '', 'Quotation number'),
+    },
+    { key: 'separator-danger', separator: true },
+    { key: 'archive-quotation', label: 'Archive Quotation', action: () => void handleArchive() },
+    { key: 'delete-quotation', label: 'Delete Quotation', action: () => void handleDelete(), danger: true },
+  ] as Array<
+    | { key: string; separator: true }
+    | { key: string; label: string; action: () => void; disabled?: boolean; danger?: boolean }
+  >
+
   return (
     <div className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
       <div className="mb-5 rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-6">
@@ -398,27 +553,20 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" sideOffset={8} className="w-56 max-w-[calc(100vw-2rem)]">
                   <DropdownMenuLabel>Quotation Actions</DropdownMenuLabel>
-                  <DropdownMenuItem onSelect={handleDownloadCsv}>Export CSV</DropdownMenuItem>
-                  <DropdownMenuItem onSelect={handleConvertToInvoice} disabled={converting}>
-                    {converting ? 'Converting...' : 'Convert to Invoice'}
-                  </DropdownMenuItem>
-                  {quotation.status === 'draft' ? (
-                    <DropdownMenuItem onSelect={() => handleStatusChange('sent')}>
-                      Mark Sent
-                    </DropdownMenuItem>
-                  ) : null}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => handleCopy(quotation.quotation_number || '', 'Quotation number')}>
-                    Copy quotation number
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => handleCopy(quotation.client_name || '', 'Client name')}>
-                    Copy client name
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={handleArchive}>Archive Quotation</DropdownMenuItem>
-                  <DropdownMenuItem onSelect={handleDelete} className="text-red-700 focus:text-red-700">
-                    Delete Quotation
-                  </DropdownMenuItem>
+                  {actionItems.map((item) =>
+                    'separator' in item ? (
+                      <DropdownMenuSeparator key={item.key} />
+                    ) : (
+                      <DropdownMenuItem
+                        key={item.key}
+                        onSelect={item.action}
+                        disabled={item.disabled}
+                        className={item.danger ? 'text-red-700 focus:text-red-700' : undefined}
+                      >
+                        {item.label}
+                      </DropdownMenuItem>
+                    ),
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -531,29 +679,52 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             </SheetDescription>
           </SheetHeader>
           <div className="grid gap-2 px-5 py-4">
-            <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowMobileActions(false); handleDownloadCsv() }}>
-              Export CSV
-            </Button>
-            <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowMobileActions(false); void handleConvertToInvoice() }} disabled={converting}>
-              {converting ? 'Converting...' : 'Convert to Invoice'}
-            </Button>
-            {quotation.status === 'draft' ? (
-              <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowMobileActions(false); void handleStatusChange('sent') }}>
-                Mark Sent
-              </Button>
-            ) : null}
-            <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowMobileActions(false); void handleCopy(quotation.quotation_number || '', 'Quotation number') }}>
-              Copy quotation number
-            </Button>
-            <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowMobileActions(false); void handleCopy(quotation.client_name || '', 'Client name') }}>
-              Copy client name
-            </Button>
-            <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowMobileActions(false); void handleArchive() }}>
-              Archive Quotation
-            </Button>
-            <Button type="button" variant="destructive" className="justify-start" onClick={() => { setShowMobileActions(false); void handleDelete() }}>
-              Delete Quotation
-            </Button>
+            {actionItems.map((item) =>
+              'separator' in item ? (
+                <div key={item.key} className="my-1 border-t border-border" />
+              ) : (
+                <Button
+                  key={item.key}
+                  type="button"
+                  variant={item.danger ? 'destructive' : 'outline'}
+                  className="justify-start"
+                  disabled={item.disabled}
+                  onClick={() => {
+                    setShowMobileActions(false)
+                    item.action()
+                  }}
+                >
+                  {item.label}
+                </Button>
+              ),
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={showPdfSettings} onOpenChange={setShowPdfSettings}>
+        <SheetContent side={isNarrow ? 'bottom' : 'right'} className="overflow-y-auto">
+          <SheetHeader className="pb-4">
+            <SheetTitle className="text-base font-bold text-foreground">PDF Output Settings</SheetTitle>
+            <SheetDescription>
+              Control what appears in the generated quotation PDF.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="pb-6">
+            <PdfOutputSettings
+              value={pdfOutput}
+              onChange={(next) => void handlePdfOutputChange(next)}
+              bankAccounts={bankAccounts.map((account) => ({
+                id: account.id,
+                bankName: account.bank_name || '',
+                accountName: account.account_name || '',
+                accountNumber: account.account_number || '',
+                sortCode: account.sort_code || '',
+                isDefault: account.is_default === true,
+              }))}
+              companyTagline={String(settings?.company_tagline || '')}
+              footerText={String(settings?.footer_text || '')}
+            />
           </div>
         </SheetContent>
       </Sheet>

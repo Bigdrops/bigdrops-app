@@ -418,6 +418,26 @@ export default function ViewInvoice() {
     setShowMore(false)
   }
 
+  const handleCopy = async (value, label) => {
+    if (!value) return
+    try {
+      await navigator.clipboard.writeText(value)
+      alert(`${label} copied.`)
+    } catch {
+      try {
+        const input = document.createElement('textarea')
+        input.value = value
+        document.body.appendChild(input)
+        input.select()
+        document.execCommand('copy')
+        document.body.removeChild(input)
+        alert(`${label} copied.`)
+      } catch {
+        alert(`Could not copy ${label.toLowerCase()}.`)
+      }
+    }
+  }
+
   // ── Status change ───────────────────────────────────────────────────────────
   const handleStatusChange = async (newStatus) => {
     if (newStatus === invoice.status) return
@@ -658,6 +678,7 @@ export default function ViewInvoice() {
     },
     { label: 'Record Payment', action: () => { setShowMore(false); setShowPaymentModal(true) }, show: invoice.status !== 'paid' },
     { label: 'Export CSV', action: handleDownloadCsv, show: true },
+    { label: 'Copy invoice number', action: () => { void handleCopy(invoice.invoice_number || '', 'Invoice number') }, show: true },
     { label: 'Clone Invoice', action: handleClone, show: true },
     { label: converting ? 'Converting to Quotation...' : 'Convert to Quotation', action: handleConvertToQuote, show: true, disabled: converting },
     { label: 'Generate CSR', action: () => { setShowMore(false); alert('Coming soon') }, show: true },
@@ -889,40 +910,22 @@ export default function ViewInvoice() {
                   overflow: 'hidden',
                 }}
               >
-                {[
-                  {
-                    label: invoice.project_id ? 'Open Linked Documents' : 'Link to Project',
-                    action: () => {
-                      setShowMore(false)
-                      invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectModal(true)
-                    },
-                    show: true,
-                  },
-                  { label: '💳 Record Payment', action: () => { setShowMore(false); setShowPaymentModal(true) }, show: invoice.status !== 'paid' },
-                  { label: '📄 Export CSV', action: handleDownloadCsv, show: true },
-                  { label: '📋 Clone Invoice', action: handleClone, show: true },
-                  { label: converting ? '⏳ Converting to Quotation...' : '📄 Convert to Quotation', action: handleConvertToQuote, show: true },
-                  { label: '🔧 Generate CSR', action: () => { setShowMore(false); alert('Coming soon') }, show: true },
-                  { label: '🚚 Generate Waybill', action: () => { setShowMore(false); alert('Coming soon') }, show: true },
-                  { label: invoice.status === 'draft' ? '✅ Mark as Sent' : null, action: handleMarkSent, show: invoice.status === 'draft' },
-                  { label: '📦 Archive Invoice', action: handleArchive, show: true },
-                  { label: '🗑 Delete Invoice', action: handleDelete, show: true, danger: true },
-                ]
-                  .filter((m) => m.show && m.label)
-                  .map((item, i) => (
+                {moreMenuItems.map((item, i) => (
                     <div
                       key={i}
-                      onClick={handleMenuItemClick(item.action)}
+                      onClick={item.disabled ? undefined : handleMenuItemClick(item.action)}
                       style={{
                         padding: '10px 16px',
-                        cursor: converting && item.label.includes('Converting') ? 'default' : 'pointer',
+                        cursor: item.disabled ? 'default' : 'pointer',
                         fontSize: '13px',
                         color: item.danger ? '#CC0000' : '#1a1a1a',
                         borderBottom: '1px solid #f5f5f5',
                         transition: 'background 0.1s',
-                        opacity: converting && item.label.includes('Converting') ? 0.7 : 1,
+                        opacity: item.disabled ? 0.7 : 1,
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f9f9f9')}
+                      onMouseEnter={(e) => {
+                        if (!item.disabled) e.currentTarget.style.backgroundColor = '#f9f9f9'
+                      }}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
                     >
                       {item.label}
