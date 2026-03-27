@@ -39,7 +39,6 @@ export const getHeaderFields = (cf) =>
 export const getInvoiceDocumentMeta = (invoice) => [
   { label: 'Date', value: invoice.issue_date },
   { label: 'Due', value: invoice.due_date },
-  { label: 'Status', value: invoice.status ? String(invoice.status).replace(/_/g, ' ') : '' },
 ].filter((entry) => hasDisplayValue(entry.value))
 
 export const getInvoiceReferenceMeta = (invoice, cf, poNumber) => [

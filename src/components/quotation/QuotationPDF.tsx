@@ -373,8 +373,11 @@ export default function QuotationPDF({
     groupMeta: customFields.groupMeta || {},
   })
   const itemColumns = getPdfColumns(columns)
-    .filter((column) => ['num', 'description', 'quantity', 'unit', 'unit_price', 'amount', 'install_rate'].includes(column.key))
+    .filter((column) => ['num', 'description', 'quantity', 'unit_price', 'amount', 'install_rate'].includes(column.key))
     .filter((column) => (column.key === 'install_rate' ? hasInstallColumn : true))
+  const patchedColumns = itemColumns.map((column) =>
+    column.key === 'quantity' ? { ...column, label: 'Qty / Unit' } : column,
+  )
   const columnStyle = (column: { key: string }, extra: Record<string, unknown> = {}) => {
     if (column.key === 'num') return { ...styles.colNum, ...styles.cell, ...extra }
     if (column.key === 'description') return { ...styles.colDesc, ...extra }
@@ -414,14 +417,12 @@ export default function QuotationPDF({
               <Text style={styles.metaLabel}>Issue Date</Text>
               <Text style={styles.metaValue}>{textOrDash(quotation.issue_date)}</Text>
             </View>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Valid Until</Text>
-              <Text style={styles.metaValue}>{textOrDash(quotation.valid_until)}</Text>
-            </View>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Status</Text>
-              <Text style={styles.metaValue}>{textOrDash(quotation.status)}</Text>
-            </View>
+            {String(quotation.valid_until || '').trim() ? (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>Valid Until</Text>
+                <Text style={styles.metaValue}>{textOrDash(quotation.valid_until)}</Text>
+              </View>
+            ) : null}
             {String(quotation.po_number || '').trim() ? (
               <View style={styles.metaRow}>
                 <Text style={styles.metaLabel}>P.O. Number</Text>
@@ -468,7 +469,7 @@ export default function QuotationPDF({
 
         {renderItemsTable({
           rows: renderRows,
-          columns: itemColumns,
+          columns: patchedColumns,
           mergeQtyUnit: true,
           styles: {
             ...styles,

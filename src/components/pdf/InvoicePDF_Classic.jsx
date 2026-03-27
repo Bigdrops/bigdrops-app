@@ -129,7 +129,7 @@ const s = StyleSheet.create({
 })
 
 const getColumnCellStyle = (column) => {
-  const styles = [s.cell, { width: column.width }]
+  const styles = [s.cell, column.pdfFlex === 1 ? { flex: 1 } : { width: column.width }]
   if (column.align === 'center') styles.push(s.centeredCell)
   if (column.align === 'right') styles.push(s.rightCell)
   if (column.key === 'amount') styles.push(s.amountCell)
@@ -281,7 +281,10 @@ export default function InvoicePDF_Classic({ document, items = [], client, setti
                   kind: 'builtin',
                   align: column.align,
                   pdfWidth: column.width,
-                  pdfFlex: 0,
+                  pdfFlex:
+                    column.key === 'desc' || column.sourceKey === 'description'
+                      ? 1
+                      : 0,
                 })),
                 styles: {
                   ...s,

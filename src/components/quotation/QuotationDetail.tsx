@@ -69,6 +69,11 @@ const defaultPdfOutput: PdfOutputState = {
   showTagline: true,
 }
 
+const QUOTATION_TEMPLATES = [
+  { id: 'default', label: 'Standard', description: 'Clean · Minimal' },
+  { id: 'servicequote', label: 'Service Quote', description: 'Readable · Open' },
+] as const
+
 function renderRichText(value?: string) {
   if (!value) return <span className="text-muted-foreground">Not provided</span>
   const clean = DOMPurify.sanitize(value)
@@ -121,6 +126,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const [bankAccounts, setBankAccounts] = useState<BankAccountRow[]>([])
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfOutput, setPdfOutput] = useState<PdfOutputState>(defaultPdfOutput)
+  const [quotationTemplate, setQuotationTemplate] = useState<'default' | 'servicequote'>('default')
   const [converting, setConverting] = useState(false)
   const [showMobileActions, setShowMobileActions] = useState(false)
   const [showPdfSettings, setShowPdfSettings] = useState(false)
@@ -220,12 +226,31 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         document: quotation,
         cf: quotation.custom_fields || {},
       })
-      const [{ pdf }, { default: QuotationPDF }] = await Promise.all([
+      const [{ pdf }, pdfModule] = await Promise.all([
         import('@react-pdf/renderer'),
-        import('./QuotationPDF'),
+        quotationTemplate === 'servicequote'
+          ? import('@/components/pdf/InvoicePDF_ServiceQuote')
+          : import('./QuotationPDF'),
       ])
       const blob = await pdf(
-        <QuotationPDF document={quotation} items={items} client={client} settings={settings} computedResult={computedResult} />,
+        quotationTemplate === 'servicequote' ? (
+          <pdfModule.default
+            document={quotation}
+            items={items}
+            client={client}
+            settings={settings}
+            computedResult={computedResult}
+            bankAccounts={[]}
+          />
+        ) : (
+          <pdfModule.default
+            document={quotation}
+            items={items}
+            client={client}
+            settings={settings}
+            computedResult={computedResult}
+          />
+        ),
       ).toBlob()
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
@@ -725,6 +750,68 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
               companyTagline={String(settings?.company_tagline || '')}
               footerText={String(settings?.footer_text || '')}
             />
+            <div className="mt-5 border-t border-border pt-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-slate-500">
+                  PDF Template
+                </div>
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-3">
+                {QUOTATION_TEMPLATES.map((template) => {
+                  const active = quotationTemplate === template.id
+                  return (
+                    <button
+                      key={template.id}
+                      type="button"
+                      onClick={() => setQuotationTemplate(template.id)}
+                      className={`rounded-xl p-3 text-center transition-all ${
+                        active ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
+                      }`}
+                      style={{
+                        width: 130,
+                        border: `2px solid ${active ? '#0F172A' : '#E2E8F0'}`,
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: 36,
+                          borderRadius: 4,
+                          marginBottom: 8,
+                          overflow: 'hidden',
+                          background: active ? '#1E3A5F' : '#F1F5F9',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 2,
+                          padding: 4,
+                        }}
+                      >
+                        {template.id === 'default' ? (
+                          <>
+                            <div style={{ height: 5, background: active ? '#3B82F6' : '#0F172A', borderRadius: 2 }} />
+                            <div style={{ height: 2, background: active ? '#475569' : '#CBD5E1', borderRadius: 1 }} />
+                            <div style={{ height: 2, background: active ? '#475569' : '#CBD5E1', borderRadius: 1, width: '70%' }} />
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ height: 5, background: '#16A34A', borderRadius: '2px 2px 0 0', margin: -4, marginBottom: 4 }} />
+                            <div style={{ height: 2, background: active ? '#86EFAC' : '#CBD5E1', borderRadius: 1 }} />
+                            <div style={{ height: 2, background: active ? '#BBF7D0' : '#D1FAE5', borderRadius: 1, width: '78%' }} />
+                            <div style={{ height: 2, background: active ? '#DCFCE7' : '#E2E8F0', borderRadius: 1, width: '58%' }} />
+                          </>
+                        )}
+                      </div>
+                      <div className={`mb-0.5 text-[12px] font-bold ${active ? 'text-white' : 'text-slate-900'}`}>{template.label}</div>
+                      <div className={`text-[10px] ${active ? 'text-slate-400' : 'text-slate-500'}`}>{template.description}</div>
+                      {active ? (
+                        <div className="mt-1.5 text-[9px] font-bold uppercase text-blue-500">
+                          Active
+                        </div>
+                      ) : null}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         </SheetContent>
       </Sheet>

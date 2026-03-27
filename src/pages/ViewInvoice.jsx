@@ -33,31 +33,19 @@ const TEMPLATES = [
   { id: 'proforma', label: 'Proforma', description: 'Green · Centered' },
   { id: 'bold', label: 'Bold', description: 'Dark band · Strong' },
   { id: 'compact', label: 'Compact', description: 'Tight · Dense' },
+  { id: 'servicequote', label: 'Service Quote', description: 'Readable · Open' },
 ]
 
-function TemplateSelector() {
-  const [active, setActive] = useState(() => {
-    try {
-      return localStorage.getItem('invoice_pdf_template') || 'classic'
-    } catch {
-      return 'classic'
-    }
-  })
-  const handleSelect = (id) => {
-    setActive(id)
-    try {
-      localStorage.setItem('invoice_pdf_template', id)
-    } catch {}
-  }
+function TemplateSelector({ value, onChange }) {
   return (
     <div style={{ marginTop: 10 }}>
       <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
         {TEMPLATES.map((t) => {
-          const on = active === t.id
+          const on = value === t.id
           return (
             <div
               key={t.id}
-              onClick={() => handleSelect(t.id)}
+              onClick={() => onChange(t.id)}
               style={{
                 flexShrink: 0,
                 width: 130,
@@ -113,6 +101,14 @@ function TemplateSelector() {
                     <div style={{ height: 1.5, background: on ? '#475569' : '#E2E8F0', borderRadius: 1 }} />
                   </>
                 )}
+                {t.id === 'servicequote' && (
+                  <>
+                    <div style={{ height: 5, background: '#16A34A', borderRadius: '2px 2px 0 0', margin: -4, marginBottom: 4 }} />
+                    <div style={{ height: 2, background: on ? '#86EFAC' : '#CBD5E1', borderRadius: 1 }} />
+                    <div style={{ height: 2, background: on ? '#BBF7D0' : '#D1FAE5', borderRadius: 1, width: '78%' }} />
+                    <div style={{ height: 2, background: on ? '#DCFCE7' : '#E2E8F0', borderRadius: 1, width: '58%' }} />
+                  </>
+                )}
               </div>
               <div style={{ fontSize: 12, fontWeight: 700, color: on ? 'white' : '#0F172A', marginBottom: 2 }}>{t.label}</div>
               <div style={{ fontSize: 10, color: on ? '#94A3B8' : '#64748B' }}>{t.description}</div>
@@ -166,6 +162,7 @@ export default function ViewInvoice() {
   const [loading, setLoading] = useState(true)
   const [showMore, setShowMore] = useState(false)
   const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
+  const [pdfTemplate, setPdfTemplate] = useState('classic')
 
   // Payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -382,7 +379,17 @@ export default function ViewInvoice() {
         import('../components/InvoicePDF'),
       ])
       const blob = await pdf(
-        <InvoicePDF document={invoice} items={items} client={client} settings={settings} computedResult={computedResult} />
+        <InvoicePDF
+          document={invoice}
+          items={items}
+          client={client}
+          settings={settings}
+          computedResult={computedResult}
+          template={pdfTemplate}
+          bankAccounts={bankAccounts}
+          pdfOutput={pdfOutput}
+          signatory={selectedSignatory}
+        />
       ).toBlob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -1587,7 +1594,7 @@ export default function ViewInvoice() {
             {pdfGenerating ? 'Preparing…' : '↓ Download PDF'}
           </div>
         </div>
-        <TemplateSelector />
+        <TemplateSelector value={pdfTemplate} onChange={setPdfTemplate} />
       </div>
     </Layout>
   )

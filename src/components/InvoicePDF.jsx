@@ -12,23 +12,7 @@ export const TEMPLATES = [
   { id: 'servicequote', label: 'Service Quote', description: 'Larger readable service layout' },
 ]
 
-export const getActiveTemplate = () => {
-  try {
-    return localStorage.getItem('invoice_pdf_template') || 'classic'
-  } catch {
-    return 'classic'
-  }
-}
-
-export const setActiveTemplate = (id) => {
-  try {
-    localStorage.setItem('invoice_pdf_template', id)
-  } catch {}
-}
-
-export default function InvoicePDF(props) {
-  const template = getActiveTemplate()
-
+export default function InvoicePDF({ template = 'classic', ...props }) {
   if (template === 'proforma') return <InvoicePDF_Proforma {...props} />
   if (template === 'bold') return <InvoicePDF_Bold {...props} />
   if (template === 'compact') return <InvoicePDF_Compact {...props} />
