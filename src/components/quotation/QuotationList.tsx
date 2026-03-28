@@ -12,6 +12,8 @@ import {
   Trash2,
 } from 'lucide-react'
 import { supabase } from '@/supabase'
+import ConfirmActionDialog from '@/components/ConfirmActionDialog'
+import { toast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -51,6 +53,8 @@ export default function QuotationList() {
   const [showSearch, setShowSearch] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [busyAction, setBusyAction] = useState<string | null>(null)
+  const [archiveId, setArchiveId] = useState<string | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const loadQuotations = async () => {
     const { data } = await supabase
@@ -66,30 +70,30 @@ export default function QuotationList() {
   }, [])
 
   const handleArchive = async (id: string) => {
-    if (!window.confirm('Archive this quotation? You can restore it later from Settings > Archives.')) return
+    setArchiveId(null)
     setBusyAction(`archive:${id}`)
     const { error } = await supabase.from('quotations').update({ archived_at: new Date().toISOString() }).eq('id', id)
     setBusyAction(null)
     if (error) {
-      alert(`Archive failed: ${error.message}`)
+      toast({ title: 'Archive failed', description: error.message, variant: 'destructive' })
       return
     }
     await loadQuotations()
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Deleting this quotation is permanent and cannot be undone.')) return
+    setDeleteId(null)
     setBusyAction(`delete:${id}`)
     const { error: itemError } = await supabase.from('quotation_items').delete().eq('quotation_id', id)
     if (itemError) {
       setBusyAction(null)
-      alert(`Delete failed: ${itemError.message}`)
+      toast({ title: 'Delete failed', description: itemError.message, variant: 'destructive' })
       return
     }
     const { error } = await supabase.from('quotations').delete().eq('id', id)
     setBusyAction(null)
     if (error) {
-      alert(`Delete failed: ${error.message}`)
+      toast({ title: 'Delete failed', description: error.message, variant: 'destructive' })
       return
     }
     await loadQuotations()
@@ -272,14 +276,14 @@ export default function QuotationList() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             disabled={isArchiving || isDeleting}
-                            onSelect={() => handleArchive(quotation.id)}
+                            onSelect={() => setArchiveId(quotation.id)}
                           >
                             {isArchiving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Archive className="mr-2 h-4 w-4" />}
                             Archive
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             disabled={isArchiving || isDeleting}
-                            onSelect={() => handleDelete(quotation.id)}
+                            onSelect={() => setDeleteId(quotation.id)}
                             className="text-red-700 focus:text-red-700"
                           >
                             {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
@@ -304,6 +308,31 @@ export default function QuotationList() {
       >
         <Plus className="h-7 w-7" />
       </Button>
+      <ConfirmActionDialog
+        open={archiveId !== null}
+        onOpenChange={(open) => {
+          if (!open) setArchiveId(null)
+        }}
+        title="Archive this quotation?"
+        description="You can restore it later from Settings > Archives."
+        confirmLabel="Archive Quotation"
+        variant="default"
+        onConfirm={() => {
+          if (archiveId) void handleArchive(archiveId)
+        }}
+      />
+      <ConfirmActionDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteId(null)
+        }}
+        title="Delete this quotation?"
+        description="Deleting this quotation is permanent and cannot be undone."
+        confirmLabel="Delete Quotation"
+        onConfirm={() => {
+          if (deleteId) void handleDelete(deleteId)
+        }}
+      />
     </div>
   )
 }

@@ -10,6 +10,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { toast } from '@/hooks/use-toast'
 import UnitInput from '@/components/UnitInput'
 
 const CLOUD_NAME = 'ddhqvv77g'
@@ -100,7 +101,7 @@ export default function MobileItemCard({
       setShowImageSlot(true)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
-      alert(`Image upload failed: ${message}`)
+      toast({ title: 'Upload failed', description: `Image upload failed: ${message}`, variant: 'destructive' })
     } finally {
       setUploading(false)
       if (event.target) event.target.value = ''

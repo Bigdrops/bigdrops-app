@@ -3,11 +3,14 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { ClipboardList, Plus, Search, SlidersHorizontal, Wrench } from "lucide-react"
 
+import ConfirmActionDialog from "@/components/ConfirmActionDialog"
 import { supabase } from "../supabase"
+import { toast } from "@/hooks/use-toast"
 import Layout from "../components/Layout"
 import { useIsMobile } from "../hooks/useIsMobile"
 
 import { Card, CardContent } from "../components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 
 function normalizeStatus(status) {
   return (status || "").trim().toLowerCase()
@@ -27,6 +30,7 @@ export default function CSR() {
   const [openMenuId, setOpenMenuId] = useState(null)
   const [showSearch, setShowSearch] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [csrToDelete, setCsrToDelete] = useState(null)
 
   const fetchCsrs = async () => {
     setLoading(true)
@@ -133,14 +137,13 @@ export default function CSR() {
   }
 
   const handleDelete = async (csr) => {
-    const confirmed = window.confirm("Delete this CSR permanently? This cannot be undone.")
-    if (!confirmed) return
     const { error } = await supabase.from("csrs").delete().eq("id", csr.id)
     if (error) {
-      alert("Unable to delete CSR right now. Please try again.")
+      toast({ title: "Delete failed", description: "Unable to delete CSR right now. Please try again.", variant: "destructive" })
       return
     }
     setOpenMenuId(null)
+    setCsrToDelete(null)
     await fetchCsrs()
   }
 
@@ -158,7 +161,8 @@ export default function CSR() {
 
   const handleDeleteClick = async (event, csr) => {
     event.stopPropagation()
-    await handleDelete(csr)
+    setOpenMenuId(null)
+    setCsrToDelete(csr)
   }
 
   const renderActionMenu = (csr) => (
@@ -228,36 +232,56 @@ export default function CSR() {
           <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold uppercase text-muted-foreground">Client</span>
-              <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className={filterSelectClass}>
-                <option>All</option>
-                {clientOptions.map((client) => (
-                  <option key={client} value={client}>{client}</option>
-                ))}
-              </select>
+              <Select value={clientFilter} onValueChange={setClientFilter}>
+                <SelectTrigger className={filterSelectClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All</SelectItem>
+                  {clientOptions.map((client) => (
+                    <SelectItem key={client} value={client}>{client}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold uppercase text-muted-foreground">Status</span>
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterSelectClass}>
-                {["All", "Draft", "Completed", "Pending", "Cancelled"].map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className={filterSelectClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["All", "Draft", "Completed", "Pending", "Cancelled"].map((option) => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold uppercase text-muted-foreground">Date</span>
-              <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className={filterSelectClass}>
-                {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className={filterSelectClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold uppercase text-muted-foreground">Sort</span>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={filterSelectClass}>
-                {["Newest", "Oldest"].map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className={filterSelectClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["Newest", "Oldest"].map((option) => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <button
               onClick={resetFilters}
@@ -530,6 +554,18 @@ export default function CSR() {
           <Plus size={32} />
         </button>
       </div>
+      <ConfirmActionDialog
+        open={Boolean(csrToDelete)}
+        onOpenChange={(open) => {
+          if (!open) setCsrToDelete(null)
+        }}
+        title="Delete this CSR?"
+        description="Delete this CSR permanently? This cannot be undone."
+        confirmLabel="Delete CSR"
+        onConfirm={() => {
+          if (csrToDelete) void handleDelete(csrToDelete)
+        }}
+      />
     </Layout>
   )
 }

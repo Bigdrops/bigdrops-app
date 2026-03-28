@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DOMPurify from 'dompurify'
+import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import { supabase } from '@/supabase'
 import { calcTotals } from '@/components/useInvoiceColumns.jsx'
 import { computeDocument } from '@/lib/Calculations'
 import { PDF_TEMPLATES, DEFAULT_TEMPLATE, type PdfTemplateId } from '@/components/pdf/pdfTemplates'
+import { toast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -126,6 +128,8 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const [converting, setConverting] = useState(false)
   const [showMobileActions, setShowMobileActions] = useState(false)
   const [showPdfSettings, setShowPdfSettings] = useState(false)
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const hasText = (value: unknown) => String(value || '').trim().length > 0
 
   useEffect(() => {
@@ -247,7 +251,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       }, 100)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
-      alert(`PDF generation failed: ${message}`)
+      toast({ title: 'PDF generation failed', description: message, variant: 'destructive' })
     } finally {
       setPdfGenerating(false)
     }
@@ -264,14 +268,10 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     try {
       await navigator.clipboard.writeText(value)
     } catch {
-      const input = document.createElement('textarea')
-      input.value = value
-      document.body.appendChild(input)
-      input.select()
-      document.execCommand('copy')
-      document.body.removeChild(input)
+      toast({ title: 'Copy failed', description: `Could not copy ${label.toLowerCase()}.`, variant: 'destructive' })
+      return
     }
-    alert(`${label} copied.`)
+    toast({ title: 'Copied', description: `${label} copied.` })
   }
 
   const handlePdfOutputChange = async (next: PdfOutputState) => {
@@ -287,7 +287,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       .eq('id', quotationId)
 
     if (error) {
-      alert(`Error saving document options: ${error.message}`)
+      toast({ title: 'Save failed', description: error.message, variant: 'destructive' })
       return
     }
 
@@ -296,13 +296,13 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
 
   const handleArchive = async () => {
     if (!quotation) return
-    if (!window.confirm('This quotation will be hidden from your list until you restore it from Settings > Archives.')) return
+    setShowArchiveConfirm(false)
     const { error } = await supabase
       .from('quotations')
       .update({ archived_at: new Date().toISOString() })
       .eq('id', quotationId)
     if (error) {
-      alert(`Archive failed: ${error.message}`)
+      toast({ title: 'Archive failed', description: error.message, variant: 'destructive' })
       return
     }
     navigate('/quotations')
@@ -310,15 +310,15 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
 
   const handleDelete = async () => {
     if (!quotation) return
-    if (!window.confirm('Deleting this quotation is permanent and cannot be undone.')) return
+    setShowDeleteConfirm(false)
     const { error: itemError } = await supabase.from('quotation_items').delete().eq('quotation_id', quotationId)
     if (itemError) {
-      alert(`Delete failed: ${itemError.message}`)
+      toast({ title: 'Delete failed', description: itemError.message, variant: 'destructive' })
       return
     }
     const { error } = await supabase.from('quotations').delete().eq('id', quotationId)
     if (error) {
-      alert(`Delete failed: ${error.message}`)
+      toast({ title: 'Delete failed', description: error.message, variant: 'destructive' })
       return
     }
     navigate('/quotations')
@@ -385,12 +385,12 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       navigate(`/quotations/${createdQuotation.id}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Clone failed'
-      alert(`Clone failed: ${message}`)
+      toast({ title: 'Clone failed', description: message, variant: 'destructive' })
     }
   }
 
   const handleRecordPaymentPlaceholder = () => {
-    alert('Convert this quotation to an invoice first before recording payment.')
+    toast({ title: 'Coming soon', description: 'Convert this quotation to an invoice first before recording payment.' })
   }
 
   const handleConvertToInvoice = async () => {
@@ -482,7 +482,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       navigate(`/invoices/${createdInvoice.id}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Conversion failed'
-      alert(`Convert to invoice failed: ${message}`)
+      toast({ title: 'Convert to invoice failed', description: message, variant: 'destructive' })
     } finally {
       setConverting(false)
     }
@@ -512,8 +512,8 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       action: () => void handleCopy(quotation.quotation_number || '', 'Quotation number'),
     },
     { key: 'separator-danger', separator: true },
-    { key: 'archive-quotation', label: 'Archive Quotation', action: () => void handleArchive() },
-    { key: 'delete-quotation', label: 'Delete Quotation', action: () => void handleDelete(), danger: true },
+    { key: 'archive-quotation', label: 'Archive Quotation', action: () => setShowArchiveConfirm(true) },
+    { key: 'delete-quotation', label: 'Delete Quotation', action: () => setShowDeleteConfirm(true), danger: true },
   ] as Array<
     | { key: string; separator: true }
     | { key: string; label: string; action: () => void; disabled?: boolean; danger?: boolean }
@@ -764,6 +764,25 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
           </div>
         </SheetContent>
       </Sheet>
+
+      <ConfirmActionDialog
+        open={showArchiveConfirm}
+        onOpenChange={setShowArchiveConfirm}
+        title="Archive this quotation?"
+        description="This quotation will be hidden from your list until you restore it from Settings > Archives."
+        confirmLabel="Archive Quotation"
+        variant="default"
+        onConfirm={() => void handleArchive()}
+      />
+
+      <ConfirmActionDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete this quotation?"
+        description="Deleting this quotation is permanent and cannot be undone."
+        confirmLabel="Delete Quotation"
+        onConfirm={() => void handleDelete()}
+      />
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-5">

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { toast } from '@/hooks/use-toast'
 
 const CLOUD_NAME = 'ddhqvv77g'
 const UPLOAD_PRESET = 'ml_default'
@@ -26,7 +27,7 @@ export default function ItemImageUpload({ value, onChange }) {
       const data = await res.json()
       onChange(data.secure_url)
     } catch (e) {
-      alert('Image upload failed: ' + e.message)
+      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' })
     }
     setUploading(false)
     setProgress(0)

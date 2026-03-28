@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "../supabase"
 import Layout from "../components/Layout"
+import ConfirmActionDialog from "../components/ConfirmActionDialog"
+import { toast } from "../hooks/use-toast"
 
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
@@ -59,6 +61,7 @@ export default function Clients(): JSX.Element {
   const [loading, setLoading] = useState<boolean>(true)
   const [query, setQuery] = useState<string>("")
   const [category, setCategory] = useState<string>("All")
+  const [clientToDelete, setClientToDelete] = useState<string | number | null>(null)
 
   const navigate = useNavigate()
 
@@ -114,10 +117,8 @@ export default function Clients(): JSX.Element {
   }
 
   const handleDelete = async (clientId: string | number): Promise<void> => {
-    const confirmed = window.confirm("Delete this client? This cannot be undone.")
-    if (!confirmed) return
-
     await supabase.from("clients").delete().eq("id", clientId)
+    setClientToDelete(null)
     await reload()
   }
 
@@ -355,19 +356,19 @@ export default function Clients(): JSX.Element {
                                   Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() => alert("Archive coming soon")}
+                                  onClick={() => toast({ title: "Coming soon", description: "Archive coming soon." })}
                                 >
                                   Archive
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() => alert("Merge coming soon")}
+                                  onClick={() => toast({ title: "Coming soon", description: "Merge coming soon." })}
                                 >
                                   Merge
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   className="text-destructive focus:text-destructive"
-                                  onClick={() => handleDelete(client.id)}
+                                  onClick={() => setClientToDelete(client.id)}
                                 >
                                   Delete
                                 </DropdownMenuItem>
@@ -423,16 +424,16 @@ export default function Clients(): JSX.Element {
                               >
                                 Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => alert("Archive coming soon")}>
+                              <DropdownMenuItem onClick={() => toast({ title: "Coming soon", description: "Archive coming soon." })}>
                                 Archive
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => alert("Merge coming soon")}>
+                              <DropdownMenuItem onClick={() => toast({ title: "Coming soon", description: "Merge coming soon." })}>
                                 Merge
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
-                                onClick={() => handleDelete(client.id)}
+                                onClick={() => setClientToDelete(client.id)}
                               >
                                 Delete
                               </DropdownMenuItem>
@@ -463,6 +464,18 @@ export default function Clients(): JSX.Element {
           <Plus className="h-7 w-7" />
         </Button>
       </div>
+      <ConfirmActionDialog
+        open={clientToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setClientToDelete(null)
+        }}
+        title="Delete this client?"
+        description="This cannot be undone."
+        confirmLabel="Delete Client"
+        onConfirm={() => {
+          if (clientToDelete !== null) void handleDelete(clientToDelete)
+        }}
+      />
     </Layout>
   )
 }

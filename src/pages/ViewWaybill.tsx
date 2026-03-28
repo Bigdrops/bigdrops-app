@@ -14,7 +14,9 @@ import {
   mapDbWaybill,
 } from '../components/waybill/waybillUtils'
 import type { Waybill, WaybillStatus } from '../components/waybill/waybillUtils'
+import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/hooks/use-toast'
 import { useSettings } from '../hooks/useSettings'
 
 function Badge({ className, label }: { className: string; label: string }) {
@@ -31,6 +33,7 @@ export default function ViewWaybill() {
   const [pdfLoading, setPdfLoading] = useState(false)
   const [linkedInvoice, setLinkedInvoice] = useState<{ id: string; invoice_number: string } | null>(null)
   const [linkedProject, setLinkedProject] = useState<{ id: string; name: string } | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -78,7 +81,7 @@ export default function ViewWaybill() {
       URL.revokeObjectURL(url)
     } catch (error) {
       console.error(error)
-      alert('Failed to generate PDF')
+      toast({ title: 'PDF failed', description: 'Failed to generate PDF.', variant: 'destructive' })
     }
     setPdfLoading(false)
   }
@@ -91,8 +94,12 @@ export default function ViewWaybill() {
   }
 
   const handleDelete = async () => {
-    if (!confirm('Delete this waybill? This cannot be undone.')) return
     setShowMore(false)
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDelete = async () => {
+    setShowDeleteConfirm(false)
     await supabase.from('waybills').delete().eq('id', id)
     navigate('/waybills')
   }
@@ -260,7 +267,19 @@ export default function ViewWaybill() {
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
               <div className="font-semibold">Project link still pending</div>
               <div className="mt-1">Copy the waybill number from this record and attach it from the Project page when the project team is ready.</div>
-              <Button type="button" variant="outline" className="mt-3 rounded-xl" onClick={async () => { try { await navigator.clipboard.writeText(waybill.waybill_number); alert('Waybill number copied.') } catch { alert('Could not copy waybill number.') } }}>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-3 rounded-xl"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(waybill.waybill_number)
+                    toast({ title: 'Copied', description: 'Waybill number copied.' })
+                  } catch {
+                    toast({ title: 'Copy failed', description: 'Could not copy waybill number.', variant: 'destructive' })
+                  }
+                }}
+              >
                 <Copy className="mr-2 h-4 w-4" />
                 Copy Waybill Number
               </Button>
@@ -272,6 +291,14 @@ export default function ViewWaybill() {
           </Button>
         </div>
       </div>
+      <ConfirmActionDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete this waybill?"
+        description="This cannot be undone."
+        confirmLabel="Delete Waybill"
+        onConfirm={() => void confirmDelete()}
+      />
     </Layout>
   )
 }

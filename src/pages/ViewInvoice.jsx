@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
+import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import RecordPaymentModal from '@/components/RecordPaymentModal'
 import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '../components/invoice/exportInvoiceCsv'
@@ -22,9 +23,12 @@ import {
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { computeDocument } from '@/lib/Calculations'
 import { PDF_TEMPLATES, DEFAULT_TEMPLATE } from '@/components/pdf/pdfTemplates'
+import { toast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
@@ -101,6 +105,11 @@ export default function ViewInvoice() {
   // Payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [voidingPaymentId, setVoidingPaymentId] = useState(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
+  const [showVoidDialog, setShowVoidDialog] = useState(false)
+  const [pendingVoidPaymentId, setPendingVoidPaymentId] = useState(null)
+  const [voidReason, setVoidReason] = useState('')
 
   // PDF
   const [pdfGenerating, setPdfGenerating] = useState(false)
@@ -336,7 +345,7 @@ export default function ViewInvoice() {
         URL.revokeObjectURL(url)
       }, 100)
     } catch (err) {
-      alert('PDF generation failed: ' + err.message)
+      toast({ title: 'PDF generation failed', description: err.message, variant: 'destructive' })
     } finally {
       setPdfGenerating(false)
     }
@@ -363,19 +372,9 @@ export default function ViewInvoice() {
     if (!value) return
     try {
       await navigator.clipboard.writeText(value)
-      alert(`${label} copied.`)
+      toast({ title: 'Copied', description: `${label} copied.` })
     } catch {
-      try {
-        const input = document.createElement('textarea')
-        input.value = value
-        document.body.appendChild(input)
-        input.select()
-        document.execCommand('copy')
-        document.body.removeChild(input)
-        alert(`${label} copied.`)
-      } catch {
-        alert(`Could not copy ${label.toLowerCase()}.`)
-      }
+      toast({ title: 'Copy failed', description: `Could not copy ${label.toLowerCase()}.`, variant: 'destructive' })
     }
   }
 
@@ -420,7 +419,7 @@ export default function ViewInvoice() {
         },
       })
     } catch (err) {
-      alert('Clone failed: ' + err.message)
+      toast({ title: 'Clone failed', description: err.message, variant: 'destructive' })
     }
   }
 
@@ -523,7 +522,11 @@ export default function ViewInvoice() {
 
       navigate(`/quotations/${createdQuotation.id}`)
     } catch (err) {
-      alert('Convert to quotation failed: ' + ((err && err.message) || 'Unknown error'))
+      toast({
+        title: 'Convert to quotation failed',
+        description: (err && err.message) || 'Unknown error',
+        variant: 'destructive',
+      })
     } finally {
       setConverting(false)
     }
@@ -536,7 +539,11 @@ export default function ViewInvoice() {
   // ── Delete invoice ──────────────────────────────────────────────────────────
   const handleDelete = async () => {
     setShowMore(false)
-    if (!window.confirm('Deleting is permanent and cannot be undone. You can archive it instead and restore it later from Settings > Archives.')) return
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDelete = async () => {
+    setShowDeleteConfirm(false)
     await supabase.from('invoice_items').delete().eq('invoice_id', id)
     await supabase.from('invoices').delete().eq('id', id)
     navigate('/invoices')
@@ -545,7 +552,11 @@ export default function ViewInvoice() {
   // ── Archive invoice ─────────────────────────────────────────────────────────
   const handleArchive = async () => {
     setShowMore(false)
-    if (!window.confirm('This invoice will be hidden from your active list until you restore it from Settings > Archives.')) return
+    setShowArchiveConfirm(true)
+  }
+
+  const confirmArchive = async () => {
+    setShowArchiveConfirm(false)
     await supabase.from('invoices').update({ archived_at: new Date().toISOString() }).eq('id', id)
     navigate('/invoices')
   }
@@ -586,20 +597,27 @@ export default function ViewInvoice() {
     }
   }
   const handleVoidPayment = async (paymentId) => {
-    const reason = window.prompt('Enter a reason for voiding this payment:')
-    if (!reason) return
+    setPendingVoidPaymentId(paymentId)
+    setVoidReason('')
+    setShowVoidDialog(true)
+  }
 
-    setVoidingPaymentId(paymentId)
+  const confirmVoidPayment = async () => {
+    if (!pendingVoidPaymentId || !voidReason.trim()) return
+    const reason = voidReason.trim()
+    setShowVoidDialog(false)
+
+    setVoidingPaymentId(pendingVoidPaymentId)
     const { error } = await supabase
       .from('payments')
       .update({
         voided_at: new Date().toISOString(),
         void_reason: reason,
       })
-      .eq('id', paymentId)
+      .eq('id', pendingVoidPaymentId)
 
     if (error) {
-      alert('Void failed: ' + error.message)
+      toast({ title: 'Void failed', description: error.message, variant: 'destructive' })
       setVoidingPaymentId(null)
       return
     }
@@ -607,6 +625,8 @@ export default function ViewInvoice() {
     await syncInvoiceStatusFromFinancials()
     await refreshInvoicePage()
     setVoidingPaymentId(null)
+    setPendingVoidPaymentId(null)
+    setVoidReason('')
   }
   const moreMenuItems = [
     {
@@ -622,8 +642,8 @@ export default function ViewInvoice() {
     { label: 'Copy invoice number', action: () => { void handleCopy(invoice.invoice_number || '', 'Invoice number') }, show: true },
     { label: 'Clone Invoice', action: handleClone, show: true },
     { label: converting ? 'Converting to Quotation...' : 'Convert to Quotation', action: handleConvertToQuote, show: true, disabled: converting },
-    { label: 'Generate CSR', action: () => { setShowMore(false); alert('Coming soon') }, show: true },
-    { label: 'Generate Waybill', action: () => { setShowMore(false); alert('Coming soon') }, show: true },
+    { label: 'Generate CSR', action: () => { setShowMore(false); toast({ title: 'Coming soon', description: 'Generate CSR is coming soon.' }) }, show: true },
+    { label: 'Generate Waybill', action: () => { setShowMore(false); toast({ title: 'Coming soon', description: 'Generate Waybill is coming soon.' }) }, show: true },
     { label: invoice.status === 'draft' ? 'Mark as Sent' : null, action: handleMarkSent, show: invoice.status === 'draft' },
     { label: 'Archive Invoice', action: handleArchive, show: true },
     { label: 'Delete Invoice', action: handleDelete, show: true, danger: true },
@@ -1439,7 +1459,7 @@ export default function ViewInvoice() {
                     const { error } = await supabase.from('invoices').update({ project_id: projectLinkId.trim() }).eq('id', id)
                     setProjectLinking(false)
                     if (error) {
-                      alert('Failed to link: ' + error.message)
+                      toast({ title: 'Failed to link', description: error.message, variant: 'destructive' })
                       return
                     }
                     setShowProjectModal(false)
@@ -1529,6 +1549,43 @@ export default function ViewInvoice() {
           </div>
         </div>
         <TemplateSelector value={pdfTemplate} onChange={setPdfTemplate} />
+        <ConfirmActionDialog
+          open={showDeleteConfirm}
+          onOpenChange={setShowDeleteConfirm}
+          title="Delete this invoice?"
+          description="Deleting is permanent and cannot be undone. You can archive it instead and restore it later from Settings > Archives."
+          confirmLabel="Delete Invoice"
+          onConfirm={() => void confirmDelete()}
+        />
+        <ConfirmActionDialog
+          open={showArchiveConfirm}
+          onOpenChange={setShowArchiveConfirm}
+          title="Archive this invoice?"
+          description="This invoice will be hidden from your active list until you restore it from Settings > Archives."
+          confirmLabel="Archive Invoice"
+          variant="default"
+          onConfirm={() => void confirmArchive()}
+        />
+        <Dialog open={showVoidDialog} onOpenChange={setShowVoidDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Void payment</DialogTitle>
+              <DialogDescription>Enter a reason for voiding this payment:</DialogDescription>
+            </DialogHeader>
+            <Input
+              value={voidReason}
+              onChange={(e) => setVoidReason(e.target.value)}
+              placeholder="Reason for voiding"
+              autoFocus
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowVoidDialog(false)}>Cancel</Button>
+              <Button type="button" variant="destructive" disabled={!voidReason.trim() || voidingPaymentId !== null} onClick={() => void confirmVoidPayment()}>
+                {voidingPaymentId !== null ? 'Voiding...' : 'Void Payment'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   )

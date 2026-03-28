@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from '@/hooks/use-toast'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import ClientSelector from '../components/ClientSelector'
@@ -33,7 +35,10 @@ export default function NewProject() {
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
   const handleSave = async () => {
-    if (!form.name.trim()) { alert('Project name is required'); return }
+    if (!form.name.trim()) {
+      toast({ title: 'Project name required', description: 'Project name is required', variant: 'destructive' })
+      return
+    }
     setSaving(true)
     const { data, error } = await supabase.from('projects').insert({
       name:          form.name.trim(),
@@ -47,7 +52,10 @@ export default function NewProject() {
       location:      form.location.trim() || null,
     }).select().single()
     setSaving(false)
-    if (error) { alert('Failed to create project: ' + error.message); return }
+    if (error) {
+      toast({ title: 'Create failed', description: error.message, variant: 'destructive' })
+      return
+    }
     navigate(`/projects/${data.id}`)
   }
 
@@ -137,16 +145,17 @@ export default function NewProject() {
           {/* Status */}
           <div>
             <label style={labelStyle}>Status</label>
-            <select
-              style={{ ...inputStyle, cursor: 'pointer' }}
-              value={form.status}
-              onChange={e => set('status', e.target.value)}
-            >
-              <option value="active">Active</option>
-              <option value="completed">Completed</option>
-              <option value="on_hold">On Hold</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+            <Select value={form.status} onValueChange={(value) => set('status', value)}>
+              <SelectTrigger style={{ ...inputStyle, cursor: 'pointer' }}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="on_hold">On Hold</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Notes */}

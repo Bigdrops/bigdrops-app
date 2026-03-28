@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from '@/hooks/use-toast'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 
@@ -37,7 +38,7 @@ export default function EditClient() {
     setSaving(false)
     if (error) {
       console.error('Update error', error)
-      alert('Failed to save client')
+      toast({ title: 'Save failed', description: 'Failed to save client', variant: 'destructive' })
     } else {
       navigate('/clients')
     }

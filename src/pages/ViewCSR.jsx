@@ -8,6 +8,7 @@ import {
   getCsrBranding,
 } from '../components/csr/csrUtils'
 import CSRPreviewPanel from '../components/csr/CSRPreviewPanel'
+import { toast } from '@/hooks/use-toast'
 
 export default function ViewCSR() {
   const { id } = useParams()
@@ -79,9 +80,9 @@ export default function ViewCSR() {
     try {
       await navigator.clipboard.writeText(value)
       setShowMore(false)
-      alert(`${label} copied`)
+      toast({ title: 'Copied', description: `${label} copied` })
     } catch {
-      alert(`Could not copy ${label.toLowerCase()}`)
+      toast({ title: 'Copy failed', description: `Could not copy ${label.toLowerCase()}`, variant: 'destructive' })
     }
   }
 

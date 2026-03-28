@@ -2,7 +2,9 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Plus, MoreHorizontal, Eye, Pencil, Copy, DollarSign, X,
          Send, Archive, Trash2, FileOutput, Truck, Wrench, Search, SlidersHorizontal } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "../supabase"
+import { toast } from "@/hooks/use-toast"
 import Layout from "../components/Layout"
 
 const PAGE_SIZE = 25
@@ -161,7 +163,7 @@ export default function Invoices() {
         }
       })
     } catch (err) {
-      alert("Clone failed: " + err.message)
+      toast({ title: "Clone failed", description: err.message, variant: "destructive" })
     }
   }
 
@@ -276,36 +278,56 @@ export default function Invoices() {
           <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-black uppercase text-muted-foreground">Client</span>
-              <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className={filterSelectClass}>
-                <option>All</option>
-                {clientOptions.map((client) => (
-                  <option key={client} value={client}>{client}</option>
-                ))}
-              </select>
+              <Select value={clientFilter} onValueChange={setClientFilter}>
+                <SelectTrigger className={filterSelectClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All</SelectItem>
+                  {clientOptions.map((client) => (
+                    <SelectItem key={client} value={client}>{client}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-black uppercase text-muted-foreground">Status</span>
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterSelectClass}>
-                {["All", "Draft", "Sent", "Paid", "Overdue", "Partial"].map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className={filterSelectClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["All", "Draft", "Sent", "Paid", "Overdue", "Partial"].map((option) => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-black uppercase text-muted-foreground">Date</span>
-              <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className={filterSelectClass}>
-                {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className={filterSelectClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-black uppercase text-muted-foreground">Sort</span>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={filterSelectClass}>
-                {["Newest", "Oldest", "Highest Value", "Lowest Value"].map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className={filterSelectClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["Newest", "Oldest", "Highest Value", "Lowest Value"].map((option) => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <button
               onClick={resetFilters}
@@ -452,9 +474,9 @@ export default function Invoices() {
             {isStandalone && (
               <MenuBtn icon={<DollarSign size={20}/>} label="Advance"    onClick={handleAdvance} />
             )}
-            <MenuBtn icon={<FileOutput size={20}/>}   label="To Quote"   onClick={() => { closeSheet(); alert("Quotations module coming soon") }} />
-            <MenuBtn icon={<Wrench size={20}/>}       label="Gen. CSR"   onClick={() => { closeSheet(); alert("Coming soon") }} />
-            <MenuBtn icon={<Truck size={20}/>}        label="Waybill"    onClick={() => { closeSheet(); alert("Coming soon") }} />
+            <MenuBtn icon={<FileOutput size={20}/>}   label="To Quote"   onClick={() => { closeSheet(); toast({ title: "Coming soon", description: "Quotations module coming soon." }) }} />
+            <MenuBtn icon={<Wrench size={20}/>}       label="Gen. CSR"   onClick={() => { closeSheet(); toast({ title: "Coming soon", description: "Coming soon." }) }} />
+            <MenuBtn icon={<Truck size={20}/>}        label="Waybill"    onClick={() => { closeSheet(); toast({ title: "Coming soon", description: "Coming soon." }) }} />
             {activeInvoice.status === "draft" && (
               <MenuBtn icon={<Send size={20}/>}       label="Mark Sent"  onClick={handleMarkSent} />
             )}

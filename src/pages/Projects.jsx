@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
+import ConfirmActionDialog from '../components/ConfirmActionDialog'
+import { toast } from '../hooks/use-toast'
 import Layout from '../components/Layout'
 import { Calendar, FileText, FolderKanban, Plus, Search, SlidersHorizontal, X } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 
 const STATUS_CONFIG = {
   active:    { label: 'Active',    bg: '#DCFCE7', color: '#16A34A', dot: '#22C55E' },
@@ -23,6 +26,7 @@ export default function Projects() {
   const [openMenuId, setOpenMenuId] = useState(null)
   const [showFilters, setShowFilters] = useState(false)
   const [docCounts, setDocCounts] = useState({})
+  const [projectToDelete, setProjectToDelete] = useState(null)
 
   useEffect(() => { fetchProjects() }, [])
 
@@ -115,10 +119,9 @@ export default function Projects() {
   }
 
   const handleDelete = async (project) => {
-    const confirmed = window.confirm('Delete this project permanently? This cannot be undone.')
-    if (!confirmed) return
     await supabase.from('projects').delete().eq('id', project.id)
     setOpenMenuId(null)
+    setProjectToDelete(null)
     await fetchProjects()
   }
 
@@ -351,26 +354,15 @@ export default function Projects() {
                     }}>
                       Client
                     </label>
-                    <select 
-                      value={clientFilter} 
-                      onChange={e => setClientFilter(e.target.value)}
-                      style={{
-                        width: '100%',
-                        height: 38,
-                        borderRadius: 10,
-                        border: '1px solid #E2E8F0',
-                        background: 'white',
-                        padding: '0 10px',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: '#1E293B',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <option>All</option>
-                      {clientOptions.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    <Select value={clientFilter} onValueChange={setClientFilter}>
+                      <SelectTrigger style={{ width: '100%', height: 38, borderRadius: 10, border: '1px solid #E2E8F0', background: 'white', fontSize: 13, fontWeight: 600, color: '#1E293B', cursor: 'pointer' }}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All</SelectItem>
+                        {clientOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>
@@ -385,25 +377,14 @@ export default function Projects() {
                     }}>
                       Status
                     </label>
-                    <select 
-                      value={statusFilter} 
-                      onChange={e => setStatusFilter(e.target.value)}
-                      style={{
-                        width: '100%',
-                        height: 38,
-                        borderRadius: 10,
-                        border: '1px solid #E2E8F0',
-                        background: 'white',
-                        padding: '0 10px',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: '#1E293B',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {['All', 'Active', 'Completed', 'On Hold', 'Cancelled'].map(o => <option key={o}>{o}</option>)}
-                    </select>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger style={{ width: '100%', height: 38, borderRadius: 10, border: '1px solid #E2E8F0', background: 'white', fontSize: 13, fontWeight: 600, color: '#1E293B', cursor: 'pointer' }}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['All', 'Active', 'Completed', 'On Hold', 'Cancelled'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -420,25 +401,14 @@ export default function Projects() {
                     }}>
                       Period
                     </label>
-                    <select 
-                      value={dateFilter} 
-                      onChange={e => setDateFilter(e.target.value)}
-                      style={{
-                        width: '100%',
-                        height: 38,
-                        borderRadius: 10,
-                        border: '1px solid #E2E8F0',
-                        background: 'white',
-                        padding: '0 10px',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: '#1E293B',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {['All Time', 'This Month', 'Last Month', 'This Year'].map(o => <option key={o}>{o}</option>)}
-                    </select>
+                    <Select value={dateFilter} onValueChange={setDateFilter}>
+                      <SelectTrigger style={{ width: '100%', height: 38, borderRadius: 10, border: '1px solid #E2E8F0', background: 'white', fontSize: 13, fontWeight: 600, color: '#1E293B', cursor: 'pointer' }}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['All Time', 'This Month', 'Last Month', 'This Year'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>
@@ -453,25 +423,14 @@ export default function Projects() {
                     }}>
                       Sort By
                     </label>
-                    <select 
-                      value={sortBy} 
-                      onChange={e => setSortBy(e.target.value)}
-                      style={{
-                        width: '100%',
-                        height: 38,
-                        borderRadius: 10,
-                        border: '1px solid #E2E8F0',
-                        background: 'white',
-                        padding: '0 10px',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: '#1E293B',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map(o => <option key={o}>{o}</option>)}
-                    </select>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger style={{ width: '100%', height: 38, borderRadius: 10, border: '1px solid #E2E8F0', background: 'white', fontSize: 13, fontWeight: 600, color: '#1E293B', cursor: 'pointer' }}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -805,7 +764,8 @@ export default function Projects() {
                             className="proj-menu-item"
                             onClick={(e) => {
                               e.stopPropagation()
-                              handleDelete(project)
+                              setProjectToDelete(project)
+                              setOpenMenuId(null)
                             }}
                             style={{
                               display: 'block',
@@ -916,6 +876,18 @@ export default function Projects() {
       >
         <Plus size={32} />
       </button>
+      <ConfirmActionDialog
+        open={Boolean(projectToDelete)}
+        onOpenChange={(open) => {
+          if (!open) setProjectToDelete(null)
+        }}
+        title="Delete this project?"
+        description="Delete this project permanently? This cannot be undone."
+        confirmLabel="Delete Project"
+        onConfirm={() => {
+          if (projectToDelete) void handleDelete(projectToDelete)
+        }}
+      />
     </Layout>
   )
 }
