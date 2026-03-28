@@ -3,6 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { PdfOutputSettings } from '@/components/PdfOutputSettings'
+import {
+  DocumentActionGrid,
+  DocumentActionSheet,
+  DocumentBottomBar,
+  DocumentDetailRows,
+  DocumentHeroCard,
+  DocumentPdfSheet,
+  DocumentSection,
+  DocumentStatusStrip,
+  DocumentSummaryList,
+  DocumentTopBar,
+} from '@/components/document/DocumentViewShell'
 import { supabase } from '@/supabase'
 import { calcTotals } from '@/components/useInvoiceColumns.jsx'
 import { computeDocument } from '@/lib/Calculations'
@@ -490,6 +502,188 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
 
   if (loading) return <div className="rounded-2xl border border-zinc-200 bg-card p-8 text-sm text-zinc-500 shadow-sm">Loading quotation...</div>
   if (!quotation) return <div className="rounded-2xl border border-zinc-200 bg-card p-8 text-sm text-zinc-500 shadow-sm">Quotation not found.</div>
+
+  const shellActionItems = [
+    { label: 'Export CSV', onClick: () => handleDownloadCsv() },
+    { label: 'Clone Quotation', onClick: () => void handleClone() },
+    { label: 'Copy quotation number', onClick: () => void handleCopy(quotation.quotation_number || '', 'Quotation number') },
+    { label: converting ? 'Converting...' : 'Convert to Invoice', onClick: () => void handleConvertToInvoice(), disabled: converting },
+    ...(quotation.status === 'draft' ? [{ label: 'Mark Sent', onClick: () => void handleStatusChange('sent') }] : []),
+    { label: 'Record Payment', onClick: handleRecordPaymentPlaceholder },
+    { label: 'Archive Quotation', onClick: () => setShowArchiveConfirm(true) },
+    { label: 'Delete Quotation', onClick: () => setShowDeleteConfirm(true), danger: true },
+  ]
+
+  const shellQuotationTotal = totals?.totalPayable ?? Number(quotation.total || 0)
+  const shellDetailRows = [
+    { label: 'Quotation No.', value: quotation.quotation_number || 'Not set' },
+    { label: 'Client', value: quotation.client_name || 'Unassigned' },
+    { label: 'Issue Date', value: quotation.issue_date || 'Not set' },
+    { label: 'Valid Until', value: quotation.valid_until || 'Not set' },
+    { label: 'PO Number', value: poNumber || '—' },
+    { label: 'Title', value: quotation.quotation_title || '—' },
+  ]
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-4 pb-32">
+      <DocumentTopBar
+        title={quotation.quotation_number}
+        subtitle="Quotation"
+        statusLabel={formatQuotationStatus(quotation.status)}
+        statusClassName={quotationStatusTone(quotation.status)}
+        onBack={() => navigate('/quotations')}
+        onMore={() => setShowMobileActions(true)}
+      />
+
+      <DocumentHeroCard
+        eyebrow="Total Quote"
+        value={formatMoney(shellQuotationTotal)}
+        helper={quotation.quotation_title || 'Quotation prepared for client review.'}
+        stats={[
+          { label: 'Valid Until', value: quotation.valid_until || 'Open' },
+          { label: 'Issue Date', value: quotation.issue_date || 'Not set' },
+          { label: 'Client', value: quotation.client_name || 'Unassigned' },
+        ]}
+      />
+
+      <DocumentActionGrid
+        actions={[
+          { key: 'pdf', label: 'PDF', onClick: () => setShowPdfSettings(true), variant: 'dark' },
+          { key: 'edit', label: 'Edit', onClick: () => navigate(`/quotations/edit/${quotationId}`), variant: 'outline' },
+          { key: 'download', label: 'Convert', onClick: () => void handleConvertToInvoice(), variant: 'blue', disabled: converting },
+          { key: 'more', label: 'More', onClick: () => setShowMobileActions(true), variant: 'outline' },
+        ]}
+      />
+
+      <DocumentStatusStrip
+        items={QUOTATION_STATUSES.map((status) => ({
+          label: formatQuotationStatus(status),
+          active: quotation.status === status,
+          onClick: () => void handleStatusChange(status),
+        }))}
+      />
+
+      <DocumentSection title="Document Details">
+        <DocumentDetailRows rows={shellDetailRows} />
+      </DocumentSection>
+
+      <DocumentSection title="Line Items">
+        <Card className="rounded-[24px] border-border shadow-sm">
+          <CardContent className="space-y-3 p-4">
+            {(() => {
+              let itemNumber = 0
+              return items.map((item, index) => {
+                if (item.row_type === 'group_header') {
+                  return (
+                    <div key={item._uiKey || item.id || index} className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-slate-300">
+                      {item.group_name || `Group ${index + 1}`}
+                    </div>
+                  )
+                }
+                itemNumber += 1
+                return (
+                  <div key={item._uiKey || item.id || index} className="flex gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
+                    <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-[10px] font-extrabold text-slate-500">{itemNumber}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-bold text-foreground">{item.description || 'Untitled item'}</div>
+                      {item.sub_description ? <div className="mt-1 text-xs text-muted-foreground">{item.sub_description}</div> : null}
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Qty {item.quantity || 0}
+                        {item.unit ? ` ${item.unit}` : ''}
+                        {item.make ? ` · ${item.make}` : ''}
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm font-extrabold text-foreground">{formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0))}</div>
+                      <div className="text-[11px] text-muted-foreground">{formatMoney(item.unit_price || 0)} each</div>
+                    </div>
+                  </div>
+                )
+              })
+            })()}
+          </CardContent>
+        </Card>
+      </DocumentSection>
+
+      <DocumentSection title="Summary">
+        <DocumentSummaryList
+          rows={[
+            { label: 'Subtotal', value: formatMoney(totals?.rawSubtotal || 0) },
+            ...(Number(totals?.installRateTotal || 0) > 0 ? [{ label: 'Install Rate Total', value: formatMoney(totals?.installRateTotal || 0) }] : []),
+            ...(Number(totals?.vatAmount || 0) > 0 ? [{ label: 'VAT', value: formatMoney(totals?.vatAmount || 0) }] : []),
+            ...(Number(totals?.discountAmount || 0) > 0 ? [{ label: 'Discount', value: formatMoney(totals?.discountAmount || 0), valueClassName: 'text-red-600' }] : []),
+            ...(Number(totals?.whtAmount || 0) > 0 ? [{ label: 'WHT', value: formatMoney(totals?.whtAmount || 0) }] : []),
+            { label: 'Grand Total', value: formatMoney(shellQuotationTotal), divider: true, emphasis: true, valueClassName: 'text-emerald-600' },
+          ]}
+        />
+      </DocumentSection>
+
+      <DocumentActionSheet
+        open={showMobileActions}
+        onOpenChange={setShowMobileActions}
+        title="Quotation Actions"
+        subtitle={quotation.quotation_number}
+        actions={shellActionItems}
+      />
+
+      <DocumentPdfSheet
+        open={showPdfSettings}
+        onOpenChange={setShowPdfSettings}
+        title="PDF & Export"
+        subtitle="Choose template and output options"
+        settingsNode={
+          <PdfOutputSettings
+            value={pdfOutput}
+            onChange={(next) => void handlePdfOutputChange(next)}
+            bankAccounts={bankAccounts.map((account) => ({
+              id: account.id,
+              bankName: account.bank_name || '',
+              accountName: account.account_name || '',
+              accountNumber: account.account_number || '',
+              sortCode: account.sort_code || '',
+              isDefault: account.is_default === true,
+            }))}
+            companyTagline={String(settings?.company_tagline || '')}
+            footerText={String(settings?.footer_text || '')}
+          />
+        }
+        templateValue={pdfTemplate}
+        onTemplateChange={setPdfTemplate}
+        templates={PDF_TEMPLATES}
+        actions={[
+          { label: 'Export CSV', onClick: handleDownloadCsv, variant: 'outline' },
+          { label: pdfGenerating ? 'Generating...' : 'Download PDF', onClick: () => void handleDownloadPdf(), className: 'bg-slate-950 text-white hover:bg-slate-800', disabled: pdfGenerating },
+        ]}
+      />
+
+      <ConfirmActionDialog
+        open={showArchiveConfirm}
+        onOpenChange={setShowArchiveConfirm}
+        title="Archive this quotation?"
+        description="This quotation will be hidden from your list until you restore it from Settings > Archives."
+        confirmLabel="Archive Quotation"
+        variant="default"
+        onConfirm={() => void handleArchive()}
+      />
+
+      <ConfirmActionDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete this quotation?"
+        description="Deleting this quotation is permanent and cannot be undone."
+        confirmLabel="Delete Quotation"
+        onConfirm={() => void handleDelete()}
+      />
+
+      <DocumentBottomBar
+        actions={[
+          { label: 'Back', onClick: () => navigate('/quotations'), variant: 'outline' },
+          { label: 'Edit', onClick: () => navigate(`/quotations/edit/${quotationId}`), variant: 'outline' },
+          { label: pdfGenerating ? 'Generating...' : 'Download PDF', onClick: () => void handleDownloadPdf(), className: 'bg-slate-950 text-white hover:bg-slate-800', disabled: pdfGenerating },
+        ]}
+      />
+    </div>
+  )
 
   const actionItems = [
     { key: 'export-csv', label: 'Export CSV', action: () => handleDownloadCsv() },

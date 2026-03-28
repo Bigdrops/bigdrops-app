@@ -4,6 +4,18 @@ import DOMPurify from 'dompurify'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
+import {
+  DocumentActionGrid,
+  DocumentActionSheet,
+  DocumentBottomBar,
+  DocumentDetailRows,
+  DocumentHeroCard,
+  DocumentPdfSheet,
+  DocumentSection,
+  DocumentStatusStrip,
+  DocumentSummaryList,
+  DocumentTopBar,
+} from '@/components/document/DocumentViewShell'
 import RecordPaymentModal from '@/components/RecordPaymentModal'
 import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '../components/invoice/exportInvoiceCsv'
@@ -99,6 +111,7 @@ export default function ViewInvoice() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showMore, setShowMore] = useState(false)
+  const [showPdfSheet, setShowPdfSheet] = useState(false)
   const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
   const [pdfTemplate, setPdfTemplate] = useState(DEFAULT_TEMPLATE)
 
@@ -661,6 +674,298 @@ export default function ViewInvoice() {
     setShowMore(false)
     setTimeout(() => action(), 10)
   }
+
+  const shellStatusClass =
+    computedStatus === 'paid'
+      ? 'bg-emerald-50 text-emerald-700'
+      : computedStatus === 'overdue'
+        ? 'bg-red-50 text-red-700'
+        : computedStatus === 'sent'
+          ? 'bg-blue-50 text-blue-700'
+          : computedStatus === 'partial'
+            ? 'bg-amber-50 text-amber-700'
+            : 'bg-slate-100 text-slate-700'
+
+  const shellDetailRows = [
+    { label: 'Invoice No.', value: invoice.invoice_number || 'Not set' },
+    { label: 'Client', value: invoice.client_name || 'Unassigned' },
+    { label: 'Issue Date', value: invoice.issue_date || 'Not set' },
+    { label: 'Due Date', value: invoice.due_date || 'Not set' },
+    { label: 'PO Number', value: poNumber || '—' },
+    { label: 'Payment Terms', value: invoice.payment_terms || '—' },
+    { label: 'Title', value: invoice.invoice_title || invoice.document_type || '—' },
+  ]
+
+  const shellStatusItems = ['draft', 'sent', 'partial', 'paid', 'overdue'].map((status) => ({
+    label: String(status).replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()),
+    active: computedStatus === status,
+    onClick: () => {
+      if (status === 'partial' || status === 'paid' || status === 'overdue') return
+      void handleStatusChange(status)
+    },
+    disabled: status === 'partial' || status === 'paid' || status === 'overdue',
+  }))
+
+  return (
+    <Layout title={invoice.invoice_number} hidePageHeader contentClassName="w-full px-4 pb-32 pt-4 md:px-6 md:pt-6">
+      <div className="mx-auto max-w-3xl space-y-4">
+        <RecordPaymentModal
+          invoice={{
+            id: invoice.id,
+            invoice_number: invoice.invoice_number,
+            client_name: invoice.client_name,
+            total: Number(invoice.total || 0),
+          }}
+          open={showPaymentModal}
+          onOpenChange={setShowPaymentModal}
+          onSuccess={refreshInvoicePage}
+        />
+
+        <DocumentTopBar
+          title={invoice.invoice_number}
+          subtitle="Invoice"
+          statusLabel={String(computedStatus).replace(/_/g, ' ')}
+          statusClassName={shellStatusClass}
+          onBack={() => navigate('/invoices')}
+          onMore={() => setShowMore(true)}
+        />
+
+        <DocumentHeroCard
+          eyebrow="Total Payable"
+          value={formatMoney(invoiceTotal)}
+          helper={invoice.amount_in_words || invoice.invoice_title || 'Invoice ready for payment tracking.'}
+          stats={[
+            { label: 'Balance Due', value: formatMoney(balanceDue), className: balanceDue > 0 ? 'text-red-400' : 'text-emerald-300' },
+            { label: 'Received', value: formatMoney(cashReceived), className: 'text-emerald-300' },
+            { label: 'Due Date', value: invoice.due_date || 'Open', className: 'text-white' },
+          ]}
+        />
+
+        <DocumentActionGrid
+          actions={[
+            { key: 'pdf', label: 'PDF', onClick: () => setShowPdfSheet(true), variant: 'dark' },
+            { key: 'payment', label: 'Payment', onClick: () => setShowPaymentModal(true), variant: 'emerald', disabled: computedStatus === 'paid' },
+            { key: 'edit', label: 'Edit', onClick: () => navigate('/invoices/edit/' + id), variant: 'blue' },
+            { key: 'more', label: 'More', onClick: () => setShowMore(true), variant: 'outline' },
+          ]}
+        />
+
+        <DocumentStatusStrip items={shellStatusItems} />
+
+        <DocumentSection title="Document Details">
+          <DocumentDetailRows rows={shellDetailRows} />
+        </DocumentSection>
+
+        <DocumentSection title="Line Items">
+          <Card className="rounded-[24px] border-border shadow-sm">
+            <CardContent className="space-y-3 p-4">
+              {(() => {
+                let itemNumber = 0
+                return items.map((item, index) => {
+                  if (item.row_type === 'group_header') {
+                    return (
+                      <div key={item._uiKey || item.id || index} className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-slate-300">
+                        {item.group_name || `Group ${index + 1}`}
+                      </div>
+                    )
+                  }
+                  itemNumber += 1
+                  return (
+                    <div key={item._uiKey || item.id || index} className="flex gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
+                      <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-[10px] font-extrabold text-slate-500">{itemNumber}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-bold text-foreground">{item.description || 'Untitled item'}</div>
+                        {item.sub_description ? <div className="mt-1 text-xs text-muted-foreground">{item.sub_description}</div> : null}
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          Qty {item.quantity || 0}
+                          {item.unit ? ` ${item.unit}` : ''}
+                          {item.make ? ` · ${item.make}` : ''}
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <div className="text-sm font-extrabold text-foreground">{formatMoney(item.amount || item.quantity * item.unit_price || 0)}</div>
+                        <div className="text-[11px] text-muted-foreground">{formatMoney(item.unit_price || 0)} each</div>
+                      </div>
+                    </div>
+                  )
+                })
+              })()}
+            </CardContent>
+          </Card>
+        </DocumentSection>
+
+        <DocumentSection title="Summary">
+          <DocumentSummaryList
+            rows={[
+              { label: 'Subtotal', value: formatMoney(invoice.subtotal || 0) },
+              ...(Number(invoice.vat || 0) > 0 ? [{ label: 'VAT', value: formatMoney(invoice.vat || 0) }] : []),
+              ...(Number(invoice.workmanship || 0) > 0 ? [{ label: 'Workmanship', value: formatMoney(invoice.workmanship || 0) }] : []),
+              ...(Number(invoice.transportation || 0) > 0 ? [{ label: 'Transportation', value: formatMoney(invoice.transportation || 0) }] : []),
+              ...(Number(invoice.shipping || 0) > 0 ? [{ label: 'Shipping', value: formatMoney(invoice.shipping || 0) }] : []),
+              ...(Number(invoice.discount || 0) > 0 ? [{ label: 'Discount', value: formatMoney(invoice.discount || 0), valueClassName: 'text-red-600' }] : []),
+              { label: 'Grand Total', value: formatMoney(invoiceTotal), divider: true, emphasis: true, valueClassName: 'text-emerald-600' },
+              { label: 'Cash Received', value: formatMoney(cashReceived) },
+              { label: 'Balance Due', value: formatMoney(balanceDue), divider: true, emphasis: true, valueClassName: balanceDue > 0 ? 'text-red-600' : 'text-emerald-600' },
+            ]}
+          />
+        </DocumentSection>
+
+        <DocumentSection title="Payment History">
+          <Card className="rounded-[24px] border-border shadow-sm">
+            <CardContent className="space-y-3 p-4">
+              {paymentHistory.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-6 text-sm text-muted-foreground">
+                  No payments recorded yet.
+                </div>
+              ) : (
+                paymentHistory.map((payment) => (
+                  <div key={payment.id} className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
+                    <div className={payment.voided_at ? 'line-through text-slate-400' : ''}>
+                      <div className="text-sm font-bold text-foreground">{formatMoney(payment.total)}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDate(payment.date)} · {payment.method || 'Payment'}
+                        {payment.reference ? ` · ${payment.reference}` : ''}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`text-xs font-bold ${payment.runningBalance > 0 ? 'text-red-600' : 'text-emerald-600'} ${payment.voided_at ? 'line-through text-slate-400' : ''}`}>
+                        {formatMoney(payment.runningBalance)}
+                      </div>
+                      {isAdmin && !payment.voided_at ? (
+                        <Button type="button" variant="outline" size="sm" disabled={voidingPaymentId === payment.id} onClick={() => handleVoidPayment(payment.id)}>
+                          {voidingPaymentId === payment.id ? 'Voiding...' : 'Void'}
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </DocumentSection>
+
+        <DocumentActionSheet
+          open={showMore}
+          onOpenChange={setShowMore}
+          title="Invoice Actions"
+          subtitle={invoice.invoice_number}
+          actions={moreMenuItems.map((item) => ({ label: item.label, onClick: item.action, disabled: item.disabled, danger: item.danger }))}
+        />
+
+        <DocumentPdfSheet
+          open={showPdfSheet}
+          onOpenChange={setShowPdfSheet}
+          title="PDF & Export"
+          subtitle="Choose template and output options"
+          settingsNode={
+            <PdfOutputSettings
+              value={pdfOutput}
+              onChange={handlePdfOutputChange}
+              bankAccounts={bankAccounts.map(b => ({
+                id: b.id,
+                bankName: b.bank_name,
+                accountName: b.account_name,
+                accountNumber: b.account_number,
+                sortCode: b.sort_code,
+                isDefault: b.is_default,
+              }))}
+              companyTagline={settings.company_tagline || ''}
+              footerText={settings.footer_text || ''}
+            />
+          }
+          templateValue={pdfTemplate}
+          onTemplateChange={setPdfTemplate}
+          templates={PDF_TEMPLATES}
+          actions={[
+            { label: 'Export CSV', onClick: handleDownloadCsv, variant: 'outline' },
+            { label: pdfGenerating ? 'Preparing...' : 'Download PDF', onClick: () => void handleDownloadPDF(), className: 'bg-slate-950 text-white hover:bg-slate-800', disabled: pdfGenerating },
+          ]}
+        />
+
+        <ConfirmActionDialog
+          open={showDeleteConfirm}
+          onOpenChange={setShowDeleteConfirm}
+          title="Delete this invoice?"
+          description="Deleting is permanent and cannot be undone. You can archive it instead and restore it later from Settings > Archives."
+          confirmLabel="Delete Invoice"
+          onConfirm={() => void confirmDelete()}
+        />
+
+        <ConfirmActionDialog
+          open={showArchiveConfirm}
+          onOpenChange={setShowArchiveConfirm}
+          title="Archive this invoice?"
+          description="This invoice will be hidden from your active list until you restore it from Settings > Archives."
+          confirmLabel="Archive Invoice"
+          variant="default"
+          onConfirm={() => void confirmArchive()}
+        />
+
+        <Dialog open={showVoidDialog} onOpenChange={setShowVoidDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Void payment</DialogTitle>
+              <DialogDescription>Enter a reason for voiding this payment:</DialogDescription>
+            </DialogHeader>
+            <Input value={voidReason} onChange={(e) => setVoidReason(e.target.value)} placeholder="Reason for voiding" autoFocus />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowVoidDialog(false)}>Cancel</Button>
+              <Button type="button" variant="destructive" disabled={!voidReason.trim() || voidingPaymentId !== null} onClick={() => void confirmVoidPayment()}>
+                {voidingPaymentId !== null ? 'Voiding...' : 'Void Payment'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {showProjectModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-5">
+            <div className="w-full max-w-sm rounded-[24px] bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-extrabold text-foreground">Link to Project</h3>
+                <button type="button" className="text-xl text-muted-foreground" onClick={() => { setShowProjectModal(false); setProjectLinkId('') }}>×</button>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">Enter a Project ID to link this invoice, or jump to Projects to create one.</p>
+              <Input className="mt-4" value={projectLinkId} onChange={(e) => setProjectLinkId(e.target.value)} placeholder="Paste Project ID (UUID)" autoFocus />
+              <div className="mt-4 flex gap-2">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => { setShowProjectModal(false); setProjectLinkId('') }}>Cancel</Button>
+                <Button
+                  type="button"
+                  className="flex-[1.35]"
+                  disabled={projectLinking}
+                  onClick={async () => {
+                    if (!projectLinkId.trim()) return
+                    setProjectLinking(true)
+                    const { error } = await supabase.from('invoices').update({ project_id: projectLinkId.trim() }).eq('id', id)
+                    setProjectLinking(false)
+                    if (error) {
+                      toast({ title: 'Failed to link', description: error.message, variant: 'destructive' })
+                      return
+                    }
+                    setShowProjectModal(false)
+                    setProjectLinkId('')
+                    await fetchInvoice()
+                  }}
+                >
+                  {projectLinking ? 'Linking...' : 'Link Invoice'}
+                </Button>
+              </div>
+              <Button type="button" variant="outline" className="mt-2 w-full" onClick={() => { setShowProjectModal(false); navigate('/projects') }}>
+                Go to Projects
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <DocumentBottomBar
+          actions={[
+            { label: 'Back', onClick: () => navigate('/invoices'), variant: 'outline' },
+            { label: 'Edit', onClick: () => navigate('/invoices/edit/' + id), variant: 'outline' },
+            { label: computedStatus === 'paid' ? 'Paid in Full' : 'Record Payment', onClick: () => setShowPaymentModal(true), className: 'bg-emerald-600 text-white hover:bg-emerald-700', disabled: computedStatus === 'paid' },
+          ]}
+        />
+      </div>
+    </Layout>
+  )
 
   return (
     <Layout title={invoice.invoice_number}>
