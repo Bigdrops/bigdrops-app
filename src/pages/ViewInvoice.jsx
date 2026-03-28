@@ -21,6 +21,7 @@ import {
 } from '@/domain/documentConversion'
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { computeDocument } from '@/lib/Calculations'
+import { PDF_TEMPLATES, DEFAULT_TEMPLATE } from '@/components/pdf/pdfTemplates'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -28,99 +29,32 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
 
-const TEMPLATES = [
-  { id: 'classic', label: 'Classic', description: 'Navy · Minimal' },
-  { id: 'proforma', label: 'Proforma', description: 'Green · Centered' },
-  { id: 'bold', label: 'Bold', description: 'Dark band · Strong' },
-  { id: 'compact', label: 'Compact', description: 'Tight · Dense' },
-  { id: 'servicequote', label: 'Service Quote', description: 'Readable · Open' },
-]
-
 function TemplateSelector({ value, onChange }) {
   return (
-    <div style={{ marginTop: 10 }}>
-      <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
-        {TEMPLATES.map((t) => {
-          const on = value === t.id
-          return (
-            <div
-              key={t.id}
-              onClick={() => onChange(t.id)}
-              style={{
-                flexShrink: 0,
-                width: 130,
-                border: `2px solid ${on ? '#0F172A' : '#E2E8F0'}`,
-                borderRadius: 12,
-                padding: '14px 12px',
-                backgroundColor: on ? '#0F172A' : 'white',
-                cursor: 'pointer',
-                textAlign: 'center',
-                transition: 'all 0.15s',
-              }}
-            >
-              <div
-                style={{
-                  height: 36,
-                  borderRadius: 4,
-                  marginBottom: 8,
-                  overflow: 'hidden',
-                  background: on ? '#1E3A5F' : '#F1F5F9',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 2,
-                  padding: 4,
-                }}
-              >
-                {t.id === 'classic' && (
-                  <>
-                    <div style={{ height: 5, background: on ? '#3B82F6' : '#0F172A', borderRadius: 2 }} />
-                    <div style={{ height: 2, background: on ? '#475569' : '#CBD5E1', borderRadius: 1 }} />
-                    <div style={{ height: 2, background: on ? '#475569' : '#CBD5E1', borderRadius: 1, width: '70%' }} />
-                  </>
-                )}
-                {t.id === 'proforma' && (
-                  <>
-                    <div style={{ height: 5, background: '#16A34A', borderRadius: 2, alignSelf: 'center', width: '80%' }} />
-                    <div style={{ height: 2, background: '#86EFAC', borderRadius: 1, alignSelf: 'center', width: '50%' }} />
-                    <div style={{ height: 2, background: '#BBF7D0', borderRadius: 1, alignSelf: 'center', width: '40%' }} />
-                  </>
-                )}
-                {t.id === 'bold' && (
-                  <>
-                    <div style={{ height: 14, background: '#0F172A', borderRadius: '2px 2px 0 0', margin: -4, marginBottom: 2 }} />
-                    <div style={{ height: 2, background: '#3B82F6' }} />
-                    <div style={{ height: 2, background: on ? '#93C5FD' : '#CBD5E1', borderRadius: 1, marginTop: 2 }} />
-                  </>
-                )}
-                {t.id === 'compact' && (
-                  <>
-                    <div style={{ height: 2, background: on ? '#94A3B8' : '#1E293B', borderRadius: 1 }} />
-                    <div style={{ height: 1.5, background: on ? '#475569' : '#E2E8F0', borderRadius: 1 }} />
-                    <div style={{ height: 1.5, background: on ? '#475569' : '#E2E8F0', borderRadius: 1 }} />
-                    <div style={{ height: 1.5, background: on ? '#475569' : '#E2E8F0', borderRadius: 1 }} />
-                    <div style={{ height: 1.5, background: on ? '#475569' : '#E2E8F0', borderRadius: 1 }} />
-                  </>
-                )}
-                {t.id === 'servicequote' && (
-                  <>
-                    <div style={{ height: 5, background: '#16A34A', borderRadius: '2px 2px 0 0', margin: -4, marginBottom: 4 }} />
-                    <div style={{ height: 2, background: on ? '#86EFAC' : '#CBD5E1', borderRadius: 1 }} />
-                    <div style={{ height: 2, background: on ? '#BBF7D0' : '#D1FAE5', borderRadius: 1, width: '78%' }} />
-                    <div style={{ height: 2, background: on ? '#DCFCE7' : '#E2E8F0', borderRadius: 1, width: '58%' }} />
-                  </>
-                )}
-              </div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: on ? 'white' : '#0F172A', marginBottom: 2 }}>{t.label}</div>
-              <div style={{ fontSize: 10, color: on ? '#94A3B8' : '#64748B' }}>{t.description}</div>
-              {on && (
-                <div style={{ marginTop: 5, fontSize: 9, fontWeight: 700, color: '#3B82F6', textTransform: 'uppercase' }}>
-                  Active
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+    <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8 }}>
+      {PDF_TEMPLATES.map((t) => {
+        const on = value === t.id
+        return (
+          <div
+            key={t.id}
+            onClick={() => onChange(t.id)}
+            style={{
+              flexShrink: 0,
+              width: 120,
+              border: `2px solid ${on ? '#0F172A' : '#E2E8F0'}`,
+              borderRadius: 12,
+              padding: '12px 10px',
+              backgroundColor: on ? '#0F172A' : 'white',
+              cursor: 'pointer',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 700, color: on ? 'white' : '#0F172A', marginBottom: 2 }}>{t.label}</div>
+            <div style={{ fontSize: 10, color: on ? '#94A3B8' : '#64748B' }}>{t.description}</div>
+            {on && <div style={{ marginTop: 4, fontSize: 9, fontWeight: 700, color: '#3B82F6', textTransform: 'uppercase' }}>Active</div>}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -162,7 +96,7 @@ export default function ViewInvoice() {
   const [loading, setLoading] = useState(true)
   const [showMore, setShowMore] = useState(false)
   const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
-  const [pdfTemplate, setPdfTemplate] = useState('classic')
+  const [pdfTemplate, setPdfTemplate] = useState(DEFAULT_TEMPLATE)
 
   // Payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false)
