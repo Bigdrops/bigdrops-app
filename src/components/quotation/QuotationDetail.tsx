@@ -8,6 +8,7 @@ import {
   DocumentActionSheet,
   DocumentBottomBar,
   DocumentDetailRows,
+  DocumentFloatingFab,
   DocumentHeroCard,
   DocumentPdfSheet,
   DocumentSection,
@@ -504,14 +505,14 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   if (!quotation) return <div className="rounded-2xl border border-zinc-200 bg-card p-8 text-sm text-zinc-500 shadow-sm">Quotation not found.</div>
 
   const shellActionItems = [
-    { label: 'Export CSV', onClick: () => handleDownloadCsv() },
-    { label: 'Clone Quotation', onClick: () => void handleClone() },
-    { label: 'Copy quotation number', onClick: () => void handleCopy(quotation.quotation_number || '', 'Quotation number') },
-    { label: converting ? 'Converting...' : 'Convert to Invoice', onClick: () => void handleConvertToInvoice(), disabled: converting },
-    ...(quotation.status === 'draft' ? [{ label: 'Mark Sent', onClick: () => void handleStatusChange('sent') }] : []),
-    { label: 'Record Payment', onClick: handleRecordPaymentPlaceholder },
-    { label: 'Archive Quotation', onClick: () => setShowArchiveConfirm(true) },
-    { label: 'Delete Quotation', onClick: () => setShowDeleteConfirm(true), danger: true },
+    { label: 'Export CSV', subtitle: 'Download a spreadsheet copy', onClick: () => handleDownloadCsv(), iconKey: 'export' },
+    { label: 'Clone Quotation', subtitle: 'Duplicate this quotation as a draft', onClick: () => void handleClone(), iconKey: 'clone' },
+    { label: 'Copy Quotation Number', subtitle: quotation.quotation_number || 'Copy the current document number', onClick: () => void handleCopy(quotation.quotation_number || '', 'Quotation number'), iconKey: 'copy' },
+    { label: converting ? 'Converting...' : 'Convert to Invoice', subtitle: 'Turn this quotation into an invoice', onClick: () => void handleConvertToInvoice(), disabled: converting, iconKey: 'convert' },
+    ...(quotation.status === 'draft' ? [{ label: 'Mark Sent', subtitle: 'Move this quotation to sent', onClick: () => void handleStatusChange('sent'), iconKey: 'convert' }] : []),
+    { label: 'Record Payment', subtitle: 'Unavailable until converted to invoice', onClick: handleRecordPaymentPlaceholder, iconKey: 'payment' },
+    { label: 'Archive Quotation', subtitle: 'Move this quotation to archives', onClick: () => setShowArchiveConfirm(true), iconKey: 'archive' },
+    { label: 'Delete Quotation', subtitle: 'Permanently remove this quotation', onClick: () => setShowDeleteConfirm(true), danger: true, iconKey: 'delete' },
   ]
 
   const shellQuotationTotal = totals?.totalPayable ?? Number(quotation.total || 0)
@@ -674,6 +675,8 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         confirmLabel="Delete Quotation"
         onConfirm={() => void handleDelete()}
       />
+
+      <DocumentFloatingFab onClick={() => setShowPdfSettings(true)} />
 
       <DocumentBottomBar
         actions={[

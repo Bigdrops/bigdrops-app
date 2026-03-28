@@ -1,11 +1,16 @@
 import {
+  Archive,
   ArrowLeft,
   ChevronRight,
   CircleDollarSign,
+  Copy,
+  Download as DownloadIcon,
   Download,
   Ellipsis,
   FileText,
+  FolderOpen,
   Pencil,
+  Trash2,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -111,7 +116,7 @@ export function DocumentTopBar({
 
 export function DocumentHeroCard({ eyebrow, value, helper, stats = [] }) {
   return (
-    <div className="overflow-hidden rounded-[28px] bg-slate-950 p-5 text-white shadow-[0_18px_40px_-18px_rgba(15,23,42,0.65)]">
+    <div className="overflow-hidden rounded-[26px] bg-slate-950 p-5 text-white shadow-[0_18px_40px_-18px_rgba(15,23,42,0.65)]">
       <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</div>
       <div className="mt-2 text-[2.2rem] font-black leading-none tracking-[-0.04em]">{value}</div>
       {helper ? <div className="mt-3 text-sm leading-6 text-slate-300">{helper}</div> : null}
@@ -149,7 +154,7 @@ export function DocumentActionGrid({ actions }) {
             onClick={action.onClick}
             disabled={action.disabled}
             className={cn(
-              'flex h-[68px] flex-col items-center justify-center gap-1 rounded-2xl border text-[10px] font-extrabold uppercase tracking-[0.08em] transition',
+              'flex h-[64px] flex-col items-center justify-center gap-1 rounded-[18px] border text-[10px] font-extrabold uppercase tracking-[0.08em] shadow-sm transition',
               action.variant === 'dark' && 'border-slate-950 bg-slate-950 text-white',
               action.variant === 'emerald' && 'border-emerald-600 bg-emerald-600 text-white',
               action.variant === 'blue' && 'border-blue-600 bg-blue-600 text-white',
@@ -202,8 +207,8 @@ export function DocumentSection({ title, children, className = '' }) {
 
 export function DocumentDetailRows({ rows }) {
   return (
-    <Card className="rounded-[24px] border-border shadow-sm">
-      <CardContent className="px-4 py-2">
+    <Card className="rounded-[22px] border-border shadow-sm">
+      <CardContent className="px-4 py-1.5">
         {rows.map((row) => (
           <div key={row.label} className="flex items-start justify-between gap-4 border-b border-slate-100 py-3 last:border-b-0">
             <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">{row.label}</div>
@@ -217,7 +222,7 @@ export function DocumentDetailRows({ rows }) {
 
 export function DocumentSummaryList({ rows }) {
   return (
-    <Card className="rounded-[24px] border-border shadow-sm">
+    <Card className="rounded-[22px] border-border shadow-sm">
       <CardContent className="p-4">
         <div className="space-y-2">
           {rows.map((row) => (
@@ -240,31 +245,66 @@ export function DocumentSummaryList({ rows }) {
 }
 
 export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actions }) {
+  const iconMap = {
+    payment: CircleDollarSign,
+    copy: Copy,
+    clone: Copy,
+    convert: DownloadIcon,
+    archive: Archive,
+    delete: Trash2,
+    open: FolderOpen,
+    export: FileText,
+    pdf: FileText,
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-[28px] px-0">
-        <SheetHeader className="border-b border-border px-5 pb-4 pt-5 text-left">
+      <SheetContent side="bottom" className="rounded-t-[30px] px-0 pb-6">
+        <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-slate-200" />
+        <SheetHeader className="border-b border-border px-5 pb-4 pt-4 text-left">
           <SheetTitle className="text-base font-extrabold text-foreground">{title}</SheetTitle>
           {subtitle ? <SheetDescription>{subtitle}</SheetDescription> : null}
         </SheetHeader>
-        <div className="px-5 py-4">
-          <div className="grid gap-2">
-            {actions.map((action) => (
-              <Button
-                key={action.label}
-                type="button"
-                variant={action.danger ? 'destructive' : 'outline'}
-                disabled={action.disabled}
-                className="h-11 justify-between rounded-2xl"
-                onClick={() => {
-                  onOpenChange(false)
-                  action.onClick()
-                }}
-              >
-                <span>{action.label}</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            ))}
+        <div className="px-3 pt-2">
+          <div className="space-y-1">
+            {actions.map((action, index) => {
+              const danger = !!action.danger
+              const Icon = action.icon || iconMap[action.iconKey] || Ellipsis
+              const nextNeedsSeparator = !danger && actions[index + 1]?.danger
+
+              return (
+                <div key={action.label} className={cn(nextNeedsSeparator && 'pb-2')}>
+                  <button
+                    type="button"
+                    disabled={action.disabled}
+                    onClick={() => {
+                      onOpenChange(false)
+                      action.onClick()
+                    }}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-[22px] px-3 py-3 text-left transition',
+                      danger ? 'hover:bg-red-50' : 'hover:bg-slate-50',
+                      action.disabled && 'opacity-60',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'grid h-11 w-11 shrink-0 place-items-center rounded-[14px]',
+                        danger ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700',
+                      )}
+                    >
+                      <Icon className="h-4.5 w-4.5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <div className={cn('text-sm font-bold', danger ? 'text-red-700' : 'text-foreground')}>{action.label}</div>
+                      {action.subtitle ? <div className="mt-0.5 text-[11px] text-muted-foreground">{action.subtitle}</div> : null}
+                    </span>
+                    <ChevronRight className={cn('h-4 w-4 shrink-0', danger ? 'text-red-300' : 'text-slate-300')} />
+                  </button>
+                  {nextNeedsSeparator ? <div className="mx-3 mt-2 border-t border-slate-100" /> : null}
+                </div>
+              )
+            })}
           </div>
         </div>
       </SheetContent>
@@ -285,8 +325,9 @@ export function DocumentPdfSheet({
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto rounded-t-[28px] px-0">
-        <SheetHeader className="border-b border-border px-5 pb-4 pt-5 text-left">
+      <SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto rounded-t-[30px] px-0 pb-6">
+        <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-slate-200" />
+        <SheetHeader className="border-b border-border px-5 pb-4 pt-4 text-left">
           <SheetTitle className="text-base font-extrabold text-foreground">{title}</SheetTitle>
           {subtitle ? <SheetDescription>{subtitle}</SheetDescription> : null}
         </SheetHeader>
@@ -322,8 +363,8 @@ export function DocumentBottomBar({ actions }) {
   const columnsClassName = actions.length === 3 ? 'grid-cols-[1fr_1fr_1.4fr]' : actions.length === 2 ? 'grid-cols-2' : ''
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-20 px-4 pb-5 pt-3 md:px-6">
-      <div className="mx-auto max-w-3xl rounded-[24px] border border-border bg-muted/95 p-2 shadow-[0_-12px_32px_-24px_rgba(15,23,42,0.45)] backdrop-blur">
+    <div className="fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t from-muted via-muted/95 to-transparent px-4 pb-5 pt-4 md:px-6">
+      <div className="mx-auto max-w-3xl rounded-[24px] border border-border bg-card/98 p-2 shadow-[0_-16px_34px_-26px_rgba(15,23,42,0.52)] backdrop-blur">
         <div className={cn('grid gap-2', columnsClassName)} style={actions.length > 3 ? { gridTemplateColumns: `repeat(${actions.length}, minmax(0, 1fr))` } : undefined}>
           {actions.map((action) => (
             <Button
@@ -340,5 +381,18 @@ export function DocumentBottomBar({ actions }) {
         </div>
       </div>
     </div>
+  )
+}
+
+export function DocumentFloatingFab({ onClick, label = 'Download PDF' }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="fixed bottom-28 right-4 z-20 grid h-14 w-14 place-items-center rounded-[18px] bg-slate-950 text-white shadow-[0_16px_36px_-18px_rgba(15,23,42,0.7)] transition hover:bg-slate-800 md:right-6"
+    >
+      <Download className="h-5 w-5" />
+    </button>
   )
 }

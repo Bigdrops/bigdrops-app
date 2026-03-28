@@ -9,6 +9,7 @@ import {
   DocumentActionSheet,
   DocumentBottomBar,
   DocumentDetailRows,
+  DocumentFloatingFab,
   DocumentHeroCard,
   DocumentPdfSheet,
   DocumentSection,
@@ -849,7 +850,36 @@ export default function ViewInvoice() {
           onOpenChange={setShowMore}
           title="Invoice Actions"
           subtitle={invoice.invoice_number}
-          actions={moreMenuItems.map((item) => ({ label: item.label, onClick: item.action, disabled: item.disabled, danger: item.danger }))}
+          actions={[
+            {
+              label: invoice.project_id ? 'Open Linked Documents' : 'Link to Project',
+              subtitle: invoice.project_id ? 'Open the linked project workspace' : 'Attach this invoice to a project',
+              onClick: () => {
+                setShowMore(false)
+                invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectModal(true)
+              },
+              iconKey: 'open',
+            },
+            ...(invoice.status !== 'paid'
+              ? [{
+                  label: 'Record Payment',
+                  subtitle: 'Log cash or WHT received',
+                  onClick: () => { setShowMore(false); setShowPaymentModal(true) },
+                  iconKey: 'payment',
+                }]
+              : []),
+            { label: 'Export CSV', subtitle: 'Download a spreadsheet copy', onClick: handleDownloadCsv, iconKey: 'export' },
+            { label: 'Copy Invoice Number', subtitle: invoice.invoice_number || 'Copy the current document number', onClick: () => { void handleCopy(invoice.invoice_number || '', 'Invoice number') }, iconKey: 'copy' },
+            { label: 'Clone Invoice', subtitle: 'Duplicate this invoice as a new draft', onClick: handleClone, iconKey: 'clone' },
+            { label: converting ? 'Converting to Quotation...' : 'Convert to Quotation', subtitle: 'Create a matching quotation', onClick: handleConvertToQuote, disabled: converting, iconKey: 'convert' },
+            { label: 'Generate CSR', subtitle: 'Create a service report from this invoice', onClick: () => { setShowMore(false); toast({ title: 'Coming soon', description: 'Generate CSR is coming soon.' }) }, iconKey: 'export' },
+            { label: 'Generate Waybill', subtitle: 'Create a delivery waybill from this invoice', onClick: () => { setShowMore(false); toast({ title: 'Coming soon', description: 'Generate Waybill is coming soon.' }) }, iconKey: 'export' },
+            ...(invoice.status === 'draft'
+              ? [{ label: 'Mark as Sent', subtitle: 'Move this invoice to sent', onClick: handleMarkSent, iconKey: 'convert' }]
+              : []),
+            { label: 'Archive Invoice', subtitle: 'Move this invoice to archives', onClick: handleArchive, iconKey: 'archive' },
+            { label: 'Delete Invoice', subtitle: 'Permanently remove this invoice', onClick: handleDelete, danger: true, iconKey: 'delete' },
+          ]}
         />
 
         <DocumentPdfSheet
@@ -955,6 +985,8 @@ export default function ViewInvoice() {
             </div>
           </div>
         )}
+
+        <DocumentFloatingFab onClick={() => setShowPdfSheet(true)} />
 
         <DocumentBottomBar
           actions={[
