@@ -19,8 +19,11 @@ import {
 } from 'lucide-react'
 
 import Layout from '../components/Layout'
+import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import ProjectDocumentCard from '@/components/project/ProjectDocumentCard'
 import ProjectDocumentSheet from '@/components/project/ProjectDocumentSheet'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { toast } from '@/hooks/use-toast'
 import { supabase } from '../supabase'
 
 const PROJECT_STATUS_CONFIG = {
@@ -111,6 +114,7 @@ export default function ProjectDetail() {
 
   const [showLink, setShowLink] = useState(false)
   const [showProjectDocumentSheet, setShowProjectDocumentSheet] = useState(false)
+  const [projectDocumentToDelete, setProjectDocumentToDelete] = useState(null)
   const [linkDocId, setLinkDocId] = useState('')
   const [linkType, setLinkType] = useState('invoice')
   const [linking, setLinking] = useState(false)
@@ -211,7 +215,7 @@ export default function ProjectDetail() {
 
     setSaving(false)
     if (error) {
-      alert(`Failed to save: ${error.message}`)
+      toast({ title: 'Save failed', description: error.message, variant: 'destructive' })
       return
     }
 
@@ -273,15 +277,13 @@ export default function ProjectDetail() {
   }
 
   const handleDeleteProjectDocument = async (docId) => {
-    const confirmed = window.confirm('Delete this external document?')
-    if (!confirmed) return
-
     const { error } = await supabase.from('project_documents').delete().eq('id', docId)
     if (error) {
-      alert(`Delete failed: ${error.message}`)
+      toast({ title: 'Delete failed', description: error.message, variant: 'destructive' })
       return
     }
 
+    setProjectDocumentToDelete(null)
     fetchAll()
   }
 
@@ -492,16 +494,17 @@ export default function ProjectDetail() {
                   <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Status
                   </label>
-                  <select
-                    className={`${inputClassName} cursor-pointer`}
-                    value={editForm.status}
-                    onChange={(e) => setEditForm((form) => ({ ...form, status: e.target.value }))}
-                  >
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                    <option value="on_hold">On Hold</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
+                  <Select value={editForm.status} onValueChange={(value) => setEditForm((form) => ({ ...form, status: value }))}>
+                    <SelectTrigger className={`${inputClassName} cursor-pointer`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="on_hold">On Hold</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -726,7 +729,7 @@ export default function ProjectDetail() {
               ) : (
                 <div className="space-y-3">
                   {projectDocs.map((document) => (
-                    <ProjectDocumentCard key={document.id} document={document} onDelete={handleDeleteProjectDocument} />
+                    <ProjectDocumentCard key={document.id} document={document} onDelete={setProjectDocumentToDelete} />
                   ))}
                 </div>
               )}
@@ -865,6 +868,18 @@ export default function ProjectDetail() {
             </div>
           </div>
         ) : null}
+        <ConfirmActionDialog
+          open={Boolean(projectDocumentToDelete)}
+          onOpenChange={(open) => {
+            if (!open) setProjectDocumentToDelete(null)
+          }}
+          title="Delete this external document?"
+          description="This action cannot be undone."
+          confirmLabel="Delete Document"
+          onConfirm={() => {
+            if (projectDocumentToDelete) void handleDeleteProjectDocument(projectDocumentToDelete)
+          }}
+        />
       </div>
     </Layout>
   )

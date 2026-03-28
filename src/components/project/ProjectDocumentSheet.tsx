@@ -342,7 +342,7 @@ export default function ProjectDocumentSheet({
       await navigator.clipboard.writeText(config.prompt)
       toast({ title: 'Copied', description: `${config.label} AI prompt copied.` })
     } catch {
-      alert('Could not copy AI prompt.')
+      toast({ title: 'Copy failed', description: 'Could not copy AI prompt.', variant: 'destructive' })
     }
   }
 
@@ -404,7 +404,7 @@ export default function ProjectDocumentSheet({
 
     setSaving(false)
     if (error) {
-      alert(`Failed to save document: ${error.message}`)
+      toast({ title: 'Save failed', description: `Failed to save document: ${error.message}`, variant: 'destructive' })
       return
     }
 

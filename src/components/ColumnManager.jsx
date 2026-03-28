@@ -15,6 +15,7 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import { COLUMN_TYPES } from './useInvoiceColumns.jsx'
 
@@ -105,17 +106,18 @@ function ColumnRow({
 
         {isCustom && (
           <div className="flex flex-wrap items-center gap-2">
-            <select
-              className="h-9 rounded-md border border-zinc-300 bg-background px-3 text-sm text-zinc-900"
-              value={col.type}
-              onChange={(e) => onUpdate(col.key, 'type', e.target.value)}
-            >
-              {COLUMN_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
+            <Select value={col.type} onValueChange={(value) => onUpdate(col.key, 'type', value)}>
+              <SelectTrigger className="h-9 rounded-md border border-zinc-300 bg-background px-3 text-sm text-zinc-900">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COLUMN_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {col.type === 'number' && (
               <label className="flex items-center gap-2 text-sm text-zinc-600">

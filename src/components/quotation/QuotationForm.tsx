@@ -24,6 +24,7 @@ import {
 } from '@/domain/quotation'
 import type { ApplyImportResult } from '@/domain/import/types'
 import { computeDocument } from '@/lib/Calculations'
+import { toast } from '@/hooks/use-toast'
 import { formatQuotationStatus } from './quotationStatus'
 
 function useIsMobile() {
@@ -318,7 +319,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         ])
 
         if (error || !quotationRow) {
-          alert('Quotation not found.')
+          toast({ title: 'Quotation not found', description: 'Quotation not found.', variant: 'destructive' })
           navigate('/quotations')
           return
         }
@@ -570,7 +571,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       .eq('id', quotationId)
 
     if (error) {
-      alert(`Error saving document options: ${error.message}`)
+      toast({ title: 'Save failed', description: `Error saving document options: ${error.message}`, variant: 'destructive' })
     }
   }
 
@@ -644,7 +645,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
     const { data: savedQuotation, error } = await quoteQuery
     if (error || !savedQuotation) {
-      alert(`Error saving quotation: ${error?.message || 'Unknown error'}`)
+      toast({ title: 'Save failed', description: `Error saving quotation: ${error?.message || 'Unknown error'}`, variant: 'destructive' })
       setSaving(false)
       return
     }
@@ -656,7 +657,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
     const { error: deleteError } = await supabase.from('quotation_items').delete().eq('quotation_id', resolvedId)
     if (deleteError) {
-      alert(`Error clearing quotation items: ${deleteError.message}`)
+      toast({ title: 'Save failed', description: `Error clearing quotation items: ${deleteError.message}`, variant: 'destructive' })
       setSaving(false)
       return
     }
@@ -664,7 +665,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     if (itemRows.length > 0) {
       const { error: itemError } = await supabase.from('quotation_items').insert(itemRows)
       if (itemError) {
-        alert(`Error saving quotation items: ${itemError.message}`)
+        toast({ title: 'Save failed', description: `Error saving quotation items: ${itemError.message}`, variant: 'destructive' })
         setSaving(false)
         return
       }

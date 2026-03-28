@@ -1,3 +1,5 @@
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
 const SUGGESTED_LABELS = [
   'Technical Specification',
   'Warranty Terms',
@@ -45,16 +47,20 @@ export default function AttachmentsPanel({ attachments = [], onChange }) {
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
 
                 {/* Label dropdown */}
-                <select
-                  value={att._isCustom ? 'Custom' : (att.label || '')}
-                  onChange={e => updateRow(idx, 'label', e.target.value)}
-                  style={{ ...inp }}
+                <Select
+                  value={att._isCustom ? 'Custom' : (att.label || '__none__')}
+                  onValueChange={(value) => updateRow(idx, 'label', value === '__none__' ? '' : value)}
                 >
-                  <option value="">— Select label —</option>
-                  {SUGGESTED_LABELS.map(l => (
-                    <option key={l} value={l}>{l}</option>
-                  ))}
-                </select>
+                  <SelectTrigger style={{ ...inp }}>
+                    <SelectValue placeholder="— Select label —" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— Select label —</SelectItem>
+                    {SUGGESTED_LABELS.map(l => (
+                      <SelectItem key={l} value={l}>{l}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
                 {/* Custom label input (only when Custom selected) */}
                 {att._isCustom && (

@@ -27,6 +27,7 @@ import {
 } from '../components/useInvoiceColumns.jsx'
 import { computeDocument } from '../lib/Calculations'
 import { numberToWords } from '../hooks/useInvoiceForm'
+import { toast } from '@/hooks/use-toast'
 
 const invoicePageClassName = 'w-full p-0 max-w-none'
 
@@ -409,7 +410,7 @@ export default function EditInvoice() {
       .eq('id', id)
 
     if (error) {
-      alert('Error saving: ' + error.message)
+      toast({ title: 'Save failed', description: 'Error saving: ' + error.message, variant: 'destructive' })
       setSaving(false)
       return
     }
@@ -420,7 +421,7 @@ export default function EditInvoice() {
 
     const { error: deleteError } = await supabase.from('invoice_items').delete().eq('invoice_id', id)
     if (deleteError) {
-      alert('Error clearing previous items: ' + deleteError.message)
+      toast({ title: 'Save failed', description: 'Error clearing previous items: ' + deleteError.message, variant: 'destructive' })
       setSaving(false)
       return
     }
@@ -428,7 +429,7 @@ export default function EditInvoice() {
     if (itemsToSave.length > 0) {
       const { error: insertError } = await supabase.from('invoice_items').insert(itemsToSave)
       if (insertError) {
-        alert('Error saving items: ' + insertError.message)
+        toast({ title: 'Save failed', description: 'Error saving items: ' + insertError.message, variant: 'destructive' })
         setSaving(false)
         return
       }

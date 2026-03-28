@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { toast } from '@/hooks/use-toast'
 
 const CATEGORIES = ['Residential', 'Commercial', 'Industrial', 'Government', 'NGO', 'Other']
 
@@ -120,7 +122,7 @@ export default function ClientSelector({
 
   const handleSaveNewClient = async () => {
     if (!newClient.name.trim()) {
-      alert('Client name is required')
+      toast({ title: 'Client name required', description: 'Client name is required', variant: 'destructive' })
       return
     }
     setSaving(true)
@@ -144,7 +146,7 @@ export default function ClientSelector({
       .single()
 
     if (error) {
-      alert('Error saving client: ' + error.message)
+      toast({ title: 'Save failed', description: error.message, variant: 'destructive' })
       setSaving(false)
       return
     }
@@ -192,18 +194,19 @@ export default function ClientSelector({
                 </div>
                 <div>
                   <Label>Category</Label>
-                  <select
-                    className="mt-2 h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"
-                    value={newClient.category}
-                    onChange={(e) => updateNew('category', e.target.value)}
-                  >
-                    <option value="">Select category</option>
-                    {CATEGORIES.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={newClient.category || '__none__'} onValueChange={(value) => updateNew('category', value === '__none__' ? '' : value)}>
+                    <SelectTrigger className="mt-2 h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Select category</SelectItem>
+                      {CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

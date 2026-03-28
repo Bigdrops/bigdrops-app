@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
+import { toast } from '@/hooks/use-toast'
 import {
   CONDITION_OPTIONS,
   WAYBILL_COLUMN_LIMIT,
@@ -136,9 +137,9 @@ Rules:
   const copyPrompt = async () => {
     try {
       await navigator.clipboard.writeText(prompt)
-      alert('Waybill AI prompt copied.')
+      toast({ title: 'Copied', description: 'Waybill AI prompt copied.' })
     } catch {
-      alert('Could not copy prompt.')
+      toast({ title: 'Copy failed', description: 'Could not copy prompt.', variant: 'destructive' })
     }
   }
 
@@ -252,7 +253,7 @@ function SignatureField({
     const path = `${role}_sig_${Date.now()}.${ext}`
     const { error } = await supabase.storage.from('signatures').upload(path, file, { upsert: true })
     if (error) {
-      alert(`Upload failed: ${error.message}`)
+      toast({ title: 'Upload failed', description: `Upload failed: ${error.message}`, variant: 'destructive' })
       setUploading(false)
       return
     }
@@ -456,7 +457,11 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
 
   const addCustomColumn = () => {
     if (customColumns.length >= WAYBILL_COLUMN_LIMIT) {
-      alert(`Keep waybill custom columns to ${WAYBILL_COLUMN_LIMIT} or fewer so the PDF stays readable.`)
+      toast({
+        title: 'Column limit reached',
+        description: `Keep waybill custom columns to ${WAYBILL_COLUMN_LIMIT} or fewer so the PDF stays readable.`,
+        variant: 'destructive',
+      })
       return
     }
     const nextColumn = { key: createCustomColumnKey(`custom_${Date.now()}`), label: `Custom ${customColumns.length + 1}` }
@@ -490,7 +495,7 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
 
   const handleImport = (text: string) => {
     if (!text.trim()) {
-      alert('Paste JSON before importing.')
+      toast({ title: 'Paste JSON', description: 'Paste JSON before importing.', variant: 'destructive' })
       return
     }
 
@@ -505,7 +510,11 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
       setImportOpen(false)
       if (imported.type !== waybill.type && !isEdit) void ensureNextNumber(imported.type)
     } catch (importError) {
-      alert(importError instanceof Error ? importError.message : 'Could not parse the waybill JSON.')
+      toast({
+        title: 'Import failed',
+        description: importError instanceof Error ? importError.message : 'Could not parse the waybill JSON.',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -651,9 +660,9 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
                     onClick={async () => {
                       try {
                         await navigator.clipboard.writeText(waybill.waybill_number)
-                        alert('Waybill number copied.')
+                        toast({ title: 'Copied', description: 'Waybill number copied.' })
                       } catch {
-                        alert('Could not copy waybill number.')
+                        toast({ title: 'Copy failed', description: 'Could not copy waybill number.', variant: 'destructive' })
                       }
                     }}
                   >

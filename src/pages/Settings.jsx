@@ -134,7 +134,7 @@ function CompanySection({ onToast }) {
       setEditing(false)
       onToast('Company info saved')
       setTimeout(() => setSaved(false), 2500)
-    } catch (e) { alert('Save failed: ' + e.message) }
+    } catch (e) { onToast('Save failed: ' + e.message) }
     setSaving(false)
   }
 
@@ -264,7 +264,7 @@ function BankingSection({ onToast }) {
       .order('bank_name', { ascending: true })
 
     if (error) {
-      alert(`Failed to load bank accounts: ${error.message}`)
+      onToast(`Failed to load bank accounts: ${error.message}`)
       setAccounts([])
     } else {
       setAccounts(data || [])
@@ -304,7 +304,7 @@ function BankingSection({ onToast }) {
 
   const saveAccount = async () => {
     if (!form.bank_name || !form.account_name || !form.account_number) {
-      alert('Bank name, account name, and account number are required')
+      onToast('Bank name, account name, and account number are required')
       return
     }
 
@@ -336,7 +336,7 @@ function BankingSection({ onToast }) {
       closeForm()
       onToast(editingId ? 'Bank account updated' : 'Bank account added')
     } catch (e) {
-      alert(e.message)
+      onToast(e.message)
     }
     setSaving(false)
   }
@@ -345,7 +345,7 @@ function BankingSection({ onToast }) {
     setActionId(`delete:${id}`)
     const { error } = await supabase.from('bank_accounts').delete().eq('id', id)
     if (error) {
-      alert(`Delete failed: ${error.message}`)
+      onToast(`Delete failed: ${error.message}`)
       setActionId(null)
       return
     }
@@ -358,14 +358,14 @@ function BankingSection({ onToast }) {
     setActionId(`default:${id}`)
     const { error: resetError } = await supabase.from('bank_accounts').update({ is_default: false }).neq('id', id)
     if (resetError) {
-      alert(`Default update failed: ${resetError.message}`)
+      onToast(`Default update failed: ${resetError.message}`)
       setActionId(null)
       return
     }
 
     const { error } = await supabase.from('bank_accounts').update({ is_default: true }).eq('id', id)
     if (error) {
-      alert(`Default update failed: ${error.message}`)
+      onToast(`Default update failed: ${error.message}`)
       setActionId(null)
       return
     }
@@ -528,7 +528,7 @@ function BrandingSection({ onToast }) {
       const url = await uploadFile('logos', path, file)
       u(type + '_url', url)
       onToast('Logo uploaded')
-    } catch (e) { alert('Upload failed: ' + e.message) }
+    } catch (e) { onToast('Upload failed: ' + e.message) }
     setUploading(p => ({ ...p, [type]: false }))
   }
 
@@ -540,7 +540,7 @@ function BrandingSection({ onToast }) {
       setEditing(false)
       onToast('Branding saved')
       setTimeout(() => setSaved(false), 2500)
-    } catch (e) { alert(e.message) }
+    } catch (e) { onToast(e.message) }
     setSaving(false)
   }
 
@@ -664,7 +664,7 @@ function SignatoriesSection({ onToast }) {
       .order('name', { ascending: true })
 
     if (error) {
-      alert(`Failed to load signatories: ${error.message}`)
+      onToast(`Failed to load signatories: ${error.message}`)
       setItems([])
     } else {
       setItems(data || [])
@@ -710,14 +710,14 @@ function SignatoriesSection({ onToast }) {
       updateForm('signature_url', url)
       onToast('Signature uploaded')
     } catch (e) {
-      alert(`Upload failed: ${e.message}`)
+      onToast(`Upload failed: ${e.message}`)
     }
     setUploading(false)
   }
 
   const saveSignatory = async () => {
     if (!form.name.trim()) {
-      alert('Name is required')
+      onToast('Name is required')
       return
     }
 
@@ -732,7 +732,7 @@ function SignatoriesSection({ onToast }) {
       : await supabase.from('signatories').insert(payload)
 
     if (result.error) {
-      alert(`Save failed: ${result.error.message}`)
+      onToast(`Save failed: ${result.error.message}`)
       setSaving(false)
       return
     }
@@ -747,7 +747,7 @@ function SignatoriesSection({ onToast }) {
     setActionId(id)
     const { error } = await supabase.from('signatories').delete().eq('id', id)
     if (error) {
-      alert(`Delete failed: ${error.message}`)
+      onToast(`Delete failed: ${error.message}`)
       setActionId(null)
       return
     }
@@ -1196,7 +1196,7 @@ function ArchivesSection({ onToast }) {
     setRestoringId(`${entity}:${id}`)
     const { error } = await supabase.from(entity).update({ archived_at: null }).eq('id', id)
     if (error) {
-      alert(`Restore failed: ${error.message}`)
+      onToast(`Restore failed: ${error.message}`)
       setRestoringId(null)
       return
     }
@@ -1590,15 +1590,19 @@ function AdminSection({ onToast, session }) {
                     <span className="ml-auto text-[10px] font-black bg-blue-50 text-blue-600 px-2 py-1 rounded-full">Assigned</span>
                   )}
                 </div>
-                <select
-                  value={device?.user_id || ''}
-                  onChange={e => assignDevice(code, e.target.value)}
+                <Select
+                  value={device?.user_id || '__unassigned__'}
+                  onValueChange={value => assignDevice(code, value === '__unassigned__' ? '' : value)}
                   disabled={actionId === code}
-                  className="w-full text-sm border border-input rounded-lg px-3 py-2 text-slate-700 bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring/10"
                 >
-                  <option value="">— Unassign —</option>
-                  {users.map(u => <option key={u.id} value={u.id}>{u.email}</option>)}
-                </select>
+                  <SelectTrigger className="w-full text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__unassigned__">— Unassign —</SelectItem>
+                    {users.map(u => <SelectItem key={u.id} value={u.id}>{u.email}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             )
           })}

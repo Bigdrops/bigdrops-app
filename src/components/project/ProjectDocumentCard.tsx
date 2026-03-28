@@ -59,7 +59,7 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
       await navigator.clipboard.writeText(rawJson)
       toast({ title: 'Copied', description: 'Document JSON copied.' })
     } catch {
-      alert('Could not copy JSON.')
+      toast({ title: 'Copy failed', description: 'Could not copy JSON.', variant: 'destructive' })
     }
   }
 

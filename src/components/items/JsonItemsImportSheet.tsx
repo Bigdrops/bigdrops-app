@@ -98,7 +98,7 @@ export default function JsonItemsImportSheet({
       await navigator.clipboard.writeText(adapter.prompts[mode])
       toast({ title: 'Copied', description: `${adapter.documentType === 'invoice' ? 'Invoice' : 'Quotation'} prompt copied.` })
     } catch {
-      alert('Could not copy prompt.')
+      toast({ title: 'Copy failed', description: 'Could not copy prompt.', variant: 'destructive' })
     }
   }
 
@@ -110,7 +110,7 @@ export default function JsonItemsImportSheet({
     })
 
     if (resolvedResult.ok === false) {
-      alert(resolvedResult.message)
+      toast({ title: 'Import blocked', description: resolvedResult.message, variant: 'destructive' })
       return
     }
 
@@ -143,25 +143,25 @@ export default function JsonItemsImportSheet({
 
   const handleStartImport = () => {
     if (!pastedText.trim()) {
-      alert('Paste JSON before importing.')
+      toast({ title: 'Paste JSON', description: 'Paste JSON before importing.', variant: 'destructive' })
       return
     }
 
     const parsed = parseImportText(pastedText, mode)
     if (parsed.ok === false) {
-      alert(parsed.error.message)
+      toast({ title: 'Invalid JSON', description: parsed.error.message, variant: 'destructive' })
       return
     }
 
     const normalized = normalizeImportData(parsed.data, mode)
     if (normalized.ok === false) {
-      alert(normalized.message)
+      toast({ title: 'Import failed', description: normalized.message, variant: 'destructive' })
       return
     }
 
     const validatedResult = validateImportData(mode, normalized.data, items)
     if (validatedResult.ok === false) {
-      alert(validatedResult.message)
+      toast({ title: 'Import failed', description: validatedResult.message, variant: 'destructive' })
       return
     }
 
@@ -194,7 +194,7 @@ export default function JsonItemsImportSheet({
     })
 
     if (resolvedResult.ok === false) {
-      alert(resolvedResult.message)
+      toast({ title: 'Import blocked', description: resolvedResult.message, variant: 'destructive' })
       return
     }
 

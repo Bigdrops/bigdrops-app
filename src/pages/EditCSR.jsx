@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from '@/hooks/use-toast'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -123,7 +124,7 @@ export default function EditCSR() {
           .single()
 
         if (error) {
-          alert('Error loading CSR: ' + error.message)
+          toast({ title: 'Load failed', description: error.message, variant: 'destructive' })
           navigate('/csr')
           return
         }
@@ -168,7 +169,7 @@ export default function EditCSR() {
 
   const handleSave = async () => {
     if (!csr.client_id) {
-      alert('Please select a client before saving')
+      toast({ title: 'Client required', description: 'Please select a client before saving', variant: 'destructive' })
       return
     }
 
@@ -185,7 +186,7 @@ export default function EditCSR() {
       .eq('csr_number', csrData.csr_number)
 
     if ((existing || []).some((item) => String(item.id) !== String(id))) {
-      alert('CSR number already exists. Please use a different number.')
+      toast({ title: 'Duplicate CSR number', description: 'CSR number already exists. Please use a different number.', variant: 'destructive' })
       return
     }
 
@@ -197,7 +198,7 @@ export default function EditCSR() {
       .eq('id', id)
 
     if (error) {
-      alert('Error: ' + error.message)
+      toast({ title: 'Save failed', description: error.message, variant: 'destructive' })
       setSaving(false)
       return
     }

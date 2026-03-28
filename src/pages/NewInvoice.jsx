@@ -23,6 +23,7 @@ import {
 } from '../components/useInvoiceColumns.jsx'
 import { computeDocument } from '../lib/Calculations'
 import { numberToWords } from '../hooks/useInvoiceForm'
+import { toast } from '@/hooks/use-toast'
 
 const invoicePageClassName = 'w-full p-0 max-w-none'
 
@@ -367,7 +368,7 @@ export default function NewInvoice() {
       .single()
 
     if (error) {
-      alert('Error saving: ' + error.message)
+      toast({ title: 'Save failed', description: 'Error saving: ' + error.message, variant: 'destructive' })
       setSaving(false)
       return
     }
