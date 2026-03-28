@@ -1,12 +1,77 @@
-import { useState } from 'react'
-import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { useMemo, useState } from 'react'
+import { ChevronDown, ChevronUp, Minus, Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 
-const labelCls = 'text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500'
-const inputCls = 'h-10 rounded-2xl border-zinc-200 bg-white text-sm'
+const sectionLabelCls = 'mb-3 flex items-center gap-2 px-0.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#64748b]'
+const inputCls =
+  'h-11 rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 text-[14px] text-[#0f172a] shadow-none transition focus:border-[#94a3b8] focus:bg-white focus:ring-0 focus-visible:ring-0'
+const cardCls =
+  'rounded-[20px] border border-[#e2e8f0] bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]'
+
+function formatCurrency(value) {
+  return `NGN ${Number(value || 0).toLocaleString()}`
+}
+
+function SectionHeader({ color, label }) {
+  return (
+    <div className={sectionLabelCls}>
+      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+      <span>{label}</span>
+    </div>
+  )
+}
+
+function CollapseCard({ color, title, subtitle, open, onToggle, children }) {
+  return (
+    <div className={cardCls}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left"
+      >
+        <div>
+          <div className="text-[14px] font-bold text-[#0f172a]">{title}</div>
+          <div className="mt-0.5 text-[11px] text-[#64748b]">{subtitle}</div>
+        </div>
+        <div
+          className="flex h-9 w-9 items-center justify-center rounded-full"
+          style={{ backgroundColor: color }}
+        >
+          {open ? (
+            <ChevronUp className="h-4 w-4 text-white" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-white" />
+          )}
+        </div>
+      </button>
+
+      {open ? <div className="border-t border-[#e2e8f0] px-4 pb-4 pt-4">{children}</div> : null}
+    </div>
+  )
+}
+
+function Segment({ value, onChange, options }) {
+  return (
+    <div className="flex gap-[3px] rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] p-[3px]">
+      {options.map((option) => {
+        const active = value === option.value
+        return (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onChange(option.value)}
+            className={`h-9 flex-1 rounded-[9px] text-[12px] font-extrabold transition ${
+              active ? 'bg-[#0f172a] text-white' : 'text-[#64748b]'
+            }`}
+          >
+            {option.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 export default function TotalsPanel({
   rawSubtotal,
@@ -41,227 +106,238 @@ export default function TotalsPanel({
   amountInWords,
 }) {
   const [showCharges, setShowCharges] = useState(true)
+  const [showDiscount, setShowDiscount] = useState(true)
+  const [showWht, setShowWht] = useState(true)
 
-  const summaryRows = [
-    { label: 'Subtotal', value: rawSubtotal },
-    installRateTotal > 0 ? { label: 'Install Rate Total', value: installRateTotal } : null,
-    vatAmount > 0 ? { label: 'VAT', value: vatAmount } : null,
-    discountAmount > 0 ? { label: 'Discount', value: -discountAmount } : null,
-    whtAmount > 0 ? { label: 'WHT', value: -whtAmount } : null,
-  ].filter(Boolean)
+  const summaryRows = useMemo(
+    () =>
+      [
+        { label: 'Subtotal', value: rawSubtotal },
+        installRateTotal > 0 ? { label: 'Install Rate', value: installRateTotal } : null,
+        workmanship > 0 ? { label: chargeLabels.workmanship || 'Workmanship', value: workmanship } : null,
+        transportation > 0 ? { label: chargeLabels.transportation || 'Transportation', value: transportation } : null,
+        shipping > 0 ? { label: chargeLabels.shipping || 'Shipping', value: shipping } : null,
+        discountAmount > 0 ? { label: 'Discount', value: -discountAmount, negative: true } : null,
+        { label: 'VAT', value: vatAmount },
+        whtAmount > 0 ? { label: 'WHT', value: -whtAmount, negative: true } : null,
+      ].filter(Boolean),
+    [
+      chargeLabels.shipping,
+      chargeLabels.transportation,
+      chargeLabels.workmanship,
+      discountAmount,
+      installRateTotal,
+      rawSubtotal,
+      shipping,
+      transportation,
+      vatAmount,
+      workmanship,
+      whtAmount,
+    ],
+  )
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-[24px] border border-zinc-200 bg-card ring-0 shadow-none">
-        <CardContent className="space-y-3 p-4 sm:p-6">
-          <div>
-            <h3 className="text-sm font-medium text-foreground">Totals</h3>
-          </div>
-
-          <div className="space-y-1 rounded-[20px] border border-zinc-200 bg-zinc-50/80 p-3">
+      <div>
+        <SectionHeader color="#059669" label="Summary" />
+        <div className={`${cardCls} p-4`}>
+          <div className="space-y-3">
             {summaryRows.map((row) => (
-              <div key={row.label} className="flex items-center justify-between py-1.5 text-sm">
-                <span className="text-zinc-600">{row.label}</span>
-                <span className={`font-semibold ${row.value < 0 ? 'text-red-600' : 'text-zinc-900'}`}>
-                  {row.value < 0 ? '-' : ''}NGN {Math.abs(Number(row.value || 0)).toLocaleString()}
+              <div key={row.label} className="flex items-center justify-between gap-3 text-[14px]">
+                <span className="text-[#64748b]">{row.label}</span>
+                <span className={`font-bold ${row.negative ? 'text-[#dc2626]' : 'text-[#0f172a]'}`}>
+                  {row.negative ? '-' : ''}
+                  {formatCurrency(Math.abs(Number(row.value || 0)))}
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="rounded-[22px] bg-zinc-900 p-4 text-white">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-[11px] uppercase tracking-[0.18em] text-zinc-400">Total Payable</span>
-              <span className="text-2xl font-bold text-emerald-400">NGN {Number(totalPayable || 0).toLocaleString()}</span>
+          <div className="mt-4 rounded-[18px] bg-[#0f172a] px-4 py-5 text-white">
+            <div className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">
+              Total Payable
             </div>
-            <div className="mt-3 flex items-center justify-between border-t border-zinc-700 pt-3 text-xs text-zinc-400">
+            <div className="mt-2 text-[36px] font-black leading-none tracking-[-0.04em] text-[#34d399]">
+              {formatCurrency(totalPayable)}
+            </div>
+            <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-[12px] text-[#cbd5e1]">
               <span>Grand Total</span>
-              <span>NGN {Number(grandTotal || 0).toLocaleString()}</span>
+              <span>{formatCurrency(grandTotal)}</span>
             </div>
             {amountInWords ? (
-              <p className="mt-3 border-t border-zinc-700 pt-3 text-[11px] italic text-zinc-400">{amountInWords}</p>
+              <div className="mt-3 border-t border-white/10 pt-3 text-[12px] italic text-[#cbd5e1]">
+                {amountInWords}
+              </div>
             ) : null}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card className="rounded-[24px] border border-zinc-200 bg-card ring-0 shadow-none">
-        <CardContent className="space-y-4 p-4 sm:p-6">
-          <div>
-            <h3 className="text-sm font-medium text-foreground">Tax & Discount Settings</h3>
-          </div>
+      <div>
+        <SectionHeader color="#d97706" label="Adjustments" />
+        <CollapseCard
+          color="#d97706"
+          title="Charges & Adjustments"
+          subtitle="Update commercial extras and taxable add-ons"
+          open={showCharges}
+          onToggle={() => setShowCharges((current) => !current)}
+        >
+          <div className="space-y-3">
+            {[
+              ['workmanship', workmanship, onWorkmanshipChange],
+              ['transportation', transportation, onTransportationChange],
+              ['shipping', shipping, onShippingChange],
+            ].map(([key, value, onChange]) => (
+              <div key={key} className="grid grid-cols-[minmax(0,1fr)_120px] gap-2 max-[520px]:grid-cols-1">
+                <Input
+                  value={chargeLabels[key] || ''}
+                  onChange={(event) => onChargeLabelChange(key, event.target.value)}
+                  placeholder={key}
+                  className={inputCls}
+                />
+                <Input
+                  type="number"
+                  min="0"
+                  value={value}
+                  onChange={(event) => onChange(Number(event.target.value))}
+                  className={`${inputCls} text-right`}
+                />
+              </div>
+            ))}
 
-          <div className="overflow-hidden rounded-[20px] border border-zinc-200 bg-zinc-50/40">
-            <button
-              type="button"
-              onClick={() => setShowCharges((current) => !current)}
-              className="flex w-full items-center justify-between px-4 py-3 text-left"
-            >
-              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-600">Charges & Adjustments</span>
-              {showCharges ? <ChevronUp className="h-4 w-4 text-zinc-400" /> : <ChevronDown className="h-4 w-4 text-zinc-400" />}
-            </button>
+            <div className="pt-1">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">
+                  Extra Charges
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onAddExtraCharge(true)}
+                  className="inline-flex h-8 items-center gap-2 rounded-full border-[1.5px] border-[#e2e8f0] bg-white px-[13px] text-[12px] font-bold text-[#334155]"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Charge
+                </button>
+              </div>
 
-            {showCharges ? (
-              <div className="space-y-3 border-t border-zinc-200 bg-card p-4">
-                {[
-                  ['workmanship', workmanship, onWorkmanshipChange],
-                  ['transportation', transportation, onTransportationChange],
-                  ['shipping', shipping, onShippingChange],
-                ].map(([key, value, onChange]) => (
-                  <div key={key} className="grid grid-cols-[minmax(0,1fr)_120px] gap-2">
+              <div className="space-y-2">
+                {extraCharges.map((charge) => (
+                  <div
+                    key={charge.id}
+                    className="grid grid-cols-[minmax(0,1.35fr)_108px_92px_42px] items-center gap-2 max-[520px]:grid-cols-1"
+                  >
                     <Input
-                      value={chargeLabels[key]}
-                      onChange={(e) => onChargeLabelChange(key, e.target.value)}
-                      placeholder={key}
+                      value={charge.label || ''}
+                      onChange={(event) => onUpdateExtraCharge(charge.id, 'label', event.target.value)}
+                      placeholder="Charge label"
                       className={inputCls}
                     />
                     <Input
                       type="number"
                       min="0"
-                      value={value}
-                      onChange={(e) => onChange(Number(e.target.value))}
-                      className={inputCls}
+                      value={charge.value || 0}
+                      onChange={(event) => onUpdateExtraCharge(charge.id, 'value', Number(event.target.value))}
+                      className={`${inputCls} text-right`}
                     />
+                    <div className="flex h-11 items-center justify-between rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3">
+                      <span className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">
+                        VAT
+                      </span>
+                      <Switch
+                        checked={charge.withTax !== false}
+                        onCheckedChange={(value) => onUpdateExtraCharge(charge.id, 'withTax', value)}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onRemoveExtraCharge(charge.id)}
+                      className="flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#fecaca] bg-[#fff5f5] text-[#ef4444]"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 ))}
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className={labelCls}>Extra Charges</span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-8 rounded-xl border-zinc-200 bg-zinc-900 px-3 text-xs text-white hover:bg-zinc-800 hover:text-white"
-                      onClick={() => onAddExtraCharge(true)}
-                    >
-                      <Plus className="mr-1 h-3.5 w-3.5" />
-                      Add Charge
-                    </Button>
-                  </div>
-
-                  {extraCharges.map((charge) => (
-                    <div key={charge.id} className="grid grid-cols-[minmax(0,1fr)_92px_auto_auto] items-center gap-2">
-                      <Input
-                        value={charge.label || ''}
-                        onChange={(e) => onUpdateExtraCharge(charge.id, 'label', e.target.value)}
-                        placeholder="Charge label"
-                        className={inputCls}
-                      />
-                      <Input
-                        type="number"
-                        min="0"
-                        value={charge.value || 0}
-                        onChange={(e) => onUpdateExtraCharge(charge.id, 'value', Number(e.target.value))}
-                        className={inputCls}
-                      />
-                      <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2">
-                        <Switch
-                          checked={charge.withTax !== false}
-                          onCheckedChange={(value) => onUpdateExtraCharge(charge.id, 'withTax', value)}
-                        />
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">VAT</span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-10 w-10 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600"
-                        onClick={() => onRemoveExtraCharge(charge.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="rounded-[20px] border border-zinc-200 bg-zinc-50/40 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <span className={labelCls}>Discount</span>
-              <div className="flex overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-0.5">
-                <button
-                  type="button"
-                  onClick={() => onDiscountTypeChange('percent')}
-                  className={`rounded-[10px] px-3 py-1.5 text-[11px] font-medium transition-colors ${discountType === 'percent' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
-                >
-                  %
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDiscountTypeChange('fixed')}
-                  className={`rounded-[10px] px-3 py-1.5 text-[11px] font-medium transition-colors ${discountType === 'fixed' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
-                >
-                  NGN
-                </button>
               </div>
             </div>
-
-            <div className="mt-3 flex overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-0.5">
-              <button
-                type="button"
-                onClick={() => onDiscountTimingChange('before')}
-                className={`flex-1 rounded-[10px] px-3 py-2 text-[11px] font-medium transition-colors ${discountTiming === 'before' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
-              >
-                Before Tax
-              </button>
-              <button
-                type="button"
-                onClick={() => onDiscountTimingChange('after')}
-                className={`flex-1 rounded-[10px] px-3 py-2 text-[11px] font-medium transition-colors ${discountTiming === 'after' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
-              >
-                After Tax
-              </button>
-            </div>
-
-            <div className="mt-3 flex items-center gap-3">
-              <Input
-                type="number"
-                min="0"
-                value={discountValue}
-                onChange={(e) => onDiscountValueChange(Number(e.target.value))}
-                className={inputCls}
-              />
-              {discountAmount > 0 ? <span className="text-xs text-red-600">-NGN {Number(discountAmount).toLocaleString()}</span> : null}
-            </div>
           </div>
+        </CollapseCard>
+      </div>
 
-          <div className="rounded-[20px] border border-zinc-200 bg-zinc-50/40 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <span className={labelCls}>WHT</span>
-              <div className="flex overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-0.5">
-                <button
-                  type="button"
-                  onClick={() => onWhtTypeChange('percent')}
-                  className={`rounded-[10px] px-3 py-1.5 text-[11px] font-medium transition-colors ${whtType === 'percent' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
-                >
-                  %
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onWhtTypeChange('fixed')}
-                  className={`rounded-[10px] px-3 py-1.5 text-[11px] font-medium transition-colors ${whtType === 'fixed' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-white hover:text-zinc-900'}`}
-                >
-                  NGN
-                </button>
-              </div>
+      <CollapseCard
+        color="#7c3aed"
+        title="Discount"
+        subtitle="Choose how discount is applied"
+        open={showDiscount}
+        onToggle={() => setShowDiscount((current) => !current)}
+      >
+        <div className="space-y-3">
+          <Segment
+            value={discountType}
+            onChange={onDiscountTypeChange}
+            options={[
+              { value: 'percent', label: '%' },
+              { value: 'fixed', label: 'NGN' },
+            ]}
+          />
+          <Segment
+            value={discountTiming}
+            onChange={onDiscountTimingChange}
+            options={[
+              { value: 'before', label: 'Before Tax' },
+              { value: 'after', label: 'After Tax' },
+            ]}
+          />
+          <Input
+            type="number"
+            min="0"
+            value={discountValue}
+            onChange={(event) => onDiscountValueChange(Number(event.target.value))}
+            className={inputCls}
+          />
+          {discountAmount > 0 ? (
+            <div className="flex items-center justify-between rounded-[14px] border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-[13px] font-bold text-[#dc2626]">
+              <span>Discount Amount</span>
+              <span>-{formatCurrency(discountAmount)}</span>
             </div>
-            <div className="mt-3 flex items-center gap-3">
-              <Input
-                type="number"
-                min="0"
-                value={whtValue}
-                onChange={(e) => onWhtValueChange(Number(e.target.value))}
-                className={inputCls}
-              />
-              {whtAmount > 0 ? <span className="text-xs text-zinc-500">-NGN {Number(whtAmount).toLocaleString()}</span> : null}
+          ) : null}
+        </div>
+      </CollapseCard>
+
+      <CollapseCard
+        color="#2563eb"
+        title="WHT"
+        subtitle="Deduct withholding tax from payable amount"
+        open={showWht}
+        onToggle={() => setShowWht((current) => !current)}
+      >
+        <div className="space-y-3">
+          <Segment
+            value={whtType}
+            onChange={onWhtTypeChange}
+            options={[
+              { value: 'percent', label: '%' },
+              { value: 'fixed', label: 'NGN' },
+            ]}
+          />
+          <Input
+            type="number"
+            min="0"
+            value={whtValue}
+            onChange={(event) => onWhtValueChange(Number(event.target.value))}
+            className={inputCls}
+          />
+          {whtAmount > 0 ? (
+            <div className="flex items-center justify-between rounded-[14px] border border-[#fee2e2] bg-[#fff1f2] px-3 py-2 text-[13px] font-bold text-[#be123c]">
+              <span>WHT Amount</span>
+              <span>-{formatCurrency(whtAmount)}</span>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">WHT is deducted from the payable amount, not added to the total.</p>
+          ) : null}
+          <div className="flex items-start gap-2 rounded-[14px] border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3 text-[12px] text-[#64748b]">
+            <Minus className="mt-0.5 h-4 w-4 shrink-0 text-[#94a3b8]" />
+            WHT is deducted from the payable amount
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapseCard>
     </div>
   )
 }

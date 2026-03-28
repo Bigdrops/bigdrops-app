@@ -1,8 +1,10 @@
-import { Plus, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Layers3, Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import MobileItemCard from './MobileItemCard'
+
+const inputCls =
+  'h-11 rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 text-[14px] font-bold text-[#0f172a] shadow-none transition focus:border-[#94a3b8] focus:bg-white focus:ring-0 focus-visible:ring-0'
 
 export default function MobileGroupCard({
   group,
@@ -23,49 +25,59 @@ export default function MobileGroupCard({
   getComputedAmount,
 }) {
   return (
-    <div className="overflow-hidden rounded-[24px] border border-zinc-200 bg-card shadow-none">
-      <div className="border-b border-zinc-200 bg-zinc-100/70 px-3.5 py-3">
-        <div className="flex items-center gap-3">
-          <Input
-            value={group.name || ''}
-            onChange={(e) => onUpdateGroupName(group.id, e.target.value)}
-            placeholder="Group name"
-            className="h-10 flex-1 rounded-2xl border-zinc-200 bg-background text-sm font-semibold text-zinc-900 placeholder:text-zinc-400"
-          />
-
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-card px-3 py-2">
-              <Switch checked={!!group.showSubtotal} onCheckedChange={() => onToggleGroupSubtotal(group.id)} />
-              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Subtotal</span>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600"
-              onClick={() => onDeleteGroup(group.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+    <div className="relative mt-4 overflow-hidden rounded-[18px] border-[1.5px] border-[#e2e8f0] border-l-[3px] border-l-[#f59e0b] bg-white pt-[10px] shadow-[0_1px_3px_rgba(15,23,42,0.04),0_6px_18px_rgba(15,23,42,0.05)]">
+      <div className="absolute left-1/2 top-[-14px] z-[3] flex h-[30px] min-w-[30px] -translate-x-1/2 items-center justify-center rounded-full bg-[#f59e0b] px-[10px] text-[11px] font-extrabold text-white shadow-[0_4px_12px_rgba(15,23,42,0.2)]">
+        G
       </div>
 
-      {group.showSubtotal ? (
-        <div className="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm">
-          <span className="text-zinc-600">Group subtotal</span>
-          <span className="font-bold text-zinc-900">NGN {Number(groupSubtotal || 0).toLocaleString()}</span>
-        </div>
-      ) : null}
+      <button
+        type="button"
+        onClick={() => onDeleteGroup(group.id)}
+        className="absolute right-[10px] top-[10px] z-[2] flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[#fecaca] bg-[#fff5f5] text-[#ef4444]"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
 
-      <div className="space-y-3 bg-zinc-50/60 p-3">
-        {items.length === 0 ? (
-          <div className="rounded-[20px] border border-dashed border-zinc-300 bg-card px-4 py-6 text-center text-sm text-zinc-500">
-            No items in this group yet.
+      <div className="space-y-3 p-4 pr-[38px]">
+        <Input
+          value={group.name || ''}
+          onChange={(event) => onUpdateGroupName(group.id, event.target.value)}
+          placeholder="Group name"
+          className={inputCls}
+        />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            className={`inline-flex h-[34px] items-center gap-2 rounded-[10px] border-[1.5px] px-3 text-[11px] font-extrabold uppercase tracking-[0.04em] transition ${
+              group.showSubtotal
+                ? 'border-[#0f172a] bg-[#0f172a] text-white'
+                : 'border-[#e2e8f0] bg-white text-[#475569]'
+            }`}
+          >
+            <Layers3 className="h-3.5 w-3.5" />
+            Subtotal
+            <Switch checked={!!group.showSubtotal} onCheckedChange={() => onToggleGroupSubtotal(group.id)} />
           </div>
-        ) : (
-          items.map(({ item, index, number, isFirst, isLast }) => {
-            return (
+        </div>
+
+        {group.showSubtotal ? (
+          <div className="rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-4 py-3">
+            <div className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">
+              Group Subtotal
+            </div>
+            <div className="mt-1 text-[24px] font-black leading-none tracking-[-0.03em] text-[#0f172a]">
+              NGN {Number(groupSubtotal || 0).toLocaleString()}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="space-y-0">
+          {items.length === 0 ? (
+            <div className="rounded-[16px] border-[1.5px] border-dashed border-[#fcd34d] bg-[#fffbeb] px-4 py-6 text-center text-[13px] text-[#a16207]">
+              No items in this group yet.
+            </div>
+          ) : (
+            items.map(({ item, index, number, isFirst, isLast }) => (
               <MobileItemCard
                 key={item._uiKey || item.id || index}
                 item={item}
@@ -85,17 +97,17 @@ export default function MobileGroupCard({
                 isVisible={isVisible}
                 getColumn={getColumn}
               />
-            )
-          })
-        )}
+            ))
+          )}
+        </div>
       </div>
 
       <button
         type="button"
         onClick={() => onAddItemToGroup(group.id)}
-        className="flex w-full items-center justify-center gap-1.5 border-t border-zinc-200 bg-zinc-100/70 py-3 text-xs font-semibold text-zinc-700 transition-colors hover:bg-zinc-200/70 active:bg-zinc-200"
+        className="flex w-full items-center justify-center gap-2 border-t border-dashed border-[#fcd34d] bg-[#fffbeb] py-3 text-[12px] font-bold text-[#b45309]"
       >
-        <Plus className="h-3.5 w-3.5" />
+        <Plus className="h-4 w-4" />
         Add item to group
       </button>
     </div>
