@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 
 import { supabase } from '../supabase'
@@ -9,6 +9,7 @@ import {
 } from '../components/csr/csrUtils'
 import CSRPreviewPanel from '../components/csr/CSRPreviewPanel'
 import { toast } from '@/hooks/use-toast'
+import { DocumentActionSheet } from '@/components/document/DocumentViewShell'
 
 export default function ViewCSR() {
   const { id } = useParams()
@@ -34,18 +35,6 @@ export default function ViewCSR() {
       if (data) setSettings(data)
     })
   }, [id])
-
-  const moreRef = useRef(null)
-
-  useEffect(() => {
-    const handlePointerDown = (event) => {
-      if (moreRef.current && !moreRef.current.contains(event.target)) {
-        setShowMore(false)
-      }
-    }
-    document.addEventListener('mousedown', handlePointerDown)
-    return () => document.removeEventListener('mousedown', handlePointerDown)
-  }, [])
 
   useEffect(() => {
     try {
@@ -86,6 +75,27 @@ export default function ViewCSR() {
     }
   }
 
+  const moreActions = [
+    {
+      label: 'Copy CSR Number',
+      subtitle: previewData.csr_number || 'Copy the current CSR number',
+      action: () => handleCopy(previewData.csr_number || '', 'CSR number'),
+      iconKey: 'copy',
+    },
+    {
+      label: 'Copy Client Name',
+      subtitle: previewData.client_name || 'Copy the linked client name',
+      action: () => handleCopy(previewData.client_name || '', 'Client name'),
+      iconKey: 'copy',
+    },
+    {
+      label: 'Open Edit Screen',
+      subtitle: 'Continue editing this CSR',
+      action: () => navigate('/csr/edit/' + id),
+      iconKey: 'open',
+    },
+  ]
+
   return (
     <Layout title={previewData.csr_number}>
       <div style={{ maxWidth: '900px', width: '100%' }}>
@@ -114,28 +124,10 @@ export default function ViewCSR() {
               <button type="button" onClick={() => navigate('/csr')} style={{ padding: '9px 16px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', border: '1px solid #d1d5db', backgroundColor: 'white', fontWeight: '600', color: '#0F172A' }}>Back</button>
               <button type="button" onClick={handleDownload} style={{ padding: '10px 18px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', backgroundColor: '#0056B3', color: 'white', fontWeight: '700', border: 'none', boxShadow: '0 10px 24px rgba(0, 86, 179, 0.18)' }}>Download PDF</button>
               <button type="button" onClick={() => navigate('/csr/edit/' + id)} style={{ display: 'none' }}>Edit CSR</button>
-              <div ref={moreRef} style={{ position: 'relative' }}>
-                <button type="button" onClick={() => setShowMore((open) => !open)} style={{ padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', border: '1px solid #CBD5E1', backgroundColor: 'white', fontWeight: '700', color: '#0F172A' }}>
+              <div>
+                <button type="button" onClick={() => setShowMore(true)} style={{ padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', border: '1px solid #CBD5E1', backgroundColor: 'white', fontWeight: '700', color: '#0F172A' }}>
                   More actions
                 </button>
-                {showMore ? (
-                  <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', minWidth: '190px', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#fff', border: '1px solid #E2E8F0', boxShadow: '0 16px 36px rgba(15, 23, 42, 0.16)', zIndex: 20 }}>
-                    {[
-                      { label: 'Copy CSR Number', action: () => handleCopy(previewData.csr_number || '', 'CSR number') },
-                      { label: 'Copy Client Name', action: () => handleCopy(previewData.client_name || '', 'Client name') },
-                      { label: 'Open Edit Screen', action: () => { setShowMore(false); navigate('/csr/edit/' + id) } },
-                    ].map((item) => (
-                      <button
-                        key={item.label}
-                        type="button"
-                        onClick={item.action}
-                        style={{ width: '100%', textAlign: 'left', padding: '12px 14px', border: 'none', borderBottom: '1px solid #F1F5F9', backgroundColor: 'white', color: '#0F172A', fontSize: '13px', cursor: 'pointer' }}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
               </div>
             </div>
           </div>
@@ -146,6 +138,19 @@ export default function ViewCSR() {
           template={template}
           onTemplateChange={setTemplate}
           branding={branding}
+        />
+
+        <DocumentActionSheet
+          open={showMore}
+          onOpenChange={setShowMore}
+          title="CSR Actions"
+          subtitle={previewData.csr_number}
+          actions={moreActions.map((item) => ({
+            label: item.label,
+            subtitle: item.subtitle,
+            onClick: item.action,
+            iconKey: item.iconKey,
+          }))}
         />
       </div>
     </Layout>

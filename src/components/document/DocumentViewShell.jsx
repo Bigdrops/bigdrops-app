@@ -256,6 +256,40 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
     export: FileText,
     pdf: FileText,
   }
+  const toneMap = {
+    payment: {
+      tile: 'bg-emerald-50 text-emerald-700',
+      chevron: 'text-emerald-300',
+    },
+    copy: {
+      tile: 'bg-blue-50 text-blue-700',
+      chevron: 'text-blue-300',
+    },
+    clone: {
+      tile: 'bg-violet-50 text-violet-700',
+      chevron: 'text-violet-300',
+    },
+    convert: {
+      tile: 'bg-amber-50 text-amber-700',
+      chevron: 'text-amber-300',
+    },
+    archive: {
+      tile: 'bg-slate-100 text-slate-700',
+      chevron: 'text-slate-300',
+    },
+    open: {
+      tile: 'bg-blue-50 text-blue-700',
+      chevron: 'text-blue-300',
+    },
+    export: {
+      tile: 'bg-blue-50 text-blue-700',
+      chevron: 'text-blue-300',
+    },
+    pdf: {
+      tile: 'bg-slate-100 text-slate-700',
+      chevron: 'text-slate-300',
+    },
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -270,6 +304,7 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
             {actions.map((action, index) => {
               const danger = !!action.danger
               const Icon = action.icon || iconMap[action.iconKey] || Ellipsis
+              const tone = toneMap[action.iconKey] || toneMap.export
               const nextNeedsSeparator = !danger && actions[index + 1]?.danger
 
               return (
@@ -290,7 +325,7 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
                     <span
                       className={cn(
                         'grid h-11 w-11 shrink-0 place-items-center rounded-[14px]',
-                        danger ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700',
+                        danger ? 'bg-red-50 text-red-600' : tone.tile,
                       )}
                     >
                       <Icon className="h-4.5 w-4.5" />
@@ -299,7 +334,7 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
                       <div className={cn('text-sm font-bold', danger ? 'text-red-700' : 'text-foreground')}>{action.label}</div>
                       {action.subtitle ? <div className="mt-0.5 text-[11px] text-muted-foreground">{action.subtitle}</div> : null}
                     </span>
-                    <ChevronRight className={cn('h-4 w-4 shrink-0', danger ? 'text-red-300' : 'text-slate-300')} />
+                    <ChevronRight className={cn('h-4 w-4 shrink-0', danger ? 'text-red-300' : tone.chevron)} />
                   </button>
                   {nextNeedsSeparator ? <div className="mx-3 mt-2 border-t border-slate-100" /> : null}
                 </div>
