@@ -4,9 +4,9 @@ import { supabase } from './supabase'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { useIsMobile } from './hooks/useIsMobile'
 import { Toaster } from '@/components/ui/toaster'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
 
 // Lazy-loaded routes — each page loads only when first visited, not upfront
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -45,6 +45,8 @@ const SPLASH_TIPS = [
   'Preparing your workspace...',
   'Getting documents and projects in order...',
 ]
+const RESUME_REFRESH_THRESHOLD_MS = 1500
+const RECOVERY_COOLDOWN_MS = 1500
 
 const PageLoader = () => (
   <div
@@ -272,32 +274,87 @@ function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [tipIndex, setTipIndex] = useState(0)
+  const [appShellKey, setAppShellKey] = useState(0)
 
   const loadingRef = useRef(false)
   const splashStartRef = useRef(Date.now())
   const hasBootedRef = useRef(false)
   const lastUserIdRef = useRef(null)
+  const hiddenAtRef = useRef(null)
+  const recoveringRef = useRef(false)
+  const lastRecoveryAtRef = useRef(0)
+  const profileRef = useRef(null)
+  const { runLatest: runLatestProfileTask, cancel: cancelProfileTask } = useSafeAsyncTask()
+
+  useEffect(() => {
+    profileRef.current = profile
+  }, [profile])
 
   const loadProfile = async (userId) => {
     if (!userId) return
     setProfileLoading(true)
-    try {
+    await runLatestProfileTask(async () => {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
-      if (!error && data) {
-        const { data: authData } = await supabase.auth.getUser()
-        const provider = authData.user?.app_metadata?.provider
-        if (provider === 'email' && !data.has_password) {
-          await supabase.from('profiles').update({ has_password: true }).eq('id', userId)
-          setProfile({ ...data, has_password: true })
-        } else {
-          setProfile(data)
-        }
+      if (error) throw error
+      if (!data) return null
+
+      const { data: authData } = await supabase.auth.getUser()
+      const provider = authData.user?.app_metadata?.provider
+      if (provider === 'email' && !data.has_password) {
+        await supabase.from('profiles').update({ has_password: true }).eq('id', userId)
+        return { ...data, has_password: true }
       }
-    } catch (err) {
-      console.error('Profile fetch error:', err)
+      return data
+    }, {
+      onSuccess: (nextProfile) => {
+        setProfile(nextProfile)
+      },
+      onError: (err) => {
+        console.error('Profile fetch error:', err)
+      },
+      onSettled: () => {
+        setProfileLoading(false)
+        loadingRef.current = false
+      },
+    })
+  }
+
+  const recoverAppState = async (reason) => {
+    const now = Date.now()
+    if (recoveringRef.current) return
+    if (now - lastRecoveryAtRef.current < RECOVERY_COOLDOWN_MS) return
+
+    recoveringRef.current = true
+    lastRecoveryAtRef.current = now
+
+    try {
+      const {
+        data: { session: nextSession },
+      } = await supabase.auth.getSession()
+
+      setSession(nextSession)
+      lastUserIdRef.current = nextSession?.user?.id || null
+
+      if (!nextSession?.user?.id) {
+        setProfile(null)
+      } else if (!profileRef.current || profileRef.current.id !== nextSession.user.id) {
+        await loadProfile(nextSession.user.id)
+      }
+
+      const hiddenDuration = hiddenAtRef.current ? now - hiddenAtRef.current : 0
+      const shouldRemountRoutes =
+        reason === 'online' ||
+        reason === 'pageshow' ||
+        hiddenDuration >= RESUME_REFRESH_THRESHOLD_MS
+
+      if (shouldRemountRoutes) {
+        setAppShellKey((current) => current + 1)
+      }
+    } catch (error) {
+      console.error('Lifecycle recovery error:', error)
     } finally {
-      setProfileLoading(false)
-      loadingRef.current = false
+      hiddenAtRef.current = null
+      recoveringRef.current = false
     }
   }
 
@@ -345,6 +402,7 @@ function App() {
         const previousUserId = lastUserIdRef.current
         const isRealNewSignIn = !previousUserId && !!nextUserId
         if (event === 'SIGNED_OUT') {
+          cancelProfileTask()
           lastUserIdRef.current = null
           setSession(null)
           setProfile(null)
@@ -369,6 +427,9 @@ function App() {
           }
           return
         }
+        if (event === 'USER_UPDATED' && nextUserId) {
+          await loadProfile(nextUserId)
+        }
         setSession(session)
         lastUserIdRef.current = nextUserId
       })
@@ -376,12 +437,50 @@ function App() {
     }
     init()
     return () => {
+      cancelProfileTask()
       subscription?.unsubscribe()
     }
-  }, [])
+  }, [cancelProfileTask, runLatestProfileTask])
 
   useEffect(() => {
     hasBootedRef.current = true
+  }, [])
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenAtRef.current = Date.now()
+        return
+      }
+      if (!hiddenAtRef.current) return
+      void recoverAppState('visibility')
+    }
+
+    const handleFocus = () => {
+      if (document.visibilityState === 'visible' && hiddenAtRef.current) {
+        void recoverAppState('focus')
+      }
+    }
+
+    const handlePageShow = () => {
+      void recoverAppState('pageshow')
+    }
+
+    const handleOnline = () => {
+      void recoverAppState('online')
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener('pageshow', handlePageShow)
+    window.addEventListener('online', handleOnline)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('pageshow', handlePageShow)
+      window.removeEventListener('online', handleOnline)
+    }
   }, [])
 
   useEffect(() => {
@@ -413,6 +512,7 @@ function App() {
                     ? withBoundary(<PendingApproval email={session?.user?.email || ''} />)
                     : withBoundary(
                         <AppShell
+                          key={appShellKey}
                           session={session}
                           profile={profile}
                           onProfileUpdate={() => loadProfile(session.user.id)}

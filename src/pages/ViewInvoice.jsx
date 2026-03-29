@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { Link, useParams, useNavigate } from 'react-router-dom'
-import DOMPurify from 'dompurify'
+import React, { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
@@ -37,67 +36,14 @@ import { getNextQuotationNumber } from '@/domain/quotation'
 import { computeDocument } from '@/lib/Calculations'
 import { PDF_TEMPLATES, DEFAULT_TEMPLATE } from '@/components/pdf/pdfTemplates'
 import { toast } from '@/hooks/use-toast'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
 
-function TemplateSelector({ value, onChange }) {
-  return (
-    <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8 }}>
-      {PDF_TEMPLATES.map((t) => {
-        const on = value === t.id
-        return (
-          <div
-            key={t.id}
-            onClick={() => onChange(t.id)}
-            style={{
-              flexShrink: 0,
-              width: 120,
-              border: `2px solid ${on ? '#0F172A' : '#E2E8F0'}`,
-              borderRadius: 12,
-              padding: '12px 10px',
-              backgroundColor: on ? '#0F172A' : 'white',
-              cursor: 'pointer',
-              textAlign: 'center',
-            }}
-          >
-            <div style={{ fontSize: 12, fontWeight: 700, color: on ? 'white' : '#0F172A', marginBottom: 2 }}>{t.label}</div>
-            <div style={{ fontSize: 10, color: on ? '#94A3B8' : '#64748B' }}>{t.description}</div>
-            {on && <div style={{ marginTop: 4, fontSize: 9, fontWeight: 700, color: '#3B82F6', textTransform: 'uppercase' }}>Active</div>}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function useIsMobile() {
-  const [m, setM] = React.useState(window.innerWidth < 640)
-  React.useEffect(() => {
-    const h = () => setM(window.innerWidth < 640)
-    window.addEventListener('resize', h)
-    return () => window.removeEventListener('resize', h)
-  }, [])
-  return m
-}
-function useIsNarrow() {
-  const [n, setN] = React.useState(window.innerWidth < 768)
-  React.useEffect(() => {
-    const h = () => setN(window.innerWidth < 768)
-    window.addEventListener('resize', h)
-    return () => window.removeEventListener('resize', h)
-  }, [])
-  return n
-}
-
 export default function ViewInvoice() {
-  const isMobile = useIsMobile()
-  const isNarrow = useIsNarrow()
   const { id } = useParams()
   const navigate = useNavigate()
 
@@ -133,8 +79,6 @@ export default function ViewInvoice() {
   const [showProjectModal, setShowProjectModal] = useState(false)
   const [projectLinkId, setProjectLinkId] = useState('')
   const [projectLinking, setProjectLinking] = useState(false)
-
-  const menuRef = useRef()
 
   const fetchInvoice = async () => {
     const { data } = await supabase.from('invoices').select('*').eq('id', id).single()
@@ -242,45 +186,13 @@ export default function ViewInvoice() {
   }, [id])
 
   useEffect(() => {
-    const handleOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setShowMore(false)
-      }
-    }
-    document.addEventListener('mousedown', handleOutside)
-    return () => document.removeEventListener('mousedown', handleOutside)
-  }, [])
-
-  useEffect(() => {
     setPdfOutput(getInvoicePdfOutput(invoice?.custom_fields))
   }, [invoice?.custom_fields])
 
   if (loading) return <Layout title="Invoice"><p style={{ padding: 30 }}>Loading...</p></Layout>
   if (!invoice) return <Layout title="Invoice"><p style={{ padding: 30 }}>Invoice not found.</p></Layout>
 
-  const companyName = settings.company_name || ''
-  const companyTagline = settings.company_tagline || ''
-  const companyCity = settings.company_city || ''
-  const companyAddress = settings.company_address || ''
-  const companyPhone = settings.company_phone || ''
-  const companyEmail = settings.company_email || ''
-  const companyIdentityLines = [companyAddress, companyCity, companyPhone, companyEmail].filter(Boolean)
-  const hasCompanyIdentity = Boolean(companyName || companyTagline || companyIdentityLines.length)
   const poNumber = String(invoice.po_number || '').trim()
-  const safeInvoiceNotes = invoice.notes ? DOMPurify.sanitize(invoice.notes) : ''
-  const safeInvoiceTerms = invoice.terms ? DOMPurify.sanitize(invoice.terms) : ''
-  const statusLabel = String(invoice.status || 'draft')
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase())
-
-  // ── Status helpers ──────────────────────────────────────────────────────────
-  const statusColor = (status) => {
-    if (status === 'paid') return { bg: '#DCFCE7', color: '#16A34A' }
-    if (status === 'sent') return { bg: '#E8F0FB', color: '#0056B3' }
-    if (status === 'overdue') return { bg: '#FEE2E2', color: '#CC0000' }
-    return { bg: '#F5F5F5', color: '#555' }
-  }
-  const s = statusColor(invoice.status)
   const formatMoney = (value) => `\u20A6${Number(value || 0).toLocaleString()}`
   const formatDate = (value) => {
     if (!value) return '-'
@@ -310,17 +222,6 @@ export default function ViewInvoice() {
       }
     })
   })()
-  const statusBadgeClass =
-    computedStatus === 'paid'
-      ? 'bg-emerald-500 text-white'
-      : computedStatus === 'overdue'
-        ? 'bg-red-500 text-white'
-        : computedStatus === 'sent'
-          ? 'bg-blue-500 text-white'
-          : computedStatus === 'partial'
-            ? 'bg-amber-500 text-white'
-            : 'bg-slate-400 text-white'
-
   const handleDownloadPDF = async () => {
     if (pdfGenerating) return
     setPdfGenerating(true)
@@ -577,11 +478,6 @@ export default function ViewInvoice() {
 
   // ── Custom fields ───────────────────────────────────────────────────────────
   const customFieldObject = parseCustomFields(invoice.custom_fields)
-  const customFields = Array.isArray(customFieldObject.header) ? customFieldObject.header : []
-  const bottomFields = Array.isArray(customFieldObject.bottom) ? customFieldObject.bottom : []
-  const attachments = Array.isArray(customFieldObject.attachments) ? customFieldObject.attachments : []
-  const topHeaderFields = customFields.filter((f) => f.label && f.value)
-  const conversionTrail = customFieldObject.conversionTrail || {}
   const selectedSignatory = signatories.find((signatory) => signatory.id === getInvoiceSignatoryId(customFieldObject)) || null
   const handlePdfOutputChange = async (next) => {
     setPdfOutput(next)
@@ -642,40 +538,6 @@ export default function ViewInvoice() {
     setPendingVoidPaymentId(null)
     setVoidReason('')
   }
-  const moreMenuItems = [
-    {
-      label: invoice.project_id ? 'Open Linked Documents' : 'Link to Project',
-      action: () => {
-        setShowMore(false)
-        invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectModal(true)
-      },
-      show: true,
-    },
-    { label: 'Record Payment', action: () => { setShowMore(false); setShowPaymentModal(true) }, show: invoice.status !== 'paid' },
-    { label: 'Export CSV', action: handleDownloadCsv, show: true },
-    { label: 'Copy invoice number', action: () => { void handleCopy(invoice.invoice_number || '', 'Invoice number') }, show: true },
-    { label: 'Clone Invoice', action: handleClone, show: true },
-    { label: converting ? 'Converting to Quotation...' : 'Convert to Quotation', action: handleConvertToQuote, show: true, disabled: converting },
-    { label: 'Generate CSR', action: () => { setShowMore(false); toast({ title: 'Coming soon', description: 'Generate CSR is coming soon.' }) }, show: true },
-    { label: 'Generate Waybill', action: () => { setShowMore(false); toast({ title: 'Coming soon', description: 'Generate Waybill is coming soon.' }) }, show: true },
-    { label: invoice.status === 'draft' ? 'Mark as Sent' : null, action: handleMarkSent, show: invoice.status === 'draft' },
-    { label: 'Archive Invoice', action: handleArchive, show: true },
-    { label: 'Delete Invoice', action: handleDelete, show: true, danger: true },
-  ].filter((item) => item.show && item.label)
-  const handleMenuItemClick = (action) => (event) => {
-    event.stopPropagation()
-    action()
-    setShowMore(false)
-  }
-  const handleMobileMenuItemClick = (action) => (event) => {
-    event.stopPropagation()
-    if (event.nativeEvent?.stopImmediatePropagation) {
-      event.nativeEvent.stopImmediatePropagation()
-    }
-    setShowMore(false)
-    setTimeout(() => action(), 10)
-  }
-
   const shellStatusClass =
     computedStatus === 'paid'
       ? 'bg-emerald-50 text-emerald-700'

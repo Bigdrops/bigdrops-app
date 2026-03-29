@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import { useSafeAsyncTask } from './useSafeAsyncTask'
 
 let cachedSettings = null
 let listeners = []
@@ -14,13 +15,26 @@ export async function fetchSettings() {
 export function useSettings() {
   const [settings, setSettings] = useState(cachedSettings || {})
   const [loading, setLoading] = useState(!cachedSettings)
+  const { runLatest, cancel } = useSafeAsyncTask()
 
   useEffect(() => {
-    if (cachedSettings) { setSettings(cachedSettings); setLoading(false); return }
-    fetchSettings().then(s => { setSettings(s); setLoading(false) })
     listeners.push(setSettings)
-    return () => { listeners = listeners.filter(fn => fn !== setSettings) }
-  }, [])
+    if (cachedSettings) {
+      setSettings(cachedSettings)
+      setLoading(false)
+    } else {
+      void runLatest(fetchSettings, {
+        onSuccess: (nextSettings) => setSettings(nextSettings),
+        onError: () => setSettings({}),
+        onSettled: () => setLoading(false),
+      })
+    }
+
+    return () => {
+      cancel()
+      listeners = listeners.filter(fn => fn !== setSettings)
+    }
+  }, [runLatest, cancel])
 
   return { settings, loading }
 }
