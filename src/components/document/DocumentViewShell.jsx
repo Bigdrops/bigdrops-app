@@ -293,14 +293,17 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-[30px] px-0 pb-6">
-        <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-slate-200" />
-        <SheetHeader className="border-b border-border px-5 pb-4 pt-4 text-left">
+      <SheetContent
+        side="bottom"
+        className="flex max-h-[min(72vh,620px)] flex-col rounded-t-[26px] px-0 pb-4"
+      >
+        <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-slate-200" />
+        <SheetHeader className="border-b border-border px-4 pb-3 pt-3 text-left">
           <SheetTitle className="text-base font-extrabold text-foreground">{title}</SheetTitle>
           {subtitle ? <SheetDescription>{subtitle}</SheetDescription> : null}
         </SheetHeader>
-        <div className="px-3 pt-2">
-          <div className="space-y-1">
+        <div className="min-h-0 overflow-y-auto px-3 pt-2">
+          <div className="space-y-0.5 pb-1">
             {actions.map((action, index) => {
               const danger = !!action.danger
               const Icon = action.icon || iconMap[action.iconKey] || Ellipsis
@@ -317,26 +320,26 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
                       action.onClick()
                     }}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-[22px] px-3 py-3 text-left transition',
+                      'flex w-full items-center gap-2.5 rounded-[18px] px-3 py-2.5 text-left transition',
                       danger ? 'hover:bg-red-50' : 'hover:bg-slate-50',
                       action.disabled && 'opacity-60',
                     )}
                   >
                     <span
                       className={cn(
-                        'grid h-11 w-11 shrink-0 place-items-center rounded-[14px]',
+                        'grid h-9 w-9 shrink-0 place-items-center rounded-[12px]',
                         danger ? 'bg-red-50 text-red-600' : tone.tile,
                       )}
                     >
-                      <Icon className="h-4.5 w-4.5" />
+                      <Icon className="h-4 w-4" />
                     </span>
                     <span className="min-w-0 flex-1">
                       <div className={cn('text-sm font-bold', danger ? 'text-red-700' : 'text-foreground')}>{action.label}</div>
-                      {action.subtitle ? <div className="mt-0.5 text-[11px] text-muted-foreground">{action.subtitle}</div> : null}
+                      {action.subtitle ? <div className="mt-0.5 text-[10px] leading-4 text-muted-foreground">{action.subtitle}</div> : null}
                     </span>
                     <ChevronRight className={cn('h-4 w-4 shrink-0', danger ? 'text-red-300' : tone.chevron)} />
                   </button>
-                  {nextNeedsSeparator ? <div className="mx-3 mt-2 border-t border-slate-100" /> : null}
+                  {nextNeedsSeparator ? <div className="mx-3 mt-1.5 border-t border-slate-100" /> : null}
                 </div>
               )
             })}
