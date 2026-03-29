@@ -427,6 +427,16 @@ function App() {
           }
           return
         }
+        if (event === 'TOKEN_REFRESHED') {
+          setSession(session)
+          lastUserIdRef.current = nextUserId
+          return
+        }
+        if (event === 'INITIAL_SESSION') {
+          setSession(session)
+          lastUserIdRef.current = nextUserId
+          return
+        }
         if (event === 'USER_UPDATED' && nextUserId) {
           await loadProfile(nextUserId)
         }

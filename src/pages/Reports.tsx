@@ -89,6 +89,17 @@ type ProjectFinancialRow = {
   outstanding?: number | null
 }
 
+type TaxInvoiceRow = {
+  id: string
+  invoice_number?: string | null
+  client_name?: string | null
+  issue_date?: string | null
+  vat?: number | null
+  wht?: number | null
+  total?: number | null
+  status?: string | null
+}
+
 type Metric = {
   label: string
   value: string
@@ -389,7 +400,7 @@ function ErrorBanner({ message }: { message: string }) {
 }
 
 type TaxReportProps = {
-  rows: InvoiceFinancialRow[]
+  rows: TaxInvoiceRow[]
   collections: CollectionRow[]
   loading: boolean
 }
@@ -399,7 +410,7 @@ function TaxReport({ rows, collections, loading }: TaxReportProps) {
 
   const vatRows = rows.filter((row) =>
     Number(row.vat || 0) > 0 &&
-    !['draft', 'cancelled'].includes(String(row.computed_status || '').toLowerCase()),
+    !['draft', 'cancelled'].includes(String(row.status || '').toLowerCase()),
   )
   const whtRows = collections.filter((row) => Number(row.wht_amount || 0) > 0)
 
@@ -437,16 +448,10 @@ function TaxReport({ rows, collections, loading }: TaxReportProps) {
                     </div>
                     <div>
                       <div className="text-[11px] text-muted-foreground">Status</div>
-                      <Badge className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusClass(row.computed_status)}`}>
-                        {row.computed_status || 'draft'}
+                      <Badge className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusClass(row.status)}`}>
+                        {row.status || 'draft'}
                       </Badge>
                     </div>
-                    {Number(row.wht_received || 0) > 0 ? (
-                      <div>
-                        <div className="text-[11px] text-muted-foreground">WHT Received</div>
-                        <div className="text-base font-black text-red-600">-{formatMoney(row.wht_received)}</div>
-                      </div>
-                    ) : null}
                   </div>
                 </div>
               ))}
@@ -734,10 +739,12 @@ export default function Reports() {
   const [receivables, setReceivables] = useState<InvoiceFinancialRow[]>([])
   const [collections, setCollections] = useState<CollectionRow[]>([])
   const [projects, setProjects] = useState<ProjectFinancialRow[]>([])
+  const [taxInvoices, setTaxInvoices] = useState<TaxInvoiceRow[]>([])
   const [loading, setLoading] = useState({
     receivables: true,
     collections: true,
     projects: true,
+    tax: true,
   })
   const [error, setError] = useState({
     receivables: '',
@@ -758,6 +765,7 @@ export default function Reports() {
         receivables: true,
         collections: true,
         projects: true,
+        tax: true,
       })
       setError({
         receivables: '',
@@ -771,6 +779,11 @@ export default function Reports() {
         .select('*, invoices(invoice_number, client_name)')
         .is('voided_at', null)
         .order('date', { ascending: false })
+      let taxQuery = supabase
+        .from('invoices')
+        .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
+        .not('status', 'in', '("draft","cancelled","archived")')
+        .order('issue_date', { ascending: false })
 
       const startDate = safeDate(queryStart)
       const endDate = safeDate(queryEnd)
@@ -778,22 +791,26 @@ export default function Reports() {
       if (startDate) {
         receivablesQuery = receivablesQuery.gte('issue_date', startDate)
         paymentsQuery = paymentsQuery.gte('date', startDate)
+        taxQuery = taxQuery.gte('issue_date', startDate)
       }
       if (endDate) {
         receivablesQuery = receivablesQuery.lte('issue_date', endDate)
         paymentsQuery = paymentsQuery.lte('date', endDate)
+        taxQuery = taxQuery.lte('issue_date', endDate)
       }
 
-      const [receivablesResult, paymentsResult, projectsResult] = await Promise.all([
+      const [receivablesResult, paymentsResult, projectsResult, taxResult] = await Promise.all([
         receivablesQuery,
         paymentsQuery,
         supabase.from('project_financials_v').select('*').order('outstanding', { ascending: false }),
+        taxQuery,
       ])
 
       if (cancelled) return
 
       setReceivables((receivablesResult.data || []) as InvoiceFinancialRow[])
       setProjects((projectsResult.data || []) as ProjectFinancialRow[])
+      setTaxInvoices((taxResult.data || []) as TaxInvoiceRow[])
 
       const bankAccountIds = Array.from(
         new Set(
@@ -840,6 +857,7 @@ export default function Reports() {
         receivables: false,
         collections: false,
         projects: false,
+        tax: false,
       })
 
       setError({
@@ -867,8 +885,11 @@ export default function Reports() {
     projects.forEach((row) => {
       if (row.client_name) allClients.add(row.client_name)
     })
+    taxInvoices.forEach((row) => {
+      if (row.client_name) allClients.add(row.client_name)
+    })
     return Array.from(allClients).sort((a, b) => a.localeCompare(b))
-  }, [receivables, collections, projects])
+  }, [receivables, collections, projects, taxInvoices])
 
   const filteredReceivables = useMemo(() => {
     return receivables
@@ -895,6 +916,13 @@ export default function Reports() {
       .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
       .filter((row) => !searchTerm || [row.project_name, row.name, row.client_name].some((value) => String(value || '').toLowerCase().includes(searchTerm)))
   }, [projects, clientFilter, searchTerm])
+
+  const filteredTaxInvoices = useMemo(() => {
+    return taxInvoices
+      .filter((row) => isWithinRange(row.issue_date, start, end))
+      .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
+      .filter((row) => !searchTerm || [row.invoice_number, row.client_name].some((value) => String(value || '').toLowerCase().includes(searchTerm)))
+  }, [taxInvoices, start, end, clientFilter, searchTerm])
 
   const receivablesMetrics = useMemo<Metric[]>(() => {
     const outstanding = filteredReceivables.reduce((sum, row) => {
@@ -936,15 +964,14 @@ export default function Reports() {
   }, [filteredProjects])
 
   const taxMetrics = useMemo<Metric[]>(() => {
-    const vatCharged = filteredReceivables
-      .filter((row) => !['draft', 'cancelled'].includes(String(row.computed_status || '').toLowerCase()))
+    const vatCharged = filteredTaxInvoices
       .reduce((sum, row) => sum + Number(row.vat || 0), 0)
 
     const whtDeducted = filteredCollections
       .reduce((sum, row) => sum + Number(row.wht_amount || 0), 0)
 
-    const whtReceived = filteredReceivables
-      .reduce((sum, row) => sum + Number(row.wht_received || 0), 0)
+    const whtReceived = filteredCollections
+      .reduce((sum, row) => sum + Number(row.wht_amount || 0), 0)
 
     const netPosition = vatCharged - whtDeducted
 
@@ -954,7 +981,7 @@ export default function Reports() {
       { label: 'WHT Received', value: formatMoney(whtReceived), tone: 'green', icon: <Wallet className="h-4 w-4" /> },
       { label: 'Net Position', value: formatMoney(netPosition), tone: netPosition >= 0 ? 'blue' : 'red', icon: <Banknote className="h-4 w-4" /> },
     ]
-  }, [filteredReceivables, filteredCollections])
+  }, [filteredTaxInvoices, filteredCollections])
 
   return (
     <Layout title="Reports" hidePageHeader contentClassName="w-full max-w-none bg-slate-50 p-0 pb-24 md:px-4 md:pb-10">
@@ -994,7 +1021,7 @@ export default function Reports() {
                 <MetricStrip metrics={taxMetrics} />
                 <Filters activeDate={datePreset} setActiveDate={setDatePreset} statusFilter={receivablesFilter} setStatusFilter={setReceivablesFilter} clientFilter={clientFilter} setClientFilter={setClientFilter} clientOptions={clientOptions} search={search} setSearch={setSearch} showStatus={false} />
                 {datePreset === 'custom' ? <Card className="border-amber-200 bg-card shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
-                <TaxReport rows={filteredReceivables} collections={filteredCollections} loading={loading.receivables || loading.collections} />
+                <TaxReport rows={filteredTaxInvoices} collections={filteredCollections} loading={loading.tax} />
               </TabsContent>
             </div>
           </Tabs>
