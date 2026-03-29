@@ -21,7 +21,6 @@ export default function Invoices() {
   const [statusFilter, setStatusFilter]   = useState("All")
   const [dateFilter, setDateFilter]       = useState("All Time")
   const [sortBy, setSortBy]               = useState("Newest")
-  const [showSearch, setShowSearch]       = useState(false)
   const [showFilters, setShowFilters]     = useState(false)
   const [showArchiveWarn, setShowArchiveWarn] = useState(false)
   const [showDeleteWarn,  setShowDeleteWarn]  = useState(false)
@@ -249,29 +248,27 @@ export default function Invoices() {
           meta={`${totalCount} invoice${totalCount !== 1 ? "s" : ""} total`}
           tone="blue"
           actions={
-            <>
-              <Button type="button" variant="outline" size="icon-lg" className="rounded-2xl bg-white/90" onClick={() => setShowSearch((prev) => !prev)} aria-label="Toggle search">
-                <Search size={16} />
-              </Button>
-              <Button type="button" variant="outline" size="icon-lg" className="rounded-2xl bg-white/90" onClick={() => setShowFilters((prev) => !prev)} aria-label="Toggle filters">
-                <SlidersHorizontal size={16} />
-              </Button>
-              <Button type="button" className="hidden h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold sm:inline-flex" onClick={() => navigate("/invoices/new")}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Invoice
-              </Button>
-            </>
+            <Button type="button" className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold" onClick={() => navigate("/invoices/new")}>
+              <Plus className="mr-2 h-4 w-4" />
+              New
+            </Button>
           }
           toolbar={
             <div className="space-y-3">
-              {showSearch && (
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search invoices or clients..."
-                  className="h-12 w-full rounded-2xl border border-border bg-white px-4 text-sm font-medium text-foreground outline-none"
-                />
-              )}
+              <div className="flex items-center gap-2">
+                <div className="flex h-11 flex-1 items-center gap-2 rounded-[14px] border border-border bg-white px-3 text-sm text-muted-foreground shadow-sm">
+                  <Search size={16} />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search invoices..."
+                    className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+                <Button type="button" variant="outline" size="icon-lg" className="rounded-[14px] bg-white" onClick={() => setShowFilters((prev) => !prev)} aria-label="Toggle filters">
+                  <SlidersHorizontal size={16} />
+                </Button>
+              </div>
 
               {showFilters && (
                 <div className="flex flex-col gap-3 rounded-[20px] border border-border bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -347,64 +344,50 @@ export default function Invoices() {
             <div
               key={inv.id}
               onClick={() => navigate(`/invoices/${inv.id}`)}
-              className="relative px-4 py-4 transition-colors hover:bg-muted/40 sm:px-5"
+              className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-4 transition-colors hover:bg-muted/40 sm:px-5"
               style={{
                 borderBottom: idx === invoices.length - 1 ? "none" : "1px solid #f1f5f9",
                 cursor: "pointer",
               }}
             >
-
-              <div className="pr-12">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-700">Invoice</div>
-                    <div className="mt-1 truncate text-base font-extrabold tracking-[-0.03em] text-foreground">
-                      {inv.invoice_number || "Invoice"}
-                    </div>
-                    <div className="mt-1 truncate text-sm font-medium text-muted-foreground">
-                      {inv.client_name || "No client"}
-                    </div>
-                  </div>
-                  <div className="shrink-0 whitespace-nowrap text-right">
-                    <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Amount</div>
-                    <div className="mt-1 text-base font-extrabold text-foreground sm:text-lg">
-                      NGN {Number(inv.total || 0).toLocaleString()}
-                    </div>
-                  </div>
+              <div className="min-w-0">
+                <div className="truncate text-[15px] font-bold tracking-[-0.02em] text-foreground">
+                  {inv.client_name || "No client"}
                 </div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <div className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                    {formatInvoiceDate(inv.issue_date) || "No issue date"}
-                  </div>
-                  <span
-                    style={{
-                      ...getInvoiceStatusStyle(inv.status),
-                      borderRadius: 999,
-                      padding: "6px 10px",
-                      fontSize: 11,
-                      fontWeight: 800,
-                      display: "inline-block",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {formatStatusLabel(inv.status)}
-                  </span>
-                  {inv.thread_role && (
+                <div className="mt-1 truncate text-xs font-semibold text-muted-foreground">
+                  {inv.invoice_number}{formatInvoiceDate(inv.issue_date) ? ` • ${formatInvoiceDate(inv.issue_date)}` : ""}
+                </div>
+                {inv.thread_role ? (
+                  <div className="mt-2">
                     <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase ${roleColor(inv.thread_role)}`}>
                       {inv.thread_role}
                     </span>
-                  )}
-                </div>
+                  </div>
+                ) : null}
+              </div>
 
-                <div className="mt-3 min-w-0 whitespace-nowrap text-xs font-bold text-muted-foreground">
-                  {formatInvoiceDate(inv.issue_date) ? `${inv.invoice_number} • ${formatInvoiceDate(inv.issue_date)}` : inv.invoice_number}
+              <div className="flex flex-col items-end gap-2 text-right">
+                <div className="text-[15px] font-extrabold tracking-[-0.02em] text-foreground">
+                  ₦{Number(inv.total || 0).toLocaleString()}
                 </div>
+                <span
+                  style={{
+                    ...getInvoiceStatusStyle(inv.status),
+                    borderRadius: 999,
+                    padding: "5px 9px",
+                    fontSize: 11,
+                    fontWeight: 800,
+                    display: "inline-block",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {formatStatusLabel(inv.status)}
+                </span>
               </div>
 
               <button
                 onClick={(e) => { e.stopPropagation(); setActiveInvoice(inv) }}
-                className="absolute right-4 top-5 flex h-9 w-9 items-center justify-center rounded-2xl border border-border bg-white text-muted-foreground shadow-sm"
+                className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-border bg-white text-muted-foreground shadow-sm"
               >
                 <MoreHorizontal size={18} />
               </button>
@@ -451,24 +434,19 @@ export default function Invoices() {
 
       {/* Action sheet */}
       {activeInvoice && !showArchiveWarn && !showDeleteWarn && (
-        <div className="fixed inset-x-0 bottom-0 z-[110] bg-background rounded-t-[40px] shadow-2xl">
-          <div className="px-8 pt-6 pb-4">
-            <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-5" />
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Invoice</p>
-                <h2 className="text-xl font-black text-zinc-950">{activeInvoice.invoice_number}</h2>
-                <p className="text-xs text-zinc-400 font-bold">{activeInvoice.client_name}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <p className="text-xl font-black text-zinc-950">₦{Number(activeInvoice.total || 0).toLocaleString()}</p>
-                <button onClick={closeSheet} className="p-2 rounded-xl bg-muted text-muted-foreground hover:bg-muted">
-                  <X size={18} />
-                </button>
-              </div>
+        <div className="fixed inset-x-0 bottom-0 z-[110] rounded-t-[28px] border-t border-border bg-white shadow-[0_-12px_32px_rgba(15,23,42,0.16)]">
+          <div className="px-4 pt-5 pb-3">
+            <div className="mx-auto mb-5 h-1.5 w-10 rounded-full bg-zinc-200" />
+            <div className="mb-5">
+              <div className="text-sm font-medium text-zinc-500">Invoice {activeInvoice.invoice_number}</div>
+              <div className="mt-1 text-[24px] font-bold leading-none tracking-[-0.03em] text-zinc-900">{activeInvoice.client_name || "No client"}</div>
+              <div className="mt-2 text-[22px] font-bold tracking-[-0.03em] text-zinc-900">₦{Number(activeInvoice.total || 0).toLocaleString()}</div>
             </div>
+            <button onClick={closeSheet} className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-[14px] border border-border bg-white text-muted-foreground shadow-sm">
+              <X size={18} />
+            </button>
           </div>
-          <div className="px-8 pb-10 grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3 px-4 pb-3">
             <MenuBtn icon={<Eye size={20}/>}          label="View"       onClick={handleView} />
             <MenuBtn icon={<Pencil size={20}/>}       label="Edit"       onClick={handleEdit} />
             {activeInvoice.status !== "paid" && (
@@ -485,7 +463,15 @@ export default function Invoices() {
               <MenuBtn icon={<Send size={20}/>}       label="Mark Sent"  onClick={handleMarkSent} />
             )}
             <MenuBtn icon={<Archive size={20}/>}      label="Archive"    onClick={() => setShowArchiveWarn(true)} amber />
-            <MenuBtn icon={<Trash2 size={20}/>}       label="Delete"     onClick={() => setShowDeleteWarn(true)}  danger />
+          </div>
+          <div className="px-4 pb-7">
+            <button
+              onClick={() => setShowDeleteWarn(true)}
+              className="flex w-full flex-col items-center gap-2 rounded-[16px] bg-red-100 px-4 py-4 text-red-800 transition hover:bg-red-200"
+            >
+              <Trash2 size={24} />
+              <span className="text-sm font-semibold">Delete Invoice</span>
+            </button>
           </div>
         </div>
       )}
@@ -544,13 +530,13 @@ export default function Invoices() {
 function MenuBtn({ icon, label, onClick, danger, amber }) {
   return (
     <button onClick={onClick}
-      className={`flex flex-col items-center justify-center p-5 rounded-[28px] transition-all group ${
-        danger ? "bg-red-50 hover:bg-red-600 text-red-600 hover:text-white" :
-        amber  ? "bg-amber-50 hover:bg-amber-500 text-amber-600 hover:text-white" :
-        "bg-zinc-50 hover:bg-zinc-950 text-zinc-600 hover:text-white"
+      className={`flex min-h-[92px] flex-col items-center justify-center gap-2 rounded-[16px] px-2 py-4 transition-all ${
+        danger ? "bg-red-50 text-red-700 hover:bg-red-100" :
+        amber  ? "bg-amber-50 text-amber-700 hover:bg-amber-100" :
+        "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
       }`}>
-      <div className="mb-1.5 transition-transform group-hover:scale-110">{icon}</div>
-      <span className="text-[9px] font-black uppercase tracking-widest">{label}</span>
+      <div>{icon}</div>
+      <span className="text-center text-[13px] font-medium leading-4">{label}</span>
     </button>
   )
 }

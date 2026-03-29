@@ -26,7 +26,6 @@ export default function Waybills() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [tab, setTab] = useState<FilterTab>('all')
-  const [showSearch, setShowSearch] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -76,39 +75,27 @@ export default function Waybills() {
           meta={`${filtered.length} of ${waybills.length} waybill${waybills.length === 1 ? '' : 's'}`}
           tone="cyan"
           actions={
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-lg"
-                className="rounded-2xl bg-white/90"
-                onClick={() => setShowSearch((v) => !v)}
-                aria-label="Toggle search"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                className="hidden h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold sm:inline-flex"
-                onClick={() => navigate('/waybills/new')}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                New Waybill
-              </Button>
-            </>
+            <Button
+              type="button"
+              className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold"
+              onClick={() => navigate('/waybills/new')}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New
+            </Button>
           }
           toolbar={
             <div className="space-y-3">
-              {showSearch ? (
+              <div className="flex h-11 items-center gap-2 rounded-[14px] border border-border bg-white px-3 text-sm text-muted-foreground shadow-sm">
+                <Search className="h-4 w-4" />
                 <input
-                  autoFocus
                   type="text"
-                  placeholder="Search waybill number, client, plate..."
+                  placeholder="Search waybills..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="h-12 w-full rounded-2xl border border-border bg-white px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
+                  className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
                 />
-              ) : null}
+              </div>
 
               <div className="grid grid-cols-3 gap-1 rounded-[18px] border border-zinc-200 bg-zinc-100/80 p-1">
                 {tabs.map((t) => (

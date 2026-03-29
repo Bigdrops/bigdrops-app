@@ -180,31 +180,13 @@ export default function Projects() {
         <PageIntro
           eyebrow="Projects"
           title="Projects"
-          description="Keep active work readable at a glance, with status, related documents, and project value grouped into one consistent mobile-friendly card."
           meta={`${filtered.length} of ${projects.length} project${projects.length !== 1 ? 's' : ''}`}
           tone="emerald"
           actions={
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-lg"
-                className="relative rounded-2xl bg-white/90"
-                onClick={() => setShowFilters((p) => !p)}
-                aria-label="Toggle filters"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                {activeFilterCount > 0 ? (
-                  <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-slate-950 px-1 text-[10px] font-bold text-white">
-                    {activeFilterCount}
-                  </span>
-                ) : null}
-              </Button>
-              <Button type="button" className="hidden h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold sm:inline-flex" onClick={() => navigate('/projects/new')}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Project
-              </Button>
-            </>
+            <Button type="button" className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold" onClick={() => navigate('/projects/new')}>
+              <Plus className="mr-2 h-4 w-4" />
+              New
+            </Button>
           }
           toolbar={
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -239,6 +221,21 @@ export default function Projects() {
                     }}
                   />
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon-lg"
+                  className="relative rounded-[14px] bg-white"
+                  onClick={() => setShowFilters((p) => !p)}
+                  aria-label="Toggle filters"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  {activeFilterCount > 0 ? (
+                    <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-slate-950 px-1 text-[10px] font-bold text-white">
+                      {activeFilterCount}
+                    </span>
+                  ) : null}
+                </Button>
               </div>
 
               {showFilters && (

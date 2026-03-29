@@ -193,7 +193,7 @@ export default function Layout({ title, children, session, hidePageHeader = fals
   }, [salesRouteActive])
 
   const desktopContentClassName = contentClassName || 'mx-auto w-full max-w-5xl px-6 py-6'
-  const mobileContentClassName = contentClassName || 'w-full px-4 pb-24 pt-4'
+  const mobileContentClassName = contentClassName || 'w-full px-0 pb-24 pt-0'
 
   return (
     <div className="min-h-dvh bg-muted/50 text-foreground">
@@ -290,7 +290,7 @@ export default function Layout({ title, children, session, hidePageHeader = fals
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
-          className="fixed left-3 top-3 z-50 grid h-10 w-10 place-items-center rounded-2xl border border-border bg-card shadow-sm"
+          className="fixed left-3 top-3 z-50 grid h-[42px] w-[42px] place-items-center rounded-[14px] border border-border bg-card/95 shadow-[0_8px_22px_-14px_rgba(15,23,42,0.35)] backdrop-blur-sm"
           aria-label="Open navigation menu"
         >
           <Menu className="h-5 w-5 text-slate-700" />
@@ -306,14 +306,14 @@ export default function Layout({ title, children, session, hidePageHeader = fals
 
         <main className={mobileContentClassName}>{children}</main>
 
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card">
-          <div className="grid w-full grid-cols-5 px-2 py-2 shadow-[0_-10px_30px_-20px_rgba(15,23,42,0.35)]">
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/92 backdrop-blur-xl">
+          <div className="grid h-[92px] w-full grid-cols-5 gap-1 px-2 pt-2 pb-4 shadow-[0_-10px_30px_-20px_rgba(15,23,42,0.35)]">
             {tabs.map((tab) => {
               const Icon = tab.icon
               const isActive = activeTab === tab.key
               return (
-                <button key={tab.key} type="button" onClick={() => onTabClick(tab.key)} className={cn('group flex flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 transition', isActive ? 'bg-slate-900/5' : 'hover:bg-muted/50')}>
-                  <span className={cn('grid h-9 w-9 place-items-center rounded-2xl transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'bg-muted text-slate-700')}>
+                <button key={tab.key} type="button" onClick={() => onTabClick(tab.key)} className={cn('group flex flex-col items-center justify-center gap-1.5 rounded-2xl px-1 py-1.5 transition', isActive ? 'text-foreground' : 'text-muted-foreground hover:bg-muted/40')}>
+                  <span className={cn('grid h-[42px] w-[42px] place-items-center rounded-[14px] border transition', isActive ? 'border-slate-900 bg-slate-900 text-white shadow-sm' : 'border-transparent bg-transparent text-slate-700')}>
                     <Icon className="h-5 w-5" />
                   </span>
                   <span className={cn('text-[11px] font-semibold', isActive ? 'text-foreground' : 'text-muted-foreground')}>{tab.label}</span>

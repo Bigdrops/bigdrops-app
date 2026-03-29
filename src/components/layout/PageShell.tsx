@@ -26,7 +26,7 @@ export function PageShell({
       data-slot="page-shell"
       className={cn(
         widthClassName[width],
-        padded ? 'px-4 py-6 pb-24 sm:px-6 md:pb-10' : '',
+        padded ? 'px-3 py-3 pb-28 sm:px-4 sm:py-5 md:px-6 md:py-6 md:pb-10' : '',
         className,
       )}
     >

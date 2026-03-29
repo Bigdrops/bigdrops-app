@@ -1,19 +1,22 @@
-
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ClipboardList, Plus, Search, SlidersHorizontal, Wrench } from "lucide-react"
+import { ClipboardList, MoreHorizontal, Plus, Search, SlidersHorizontal, Wrench } from "lucide-react"
 
 import ConfirmActionDialog from "@/components/ConfirmActionDialog"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
 import Layout from "../components/Layout"
-import { useIsMobile } from "../hooks/useIsMobile"
 import PageIntro from "../components/layout/PageIntro"
 import { PageShell } from "../components/layout/PageShell"
 import { Button } from "../components/ui/button"
-
 import { Card, CardContent } from "../components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu"
 
 function normalizeStatus(status) {
   return (status || "").trim().toLowerCase()
@@ -21,7 +24,6 @@ function normalizeStatus(status) {
 
 export default function CSR() {
   const navigate = useNavigate()
-  const isMobile = useIsMobile()
 
   const [csrs, setCsrs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -30,8 +32,6 @@ export default function CSR() {
   const [statusFilter, setStatusFilter] = useState("All")
   const [dateFilter, setDateFilter] = useState("All Time")
   const [sortBy, setSortBy] = useState("Newest")
-  const [openMenuId, setOpenMenuId] = useState(null)
-  const [showSearch, setShowSearch] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [csrToDelete, setCsrToDelete] = useState(null)
 
@@ -53,12 +53,6 @@ export default function CSR() {
     }, 0)
 
     return () => clearTimeout(timer)
-  }, [])
-
-  useEffect(() => {
-    const handleOutsideClick = () => setOpenMenuId(null)
-    document.addEventListener("click", handleOutsideClick)
-    return () => document.removeEventListener("click", handleOutsideClick)
   }, [])
 
   const getCsrStatusKey = (status) => {
@@ -145,81 +139,47 @@ export default function CSR() {
       toast({ title: "Delete failed", description: "Unable to delete CSR right now. Please try again.", variant: "destructive" })
       return
     }
-    setOpenMenuId(null)
     setCsrToDelete(null)
     await fetchCsrs()
   }
 
-  const handleView = (event, csrId) => {
-    event.stopPropagation()
-    setOpenMenuId(null)
-    navigate("/csr/" + csrId)
-  }
-
-  const handleEdit = (event, csrId) => {
-    event.stopPropagation()
-    setOpenMenuId(null)
-    navigate("/csr/edit/" + csrId)
-  }
-
-  const handleDeleteClick = async (event, csr) => {
-    event.stopPropagation()
-    setOpenMenuId(null)
-    setCsrToDelete(csr)
-  }
-
-  const renderActionMenu = (csr) => (
-    <div
-      className="absolute right-0 top-12 z-30 w-36 rounded-2xl border border-border bg-card p-1 shadow-xl"
-      onClick={(event) => event.stopPropagation()}
-      onMouseDown={(event) => event.stopPropagation()}
-    >
-      <button onClick={(event) => handleView(event, csr.id)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted/50">View</button>
-      <button onClick={(event) => handleEdit(event, csr.id)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted/50">Edit</button>
-      <button onClick={(event) => void handleDeleteClick(event, csr)} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">Delete</button>
-    </div>
-  )
-
-  const filterSelectClass = "h-10 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 outline-none"
+  const filterSelectClass = "h-10 rounded-[14px] border border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 outline-none"
   const hasActiveFilters =
     !!search || clientFilter !== "All" || statusFilter !== "All" || dateFilter !== "All Time"
 
   return (
     <Layout title="Customer Service Reports" hidePageHeader>
-      <PageShell className="space-y-5 pb-32">
+      <PageShell className="pb-32">
         <PageIntro
           eyebrow="Service"
           title="Customer Service Reports"
-          description="Make recent field reports easier to scan, keep equipment context visible, and preserve quick access to existing report actions."
           meta={`${filteredCsrs.length} of ${csrs.length} report${csrs.length !== 1 ? "s" : ""}`}
           tone="amber"
           actions={
-            <>
-              <Button type="button" variant="outline" size="icon-lg" className="rounded-2xl bg-white/90" onClick={() => setShowSearch((prev) => !prev)} aria-label="Toggle search">
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button type="button" variant="outline" size="icon-lg" className="rounded-2xl bg-white/90" onClick={() => setShowFilters((prev) => !prev)} aria-label="Toggle filters">
-                <SlidersHorizontal className="h-4 w-4" />
-              </Button>
-              <Button type="button" className="hidden h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold sm:inline-flex" onClick={() => navigate("/csr/new")}>
-                <Plus className="mr-2 h-4 w-4" />
-                New CSR
-              </Button>
-            </>
+            <Button type="button" className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold" onClick={() => navigate("/csr/new")}>
+              <Plus className="mr-2 h-4 w-4" />
+              New
+            </Button>
           }
           toolbar={
             <div className="space-y-3">
-              {showSearch && (
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search CSRs, clients, or equipment..."
-                  className="h-12 w-full rounded-2xl border border-border bg-white px-4 text-sm font-medium text-foreground outline-none"
-                />
-              )}
+              <div className="flex items-center gap-2">
+                <div className="flex h-11 flex-1 items-center gap-2 rounded-[14px] border border-border bg-white px-3 text-sm text-muted-foreground shadow-sm">
+                  <Search size={16} />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search reports..."
+                    className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+                <Button type="button" variant="outline" size="icon-lg" className="rounded-[14px] bg-white" onClick={() => setShowFilters((prev) => !prev)} aria-label="Toggle filters">
+                  <SlidersHorizontal className="h-4 w-4" />
+                </Button>
+              </div>
 
-              {showFilters && (
-                <div className="flex flex-col gap-3 rounded-[20px] border border-border bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center">
+              {showFilters ? (
+                <div className="flex flex-col gap-3 rounded-[18px] border border-border bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center">
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold uppercase text-muted-foreground">Client</span>
                     <Select value={clientFilter} onValueChange={setClientFilter}>
@@ -275,269 +235,97 @@ export default function CSR() {
                   </div>
                   <button
                     onClick={resetFilters}
-                    className="h-10 rounded-xl border border-border px-4 text-xs font-bold uppercase text-muted-foreground transition hover:bg-muted/50"
+                    className="h-10 rounded-[14px] border border-border px-4 text-xs font-bold uppercase text-muted-foreground transition hover:bg-muted/50"
                   >
                     Clear Filters
                   </button>
                 </div>
-              )}
+              ) : null}
             </div>
           }
         />
 
-        {isMobile ? (
-          <div className="space-y-3">
-            {loading ? (
-              <Card className="rounded-[26px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_36px_-30px_rgba(15,23,42,0.45)]">
-                <CardContent className="p-5 text-sm text-muted-foreground">
-                  Loading service reports...
-                </CardContent>
-              </Card>
-            ) : filteredCsrs.length === 0 ? (
-              <Card className="rounded-[26px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_36px_-30px_rgba(15,23,42,0.45)]">
-                <CardContent className="p-5 text-center">
-                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-zinc-900 text-white">
-                    <ClipboardList className="h-5 w-5" />
-                  </div>
-                  <div className="text-base font-semibold text-foreground">
-                    {hasActiveFilters ? "No service reports found" : "No service reports yet"}
-                  </div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    {hasActiveFilters ? "Try a different search or filter." : "Create your first CSR to start tracking service activity."}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              filteredCsrs.map((csr) => (
-                <div
-                  key={csr.id}
-                  onClick={() => navigate("/csr/" + csr.id)}
-                  style={{
-                    background: "linear-gradient(180deg, rgba(255,255,255,1), rgba(247,249,252,1))",
-                    borderRadius: 26,
-                    border: "1px solid #e2eefc",
-                    boxShadow: "0 18px 36px -30px rgba(15,23,42,0.48)",
-                    padding: "18px 20px",
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 16,
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fcff" }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(180deg, rgba(255,255,255,1), rgba(247,249,252,1))" }}
-                >
-                  <div
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 18,
-                      background: "#fff2df",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Wrench size={20} color="#8c5a17" />
-                  </div>
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: "#6a89a8", textTransform: "uppercase" }}>CSR</span>
-                      <span style={{ fontSize: 18, fontWeight: 800, color: "#0d2f50" }}>{csr.csr_number || "-"}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: "#2a4b74" }}>{csr.client_name || "No client name"}</span>
-                      <span style={{ fontSize: 14, color: "#617e9e", fontWeight: 500 }}>{formatCardDate(csr.date)}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <span
-                        style={{
-                          borderRadius: 60,
-                          padding: "5px 12px",
-                          fontSize: 12,
-                          fontWeight: 600,
-                          ...(getCsrStatusKey(csr.status) === "completed"
-                            ? { background: "#e2f3e4", color: "#1f7840" }
-                            : { background: "#eef4fa", color: "#1d3f61" }),
-                        }}
-                      >
-                        {formatStatusLabel(csr.status)}
-                      </span>
-                      {(csr.make || csr.equipment_type) && (
-                        <span
-                          style={{
-                            borderRadius: 60,
-                            padding: "5px 12px",
-                            fontSize: 12,
-                            fontWeight: 600,
-                            background: "#eef4fa",
-                            color: "#1d3f61",
-                          }}
-                        >
-                          {csr.make || csr.equipment_type}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="relative" onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setOpenMenuId(openMenuId === csr.id ? null : csr.id)
-                      }}
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 12,
-                        border: "1px solid #d9e5f2",
-                        background: "white",
-                        color: "#48627e",
-                        fontSize: 14,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
-                      •••
-                    </button>
-                    {openMenuId === csr.id && renderActionMenu(csr)}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        ) : (
-          <Card className="overflow-hidden rounded-[28px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_36px_-30px_rgba(15,23,42,0.45)]">
-            <CardContent className="p-0">
-              <div className="border-b border-border bg-muted/50 px-5 py-4">
-                <div className="text-sm font-semibold text-foreground">
-                  CSR List
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {filteredCsrs.length} record{filteredCsrs.length === 1 ? "" : "s"}
-                </div>
-              </div>
-
-              {loading ? (
-                <div className="p-6 text-sm text-muted-foreground">
-                  Loading service reports...
-                </div>
-              ) : filteredCsrs.length === 0 ? (
-                <div className="p-10 text-center">
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 text-white">
-                    <ClipboardList className="h-5 w-5" />
-                  </div>
-                  <div className="text-base font-semibold text-foreground">
-                    No service reports found
-                  </div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    Try a different search or filter.
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3 p-4">
-                  {filteredCsrs.map((csr) => (
-                    <div
-                      key={csr.id}
-                      onClick={() => navigate("/csr/" + csr.id)}
-                      style={{
-                        background: "linear-gradient(180deg, rgba(255,255,255,1), rgba(247,249,252,1))",
-                        borderRadius: 26,
-                        border: "1px solid #e2eefc",
-                        boxShadow: "0 18px 36px -30px rgba(15,23,42,0.48)",
-                        padding: "18px 20px",
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 16,
-                        cursor: "pointer",
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fcff" }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(180deg, rgba(255,255,255,1), rgba(247,249,252,1))" }}
-                    >
-                      <div
-                        style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 18,
-                          background: "#fff2df",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <Wrench size={20} color="#8c5a17" />
-                      </div>
-
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: "#6a89a8", textTransform: "uppercase" }}>CSR</span>
-                          <span style={{ fontSize: 18, fontWeight: 800, color: "#0d2f50" }}>{csr.csr_number || "-"}</span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-                          <span style={{ fontSize: 15, fontWeight: 600, color: "#2a4b74" }}>{csr.client_name || "No client name"}</span>
-                          <span style={{ fontSize: 14, color: "#617e9e", fontWeight: 500 }}>{formatCardDate(csr.date)}</span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                          <span
-                            style={{
-                              borderRadius: 60,
-                              padding: "5px 12px",
-                              fontSize: 12,
-                              fontWeight: 600,
-                              ...(getCsrStatusKey(csr.status) === "completed"
-                                ? { background: "#e2f3e4", color: "#1f7840" }
-                                : { background: "#eef4fa", color: "#1d3f61" }),
-                            }}
-                          >
-                            {formatStatusLabel(csr.status)}
-                          </span>
-                          {(csr.make || csr.equipment_type) && (
-                            <span
-                              style={{
-                                borderRadius: 60,
-                                padding: "5px 12px",
-                                fontSize: 12,
-                                fontWeight: 600,
-                                background: "#eef4fa",
-                                color: "#1d3f61",
-                              }}
-                            >
-                              {csr.make || csr.equipment_type}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="relative" onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setOpenMenuId(openMenuId === csr.id ? null : csr.id)
-                          }}
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: 12,
-                            border: "1px solid #d9e5f2",
-                            background: "white",
-                            color: "#48627e",
-                            fontSize: 14,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                          }}
-                        >
-                          •••
-                        </button>
-                        {openMenuId === csr.id && renderActionMenu(csr)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+        {loading ? (
+          <Card className="mt-4 rounded-[22px] border border-border bg-white shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
+            <CardContent className="p-5 text-sm text-muted-foreground">
+              Loading service reports...
             </CardContent>
           </Card>
+        ) : filteredCsrs.length === 0 ? (
+          <Card className="mt-4 rounded-[22px] border border-border bg-white shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
+            <CardContent className="p-5 text-center">
+              <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-[16px] bg-zinc-900 text-white">
+                <ClipboardList className="h-5 w-5" />
+              </div>
+              <div className="text-base font-semibold text-foreground">
+                {hasActiveFilters ? "No service reports found" : "No service reports yet"}
+              </div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                {hasActiveFilters ? "Try a different search or filter." : "Create your first CSR to start tracking service activity."}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="mt-4 grid gap-3">
+            {filteredCsrs.map((csr) => (
+              <Card
+                key={csr.id}
+                className="cursor-pointer rounded-[22px] border border-border bg-white shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_40px_-32px_rgba(15,23,42,0.42)]"
+                onClick={() => navigate("/csr/" + csr.id)}
+              >
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[16px] border border-amber-100 bg-amber-50 text-amber-700">
+                      <Wrench className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">CSR</div>
+                      <div className="mt-1 text-[18px] font-extrabold tracking-[-0.03em] text-foreground">
+                        {csr.csr_number || "-"}
+                      </div>
+                      <div className="mt-1 text-sm font-medium text-slate-700">{csr.client_name || "No client name"}</div>
+                    </div>
+                    <div onClick={(event) => event.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="icon-lg" className="rounded-[14px] bg-white">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem onClick={() => navigate("/csr/" + csr.id)}>View</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate("/csr/edit/" + csr.id)}>Edit</DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => setCsrToDelete(csr)}>
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                      {formatCardDate(csr.date)}
+                    </span>
+                    <span
+                      className={
+                        getCsrStatusKey(csr.status) === "completed"
+                          ? "rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700"
+                          : "rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700"
+                      }
+                    >
+                      {formatStatusLabel(csr.status)}
+                    </span>
+                    {(csr.make || csr.equipment_type) ? (
+                      <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                        {csr.make || csr.equipment_type}
+                      </span>
+                    ) : null}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
 
         <button

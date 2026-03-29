@@ -7,7 +7,7 @@ import { toast } from "../hooks/use-toast"
 
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Card, CardContent } from "../components/ui/card"
 import { Input } from "../components/ui/input"
 import {
   DropdownMenu,
@@ -16,20 +16,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table"
-import { Skeleton } from "../components/ui/skeleton"
-import { Avatar, AvatarFallback } from "../components/ui/avatar"
 import PageIntro from "../components/layout/PageIntro"
 import { PageShell } from "../components/layout/PageShell"
 
-import { MoreHorizontal, Plus, Search, User } from "lucide-react"
+import { MoreHorizontal, Plus, Search, Users, SlidersHorizontal } from "lucide-react"
 
 type Client = {
   id: string | number
@@ -62,6 +52,7 @@ export default function Clients(): JSX.Element {
   const [loading, setLoading] = useState<boolean>(true)
   const [query, setQuery] = useState<string>("")
   const [category, setCategory] = useState<string>("All")
+  const [showFilters, setShowFilters] = useState(false)
   const [clientToDelete, setClientToDelete] = useState<string | number | null>(null)
 
   const navigate = useNavigate()
@@ -127,335 +118,145 @@ export default function Clients(): JSX.Element {
     <Layout title="Clients" hidePageHeader>
       <PageShell width="wide" className="pb-32">
         <PageIntro
-          eyebrow="Directory"
+          eyebrow="Clients"
           title="Clients"
-          description="Keep contacts tidy and make document lookups faster when you are working from the phone."
           meta={loading ? "Loading clients..." : `${filtered.length} of ${clients.length} client${clients.length === 1 ? "" : "s"}`}
           tone="violet"
           actions={
-            <Button onClick={() => navigate("/clients/new")} className="hidden h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold sm:inline-flex">
+            <Button onClick={() => navigate("/clients/new")} className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold">
               <Plus className="mr-2 h-4 w-4" />
-              Add client
+              New
             </Button>
           }
           toolbar={
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-1 items-center gap-2">
-                <div className="relative w-full">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search clients…"
-                    className="h-12 rounded-2xl border-zinc-200 bg-white pl-9 text-sm"
+                    placeholder="Search clients..."
+                    className="h-11 rounded-[14px] border-zinc-200 bg-white pl-9"
                   />
                 </div>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="h-12 shrink-0 rounded-2xl bg-white px-4 text-sm font-semibold">
-                      {category === "All" ? "Category" : category}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    {categories.map((c) => (
-                      <DropdownMenuItem
-                        key={c}
-                        onClick={() => setCategory(c)}
-                        className={c === category ? "bg-muted/50" : ""}
-                      >
-                        {c}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              <div className="flex items-center justify-between gap-2 sm:justify-end">
-                <Button variant="ghost" className="h-11 rounded-2xl px-4 text-sm font-semibold" onClick={reload}>
-                  Refresh
+                <Button variant="outline" size="icon-lg" className="rounded-[14px] bg-white" onClick={() => setShowFilters((prev) => !prev)}>
+                  <SlidersHorizontal className="h-4 w-4" />
                 </Button>
               </div>
+
+              {showFilters ? (
+                <div className="flex flex-wrap gap-2 rounded-[18px] border border-zinc-200 bg-white p-3">
+                  {categories.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setCategory(option)}
+                      className={option === category
+                        ? "rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
+                        : "rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600"}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                  <Button variant="ghost" className="h-8 rounded-full px-3 text-xs font-semibold" onClick={reload}>
+                    Refresh
+                  </Button>
+                </div>
+              ) : null}
             </div>
           }
         />
 
-        {/* Content */}
         {loading ? (
-          <>
-            {/* Desktop skeleton */}
-            <Card className="mt-5 hidden rounded-[26px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_40px_-30px_rgba(15,23,42,0.45)] md:block">
-              <CardHeader className="border-b border-border bg-muted/50 px-4 py-4 sm:px-6">
-                <CardTitle className="text-sm font-medium text-foreground">
-                  Clients
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="w-[45%]">Client</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead className="text-right">Category</TableHead>
-                      <TableHead className="w-[60px]" />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Skeleton className="h-9 w-9 rounded-lg" />
-                            <div className="space-y-2">
-                              <Skeleton className="h-3 w-40" />
-                              <Skeleton className="h-3 w-24" />
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell><Skeleton className="h-3 w-28" /></TableCell>
-                        <TableCell><Skeleton className="h-3 w-32" /></TableCell>
-                        <TableCell className="text-right">
-                          <Skeleton className="ml-auto h-5 w-24 rounded-full" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-8 w-8 rounded-md" />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            {/* Mobile skeleton */}
-            <div className="mt-5 space-y-3 md:hidden">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="rounded-[24px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="h-10 w-10 rounded-lg" />
-                        <div className="space-y-2">
-                          <Skeleton className="h-3 w-40" />
-                          <Skeleton className="h-3 w-28" />
-                        </div>
-                      </div>
-                      <Skeleton className="h-8 w-8 rounded-md" />
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      <Skeleton className="h-3 w-36" />
-                      <Skeleton className="h-5 w-24 rounded-full" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </>
+          <div className="mt-4 grid gap-3">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Card key={index} className="rounded-[22px] border border-border bg-white shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
+                <CardContent className="p-4">
+                  <div className="h-20 animate-pulse rounded-[16px] bg-slate-100" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
-          <Card className="mt-5 rounded-[26px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_40px_-30px_rgba(15,23,42,0.45)]">
+          <Card className="mt-4 rounded-[22px] border border-dashed border-border bg-white shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
             <CardContent className="flex flex-col items-center justify-center p-10 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted/50">
-                <User className="h-5 w-5 text-muted-foreground" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-muted/60">
+                <Users className="h-5 w-5 text-muted-foreground" />
               </div>
-              <h3 className="mt-4 text-sm font-medium text-foreground">No clients found</h3>
+              <h3 className="mt-4 text-base font-semibold text-foreground">No clients found</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Try a different search or add your first client.
               </p>
-              <div className="mt-5 flex items-center gap-2">
-                <Button onClick={() => navigate("/clients/new")}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add client
-                </Button>
-                <Button variant="outline" onClick={() => { setQuery(""); setCategory("All") }}>
-                  Clear filters
-                </Button>
-              </div>
             </CardContent>
           </Card>
         ) : (
-          <>
-            {/* Desktop: Table */}
-            <Card className="mt-5 hidden rounded-[26px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_40px_-30px_rgba(15,23,42,0.45)] md:block">
-              <CardHeader className="border-b border-border bg-muted/50 px-4 py-4 sm:px-6">
-                <div className="flex items-center justify-between gap-3">
-                  <CardTitle className="text-sm font-medium text-foreground">
-                    Clients
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground">
-                    Click a row to open details.
-                  </p>
-                </div>
-              </CardHeader>
-
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="w-[45%]">Client</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead className="text-right">Category</TableHead>
-                      <TableHead className="w-[60px]" />
-                    </TableRow>
-                  </TableHeader>
-
-                  <TableBody>
-                    {filtered.map((client) => {
-                      const cat = normalizeCategory(client.category)
-                      return (
-                        <TableRow
-                          key={client.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => navigate(`/clients/${client.id}`)}
-                        >
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-9 w-9 rounded-lg">
-                                <AvatarFallback className="rounded-lg bg-muted/50 text-xs font-semibold text-foreground">
-                                  {initials(client.name)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="min-w-0">
-                                <div className="truncate text-sm font-medium text-foreground">
-                                  {client.name}
-                                </div>
-                                <div className="truncate text-xs text-muted-foreground">
-                                  ID: {String(client.id)}
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-
-                          <TableCell className="text-sm text-foreground">
-                            {client.phone ?? "—"}
-                          </TableCell>
-
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatLocation(client.city, client.state)}
-                          </TableCell>
-
-                          <TableCell className="text-right">
-                            <Badge variant="secondary" className="font-medium">
-                              {cat}
-                            </Badge>
-                          </TableCell>
-
-                          <TableCell
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-right"
-                          >
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-44">
-                                <DropdownMenuItem
-                                  onClick={() => navigate(`/clients/edit/${client.id}`)}
-                                >
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => toast({ title: "Coming soon", description: "Archive coming soon." })}
-                                >
-                                  Archive
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => toast({ title: "Coming soon", description: "Merge coming soon." })}
-                                >
-                                  Merge
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() => setClientToDelete(client.id)}
-                                >
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            {/* Mobile: Cards */}
-            <div className="mt-5 space-y-3 md:hidden">
-              {filtered.map((client) => {
-                const cat = normalizeCategory(client.category)
-                return (
-                  <Card
-                    key={client.id}
-                    className="rounded-[24px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(247,249,252,1))] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)] transition-all hover:-translate-y-0.5 hover:bg-muted/30 hover:shadow-[0_24px_40px_-32px_rgba(15,23,42,0.42)]"
-                    onClick={() => navigate(`/clients/${client.id}`)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10 rounded-lg">
-                            <AvatarFallback className="rounded-lg bg-muted/50 text-xs font-semibold text-foreground">
-                              {initials(client.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-medium text-foreground">
-                              {client.name}
-                            </div>
-                            <div className="mt-1 truncate text-xs text-muted-foreground">
-                              {formatLocation(client.city, client.state)}
-                            </div>
-                          </div>
+          <div className="mt-4 grid gap-3">
+            {filtered.map((client) => {
+              const cat = normalizeCategory(client.category)
+              return (
+                <Card
+                  key={client.id}
+                  className="cursor-pointer rounded-[22px] border border-border bg-white shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_40px_-32px_rgba(15,23,42,0.42)]"
+                  onClick={() => navigate(`/clients/${client.id}`)}
+                >
+                  <CardContent className="p-4">
+                    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-[16px] border border-violet-100 bg-violet-50 text-sm font-extrabold text-violet-700">
+                        {initials(client.name)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate text-[17px] font-bold tracking-[-0.02em] text-foreground">
+                          {client.name}
                         </div>
-
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44">
-                              <DropdownMenuItem
-                                onClick={() => navigate(`/clients/edit/${client.id}`)}
-                              >
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => toast({ title: "Coming soon", description: "Archive coming soon." })}>
-                                Archive
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => toast({ title: "Coming soon", description: "Merge coming soon." })}>
-                                Merge
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => setClientToDelete(client.id)}
-                              >
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          {formatLocation(client.city, client.state)}
                         </div>
                       </div>
-
-                      <div className="mt-3 flex items-center justify-between gap-3">
-                        <div className="text-sm text-foreground">{client.phone ?? "—"}</div>
-                        <Badge variant="secondary" className="shrink-0 font-medium">
-                          {cat}
-                        </Badge>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon-lg" className="rounded-[14px] bg-white">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem onClick={() => navigate(`/clients/edit/${client.id}`)}>
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toast({ title: "Coming soon", description: "Archive coming soon." })}>
+                              Archive
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toast({ title: "Coming soon", description: "Merge coming soon." })}>
+                              Merge
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => setClientToDelete(client.id)}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-          </>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span>{client.phone ?? "—"}</span>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-zinc-200 pt-3">
+                      <Badge variant="secondary" className="font-medium">
+                        {cat}
+                      </Badge>
+                      <div className="text-xs font-medium text-muted-foreground">Open client</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
         )}
 
         <Button
