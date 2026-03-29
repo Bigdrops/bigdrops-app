@@ -17,14 +17,6 @@ import { toast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -38,6 +30,7 @@ import { mapDbQuotation } from '@/domain/quotation'
 import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
 import PageIntro from '@/components/layout/PageIntro'
 import { PageShell } from '@/components/layout/PageShell'
+import ListActionSheet from '@/components/layout/ListActionSheet'
 
 function formatMoney(value: number | string | null | undefined) {
   const parsed = Number(value || 0)
@@ -55,6 +48,7 @@ export default function QuotationList() {
   const [busyAction, setBusyAction] = useState<string | null>(null)
   const [archiveId, setArchiveId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [activeQuotation, setActiveQuotation] = useState<ReturnType<typeof mapDbQuotation> | null>(null)
 
   const loadQuotations = async () => {
     const { data } = await supabase
@@ -124,6 +118,9 @@ export default function QuotationList() {
 
     return next
   }, [quotations, search, sortBy, statusFilter])
+
+  const activeQuotationIsArchiving = activeQuotation ? busyAction === `archive:${activeQuotation.id}` : false
+  const activeQuotationIsDeleting = activeQuotation ? busyAction === `delete:${activeQuotation.id}` : false
 
   return (
     <PageShell width="wide" className="pb-32">
@@ -228,38 +225,18 @@ export default function QuotationList() {
                       <Badge className={`h-auto px-2.5 py-1 text-[10px] font-bold uppercase ${quotationStatusTone(quotation.status)}`}>
                         {formatQuotationStatus(quotation.status)}
                       </Badge>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button type="button" variant="outline" size="icon-lg" className="rounded-[14px] bg-white" onClick={(event) => event.stopPropagation()}>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48" onClick={(event) => event.stopPropagation()}>
-                          <DropdownMenuLabel>Quotation Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onSelect={() => navigate(`/quotations/${quotation.id}`)}>
-                            Open quotation
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => navigate(`/quotations/edit/${quotation.id}`)}>
-                            Edit quotation
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            disabled={isArchiving || isDeleting}
-                            onSelect={() => setArchiveId(quotation.id)}
-                          >
-                            {isArchiving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Archive className="mr-2 h-4 w-4" />}
-                            Archive
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled={isArchiving || isDeleting}
-                            onSelect={() => setDeleteId(quotation.id)}
-                            className="text-red-700 focus:text-red-700"
-                          >
-                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-lg"
+                        className="rounded-[14px] bg-white"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          setActiveQuotation(quotation)
+                        }}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
 
@@ -325,6 +302,40 @@ export default function QuotationList() {
         onConfirm={() => {
           if (deleteId) void handleDelete(deleteId)
         }}
+      />
+      <ListActionSheet
+        open={Boolean(activeQuotation)}
+        onOpenChange={(open) => {
+          if (!open) setActiveQuotation(null)
+        }}
+        eyebrow={activeQuotation ? `Quotation ${activeQuotation.quotation_number}` : "Quotation"}
+        title={activeQuotation?.client_name || "No client selected"}
+        amount={activeQuotation ? formatMoney(activeQuotation.total || 0) : null}
+        actions={activeQuotation ? [
+          {
+            key: "view",
+            label: "View",
+            icon: <ClipboardList className="h-6 w-6" />,
+            onClick: () => navigate(`/quotations/${activeQuotation.id}`),
+          },
+          {
+            key: "edit",
+            label: "Edit",
+            icon: <Pencil className="h-6 w-6" />,
+            onClick: () => navigate(`/quotations/edit/${activeQuotation.id}`),
+          },
+          {
+            key: "archive",
+            label: activeQuotationIsArchiving ? "Working..." : "Archive",
+            icon: activeQuotationIsArchiving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6" />,
+            onClick: () => setArchiveId(activeQuotation.id),
+          },
+        ] : []}
+        deleteAction={activeQuotation ? {
+          label: activeQuotationIsDeleting ? "Deleting..." : "Delete Quotation",
+          icon: activeQuotationIsDeleting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Trash2 className="h-6 w-6" />,
+          onClick: () => setDeleteId(activeQuotation.id),
+        } : undefined}
       />
     </PageShell>
   )

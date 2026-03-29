@@ -9,17 +9,11 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Card, CardContent } from "../components/ui/card"
 import { Input } from "../components/ui/input"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu"
 import PageIntro from "../components/layout/PageIntro"
+import ListActionSheet from "../components/layout/ListActionSheet"
 import { PageShell } from "../components/layout/PageShell"
 
-import { MoreHorizontal, Plus, Search, Users, SlidersHorizontal } from "lucide-react"
+import { Archive, Eye, MoreHorizontal, Pencil, Plus, Search, Trash2, Users, SlidersHorizontal } from "lucide-react"
 
 type Client = {
   id: string | number
@@ -54,6 +48,7 @@ export default function Clients(): JSX.Element {
   const [category, setCategory] = useState<string>("All")
   const [showFilters, setShowFilters] = useState(false)
   const [clientToDelete, setClientToDelete] = useState<string | number | null>(null)
+  const [activeClient, setActiveClient] = useState<Client | null>(null)
 
   const navigate = useNavigate()
 
@@ -213,33 +208,16 @@ export default function Clients(): JSX.Element {
                           {formatLocation(client.city, client.state)}
                         </div>
                       </div>
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon-lg" className="rounded-[14px] bg-white">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuItem onClick={() => navigate(`/clients/edit/${client.id}`)}>
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => toast({ title: "Coming soon", description: "Archive coming soon." })}>
-                              Archive
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => toast({ title: "Coming soon", description: "Merge coming soon." })}>
-                              Merge
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => setClientToDelete(client.id)}
-                            >
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setActiveClient(client)
+                        }}
+                        className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-border bg-white text-muted-foreground shadow-sm"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -278,6 +256,45 @@ export default function Clients(): JSX.Element {
         onConfirm={() => {
           if (clientToDelete !== null) void handleDelete(clientToDelete)
         }}
+      />
+      <ListActionSheet
+        open={Boolean(activeClient)}
+        onOpenChange={(open) => {
+          if (!open) setActiveClient(null)
+        }}
+        eyebrow="Client"
+        title={activeClient?.name || "Unknown client"}
+        actions={activeClient ? [
+          {
+            key: "view",
+            label: "View",
+            icon: <Eye className="h-6 w-6" />,
+            onClick: () => navigate(`/clients/${activeClient.id}`),
+          },
+          {
+            key: "edit",
+            label: "Edit",
+            icon: <Pencil className="h-6 w-6" />,
+            onClick: () => navigate(`/clients/edit/${activeClient.id}`),
+          },
+          {
+            key: "archive",
+            label: "Archive",
+            icon: <Archive className="h-6 w-6" />,
+            onClick: () => toast({ title: "Coming soon", description: "Archive coming soon." }),
+          },
+          {
+            key: "merge",
+            label: "Merge",
+            icon: <Users className="h-6 w-6" />,
+            onClick: () => toast({ title: "Coming soon", description: "Merge coming soon." }),
+          },
+        ] : []}
+        deleteAction={activeClient ? {
+          label: "Delete Client",
+          icon: <Trash2 className="h-6 w-6" />,
+          onClick: () => setClientToDelete(activeClient.id),
+        } : undefined}
       />
     </Layout>
   )

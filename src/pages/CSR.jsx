@@ -1,22 +1,17 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ClipboardList, MoreHorizontal, Plus, Search, SlidersHorizontal, Wrench } from "lucide-react"
+import { ClipboardList, Copy, Eye, MoreHorizontal, Pencil, Plus, Search, SlidersHorizontal, Trash2, Wrench } from "lucide-react"
 
 import ConfirmActionDialog from "@/components/ConfirmActionDialog"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
 import Layout from "../components/Layout"
 import PageIntro from "../components/layout/PageIntro"
+import ListActionSheet from "../components/layout/ListActionSheet"
 import { PageShell } from "../components/layout/PageShell"
 import { Button } from "../components/ui/button"
 import { Card, CardContent } from "../components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu"
 
 function normalizeStatus(status) {
   return (status || "").trim().toLowerCase()
@@ -34,6 +29,7 @@ export default function CSR() {
   const [sortBy, setSortBy] = useState("Newest")
   const [showFilters, setShowFilters] = useState(false)
   const [csrToDelete, setCsrToDelete] = useState(null)
+  const [activeCsr, setActiveCsr] = useState(null)
 
   const fetchCsrs = async () => {
     setLoading(true)
@@ -140,6 +136,25 @@ export default function CSR() {
       return
     }
     setCsrToDelete(null)
+    await fetchCsrs()
+  }
+
+  const handleClone = async (csr) => {
+    const clonePayload = {
+      ...csr,
+      csr_number: `${csr.csr_number || "CSR"}-COPY`,
+    }
+    delete clonePayload.id
+    delete clonePayload.created_at
+    delete clonePayload.updated_at
+
+    const { error } = await supabase.from("csrs").insert([clonePayload])
+    if (error) {
+      toast({ title: "Clone failed", description: "Unable to clone CSR right now.", variant: "destructive" })
+      return
+    }
+    toast({ title: "CSR cloned", description: "A duplicate report was created." })
+    setActiveCsr(null)
     await fetchCsrs()
   }
 
@@ -285,22 +300,16 @@ export default function CSR() {
                       </div>
                       <div className="mt-1 text-sm font-medium text-slate-700">{csr.client_name || "No client name"}</div>
                     </div>
-                    <div onClick={(event) => event.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="icon-lg" className="rounded-[14px] bg-white">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem onClick={() => navigate("/csr/" + csr.id)}>View</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate("/csr/edit/" + csr.id)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => setCsrToDelete(csr)}>
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setActiveCsr(csr)
+                      }}
+                      className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-border bg-white text-muted-foreground shadow-sm"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </button>
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -346,6 +355,39 @@ export default function CSR() {
         onConfirm={() => {
           if (csrToDelete) void handleDelete(csrToDelete)
         }}
+      />
+      <ListActionSheet
+        open={Boolean(activeCsr)}
+        onOpenChange={(open) => {
+          if (!open) setActiveCsr(null)
+        }}
+        eyebrow={activeCsr ? `CSR ${activeCsr.csr_number || ""}`.trim() : "CSR"}
+        title={activeCsr?.client_name || "No client"}
+        actions={activeCsr ? [
+          {
+            key: "view",
+            label: "View",
+            icon: <Eye className="h-6 w-6" />,
+            onClick: () => navigate(`/csr/${activeCsr.id}`),
+          },
+          {
+            key: "edit",
+            label: "Edit",
+            icon: <Pencil className="h-6 w-6" />,
+            onClick: () => navigate(`/csr/edit/${activeCsr.id}`),
+          },
+          {
+            key: "clone",
+            label: "Clone",
+            icon: <Copy className="h-6 w-6" />,
+            onClick: () => void handleClone(activeCsr),
+          },
+        ] : []}
+        deleteAction={activeCsr ? {
+          label: "Delete CSR",
+          icon: <Trash2 className="h-6 w-6" />,
+          onClick: () => setCsrToDelete(activeCsr),
+        } : undefined}
       />
     </Layout>
   )

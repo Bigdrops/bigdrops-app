@@ -4,11 +4,12 @@ import { supabase } from '../supabase'
 import ConfirmActionDialog from '../components/ConfirmActionDialog'
 import { toast } from '../hooks/use-toast'
 import Layout from '../components/Layout'
-import { Calendar, FileText, FolderKanban, Plus, Search, SlidersHorizontal, X } from 'lucide-react'
+import { Archive, Calendar, Eye, FileText, FolderKanban, MoreHorizontal, Plus, Search, SlidersHorizontal, Trash2, X } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import PageIntro from '../components/layout/PageIntro'
 import { PageShell } from '../components/layout/PageShell'
 import { Button } from '../components/ui/button'
+import ListActionSheet from '../components/layout/ListActionSheet'
 
 const STATUS_CONFIG = {
   active:    { label: 'Active',    bg: '#DCFCE7', color: '#16A34A', dot: '#22C55E' },
@@ -26,23 +27,12 @@ export default function Projects() {
   const [statusFilter, setStatusFilter] = useState('All')
   const [dateFilter, setDateFilter] = useState('All Time')
   const [sortBy, setSortBy] = useState('Newest')
-  const [openMenuId, setOpenMenuId] = useState(null)
   const [showFilters, setShowFilters] = useState(false)
   const [docCounts, setDocCounts] = useState({})
   const [projectToDelete, setProjectToDelete] = useState(null)
+  const [activeProject, setActiveProject] = useState(null)
 
   useEffect(() => { fetchProjects() }, [])
-
-  useEffect(() => {
-    const handleOutsideClick = (e) => {
-      // Check if click is outside the menu
-      if (openMenuId && !e.target.closest('[data-menu-container]')) {
-        setOpenMenuId(null)
-      }
-    }
-    document.addEventListener('mousedown', handleOutsideClick)
-    return () => document.removeEventListener('mousedown', handleOutsideClick)
-  }, [openMenuId])
 
   const fetchProjects = async () => {
     setLoading(true)
@@ -123,14 +113,14 @@ export default function Projects() {
 
   const handleDelete = async (project) => {
     await supabase.from('projects').delete().eq('id', project.id)
-    setOpenMenuId(null)
     setProjectToDelete(null)
+    setActiveProject(null)
     await fetchProjects()
   }
 
   const handleArchive = async (project) => {
     await supabase.from('projects').update({ archived_at: new Date().toISOString() }).eq('id', project.id)
-    setOpenMenuId(null)
+    setActiveProject(null)
     await fetchProjects()
   }
 
@@ -443,7 +433,6 @@ export default function Projects() {
               const startedText = project.start_date
                 ? new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                 : null
-              const isMenuOpen = openMenuId === project.id
 
               return (
                 <div
@@ -538,161 +527,26 @@ export default function Projects() {
                     </div>
 
                     {/* Menu */}
-                    <div
-                      data-menu-container
-                      style={{ 
-                        position: 'relative', 
-                        flexShrink: 0, 
-                        zIndex: isMenuOpen ? 300 : 1 
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setActiveProject(project)
+                      }}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 14,
+                        border: '1px solid #E2E8F0',
+                        background: 'white',
+                        color: '#64748B',
+                        cursor: 'pointer',
+                        display: 'grid',
+                        placeItems: 'center',
+                        boxShadow: '0 1px 2px rgba(15,23,42,0.05)',
                       }}
                     >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setOpenMenuId(isMenuOpen ? null : project.id)
-                        }}
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 10,
-                          border: isMenuOpen ? '1.5px solid #0F172A' : '1px solid #E2E8F0',
-                          background: isMenuOpen ? '#F8FAFC' : 'white',
-                          color: '#64748B',
-                          cursor: 'pointer',
-                          fontSize: 16,
-                          fontWeight: 800,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        •••
-                      </button>
-
-                      {isMenuOpen && (
-                        <div
-                          style={{
-                            position: 'absolute',
-                            right: 0,
-                            top: 'calc(100% + 6px)',
-                            zIndex: 300,
-                            minWidth: 180,
-                            maxHeight: '70vh',
-                            overflowY: 'auto',
-                            borderRadius: 14,
-                            border: '1px solid #E2E8F0',
-                            background: 'white',
-                            padding: '6px',
-                            boxShadow: '0 12px 40px rgba(15,23,42,0.15)',
-                          }}
-                        >
-                          {/* Close Button */}
-                          <button
-                            className="proj-menu-item"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setOpenMenuId(null)
-                            }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              width: '100%',
-                              border: 'none',
-                              background: 'transparent',
-                              textAlign: 'left',
-                              padding: '10px 12px',
-                              borderRadius: 10,
-                              fontSize: 14,
-                              color: '#64748B',
-                              cursor: 'pointer',
-                              fontWeight: 600
-                            }}
-                          >
-                            <span>Close</span>
-                            <X size={16} />
-                          </button>
-
-                          <div style={{ height: 1, background: '#F1F5F9', margin: '4px 0' }} />
-
-                          {/* View */}
-                          <button
-                            className="proj-menu-item"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setOpenMenuId(null)
-                              navigate(`/projects/${project.id}`)
-                            }}
-                            style={{
-                              display: 'block',
-                              width: '100%',
-                              border: 'none',
-                              background: 'transparent',
-                              textAlign: 'left',
-                              padding: '10px 12px',
-                              borderRadius: 10,
-                              fontSize: 14,
-                              color: '#1E293B',
-                              cursor: 'pointer',
-                              fontWeight: 600
-                            }}
-                          >
-                            View
-                          </button>
-
-                          <div style={{ height: 1, background: '#F1F5F9', margin: '4px 0' }} />
-
-                          {/* Archive */}
-                          <button
-                            className="proj-menu-item"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleArchive(project)
-                            }}
-                            style={{
-                              display: 'block',
-                              width: '100%',
-                              border: 'none',
-                              background: 'transparent',
-                              textAlign: 'left',
-                              padding: '10px 12px',
-                              borderRadius: 10,
-                              fontSize: 14,
-                              color: '#D97706',
-                              cursor: 'pointer',
-                              fontWeight: 600
-                            }}
-                          >
-                            Archive
-                          </button>
-
-                          {/* Delete */}
-                          <button
-                            className="proj-menu-item"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setProjectToDelete(project)
-                              setOpenMenuId(null)
-                            }}
-                            style={{
-                              display: 'block',
-                              width: '100%',
-                              border: 'none',
-                              background: 'transparent',
-                              textAlign: 'left',
-                              padding: '10px 12px',
-                              borderRadius: 10,
-                              fontSize: 14,
-                              color: '#DC2626',
-                              cursor: 'pointer',
-                              fontWeight: 600
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                      <MoreHorizontal size={18} />
+                    </button>
                   </div>
 
                   {/* Meta Info */}
@@ -794,6 +648,34 @@ export default function Projects() {
         onConfirm={() => {
           if (projectToDelete) void handleDelete(projectToDelete)
         }}
+      />
+      <ListActionSheet
+        open={Boolean(activeProject)}
+        onOpenChange={(open) => {
+          if (!open) setActiveProject(null)
+        }}
+        eyebrow={activeProject ? `Project ${activeProject.name}` : 'Project'}
+        title={activeProject?.client_name || 'No client'}
+        amount={activeProject ? formatProjectValue(activeProject.project_value) : null}
+        actions={activeProject ? [
+          {
+            key: 'view',
+            label: 'View',
+            icon: <Eye className="h-6 w-6" />,
+            onClick: () => navigate(`/projects/${activeProject.id}`),
+          },
+          {
+            key: 'archive',
+            label: 'Archive',
+            icon: <Archive className="h-6 w-6" />,
+            onClick: () => handleArchive(activeProject),
+          },
+        ] : []}
+        deleteAction={activeProject ? {
+          label: 'Delete Project',
+          icon: <Trash2 className="h-6 w-6" />,
+          onClick: () => setProjectToDelete(activeProject),
+        } : undefined}
       />
       </PageShell>
     </Layout>
