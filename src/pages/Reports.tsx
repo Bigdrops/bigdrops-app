@@ -40,6 +40,7 @@ type InvoiceFinancialRow = {
   issue_date?: string | null
   due_date?: string | null
   total?: number | null
+  vat?: number | null
   cash_received?: number | null
   wht_received?: number | null
   balance_due?: number | null
@@ -387,44 +388,119 @@ function ErrorBanner({ message }: { message: string }) {
   return <div className="rounded-2xl bg-red-500 px-4 py-3 text-sm font-medium text-white shadow-sm">{message}</div>
 }
 
-function TaxPlaceholder() {
+type TaxReportProps = {
+  rows: InvoiceFinancialRow[]
+  collections: CollectionRow[]
+  loading: boolean
+}
+
+function TaxReport({ rows, collections, loading }: TaxReportProps) {
+  if (loading) return <LoadingState label="tax data" />
+
+  const vatRows = rows.filter((row) =>
+    Number(row.vat || 0) > 0 &&
+    !['draft', 'cancelled'].includes(String(row.computed_status || '').toLowerCase()),
+  )
+  const whtRows = collections.filter((row) => Number(row.wht_amount || 0) > 0)
+
   return (
-    <Card className="border-amber-200 bg-amber-50/40 shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-sm font-semibold text-foreground">VAT & WHT Summary</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="rounded-2xl border border-amber-200 bg-card p-6 text-center shadow-sm">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-200 bg-amber-100 text-amber-700">
-            <Receipt className="h-6 w-6" />
-          </div>
-          <h3 className="mt-4 text-base font-bold text-foreground">Tax Summary Coming Soon</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Placeholder for VAT charged, WHT deductions and net tax position by period.
-          </p>
-          <div className="mt-5 grid gap-3 text-left">
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-amber-700">Period</div>
-              <div className="mt-1 text-sm font-semibold text-foreground">Current reporting period</div>
+    <div className="space-y-4">
+      <Card className="border-amber-200 bg-card shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold text-foreground">VAT Charged by Invoice</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {vatRows.length === 0 ? (
+            <EmptyState title="No VAT charged" description="No invoices with VAT in the selected period." tone="amber" />
+          ) : (
+            <div className="space-y-3">
+              {vatRows.map((row) => (
+                <div key={row.id} className="rounded-2xl border border-border border-l-4 border-l-amber-400 bg-card p-4 shadow-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-bold text-foreground">
+                        <Link to={`/invoices/${row.id}`} className="hover:text-blue-700 hover:underline">
+                          {row.invoice_number || '—'}
+                        </Link>
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">{row.client_name || '—'} · {formatDate(row.issue_date)}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground">Invoice Total</div>
+                      <div className="text-sm font-semibold text-foreground">{formatMoney(row.total)}</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div>
+                      <div className="text-[11px] text-muted-foreground">VAT Amount</div>
+                      <div className="text-base font-black text-amber-700">{formatMoney(row.vat)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-muted-foreground">Status</div>
+                      <Badge className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusClass(row.computed_status)}`}>
+                        {row.computed_status || 'draft'}
+                      </Badge>
+                    </div>
+                    {Number(row.wht_received || 0) > 0 ? (
+                      <div>
+                        <div className="text-[11px] text-muted-foreground">WHT Received</div>
+                        <div className="text-base font-black text-red-600">-{formatMoney(row.wht_received)}</div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-xl border border-border bg-card p-3">
-                <div className="text-xs text-muted-foreground">Total VAT Charged</div>
-                <div className="mt-1 text-lg font-bold text-foreground">₦0.00</div>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-3">
-                <div className="text-xs text-muted-foreground">Total WHT</div>
-                <div className="mt-1 text-lg font-bold text-foreground">₦0.00</div>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-3">
-                <div className="text-xs text-muted-foreground">Net Tax Position</div>
-                <div className="mt-1 text-lg font-bold text-blue-700">₦0.00</div>
-              </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-red-200 bg-card shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold text-foreground">WHT Deductions from Payments</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {whtRows.length === 0 ? (
+            <EmptyState title="No WHT recorded" description="No payments with WHT deductions in the selected period." tone="red" />
+          ) : (
+            <div className="space-y-3">
+              {whtRows.map((row) => (
+                <div key={row.id} className="rounded-2xl border border-border border-l-4 border-l-red-400 bg-card p-4 shadow-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-bold text-foreground">
+                        {row.invoice_id ? (
+                          <Link to={`/invoices/${row.invoice_id}`} className="hover:text-blue-700 hover:underline">
+                            {row.invoice_number || '—'}
+                          </Link>
+                        ) : (
+                          row.invoice_number || '—'
+                        )}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">{row.client_name || '—'} · {formatDate(row.date)}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground">Cash Amount</div>
+                      <div className="text-sm font-semibold text-emerald-700">{formatMoney(row.cash_amount)}</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-[11px] text-muted-foreground">WHT Deducted</div>
+                      <div className="text-base font-black text-red-600">{formatMoney(row.wht_amount)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-muted-foreground">Method</div>
+                      <div className="text-sm font-semibold text-foreground">{row.method || '—'}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 
@@ -859,11 +935,26 @@ export default function Reports() {
     ]
   }, [filteredProjects])
 
-  const taxMetrics = useMemo<Metric[]>(() => [
-    { label: 'VAT Charged', value: '₦0.00', tone: 'amber', icon: <Receipt className="h-4 w-4" /> },
-    { label: 'WHT', value: '₦0.00', tone: 'amber', icon: <FileSpreadsheet className="h-4 w-4" /> },
-    { label: 'Net Position', value: '₦0.00', tone: 'blue', icon: <Wallet className="h-4 w-4" /> },
-  ], [])
+  const taxMetrics = useMemo<Metric[]>(() => {
+    const vatCharged = filteredReceivables
+      .filter((row) => !['draft', 'cancelled'].includes(String(row.computed_status || '').toLowerCase()))
+      .reduce((sum, row) => sum + Number(row.vat || 0), 0)
+
+    const whtDeducted = filteredCollections
+      .reduce((sum, row) => sum + Number(row.wht_amount || 0), 0)
+
+    const whtReceived = filteredReceivables
+      .reduce((sum, row) => sum + Number(row.wht_received || 0), 0)
+
+    const netPosition = vatCharged - whtDeducted
+
+    return [
+      { label: 'VAT Charged', value: formatMoney(vatCharged), tone: 'amber', icon: <Receipt className="h-4 w-4" /> },
+      { label: 'WHT Deducted', value: formatMoney(whtDeducted), tone: 'red', icon: <FileSpreadsheet className="h-4 w-4" /> },
+      { label: 'WHT Received', value: formatMoney(whtReceived), tone: 'green', icon: <Wallet className="h-4 w-4" /> },
+      { label: 'Net Position', value: formatMoney(netPosition), tone: netPosition >= 0 ? 'blue' : 'red', icon: <Banknote className="h-4 w-4" /> },
+    ]
+  }, [filteredReceivables, filteredCollections])
 
   return (
     <Layout title="Reports" hidePageHeader contentClassName="w-full max-w-none bg-slate-50 p-0 pb-24 md:px-4 md:pb-10">
@@ -903,7 +994,7 @@ export default function Reports() {
                 <MetricStrip metrics={taxMetrics} />
                 <Filters activeDate={datePreset} setActiveDate={setDatePreset} statusFilter={receivablesFilter} setStatusFilter={setReceivablesFilter} clientFilter={clientFilter} setClientFilter={setClientFilter} clientOptions={clientOptions} search={search} setSearch={setSearch} showStatus={false} />
                 {datePreset === 'custom' ? <Card className="border-amber-200 bg-card shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
-                <TaxPlaceholder />
+                <TaxReport rows={filteredReceivables} collections={filteredCollections} loading={loading.receivables || loading.collections} />
               </TabsContent>
             </div>
           </Tabs>
