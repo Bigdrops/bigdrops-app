@@ -8,6 +8,9 @@ import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
 import Layout from "../components/Layout"
 import { useIsMobile } from "../hooks/useIsMobile"
+import PageIntro from "../components/layout/PageIntro"
+import { PageShell } from "../components/layout/PageShell"
+import { Button } from "../components/ui/button"
 
 import { Card, CardContent } from "../components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
@@ -180,128 +183,118 @@ export default function CSR() {
   const filterSelectClass = "h-10 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 outline-none"
   const hasActiveFilters =
     !!search || clientFilter !== "All" || statusFilter !== "All" || dateFilter !== "All Time"
-  const iconButtonClass = "h-10 w-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center text-zinc-500"
 
   return (
     <Layout title="Customer Service Reports" hidePageHeader>
-      <div className="w-full space-y-5 py-6" style={{ fontFamily: "'Inter', sans-serif" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, gap: 12 }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#0F172A" }}>Customer Service Reports</h2>
-            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#94A3B8" }}>
-              {csrs.length} report{csrs.length !== 1 ? "s" : ""} total
-            </p>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button onClick={() => setShowSearch((prev) => !prev)} className={iconButtonClass} aria-label="Toggle search">
-              <Search size={16} />
-            </button>
-            <button onClick={() => setShowFilters((prev) => !prev)} className={iconButtonClass} aria-label="Toggle filters">
-              <SlidersHorizontal size={16} />
-            </button>
-            <button
-              onClick={() => navigate("/csr/new")}
-              style={{
-                backgroundColor: "#0F172A",
-                color: "white",
-                border: "none",
-                borderRadius: 10,
-                padding: "10px 18px",
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              + New CSR
-            </button>
-          </div>
-        </div>
+      <PageShell className="space-y-5 pb-32">
+        <PageIntro
+          eyebrow="Service"
+          title="Customer Service Reports"
+          description="Make recent field reports easier to scan, keep equipment context visible, and preserve quick access to existing report actions."
+          meta={`${filteredCsrs.length} of ${csrs.length} report${csrs.length !== 1 ? "s" : ""}`}
+          tone="amber"
+          actions={
+            <>
+              <Button type="button" variant="outline" size="icon-lg" className="rounded-2xl bg-white/90" onClick={() => setShowSearch((prev) => !prev)} aria-label="Toggle search">
+                <Search className="h-4 w-4" />
+              </Button>
+              <Button type="button" variant="outline" size="icon-lg" className="rounded-2xl bg-white/90" onClick={() => setShowFilters((prev) => !prev)} aria-label="Toggle filters">
+                <SlidersHorizontal className="h-4 w-4" />
+              </Button>
+              <Button type="button" className="hidden h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold sm:inline-flex" onClick={() => navigate("/csr/new")}>
+                <Plus className="mr-2 h-4 w-4" />
+                New CSR
+              </Button>
+            </>
+          }
+          toolbar={
+            <div className="space-y-3">
+              {showSearch && (
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search CSRs, clients, or equipment..."
+                  className="h-12 w-full rounded-2xl border border-border bg-white px-4 text-sm font-medium text-foreground outline-none"
+                />
+              )}
 
-        {showSearch && (
-          <div className="mb-4">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search CSRs, clients, or equipment..."
-              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm font-medium text-foreground outline-none"
-            />
-          </div>
-        )}
-
-        {showFilters && (
-          <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase text-muted-foreground">Client</span>
-              <Select value={clientFilter} onValueChange={setClientFilter}>
-                <SelectTrigger className={filterSelectClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All</SelectItem>
-                  {clientOptions.map((client) => (
-                    <SelectItem key={client} value={client}>{client}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {showFilters && (
+                <div className="flex flex-col gap-3 rounded-[20px] border border-border bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase text-muted-foreground">Client</span>
+                    <Select value={clientFilter} onValueChange={setClientFilter}>
+                      <SelectTrigger className={filterSelectClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All</SelectItem>
+                        {clientOptions.map((client) => (
+                          <SelectItem key={client} value={client}>{client}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase text-muted-foreground">Status</span>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className={filterSelectClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["All", "Draft", "Completed", "Pending", "Cancelled"].map((option) => (
+                          <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase text-muted-foreground">Date</span>
+                    <Select value={dateFilter} onValueChange={setDateFilter}>
+                      <SelectTrigger className={filterSelectClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
+                          <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase text-muted-foreground">Sort</span>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className={filterSelectClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["Newest", "Oldest"].map((option) => (
+                          <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <button
+                    onClick={resetFilters}
+                    className="h-10 rounded-xl border border-border px-4 text-xs font-bold uppercase text-muted-foreground transition hover:bg-muted/50"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase text-muted-foreground">Status</span>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className={filterSelectClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {["All", "Draft", "Completed", "Pending", "Cancelled"].map((option) => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase text-muted-foreground">Date</span>
-              <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger className={filterSelectClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase text-muted-foreground">Sort</span>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className={filterSelectClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {["Newest", "Oldest"].map((option) => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <button
-              onClick={resetFilters}
-              className="h-10 rounded-xl border border-border px-4 text-xs font-bold uppercase text-muted-foreground transition hover:bg-muted/50"
-            >
-              Clear Filters
-            </button>
-          </div>
-        )}
+          }
+        />
 
         {isMobile ? (
-          <div className="space-y-3 pb-24">
+          <div className="space-y-3">
             {loading ? (
-              <Card className="rounded-3xl border border-border bg-card">
+              <Card className="rounded-[26px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_36px_-30px_rgba(15,23,42,0.45)]">
                 <CardContent className="p-5 text-sm text-muted-foreground">
                   Loading service reports...
                 </CardContent>
               </Card>
             ) : filteredCsrs.length === 0 ? (
-              <Card className="rounded-3xl border border-border bg-card">
+              <Card className="rounded-[26px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_36px_-30px_rgba(15,23,42,0.45)]">
                 <CardContent className="p-5 text-center">
                   <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-zinc-900 text-white">
                     <ClipboardList className="h-5 w-5" />
@@ -320,10 +313,10 @@ export default function CSR() {
                   key={csr.id}
                   onClick={() => navigate("/csr/" + csr.id)}
                   style={{
-                    background: "white",
-                    borderRadius: 32,
+                    background: "linear-gradient(180deg, rgba(255,255,255,1), rgba(247,249,252,1))",
+                    borderRadius: 26,
                     border: "1px solid #e2eefc",
-                    boxShadow: "0 10px 28px -12px rgba(10,40,70,0.12)",
+                    boxShadow: "0 18px 36px -30px rgba(15,23,42,0.48)",
                     padding: "18px 20px",
                     display: "flex",
                     alignItems: "flex-start",
@@ -331,7 +324,7 @@ export default function CSR() {
                     cursor: "pointer",
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fcff" }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "white" }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(180deg, rgba(255,255,255,1), rgba(247,249,252,1))" }}
                 >
                   <div
                     style={{
@@ -415,7 +408,7 @@ export default function CSR() {
             )}
           </div>
         ) : (
-          <Card className="overflow-hidden rounded-[28px] border border-border bg-card shadow-sm">
+          <Card className="overflow-hidden rounded-[28px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_36px_-30px_rgba(15,23,42,0.45)]">
             <CardContent className="p-0">
               <div className="border-b border-border bg-muted/50 px-5 py-4">
                 <div className="text-sm font-semibold text-foreground">
@@ -449,10 +442,10 @@ export default function CSR() {
                       key={csr.id}
                       onClick={() => navigate("/csr/" + csr.id)}
                       style={{
-                        background: "white",
-                        borderRadius: 32,
+                        background: "linear-gradient(180deg, rgba(255,255,255,1), rgba(247,249,252,1))",
+                        borderRadius: 26,
                         border: "1px solid #e2eefc",
-                        boxShadow: "0 10px 28px -12px rgba(10,40,70,0.12)",
+                        boxShadow: "0 18px 36px -30px rgba(15,23,42,0.48)",
                         padding: "18px 20px",
                         display: "flex",
                         alignItems: "flex-start",
@@ -460,7 +453,7 @@ export default function CSR() {
                         cursor: "pointer",
                       }}
                       onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fcff" }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "white" }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(180deg, rgba(255,255,255,1), rgba(247,249,252,1))" }}
                     >
                       <div
                         style={{
@@ -549,11 +542,11 @@ export default function CSR() {
 
         <button
           onClick={() => navigate("/csr/new")}
-          className="fixed bottom-28 right-8 z-50 flex h-16 w-16 items-center justify-center rounded-[24px] border border-white/20 bg-zinc-950 text-white shadow-2xl transition-transform hover:scale-110"
+          className="fixed bottom-28 right-5 z-50 flex h-16 w-16 items-center justify-center rounded-[20px] border border-white/20 bg-slate-950 text-white shadow-[0_22px_40px_-18px_rgba(15,23,42,0.65)] transition-transform hover:scale-110 sm:hidden"
         >
           <Plus size={32} />
         </button>
-      </div>
+      </PageShell>
       <ConfirmActionDialog
         open={Boolean(csrToDelete)}
         onOpenChange={(open) => {

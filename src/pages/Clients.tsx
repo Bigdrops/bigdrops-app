@@ -27,6 +27,7 @@ import {
 import { Skeleton } from "../components/ui/skeleton"
 import { Avatar, AvatarFallback } from "../components/ui/avatar"
 import PageIntro from "../components/layout/PageIntro"
+import { PageShell } from "../components/layout/PageShell"
 
 import { MoreHorizontal, Plus, Search, User } from "lucide-react"
 
@@ -123,15 +124,16 @@ export default function Clients(): JSX.Element {
   }
 
   return (
-    <Layout title="Clients">
-      <div className="w-full py-6">
+    <Layout title="Clients" hidePageHeader>
+      <PageShell width="wide" className="pb-32">
         <PageIntro
           eyebrow="Directory"
           title="Clients"
           description="Keep contacts tidy and make document lookups faster when you are working from the phone."
           meta={loading ? "Loading clients..." : `${filtered.length} of ${clients.length} client${clients.length === 1 ? "" : "s"}`}
+          tone="violet"
           actions={
-            <Button onClick={() => navigate("/clients/new")} className="hidden sm:inline-flex">
+            <Button onClick={() => navigate("/clients/new")} className="hidden h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold sm:inline-flex">
               <Plus className="mr-2 h-4 w-4" />
               Add client
             </Button>
@@ -145,13 +147,13 @@ export default function Clients(): JSX.Element {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search clients…"
-                    className="border-zinc-200 bg-white pl-9"
+                    className="h-12 rounded-2xl border-zinc-200 bg-white pl-9 text-sm"
                   />
                 </div>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="shrink-0">
+                    <Button variant="outline" className="h-12 shrink-0 rounded-2xl bg-white px-4 text-sm font-semibold">
                       {category === "All" ? "Category" : category}
                     </Button>
                   </DropdownMenuTrigger>
@@ -170,7 +172,7 @@ export default function Clients(): JSX.Element {
               </div>
 
               <div className="flex items-center justify-between gap-2 sm:justify-end">
-                <Button variant="ghost" onClick={reload}>
+                <Button variant="ghost" className="h-11 rounded-2xl px-4 text-sm font-semibold" onClick={reload}>
                   Refresh
                 </Button>
               </div>
@@ -182,8 +184,8 @@ export default function Clients(): JSX.Element {
         {loading ? (
           <>
             {/* Desktop skeleton */}
-            <Card className="hidden rounded-xl border border-border bg-card md:block">
-              <CardHeader className="border-b border-border bg-muted/50 px-4 py-3 sm:px-6">
+            <Card className="mt-5 hidden rounded-[26px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_40px_-30px_rgba(15,23,42,0.45)] md:block">
+              <CardHeader className="border-b border-border bg-muted/50 px-4 py-4 sm:px-6">
                 <CardTitle className="text-sm font-medium text-foreground">
                   Clients
                 </CardTitle>
@@ -227,9 +229,9 @@ export default function Clients(): JSX.Element {
             </Card>
 
             {/* Mobile skeleton */}
-            <div className="space-y-3 md:hidden">
+            <div className="mt-5 space-y-3 md:hidden">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="rounded-xl border border-border bg-card">
+                <Card key={i} className="rounded-[24px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -251,7 +253,7 @@ export default function Clients(): JSX.Element {
             </div>
           </>
         ) : filtered.length === 0 ? (
-          <Card className="rounded-xl border border-border bg-card">
+          <Card className="mt-5 rounded-[26px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_40px_-30px_rgba(15,23,42,0.45)]">
             <CardContent className="flex flex-col items-center justify-center p-10 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted/50">
                 <User className="h-5 w-5 text-muted-foreground" />
@@ -274,8 +276,8 @@ export default function Clients(): JSX.Element {
         ) : (
           <>
             {/* Desktop: Table */}
-            <Card className="hidden rounded-xl border border-border bg-card md:block">
-              <CardHeader className="border-b border-border bg-muted/50 px-4 py-3 sm:px-6">
+            <Card className="mt-5 hidden rounded-[26px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_40px_-30px_rgba(15,23,42,0.45)] md:block">
+              <CardHeader className="border-b border-border bg-muted/50 px-4 py-4 sm:px-6">
                 <div className="flex items-center justify-between gap-3">
                   <CardTitle className="text-sm font-medium text-foreground">
                     Clients
@@ -384,13 +386,13 @@ export default function Clients(): JSX.Element {
             </Card>
 
             {/* Mobile: Cards */}
-            <div className="space-y-3 md:hidden">
+            <div className="mt-5 space-y-3 md:hidden">
               {filtered.map((client) => {
                 const cat = normalizeCategory(client.category)
                 return (
                   <Card
                     key={client.id}
-                    className="rounded-2xl border border-border bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,1))] hover:bg-muted/50"
+                    className="rounded-[24px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(247,249,252,1))] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)] transition-all hover:-translate-y-0.5 hover:bg-muted/30 hover:shadow-[0_24px_40px_-32px_rgba(15,23,42,0.42)]"
                     onClick={() => navigate(`/clients/${client.id}`)}
                   >
                     <CardContent className="p-4">
@@ -458,12 +460,12 @@ export default function Clients(): JSX.Element {
 
         <Button
           onClick={() => navigate("/clients/new")}
-          className="fixed bottom-28 right-8 z-50 h-16 w-16 rounded-[24px] border border-white/20 bg-zinc-950 p-0 text-white shadow-2xl transition-transform hover:scale-105 md:hidden"
+          className="fixed bottom-28 right-5 z-50 h-16 w-16 rounded-[20px] border border-white/20 bg-slate-950 p-0 text-white shadow-[0_22px_40px_-18px_rgba(15,23,42,0.65)] transition-transform hover:scale-105 md:hidden"
           aria-label="Add client"
         >
           <Plus className="h-7 w-7" />
         </Button>
-      </div>
+      </PageShell>
       <ConfirmActionDialog
         open={clientToDelete !== null}
         onOpenChange={(open) => {

@@ -6,6 +6,9 @@ import { toast } from '../hooks/use-toast'
 import Layout from '../components/Layout'
 import { Calendar, FileText, FolderKanban, Plus, Search, SlidersHorizontal, X } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
+import PageIntro from '../components/layout/PageIntro'
+import { PageShell } from '../components/layout/PageShell'
+import { Button } from '../components/ui/button'
 
 const STATUS_CONFIG = {
   active:    { label: 'Active',    bg: '#DCFCE7', color: '#16A34A', dot: '#22C55E' },
@@ -144,6 +147,7 @@ export default function Projects() {
 
   return (
     <Layout title="Projects" hidePageHeader>
+      <PageShell width="wide" className="pb-32">
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }
@@ -172,176 +176,81 @@ export default function Projects() {
         }
       `}</style>
 
-      <div style={{ 
-        maxWidth: 900, 
-        margin: '0 auto',
-        padding: '0 16px 24px',
-        fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif" 
-      }}>
-
-        {/* Header */}
-        <div style={{ 
-          padding: '16px 0 20px',
-          position: 'sticky',
-          top: 0,
-          background: 'linear-gradient(180deg, rgba(250,250,250,0.98) 0%, rgba(245,247,250,0.98) 100%)',
-          zIndex: 10,
-          marginLeft: -16,
-          marginRight: -16,
-          paddingLeft: 16,
-          paddingRight: 16,
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
-            marginBottom: 12,
-            gap: 12 
-          }}>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                borderRadius: 999,
-                padding: '5px 10px',
-                background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                color: '#475569',
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                marginBottom: 10
-              }}>
-                Project Directory
-              </div>
-              <h2 style={{ 
-                margin: 0, 
-                fontSize: 24, 
-                fontWeight: 800, 
-                color: '#0F172A',
-                letterSpacing: '-0.02em'
-              }}>
-                Projects
-              </h2>
-              <p style={{ 
-                margin: '2px 0 0', 
-                fontSize: 13, 
-                color: '#64748B',
-                fontWeight: 500
-              }}>
-                {filtered.length} of {projects.length} project{projects.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-            <button
-              onClick={() => navigate('/projects/new')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                background: '#0F172A',
-                color: 'white',
-                border: 'none',
-                borderRadius: 12,
-                padding: '10px 16px',
-                fontSize: 14,
-                fontWeight: 700,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(15,23,42,0.15)',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              <Plus size={18} strokeWidth={2.5} />
-              <span>New</span>
-            </button>
-          </div>
-
-          {/* Search & Filter Bar */}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <div style={{ position: 'relative', flex: 1 }}>
-              <Search 
-                size={16} 
-                style={{ 
-                  position: 'absolute', 
-                  left: 12, 
-                  top: '50%', 
-                  transform: 'translateY(-50%)', 
-                  color: '#94A3B8',
-                  pointerEvents: 'none'
-                }} 
-              />
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search projects..."
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  padding: '10px 12px 10px 38px',
-                  border: '1px solid #E2E8F0',
-                  borderRadius: 12,
-                  fontSize: 14,
-                  color: '#1E293B',
-                  background: 'white',
-                  outline: 'none',
-                  fontWeight: 500
-                }}
-              />
-            </div>
-            <button
-              onClick={() => setShowFilters(p => !p)}
-              style={{
-                position: 'relative',
-                width: 42,
-                height: 42,
-                borderRadius: 12,
-                border: showFilters ? '1.5px solid #0F172A' : '1px solid #E2E8F0',
-                background: showFilters ? '#F8FAFC' : 'white',
-                color: showFilters ? '#0F172A' : '#64748B',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                flexShrink: 0
-              }}
-            >
-              <SlidersHorizontal size={18} />
-              {activeFilterCount > 0 && (
-                <div style={{
-                  position: 'absolute',
-                  top: -4,
-                  right: -4,
-                  width: 18,
-                  height: 18,
-                  borderRadius: '50%',
-                  background: '#0F172A',
-                  color: 'white',
-                  fontSize: 10,
-                  fontWeight: 800,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '2px solid #FAFAFA'
-                }}>
-                  {activeFilterCount}
+      <div style={{ maxWidth: 920, margin: '0 auto', fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif" }}>
+        <PageIntro
+          eyebrow="Projects"
+          title="Projects"
+          description="Keep active work readable at a glance, with status, related documents, and project value grouped into one consistent mobile-friendly card."
+          meta={`${filtered.length} of ${projects.length} project${projects.length !== 1 ? 's' : ''}`}
+          tone="emerald"
+          actions={
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-lg"
+                className="relative rounded-2xl bg-white/90"
+                onClick={() => setShowFilters((p) => !p)}
+                aria-label="Toggle filters"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                {activeFilterCount > 0 ? (
+                  <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-slate-950 px-1 text-[10px] font-bold text-white">
+                    {activeFilterCount}
+                  </span>
+                ) : null}
+              </Button>
+              <Button type="button" className="hidden h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold sm:inline-flex" onClick={() => navigate('/projects/new')}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Project
+              </Button>
+            </>
+          }
+          toolbar={
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <Search
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      left: 14,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#94A3B8',
+                      pointerEvents: 'none'
+                    }}
+                  />
+                  <input
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder="Search projects..."
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      padding: '12px 14px 12px 40px',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: 16,
+                      fontSize: 14,
+                      color: '#1E293B',
+                      background: 'white',
+                      outline: 'none',
+                      fontWeight: 500
+                    }}
+                  />
                 </div>
-              )}
-            </button>
-          </div>
+              </div>
 
-          {/* Filters Panel */}
-          {showFilters && (
-            <div style={{
-              marginTop: 12,
-              background: 'white',
-              border: '1px solid #E2E8F0',
-              borderRadius: 16,
-              padding: 16,
-              boxShadow: '0 4px 12px rgba(15,23,42,0.08)'
-            }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {showFilters && (
+                <div style={{
+                  background: 'white',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: 20,
+                  padding: 16,
+                  boxShadow: '0 8px 22px -18px rgba(15,23,42,0.35)'
+                }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div>
                     <label style={{ 
                       display: 'block',
@@ -388,7 +297,7 @@ export default function Projects() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div>
                     <label style={{ 
                       display: 'block',
@@ -430,41 +339,43 @@ export default function Projects() {
                       <SelectContent>
                         {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                       </SelectContent>
-                    </Select>
+                      </Select>
                   </div>
                 </div>
 
-                {hasActiveFilters && (
-                  <button
-                    onClick={resetFilters}
-                    style={{
-                      width: '100%',
-                      height: 38,
-                      borderRadius: 10,
-                      border: '1px solid #E2E8F0',
-                      background: 'white',
-                      color: '#64748B',
-                      fontSize: 13,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6
-                    }}
-                  >
-                    <X size={14} />
-                    Clear All Filters
-                  </button>
-                )}
-              </div>
+                    {hasActiveFilters && (
+                      <button
+                        onClick={resetFilters}
+                        style={{
+                          width: '100%',
+                          height: 40,
+                          borderRadius: 14,
+                          border: '1px solid #E2E8F0',
+                          background: 'white',
+                          color: '#64748B',
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6
+                        }}
+                      >
+                        <X size={14} />
+                        Clear All Filters
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          }
+        />
 
         {/* Project List */}
         {loading ? (
-          <div style={{ 
+          <div style={{
             textAlign: 'center', 
             padding: '80px 20px', 
             color: '#94A3B8', 
@@ -549,13 +460,12 @@ export default function Projects() {
                   }}
                   style={{
                     position: 'relative',
-                    background: 'white',
+                    background: 'linear-gradient(180deg, rgba(255,255,255,1), rgba(247,249,252,1))',
                     border: '1px solid #E2E8F0',
-                    borderRadius: 20,
-                    padding: '18px 16px',
+                    borderRadius: 24,
+                    padding: '20px 18px',
                     cursor: 'pointer',
-                  boxShadow: '0 6px 18px rgba(15,23,42,0.08)',
-                  backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,1), rgba(248,250,252,1))',
+                    boxShadow: '0 18px 36px -30px rgba(15,23,42,0.48)',
                 }}
               >
                   {/* Top accent */}
@@ -872,7 +782,7 @@ export default function Projects() {
 
       <button
         onClick={() => navigate('/projects/new')}
-        className="fixed bottom-28 right-8 z-50 flex h-16 w-16 items-center justify-center rounded-[24px] border border-white/20 bg-zinc-950 text-white shadow-2xl transition-transform hover:scale-110"
+        className="fixed bottom-28 right-5 z-50 flex h-16 w-16 items-center justify-center rounded-[20px] border border-white/20 bg-slate-950 text-white shadow-[0_22px_40px_-18px_rgba(15,23,42,0.65)] transition-transform hover:scale-110 sm:hidden"
       >
         <Plus size={32} />
       </button>
@@ -888,6 +798,7 @@ export default function Projects() {
           if (projectToDelete) void handleDelete(projectToDelete)
         }}
       />
+      </PageShell>
     </Layout>
   )
 }

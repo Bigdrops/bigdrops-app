@@ -6,6 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
 import Layout from "../components/Layout"
+import PageIntro from "../components/layout/PageIntro"
+import { PageShell } from "../components/layout/PageShell"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 
 const PAGE_SIZE = 25
 
@@ -234,125 +238,116 @@ export default function Invoices() {
   }
 
   const filterSelectClass = "h-10 rounded-xl border border-border bg-background px-3 text-xs font-bold text-zinc-700 outline-none"
-  const iconButtonClass = "h-10 w-10 rounded-xl border border-border bg-background flex items-center justify-center text-muted-foreground"
 
   return (
     <Layout title="Invoices" hidePageHeader>
-      <div className="w-full py-6 pb-32" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <PageShell width="wide" className="pb-32">
+        <PageIntro
+          eyebrow="Sales"
+          title="Invoices"
+          description="Keep outstanding invoices readable on mobile with stronger amount hierarchy, cleaner filters, and the same existing invoice actions."
+          meta={`${totalCount} invoice${totalCount !== 1 ? "s" : ""} total`}
+          tone="blue"
+          actions={
+            <>
+              <Button type="button" variant="outline" size="icon-lg" className="rounded-2xl bg-white/90" onClick={() => setShowSearch((prev) => !prev)} aria-label="Toggle search">
+                <Search size={16} />
+              </Button>
+              <Button type="button" variant="outline" size="icon-lg" className="rounded-2xl bg-white/90" onClick={() => setShowFilters((prev) => !prev)} aria-label="Toggle filters">
+                <SlidersHorizontal size={16} />
+              </Button>
+              <Button type="button" className="hidden h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold sm:inline-flex" onClick={() => navigate("/invoices/new")}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Invoice
+              </Button>
+            </>
+          }
+          toolbar={
+            <div className="space-y-3">
+              {showSearch && (
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search invoices or clients..."
+                  className="h-12 w-full rounded-2xl border border-border bg-white px-4 text-sm font-medium text-foreground outline-none"
+                />
+              )}
 
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="m-0 text-xl font-semibold text-foreground">Invoices</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {totalCount} invoice{totalCount !== 1 ? "s" : ""} total
-            </p>
-          </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <button onClick={() => setShowSearch((prev) => !prev)} className={iconButtonClass} aria-label="Toggle search">
-              <Search size={16} />
-            </button>
-            <button onClick={() => setShowFilters((prev) => !prev)} className={iconButtonClass} aria-label="Toggle filters">
-              <SlidersHorizontal size={16} />
-            </button>
-            <button
-              onClick={() => navigate("/invoices/new")}
-              className="h-10 rounded-xl bg-slate-900 px-4 text-[13px] font-bold text-white"
-            >
-              + New Invoice
-            </button>
-          </div>
-        </div>
-
-        {showSearch && (
-          <div className="mb-4">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search invoices or clients..."
-              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm font-medium text-foreground outline-none"
-            />
-          </div>
-        )}
-
-        {showFilters && (
-          <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black uppercase text-muted-foreground">Client</span>
-              <Select value={clientFilter} onValueChange={setClientFilter}>
-                <SelectTrigger className={filterSelectClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All</SelectItem>
-                  {clientOptions.map((client) => (
-                    <SelectItem key={client} value={client}>{client}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {showFilters && (
+                <div className="flex flex-col gap-3 rounded-[20px] border border-border bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-black uppercase text-muted-foreground">Client</span>
+                    <Select value={clientFilter} onValueChange={setClientFilter}>
+                      <SelectTrigger className={filterSelectClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All</SelectItem>
+                        {clientOptions.map((client) => (
+                          <SelectItem key={client} value={client}>{client}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-black uppercase text-muted-foreground">Status</span>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className={filterSelectClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["All", "Draft", "Sent", "Paid", "Overdue", "Partial"].map((option) => (
+                          <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-black uppercase text-muted-foreground">Date</span>
+                    <Select value={dateFilter} onValueChange={setDateFilter}>
+                      <SelectTrigger className={filterSelectClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
+                          <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-black uppercase text-muted-foreground">Sort</span>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className={filterSelectClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["Newest", "Oldest", "Highest Value", "Lowest Value"].map((option) => (
+                          <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <button
+                    onClick={resetFilters}
+                    className="h-10 rounded-xl border border-border px-4 text-xs font-black uppercase text-muted-foreground transition hover:bg-muted/50"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black uppercase text-muted-foreground">Status</span>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className={filterSelectClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {["All", "Draft", "Sent", "Paid", "Overdue", "Partial"].map((option) => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black uppercase text-muted-foreground">Date</span>
-              <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger className={filterSelectClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black uppercase text-muted-foreground">Sort</span>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className={filterSelectClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {["Newest", "Oldest", "Highest Value", "Lowest Value"].map((option) => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <button
-              onClick={resetFilters}
-              className="h-10 rounded-xl border border-border px-4 text-xs font-black uppercase text-muted-foreground transition hover:bg-muted/50"
-            >
-              Clear Filters
-            </button>
-          </div>
-        )}
+          }
+        />
 
         {/* Invoice list */}
-        <div
-          style={{
-            background: "white",
-            border: "1px solid #e2e8f0",
-            borderRadius: 24,
-            overflow: "hidden",
-            boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
-          }}
-        >
+        <Card className="mt-5 overflow-hidden rounded-[28px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_40px_-30px_rgba(15,23,42,0.45)]">
+          <CardContent className="p-0">
           {invoices.map((inv, idx) => (
             <div
               key={inv.id}
               onClick={() => navigate(`/invoices/${inv.id}`)}
-              className="relative px-4 py-3 transition-colors hover:bg-muted/50"
+              className="relative px-4 py-4 transition-colors hover:bg-muted/40 sm:px-5"
               style={{
                 borderBottom: idx === invoices.length - 1 ? "none" : "1px solid #f1f5f9",
                 cursor: "pointer",
@@ -360,48 +355,56 @@ export default function Invoices() {
             >
 
               <div className="pr-12">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0 truncate whitespace-nowrap text-sm font-bold text-foreground">
-                    {inv.client_name || "No client"}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-700">Invoice</div>
+                    <div className="mt-1 truncate text-base font-extrabold tracking-[-0.03em] text-foreground">
+                      {inv.invoice_number || "Invoice"}
+                    </div>
+                    <div className="mt-1 truncate text-sm font-medium text-muted-foreground">
+                      {inv.client_name || "No client"}
+                    </div>
                   </div>
-                  <div className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-foreground">
-                    NGN {Number(inv.total || 0).toLocaleString()}
-                  </div>
-                </div>
-
-                <div className="mt-1 flex items-center justify-between gap-3">
-                  <div className="min-w-0 whitespace-nowrap text-xs font-bold text-muted-foreground">
-                    {inv.invoice_number}{formatInvoiceDate(inv.issue_date) ? ` • ${formatInvoiceDate(inv.issue_date)}` : ""}
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <span
-                      style={{
-                        ...getInvoiceStatusStyle(inv.status),
-                        borderRadius: 999,
-                        padding: "4px 8px",
-                        fontSize: 10,
-                        fontWeight: 900,
-                        display: "inline-block",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {formatStatusLabel(inv.status)}
-                    </span>
+                  <div className="shrink-0 whitespace-nowrap text-right">
+                    <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Amount</div>
+                    <div className="mt-1 text-base font-extrabold text-foreground sm:text-lg">
+                      NGN {Number(inv.total || 0).toLocaleString()}
+                    </div>
                   </div>
                 </div>
 
-                {inv.thread_role && (
-                  <div className="mt-1 text-right">
-                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase ${roleColor(inv.thread_role)}`}>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <div className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                    {formatInvoiceDate(inv.issue_date) || "No issue date"}
+                  </div>
+                  <span
+                    style={{
+                      ...getInvoiceStatusStyle(inv.status),
+                      borderRadius: 999,
+                      padding: "6px 10px",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      display: "inline-block",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {formatStatusLabel(inv.status)}
+                  </span>
+                  {inv.thread_role && (
+                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase ${roleColor(inv.thread_role)}`}>
                       {inv.thread_role}
                     </span>
-                  </div>
-                )}
+                  )}
+                </div>
+
+                <div className="mt-3 min-w-0 whitespace-nowrap text-xs font-bold text-muted-foreground">
+                  {formatInvoiceDate(inv.issue_date) ? `${inv.invoice_number} • ${formatInvoiceDate(inv.issue_date)}` : inv.invoice_number}
+                </div>
               </div>
 
               <button
                 onClick={(e) => { e.stopPropagation(); setActiveInvoice(inv) }}
-                className="absolute right-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground"
+                className="absolute right-4 top-5 flex h-9 w-9 items-center justify-center rounded-2xl border border-border bg-white text-muted-foreground shadow-sm"
               >
                 <MoreHorizontal size={18} />
               </button>
@@ -413,7 +416,8 @@ export default function Invoices() {
               No invoices match the current filters
             </div>
           )}
-        </div>
+          </CardContent>
+        </Card>
 
         {hasMore ? (
           <div className="mt-4 flex justify-center">
@@ -421,18 +425,18 @@ export default function Invoices() {
               type="button"
               onClick={() => fetchInvoices(page + 1, false)}
               disabled={loadingMore}
-              className="h-11 rounded-2xl border border-border bg-background px-5 text-sm font-bold text-zinc-700 disabled:opacity-60"
+              className="h-11 rounded-2xl border border-border bg-white px-5 text-sm font-bold text-zinc-700 disabled:opacity-60"
             >
               {loadingMore ? "Loading..." : "Load more"}
             </button>
           </div>
         ) : null}
-      </div>
+      </PageShell>
 
       {/* FAB */}
       <button
         onClick={() => navigate("/invoices/new")}
-        className="fixed bottom-28 right-8 z-50 h-16 w-16 bg-zinc-950 text-white rounded-[24px] shadow-2xl flex items-center justify-center border border-white/20 hover:scale-110 transition-transform"
+        className="fixed bottom-28 right-5 z-50 flex h-16 w-16 items-center justify-center rounded-[20px] border border-white/20 bg-slate-950 text-white shadow-[0_22px_40px_-18px_rgba(15,23,42,0.65)] transition-transform hover:scale-110 sm:hidden"
       >
         <Plus size={32} />
       </button>
@@ -457,7 +461,7 @@ export default function Invoices() {
                 <p className="text-xs text-zinc-400 font-bold">{activeInvoice.client_name}</p>
               </div>
               <div className="flex items-center gap-3">
-                <p className="text-xl font-black text-zinc-950">â‚¦{Number(activeInvoice.total || 0).toLocaleString()}</p>
+                <p className="text-xl font-black text-zinc-950">₦{Number(activeInvoice.total || 0).toLocaleString()}</p>
                 <button onClick={closeSheet} className="p-2 rounded-xl bg-muted text-muted-foreground hover:bg-muted">
                   <X size={18} />
                 </button>

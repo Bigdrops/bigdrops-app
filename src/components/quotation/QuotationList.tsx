@@ -37,6 +37,7 @@ import type { DbQuotation } from '@/domain/quotation'
 import { mapDbQuotation } from '@/domain/quotation'
 import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
 import PageIntro from '@/components/layout/PageIntro'
+import { PageShell } from '@/components/layout/PageShell'
 
 function formatMoney(value: number | string | null | undefined) {
   const parsed = Number(value || 0)
@@ -126,21 +127,22 @@ export default function QuotationList() {
   }, [quotations, search, sortBy, statusFilter])
 
   return (
-    <div className="mx-auto max-w-6xl px-3 pb-32 pt-6 sm:px-4">
+    <PageShell width="wide" className="pb-32">
       <PageIntro
         eyebrow="Documents"
         title="Quotations"
         description="Prepare quotes quickly, keep statuses readable, and keep the next action close on mobile."
         meta={`${filteredQuotations.length} of ${quotations.length} quotation${quotations.length === 1 ? '' : 's'}`}
+        tone="violet"
         actions={
           <>
-            <Button type="button" variant="outline" size="icon" onClick={() => setShowSearch((prev) => !prev)} aria-label="Toggle search">
+            <Button type="button" variant="outline" size="icon-lg" className="rounded-2xl bg-white/90" onClick={() => setShowSearch((prev) => !prev)} aria-label="Toggle search">
               <Search className="h-4 w-4" />
             </Button>
-            <Button type="button" variant="outline" size="icon" onClick={() => setShowFilters((prev) => !prev)} aria-label="Toggle filters">
+            <Button type="button" variant="outline" size="icon-lg" className="rounded-2xl bg-white/90" onClick={() => setShowFilters((prev) => !prev)} aria-label="Toggle filters">
               <SlidersHorizontal className="h-4 w-4" />
             </Button>
-            <Button type="button" className="hidden sm:inline-flex" onClick={() => navigate('/quotations/new')}>
+            <Button type="button" className="hidden h-11 rounded-2xl bg-slate-950 px-5 text-sm font-semibold sm:inline-flex" onClick={() => navigate('/quotations/new')}>
               <Plus className="mr-2 h-4 w-4" />
               New Quotation
             </Button>
@@ -155,17 +157,17 @@ export default function QuotationList() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search quotations, clients, or P.O. numbers..."
-                  className="h-11 rounded-xl border-zinc-200 bg-white pl-9"
+                  className="h-12 rounded-2xl border-zinc-200 bg-white pl-9 text-sm"
                 />
               </div>
             ) : null}
 
             {showFilters ? (
-              <div className="grid gap-3 rounded-2xl border border-zinc-200 bg-white/90 p-3 sm:grid-cols-2">
+              <div className="grid gap-3 rounded-[20px] border border-zinc-200 bg-white/90 p-3 sm:grid-cols-2">
                 <div className="space-y-2">
                   <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11 rounded-2xl bg-white">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -180,7 +182,7 @@ export default function QuotationList() {
                 <div className="space-y-2">
                   <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Sort</div>
                   <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11 rounded-2xl bg-white">
                       <SelectValue placeholder="Sort quotations" />
                     </SelectTrigger>
                     <SelectContent>
@@ -199,7 +201,7 @@ export default function QuotationList() {
       />
 
       {filteredQuotations.length === 0 ? (
-        <Card className="mt-5 border-dashed border-zinc-300">
+        <Card className="mt-5 rounded-[26px] border-dashed border-zinc-300 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(246,248,252,0.98))] shadow-[0_18px_36px_-30px_rgba(15,23,42,0.45)]">
           <CardContent className="px-6 py-12 text-center text-sm text-muted-foreground">
             No quotations yet. Create the first one when you are ready to send a quote.
           </CardContent>
@@ -214,12 +216,12 @@ export default function QuotationList() {
             return (
               <Card
                 key={quotation.id}
-                className="cursor-pointer border-zinc-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,1))] shadow-sm transition-shadow hover:shadow-md"
+                className="cursor-pointer rounded-[26px] border-zinc-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(247,249,252,1))] shadow-[0_16px_36px_-30px_rgba(15,23,42,0.48)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_44px_-32px_rgba(15,23,42,0.45)]"
                 onClick={() => navigate(`/quotations/${quotation.id}`)}
               >
                 <CardContent className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-start lg:justify-between">
                   <div className="flex min-w-0 gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border border-violet-100 bg-violet-50 text-violet-600">
                       <ClipboardList size={18} />
                     </div>
                     <div className="min-w-0">
@@ -250,6 +252,7 @@ export default function QuotationList() {
                       <Button
                         type="button"
                         variant="outline"
+                        className="h-10 rounded-2xl bg-white px-4 text-sm font-semibold"
                         onClick={(event) => {
                           event.stopPropagation()
                           navigate(`/quotations/edit/${quotation.id}`)
@@ -261,7 +264,7 @@ export default function QuotationList() {
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button type="button" variant="outline" size="icon" onClick={(event) => event.stopPropagation()}>
+                          <Button type="button" variant="outline" size="icon-lg" className="rounded-2xl bg-white" onClick={(event) => event.stopPropagation()}>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -303,7 +306,7 @@ export default function QuotationList() {
       <Button
         type="button"
         onClick={() => navigate('/quotations/new')}
-        className="fixed bottom-28 right-8 z-50 h-16 w-16 rounded-[24px] border border-white/20 bg-zinc-950 p-0 text-white shadow-2xl transition-transform hover:scale-105 sm:hidden"
+        className="fixed bottom-28 right-5 z-50 h-16 w-16 rounded-[20px] border border-white/20 bg-slate-950 p-0 text-white shadow-[0_22px_40px_-18px_rgba(15,23,42,0.65)] transition-transform hover:scale-105 sm:hidden"
         aria-label="Create quotation"
       >
         <Plus className="h-7 w-7" />
@@ -333,6 +336,6 @@ export default function QuotationList() {
           if (deleteId) void handleDelete(deleteId)
         }}
       />
-    </div>
+    </PageShell>
   )
 }
