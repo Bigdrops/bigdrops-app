@@ -386,31 +386,58 @@ function App() {
     })
   }
 
-  const recoverAppState = async (reason) => {
+  const recoverAppState = async (reason, options = {}) => {
+    const { force = false } = options
     const now = Date.now()
     if (recoveringRef.current) return
-    if (now - lastRecoveryAtRef.current < RECOVERY_COOLDOWN_MS) return
+    if (!force && now - lastRecoveryAtRef.current < RECOVERY_COOLDOWN_MS) return
 
     recoveringRef.current = true
     lastRecoveryAtRef.current = now
 
     try {
       const nextSession = await resolveSessionSafely(`lifecycle recovery (${reason})`)
+      const nextUserId = nextSession?.user?.id || null
+      const currentProfileUserId = profileRef.current?.id || null
+      const hiddenDuration = hiddenAtRef.current ? now - hiddenAtRef.current : 0
+      const resumedFromHidden = hiddenAtRef.current !== null
 
       setSession(nextSession)
-      lastUserIdRef.current = nextSession?.user?.id || null
+      lastUserIdRef.current = nextUserId || null
+      setAuthLoading(false)
 
-      if (!nextSession?.user?.id) {
+      if (!nextUserId) {
+        cancelProfileTask()
         setProfile(null)
-      } else if (!profileRef.current || profileRef.current.id !== nextSession.user.id) {
-        await loadProfile(nextSession.user.id)
+        setProfileLoading(false)
+        loadingRef.current = false
+      } else {
+        const shouldReloadProfile =
+          !profileRef.current ||
+          currentProfileUserId !== nextUserId ||
+          profileLoading ||
+          loadingRef.current ||
+          resumedFromHidden
+
+        if (shouldReloadProfile) {
+          cancelProfileTask()
+          loadingRef.current = true
+          await loadProfile(nextUserId)
+        } else {
+          setProfileLoading(false)
+          loadingRef.current = false
+        }
       }
 
-      const hiddenDuration = hiddenAtRef.current ? now - hiddenAtRef.current : 0
       const shouldRemountRoutes =
+        !!nextUserId &&
+        (
         reason === 'online' ||
         reason === 'pageshow' ||
+        reason === 'token_refresh' ||
+        resumedFromHidden ||
         hiddenDuration >= RESUME_REFRESH_THRESHOLD_MS
+        )
 
       if (shouldRemountRoutes) {
         setAppShellKey((current) => current + 1)
@@ -418,6 +445,7 @@ function App() {
     } catch (error) {
       console.error('Lifecycle recovery error:', error)
     } finally {
+      setAuthLoading(false)
       hiddenAtRef.current = null
       recoveringRef.current = false
     }
@@ -496,10 +524,7 @@ function App() {
           return
         }
         if (event === 'TOKEN_REFRESHED') {
-          setSession(session)
-          lastUserIdRef.current = nextUserId
-          setAuthLoading(false)
-          setProfileLoading(false)
+          await recoverAppState('token_refresh', { force: true })
           return
         }
         if (event === 'TOKEN_REFRESH_FAILED') {
