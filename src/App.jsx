@@ -55,6 +55,12 @@ const INVALID_SESSION_PATTERNS = [
   /jwt expired/i,
   /session.*not found/i,
 ]
+const AUTH_DEBUG = import.meta.env.DEV
+
+function debugAuth(...args) {
+  if (!AUTH_DEBUG) return
+  console.log('[auth-debug]', ...args)
+}
 
 function isInvalidSessionError(error) {
   const message = [
@@ -294,6 +300,7 @@ function App() {
   const [showSplash, setShowSplash] = useState(true)
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [resolvedProfileUserId, setResolvedProfileUserId] = useState(null)
   const [tipIndex, setTipIndex] = useState(0)
   const [appShellKey, setAppShellKey] = useState(0)
 
@@ -316,6 +323,7 @@ function App() {
     lastUserIdRef.current = null
     setSession(null)
     setProfile(null)
+    setResolvedProfileUserId(null)
     setAuthLoading(false)
     setProfileLoading(false)
     loadingRef.current = false
@@ -355,9 +363,15 @@ function App() {
 
   const loadProfile = async (userId) => {
     if (!userId) return
+    debugAuth('loadProfile:start', {
+      userId,
+      query: "supabase.from('profiles').select('*').eq('id', userId).single()",
+    })
     setProfileLoading(true)
+    setResolvedProfileUserId(null)
     await runLatestProfileTask(async () => {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+      debugAuth('loadProfile:queryResult', { userId, data, error })
       if (error) throw error
       if (!data) return null
 
@@ -370,9 +384,13 @@ function App() {
       return data
     }, {
       onSuccess: (nextProfile) => {
+        debugAuth('loadProfile:onSuccess', { userId, nextProfile })
         setProfile(nextProfile)
+        setResolvedProfileUserId(userId)
       },
       onError: (err) => {
+        debugAuth('loadProfile:onError', { userId, error: err })
+        setResolvedProfileUserId(userId)
         if (isInvalidSessionError(err)) {
           void clearBadSession('profile load', err)
           return
@@ -380,6 +398,7 @@ function App() {
         console.error('Profile fetch error:', err)
       },
       onSettled: () => {
+        debugAuth('loadProfile:onSettled', { userId })
         setProfileLoading(false)
         loadingRef.current = false
       },
@@ -401,6 +420,17 @@ function App() {
       const currentProfileUserId = profileRef.current?.id || null
       const hiddenDuration = hiddenAtRef.current ? now - hiddenAtRef.current : 0
       const resumedFromHidden = hiddenAtRef.current !== null
+
+      debugAuth('recoverAppState', {
+        reason,
+        force,
+        nextUserId,
+        currentProfileUserId,
+        resumedFromHidden,
+        hiddenDuration,
+        authLoading,
+        profileLoading,
+      })
 
       setSession(nextSession)
       lastUserIdRef.current = nextUserId || null
@@ -497,11 +527,19 @@ function App() {
         const nextUserId = session?.user?.id || null
         const previousUserId = lastUserIdRef.current
         const isRealNewSignIn = !previousUserId && !!nextUserId
+        debugAuth('onAuthStateChange', {
+          event,
+          sessionUserId: session?.user?.id || null,
+          sessionEmail: session?.user?.email || null,
+          previousUserId,
+          nextUserId,
+        })
         if (event === 'SIGNED_OUT') {
           cancelProfileTask()
           lastUserIdRef.current = null
           setSession(null)
           setProfile(null)
+          setResolvedProfileUserId(null)
           loadingRef.current = false
           setProfileLoading(false)
           setAuthLoading(false)
@@ -511,6 +549,7 @@ function App() {
         if (event === 'SIGNED_IN') {
           lastUserIdRef.current = nextUserId
           setSession(session)
+          setResolvedProfileUserId(null)
           if (isRealNewSignIn && hasBootedRef.current) {
             splashStartRef.current = Date.now()
             setShowSplash(true)
@@ -537,6 +576,7 @@ function App() {
           if (!nextUserId) {
             setAuthLoading(false)
             setProfileLoading(false)
+            setResolvedProfileUserId(null)
           }
           return
         }
@@ -609,7 +649,30 @@ function App() {
     return () => clearTimeout(timer)
   }, [authLoading, profileLoading])
 
-  const approved = profile?.is_approved === true
+  useEffect(() => {
+    debugAuth('profileState', profile)
+  }, [profile])
+
+  const currentSessionUserId = session?.user?.id || null
+  const profileResolvedForCurrentSession =
+    !currentSessionUserId || resolvedProfileUserId === currentSessionUserId
+  const approved = profileResolvedForCurrentSession && profile?.is_approved === true
+  const waitingForProfileResolution =
+    !!currentSessionUserId && (!profileResolvedForCurrentSession || profileLoading)
+
+  useEffect(() => {
+    debugAuth('routeGate', {
+      sessionUserId: currentSessionUserId,
+      sessionEmail: session?.user?.email || null,
+      resolvedProfileUserId,
+      profile,
+      approved,
+      authLoading,
+      profileLoading,
+      waitingForProfileResolution,
+    })
+  }, [approved, authLoading, currentSessionUserId, profile, profileLoading, resolvedProfileUserId, session?.user?.email, waitingForProfileResolution])
+
   return (
     <>
       <BrowserRouter>
@@ -622,6 +685,8 @@ function App() {
               element={
                 !session
                   ? withBoundary(<Login />)
+                  : waitingForProfileResolution
+                    ? withBoundary(<PageLoader />)
                   : !approved
                     ? withBoundary(<PendingApproval email={session?.user?.email || ''} />)
                     : withBoundary(
