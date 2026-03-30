@@ -24,7 +24,7 @@ export function renderTotals({
   styles,
   showInstallRate = false,
   amountInWords,
-  totalLabel = 'Total Payable',
+  totalLabel = 'Balance Due',
   includeGrandTotal = true,
 }: RenderTotalsArgs) {
   const grandTotal = Number(result.grandTotal ?? result.totalPayable ?? 0)
@@ -78,48 +78,20 @@ export function renderTotals({
           ) : null}
 
           {result.wht > 0 ? (
-            <>
-              <React.View style={styles.whtRow}>
-                <React.Text style={[styles.totalLabel, { color: '#CC0000' }]}>Less: WHT</React.Text>
-                <React.Text style={[styles.totalValue, { color: '#CC0000' }]}>
-                  - NGN {Number(result.wht || 0).toLocaleString()}
-                </React.Text>
-              </React.View>
-
-              <React.View style={styles.payableRow || styles.totalRowStrong}>
-                <React.Text style={styles.payableLabel || styles.totalLabelStrong}>{totalLabel}</React.Text>
-                <React.Text style={styles.payableValue || styles.totalValueStrong}>
-                  NGN {Number(result.totalPayable || 0).toLocaleString()}
-                </React.Text>
-              </React.View>
-            </>
-          ) : (
-            <React.View style={styles.payableRow || styles.totalRowStrong}>
-              <React.Text style={styles.payableLabel || styles.totalLabelStrong}>{totalLabel}</React.Text>
-              <React.Text style={styles.payableValue || styles.totalValueStrong}>
-                NGN {Number(result.totalPayable || 0).toLocaleString()}
-              </React.Text>
-            </React.View>
-          )}
-
-          {cashReceived > 0 ? (
-            <React.View style={styles.totalRow}>
-              <React.Text style={styles.totalLabel}>Cash Received</React.Text>
-              <React.Text style={[styles.totalValue, { color: '#059669' }]}>
-                NGN {cashReceived.toLocaleString()}
+            <React.View style={styles.whtRow}>
+              <React.Text style={[styles.totalLabel, { color: '#CC0000' }]}>Less: WHT</React.Text>
+              <React.Text style={[styles.totalValue, { color: '#CC0000' }]}>
+                - NGN {Number(result.wht || 0).toLocaleString()}
               </React.Text>
             </React.View>
           ) : null}
 
-          <React.View style={styles.totalRow}>
-            <React.Text style={[styles.totalLabel, { fontFamily: 'Helvetica-Bold' }]}>Balance Due</React.Text>
+          <React.View style={styles.payableRow || styles.totalRowStrong}>
+            <React.Text style={styles.payableLabel || styles.totalLabelStrong}>{totalLabel}</React.Text>
             <React.Text
               style={[
-                styles.totalValue,
-                {
-                  fontFamily: 'Helvetica-Bold',
-                  color: balanceDue > 0 ? '#DC2626' : '#059669',
-                },
+                styles.payableValue || styles.totalValueStrong,
+                { color: balanceDue > 0 ? '#DC2626' : '#059669' },
               ]}
             >
               NGN {balanceDue.toLocaleString()}
