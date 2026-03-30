@@ -5,20 +5,13 @@ import {
   ClipboardList,
   Copy,
   Loader2,
-  MoreHorizontal,
   Pencil,
   Plus,
-  Search,
-  SlidersHorizontal,
   Trash2,
 } from 'lucide-react'
 import { supabase } from '@/supabase'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { toast } from '@/hooks/use-toast'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -29,10 +22,10 @@ import {
 import type { DbQuotation } from '@/domain/quotation'
 import { getNextQuotationNumber, mapDbQuotation } from '@/domain/quotation'
 import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
-import PageIntro from '@/components/layout/PageIntro'
-import { PageShell } from '@/components/layout/PageShell'
 import ListActionSheet from '@/components/layout/ListActionSheet'
 import MobileFab from '@/components/layout/MobileFab'
+import MobileListPageShell from '@/components/layout/MobileListPageShell'
+import EntityListCard from '@/components/list/EntityListCard'
 
 function formatMoney(value: number | string | null | undefined) {
   const parsed = Number(value || 0)
@@ -174,148 +167,76 @@ export default function QuotationList() {
   const activeQuotationIsDeleting = activeQuotation ? busyAction === `delete:${activeQuotation.id}` : false
 
   return (
-    <PageShell width="wide" className="pb-32">
-      <PageIntro
+    <MobileListPageShell
         eyebrow="Sales"
         title="Quotations"
-        meta={`${quotations.length} quotations total`}
+        summary={`${quotations.length} quotations total`}
         tone="blue"
-        actions={
-          <Button type="button" className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold" onClick={() => navigate('/quotations/new')}>
-            <Plus className="mr-2 h-4 w-4" />
-            New
-          </Button>
-        }
-        toolbar={
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search quotations..."
-                  className="h-11 rounded-[14px] border-zinc-200 bg-white pl-9 text-sm"
-                />
-              </div>
-              <Button type="button" variant="outline" size="icon-lg" className="rounded-[14px] bg-white" onClick={() => setShowFilters((prev) => !prev)} aria-label="Toggle filters">
-                <SlidersHorizontal className="h-4 w-4" />
-              </Button>
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search quotations..."
+        onFilterClick={() => setShowFilters((prev) => !prev)}
+        filterPanel={showFilters ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-11 rounded-[14px] bg-white">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {['All', 'Draft', 'Sent', 'Accepted', 'Rejected'].map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-
-            {showFilters ? (
-              <div className="grid gap-3 rounded-[18px] border border-zinc-200 bg-white p-3 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="h-11 rounded-[14px] bg-white">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['All', 'Draft', 'Sent', 'Accepted', 'Rejected'].map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Sort</div>
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="h-11 rounded-[14px] bg-white">
-                      <SelectValue placeholder="Sort quotations" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            ) : null}
+            <div className="space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Sort</div>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="h-11 rounded-[14px] bg-white">
+                  <SelectValue placeholder="Sort quotations" />
+                </SelectTrigger>
+                <SelectContent>
+                  {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        }
-      />
+        ) : null}
+      >
 
       {filteredQuotations.length === 0 ? (
-        <Card className="mt-4 rounded-[22px] border-dashed border-zinc-300 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(246,248,252,0.98))] shadow-[0_18px_36px_-30px_rgba(15,23,42,0.45)]">
-          <CardContent className="px-6 py-12 text-center text-sm text-muted-foreground">
-            No quotations yet. Create the first one when you are ready to send a quote.
-          </CardContent>
-        </Card>
+        <div className="rounded-[22px] border border-dashed border-zinc-300 bg-white px-6 py-12 text-center text-sm text-muted-foreground">
+          No quotations yet. Create the first one when you are ready to send a quote.
+        </div>
       ) : (
-        <div className="mt-4 grid gap-3">
+        <div className="grid gap-3">
           {filteredQuotations.map((row) => {
             const quotation = mapDbQuotation(row)
-            const isArchiving = busyAction === `archive:${quotation.id}`
-            const isDeleting = busyAction === `delete:${quotation.id}`
 
             return (
-              <Card
+              <EntityListCard
                 key={quotation.id}
-                className="cursor-pointer rounded-[22px] border-zinc-200/90 bg-white shadow-[0_16px_34px_-30px_rgba(15,23,42,0.48)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_44px_-32px_rgba(15,23,42,0.45)]"
+                leading={<div className="grid h-12 w-12 place-items-center rounded-2xl border border-blue-100 bg-blue-50 text-lg font-extrabold text-blue-600">Q</div>}
+                kicker="Quotation"
+                title={quotation.quotation_number}
+                subtitle={quotation.client_name || 'No client selected'}
+                metadata={[
+                  `Issue date: ${quotation.issue_date || 'Not set'}`,
+                  ...(String(quotation.po_number || '').trim() ? [`P.O: ${String(quotation.po_number || '').trim()}`] : []),
+                ]}
+                status={{ label: formatQuotationStatus(quotation.status), tone: quotationStatusTone(quotation.status) }}
+                amount={formatMoney(quotation.total || 0)}
                 onClick={() => navigate(`/quotations/${quotation.id}`)}
-              >
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-violet-100 bg-violet-50 text-violet-600">
-                      <ClipboardList size={18} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Quotation</div>
-                      <div className="mt-1 break-all text-[18px] font-extrabold tracking-[-0.03em] text-foreground">
-                        {quotation.quotation_number}
-                      </div>
-                      <div className="mt-1 text-sm font-medium text-slate-700">{quotation.client_name || 'No client selected'}</div>
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <Badge className={`h-auto px-2.5 py-1 text-[10px] font-bold uppercase ${quotationStatusTone(quotation.status)}`}>
-                        {formatQuotationStatus(quotation.status)}
-                      </Badge>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-lg"
-                        className="rounded-[14px] bg-white"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          setActiveQuotation(quotation)
-                        }}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span>Issue date: {quotation.issue_date || 'Not set'}</span>
-                    {String(quotation.po_number || '').trim() ? <span>P.O.: {String(quotation.po_number || '').trim()}</span> : null}
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-zinc-200 pt-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-10 rounded-[14px] bg-white px-4 text-sm font-semibold"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        navigate(`/quotations/edit/${quotation.id}`)
-                      }}
-                    >
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Edit
-                    </Button>
-                    <div className="text-right">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Amount</div>
-                      <div className="mt-1 text-lg font-extrabold text-foreground">{formatMoney(quotation.total || 0)}</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                onAction={() => setActiveQuotation(quotation)}
+              />
             )
           })}
         </div>
@@ -383,6 +304,6 @@ export default function QuotationList() {
           onClick: () => setDeleteId(activeQuotation.id),
         } : undefined}
       />
-    </PageShell>
+    </MobileListPageShell>
   )
 }

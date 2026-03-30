@@ -4,13 +4,12 @@ import { supabase } from '../supabase'
 import ConfirmActionDialog from '../components/ConfirmActionDialog'
 import { toast } from '../hooks/use-toast'
 import Layout from '../components/Layout'
-import { Archive, Calendar, Eye, FileText, FolderKanban, MoreHorizontal, Plus, Search, SlidersHorizontal, Trash2, X } from 'lucide-react'
+import { Archive, Eye, FolderKanban, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import PageIntro from '../components/layout/PageIntro'
-import { PageShell } from '../components/layout/PageShell'
-import { Button } from '../components/ui/button'
 import ListActionSheet from '../components/layout/ListActionSheet'
 import MobileFab from '../components/layout/MobileFab'
+import MobileListPageShell from '../components/layout/MobileListPageShell'
+import ProjectListCard from '../components/list/ProjectListCard'
 
 const STATUS_CONFIG = {
   active:    { label: 'Active',    bg: '#DCFCE7', color: '#16A34A', dot: '#22C55E' },
@@ -138,297 +137,79 @@ export default function Projects() {
 
   return (
     <Layout title="Projects" hidePageHeader>
-      <PageShell width="wide" className="pb-32">
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.6; }
-        }
-        .proj-menu-item:hover {
-          background: #F8FAFC !important;
-        }
-        .proj-card {
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .proj-card:active {
-          transform: scale(0.98);
-        }
-        @media (hover: hover) {
-          .proj-card:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 24px rgba(15,23,42,0.12) !important;
-          }
-        }
-        .filter-badge {
-          transition: all 0.2s ease;
-        }
-        .filter-badge:active {
-          transform: scale(0.95);
-        }
-      `}</style>
-
-      <div style={{ maxWidth: 920, margin: '0 auto', fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif" }}>
-        <PageIntro
+      <MobileListPageShell
           eyebrow="Projects"
           title="Projects"
-          meta={`${projects.length} projects total`}
+          summary={`${projects.length} projects total`}
           tone="emerald"
-          actions={
-            <Button type="button" className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold" onClick={() => navigate('/projects/new')}>
-              <Plus className="mr-2 h-4 w-4" />
-              New
-            </Button>
-          }
-          toolbar={
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <div style={{ position: 'relative', flex: 1 }}>
-                  <Search
-                    size={16}
-                    style={{
-                      position: 'absolute',
-                      left: 14,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: '#94A3B8',
-                      pointerEvents: 'none'
-                    }}
-                  />
-                  <input
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    placeholder="Search projects..."
-                    style={{
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      padding: '12px 14px 12px 40px',
-                      border: '1px solid #E2E8F0',
-                      borderRadius: 16,
-                      fontSize: 14,
-                      color: '#1E293B',
-                      background: 'white',
-                      outline: 'none',
-                      fontWeight: 500
-                    }}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon-lg"
-                  className="relative rounded-[14px] bg-white"
-                  onClick={() => setShowFilters((p) => !p)}
-                  aria-label="Toggle filters"
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  {activeFilterCount > 0 ? (
-                    <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-slate-950 px-1 text-[10px] font-bold text-white">
-                      {activeFilterCount}
-                    </span>
-                  ) : null}
-                </Button>
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search projects..."
+          onFilterClick={() => setShowFilters((p) => !p)}
+          filterPanel={showFilters ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Client</div>
+                <Select value={clientFilter} onValueChange={setClientFilter}>
+                  <SelectTrigger className="h-10 rounded-xl bg-white"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All</SelectItem>
+                    {clientOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
-
-              {showFilters && (
-                <div style={{
-                  background: 'white',
-                  border: '1px solid #E2E8F0',
-                  borderRadius: 20,
-                  padding: 16,
-                  boxShadow: '0 8px 22px -18px rgba(15,23,42,0.35)'
-                }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <div>
-                    <label style={{ 
-                      display: 'block',
-                      fontSize: 11, 
-                      fontWeight: 700, 
-                      textTransform: 'uppercase', 
-                      color: '#64748B',
-                      marginBottom: 6,
-                      letterSpacing: '0.05em'
-                    }}>
-                      Client
-                    </label>
-                    <Select value={clientFilter} onValueChange={setClientFilter}>
-                      <SelectTrigger style={{ width: '100%', height: 38, borderRadius: 10, border: '1px solid #E2E8F0', background: 'white', fontSize: 13, fontWeight: 600, color: '#1E293B', cursor: 'pointer' }}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All">All</SelectItem>
-                        {clientOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label style={{ 
-                      display: 'block',
-                      fontSize: 11, 
-                      fontWeight: 700, 
-                      textTransform: 'uppercase', 
-                      color: '#64748B',
-                      marginBottom: 6,
-                      letterSpacing: '0.05em'
-                    }}>
-                      Status
-                    </label>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger style={{ width: '100%', height: 38, borderRadius: 10, border: '1px solid #E2E8F0', background: 'white', fontSize: 13, fontWeight: 600, color: '#1E293B', cursor: 'pointer' }}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {['All', 'Active', 'Completed', 'On Hold', 'Cancelled'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <div>
-                    <label style={{ 
-                      display: 'block',
-                      fontSize: 11, 
-                      fontWeight: 700, 
-                      textTransform: 'uppercase', 
-                      color: '#64748B',
-                      marginBottom: 6,
-                      letterSpacing: '0.05em'
-                    }}>
-                      Period
-                    </label>
-                    <Select value={dateFilter} onValueChange={setDateFilter}>
-                      <SelectTrigger style={{ width: '100%', height: 38, borderRadius: 10, border: '1px solid #E2E8F0', background: 'white', fontSize: 13, fontWeight: 600, color: '#1E293B', cursor: 'pointer' }}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {['All Time', 'This Month', 'Last Month', 'This Year'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label style={{ 
-                      display: 'block',
-                      fontSize: 11, 
-                      fontWeight: 700, 
-                      textTransform: 'uppercase', 
-                      color: '#64748B',
-                      marginBottom: 6,
-                      letterSpacing: '0.05em'
-                    }}>
-                      Sort By
-                    </label>
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger style={{ width: '100%', height: 38, borderRadius: 10, border: '1px solid #E2E8F0', background: 'white', fontSize: 13, fontWeight: 600, color: '#1E293B', cursor: 'pointer' }}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                      </SelectContent>
-                      </Select>
-                  </div>
-                </div>
-
-                    {hasActiveFilters && (
-                      <button
-                        onClick={resetFilters}
-                        style={{
-                          width: '100%',
-                          height: 40,
-                          borderRadius: 14,
-                          border: '1px solid #E2E8F0',
-                          background: 'white',
-                          color: '#64748B',
-                          fontSize: 13,
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 6
-                        }}
-                      >
-                        <X size={14} />
-                        Clear All Filters
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-10 rounded-xl bg-white"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {['All', 'Active', 'Completed', 'On Hold', 'Cancelled'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Period</div>
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger className="h-10 rounded-xl bg-white"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {['All Time', 'This Month', 'Last Month', 'This Year'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Sort</div>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="h-10 rounded-xl bg-white"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              {hasActiveFilters ? (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="h-10 rounded-xl border border-slate-200 px-4 text-xs font-bold uppercase text-slate-500 sm:col-span-2"
+                >
+                  Clear
+                </button>
+              ) : null}
             </div>
-          }
-        />
-
-        {/* Project List */}
+          ) : null}
+      >
         {loading ? (
-          <div style={{
-            textAlign: 'center', 
-            padding: '80px 20px', 
-            color: '#94A3B8', 
-            fontSize: 14,
-            fontWeight: 500
-          }}>
-            Loading projects...
-          </div>
+          <div className="rounded-[22px] border border-slate-200 bg-white px-5 py-16 text-center text-sm text-slate-500">Loading projects...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{
-              width: 64,
-              height: 64,
-              borderRadius: 16,
-              background: '#F1F5F9',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px'
-            }}>
-              <FolderKanban size={32} color="#94A3B8" />
+          <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-500">
+              <FolderKanban className="h-7 w-7" />
             </div>
-            <div style={{ 
-              fontSize: 17, 
-              fontWeight: 800, 
-              color: '#1E293B', 
-              marginBottom: 6,
-              letterSpacing: '-0.01em'
-            }}>
-              {hasActiveFilters ? 'No matches found' : 'No projects yet'}
-            </div>
-            <div style={{ 
-              fontSize: 14, 
-              color: '#64748B', 
-              marginBottom: 24,
-              fontWeight: 500
-            }}>
-              {hasActiveFilters ? 'Try adjusting your filters' : 'Create your first project to get started'}
-            </div>
-            {!hasActiveFilters && (
-              <button
-                onClick={() => navigate('/projects/new')}
-                style={{
-                  background: '#0F172A',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 12,
-                  padding: '12px 24px',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8
-                }}
-              >
-                <Plus size={18} />
-                New Project
-              </button>
-            )}
+            <div className="text-base font-semibold text-slate-900">{hasActiveFilters ? 'No matches found' : 'No projects yet'}</div>
+            <div className="mt-1 text-sm text-slate-500">{hasActiveFilters ? 'Try adjusting your filters' : 'Create your first project to get started'}</div>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="grid gap-3">
             {filtered.map(project => {
-              const st = STATUS_CONFIG[project.status] || STATUS_CONFIG.active
               const count = docCounts[project.id] || 0
               const formattedValue = formatProjectValue(project.project_value)
               const startedText = project.start_date
@@ -436,201 +217,22 @@ export default function Projects() {
                 : null
 
               return (
-                <div
+                <ProjectListCard
                   key={project.id}
-                  className="proj-card"
-                  onClick={(e) => {
-                    // Only navigate if not clicking menu or its children
-                    if (!e.target.closest('[data-menu-container]')) {
-                      navigate(`/projects/${project.id}`)
-                    }
-                  }}
-                  style={{
-                    position: 'relative',
-                    background: 'linear-gradient(180deg, rgba(255,255,255,1), rgba(247,249,252,1))',
-                    border: '1px solid #E2E8F0',
-                    borderRadius: 24,
-                    padding: '20px 18px',
-                    cursor: 'pointer',
-                    boxShadow: '0 18px 36px -30px rgba(15,23,42,0.48)',
-                }}
-              >
-                  {/* Top accent */}
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: `linear-gradient(90deg, ${st.dot}, ${st.color})`,
-                    borderRadius: '20px 20px 0 0',
-                  }} />
-
-                  {/* Header */}
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'flex-start', 
-                    justifyContent: 'space-between',
-                    gap: 12,
-                    marginBottom: 14
-                  }}>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 6, 
-                        marginBottom: 8,
-                        flexWrap: 'wrap'
-                      }}>
-                        <span style={{
-                          fontSize: 10,
-                          fontWeight: 800,
-                          textTransform: 'uppercase',
-                          color: st.color,
-                          background: st.bg,
-                          borderRadius: 6,
-                          padding: '3px 8px',
-                          letterSpacing: '0.03em'
-                        }}>
-                          {st.label}
-                        </span>
-                        <div style={{
-                          width: 4,
-                          height: 4,
-                          borderRadius: '50%',
-                          background: st.dot,
-                          animation: project.status === 'active' ? 'pulse 2s infinite' : 'none',
-                        }} />
-                      </div>
-                      <h3 style={{
-                        margin: 0,
-                        fontSize: 18,
-                        fontWeight: 800,
-                        letterSpacing: '-0.02em',
-                        color: '#0F172A',
-                        lineHeight: 1.3,
-                        marginBottom: 4
-                      }}>
-                        {project.name}
-                      </h3>
-                      {project.client_name && (
-                        <div style={{
-                          fontSize: 14,
-                          fontWeight: 600,
-                          color: '#64748B',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
-                        }}>
-                          {project.client_name}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Menu */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setActiveProject(project)
-                      }}
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 14,
-                        border: '1px solid #E2E8F0',
-                        background: 'white',
-                        color: '#64748B',
-                        cursor: 'pointer',
-                        display: 'grid',
-                        placeItems: 'center',
-                        boxShadow: '0 1px 2px rgba(15,23,42,0.05)',
-                      }}
-                    >
-                      <MoreHorizontal size={18} />
-                    </button>
-                  </div>
-
-                  {/* Meta Info */}
-                  <div style={{ 
-                    display: 'flex', 
-                    gap: 12, 
-                    flexWrap: 'wrap',
-                    marginBottom: 14
-                  }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 6 
-                    }}>
-                      <div style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: 6,
-                        background: '#F8FAFC',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#64748B'
-                      }}>
-                        <FileText size={12} strokeWidth={2.5} />
-                      </div>
-                      <span style={{ 
-                        fontSize: 12, 
-                        color: '#64748B', 
-                        fontWeight: 600 
-                      }}>
-                        {count} doc{count !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                    {startedText && (
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 6 
-                      }}>
-                        <div style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: 6,
-                          background: '#F8FAFC',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#64748B'
-                        }}>
-                          <Calendar size={12} strokeWidth={2.5} />
-                        </div>
-                        <span style={{ 
-                          fontSize: 12, 
-                          color: '#64748B', 
-                          fontWeight: 600 
-                        }}>
-                          {startedText}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Value */}
-                  <div style={{
-                    paddingTop: 14,
-                    borderTop: '1px solid #F1F5F9',
-                  }}>
-                    <div style={{
-                      fontSize: 20,
-                      fontWeight: 800,
-                      letterSpacing: '-0.02em',
-                      color: '#0F172A'
-                    }}>
-                      {formattedValue}
-                    </div>
-                  </div>
-                </div>
+                  title={project.name}
+                  subtitle={project.client_name || 'No client'}
+                  metadata={[`${count} doc${count !== 1 ? 's' : ''}`, ...(startedText ? [startedText] : [])]}
+                  footerLabel="Open project"
+                  footerValue={formattedValue}
+                  statusLabel={(STATUS_CONFIG[project.status] || STATUS_CONFIG.active).label}
+                  onClick={() => navigate(`/projects/${project.id}`)}
+                  onAction={() => setActiveProject(project)}
+                />
               )
             })}
           </div>
         )}
-      </div>
+      </MobileListPageShell>
 
       <MobileFab onClick={() => navigate('/projects/new')} ariaLabel="Create project">
         <Plus size={32} />
@@ -663,6 +265,12 @@ export default function Projects() {
             onClick: () => navigate(`/projects/${activeProject.id}`),
           },
           {
+            key: 'edit',
+            label: 'Edit',
+            icon: <Pencil className="h-6 w-6" />,
+            onClick: () => navigate(`/projects/${activeProject.id}`),
+          },
+          {
             key: 'archive',
             label: 'Archive',
             icon: <Archive className="h-6 w-6" />,
@@ -675,7 +283,6 @@ export default function Projects() {
           onClick: () => setProjectToDelete(activeProject),
         } : undefined}
       />
-      </PageShell>
     </Layout>
   )
 }

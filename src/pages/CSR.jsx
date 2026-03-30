@@ -1,18 +1,16 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ClipboardList, Copy, Eye, MoreHorizontal, Pencil, Plus, Search, SlidersHorizontal, Trash2, Wrench } from "lucide-react"
+import { ClipboardList, Eye, Pencil, Plus, Trash2 } from "lucide-react"
 
 import ConfirmActionDialog from "@/components/ConfirmActionDialog"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
 import Layout from "../components/Layout"
-import PageIntro from "../components/layout/PageIntro"
 import ListActionSheet from "../components/layout/ListActionSheet"
-import { PageShell } from "../components/layout/PageShell"
 import MobileFab from "../components/layout/MobileFab"
-import { Button } from "../components/ui/button"
-import { Card, CardContent } from "../components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
+import MobileListPageShell from "../components/layout/MobileListPageShell"
+import EntityListCard from "../components/list/EntityListCard"
 
 function normalizeStatus(status) {
   return (status || "").trim().toLowerCase()
@@ -140,200 +138,103 @@ export default function CSR() {
     await fetchCsrs()
   }
 
-  const handleClone = async (csr) => {
-    const clonePayload = {
-      ...csr,
-      csr_number: `${csr.csr_number || "CSR"}-COPY`,
-    }
-    delete clonePayload.id
-    delete clonePayload.created_at
-    delete clonePayload.updated_at
-
-    const { error } = await supabase.from("csrs").insert([clonePayload])
-    if (error) {
-      toast({ title: "Clone failed", description: "Unable to clone CSR right now.", variant: "destructive" })
-      return
-    }
-    toast({ title: "CSR cloned", description: "A duplicate report was created." })
-    setActiveCsr(null)
-    await fetchCsrs()
-  }
-
   const filterSelectClass = "h-10 rounded-[14px] border border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 outline-none"
   const hasActiveFilters =
     !!search || clientFilter !== "All" || statusFilter !== "All" || dateFilter !== "All Time"
 
   return (
     <Layout title="Customer Service Reports" hidePageHeader>
-      <PageShell className="pb-32">
-        <PageIntro
+      <MobileListPageShell
           eyebrow="Service"
           title="Customer Service Reports"
-          meta={`${csrs.length} reports total`}
+          summary={`${csrs.length} reports total`}
           tone="amber"
-          actions={
-            <Button type="button" className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold" onClick={() => navigate("/csr/new")}>
-              <Plus className="mr-2 h-4 w-4" />
-              New
-            </Button>
-          }
-          toolbar={
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-11 flex-1 items-center gap-2 rounded-[14px] border border-border bg-white px-3 text-sm text-muted-foreground shadow-sm">
-                  <Search size={16} />
-                  <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search reports..."
-                    className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground"
-                  />
-                </div>
-                <Button type="button" variant="outline" size="icon-lg" className="rounded-[14px] bg-white" onClick={() => setShowFilters((prev) => !prev)} aria-label="Toggle filters">
-                  <SlidersHorizontal className="h-4 w-4" />
-                </Button>
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search reports..."
+          onFilterClick={() => setShowFilters((prev) => !prev)}
+          filterPanel={showFilters ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Client</div>
+                <Select value={clientFilter} onValueChange={setClientFilter}>
+                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All</SelectItem>
+                    {clientOptions.map((client) => <SelectItem key={client} value={client}>{client}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
-
-              {showFilters ? (
-                <div className="flex flex-col gap-3 rounded-[18px] border border-border bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase text-muted-foreground">Client</span>
-                    <Select value={clientFilter} onValueChange={setClientFilter}>
-                      <SelectTrigger className={filterSelectClass}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All">All</SelectItem>
-                        {clientOptions.map((client) => (
-                          <SelectItem key={client} value={client}>{client}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase text-muted-foreground">Status</span>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className={filterSelectClass}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["All", "Draft", "Completed", "Pending", "Cancelled"].map((option) => (
-                          <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase text-muted-foreground">Date</span>
-                    <Select value={dateFilter} onValueChange={setDateFilter}>
-                      <SelectTrigger className={filterSelectClass}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
-                          <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase text-muted-foreground">Sort</span>
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className={filterSelectClass}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["Newest", "Oldest"].map((option) => (
-                          <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <button
-                    onClick={resetFilters}
-                    className="h-10 rounded-[14px] border border-border px-4 text-xs font-bold uppercase text-muted-foreground transition hover:bg-muted/50"
-                  >
-                    Clear Filters
-                  </button>
-                </div>
-              ) : null}
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["All", "Draft", "Completed", "Pending", "Cancelled"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Date</div>
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["All Time", "This Month", "Last Month", "This Year"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Sort</div>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["Newest", "Oldest"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="h-10 rounded-[14px] border border-border px-4 text-xs font-bold uppercase text-muted-foreground transition hover:bg-muted/50 sm:col-span-2"
+              >
+                Clear
+              </button>
             </div>
-          }
-        />
+          ) : null}
+      >
 
         {loading ? (
-          <Card className="mt-4 rounded-[22px] border border-border bg-white shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
-            <CardContent className="p-5 text-sm text-muted-foreground">
-              Loading service reports...
-            </CardContent>
-          </Card>
+          <div className="rounded-[22px] border border-slate-200 bg-white px-5 py-16 text-center text-sm text-muted-foreground">
+            Loading service reports...
+          </div>
         ) : filteredCsrs.length === 0 ? (
-          <Card className="mt-4 rounded-[22px] border border-border bg-white shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
-            <CardContent className="p-5 text-center">
-              <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-[16px] bg-zinc-900 text-white">
-                <ClipboardList className="h-5 w-5" />
-              </div>
-              <div className="text-base font-semibold text-foreground">
-                {hasActiveFilters ? "No service reports found" : "No service reports yet"}
-              </div>
-              <div className="mt-1 text-sm text-muted-foreground">
-                {hasActiveFilters ? "Try a different search or filter." : "Create your first CSR to start tracking service activity."}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="rounded-[22px] border border-dashed border-slate-300 bg-white p-5 text-center">
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-[16px] bg-zinc-900 text-white">
+              <ClipboardList className="h-5 w-5" />
+            </div>
+            <div className="text-base font-semibold text-foreground">
+              {hasActiveFilters ? "No service reports found" : "No service reports yet"}
+            </div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              {hasActiveFilters ? "Try a different search or filter." : "Create your first CSR to start tracking service activity."}
+            </div>
+          </div>
         ) : (
-          <div className="mt-4 grid gap-3">
+          <div className="grid gap-3">
             {filteredCsrs.map((csr) => (
-              <Card
+              <EntityListCard
                 key={csr.id}
-                className="cursor-pointer rounded-[22px] border border-border bg-white shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_40px_-32px_rgba(15,23,42,0.42)]"
+                leading={<div className="grid h-12 w-12 place-items-center rounded-2xl border border-amber-100 bg-amber-50 text-lg font-extrabold text-amber-700">S</div>}
+                kicker="CSR"
+                title={csr.csr_number || "-"}
+                subtitle={[csr.client_name || "No client name", formatCardDate(csr.date)].filter(Boolean).join(" • ")}
+                chips={[
+                  { label: formatStatusLabel(csr.status), tone: getCsrStatusKey(csr.status) === "completed" ? "completed" : "tag" },
+                  ...[csr.make || csr.equipment_type].filter(Boolean).map((item) => ({ label: item, tone: "tag" })),
+                ]}
                 onClick={() => navigate("/csr/" + csr.id)}
-              >
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-[16px] border border-amber-100 bg-amber-50 text-amber-700">
-                      <Wrench className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">CSR</div>
-                      <div className="mt-1 text-[18px] font-extrabold tracking-[-0.03em] text-foreground">
-                        {csr.csr_number || "-"}
-                      </div>
-                      <div className="mt-1 text-sm font-medium text-slate-700">{csr.client_name || "No client name"}</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setActiveCsr(csr)
-                      }}
-                      className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-border bg-white text-muted-foreground shadow-sm"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                      {formatCardDate(csr.date)}
-                    </span>
-                    <span
-                      className={
-                        getCsrStatusKey(csr.status) === "completed"
-                          ? "rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700"
-                          : "rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700"
-                      }
-                    >
-                      {formatStatusLabel(csr.status)}
-                    </span>
-                    {(csr.make || csr.equipment_type) ? (
-                      <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
-                        {csr.make || csr.equipment_type}
-                      </span>
-                    ) : null}
-                  </div>
-                </CardContent>
-              </Card>
+                onAction={() => setActiveCsr(csr)}
+              />
             ))}
           </div>
         )}
@@ -341,7 +242,7 @@ export default function CSR() {
         <MobileFab onClick={() => navigate("/csr/new")} ariaLabel="Create CSR">
           <Plus size={32} />
         </MobileFab>
-      </PageShell>
+      </MobileListPageShell>
       <ConfirmActionDialog
         open={Boolean(csrToDelete)}
         onOpenChange={(open) => {

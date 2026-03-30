@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Plus, MoreHorizontal, Eye, Pencil, Copy, DollarSign, X,
-         Send, Archive, Trash2, FileOutput, Truck, Wrench, Search, SlidersHorizontal } from "lucide-react"
+import { Plus, Eye, Pencil, Copy, DollarSign, Send, Archive, Trash2, FileOutput, Truck, Wrench } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
 import Layout from "../components/Layout"
-import PageIntro from "../components/layout/PageIntro"
-import { PageShell } from "../components/layout/PageShell"
 import MobileFab from "../components/layout/MobileFab"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import MobileListPageShell from "../components/layout/MobileListPageShell"
+import DenseListCard from "../components/list/DenseListCard"
+import ListActionSheet from "../components/layout/ListActionSheet"
+import ConfirmActionDialog from "../components/ConfirmActionDialog"
 
 const PAGE_SIZE = 25
 
@@ -238,173 +237,91 @@ export default function Invoices() {
   }
 
   const filterSelectClass = "h-10 rounded-xl border border-border bg-background px-3 text-xs font-bold text-zinc-700 outline-none"
+  const denseRows = invoices.map((inv) => ({
+    key: inv.id,
+    title: inv.client_name || "No client",
+    meta: `${inv.invoice_number}${formatInvoiceDate(inv.issue_date) ? ` • ${formatInvoiceDate(inv.issue_date)}` : ""}`,
+    amount: `₦${Number(inv.total || 0).toLocaleString()}`,
+    statusLabel: formatStatusLabel(inv.status),
+    statusTone: inv.status === "paid" ? "paid" : inv.status === "sent" ? "sent" : inv.status === "overdue" ? "overdue" : inv.status === "partial" ? "partial" : "draft",
+    roleBadge: inv.thread_role ? {
+      label: inv.thread_role,
+      className: `inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase ${roleColor(inv.thread_role)}`,
+    } : null,
+    onClick: () => navigate(`/invoices/${inv.id}`),
+    onAction: () => setActiveInvoice(inv),
+  }))
 
   return (
     <Layout title="Invoices" hidePageHeader>
-      <PageShell width="wide" className="pb-32">
-        <PageIntro
+      <MobileListPageShell
           eyebrow="Sales"
           title="Invoices"
-          description="Keep outstanding invoices readable on mobile with stronger amount hierarchy, cleaner filters, and the same existing invoice actions."
-          meta={`${totalCount} invoices total`}
+          summary={`${totalCount} invoices total`}
           tone="blue"
-          actions={
-            <Button type="button" className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold" onClick={() => navigate("/invoices/new")}>
-              <Plus className="mr-2 h-4 w-4" />
-              New
-            </Button>
-          }
-          toolbar={
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-11 flex-1 items-center gap-2 rounded-[14px] border border-border bg-white px-3 text-sm text-muted-foreground shadow-sm">
-                  <Search size={16} />
-                  <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search invoices..."
-                    className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground"
-                  />
-                </div>
-                <Button type="button" variant="outline" size="icon-lg" className="rounded-[14px] bg-white" onClick={() => setShowFilters((prev) => !prev)} aria-label="Toggle filters">
-                  <SlidersHorizontal size={16} />
-                </Button>
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search invoices..."
+          onFilterClick={() => setShowFilters((prev) => !prev)}
+          filterPanel={showFilters ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Client</div>
+                <Select value={clientFilter} onValueChange={setClientFilter}>
+                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All</SelectItem>
+                    {clientOptions.map((client) => <SelectItem key={client} value={client}>{client}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
-
-              {showFilters && (
-                <div className="flex flex-col gap-3 rounded-[20px] border border-border bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-black uppercase text-muted-foreground">Client</span>
-                    <Select value={clientFilter} onValueChange={setClientFilter}>
-                      <SelectTrigger className={filterSelectClass}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All">All</SelectItem>
-                        {clientOptions.map((client) => (
-                          <SelectItem key={client} value={client}>{client}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-black uppercase text-muted-foreground">Status</span>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className={filterSelectClass}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["All", "Draft", "Sent", "Paid", "Overdue", "Partial"].map((option) => (
-                          <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-black uppercase text-muted-foreground">Date</span>
-                    <Select value={dateFilter} onValueChange={setDateFilter}>
-                      <SelectTrigger className={filterSelectClass}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["All Time", "This Month", "Last Month", "This Year"].map((option) => (
-                          <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-black uppercase text-muted-foreground">Sort</span>
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className={filterSelectClass}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["Newest", "Oldest", "Highest Value", "Lowest Value"].map((option) => (
-                          <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <button
-                    onClick={resetFilters}
-                    className="h-10 rounded-xl border border-border px-4 text-xs font-black uppercase text-muted-foreground transition hover:bg-muted/50"
-                  >
-                    Clear Filters
-                  </button>
-                </div>
-              )}
-            </div>
-          }
-        />
-
-        {/* Invoice list */}
-        <Card className="mt-5 overflow-hidden rounded-[28px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] shadow-[0_18px_40px_-30px_rgba(15,23,42,0.45)]">
-          <CardContent className="p-0">
-          {invoices.map((inv, idx) => (
-            <div
-              key={inv.id}
-              onClick={() => navigate(`/invoices/${inv.id}`)}
-              className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-4 transition-colors hover:bg-muted/40 sm:px-5"
-              style={{
-                borderBottom: idx === invoices.length - 1 ? "none" : "1px solid #f1f5f9",
-                cursor: "pointer",
-              }}
-            >
-              <div className="min-w-0">
-                <div className="truncate text-[15px] font-bold tracking-[-0.02em] text-foreground">
-                  {inv.client_name || "No client"}
-                </div>
-                <div className="mt-1 truncate text-xs font-semibold text-muted-foreground">
-                  {inv.invoice_number}{formatInvoiceDate(inv.issue_date) ? ` • ${formatInvoiceDate(inv.issue_date)}` : ""}
-                </div>
-                {inv.thread_role ? (
-                  <div className="mt-2">
-                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase ${roleColor(inv.thread_role)}`}>
-                      {inv.thread_role}
-                    </span>
-                  </div>
-                ) : null}
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["All", "Draft", "Sent", "Paid", "Overdue", "Partial"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
-
-              <div className="flex flex-col items-end gap-2 text-right">
-                <div className="text-[15px] font-extrabold tracking-[-0.02em] text-foreground">
-                  ₦{Number(inv.total || 0).toLocaleString()}
-                </div>
-                <span
-                  style={{
-                    ...getInvoiceStatusStyle(inv.status),
-                    borderRadius: 999,
-                    padding: "5px 9px",
-                    fontSize: 11,
-                    fontWeight: 800,
-                    display: "inline-block",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {formatStatusLabel(inv.status)}
-                </span>
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Date</div>
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["All Time", "This Month", "Last Month", "This Year"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
-
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Sort</div>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["Newest", "Oldest", "Highest Value", "Lowest Value"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <button
-                onClick={(e) => { e.stopPropagation(); setActiveInvoice(inv) }}
-                className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-border bg-white text-muted-foreground shadow-sm"
+                type="button"
+                onClick={resetFilters}
+                className="h-10 rounded-xl border border-border px-4 text-xs font-black uppercase text-muted-foreground transition hover:bg-muted/50 sm:col-span-2"
               >
-                <MoreHorizontal size={18} />
+                Clear
               </button>
             </div>
-          ))}
-
-          {invoices.length === 0 && (
-            <div className="px-6 py-20 text-center text-sm font-medium text-muted-foreground">
-              No invoices match the current filters
-            </div>
-          )}
-          </CardContent>
-        </Card>
+          ) : null}
+      >
+        {invoices.length === 0 ? (
+          <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center text-sm text-slate-500">
+            No invoices match the current filters
+          </div>
+        ) : (
+          <DenseListCard rows={denseRows} />
+        )}
 
         {hasMore ? (
-          <div className="mt-4 flex justify-center">
+          <div className="flex justify-center pt-1">
             <button
               type="button"
               onClick={() => fetchInvoices(page + 1, false)}
@@ -415,125 +332,48 @@ export default function Invoices() {
             </button>
           </div>
         ) : null}
-      </PageShell>
+      </MobileListPageShell>
 
-      {/* FAB */}
       <MobileFab onClick={() => navigate("/invoices/new")} ariaLabel="Create invoice">＋</MobileFab>
-
-      {/* Overlay */}
-      {activeInvoice && (
-        <div
-          className="fixed inset-0 z-[100] bg-zinc-950/40 backdrop-blur-sm"
-          onClick={closeSheet}
-        />
-      )}
-
-      {/* Action sheet */}
-      {activeInvoice && !showArchiveWarn && !showDeleteWarn && (
-        <div className="fixed inset-x-0 bottom-0 z-[110] rounded-t-[28px] border-t border-border bg-white shadow-[0_-12px_32px_rgba(15,23,42,0.16)]">
-          <div className="px-4 pt-5 pb-3">
-            <div className="mx-auto mb-5 h-1.5 w-10 rounded-full bg-zinc-200" />
-            <div className="mb-5">
-              <div className="text-sm font-medium text-zinc-500">Invoice {activeInvoice.invoice_number}</div>
-              <div className="mt-1 text-[24px] font-bold leading-none tracking-[-0.03em] text-zinc-900">{activeInvoice.client_name || "No client"}</div>
-              <div className="mt-2 text-[22px] font-bold tracking-[-0.03em] text-zinc-900">₦{Number(activeInvoice.total || 0).toLocaleString()}</div>
-            </div>
-            <button onClick={closeSheet} className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-[14px] border border-border bg-white text-muted-foreground shadow-sm">
-              <X size={18} />
-            </button>
-          </div>
-          <div className="grid grid-cols-3 gap-3 px-4 pb-3">
-            <MenuBtn icon={<Eye size={20}/>}          label="View"       onClick={handleView} />
-            <MenuBtn icon={<Pencil size={20}/>}       label="Edit"       onClick={handleEdit} />
-            {activeInvoice.status !== "paid" && (
-              <MenuBtn icon={<DollarSign size={20}/>} label="Payment"    onClick={() => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) }} />
-            )}
-            <MenuBtn icon={<Copy size={20}/>}         label="Clone"      onClick={handleClone} />
-            {isStandalone && (
-              <MenuBtn icon={<DollarSign size={20}/>} label="Advance"    onClick={handleAdvance} />
-            )}
-            <MenuBtn icon={<FileOutput size={20}/>}   label="To Quote"   onClick={() => { closeSheet(); toast({ title: "Coming soon", description: "Quotations module coming soon." }) }} />
-            <MenuBtn icon={<Wrench size={20}/>}       label="Gen. CSR"   onClick={() => { closeSheet(); toast({ title: "Coming soon", description: "Coming soon." }) }} />
-            <MenuBtn icon={<Truck size={20}/>}        label="Waybill"    onClick={() => { closeSheet(); toast({ title: "Coming soon", description: "Coming soon." }) }} />
-            {activeInvoice.status === "draft" && (
-              <MenuBtn icon={<Send size={20}/>}       label="Mark Sent"  onClick={handleMarkSent} />
-            )}
-            <MenuBtn icon={<Archive size={20}/>}      label="Archive"    onClick={() => setShowArchiveWarn(true)} amber />
-          </div>
-          <div className="px-4 pb-7">
-            <button
-              onClick={() => setShowDeleteWarn(true)}
-              className="flex w-full flex-col items-center gap-2 rounded-[16px] bg-red-100 px-4 py-4 text-red-800 transition hover:bg-red-200"
-            >
-              <Trash2 size={24} />
-              <span className="text-sm font-semibold">Delete Invoice</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Archive warning sheet */}
-      {showArchiveWarn && activeInvoice && (
-        <div className="fixed inset-x-0 bottom-0 z-[130] bg-background rounded-t-[40px] p-8 shadow-2xl">
-          <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-6" />
-          <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Archive size={24} className="text-amber-600" />
-          </div>
-          <h3 className="text-xl font-black text-zinc-950 text-center mb-2">Archive Invoice?</h3>
-          <p className="text-sm text-muted-foreground text-center font-medium leading-relaxed mb-8">
-            This invoice will be hidden from your active list until you restore it from Settings &gt; Archives.
-          </p>
-          <div className="flex gap-3">
-            <button onClick={() => setShowArchiveWarn(false)}
-              className="flex-1 py-4 rounded-2xl border-2 border-border text-sm font-black text-muted-foreground hover:bg-muted/50">
-              Cancel
-            </button>
-            <button onClick={handleArchive}
-              className="flex-1 py-4 rounded-2xl bg-amber-500 text-white text-sm font-black hover:bg-amber-600">
-              Archive
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Delete warning sheet */}
-      {showDeleteWarn && activeInvoice && (
-        <div className="fixed inset-x-0 bottom-0 z-[130] bg-background rounded-t-[40px] p-8 shadow-2xl">
-          <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-6" />
-          <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Trash2 size={24} className="text-red-600" />
-          </div>
-          <h3 className="text-xl font-black text-zinc-950 text-center mb-2">Delete Invoice?</h3>
-          <p className="text-sm text-muted-foreground text-center font-medium leading-relaxed mb-8">
-            Deleting is permanent and cannot be undone. You may choose to archive it instead â€” archived invoices remain recoverable for 30 days.
-          </p>
-          <div className="flex gap-3">
-            <button onClick={() => setShowDeleteWarn(false)}
-              className="flex-1 py-4 rounded-2xl border-2 border-border text-sm font-black text-muted-foreground hover:bg-muted/50">
-              Cancel
-            </button>
-            <button onClick={handleDelete}
-              className="flex-1 py-4 rounded-2xl bg-red-600 text-white text-sm font-black hover:bg-red-700">
-              Delete Forever
-            </button>
-          </div>
-        </div>
-      )}
+      <ListActionSheet
+        open={Boolean(activeInvoice) && !showArchiveWarn && !showDeleteWarn}
+        onOpenChange={(open) => {
+          if (!open) setActiveInvoice(null)
+        }}
+        eyebrow={activeInvoice ? `Invoice ${activeInvoice.invoice_number}` : "Invoice"}
+        title={activeInvoice?.client_name || "No client"}
+        amount={activeInvoice ? `₦${Number(activeInvoice.total || 0).toLocaleString()}` : null}
+        actions={activeInvoice ? [
+          { key: "view", label: "View", icon: <Eye className="h-6 w-6" />, onClick: handleView },
+          { key: "edit", label: "Edit", icon: <Pencil className="h-6 w-6" />, onClick: handleEdit },
+          ...(activeInvoice.status !== "paid" ? [{ key: "payment", label: "Payment", icon: <DollarSign className="h-6 w-6" />, onClick: () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) } }] : []),
+          { key: "clone", label: "Clone", icon: <Copy className="h-6 w-6" />, onClick: handleClone },
+          ...(isStandalone ? [{ key: "advance", label: "Advance", icon: <DollarSign className="h-6 w-6" />, onClick: handleAdvance }] : []),
+          { key: "quote", label: "To Quote", icon: <FileOutput className="h-6 w-6" />, onClick: () => { closeSheet(); toast({ title: "Coming soon", description: "Quotations module coming soon." }) } },
+          { key: "csr", label: "Gen. CSR", icon: <Wrench className="h-6 w-6" />, onClick: () => { closeSheet(); toast({ title: "Coming soon", description: "Coming soon." }) } },
+          { key: "waybill", label: "Waybill", icon: <Truck className="h-6 w-6" />, onClick: () => { closeSheet(); toast({ title: "Coming soon", description: "Coming soon." }) } },
+          ...(activeInvoice.status === "draft" ? [{ key: "mark-sent", label: "Mark Sent", icon: <Send className="h-6 w-6" />, onClick: handleMarkSent }] : []),
+          { key: "archive", label: "Archive", icon: <Archive className="h-6 w-6" />, onClick: () => setShowArchiveWarn(true), closeOnClick: false },
+        ] : []}
+        deleteAction={activeInvoice ? { label: "Delete Invoice", icon: <Trash2 className="h-6 w-6" />, onClick: () => setShowDeleteWarn(true), closeOnClick: false } : undefined}
+      />
+      <ConfirmActionDialog
+        open={showArchiveWarn}
+        onOpenChange={setShowArchiveWarn}
+        title="Archive invoice?"
+        description="This invoice will be hidden from the active list until it is restored from archives."
+        confirmLabel="Archive"
+        onConfirm={() => { void handleArchive() }}
+      />
+      <ConfirmActionDialog
+        open={showDeleteWarn}
+        onOpenChange={setShowDeleteWarn}
+        title="Delete invoice?"
+        description="Deleting is permanent and cannot be undone."
+        confirmLabel="Delete Forever"
+        onConfirm={() => { void handleDelete() }}
+      />
     </Layout>
-  )
-}
-
-function MenuBtn({ icon, label, onClick, danger, amber }) {
-  return (
-    <button onClick={onClick}
-      className={`flex min-h-[92px] flex-col items-center justify-center gap-2 rounded-[16px] px-2 py-4 transition-all ${
-        danger ? "bg-red-50 text-red-700 hover:bg-red-100" :
-        amber  ? "bg-amber-50 text-amber-700 hover:bg-amber-100" :
-        "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
-      }`}>
-      <div>{icon}</div>
-      <span className="text-center text-[13px] font-medium leading-4">{label}</span>
-    </button>
   )
 }
 

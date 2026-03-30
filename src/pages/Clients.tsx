@@ -5,16 +5,13 @@ import Layout from "../components/Layout"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"
 import { toast } from "../hooks/use-toast"
 
-import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
-import { Card, CardContent } from "../components/ui/card"
-import { Input } from "../components/ui/input"
-import PageIntro from "../components/layout/PageIntro"
 import ListActionSheet from "../components/layout/ListActionSheet"
-import { PageShell } from "../components/layout/PageShell"
 import MobileFab from "../components/layout/MobileFab"
+import MobileListPageShell from "../components/layout/MobileListPageShell"
+import EntityListCard from "../components/list/EntityListCard"
 
-import { Archive, Eye, MoreHorizontal, Pencil, Plus, Search, Trash2, Users, SlidersHorizontal } from "lucide-react"
+import { Archive, Eye, Pencil, Plus, Trash2, Users } from "lucide-react"
 
 type Client = {
   id: string | number
@@ -112,127 +109,69 @@ export default function Clients(): JSX.Element {
 
   return (
     <Layout title="Clients" hidePageHeader>
-      <PageShell width="wide" className="pb-32">
-        <PageIntro
+      <MobileListPageShell
           eyebrow="Clients"
           title="Clients"
-          meta={loading ? "Loading clients..." : `${clients.length} clients total`}
+          summary={loading ? "Loading clients..." : `${clients.length} clients total`}
           tone="violet"
-          actions={
-            <Button onClick={() => navigate("/clients/new")} className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold">
-              <Plus className="mr-2 h-4 w-4" />
-              New
-            </Button>
-          }
-          toolbar={
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search clients..."
-                    className="h-11 rounded-[14px] border-zinc-200 bg-white pl-9"
-                  />
-                </div>
-                <Button variant="outline" size="icon-lg" className="rounded-[14px] bg-white" onClick={() => setShowFilters((prev) => !prev)}>
-                  <SlidersHorizontal className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {showFilters ? (
-                <div className="flex flex-wrap gap-2 rounded-[18px] border border-zinc-200 bg-white p-3">
-                  {categories.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setCategory(option)}
-                      className={option === category
-                        ? "rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
-                        : "rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600"}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                  <Button variant="ghost" className="h-8 rounded-full px-3 text-xs font-semibold" onClick={reload}>
-                    Refresh
-                  </Button>
-                </div>
-              ) : null}
+          searchValue={query}
+          onSearchChange={setQuery}
+          searchPlaceholder="Search clients..."
+          onFilterClick={() => setShowFilters((prev) => !prev)}
+          filterPanel={showFilters ? (
+            <div className="flex flex-wrap gap-2">
+              {categories.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setCategory(option)}
+                  className={option === category
+                    ? "rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
+                    : "rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600"}
+                >
+                  {option}
+                </button>
+              ))}
+              <Button variant="ghost" className="h-8 rounded-full px-3 text-xs font-semibold" onClick={reload}>
+                Refresh
+              </Button>
             </div>
-          }
-        />
+          ) : null}
+      >
 
         {loading ? (
-          <div className="mt-4 grid gap-3">
+          <div className="grid gap-3">
             {Array.from({ length: 5 }).map((_, index) => (
-              <Card key={index} className="rounded-[22px] border border-border bg-white shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
-                <CardContent className="p-4">
-                  <div className="h-20 animate-pulse rounded-[16px] bg-slate-100" />
-                </CardContent>
-              </Card>
+              <div key={index} className="rounded-[22px] border border-border bg-white p-4 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
+                <div className="h-20 animate-pulse rounded-[16px] bg-slate-100" />
+              </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <Card className="mt-4 rounded-[22px] border border-dashed border-border bg-white shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
-            <CardContent className="flex flex-col items-center justify-center p-10 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-muted/60">
-                <Users className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <h3 className="mt-4 text-base font-semibold text-foreground">No clients found</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Try a different search or add your first client.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="rounded-[22px] border border-dashed border-border bg-white p-10 text-center shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] bg-muted/60">
+              <Users className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <h3 className="mt-4 text-base font-semibold text-foreground">No clients found</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Try a different search or add your first client.
+            </p>
+          </div>
         ) : (
-          <div className="mt-4 grid gap-3">
+          <div className="grid gap-3">
             {filtered.map((client) => {
               const cat = normalizeCategory(client.category)
               return (
-                <Card
+                <EntityListCard
                   key={client.id}
-                  className="cursor-pointer rounded-[22px] border border-border bg-white shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_40px_-32px_rgba(15,23,42,0.42)]"
+                  leading={<div className="grid h-12 w-12 place-items-center rounded-2xl border border-violet-100 bg-violet-50 text-sm font-extrabold text-violet-700">{initials(client.name)}</div>}
+                  title={client.name}
+                  subtitle={formatLocation(client.city, client.state)}
+                  metadata={[client.phone ?? "—"]}
+                  chips={[{ label: cat, tone: cat === "Client" ? "scope" : "tag" }]}
                   onClick={() => navigate(`/clients/${client.id}`)}
-                >
-                  <CardContent className="p-4">
-                    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-[16px] border border-violet-100 bg-violet-50 text-sm font-extrabold text-violet-700">
-                        {initials(client.name)}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="truncate text-[17px] font-bold tracking-[-0.02em] text-foreground">
-                          {client.name}
-                        </div>
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          {formatLocation(client.city, client.state)}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setActiveClient(client)
-                        }}
-                        className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-border bg-white text-muted-foreground shadow-sm"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <span>{client.phone ?? "—"}</span>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-zinc-200 pt-3">
-                      <Badge variant="secondary" className="font-medium">
-                        {cat}
-                      </Badge>
-                      <div className="text-xs font-medium text-muted-foreground">Open client</div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  onAction={() => setActiveClient(client)}
+                />
               )
             })}
           </div>
@@ -241,7 +180,7 @@ export default function Clients(): JSX.Element {
         <MobileFab onClick={() => navigate("/clients/new")} ariaLabel="Create client">
           <Plus className="h-7 w-7" />
         </MobileFab>
-      </PageShell>
+      </MobileListPageShell>
       <ConfirmActionDialog
         open={clientToDelete !== null}
         onOpenChange={(open) => {

@@ -15,8 +15,8 @@ export default function ListActionSheet({
   eyebrow: string
   title: string
   amount?: string | null
-  actions: Array<{ key: string; label: string; icon: ReactNode; onClick: () => void; tone?: "default" | "danger" }>
-  deleteAction?: { label: string; icon: ReactNode; onClick: () => void }
+  actions: Array<{ key: string; label: string; icon: ReactNode; onClick: () => void; tone?: "default" | "danger"; closeOnClick?: boolean }>
+  deleteAction?: { label: string; icon: ReactNode; onClick: () => void; closeOnClick?: boolean }
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -41,7 +41,7 @@ export default function ListActionSheet({
                 type="button"
                 onClick={() => {
                   action.onClick()
-                  onOpenChange(false)
+                  if (action.closeOnClick !== false) onOpenChange(false)
                 }}
                 className={`flex min-h-[92px] flex-col items-center justify-center gap-2 rounded-[16px] px-2 py-4 ${
                   action.tone === "danger"
@@ -60,7 +60,7 @@ export default function ListActionSheet({
               type="button"
               onClick={() => {
                 deleteAction.onClick()
-                onOpenChange(false)
+                if (deleteAction.closeOnClick !== false) onOpenChange(false)
               }}
               className="mt-3 flex w-full flex-col items-center gap-2 rounded-[16px] bg-red-100 px-4 py-4 text-red-800 hover:bg-red-200"
             >
