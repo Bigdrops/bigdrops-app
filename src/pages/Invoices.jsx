@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast"
 import Layout from "../components/Layout"
 import PageIntro from "../components/layout/PageIntro"
 import { PageShell } from "../components/layout/PageShell"
+import MobileFab from "../components/layout/MobileFab"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -417,12 +418,7 @@ export default function Invoices() {
       </PageShell>
 
       {/* FAB */}
-      <button
-        onClick={() => navigate("/invoices/new")}
-        style={{ position: 'fixed', right: 16, bottom: 94, width: 56, height: 56, borderRadius: 18, background: '#0f172a', color: '#fff', border: 'none', display: 'grid', placeItems: 'center', fontSize: 30, cursor: 'pointer', boxShadow: '0 10px 30px rgba(15,23,42,.25)', zIndex: 50 }}
-      >
-        ＋
-      </button>
+      <MobileFab onClick={() => navigate("/invoices/new")} ariaLabel="Create invoice">＋</MobileFab>
 
       {/* Overlay */}
       {activeInvoice && (

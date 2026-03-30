@@ -12,6 +12,7 @@ import { Input } from "../components/ui/input"
 import PageIntro from "../components/layout/PageIntro"
 import ListActionSheet from "../components/layout/ListActionSheet"
 import { PageShell } from "../components/layout/PageShell"
+import MobileFab from "../components/layout/MobileFab"
 
 import { Archive, Eye, MoreHorizontal, Pencil, Plus, Search, Trash2, Users, SlidersHorizontal } from "lucide-react"
 
@@ -237,13 +238,9 @@ export default function Clients(): JSX.Element {
           </div>
         )}
 
-        <Button
-          onClick={() => navigate("/clients/new")}
-          className="fixed bottom-28 right-5 z-50 h-16 w-16 rounded-[20px] border border-white/20 bg-slate-950 p-0 text-white shadow-[0_22px_40px_-18px_rgba(15,23,42,0.65)] transition-transform hover:scale-105 md:hidden"
-          aria-label="Add client"
-        >
+        <MobileFab onClick={() => navigate("/clients/new")} ariaLabel="Create client">
           <Plus className="h-7 w-7" />
-        </Button>
+        </MobileFab>
       </PageShell>
       <ConfirmActionDialog
         open={clientToDelete !== null}

@@ -32,6 +32,7 @@ import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
 import PageIntro from '@/components/layout/PageIntro'
 import { PageShell } from '@/components/layout/PageShell'
 import ListActionSheet from '@/components/layout/ListActionSheet'
+import MobileFab from '@/components/layout/MobileFab'
 
 function formatMoney(value: number | string | null | undefined) {
   const parsed = Number(value || 0)
@@ -320,14 +321,9 @@ export default function QuotationList() {
         </div>
       )}
 
-      <Button
-        type="button"
-        onClick={() => navigate('/quotations/new')}
-        className="fixed bottom-28 right-5 z-50 h-16 w-16 rounded-[20px] border border-white/20 bg-slate-950 p-0 text-white shadow-[0_22px_40px_-18px_rgba(15,23,42,0.65)] transition-transform hover:scale-105 sm:hidden"
-        aria-label="Create quotation"
-      >
+      <MobileFab onClick={() => navigate('/quotations/new')} ariaLabel="Create quotation">
         <Plus className="h-7 w-7" />
-      </Button>
+      </MobileFab>
       <ConfirmActionDialog
         open={archiveId !== null}
         onOpenChange={(open) => {

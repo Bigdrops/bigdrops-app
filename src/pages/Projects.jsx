@@ -10,6 +10,7 @@ import PageIntro from '../components/layout/PageIntro'
 import { PageShell } from '../components/layout/PageShell'
 import { Button } from '../components/ui/button'
 import ListActionSheet from '../components/layout/ListActionSheet'
+import MobileFab from '../components/layout/MobileFab'
 
 const STATUS_CONFIG = {
   active:    { label: 'Active',    bg: '#DCFCE7', color: '#16A34A', dot: '#22C55E' },
@@ -631,12 +632,9 @@ export default function Projects() {
         )}
       </div>
 
-      <button
-        onClick={() => navigate('/projects/new')}
-        className="fixed bottom-28 right-5 z-50 flex h-16 w-16 items-center justify-center rounded-[20px] border border-white/20 bg-slate-950 text-white shadow-[0_22px_40px_-18px_rgba(15,23,42,0.65)] transition-transform hover:scale-110 sm:hidden"
-      >
+      <MobileFab onClick={() => navigate('/projects/new')} ariaLabel="Create project">
         <Plus size={32} />
-      </button>
+      </MobileFab>
       <ConfirmActionDialog
         open={Boolean(projectToDelete)}
         onOpenChange={(open) => {

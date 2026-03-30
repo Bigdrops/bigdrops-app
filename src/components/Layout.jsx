@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
+import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import { useSettings } from '../hooks/useSettings'
 import { supabase } from '../supabase'
 
@@ -306,22 +307,7 @@ export default function Layout({ title, children, session, hidePageHeader = fals
 
         <main className={mobileContentClassName}>{children}</main>
 
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/92 backdrop-blur-xl">
-          <div className="grid h-[92px] w-full grid-cols-5 gap-1 px-2 pt-2 pb-4 shadow-[0_-10px_30px_-20px_rgba(15,23,42,0.35)]">
-            {tabs.map((tab) => {
-              const Icon = tab.icon
-              const isActive = activeTab === tab.key
-              return (
-                <button key={tab.key} type="button" onClick={() => onTabClick(tab.key)} className={cn('group flex flex-col items-center justify-center gap-1.5 rounded-2xl px-1 py-1.5 transition', isActive ? 'text-foreground' : 'text-muted-foreground hover:bg-muted/40')}>
-                  <span className={cn('grid h-[42px] w-[42px] place-items-center rounded-[14px] border transition', isActive ? 'border-slate-900 bg-slate-900 text-white shadow-sm' : 'border-transparent bg-transparent text-slate-700')}>
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <span className={cn('text-[11px] font-semibold', isActive ? 'text-foreground' : 'text-muted-foreground')}>{tab.label}</span>
-                </button>
-              )
-            })}
-          </div>
-        </nav>
+        <MobileBottomNav active={activeTab} onSelect={onTabClick} />
 
         <div className={cn('fixed inset-0 z-50 transition-opacity duration-300', sidebarOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0')} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setSidebarOpen(false)} />
         <div className="fixed left-0 top-0 z-[60] h-dvh w-[280px] bg-background" style={{ boxShadow: '4px 0 24px rgba(0,0,0,0.15)', transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)' }}>

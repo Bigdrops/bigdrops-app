@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Truck } from 'lucide-react'
+import { Eye, MoreHorizontal, Pencil, Plus, Search, Truck } from 'lucide-react'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -9,6 +9,9 @@ import type { Waybill } from '../components/waybill/waybillUtils'
 import PageIntro from '../components/layout/PageIntro'
 import { PageShell } from '../components/layout/PageShell'
 import { Button } from '../components/ui/button'
+import MobileFab from '../components/layout/MobileFab'
+import MobileSegmentedControl from '../components/layout/MobileSegmentedControl'
+import ListActionSheet from '../components/layout/ListActionSheet'
 
 type FilterTab = 'all' | 'internal' | 'external'
 
@@ -26,6 +29,7 @@ export default function Waybills() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [tab, setTab] = useState<FilterTab>('all')
+  const [activeWaybill, setActiveWaybill] = useState<Waybill | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -98,20 +102,7 @@ export default function Waybills() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6, padding: 4, borderRadius: 16, background: 'hsl(210,40%,96%)', border: '1px solid hsl(214,32%,91%)', marginTop: 14 }}>
-                {tabs.map((t) => (
-                  <button
-                    key={t.key}
-                    type="button"
-                    onClick={() => setTab(t.key)}
-                    style={tab === t.key
-                      ? { height: 36, borderRadius: 12, display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: '#fff', color: '#0f172a', boxShadow: '0 1px 2px rgba(15,23,42,.05)', border: 'none' }
-                      : { height: 36, borderRadius: 12, display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: 'hsl(215,16%,47%)', background: 'transparent', border: 'none' }}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
+              <MobileSegmentedControl options={tabs} value={tab} onChange={(value) => setTab(value as FilterTab)} />
             </div>
           }
         />
@@ -149,8 +140,18 @@ export default function Waybills() {
                 <div
                   key={w.id}
                   onClick={() => navigate(`/waybills/${w.id}`)}
-                  style={{ background: '#fff', border: '1px solid hsl(214,32%,91%)', borderRadius: 22, boxShadow: '0 1px 2px rgba(15,23,42,.05)', padding: 16, cursor: 'pointer' }}
+                  style={{ position: 'relative', background: '#fff', border: '1px solid hsl(214,32%,91%)', borderRadius: 22, boxShadow: '0 1px 2px rgba(15,23,42,.05)', padding: 16, cursor: 'pointer' }}
                 >
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setActiveWaybill(w)
+                    }}
+                    className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-slate-900"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
                   <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr)', gap: 12, alignItems: 'start' }}>
                     <div style={{ width: 48, height: 48, borderRadius: 16, display: 'grid', placeItems: 'center', fontSize: 20, fontWeight: 800, background: '#06b6d41f', color: '#06b6d4' }}>
                       W
@@ -182,14 +183,31 @@ export default function Waybills() {
           </div>
         )}
 
-      <button
-        type="button"
-        onClick={() => navigate('/waybills/new')}
-        className="fixed bottom-28 right-5 z-30 flex h-16 w-16 items-center justify-center rounded-[20px] bg-slate-950 text-white shadow-[0_22px_40px_-18px_rgba(15,23,42,0.65)] transition hover:bg-slate-900 active:scale-95 sm:hidden"
-        aria-label="New Waybill"
-      >
+      <MobileFab onClick={() => navigate('/waybills/new')} ariaLabel="Create waybill">
         <Plus className="h-6 w-6" />
-      </button>
+      </MobileFab>
+      <ListActionSheet
+        open={Boolean(activeWaybill)}
+        onOpenChange={(open) => {
+          if (!open) setActiveWaybill(null)
+        }}
+        eyebrow={activeWaybill ? `Waybill ${activeWaybill.waybill_number || ''}`.trim() : 'Waybill'}
+        title={activeWaybill?.client_name || 'No client / internal movement'}
+        actions={activeWaybill ? [
+          {
+            key: 'view',
+            label: 'View',
+            icon: <Eye className="h-6 w-6" />,
+            onClick: () => navigate(`/waybills/${activeWaybill.id}`),
+          },
+          {
+            key: 'edit',
+            label: 'Edit',
+            icon: <Pencil className="h-6 w-6" />,
+            onClick: () => navigate(`/waybills/${activeWaybill.id}/edit`),
+          },
+        ] : []}
+      />
       </PageShell>
     </Layout>
   )

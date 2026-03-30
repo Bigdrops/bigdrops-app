@@ -9,6 +9,7 @@ import Layout from "../components/Layout"
 import PageIntro from "../components/layout/PageIntro"
 import ListActionSheet from "../components/layout/ListActionSheet"
 import { PageShell } from "../components/layout/PageShell"
+import MobileFab from "../components/layout/MobileFab"
 import { Button } from "../components/ui/button"
 import { Card, CardContent } from "../components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
@@ -337,12 +338,9 @@ export default function CSR() {
           </div>
         )}
 
-        <button
-          onClick={() => navigate("/csr/new")}
-          className="fixed bottom-28 right-5 z-50 flex h-16 w-16 items-center justify-center rounded-[20px] border border-white/20 bg-slate-950 text-white shadow-[0_22px_40px_-18px_rgba(15,23,42,0.65)] transition-transform hover:scale-110 sm:hidden"
-        >
+        <MobileFab onClick={() => navigate("/csr/new")} ariaLabel="Create CSR">
           <Plus size={32} />
-        </button>
+        </MobileFab>
       </PageShell>
       <ConfirmActionDialog
         open={Boolean(csrToDelete)}
