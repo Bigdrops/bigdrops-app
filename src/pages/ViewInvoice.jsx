@@ -227,11 +227,19 @@ export default function ViewInvoice() {
     setPdfGenerating(true)
     try {
       const cf = parseDocumentCustomFields(invoice.custom_fields || customFieldObject)
-      const computedResult = computeDocument({
+
+      const baseComputedResult = computeDocument({
         items,
         document: invoice,
         cf,
       })
+
+      const computedResult = {
+        ...baseComputedResult,
+        cashReceived,
+        settledTotal,
+        balanceDue,
+      }
       const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
         import('@react-pdf/renderer'),
         import('../components/InvoicePDF'),
