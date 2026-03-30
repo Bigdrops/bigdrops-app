@@ -9,6 +9,14 @@ import type { PdfDocumentProps } from '@/components/pdf/base/PdfTypes'
 import type { DocumentResult } from '@/lib/Calculations'
 import { buildRenderRows, renderItemsTable } from '@/components/pdf/base/renderItems'
 import { renderTotals } from '@/components/pdf/base/renderTotals'
+import {
+  darkenHex,
+  getDefaultPdfDesignPreset,
+  getEffectiveFillableFont,
+  lightenHex,
+  resolvePdfFontFamily,
+  type PdfDesignPreset,
+} from '@/lib/pdfDesignPreset'
 
 type QuotationPdfProps = {
   document: Quotation
@@ -16,11 +24,25 @@ type QuotationPdfProps = {
   client?: Record<string, unknown> | null
   settings?: Record<string, unknown> | null
   computedResult: DocumentResult
+  designPreset?: PdfDesignPreset
 } & Partial<PdfDocumentProps<Quotation, InvoiceItem, Record<string, unknown> | null, Record<string, unknown> | null>>
 
-const styles = StyleSheet.create({
+function createStyles(designPreset?: PdfDesignPreset) {
+  const preset = designPreset || getDefaultPdfDesignPreset('quotation')
+  const accent = preset.accentColor
+  const accentDark = darkenHex(accent, 26)
+  const accentSoft = lightenHex(accent, 48)
+  const accentBorder = lightenHex(accent, 34)
+  const headerBold = resolvePdfFontFamily(preset.headerFont, 'bold')
+  const bodyRegular = resolvePdfFontFamily(preset.bodyFont, 'regular')
+  const fillableChoice = getEffectiveFillableFont(preset)
+  const fillableRegular = resolvePdfFontFamily(fillableChoice, 'regular')
+  const fillableBold = resolvePdfFontFamily(fillableChoice, 'bold')
+  const fillableColor = preset.fillableColor
+
+  return StyleSheet.create({
   page: {
-    fontFamily: 'Helvetica',
+    fontFamily: bodyRegular,
     fontSize: 10,
     paddingTop: 32,
     paddingRight: 34,
@@ -34,7 +56,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingBottom: 14,
     borderBottomWidth: 1.5,
-    borderBottomColor: '#0f172a',
+    borderBottomColor: accentDark,
   },
   companyBlock: {
     flex: 1,
@@ -48,13 +70,14 @@ const styles = StyleSheet.create({
   },
   companyName: {
     fontSize: 14,
-    fontFamily: 'Helvetica-Bold',
-    color: '#0f172a',
+    fontFamily: fillableBold,
+    color: fillableColor,
     marginBottom: 2,
   },
   companyText: {
     fontSize: 8.2,
-    color: '#475569',
+    fontFamily: fillableRegular,
+    color: fillableColor,
     marginBottom: 1.5,
     lineHeight: 1.35,
   },
@@ -64,15 +87,16 @@ const styles = StyleSheet.create({
   },
   metaKicker: {
     fontSize: 8,
-    color: '#64748b',
+    fontFamily: bodyRegular,
+    color: accentDark,
     textTransform: 'uppercase',
     letterSpacing: 1.2,
     marginBottom: 4,
   },
   metaNumber: {
     fontSize: 17,
-    fontFamily: 'Helvetica-Bold',
-    color: '#0f172a',
+    fontFamily: fillableBold,
+    color: fillableColor,
     marginBottom: 8,
   },
   metaRow: {
@@ -83,13 +107,14 @@ const styles = StyleSheet.create({
   },
   metaLabel: {
     fontSize: 8.2,
-    color: '#64748b',
+    fontFamily: bodyRegular,
+    color: accentDark,
     marginRight: 8,
   },
   metaValue: {
     fontSize: 8.6,
-    color: '#0f172a',
-    fontFamily: 'Helvetica-Bold',
+    color: fillableColor,
+    fontFamily: fillableBold,
     textAlign: 'right',
     flexShrink: 1,
   },
@@ -103,36 +128,37 @@ const styles = StyleSheet.create({
   preparedCard: {
     flex: 1.25,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: accentBorder,
     borderRadius: 6,
     padding: 10,
-    backgroundColor: '#f8fafc',
+    backgroundColor: accentSoft,
   },
   infoCard: {
     flex: 0.95,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: accentBorder,
     borderRadius: 6,
     padding: 10,
     backgroundColor: 'white',
   },
   blockLabel: {
     fontSize: 7.8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: headerBold,
     textTransform: 'uppercase',
     letterSpacing: 1.15,
-    color: '#64748b',
+    color: accentDark,
     marginBottom: 5,
   },
   clientName: {
     fontSize: 10.4,
-    fontFamily: 'Helvetica-Bold',
-    color: '#111827',
+    fontFamily: fillableBold,
+    color: fillableColor,
     marginBottom: 2,
   },
   bodyText: {
     fontSize: 8.5,
-    color: '#475569',
+    fontFamily: fillableRegular,
+    color: fillableColor,
     marginBottom: 1.5,
     lineHeight: 1.35,
   },
@@ -141,8 +167,8 @@ const styles = StyleSheet.create({
   },
   titleText: {
     fontSize: 13,
-    fontFamily: 'Helvetica-Bold',
-    color: '#0f172a',
+    fontFamily: headerBold,
+    color: accentDark,
     lineHeight: 1.3,
   },
   table: {
@@ -152,17 +178,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderTopWidth: 1.4,
     borderBottomWidth: 1,
-    borderTopColor: '#0f172a',
-    borderBottomColor: '#cbd5e1',
+    borderTopColor: accentDark,
+    borderBottomColor: accentBorder,
     paddingTop: 7,
     paddingBottom: 6,
   },
   thText: {
     fontSize: 7.6,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: headerBold,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
-    color: '#475569',
+    color: accentDark,
   },
   tableRow: {
     flexDirection: 'row',
@@ -184,14 +210,14 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     paddingLeft: 8,
     paddingRight: 8,
-    backgroundColor: '#0f172a',
+    backgroundColor: accentDark,
     borderBottomWidth: 1,
-    borderBottomColor: '#0f172a',
+    borderBottomColor: accentDark,
   },
   groupText: {
     fontSize: 8.5,
     color: 'white',
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: headerBold,
   },
   colNum: { width: 22, textAlign: 'center' },
   colDesc: { flex: 1.85, paddingRight: 10 },
@@ -201,25 +227,27 @@ const styles = StyleSheet.create({
   colAmount: { width: 92, textAlign: 'right' },
   descMain: {
     fontSize: 8.8,
-    color: '#111827',
-    fontFamily: 'Helvetica-Bold',
+    color: fillableColor,
+    fontFamily: fillableBold,
     lineHeight: 1.35,
   },
   descSub: {
     fontSize: 7.4,
-    color: '#64748b',
+    color: accentDark,
+    fontFamily: fillableRegular,
     marginTop: 2,
     lineHeight: 1.35,
   },
   cell: {
     fontSize: 8.3,
-    color: '#334155',
+    fontFamily: fillableRegular,
+    color: fillableColor,
     lineHeight: 1.3,
   },
   amountCell: {
     fontSize: 8.3,
-    color: '#111827',
-    fontFamily: 'Helvetica-Bold',
+    color: fillableColor,
+    fontFamily: fillableBold,
     lineHeight: 1.3,
   },
   totalsSection: {
@@ -237,11 +265,13 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 8.5,
-    color: '#475569',
+    fontFamily: bodyRegular,
+    color: accentDark,
   },
   totalValue: {
     fontSize: 8.5,
-    color: '#0f172a',
+    fontFamily: fillableRegular,
+    color: fillableColor,
     textAlign: 'right',
   },
   totalNegative: {
@@ -251,38 +281,47 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderTopWidth: 2,
-    borderTopColor: '#0f172a',
+    borderTopColor: accentDark,
     paddingTop: 7,
     marginTop: 6,
   },
   payableLabel: {
     fontSize: 11,
-    fontFamily: 'Helvetica-Bold',
-    color: '#0f172a',
+    fontFamily: headerBold,
+    color: accentDark,
   },
   payableValue: {
     fontSize: 12,
-    fontFamily: 'Helvetica-Bold',
-    color: '#0f172a',
+    fontFamily: fillableBold,
+    color: fillableColor,
   },
   notesSection: {
     marginTop: 12,
   },
   notesTitle: {
     fontSize: 7.8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: headerBold,
     textTransform: 'uppercase',
     letterSpacing: 1.1,
-    color: '#64748b',
+    color: accentDark,
     marginBottom: 4,
   },
   notesText: {
     fontSize: 8.4,
-    color: '#475569',
+    fontFamily: fillableRegular,
+    color: fillableColor,
     lineHeight: 1.45,
     marginBottom: 3,
   },
+  groupDividerColor: accentBorder,
+  rowNumberColor: accentDark,
+  cellMutedColor: accentDark,
+  cellValueColor: fillableColor,
+  negativeValueColor: '#b91c1c',
+  payableNegativeColor: '#DC2626',
+  payablePositiveColor: accentDark,
 })
+}
 
 function stripHtml(value?: string) {
   return String(value || '')
@@ -341,8 +380,10 @@ export default function QuotationPDF({
   client = null,
   settings = null,
   computedResult,
+  designPreset,
 }: QuotationPdfProps) {
   const quotation = document
+  const styles = createStyles(designPreset)
   const customFields = (quotation.custom_fields || {}) as InvoiceCustomFields & {
     columnConfig?: ColumnConfig[]
     header?: Array<Record<string, unknown>>

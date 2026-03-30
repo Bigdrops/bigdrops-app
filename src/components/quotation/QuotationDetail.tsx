@@ -7,6 +7,8 @@ import {
   DocumentActionGrid,
   DocumentActionSheet,
   DocumentBottomBar,
+  DocumentDesignPanel,
+  DocumentDesignStyleEditor,
   DocumentDetailRows,
   DocumentFloatingFab,
   DocumentHeroCard,
@@ -14,12 +16,15 @@ import {
   DocumentSection,
   DocumentStatusStrip,
   DocumentSummaryList,
+  DocumentTemplatePicker,
   DocumentTopBar,
 } from '@/components/document/DocumentViewShell'
 import { supabase } from '@/supabase'
 import { calcTotals } from '@/components/useInvoiceColumns.jsx'
 import { computeDocument } from '@/lib/Calculations'
 import { PDF_TEMPLATES, DEFAULT_TEMPLATE, type PdfTemplateId } from '@/components/pdf/pdfTemplates'
+import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getPdfTemplatePreset, setPdfTemplatePreset } from '@/lib/pdfTemplatePreset'
 import { toast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -137,7 +142,8 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const [bankAccounts, setBankAccounts] = useState<BankAccountRow[]>([])
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfOutput, setPdfOutput] = useState<PdfOutputState>(defaultPdfOutput)
-  const [pdfTemplate, setPdfTemplate] = useState<PdfTemplateId>(DEFAULT_TEMPLATE)
+  const [pdfTemplate, setPdfTemplate] = useState<PdfTemplateId>(() => getPdfTemplatePreset('quotation', DEFAULT_TEMPLATE))
+  const [pdfDesignPreset, setPdfDesignPresetState] = useState(() => getPdfDesignPreset('quotation'))
   const [converting, setConverting] = useState(false)
   const [showMobileActions, setShowMobileActions] = useState(false)
   const [showPdfSettings, setShowPdfSettings] = useState(false)
@@ -250,7 +256,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         (templateMap[pdfTemplate] ?? templateMap.proforma)(),
       ])
       const blob = await pdf(
-        <TemplatePDF document={quotation} items={items} client={client} settings={settings} computedResult={computedResult} />
+        <TemplatePDF document={quotation} items={items} client={client} settings={settings} computedResult={computedResult} designPreset={pdfDesignPreset} />
       ).toBlob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -524,6 +530,15 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     { label: 'PO Number', value: poNumber || '—' },
     { label: 'Title', value: quotation.quotation_title || '—' },
   ]
+  const activePdfTemplate = PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || PDF_TEMPLATES[0]
+  const handlePdfTemplateChange = (nextTemplate: PdfTemplateId) => {
+    setPdfTemplate(nextTemplate)
+    setPdfTemplatePreset('quotation', nextTemplate)
+  }
+  const handlePdfDesignPresetChange = (nextPreset) => {
+    setPdfDesignPresetState(nextPreset)
+    setPdfDesignPreset('quotation', nextPreset)
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 pb-32">
@@ -566,6 +581,57 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
 
       <DocumentSection title="Document Details">
         <DocumentDetailRows rows={shellDetailRows} />
+      </DocumentSection>
+
+      <DocumentSection title="Design">
+        <DocumentDesignPanel
+          title="Customize Quotation Design"
+          subtitle="This quotation PDF preset is saved on this device and will be reused for every future quotation until you change it again."
+          sections={[
+            {
+              key: 'template',
+              title: '1. Select Template',
+              description: 'Choose the quotation PDF layout you want to keep using across quotations.',
+              content: (
+                <div className="space-y-3">
+                  <div className="rounded-[18px] border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                    Selected preset: <span className="font-bold">{activePdfTemplate.label}</span> · {activePdfTemplate.description}
+                  </div>
+                  <DocumentTemplatePicker value={pdfTemplate} onChange={handlePdfTemplateChange} templates={PDF_TEMPLATES} />
+                </div>
+              ),
+            },
+            {
+              key: 'styling',
+              title: '2. Change Color & Font',
+              description: 'These settings are saved as the global quotation design preset for this browser.',
+              content: (
+                <DocumentDesignStyleEditor value={pdfDesignPreset} onChange={handlePdfDesignPresetChange} />
+              ),
+            },
+            {
+              key: 'output',
+              title: '3. Add LetterHead & Footer',
+              description: 'Control supporting PDF options that appear alongside your saved quotation design.',
+              content: (
+                <PdfOutputSettings
+                  value={pdfOutput}
+                  onChange={(next) => void handlePdfOutputChange(next)}
+                  bankAccounts={bankAccounts.map((account) => ({
+                    id: account.id,
+                    bankName: account.bank_name || '',
+                    accountName: account.account_name || '',
+                    accountNumber: account.account_number || '',
+                    sortCode: account.sort_code || '',
+                    isDefault: account.is_default === true,
+                  }))}
+                  companyTagline={String(settings?.company_tagline || '')}
+                  footerText={String(settings?.footer_text || '')}
+                />
+              ),
+            },
+          ]}
+        />
       </DocumentSection>
 
       <DocumentSection title="Line Items">
@@ -630,27 +696,8 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       <DocumentPdfSheet
         open={showPdfSettings}
         onOpenChange={setShowPdfSettings}
-        title="PDF & Export"
-        subtitle="Choose template and output options"
-        settingsNode={
-          <PdfOutputSettings
-            value={pdfOutput}
-            onChange={(next) => void handlePdfOutputChange(next)}
-            bankAccounts={bankAccounts.map((account) => ({
-              id: account.id,
-              bankName: account.bank_name || '',
-              accountName: account.account_name || '',
-              accountNumber: account.account_number || '',
-              sortCode: account.sort_code || '',
-              isDefault: account.is_default === true,
-            }))}
-            companyTagline={String(settings?.company_tagline || '')}
-            footerText={String(settings?.footer_text || '')}
-          />
-        }
-        templateValue={pdfTemplate}
-        onTemplateChange={setPdfTemplate}
-        templates={PDF_TEMPLATES}
+        title="Download & Export"
+        subtitle={`Using ${activePdfTemplate.label} as the saved quotation PDF preset on this device.`}
         actions={[
           { label: 'Export CSV', onClick: handleDownloadCsv, variant: 'outline' },
           { label: pdfGenerating ? 'Generating...' : 'Download PDF', onClick: () => void handleDownloadPdf(), className: 'bg-slate-950 text-white hover:bg-slate-800', disabled: pdfGenerating },

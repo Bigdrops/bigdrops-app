@@ -2,27 +2,46 @@ import { Document, Page, Text, View, StyleSheet, Image, Link } from '@react-pdf/
 import { stripHtml, extractInvoiceData } from './pdfUtils'
 import { renderTotals } from './base/renderTotals'
 import { renderItemsTable } from './base/renderItems'
+import {
+  darkenHex,
+  getDefaultPdfDesignPreset,
+  getEffectiveFillableFont,
+  lightenHex,
+  resolvePdfFontFamily,
+} from '@/lib/pdfDesignPreset'
 
-const BAND = '#0F172A'
-const A    = '#3B82F6' // blue accent for totals/labels
+function createStyles(designPreset) {
+  const preset = designPreset || getDefaultPdfDesignPreset('invoice')
+  const accent = preset.accentColor
+  const band = darkenHex(accent, 35)
+  const accentSoft = lightenHex(accent, 42)
+  const accentPale = lightenHex(accent, 50)
+  const accentBorder = lightenHex(accent, 34)
+  const headerBold = resolvePdfFontFamily(preset.headerFont, 'bold')
+  const bodyRegular = resolvePdfFontFamily(preset.bodyFont, 'regular')
+  const fillableChoice = getEffectiveFillableFont(preset)
+  const fillableRegular = resolvePdfFontFamily(fillableChoice, 'regular')
+  const fillableBold = resolvePdfFontFamily(fillableChoice, 'bold')
+  const fillableItalic = resolvePdfFontFamily(fillableChoice, 'italic')
+  const fillableColor = preset.fillableColor
 
-const s = StyleSheet.create({
-  page: { fontFamily: 'Helvetica', fontSize: 10, padding: 0, backgroundColor: 'white' },
+  return StyleSheet.create({
+  page: { fontFamily: bodyRegular, fontSize: 10, padding: 0, backgroundColor: 'white' },
 
   // Full-width dark band header
-  headerBand: { backgroundColor: BAND, padding: '28 40 24 40', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 0 },
+  headerBand: { backgroundColor: band, padding: '28 40 24 40', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 0 },
   companyBlock: { flex: 1, marginRight: 20 },
   logo: { maxWidth: 100, maxHeight: 50, marginBottom: 6, objectFit: 'contain' },
-  companyName: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: 'white', marginBottom: 2 },
-  companyDetail: { fontSize: 8, color: '#94A3B8', marginBottom: 1 },
+  companyName: { fontSize: 14, fontFamily: fillableBold, color: 'white', marginBottom: 2 },
+  companyDetail: { fontSize: 8, fontFamily: fillableRegular, color: accentSoft, marginBottom: 1 },
   docBlock: { alignItems: 'flex-end' },
-  docTitle: { fontSize: 24, fontFamily: 'Helvetica-Bold', color: 'white', letterSpacing: 2, marginBottom: 6 },
-  docNumber: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#E2E8F0', marginBottom: 2 },
-  docDate: { fontSize: 9, color: '#94A3B8', marginBottom: 1 },
-  docSubtitle: { fontSize: 9, color: '#94A3B8', marginBottom: 2 },
+  docTitle: { fontSize: 24, fontFamily: headerBold, color: 'white', letterSpacing: 2, marginBottom: 6 },
+  docNumber: { fontSize: 11, fontFamily: fillableBold, color: accentPale, marginBottom: 2 },
+  docDate: { fontSize: 9, fontFamily: fillableRegular, color: accentSoft, marginBottom: 1 },
+  docSubtitle: { fontSize: 9, fontFamily: bodyRegular, color: accentSoft, marginBottom: 2 },
 
   // Blue accent strip under band
-  accentStrip: { backgroundColor: A, height: 4, marginBottom: 0 },
+  accentStrip: { backgroundColor: accent, height: 4, marginBottom: 0 },
 
   // Body content area
   body: { padding: '20 40 40 40' },
@@ -30,24 +49,24 @@ const s = StyleSheet.create({
   // Client section
   twoCol: { flexDirection: 'row', marginBottom: 20 },
   col: { flex: 1 },
-  sectionLabel: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: A, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 5 },
-  clientName: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#1a1a1a', marginBottom: 2 },
-  clientDetail: { fontSize: 8, color: '#555', marginBottom: 2 },
+  sectionLabel: { fontSize: 8, fontFamily: headerBold, color: accent, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 5 },
+  clientName: { fontSize: 11, fontFamily: fillableBold, color: fillableColor, marginBottom: 2 },
+  clientDetail: { fontSize: 8, fontFamily: fillableRegular, color: fillableColor, marginBottom: 2 },
 
   // Invoice title above table
-  invoiceTitle: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: BAND, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', paddingBottom: 6 },
+  invoiceTitle: { fontSize: 12, fontFamily: headerBold, color: band, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5, borderBottomWidth: 1, borderBottomColor: accentBorder, paddingBottom: 6 },
 
   // Table
   table: { marginBottom: 14 },
-  tableHeader: { flexDirection: 'row', backgroundColor: BAND, paddingVertical: 7, paddingHorizontal: 8 },
-  thText: { color: 'white', fontFamily: 'Helvetica-Bold', fontSize: 8 },
+  tableHeader: { flexDirection: 'row', backgroundColor: band, paddingVertical: 7, paddingHorizontal: 8 },
+  thText: { color: 'white', fontFamily: headerBold, fontSize: 8 },
   tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#F1F5F9', paddingVertical: 6, paddingHorizontal: 8, backgroundColor: 'white' },
-  tableRowAlt: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#F1F5F9', paddingVertical: 6, paddingHorizontal: 8, backgroundColor: '#F8FAFC' },
-  groupRow: { flexDirection: 'row', backgroundColor: '#1E3A5F', paddingVertical: 5, paddingHorizontal: 8 },
-  groupText: { color: 'white', fontFamily: 'Helvetica-Bold', fontSize: 9 },
-  groupSubtotalRow: { flexDirection: 'row', justifyContent: 'flex-end', paddingVertical: 4, paddingHorizontal: 8, backgroundColor: '#EFF6FF', borderBottomWidth: 1, borderBottomColor: '#BFDBFE' },
-  groupSubtotalLabel: { fontSize: 8, color: '#555', fontFamily: 'Helvetica-Bold', marginRight: 12 },
-  groupSubtotalValue: { fontSize: 8, color: A, fontFamily: 'Helvetica-Bold' },
+  tableRowAlt: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#F1F5F9', paddingVertical: 6, paddingHorizontal: 8, backgroundColor: accentPale },
+  groupRow: { flexDirection: 'row', backgroundColor: band, paddingVertical: 5, paddingHorizontal: 8 },
+  groupText: { color: 'white', fontFamily: headerBold, fontSize: 9 },
+  groupSubtotalRow: { flexDirection: 'row', justifyContent: 'flex-end', paddingVertical: 4, paddingHorizontal: 8, backgroundColor: accentPale, borderBottomWidth: 1, borderBottomColor: accentBorder },
+  groupSubtotalLabel: { fontSize: 8, color: fillableColor, fontFamily: headerBold, marginRight: 12 },
+  groupSubtotalValue: { fontSize: 8, color: fillableColor, fontFamily: fillableBold },
 
   cNum:   { width: 18, textAlign: 'center', fontSize: 8 },
   cDesc:  { flex: 2.5 },
@@ -55,39 +74,48 @@ const s = StyleSheet.create({
   cQty:   { flex: 0.7, textAlign: 'center', fontSize: 8 },
   cUnit:  { flex: 0.8, textAlign: 'center', fontSize: 8 },
   cPrice: { flex: 1.5, textAlign: 'right', fontSize: 8 },
-  cAmt:   { flex: 1.5, textAlign: 'right', fontSize: 8, fontFamily: 'Helvetica-Bold' },
-  descText: { fontSize: 8.5, color: '#1a1a1a' },
-  subDescText: { fontSize: 7, color: '#888', marginTop: 1, fontFamily: 'Helvetica-Oblique' },
+  cAmt:   { flex: 1.5, textAlign: 'right', fontSize: 8, fontFamily: fillableBold },
+  descText: { fontSize: 8.5, fontFamily: fillableRegular, color: fillableColor },
+  subDescText: { fontSize: 7, color: darkenHex(accent, 18), marginTop: 1, fontFamily: fillableItalic },
 
   // Totals
   totalsSection: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 12 },
   totalsBox: { width: 260, backgroundColor: '#F8FAFC', padding: 12, borderWidth: 1, borderColor: '#E2E8F0' },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  totalLabel: { fontSize: 8, color: '#555' },
-  totalValue: { fontSize: 8, color: '#1a1a1a' },
-  grandTotalRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 2, borderTopColor: BAND, paddingTop: 6, marginTop: 4 },
-  grandLabel: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: BAND },
-  grandValue: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: BAND },
+  totalLabel: { fontSize: 8, fontFamily: bodyRegular, color: darkenHex(accent, 18) },
+  totalValue: { fontSize: 8, fontFamily: fillableRegular, color: fillableColor },
+  grandTotalRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 2, borderTopColor: band, paddingTop: 6, marginTop: 4 },
+  grandLabel: { fontSize: 11, fontFamily: headerBold, color: band },
+  grandValue: { fontSize: 13, fontFamily: fillableBold, color: fillableColor },
   whtRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, paddingTop: 4, borderTopWidth: 1, borderTopColor: '#ddd' },
-  payableRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 2, borderTopColor: A, paddingTop: 6, marginTop: 4 },
-  payableLabel: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: A },
-  payableValue: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: A },
+  payableRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 2, borderTopColor: accent, paddingTop: 6, marginTop: 4 },
+  payableLabel: { fontSize: 11, fontFamily: headerBold, color: accent },
+  payableValue: { fontSize: 13, fontFamily: fillableBold, color: fillableColor },
 
-  amountWords: { backgroundColor: '#EFF6FF', padding: 8, marginBottom: 12, borderLeftWidth: 3, borderLeftColor: A },
-  amountWordsText: { fontSize: 8, color: '#334155', fontFamily: 'Helvetica-Oblique' },
+  amountWords: { backgroundColor: accentPale, padding: 8, marginBottom: 12, borderLeftWidth: 3, borderLeftColor: accent },
+  amountWordsText: { fontSize: 8, color: fillableColor, fontFamily: fillableItalic },
   notesBox: { marginBottom: 10 },
-  notesText: { fontSize: 8, color: '#555', lineHeight: 1.5 },
+  notesText: { fontSize: 8, fontFamily: fillableRegular, color: fillableColor, lineHeight: 1.5 },
   docsSection: { marginTop: 16, borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 12 },
-  docsSectionLabel: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#333', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
+  docsSectionLabel: { fontSize: 9, fontFamily: headerBold, color: fillableColor, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
   docItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
-  docLink: { fontSize: 8, color: A, textDecoration: 'underline' },
+  docLink: { fontSize: 8, color: accent, textDecoration: 'underline' },
   footer: { borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 10, marginTop: 12 },
-  footerText: { fontSize: 7.5, color: '#888', textAlign: 'center', lineHeight: 1.6 },
+  footerText: { fontSize: 7.5, fontFamily: bodyRegular, color: fillableColor, textAlign: 'center', lineHeight: 1.6 },
+  groupDividerColor: accentBorder,
+  rowNumberColor: darkenHex(accent, 18),
+  cellMutedColor: darkenHex(accent, 18),
+  cellValueColor: fillableColor,
+  negativeValueColor: '#CC0000',
+  payableNegativeColor: '#DC2626',
+  payablePositiveColor: accent,
 })
+}
 
-export default function InvoicePDF_Bold({ document, items = [], client, settings = {}, computedResult }) {
+export default function InvoicePDF_Bold({ document, items = [], client, settings = {}, computedResult, designPreset }) {
   const invoice = document
   const d = extractInvoiceData(document, items, client, settings, computedResult)
+  const s = createStyles(designPreset)
   const columns = d.pdfColumns
   const columnStyle = (column, extra = {}) => ({
     flex: column.pdfFlex,

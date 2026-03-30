@@ -166,7 +166,7 @@ export function renderItemsTable({
           return (
             <React.View
               key={'type' in row ? row.key : `group_end_${index}`}
-              style={{ height: 1, backgroundColor: '#e2e8f0', marginHorizontal: 8, marginBottom: 4 }}
+              style={{ height: 1, backgroundColor: styles.groupDividerColor || '#e2e8f0', marginHorizontal: 8, marginBottom: 4 }}
               wrap={false}
             />
           )
@@ -188,7 +188,7 @@ export function renderItemsTable({
                 return (
                   <React.Text
                     key={column.key}
-                    style={[columnStyle(column), { color: '#999', alignSelf: 'flex-start' }]}
+                    style={[columnStyle(column), { color: styles.rowNumberColor || '#999', alignSelf: 'flex-start' }]}
                   >
                     {itemCount}
                   </React.Text>
@@ -219,7 +219,7 @@ export function renderItemsTable({
                 return (
                   <React.Text
                     key={column.key}
-                    style={[columnStyle(column, { alignSelf: 'flex-start', color: '#555' })]}
+                    style={[columnStyle(column, { alignSelf: 'flex-start', color: styles.cellMutedColor || '#555' })]}
                   >
                     {unit ? `${qty} ${unit}` : qty}
                   </React.Text>
@@ -236,7 +236,7 @@ export function renderItemsTable({
                   style={[
                     columnStyle(column, {
                       alignSelf: 'flex-start',
-                      color: column.align === 'right' ? '#1a1a1a' : '#555',
+                      color: column.align === 'right' ? styles.cellValueColor || '#1a1a1a' : styles.cellMutedColor || '#555',
                     }),
                   ]}
                 >

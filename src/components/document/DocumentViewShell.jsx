@@ -1,6 +1,8 @@
+import * as React from 'react'
 import {
   Archive,
   ArrowLeft,
+  CheckCircle2,
   ChevronRight,
   CircleDollarSign,
   Copy,
@@ -10,12 +12,20 @@ import {
   FileText,
   FolderOpen,
   Pencil,
+  Palette,
   Trash2,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import {
+  getEffectiveFillableFont,
+  PDF_ACCENT_SWATCHES,
+  PDF_FONT_OPTIONS,
+} from '@/lib/pdfDesignPreset'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Sheet,
   SheetContent,
@@ -71,6 +81,212 @@ export function DocumentTemplatePicker({ value, onChange, templates }) {
           </button>
         )
       })}
+    </div>
+  )
+}
+
+export function DocumentDesignPanel({ title, subtitle, badge = 'Persistent preset', sections }) {
+  const [openSections, setOpenSections] = React.useState(() =>
+    Object.fromEntries(sections.map((section, index) => [section.key || String(index), section.defaultOpen !== false])),
+  )
+
+  return (
+    <Card className="overflow-hidden rounded-[26px] border-border bg-[linear-gradient(180deg,#ffffff,rgba(248,250,252,0.96))] shadow-sm">
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">
+              <Palette className="h-4 w-4 text-slate-500" />
+              Design Controls
+            </div>
+            <div className="mt-2 text-xl font-black tracking-[-0.04em] text-foreground sm:text-[1.7rem]">{title}</div>
+            {subtitle ? <div className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{subtitle}</div> : null}
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            <span>{badge}</span>
+          </div>
+        </div>
+
+        <div className="mt-5 space-y-3">
+          {sections.map((section, index) => {
+            const sectionKey = section.key || String(index)
+            const open = openSections[sectionKey] !== false
+
+            return (
+              <div key={sectionKey} className="overflow-hidden rounded-[22px] border border-border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+                <button
+                  type="button"
+                  onClick={() => setOpenSections((current) => ({ ...current, [sectionKey]: !open }))}
+                  className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left"
+                >
+                  <div className="min-w-0">
+                    <div className="text-base font-extrabold tracking-[-0.03em] text-foreground">{section.title}</div>
+                    {section.description ? <div className="mt-1 text-sm text-muted-foreground">{section.description}</div> : null}
+                  </div>
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-slate-500">
+                    {open ? <ChevronDown className="h-4 w-4 rotate-180" /> : <ChevronDown className="h-4 w-4" />}
+                  </div>
+                </button>
+                {open ? <div className="border-t border-slate-100 px-4 py-4">{section.content}</div> : null}
+              </div>
+            )
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export function DocumentDesignStyleEditor({ value, onChange, accentLabel = 'Accent Color' }) {
+  const effectiveFillableFont = getEffectiveFillableFont(value)
+
+  const update = (patch) => {
+    onChange({
+      ...value,
+      ...patch,
+    })
+  }
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">{accentLabel}</div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {PDF_ACCENT_SWATCHES.map((swatch) => {
+            const active = value.accentColor.toLowerCase() === swatch.toLowerCase()
+            return (
+              <button
+                key={swatch}
+                type="button"
+                onClick={() => update({ accentColor: swatch })}
+                className={cn(
+                  'h-9 w-9 rounded-xl border-2 shadow-sm transition',
+                  active ? 'border-slate-950 scale-[1.03]' : 'border-white/80',
+                )}
+                style={{ backgroundColor: swatch }}
+                aria-label={`Use accent color ${swatch}`}
+              />
+            )
+          })}
+        </div>
+        <div className="mt-3">
+          <Input
+            value={value.accentColor}
+            onChange={(event) => update({ accentColor: event.target.value })}
+            className="h-11 rounded-[14px] bg-white font-mono"
+            placeholder="#14b8a6"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Header Font</div>
+          <Select value={value.headerFont} onValueChange={(next) => update({ headerFont: next })}>
+            <SelectTrigger className="h-11 rounded-[14px] bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PDF_FONT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="text-xs text-muted-foreground">
+            {PDF_FONT_OPTIONS.find((option) => option.value === value.headerFont)?.description}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Body Font</div>
+          <Select value={value.bodyFont} onValueChange={(next) => update({ bodyFont: next })}>
+            <SelectTrigger className="h-11 rounded-[14px] bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PDF_FONT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="text-xs text-muted-foreground">
+            {PDF_FONT_OPTIONS.find((option) => option.value === value.bodyFont)?.description}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[18px] border border-border bg-muted/30 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Fillable Font</div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              Auto uses the current body font until you switch to a manual fillable font.
+            </div>
+          </div>
+          <div className="inline-flex rounded-full border border-border bg-white p-1">
+            <button
+              type="button"
+              onClick={() => update({ fillableFontMode: 'auto' })}
+              className={cn(
+                'rounded-full px-3 py-1.5 text-xs font-bold transition',
+                value.fillableFontMode === 'auto' ? 'bg-slate-950 text-white' : 'text-slate-600',
+              )}
+            >
+              Auto
+            </button>
+            <button
+              type="button"
+              onClick={() => update({ fillableFontMode: 'custom' })}
+              className={cn(
+                'rounded-full px-3 py-1.5 text-xs font-bold transition',
+                value.fillableFontMode === 'custom' ? 'bg-slate-950 text-white' : 'text-slate-600',
+              )}
+            >
+              Custom
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Fillable Font Choice</div>
+            <Select
+              value={value.fillableFontMode === 'custom' ? value.fillableFont : effectiveFillableFont}
+              onValueChange={(next) => update({ fillableFont: next, fillableFontMode: 'custom' })}
+              disabled={value.fillableFontMode !== 'custom'}
+            >
+              <SelectTrigger className="h-11 rounded-[14px] bg-white disabled:opacity-70">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PDF_FONT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="text-xs text-muted-foreground">
+              Effective fillable font: {PDF_FONT_OPTIONS.find((option) => option.value === effectiveFillableFont)?.label}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Fillable Color</div>
+            <Input
+              value={value.fillableColor}
+              onChange={(event) => update({ fillableColor: event.target.value })}
+              className="h-11 rounded-[14px] bg-white font-mono"
+              placeholder="#0f172a"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -370,11 +586,13 @@ export function DocumentPdfSheet({
           {subtitle ? <SheetDescription>{subtitle}</SheetDescription> : null}
         </SheetHeader>
         <div className="space-y-5 px-5 py-5">
-          {settingsNode}
-          <div className="space-y-2">
-            <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Template</div>
-            <DocumentTemplatePicker value={templateValue} onChange={onTemplateChange} templates={templates} />
-          </div>
+          {settingsNode ? settingsNode : null}
+          {templateValue && onTemplateChange && templates?.length ? (
+            <div className="space-y-2">
+              <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Template</div>
+              <DocumentTemplatePicker value={templateValue} onChange={onTemplateChange} templates={templates} />
+            </div>
+          ) : null}
           {actions.length > 0 ? (
             <div className="grid grid-cols-2 gap-2">
               {actions.map((action) => (

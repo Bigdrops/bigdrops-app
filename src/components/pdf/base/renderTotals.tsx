@@ -64,7 +64,7 @@ export function renderTotals({
           {result.discount > 0 ? (
             <React.View style={styles.totalRow}>
               <React.Text style={styles.totalLabel}>Discount</React.Text>
-              <React.Text style={[styles.totalValue, { color: '#CC0000' }]}>
+              <React.Text style={[styles.totalValue, { color: styles.negativeValueColor || '#CC0000' }]}>
                 - NGN {Number(result.discount || 0).toLocaleString()}
               </React.Text>
             </React.View>
@@ -79,8 +79,8 @@ export function renderTotals({
 
           {result.wht > 0 ? (
             <React.View style={styles.whtRow}>
-              <React.Text style={[styles.totalLabel, { color: '#CC0000' }]}>Less: WHT</React.Text>
-              <React.Text style={[styles.totalValue, { color: '#CC0000' }]}>
+              <React.Text style={[styles.totalLabel, { color: styles.negativeValueColor || '#CC0000' }]}>Less: WHT</React.Text>
+              <React.Text style={[styles.totalValue, { color: styles.negativeValueColor || '#CC0000' }]}>
                 - NGN {Number(result.wht || 0).toLocaleString()}
               </React.Text>
             </React.View>
@@ -91,7 +91,7 @@ export function renderTotals({
             <React.Text
               style={[
                 styles.payableValue || styles.totalValueStrong,
-                { color: balanceDue > 0 ? '#DC2626' : '#059669' },
+                { color: balanceDue > 0 ? styles.payableNegativeColor || '#DC2626' : styles.payablePositiveColor || '#059669' },
               ]}
             >
               NGN {balanceDue.toLocaleString()}

@@ -7,6 +7,8 @@ import {
   DocumentActionGrid,
   DocumentActionSheet,
   DocumentBottomBar,
+  DocumentDesignPanel,
+  DocumentDesignStyleEditor,
   DocumentDetailRows,
   DocumentFloatingFab,
   DocumentHeroCard,
@@ -14,6 +16,7 @@ import {
   DocumentSection,
   DocumentStatusStrip,
   DocumentSummaryList,
+  DocumentTemplatePicker,
   DocumentTopBar,
 } from '@/components/document/DocumentViewShell'
 import RecordPaymentModal from '@/components/RecordPaymentModal'
@@ -35,6 +38,11 @@ import {
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { computeDocument } from '@/lib/Calculations'
 import { PDF_TEMPLATES, DEFAULT_TEMPLATE } from '@/components/pdf/pdfTemplates'
+import {
+  getPdfDesignPreset,
+  setPdfDesignPreset,
+} from '@/lib/pdfDesignPreset'
+import { getPdfTemplatePreset, setPdfTemplatePreset } from '@/lib/pdfTemplatePreset'
 import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -60,7 +68,8 @@ export default function ViewInvoice() {
   const [showMore, setShowMore] = useState(false)
   const [showPdfSheet, setShowPdfSheet] = useState(false)
   const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
-  const [pdfTemplate, setPdfTemplate] = useState(DEFAULT_TEMPLATE)
+  const [pdfTemplate, setPdfTemplate] = useState(() => getPdfTemplatePreset('invoice', DEFAULT_TEMPLATE))
+  const [pdfDesignPreset, setPdfDesignPresetState] = useState(() => getPdfDesignPreset('invoice'))
 
   // Payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -252,6 +261,7 @@ export default function ViewInvoice() {
           settings={settings}
           computedResult={computedResult}
           template={pdfTemplate}
+          designPreset={pdfDesignPreset}
           bankAccounts={bankAccounts}
           pdfOutput={pdfOutput}
           signatory={selectedSignatory}
@@ -576,6 +586,15 @@ export default function ViewInvoice() {
     },
     disabled: status === 'partial' || status === 'paid' || status === 'overdue',
   }))
+  const activePdfTemplate = PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || PDF_TEMPLATES[0]
+  const handlePdfTemplateChange = (nextTemplate) => {
+    setPdfTemplate(nextTemplate)
+    setPdfTemplatePreset('invoice', nextTemplate)
+  }
+  const handlePdfDesignPresetChange = (nextPreset) => {
+    setPdfDesignPresetState(nextPreset)
+    setPdfDesignPreset('invoice', nextPreset)
+  }
 
   return (
     <Layout title={invoice.invoice_number} hidePageHeader contentClassName="w-full px-4 pb-32 pt-4 md:px-6 md:pt-6">
@@ -625,6 +644,57 @@ export default function ViewInvoice() {
 
         <DocumentSection title="Document Details">
           <DocumentDetailRows rows={shellDetailRows} />
+        </DocumentSection>
+
+        <DocumentSection title="Design">
+          <DocumentDesignPanel
+            title="Customize Invoice Design"
+            subtitle="This invoice PDF preset is saved on this device and will be reused for every future invoice until you change it again."
+            sections={[
+              {
+                key: 'template',
+                title: '1. Select Template',
+                description: 'Choose the invoice PDF layout you want to keep using across invoices.',
+                content: (
+                  <div className="space-y-3">
+                  <div className="rounded-[18px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                      Selected preset: <span className="font-bold">{activePdfTemplate.label}</span> · {activePdfTemplate.description}
+                    </div>
+                    <DocumentTemplatePicker value={pdfTemplate} onChange={handlePdfTemplateChange} templates={PDF_TEMPLATES} />
+                  </div>
+                ),
+              },
+              {
+                key: 'styling',
+                title: '2. Change Color & Font',
+                description: 'These settings are saved as the global invoice design preset for this browser.',
+                content: (
+                  <DocumentDesignStyleEditor value={pdfDesignPreset} onChange={handlePdfDesignPresetChange} />
+                ),
+              },
+              {
+                key: 'output',
+                title: '3. Add LetterHead & Footer',
+                description: 'Control supporting PDF options that appear alongside your saved invoice design.',
+                content: (
+                  <PdfOutputSettings
+                    value={pdfOutput}
+                    onChange={handlePdfOutputChange}
+                    bankAccounts={bankAccounts.map((b) => ({
+                      id: b.id,
+                      bankName: b.bank_name,
+                      accountName: b.account_name,
+                      accountNumber: b.account_number,
+                      sortCode: b.sort_code,
+                      isDefault: b.is_default,
+                    }))}
+                    companyTagline={settings.company_tagline || ''}
+                    footerText={settings.footer_text || ''}
+                  />
+                ),
+              },
+            ]}
+          />
         </DocumentSection>
 
         <DocumentSection title="Line Items">
@@ -755,27 +825,8 @@ export default function ViewInvoice() {
         <DocumentPdfSheet
           open={showPdfSheet}
           onOpenChange={setShowPdfSheet}
-          title="PDF & Export"
-          subtitle="Choose template and output options"
-          settingsNode={
-            <PdfOutputSettings
-              value={pdfOutput}
-              onChange={handlePdfOutputChange}
-              bankAccounts={bankAccounts.map(b => ({
-                id: b.id,
-                bankName: b.bank_name,
-                accountName: b.account_name,
-                accountNumber: b.account_number,
-                sortCode: b.sort_code,
-                isDefault: b.is_default,
-              }))}
-              companyTagline={settings.company_tagline || ''}
-              footerText={settings.footer_text || ''}
-            />
-          }
-          templateValue={pdfTemplate}
-          onTemplateChange={setPdfTemplate}
-          templates={PDF_TEMPLATES}
+          title="Download & Export"
+          subtitle={`Using ${activePdfTemplate.label} as the saved invoice PDF preset on this device.`}
           actions={[
             { label: 'Export CSV', onClick: handleDownloadCsv, variant: 'outline' },
             { label: pdfGenerating ? 'Preparing...' : 'Download PDF', onClick: () => void handleDownloadPDF(), className: 'bg-slate-950 text-white hover:bg-slate-800', disabled: pdfGenerating },
