@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Menu } from 'lucide-react'
 import MobileSearchFilterRow from './MobileSearchFilterRow'
 
 const toneStyles = {
@@ -61,18 +60,7 @@ export default function MobileListPageShell({
       <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_10px_30px_rgba(15,23,42,0.08)]">
         <div className={`h-1 w-full ${toneStyle.accent}`} />
         <div className="bg-[linear-gradient(180deg,rgba(248,250,252,0.9),rgba(255,255,255,1))] p-4">
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              aria-label="Open navigation"
-              className="grid h-[42px] w-[42px] place-items-center rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-            >
-              <Menu className="h-[18px] w-[18px]" />
-            </button>
-            <div className="h-[42px] w-[42px]" aria-hidden="true" />
-          </div>
-
-          <div className="mt-4 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</div>
           <h2 className="mt-2 text-[28px] font-black leading-[1.05] tracking-[-0.045em] text-slate-950">{title}</h2>
           <p className="mt-1 text-sm text-slate-500">{summary}</p>
 

@@ -194,7 +194,7 @@ export default function Layout({ title, children, session, hidePageHeader = fals
   }, [salesRouteActive])
 
   const desktopContentClassName = contentClassName || 'mx-auto w-full max-w-5xl px-6 py-6'
-  const mobileContentClassName = contentClassName || 'w-full px-0 pb-24 pt-0'
+  const mobileContentClassName = contentClassName || 'w-full overflow-x-hidden px-0 pb-24 pt-0'
 
   return (
     <div className="min-h-dvh bg-muted/50 text-foreground">
@@ -305,7 +305,7 @@ export default function Layout({ title, children, session, hidePageHeader = fals
           </div>
         ) : null}
 
-        <main className={mobileContentClassName}>{children}</main>
+        <main className={cn('overflow-x-hidden', mobileContentClassName)}>{children}</main>
 
         <MobileBottomNav active={activeTab} onSelect={onTabClick} />
 

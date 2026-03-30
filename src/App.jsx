@@ -430,11 +430,17 @@ function App() {
         if (event === 'TOKEN_REFRESHED') {
           setSession(session)
           lastUserIdRef.current = nextUserId
+          setAuthLoading(false)
+          setProfileLoading(false)
           return
         }
         if (event === 'INITIAL_SESSION') {
           setSession(session)
           lastUserIdRef.current = nextUserId
+          if (!nextUserId) {
+            setAuthLoading(false)
+            setProfileLoading(false)
+          }
           return
         }
         if (event === 'USER_UPDATED' && nextUserId) {

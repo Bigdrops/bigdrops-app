@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, Pencil, Plus, Truck } from 'lucide-react'
+import { Eye, Pencil, Plus, Trash2, Truck } from 'lucide-react'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -59,6 +59,13 @@ export default function Waybills() {
     { key: 'internal', label: 'Internal' },
     { key: 'external', label: 'External' },
   ]
+
+  const handleDeleteWaybill = async () => {
+    if (!activeWaybill?.id) return
+    await supabase.from('waybills').delete().eq('id', activeWaybill.id)
+    setWaybills((prev) => prev.filter((w) => w.id !== activeWaybill.id))
+    setActiveWaybill(null)
+  }
 
   return (
     <Layout title="Waybills" hidePageHeader>
@@ -139,22 +146,27 @@ export default function Waybills() {
         onOpenChange={(open) => {
           if (!open) setActiveWaybill(null)
         }}
-        eyebrow={activeWaybill ? `Waybill ${activeWaybill.waybill_number || ''}`.trim() : 'Waybill'}
-        title={activeWaybill?.client_name || 'No client / internal movement'}
+        eyebrow={activeWaybill ? (activeWaybill.type === 'internal' ? 'Internal Waybill' : 'External Waybill') : 'Waybill'}
+        title={activeWaybill?.waybill_number || ''}
         actions={activeWaybill ? [
           {
             key: 'view',
             label: 'View',
-            icon: <Eye className="h-6 w-6" />,
+            icon: <Eye size={20} />,
             onClick: () => navigate(`/waybills/${activeWaybill.id}`),
           },
           {
             key: 'edit',
             label: 'Edit',
-            icon: <Pencil className="h-6 w-6" />,
+            icon: <Pencil size={20} />,
             onClick: () => navigate(`/waybills/${activeWaybill.id}/edit`),
           },
         ] : []}
+        deleteAction={activeWaybill ? {
+          label: 'Delete Waybill',
+          icon: <Trash2 size={20} />,
+          onClick: handleDeleteWaybill,
+        } : undefined}
       />
       </MobileListPageShell>
     </Layout>
