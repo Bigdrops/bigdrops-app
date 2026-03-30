@@ -6,6 +6,7 @@ import {
   ImagePlus,
   MoveDown,
   MoveUp,
+  Plus,
   Trash2,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -54,6 +55,7 @@ export default function MobileItemCard({
   onRemove,
   onMoveUp,
   onMoveDown,
+  onInsertBelow,
   isVisible,
   getColumn,
 }) {
@@ -131,7 +133,7 @@ export default function MobileItemCard({
         <div className="flex flex-wrap items-center gap-2">
           <MiniButton active={showDetails} onClick={() => setShowDetails((current) => !current)}>
             {showDetails ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-            Sub descriptions
+            Sub-description
           </MiniButton>
           <MiniButton disabled={isFirst} onClick={() => onMoveUp(index)}>
             <MoveUp className="h-3.5 w-3.5" />
@@ -162,7 +164,7 @@ export default function MobileItemCard({
           <Input
             value={item.sub_description || ''}
             onChange={(event) => onUpdate(index, 'sub_description', event.target.value)}
-            placeholder="Sub descriptions"
+            placeholder="Sub-description"
             className={inputCls}
           />
         ) : null}
@@ -390,6 +392,15 @@ export default function MobileItemCard({
           ) : null}
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => onInsertBelow(index)}
+        className="flex w-full items-center justify-center gap-2 border-t border-[#e2e8f0] bg-[#f8fafc] py-3 text-[12px] font-bold text-[#475569]"
+      >
+        <Plus className="h-4 w-4" />
+        Add item below
+      </button>
     </div>
   )
 }

@@ -29,8 +29,6 @@ import { computeDocument } from '../lib/Calculations'
 import { numberToWords } from '../hooks/useInvoiceForm'
 import { toast } from '@/hooks/use-toast'
 
-const invoicePageClassName = 'w-full p-0 max-w-none'
-
 export default function EditInvoice() {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -328,7 +326,7 @@ export default function EditInvoice() {
 
   if (loading || !invoice) {
     return (
-      <Layout title="Edit Invoice" hidePageHeader contentClassName={invoicePageClassName}>
+      <Layout title="Edit Invoice" hidePageHeader>
         <div className="w-full px-4 py-6 pb-24 text-sm text-muted-foreground sm:px-6 md:mx-auto md:max-w-2xl md:pb-12 lg:px-8">
           Loading invoice...
         </div>
@@ -440,30 +438,99 @@ export default function EditInvoice() {
   }
 
   return (
-    <Layout title="Edit Invoice" hidePageHeader contentClassName={invoicePageClassName}>
-      <MobileInvoiceForm
-        title="Edit Invoice"
-        modeLabel="Edit Invoice"
-        invoice={invoice}
-        invoiceTitle={invoiceTitle}
-        setInvoiceTitle={setInvoiceTitle}
-        updateInvoice={updateInvoice}
-        items={items}
-        groups={groups}
-        customFields={customFields}
-        bottomFields={bottomFields}
-        extraCharges={extraCharges}
-        chargeLabels={chargeLabels}
-        notesTitle={notesTitle}
-        setNotesTitle={setNotesTitle}
-        termsTitle={termsTitle}
-        setTermsTitle={setTermsTitle}
-        attachments={attachments}
-        setAttachments={setAttachments}
-        signatories={signatories}
-        signatoryId={signatoryId}
-        onSignatoryChange={setSignatoryId}
-        afterSignatorySlot={
+    <Layout title="Edit Invoice" hidePageHeader>
+      <div className="space-y-6">
+        <MobileInvoiceForm
+          title="Edit Invoice"
+          modeLabel="Edit Invoice"
+          invoice={invoice}
+          invoiceTitle={invoiceTitle}
+          setInvoiceTitle={setInvoiceTitle}
+          updateInvoice={updateInvoice}
+          items={items}
+          groups={groups}
+          customFields={customFields}
+          bottomFields={bottomFields}
+          extraCharges={extraCharges}
+          chargeLabels={chargeLabels}
+          notesTitle={notesTitle}
+          setNotesTitle={setNotesTitle}
+          termsTitle={termsTitle}
+          setTermsTitle={setTermsTitle}
+          attachments={attachments}
+          setAttachments={setAttachments}
+          signatories={signatories}
+          signatoryId={signatoryId}
+          onSignatoryChange={setSignatoryId}
+          mergeQtyUnit={mergeQtyUnit}
+          setMergeQtyUnit={setMergeQtyUnit}
+          columns={columns}
+          isVisible={isVisible}
+          getColumn={getColumn}
+          toggleVisible={toggleVisible}
+          updateColumn={updateColumn}
+          addCustomColumn={addCustomColumn}
+          removeCustomColumn={removeCustomColumn}
+          resetColumns={resetColumns}
+          moveColumn={moveColumn}
+          customColumns={customColumns}
+          computedItems={documentTotals.items}
+          computedGroups={documentTotals.groups}
+          rawSubtotal={documentTotals.subtotal}
+          installRateTotal={documentTotals.installRateTotal}
+          vatAmount={documentTotals.vat}
+          discountAmount={documentTotals.discount}
+          grandTotal={documentTotals.grandTotal}
+          whtAmount={documentTotals.wht}
+          totalPayable={documentTotals.totalPayable}
+          amountInWords={numberToWords(documentTotals.totalPayable)}
+          discountType={discountType}
+          setDiscountType={setDiscountType}
+          discountTiming={discountTiming}
+          setDiscountTiming={setDiscountTiming}
+          whtType={whtType}
+          setWhtType={setWhtType}
+          saving={saving}
+          primaryLabel="Save Changes"
+          onSaveSent={() => handleSave('sent')}
+          onSaveDraft={() => handleSave('draft')}
+          onFloatingSave={() => handleSave('draft')}
+          onCancel={() => navigate('/invoices/' + id)}
+          onApplyImport={handleImportApply}
+          importAdapter={invoiceImportAdapter}
+          onAddItem={addItem}
+          onAddGroup={addGroup}
+          onAddItemToGroup={addItemToGroup}
+          onUpdateItem={updateItem}
+          onResetItemOverrides={resetItemOverrides}
+          onRemoveItem={removeItem}
+          onMoveItem={moveItem}
+          onInsertItemAfter={insertItemAfter}
+          onUpdateGroupName={updateGroupName}
+          onToggleGroupSubtotal={toggleGroupSubtotal}
+          onDeleteGroup={deleteGroup}
+          onAddHeaderField={() => setCustomFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])}
+          onUpdateHeaderField={(fieldId, field, value) =>
+            setCustomFields((current) => current.map((entry) => (entry.id === fieldId ? { ...entry, [field]: value } : entry)))
+          }
+          onRemoveHeaderField={(fieldId) => setCustomFields((current) => current.filter((entry) => entry.id !== fieldId))}
+          onAddBottomField={() => setBottomFields((current) => [...current, makeFieldEntry({ text: '' })])}
+          onUpdateBottomField={(fieldId, value) =>
+            setBottomFields((current) => current.map((entry) => (entry.id === fieldId ? { ...entry, text: value } : entry)))
+          }
+          onRemoveBottomField={(fieldId) => setBottomFields((current) => current.filter((entry) => entry.id !== fieldId))}
+          onChargeLabelChange={(key, value) => setChargeLabels((current) => ({ ...current, [key]: value }))}
+          onAddExtraCharge={(withTax) => setExtraCharges((current) => [...current, makeExtraCharge({ withTax })])}
+          onUpdateExtraCharge={(chargeId, field, value) =>
+            setExtraCharges((current) => current.map((charge) => (charge.id === chargeId ? { ...charge, [field]: value } : charge)))
+          }
+          onRemoveExtraCharge={(chargeId) => setExtraCharges((current) => current.filter((charge) => charge.id !== chargeId))}
+          showColumnManager={showColumnManager}
+          setShowColumnManager={setShowColumnManager}
+          isMobile={isMobile}
+        />
+
+        <div className="mx-auto w-full max-w-2xl px-4 pb-6 sm:px-6">
           <PdfOutputSettings
             value={pdfOutput}
             onChange={setPdfOutput}
@@ -478,73 +545,8 @@ export default function EditInvoice() {
             companyTagline={settingsData?.company_tagline || ''}
             footerText={settingsData?.footer_text || ''}
           />
-        }
-        mergeQtyUnit={mergeQtyUnit}
-        setMergeQtyUnit={setMergeQtyUnit}
-        columns={columns}
-        isVisible={isVisible}
-        getColumn={getColumn}
-        toggleVisible={toggleVisible}
-        updateColumn={updateColumn}
-        addCustomColumn={addCustomColumn}
-        removeCustomColumn={removeCustomColumn}
-        resetColumns={resetColumns}
-        moveColumn={moveColumn}
-        customColumns={customColumns}
-        computedItems={documentTotals.items}
-        computedGroups={documentTotals.groups}
-        rawSubtotal={documentTotals.subtotal}
-        installRateTotal={documentTotals.installRateTotal}
-        vatAmount={documentTotals.vat}
-        discountAmount={documentTotals.discount}
-        grandTotal={documentTotals.grandTotal}
-        whtAmount={documentTotals.wht}
-        totalPayable={documentTotals.totalPayable}
-        amountInWords={numberToWords(documentTotals.totalPayable)}
-        discountType={discountType}
-        setDiscountType={setDiscountType}
-        discountTiming={discountTiming}
-        setDiscountTiming={setDiscountTiming}
-        whtType={whtType}
-        setWhtType={setWhtType}
-        saving={saving}
-        primaryLabel="Save Changes"
-        onSaveSent={() => handleSave('sent')}
-        onSaveDraft={() => handleSave('draft')}
-        onCancel={() => navigate('/invoices/' + id)}
-        onApplyImport={handleImportApply}
-        importAdapter={invoiceImportAdapter}
-        onAddItem={addItem}
-        onAddGroup={addGroup}
-        onAddItemToGroup={addItemToGroup}
-        onUpdateItem={updateItem}
-        onResetItemOverrides={resetItemOverrides}
-        onRemoveItem={removeItem}
-        onMoveItem={moveItem}
-        onInsertItemAfter={insertItemAfter}
-        onUpdateGroupName={updateGroupName}
-        onToggleGroupSubtotal={toggleGroupSubtotal}
-        onDeleteGroup={deleteGroup}
-        onAddHeaderField={() => setCustomFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])}
-        onUpdateHeaderField={(fieldId, field, value) =>
-          setCustomFields((current) => current.map((entry) => (entry.id === fieldId ? { ...entry, [field]: value } : entry)))
-        }
-        onRemoveHeaderField={(fieldId) => setCustomFields((current) => current.filter((entry) => entry.id !== fieldId))}
-        onAddBottomField={() => setBottomFields((current) => [...current, makeFieldEntry({ text: '' })])}
-        onUpdateBottomField={(fieldId, value) =>
-          setBottomFields((current) => current.map((entry) => (entry.id === fieldId ? { ...entry, text: value } : entry)))
-        }
-        onRemoveBottomField={(fieldId) => setBottomFields((current) => current.filter((entry) => entry.id !== fieldId))}
-        onChargeLabelChange={(key, value) => setChargeLabels((current) => ({ ...current, [key]: value }))}
-        onAddExtraCharge={(withTax) => setExtraCharges((current) => [...current, makeExtraCharge({ withTax })])}
-        onUpdateExtraCharge={(chargeId, field, value) =>
-          setExtraCharges((current) => current.map((charge) => (charge.id === chargeId ? { ...charge, [field]: value } : charge)))
-        }
-        onRemoveExtraCharge={(chargeId) => setExtraCharges((current) => current.filter((charge) => charge.id !== chargeId))}
-        showColumnManager={showColumnManager}
-        setShowColumnManager={setShowColumnManager}
-        isMobile={isMobile}
-      />
+        </div>
+      </div>
     </Layout>
   )
 }

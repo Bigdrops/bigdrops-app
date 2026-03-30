@@ -25,8 +25,6 @@ import { computeDocument } from '../lib/Calculations'
 import { numberToWords } from '../hooks/useInvoiceForm'
 import { toast } from '@/hooks/use-toast'
 
-const invoicePageClassName = 'w-full p-0 max-w-none'
-
 export default function NewInvoice() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -386,7 +384,7 @@ export default function NewInvoice() {
   }
 
   return (
-    <Layout title="Create Invoice" hidePageHeader contentClassName={invoicePageClassName}>
+    <Layout title="Create Invoice" hidePageHeader>
       <div className="space-y-6">
         <MobileInvoiceForm
           title="Create Invoice"

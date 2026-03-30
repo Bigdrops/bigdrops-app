@@ -543,6 +543,7 @@ export default function MobileInvoiceForm(props) {
                     onUpdateItem={onUpdateItem}
                     onRemoveItem={onRemoveItem}
                     onMoveItem={onMoveItem}
+                    onInsertItemAfter={onInsertItemAfter}
                     isVisible={isVisible}
                     getColumn={getColumn}
                     getComputedAmount={getComputedAmount}
@@ -563,6 +564,7 @@ export default function MobileInvoiceForm(props) {
                     onRemove={onRemoveItem}
                     onMoveUp={(itemIndex) => onMoveItem(itemIndex, -1)}
                     onMoveDown={(itemIndex) => onMoveItem(itemIndex, 1)}
+                    onInsertBelow={onInsertItemAfter}
                     isVisible={isVisible}
                     getColumn={getColumn}
                   />
