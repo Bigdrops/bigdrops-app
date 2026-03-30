@@ -168,7 +168,7 @@ export default function CSR() {
         <PageIntro
           eyebrow="Service"
           title="Customer Service Reports"
-          meta={`${filteredCsrs.length} of ${csrs.length} report${csrs.length !== 1 ? "s" : ""}`}
+          meta={`${csrs.length} reports total`}
           tone="amber"
           actions={
             <Button type="button" className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold" onClick={() => navigate("/csr/new")}>
@@ -375,12 +375,6 @@ export default function CSR() {
             label: "Edit",
             icon: <Pencil className="h-6 w-6" />,
             onClick: () => navigate(`/csr/edit/${activeCsr.id}`),
-          },
-          {
-            key: "clone",
-            label: "Clone",
-            icon: <Copy className="h-6 w-6" />,
-            onClick: () => void handleClone(activeCsr),
           },
         ] : []}
         deleteAction={activeCsr ? {

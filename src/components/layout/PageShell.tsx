@@ -1,5 +1,4 @@
-import type { ReactNode } from 'react'
-import { cn } from '@/lib/utils'
+import type { CSSProperties, ReactNode } from 'react'
 
 type PageShellProps = {
   children: ReactNode
@@ -8,11 +7,11 @@ type PageShellProps = {
   padded?: boolean
 }
 
-const widthClassName: Record<NonNullable<PageShellProps['width']>, string> = {
-  default: 'mx-auto w-full max-w-5xl',
-  narrow: 'mx-auto w-full max-w-3xl',
-  wide: 'mx-auto w-full max-w-6xl',
-  full: 'w-full',
+const widthStyles: Record<NonNullable<PageShellProps['width']>, CSSProperties> = {
+  default: { width: '100%', maxWidth: 520, margin: '0 auto' },
+  narrow: { width: '100%', maxWidth: 440, margin: '0 auto' },
+  wide: { width: '100%', maxWidth: 560, margin: '0 auto' },
+  full: { width: '100%' },
 }
 
 export function PageShell({
@@ -24,11 +23,14 @@ export function PageShell({
   return (
     <div
       data-slot="page-shell"
-      className={cn(
-        widthClassName[width],
-        padded ? 'px-3 py-3 pb-28 sm:px-4 sm:py-5 md:px-6 md:py-6 md:pb-10' : '',
-        className,
-      )}
+      className={className}
+      style={{
+        ...widthStyles[width],
+        minHeight: '100vh',
+        padding: padded ? '20px 16px 120px' : undefined,
+        background: 'radial-gradient(circle at top, rgba(59,130,246,.08), transparent 30%), hsl(220,20%,98%)',
+        fontFamily: "'DM Sans', sans-serif",
+      }}
     >
       {children}
     </div>

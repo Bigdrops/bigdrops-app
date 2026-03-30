@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Archive,
   ClipboardList,
+  Copy,
   Loader2,
   MoreHorizontal,
   Pencil,
@@ -26,7 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { DbQuotation } from '@/domain/quotation'
-import { mapDbQuotation } from '@/domain/quotation'
+import { getNextQuotationNumber, mapDbQuotation } from '@/domain/quotation'
 import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
 import PageIntro from '@/components/layout/PageIntro'
 import { PageShell } from '@/components/layout/PageShell'
@@ -93,6 +94,55 @@ export default function QuotationList() {
     await loadQuotations()
   }
 
+  const handleClone = async (id: string) => {
+    setBusyAction(`clone:${id}`)
+    const { data: quotationRow, error: quotationError } = await supabase.from('quotations').select('*').eq('id', id).single()
+    if (quotationError || !quotationRow) {
+      setBusyAction(null)
+      toast({ title: 'Clone failed', description: quotationError?.message || 'Quotation not found', variant: 'destructive' })
+      return
+    }
+
+    const { data: quotationRows } = await supabase.from('quotations').select('quotation_number')
+    const payload = {
+      ...quotationRow,
+      quotation_number: getNextQuotationNumber((quotationRows || []) as Array<{ quotation_number?: string | null }>),
+      status: 'draft',
+      issue_date: new Date().toISOString().split('T')[0],
+      archived_at: null,
+    } as Record<string, unknown>
+    delete payload.id
+    delete payload.created_at
+    delete payload.updated_at
+
+    const { data: createdQuotation, error: createError } = await supabase.from('quotations').insert([payload]).select().single()
+    if (createError || !createdQuotation) {
+      setBusyAction(null)
+      toast({ title: 'Clone failed', description: createError?.message || 'Unable to create clone', variant: 'destructive' })
+      return
+    }
+
+    const { data: itemRows } = await supabase.from('quotation_items').select('*').eq('quotation_id', id)
+    if (itemRows?.length) {
+      const nextItems = itemRows.map(({ id: _id, created_at: _createdAt, updated_at: _updatedAt, ...item }) => ({
+        ...item,
+        quotation_id: createdQuotation.id,
+      }))
+      const { error: itemError } = await supabase.from('quotation_items').insert(nextItems)
+      if (itemError) {
+        await supabase.from('quotations').delete().eq('id', createdQuotation.id)
+        setBusyAction(null)
+        toast({ title: 'Clone failed', description: itemError.message, variant: 'destructive' })
+        return
+      }
+    }
+
+    setBusyAction(null)
+    setActiveQuotation(null)
+    await loadQuotations()
+    navigate(`/quotations/${createdQuotation.id}`)
+  }
+
   const filteredQuotations = useMemo(() => {
     const query = search.trim().toLowerCase()
     const next = quotations.filter((row) => {
@@ -127,8 +177,8 @@ export default function QuotationList() {
       <PageIntro
         eyebrow="Sales"
         title="Quotations"
-        meta={`${filteredQuotations.length} of ${quotations.length} quotation${quotations.length === 1 ? '' : 's'}`}
-        tone="violet"
+        meta={`${quotations.length} quotations total`}
+        tone="blue"
         actions={
           <Button type="button" className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold" onClick={() => navigate('/quotations/new')}>
             <Plus className="mr-2 h-4 w-4" />
@@ -325,10 +375,10 @@ export default function QuotationList() {
             onClick: () => navigate(`/quotations/edit/${activeQuotation.id}`),
           },
           {
-            key: "archive",
-            label: activeQuotationIsArchiving ? "Working..." : "Archive",
-            icon: activeQuotationIsArchiving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6" />,
-            onClick: () => setArchiveId(activeQuotation.id),
+            key: "clone",
+            label: busyAction === `clone:${activeQuotation.id}` ? "Working..." : "Clone",
+            icon: busyAction === `clone:${activeQuotation.id}` ? <Loader2 className="h-6 w-6 animate-spin" /> : <Copy className="h-6 w-6" />,
+            onClick: () => void handleClone(activeQuotation.id),
           },
         ] : []}
         deleteAction={activeQuotation ? {

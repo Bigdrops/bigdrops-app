@@ -170,7 +170,7 @@ export default function Projects() {
         <PageIntro
           eyebrow="Projects"
           title="Projects"
-          meta={`${filtered.length} of ${projects.length} project${projects.length !== 1 ? 's' : ''}`}
+          meta={`${projects.length} projects total`}
           tone="emerald"
           actions={
             <Button type="button" className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold" onClick={() => navigate('/projects/new')}>

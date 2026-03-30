@@ -245,7 +245,7 @@ export default function Invoices() {
           eyebrow="Sales"
           title="Invoices"
           description="Keep outstanding invoices readable on mobile with stronger amount hierarchy, cleaner filters, and the same existing invoice actions."
-          meta={`${totalCount} invoice${totalCount !== 1 ? "s" : ""} total`}
+          meta={`${totalCount} invoices total`}
           tone="blue"
           actions={
             <Button type="button" className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold" onClick={() => navigate("/invoices/new")}>
@@ -419,9 +419,9 @@ export default function Invoices() {
       {/* FAB */}
       <button
         onClick={() => navigate("/invoices/new")}
-        className="fixed bottom-28 right-5 z-50 flex h-16 w-16 items-center justify-center rounded-[20px] border border-white/20 bg-slate-950 text-white shadow-[0_22px_40px_-18px_rgba(15,23,42,0.65)] transition-transform hover:scale-110 sm:hidden"
+        style={{ position: 'fixed', right: 16, bottom: 94, width: 56, height: 56, borderRadius: 18, background: '#0f172a', color: '#fff', border: 'none', display: 'grid', placeItems: 'center', fontSize: 30, cursor: 'pointer', boxShadow: '0 10px 30px rgba(15,23,42,.25)', zIndex: 50 }}
       >
-        <Plus size={32} />
+        ＋
       </button>
 
       {/* Overlay */}

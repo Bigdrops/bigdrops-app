@@ -71,8 +71,7 @@ export default function Waybills() {
         <PageIntro
           eyebrow="Logistics"
           title="Waybills"
-          description="Keep dispatch records easy to scan, split internal and external movement quickly, and leave route details readable on smaller screens."
-          meta={`${filtered.length} of ${waybills.length} waybill${waybills.length === 1 ? '' : 's'}`}
+          meta={`${waybills.length} waybill${waybills.length === 1 ? '' : 's'}`}
           tone="cyan"
           actions={
             <Button
@@ -86,28 +85,28 @@ export default function Waybills() {
           }
           toolbar={
             <div className="space-y-3">
-              <div className="flex h-11 items-center gap-2 rounded-[14px] border border-border bg-white px-3 text-sm text-muted-foreground shadow-sm">
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ flex: 1, height: 44, borderRadius: 14, border: '1px solid hsl(214,32%,91%)', background: '#fff', display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', color: 'hsl(215,16%,47%)' }}>
                 <Search className="h-4 w-4" />
                 <input
                   type="text"
                   placeholder="Search waybills..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                    style={{ border: 'none', outline: 'none', background: 'transparent', flex: 1, fontSize: 14, color: '#0f172a' }}
                 />
+                </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-1 rounded-[18px] border border-zinc-200 bg-zinc-100/80 p-1">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6, padding: 4, borderRadius: 16, background: 'hsl(210,40%,96%)', border: '1px solid hsl(214,32%,91%)', marginTop: 14 }}>
                 {tabs.map((t) => (
                   <button
                     key={t.key}
                     type="button"
                     onClick={() => setTab(t.key)}
-                    className={`rounded-[14px] px-3 py-2 text-sm font-semibold transition ${
-                      tab === t.key
-                        ? 'bg-white text-foreground shadow-[0_8px_16px_-12px_rgba(15,23,42,0.5)]'
-                        : 'text-muted-foreground hover:bg-white/60'
-                    }`}
+                    style={tab === t.key
+                      ? { height: 36, borderRadius: 12, display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: '#fff', color: '#0f172a', boxShadow: '0 1px 2px rgba(15,23,42,.05)', border: 'none' }
+                      : { height: 36, borderRadius: 12, display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: 'hsl(215,16%,47%)', background: 'transparent', border: 'none' }}
                   >
                     {t.label}
                   </button>
@@ -142,50 +141,42 @@ export default function Waybills() {
             )}
           </div>
         ) : (
-          <div className="mt-5 space-y-3">
+          <div className="mt-4 space-y-3">
             {filtered.map((w) => {
               const statusMeta = getStatusMeta(w.status)
               const typeMeta = getTypeMeta(w.type)
-              const typeContent = getWaybillTypeContent(w.type)
               return (
-                <button
+                <div
                   key={w.id}
-                  type="button"
                   onClick={() => navigate(`/waybills/${w.id}`)}
-                  className="w-full rounded-[24px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(247,249,252,1))] p-4 text-left shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)] transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_24px_40px_-32px_rgba(15,23,42,0.42)]"
+                  style={{ background: '#fff', border: '1px solid hsl(214,32%,91%)', borderRadius: 22, boxShadow: '0 1px 2px rgba(15,23,42,.05)', padding: 16, cursor: 'pointer' }}
                 >
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-700">Waybill</div>
-                      <div className="mt-1 truncate text-base font-extrabold tracking-[-0.03em] text-foreground">{w.waybill_number || '—'}</div>
-                      <div className="mt-1 truncate text-sm text-muted-foreground">{w.client_name || 'No client / internal movement'}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr)', gap: 12, alignItems: 'start' }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 16, display: 'grid', placeItems: 'center', fontSize: 20, fontWeight: 800, background: '#06b6d41f', color: '#06b6d4' }}>
+                      W
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1">
-                      <Badge className={typeMeta.className} label={typeMeta.label} />
-                      <Badge className={statusMeta.className} label={statusMeta.label} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.16em', color: 'hsl(215,16%,47%)' }}>Waybill</div>
+                      <div style={{ marginTop: 4, fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#0f172a' }}>{w.waybill_number || '—'}</div>
+                      <div style={{ marginTop: 4, fontSize: 14, color: 'hsl(215,16%,47%)' }}>{w.client_name || 'No client / internal movement'}</div>
                     </div>
                   </div>
 
-                  <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="rounded-lg bg-slate-100 px-2 py-0.5 font-medium text-slate-700">{formatWaybillDate(w.date)}</span>
-                    {w.vehicle_plate && (
-                      <span className="rounded-lg bg-blue-50 px-2 py-0.5 font-medium text-blue-700">{w.vehicle_plate}</span>
-                    )}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                    <Badge className={statusMeta.className} label={statusMeta.label} />
+                    <Badge className={typeMeta.className} label={typeMeta.label} />
                   </div>
 
-                  <div className="mb-3 text-sm text-muted-foreground">
-                    {typeContent.locationLabel}: {w.delivery_location || '—'}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginTop: 12, color: 'hsl(215,16%,47%)', fontSize: 13, lineHeight: 1.45 }}>
+                    <span>{formatWaybillDate(w.date)}</span>
+                    {w.vehicle_plate ? <span>•</span> : null}
+                    {w.vehicle_plate ? <span>{w.vehicle_plate}</span> : null}
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-1 text-xs text-slate-500">
-                    <span className="font-medium text-slate-700">{w.sender_name || '—'}</span>
-                    <span>→</span>
-                    <span className="font-medium text-slate-700">{w.receiver_name || '—'}</span>
-                  </div>
-                  {!w.project_id ? (
-                    <div className="mt-2 text-[11px] font-medium text-amber-700">Project link pending</div>
-                  ) : null}
-                </button>
+                  <div style={{ height: 1, background: 'hsl(214,32%,91%)', margin: '14px 0' }} />
+                  <div style={{ fontSize: 14, color: 'hsl(215,16%,47%)' }}>{w.delivery_location || '—'}</div>
+                  {!w.project_id ? <div style={{ marginTop: 8, color: 'hsl(35 76% 34%)', fontSize: 14 }}>Project link pending</div> : null}
+                </div>
               )
             })}
           </div>

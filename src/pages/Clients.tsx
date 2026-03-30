@@ -115,7 +115,7 @@ export default function Clients(): JSX.Element {
         <PageIntro
           eyebrow="Clients"
           title="Clients"
-          meta={loading ? "Loading clients..." : `${filtered.length} of ${clients.length} client${clients.length === 1 ? "" : "s"}`}
+          meta={loading ? "Loading clients..." : `${clients.length} clients total`}
           tone="violet"
           actions={
             <Button onClick={() => navigate("/clients/new")} className="h-11 rounded-[14px] bg-slate-950 px-4 text-sm font-semibold">
