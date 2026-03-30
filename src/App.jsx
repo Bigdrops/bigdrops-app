@@ -47,6 +47,27 @@ const SPLASH_TIPS = [
 ]
 const RESUME_REFRESH_THRESHOLD_MS = 1500
 const RECOVERY_COOLDOWN_MS = 1500
+const INVALID_SESSION_PATTERNS = [
+  /invalid refresh token/i,
+  /refresh token not found/i,
+  /refresh_token_not_found/i,
+  /invalid_grant/i,
+  /jwt expired/i,
+  /session.*not found/i,
+]
+
+function isInvalidSessionError(error) {
+  const message = [
+    error?.message,
+    error?.error_description,
+    error?.details,
+    error?.cause?.message,
+  ]
+    .filter(Boolean)
+    .join(' | ')
+
+  return INVALID_SESSION_PATTERNS.some((pattern) => pattern.test(message))
+}
 
 const PageLoader = () => (
   <div
@@ -290,6 +311,48 @@ function App() {
     profileRef.current = profile
   }, [profile])
 
+  const resetAuthState = () => {
+    cancelProfileTask()
+    lastUserIdRef.current = null
+    setSession(null)
+    setProfile(null)
+    setAuthLoading(false)
+    setProfileLoading(false)
+    loadingRef.current = false
+  }
+
+  const clearBadSession = async (reason, error) => {
+    console.warn(`Clearing bad auth state during ${reason}:`, error)
+    try {
+      await supabase.auth.signOut({ scope: 'local' })
+    } catch (signOutError) {
+      console.warn('Local sign-out cleanup failed:', signOutError)
+    } finally {
+      resetAuthState()
+    }
+  }
+
+  const resolveSessionSafely = async (reason) => {
+    try {
+      const {
+        data: { session: nextSession },
+        error,
+      } = await supabase.auth.getSession()
+
+      if (error) throw error
+      return nextSession
+    } catch (error) {
+      if (isInvalidSessionError(error)) {
+        await clearBadSession(reason, error)
+        return null
+      }
+
+      console.error(`Session restore failed during ${reason}:`, error)
+      resetAuthState()
+      return null
+    }
+  }
+
   const loadProfile = async (userId) => {
     if (!userId) return
     setProfileLoading(true)
@@ -310,6 +373,10 @@ function App() {
         setProfile(nextProfile)
       },
       onError: (err) => {
+        if (isInvalidSessionError(err)) {
+          void clearBadSession('profile load', err)
+          return
+        }
         console.error('Profile fetch error:', err)
       },
       onSettled: () => {
@@ -328,9 +395,7 @@ function App() {
     lastRecoveryAtRef.current = now
 
     try {
-      const {
-        data: { session: nextSession },
-      } = await supabase.auth.getSession()
+      const nextSession = await resolveSessionSafely(`lifecycle recovery (${reason})`)
 
       setSession(nextSession)
       lastUserIdRef.current = nextSession?.user?.id || null
@@ -385,18 +450,21 @@ function App() {
     const init = async () => {
       splashStartRef.current = Date.now()
       setAuthLoading(true)
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      setSession(session)
-      lastUserIdRef.current = session?.user?.id || null
-      if (session?.user?.id) {
-        loadingRef.current = true
-        await loadProfile(session.user.id)
-      } else {
-        setProfile(null)
+      try {
+        const restoredSession = await resolveSessionSafely('app bootstrap')
+        setSession(restoredSession)
+        lastUserIdRef.current = restoredSession?.user?.id || null
+
+        if (restoredSession?.user?.id) {
+          loadingRef.current = true
+          await loadProfile(restoredSession.user.id)
+        } else {
+          setProfile(null)
+        }
+      } finally {
+        setAuthLoading(false)
       }
-      setAuthLoading(false)
+
       const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
         const nextUserId = session?.user?.id || null
         const previousUserId = lastUserIdRef.current
@@ -434,6 +502,10 @@ function App() {
           setProfileLoading(false)
           return
         }
+        if (event === 'TOKEN_REFRESH_FAILED') {
+          await clearBadSession('token refresh failure', new Error('Supabase token refresh failed'))
+          return
+        }
         if (event === 'INITIAL_SESSION') {
           setSession(session)
           lastUserIdRef.current = nextUserId
@@ -451,7 +523,8 @@ function App() {
       })
       subscription = data.subscription
     }
-    init()
+
+    void init()
     return () => {
       cancelProfileTask()
       subscription?.unsubscribe()
