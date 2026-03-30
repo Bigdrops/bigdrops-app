@@ -826,6 +826,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         primaryLabel={isEdit ? 'Save Quotation' : 'Create Quotation'}
         onSaveSent={() => handleSave('sent')}
         onSaveDraft={() => handleSave('draft')}
+        onFloatingSave={() => handleSave('draft')}
         onCancel={() => navigate('/quotations')}
         onApplyImport={handleImportApply}
         importAdapter={quotationImportAdapter}

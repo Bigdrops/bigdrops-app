@@ -223,6 +223,7 @@ export default function MobileInvoiceForm(props) {
     onAddExtraCharge,
     onUpdateExtraCharge,
     onRemoveExtraCharge,
+    onFloatingSave,
     showColumnManager,
     setShowColumnManager,
     isMobile,
@@ -313,7 +314,6 @@ export default function MobileInvoiceForm(props) {
   }, [groupMap, items])
 
   const paymentTermValue = invoice.payment_terms || undefined
-  const showDocumentTypeField = typeof invoice.document_type !== 'undefined'
   const dueValidityLabel = isQuotation ? 'Validity' : 'Due / Validity'
   const referenceLinks = Array.isArray(attachments) ? attachments.map(asLinkAttachment) : []
   const workmanship = Number(invoice.workmanship || 0)
@@ -339,7 +339,7 @@ export default function MobileInvoiceForm(props) {
 
   return (
     <>
-      <div className="min-h-screen bg-[#f2f4f8] px-3 pb-[160px] pt-4 font-sans text-[#0f172a] sm:px-4 md:mx-auto md:max-w-3xl">
+      <div className="min-h-screen bg-[#f2f4f8] px-3 pb-8 pt-4 font-sans text-[#0f172a] sm:px-4 md:mx-auto md:max-w-3xl">
         <div className="space-y-5">
           <div>
             <SectionLabel color="#0f172a">{isQuotation ? 'Quotation Details' : 'Document Details'}</SectionLabel>
@@ -441,24 +441,6 @@ export default function MobileInvoiceForm(props) {
                   </div>
                 </div>
 
-                {showDocumentTypeField ? (
-                  <div>
-                    <label className={labelCls}>Document Type</label>
-                    <Select
-                      value={invoice.document_type || 'INVOICE'}
-                      onValueChange={(value) => updateInvoice('document_type', value)}
-                    >
-                      <SelectTrigger className={`${fieldCls} justify-between`}>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="INVOICE">Invoice</SelectItem>
-                        <SelectItem value="QUOTATION">Quotation</SelectItem>
-                        <SelectItem value="PROFORMA">Proforma</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : null}
               </div>
             </div>
           </div>
@@ -561,7 +543,6 @@ export default function MobileInvoiceForm(props) {
                     onUpdateItem={onUpdateItem}
                     onRemoveItem={onRemoveItem}
                     onMoveItem={onMoveItem}
-                    onInsertItemAfter={onInsertItemAfter}
                     isVisible={isVisible}
                     getColumn={getColumn}
                     getComputedAmount={getComputedAmount}
@@ -582,7 +563,6 @@ export default function MobileInvoiceForm(props) {
                     onRemove={onRemoveItem}
                     onMoveUp={(itemIndex) => onMoveItem(itemIndex, -1)}
                     onMoveDown={(itemIndex) => onMoveItem(itemIndex, 1)}
-                    onInsertBelow={onInsertItemAfter}
                     isVisible={isVisible}
                     getColumn={getColumn}
                   />
@@ -985,7 +965,7 @@ export default function MobileInvoiceForm(props) {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[linear-gradient(180deg,rgba(242,244,248,0)_0%,rgba(242,244,248,1)_30%)] px-3 pb-5 pt-3 sm:px-4">
+      <div className="px-3 pb-5 pt-3 sm:px-4">
         <div className="mx-auto max-w-3xl">
           <div className={`${pageCardCls} p-2`}>
             <div className="grid grid-cols-[1fr_1fr_1.35fr] gap-2">
@@ -1020,8 +1000,9 @@ export default function MobileInvoiceForm(props) {
 
       <button
         type="button"
-        onClick={() => setShowActionsSheet(true)}
-        className="fixed bottom-[92px] right-4 z-[60] flex h-[52px] w-[52px] items-center justify-center rounded-[16px] bg-[#0f172a] text-white shadow-[0_8px_24px_rgba(15,23,42,0.28)]"
+        onClick={onFloatingSave}
+        disabled={saving}
+        className="fixed bottom-[92px] right-4 z-[60] flex h-[52px] w-[52px] items-center justify-center rounded-[16px] bg-[#0f172a] text-white shadow-[0_8px_24px_rgba(15,23,42,0.28)] disabled:opacity-60"
       >
         <Save className="h-5 w-5" />
       </button>

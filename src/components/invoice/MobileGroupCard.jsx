@@ -19,7 +19,6 @@ export default function MobileGroupCard({
   onUpdateItem,
   onRemoveItem,
   onMoveItem,
-  onInsertItemAfter,
   isVisible,
   getColumn,
   getComputedAmount,
@@ -93,7 +92,6 @@ export default function MobileGroupCard({
                 onRemove={onRemoveItem}
                 onMoveUp={(itemIndex) => onMoveItem(itemIndex, -1)}
                 onMoveDown={(itemIndex) => onMoveItem(itemIndex, 1)}
-                onInsertBelow={onInsertItemAfter}
                 isVisible={isVisible}
                 getColumn={getColumn}
               />
