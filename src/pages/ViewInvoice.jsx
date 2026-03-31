@@ -11,9 +11,10 @@ import {
   DocumentDesignStyleEditor,
   DocumentDetailRows,
   DocumentFloatingFab,
-  DocumentHeroCard,
+  DocumentLivePreviewCard,
   DocumentPdfSheet,
   DocumentSection,
+  DocumentSummaryDisclosure,
   DocumentStatusStrip,
   DocumentSummaryList,
   DocumentTemplatePicker,
@@ -620,7 +621,7 @@ export default function ViewInvoice() {
           onMore={() => setShowMore(true)}
         />
 
-        <DocumentHeroCard
+        <DocumentSummaryDisclosure
           eyebrow="Total Payable"
           value={formatMoney(invoiceTotal)}
           helper={invoice.amount_in_words || invoice.invoice_title || 'Invoice ready for payment tracking.'}
@@ -629,6 +630,9 @@ export default function ViewInvoice() {
             { label: 'Received', value: formatMoney(cashReceived), className: 'text-emerald-300' },
             { label: 'Due Date', value: invoice.due_date || 'Open', className: 'text-white' },
           ]}
+          compactLabel="Invoice Summary"
+          openLabel="Open summary"
+          closeLabel="Collapse summary"
         />
 
         <DocumentActionGrid
@@ -642,11 +646,39 @@ export default function ViewInvoice() {
 
         <DocumentStatusStrip items={shellStatusItems} />
 
-        <DocumentSection title="Document Details">
+        <DocumentLivePreviewCard
+          templateLabel={activePdfTemplate.label}
+          documentLabel="Invoice"
+          documentNumber={invoice.invoice_number || 'Invoice'}
+          companyName={settings.company_name || ''}
+          companyTagline={settings.company_tagline || ''}
+          recipientLabel="Bill To"
+          recipientName={invoice.client_name || 'Unassigned'}
+          meta={[
+            { label: 'Issue Date', value: invoice.issue_date || 'Not set' },
+            { label: 'Due Date', value: invoice.due_date || 'Open' },
+            { label: 'Balance Due', value: formatMoney(balanceDue) },
+          ]}
+          items={items
+            .filter((item) => item.row_type !== 'group_header')
+            .slice(0, 3)
+            .map((item) => ({
+              label: item.description || 'Untitled item',
+              detail: [item.sub_description, `Qty ${item.quantity || 0}${item.unit ? ` ${item.unit}` : ''}`].filter(Boolean).join(' · '),
+              value: formatMoney(item.amount || item.quantity * item.unit_price || 0),
+            }))}
+          summaryRows={[
+            { label: 'Subtotal', value: formatMoney(invoice.subtotal || 0) },
+            { label: 'Grand Total', value: formatMoney(invoiceTotal), valueClassName: 'text-emerald-600' },
+          ]}
+          previewSubtitle="A quick mobile preview of the current invoice with your active PDF preset."
+        />
+
+        <DocumentSection title="Document Details" summary="Client, dates, payment terms, and document references.">
           <DocumentDetailRows rows={shellDetailRows} />
         </DocumentSection>
 
-        <DocumentSection title="Design">
+        <DocumentSection title="Customize Design" summary="Template, font, color, and output controls for this invoice PDF preset.">
           <DocumentDesignPanel
             title="Customize Invoice Design"
             subtitle="This invoice PDF preset is saved on this device and will be reused for every future invoice until you change it again."
@@ -697,7 +729,7 @@ export default function ViewInvoice() {
           />
         </DocumentSection>
 
-        <DocumentSection title="Line Items">
+        <DocumentSection title="Line Items" summary={`${items.filter((item) => item.row_type !== 'group_header').length} billable rows in this invoice.`}>
           <Card className="rounded-[24px] border-border shadow-sm">
             <CardContent className="space-y-3 p-4">
               {(() => {
@@ -735,7 +767,7 @@ export default function ViewInvoice() {
           </Card>
         </DocumentSection>
 
-        <DocumentSection title="Summary">
+        <DocumentSection title="Summary" summary="Totals, discounts, cash received, and balance due.">
           <DocumentSummaryList
             rows={[
               { label: 'Subtotal', value: formatMoney(invoice.subtotal || 0) },
@@ -751,7 +783,7 @@ export default function ViewInvoice() {
           />
         </DocumentSection>
 
-        <DocumentSection title="Payment History">
+        <DocumentSection title="Payment History" summary={paymentHistory.length > 0 ? `${paymentHistory.length} recorded payment entries.` : 'No payments recorded yet.'}>
           <Card className="rounded-[24px] border-border shadow-sm">
             <CardContent className="space-y-3 p-4">
               {paymentHistory.length === 0 ? (

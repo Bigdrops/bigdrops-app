@@ -11,9 +11,10 @@ import {
   DocumentDesignStyleEditor,
   DocumentDetailRows,
   DocumentFloatingFab,
-  DocumentHeroCard,
+  DocumentLivePreviewCard,
   DocumentPdfSheet,
   DocumentSection,
+  DocumentSummaryDisclosure,
   DocumentStatusStrip,
   DocumentSummaryList,
   DocumentTemplatePicker,
@@ -551,7 +552,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         onMore={() => setShowMobileActions(true)}
       />
 
-      <DocumentHeroCard
+      <DocumentSummaryDisclosure
         eyebrow="Total Quote"
         value={formatMoney(shellQuotationTotal)}
         helper={quotation.quotation_title || 'Quotation prepared for client review.'}
@@ -560,6 +561,9 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
           { label: 'Issue Date', value: quotation.issue_date || 'Not set' },
           { label: 'Client', value: quotation.client_name || 'Unassigned' },
         ]}
+        compactLabel="Quotation Summary"
+        openLabel="Open summary"
+        closeLabel="Collapse summary"
       />
 
       <DocumentActionGrid
@@ -579,11 +583,39 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         }))}
       />
 
-      <DocumentSection title="Document Details">
+      <DocumentLivePreviewCard
+        templateLabel={activePdfTemplate.label}
+        documentLabel="Quotation"
+        documentNumber={quotation.quotation_number || 'Quotation'}
+        companyName={companyIdentity.companyName || ''}
+        companyTagline={companyIdentity.companyTagline || ''}
+        recipientLabel="Prepared For"
+        recipientName={quotation.client_name || 'Unassigned'}
+        meta={[
+          { label: 'Issue Date', value: quotation.issue_date || 'Not set' },
+          { label: 'Valid Until', value: quotation.valid_until || 'Open' },
+          { label: 'Status', value: formatQuotationStatus(quotation.status) },
+        ]}
+        items={items
+          .filter((item) => item.row_type !== 'group_header')
+          .slice(0, 3)
+          .map((item) => ({
+            label: item.description || 'Untitled item',
+            detail: [item.sub_description, `Qty ${item.quantity || 0}${item.unit ? ` ${item.unit}` : ''}`].filter(Boolean).join(' · '),
+            value: formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0)),
+          }))}
+        summaryRows={[
+          { label: 'Subtotal', value: formatMoney(totals?.rawSubtotal || 0) },
+          { label: 'Grand Total', value: formatMoney(shellQuotationTotal), valueClassName: 'text-emerald-600' },
+        ]}
+        previewSubtitle="A quick mobile preview of the current quotation with your active PDF preset."
+      />
+
+      <DocumentSection title="Document Details" summary="Client, dates, and reference details for this quotation.">
         <DocumentDetailRows rows={shellDetailRows} />
       </DocumentSection>
 
-      <DocumentSection title="Design">
+      <DocumentSection title="Customize Design" summary="Template, font, color, and output controls for this quotation PDF preset.">
         <DocumentDesignPanel
           title="Customize Quotation Design"
           subtitle="This quotation PDF preset is saved on this device and will be reused for every future quotation until you change it again."
@@ -634,7 +666,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         />
       </DocumentSection>
 
-      <DocumentSection title="Line Items">
+      <DocumentSection title="Line Items" summary={`${items.filter((item) => item.row_type !== 'group_header').length} quoted rows in this document.`}>
         <Card className="rounded-[24px] border-border shadow-sm">
           <CardContent className="space-y-3 p-4">
             {(() => {
@@ -672,7 +704,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         </Card>
       </DocumentSection>
 
-      <DocumentSection title="Summary">
+      <DocumentSection title="Summary" summary="Totals, VAT, discounts, and the current quoted amount.">
         <DocumentSummaryList
           rows={[
             { label: 'Subtotal', value: formatMoney(totals?.rawSubtotal || 0) },

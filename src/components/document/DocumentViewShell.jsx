@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   ChevronDown,
+  ChevronUp,
   ChevronRight,
   CircleDollarSign,
   Copy,
@@ -351,6 +352,54 @@ export function DocumentHeroCard({ eyebrow, value, helper, stats = [] }) {
   )
 }
 
+export function DocumentSummaryDisclosure({
+  eyebrow,
+  value,
+  helper,
+  stats = [],
+  defaultOpen = false,
+  compactLabel = 'Quick Summary',
+  openLabel = 'Show full summary',
+  closeLabel = 'Hide full summary',
+}) {
+  const [open, setOpen] = React.useState(defaultOpen)
+  const compactStats = stats.slice(0, 2)
+
+  return (
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="w-full rounded-[24px] border border-border bg-card p-4 text-left shadow-sm transition hover:bg-muted/30"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">{compactLabel}</div>
+            <div className="mt-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{eyebrow}</div>
+            <div className="mt-1 text-[1.6rem] font-black leading-none tracking-[-0.04em] text-foreground">{value}</div>
+            {helper ? <div className="mt-2 text-sm leading-6 text-muted-foreground">{helper}</div> : null}
+            {compactStats.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {compactStats.map((stat) => (
+                  <div key={stat.label} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
+                    <span className="font-extrabold text-slate-900">{stat.value}</span> · {stat.label}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-600">
+            <span>{open ? closeLabel : openLabel}</span>
+            {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </div>
+        </div>
+      </button>
+
+      {open ? <DocumentHeroCard eyebrow={eyebrow} value={value} helper={helper} stats={stats} /> : null}
+    </div>
+  )
+}
+
 export function DocumentActionGrid({ actions }) {
   const iconByKey = {
     pdf: FileText,
@@ -413,12 +462,125 @@ export function DocumentStatusStrip({ items }) {
   )
 }
 
-export function DocumentSection({ title, children, className = '' }) {
+export function DocumentSection({ title, children, className = '', defaultOpen = false, summary }) {
+  const [open, setOpen] = React.useState(defaultOpen)
+
   return (
     <section className={cn('space-y-2', className)}>
-      <div className="px-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">{title}</div>
-      {children}
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-3 rounded-[20px] border border-border bg-card px-4 py-3 text-left shadow-sm transition hover:bg-muted/30"
+      >
+        <div className="min-w-0">
+          <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">{title}</div>
+          {summary ? <div className="mt-1 text-sm text-muted-foreground">{summary}</div> : null}
+        </div>
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-slate-500">
+          {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </div>
+      </button>
+      {open ? children : null}
     </section>
+  )
+}
+
+export function DocumentLivePreviewCard({
+  templateLabel,
+  documentLabel,
+  documentNumber,
+  companyName,
+  companyTagline,
+  recipientLabel = 'Client',
+  recipientName,
+  meta = [],
+  items = [],
+  summaryRows = [],
+  previewTitle = 'Live Preview',
+  previewSubtitle = 'Current on-page snapshot of the document you are reviewing.',
+}) {
+  const visibleItems = items.slice(0, 3)
+
+  return (
+    <Card className="overflow-hidden rounded-[26px] border-border bg-[linear-gradient(180deg,#f8fafc,rgba(255,255,255,0.98))] shadow-sm">
+      <CardContent className="space-y-4 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">{previewTitle}</div>
+            <div className="mt-1 text-sm text-muted-foreground">{previewSubtitle}</div>
+          </div>
+          <div className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600">
+            {templateLabel}
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
+          <div className="border-b border-slate-200 bg-slate-950 px-4 py-4 text-white">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-base font-black tracking-[-0.03em]">{companyName || documentLabel}</div>
+                {companyTagline ? <div className="mt-1 text-xs text-slate-300">{companyTagline}</div> : null}
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-400">{documentLabel}</div>
+                <div className="mt-1 text-sm font-extrabold">{documentNumber}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4 p-4">
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+              <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">{recipientLabel}</div>
+                <div className="mt-1 text-sm font-bold text-foreground">{recipientName || 'Unassigned'}</div>
+              </div>
+              <div className="rounded-[18px] border border-slate-200 bg-white px-4 py-3">
+                <div className="space-y-2">
+                  {meta.map((entry) => (
+                    <div key={entry.label} className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-slate-500">{entry.label}</span>
+                      <span className="text-right font-semibold text-foreground">{entry.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[18px] border border-slate-200 bg-white">
+              <div className="border-b border-slate-100 px-4 py-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">Line Items Snapshot</div>
+              <div className="space-y-0 px-4 py-1">
+                {visibleItems.length > 0 ? (
+                  visibleItems.map((item, index) => (
+                    <div key={`${item.label}-${index}`} className="flex items-start justify-between gap-3 border-b border-slate-100 py-3 last:border-b-0">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-bold text-foreground">{item.label}</div>
+                        {item.detail ? <div className="mt-1 text-xs text-muted-foreground">{item.detail}</div> : null}
+                      </div>
+                      <div className="shrink-0 text-sm font-extrabold text-foreground">{item.value}</div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-4 text-sm text-muted-foreground">No line items available yet.</div>
+                )}
+              </div>
+            </div>
+
+            {summaryRows.length > 0 ? (
+              <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className="space-y-2">
+                  {summaryRows.map((row) => (
+                    <div key={row.label} className="flex items-center justify-between gap-3 text-sm">
+                      <span className={cn('text-slate-500', row.labelClassName)}>{row.label}</span>
+                      <span className={cn('font-semibold text-foreground', row.valueClassName)}>{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
