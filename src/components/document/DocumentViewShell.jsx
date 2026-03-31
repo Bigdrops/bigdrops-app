@@ -630,8 +630,23 @@ export function DocumentLivePreviewCard({
                       row.emphasis ? 'bg-slate-950 text-white' : 'bg-slate-50 text-foreground',
                     )}
                   >
-                    <span className={cn('font-medium', row.emphasis ? 'text-slate-300' : 'text-slate-500', row.labelClassName)}>{row.label}</span>
-                    <span className={cn('text-right font-bold', row.emphasis ? 'text-white' : 'text-foreground', row.valueClassName)}>{row.value}</span>
+                    <span
+                      className={cn(
+                        row.emphasis ? 'font-bold text-white' : 'font-medium text-slate-500',
+                        row.labelClassName,
+                      )}
+                    >
+                      {row.label}
+                    </span>
+                    <span
+                      className={cn(
+                        'text-right',
+                        row.emphasis ? 'font-extrabold text-white' : 'font-bold text-foreground',
+                        row.valueClassName,
+                      )}
+                    >
+                      {row.value}
+                    </span>
                   </div>
                 ))}
               </div>

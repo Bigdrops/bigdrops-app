@@ -5,7 +5,6 @@ import {
   FolderKanban,
   Users,
   MoreHorizontal,
-  Menu,
   X,
   ChevronRight,
   Receipt,
@@ -30,6 +29,7 @@ import { useSettings } from '../hooks/useSettings'
 import { supabase } from '../supabase'
 
 const APP_NAME = 'BIGDROPS'
+export const MobileChromeContext = React.createContext({ openSidebar: () => {} })
 
 const tabs = [
   { key: 'home', label: 'Home', icon: Home },
@@ -195,6 +195,9 @@ export default function Layout({ title, children, session, hidePageHeader = fals
 
   const desktopContentClassName = contentClassName || 'mx-auto w-full max-w-5xl px-6 py-6'
   const mobileContentClassName = contentClassName || 'w-full overflow-x-hidden px-0 pb-24 pt-0'
+  const mobileChromeValue = React.useMemo(() => ({
+    openSidebar: () => setSidebarOpen(true),
+  }), [])
 
   return (
     <div className="min-h-dvh bg-muted/50 text-foreground">
@@ -288,15 +291,6 @@ export default function Layout({ title, children, session, hidePageHeader = fals
       </div>
 
       <div className="md:hidden">
-        <button
-          type="button"
-          onClick={() => setSidebarOpen(true)}
-          className="fixed left-3 top-3 z-50 grid h-[42px] w-[42px] place-items-center rounded-[14px] border border-border bg-card/95 shadow-[0_8px_22px_-14px_rgba(15,23,42,0.35)] backdrop-blur-sm"
-          aria-label="Open navigation menu"
-        >
-          <Menu className="h-5 w-5 text-slate-700" />
-        </button>
-
         {!isHome && !hidePageHeader ? (
           <div className="w-full px-4 pt-4">
             <div className="rounded-2xl border-l-4 border-l-blue-500 border border-border bg-card px-5 py-4 shadow-sm">
@@ -305,7 +299,9 @@ export default function Layout({ title, children, session, hidePageHeader = fals
           </div>
         ) : null}
 
-        <main className={cn('overflow-x-hidden', mobileContentClassName)}>{children}</main>
+        <MobileChromeContext.Provider value={mobileChromeValue}>
+          <main className={cn('overflow-x-hidden', mobileContentClassName)}>{children}</main>
+        </MobileChromeContext.Provider>
 
         <MobileBottomNav active={activeTab} onSelect={onTabClick} />
 

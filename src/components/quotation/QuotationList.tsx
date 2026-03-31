@@ -25,7 +25,6 @@ import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
 import ListActionSheet from '@/components/layout/ListActionSheet'
 import MobileFab from '@/components/layout/MobileFab'
 import MobileListPageShell from '@/components/layout/MobileListPageShell'
-import EntityListCard from '@/components/list/EntityListCard'
 
 function formatMoney(value: number | string | null | undefined) {
   const parsed = Number(value || 0)
@@ -172,6 +171,7 @@ export default function QuotationList() {
         title="Quotations"
         summary={`${quotations.length} quotations total`}
         tone="blue"
+        onPrimaryAction={() => navigate('/quotations/new')}
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Search quotations..."
@@ -220,23 +220,61 @@ export default function QuotationList() {
         <div className="grid gap-3">
           {filteredQuotations.map((row) => {
             const quotation = mapDbQuotation(row)
+            const issueDateLabel = quotation.issue_date || 'Not set'
+            const statusTone = quotationStatusTone(quotation.status)
+            const statusClasses = {
+              draft: 'bg-amber-50 text-amber-800',
+              sent: 'bg-sky-100 text-sky-700',
+              accepted: 'bg-emerald-100 text-emerald-700',
+              rejected: 'bg-rose-100 text-rose-700',
+              paid: 'bg-emerald-100 text-emerald-700',
+            }[statusTone] || 'bg-slate-100 text-slate-600'
 
             return (
-              <EntityListCard
+              <div
                 key={quotation.id}
-                leading={<div className="grid h-12 w-12 place-items-center rounded-2xl border border-blue-100 bg-blue-50 text-lg font-extrabold text-blue-600">Q</div>}
-                kicker="Quotation"
-                title={quotation.quotation_number}
-                subtitle={quotation.client_name || 'No client selected'}
-                metadata={[
-                  `Issue date: ${quotation.issue_date || 'Not set'}`,
-                  ...(String(quotation.po_number || '').trim() ? [`P.O: ${String(quotation.po_number || '').trim()}`] : []),
-                ]}
-                status={{ label: formatQuotationStatus(quotation.status), tone: quotationStatusTone(quotation.status) }}
-                amount={formatMoney(quotation.total || 0)}
                 onClick={() => navigate(`/quotations/${quotation.id}`)}
-                onAction={() => setActiveQuotation(quotation)}
-              />
+                className="cursor-pointer rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+              >
+                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl border border-blue-100 bg-blue-50 text-lg font-extrabold text-blue-600">Q</div>
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Quotation</div>
+                    <div className="mt-1 text-lg font-bold tracking-[-0.03em] text-slate-950">{quotation.quotation_number}</div>
+                    <div className="mt-1 text-sm text-slate-500">{quotation.client_name || 'No client selected'}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setActiveQuotation(quotation)
+                    }}
+                    className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                    aria-label={`Open actions for ${quotation.quotation_number}`}
+                  >
+                    ⋯
+                  </button>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-slate-500">
+                  <span>Issue date: {issueDateLabel}</span>
+                  {String(quotation.po_number || '').trim() ? (
+                    <>
+                      <span>•</span>
+                      <span>P.O: {String(quotation.po_number || '').trim()}</span>
+                    </>
+                  ) : null}
+                </div>
+
+                <div className="my-[14px] h-px bg-slate-200" />
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusClasses}`}>
+                    {formatQuotationStatus(quotation.status)}
+                  </span>
+                  <div className="text-base font-extrabold tracking-[-0.03em] text-slate-950">{formatMoney(quotation.total || 0)}</div>
+                </div>
+              </div>
             )
           })}
         </div>

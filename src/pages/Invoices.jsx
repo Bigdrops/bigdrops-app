@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Plus, Eye, Pencil, Copy, DollarSign, Send, Archive, Trash2, FileOutput, Truck, Wrench } from "lucide-react"
+import { Eye, Pencil, Copy, DollarSign, Send, Archive, Trash2, FileOutput, Truck, Wrench } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
 import Layout from "../components/Layout"
 import MobileFab from "../components/layout/MobileFab"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
-import DenseListCard from "../components/list/DenseListCard"
 import ListActionSheet from "../components/layout/ListActionSheet"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"
 
@@ -237,20 +236,6 @@ export default function Invoices() {
   }
 
   const filterSelectClass = "h-10 rounded-xl border border-border bg-background px-3 text-xs font-bold text-zinc-700 outline-none"
-  const denseRows = invoices.map((inv) => ({
-    key: inv.id,
-    title: inv.client_name || "No client",
-    meta: `${inv.invoice_number}${formatInvoiceDate(inv.issue_date) ? ` • ${formatInvoiceDate(inv.issue_date)}` : ""}`,
-    amount: `₦${Number(inv.total || 0).toLocaleString()}`,
-    statusLabel: formatStatusLabel(inv.status),
-    statusTone: inv.status === "paid" ? "paid" : inv.status === "sent" ? "sent" : inv.status === "overdue" ? "overdue" : inv.status === "partial" ? "partial" : "draft",
-    roleBadge: inv.thread_role ? {
-      label: inv.thread_role,
-      className: `inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase ${roleColor(inv.thread_role)}`,
-    } : null,
-    onClick: () => navigate(`/invoices/${inv.id}`),
-    onAction: () => setActiveInvoice(inv),
-  }))
 
   return (
     <Layout title="Invoices" hidePageHeader>
@@ -259,6 +244,7 @@ export default function Invoices() {
           title="Invoices"
           summary={`${totalCount} invoices total`}
           tone="blue"
+          onPrimaryAction={() => navigate("/invoices/new")}
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Search invoices..."
@@ -317,7 +303,55 @@ export default function Invoices() {
             No invoices match the current filters
           </div>
         ) : (
-          <DenseListCard rows={denseRows} />
+          <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+            {invoices.map((inv, index) => {
+              const statusStyle = getInvoiceStatusStyle(inv.status)
+              const statusLabel = formatStatusLabel(inv.status)
+              const amount = `₦${Number(inv.total || 0).toLocaleString()}`
+              const meta = `${inv.invoice_number}${formatInvoiceDate(inv.issue_date) ? ` • ${formatInvoiceDate(inv.issue_date)}` : ""}`
+
+              return (
+                <div
+                  key={inv.id}
+                  onClick={() => navigate(`/invoices/${inv.id}`)}
+                  className="grid cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-4"
+                  style={{ borderTop: index === 0 ? "none" : "1px solid hsl(214,32%,91%)" }}
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-base font-bold leading-[1.18] tracking-[-0.03em] text-slate-950">
+                      {inv.client_name || "No client"}
+                    </div>
+                    <div className="mt-1 text-[13px] leading-[1.45] text-slate-500">{meta}</div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="text-base font-extrabold tracking-[-0.03em] text-slate-950">{amount}</div>
+                    <span
+                      className="inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold"
+                      style={statusStyle}
+                    >
+                      {statusLabel}
+                    </span>
+                    {inv.thread_role ? (
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase ${roleColor(inv.thread_role)}`}>
+                        {inv.thread_role}
+                      </span>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setActiveInvoice(inv)
+                    }}
+                    className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                    aria-label={`Open actions for ${inv.invoice_number}`}
+                  >
+                    ⋯
+                  </button>
+                </div>
+              )
+            })}
+          </div>
         )}
 
         {hasMore ? (

@@ -2,14 +2,12 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import ConfirmActionDialog from '../components/ConfirmActionDialog'
-import { toast } from '../hooks/use-toast'
 import Layout from '../components/Layout'
 import { Archive, Eye, FolderKanban, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import ListActionSheet from '../components/layout/ListActionSheet'
 import MobileFab from '../components/layout/MobileFab'
 import MobileListPageShell from '../components/layout/MobileListPageShell'
-import ProjectListCard from '../components/list/ProjectListCard'
 
 const STATUS_CONFIG = {
   active:    { label: 'Active',    bg: '#DCFCE7', color: '#16A34A', dot: '#22C55E' },
@@ -142,6 +140,7 @@ export default function Projects() {
           title="Projects"
           summary={`${projects.length} projects total`}
           tone="emerald"
+          onPrimaryAction={() => navigate('/projects/new')}
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Search projects..."
@@ -217,17 +216,46 @@ export default function Projects() {
                 : null
 
               return (
-                <ProjectListCard
+                <div
                   key={project.id}
-                  title={project.name}
-                  subtitle={project.client_name || 'No client'}
-                  metadata={[`${count} doc${count !== 1 ? 's' : ''}`, ...(startedText ? [startedText] : [])]}
-                  footerLabel="Open project"
-                  footerValue={formattedValue}
-                  statusLabel={(STATUS_CONFIG[project.status] || STATUS_CONFIG.active).label}
                   onClick={() => navigate(`/projects/${project.id}`)}
-                  onAction={() => setActiveProject(project)}
-                />
+                  className="relative cursor-pointer rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                >
+                  <div className="absolute inset-y-0 left-0 w-1 rounded-l-[22px] bg-emerald-500" />
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="inline-flex h-7 items-center rounded-full bg-emerald-100 px-2.5 text-xs font-semibold text-emerald-700">
+                      {(STATUS_CONFIG[project.status] || STATUS_CONFIG.active).label}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setActiveProject(project)
+                      }}
+                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                      aria-label={`Open actions for ${project.name}`}
+                    >
+                      ⋯
+                    </button>
+                  </div>
+                  <div className="mt-3 text-lg font-bold leading-[1.18] tracking-[-0.03em] text-slate-950">{project.name}</div>
+                  <div className="mt-1 text-sm text-slate-500">{project.client_name || 'No client'}</div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-slate-500">
+                    <span>{count} doc{count !== 1 ? 's' : ''}</span>
+                    {startedText ? (
+                      <>
+                        <span>•</span>
+                        <span>{startedText}</span>
+                      </>
+                    ) : null}
+                  </div>
+                  <div className="mt-[14px] flex items-center justify-between gap-3 border-t border-slate-200 pt-[14px]">
+                    <span className="inline-flex h-7 items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 text-xs font-semibold text-slate-500">
+                      Open project
+                    </span>
+                    <div className="text-base font-extrabold tracking-[-0.03em] text-slate-950">{formattedValue}</div>
+                  </div>
+                </div>
               )
             })}
           </div>

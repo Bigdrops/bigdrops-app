@@ -10,7 +10,6 @@ import ListActionSheet from "../components/layout/ListActionSheet"
 import MobileFab from "../components/layout/MobileFab"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
-import EntityListCard from "../components/list/EntityListCard"
 
 function normalizeStatus(status) {
   return (status || "").trim().toLowerCase()
@@ -149,6 +148,7 @@ export default function CSR() {
           title="Customer Service Reports"
           summary={`${csrs.length} reports total`}
           tone="amber"
+          onPrimaryAction={() => navigate("/csr/new")}
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Search reports..."
@@ -221,21 +221,56 @@ export default function CSR() {
           </div>
         ) : (
           <div className="grid gap-3">
-            {filteredCsrs.map((csr) => (
-              <EntityListCard
+            {filteredCsrs.map((csr) => {
+              const statusKey = getCsrStatusKey(csr.status)
+              const statusClasses = statusKey === "completed"
+                ? "bg-emerald-100 text-emerald-700"
+                : statusKey === "cancelled"
+                  ? "bg-rose-100 text-rose-700"
+                  : statusKey === "pending"
+                    ? "bg-amber-100 text-amber-700"
+                    : "bg-slate-100 text-slate-600"
+              const secondaryLabel = csr.make || csr.equipment_type
+
+              return (
+              <div
                 key={csr.id}
-                leading={<div className="grid h-12 w-12 place-items-center rounded-2xl border border-amber-100 bg-amber-50 text-lg font-extrabold text-amber-700">S</div>}
-                kicker="CSR"
-                title={csr.csr_number || "-"}
-                subtitle={[csr.client_name || "No client name", formatCardDate(csr.date)].filter(Boolean).join(" • ")}
-                chips={[
-                  { label: formatStatusLabel(csr.status), tone: getCsrStatusKey(csr.status) === "completed" ? "completed" : "tag" },
-                  ...[csr.make || csr.equipment_type].filter(Boolean).map((item) => ({ label: item, tone: "tag" })),
-                ]}
                 onClick={() => navigate("/csr/" + csr.id)}
-                onAction={() => setActiveCsr(csr)}
-              />
-            ))}
+                className="cursor-pointer rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+              >
+                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl border border-amber-100 bg-amber-50 text-lg font-extrabold text-amber-700">S</div>
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">CSR</div>
+                    <div className="mt-1 text-lg font-bold tracking-[-0.03em] text-slate-950">{csr.csr_number || "-"}</div>
+                    <div className="mt-1 text-sm text-slate-500">
+                      {[csr.client_name || "No client name", formatCardDate(csr.date)].filter(Boolean).join(" • ")}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setActiveCsr(csr)
+                    }}
+                    className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                    aria-label={`Open actions for ${csr.csr_number || "CSR"}`}
+                  >
+                    ⋯
+                  </button>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusClasses}`}>
+                    {formatStatusLabel(csr.status)}
+                  </span>
+                  {secondaryLabel ? (
+                    <span className="inline-flex h-7 items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 text-xs font-semibold text-slate-500">
+                      {secondaryLabel}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            )})}
           </div>
         )}
 

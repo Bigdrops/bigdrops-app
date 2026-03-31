@@ -10,7 +10,6 @@ import MobileFab from '../components/layout/MobileFab'
 import MobileSegmentedControl from '../components/layout/MobileSegmentedControl'
 import ListActionSheet from '../components/layout/ListActionSheet'
 import MobileListPageShell from '../components/layout/MobileListPageShell'
-import EntityListCard from '../components/list/EntityListCard'
 
 type FilterTab = 'all' | 'internal' | 'external'
 
@@ -74,6 +73,7 @@ export default function Waybills() {
           title="Waybills"
           summary={`${waybills.length} waybill${waybills.length === 1 ? '' : 's'}`}
           tone="cyan"
+          onPrimaryAction={() => navigate('/waybills/new')}
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Search waybills..."
@@ -110,29 +110,55 @@ export default function Waybills() {
               const statusMeta = getStatusMeta(w.status)
               const typeMeta = getTypeMeta(w.type)
               return (
-                <EntityListCard
+                <div
                   key={w.id}
-                  leading={<div className="grid h-12 w-12 place-items-center rounded-2xl border border-cyan-100 bg-cyan-50 text-lg font-extrabold text-cyan-500">W</div>}
-                  kicker="Waybill"
-                  title={w.waybill_number || '—'}
-                  subtitle={w.client_name || 'No client / internal movement'}
-                  chips={[
-                    { label: statusMeta.label, tone: statusMeta.label.toLowerCase() === 'delivered' ? 'delivered' : 'dispatched' },
-                    { label: typeMeta.label, tone: w.type === 'internal' ? 'scope' : 'tag' },
-                  ]}
-                  metadata={[
-                    formatWaybillDate(w.date),
-                    ...(w.vehicle_plate ? [w.vehicle_plate] : []),
-                  ]}
-                  footer={
-                    <div className="space-y-2 border-t border-slate-200 pt-3">
-                      <div className="text-sm text-slate-600">{w.delivery_location || '—'}</div>
-                      {!w.project_id ? <div className="text-sm font-medium text-amber-700">Project link pending</div> : null}
-                    </div>
-                  }
                   onClick={() => navigate(`/waybills/${w.id}`)}
-                  onAction={() => setActiveWaybill(w)}
-                />
+                  className="cursor-pointer rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                >
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
+                    <div className="grid h-12 w-12 place-items-center rounded-2xl border border-cyan-100 bg-cyan-50 text-lg font-extrabold text-cyan-500">W</div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Waybill</div>
+                      <div className="mt-1 text-lg font-bold tracking-[-0.03em] text-slate-950">{w.waybill_number || '—'}</div>
+                      <div className="mt-1 text-sm text-slate-500">{w.client_name || 'No client / internal movement'}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setActiveWaybill(w)
+                      }}
+                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                      aria-label={`Open actions for ${w.waybill_number || 'waybill'}`}
+                    >
+                      ⋯
+                    </button>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusMeta.label.toLowerCase() === 'delivered' ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-700'}`}>
+                      {statusMeta.label}
+                    </span>
+                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${w.type === 'internal' ? 'bg-cyan-100 text-cyan-700' : 'border border-slate-200 bg-slate-100 text-slate-500'}`}>
+                      {typeMeta.label}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-slate-500">
+                    <span>{formatWaybillDate(w.date)}</span>
+                    {w.vehicle_plate ? (
+                      <>
+                        <span>•</span>
+                        <span>{w.vehicle_plate}</span>
+                      </>
+                    ) : null}
+                  </div>
+
+                  <div className="my-[14px] h-px bg-slate-200" />
+
+                  <div className="text-sm text-slate-600">Route: {w.delivery_location || '—'}</div>
+                  {!w.project_id ? <div className="mt-2 text-sm font-medium text-amber-700">Project link pending</div> : null}
+                </div>
               )
             })}
           </div>

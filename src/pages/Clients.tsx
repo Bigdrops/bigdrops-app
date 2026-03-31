@@ -9,7 +9,6 @@ import { Button } from "../components/ui/button"
 import ListActionSheet from "../components/layout/ListActionSheet"
 import MobileFab from "../components/layout/MobileFab"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
-import EntityListCard from "../components/list/EntityListCard"
 
 import { Archive, Eye, Pencil, Plus, Trash2, Users } from "lucide-react"
 
@@ -114,6 +113,7 @@ export default function Clients(): JSX.Element {
           title="Clients"
           summary={loading ? "Loading clients..." : `${clients.length} clients total`}
           tone="violet"
+          onPrimaryAction={() => navigate("/clients/new")}
           searchValue={query}
           onSearchChange={setQuery}
           searchPlaceholder="Search clients..."
@@ -162,16 +162,40 @@ export default function Clients(): JSX.Element {
             {filtered.map((client) => {
               const cat = normalizeCategory(client.category)
               return (
-                <EntityListCard
+                <div
                   key={client.id}
-                  leading={<div className="grid h-12 w-12 place-items-center rounded-2xl border border-violet-100 bg-violet-50 text-sm font-extrabold text-violet-700">{initials(client.name)}</div>}
-                  title={client.name}
-                  subtitle={formatLocation(client.city, client.state)}
-                  metadata={[client.phone ?? "—"]}
-                  chips={[{ label: cat, tone: cat === "Client" ? "scope" : "tag" }]}
                   onClick={() => navigate(`/clients/${client.id}`)}
-                  onAction={() => setActiveClient(client)}
-                />
+                  className="cursor-pointer rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                >
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
+                    <div className="grid h-12 w-12 place-items-center rounded-2xl border border-violet-100 bg-violet-50 text-sm font-extrabold text-violet-700">
+                      {initials(client.name)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-lg font-bold tracking-[-0.03em] text-slate-950">{client.name}</div>
+                      <div className="mt-1 text-sm text-slate-500">{formatLocation(client.city, client.state)}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setActiveClient(client)
+                      }}
+                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                      aria-label={`Open actions for ${client.name}`}
+                    >
+                      ⋯
+                    </button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-slate-500">
+                    <span>{client.phone ?? "—"}</span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${cat === "Client" ? "bg-violet-100 text-violet-700" : "border border-slate-200 bg-slate-100 text-slate-500"}`}>
+                      {cat}
+                    </span>
+                  </div>
+                </div>
               )
             })}
           </div>
