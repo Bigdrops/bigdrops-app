@@ -121,7 +121,16 @@ export default function NewCSR() {
 
     if (isField) {
       try {
-        const previewData = buildCsrPreviewData(csrData)
+        const technicianSignatory = csrData.technician_signatory_id
+          ? (
+              await supabase
+                .from('signatories')
+                .select('id, name, role, signature_url')
+                .eq('id', csrData.technician_signatory_id)
+                .maybeSingle()
+            ).data
+          : null
+        const previewData = buildCsrPreviewData(csrData, { technicianSignatory })
         const blob = await pdf(getCsrPdfDocument({ csr: previewData, branding: EMPTY_BRANDING, template: '3' })).toBlob()
         const url = URL.createObjectURL(blob)
         const anchor = document.createElement('a')

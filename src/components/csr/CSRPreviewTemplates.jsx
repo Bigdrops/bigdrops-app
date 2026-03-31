@@ -1,5 +1,5 @@
 import React from 'react'
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import {
   CSR_READING_FIELDS,
   CSR_STATUS_OPTIONS_PDF,
@@ -43,6 +43,59 @@ function buildReadingRows(csr) {
     label,
     value: safe(csr[key]),
   }))
+}
+
+function getPopulatedReadingRows(csr) {
+  return buildReadingRows(csr).filter((row) => hasText(row.value))
+}
+
+function hasOperationalReadings(csr) {
+  return !!csr.showOperationalReadings && getPopulatedReadingRows(csr).length > 0
+}
+
+function getMaterialsRows(csr) {
+  if (Array.isArray(csr.materialsRows)) {
+    const populated = csr.materialsRows.filter((row) => row.item || row.quantity || row.unit)
+    if (populated.length > 0) return populated
+  }
+  return hasText(csr.materialsText) ? [{ item: csr.materialsText || ' ', quantity: '', unit: '' }] : []
+}
+
+function hasMaterials(csr) {
+  return getMaterialsRows(csr).length > 0
+}
+
+function getTechnicianName(csr) {
+  return safe(csr.technicianSignatory?.name || csr.technicianName)
+}
+
+function getTechnicianRole(csr) {
+  return safe(csr.technicianSignatory?.role)
+}
+
+function getTechnicianSignatureUrl(csr) {
+  return safe(csr.technicianSignatory?.signatureUrl)
+}
+
+function getLayoutDensity(csr) {
+  return csr.layoutDensity || 'comfortable'
+}
+
+function PdfSignatureCard({ styles, label, name = '', role = '', signatureUrl = '' }) {
+  return (
+    <View style={styles.signCard}>
+      {signatureUrl ? (
+        <View style={{ height: 24, marginBottom: 4, justifyContent: 'flex-end' }}>
+          <Image src={signatureUrl} style={{ maxHeight: 24, maxWidth: 92, objectFit: 'contain' }} />
+        </View>
+      ) : (
+        <View style={styles.signSpace} />
+      )}
+      <Text style={styles.signLabel}>{label}</Text>
+      {hasText(name) ? <Text style={styles.fieldValue}>{name}</Text> : null}
+      {hasText(role) ? <Text style={[styles.fieldLabel, { marginTop: 2, marginBottom: 0 }]}>{role}</Text> : null}
+    </View>
+  )
 }
 
 function PdfField({ styles, label, value }) {
@@ -131,9 +184,8 @@ function StatusListChecks({ styles, status }) {
 }
 
 function ReadingsCardGrid({ styles, csr }) {
-  const rows = buildReadingRows(csr)
-  const hasReadings = rows.some((row) => hasText(row.value))
-  if (!csr.showOperationalReadings || !hasReadings) return null
+  const rows = getPopulatedReadingRows(csr)
+  if (!hasOperationalReadings(csr)) return null
 
   return (
     <PdfSection styles={styles} title="Readings">
@@ -150,9 +202,8 @@ function ReadingsCardGrid({ styles, csr }) {
 }
 
 function ReadingsStrip({ styles, csr }) {
-  const rows = buildReadingRows(csr)
-  const hasReadings = rows.some((row) => hasText(row.value))
-  if (!csr.showOperationalReadings || !hasReadings) return null
+  const rows = getPopulatedReadingRows(csr)
+  if (!hasOperationalReadings(csr)) return null
 
   return (
     <PdfSection styles={styles} title="Readings">
@@ -172,7 +223,7 @@ function ReadingsStrip({ styles, csr }) {
 }
 
 function MaterialsPills({ styles, csr }) {
-  if (!shouldRender(true, csr.materialsText)) return null
+  if (!hasMaterials(csr)) return null
 
   const items = safe(csr.materialsText)
     .split(/[,\u00b7]/)
@@ -193,14 +244,8 @@ function MaterialsPills({ styles, csr }) {
 }
 
 function MaterialsTable({ styles, csr }) {
-  if (!shouldRender(true, csr.materialsRows)) {
-    if (!shouldRender(true, csr.materialsText)) return null
-  }
-
-  const rows =
-    Array.isArray(csr.materialsRows) && csr.materialsRows.some((row) => row.item || row.quantity || row.unit)
-      ? csr.materialsRows.filter((row) => row.item || row.quantity || row.unit)
-      : [{ item: csr.materialsText || ' ', quantity: '', unit: '' }]
+  const rows = getMaterialsRows(csr)
+  if (rows.length === 0) return null
 
   return (
     <PdfSection styles={styles} title="Materials Used">
@@ -221,29 +266,41 @@ function MaterialsTable({ styles, csr }) {
 }
 
 function AcknowledgementBlock({ styles, csr }) {
-  if (!csr.showAcknowledgement) return null
+  if (!csr.showAcknowledgement && !csr.showTechnicianSignLine) return null
+  const technicianName = getTechnicianName(csr)
+  const technicianRole = getTechnicianRole(csr)
+  const technicianSignatureUrl = getTechnicianSignatureUrl(csr)
 
   return (
     <PdfSection styles={styles} title="Acknowledgement">
-      <View style={styles.ackGrid}>
-        <PdfField styles={styles} label="Customer Name" value={csr.acknowledgement_name} />
-        <PdfField styles={styles} label="Recipient Title" value={csr.recipientTitle} />
-        <PdfField styles={styles} label="Recipient Role" value={csr.recipientRole} />
-        <PdfField styles={styles} label="Signature" value="________________" />
-      </View>
+      {csr.showAcknowledgement ? (
+        <View style={styles.ackGrid}>
+          <PdfField styles={styles} label="Customer Name" value={csr.acknowledgement_name} />
+          <PdfField styles={styles} label="Recipient Title" value={csr.recipientTitle} />
+          <PdfField styles={styles} label="Recipient Role" value={csr.recipientRole} />
+          <PdfField styles={styles} label="Signature" value="________________" />
+        </View>
+      ) : null}
 
       <View style={styles.signRow}>
         {csr.showTechnicianSignLine ? (
-          <View style={styles.signCard}>
-            <View style={styles.signSpace} />
-            <Text style={styles.signLabel}>Technician Sign Line</Text>
-          </View>
+          <PdfSignatureCard
+            styles={styles}
+            label="Technician Signature"
+            name={technicianName}
+            role={technicianRole}
+            signatureUrl={technicianSignatureUrl}
+          />
         ) : null}
 
-        <View style={styles.signCard}>
-          <View style={styles.signSpace} />
-          <Text style={styles.signLabel}>Customer Sign Line</Text>
-        </View>
+        {csr.showAcknowledgement ? (
+          <PdfSignatureCard
+            styles={styles}
+            label="Customer Sign Line"
+            name={safe(csr.acknowledgement_name)}
+            role={safe(csr.recipientRole)}
+          />
+        ) : null}
       </View>
     </PdfSection>
   )
@@ -332,22 +389,24 @@ function SharedEquipmentSection({ styles, csr }) {
 
 /* ---------------- PulseFrame ---------------- */
 
-function createPulseFrameStyles() {
+function createPulseFrameStyles(density = 'comfortable') {
+  const compact = density !== 'comfortable'
+  const tight = density === 'tight'
   return StyleSheet.create({
     page: {
-      paddingTop: 16,
-      paddingBottom: 16,
-      paddingHorizontal: 16,
+      paddingTop: tight ? 10 : compact ? 12 : 14,
+      paddingBottom: tight ? 10 : compact ? 12 : 14,
+      paddingHorizontal: tight ? 10 : compact ? 12 : 14,
       backgroundColor: '#ffffff',
       color: '#14213d',
       fontFamily: 'Helvetica',
-      fontSize: 9,
+      fontSize: tight ? 7.7 : compact ? 8.2 : 8.6,
     },
     topWrap: {
       backgroundColor: '#0f172a',
-      paddingTop: 12,
-      paddingBottom: 40,
-      paddingHorizontal: 14,
+      paddingTop: tight ? 9 : 10,
+      paddingBottom: tight ? 28 : compact ? 30 : 34,
+      paddingHorizontal: tight ? 10 : 12,
       borderRadius: 12,
       marginBottom: 0,
     },
@@ -374,10 +433,10 @@ function createPulseFrameStyles() {
     metaValue: { fontSize: 9, color: '#ffffff', fontFamily: 'Helvetica-Bold', marginTop: 2 },
 
     summaryRow: {
-      marginTop: -26,
-      marginBottom: 8,
+      marginTop: tight ? -20 : compact ? -22 : -24,
+      marginBottom: compact ? 6 : 8,
       flexDirection: 'row',
-      gap: 6,
+      gap: compact ? 4 : 6,
     },
     summaryCard: {
       flex: 1,
@@ -385,24 +444,24 @@ function createPulseFrameStyles() {
       borderWidth: 1,
       borderColor: '#dbeafe',
       borderRadius: 12,
-      padding: 8,
+      padding: tight ? 5 : compact ? 6 : 7,
     },
     fieldLabel: { fontSize: 6.5, textTransform: 'uppercase', color: '#64748b', fontFamily: 'Helvetica-Bold', marginBottom: 3 },
-    fieldValue: { fontSize: 9.5, color: '#0f172a', fontFamily: 'Helvetica-Bold', lineHeight: 1.2 },
-    blockText: { fontSize: 8.5, color: '#1e293b', lineHeight: 1.5 },
+    fieldValue: { fontSize: tight ? 8 : compact ? 8.5 : 9, color: '#0f172a', fontFamily: 'Helvetica-Bold', lineHeight: 1.15 },
+    blockText: { fontSize: tight ? 7.2 : compact ? 7.6 : 8, color: '#1e293b', lineHeight: tight ? 1.25 : 1.35 },
     section: {
-      marginBottom: 8,
+      marginBottom: compact ? 5 : 7,
       borderWidth: 1,
       borderColor: '#dbe7f5',
       borderRadius: 14,
       overflow: 'hidden',
     },
     sectionTitle: {
-      paddingVertical: 5,
-      paddingHorizontal: 8,
+      paddingVertical: tight ? 3 : 4,
+      paddingHorizontal: tight ? 6 : 7,
       color: '#ffffff',
       backgroundColor: '#1d4ed8',
-      fontSize: 8,
+      fontSize: tight ? 6.7 : 7.2,
       fontFamily: 'Helvetica-Bold',
       textTransform: 'uppercase',
     },
@@ -410,28 +469,28 @@ function createPulseFrameStyles() {
     grid2: { flexDirection: 'row' },
     fieldCard: {
       width: '25%',
-      paddingVertical: 6,
-      paddingHorizontal: 7,
+      paddingVertical: tight ? 4 : 5,
+      paddingHorizontal: tight ? 5 : 6,
       borderRightWidth: 1,
       borderBottomWidth: 1,
       borderColor: '#e2e8f0',
-      minHeight: 42,
+      minHeight: tight ? 30 : compact ? 34 : 38,
     },
-    blockCard: { paddingVertical: 8, paddingHorizontal: 8, minHeight: 42 },
-    readingGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 4 },
+    blockCard: { paddingVertical: tight ? 5 : 6, paddingHorizontal: tight ? 6 : 7, minHeight: tight ? 30 : compact ? 34 : 38 },
+    readingGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: compact ? 6 : 8, gap: 4 },
     readingCard: {
       width: '15.5%',
       backgroundColor: '#eff6ff',
       borderWidth: 1,
       borderColor: '#bfdbfe',
       borderRadius: 10,
-      paddingVertical: 6,
+      paddingVertical: tight ? 4 : 5,
       paddingHorizontal: 5,
       alignItems: 'center',
     },
     readingLabel: { fontSize: 6.1, color: '#475569', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 2, textAlign: 'center' },
     readingValue: { fontSize: 10, color: '#0f172a', fontFamily: 'Helvetica-Bold' },
-    pillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, padding: 8 },
+    pillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, padding: compact ? 6 : 8 },
     pill: {
       paddingVertical: 4,
       paddingHorizontal: 7,
@@ -444,13 +503,13 @@ function createPulseFrameStyles() {
     serviceGrid: { flexDirection: 'row' },
     serviceCard: {
       flex: 1,
-      paddingVertical: 8,
-      paddingHorizontal: 8,
+      paddingVertical: tight ? 5 : 6,
+      paddingHorizontal: tight ? 6 : 7,
       borderRightWidth: 1,
       borderColor: '#e2e8f0',
-      minHeight: 70,
+      minHeight: tight ? 46 : compact ? 52 : 60,
     },
-    statusGrid: { padding: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+    statusGrid: { padding: compact ? 6 : 8, flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
     statusItem: {
       width: '31%',
       flexDirection: 'row',
@@ -459,40 +518,40 @@ function createPulseFrameStyles() {
       borderWidth: 1,
       borderColor: '#dbeafe',
       borderRadius: 10,
-      paddingVertical: 5,
+      paddingVertical: tight ? 4 : 5,
       paddingHorizontal: 6,
       backgroundColor: '#f8fbff',
     },
     statusDot: { width: 8, height: 8, borderRadius: 99, borderWidth: 1.5, borderColor: '#94a3b8', backgroundColor: '#ffffff' },
     statusDotActive: { borderColor: '#1d4ed8', backgroundColor: '#1d4ed8' },
     statusText: { fontSize: 6.8, color: '#0f172a', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
-    textAreaOnly: { padding: 8, minHeight: 40 },
+    textAreaOnly: { padding: compact ? 6 : 8, minHeight: tight ? 24 : 30 },
     ackGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-    signRow: { flexDirection: 'row', gap: 8, padding: 8 },
+    signRow: { flexDirection: 'row', gap: compact ? 6 : 8, padding: compact ? 6 : 8 },
     signCard: {
       flex: 1,
       borderWidth: 1,
       borderColor: '#dbe7f5',
       borderRadius: 12,
-      padding: 8,
+      padding: compact ? 6 : 8,
     },
-    signSpace: { height: 20, borderBottomWidth: 1.5, borderBottomColor: '#93c5fd', borderStyle: 'dashed', marginBottom: 4 },
+    signSpace: { height: tight ? 14 : 18, borderBottomWidth: 1.5, borderBottomColor: '#93c5fd', borderStyle: 'dashed', marginBottom: 4 },
     signLabel: { fontSize: 7, color: '#64748b', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     footer: {
-      marginTop: 4,
+      marginTop: compact ? 2 : 4,
       backgroundColor: '#0f172a',
       color: '#ffffff',
-      paddingVertical: 5,
-      paddingHorizontal: 8,
+      paddingVertical: 4,
+      paddingHorizontal: 7,
       borderRadius: 10,
-      fontSize: 6.8,
+      fontSize: 6.2,
       lineHeight: 1.2,
     },
   })
 }
 
 function PulseFrameTemplate({ csr, branding }) {
-  const styles = createPulseFrameStyles()
+  const styles = createPulseFrameStyles(getLayoutDensity(csr))
   const status = getStatusValue(csr)
 
   return (
@@ -555,38 +614,40 @@ function PulseFrameTemplate({ csr, branding }) {
 
 /* ---------------- SignalBands ---------------- */
 
-function createSignalBandsStyles() {
+function createSignalBandsStyles(density = 'comfortable') {
+  const compact = density !== 'comfortable'
+  const tight = density === 'tight'
   return StyleSheet.create({
     page: {
-      paddingTop: 14,
-      paddingBottom: 14,
-      paddingHorizontal: 14,
+      paddingTop: tight ? 10 : 12,
+      paddingBottom: tight ? 10 : 12,
+      paddingHorizontal: tight ? 10 : 12,
       backgroundColor: '#fffdfa',
       color: '#231f20',
       fontFamily: 'Helvetica',
-      fontSize: 8.5,
+      fontSize: tight ? 7.5 : compact ? 7.9 : 8.2,
     },
     headerRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      gap: 10,
+      gap: compact ? 8 : 10,
       backgroundColor: '#7f1d1d',
       borderRadius: 10,
-      paddingVertical: 10,
-      paddingHorizontal: 12,
-      marginBottom: 8,
+      paddingVertical: tight ? 7 : 8,
+      paddingHorizontal: tight ? 9 : 10,
+      marginBottom: compact ? 6 : 8,
     },
     brandBlock: { flex: 1 },
     companyName: { fontSize: 16, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
     companyTagline: { fontSize: 7.2, color: '#FDE68A', marginTop: 2 },
     contactLine: { fontSize: 6.6, color: '#ffffff', marginTop: 3, lineHeight: 1.2 },
     identityCard: {
-      width: 200,
+      width: tight ? 184 : 192,
       backgroundColor: '#ffffff22',
       borderWidth: 1,
       borderColor: '#ffffff33',
       borderRadius: 10,
-      padding: 8,
+      padding: tight ? 6 : 7,
     },
     identityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     identityFull: { width: '100%' },
@@ -595,16 +656,16 @@ function createSignalBandsStyles() {
 
     band: {
       flexDirection: 'row',
-      marginBottom: 6,
+      marginBottom: compact ? 4 : 6,
       borderWidth: 1,
       borderColor: '#e7d7c8',
       borderRadius: 12,
       overflow: 'hidden',
     },
     bandKey: {
-      width: 112,
-      paddingVertical: 8,
-      paddingHorizontal: 8,
+      width: tight ? 96 : 104,
+      paddingVertical: tight ? 6 : 7,
+      paddingHorizontal: tight ? 6 : 7,
       justifyContent: 'center',
     },
     bandKeyRed: { backgroundColor: '#991b1b' },
@@ -621,18 +682,18 @@ function createSignalBandsStyles() {
     grid4: { flexDirection: 'row', flexWrap: 'wrap' },
     fieldCard: {
       width: '25%',
-      paddingVertical: 7,
-      paddingHorizontal: 8,
+      paddingVertical: tight ? 5 : 6,
+      paddingHorizontal: tight ? 6 : 7,
       borderRightWidth: 1,
       borderBottomWidth: 1,
       borderColor: '#eee3d7',
-      minHeight: 44,
+      minHeight: tight ? 30 : compact ? 34 : 38,
       backgroundColor: '#fffdfa',
     },
     fieldLabel: { fontSize: 6.5, color: '#78716c', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 3 },
     fieldValue: { fontSize: 9.5, color: '#231f20', fontFamily: 'Helvetica-Bold', lineHeight: 1.2 },
-    blockCard: { paddingVertical: 8, paddingHorizontal: 10, minHeight: 42 },
-    blockText: { fontSize: 8.5, color: '#292524', lineHeight: 1.4 },
+    blockCard: { paddingVertical: tight ? 5 : 6, paddingHorizontal: tight ? 7 : 8, minHeight: tight ? 30 : compact ? 34 : 38 },
+    blockText: { fontSize: tight ? 7.1 : compact ? 7.4 : 7.8, color: '#292524', lineHeight: tight ? 1.22 : 1.3 },
 
     readingStrip: {
       flexDirection: 'row',
@@ -640,7 +701,7 @@ function createSignalBandsStyles() {
     },
     readingStripCell: {
       flex: 1,
-      paddingVertical: 7,
+      paddingVertical: tight ? 5 : 6,
       paddingHorizontal: 4,
       borderRightWidth: 1,
       borderColor: '#eee3d7',
@@ -650,7 +711,7 @@ function createSignalBandsStyles() {
     readingLabel: { fontSize: 6.1, color: '#78716c', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginTop: 2, textAlign: 'center' },
     readingValue: { fontSize: 10, color: '#231f20', fontFamily: 'Helvetica-Bold' },
 
-    pillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, padding: 8 },
+    pillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, padding: compact ? 6 : 8 },
     pill: {
       paddingVertical: 4,
       paddingHorizontal: 7,
@@ -662,7 +723,7 @@ function createSignalBandsStyles() {
     pillText: { fontSize: 7.2, color: '#9a3412', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
 
     statusGrid: {
-      padding: 8,
+      padding: compact ? 6 : 8,
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: 4,
@@ -672,7 +733,7 @@ function createSignalBandsStyles() {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 5,
-      paddingVertical: 5,
+      paddingVertical: tight ? 4 : 5,
       paddingHorizontal: 6,
       borderRadius: 10,
       borderWidth: 1,
@@ -702,19 +763,19 @@ function createSignalBandsStyles() {
     checkMark: { color: '#ffffff', fontSize: 7, fontFamily: 'Helvetica-Bold' },
     statusText: { fontSize: 6.8, color: '#231f20', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
 
-    textAreaOnly: { padding: 8, minHeight: 38 },
+    textAreaOnly: { padding: compact ? 6 : 8, minHeight: tight ? 24 : 28 },
     ackGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-    signRow: { flexDirection: 'row', gap: 8, padding: 8 },
+    signRow: { flexDirection: 'row', gap: compact ? 6 : 8, padding: compact ? 6 : 8 },
     signCard: {
       flex: 1,
       borderWidth: 1,
       borderColor: '#e7d7c8',
       borderRadius: 12,
-      padding: 8,
+      padding: compact ? 6 : 8,
       backgroundColor: '#ffffff',
     },
     signSpace: {
-      height: 20,
+      height: tight ? 14 : 18,
       borderBottomWidth: 1.5,
       borderBottomColor: '#d6bfa6',
       borderStyle: 'dashed',
@@ -723,20 +784,20 @@ function createSignalBandsStyles() {
     signLabel: { fontSize: 7, color: '#78716c', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
 
     footer: {
-      marginTop: 4,
+      marginTop: compact ? 2 : 4,
       backgroundColor: '#1f2937',
       color: '#ffffff',
       borderRadius: 10,
-      paddingVertical: 5,
-      paddingHorizontal: 8,
-      fontSize: 6.8,
+      paddingVertical: 4,
+      paddingHorizontal: 7,
+      fontSize: 6.2,
       lineHeight: 1.2,
     },
   })
 }
 
 function SignalBandsTemplate({ csr, branding }) {
-  const styles = createSignalBandsStyles()
+  const styles = createSignalBandsStyles(getLayoutDensity(csr))
   const status = getStatusValue(csr)
 
   const Band = ({ colorStyle, title, sub, children }) => (
@@ -785,7 +846,7 @@ function SignalBandsTemplate({ csr, branding }) {
           <SharedEquipmentSection styles={styles} csr={csr} />
         </Band>
 
-        {csr.showOperationalReadings ? (
+        {hasOperationalReadings(csr) ? (
           <Band colorStyle={styles.bandKeyTeal} title="Readings" sub="Field values captured during attendance.">
             <ReadingsStrip styles={styles} csr={csr} />
           </Band>
@@ -804,7 +865,7 @@ function SignalBandsTemplate({ csr, branding }) {
           </View>
         </Band>
 
-        {shouldRender(true, csr.materialsText) ? (
+        {hasMaterials(csr) ? (
           <Band colorStyle={styles.bandKeyGold} title="Materials" sub="Consumables and replaced items used on site.">
             <MaterialsPills styles={styles} csr={csr} />
           </Band>
@@ -824,7 +885,7 @@ function SignalBandsTemplate({ csr, branding }) {
           </Band>
         ) : null}
 
-        {csr.showAcknowledgement ? (
+        {csr.showAcknowledgement || csr.showTechnicianSignLine ? (
           <Band colorStyle={styles.bandKeyCharcoal} title="Acknowledgement" sub="Recipient identity, approval, and signature fields.">
             <AcknowledgementBlock styles={styles} csr={csr} />
           </Band>
@@ -838,21 +899,23 @@ function SignalBandsTemplate({ csr, branding }) {
 
 /* ---------------- Zinc ---------------- */
 
-function createZincStyles() {
+function createZincStyles(density = 'comfortable') {
+  const compact = density !== 'comfortable'
+  const tight = density === 'tight'
   return StyleSheet.create({
     page: {
-      paddingTop: 16,
-      paddingBottom: 16,
-      paddingHorizontal: 16,
+      paddingTop: tight ? 10 : 12,
+      paddingBottom: tight ? 10 : 12,
+      paddingHorizontal: tight ? 10 : 12,
       backgroundColor: '#ffffff',
       color: '#09090b',
       fontFamily: 'Helvetica',
-      fontSize: 8.5,
+      fontSize: tight ? 7.4 : compact ? 7.8 : 8,
     },
     headerTop: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      marginBottom: 10,
+      marginBottom: compact ? 6 : 8,
     },
     brandBlock: { flex: 1 },
     companyName: { fontSize: 16, color: '#09090b', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
@@ -862,40 +925,40 @@ function createZincStyles() {
     idLabel: { fontSize: 6.5, color: '#71717a', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     idValue: { fontSize: 12, color: '#09090b', fontFamily: 'Courier-Bold', marginTop: 2 },
     idDate: { fontSize: 7.5, color: '#71717a', marginTop: 4 },
-    section: { marginBottom: 10 },
+    section: { marginBottom: compact ? 6 : 8 },
     sectionTitle: {
-      fontSize: 7.5,
+      fontSize: tight ? 6.8 : 7.1,
       color: '#09090b',
       fontFamily: 'Helvetica-Bold',
       textTransform: 'uppercase',
       borderBottomWidth: 1.5,
       borderBottomColor: '#09090b',
-      paddingBottom: 4,
-      marginBottom: 6,
+      paddingBottom: 3,
+      marginBottom: compact ? 4 : 5,
     },
-    fieldCard: { width: '33.33%', paddingRight: 8, marginBottom: 6 },
+    fieldCard: { width: '33.33%', paddingRight: compact ? 5 : 6, marginBottom: compact ? 4 : 5 },
     fieldLabel: { fontSize: 6.5, color: '#71717a', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 3 },
-    fieldValue: { fontSize: 9, color: '#09090b', fontFamily: 'Helvetica-Bold', lineHeight: 1.2 },
+    fieldValue: { fontSize: tight ? 7.8 : compact ? 8.2 : 8.5, color: '#09090b', fontFamily: 'Helvetica-Bold', lineHeight: 1.15 },
     grid3: { flexDirection: 'row', flexWrap: 'wrap' },
     grid4: { flexDirection: 'row', flexWrap: 'wrap' },
     blockCard: {
-      paddingVertical: 7,
-      paddingHorizontal: 8,
+      paddingVertical: tight ? 5 : 6,
+      paddingHorizontal: tight ? 6 : 7,
       backgroundColor: '#ffffff',
       borderWidth: 1,
       borderColor: '#e4e4e7',
       borderRadius: 4,
-      minHeight: 36,
+      minHeight: tight ? 28 : compact ? 30 : 34,
     },
-    blockText: { fontSize: 8.4, color: '#09090b', lineHeight: 1.45 },
+    blockText: { fontSize: tight ? 7 : compact ? 7.3 : 7.7, color: '#09090b', lineHeight: tight ? 1.22 : 1.3 },
     readingStrip: {
       flexDirection: 'row',
       backgroundColor: '#f4f4f5',
       borderWidth: 1,
       borderColor: '#e4e4e7',
       borderRadius: 6,
-      paddingVertical: 8,
-      paddingHorizontal: 6,
+      paddingVertical: tight ? 5 : 6,
+      paddingHorizontal: tight ? 4 : 5,
     },
     readingStripCell: {
       flex: 1,
@@ -943,7 +1006,7 @@ function createZincStyles() {
       flexDirection: 'row',
       borderBottomWidth: 1.5,
       borderBottomColor: '#e4e4e7',
-      paddingBottom: 4,
+      paddingBottom: 3,
       marginBottom: 2,
     },
     tableHead: {
@@ -965,18 +1028,18 @@ function createZincStyles() {
       fontSize: 8,
       color: '#09090b',
       fontFamily: 'Helvetica-Bold',
-      paddingVertical: 5,
+      paddingVertical: tight ? 4 : 5,
       paddingHorizontal: 3,
       borderRightWidth: 1,
       borderRightColor: '#f1f1f1',
     },
-    textAreaOnly: { paddingTop: 4 },
-    ackGrid: { flexDirection: 'row', gap: 10, marginTop: 10 },
-    signRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
+    textAreaOnly: { paddingTop: compact ? 2 : 4 },
+    ackGrid: { flexDirection: 'row', gap: compact ? 6 : 8, marginTop: compact ? 6 : 8 },
+    signRow: { flexDirection: 'row', gap: compact ? 6 : 8, marginTop: compact ? 6 : 8 },
     signCard: { flex: 1 },
-    signSpace: { height: 20, borderBottomWidth: 1.5, borderBottomColor: '#09090b', marginBottom: 4 },
+    signSpace: { height: tight ? 14 : 18, borderBottomWidth: 1.5, borderBottomColor: '#09090b', marginBottom: 4 },
     signLabel: { fontSize: 6.5, color: '#71717a', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    footer: { marginTop: 10, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#e4e4e7', fontSize: 6.4, color: '#71717a', textAlign: 'center' },
+    footer: { marginTop: compact ? 6 : 8, paddingTop: 5, borderTopWidth: 1, borderTopColor: '#e4e4e7', fontSize: 6, color: '#71717a', textAlign: 'center' },
     statusGrid: { display: 'none' },
     statusItem: {},
     statusText: {},
@@ -984,8 +1047,11 @@ function createZincStyles() {
 }
 
 function ZincTemplate({ csr, branding }) {
-  const styles = createZincStyles()
+  const styles = createZincStyles(getLayoutDensity(csr))
   const status = getStatusValue(csr)
+  const technicianName = getTechnicianName(csr)
+  const technicianRole = getTechnicianRole(csr)
+  const technicianSignatureUrl = getTechnicianSignatureUrl(csr)
   const stages = ['Arrival', 'Diagnostic', 'Repair', 'Observation', 'Handover']
   const activeIndex = status === 'Working solution provided' || status === 'Under observation'
     ? 3
@@ -1038,7 +1104,7 @@ function ZincTemplate({ csr, branding }) {
             <View style={[styles.fieldCard, { width: '25%' }]}><Text style={styles.fieldLabel}>Capacity</Text><Text style={styles.fieldValue}>{safe(csr.capacity)}</Text></View>
             <View style={[styles.fieldCard, { width: '100%' }]}><Text style={styles.fieldLabel}>Equipment Location</Text><Text style={styles.fieldValue}>{safe(csr.equipment_location)}</Text></View>
           </View>
-          <ReadingsStrip styles={styles} csr={csr} />
+          {hasOperationalReadings(csr) ? <ReadingsStrip styles={styles} csr={csr} /> : null}
         </PdfSection>
 
         <PdfSection styles={styles} title="Technical Narrative">
@@ -1096,11 +1162,13 @@ function ZincTemplate({ csr, branding }) {
           </View>
         </PdfSection>
 
-        {shouldRender(true, csr.materialsText) || shouldRender(true, csr.customer_feedback) ? (
+        {hasMaterials(csr) || shouldRender(true, csr.customer_feedback) ? (
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1 }}>
-              <MaterialsTable styles={styles} csr={csr} />
-            </View>
+            {hasMaterials(csr) ? (
+              <View style={{ flex: 1 }}>
+                <MaterialsTable styles={styles} csr={csr} />
+              </View>
+            ) : null}
             {shouldRender(true, csr.customer_feedback) ? (
               <View style={{ flex: 1 }}>
                 <PdfSection styles={styles} title="Customer Feedback">
@@ -1113,25 +1181,28 @@ function ZincTemplate({ csr, branding }) {
           </View>
         ) : null}
 
-        <View style={styles.ackGrid}>
-          {csr.showTechnicianSignLine ? (
-            <View style={styles.signCard}>
-              <View style={styles.signSpace} />
-              <Text style={styles.signLabel}>Lead Technician Signature</Text>
-              <Text style={styles.fieldValue}>{safe(csr.technicianName) || ' '}</Text>
-            </View>
-          ) : null}
+        {csr.showTechnicianSignLine || csr.showAcknowledgement ? (
+          <View style={styles.ackGrid}>
+            {csr.showTechnicianSignLine ? (
+              <PdfSignatureCard
+                styles={styles}
+                label="Lead Technician Signature"
+                name={technicianName}
+                role={technicianRole}
+                signatureUrl={technicianSignatureUrl}
+              />
+            ) : null}
 
-          {csr.showAcknowledgement ? (
-            <View style={styles.signCard}>
-              <View style={styles.signSpace} />
-              <Text style={styles.signLabel}>Customer Acknowledgement</Text>
-              <Text style={styles.fieldValue}>
-                {[safe(csr.acknowledgement_name), safe(csr.recipientRole)].filter(Boolean).join(' • ') || ' '}
-              </Text>
-            </View>
-          ) : null}
-        </View>
+            {csr.showAcknowledgement ? (
+              <PdfSignatureCard
+                styles={styles}
+                label="Customer Acknowledgement"
+                name={safe(csr.acknowledgement_name)}
+                role={safe(csr.recipientRole)}
+              />
+            ) : null}
+          </View>
+        ) : null}
 
         {branding.footerText ? <Text style={styles.footer}>{branding.footerText}</Text> : null}
       </Page>
@@ -1141,37 +1212,39 @@ function ZincTemplate({ csr, branding }) {
 
 /* ---------------- Crimson ---------------- */
 
-function createCrimsonStyles() {
+function createCrimsonStyles(density = 'comfortable') {
+  const compact = density !== 'comfortable'
+  const tight = density === 'tight'
   return StyleSheet.create({
     page: {
-      paddingTop: 14,
-      paddingBottom: 14,
-      paddingHorizontal: 14,
+      paddingTop: tight ? 8 : 12,
+      paddingBottom: tight ? 8 : 12,
+      paddingHorizontal: tight ? 8 : 12,
       backgroundColor: '#ffffff',
       color: '#0f172a',
       fontFamily: 'Helvetica',
-      fontSize: 8.3,
+      fontSize: tight ? 7.2 : compact ? 7.6 : 7.9,
     },
     header: {
       backgroundColor: '#0f172a',
       borderRadius: 10,
       overflow: 'hidden',
-      marginBottom: 10,
+      marginBottom: tight ? 4 : compact ? 6 : 8,
     },
     headerTop: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      gap: 10,
-      paddingVertical: 10,
-      paddingHorizontal: 12,
+      gap: compact ? 8 : 10,
+      paddingVertical: tight ? 6 : 8,
+      paddingHorizontal: tight ? 8 : 10,
     },
     headerBottom: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      gap: 8,
+      gap: compact ? 6 : 8,
       backgroundColor: '#f8fafc',
-      paddingVertical: 8,
-      paddingHorizontal: 12,
+      paddingVertical: tight ? 5 : 7,
+      paddingHorizontal: tight ? 8 : 10,
       borderTopWidth: 1,
       borderTopColor: '#1e293b',
     },
@@ -1186,25 +1259,25 @@ function createCrimsonStyles() {
     },
     logoSlotText: { color: '#ffffff', fontSize: 14, fontFamily: 'Helvetica-Bold' },
     brandBlock: { flex: 1 },
-    companyName: { fontSize: 15, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.4 },
-    companyTagline: { fontSize: 6.8, color: '#e2e8f0', textTransform: 'uppercase', marginTop: 2 },
-    contactLine: { fontSize: 6.7, color: '#cbd5e1', marginTop: 3, lineHeight: 1.35 },
+    companyName: { fontSize: tight ? 13 : 15, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.4 },
+    companyTagline: { fontSize: tight ? 5.8 : 6.8, color: '#e2e8f0', textTransform: 'uppercase', marginTop: 2 },
+    contactLine: { fontSize: tight ? 5.7 : 6.7, color: '#cbd5e1', marginTop: 3, lineHeight: tight ? 1.1 : 1.35 },
     idBox: {
-      width: 148,
+      width: tight ? 134 : 148,
       backgroundColor: '#111827',
       borderWidth: 1,
       borderColor: '#334155',
       borderRadius: 8,
-      paddingVertical: 8,
-      paddingHorizontal: 9,
+      paddingVertical: tight ? 6 : 8,
+      paddingHorizontal: tight ? 7 : 9,
       alignItems: 'flex-end',
     },
     idLabel: { fontSize: 6.1, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     idValue: { fontSize: 12.2, color: '#ffffff', fontFamily: 'Courier-Bold', marginTop: 2 },
     idDate: { fontSize: 7, color: '#e2e8f0', marginTop: 3, fontFamily: 'Helvetica-Bold' },
     docKicker: { fontSize: 6.3, color: '#64748b', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', letterSpacing: 0.5 },
-    docTitle: { fontSize: 11.5, color: '#0f172a', fontFamily: 'Helvetica-Bold', marginTop: 3, textTransform: 'uppercase' },
-    docSubtext: { fontSize: 7, color: '#475569', marginTop: 2, lineHeight: 1.3 },
+    docTitle: { fontSize: tight ? 10 : 11.5, color: '#0f172a', fontFamily: 'Helvetica-Bold', marginTop: 3, textTransform: 'uppercase' },
+    docSubtext: { fontSize: 6.3, color: '#475569', marginTop: 2, lineHeight: 1.15 },
     summaryPillRow: { flexDirection: 'row', gap: 6 },
     summaryPill: {
       flex: 1,
@@ -1212,51 +1285,51 @@ function createCrimsonStyles() {
       borderWidth: 1,
       borderColor: '#e2e8f0',
       borderRadius: 999,
-      paddingVertical: 5,
-      paddingHorizontal: 8,
+      paddingVertical: tight ? 4 : 5,
+      paddingHorizontal: tight ? 6 : 8,
     },
     summaryPillLabel: { fontSize: 5.8, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     summaryPillValue: { fontSize: 7.3, color: '#0f172a', fontFamily: 'Helvetica-Bold', marginTop: 2 },
 
-    section: { marginBottom: 9 },
+    section: { marginBottom: tight ? 4 : compact ? 6 : 8 },
     sectionTitle: {
       fontSize: 7.2,
       color: '#ffffff',
       backgroundColor: '#0f172a',
       borderLeftWidth: 4,
       borderLeftColor: '#b91c1c',
-      paddingVertical: 4,
-      paddingHorizontal: 8,
-      marginBottom: 5,
+      paddingVertical: 3,
+      paddingHorizontal: 7,
+      marginBottom: 4,
       textTransform: 'uppercase',
       fontFamily: 'Helvetica-Bold',
       letterSpacing: 0.4,
     },
 
-    fieldLabel: { fontSize: 6.1, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 2 },
-    fieldValue: { fontSize: 8.6, color: '#1e293b', fontFamily: 'Helvetica-Bold', lineHeight: 1.25 },
-    blockText: { fontSize: 8.1, color: '#334155', lineHeight: 1.48 },
+    fieldLabel: { fontSize: tight ? 5.6 : 6.1, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 2 },
+    fieldValue: { fontSize: tight ? 7.1 : compact ? 7.9 : 8.2, color: '#1e293b', fontFamily: 'Helvetica-Bold', lineHeight: 1.1 },
+    blockText: { fontSize: tight ? 6.5 : compact ? 7.2 : 7.5, color: '#334155', lineHeight: tight ? 1.12 : 1.26 },
 
-    grid4: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    grid4: { flexDirection: 'row', flexWrap: 'wrap', gap: compact ? 4 : 6 },
     fieldCard: {
       width: '24%',
       backgroundColor: '#f8fafc',
       borderWidth: 1,
       borderColor: '#e2e8f0',
       borderRadius: 6,
-      paddingVertical: 6,
-      paddingHorizontal: 7,
-      minHeight: 40,
-      marginBottom: 4,
+      paddingVertical: tight ? 3 : 5,
+      paddingHorizontal: tight ? 4 : 6,
+      minHeight: tight ? 24 : compact ? 30 : 34,
+      marginBottom: tight ? 2 : compact ? 3 : 4,
     },
     blockCard: {
       backgroundColor: '#ffffff',
       borderWidth: 1,
       borderColor: '#e2e8f0',
       borderRadius: 6,
-      paddingVertical: 7,
-      paddingHorizontal: 8,
-      minHeight: 40,
+      paddingVertical: tight ? 4 : 6,
+      paddingHorizontal: tight ? 5 : 7,
+      minHeight: tight ? 24 : compact ? 30 : 34,
     },
     heroBlockCard: {
       backgroundColor: '#fff7ed',
@@ -1270,8 +1343,8 @@ function createCrimsonStyles() {
     readingsSection: {
       backgroundColor: '#0f172a',
       borderRadius: 6,
-      paddingVertical: 7,
-      paddingHorizontal: 7,
+      paddingVertical: tight ? 4 : 6,
+      paddingHorizontal: tight ? 4 : 6,
       marginTop: 2,
     },
     readingStrip: { flexDirection: 'row' },
@@ -1294,12 +1367,12 @@ function createCrimsonStyles() {
       marginTop: 3,
     },
     tableHead: {
-      fontSize: 6.3,
+      fontSize: tight ? 5.7 : 6.3,
       color: '#64748b',
       textTransform: 'uppercase',
       fontFamily: 'Helvetica-Bold',
-      paddingVertical: 6,
-      paddingHorizontal: 6,
+      paddingVertical: tight ? 3 : 5,
+      paddingHorizontal: tight ? 4 : 6,
       borderRightWidth: 1,
       borderRightColor: '#e2e8f0',
     },
@@ -1309,26 +1382,26 @@ function createCrimsonStyles() {
       borderBottomColor: '#f1f5f9',
     },
     tableCell: {
-      fontSize: 7.8,
+      fontSize: tight ? 6.9 : 7.8,
       color: '#1e293b',
       fontFamily: 'Helvetica-Bold',
-      paddingVertical: 5,
-      paddingHorizontal: 6,
+      paddingVertical: tight ? 3 : 5,
+      paddingHorizontal: tight ? 4 : 6,
       borderRightWidth: 1,
       borderRightColor: '#f1f5f9',
     },
 
-    statusGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 2 },
+    statusGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: compact ? 4 : 5, marginTop: 2 },
     statusItem: {
       width: '24%',
-      paddingVertical: 5,
+      paddingVertical: tight ? 4 : 5,
       paddingHorizontal: 5,
       borderWidth: 1.2,
       borderColor: '#e2e8f0',
       borderRadius: 6,
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: 28,
+      minHeight: tight ? 18 : 24,
       backgroundColor: '#f8fafc',
     },
     statusItemActive: {
@@ -1339,19 +1412,19 @@ function createCrimsonStyles() {
     statusTextActive: { color: '#ffffff' },
 
     textAreaOnly: {},
-    ackGrid: { flexDirection: 'row', gap: 10, marginTop: 9 },
+    ackGrid: { flexDirection: 'row', gap: tight ? 4 : compact ? 6 : 8, marginTop: tight ? 4 : compact ? 6 : 8 },
     signRow: { display: 'none' },
     signCard: {
       flex: 1,
       borderWidth: 1,
       borderColor: '#e2e8f0',
       borderRadius: 6,
-      paddingVertical: 7,
-      paddingHorizontal: 8,
+      paddingVertical: tight ? 4 : 6,
+      paddingHorizontal: tight ? 5 : 7,
       backgroundColor: '#f8fafc',
     },
     signSpace: {
-      height: 20,
+      height: tight ? 10 : 18,
       marginBottom: 4,
       borderBottomWidth: 1,
       borderBottomColor: '#94a3b8',
@@ -1359,11 +1432,11 @@ function createCrimsonStyles() {
     },
     signLabel: { fontSize: 6.3, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     footer: {
-      marginTop: 10,
-      paddingTop: 6,
+      marginTop: compact ? 6 : 8,
+      paddingTop: 5,
       borderTopWidth: 1,
       borderTopColor: '#e2e8f0',
-      fontSize: 6.2,
+      fontSize: 5.8,
       color: '#94a3b8',
       textAlign: 'center',
       textTransform: 'uppercase',
@@ -1372,10 +1445,15 @@ function createCrimsonStyles() {
 }
 
 function CrimsonTemplate({ csr, branding }) {
-  const styles = createCrimsonStyles()
+  const layoutDensity = getLayoutDensity(csr)
+  const tightLayout = layoutDensity === 'tight'
+  const styles = createCrimsonStyles(layoutDensity)
   const status = getStatusValue(csr)
   const serviceStart = [safe(csr.start_date), safe(csr.start_time)].filter(Boolean).join(' / ')
   const serviceEnd = [safe(csr.end_date), safe(csr.end_time)].filter(Boolean).join(' / ')
+  const technicianName = getTechnicianName(csr)
+  const technicianRole = getTechnicianRole(csr)
+  const technicianSignatureUrl = getTechnicianSignatureUrl(csr)
 
   return (
     <Document>
@@ -1396,7 +1474,7 @@ function CrimsonTemplate({ csr, branding }) {
             <View>
               <Text style={styles.docKicker}>Corporate Service Documentation</Text>
               <Text style={styles.docTitle}>Customer Service Report</Text>
-              <Text style={styles.docSubtext}>Structured field record for customer communication, technician reference, and sign-off.</Text>
+              {!tightLayout ? <Text style={styles.docSubtext}>Technician record and customer sign-off.</Text> : null}
             </View>
             <View style={styles.summaryPillRow}>
               <View style={styles.summaryPill}>
@@ -1454,7 +1532,7 @@ function CrimsonTemplate({ csr, branding }) {
             <View style={[styles.fieldCard, { width: '49%' }]}><Text style={styles.fieldLabel}>Equipment Location</Text><Text style={styles.fieldValue}>{safe(csr.equipment_location)}</Text></View>
           </View>
 
-          {csr.showOperationalReadings ? (
+          {hasOperationalReadings(csr) ? (
             <View style={styles.readingsSection}>
               <ReadingsStrip styles={styles} csr={csr} />
             </View>
@@ -1475,8 +1553,8 @@ function CrimsonTemplate({ csr, branding }) {
           ) : null}
         </PdfSection>
 
-        {shouldRender(true, csr.materialsRows) || shouldRender(true, csr.materialsText) ? (
-          <MaterialsTable styles={styles} csr={csr} />
+        {hasMaterials(csr) ? (
+          tightLayout ? <MaterialsPills styles={styles} csr={csr} /> : <MaterialsTable styles={styles} csr={csr} />
         ) : null}
 
         <PdfSection styles={styles} title="Status & Acknowledgement">
@@ -1495,9 +1573,18 @@ function CrimsonTemplate({ csr, branding }) {
             <View style={styles.ackGrid}>
               {csr.showTechnicianSignLine ? (
                 <View style={styles.signCard}>
-                  <View style={styles.signSpace} />
+                  <View>
+                    {technicianSignatureUrl ? (
+                      <View style={{ height: 24, marginBottom: 4, justifyContent: 'flex-end' }}>
+                        <Image src={technicianSignatureUrl} style={{ maxHeight: 24, maxWidth: 92, objectFit: 'contain' }} />
+                      </View>
+                    ) : (
+                      <View style={styles.signSpace} />
+                    )}
+                  </View>
                   <Text style={styles.signLabel}>Technician Name</Text>
-                  <Text style={styles.fieldValue}>{safe(csr.technicianName)}</Text>
+                  <Text style={styles.fieldValue}>{technicianName}</Text>
+                  {technicianRole ? <Text style={[styles.fieldLabel, { marginTop: 2, marginBottom: 0 }]}>{technicianRole}</Text> : null}
                 </View>
               ) : null}
 

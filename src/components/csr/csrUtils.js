@@ -18,6 +18,16 @@ export const DEFAULT_CSR_META = {
   materialsOutputStyle: 'list',
 }
 
+function normalizeSignatory(input) {
+  if (!input) return null
+  return {
+    id: input.id || null,
+    name: input.name || '',
+    role: input.role || '',
+    signatureUrl: input.signature_url || input.signatureUrl || '',
+  }
+}
+
 export function createDefaultCsr(isField = false) {
   const today = new Date().toISOString().split('T')[0]
   return {
@@ -202,6 +212,34 @@ export function buildCsrPreviewData(csr, options = {}) {
     options.materialsText ||
     parsed.materialsText ||
     formatMaterialsRows(parsed.materialsRows, parsed.meta.materialsOutputStyle)
+  const signatories = Array.isArray(options.signatories) ? options.signatories : []
+  const resolvedTechnicianSignatory =
+    normalizeSignatory(options.technicianSignatory) ||
+    normalizeSignatory(
+      signatories.find((entry) => String(entry.id) === String(csr.technician_signatory_id || '')),
+    )
+  const resolvedTechnicianName =
+    resolvedTechnicianSignatory?.name ||
+    parsed.meta.technicianName ||
+    ''
+  const populatedMaterialsRows = parsed.materialsRows.filter((row) => row.item || row.quantity || row.unit)
+  const totalNarrativeLength = [
+    csr.problem_reported,
+    csr.service_rendered,
+    csr.defects_found,
+    csr.engineer_remarks,
+    csr.customer_feedback,
+    materialsText,
+    csr.address,
+  ]
+    .map((value) => String(value || '').trim().length)
+    .reduce((sum, value) => sum + value, 0)
+  const layoutDensity =
+    totalNarrativeLength > 900 || populatedMaterialsRows.length > 4
+      ? 'tight'
+      : totalNarrativeLength > 520 || populatedMaterialsRows.length > 2
+      ? 'compact'
+      : 'comfortable'
 
   return {
     ...csr,
@@ -214,9 +252,11 @@ export function buildCsrPreviewData(csr, options = {}) {
     showAcknowledgement: parsed.meta.showAcknowledgement !== false,
     recipientTitle: parsed.meta.recipientTitle || DEFAULT_CSR_META.recipientTitle,
     recipientRole: parsed.meta.recipientRole || '',
-    technicianName: parsed.meta.technicianName || '',
+    technicianName: resolvedTechnicianName,
+    technicianSignatory: resolvedTechnicianSignatory,
     showTechnicianSignLine: !!parsed.meta.showTechnicianSignLine,
     technicianRemarks: csr.engineer_remarks || '',
+    layoutDensity,
   }
 }
 
@@ -238,6 +278,6 @@ export function getCsrBranding(settings = {}) {
   }
 }
 
-export function getCsrViewData(csr) {
-  return buildCsrPreviewData(csr)
+export function getCsrViewData(csr, options = {}) {
+  return buildCsrPreviewData(csr, options)
 }

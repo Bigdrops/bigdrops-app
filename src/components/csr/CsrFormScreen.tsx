@@ -1,19 +1,9 @@
 import * as React from 'react'
-import { Hash, MoreHorizontal, Search, ChevronRight, Save, ChevronDown } from 'lucide-react'
+import { Hash, MoreHorizontal, Save } from 'lucide-react'
 
 import { supabase } from '@/supabase'
+import ClientSelector from '@/components/ClientSelector'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-
-type ClientRow = {
-  id: string
-  name: string
-  address?: string | null
-  city?: string | null
-  state?: string | null
-  contact_person?: string | null
-  phone?: string | null
-  email?: string | null
-}
 
 type SignatoryRow = {
   id: string
@@ -168,29 +158,18 @@ export default function CsrFormScreen({
   onRemoveMaterialRow,
   onSave,
 }: Props) {
-  const [clients, setClients] = React.useState<ClientRow[]>([])
   const [signatories, setSignatories] = React.useState<SignatoryRow[]>([])
-  const [clientQuery, setClientQuery] = React.useState('')
-  const [showClientResults, setShowClientResults] = React.useState(false)
   const [signatorySheetOpen, setSignatorySheetOpen] = React.useState(false)
   const [materialsTitle, setMaterialsTitle] = React.useState('Materials Used')
-
-  React.useEffect(() => {
-    setClientQuery(String(csr.client_name || ''))
-  }, [csr.client_name])
 
   React.useEffect(() => {
     let mounted = true
 
     const load = async () => {
-      const [clientsResult, signatoriesResult] = await Promise.all([
-        supabase.from('clients').select('*').order('name'),
-        supabase.from('signatories').select('*').order('name'),
-      ])
+      const { data } = await supabase.from('signatories').select('*').order('name')
 
       if (!mounted) return
-      setClients((clientsResult.data || []) as ClientRow[])
-      setSignatories((signatoriesResult.data || []) as SignatoryRow[])
+      setSignatories((data || []) as SignatoryRow[])
     }
 
     load()
@@ -199,28 +178,8 @@ export default function CsrFormScreen({
     }
   }, [])
 
-  const filteredClients = React.useMemo(() => {
-    const query = clientQuery.trim().toLowerCase()
-    if (!query) return clients.slice(0, 8)
-    return clients.filter((client) =>
-      [client.name, client.contact_person, client.phone, client.email]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
-        .includes(query),
-    )
-  }, [clientQuery, clients])
-
   const selectedSignatory = signatories.find((entry) => String(entry.id) === String(csr.technician_signatory_id || '')) || null
   const materialCount = materialsRows.filter((row) => row.item || row.quantity || row.unit).length
-
-  const selectClient = (client: ClientRow) => {
-    onUpdate('client_id', client.id)
-    onUpdate('client_name', client.name)
-    onUpdate('address', client.address || '')
-    setClientQuery(client.name)
-    setShowClientResults(false)
-  }
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-[#f2f4f8] px-3 pb-[120px] pt-4 sm:px-4">
@@ -238,51 +197,17 @@ export default function CsrFormScreen({
             </button>
           </div>
 
-          <div className="relative mt-4 rounded-[16px] border-2 border-dashed border-[#d8e1ec] bg-[#f8fafc] p-3">
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[#ecfdf5] text-[#059669]">
-                <Search className="h-4.5 w-4.5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">Client</div>
-                <div className="mt-0.5 text-[14px] font-bold text-[#0f172a]">{csr.client_name || 'Select a client'}</div>
-                <div className="text-[11px] text-[#94a3b8]">Tap to change</div>
-                <div className="mt-3">
-                  <div className="relative">
-                    <TextInput
-                      value={clientQuery}
-                      placeholder="Search clients"
-                      onFocus={() => setShowClientResults(true)}
-                      onChange={(event) => {
-                        setClientQuery(event.target.value)
-                        setShowClientResults(true)
-                      }}
-                    />
-                    {showClientResults && filteredClients.length > 0 ? (
-                      <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 max-h-56 overflow-y-auto rounded-[16px] border border-[#e2e8f0] bg-white p-2 shadow-[0_12px_34px_rgba(15,23,42,0.12)]">
-                        {filteredClients.map((client) => (
-                          <button
-                            key={client.id}
-                            type="button"
-                            onClick={() => selectClient(client)}
-                            className="flex w-full items-center justify-between gap-3 rounded-[12px] px-3 py-3 text-left hover:bg-[#f8fafc]"
-                          >
-                            <div className="min-w-0">
-                              <div className="truncate text-[14px] font-bold text-[#0f172a]">{client.name}</div>
-                              <div className="truncate text-[11px] text-[#94a3b8]">
-                                {[client.contact_person, client.phone].filter(Boolean).join(' • ') || 'Client'}
-                              </div>
-                            </div>
-                            <ChevronRight className="h-4 w-4 shrink-0 text-[#cbd5e1]" />
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-              <ChevronRight className="mt-1 h-4 w-4 text-[#cbd5e1]" />
-            </div>
+          <div className="mt-4 rounded-[16px] border-2 border-dashed border-[#d8e1ec] bg-[#f8fafc] p-3">
+            <ClientSelector
+              clientId={String(csr.client_id || '')}
+              clientName={String(csr.client_name || '')}
+              isMobile
+              onClientChange={(clientId: string, clientName: string, client: { address?: string | null } | null) => {
+                onUpdate('client_id', clientId || '')
+                onUpdate('client_name', clientName || '')
+                onUpdate('address', client?.address || '')
+              }}
+            />
           </div>
 
           <div className="mt-4 space-y-3">

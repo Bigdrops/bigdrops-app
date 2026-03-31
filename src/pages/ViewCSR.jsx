@@ -16,6 +16,7 @@ export default function ViewCSR() {
   const navigate = useNavigate()
   const [csr, setCsr] = useState(null)
   const [settings, setSettings] = useState({})
+  const [signatories, setSignatories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showMore, setShowMore] = useState(false)
   const [template, setTemplate] = useState(() => {
@@ -34,6 +35,9 @@ export default function ViewCSR() {
     supabase.from('settings').select('*').eq('id', 1).single().then(({ data }) => {
       if (data) setSettings(data)
     })
+    supabase.from('signatories').select('id, name, role, signature_url').order('name').then(({ data }) => {
+      setSignatories(data || [])
+    })
   }, [id])
 
   useEffect(() => {
@@ -47,7 +51,7 @@ export default function ViewCSR() {
   if (loading) return <Layout title="CSR"><p style={{ padding: 30 }}>Loading...</p></Layout>
   if (!csr) return <Layout title="CSR"><p style={{ padding: 30 }}>CSR not found.</p></Layout>
 
-  const previewData = buildCsrPreviewData(csr)
+  const previewData = buildCsrPreviewData(csr, { signatories })
   const branding = getCsrBranding(settings)
 
   const handleDownload = async () => {
