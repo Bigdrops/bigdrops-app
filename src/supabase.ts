@@ -14,6 +14,7 @@ function parseJwtPayload(token: string | null | undefined): Record<string, unkno
 
     const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
     const padding = '='.repeat((4 - (normalized.length % 4)) % 4)
+
     return JSON.parse(atob(normalized + padding)) as Record<string, unknown>
   } catch {
     return null
@@ -59,7 +60,11 @@ function isAuthRefreshRequest(input: RequestInfo | URL): boolean {
   return /\/auth\/v1\/token\b/i.test(url)
 }
 
-function shouldRetryRequest(input: RequestInfo | URL, init: RequestInit | undefined, error: unknown): boolean {
+function shouldRetryRequest(
+  input: RequestInfo | URL,
+  init: RequestInit | undefined,
+  error: unknown
+): boolean {
   const method = getRequestMethod(init)
 
   if (!isRetryableFetchError(error)) return false
@@ -67,8 +72,7 @@ function shouldRetryRequest(input: RequestInfo | URL, init: RequestInit | undefi
 
   if (RETRYABLE_METHODS.has(method)) return true
 
-  // Very narrow exception:
-  // allow retry for Supabase auth token refresh/revalidation requests.
+  // Narrow exception: allow one retry for auth token refresh calls.
   if (method === 'POST' && isAuthRefreshRequest(input)) return true
 
   return false
