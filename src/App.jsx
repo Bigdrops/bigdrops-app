@@ -45,16 +45,17 @@ const SPLASH_TIPS = [
   'Preparing your workspace...',
   'Getting documents and projects in order...',
 ]
-const RESUME_REFRESH_THRESHOLD_MS = 1500
+
 const RECOVERY_COOLDOWN_MS = 1500
+
 const INVALID_SESSION_PATTERNS = [
   /invalid refresh token/i,
   /refresh token not found/i,
   /refresh_token_not_found/i,
   /invalid_grant/i,
-  /jwt expired/i,
   /session.*not found/i,
 ]
+
 const AUTH_DEBUG = import.meta.env.DEV
 
 function debugAuth(...args) {
@@ -281,7 +282,10 @@ function AppShell({ session, profile, onProfileUpdate }) {
           <Route path="/settings" element={withBoundary(<Settings />)} />
           <Route path="/projects" element={withBoundary(<Projects />)} />
           <Route path="/projects/new" element={withBoundary(<NewProject />)} />
-          <Route path="/projects/:projectId/documents/:documentId" element={withBoundary(<ProjectDocumentView />)} />
+          <Route
+            path="/projects/:projectId/documents/:documentId"
+            element={withBoundary(<ProjectDocumentView />)}
+          />
           <Route path="/projects/:id" element={withBoundary(<ProjectDetail />)} />
           <Route path="/reports" element={withBoundary(<Reports />)} />
           <Route path="/waybills" element={withBoundary(<Waybills />)} />
@@ -302,7 +306,6 @@ function App() {
   const [profile, setProfile] = useState(null)
   const [resolvedProfileUserId, setResolvedProfileUserId] = useState(null)
   const [tipIndex, setTipIndex] = useState(0)
-  const [appShellKey, setAppShellKey] = useState(0)
 
   const loadingRef = useRef(false)
   const splashStartRef = useRef(Date.now())
@@ -312,15 +315,23 @@ function App() {
   const recoveringRef = useRef(false)
   const lastRecoveryAtRef = useRef(0)
   const profileRef = useRef(null)
+  const sessionRef = useRef(null)
+
   const { runLatest: runLatestProfileTask, cancel: cancelProfileTask } = useSafeAsyncTask()
 
   useEffect(() => {
     profileRef.current = profile
   }, [profile])
 
+  useEffect(() => {
+    sessionRef.current = session
+  }, [session])
+
   const resetAuthState = () => {
     cancelProfileTask()
     lastUserIdRef.current = null
+    sessionRef.current = null
+    profileRef.current = null
     setSession(null)
     setProfile(null)
     setResolvedProfileUserId(null)
@@ -356,58 +367,78 @@ function App() {
       }
 
       console.error(`Session restore failed during ${reason}:`, error)
-      resetAuthState()
-      return null
+
+      // Preserve the last known good session on transient failures.
+      return sessionRef.current
     }
   }
 
   const loadProfile = async (userId) => {
     if (!userId) return
+
     debugAuth('loadProfile:start', {
       userId,
       query: "supabase.from('profiles').select('*').eq('id', userId).single()",
     })
+
     setProfileLoading(true)
     setResolvedProfileUserId(null)
-    await runLatestProfileTask(async () => {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
-      debugAuth('loadProfile:queryResult', { userId, data, error })
-      if (error) throw error
-      if (!data) return null
 
-      const { data: authData } = await supabase.auth.getUser()
-      const provider = authData.user?.app_metadata?.provider
-      if (provider === 'email' && !data.has_password) {
-        await supabase.from('profiles').update({ has_password: true }).eq('id', userId)
-        return { ...data, has_password: true }
-      }
-      return data
-    }, {
-      onSuccess: (nextProfile) => {
-        debugAuth('loadProfile:onSuccess', { userId, nextProfile })
-        setProfile(nextProfile)
-        setResolvedProfileUserId(userId)
-      },
-      onError: (err) => {
-        debugAuth('loadProfile:onError', { userId, error: err })
-        setResolvedProfileUserId(userId)
-        if (isInvalidSessionError(err)) {
-          void clearBadSession('profile load', err)
-          return
+    await runLatestProfileTask(
+      async () => {
+        const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+        debugAuth('loadProfile:queryResult', { userId, data, error })
+        if (error) throw error
+        if (!data) return null
+
+        const { data: authData } = await supabase.auth.getUser()
+        const provider = authData.user?.app_metadata?.provider
+
+        if (provider === 'email' && !data.has_password) {
+          await supabase.from('profiles').update({ has_password: true }).eq('id', userId)
+          return { ...data, has_password: true }
         }
-        console.error('Profile fetch error:', err)
+
+        return data
       },
-      onSettled: () => {
-        debugAuth('loadProfile:onSettled', { userId })
-        setProfileLoading(false)
-        loadingRef.current = false
-      },
-    })
+      {
+        onSuccess: (nextProfile) => {
+          debugAuth('loadProfile:onSuccess', { userId, nextProfile })
+          profileRef.current = nextProfile
+          setProfile(nextProfile)
+          setResolvedProfileUserId(userId)
+        },
+        onError: (err) => {
+          debugAuth('loadProfile:onError', { userId, error: err })
+
+          if (isInvalidSessionError(err)) {
+            void clearBadSession('profile load', err)
+            return
+          }
+
+          console.error('Profile fetch error:', err)
+
+          // Preserve existing profile for the same user on transient failures.
+          if (profileRef.current?.id === userId) {
+            setProfile(profileRef.current)
+          }
+
+          // Mark resolution complete so the app does not get stuck on the loader.
+          setResolvedProfileUserId(userId)
+        },
+        onSettled: () => {
+          debugAuth('loadProfile:onSettled', { userId })
+          setProfileLoading(false)
+          loadingRef.current = false
+        },
+      }
+    )
   }
 
   const recoverAppState = async (reason, options = {}) => {
     const { force = false } = options
     const now = Date.now()
+
     if (recoveringRef.current) return
     if (!force && now - lastRecoveryAtRef.current < RECOVERY_COOLDOWN_MS) return
 
@@ -418,59 +449,43 @@ function App() {
       const nextSession = await resolveSessionSafely(`lifecycle recovery (${reason})`)
       const nextUserId = nextSession?.user?.id || null
       const currentProfileUserId = profileRef.current?.id || null
-      const hiddenDuration = hiddenAtRef.current ? now - hiddenAtRef.current : 0
-      const resumedFromHidden = hiddenAtRef.current !== null
 
       debugAuth('recoverAppState', {
         reason,
         force,
         nextUserId,
         currentProfileUserId,
-        resumedFromHidden,
-        hiddenDuration,
         authLoading,
         profileLoading,
       })
 
+      sessionRef.current = nextSession
       setSession(nextSession)
       lastUserIdRef.current = nextUserId || null
       setAuthLoading(false)
 
       if (!nextUserId) {
         cancelProfileTask()
+        profileRef.current = null
         setProfile(null)
+        setResolvedProfileUserId(null)
         setProfileLoading(false)
         loadingRef.current = false
-      } else {
-        const shouldReloadProfile =
-          !profileRef.current ||
-          currentProfileUserId !== nextUserId ||
-          profileLoading ||
-          loadingRef.current ||
-          resumedFromHidden
-
-        if (shouldReloadProfile) {
-          cancelProfileTask()
-          loadingRef.current = true
-          await loadProfile(nextUserId)
-        } else {
-          setProfileLoading(false)
-          loadingRef.current = false
-        }
+        return
       }
 
-      const shouldRemountRoutes =
-        !!nextUserId &&
-        (
-        reason === 'online' ||
-        reason === 'pageshow' ||
-        reason === 'token_refresh' ||
-        resumedFromHidden ||
-        hiddenDuration >= RESUME_REFRESH_THRESHOLD_MS
-        )
+      const shouldReloadProfile =
+        !profileRef.current ||
+        currentProfileUserId !== nextUserId ||
+        loadingRef.current
 
-      if (shouldRemountRoutes) {
-        setAppShellKey((current) => current + 1)
+      if (shouldReloadProfile) {
+        cancelProfileTask()
+        loadingRef.current = true
+        await loadProfile(nextUserId)
+      } else {
+        setProfileLoading(false)
+        loadingRef.current = false
       }
     } catch (error) {
       console.error('Lifecycle recovery error:', error)
@@ -504,12 +519,116 @@ function App() {
   }, [])
 
   useEffect(() => {
+    let isActive = true
     let subscription = null
+
+    const handleAuthStateChange = async (event, nextSession) => {
+      if (!isActive) return
+
+      const nextUserId = nextSession?.user?.id || null
+      const previousUserId = lastUserIdRef.current
+      const isSameUserSession = !!previousUserId && previousUserId === nextUserId
+
+      debugAuth('onAuthStateChange', {
+        event,
+        sessionUserId: nextSession?.user?.id || null,
+        sessionEmail: nextSession?.user?.email || null,
+        previousUserId,
+        nextUserId,
+      })
+
+      if (event === 'SIGNED_OUT') {
+        resetAuthState()
+        setShowSplash(false)
+        return
+      }
+
+      if (event === 'INITIAL_SESSION') {
+        sessionRef.current = nextSession
+        setSession(nextSession)
+        lastUserIdRef.current = nextUserId
+
+        if (!nextUserId) {
+          setAuthLoading(false)
+          setProfileLoading(false)
+          setResolvedProfileUserId(null)
+        }
+
+        return
+      }
+
+      if (event === 'TOKEN_REFRESHED') {
+        sessionRef.current = nextSession
+        setSession(nextSession)
+        lastUserIdRef.current = nextUserId
+        setAuthLoading(false)
+        return
+      }
+
+      if (event === 'TOKEN_REFRESH_FAILED') {
+        await clearBadSession('token refresh failure', new Error('Supabase token refresh failed'))
+        return
+      }
+
+      if (event === 'SIGNED_IN') {
+        sessionRef.current = nextSession
+        setSession(nextSession)
+        lastUserIdRef.current = nextUserId
+
+        if (!nextUserId) {
+          resetAuthState()
+          return
+        }
+
+        const shouldHydrateProfile =
+          !profileRef.current ||
+          profileRef.current.id !== nextUserId ||
+          loadingRef.current
+
+        // Supabase can emit SIGNED_IN again when the same session is re-confirmed.
+        // Do not treat that as a real fresh login.
+        if (isSameUserSession && !shouldHydrateProfile) {
+          setAuthLoading(false)
+          return
+        }
+
+        setResolvedProfileUserId(null)
+
+        const isRealNewSignIn = !previousUserId && !!nextUserId
+        if (isRealNewSignIn && hasBootedRef.current) {
+          splashStartRef.current = Date.now()
+          setShowSplash(true)
+        }
+
+        setAuthLoading(true)
+        loadingRef.current = true
+        await loadProfile(nextUserId)
+        setAuthLoading(false)
+        return
+      }
+
+      if (event === 'USER_UPDATED' && nextUserId) {
+        sessionRef.current = nextSession
+        setSession(nextSession)
+        lastUserIdRef.current = nextUserId
+        await loadProfile(nextUserId)
+        return
+      }
+
+      sessionRef.current = nextSession
+      setSession(nextSession)
+      lastUserIdRef.current = nextUserId
+    }
+
     const init = async () => {
       splashStartRef.current = Date.now()
       setAuthLoading(true)
+
       try {
         const restoredSession = await resolveSessionSafely('app bootstrap')
+        if (!isActive) return
+
+        sessionRef.current = restoredSession
         setSession(restoredSession)
         lastUserIdRef.current = restoredSession?.user?.id || null
 
@@ -517,80 +636,29 @@ function App() {
           loadingRef.current = true
           await loadProfile(restoredSession.user.id)
         } else {
+          profileRef.current = null
           setProfile(null)
+          setResolvedProfileUserId(null)
         }
       } finally {
-        setAuthLoading(false)
+        if (isActive) {
+          setAuthLoading(false)
+        }
       }
 
-      const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
-        const nextUserId = session?.user?.id || null
-        const previousUserId = lastUserIdRef.current
-        const isRealNewSignIn = !previousUserId && !!nextUserId
-        debugAuth('onAuthStateChange', {
-          event,
-          sessionUserId: session?.user?.id || null,
-          sessionEmail: session?.user?.email || null,
-          previousUserId,
-          nextUserId,
-        })
-        if (event === 'SIGNED_OUT') {
-          cancelProfileTask()
-          lastUserIdRef.current = null
-          setSession(null)
-          setProfile(null)
-          setResolvedProfileUserId(null)
-          loadingRef.current = false
-          setProfileLoading(false)
-          setAuthLoading(false)
-          setShowSplash(false)
-          return
-        }
-        if (event === 'SIGNED_IN') {
-          lastUserIdRef.current = nextUserId
-          setSession(session)
-          setResolvedProfileUserId(null)
-          if (isRealNewSignIn && hasBootedRef.current) {
-            splashStartRef.current = Date.now()
-            setShowSplash(true)
-          }
-          if (nextUserId) {
-            setAuthLoading(true)
-            loadingRef.current = true
-            await loadProfile(nextUserId)
-            setAuthLoading(false)
-          }
-          return
-        }
-        if (event === 'TOKEN_REFRESHED') {
-          await recoverAppState('token_refresh', { force: true })
-          return
-        }
-        if (event === 'TOKEN_REFRESH_FAILED') {
-          await clearBadSession('token refresh failure', new Error('Supabase token refresh failed'))
-          return
-        }
-        if (event === 'INITIAL_SESSION') {
-          setSession(session)
-          lastUserIdRef.current = nextUserId
-          if (!nextUserId) {
-            setAuthLoading(false)
-            setProfileLoading(false)
-            setResolvedProfileUserId(null)
-          }
-          return
-        }
-        if (event === 'USER_UPDATED' && nextUserId) {
-          await loadProfile(nextUserId)
-        }
-        setSession(session)
-        lastUserIdRef.current = nextUserId
+      const { data } = supabase.auth.onAuthStateChange((event, nextSession) => {
+        setTimeout(() => {
+          void handleAuthStateChange(event, nextSession)
+        }, 0)
       })
+
       subscription = data.subscription
     }
 
     void init()
+
     return () => {
+      isActive = false
       cancelProfileTask()
       subscription?.unsubscribe()
     }
@@ -606,18 +674,9 @@ function App() {
         hiddenAtRef.current = Date.now()
         return
       }
+
       if (!hiddenAtRef.current) return
       void recoverAppState('visibility')
-    }
-
-    const handleFocus = () => {
-      if (document.visibilityState === 'visible' && hiddenAtRef.current) {
-        void recoverAppState('focus')
-      }
-    }
-
-    const handlePageShow = () => {
-      void recoverAppState('pageshow')
     }
 
     const handleOnline = () => {
@@ -625,14 +684,10 @@ function App() {
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('focus', handleFocus)
-    window.addEventListener('pageshow', handlePageShow)
     window.addEventListener('online', handleOnline)
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('focus', handleFocus)
-      window.removeEventListener('pageshow', handlePageShow)
       window.removeEventListener('online', handleOnline)
     }
   }, [])
@@ -640,12 +695,15 @@ function App() {
   useEffect(() => {
     const loadingDone = !authLoading && !profileLoading
     if (!loadingDone) return
+
     const elapsed = Date.now() - splashStartRef.current
     const minimumVisible = 600
     const remaining = Math.max(0, minimumVisible - elapsed)
+
     const timer = setTimeout(() => {
       setShowSplash(false)
     }, remaining)
+
     return () => clearTimeout(timer)
   }, [authLoading, profileLoading])
 
@@ -671,7 +729,16 @@ function App() {
       profileLoading,
       waitingForProfileResolution,
     })
-  }, [approved, authLoading, currentSessionUserId, profile, profileLoading, resolvedProfileUserId, session?.user?.email, waitingForProfileResolution])
+  }, [
+    approved,
+    authLoading,
+    currentSessionUserId,
+    profile,
+    profileLoading,
+    resolvedProfileUserId,
+    session?.user?.email,
+    waitingForProfileResolution,
+  ])
 
   return (
     <>
@@ -687,16 +754,15 @@ function App() {
                   ? withBoundary(<Login />)
                   : waitingForProfileResolution
                     ? withBoundary(<PageLoader />)
-                  : !approved
-                    ? withBoundary(<PendingApproval email={session?.user?.email || ''} />)
-                    : withBoundary(
-                        <AppShell
-                          key={appShellKey}
-                          session={session}
-                          profile={profile}
-                          onProfileUpdate={() => loadProfile(session.user.id)}
-                        />
-                      )
+                    : !approved
+                      ? withBoundary(<PendingApproval email={session?.user?.email || ''} />)
+                      : withBoundary(
+                          <AppShell
+                            session={session}
+                            profile={profile}
+                            onProfileUpdate={() => loadProfile(session.user.id)}
+                          />
+                        )
               }
             />
           </Routes>
