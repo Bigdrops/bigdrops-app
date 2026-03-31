@@ -3,6 +3,7 @@ import { Hash, MoreHorizontal, Save } from 'lucide-react'
 
 import { supabase } from '@/supabase'
 import ClientSelector from '@/components/ClientSelector'
+import UnitInput from '@/components/UnitInput'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
@@ -48,12 +49,11 @@ type Props = {
 }
 
 const STATUS_OPTIONS = [
-  'Complete',
-  'Incomplete',
+  'OK',
+  'Working solution provided',
   'Pending for spares',
   'Under observation',
-  'Working solution provided',
-  'Field Entry Pending',
+  'Incomplete',
 ]
 
 const CALL_TYPE_OPTIONS = ['Warranty', 'AMC', 'Paid Service']
@@ -276,7 +276,13 @@ export default function CsrFormScreen({
               <FieldLabel>System Down</FieldLabel>
               <SelectField
                 value={csr.system_down === true ? 'Yes' : csr.system_down === false ? 'No' : ''}
-                onChange={(value) => onUpdate('system_down', value === 'Yes')}
+                onChange={(value) => {
+                  if (!value) {
+                    onUpdate('system_down', null)
+                    return
+                  }
+                  onUpdate('system_down', value === 'Yes')
+                }}
                 options={YES_NO_OPTIONS}
                 placeholder="Select"
               />
@@ -363,7 +369,7 @@ export default function CsrFormScreen({
               </div>
             </div>
             <div>
-              <FieldLabel>Status</FieldLabel>
+              <FieldLabel>Status After Service</FieldLabel>
               <SelectField value={String(csr.status || '')} onChange={(value) => onUpdate('status', value)} options={STATUS_OPTIONS} placeholder="Select" />
             </div>
             <div>
@@ -445,10 +451,37 @@ export default function CsrFormScreen({
               {materialsRows.map((row, index) => (
                 <div key={index} className="rounded-[16px] border border-[#e2e8f0] bg-[#f8fafc] p-3">
                   <div className="grid grid-cols-[minmax(0,1.4fr)_88px_86px] gap-3">
-                    <TextInput value={row.item} onChange={(event) => onUpdateMaterialRow(index, 'item', event.target.value)} placeholder="Material" className="bg-white" />
-                    <TextInput value={row.quantity} onChange={(event) => onUpdateMaterialRow(index, 'quantity', event.target.value)} placeholder="Qty" className="bg-white" />
-                    <TextInput value={row.unit} onChange={(event) => onUpdateMaterialRow(index, 'unit', event.target.value)} placeholder="Unit" className="bg-white" />
+                    <TextInput
+                      value={row.item}
+                      onChange={(event) => onUpdateMaterialRow(index, 'item', event.target.value)}
+                      placeholder="Material"
+                      className="bg-white"
+                    />
+
+                    <TextInput
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      step="any"
+                      value={row.quantity}
+                      onChange={(event) => {
+                        const next = event.target.value
+                        if (next === '' || /^\d*\.?\d*$/.test(next)) {
+                          onUpdateMaterialRow(index, 'quantity', next)
+                        }
+                      }}
+                      placeholder="Qty"
+                      className="bg-white text-center"
+                    />
+
+                    <div className="[&>div>input]:h-11 [&>div>input]:rounded-[12px] [&>div>input]:border-[1.5px] [&>div>input]:border-[#e2e8f0] [&>div>input]:bg-white [&>div>input]:px-3 [&>div>input]:text-[14px]">
+                      <UnitInput
+                        value={row.unit || ''}
+                        onChange={(value) => onUpdateMaterialRow(index, 'unit', value)}
+                      />
+                    </div>
                   </div>
+
                   {materialsRows.length > 1 ? (
                     <button type="button" onClick={() => onRemoveMaterialRow(index)} className="mt-3 text-[12px] font-bold text-[#ef4444]">
                       Remove
