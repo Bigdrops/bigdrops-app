@@ -5,6 +5,7 @@ import {
   FolderKanban,
   Users,
   MoreHorizontal,
+  Menu,
   X,
   ChevronRight,
   Receipt,
@@ -291,6 +292,25 @@ export default function Layout({ title, children, session, hidePageHeader = fals
       </div>
 
       <div className="md:hidden">
+        {isHome ? (
+          <div className="w-full px-4 pt-4">
+            <div className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(true)}
+                className="grid h-10 w-10 place-items-center rounded-2xl border border-border bg-muted/50 text-slate-700"
+                aria-label="Open navigation menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <div className="min-w-0 px-3 text-sm font-black tracking-tight text-foreground">
+                {APP_NAME}
+              </div>
+              <div className="h-10 w-10" aria-hidden="true" />
+            </div>
+          </div>
+        ) : null}
+
         {!isHome && !hidePageHeader ? (
           <div className="w-full px-4 pt-4">
             <div className="rounded-2xl border-l-4 border-l-blue-500 border border-border bg-card px-5 py-4 shadow-sm">

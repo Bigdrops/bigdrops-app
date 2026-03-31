@@ -9,7 +9,6 @@ import {
   FileSignature,
   FileText,
   FolderOpen,
-  Menu,
   Truck,
   AlertCircle,
 } from 'lucide-react'
@@ -20,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import Layout, { MobileChromeContext } from '../components/Layout'
+import Layout from '../components/Layout'
 import { getQuickTiles, loadStoredQuickTiles } from '../config/quickTiles'
 import { supabase } from '../supabase'
 
@@ -73,7 +72,6 @@ function getStatusStyle(status) {
 
 export default function Dashboard({ session }) {
   const navigate = useNavigate()
-  const mobileChrome = React.useContext(MobileChromeContext)
   const [quickAccessOpen, setQuickAccessOpen] = React.useState(false)
   const [loading, setLoading] = React.useState(true)
   const [recentDocs, setRecentDocs] = React.useState([])
@@ -160,17 +158,6 @@ export default function Dashboard({ session }) {
                 </div>
                 <div className="mt-0.5 text-xs text-muted-foreground">{dateLabel}</div>
               </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-9 w-9 rounded-2xl border-border bg-muted/50 md:hidden"
-                onClick={mobileChrome.openSidebar}
-                aria-label="Open navigation menu"
-              >
-                <Menu className="h-4.5 w-4.5 text-slate-700" />
-              </Button>
             </div>
           </Card>
 
