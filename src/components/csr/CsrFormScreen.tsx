@@ -4,6 +4,7 @@ import { Hash, MoreHorizontal, Save } from 'lucide-react'
 import { supabase } from '@/supabase'
 import ClientSelector from '@/components/ClientSelector'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 type SignatoryRow = {
   id: string
@@ -108,19 +109,25 @@ function SelectField({
   options: string[]
   placeholder?: string
 }) {
+  const safeValue = value && options.includes(value) ? value : '__placeholder__'
+
   return (
-    <select
-      value={value || ''}
-      onChange={(event) => onChange(event.target.value)}
-      className="h-11 w-full rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 text-[14px] text-[#0f172a] outline-none"
+    <Select
+      value={safeValue}
+      onValueChange={(next) => onChange(next === '__placeholder__' ? '' : next)}
     >
-      <option value="">{placeholder || 'Select'}</option>
-      {options.map((option) => (
-        <option key={option} value={option}>
-          {option}
-        </option>
-      ))}
-    </select>
+      <SelectTrigger className="h-11 w-full rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 text-[14px] text-[#0f172a] shadow-none focus:ring-0 focus:ring-offset-0">
+        <SelectValue placeholder={placeholder || 'Select'} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__placeholder__">{placeholder || 'Select'}</SelectItem>
+        {options.map((option) => (
+          <SelectItem key={option} value={option}>
+            {option}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }
 
@@ -182,7 +189,7 @@ export default function CsrFormScreen({
   const materialCount = materialsRows.filter((row) => row.item || row.quantity || row.unit).length
 
   return (
-    <div className="mx-auto min-h-screen max-w-md bg-[#f2f4f8] px-3 pb-[120px] pt-4 sm:px-4">
+    <div className="mx-auto min-h-screen max-w-md bg-[#f2f4f8] px-3 pb-[200px] pt-4 sm:px-4">
       <div className="space-y-5">
         <Section title="Document Details" dotClassName="bg-[#0f172a]">
           <div className="flex items-start justify-between gap-3">
@@ -245,11 +252,6 @@ export default function CsrFormScreen({
                 }}
               />
             </div>
-
-            <div>
-              <FieldLabel>Address</FieldLabel>
-              <TextArea value={String(csr.address || '')} className="min-h-[84px]" onChange={(event) => onUpdate('address', event.target.value)} />
-            </div>
           </div>
         </Section>
 
@@ -272,7 +274,12 @@ export default function CsrFormScreen({
             </div>
             <div>
               <FieldLabel>System Down</FieldLabel>
-              <SelectField value={String(csr.system_down || '')} onChange={(value) => onUpdate('system_down', value)} options={YES_NO_OPTIONS} placeholder="Select" />
+              <SelectField
+                value={csr.system_down === true ? 'Yes' : csr.system_down === false ? 'No' : ''}
+                onChange={(value) => onUpdate('system_down', value === 'Yes')}
+                options={YES_NO_OPTIONS}
+                placeholder="Select"
+              />
             </div>
           </div>
         </Section>
@@ -520,7 +527,7 @@ export default function CsrFormScreen({
         type="button"
         onClick={onSave}
         disabled={saving}
-        className="fixed bottom-5 right-5 z-40 flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#0f172a] text-white shadow-[0_10px_28px_rgba(15,23,42,0.24)] disabled:opacity-60"
+        className="fixed bottom-[108px] right-5 z-[70] flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#0f172a] text-white shadow-[0_10px_28px_rgba(15,23,42,0.24)] disabled:opacity-60"
         aria-label={saving ? 'Saving CSR' : 'Save CSR'}
       >
         <Save className="h-7 w-7" />
