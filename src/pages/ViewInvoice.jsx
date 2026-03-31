@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import DOMPurify from 'dompurify'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
@@ -9,14 +10,12 @@ import {
   DocumentBottomBar,
   DocumentDesignPanel,
   DocumentDesignStyleEditor,
-  DocumentDetailRows,
   DocumentFloatingFab,
   DocumentLivePreviewCard,
   DocumentPdfSheet,
   DocumentSection,
   DocumentSummaryDisclosure,
   DocumentStatusStrip,
-  DocumentSummaryList,
   DocumentTemplatePicker,
   DocumentTopBar,
 } from '@/components/document/DocumentViewShell'
@@ -568,16 +567,6 @@ export default function ViewInvoice() {
             ? 'bg-amber-50 text-amber-700'
             : 'bg-slate-100 text-slate-700'
 
-  const shellDetailRows = [
-    { label: 'Invoice No.', value: invoice.invoice_number || 'Not set' },
-    { label: 'Client', value: invoice.client_name || 'Unassigned' },
-    { label: 'Issue Date', value: invoice.issue_date || 'Not set' },
-    { label: 'Due Date', value: invoice.due_date || 'Not set' },
-    { label: 'PO Number', value: poNumber || '—' },
-    { label: 'Payment Terms', value: invoice.payment_terms || '—' },
-    { label: 'Title', value: invoice.invoice_title || invoice.document_type || '—' },
-  ]
-
   const shellStatusItems = ['draft', 'sent', 'partial', 'paid', 'overdue'].map((status) => ({
     label: String(status).replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()),
     active: computedStatus === status,
@@ -623,17 +612,54 @@ export default function ViewInvoice() {
     client?.phone || null,
     client?.email || null,
   ].filter(Boolean)
+  const topHeaderFields = Array.isArray(customFieldObject?.header)
+    ? customFieldObject.header.filter((field) => field?.label && field?.value)
+    : []
+  const bottomFields = Array.isArray(customFieldObject?.bottom)
+    ? customFieldObject.bottom.filter((field) => field?.text)
+    : []
+  const attachmentLinks = Array.isArray(customFieldObject?.attachments)
+    ? customFieldObject.attachments.filter((entry) => entry?.url).map((entry, index) => ({
+        key: `${entry.label || entry.url || index}`,
+        label: entry.label || entry.name || `Reference ${index + 1}`,
+        url: entry.url,
+      }))
+    : []
+  const previewCustomColumns = Array.isArray(customFieldObject?.columnConfig)
+    ? customFieldObject.columnConfig.filter((column) => column?.visible && String(column?.key || '').startsWith('custom_'))
+    : []
+  const previewDetailRows = [
+    { label: 'Client', value: invoice.client_name || 'Unassigned' },
+    { label: 'PO Number', value: poNumber || '' },
+    { label: 'Payment Terms', value: invoice.payment_terms || '' },
+    { label: 'Title', value: invoice.invoice_title || invoice.document_type || '' },
+    { label: 'Work Duration', value: invoice.work_duration || '' },
+    ...topHeaderFields.map((field) => ({ label: field.label, value: field.value })),
+  ].filter((row) => String(row.value || '').trim().length > 0)
   const previewItems = items.map((item, index) => {
     if (item.row_type === 'group_header') {
       return { type: 'group', label: item.group_name || `Group ${index + 1}` }
     }
+    const customFacts = previewCustomColumns
+      .map((column) => {
+        const value = item.custom_data?.[column.key]
+        return value === null || value === undefined || value === '' ? null : `${column.label}: ${value}`
+      })
+      .filter(Boolean)
     return {
       type: 'line',
       label: item.description || 'Untitled item',
       detail: item.sub_description || '',
-      qty: item.quantity ? `${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : '-',
-      rate: formatMoney(item.unit_price || 0),
       value: formatMoney(item.amount || item.quantity * item.unit_price || 0),
+      facts: [
+        item.quantity ? `Qty: ${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : null,
+        `Rate: ${formatMoney(item.unit_price || 0)}`,
+        item.make ? `Make: ${item.make}` : null,
+        item.install_rate !== null && item.install_rate !== undefined ? `Install: ${item.install_rate}` : null,
+        item.vat_rate !== null && item.vat_rate !== undefined ? `VAT: ${item.vat_rate}%` : null,
+        item.discount_rate !== null && item.discount_rate !== undefined ? `Discount: ${item.discount_rate}%` : null,
+        ...customFacts,
+      ].filter(Boolean),
     }
   })
   const previewTotals = [
@@ -643,8 +669,59 @@ export default function ViewInvoice() {
     ...(Number(invoice.transportation || 0) > 0 ? [{ label: 'Transportation', value: formatMoney(invoice.transportation || 0) }] : []),
     ...(Number(invoice.shipping || 0) > 0 ? [{ label: 'Shipping', value: formatMoney(invoice.shipping || 0) }] : []),
     ...(Number(invoice.discount || 0) > 0 ? [{ label: 'Discount', value: formatMoney(invoice.discount || 0), valueClassName: 'text-red-600' }] : []),
+    ...(Number(invoice.wht || 0) > 0 ? [{ label: 'WHT', value: formatMoney(invoice.wht || 0) }] : []),
     { label: 'Total', value: formatMoney(invoiceTotal), emphasis: true, valueClassName: 'text-slate-950' },
+    { label: 'Cash Received', value: formatMoney(cashReceived) },
+    { label: 'Balance Due', value: formatMoney(balanceDue), emphasis: true, valueClassName: balanceDue > 0 ? 'text-red-200' : 'text-emerald-200' },
   ]
+  const previewNotesSections = [
+    invoice.notes
+      ? {
+          title: customFieldObject?.notesTitle || 'Notes',
+          content: (
+            <div
+              className="prose prose-sm max-w-none break-words text-foreground"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(invoice.notes) }}
+            />
+          ),
+        }
+      : null,
+    invoice.terms
+      ? {
+          title: customFieldObject?.termsTitle || 'Terms and Conditions',
+          content: (
+            <div
+              className="prose prose-sm max-w-none break-words text-foreground"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(invoice.terms) }}
+            />
+          ),
+        }
+      : null,
+    ...bottomFields.map((field, index) => ({
+      title: index === 0 ? 'Additional Notes' : `Additional Notes ${index + 1}`,
+      content: <div className="whitespace-pre-wrap break-words">{field.text}</div>,
+    })),
+    ...(attachmentLinks.length > 0
+      ? [{
+          title: 'Reference Links',
+          content: (
+            <div className="space-y-2">
+              {attachmentLinks.map((link) => (
+                <a
+                  key={link.key}
+                  href={link.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block break-all text-sm font-medium text-blue-700 underline decoration-blue-300 underline-offset-4"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          ),
+        }]
+      : []),
+  ].filter(Boolean)
 
   return (
     <Layout title={invoice.invoice_number} hidePageHeader contentClassName="w-full px-4 pb-32 pt-4 md:px-6 md:pt-6">
@@ -710,10 +787,17 @@ export default function ViewInvoice() {
             { label: 'Due Date', value: invoice.due_date || 'Open' },
             { label: 'Status', value: String(computedStatus).replace(/_/g, ' ') },
           ]}
+          detailRows={previewDetailRows}
           items={previewItems}
           totals={previewTotals}
           amountInWords={invoice.amount_in_words || ''}
           bankDetails={pdfOutput.showBankDetails && selectedPreviewBank ? selectedPreviewBank : null}
+          notesSections={previewNotesSections}
+          signatory={selectedSignatory ? {
+            name: selectedSignatory.name,
+            role: selectedSignatory.role || 'Saved signatory',
+            signatureUrl: selectedSignatory.signature_url || '',
+          } : null}
           accentColor={pdfDesignPreset.accentColor}
         />
 
@@ -722,10 +806,6 @@ export default function ViewInvoice() {
           onChange={handlePdfOutputChange}
           bankAccounts={previewBankAccounts}
         />
-
-        <DocumentSection title="Document Details">
-          <DocumentDetailRows rows={shellDetailRows} />
-        </DocumentSection>
 
         <DocumentSection title="Customize Design">
           <DocumentDesignPanel
@@ -798,22 +878,6 @@ export default function ViewInvoice() {
               })()}
             </CardContent>
           </Card>
-        </DocumentSection>
-
-        <DocumentSection title="Summary">
-          <DocumentSummaryList
-            rows={[
-              { label: 'Subtotal', value: formatMoney(invoice.subtotal || 0) },
-              ...(Number(invoice.vat || 0) > 0 ? [{ label: 'VAT', value: formatMoney(invoice.vat || 0) }] : []),
-              ...(Number(invoice.workmanship || 0) > 0 ? [{ label: 'Workmanship', value: formatMoney(invoice.workmanship || 0) }] : []),
-              ...(Number(invoice.transportation || 0) > 0 ? [{ label: 'Transportation', value: formatMoney(invoice.transportation || 0) }] : []),
-              ...(Number(invoice.shipping || 0) > 0 ? [{ label: 'Shipping', value: formatMoney(invoice.shipping || 0) }] : []),
-              ...(Number(invoice.discount || 0) > 0 ? [{ label: 'Discount', value: formatMoney(invoice.discount || 0), valueClassName: 'text-red-600' }] : []),
-              { label: 'Grand Total', value: formatMoney(invoiceTotal), divider: true, emphasis: true, valueClassName: 'text-emerald-600' },
-              { label: 'Cash Received', value: formatMoney(cashReceived) },
-              { label: 'Balance Due', value: formatMoney(balanceDue), divider: true, emphasis: true, valueClassName: balanceDue > 0 ? 'text-red-600' : 'text-emerald-600' },
-            ]}
-          />
         </DocumentSection>
 
         <DocumentSection title="Payment History">

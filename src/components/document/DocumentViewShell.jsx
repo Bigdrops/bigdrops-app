@@ -497,141 +497,205 @@ export function DocumentLivePreviewCard({
   recipientName,
   recipientLines = [],
   meta = [],
+  detailRows = [],
   items = [],
   totals = [],
   amountInWords,
   bankDetails,
+  notesSections = [],
+  signatory,
   accentColor = '#0f172a',
 }) {
-  const previewItems = items.slice(0, 12)
+  const previewItems = items.slice(0, 16)
+  const previewNotes = notesSections.filter((section) => section?.title && section?.content)
 
   return (
     <Card className="overflow-hidden rounded-[26px] border-border bg-[linear-gradient(180deg,#f8fafc,rgba(255,255,255,0.98))] shadow-sm">
-      <CardContent className="space-y-4 p-4">
-        <div className="flex items-center justify-between gap-3">
+      <CardContent className="p-0">
+        <div className="flex items-center justify-between gap-3 px-3 py-3 sm:px-4">
           <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Preview</div>
           <div className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600">
             {templateLabel}
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
-          <div className="space-y-6 p-5">
-            <div className="flex items-start justify-between gap-5">
-              <div className="min-w-0">
-                <div className="text-[2rem] font-light tracking-[-0.05em]" style={{ color: accentColor }}>{documentLabel}</div>
-                <div className="mt-5 text-sm font-bold uppercase tracking-[0.14em] text-slate-500">{companyName || documentLabel}</div>
-                {companyTagline ? <div className="mt-1 text-sm text-slate-500">{companyTagline}</div> : null}
-                {companyLines.length > 0 ? (
-                  <div className="mt-2 space-y-1 text-sm text-slate-600">
-                    {companyLines.map((line) => <div key={line}>{line}</div>)}
-                  </div>
-                ) : null}
+        <div className="overflow-hidden border-t border-slate-200 bg-white sm:mx-2 sm:mb-2 sm:rounded-[24px] sm:border sm:shadow-[0_18px_34px_rgba(15,23,42,0.08)]">
+          <div className="h-1.5 w-full" style={{ backgroundColor: accentColor }} />
+          <div className="space-y-5 px-3 py-4 sm:px-5 sm:py-6">
+            <div className="space-y-4 border-b border-slate-200 pb-5">
+              <div className="space-y-2">
+                <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">{documentLabel}</div>
+                <div className="break-words text-[2rem] font-black leading-none tracking-[-0.05em] text-foreground">{documentNumber || documentLabel}</div>
               </div>
-              <div className="min-w-[140px] rounded-[18px] bg-slate-50 px-4 py-3">
-                <div className="space-y-3">
-                  <div>
-                    <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">{documentLabel} No.</div>
-                    <div className="mt-1 text-sm font-bold text-foreground">{documentNumber}</div>
+
+              <div className="space-y-4 sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,0.88fr)] sm:gap-4 sm:space-y-0">
+                <div className="min-w-0 space-y-2">
+                  <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">From</div>
+                  <div className="break-words text-base font-bold text-foreground">{companyName || documentLabel}</div>
+                  {companyTagline ? <div className="text-sm text-slate-500">{companyTagline}</div> : null}
+                  {companyLines.length > 0 ? (
+                    <div className="space-y-1 text-sm leading-6 text-slate-600">
+                      {companyLines.map((line) => <div key={line}>{line}</div>)}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="min-w-0 rounded-[20px] bg-slate-50 px-4 py-4">
+                  <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">{recipientLabel}</div>
+                  <div className="mt-2 break-words text-base font-bold text-foreground">{recipientName || 'Unassigned'}</div>
+                  {recipientLines.length > 0 ? (
+                    <div className="mt-2 space-y-1 text-sm leading-6 text-slate-600">
+                      {recipientLines.map((line) => <div key={line}>{line}</div>)}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            {meta.length > 0 ? (
+              <div className="grid gap-3 border-b border-slate-200 pb-5 sm:grid-cols-2">
+                {meta.map((entry) => (
+                  <div key={entry.label} className="min-w-0 rounded-[18px] border border-slate-200 bg-white px-4 py-3">
+                    <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">{entry.label}</div>
+                    <div className="mt-1 break-words text-sm font-semibold text-foreground">{entry.value || '—'}</div>
                   </div>
-                  {meta.map((entry) => (
-                    <div key={entry.label}>
-                      <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">{entry.label}</div>
-                      <div className="mt-1 text-sm font-semibold text-foreground">{entry.value}</div>
+                ))}
+              </div>
+            ) : null}
+
+            {detailRows.length > 0 ? (
+              <div className="space-y-3 border-b border-slate-200 pb-5">
+                <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Document Snapshot</div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {detailRows.map((row) => (
+                    <div key={row.label} className="min-w-0">
+                      <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">{row.label}</div>
+                      <div className="mt-1 break-words text-sm leading-6 text-foreground">{row.value || '—'}</div>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
+            ) : null}
 
-            <div className="rounded-[20px] bg-slate-100 px-4 py-4">
-              <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">{recipientLabel}</div>
-              <div className="mt-2 text-base font-extrabold text-foreground">{recipientName || 'Unassigned'}</div>
-              {recipientLines.length > 0 ? (
-                <div className="mt-2 space-y-1 text-sm text-slate-600">
-                  {recipientLines.map((line) => <div key={line}>{line}</div>)}
-                </div>
-              ) : null}
-            </div>
-
-            <div className="overflow-hidden rounded-[18px] border border-slate-200">
-              <div className="overflow-x-auto">
-                <div className="min-w-[620px]">
-                  <div className="grid grid-cols-[minmax(0,1fr)_84px_110px_120px] gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-                    <div>Item</div>
-                    <div className="text-right">Qty</div>
-                    <div className="text-right">Rate</div>
-                    <div className="text-right">Amount</div>
-                  </div>
-                  <div className="divide-y divide-slate-100">
-                    {previewItems.length > 0 ? (
-                      previewItems.map((item, index) =>
-                        item.type === 'group' ? (
-                          <div key={`${item.label}-${index}`} className="bg-slate-950 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-300">
-                            {item.label}
-                          </div>
-                        ) : (
-                          <div key={`${item.label}-${index}`} className="grid grid-cols-[minmax(0,1fr)_84px_110px_120px] gap-3 px-4 py-3 text-sm">
-                            <div className="min-w-0">
-                              <div className="font-bold text-foreground">{item.label}</div>
-                              {item.detail ? <div className="mt-1 text-xs text-slate-500">{item.detail}</div> : null}
-                            </div>
-                            <div className="text-right text-slate-600">{item.qty || '-'}</div>
-                            <div className="text-right text-slate-600">{item.rate || '-'}</div>
-                            <div className="text-right font-bold text-foreground">{item.value || '-'}</div>
-                          </div>
-                        ),
-                      )
+            <div className="space-y-3 border-b border-slate-200 pb-5">
+              <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Line Items</div>
+              {previewItems.length > 0 ? (
+                <div className="space-y-3">
+                  {previewItems.map((item, index) =>
+                    item.type === 'group' ? (
+                      <div key={`${item.label}-${index}`} className="rounded-[18px] bg-slate-950 px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-300">
+                        {item.label}
+                      </div>
                     ) : (
-                      <div className="px-4 py-4 text-sm text-muted-foreground">No line items.</div>
-                    )}
-                  </div>
+                      <div key={`${item.label}-${index}`} className="rounded-[20px] border border-slate-200 bg-slate-50/70 px-4 py-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="break-words text-sm font-bold text-foreground">{item.label}</div>
+                            {item.detail ? <div className="mt-1 break-words text-sm leading-6 text-slate-500">{item.detail}</div> : null}
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Amount</div>
+                            <div className="mt-1 text-sm font-extrabold text-foreground">{item.value || '-'}</div>
+                          </div>
+                        </div>
+
+                        {item.facts?.length ? (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {item.facts.map((fact) => (
+                              <div key={fact} className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                                {fact}
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ),
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="rounded-[18px] border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
+                  No line items.
+                </div>
+              )}
             </div>
 
             {totals.length > 0 ? (
-              <div className="border-t border-slate-200 pt-4">
-                <div className="ml-auto max-w-sm space-y-2">
-                  {totals.map((row) => (
-                    <div key={row.label} className={cn('flex items-center justify-between gap-3 text-sm', row.emphasis && 'pt-2 text-base font-extrabold')}>
-                      <span className={cn('text-slate-500', row.labelClassName)}>{row.label}</span>
-                      <span className={cn('font-semibold text-foreground', row.valueClassName)}>{row.value}</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="space-y-2 border-b border-slate-200 pb-5">
+                <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Totals</div>
+                {totals.map((row) => (
+                  <div
+                    key={row.label}
+                    className={cn(
+                      'flex items-start justify-between gap-4 rounded-[16px] px-3 py-2.5 text-sm',
+                      row.emphasis ? 'bg-slate-950 text-white' : 'bg-slate-50 text-foreground',
+                    )}
+                  >
+                    <span className={cn('font-medium', row.emphasis ? 'text-slate-300' : 'text-slate-500', row.labelClassName)}>{row.label}</span>
+                    <span className={cn('text-right font-bold', row.emphasis ? 'text-white' : 'text-foreground', row.valueClassName)}>{row.value}</span>
+                  </div>
+                ))}
               </div>
             ) : null}
 
             {amountInWords ? (
-              <div className="border-t border-slate-200 pt-4">
-                <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Amount in Words</div>
-                <div className="mt-2 text-sm font-semibold text-foreground">{amountInWords}</div>
+              <div className="space-y-2 border-b border-slate-200 pb-5">
+                <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Amount in Words</div>
+                <div className="rounded-[18px] bg-slate-50 px-4 py-4 text-sm font-semibold leading-6 text-foreground">{amountInWords}</div>
+              </div>
+            ) : null}
+
+            {previewNotes.length > 0 ? (
+              <div className="space-y-4 border-b border-slate-200 pb-5">
+                {previewNotes.map((section) => (
+                  <div key={section.title} className="space-y-2">
+                    <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">{section.title}</div>
+                    <div className="rounded-[18px] bg-slate-50 px-4 py-4 text-sm leading-6 text-foreground">
+                      {section.content}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : null}
 
             {bankDetails ? (
-              <div className="rounded-[20px] bg-slate-100 px-4 py-4">
-                <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">Bank Details</div>
-                <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+              <div className="space-y-3 border-b border-slate-200 pb-5">
+                <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Bank Details</div>
+                <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Account Name</div>
-                    <div className="mt-1 font-semibold text-foreground">{bankDetails.accountName}</div>
+                    <div className="mt-1 break-words text-sm leading-6 text-foreground">{bankDetails.accountName}</div>
                   </div>
                   <div>
                     <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Account Number</div>
-                    <div className="mt-1 font-semibold text-foreground">{bankDetails.accountNumber}</div>
+                    <div className="mt-1 break-words text-sm leading-6 text-foreground">{bankDetails.accountNumber}</div>
                   </div>
                   <div>
                     <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Bank</div>
-                    <div className="mt-1 font-semibold text-foreground">{bankDetails.bankName}</div>
+                    <div className="mt-1 break-words text-sm leading-6 text-foreground">{bankDetails.bankName}</div>
                   </div>
                   {bankDetails.sortCode ? (
                     <div>
                       <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Sort Code</div>
-                      <div className="mt-1 font-semibold text-foreground">{bankDetails.sortCode}</div>
+                      <div className="mt-1 break-words text-sm leading-6 text-foreground">{bankDetails.sortCode}</div>
                     </div>
                   ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            {signatory ? (
+              <div className="flex items-center gap-3 rounded-[18px] bg-slate-50 px-4 py-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  {signatory.signatureUrl ? (
+                    <img src={signatory.signatureUrl} alt={`${signatory.name} signature`} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-bold text-slate-400">SIG</span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Authorized Signatory</div>
+                  <div className="mt-1 break-words text-sm font-bold text-foreground">{signatory.name}</div>
+                  {signatory.role ? <div className="text-sm text-slate-500">{signatory.role}</div> : null}
                 </div>
               </div>
             ) : null}

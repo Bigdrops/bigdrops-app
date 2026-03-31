@@ -9,14 +9,12 @@ import {
   DocumentBottomBar,
   DocumentDesignPanel,
   DocumentDesignStyleEditor,
-  DocumentDetailRows,
   DocumentFloatingFab,
   DocumentLivePreviewCard,
   DocumentPdfSheet,
   DocumentSection,
   DocumentSummaryDisclosure,
   DocumentStatusStrip,
-  DocumentSummaryList,
   DocumentTemplatePicker,
   DocumentTopBar,
 } from '@/components/document/DocumentViewShell'
@@ -523,14 +521,6 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   ]
 
   const shellQuotationTotal = totals?.totalPayable ?? Number(quotation.total || 0)
-  const shellDetailRows = [
-    { label: 'Quotation No.', value: quotation.quotation_number || 'Not set' },
-    { label: 'Client', value: quotation.client_name || 'Unassigned' },
-    { label: 'Issue Date', value: quotation.issue_date || 'Not set' },
-    { label: 'Valid Until', value: quotation.valid_until || 'Not set' },
-    { label: 'PO Number', value: poNumber || '—' },
-    { label: 'Title', value: quotation.quotation_title || '—' },
-  ]
   const activePdfTemplate = PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || PDF_TEMPLATES[0]
   const handlePdfTemplateChange = (nextTemplate: PdfTemplateId) => {
     setPdfTemplate(nextTemplate)
@@ -560,17 +550,34 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     hasText(client?.phone) ? String(client?.phone) : null,
     hasText(client?.email) ? String(client?.email) : null,
   ].filter(Boolean)
+  const previewDetailRows = [
+    { label: 'Client', value: quotation.client_name || 'Unassigned' },
+    { label: 'PO Number', value: poNumber || '' },
+    { label: 'Title', value: quotation.quotation_title || '' },
+    ...topHeaderFields.map((field: any) => ({ label: field.label, value: field.value })),
+  ].filter((row) => String(row.value || '').trim().length > 0)
   const previewItems = items.map((item, index) => {
     if (item.row_type === 'group_header') {
       return { type: 'group', label: item.group_name || `Group ${index + 1}` }
     }
+    const itemFacts = [
+      item.quantity ? `Qty: ${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : null,
+      `Rate: ${formatMoney(item.unit_price || 0)}`,
+      columns.find((column: any) => column.key === 'make')?.visible && item.make ? `Make: ${item.make}` : null,
+      columns.find((column: any) => column.key === 'install_rate')?.visible && item.install_rate !== null && item.install_rate !== undefined ? `Install: ${item.install_rate}` : null,
+      columns.find((column: any) => column.key === 'vat_rate')?.visible && item.vat_rate !== null && item.vat_rate !== undefined ? `VAT: ${item.vat_rate}%` : null,
+      columns.find((column: any) => column.key === 'discount_rate')?.visible && item.discount_rate !== null && item.discount_rate !== undefined ? `Discount: ${item.discount_rate}%` : null,
+      ...visibleCustomColumns.map((column: any) => {
+        const value = (item.custom_data || {})[column.key]
+        return value === null || value === undefined || value === '' ? null : `${column.label}: ${value}`
+      }),
+    ].filter(Boolean)
     return {
       type: 'line',
       label: item.description || 'Untitled item',
       detail: item.sub_description || '',
-      qty: item.quantity ? `${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : '-',
-      rate: formatMoney(item.unit_price || 0),
       value: formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0)),
+      facts: itemFacts,
     }
   })
   const previewTotals = [
@@ -581,6 +588,16 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     ...(Number(totals?.whtAmount || 0) > 0 ? [{ label: 'WHT', value: formatMoney(totals?.whtAmount || 0) }] : []),
     { label: 'Total', value: formatMoney(shellQuotationTotal), emphasis: true, valueClassName: 'text-slate-950' },
   ]
+  const previewNotesSections = [
+    quotation.notes ? { title: notesTitle, content: renderRichText(quotation.notes) } : null,
+    quotation.terms ? { title: termsTitle, content: renderRichText(quotation.terms) } : null,
+    ...bottomFields
+      .filter((field) => field?.text)
+      .map((field, index) => ({
+        title: index === 0 ? 'Additional Notes' : `Additional Notes ${index + 1}`,
+        content: <div className="whitespace-pre-wrap break-words">{field.text}</div>,
+      })),
+  ].filter(Boolean)
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 pb-32">
@@ -639,10 +656,12 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
           { label: 'Valid Until', value: quotation.valid_until || 'Open' },
           { label: 'Status', value: formatQuotationStatus(quotation.status) },
         ]}
+        detailRows={previewDetailRows}
         items={previewItems}
         totals={previewTotals}
         amountInWords={quotation.amount_in_words || ''}
         bankDetails={pdfOutput.showBankDetails && selectedPreviewBank ? selectedPreviewBank : null}
+        notesSections={previewNotesSections}
         accentColor={pdfDesignPreset.accentColor}
       />
 
@@ -651,10 +670,6 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         onChange={(next) => void handlePdfOutputChange(next)}
         bankAccounts={previewBankAccounts}
       />
-
-      <DocumentSection title="Document Details">
-        <DocumentDetailRows rows={shellDetailRows} />
-      </DocumentSection>
 
       <DocumentSection title="Customize Design">
         <DocumentDesignPanel
@@ -727,19 +742,6 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             })()}
           </CardContent>
         </Card>
-      </DocumentSection>
-
-      <DocumentSection title="Summary">
-        <DocumentSummaryList
-          rows={[
-            { label: 'Subtotal', value: formatMoney(totals?.rawSubtotal || 0) },
-            ...(Number(totals?.installRateTotal || 0) > 0 ? [{ label: 'Install Rate Total', value: formatMoney(totals?.installRateTotal || 0) }] : []),
-            ...(Number(totals?.vatAmount || 0) > 0 ? [{ label: 'VAT', value: formatMoney(totals?.vatAmount || 0) }] : []),
-            ...(Number(totals?.discountAmount || 0) > 0 ? [{ label: 'Discount', value: formatMoney(totals?.discountAmount || 0), valueClassName: 'text-red-600' }] : []),
-            ...(Number(totals?.whtAmount || 0) > 0 ? [{ label: 'WHT', value: formatMoney(totals?.whtAmount || 0) }] : []),
-            { label: 'Grand Total', value: formatMoney(shellQuotationTotal), divider: true, emphasis: true, valueClassName: 'text-emerald-600' },
-          ]}
-        />
       </DocumentSection>
 
       <DocumentActionSheet
