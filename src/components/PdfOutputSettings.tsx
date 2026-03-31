@@ -27,6 +27,8 @@ type PdfOutputSettingsValue = {
   showTagline: boolean
 }
 
+export type { PdfOutputSettingsValue }
+
 type PdfOutputSettingsProps = {
   value?: Partial<PdfOutputSettingsValue>
   onChange?: (next: PdfOutputSettingsValue) => void
@@ -74,6 +76,160 @@ function getDefaultBank(bankAccounts: BankAccount[]) {
   return bankAccounts.find((b) => b.isDefault) || bankAccounts[0] || null
 }
 
+function resolveBanks(bankAccounts?: BankAccount[]) {
+  return bankAccounts && bankAccounts.length > 0 ? bankAccounts : PLACEHOLDER_BANKS
+}
+
+function mergeOutputState(value: Partial<PdfOutputSettingsValue> | undefined, defaultBank: BankAccount | null): PdfOutputSettingsValue {
+  return {
+    showBankDetails: value?.showBankDetails ?? false,
+    bankAccountId: value?.bankAccountId ?? defaultBank?.id ?? null,
+    showFooter: value?.showFooter ?? true,
+    showTagline: value?.showTagline ?? true,
+  }
+}
+
+function OutputToggle({ checked, onToggle }: { checked: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
+        checked ? 'bg-emerald-500' : 'bg-slate-300'
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-card shadow-md transition-transform duration-200 ${
+          checked ? 'translate-x-6' : 'translate-x-1'
+        }`}
+      />
+    </button>
+  )
+}
+
+export function PdfBankControls({
+  value,
+  onChange,
+  bankAccounts,
+}: Pick<PdfOutputSettingsProps, 'value' | 'onChange' | 'bankAccounts'>) {
+  const banks = resolveBanks(bankAccounts)
+  const defaultBank = getDefaultBank(banks)
+  const state = mergeOutputState(value, defaultBank)
+  const selectedBank = banks.find((b) => b.id === state.bankAccountId) || defaultBank || null
+  const [bankSheetOpen, setBankSheetOpen] = React.useState(false)
+
+  function update(patch: Partial<PdfOutputSettingsValue>) {
+    onChange?.({ ...state, ...patch })
+  }
+
+  return (
+    <>
+      <Card className="rounded-[24px] border-border shadow-sm">
+        <CardContent className="space-y-4 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-extrabold tracking-[-0.02em] text-foreground">Bank Details</div>
+            <OutputToggle
+              checked={state.showBankDetails}
+              onToggle={() =>
+                update({
+                  showBankDetails: !state.showBankDetails,
+                  bankAccountId: state.bankAccountId || defaultBank?.id || null,
+                })
+              }
+            />
+          </div>
+
+          {state.showBankDetails && selectedBank ? (
+            <div className="space-y-3">
+              <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
+                <div className="mb-3 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                  <Landmark className="h-4 w-4" />
+                  Selected Account
+                </div>
+                <div className="grid gap-2 text-sm sm:grid-cols-2">
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Account Name</div>
+                    <div className="mt-1 font-semibold text-foreground">{selectedBank.accountName}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Account Number</div>
+                    <div className="mt-1 font-mono font-semibold text-foreground">{selectedBank.accountNumber}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Bank</div>
+                    <div className="mt-1 font-semibold text-foreground">{selectedBank.bankName}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Sort Code</div>
+                    <div className="mt-1 font-mono font-semibold text-foreground">{selectedBank.sortCode}</div>
+                  </div>
+                </div>
+              </div>
+
+              <Button type="button" variant="outline" className="w-full justify-between" onClick={() => setBankSheetOpen(true)}>
+                <span>Switch Account</span>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <BankAccountPickerSheet
+        open={bankSheetOpen}
+        onOpenChange={setBankSheetOpen}
+        bankAccounts={banks}
+        selectedBankId={state.bankAccountId}
+        onSelect={(bankId) => {
+          update({ bankAccountId: bankId, showBankDetails: true })
+          setBankSheetOpen(false)
+        }}
+      />
+    </>
+  )
+}
+
+export function PdfSupportingOptions({
+  value,
+  onChange,
+  companyTagline = 'Reliable power for every site',
+  footerText = 'Thank you for your business. Payment is due within 7 days unless otherwise agreed.',
+}: Pick<PdfOutputSettingsProps, 'value' | 'onChange' | 'companyTagline' | 'footerText'>) {
+  const state = mergeOutputState(value, null)
+
+  function update(patch: Partial<PdfOutputSettingsValue>) {
+    onChange?.({ ...state, ...patch })
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-[20px] border border-border bg-card px-4 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-sm font-semibold text-foreground">Letterhead Tagline</div>
+          <OutputToggle checked={state.showTagline} onToggle={() => update({ showTagline: !state.showTagline })} />
+        </div>
+        {state.showTagline ? (
+          <div className="mt-3 rounded-[16px] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+            {companyTagline || 'No tagline'}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="rounded-[20px] border border-border bg-card px-4 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-sm font-semibold text-foreground">Footer</div>
+          <OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />
+        </div>
+        {state.showFooter ? (
+          <div className="mt-3 rounded-[16px] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+            {footerText || 'No footer'}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 export function PdfOutputSettings({
   value,
   onChange,
@@ -81,16 +237,11 @@ export function PdfOutputSettings({
   companyTagline = "Reliable power for every site",
   footerText = "Thank you for your business. Payment is due within 7 days unless otherwise agreed.",
 }: PdfOutputSettingsProps) {
-  const banks = bankAccounts && bankAccounts.length > 0 ? bankAccounts : PLACEHOLDER_BANKS
+  const banks = resolveBanks(bankAccounts)
   const defaultBank = getDefaultBank(banks)
 
   const initialState = React.useMemo<PdfOutputSettingsValue>(() => {
-    return {
-      showBankDetails: value?.showBankDetails ?? false,
-      bankAccountId: value?.bankAccountId ?? defaultBank?.id ?? null,
-      showFooter: value?.showFooter ?? true,
-      showTagline: value?.showTagline ?? true,
-    }
+    return mergeOutputState(value, defaultBank)
   }, [value?.showBankDetails, value?.bankAccountId, value?.showFooter, value?.showTagline, defaultBank?.id])
 
   const [state, setState] = React.useState<PdfOutputSettingsValue>(initialState)
@@ -133,9 +284,9 @@ export function PdfOutputSettings({
           <div className="space-y-0 border-t border-border px-4 py-4">
             <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
               <span className="text-sm font-medium text-slate-700">Bank Details</span>
-              <button
-                type="button"
-                onClick={() =>
+              <OutputToggle
+                checked={state.showBankDetails}
+                onToggle={() =>
                   update({
                     showBankDetails: !state.showBankDetails,
                     bankAccountId: !state.showBankDetails
@@ -143,16 +294,7 @@ export function PdfOutputSettings({
                       : state.bankAccountId,
                   })
                 }
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
-                  state.showBankDetails ? "bg-emerald-500" : "bg-slate-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-card shadow-md transition-transform duration-200 ${
-                    state.showBankDetails ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
+              />
             </div>
             {state.showBankDetails && selectedBank ? (
               <div className="space-y-3 border-b border-border bg-emerald-50 px-3 py-3">
@@ -198,19 +340,7 @@ export function PdfOutputSettings({
 
             <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
               <span className="text-sm font-medium text-slate-700">Show Tagline</span>
-              <button
-                type="button"
-                onClick={() => update({ showTagline: !state.showTagline })}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
-                  state.showTagline ? "bg-emerald-500" : "bg-slate-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-card shadow-md transition-transform duration-200 ${
-                    state.showTagline ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
+              <OutputToggle checked={state.showTagline} onToggle={() => update({ showTagline: !state.showTagline })} />
             </div>
             {state.showTagline ? (
               <div className="border-b border-border bg-blue-50 px-3 py-3">
@@ -225,19 +355,7 @@ export function PdfOutputSettings({
 
             <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
               <span className="text-sm font-medium text-slate-700">Show Footer</span>
-              <button
-                type="button"
-                onClick={() => update({ showFooter: !state.showFooter })}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
-                  state.showFooter ? "bg-emerald-500" : "bg-slate-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-card shadow-md transition-transform duration-200 ${
-                    state.showFooter ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
+              <OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />
             </div>
             {state.showFooter ? (
               <div className="bg-amber-50 px-3 py-3">

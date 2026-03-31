@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
-import { PdfOutputSettings } from '@/components/PdfOutputSettings'
+import { PdfBankControls, PdfSupportingOptions } from '@/components/PdfOutputSettings'
 import {
   DocumentActionGrid,
   DocumentActionSheet,
@@ -540,6 +540,47 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     setPdfDesignPresetState(nextPreset)
     setPdfDesignPreset('quotation', nextPreset)
   }
+  const previewBankAccounts = bankAccounts.map((account) => ({
+    id: account.id,
+    bankName: account.bank_name || '',
+    accountName: account.account_name || '',
+    accountNumber: account.account_number || '',
+    sortCode: account.sort_code || '',
+    isDefault: account.is_default === true,
+  }))
+  const selectedPreviewBank =
+    previewBankAccounts.find((account) => account.id === pdfOutput.bankAccountId)
+    || previewBankAccounts.find((account) => account.isDefault)
+    || previewBankAccounts[0]
+    || null
+  const clientPreviewLines = [
+    hasText(client?.contact_person) ? `Attn: ${String(client?.contact_person)}` : null,
+    hasText(client?.address) ? String(client?.address) : null,
+    [String(client?.city || ''), String(client?.state || '')].filter(Boolean).join(', '),
+    hasText(client?.phone) ? String(client?.phone) : null,
+    hasText(client?.email) ? String(client?.email) : null,
+  ].filter(Boolean)
+  const previewItems = items.map((item, index) => {
+    if (item.row_type === 'group_header') {
+      return { type: 'group', label: item.group_name || `Group ${index + 1}` }
+    }
+    return {
+      type: 'line',
+      label: item.description || 'Untitled item',
+      detail: item.sub_description || '',
+      qty: item.quantity ? `${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : '-',
+      rate: formatMoney(item.unit_price || 0),
+      value: formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0)),
+    }
+  })
+  const previewTotals = [
+    { label: 'Subtotal', value: formatMoney(totals?.rawSubtotal || 0) },
+    ...(Number(totals?.installRateTotal || 0) > 0 ? [{ label: 'Install Rate', value: formatMoney(totals?.installRateTotal || 0) }] : []),
+    ...(Number(totals?.vatAmount || 0) > 0 ? [{ label: 'VAT', value: formatMoney(totals?.vatAmount || 0) }] : []),
+    ...(Number(totals?.discountAmount || 0) > 0 ? [{ label: 'Discount', value: formatMoney(totals?.discountAmount || 0), valueClassName: 'text-red-600' }] : []),
+    ...(Number(totals?.whtAmount || 0) > 0 ? [{ label: 'WHT', value: formatMoney(totals?.whtAmount || 0) }] : []),
+    { label: 'Total', value: formatMoney(shellQuotationTotal), emphasis: true, valueClassName: 'text-slate-950' },
+  ]
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 pb-32">
@@ -588,85 +629,69 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         documentLabel="Quotation"
         documentNumber={quotation.quotation_number || 'Quotation'}
         companyName={companyIdentity.companyName || ''}
-        companyTagline={companyIdentity.companyTagline || ''}
+        companyTagline={pdfOutput.showTagline ? companyIdentity.companyTagline || '' : ''}
+        companyLines={companyIdentity.lines}
         recipientLabel="Prepared For"
         recipientName={quotation.client_name || 'Unassigned'}
+        recipientLines={clientPreviewLines}
         meta={[
           { label: 'Issue Date', value: quotation.issue_date || 'Not set' },
           { label: 'Valid Until', value: quotation.valid_until || 'Open' },
           { label: 'Status', value: formatQuotationStatus(quotation.status) },
         ]}
-        items={items
-          .filter((item) => item.row_type !== 'group_header')
-          .slice(0, 3)
-          .map((item) => ({
-            label: item.description || 'Untitled item',
-            detail: [item.sub_description, `Qty ${item.quantity || 0}${item.unit ? ` ${item.unit}` : ''}`].filter(Boolean).join(' · '),
-            value: formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0)),
-          }))}
-        summaryRows={[
-          { label: 'Subtotal', value: formatMoney(totals?.rawSubtotal || 0) },
-          { label: 'Grand Total', value: formatMoney(shellQuotationTotal), valueClassName: 'text-emerald-600' },
-        ]}
-        previewSubtitle="A quick mobile preview of the current quotation with your active PDF preset."
+        items={previewItems}
+        totals={previewTotals}
+        amountInWords={quotation.amount_in_words || ''}
+        bankDetails={pdfOutput.showBankDetails && selectedPreviewBank ? selectedPreviewBank : null}
+        accentColor={pdfDesignPreset.accentColor}
       />
 
-      <DocumentSection title="Document Details" summary="Client, dates, and reference details for this quotation.">
+      <PdfBankControls
+        value={pdfOutput}
+        onChange={(next) => void handlePdfOutputChange(next)}
+        bankAccounts={previewBankAccounts}
+      />
+
+      <DocumentSection title="Document Details">
         <DocumentDetailRows rows={shellDetailRows} />
       </DocumentSection>
 
-      <DocumentSection title="Customize Design" summary="Template, font, color, and output controls for this quotation PDF preset.">
+      <DocumentSection title="Customize Design">
         <DocumentDesignPanel
-          title="Customize Quotation Design"
-          subtitle="This quotation PDF preset is saved on this device and will be reused for every future quotation until you change it again."
+          title="Design"
+          badge={activePdfTemplate.label}
           sections={[
             {
               key: 'template',
-              title: '1. Select Template',
-              description: 'Choose the quotation PDF layout you want to keep using across quotations.',
+              title: 'Template',
               content: (
-                <div className="space-y-3">
-                  <div className="rounded-[18px] border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                    Selected preset: <span className="font-bold">{activePdfTemplate.label}</span> · {activePdfTemplate.description}
-                  </div>
-                  <DocumentTemplatePicker value={pdfTemplate} onChange={handlePdfTemplateChange} templates={PDF_TEMPLATES} />
-                </div>
+                <DocumentTemplatePicker value={pdfTemplate} onChange={handlePdfTemplateChange} templates={PDF_TEMPLATES} />
               ),
             },
             {
               key: 'styling',
-              title: '2. Change Color & Font',
-              description: 'These settings are saved as the global quotation design preset for this browser.',
+              title: 'Fonts & Color',
               content: (
                 <DocumentDesignStyleEditor value={pdfDesignPreset} onChange={handlePdfDesignPresetChange} />
               ),
             },
             {
               key: 'output',
-              title: '3. Add LetterHead & Footer',
-              description: 'Control supporting PDF options that appear alongside your saved quotation design.',
+              title: 'Letterhead & Footer',
               content: (
-                <PdfOutputSettings
+                <PdfSupportingOptions
                   value={pdfOutput}
                   onChange={(next) => void handlePdfOutputChange(next)}
-                  bankAccounts={bankAccounts.map((account) => ({
-                    id: account.id,
-                    bankName: account.bank_name || '',
-                    accountName: account.account_name || '',
-                    accountNumber: account.account_number || '',
-                    sortCode: account.sort_code || '',
-                    isDefault: account.is_default === true,
-                  }))}
                   companyTagline={String(settings?.company_tagline || '')}
                   footerText={String(settings?.footer_text || '')}
                 />
               ),
             },
           ]}
-        />
-      </DocumentSection>
+          />
+        </DocumentSection>
 
-      <DocumentSection title="Line Items" summary={`${items.filter((item) => item.row_type !== 'group_header').length} quoted rows in this document.`}>
+      <DocumentSection title="Line Items">
         <Card className="rounded-[24px] border-border shadow-sm">
           <CardContent className="space-y-3 p-4">
             {(() => {
@@ -704,7 +729,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         </Card>
       </DocumentSection>
 
-      <DocumentSection title="Summary" summary="Totals, VAT, discounts, and the current quoted amount.">
+      <DocumentSection title="Summary">
         <DocumentSummaryList
           rows={[
             { label: 'Subtotal', value: formatMoney(totals?.rawSubtotal || 0) },

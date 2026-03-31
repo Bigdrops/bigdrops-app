@@ -21,7 +21,7 @@ import {
   DocumentTopBar,
 } from '@/components/document/DocumentViewShell'
 import RecordPaymentModal from '@/components/RecordPaymentModal'
-import { PdfOutputSettings } from '@/components/PdfOutputSettings'
+import { PdfBankControls, PdfSupportingOptions } from '@/components/PdfOutputSettings'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '../components/invoice/exportInvoiceCsv'
 import {
   DEFAULT_INVOICE_PDF_OUTPUT,
@@ -596,6 +596,55 @@ export default function ViewInvoice() {
     setPdfDesignPresetState(nextPreset)
     setPdfDesignPreset('invoice', nextPreset)
   }
+  const previewBankAccounts = bankAccounts.map((b) => ({
+    id: b.id,
+    bankName: b.bank_name || '',
+    accountName: b.account_name || '',
+    accountNumber: b.account_number || '',
+    sortCode: b.sort_code || '',
+    isDefault: b.is_default === true,
+  }))
+  const selectedPreviewBank =
+    previewBankAccounts.find((account) => account.id === pdfOutput.bankAccountId)
+    || previewBankAccounts.find((account) => account.isDefault)
+    || previewBankAccounts[0]
+    || null
+  const companyPreviewLines = [
+    settings.company_address,
+    [settings.company_city, settings.company_state].filter(Boolean).join(', '),
+    settings.company_vat ? `VAT Number: ${settings.company_vat}` : null,
+    settings.company_phone ? `Phone: ${settings.company_phone}` : null,
+    settings.company_email ? `Email: ${settings.company_email}` : null,
+  ].filter(Boolean)
+  const clientPreviewLines = [
+    client?.contact_person ? `Attn: ${client.contact_person}` : null,
+    client?.address || null,
+    [client?.city, client?.state].filter(Boolean).join(', '),
+    client?.phone || null,
+    client?.email || null,
+  ].filter(Boolean)
+  const previewItems = items.map((item, index) => {
+    if (item.row_type === 'group_header') {
+      return { type: 'group', label: item.group_name || `Group ${index + 1}` }
+    }
+    return {
+      type: 'line',
+      label: item.description || 'Untitled item',
+      detail: item.sub_description || '',
+      qty: item.quantity ? `${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : '-',
+      rate: formatMoney(item.unit_price || 0),
+      value: formatMoney(item.amount || item.quantity * item.unit_price || 0),
+    }
+  })
+  const previewTotals = [
+    { label: 'Subtotal', value: formatMoney(invoice.subtotal || 0) },
+    ...(Number(invoice.vat || 0) > 0 ? [{ label: 'VAT', value: formatMoney(invoice.vat || 0) }] : []),
+    ...(Number(invoice.workmanship || 0) > 0 ? [{ label: 'Workmanship', value: formatMoney(invoice.workmanship || 0) }] : []),
+    ...(Number(invoice.transportation || 0) > 0 ? [{ label: 'Transportation', value: formatMoney(invoice.transportation || 0) }] : []),
+    ...(Number(invoice.shipping || 0) > 0 ? [{ label: 'Shipping', value: formatMoney(invoice.shipping || 0) }] : []),
+    ...(Number(invoice.discount || 0) > 0 ? [{ label: 'Discount', value: formatMoney(invoice.discount || 0), valueClassName: 'text-red-600' }] : []),
+    { label: 'Total', value: formatMoney(invoiceTotal), emphasis: true, valueClassName: 'text-slate-950' },
+  ]
 
   return (
     <Layout title={invoice.invoice_number} hidePageHeader contentClassName="w-full px-4 pb-32 pt-4 md:px-6 md:pt-6">
@@ -651,75 +700,59 @@ export default function ViewInvoice() {
           documentLabel="Invoice"
           documentNumber={invoice.invoice_number || 'Invoice'}
           companyName={settings.company_name || ''}
-          companyTagline={settings.company_tagline || ''}
+          companyTagline={pdfOutput.showTagline ? settings.company_tagline || '' : ''}
+          companyLines={companyPreviewLines}
           recipientLabel="Bill To"
           recipientName={invoice.client_name || 'Unassigned'}
+          recipientLines={clientPreviewLines}
           meta={[
             { label: 'Issue Date', value: invoice.issue_date || 'Not set' },
             { label: 'Due Date', value: invoice.due_date || 'Open' },
-            { label: 'Balance Due', value: formatMoney(balanceDue) },
+            { label: 'Status', value: String(computedStatus).replace(/_/g, ' ') },
           ]}
-          items={items
-            .filter((item) => item.row_type !== 'group_header')
-            .slice(0, 3)
-            .map((item) => ({
-              label: item.description || 'Untitled item',
-              detail: [item.sub_description, `Qty ${item.quantity || 0}${item.unit ? ` ${item.unit}` : ''}`].filter(Boolean).join(' · '),
-              value: formatMoney(item.amount || item.quantity * item.unit_price || 0),
-            }))}
-          summaryRows={[
-            { label: 'Subtotal', value: formatMoney(invoice.subtotal || 0) },
-            { label: 'Grand Total', value: formatMoney(invoiceTotal), valueClassName: 'text-emerald-600' },
-          ]}
-          previewSubtitle="A quick mobile preview of the current invoice with your active PDF preset."
+          items={previewItems}
+          totals={previewTotals}
+          amountInWords={invoice.amount_in_words || ''}
+          bankDetails={pdfOutput.showBankDetails && selectedPreviewBank ? selectedPreviewBank : null}
+          accentColor={pdfDesignPreset.accentColor}
         />
 
-        <DocumentSection title="Document Details" summary="Client, dates, payment terms, and document references.">
+        <PdfBankControls
+          value={pdfOutput}
+          onChange={handlePdfOutputChange}
+          bankAccounts={previewBankAccounts}
+        />
+
+        <DocumentSection title="Document Details">
           <DocumentDetailRows rows={shellDetailRows} />
         </DocumentSection>
 
-        <DocumentSection title="Customize Design" summary="Template, font, color, and output controls for this invoice PDF preset.">
+        <DocumentSection title="Customize Design">
           <DocumentDesignPanel
-            title="Customize Invoice Design"
-            subtitle="This invoice PDF preset is saved on this device and will be reused for every future invoice until you change it again."
+            title="Design"
+            badge={activePdfTemplate.label}
             sections={[
               {
                 key: 'template',
-                title: '1. Select Template',
-                description: 'Choose the invoice PDF layout you want to keep using across invoices.',
+                title: 'Template',
                 content: (
-                  <div className="space-y-3">
-                  <div className="rounded-[18px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                      Selected preset: <span className="font-bold">{activePdfTemplate.label}</span> · {activePdfTemplate.description}
-                    </div>
-                    <DocumentTemplatePicker value={pdfTemplate} onChange={handlePdfTemplateChange} templates={PDF_TEMPLATES} />
-                  </div>
+                  <DocumentTemplatePicker value={pdfTemplate} onChange={handlePdfTemplateChange} templates={PDF_TEMPLATES} />
                 ),
               },
               {
                 key: 'styling',
-                title: '2. Change Color & Font',
-                description: 'These settings are saved as the global invoice design preset for this browser.',
+                title: 'Fonts & Color',
                 content: (
                   <DocumentDesignStyleEditor value={pdfDesignPreset} onChange={handlePdfDesignPresetChange} />
                 ),
               },
               {
                 key: 'output',
-                title: '3. Add LetterHead & Footer',
-                description: 'Control supporting PDF options that appear alongside your saved invoice design.',
+                title: 'Letterhead & Footer',
                 content: (
-                  <PdfOutputSettings
+                  <PdfSupportingOptions
                     value={pdfOutput}
                     onChange={handlePdfOutputChange}
-                    bankAccounts={bankAccounts.map((b) => ({
-                      id: b.id,
-                      bankName: b.bank_name,
-                      accountName: b.account_name,
-                      accountNumber: b.account_number,
-                      sortCode: b.sort_code,
-                      isDefault: b.is_default,
-                    }))}
                     companyTagline={settings.company_tagline || ''}
                     footerText={settings.footer_text || ''}
                   />
@@ -729,7 +762,7 @@ export default function ViewInvoice() {
           />
         </DocumentSection>
 
-        <DocumentSection title="Line Items" summary={`${items.filter((item) => item.row_type !== 'group_header').length} billable rows in this invoice.`}>
+        <DocumentSection title="Line Items">
           <Card className="rounded-[24px] border-border shadow-sm">
             <CardContent className="space-y-3 p-4">
               {(() => {
@@ -767,7 +800,7 @@ export default function ViewInvoice() {
           </Card>
         </DocumentSection>
 
-        <DocumentSection title="Summary" summary="Totals, discounts, cash received, and balance due.">
+        <DocumentSection title="Summary">
           <DocumentSummaryList
             rows={[
               { label: 'Subtotal', value: formatMoney(invoice.subtotal || 0) },
@@ -783,7 +816,7 @@ export default function ViewInvoice() {
           />
         </DocumentSection>
 
-        <DocumentSection title="Payment History" summary={paymentHistory.length > 0 ? `${paymentHistory.length} recorded payment entries.` : 'No payments recorded yet.'}>
+        <DocumentSection title="Payment History">
           <Card className="rounded-[24px] border-border shadow-sm">
             <CardContent className="space-y-3 p-4">
               {paymentHistory.length === 0 ? (
