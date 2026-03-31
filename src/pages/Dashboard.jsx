@@ -2,7 +2,6 @@ import * as React from 'react'
 import {
   Archive,
   BadgeCheck,
-  Bell,
   ChevronDown,
   ChevronRight,
   ClipboardCheck,
@@ -10,6 +9,7 @@ import {
   FileSignature,
   FileText,
   FolderOpen,
+  Menu,
   Truck,
   AlertCircle,
 } from 'lucide-react'
@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import Layout from '../components/Layout'
+import Layout, { MobileChromeContext } from '../components/Layout'
 import { getQuickTiles, loadStoredQuickTiles } from '../config/quickTiles'
 import { supabase } from '../supabase'
 
@@ -73,6 +73,7 @@ function getStatusStyle(status) {
 
 export default function Dashboard({ session }) {
   const navigate = useNavigate()
+  const mobileChrome = React.useContext(MobileChromeContext)
   const [quickAccessOpen, setQuickAccessOpen] = React.useState(false)
   const [loading, setLoading] = React.useState(true)
   const [recentDocs, setRecentDocs] = React.useState([])
@@ -149,21 +150,29 @@ export default function Dashboard({ session }) {
 
   return (
     <Layout title="Dashboard" session={session}>
-      <div className="space-y-3">
-        <Card className="rounded-2xl border-border bg-card shadow-sm">
-          <div className="flex items-center justify-between gap-2 px-3.5 py-3">
-            <div className="min-w-0 flex-1 pr-1">
-              <div className="truncate text-base font-black text-foreground">
-                {getGreeting()}, {userName}
+      <div className="w-full overflow-x-hidden px-4 pb-2 md:px-0">
+        <div className="space-y-3">
+          <Card className="max-w-full rounded-2xl border-border bg-card shadow-sm">
+            <div className="flex items-center justify-between gap-2 px-3.5 py-3">
+              <div className="min-w-0 flex-1 pr-1">
+                <div className="truncate text-base font-black text-foreground">
+                  {getGreeting()}, {userName}
+                </div>
+                <div className="mt-0.5 text-xs text-muted-foreground">{dateLabel}</div>
               </div>
-              <div className="mt-0.5 text-xs text-muted-foreground">{dateLabel}</div>
-            </div>
 
-            <Button variant="outline" size="icon" className="h-9 w-9 rounded-2xl border-border bg-muted/50" onClick={() => {}}>
-              <Bell className="h-4.5 w-4.5 text-slate-700" />
-            </Button>
-          </div>
-        </Card>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 rounded-2xl border-border bg-muted/50 md:hidden"
+                onClick={mobileChrome.openSidebar}
+                aria-label="Open navigation menu"
+              >
+                <Menu className="h-4.5 w-4.5 text-slate-700" />
+              </Button>
+            </div>
+          </Card>
 
         <section className="space-y-2">
           <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quick tiles</div>
@@ -171,14 +180,22 @@ export default function Dashboard({ session }) {
             {quickTiles.map((tile) => {
               const Icon = tile.icon
               return (
-                <button key={tile.id} type="button" onClick={() => navigate(tile.path)} className={cn('group rounded-2xl border p-4 text-left shadow-sm transition active:scale-[0.99]', tile.tint)}>
+                <button
+                  key={tile.id}
+                  type="button"
+                  onClick={() => navigate(tile.path)}
+                  className={cn(
+                    'group min-w-0 max-w-full overflow-hidden rounded-2xl border p-4 text-left shadow-sm transition active:scale-[0.99]',
+                    tile.tint
+                  )}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <span className={cn('grid h-11 w-11 place-items-center rounded-2xl shadow-sm', tile.iconBg)}>
                       <Icon className="h-6 w-6 text-white" />
                     </span>
                     <ChevronRight className="h-5 w-5 text-muted-foreground opacity-70 transition group-hover:opacity-100" />
                   </div>
-                  <div className="mt-3 text-sm font-bold text-foreground">{tile.label}</div>
+                  <div className="mt-3 truncate text-sm font-bold text-foreground">{tile.label}</div>
                   <div className="mt-1 text-xs text-muted-foreground">{tile.tileHint || tile.description}</div>
                 </button>
               )
@@ -189,7 +206,7 @@ export default function Dashboard({ session }) {
         <section className="space-y-2">
           <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent activity</div>
 
-          <Card className="rounded-2xl border-border bg-card shadow-sm">
+          <Card className="max-w-full overflow-hidden rounded-2xl border-border bg-card shadow-sm">
             <div className="divide-y divide-border">
               {loading ? (
                 <div className="px-4 py-8 text-center text-sm text-muted-foreground">Loading activity...</div>
@@ -202,8 +219,13 @@ export default function Dashboard({ session }) {
                   const TypeIcon = type.icon
                   const StatusIcon = status.icon
                   return (
-                    <button key={`${doc.type}-${doc.id}`} type="button" onClick={() => navigate(`/${type.path}/${doc.id}`)} className="w-full px-4 py-4 text-left transition hover:bg-muted/50">
-                      <div className="flex items-start justify-between gap-3">
+                    <button
+                      key={`${doc.type}-${doc.id}`}
+                      type="button"
+                      onClick={() => navigate(`/${type.path}/${doc.id}`)}
+                      className="w-full overflow-hidden px-4 py-4 text-left transition hover:bg-muted/50"
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex min-w-0 items-start gap-3">
                           <span className="mt-0.5 grid h-11 w-11 place-items-center rounded-2xl bg-muted">
                             <TypeIcon className="h-5 w-5 text-slate-700" />
@@ -224,12 +246,12 @@ export default function Dashboard({ session }) {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex shrink-0 items-center gap-2 self-start sm:ml-3">
                           <Badge variant="outline" className={cn('rounded-full', status.badge)}>
                             <StatusIcon className="mr-1.5 h-3.5 w-3.5" />
                             {status.label}
                           </Badge>
-                          <ChevronRight className="h-5 w-5 text-slate-300" />
+                          <ChevronRight className="hidden h-5 w-5 text-slate-300 sm:block" />
                         </div>
                       </div>
                     </button>
@@ -243,22 +265,22 @@ export default function Dashboard({ session }) {
         <section className="space-y-2">
           <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Action summary</div>
           <div className="grid grid-cols-2 gap-3">
-            <button type="button" onClick={() => navigate('/reports')} className="rounded-2xl border border-red-200 bg-red-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
+            <button type="button" onClick={() => navigate('/reports')} className="min-w-0 rounded-2xl border border-red-200 bg-red-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
               <div className="text-xs font-semibold uppercase tracking-wider text-red-700">Overdue</div>
               <div className="mt-2 text-lg font-black text-foreground">{naira(summary.overdue)}</div>
               <div className="mt-1 text-xs text-muted-foreground">Unpaid past due</div>
             </button>
-            <button type="button" onClick={() => navigate('/reports')} className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
+            <button type="button" onClick={() => navigate('/reports')} className="min-w-0 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
               <div className="text-xs font-semibold uppercase tracking-wider text-amber-700">Due this week</div>
               <div className="mt-2 text-lg font-black text-foreground">{naira(summary.dueThisWeek)}</div>
               <div className="mt-1 text-xs text-muted-foreground">Upcoming receivables</div>
             </button>
-            <button type="button" onClick={() => navigate('/reports')} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
+            <button type="button" onClick={() => navigate('/reports')} className="min-w-0 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
               <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Collected</div>
               <div className="mt-2 text-lg font-black text-foreground">{naira(summary.thisMonthCollections)}</div>
               <div className="mt-1 text-xs text-muted-foreground">This month</div>
             </button>
-            <button type="button" onClick={() => navigate('/reports')} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
+            <button type="button" onClick={() => navigate('/reports')} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
               <div className="text-xs font-semibold uppercase tracking-wider text-slate-700">Pending follow-up</div>
               <div className="mt-2 text-lg font-black text-foreground">{summary.pendingFollowUp}</div>
               <div className="mt-1 text-xs text-muted-foreground">Invoices needing attention</div>
@@ -327,6 +349,7 @@ export default function Dashboard({ session }) {
         </section>
 
         <div className="h-2" />
+        </div>
       </div>
     </Layout>
   )
