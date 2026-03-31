@@ -49,11 +49,11 @@ type Props = {
 }
 
 const STATUS_OPTIONS = [
-  'OK',
-  'Working solution provided',
-  'Pending for spares',
-  'Under observation',
-  'Incomplete',
+  'Operational',
+  'Running with observation',
+  'Pending parts',
+  'Temporarily restored',
+  'Not running',
 ]
 
 const CALL_TYPE_OPTIONS = ['Warranty', 'AMC', 'Paid Service']
@@ -91,11 +91,21 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={`h-11 w-full rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 text-[14px] text-[#0f172a] outline-none ${props.className || ''}`} />
+  return (
+    <input
+      {...props}
+      className={`h-11 w-full rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 text-[14px] text-[#0f172a] outline-none ${props.className || ''}`}
+    />
+  )
 }
 
 function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={`min-h-[84px] w-full rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 py-3 text-[14px] text-[#0f172a] outline-none ${props.className || ''}`} />
+  return (
+    <textarea
+      {...props}
+      className={`min-h-[84px] w-full rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 py-3 text-[14px] text-[#0f172a] outline-none ${props.className || ''}`}
+    />
+  )
 }
 
 function SelectField({
@@ -112,10 +122,7 @@ function SelectField({
   const safeValue = value && options.includes(value) ? value : '__placeholder__'
 
   return (
-    <Select
-      value={safeValue}
-      onValueChange={(next) => onChange(next === '__placeholder__' ? '' : next)}
-    >
+    <Select value={safeValue} onValueChange={(next) => onChange(next === '__placeholder__' ? '' : next)}>
       <SelectTrigger className="h-11 w-full rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 text-[14px] text-[#0f172a] shadow-none focus:ring-0 focus:ring-offset-0">
         <SelectValue placeholder={placeholder || 'Select'} />
       </SelectTrigger>
@@ -168,6 +175,8 @@ export default function CsrFormScreen({
   const [signatories, setSignatories] = React.useState<SignatoryRow[]>([])
   const [signatorySheetOpen, setSignatorySheetOpen] = React.useState(false)
   const [materialsTitle, setMaterialsTitle] = React.useState('Materials Used')
+  const [recipientSignatureName, setRecipientSignatureName] = React.useState('')
+  const recipientSignatureInputRef = React.useRef<HTMLInputElement | null>(null)
 
   React.useEffect(() => {
     let mounted = true
@@ -185,7 +194,8 @@ export default function CsrFormScreen({
     }
   }, [])
 
-  const selectedSignatory = signatories.find((entry) => String(entry.id) === String(csr.technician_signatory_id || '')) || null
+  const selectedSignatory =
+    signatories.find((entry) => String(entry.id) === String(csr.technician_signatory_id || '')) || null
   const materialCount = materialsRows.filter((row) => row.item || row.quantity || row.unit).length
 
   return (
@@ -194,12 +204,17 @@ export default function CsrFormScreen({
         <Section title="Document Details" dotClassName="bg-[#0f172a]">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">{mode === 'new' ? 'New CSR' : 'Edit CSR'}</div>
+              <div className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">
+                {mode === 'new' ? 'New CSR' : 'Edit CSR'}
+              </div>
               <h1 className="mt-1 text-[28px] font-black leading-none tracking-[-0.04em] text-[#0f172a]">
                 {mode === 'new' ? 'Create CSR' : 'Update CSR'}
               </h1>
             </div>
-            <button type="button" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border-[1.5px] border-[#e2e8f0] bg-white text-[#475569]">
+            <button
+              type="button"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border-[1.5px] border-[#e2e8f0] bg-white text-[#475569]"
+            >
               <MoreHorizontal className="h-5 w-5" />
             </button>
           </div>
@@ -233,11 +248,18 @@ export default function CsrFormScreen({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <FieldLabel>Date</FieldLabel>
-                <TextInput type="date" value={String(csr.date || '')} onChange={(event) => onUpdate('date', event.target.value)} />
+                <TextInput
+                  type="date"
+                  value={String(csr.date || '')}
+                  onChange={(event) => onUpdate('date', event.target.value)}
+                />
               </div>
               <div>
                 <FieldLabel>Customer Name</FieldLabel>
-                <TextInput value={String(csr.client_name || '')} onChange={(event) => onUpdate('client_name', event.target.value)} />
+                <TextInput
+                  value={String(csr.client_name || '')}
+                  onChange={(event) => onUpdate('client_name', event.target.value)}
+                />
               </div>
             </div>
 
@@ -257,10 +279,18 @@ export default function CsrFormScreen({
 
         <Section title="Item Controls" dotClassName="bg-[#475569]">
           <div className="grid grid-cols-2 gap-3">
-            <button type="button" disabled className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[#e2e8f0] bg-white px-3 text-[13px] font-bold text-[#334155] opacity-70">
+            <button
+              type="button"
+              disabled
+              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[#e2e8f0] bg-white px-3 text-[13px] font-bold text-[#334155] opacity-70"
+            >
               Import
             </button>
-            <button type="button" disabled className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[#e2e8f0] bg-white px-3 text-[13px] font-bold text-[#334155] opacity-70">
+            <button
+              type="button"
+              disabled
+              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[#e2e8f0] bg-white px-3 text-[13px] font-bold text-[#334155] opacity-70"
+            >
               Settings
             </button>
           </div>
@@ -270,7 +300,12 @@ export default function CsrFormScreen({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <FieldLabel>Call Type</FieldLabel>
-              <SelectField value={String(csr.call_type || '')} onChange={(value) => onUpdate('call_type', value)} options={CALL_TYPE_OPTIONS} placeholder="Select" />
+              <SelectField
+                value={String(csr.call_type || '')}
+                onChange={(value) => onUpdate('call_type', value)}
+                options={CALL_TYPE_OPTIONS}
+                placeholder="Select"
+              />
             </div>
             <div>
               <FieldLabel>System Down</FieldLabel>
@@ -295,11 +330,17 @@ export default function CsrFormScreen({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <FieldLabel>Equipment Type</FieldLabel>
-                <TextInput value={String(csr.equipment_type || '')} onChange={(event) => onUpdate('equipment_type', event.target.value)} />
+                <TextInput
+                  value={String(csr.equipment_type || '')}
+                  onChange={(event) => onUpdate('equipment_type', event.target.value)}
+                />
               </div>
               <div>
                 <FieldLabel>Equipment Location</FieldLabel>
-                <TextInput value={String(csr.equipment_location || '')} onChange={(event) => onUpdate('equipment_location', event.target.value)} />
+                <TextInput
+                  value={String(csr.equipment_location || '')}
+                  onChange={(event) => onUpdate('equipment_location', event.target.value)}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -309,7 +350,10 @@ export default function CsrFormScreen({
               </div>
               <div>
                 <FieldLabel>Capacity</FieldLabel>
-                <TextInput value={String(csr.capacity || '')} onChange={(event) => onUpdate('capacity', event.target.value)} />
+                <TextInput
+                  value={String(csr.capacity || '')}
+                  onChange={(event) => onUpdate('capacity', event.target.value)}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -319,7 +363,10 @@ export default function CsrFormScreen({
               </div>
               <div>
                 <FieldLabel>{csrMeta.serialLabel || 'Serial No.'}</FieldLabel>
-                <TextInput value={String(csr.serial_no || '')} onChange={(event) => onUpdate('serial_no', event.target.value)} />
+                <TextInput
+                  value={String(csr.serial_no || '')}
+                  onChange={(event) => onUpdate('serial_no', event.target.value)}
+                />
               </div>
             </div>
           </div>
@@ -329,19 +376,32 @@ export default function CsrFormScreen({
           <div className="space-y-3">
             <div>
               <FieldLabel>Problem Reported</FieldLabel>
-              <TextArea value={String(csr.problem_reported || '')} onChange={(event) => onUpdate('problem_reported', event.target.value)} />
+              <TextArea
+                value={String(csr.problem_reported || '')}
+                onChange={(event) => onUpdate('problem_reported', event.target.value)}
+              />
             </div>
             <div>
               <FieldLabel>Service Rendered</FieldLabel>
-              <TextArea className="min-h-[96px]" value={String(csr.service_rendered || '')} onChange={(event) => onUpdate('service_rendered', event.target.value)} />
+              <TextArea
+                className="min-h-[96px]"
+                value={String(csr.service_rendered || '')}
+                onChange={(event) => onUpdate('service_rendered', event.target.value)}
+              />
             </div>
             <div>
               <FieldLabel>Defects Found</FieldLabel>
-              <TextArea value={String(csr.defects_found || '')} onChange={(event) => onUpdate('defects_found', event.target.value)} />
+              <TextArea
+                value={String(csr.defects_found || '')}
+                onChange={(event) => onUpdate('defects_found', event.target.value)}
+              />
             </div>
             <div>
               <FieldLabel>Engineer Remarks</FieldLabel>
-              <TextArea value={String(csr.engineer_remarks || '')} onChange={(event) => onUpdate('engineer_remarks', event.target.value)} />
+              <TextArea
+                value={String(csr.engineer_remarks || '')}
+                onChange={(event) => onUpdate('engineer_remarks', event.target.value)}
+              />
             </div>
           </div>
         </Section>
@@ -351,30 +411,47 @@ export default function CsrFormScreen({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <FieldLabel>Start Date</FieldLabel>
-                <TextInput type="date" value={String(csr.start_date || '')} onChange={(event) => onUpdate('start_date', event.target.value)} />
+                <TextInput
+                  type="date"
+                  value={String(csr.start_date || '')}
+                  onChange={(event) => onUpdate('start_date', event.target.value)}
+                />
               </div>
               <div>
                 <FieldLabel>Start Time</FieldLabel>
-                <TextInput type="time" value={String(csr.start_time || '')} onChange={(event) => onUpdate('start_time', event.target.value)} />
+                <TextInput
+                  type="time"
+                  value={String(csr.start_time || '')}
+                  onChange={(event) => onUpdate('start_time', event.target.value)}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <FieldLabel>End Date</FieldLabel>
-                <TextInput type="date" value={String(csr.end_date || '')} onChange={(event) => onUpdate('end_date', event.target.value)} />
+                <TextInput
+                  type="date"
+                  value={String(csr.end_date || '')}
+                  onChange={(event) => onUpdate('end_date', event.target.value)}
+                />
               </div>
               <div>
                 <FieldLabel>End Time</FieldLabel>
-                <TextInput type="time" value={String(csr.end_time || '')} onChange={(event) => onUpdate('end_time', event.target.value)} />
+                <TextInput
+                  type="time"
+                  value={String(csr.end_time || '')}
+                  onChange={(event) => onUpdate('end_time', event.target.value)}
+                />
               </div>
             </div>
             <div>
               <FieldLabel>Status After Service</FieldLabel>
-              <SelectField value={String(csr.status || '')} onChange={(value) => onUpdate('status', value)} options={STATUS_OPTIONS} placeholder="Select" />
-            </div>
-            <div>
-              <FieldLabel>Customer Feedback</FieldLabel>
-              <TextArea value={String(csr.customer_feedback || '')} onChange={(event) => onUpdate('customer_feedback', event.target.value)} />
+              <SelectField
+                value={String(csr.status || '')}
+                onChange={(value) => onUpdate('status', value)}
+                options={STATUS_OPTIONS}
+                placeholder="Select"
+              />
             </div>
           </div>
         </Section>
@@ -396,7 +473,10 @@ export default function CsrFormScreen({
               </div>
               <div>
                 <FieldLabel>Frequency</FieldLabel>
-                <TextInput value={String(csr.frequency || '')} onChange={(event) => onUpdate('frequency', event.target.value)} />
+                <TextInput
+                  value={String(csr.frequency || '')}
+                  onChange={(event) => onUpdate('frequency', event.target.value)}
+                />
               </div>
               <div>
                 <FieldLabel>Battery</FieldLabel>
@@ -404,11 +484,17 @@ export default function CsrFormScreen({
               </div>
               <div>
                 <FieldLabel>Temperature</FieldLabel>
-                <TextInput value={String(csr.temperature || '')} onChange={(event) => onUpdate('temperature', event.target.value)} />
+                <TextInput
+                  value={String(csr.temperature || '')}
+                  onChange={(event) => onUpdate('temperature', event.target.value)}
+                />
               </div>
               <div>
                 <FieldLabel>Pressure</FieldLabel>
-                <TextInput value={String(csr.pressure || '')} onChange={(event) => onUpdate('pressure', event.target.value)} />
+                <TextInput
+                  value={String(csr.pressure || '')}
+                  onChange={(event) => onUpdate('pressure', event.target.value)}
+                />
               </div>
               <div>
                 <FieldLabel>Hours</FieldLabel>
@@ -427,21 +513,29 @@ export default function CsrFormScreen({
             />
           }
           dotClassName="bg-[#059669]"
-          action={<span className="inline-flex h-8 items-center rounded-full border border-[#bbf7d0] bg-[#f0fdf4] px-3 text-[12px] font-bold text-[#16a34a]">{materialCount} item{materialCount === 1 ? '' : 's'}</span>}
+          action={
+            <span className="inline-flex h-8 items-center rounded-full border border-[#bbf7d0] bg-[#f0fdf4] px-3 text-[12px] font-bold text-[#16a34a]">
+              {materialCount} item{materialCount === 1 ? '' : 's'}
+            </span>
+          }
         >
           <div className="space-y-3">
             <div className="flex gap-[3px] rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] p-[3px]">
               <button
                 type="button"
                 onClick={() => onUpdateMeta('materialsOutputStyle', 'comma')}
-                className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${csrMeta.materialsOutputStyle === 'comma' ? 'bg-[#0f172a] text-white' : 'text-[#64748b]'}`}
+                className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${
+                  csrMeta.materialsOutputStyle === 'comma' ? 'bg-[#0f172a] text-white' : 'text-[#64748b]'
+                }`}
               >
                 Comma
               </button>
               <button
                 type="button"
                 onClick={() => onUpdateMeta('materialsOutputStyle', 'list')}
-                className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${csrMeta.materialsOutputStyle !== 'comma' ? 'bg-[#0f172a] text-white' : 'text-[#64748b]'}`}
+                className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${
+                  csrMeta.materialsOutputStyle !== 'comma' ? 'bg-[#0f172a] text-white' : 'text-[#64748b]'
+                }`}
               >
                 Enumerate
               </button>
@@ -475,15 +569,16 @@ export default function CsrFormScreen({
                     />
 
                     <div className="[&>div>input]:h-11 [&>div>input]:rounded-[12px] [&>div>input]:border-[1.5px] [&>div>input]:border-[#e2e8f0] [&>div>input]:bg-white [&>div>input]:px-3 [&>div>input]:text-[14px]">
-                      <UnitInput
-                        value={row.unit || ''}
-                        onChange={(value) => onUpdateMaterialRow(index, 'unit', value)}
-                      />
+                      <UnitInput value={row.unit || ''} onChange={(value) => onUpdateMaterialRow(index, 'unit', value)} />
                     </div>
                   </div>
 
                   {materialsRows.length > 1 ? (
-                    <button type="button" onClick={() => onRemoveMaterialRow(index)} className="mt-3 text-[12px] font-bold text-[#ef4444]">
+                    <button
+                      type="button"
+                      onClick={() => onRemoveMaterialRow(index)}
+                      className="mt-3 text-[12px] font-bold text-[#ef4444]"
+                    >
                       Remove
                     </button>
                   ) : null}
@@ -491,7 +586,11 @@ export default function CsrFormScreen({
               ))}
             </div>
 
-            <button type="button" onClick={onAddMaterialRow} className="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[#e2e8f0] px-3 text-[13px] font-bold text-[#334155]">
+            <button
+              type="button"
+              onClick={onAddMaterialRow}
+              className="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[#e2e8f0] px-3 text-[13px] font-bold text-[#334155]"
+            >
               Add material
             </button>
           </div>
@@ -510,16 +609,29 @@ export default function CsrFormScreen({
             <div className="space-y-3">
               <div>
                 <FieldLabel>Technician Name</FieldLabel>
-                <TextInput value={String(csrMeta.technicianName || '')} onChange={(event) => onUpdateMeta('technicianName', event.target.value)} />
+                <TextInput
+                  value={String(csrMeta.technicianName || '')}
+                  onChange={(event) => onUpdateMeta('technicianName', event.target.value)}
+                />
               </div>
-              <div className="rounded-[16px] border border-dashed border-[#d8e1ec] bg-[#f8fafc] p-3">
+              <div className="rounded-[16px] border border-[#e2e8f0] bg-[#f8fafc] p-3">
                 <div className="text-[13px] font-bold text-[#0f172a]">Technician Signature</div>
-                <div className="mt-1 text-[11px] text-[#94a3b8]">{selectedSignatory ? selectedSignatory.name : 'Uses signatory registry when selected.'}</div>
+                <div className="mt-1 text-[11px] text-[#94a3b8]">
+                  {selectedSignatory ? selectedSignatory.name : 'Leave blank for offline sign.'}
+                </div>
                 <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide">
-                  <button type="button" onClick={() => setSignatorySheetOpen(true)} className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[#0f172a] bg-[#0f172a] px-[13px] text-[12px] font-bold text-white">
+                  <button
+                    type="button"
+                    onClick={() => setSignatorySheetOpen(true)}
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[#0f172a] bg-[#0f172a] px-[13px] text-[12px] font-bold text-white"
+                  >
                     {selectedSignatory ? 'Change signatory' : 'Choose signatory'}
                   </button>
-                  <button type="button" onClick={() => onUpdate('technician_signatory_id', null)} className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[#e2e8f0] bg-white px-[13px] text-[12px] font-bold text-[#334155]">
+                  <button
+                    type="button"
+                    onClick={() => onUpdate('technician_signatory_id', null)}
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[#e2e8f0] bg-white px-[13px] text-[12px] font-bold text-[#334155]"
+                  >
                     Leave blank
                   </button>
                 </div>
@@ -540,16 +652,63 @@ export default function CsrFormScreen({
           {csrMeta.showAcknowledgement ? (
             <div className="space-y-3">
               <div>
-                <FieldLabel>Section Title</FieldLabel>
-                <TextInput value={String(csrMeta.recipientTitle || '')} onChange={(event) => onUpdateMeta('recipientTitle', event.target.value)} />
+                <FieldLabel>Name</FieldLabel>
+                <TextInput
+                  value={String(csr.acknowledgement_name || '')}
+                  onChange={(event) => onUpdate('acknowledgement_name', event.target.value)}
+                />
               </div>
               <div>
                 <FieldLabel>Recipient / Witness Role</FieldLabel>
-                <TextInput value={String(csrMeta.recipientRole || '')} onChange={(event) => onUpdateMeta('recipientRole', event.target.value)} />
+                <TextInput
+                  value={String(csrMeta.recipientRole || '')}
+                  onChange={(event) => onUpdateMeta('recipientRole', event.target.value)}
+                />
               </div>
               <div>
-                <FieldLabel>Customer Name</FieldLabel>
-                <TextInput value={String(csr.acknowledgement_name || '')} onChange={(event) => onUpdate('acknowledgement_name', event.target.value)} />
+                <FieldLabel>Customer Feedback</FieldLabel>
+                <TextArea
+                  value={String(csr.customer_feedback || '')}
+                  onChange={(event) => onUpdate('customer_feedback', event.target.value)}
+                />
+              </div>
+
+              <div className="rounded-[16px] border border-[#e2e8f0] bg-[#f8fafc] p-3">
+                <div className="text-[13px] font-bold text-[#0f172a]">Recipient Signature</div>
+                <div className="mt-1 text-[11px] text-[#94a3b8]">
+                  {recipientSignatureName || 'Leave blank for offline sign.'}
+                </div>
+                <input
+                  ref={recipientSignatureInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    setRecipientSignatureName(file?.name || '')
+                  }}
+                />
+                <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide">
+                  <button
+                    type="button"
+                    onClick={() => recipientSignatureInputRef.current?.click()}
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[#0f172a] bg-[#0f172a] px-[13px] text-[12px] font-bold text-white"
+                  >
+                    Upload signature
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRecipientSignatureName('')
+                      if (recipientSignatureInputRef.current) {
+                        recipientSignatureInputRef.current.value = ''
+                      }
+                    }}
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[#e2e8f0] bg-white px-[13px] text-[12px] font-bold text-[#334155]"
+                  >
+                    Leave blank
+                  </button>
+                </div>
               </div>
             </div>
           ) : null}
@@ -587,10 +746,16 @@ export default function CsrFormScreen({
                       onUpdate('technician_signatory_id', signatory.id)
                       setSignatorySheetOpen(false)
                     }}
-                    className={`w-full rounded-[16px] border p-4 text-left ${active ? 'border-[#0f172a] bg-[#0f172a] text-white' : 'border-[#e2e8f0] bg-white text-[#0f172a]'}`}
+                    className={`w-full rounded-[16px] border p-4 text-left ${
+                      active ? 'border-[#0f172a] bg-[#0f172a] text-white' : 'border-[#e2e8f0] bg-white text-[#0f172a]'
+                    }`}
                   >
                     <div className="text-[14px] font-bold">{signatory.name}</div>
-                    {signatory.role ? <div className={`mt-1 text-[12px] ${active ? 'text-slate-300' : 'text-[#64748b]'}`}>{signatory.role}</div> : null}
+                    {signatory.role ? (
+                      <div className={`mt-1 text-[12px] ${active ? 'text-slate-300' : 'text-[#64748b]'}`}>
+                        {signatory.role}
+                      </div>
+                    ) : null}
                   </button>
                 )
               })
