@@ -368,7 +368,7 @@ function App() {
 
       console.error(`Session restore failed during ${reason}:`, error)
 
-      // Preserve the last known good session on transient failures.
+      // Preserve last known good session on transient failures.
       return sessionRef.current
     }
   }
@@ -385,9 +385,16 @@ function App() {
     setResolvedProfileUserId(null)
 
     await runLatestProfileTask(
-      async () => {
-        const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+      async (signal) => {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single()
+          .abortSignal(signal)
+
         debugAuth('loadProfile:queryResult', { userId, data, error })
+
         if (error) throw error
         if (!data) return null
 
@@ -418,12 +425,12 @@ function App() {
 
           console.error('Profile fetch error:', err)
 
-          // Preserve existing profile for the same user on transient failures.
+          // Keep old profile for same user on transient failures.
           if (profileRef.current?.id === userId) {
             setProfile(profileRef.current)
           }
 
-          // Mark resolution complete so the app does not get stuck on the loader.
+          // Mark profile as resolved so route gate does not hang forever.
           setResolvedProfileUserId(userId)
         },
         onSettled: () => {
@@ -585,8 +592,7 @@ function App() {
           profileRef.current.id !== nextUserId ||
           loadingRef.current
 
-        // Supabase can emit SIGNED_IN again when the same session is re-confirmed.
-        // Do not treat that as a real fresh login.
+        // Ignore same-session SIGNED_IN re-emits during resume/reconnect.
         if (isSameUserSession && !shouldHydrateProfile) {
           setAuthLoading(false)
           return
@@ -662,7 +668,7 @@ function App() {
       cancelProfileTask()
       subscription?.unsubscribe()
     }
-  }, [cancelProfileTask, runLatestProfileTask])
+  }, [cancelProfileTask])
 
   useEffect(() => {
     hasBootedRef.current = true
