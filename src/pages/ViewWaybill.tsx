@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Copy, MoreHorizontal, Pencil, Truck } from 'lucide-react'
+import { ArrowLeft, Copy, FolderOpen, FolderPlus, GitBranchPlus, MoreHorizontal, Pencil, Truck, Workflow } from 'lucide-react'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -15,9 +15,12 @@ import {
 } from '../components/waybill/waybillUtils'
 import type { Waybill, WaybillStatus } from '../components/waybill/waybillUtils'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
+import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
+import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/use-toast'
 import { useSettings } from '../hooks/useSettings'
+import { hasWaybillRelatedDocuments } from '@/domain/documentRelationships'
 
 function Badge({ className, label }: { className: string; label: string }) {
   return <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${className}`}>{label}</span>
@@ -34,6 +37,8 @@ export default function ViewWaybill() {
   const [linkedInvoice, setLinkedInvoice] = useState<{ id: string; invoice_number: string } | null>(null)
   const [linkedProject, setLinkedProject] = useState<{ id: string; name: string } | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
+  const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -117,6 +122,35 @@ export default function ViewWaybill() {
   const receiverSignature = getWaybillSignature(waybill, 'receiver')
   const projectReferenceName = linkedProject?.name || customFields?.references?.linkedProjectName || ''
   const invoiceReference = linkedInvoice?.invoice_number || customFields?.references?.linkedInvoiceNumber || ''
+  const hasLinkedDocuments = hasWaybillRelatedDocuments(waybill)
+  const linkedDocumentsSections = [
+    {
+      key: 'source',
+      title: 'Source',
+      description: 'Documents this waybill is linked to.',
+      items: linkedInvoice
+        ? [{
+            key: `invoice-${linkedInvoice.id}`,
+            label: `Invoice ${linkedInvoice.invoice_number}`,
+            subtitle: 'Open linked invoice',
+            onClick: () => navigate(`/invoices/${linkedInvoice.id}`),
+          }]
+        : [],
+    },
+    {
+      key: 'project',
+      title: 'Project',
+      description: 'Project connected to this waybill.',
+      items: linkedProject
+        ? [{
+            key: `project-${linkedProject.id}`,
+            label: linkedProject.name || linkedProject.id,
+            subtitle: 'Open linked project',
+            onClick: () => navigate(`/projects/${linkedProject.id}`),
+          }]
+        : [],
+    },
+  ]
 
   return (
     <Layout title={waybill.waybill_number || 'Waybill'} hidePageHeader>
@@ -142,6 +176,33 @@ export default function ViewWaybill() {
             {showMore ? (
               <div className="absolute right-0 top-11 z-30 w-52 rounded-2xl border border-border bg-card shadow-xl">
                 <div className="p-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMore(false)
+                      if (waybill.project_id) {
+                        navigate(`/projects/${waybill.project_id}`)
+                        return
+                      }
+                      setShowProjectLinkDialog(true)
+                    }}
+                    className="flex w-full items-center gap-2 rounded-xl px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    {waybill.project_id ? <FolderOpen className="h-4 w-4" /> : <FolderPlus className="h-4 w-4" />}
+                    <span>{waybill.project_id ? 'View Project' : 'Link to Project'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMore(false)
+                      setShowLinkedDocuments(true)
+                    }}
+                    className="flex w-full items-center gap-2 rounded-xl px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    {hasLinkedDocuments ? <Workflow className="h-4 w-4" /> : <GitBranchPlus className="h-4 w-4" />}
+                    <span>{hasLinkedDocuments ? 'Linked Documents' : 'Link Documents'}</span>
+                  </button>
+                  <div className="my-1 h-px bg-border" />
                   {waybill.status === 'draft' ? <button type="button" onClick={() => void handleStatusChange('dispatched')} className="w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium text-blue-600 hover:bg-blue-50">Mark as Dispatched</button> : null}
                   {waybill.status === 'dispatched' ? <button type="button" onClick={() => void handleStatusChange('delivered')} className="w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium text-emerald-600 hover:bg-emerald-50">Mark as Delivered</button> : null}
                   <div className="my-1 h-px bg-border" />
@@ -298,6 +359,30 @@ export default function ViewWaybill() {
         description="This cannot be undone."
         confirmLabel="Delete Waybill"
         onConfirm={() => void confirmDelete()}
+      />
+      <LinkedDocumentsSheet
+        open={showLinkedDocuments}
+        onOpenChange={setShowLinkedDocuments}
+        title="Linked Documents"
+        subtitle={waybill.waybill_number || 'Waybill'}
+        sections={linkedDocumentsSections}
+      />
+      <ProjectLinkDialog
+        open={showProjectLinkDialog}
+        onOpenChange={setShowProjectLinkDialog}
+        tableName="waybills"
+        recordId={id}
+        documentLabel="Waybill"
+        onLinked={async () => {
+          const { data } = await supabase.from('waybills').select('*').eq('id', id).single()
+          if (!data) return
+          const mapped = mapDbWaybill(data as Record<string, unknown>)
+          setWaybill(mapped)
+          if (mapped.project_id) {
+            const { data: project } = await supabase.from('projects').select('id, name').eq('id', mapped.project_id).single()
+            setLinkedProject(project as { id: string; name: string } | null)
+          }
+        }}
       />
     </Layout>
   )

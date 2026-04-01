@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, Pencil, Plus, Trash2, Truck } from 'lucide-react'
+import { Eye, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Plus, Trash2, Truck, Workflow } from 'lucide-react'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -10,6 +10,9 @@ import MobileFab from '../components/layout/MobileFab'
 import MobileSegmentedControl from '../components/layout/MobileSegmentedControl'
 import ListActionSheet from '../components/layout/ListActionSheet'
 import MobileListPageShell from '../components/layout/MobileListPageShell'
+import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
+import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
+import { fetchInvoiceSummary, fetchProjectSummary, hasWaybillRelatedDocuments } from '@/domain/documentRelationships'
 
 type FilterTab = 'all' | 'internal' | 'external'
 
@@ -20,20 +23,54 @@ export default function Waybills() {
   const [search, setSearch] = useState('')
   const [tab, setTab] = useState<FilterTab>('all')
   const [activeWaybill, setActiveWaybill] = useState<Waybill | null>(null)
+  const [activeWaybillInvoice, setActiveWaybillInvoice] = useState<{ id: string; invoice_number?: string | null } | null>(null)
+  const [activeWaybillProject, setActiveWaybillProject] = useState<{ id: string; name?: string | null } | null>(null)
+  const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
+  const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
+
+  const loadWaybills = async () => {
+    const { data } = await supabase
+      .from('waybills')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    setWaybills(((data as Record<string, unknown>[]) || []).map((row) => mapDbWaybill(row)) as Waybill[])
+    setLoading(false)
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      supabase
-        .from('waybills')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .then(({ data }) => {
-          setWaybills(((data as Record<string, unknown>[]) || []).map((row) => mapDbWaybill(row)) as Waybill[])
-          setLoading(false)
-        })
+      void loadWaybills()
     }, 0)
     return () => clearTimeout(timer)
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadRelationships = async () => {
+      if (!activeWaybill) {
+        setActiveWaybillInvoice(null)
+        setActiveWaybillProject(null)
+        return
+      }
+
+      const [invoice, project] = await Promise.all([
+        activeWaybill.invoice_id ? fetchInvoiceSummary(activeWaybill.invoice_id) : Promise.resolve(null),
+        activeWaybill.project_id ? fetchProjectSummary(activeWaybill.project_id) : Promise.resolve(null),
+      ])
+
+      if (cancelled) return
+      setActiveWaybillInvoice(invoice)
+      setActiveWaybillProject(project)
+    }
+
+    void loadRelationships()
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeWaybill?.id, activeWaybill?.invoice_id, activeWaybill?.project_id])
 
   const filtered = useMemo(() => {
     let list = waybills
@@ -65,6 +102,36 @@ export default function Waybills() {
     setWaybills((prev) => prev.filter((w) => w.id !== activeWaybill.id))
     setActiveWaybill(null)
   }
+
+  const activeWaybillHasLinkedDocuments = hasWaybillRelatedDocuments(activeWaybill)
+  const activeWaybillLinkedSections = activeWaybill ? [
+    {
+      key: 'source',
+      title: 'Source',
+      description: 'Documents this waybill is linked to.',
+      items: activeWaybillInvoice
+        ? [{
+            key: `invoice-${activeWaybillInvoice.id}`,
+            label: `Invoice ${activeWaybillInvoice.invoice_number || activeWaybillInvoice.id}`,
+            subtitle: 'Open linked invoice',
+            onClick: () => navigate(`/invoices/${activeWaybillInvoice.id}`),
+          }]
+        : [],
+    },
+    {
+      key: 'project',
+      title: 'Project',
+      description: 'Project connected to this waybill.',
+      items: activeWaybillProject
+        ? [{
+            key: `project-${activeWaybillProject.id}`,
+            label: activeWaybillProject.name || activeWaybillProject.id,
+            subtitle: 'Open linked project',
+            onClick: () => navigate(`/projects/${activeWaybillProject.id}`),
+          }]
+        : [],
+    },
+  ] : []
 
   return (
     <Layout title="Waybills" hidePageHeader>
@@ -187,12 +254,50 @@ export default function Waybills() {
             icon: <Pencil size={20} />,
             onClick: () => navigate(`/waybills/${activeWaybill.id}/edit`),
           },
+          {
+            key: 'project',
+            label: activeWaybill.project_id ? 'View Project' : 'Link to Project',
+            icon: activeWaybill.project_id ? <FolderOpen size={20} /> : <FolderPlus size={20} />,
+            onClick: () => {
+              if (activeWaybill.project_id) {
+                navigate(`/projects/${activeWaybill.project_id}`)
+                return
+              }
+              setShowProjectLinkDialog(true)
+            },
+            closeOnClick: !!activeWaybill.project_id,
+          },
+          {
+            key: 'documents',
+            label: activeWaybillHasLinkedDocuments ? 'Linked Documents' : 'Link Documents',
+            icon: activeWaybillHasLinkedDocuments ? <Workflow size={20} /> : <GitBranchPlus size={20} />,
+            onClick: () => setShowLinkedDocuments(true),
+            closeOnClick: false,
+          },
         ] : []}
         deleteAction={activeWaybill ? {
           label: 'Delete Waybill',
           icon: <Trash2 size={20} />,
           onClick: handleDeleteWaybill,
         } : undefined}
+      />
+      <LinkedDocumentsSheet
+        open={showLinkedDocuments}
+        onOpenChange={setShowLinkedDocuments}
+        title="Linked Documents"
+        subtitle={activeWaybill?.waybill_number || 'Waybill'}
+        sections={activeWaybillLinkedSections}
+      />
+      <ProjectLinkDialog
+        open={showProjectLinkDialog}
+        onOpenChange={setShowProjectLinkDialog}
+        tableName="waybills"
+        recordId={activeWaybill?.id || null}
+        documentLabel="Waybill"
+        onLinked={async () => {
+          await loadWaybills()
+          setActiveWaybill(null)
+        }}
       />
       </MobileListPageShell>
     </Layout>

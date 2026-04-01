@@ -12,10 +12,13 @@ import {
   Download,
   Ellipsis,
   FileText,
+  FolderPlus,
   FolderOpen,
+  GitBranchPlus,
   Pencil,
   Palette,
   Trash2,
+  Workflow,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -771,6 +774,10 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
     open: FolderOpen,
     export: FileText,
     pdf: FileText,
+    projectLink: FolderPlus,
+    projectView: FolderOpen,
+    documentsLink: GitBranchPlus,
+    documentsView: Workflow,
   }
   const toneMap = {
     payment: {
@@ -804,6 +811,22 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
     pdf: {
       tile: 'bg-slate-100 text-slate-700',
       chevron: 'text-slate-300',
+    },
+    projectLink: {
+      tile: 'bg-emerald-50 text-emerald-700',
+      chevron: 'text-emerald-300',
+    },
+    projectView: {
+      tile: 'bg-emerald-50 text-emerald-700',
+      chevron: 'text-emerald-300',
+    },
+    documentsLink: {
+      tile: 'bg-violet-50 text-violet-700',
+      chevron: 'text-violet-300',
+    },
+    documentsView: {
+      tile: 'bg-violet-50 text-violet-700',
+      chevron: 'text-violet-300',
     },
   }
 

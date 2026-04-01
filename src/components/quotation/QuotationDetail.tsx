@@ -52,6 +52,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
+import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { toDbItem, type InvoiceItem } from '@/domain/invoice'
 import {
   appendDerivedTrail,
@@ -61,6 +63,7 @@ import {
   toQuotationItemRow,
   withSourceTrail,
 } from '@/domain/documentConversion'
+import { fetchProjectSummary, getQuotationDocumentRelations, hasQuotationRelatedDocuments } from '@/domain/documentRelationships'
 import type { DbQuotation, DbQuotationItem, Quotation } from '@/domain/quotation'
 import { buildQuotationFormState, getNextQuotationNumber } from '@/domain/quotation'
 import { buildQuotationCsv, downloadQuotationCsv } from './exportQuotationCsv'
@@ -148,6 +151,9 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const [showPdfSettings, setShowPdfSettings] = useState(false)
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [linkedProject, setLinkedProject] = useState<{ id: string; name?: string | null } | null>(null)
+  const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
+  const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const hasText = (value: unknown) => String(value || '').trim().length > 0
 
   useEffect(() => {
@@ -192,6 +198,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
 
       setClient((clientResponse.data as Record<string, unknown> | null) || null)
       setSettings((settingsResponse.data as Record<string, unknown> | null) || null)
+      setLinkedProject(state.quotation.project_id ? await fetchProjectSummary(state.quotation.project_id) : null)
       setLoading(false)
     }
 
@@ -211,6 +218,52 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     derived?: Array<{ id?: string | null; type?: 'invoice' | 'quotation'; number?: string }>
   }
   const derivedInvoices = (conversionTrail.derived || []).filter((entry) => entry.type === 'invoice' && entry.id)
+  const quotationRelations = getQuotationDocumentRelations(quotation)
+  const hasLinkedDocuments = hasQuotationRelatedDocuments(quotation)
+  const linkedDocumentsSections = [
+    {
+      key: 'source',
+      title: 'Source',
+      description: 'Documents this quotation came from.',
+      items: quotationRelations.source
+        ? [{
+            key: `source-${quotationRelations.source.id || quotationRelations.source.number || 'quotation-source'}`,
+            label: `${quotationRelations.source.type === 'invoice' ? 'Invoice' : 'Quotation'} ${quotationRelations.source.number || quotationRelations.source.id || 'Linked source'}`,
+            subtitle: 'Open the source document',
+            onClick: () => {
+              if (quotationRelations.source?.id) {
+                navigate(`/${quotationRelations.source.type === 'invoice' ? 'invoices' : 'quotations'}/${quotationRelations.source.id}`)
+              }
+            },
+            disabled: !quotationRelations.source?.id,
+          }]
+        : [],
+    },
+    {
+      key: 'generated',
+      title: 'Generated / Child Documents',
+      description: 'Documents created from this quotation.',
+      items: derivedInvoices.map((entry) => ({
+        key: `invoice-${entry.id}`,
+        label: `Invoice ${entry.number || entry.id}`,
+        subtitle: 'Open generated invoice',
+        onClick: () => navigate(`/invoices/${entry.id}`),
+      })),
+    },
+    {
+      key: 'project',
+      title: 'Project',
+      description: 'Project connected to this quotation.',
+      items: linkedProject
+        ? [{
+            key: `project-${linkedProject.id}`,
+            label: linkedProject.name || linkedProject.id,
+            subtitle: 'Open linked project',
+            onClick: () => navigate(`/projects/${linkedProject.id}`),
+          }]
+        : [],
+    },
+  ]
 
   const companyIdentity = useMemo(() => {
     const companyName = String(settings?.company_name || '')
@@ -510,6 +563,24 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   if (!quotation) return <div className="rounded-2xl border border-zinc-200 bg-card p-8 text-sm text-zinc-500 shadow-sm">Quotation not found.</div>
 
   const shellActionItems = [
+    {
+      label: quotation.project_id ? 'View Project' : 'Link to Project',
+      subtitle: quotation.project_id ? (linkedProject?.name || 'Open the linked project workspace') : 'Attach this quotation to a project',
+      onClick: () => {
+        if (quotation.project_id) {
+          navigate(`/projects/${quotation.project_id}`)
+          return
+        }
+        setShowProjectLinkDialog(true)
+      },
+      iconKey: quotation.project_id ? 'projectView' : 'projectLink',
+    },
+    {
+      label: hasLinkedDocuments ? 'Linked Documents' : 'Link Documents',
+      subtitle: hasLinkedDocuments ? 'View source, generated, and related records' : 'Connect this quotation to related records',
+      onClick: () => setShowLinkedDocuments(true),
+      iconKey: hasLinkedDocuments ? 'documentsView' : 'documentsLink',
+    },
     { label: 'Export CSV', subtitle: 'Download a spreadsheet copy', onClick: () => handleDownloadCsv(), iconKey: 'export' },
     { label: 'Clone Quotation', subtitle: 'Duplicate this quotation as a draft', onClick: () => void handleClone(), iconKey: 'clone' },
     { label: 'Copy Quotation Number', subtitle: quotation.quotation_number || 'Copy the current document number', onClick: () => void handleCopy(quotation.quotation_number || '', 'Quotation number'), iconKey: 'copy' },
@@ -782,6 +853,29 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         onConfirm={() => void handleDelete()}
       />
 
+      <LinkedDocumentsSheet
+        open={showLinkedDocuments}
+        onOpenChange={setShowLinkedDocuments}
+        title="Linked Documents"
+        subtitle={quotation.quotation_number}
+        sections={linkedDocumentsSections}
+      />
+
+      <ProjectLinkDialog
+        open={showProjectLinkDialog}
+        onOpenChange={setShowProjectLinkDialog}
+        tableName="quotations"
+        recordId={quotationId}
+        documentLabel="Quotation"
+        onLinked={async () => {
+          const { data: refreshed } = await supabase.from('quotations').select('*').eq('id', quotationId).single()
+          if (!refreshed) return
+          const nextProject = refreshed.project_id ? await fetchProjectSummary(refreshed.project_id) : null
+          setQuotation((current) => (current ? { ...current, project_id: refreshed.project_id ?? null } : current))
+          setLinkedProject(nextProject)
+        }}
+      />
+
       <DocumentFloatingFab onClick={() => setShowPdfSettings(true)} />
 
       <DocumentBottomBar
@@ -795,6 +889,22 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   )
 
   const actionItems = [
+    {
+      key: 'project',
+      label: quotation.project_id ? 'View Project' : 'Link to Project',
+      action: () => {
+        if (quotation.project_id) {
+          navigate(`/projects/${quotation.project_id}`)
+          return
+        }
+        setShowProjectLinkDialog(true)
+      },
+    },
+    {
+      key: 'documents',
+      label: hasLinkedDocuments ? 'Linked Documents' : 'Link Documents',
+      action: () => setShowLinkedDocuments(true),
+    },
     { key: 'export-csv', label: 'Export CSV', action: () => handleDownloadCsv() },
     { key: 'clone-quotation', label: 'Clone Quotation', action: () => void handleClone() },
     { key: 'pdf-output-settings', label: 'PDF Output Settings', action: () => setShowPdfSettings(true) },

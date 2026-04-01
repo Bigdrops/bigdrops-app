@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Eye, Pencil, Copy, DollarSign, Send, Archive, Trash2, FileOutput, Truck, Wrench } from "lucide-react"
+import { Eye, Pencil, Copy, DollarSign, Send, Archive, Trash2, FileOutput, Truck, Wrench, FolderOpen, FolderPlus, GitBranchPlus, Workflow } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
@@ -9,6 +9,9 @@ import MobileFab from "../components/layout/MobileFab"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
 import ListActionSheet from "../components/layout/ListActionSheet"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"
+import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
+import ProjectLinkDialog from "@/components/document/ProjectLinkDialog"
+import { fetchInvoiceChildDocuments, fetchProjectSummary, getInvoiceSourceDocument, hasInvoiceRelatedDocuments } from "@/domain/documentRelationships"
 
 const PAGE_SIZE = 25
 
@@ -28,6 +31,10 @@ export default function Invoices() {
   const [page, setPage]                   = useState(0)
   const [hasMore, setHasMore]             = useState(false)
   const [loadingMore, setLoadingMore]     = useState(false)
+  const [activeInvoiceRelatedDocs, setActiveInvoiceRelatedDocs] = useState({ csrs: [], waybills: [] })
+  const [activeInvoiceProject, setActiveInvoiceProject] = useState(null)
+  const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
+  const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const navigate = useNavigate()
 
   const buildInvoiceQuery = () => {
@@ -121,6 +128,33 @@ export default function Invoices() {
     fetchInvoices(0, true)
   }, [clientFilter, dateFilter, search, sortBy, statusFilter])
 
+  useEffect(() => {
+    let cancelled = false
+
+    const loadActiveInvoiceRelationships = async () => {
+      if (!activeInvoice?.id) {
+        setActiveInvoiceRelatedDocs({ csrs: [], waybills: [] })
+        setActiveInvoiceProject(null)
+        return
+      }
+
+      const [relatedDocs, project] = await Promise.all([
+        fetchInvoiceChildDocuments(activeInvoice.id),
+        activeInvoice.project_id ? fetchProjectSummary(activeInvoice.project_id) : Promise.resolve(null),
+      ])
+
+      if (cancelled) return
+      setActiveInvoiceRelatedDocs(relatedDocs)
+      setActiveInvoiceProject(project)
+    }
+
+    void loadActiveInvoiceRelationships()
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeInvoice?.id, activeInvoice?.project_id])
+
   const closeSheet = () => {
     setActiveInvoice(null)
     setShowArchiveWarn(false)
@@ -194,6 +228,54 @@ export default function Invoices() {
   }
 
   const isStandalone = activeInvoice && !activeInvoice.thread_id
+  const activeInvoiceSource = activeInvoice ? getInvoiceSourceDocument(activeInvoice) : null
+  const activeInvoiceHasLinkedDocuments = activeInvoice ? hasInvoiceRelatedDocuments(activeInvoice, activeInvoiceRelatedDocs) : false
+  const activeInvoiceLinkedSections = activeInvoice ? [
+    {
+      key: "source",
+      title: "Source",
+      description: "Documents this invoice came from.",
+      items: activeInvoiceSource ? [{
+        key: `source-${activeInvoiceSource.id || activeInvoiceSource.number || "invoice-source"}`,
+        label: `${activeInvoiceSource.type === "quotation" ? "Quotation" : "Document"} ${activeInvoiceSource.number || activeInvoiceSource.id || "Linked source"}`,
+        subtitle: activeInvoiceSource.po_number ? `PO ${activeInvoiceSource.po_number}` : "Open the source document",
+        onClick: () => {
+          if (activeInvoiceSource.id) navigate(`/${activeInvoiceSource.type === "quotation" ? "quotations" : "invoices"}/${activeInvoiceSource.id}`)
+        },
+        disabled: !activeInvoiceSource.id,
+      }] : [],
+    },
+    {
+      key: "generated",
+      title: "Generated / Child Documents",
+      description: "Documents created from this invoice.",
+      items: [
+        ...(activeInvoiceRelatedDocs.csrs || []).map((csr) => ({
+          key: `csr-${csr.id}`,
+          label: `CSR ${csr.csr_number || csr.id}`,
+          subtitle: "Open linked CSR",
+          onClick: () => navigate(`/csr/${csr.id}`),
+        })),
+        ...(activeInvoiceRelatedDocs.waybills || []).map((waybill) => ({
+          key: `waybill-${waybill.id}`,
+          label: `Waybill ${waybill.waybill_number || waybill.id}`,
+          subtitle: "Open linked waybill",
+          onClick: () => navigate(`/waybills/${waybill.id}`),
+        })),
+      ],
+    },
+    {
+      key: "project",
+      title: "Project",
+      description: "Project connected to this invoice.",
+      items: activeInvoiceProject ? [{
+        key: `project-${activeInvoiceProject.id}`,
+        label: activeInvoiceProject.name || activeInvoiceProject.id,
+        subtitle: "Open linked project",
+        onClick: () => navigate(`/projects/${activeInvoiceProject.id}`),
+      }] : [],
+    },
+  ] : []
 
   const roleColor = (role) => {
     if (role === "advance")  return "bg-blue-100 text-blue-700"
@@ -380,6 +462,24 @@ export default function Invoices() {
         actions={activeInvoice ? [
           { key: "view", label: "View", icon: <Eye className="h-6 w-6" />, onClick: handleView },
           { key: "edit", label: "Edit", icon: <Pencil className="h-6 w-6" />, onClick: handleEdit },
+          {
+            key: "project",
+            label: activeInvoice.project_id ? "View Project" : "Link to Project",
+            icon: activeInvoice.project_id ? <FolderOpen className="h-6 w-6" /> : <FolderPlus className="h-6 w-6" />,
+            onClick: () => {
+              activeInvoice.project_id ? navigate(`/projects/${activeInvoice.project_id}`) : setShowProjectLinkDialog(true)
+            },
+            closeOnClick: activeInvoice.project_id,
+          },
+          {
+            key: "documents",
+            label: activeInvoiceHasLinkedDocuments ? "Linked Documents" : "Link Documents",
+            icon: activeInvoiceHasLinkedDocuments ? <Workflow className="h-6 w-6" /> : <GitBranchPlus className="h-6 w-6" />,
+            onClick: () => {
+              setShowLinkedDocuments(true)
+            },
+            closeOnClick: false,
+          },
           ...(activeInvoice.status !== "paid" ? [{ key: "payment", label: "Payment", icon: <DollarSign className="h-6 w-6" />, onClick: () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) } }] : []),
           { key: "clone", label: "Clone", icon: <Copy className="h-6 w-6" />, onClick: handleClone },
           ...(isStandalone ? [{ key: "advance", label: "Advance", icon: <DollarSign className="h-6 w-6" />, onClick: handleAdvance }] : []),
@@ -406,6 +506,24 @@ export default function Invoices() {
         description="Deleting is permanent and cannot be undone."
         confirmLabel="Delete Forever"
         onConfirm={() => { void handleDelete() }}
+      />
+      <LinkedDocumentsSheet
+        open={showLinkedDocuments}
+        onOpenChange={setShowLinkedDocuments}
+        title="Linked Documents"
+        subtitle={activeInvoice?.invoice_number || "Invoice"}
+        sections={activeInvoiceLinkedSections}
+      />
+      <ProjectLinkDialog
+        open={showProjectLinkDialog}
+        onOpenChange={setShowProjectLinkDialog}
+        tableName="invoices"
+        recordId={activeInvoice?.id || null}
+        documentLabel="Invoice"
+        onLinked={async () => {
+          await Promise.all([fetchInvoices(0, true), fetchClientOptions()])
+          setActiveInvoice(null)
+        }}
       />
     </Layout>
   )

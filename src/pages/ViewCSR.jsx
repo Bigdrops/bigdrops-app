@@ -10,6 +10,9 @@ import {
 import CSRPreviewPanel from '../components/csr/CSRPreviewPanel'
 import { toast } from '@/hooks/use-toast'
 import { DocumentActionSheet } from '@/components/document/DocumentViewShell'
+import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
+import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
+import { fetchInvoiceSummary, fetchProjectSummary, hasCsrRelatedDocuments } from '@/domain/documentRelationships'
 
 export default function ViewCSR() {
   const { id } = useParams()
@@ -19,6 +22,10 @@ export default function ViewCSR() {
   const [signatories, setSignatories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showMore, setShowMore] = useState(false)
+  const [linkedInvoice, setLinkedInvoice] = useState(null)
+  const [linkedProject, setLinkedProject] = useState(null)
+  const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
+  const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [template, setTemplate] = useState(() => {
     try {
       return localStorage.getItem('csr_pdf_template') || '4'
@@ -31,6 +38,16 @@ export default function ViewCSR() {
     supabase.from('csrs').select('*').eq('id', id).single().then(({ data }) => {
       setCsr(data)
       setLoading(false)
+      if (data?.linked_invoice_id) {
+        fetchInvoiceSummary(data.linked_invoice_id).then((invoice) => setLinkedInvoice(invoice))
+      } else {
+        setLinkedInvoice(null)
+      }
+      if (data?.project_id) {
+        fetchProjectSummary(data.project_id).then((project) => setLinkedProject(project))
+      } else {
+        setLinkedProject(null)
+      }
     })
     supabase.from('settings').select('*').eq('id', 1).single().then(({ data }) => {
       if (data) setSettings(data)
@@ -53,6 +70,35 @@ export default function ViewCSR() {
 
   const previewData = buildCsrPreviewData(csr, { signatories })
   const branding = getCsrBranding(settings)
+  const hasLinkedDocuments = hasCsrRelatedDocuments(csr)
+  const linkedDocumentsSections = [
+    {
+      key: 'source',
+      title: 'Source',
+      description: 'Documents this CSR is linked to.',
+      items: linkedInvoice
+        ? [{
+            key: `invoice-${linkedInvoice.id}`,
+            label: `Invoice ${linkedInvoice.invoice_number || linkedInvoice.id}`,
+            subtitle: 'Open linked invoice',
+            onClick: () => navigate(`/invoices/${linkedInvoice.id}`),
+          }]
+        : [],
+    },
+    {
+      key: 'project',
+      title: 'Project',
+      description: 'Project connected to this CSR.',
+      items: linkedProject
+        ? [{
+            key: `project-${linkedProject.id}`,
+            label: linkedProject.name || linkedProject.id,
+            subtitle: 'Open linked project',
+            onClick: () => navigate(`/projects/${linkedProject.id}`),
+          }]
+        : [],
+    },
+  ]
 
   const handleDownload = async () => {
     const [{ pdf }, { getCsrPdfDocument }] = await Promise.all([
@@ -80,6 +126,24 @@ export default function ViewCSR() {
   }
 
   const moreActions = [
+    {
+      label: csr.project_id ? 'View Project' : 'Link to Project',
+      subtitle: csr.project_id ? (linkedProject?.name || 'Open the linked project workspace') : 'Attach this CSR to a project',
+      action: () => {
+        if (csr.project_id) {
+          navigate(`/projects/${csr.project_id}`)
+          return
+        }
+        setShowProjectLinkDialog(true)
+      },
+      iconKey: csr.project_id ? 'projectView' : 'projectLink',
+    },
+    {
+      label: hasLinkedDocuments ? 'Linked Documents' : 'Link Documents',
+      subtitle: hasLinkedDocuments ? 'View source and related records' : 'Connect this CSR to related records',
+      action: () => setShowLinkedDocuments(true),
+      iconKey: hasLinkedDocuments ? 'documentsView' : 'documentsLink',
+    },
     {
       label: 'Copy CSR Number',
       subtitle: previewData.csr_number || 'Copy the current CSR number',
@@ -155,6 +219,26 @@ export default function ViewCSR() {
             onClick: item.action,
             iconKey: item.iconKey,
           }))}
+        />
+        <LinkedDocumentsSheet
+          open={showLinkedDocuments}
+          onOpenChange={setShowLinkedDocuments}
+          title="Linked Documents"
+          subtitle={previewData.csr_number}
+          sections={linkedDocumentsSections}
+        />
+        <ProjectLinkDialog
+          open={showProjectLinkDialog}
+          onOpenChange={setShowProjectLinkDialog}
+          tableName="csrs"
+          recordId={id}
+          documentLabel="CSR"
+          onLinked={async () => {
+            const { data } = await supabase.from('csrs').select('*').eq('id', id).single()
+            if (!data) return
+            setCsr(data)
+            setLinkedProject(data.project_id ? await fetchProjectSummary(data.project_id) : null)
+          }}
         />
       </div>
     </Layout>

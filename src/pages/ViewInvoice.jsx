@@ -35,6 +35,12 @@ import {
   toQuotationItemRow,
   withSourceTrail,
 } from '@/domain/documentConversion'
+import {
+  fetchInvoiceChildDocuments,
+  fetchProjectSummary,
+  getInvoiceSourceDocument,
+  hasInvoiceRelatedDocuments,
+} from '@/domain/documentRelationships'
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { computeDocument } from '@/lib/Calculations'
 import { PDF_TEMPLATES, DEFAULT_TEMPLATE } from '@/components/pdf/pdfTemplates'
@@ -57,6 +63,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
+import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -100,18 +108,23 @@ export default function ViewInvoice() {
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [converting, setConverting] = useState(false)
 
-  // Project linking modal
-  const [showProjectModal, setShowProjectModal] = useState(false)
-  const [projectLinkId, setProjectLinkId] = useState('')
-  const [projectLinking, setProjectLinking] = useState(false)
+  const [linkedProject, setLinkedProject] = useState(null)
+  const [invoiceRelatedDocs, setInvoiceRelatedDocs] = useState({ csrs: [], waybills: [] })
+  const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
+  const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
 
   const fetchInvoice = async () => {
     const { data } = await supabase.from('invoices').select('*').eq('id', id).single()
     setInvoice(data)
+    setLinkedProject(data?.project_id ? await fetchProjectSummary(data.project_id) : null)
     if (data?.client_id) {
       const { data: c } = await supabase.from('clients').select('*').eq('id', data.client_id).single()
       setClient(c || null)
     }
+  }
+
+  const fetchInvoiceRelationships = async () => {
+    setInvoiceRelatedDocs(await fetchInvoiceChildDocuments(id))
   }
 
   const fetchPayments = async () => {
@@ -178,6 +191,7 @@ export default function ViewInvoice() {
       fetchInvoice(),
       fetchItems(),
       fetchPayments(),
+      fetchInvoiceRelationships(),
       fetchInvoiceFinancials(),
       supabase
         .from('signatories')
@@ -254,6 +268,58 @@ export default function ViewInvoice() {
   }, 0)
   const canConfirmRevert =
     revertConfirmInput === String(invoice.invoice_number || '') && !!revertReason.trim() && !converting
+  const sourceDocument = getInvoiceSourceDocument(invoice)
+  const hasLinkedDocuments = hasInvoiceRelatedDocuments(invoice, invoiceRelatedDocs)
+  const linkedDocumentsSections = [
+    {
+      key: 'source',
+      title: 'Source',
+      description: 'Documents this invoice came from.',
+      items: sourceDocument
+        ? [{
+            key: `source-${sourceDocument.id || sourceDocument.number || 'invoice-source'}`,
+            label: `${sourceDocument.type === 'quotation' ? 'Quotation' : 'Document'} ${sourceDocument.number || sourceDocument.id || 'Linked source'}`,
+            subtitle: sourceDocument.po_number ? `PO ${sourceDocument.po_number}` : 'Open the source document',
+            onClick: () => {
+              if (sourceDocument.id) navigate(`/${sourceDocument.type === 'quotation' ? 'quotations' : 'invoices'}/${sourceDocument.id}`)
+            },
+            disabled: !sourceDocument.id,
+          }]
+        : [],
+    },
+    {
+      key: 'generated',
+      title: 'Generated / Child Documents',
+      description: 'Documents created from this invoice.',
+      items: [
+        ...(invoiceRelatedDocs.csrs || []).map((csr) => ({
+          key: `csr-${csr.id}`,
+          label: `CSR ${csr.csr_number || csr.id}`,
+          subtitle: 'Open linked CSR',
+          onClick: () => navigate(`/csr/${csr.id}`),
+        })),
+        ...(invoiceRelatedDocs.waybills || []).map((waybill) => ({
+          key: `waybill-${waybill.id}`,
+          label: `Waybill ${waybill.waybill_number || waybill.id}`,
+          subtitle: 'Open linked waybill',
+          onClick: () => navigate(`/waybills/${waybill.id}`),
+        })),
+      ],
+    },
+    {
+      key: 'project',
+      title: 'Project',
+      description: 'Project connected to this invoice.',
+      items: linkedProject
+        ? [{
+            key: `project-${linkedProject.id}`,
+            label: linkedProject.name || linkedProject.id,
+            subtitle: 'Open linked project',
+            onClick: () => navigate(`/projects/${linkedProject.id}`),
+          }]
+        : [],
+    },
+  ]
   const handleDownloadPDF = async () => {
     if (pdfGenerating) return
     setPdfGenerating(true)
@@ -977,13 +1043,22 @@ export default function ViewInvoice() {
           subtitle={invoice.invoice_number}
           actions={[
             {
-              label: invoice.project_id ? 'Open Linked Documents' : 'Link to Project',
-              subtitle: invoice.project_id ? 'Open the linked project workspace' : 'Attach this invoice to a project',
+              label: invoice.project_id ? 'View Project' : 'Link to Project',
+              subtitle: invoice.project_id ? (linkedProject?.name || 'Open the linked project workspace') : 'Attach this invoice to a project',
               onClick: () => {
                 setShowMore(false)
-                invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectModal(true)
+                invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectLinkDialog(true)
               },
-              iconKey: 'open',
+              iconKey: invoice.project_id ? 'projectView' : 'projectLink',
+            },
+            {
+              label: hasLinkedDocuments ? 'Linked Documents' : 'Link Documents',
+              subtitle: hasLinkedDocuments ? 'View source, generated, and related records' : 'Connect this invoice to related records',
+              onClick: () => {
+                setShowMore(false)
+                setShowLinkedDocuments(true)
+              },
+              iconKey: hasLinkedDocuments ? 'documentsView' : 'documentsLink',
             },
             ...(invoice.status !== 'paid'
               ? [{
@@ -1037,6 +1112,98 @@ export default function ViewInvoice() {
           onConfirm={() => void confirmArchive()}
         />
 
+        <AlertDialog open={showRevertConfirm} onOpenChange={setShowRevertConfirm}>
+          <AlertDialogContent className="max-w-lg border border-border bg-background text-foreground shadow-lg">
+            <AlertDialogHeader className="items-start text-left">
+              <AlertDialogMedia className="border border-destructive/20 bg-destructive/15 text-destructive">
+                <AlertTriangle className="h-4 w-4" />
+              </AlertDialogMedia>
+              <AlertDialogTitle className="text-base font-semibold">
+                Revert invoice to quotation?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-3 text-left">
+                <p>This will revert Invoice {invoice.invoice_number} to a quotation.</p>
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+                  <p className="font-medium text-foreground">The invoice will be deleted.</p>
+                  <p className="mt-1 font-medium text-destructive">
+                    All payments recorded against this invoice will also be removed.
+                  </p>
+                  <p className="mt-1 text-muted-foreground">
+                    Use this only when the invoice was created by mistake.
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <div className="space-y-4">
+              <div className="grid gap-2 sm:grid-cols-3">
+                <div className="rounded-lg border border-border bg-background p-3">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                    Invoice
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-foreground">
+                    {invoice.invoice_number || '-'}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-3">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                    Payments
+                  </div>
+                  <div className="mt-1">
+                    <Badge variant="outline">{activePaymentCount}</Badge>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-3">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                    Payment Total
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-foreground">
+                    {formatMoney(activePaymentTotal)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="revert-confirm-number" className="text-sm font-medium text-foreground">
+                  Type the invoice number to confirm
+                </label>
+                <Input
+                  id="revert-confirm-number"
+                  value={revertConfirmInput}
+                  onChange={(e) => setRevertConfirmInput(e.target.value)}
+                  placeholder={invoice.invoice_number || 'Invoice number'}
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="revert-reason" className="text-sm font-medium text-foreground">
+                  Reason for revert
+                </label>
+                <Textarea
+                  id="revert-reason"
+                  value={revertReason}
+                  onChange={(e) => setRevertReason(e.target.value)}
+                  placeholder="Explain why this invoice needs to be reverted"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={converting}>Cancel</AlertDialogCancel>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={!canConfirmRevert}
+                onClick={() => void handleConvertToQuote()}
+              >
+                {converting ? 'Reverting...' : 'Revert to Quotation'}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <Dialog open={showVoidDialog} onOpenChange={setShowVoidDialog}>
           <DialogContent>
             <DialogHeader>
@@ -1053,44 +1220,24 @@ export default function ViewInvoice() {
           </DialogContent>
         </Dialog>
 
-        {showProjectModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-5">
-            <div className="w-full max-w-sm rounded-[24px] bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-extrabold text-foreground">Link to Project</h3>
-                <button type="button" className="text-xl text-muted-foreground" onClick={() => { setShowProjectModal(false); setProjectLinkId('') }}>×</button>
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground">Enter a Project ID to link this invoice, or jump to Projects to create one.</p>
-              <Input className="mt-4" value={projectLinkId} onChange={(e) => setProjectLinkId(e.target.value)} placeholder="Paste Project ID (UUID)" autoFocus />
-              <div className="mt-4 flex gap-2">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => { setShowProjectModal(false); setProjectLinkId('') }}>Cancel</Button>
-                <Button
-                  type="button"
-                  className="flex-[1.35]"
-                  disabled={projectLinking}
-                  onClick={async () => {
-                    if (!projectLinkId.trim()) return
-                    setProjectLinking(true)
-                    const { error } = await supabase.from('invoices').update({ project_id: projectLinkId.trim() }).eq('id', id)
-                    setProjectLinking(false)
-                    if (error) {
-                      toast({ title: 'Failed to link', description: error.message, variant: 'destructive' })
-                      return
-                    }
-                    setShowProjectModal(false)
-                    setProjectLinkId('')
-                    await fetchInvoice()
-                  }}
-                >
-                  {projectLinking ? 'Linking...' : 'Link Invoice'}
-                </Button>
-              </div>
-              <Button type="button" variant="outline" className="mt-2 w-full" onClick={() => { setShowProjectModal(false); navigate('/projects') }}>
-                Go to Projects
-              </Button>
-            </div>
-          </div>
-        )}
+        <LinkedDocumentsSheet
+          open={showLinkedDocuments}
+          onOpenChange={setShowLinkedDocuments}
+          title="Linked Documents"
+          subtitle={invoice.invoice_number || 'Invoice'}
+          sections={linkedDocumentsSections}
+        />
+
+        <ProjectLinkDialog
+          open={showProjectLinkDialog}
+          onOpenChange={setShowProjectLinkDialog}
+          tableName="invoices"
+          recordId={id}
+          documentLabel="Invoice"
+          onLinked={async () => {
+            await Promise.all([fetchInvoice(), fetchInvoiceRelationships()])
+          }}
+        />
 
         <DocumentFloatingFab onClick={() => setShowPdfSheet(true)} />
 
@@ -1827,123 +1974,6 @@ export default function ViewInvoice() {
           )}
         </div>
 
-        {/* ── Link to Project Modal ── */}
-        {showProjectModal && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              zIndex: 999,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '20px',
-            }}
-          >
-            <div
-              style={{
-                backgroundColor: 'white',
-                borderRadius: '16px',
-                padding: '24px',
-                width: '100%',
-                maxWidth: '400px',
-                boxShadow: '0 12px 50px rgba(0,0,0,0.2)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>Link to Project</h3>
-                <span onClick={() => { setShowProjectModal(false); setProjectLinkId('') }} style={{ cursor: 'pointer', fontSize: '20px', color: '#aaa', lineHeight: 1 }}>
-                  ×
-                </span>
-              </div>
-              <p style={{ margin: '0 0 18px', fontSize: '13px', color: '#64748B', lineHeight: 1.5 }}>
-                Enter a Project ID to link this invoice, or go to Projects to create a new one.
-              </p>
-              <div style={{ marginBottom: '14px' }}>
-                <input
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '10px 14px',
-                    border: '1px solid #E2E8F0',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    outline: 'none',
-                  }}
-                  value={projectLinkId}
-                  onChange={(e) => setProjectLinkId(e.target.value)}
-                  placeholder="Paste Project ID (UUID)"
-                  autoFocus
-                />
-              </div>
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                <button
-                  onClick={() => { setShowProjectModal(false); setProjectLinkId('') }}
-                  style={{
-                    flex: 1,
-                    padding: '10px',
-                    border: '1px solid #E2E8F0',
-                    borderRadius: '8px',
-                    background: 'white',
-                    fontSize: '13px',
-                    color: '#64748B',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  disabled={projectLinking}
-                  onClick={async () => {
-                    if (!projectLinkId.trim()) return
-                    setProjectLinking(true)
-                    const { error } = await supabase.from('invoices').update({ project_id: projectLinkId.trim() }).eq('id', id)
-                    setProjectLinking(false)
-                    if (error) {
-                      toast({ title: 'Failed to link', description: error.message, variant: 'destructive' })
-                      return
-                    }
-                    setShowProjectModal(false)
-                    setProjectLinkId('')
-                    await fetchInvoice()
-                  }}
-                  style={{
-                    flex: 2,
-                    padding: '10px',
-                    border: 'none',
-                    borderRadius: '8px',
-                    background: projectLinking ? '#94A3B8' : '#0F172A',
-                    fontSize: '13px',
-                    color: 'white',
-                    cursor: projectLinking ? 'not-allowed' : 'pointer',
-                    fontWeight: '700',
-                  }}
-                >
-                  {projectLinking ? 'Linking...' : 'Link Invoice'}
-                </button>
-              </div>
-              <button
-                onClick={() => { setShowProjectModal(false); navigate('/projects') }}
-                style={{
-                  width: '100%',
-                  padding: '9px',
-                  border: '1px solid #BFDBFE',
-                  borderRadius: '8px',
-                  background: '#EFF6FF',
-                  fontSize: '13px',
-                  color: '#1D4ED8',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                }}
-              >
-                Go to Projects →
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* ── PDF Download + Template Selector ── */}
         <PdfOutputSettings
           value={pdfOutput}
@@ -2009,98 +2039,6 @@ export default function ViewInvoice() {
           variant="default"
           onConfirm={() => void confirmArchive()}
         />
-
-        <AlertDialog open={showRevertConfirm} onOpenChange={setShowRevertConfirm}>
-          <AlertDialogContent className="max-w-lg border border-border bg-background text-foreground shadow-lg">
-            <AlertDialogHeader className="items-start text-left">
-              <AlertDialogMedia className="border border-destructive/20 bg-destructive/15 text-destructive">
-                <AlertTriangle className="h-4 w-4" />
-              </AlertDialogMedia>
-              <AlertDialogTitle className="text-base font-semibold">
-                Revert invoice to quotation?
-              </AlertDialogTitle>
-              <AlertDialogDescription className="space-y-3 text-left">
-                <p>This will revert Invoice {invoice.invoice_number} to a quotation.</p>
-                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
-                  <p className="font-medium text-foreground">The invoice will be deleted.</p>
-                  <p className="mt-1 font-medium text-destructive">
-                    All payments recorded against this invoice will also be removed.
-                  </p>
-                  <p className="mt-1 text-muted-foreground">
-                    Use this only when the invoice was created by mistake.
-                  </p>
-                </div>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-
-            <div className="space-y-4">
-              <div className="grid gap-2 sm:grid-cols-3">
-                <div className="rounded-lg border border-border bg-background p-3">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                    Invoice
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-foreground">
-                    {invoice.invoice_number || '-'}
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border bg-background p-3">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                    Payments
-                  </div>
-                  <div className="mt-1">
-                    <Badge variant="outline">{activePaymentCount}</Badge>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border bg-background p-3">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                    Payment Total
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-foreground">
-                    {formatMoney(activePaymentTotal)}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="revert-confirm-number" className="text-sm font-medium text-foreground">
-                  Type the invoice number to confirm
-                </label>
-                <Input
-                  id="revert-confirm-number"
-                  value={revertConfirmInput}
-                  onChange={(e) => setRevertConfirmInput(e.target.value)}
-                  placeholder={invoice.invoice_number || 'Invoice number'}
-                  autoFocus
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="revert-reason" className="text-sm font-medium text-foreground">
-                  Reason for revert
-                </label>
-                <Textarea
-                  id="revert-reason"
-                  value={revertReason}
-                  onChange={(e) => setRevertReason(e.target.value)}
-                  placeholder="Explain why this invoice needs to be reverted"
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={converting}>Cancel</AlertDialogCancel>
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={!canConfirmRevert}
-                onClick={() => void handleConvertToQuote()}
-              >
-                {converting ? 'Reverting...' : 'Revert to Quotation'}
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
 
         <Dialog open={showVoidDialog} onOpenChange={setShowVoidDialog}>
           <DialogContent>

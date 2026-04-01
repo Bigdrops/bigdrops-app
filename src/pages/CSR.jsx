@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ClipboardList, Eye, Pencil, Plus, Trash2 } from "lucide-react"
+import { ClipboardList, Eye, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Plus, Trash2, Workflow } from "lucide-react"
 
 import ConfirmActionDialog from "@/components/ConfirmActionDialog"
 import { supabase } from "../supabase"
@@ -8,8 +8,11 @@ import { toast } from "@/hooks/use-toast"
 import Layout from "../components/Layout"
 import ListActionSheet from "../components/layout/ListActionSheet"
 import MobileFab from "../components/layout/MobileFab"
+import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
+import ProjectLinkDialog from "@/components/document/ProjectLinkDialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
+import { fetchInvoiceSummary, fetchProjectSummary, hasCsrRelatedDocuments } from "@/domain/documentRelationships"
 
 function normalizeStatus(status) {
   return (status || "").trim().toLowerCase()
@@ -28,6 +31,10 @@ export default function CSR() {
   const [showFilters, setShowFilters] = useState(false)
   const [csrToDelete, setCsrToDelete] = useState(null)
   const [activeCsr, setActiveCsr] = useState(null)
+  const [activeCsrInvoice, setActiveCsrInvoice] = useState(null)
+  const [activeCsrProject, setActiveCsrProject] = useState(null)
+  const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
+  const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
 
   const fetchCsrs = async () => {
     setLoading(true)
@@ -48,6 +55,33 @@ export default function CSR() {
 
     return () => clearTimeout(timer)
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadRelationships = async () => {
+      if (!activeCsr) {
+        setActiveCsrInvoice(null)
+        setActiveCsrProject(null)
+        return
+      }
+
+      const [invoice, project] = await Promise.all([
+        activeCsr.linked_invoice_id ? fetchInvoiceSummary(activeCsr.linked_invoice_id) : Promise.resolve(null),
+        activeCsr.project_id ? fetchProjectSummary(activeCsr.project_id) : Promise.resolve(null),
+      ])
+
+      if (cancelled) return
+      setActiveCsrInvoice(invoice)
+      setActiveCsrProject(project)
+    }
+
+    void loadRelationships()
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeCsr?.id, activeCsr?.linked_invoice_id, activeCsr?.project_id])
 
   const getCsrStatusKey = (status) => {
     const normalized = normalizeStatus(status)
@@ -78,6 +112,36 @@ export default function CSR() {
   const clientOptions = useMemo(() => {
     return Array.from(new Set(csrs.map((csr) => csr.client_name).filter(Boolean))).sort((a, b) => a.localeCompare(b))
   }, [csrs])
+
+  const activeCsrHasLinkedDocuments = hasCsrRelatedDocuments(activeCsr)
+  const activeCsrLinkedSections = activeCsr ? [
+    {
+      key: 'source',
+      title: 'Source',
+      description: 'Documents this CSR is linked to.',
+      items: activeCsrInvoice
+        ? [{
+            key: `invoice-${activeCsrInvoice.id}`,
+            label: `Invoice ${activeCsrInvoice.invoice_number || activeCsrInvoice.id}`,
+            subtitle: 'Open linked invoice',
+            onClick: () => navigate(`/invoices/${activeCsrInvoice.id}`),
+          }]
+        : [],
+    },
+    {
+      key: 'project',
+      title: 'Project',
+      description: 'Project connected to this CSR.',
+      items: activeCsrProject
+        ? [{
+            key: `project-${activeCsrProject.id}`,
+            label: activeCsrProject.name || activeCsrProject.id,
+            subtitle: 'Open linked project',
+            onClick: () => navigate(`/projects/${activeCsrProject.id}`),
+          }]
+        : [],
+    },
+  ] : []
 
   const filteredCsrs = useMemo(() => {
     const now = new Date()
@@ -310,12 +374,50 @@ export default function CSR() {
             icon: <Pencil className="h-6 w-6" />,
             onClick: () => navigate(`/csr/edit/${activeCsr.id}`),
           },
+          {
+            key: 'project',
+            label: activeCsr.project_id ? 'View Project' : 'Link to Project',
+            icon: activeCsr.project_id ? <FolderOpen className="h-6 w-6" /> : <FolderPlus className="h-6 w-6" />,
+            onClick: () => {
+              if (activeCsr.project_id) {
+                navigate(`/projects/${activeCsr.project_id}`)
+                return
+              }
+              setShowProjectLinkDialog(true)
+            },
+            closeOnClick: !!activeCsr.project_id,
+          },
+          {
+            key: 'documents',
+            label: activeCsrHasLinkedDocuments ? 'Linked Documents' : 'Link Documents',
+            icon: activeCsrHasLinkedDocuments ? <Workflow className="h-6 w-6" /> : <GitBranchPlus className="h-6 w-6" />,
+            onClick: () => setShowLinkedDocuments(true),
+            closeOnClick: false,
+          },
         ] : []}
         deleteAction={activeCsr ? {
           label: "Delete CSR",
           icon: <Trash2 className="h-6 w-6" />,
           onClick: () => setCsrToDelete(activeCsr),
         } : undefined}
+      />
+      <LinkedDocumentsSheet
+        open={showLinkedDocuments}
+        onOpenChange={setShowLinkedDocuments}
+        title="Linked Documents"
+        subtitle={activeCsr?.csr_number || 'CSR'}
+        sections={activeCsrLinkedSections}
+      />
+      <ProjectLinkDialog
+        open={showProjectLinkDialog}
+        onOpenChange={setShowProjectLinkDialog}
+        tableName="csrs"
+        recordId={activeCsr?.id || null}
+        documentLabel="CSR"
+        onLinked={async () => {
+          await fetchCsrs()
+          setActiveCsr(null)
+        }}
       />
     </Layout>
   )

@@ -4,13 +4,19 @@ import {
   Archive,
   ClipboardList,
   Copy,
+  FolderOpen,
+  FolderPlus,
+  GitBranchPlus,
   Loader2,
   Pencil,
   Plus,
   Trash2,
+  Workflow,
 } from 'lucide-react'
 import { supabase } from '@/supabase'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
+import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
+import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { toast } from '@/hooks/use-toast'
 import {
   Select,
@@ -21,6 +27,7 @@ import {
 } from '@/components/ui/select'
 import type { DbQuotation } from '@/domain/quotation'
 import { getNextQuotationNumber, mapDbQuotation } from '@/domain/quotation'
+import { fetchProjectSummary, getQuotationDocumentRelations, hasQuotationRelatedDocuments } from '@/domain/documentRelationships'
 import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
 import ListActionSheet from '@/components/layout/ListActionSheet'
 import MobileFab from '@/components/layout/MobileFab'
@@ -43,6 +50,9 @@ export default function QuotationList() {
   const [archiveId, setArchiveId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [activeQuotation, setActiveQuotation] = useState<ReturnType<typeof mapDbQuotation> | null>(null)
+  const [activeQuotationProject, setActiveQuotationProject] = useState<{ id: string; name?: string | null } | null>(null)
+  const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
+  const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
 
   const loadQuotations = async () => {
     const { data } = await supabase
@@ -56,6 +66,26 @@ export default function QuotationList() {
   useEffect(() => {
     loadQuotations()
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadProject = async () => {
+      if (!activeQuotation?.project_id) {
+        setActiveQuotationProject(null)
+        return
+      }
+
+      const project = await fetchProjectSummary(activeQuotation.project_id)
+      if (!cancelled) setActiveQuotationProject(project)
+    }
+
+    void loadProject()
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeQuotation?.project_id])
 
   const handleArchive = async (id: string) => {
     setArchiveId(null)
@@ -164,6 +194,54 @@ export default function QuotationList() {
 
   const activeQuotationIsArchiving = activeQuotation ? busyAction === `archive:${activeQuotation.id}` : false
   const activeQuotationIsDeleting = activeQuotation ? busyAction === `delete:${activeQuotation.id}` : false
+  const activeQuotationRelations = activeQuotation ? getQuotationDocumentRelations(activeQuotation) : { source: null, derived: [] }
+  const activeQuotationHasLinkedDocuments = activeQuotation ? hasQuotationRelatedDocuments(activeQuotation) : false
+  const activeQuotationLinkedSections = activeQuotation ? [
+    {
+      key: 'source',
+      title: 'Source',
+      description: 'Documents this quotation came from.',
+      items: activeQuotationRelations.source
+        ? [{
+            key: `source-${activeQuotationRelations.source.id || activeQuotationRelations.source.number || 'quotation-source'}`,
+            label: `${activeQuotationRelations.source.type === 'invoice' ? 'Invoice' : 'Quotation'} ${activeQuotationRelations.source.number || activeQuotationRelations.source.id || 'Linked source'}`,
+            subtitle: 'Open the source document',
+            onClick: () => {
+              if (activeQuotationRelations.source?.id) {
+                navigate(`/${activeQuotationRelations.source.type === 'invoice' ? 'invoices' : 'quotations'}/${activeQuotationRelations.source.id}`)
+              }
+            },
+            disabled: !activeQuotationRelations.source?.id,
+          }]
+        : [],
+    },
+    {
+      key: 'generated',
+      title: 'Generated / Child Documents',
+      description: 'Documents created from this quotation.',
+      items: (activeQuotationRelations.derived || [])
+        .filter((entry) => entry.type === 'invoice' && entry.id)
+        .map((entry) => ({
+          key: `invoice-${entry.id}`,
+          label: `Invoice ${entry.number || entry.id}`,
+          subtitle: 'Open generated invoice',
+          onClick: () => navigate(`/invoices/${entry.id}`),
+        })),
+    },
+    {
+      key: 'project',
+      title: 'Project',
+      description: 'Project connected to this quotation.',
+      items: activeQuotationProject
+        ? [{
+            key: `project-${activeQuotationProject.id}`,
+            label: activeQuotationProject.name || activeQuotationProject.id,
+            subtitle: 'Open linked project',
+            onClick: () => navigate(`/projects/${activeQuotationProject.id}`),
+          }]
+        : [],
+    },
+  ] : []
 
   return (
     <MobileListPageShell
@@ -330,6 +408,26 @@ export default function QuotationList() {
             onClick: () => navigate(`/quotations/edit/${activeQuotation.id}`),
           },
           {
+            key: 'project',
+            label: activeQuotation.project_id ? 'View Project' : 'Link to Project',
+            icon: activeQuotation.project_id ? <FolderOpen className="h-6 w-6" /> : <FolderPlus className="h-6 w-6" />,
+            onClick: () => {
+              if (activeQuotation.project_id) {
+                navigate(`/projects/${activeQuotation.project_id}`)
+                return
+              }
+              setShowProjectLinkDialog(true)
+            },
+            closeOnClick: !!activeQuotation.project_id,
+          },
+          {
+            key: 'documents',
+            label: activeQuotationHasLinkedDocuments ? 'Linked Documents' : 'Link Documents',
+            icon: activeQuotationHasLinkedDocuments ? <Workflow className="h-6 w-6" /> : <GitBranchPlus className="h-6 w-6" />,
+            onClick: () => setShowLinkedDocuments(true),
+            closeOnClick: false,
+          },
+          {
             key: "clone",
             label: busyAction === `clone:${activeQuotation.id}` ? "Working..." : "Clone",
             icon: busyAction === `clone:${activeQuotation.id}` ? <Loader2 className="h-6 w-6 animate-spin" /> : <Copy className="h-6 w-6" />,
@@ -341,6 +439,24 @@ export default function QuotationList() {
           icon: activeQuotationIsDeleting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Trash2 className="h-6 w-6" />,
           onClick: () => setDeleteId(activeQuotation.id),
         } : undefined}
+      />
+      <LinkedDocumentsSheet
+        open={showLinkedDocuments}
+        onOpenChange={setShowLinkedDocuments}
+        title="Linked Documents"
+        subtitle={activeQuotation?.quotation_number || 'Quotation'}
+        sections={activeQuotationLinkedSections}
+      />
+      <ProjectLinkDialog
+        open={showProjectLinkDialog}
+        onOpenChange={setShowProjectLinkDialog}
+        tableName="quotations"
+        recordId={activeQuotation?.id || null}
+        documentLabel="Quotation"
+        onLinked={async () => {
+          await loadQuotations()
+          setActiveQuotation(null)
+        }}
       />
     </MobileListPageShell>
   )
