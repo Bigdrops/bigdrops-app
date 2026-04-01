@@ -35,8 +35,6 @@ import {
   withSourceTrail,
 } from '@/domain/documentConversion'
 import {
-  fetchInvoiceChildDocuments,
-  fetchProjectSummary,
   getInvoiceSourceDocument,
   hasInvoiceRelatedDocuments,
 } from '@/domain/documentRelationships'
@@ -58,6 +56,7 @@ import RevertInvoiceDialog from '@/components/invoice/RevertInvoiceDialog'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
 
@@ -65,16 +64,6 @@ export default function ViewInvoice() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const [invoice, setInvoice] = useState(null)
-  const [items, setItems] = useState([])
-  const [payments, setPayments] = useState([])
-  const [invoiceFinancials, setInvoiceFinancials] = useState(null)
-  const [client, setClient] = useState(null)
-  const [settings, setSettings] = useState({})
-  const [bankAccounts, setBankAccounts] = useState([])
-  const [signatories, setSignatories] = useState([])
-  const [session, setSession] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [showMore, setShowMore] = useState(false)
   const [showPdfSheet, setShowPdfSheet] = useState(false)
   const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
@@ -95,121 +84,26 @@ export default function ViewInvoice() {
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [converting, setConverting] = useState(false)
 
-  const [linkedProject, setLinkedProject] = useState(null)
-  const [invoiceRelatedDocs, setInvoiceRelatedDocs] = useState({ csrs: [], waybills: [] })
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
 
-  const fetchInvoice = async () => {
-    const { data } = await supabase.from('invoices').select('*').eq('id', id).single()
-    setInvoice(data)
-    setLinkedProject(data?.project_id ? await fetchProjectSummary(data.project_id) : null)
-    if (data?.client_id) {
-      const { data: c } = await supabase.from('clients').select('*').eq('id', data.client_id).single()
-      setClient(c || null)
-    }
-  }
+  const {
+    invoice,
+    items,
+    payments,
+    invoiceFinancials,
+    client,
+    settings,
+    bankAccounts,
+    signatories,
+    session,
+    linkedProject,
+    relatedCsrs,
+    relatedWaybills,
+    loading,
+    refresh,
+  } = useInvoiceDetailData(id)
 
-  const fetchInvoiceRelationships = async () => {
-    setInvoiceRelatedDocs(await fetchInvoiceChildDocuments(id))
-  }
-
-  const fetchPayments = async () => {
-    const [{ data: activePayments }, { data: voidedPayments }] = await Promise.all([
-      supabase
-        .from('payments')
-        .select('*')
-        .eq('invoice_id', id)
-        .is('voided_at', null)
-        .order('date', { ascending: true }),
-      supabase
-        .from('payments')
-        .select('*')
-        .eq('invoice_id', id)
-        .not('voided_at', 'is', null)
-        .order('date', { ascending: true }),
-    ])
-
-    const mergedPayments = [...(activePayments || []), ...(voidedPayments || [])].sort((a, b) => {
-      const dateCompare = String(a.date || '').localeCompare(String(b.date || ''))
-      if (dateCompare !== 0) return dateCompare
-      return String(a.created_at || '').localeCompare(String(b.created_at || ''))
-    })
-    setPayments(mergedPayments)
-  }
-
-  const fetchInvoiceFinancials = async () => {
-    const { data } = await supabase
-      .from('invoice_financials_v')
-      .select('*')
-      .eq('id', id)
-      .single()
-    setInvoiceFinancials(data || null)
-    if (data?.computed_status) {
-      setInvoice((current) => (current ? { ...current, status: data.computed_status } : current))
-    }
-  }
-
-  const fetchItems = async () => {
-    const { data } = await supabase
-      .from('invoice_items')
-      .select('*')
-      .eq('invoice_id', id)
-      .order('sort_order')
-
-    const loaded = (data || []).map((item) => ({
-      ...item,
-      custom_data: typeof item.custom_data === 'string' ? JSON.parse(item.custom_data || '{}') : item.custom_data || {},
-      install_rate_override: item.install_rate_override === true,
-      install_rate: item.install_rate === undefined ? null : item.install_rate,
-      vat_rate: item.vat_rate === undefined ? null : item.vat_rate,
-      discount_rate: item.discount_rate === undefined ? null : item.discount_rate,
-      image_url: item.image_url || null,
-    }))
-    setItems(loaded)
-  }
-
-  const refreshInvoicePage = async () => {
-    setLoading(true)
-    const { data: currentSession } = await supabase.auth.getSession()
-    setSession(currentSession.session || null)
-
-    await Promise.all([
-      fetchInvoice(),
-      fetchItems(),
-      fetchPayments(),
-      fetchInvoiceRelationships(),
-      fetchInvoiceFinancials(),
-      supabase
-        .from('signatories')
-        .select('*')
-        .order('name')
-        .then(({ data }) => {
-          setSignatories(data || [])
-        }),
-      supabase
-        .from('bank_accounts')
-        .select('*')
-        .order('is_default', { ascending: false })
-        .then(({ data }) => {
-          setBankAccounts(data || [])
-        }),
-      supabase
-        .from('settings')
-        .select('*')
-        .eq('id', 1)
-        .single()
-        .then(({ data }) => {
-          if (data) setSettings(data)
-        }),
-    ])
-
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    refreshInvoicePage()
-  }, [id])
 
   useEffect(() => {
     setPdfOutput(getInvoicePdfOutput(invoice?.custom_fields))
@@ -254,6 +148,7 @@ export default function ViewInvoice() {
     return sum + Number(payment.cash_amount || 0) + Number(payment.wht_amount || 0)
   }, 0)
   const sourceDocument = getInvoiceSourceDocument(invoice)
+  const invoiceRelatedDocs = { csrs: relatedCsrs, waybills: relatedWaybills }
   const hasLinkedDocuments = hasInvoiceRelatedDocuments(invoice, invoiceRelatedDocs)
   const linkedDocumentsSections = [
     {
@@ -420,7 +315,7 @@ export default function ViewInvoice() {
   const handleStatusChange = async (newStatus) => {
     if (newStatus === invoice.status) return
     await supabase.from('invoices').update({ status: newStatus }).eq('id', id)
-    await fetchInvoice()
+    await refresh()
   }
 
   // ── Record Payment ──────────────────────────────────────────────────────────
@@ -656,7 +551,7 @@ export default function ViewInvoice() {
     }
 
     await syncInvoiceStatusFromFinancials()
-    await refreshInvoicePage()
+    await refresh()
     setVoidingPaymentId(null)
     setPendingVoidPaymentId(null)
     setVoidReason('')
@@ -840,7 +735,7 @@ export default function ViewInvoice() {
           }}
           open={showPaymentModal}
           onOpenChange={setShowPaymentModal}
-          onSuccess={refreshInvoicePage}
+          onSuccess={refresh}
         />
 
         <DocumentTopBar
@@ -1126,7 +1021,7 @@ export default function ViewInvoice() {
           recordId={id}
           documentLabel="Invoice"
           onLinked={async () => {
-            await Promise.all([fetchInvoice(), fetchInvoiceRelationships()])
+            await refresh()
           }}
         />
 
@@ -1156,7 +1051,7 @@ export default function ViewInvoice() {
           }}
           open={showPaymentModal}
           onOpenChange={setShowPaymentModal}
-          onSuccess={refreshInvoicePage}
+          onSuccess={refresh}
         />
 
         {showMore && isNarrow && (
