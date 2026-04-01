@@ -146,7 +146,7 @@ export function BusinessSwitcher() {
   )
 }
 
-export default function Layout({ title, children, session, hidePageHeader = false, hideMobileHomeHeader = false, contentClassName = '' }) {
+export default function Layout({ title, children, session, hidePageHeader = false, contentClassName = '' }) {
   const navigate = useNavigate()
   const location = useLocation()
   const { settings } = useSettings()
@@ -293,7 +293,7 @@ export default function Layout({ title, children, session, hidePageHeader = fals
       </div>
 
       <div className="md:hidden">
-        {isHome && !hideMobileHomeHeader ? (
+        {isHome ? (
           <div className="w-full px-4 pt-4">
             <MobilePageHeader
               title={APP_NAME}

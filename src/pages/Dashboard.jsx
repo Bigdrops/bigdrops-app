@@ -9,7 +9,6 @@ import {
   FileSignature,
   FileText,
   FolderOpen,
-  Menu,
   Truck,
   AlertCircle,
 } from 'lucide-react'
@@ -20,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import Layout, { BusinessSwitcher, MobileChromeContext } from '../components/Layout'
+import Layout from '../components/Layout'
 import { getQuickTiles, loadStoredQuickTiles } from '../config/quickTiles'
 import { supabase } from '../supabase'
 
@@ -73,7 +72,6 @@ function getStatusStyle(status) {
 
 export default function Dashboard({ session }) {
   const navigate = useNavigate()
-  const mobileChrome = React.useContext(MobileChromeContext)
   const [quickAccessOpen, setQuickAccessOpen] = React.useState(false)
   const [loading, setLoading] = React.useState(true)
   const [recentDocs, setRecentDocs] = React.useState([])
@@ -149,29 +147,9 @@ export default function Dashboard({ session }) {
   const dateLabel = new Date().toLocaleDateString('en-GB', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
 
   return (
-    <Layout title="Dashboard" session={session} hideMobileHomeHeader>
+    <Layout title="Dashboard" session={session}>
       <div className="w-full overflow-x-hidden px-4 pb-2 md:px-0">
         <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-3.5 py-2.5 shadow-sm md:hidden">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={mobileChrome.openSidebar}
-              className="h-9 w-9 rounded-xl border-border bg-muted/40 shadow-none"
-              aria-label="Open navigation menu"
-            >
-              <Menu className="h-4 w-4" />
-            </Button>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Dashboard</div>
-              <div className="truncate text-sm font-semibold text-foreground">BIGDROPS</div>
-            </div>
-            <div className="shrink-0">
-              <BusinessSwitcher />
-            </div>
-          </div>
-
           <Card className="max-w-full rounded-2xl border-border bg-card shadow-sm">
             <div className="flex items-center justify-between gap-2 px-3.5 py-3">
               <div className="min-w-0 flex-1 pr-1">
@@ -215,7 +193,7 @@ export default function Dashboard({ session }) {
         <section className="space-y-2">
           <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent activity</div>
 
-          <div className="max-w-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <Card className="max-w-full overflow-hidden rounded-2xl border-border bg-card shadow-sm">
             <div className="divide-y divide-border">
               {loading ? (
                 <div className="px-4 py-8 text-center text-sm text-muted-foreground">Loading activity...</div>
@@ -268,7 +246,7 @@ export default function Dashboard({ session }) {
                 })
               )}
             </div>
-          </div>
+          </Card>
         </section>
 
         <section className="space-y-2">
