@@ -47,7 +47,17 @@ type ProjectPrefillState = {
   projectName?: string
   clientId?: string
   clientName?: string
+  sourceInvoice?: {
+    invoiceId?: string
+    invoiceNumber?: string
+    clientId?: string
+    clientName?: string
+    poNumber?: string
+  }
 }
+
+const hasInvoicePrefillDetails = (invoice?: ProjectPrefillState['sourceInvoice']) =>
+  Boolean(invoice?.invoiceNumber || invoice?.clientId || invoice?.clientName || invoice?.poNumber)
 
 function Field({ label, help, required, children }: { label: string; help?: string; required?: boolean; children: React.ReactNode }) {
   return (
@@ -403,18 +413,23 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
   useEffect(() => {
     if (!isEdit) {
       void ensureNextNumber(waybill.type)
-      if (prefill.projectId || prefill.projectName || prefill.clientName) {
+      if (prefill.projectId || prefill.projectName || prefill.clientName || prefill.sourceInvoice?.invoiceId) {
         setWaybill((current) => ({
           ...current,
           project_id: String(prefill.projectId || ''),
           client_id: String(prefill.clientId || ''),
           client_name: String(prefill.clientName || ''),
+          invoice_id: String(prefill.sourceInvoice?.invoiceId || current.invoice_id || ''),
+          po_number: String(prefill.sourceInvoice?.poNumber || current.po_number || ''),
           custom_fields: buildWaybillCustomFields(current.custom_fields, {
             references: {
               linkedProjectName: String(prefill.projectName || ''),
+              linkedInvoiceNumber: String(prefill.sourceInvoice?.invoiceNumber || ''),
+              sourceDocumentNumber: String(prefill.sourceInvoice?.invoiceNumber || ''),
             },
           }),
         }))
+        setInvoiceSearch(String(prefill.sourceInvoice?.invoiceNumber || ''))
       }
       return
     }
@@ -434,6 +449,67 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
       setLoading(false)
     })
   }, [isEdit, prefill.clientId, prefill.clientName, prefill.projectId, prefill.projectName, waybill.type, waybillId])
+
+  useEffect(() => {
+    let active = true
+
+    const applyInvoicePrefill = (invoice?: ProjectPrefillState['sourceInvoice']) => {
+      if (!active || !invoice?.invoiceId || isEdit) return
+
+      setWaybill((current) => ({
+        ...current,
+        invoice_id: current.invoice_id || String(invoice.invoiceId || ''),
+        client_id: current.client_id || String(invoice.clientId || ''),
+        client_name: current.client_name || String(invoice.clientName || ''),
+        po_number: current.po_number || String(invoice.poNumber || ''),
+        custom_fields: buildWaybillCustomFields(current.custom_fields, {
+          references: {
+            ...(current.custom_fields?.references || {}),
+            linkedInvoiceNumber:
+              current.custom_fields?.references?.linkedInvoiceNumber || String(invoice.invoiceNumber || ''),
+            sourceDocumentNumber:
+              current.custom_fields?.references?.sourceDocumentNumber || String(invoice.invoiceNumber || ''),
+          },
+        }),
+      }))
+
+      if (!invoiceSearch) {
+        setInvoiceSearch(String(invoice.invoiceNumber || ''))
+      }
+    }
+
+    const loadInvoicePrefill = async () => {
+      const invoice = prefill.sourceInvoice
+      if (!invoice?.invoiceId || isEdit) return
+
+      if (hasInvoicePrefillDetails(invoice)) {
+        applyInvoicePrefill(invoice)
+        return
+      }
+
+      const { data } = await supabase
+        .from('invoices')
+        .select('id, invoice_number, client_id, client_name, po_number')
+        .eq('id', invoice.invoiceId)
+        .single()
+
+      if (!data) return
+
+      applyInvoicePrefill({
+        invoiceId: data.id,
+        invoiceNumber: data.invoice_number || '',
+        clientId: data.client_id || '',
+        clientName: data.client_name || '',
+        poNumber: data.po_number || '',
+      })
+    }
+
+    void loadInvoicePrefill()
+
+    return () => {
+      active = false
+    }
+  }, [invoiceSearch, isEdit, prefill.sourceInvoice])
 
   const setSignature = (role: SignatureRole, next: ReturnType<typeof normalizeSignatureEvidence>) => {
     updateCustomFields({

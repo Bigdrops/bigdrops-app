@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { pdf } from '@react-pdf/renderer'
 import { toast } from '@/hooks/use-toast'
 
@@ -23,11 +23,16 @@ const EMPTY_BRANDING = {
   footerText: '',
 }
 
+const hasInvoicePrefillDetails = (invoice) =>
+  Boolean(invoice?.invoiceNumber || invoice?.clientId || invoice?.clientName || invoice?.poNumber)
+
 export default function NewCSR() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const type = searchParams.get('type')
   const isField = type === 'field'
+  const sourceInvoice = location.state?.sourceInvoice || null
 
   const [saving, setSaving] = useState(false)
   const [csr, setCsr] = useState(() => createDefaultCsr(isField))
@@ -62,6 +67,54 @@ export default function NewCSR() {
       mounted = false
     }
   }, [isField])
+
+  useEffect(() => {
+    let active = true
+
+    const applyInvoicePrefill = (invoice) => {
+      if (!active || !invoice?.invoiceId) return
+
+      setCsr((current) => ({
+        ...current,
+        linked_invoice_id: current.linked_invoice_id || String(invoice.invoiceId || ''),
+        client_id: current.client_id || String(invoice.clientId || ''),
+        client_name: current.client_name || String(invoice.clientName || ''),
+        po_number: current.po_number || String(invoice.poNumber || ''),
+        show_po: current.show_po || Boolean(String(invoice.poNumber || '').trim()),
+      }))
+    }
+
+    const loadInvoicePrefill = async () => {
+      if (!sourceInvoice?.invoiceId) return
+
+      if (hasInvoicePrefillDetails(sourceInvoice)) {
+        applyInvoicePrefill(sourceInvoice)
+        return
+      }
+
+      const { data } = await supabase
+        .from('invoices')
+        .select('id, invoice_number, client_id, client_name, po_number')
+        .eq('id', sourceInvoice.invoiceId)
+        .single()
+
+      if (!data) return
+
+      applyInvoicePrefill({
+        invoiceId: data.id,
+        invoiceNumber: data.invoice_number || '',
+        clientId: data.client_id || '',
+        clientName: data.client_name || '',
+        poNumber: data.po_number || '',
+      })
+    }
+
+    void loadInvoicePrefill()
+
+    return () => {
+      active = false
+    }
+  }, [sourceInvoice])
 
   const update = (field, value) => {
     setCsr((current) => ({ ...current, [field]: value }))

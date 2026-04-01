@@ -334,6 +334,32 @@ export default function ViewInvoice() {
     }
   }
 
+  const buildInvoiceChildPrefill = () => ({
+    invoiceId: invoice.id,
+    invoiceNumber: invoice.invoice_number || '',
+    clientId: invoice.client_id || '',
+    clientName: invoice.client_name || '',
+    poNumber: poNumber || '',
+  })
+
+  const handleGenerateCsr = () => {
+    setShowMore(false)
+    navigate('/csr/new', {
+      state: {
+        sourceInvoice: buildInvoiceChildPrefill(),
+      },
+    })
+  }
+
+  const handleGenerateWaybill = () => {
+    setShowMore(false)
+    navigate('/waybills/new', {
+      state: {
+        sourceInvoice: buildInvoiceChildPrefill(),
+      },
+    })
+  }
+
   const openRevertConfirm = () => {
     setShowMore(false)
     setRevertConfirmInput('')
@@ -971,8 +997,8 @@ export default function ViewInvoice() {
             { label: 'Copy Invoice Number', subtitle: invoice.invoice_number || 'Copy the current document number', onClick: () => { void handleCopy(invoice.invoice_number || '', 'Invoice number') }, iconKey: 'copy' },
             { label: 'Clone Invoice', subtitle: 'Duplicate this invoice as a new draft', onClick: handleClone, iconKey: 'clone' },
             { label: converting ? 'Reverting to Quotation...' : 'Revert to Quotation', subtitle: 'Delete this invoice and restore it as a quotation', onClick: openRevertConfirm, disabled: converting, iconKey: 'convert' },
-            { label: 'Generate CSR', subtitle: 'Create a service report from this invoice', onClick: () => { setShowMore(false); toast({ title: 'Coming soon', description: 'Generate CSR is coming soon.' }) }, iconKey: 'export' },
-            { label: 'Generate Waybill', subtitle: 'Create a delivery waybill from this invoice', onClick: () => { setShowMore(false); toast({ title: 'Coming soon', description: 'Generate Waybill is coming soon.' }) }, iconKey: 'export' },
+            { label: 'Generate CSR', subtitle: 'Create a service report from this invoice', onClick: handleGenerateCsr, iconKey: 'export' },
+            { label: 'Generate Waybill', subtitle: 'Create a delivery waybill from this invoice', onClick: handleGenerateWaybill, iconKey: 'export' },
             ...(invoice.status === 'draft'
               ? [{ label: 'Mark as Sent', subtitle: 'Move this invoice to sent', onClick: handleMarkSent, iconKey: 'convert' }]
               : []),
