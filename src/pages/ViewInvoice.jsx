@@ -44,10 +44,23 @@ import {
 } from '@/lib/pdfDesignPreset'
 import { getPdfTemplatePreset, setPdfTemplatePreset } from '@/lib/pdfTemplatePreset'
 import { toast } from '@/hooks/use-toast'
+import { AlertTriangle } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
 
@@ -77,8 +90,11 @@ export default function ViewInvoice() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
   const [showVoidDialog, setShowVoidDialog] = useState(false)
+  const [showRevertConfirm, setShowRevertConfirm] = useState(false)
   const [pendingVoidPaymentId, setPendingVoidPaymentId] = useState(null)
   const [voidReason, setVoidReason] = useState('')
+  const [revertConfirmInput, setRevertConfirmInput] = useState('')
+  const [revertReason, setRevertReason] = useState('')
 
   // PDF
   const [pdfGenerating, setPdfGenerating] = useState(false)
@@ -231,6 +247,13 @@ export default function ViewInvoice() {
       }
     })
   })()
+  const activePaymentCount = payments.filter((payment) => !payment.voided_at).length
+  const activePaymentTotal = payments.reduce((sum, payment) => {
+    if (payment.voided_at) return sum
+    return sum + Number(payment.cash_amount || 0) + Number(payment.wht_amount || 0)
+  }, 0)
+  const canConfirmRevert =
+    revertConfirmInput === String(invoice.invoice_number || '') && !!revertReason.trim() && !converting
   const handleDownloadPDF = async () => {
     if (pdfGenerating) return
     setPdfGenerating(true)
@@ -311,6 +334,13 @@ export default function ViewInvoice() {
     }
   }
 
+  const openRevertConfirm = () => {
+    setShowMore(false)
+    setRevertConfirmInput('')
+    setRevertReason('')
+    setShowRevertConfirm(true)
+  }
+
   // ── Status change ───────────────────────────────────────────────────────────
   const handleStatusChange = async (newStatus) => {
     if (newStatus === invoice.status) return
@@ -359,7 +389,7 @@ export default function ViewInvoice() {
   // ── Misc More menu actions ──────────────────────────────────────────────────
   const handleConvertToQuote = async () => {
     if (converting) return
-    setShowMore(false)
+    setShowRevertConfirm(false)
     setConverting(true)
     try {
       const [{ data: quotationRows }, { data: latestInvoice }] = await Promise.all([
@@ -456,7 +486,7 @@ export default function ViewInvoice() {
       navigate(`/quotations/${createdQuotation.id}`)
     } catch (err) {
       toast({
-        title: 'Convert to quotation failed',
+        title: 'Revert to quotation failed',
         description: (err && err.message) || 'Unknown error',
         variant: 'destructive',
       })
@@ -940,7 +970,7 @@ export default function ViewInvoice() {
             { label: 'Export CSV', subtitle: 'Download a spreadsheet copy', onClick: handleDownloadCsv, iconKey: 'export' },
             { label: 'Copy Invoice Number', subtitle: invoice.invoice_number || 'Copy the current document number', onClick: () => { void handleCopy(invoice.invoice_number || '', 'Invoice number') }, iconKey: 'copy' },
             { label: 'Clone Invoice', subtitle: 'Duplicate this invoice as a new draft', onClick: handleClone, iconKey: 'clone' },
-            { label: converting ? 'Converting to Quotation...' : 'Convert to Quotation', subtitle: 'Create a matching quotation', onClick: handleConvertToQuote, disabled: converting, iconKey: 'convert' },
+            { label: converting ? 'Reverting to Quotation...' : 'Revert to Quotation', subtitle: 'Delete this invoice and restore it as a quotation', onClick: openRevertConfirm, disabled: converting, iconKey: 'convert' },
             { label: 'Generate CSR', subtitle: 'Create a service report from this invoice', onClick: () => { setShowMore(false); toast({ title: 'Coming soon', description: 'Generate CSR is coming soon.' }) }, iconKey: 'export' },
             { label: 'Generate Waybill', subtitle: 'Create a delivery waybill from this invoice', onClick: () => { setShowMore(false); toast({ title: 'Coming soon', description: 'Generate Waybill is coming soon.' }) }, iconKey: 'export' },
             ...(invoice.status === 'draft'
@@ -1953,6 +1983,99 @@ export default function ViewInvoice() {
           variant="default"
           onConfirm={() => void confirmArchive()}
         />
+
+        <AlertDialog open={showRevertConfirm} onOpenChange={setShowRevertConfirm}>
+          <AlertDialogContent className="max-w-lg border border-border bg-background text-foreground shadow-lg">
+            <AlertDialogHeader className="items-start text-left">
+              <AlertDialogMedia className="border border-destructive/20 bg-destructive/15 text-destructive">
+                <AlertTriangle className="h-4 w-4" />
+              </AlertDialogMedia>
+              <AlertDialogTitle className="text-base font-semibold">
+                Revert invoice to quotation?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-3 text-left">
+                <p>This will revert Invoice {invoice.invoice_number} to a quotation.</p>
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+                  <p className="font-medium text-foreground">The invoice will be deleted.</p>
+                  <p className="mt-1 font-medium text-destructive">
+                    All payments recorded against this invoice will also be removed.
+                  </p>
+                  <p className="mt-1 text-muted-foreground">
+                    Use this only when the invoice was created by mistake.
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <div className="space-y-4">
+              <div className="grid gap-2 sm:grid-cols-3">
+                <div className="rounded-lg border border-border bg-background p-3">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                    Invoice
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-foreground">
+                    {invoice.invoice_number || '-'}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-3">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                    Payments
+                  </div>
+                  <div className="mt-1">
+                    <Badge variant="outline">{activePaymentCount}</Badge>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-3">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                    Payment Total
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-foreground">
+                    {formatMoney(activePaymentTotal)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="revert-confirm-number" className="text-sm font-medium text-foreground">
+                  Type the invoice number to confirm
+                </label>
+                <Input
+                  id="revert-confirm-number"
+                  value={revertConfirmInput}
+                  onChange={(e) => setRevertConfirmInput(e.target.value)}
+                  placeholder={invoice.invoice_number || 'Invoice number'}
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="revert-reason" className="text-sm font-medium text-foreground">
+                  Reason for revert
+                </label>
+                <Textarea
+                  id="revert-reason"
+                  value={revertReason}
+                  onChange={(e) => setRevertReason(e.target.value)}
+                  placeholder="Explain why this invoice needs to be reverted"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={converting}>Cancel</AlertDialogCancel>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={!canConfirmRevert}
+                onClick={() => void handleConvertToQuote()}
+              >
+                {converting ? 'Reverting...' : 'Revert to Quotation'}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <Dialog open={showVoidDialog} onOpenChange={setShowVoidDialog}>
           <DialogContent>
             <DialogHeader>
