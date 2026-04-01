@@ -5,7 +5,6 @@ import {
   FolderKanban,
   Users,
   MoreHorizontal,
-  Menu,
   X,
   ChevronRight,
   Receipt,
@@ -26,6 +25,7 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
+import MobilePageHeader from '@/components/layout/MobilePageHeader'
 import { useSettings } from '../hooks/useSettings'
 import { supabase } from '../supabase'
 
@@ -149,6 +149,7 @@ export function BusinessSwitcher() {
 export default function Layout({ title, children, session, hidePageHeader = false, contentClassName = '' }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { settings } = useSettings()
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
   const [salesOpen, setSalesOpen] = React.useState(false)
   const [moreOpen, setMoreOpen] = React.useState(false)
@@ -294,20 +295,12 @@ export default function Layout({ title, children, session, hidePageHeader = fals
       <div className="md:hidden">
         {isHome ? (
           <div className="w-full px-4 pt-4">
-            <div className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setSidebarOpen(true)}
-                className="grid h-10 w-10 place-items-center rounded-2xl border border-border bg-muted/50 text-slate-700"
-                aria-label="Open navigation menu"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-              <div className="min-w-0 px-3 text-sm font-black tracking-tight text-foreground">
-                {APP_NAME}
-              </div>
-              <div className="h-10 w-10" aria-hidden="true" />
-            </div>
+            <MobilePageHeader
+              title={APP_NAME}
+              subtitle={settings?.company_name || 'Invoicing and Projects'}
+              accentClassName="bg-blue-500"
+              onMenuClick={() => setSidebarOpen(true)}
+            />
           </div>
         ) : null}
 
@@ -325,108 +318,109 @@ export default function Layout({ title, children, session, hidePageHeader = fals
 
         <MobileBottomNav active={activeTab} onSelect={onTabClick} />
 
-        <div className={cn('fixed inset-0 z-50 transition-opacity duration-300', sidebarOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0')} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setSidebarOpen(false)} />
-        <div className="fixed left-0 top-0 z-[60] h-dvh w-[280px] bg-background" style={{ boxShadow: '4px 0 24px rgba(0,0,0,0.15)', transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)' }}>
-          <button type="button" onClick={() => setSidebarOpen(false)} className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-muted text-muted-foreground" aria-label="Close navigation menu">
-            <X className="h-5 w-5" />
-          </button>
-
-          <div className="px-5 pb-5 pt-6">
-            <div className="text-sm font-black tracking-tight text-foreground">{APP_NAME}</div>
-            <div className="mt-1 text-xs text-muted-foreground">Navigation</div>
-          </div>
-
-          <div className="space-y-2 px-4 pb-6">
-            <div className="rounded-2xl border border-border bg-card px-3 py-3 shadow-sm">
-              <div className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Business</div>
-              <BusinessSwitcher />
-            </div>
-
-            {mobileDrawerPrimaryNav.map((item) => {
-              const Icon = item.icon
-              const isActive = isPathActive(location.pathname, item.path)
-              return (
-                <button key={item.key} type="button" onClick={() => { navigate(item.path); setSidebarOpen(false) }} className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}>
-                  <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-muted')}>
-                    <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
-                  </span>
-                  <span className="font-semibold">{item.label}</span>
-                </button>
-              )
-            })}
-
-            <Separator className="my-3" />
-
-            <div className="rounded-2xl border border-border bg-card p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setDrawerSalesOpen((open) => !open)}
-                className={cn('flex w-full items-center justify-between rounded-[18px] px-2 py-2 text-sm transition', salesRouteActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}
-              >
-                <div className="flex items-center gap-3">
-                  <span className={cn('grid h-9 w-9 place-items-center rounded-xl', salesRouteActive ? 'bg-white/10' : 'bg-muted')}>
-                    <Receipt className={cn('h-5 w-5', salesRouteActive ? 'text-white' : 'text-slate-700')} />
-                  </span>
-                  <span className="font-semibold">Sales</span>
-                </div>
-                <ChevronDown className={cn('h-5 w-5 transition-transform', drawerSalesOpen ? 'rotate-180' : '')} />
-              </button>
-
-              {drawerSalesOpen ? (
-                <div className="mt-1 space-y-1 pb-1 pl-2">
-                  {salesPicker.map((item) => {
-                    const Icon = item.icon
-                    const isActive = isPathActive(location.pathname, getSalesPath(item.key))
-                    return (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => handleSalesPick(item.key)}
-                        className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}
-                      >
-                        <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-muted')}>
-                          <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
-                        </span>
-                        <span className="font-semibold">{item.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              ) : null}
-            </div>
-
-            {mobileDrawerUtilityNav.map((item) => {
-              const Icon = item.icon
-              const isActive = isPathActive(location.pathname, item.path)
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => {
-                    navigate(item.path)
-                    setSidebarOpen(false)
-                  }}
-                  className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}
-                >
-                  <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-muted')}>
-                    <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
-                  </span>
-                  <span className="font-semibold">{item.label}</span>
-                </button>
-              )
-            })}
-
-            <button type="button" onClick={() => handleMorePick('signout')} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-3 py-2 text-sm shadow-sm transition hover:bg-muted/50">
-              <div className="flex items-center gap-3">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-muted">
-                  <LogOut className="h-5 w-5 text-slate-700" />
-                </span>
-                <span className="font-semibold text-foreground">Sign Out</span>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetContent side="left" className="w-[280px] p-0 sm:max-w-[280px]" showCloseButton={false}>
+            <button type="button" onClick={() => setSidebarOpen(false)} className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-muted text-muted-foreground" aria-label="Close navigation menu">
+              <X className="h-5 w-5" />
             </button>
-          </div>
-        </div>
+
+            <div className="px-5 pb-5 pt-6">
+              <div className="text-sm font-black tracking-tight text-foreground">{APP_NAME}</div>
+              <div className="mt-1 text-xs text-muted-foreground">Navigation</div>
+            </div>
+
+            <div className="space-y-2 px-4 pb-6">
+              <div className="rounded-2xl border border-border bg-card px-3 py-3 shadow-sm">
+                <div className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Business</div>
+                <BusinessSwitcher />
+              </div>
+
+              {mobileDrawerPrimaryNav.map((item) => {
+                const Icon = item.icon
+                const isActive = isPathActive(location.pathname, item.path)
+                return (
+                  <button key={item.key} type="button" onClick={() => { navigate(item.path); setSidebarOpen(false) }} className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}>
+                    <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-muted')}>
+                      <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
+                    </span>
+                    <span className="font-semibold">{item.label}</span>
+                  </button>
+                )
+              })}
+
+              <Separator className="my-3" />
+
+              <div className="rounded-2xl border border-border bg-card p-1 shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => setDrawerSalesOpen((open) => !open)}
+                  className={cn('flex w-full items-center justify-between rounded-[18px] px-2 py-2 text-sm transition', salesRouteActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={cn('grid h-9 w-9 place-items-center rounded-xl', salesRouteActive ? 'bg-white/10' : 'bg-muted')}>
+                      <Receipt className={cn('h-5 w-5', salesRouteActive ? 'text-white' : 'text-slate-700')} />
+                    </span>
+                    <span className="font-semibold">Sales</span>
+                  </div>
+                  <ChevronDown className={cn('h-5 w-5 transition-transform', drawerSalesOpen ? 'rotate-180' : '')} />
+                </button>
+
+                {drawerSalesOpen ? (
+                  <div className="mt-1 space-y-1 pb-1 pl-2">
+                    {salesPicker.map((item) => {
+                      const Icon = item.icon
+                      const isActive = isPathActive(location.pathname, getSalesPath(item.key))
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => handleSalesPick(item.key)}
+                          className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}
+                        >
+                          <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-muted')}>
+                            <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
+                          </span>
+                          <span className="font-semibold">{item.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : null}
+              </div>
+
+              {mobileDrawerUtilityNav.map((item) => {
+                const Icon = item.icon
+                const isActive = isPathActive(location.pathname, item.path)
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => {
+                      navigate(item.path)
+                      setSidebarOpen(false)
+                    }}
+                    className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}
+                  >
+                    <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-muted')}>
+                      <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
+                    </span>
+                    <span className="font-semibold">{item.label}</span>
+                  </button>
+                )
+              })}
+
+              <button type="button" onClick={() => handleMorePick('signout')} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-3 py-2 text-sm shadow-sm transition hover:bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-muted">
+                    <LogOut className="h-5 w-5 text-slate-700" />
+                  </span>
+                  <span className="font-semibold text-foreground">Sign Out</span>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+          </SheetContent>
+        </Sheet>
 
         <Sheet open={salesOpen} onOpenChange={setSalesOpen}>
           <SheetContent side="bottom" className="p-0">

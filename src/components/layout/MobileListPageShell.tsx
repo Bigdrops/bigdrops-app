@@ -1,6 +1,10 @@
-import { useContext } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Menu, Search, SlidersHorizontal } from 'lucide-react'
+import { Search, SlidersHorizontal, X } from 'lucide-react'
+
+import MobilePageHeader from '@/components/layout/MobilePageHeader'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { MobileChromeContext } from '@/components/Layout'
 
 const toneStyles = {
@@ -61,69 +65,87 @@ export default function MobileListPageShell({
 }: MobileListPageShellProps) {
   const toneStyle = toneStyles[tone]
   const mobileChrome = useContext(MobileChromeContext)
+  const [searchOpen, setSearchOpen] = useState(false)
+
+  useEffect(() => {
+    if (searchValue) {
+      setSearchOpen(true)
+    }
+  }, [searchValue])
+
+  const toggleSearch = () => {
+    setSearchOpen((open) => !open)
+  }
 
   return (
     <div className={`min-h-screen px-[14px] pb-32 pt-[14px] font-['DM_Sans',sans-serif] ${toneStyle.glow}`}>
-      <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_10px_30px_rgba(15,23,42,0.08)]">
-        <div className={`h-1 w-full ${toneStyle.accent}`} />
-        <div className="bg-[linear-gradient(180deg,rgba(248,250,252,0.9),rgba(255,255,255,1))] p-4">
-          <div className="flex items-center justify-between gap-3">
-            <button
+      <MobilePageHeader
+        eyebrow={eyebrow}
+        title={title}
+        subtitle={summary}
+        accentClassName={toneStyle.accent}
+        onMenuClick={mobileChrome.openSidebar}
+        actions={
+          <>
+            <Button
               type="button"
-              onClick={mobileChrome.openSidebar}
-              className="grid h-[42px] w-[42px] place-items-center rounded-[14px] border border-slate-200 bg-white text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-              aria-label="Open navigation menu"
+              variant={searchOpen || searchValue ? 'outline' : 'ghost'}
+              size="icon"
+              onClick={toggleSearch}
+              className="h-9 w-9 rounded-xl border-border text-foreground"
+              aria-label={searchOpen ? 'Hide search' : 'Show search'}
             >
-              <Menu className="h-5 w-5" />
-            </button>
-            {onPrimaryAction ? (
-              <button
-                type="button"
-                onClick={onPrimaryAction}
-                className="inline-flex h-11 items-center justify-center rounded-[14px] border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-              >
-                {primaryActionLabel}
-              </button>
-            ) : <div className="h-11" />}
-          </div>
-
-          <div className="mt-4 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</div>
-          <h2 className="mt-2 text-[28px] font-black leading-[1.05] tracking-[-0.045em] text-slate-950">{title}</h2>
-          <p className="mt-[10px] text-sm text-slate-500">{summary}</p>
-
-          <div className="mt-4 flex gap-2.5">
-            <div className="flex h-11 flex-1 items-center gap-2.5 rounded-[14px] border border-slate-200 bg-white px-3.5 text-sm text-slate-500 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
-              <Search className="h-4 w-4" />
-              <input
-                value={searchValue}
-                onChange={(event) => onSearchChange(event.target.value)}
-                placeholder={searchPlaceholder}
-                className="flex-1 border-none bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-500"
-              />
-            </div>
+              {searchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+            </Button>
             {onFilterClick ? (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={onFilterClick}
-                className="inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-[14px] border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                className="h-9 w-9 rounded-xl text-foreground"
+                aria-label={filterLabel || 'Open filters'}
               >
                 <SlidersHorizontal className="h-4 w-4" />
-                {filterLabel ? <span>{filterLabel}</span> : null}
-              </button>
+              </Button>
             ) : null}
-          </div>
+          </>
+        }
+      />
 
-          {segmentedControl ? <div className="mt-[14px]">{segmentedControl}</div> : null}
+      {searchOpen ? (
+        <div className="mt-3 rounded-[18px] border border-border/80 bg-background/95 p-2 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Search className="ml-1 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={searchValue}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder={searchPlaceholder}
+              className="h-10 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setSearchOpen(false)}
+              className="rounded-lg text-muted-foreground"
+              aria-label="Close search"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : null}
+
+      {segmentedControl ? <div className="mt-3">{segmentedControl}</div> : null}
 
       {filterPanel ? (
-        <div className="mt-[14px] rounded-[22px] border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+        <div className="mt-3 rounded-[18px] border border-border/80 bg-background/95 p-3 shadow-sm">
           {filterPanel}
         </div>
       ) : null}
 
-      <div className="mt-[14px] space-y-3">{children}</div>
+      <div className="mt-3 space-y-3">{children}</div>
     </div>
   )
 }
