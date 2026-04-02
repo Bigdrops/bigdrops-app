@@ -28,9 +28,7 @@ import {
   parseCustomFields,
 } from '@/domain/invoice'
 import { parseDocumentCustomFields } from '@/domain/documentConversion'
-import {
-  getInvoiceSourceDocument,
-} from '@/domain/documentRelationships'
+import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
 import { buildInvoiceViewModel } from '@/domain/invoice/viewModel'
 import { computeDocument } from '@/lib/Calculations'
 import { PDF_TEMPLATES, DEFAULT_TEMPLATE } from '@/components/pdf/pdfTemplates'
@@ -40,8 +38,6 @@ import {
 } from '@/lib/pdfDesignPreset'
 import { getPdfTemplatePreset, setPdfTemplatePreset } from '@/lib/pdfTemplatePreset'
 import { toast } from '@/hooks/use-toast'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
@@ -67,7 +63,6 @@ export default function ViewInvoice() {
   const [pdfTemplate, setPdfTemplate] = useState(() => getPdfTemplatePreset('invoice', DEFAULT_TEMPLATE))
   const [pdfDesignPreset, setPdfDesignPresetState] = useState(() => getPdfDesignPreset('invoice'))
 
-  // Payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [voidingPaymentId, setVoidingPaymentId] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -77,7 +72,6 @@ export default function ViewInvoice() {
   const [pendingVoidPaymentId, setPendingVoidPaymentId] = useState(null)
   const [voidReason, setVoidReason] = useState('')
 
-  // PDF
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [converting, setConverting] = useState(false)
 
@@ -103,25 +97,41 @@ export default function ViewInvoice() {
     refresh,
   } = useInvoiceDetailData(id)
 
-
   useEffect(() => {
     setPdfOutput(getInvoicePdfOutput(invoice?.custom_fields))
   }, [invoice?.custom_fields])
 
-  if (loading) return <Layout title="Invoice"><p style={{ padding: 30 }}>Loading...</p></Layout>
-  if (!invoice) return <Layout title="Invoice"><p style={{ padding: 30 }}>Invoice not found.</p></Layout>
+  if (loading) {
+    return (
+      <Layout title="Invoice">
+        <p style={{ padding: 30 }}>Loading...</p>
+      </Layout>
+    )
+  }
+
+  if (!invoice) {
+    return (
+      <Layout title="Invoice">
+        <p style={{ padding: 30 }}>Invoice not found.</p>
+      </Layout>
+    )
+  }
 
   const poNumber = String(invoice.po_number || '').trim()
+
   const formatMoney = (value) => `\u20A6${Number(value || 0).toLocaleString()}`
+
   const formatDate = (value) => {
     if (!value) return '-'
     const parsed = new Date(value)
     if (Number.isNaN(parsed.getTime())) return value
     return parsed.toLocaleDateString()
   }
+
   const isAdmin = ADMIN_EMAILS.includes(session?.user?.email || '')
   const sourceDocument = getInvoiceSourceDocument(invoice)
   const invoiceRelatedDocs = { csrs: relatedCsrs, waybills: relatedWaybills }
+
   const viewModel = buildInvoiceViewModel({
     invoice,
     items,
@@ -132,6 +142,7 @@ export default function ViewInvoice() {
     project: linkedProject,
     sourceDocument,
   })
+
   const {
     computedStatus,
     statusLabel,
@@ -150,13 +161,93 @@ export default function ViewInvoice() {
     documentActionLabel,
   } = viewModel
 
+  const customFieldObject = parseCustomFields(invoice.custom_fields)
+  const selectedSignatory =
+    signatories.find((signatory) => signatory.id === getInvoiceSignatoryId(customFieldObject)) || null
+
+  const handleDownloadCsv = () => {
+    const csv = buildInvoiceCsv({
+      invoice,
+      items,
+      totals: {
+        rawSubtotal: Number(invoice.subtotal || 0),
+        installRateTotal: Number(invoice.install_rate_total || 0),
+        vatAmount: Number(invoice.vat || 0),
+        discountAmount: Number(invoice.discount || 0),
+        whtAmount: Number(invoice.wht || 0),
+        totalPayable: Number(invoice.total || 0),
+      },
+    })
+
+    downloadInvoiceCsv(`${invoice.invoice_number || 'invoice'}.csv`, csv)
+    setShowMore(false)
+  }
+
+  const handleCopy = async (value, label) => {
+    if (!value) return
+    try {
+      await navigator.clipboard.writeText(value)
+      toast({ title: 'Copied', description: `${label} copied.` })
+    } catch {
+      toast({
+        title: 'Copy failed',
+        description: `Could not copy ${label.toLowerCase()}.`,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const {
+    handleAttachExisting,
+    handleGenerateCsr,
+    handleGenerateWaybill,
+    openRevertConfirm,
+    handleStatusChange,
+    handleClone,
+    handleConvertToQuote,
+    handleMarkSent,
+    handleDelete,
+    confirmDelete,
+    handleArchive,
+    confirmArchive,
+    handleVoidPayment,
+    confirmVoidPayment,
+  } = useInvoiceMutations({
+    id,
+    invoice,
+    items,
+    poNumber,
+    customFieldObject,
+    converting,
+    pendingVoidPaymentId,
+    voidReason,
+    attachKind,
+    refresh,
+    navigate,
+    setShowMore,
+    setShowDeleteConfirm,
+    setShowArchiveConfirm,
+    setShowRevertConfirm,
+    setShowVoidDialog,
+    setPendingVoidPaymentId,
+    setVoidReason,
+    setVoidingPaymentId,
+    setConverting,
+    setAttachKind,
+    setShowAttachSheet,
+  })
+
   const detailActionDefs = getInvoiceDetailActionDefs({
     invoiceNumber: invoice.invoice_number || '',
     projectActionLabel,
-    projectActionSubtitle: hasProject ? (linkedProject?.name || 'Open the linked project workspace') : 'Attach this invoice to a project',
+    projectActionSubtitle: hasProject
+      ? linkedProject?.name || 'Open the linked project workspace'
+      : 'Attach this invoice to a project',
     hasProject,
     documentActionLabel,
-    documentActionSubtitle: hasLinkedDocuments ? 'View source, generated, and related records' : 'Connect this invoice to related records',
+    documentActionSubtitle: hasLinkedDocuments
+      ? 'View source, generated, and related records'
+      : 'Connect this invoice to related records',
     hasLinkedDocuments,
     canRecordPayment,
     reverting: converting,
@@ -177,7 +268,9 @@ export default function ViewInvoice() {
       setShowPaymentModal(true)
     },
     export: handleDownloadCsv,
-    'copy-number': () => { void handleCopy(invoice.invoice_number || '', 'Invoice number') },
+    'copy-number': () => {
+      void handleCopy(invoice.invoice_number || '', 'Invoice number')
+    },
     clone: handleClone,
     revert: openRevertConfirm,
     'generate-csr': handleGenerateCsr,
@@ -191,21 +284,30 @@ export default function ViewInvoice() {
     ...action,
     onClick: detailActionHandlers[action.key],
   }))
+
   const linkedDocumentsSections = [
     {
       key: 'source',
       title: 'Source',
       description: 'Documents this invoice came from.',
       items: sourceDocument
-        ? [{
-            key: `source-${sourceDocument.id || sourceDocument.number || 'invoice-source'}`,
-            label: `${sourceDocument.type === 'quotation' ? 'Quotation' : 'Document'} ${sourceDocument.number || sourceDocument.id || 'Linked source'}`,
-            subtitle: sourceDocument.po_number ? `PO ${sourceDocument.po_number}` : 'Open the source document',
-            onClick: () => {
-              if (sourceDocument.id) navigate(`/${sourceDocument.type === 'quotation' ? 'quotations' : 'invoices'}/${sourceDocument.id}`)
+        ? [
+            {
+              key: `source-${sourceDocument.id || sourceDocument.number || 'invoice-source'}`,
+              label: `${sourceDocument.type === 'quotation' ? 'Quotation' : 'Document'} ${
+                sourceDocument.number || sourceDocument.id || 'Linked source'
+              }`,
+              subtitle: sourceDocument.po_number
+                ? `PO ${sourceDocument.po_number}`
+                : 'Open the source document',
+              onClick: () => {
+                if (sourceDocument.id) {
+                  navigate(`/${sourceDocument.type === 'quotation' ? 'quotations' : 'invoices'}/${sourceDocument.id}`)
+                }
+              },
+              disabled: !sourceDocument.id,
             },
-            disabled: !sourceDocument.id,
-          }]
+          ]
         : [],
     },
     {
@@ -252,62 +354,22 @@ export default function ViewInvoice() {
       title: 'Project',
       description: 'Project connected to this invoice.',
       items: linkedProject
-        ? [{
-            key: `project-${linkedProject.id}`,
-            label: linkedProject.name || linkedProject.id,
-            subtitle: 'Open linked project',
-            onClick: () => navigate(`/projects/${linkedProject.id}`),
-          }]
+        ? [
+            {
+              key: `project-${linkedProject.id}`,
+              label: linkedProject.name || linkedProject.id,
+              subtitle: 'Open linked project',
+              onClick: () => navigate(`/projects/${linkedProject.id}`),
+            },
+          ]
         : [],
     },
   ]
 
-  // ── Custom fields ───────────────────────────────────────────────────────────
-  const customFieldObject = parseCustomFields(invoice.custom_fields)
-  const selectedSignatory = signatories.find((signatory) => signatory.id === getInvoiceSignatoryId(customFieldObject)) || null
-
-  const {
-    handleAttachExisting,
-    handleGenerateCsr,
-    handleGenerateWaybill,
-    openRevertConfirm,
-    handleStatusChange,
-    handleClone,
-    handleConvertToQuote,
-    handleMarkSent,
-    handleDelete,
-    confirmDelete,
-    handleArchive,
-    confirmArchive,
-    handleVoidPayment,
-    confirmVoidPayment,
-  } = useInvoiceMutations({
-    id,
-    invoice,
-    items,
-    poNumber,
-    customFieldObject,
-    converting,
-    pendingVoidPaymentId,
-    voidReason,
-    attachKind,
-    refresh,
-    navigate,
-    setShowMore,
-    setShowDeleteConfirm,
-    setShowArchiveConfirm,
-    setShowRevertConfirm,
-    setShowVoidDialog,
-    setPendingVoidPaymentId,
-    setVoidReason,
-    setVoidingPaymentId,
-    setConverting,
-    setAttachKind,
-    setShowAttachSheet,
-  })
   const handleDownloadPDF = async () => {
     if (pdfGenerating) return
     setPdfGenerating(true)
+
     try {
       const cf = parseDocumentCustomFields(invoice.custom_fields || customFieldObject)
 
@@ -323,10 +385,12 @@ export default function ViewInvoice() {
         settledTotal,
         balanceDue,
       }
+
       const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
         import('@react-pdf/renderer'),
         import('../components/InvoicePDF'),
       ])
+
       const blob = await pdf(
         <InvoicePDF
           document={invoice}
@@ -341,67 +405,51 @@ export default function ViewInvoice() {
           signatory={selectedSignatory}
         />
       ).toBlob()
+
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = (invoice.invoice_number || 'invoice') + '.pdf'
+      a.download = `${invoice.invoice_number || 'invoice'}.pdf`
       document.body.appendChild(a)
       a.click()
+
       setTimeout(() => {
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
       }, 100)
     } catch (err) {
-      toast({ title: 'PDF generation failed', description: err.message, variant: 'destructive' })
+      toast({
+        title: 'PDF generation failed',
+        description: err.message,
+        variant: 'destructive',
+      })
     } finally {
       setPdfGenerating(false)
     }
   }
 
-  const handleDownloadCsv = () => {
-    const csv = buildInvoiceCsv({
-      invoice,
-      items,
-      totals: {
-        rawSubtotal: Number(invoice.subtotal || 0),
-        installRateTotal: Number(invoice.install_rate_total || 0),
-        vatAmount: Number(invoice.vat || 0),
-        discountAmount: Number(invoice.discount || 0),
-        whtAmount: Number(invoice.wht || 0),
-        totalPayable: Number(invoice.total || 0),
-      },
-    })
-    downloadInvoiceCsv(`${invoice.invoice_number || 'invoice'}.csv`, csv)
-    setShowMore(false)
-  }
-
-  const handleCopy = async (value, label) => {
-    if (!value) return
-    try {
-      await navigator.clipboard.writeText(value)
-      toast({ title: 'Copied', description: `${label} copied.` })
-    } catch {
-      toast({ title: 'Copy failed', description: `Could not copy ${label.toLowerCase()}.`, variant: 'destructive' })
-    }
-  }
-
   const handlePdfOutputChange = async (next) => {
     setPdfOutput(next)
+
     const updatedCf = {
       ...customFieldObject,
       pdfOutput: next,
     }
+
     await supabase
       .from('invoices')
       .update({
-        custom_fields: JSON.stringify(updatedCf)
+        custom_fields: JSON.stringify(updatedCf),
       })
       .eq('id', id)
   }
+
   const shellStatusClass = statusBadgeClass
 
   const shellStatusItems = ['draft', 'sent', 'partial', 'paid', 'overdue'].map((status) => ({
-    label: String(status).replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()),
+    label: String(status)
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase()),
     active: computedStatus === status,
     onClick: () => {
       if (status === 'partial' || status === 'paid' || status === 'overdue') return
@@ -409,15 +457,19 @@ export default function ViewInvoice() {
     },
     disabled: status === 'partial' || status === 'paid' || status === 'overdue',
   }))
+
   const activePdfTemplate = PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || PDF_TEMPLATES[0]
+
   const handlePdfTemplateChange = (nextTemplate) => {
     setPdfTemplate(nextTemplate)
     setPdfTemplatePreset('invoice', nextTemplate)
   }
+
   const handlePdfDesignPresetChange = (nextPreset) => {
     setPdfDesignPresetState(nextPreset)
     setPdfDesignPreset('invoice', nextPreset)
   }
+
   const previewModel = buildInvoicePreviewModel({
     invoice,
     items,
@@ -432,6 +484,7 @@ export default function ViewInvoice() {
     balanceDue,
     formatMoney,
   })
+
   const {
     previewBankAccounts,
     selectedPreviewBank,
@@ -485,7 +538,11 @@ export default function ViewInvoice() {
   })
 
   return (
-    <Layout title={invoice.invoice_number} hidePageHeader contentClassName="w-full px-4 pb-32 pt-4 md:px-6 md:pt-6">
+    <Layout
+      title={invoice.invoice_number}
+      hidePageHeader
+      contentClassName="w-full px-4 pb-32 pt-4 md:px-6 md:pt-6"
+    >
       <div className="mx-auto max-w-3xl space-y-4">
         <RecordPaymentModal
           invoice={{
@@ -513,9 +570,21 @@ export default function ViewInvoice() {
           value={formatMoney(invoiceTotal)}
           helper={invoice.amount_in_words || invoice.invoice_title || 'Invoice ready for payment tracking.'}
           stats={[
-            { label: 'Balance Due', value: formatMoney(balanceDue), className: balanceDue > 0 ? 'text-red-400' : 'text-emerald-300' },
-            { label: 'Received', value: formatMoney(cashReceived), className: 'text-emerald-300' },
-            { label: 'Due Date', value: invoice.due_date || 'Open', className: 'text-white' },
+            {
+              label: 'Balance Due',
+              value: formatMoney(balanceDue),
+              className: balanceDue > 0 ? 'text-red-400' : 'text-emerald-300',
+            },
+            {
+              label: 'Received',
+              value: formatMoney(cashReceived),
+              className: 'text-emerald-300',
+            },
+            {
+              label: 'Due Date',
+              value: invoice.due_date || 'Open',
+              className: 'text-white',
+            },
           ]}
           compactLabel="Invoice Summary"
           openLabel="Open summary"
@@ -525,7 +594,13 @@ export default function ViewInvoice() {
         <DocumentActionGrid
           actions={[
             { key: 'pdf', label: 'PDF', onClick: () => setShowPdfSheet(true), variant: 'dark' },
-            { key: 'payment', label: 'Payment', onClick: () => setShowPaymentModal(true), variant: 'emerald', disabled: !canRecordPayment },
+            {
+              key: 'payment',
+              label: 'Payment',
+              onClick: () => setShowPaymentModal(true),
+              variant: 'emerald',
+              disabled: !canRecordPayment,
+            },
             { key: 'edit', label: 'Edit', onClick: () => navigate('/invoices/edit/' + id), variant: 'blue' },
             { key: 'more', label: 'More', onClick: () => setShowMore(true), variant: 'outline' },
           ]}
@@ -554,11 +629,15 @@ export default function ViewInvoice() {
           amountInWords={invoice.amount_in_words || ''}
           bankDetails={pdfOutput.showBankDetails && selectedPreviewBank ? selectedPreviewBank : null}
           notesSections={previewNotesContent}
-          signatory={selectedSignatory ? {
-            name: selectedSignatory.name,
-            role: selectedSignatory.role || 'Saved signatory',
-            signatureUrl: selectedSignatory.signature_url || '',
-          } : null}
+          signatory={
+            selectedSignatory
+              ? {
+                  name: selectedSignatory.name,
+                  role: selectedSignatory.role || 'Saved signatory',
+                  signatureUrl: selectedSignatory.signature_url || '',
+                }
+              : null
+          }
           accentColor={pdfDesignPreset.accentColor}
         />
 
@@ -577,14 +656,21 @@ export default function ViewInvoice() {
                 key: 'template',
                 title: 'Template',
                 content: (
-                  <DocumentTemplatePicker value={pdfTemplate} onChange={handlePdfTemplateChange} templates={PDF_TEMPLATES} />
+                  <DocumentTemplatePicker
+                    value={pdfTemplate}
+                    onChange={handlePdfTemplateChange}
+                    templates={PDF_TEMPLATES}
+                  />
                 ),
               },
               {
                 key: 'styling',
                 title: 'Fonts & Color',
                 content: (
-                  <DocumentDesignStyleEditor value={pdfDesignPreset} onChange={handlePdfDesignPresetChange} />
+                  <DocumentDesignStyleEditor
+                    value={pdfDesignPreset}
+                    onChange={handlePdfDesignPresetChange}
+                  />
                 ),
               },
               {
@@ -611,18 +697,34 @@ export default function ViewInvoice() {
                 return items.map((item, index) => {
                   if (item.row_type === 'group_header') {
                     return (
-                      <div key={item._uiKey || item.id || index} className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-slate-300">
+                      <div
+                        key={item._uiKey || item.id || index}
+                        className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-slate-300"
+                      >
                         {item.group_name || `Group ${index + 1}`}
                       </div>
                     )
                   }
+
                   itemNumber += 1
+
                   return (
-                    <div key={item._uiKey || item.id || index} className="flex gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
-                      <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-[10px] font-extrabold text-slate-500">{itemNumber}</div>
+                    <div
+                      key={item._uiKey || item.id || index}
+                      className="flex gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0"
+                    >
+                      <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-[10px] font-extrabold text-slate-500">
+                        {itemNumber}
+                      </div>
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-bold text-foreground">{item.description || 'Untitled item'}</div>
-                        {item.sub_description ? <div className="mt-1 text-xs text-muted-foreground">{item.sub_description}</div> : null}
+                        <div className="text-sm font-bold text-foreground">
+                          {item.description || 'Untitled item'}
+                        </div>
+                        {item.sub_description ? (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {item.sub_description}
+                          </div>
+                        ) : null}
                         <div className="mt-2 text-xs text-muted-foreground">
                           Qty {item.quantity || 0}
                           {item.unit ? ` ${item.unit}` : ''}
@@ -630,8 +732,12 @@ export default function ViewInvoice() {
                         </div>
                       </div>
                       <div className="shrink-0 text-right">
-                        <div className="text-sm font-extrabold text-foreground">{formatMoney(item.amount || item.quantity * item.unit_price || 0)}</div>
-                        <div className="text-[11px] text-muted-foreground">{formatMoney(item.unit_price || 0)} each</div>
+                        <div className="text-sm font-extrabold text-foreground">
+                          {formatMoney(item.amount || item.quantity * item.unit_price || 0)}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {formatMoney(item.unit_price || 0)} each
+                        </div>
                       </div>
                     </div>
                   )
@@ -665,7 +771,12 @@ export default function ViewInvoice() {
           subtitle={`Using ${activePdfTemplate.label} as the saved invoice PDF preset on this device.`}
           actions={[
             { label: 'Export CSV', onClick: handleDownloadCsv, variant: 'outline' },
-            { label: pdfGenerating ? 'Preparing...' : 'Download PDF', onClick: () => void handleDownloadPDF(), className: 'bg-slate-950 text-white hover:bg-slate-800', disabled: pdfGenerating },
+            {
+              label: pdfGenerating ? 'Preparing...' : 'Download PDF',
+              onClick: () => void handleDownloadPDF(),
+              className: 'bg-slate-950 text-white hover:bg-slate-800',
+              disabled: pdfGenerating,
+            },
           ]}
         />
 
@@ -728,7 +839,11 @@ export default function ViewInvoice() {
           linkedInvoiceField={attachKind === 'csr' ? 'linked_invoice_id' : 'invoice_id'}
           currentInvoiceId={invoice.id}
           currentClientName={invoice.client_name}
-          searchPlaceholder={attachKind === 'csr' ? 'Search CSR number, client, or PO' : 'Search waybill number, client, or PO'}
+          searchPlaceholder={
+            attachKind === 'csr'
+              ? 'Search CSR number, client, or PO'
+              : 'Search waybill number, client, or PO'
+          }
           onAttach={handleAttachExisting}
         />
 
@@ -749,737 +864,15 @@ export default function ViewInvoice() {
           actions={[
             { label: 'Back', onClick: () => navigate('/invoices'), variant: 'outline' },
             { label: 'Edit', onClick: () => navigate('/invoices/edit/' + id), variant: 'outline' },
-            { label: computedStatus === 'paid' ? 'Paid in Full' : 'Record Payment', onClick: () => setShowPaymentModal(true), className: 'bg-emerald-600 text-white hover:bg-emerald-700', disabled: computedStatus === 'paid' },
+            {
+              label: computedStatus === 'paid' ? 'Paid in Full' : 'Record Payment',
+              onClick: () => setShowPaymentModal(true),
+              className: 'bg-emerald-600 text-white hover:bg-emerald-700',
+              disabled: computedStatus === 'paid',
+            },
           ]}
         />
       </div>
     </Layout>
   )
-
-  return (
-    <Layout title={invoice.invoice_number}>
-      <div style={{ maxWidth: '900px', width: '100%', boxSizing: 'border-box', padding: isNarrow ? '0' : undefined }}>
-        {/* ── Record Payment Modal ── */}
-        <RecordPaymentModal
-          invoice={{
-            id: invoice.id,
-            invoice_number: invoice.invoice_number,
-            client_name: invoice.client_name,
-            total: Number(invoice.total || 0),
-          }}
-          open={showPaymentModal}
-          onOpenChange={setShowPaymentModal}
-          onSuccess={refresh}
-        />
-
-        {showMore && isNarrow && (
-          <div
-            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15,23,42,0.35)', zIndex: 1200, display: 'flex', alignItems: 'flex-end' }}
-            onClick={() => setShowMore(false)}
-          >
-            <div
-              style={{
-                width: '100%',
-                backgroundColor: 'white',
-                borderTopLeftRadius: '18px',
-                borderTopRightRadius: '18px',
-                padding: '10px 0 calc(18px + env(safe-area-inset-bottom, 0px))',
-                boxShadow: '0 -18px 48px rgba(15,23,42,0.22)',
-                position: 'relative',
-                zIndex: 1250,
-                pointerEvents: 'auto',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div style={{ width: '42px', height: '4px', borderRadius: '999px', backgroundColor: '#CBD5E1', margin: '0 auto 10px' }} />
-              <div
-                style={{
-                  padding: '0 16px 8px',
-                  fontSize: '12px',
-                  fontWeight: '700',
-                  color: '#64748B',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                }}
-              >
-                Invoice actions
-              </div>
-              <div style={{ display: 'grid' }}>
-                {moreMenuItems.map((item) => (
-                  <button
-                    key={item.label}
-                    type="button"
-                    disabled={item.disabled}
-                    onPointerUp={item.disabled ? undefined : handleMobileMenuItemClick(item.action)}
-                    style={{
-                      width: '100%',
-                      textAlign: 'left',
-                      padding: '14px 16px',
-                      border: 'none',
-                      borderTop: '1px solid #F1F5F9',
-                      backgroundColor: 'white',
-                      color: item.danger ? '#CC0000' : '#0F172A',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      cursor: item.disabled ? 'default' : 'pointer',
-                      opacity: item.disabled ? 0.65 : 1,
-                      touchAction: 'manipulation',
-                      pointerEvents: 'auto',
-                      position: 'relative',
-                      zIndex: 1300,
-                    }}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div
-          style={{
-            display: 'flex',
-            gap: '6px',
-            marginBottom: '14px',
-            alignItems: 'center',
-            overflowX: 'auto',
-            overflowY: 'visible',
-            flexWrap: 'nowrap',
-            WebkitOverflowScrolling: 'touch',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            paddingBottom: '2px',
-            position: 'relative',
-            zIndex: 5,
-          }}
-        >
-          <div
-            onClick={() => navigate('/invoices')}
-            style={{
-              flexShrink: 0,
-              padding: '6px 10px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              border: '1px solid #e2e8f0',
-              backgroundColor: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontWeight: '600',
-              color: '#374151',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            ← Back
-          </div>
-          <span style={{ flexShrink: 0, fontSize: '13px', fontWeight: '700', color: '#111827', whiteSpace: 'nowrap' }}>{invoice.invoice_number}</span>
-          <span
-            style={{
-              flexShrink: 0,
-              backgroundColor: s.bg,
-              color: s.color,
-              padding: '3px 9px',
-              borderRadius: '20px',
-              fontSize: '11px',
-              fontWeight: '700',
-              textTransform: 'capitalize',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {invoice.status || 'draft'}
-          </span>
-          <div style={{ flex: 1, minWidth: 4 }} />
-          <div
-            onClick={handleDownloadPDF}
-            style={{
-              flexShrink: 0,
-              padding: '6px 12px',
-              borderRadius: '6px',
-              cursor: pdfGenerating ? 'default' : 'pointer',
-              fontSize: '13px',
-              backgroundColor: '#0F172A',
-              color: 'white',
-              fontWeight: '600',
-              opacity: pdfGenerating ? 0.7 : 1,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {pdfGenerating ? 'Preparing…' : '↓ PDF'}
-          </div>
-          <div
-            onClick={() => navigate('/invoices/edit/' + id)}
-            style={{
-              flexShrink: 0,
-              padding: '6px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              border: '1px solid #e2e8f0',
-              backgroundColor: 'white',
-              fontWeight: '600',
-              color: '#374151',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Edit
-          </div>
-          <div ref={menuRef} style={{ position: 'relative', flexShrink: 0, zIndex: 6 }}>
-            <button
-              type="button"
-              onClick={() => setShowMore((open) => !open)}
-              style={{
-                padding: '6px 10px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                border: '1px solid #e2e8f0',
-                backgroundColor: 'white',
-                fontWeight: '600',
-                userSelect: 'none',
-                color: '#374151',
-                letterSpacing: '0.05em',
-                touchAction: 'manipulation',
-                WebkitTapHighlightColor: 'transparent',
-                position: 'relative',
-                zIndex: 20,
-              }}
-            >
-              ···
-            </button>
-            {showMore && !isNarrow && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  left: 'auto',
-                  marginTop: '4px',
-                  backgroundColor: 'white',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-                  border: '1px solid #e2e8f0',
-                  zIndex: 200,
-                  minWidth: '220px',
-                  overflow: 'hidden',
-                }}
-              >
-                {moreMenuItems.map((item, i) => (
-                    <div
-                      key={i}
-                      onClick={item.disabled ? undefined : handleMenuItemClick(item.action)}
-                      style={{
-                        padding: '10px 16px',
-                        cursor: item.disabled ? 'default' : 'pointer',
-                        fontSize: '13px',
-                        color: item.danger ? '#CC0000' : '#1a1a1a',
-                        borderBottom: '1px solid #f5f5f5',
-                        transition: 'background 0.1s',
-                        opacity: item.disabled ? 0.7 : 1,
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!item.disabled) e.currentTarget.style.backgroundColor = '#f9f9f9'
-                      }}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
-                    >
-                      {item.label}
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: isNarrow ? '1fr' : 'minmax(0,1fr) 240px', marginBottom: '16px' }}>
-          <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr' }}>
-            {/* Client */}
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px 12px' }}>
-              <div
-                style={{
-                  fontSize: '10px',
-                  fontWeight: '700',
-                  color: '#94a3b8',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.14em',
-                  marginBottom: '6px',
-                }}
-              >
-                Client
-              </div>
-              <div style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', lineHeight: 1.3 }}>{invoice.client_name || 'Unassigned'}</div>
-              {client?.contact_person && <div style={{ marginTop: '3px', fontSize: '12px', color: '#64748b' }}>{client.contact_person}</div>}
-              {client?.email && <div style={{ fontSize: '12px', color: '#64748b' }}>{client.email}</div>}
-              {client?.phone && <div style={{ fontSize: '12px', color: '#64748b' }}>{client.phone}</div>}
-            </div>
-
-            {/* Conversion Trail */}
-            {(conversionTrail?.source?.number || (conversionTrail?.derived || []).length > 0) && (
-              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px 12px', gridColumn: isNarrow ? 'auto' : '1 / span 2' }}>
-                <div
-                  style={{
-                    fontSize: '10px',
-                    fontWeight: '700',
-                    color: '#94a3b8',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.14em',
-                    marginBottom: '6px',
-                  }}
-                >
-                  Conversion Trail
-                </div>
-                <div style={{ display: 'grid', gap: '4px', fontSize: '12px', color: '#475569' }}>
-                  {conversionTrail?.source?.number ? (
-                    <button
-                      type="button"
-                      onClick={() => (conversionTrail.source.id ? navigate(`/quotations/${conversionTrail.source.id}`) : null)}
-                      style={{
-                        textAlign: 'left',
-                        color: '#1d4ed8',
-                        background: 'transparent',
-                        border: 'none',
-                        padding: 0,
-                        cursor: conversionTrail.source.id ? 'pointer' : 'default',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                      }}
-                    >
-                      Source Quotation: {conversionTrail.source.number}
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Document Identity */}
-          <div style={{ border: '1px solid #0f172a', borderRadius: '8px', backgroundColor: '#0f172a', padding: '11px 12px', color: 'white' }}>
-            <div
-              style={{
-                fontSize: '10px',
-                fontWeight: '700',
-                color: '#94a3b8',
-                textTransform: 'uppercase',
-                letterSpacing: '0.14em',
-                marginBottom: '6px',
-              }}
-            >
-              Document Identity
-            </div>
-            <div style={{ fontSize: '17px', fontWeight: '700', lineHeight: 1.3 }}>{companyName || (invoice.document_type || 'INVOICE')}</div>
-            {companyTagline ? <div style={{ marginTop: '3px', fontSize: '12px', color: '#cbd5e1' }}>{companyTagline}</div> : null}
-            {companyIdentityLines.length > 0 && (
-              <div style={{ marginTop: '8px', display: 'grid', gap: '2px', fontSize: '11px', color: '#94a3b8' }}>
-                {companyIdentityLines.map((line) => (
-                  <div key={line}>{line}</div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Invoice Preview ── */}
-        <div
-          style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-            padding: isNarrow ? '16px' : '40px',
-            overflowX: 'auto',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px', flexWrap: 'wrap', gap: '16px' }}>
-            {hasCompanyIdentity ? (
-              <div>
-                {companyName ? <div style={{ color: '#CC0000', fontWeight: 'bold', fontSize: '22px', marginBottom: '4px' }}>{companyName}</div> : null}
-                {companyTagline ? <div style={{ color: '#555', fontSize: '12px' }}>{companyTagline}</div> : null}
-                {companyIdentityLines.map((line) => (
-                  <div key={line} style={{ color: '#555', fontSize: '12px' }}>{line}</div>
-                ))}
-              </div>
-            ) : (
-              <div />
-            )}
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ color: '#CC0000', fontWeight: 'bold', fontSize: '20px', marginBottom: '4px' }}>{invoice.document_type || 'INVOICE'}</div>
-              <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>{invoice.invoice_number}</div>
-              <div style={{ fontSize: '12px', color: '#555' }}>Date: {invoice.issue_date}</div>
-              {invoice.due_date && <div style={{ fontSize: '12px', color: '#555' }}>Due: {invoice.due_date}</div>}
-            </div>
-          </div>
-
-          <div style={{ borderBottom: '2px solid #CC0000', marginBottom: '24px' }} />
-
-          <div style={{ display: 'flex', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-            <div style={{ flex: 1, minWidth: '160px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-                Bill To
-              </div>
-              <div style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '4px' }}>{invoice.client_name}</div>
-              {client?.contact_person && <div style={{ fontSize: '13px', color: '#555', marginBottom: '2px' }}>Attn: {client.contact_person}</div>}
-              {client?.phone && <div style={{ fontSize: '13px', color: '#555', marginBottom: '2px' }}>{client.phone}</div>}
-              {client?.email && <div style={{ fontSize: '13px', color: '#555', marginBottom: '2px' }}>{client.email}</div>}
-              {client?.address && <div style={{ fontSize: '13px', color: '#555', marginBottom: '2px' }}>{client.address}</div>}
-              {client?.city && <div style={{ fontSize: '13px', color: '#555', marginBottom: '2px' }}>{client.city}{client.state ? ', ' + client.state : ''}</div>}
-            </div>
-            <div style={{ flex: 1, minWidth: '160px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-                Details
-              </div>
-              {invoice.issue_date && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>Issued: {invoice.issue_date}</div>}
-              {poNumber && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>P.O.: {poNumber}</div>}
-              {invoice.payment_terms && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>Payment Terms: {invoice.payment_terms}</div>}
-              {invoice.work_duration && <div style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>Work Duration: {invoice.work_duration}</div>}
-              {topHeaderFields.map((field, index) =>
-                field.label && field.value ? (
-                  <div key={`${field.label}-${index}`} style={{ fontSize: '13px', color: '#555', marginBottom: '4px' }}>
-                    {field.label}: {field.value}
-                  </div>
-                ) : null
-              )}
-            </div>
-          </div>
-
-          {/* Mobile items */}
-          {isNarrow && (
-            <div style={{ marginBottom: '24px' }}>
-              {(() => {
-                let stdCount = 0
-                return items.map((item, index) => {
-                  if (item.row_type === 'standard') stdCount++
-                  const n = stdCount
-                  if (item.row_type === 'group_header') {
-                    return (
-                      <div
-                        key={index}
-                        style={{
-                          backgroundColor: '#333',
-                          borderRadius: '8px',
-                          padding: '10px 14px',
-                          marginBottom: '8px',
-                          color: 'white',
-                          fontWeight: 'bold',
-                          fontSize: '13px',
-                        }}
-                      >
-                        {item.group_name}
-                      </div>
-                    )
-                  }
-                  return (
-                    <div
-                      key={index}
-                      style={{
-                        backgroundColor: index % 2 === 0 ? '#f9f9f9' : 'white',
-                        border: '1px solid #eee',
-                        borderRadius: '8px',
-                        padding: '12px 14px',
-                        marginBottom: '8px',
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                        <div style={{ flex: 1 }}>
-                          <span style={{ fontSize: '11px', color: '#999', fontWeight: '700', marginRight: '6px' }}>{n}.</span>
-                          <span style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>{item.description}</span>
-                          {item.sub_description && (
-                            <div style={{ fontSize: '11px', color: '#888', fontStyle: 'italic', marginTop: '2px' }}>{item.sub_description}</div>
-                          )}
-                        </div>
-                        <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#CC0000', whiteSpace: 'nowrap', marginLeft: '10px' }}>
-                          ₦{Number(item.amount || item.quantity * item.unit_price || 0).toLocaleString()}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
-                        {item.make && (
-                          <span style={{ fontSize: '11px', backgroundColor: '#f0f0f0', borderRadius: '4px', padding: '2px 8px', color: '#555' }}>
-                            Make: {item.make}
-                          </span>
-                        )}
-                        <span style={{ fontSize: '11px', backgroundColor: '#f0f0f0', borderRadius: '4px', padding: '2px 8px', color: '#555' }}>
-                          Qty: {item.quantity}{item.unit ? ' ' + item.unit : ''}
-                        </span>
-                        <span style={{ fontSize: '11px', backgroundColor: '#f0f0f0', borderRadius: '4px', padding: '2px 8px', color: '#555' }}>
-                          ₦{Number(item.unit_price || 0).toLocaleString()} / unit
-                        </span>
-                      </div>
-                    </div>
-                  )
-                })
-              })()}
-            </div>
-          )}
-
-          {/* Desktop table */}
-          <div style={{ display: isNarrow ? 'none' : 'block', overflowX: 'auto', marginBottom: '24px' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '500px' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#1a1a1a' }}>
-                  <th style={{ padding: '10px 8px', textAlign: 'center', color: 'white', width: '32px' }}>#</th>
-                  <th style={{ padding: '10px 14px', textAlign: 'left', color: 'white' }}>Description</th>
-                  <th style={{ padding: '10px 14px', textAlign: 'left', color: 'white' }}>Make</th>
-                  <th style={{ padding: '10px 14px', textAlign: 'center', color: 'white' }}>Qty</th>
-                  <th style={{ padding: '10px 14px', textAlign: 'center', color: 'white' }}>Unit</th>
-                  <th style={{ padding: '10px 14px', textAlign: 'right', color: 'white' }}>Unit Price</th>
-                  <th style={{ padding: '10px 14px', textAlign: 'right', color: 'white' }}>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(() => {
-                  let stdCount = 0
-                  return items.map((item, index) => {
-                    if (item.row_type === 'standard') stdCount++
-                    return item.row_type === 'group_header' ? (
-                      <tr key={index} style={{ backgroundColor: '#333' }}>
-                        <td style={{ padding: '10px 8px', textAlign: 'center', color: '#888' }}>—</td>
-                        <td colSpan={6} style={{ padding: '10px 14px', fontWeight: 'bold', color: 'white', fontSize: '13px' }}>{item.group_name}</td>
-                      </tr>
-                    ) : (
-                      <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#f9f9f9' : 'white', borderBottom: '1px solid #eee' }}>
-                        <td style={{ padding: '10px 8px', textAlign: 'center', color: '#999', fontSize: '12px', fontWeight: '700' }}>{stdCount}</td>
-                        <td style={{ padding: '10px 14px' }}>
-                          <div style={{ color: '#1a1a1a', fontWeight: '500' }}>{item.description}</div>
-                          {item.sub_description && <div style={{ fontSize: '11px', color: '#888', fontStyle: 'italic', marginTop: '2px' }}>{item.sub_description}</div>}
-                        </td>
-                        <td style={{ padding: '10px 14px', color: '#555' }}>{item.make || '—'}</td>
-                        <td style={{ padding: '10px 14px', textAlign: 'center' }}>{item.quantity}</td>
-                        <td style={{ padding: '10px 14px', textAlign: 'center', color: '#555' }}>{item.unit || '—'}</td>
-                        <td style={{ padding: '10px 14px', textAlign: 'right' }}>₦{Number(item.unit_price || 0).toLocaleString()}</td>
-                        <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 'bold' }}>₦{Number(item.amount || item.quantity * item.unit_price || 0).toLocaleString()}</td>
-                      </tr>
-                    )
-                  })
-                })()}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Totals */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
-            <div style={{ width: '320px' }}>
-              {[
-                { label: 'Subtotal', value: invoice.subtotal },
-                { label: 'VAT', value: invoice.vat },
-                { label: 'Workmanship', value: invoice.workmanship },
-                { label: 'Transportation', value: invoice.transportation },
-                { label: 'Shipping', value: invoice.shipping },
-                { label: 'Discount', value: invoice.discount, negative: true },
-              ]
-                .filter((r) => Number(r.value) > 0)
-                .map(({ label, value, negative }) => (
-                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-                    <span style={{ color: '#555' }}>{label}</span>
-                    <span style={{ color: negative ? '#CC0000' : '#1a1a1a' }}>
-                      {negative ? '-' : ''}???{Number(value || 0).toLocaleString()}
-                    </span>
-                  </div>
-                ))}
-
-              {/* Grand total */}
-              <div style={{ borderTop: '2px solid #1a1a1a', paddingTop: '10px', marginTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 'bold', fontSize: '15px' }}>TOTAL (NGN)</span>
-                <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#CC0000' }}>???{Number(invoice.total || 0).toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-
-          <InvoicePaymentSection
-            variant="detailed"
-            paymentHistory={paymentHistory}
-            formatMoney={formatMoney}
-            formatDate={formatDate}
-            isAdmin={isAdmin}
-            voidingPaymentId={voidingPaymentId}
-            onVoidPayment={handleVoidPayment}
-            onRecordPayment={() => setShowPaymentModal(true)}
-            showRecordPaymentButton={computedStatus !== 'paid'}
-            invoiceTotal={invoiceTotal}
-            cashReceived={cashReceived}
-            balanceDue={balanceDue}
-            computedStatus={computedStatus}
-            statusBadgeClass={statusBadgeClass}
-          />
-
-          {invoice.amount_in_words && (
-            <div
-              style={{
-                backgroundColor: '#f9f9f9',
-                padding: '12px',
-                borderLeft: '3px solid #CC0000',
-                marginBottom: '24px',
-                fontSize: '12px',
-                color: '#555',
-                fontStyle: 'italic',
-              }}
-            >
-              {invoice.amount_in_words}
-            </div>
-          )}
-
-          {invoice.notes && (
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>
-                Notes
-              </div>
-              <div dangerouslySetInnerHTML={{ __html: safeInvoiceNotes }} style={{ fontSize: 14, color: '#555', lineHeight: 1.7 }} />
-            </div>
-          )}
-          {invoice.terms && (
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>
-                Terms & Conditions
-              </div>
-              <div dangerouslySetInnerHTML={{ __html: safeInvoiceTerms }} style={{ fontSize: 14, color: '#555', lineHeight: 1.7 }} />
-            </div>
-          )}
-
-          {attachments.length > 0 && (
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#0056B3', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-                Supporting Documents
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {attachments.map((att, i) => (
-                  <a
-                    key={i}
-                    href={att.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '8px 12px',
-                      backgroundColor: '#f8f9ff',
-                      borderRadius: '8px',
-                      border: '1px solid #e0e8ff',
-                      textDecoration: 'none',
-                      color: '#1a1a1a',
-                    }}
-                  >
-                    <span style={{ fontSize: '18px' }}>📎</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          color: '#0056B3',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {att.label || att.name}
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '12px', color: '#6366F1', flexShrink: 0 }}>↗ Open</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div style={{ borderTop: '1px solid #eee', paddingTop: '14px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#333', marginBottom: '4px' }}>Payment Terms</div>
-            <div style={{ fontSize: '12px', color: '#555' }}>{invoice.payment_terms || 'Net 30'}</div>
-          </div>
-
-          {selectedSignatory && (
-            <Card className="mt-6 border-border shadow-none">
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
-                  {selectedSignatory.signature_url ? (
-                    <img src={selectedSignatory.signature_url} alt={`${selectedSignatory.name} signature`} className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-xs font-bold text-muted-foreground">SIG</span>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Signatory</div>
-                  <div className="mt-1 text-sm font-bold text-foreground">{selectedSignatory.name}</div>
-                  <div className="text-xs text-muted-foreground">{selectedSignatory.role || 'Saved signatory'}</div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* ── PDF Download + Template Selector ── */}
-        <PdfOutputSettings
-          value={pdfOutput}
-          onChange={handlePdfOutputChange}
-          bankAccounts={bankAccounts.map(b => ({
-            id: b.id,
-            bankName: b.bank_name,
-            accountName: b.account_name,
-            accountNumber: b.account_number,
-            sortCode: b.sort_code,
-            isDefault: b.is_default,
-          }))}
-          companyTagline={settings.company_tagline || ''}
-          footerText={settings.footer_text || ''}
-        />
-        <div
-          style={{
-            marginTop: '20px',
-            paddingTop: '16px',
-            borderTop: '1px solid #E2E8F0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '10px',
-          }}
-        >
-          <div style={{ fontSize: '12px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            PDF Template
-          </div>
-          <div
-            onClick={handleDownloadPDF}
-            style={{
-              flexShrink: 0,
-              padding: '7px 14px',
-              borderRadius: '6px',
-              cursor: pdfGenerating ? 'default' : 'pointer',
-              fontSize: '13px',
-              backgroundColor: '#0F172A',
-              color: 'white',
-              fontWeight: '600',
-              opacity: pdfGenerating ? 0.7 : 1,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {pdfGenerating ? 'Preparing…' : '↓ Download PDF'}
-          </div>
-        </div>
-        <TemplateSelector value={pdfTemplate} onChange={setPdfTemplate} />
-        <ConfirmActionDialog
-          open={showDeleteConfirm}
-          onOpenChange={setShowDeleteConfirm}
-          title="Delete this invoice?"
-          description="Deleting is permanent and cannot be undone. You can archive it instead and restore it later from Settings > Archives."
-          confirmLabel="Delete Invoice"
-          onConfirm={() => void confirmDelete()}
-        />
-        <ConfirmActionDialog
-          open={showArchiveConfirm}
-          onOpenChange={setShowArchiveConfirm}
-          title="Archive this invoice?"
-          description="This invoice will be hidden from your active list until you restore it from Settings > Archives."
-          confirmLabel="Archive Invoice"
-          variant="default"
-          onConfirm={() => void confirmArchive()}
-        />
-
-        <VoidPaymentDialog
-          open={showVoidDialog}
-          onOpenChange={setShowVoidDialog}
-          reason={voidReason}
-          onReasonChange={setVoidReason}
-          submitting={voidingPaymentId !== null}
-          onConfirm={() => void confirmVoidPayment()}
-          onCancel={() => setShowVoidDialog(false)}
-        />
-      </div>
-    </Layout>
-  )
 }
-
