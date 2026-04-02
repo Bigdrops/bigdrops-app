@@ -4,6 +4,11 @@ import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, Git
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
+import { canUseNativeSqlite } from "@/lib/native/capacitor"
+import {
+  cacheInvoiceList,
+  getCachedInvoiceList,
+} from "@/lib/native/invoiceCache"
 import Layout from "../components/Layout"
 import MobileFab from "../components/layout/MobileFab"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
@@ -17,6 +22,14 @@ import { getInvoiceListActionDefs, getInvoiceListDeleteActionDef } from "@/domai
 import { fetchInvoiceChildDocuments, fetchProjectSummary, getInvoiceSourceDocument } from "@/domain/documentRelationships"
 
 const PAGE_SIZE = 25
+
+function canUseInvoiceCacheFallback() {
+  return (
+    canUseNativeSqlite() &&
+    typeof navigator !== "undefined" &&
+    navigator.onLine === false
+  )
+}
 
 export default function Invoices() {
   const [invoices, setInvoices]           = useState([])
@@ -99,27 +112,131 @@ export default function Invoices() {
     setLoadingMore(true)
     const from = pageIndex * PAGE_SIZE
     const to = from + PAGE_SIZE - 1
-    const { data, count } = await buildInvoiceQuery().range(from, to)
-    const nextRows = data || []
+    try {
+      const { data, count, error } = await buildInvoiceQuery().range(from, to)
+      if (error) throw error
 
-    setInvoices((current) => (replace ? nextRows : [...current, ...nextRows]))
-    setTotalCount(count || 0)
-    setPage(pageIndex)
-    setHasMore(count !== null ? to + 1 < count : nextRows.length === PAGE_SIZE)
-    setLoadingMore(false)
+      const nextRows = data || []
+
+      setInvoices((current) => (replace ? nextRows : [...current, ...nextRows]))
+      setTotalCount(count || 0)
+      setPage(pageIndex)
+      setHasMore(count !== null ? to + 1 < count : nextRows.length === PAGE_SIZE)
+
+      if (canUseNativeSqlite() && nextRows.length > 0) {
+        void cacheInvoiceList(nextRows).catch((cacheError) => {
+          console.warn("Invoice list cache write failed:", cacheError)
+        })
+      }
+    } catch (error) {
+      if (!canUseInvoiceCacheFallback()) {
+        setInvoices((current) => (replace ? [] : current))
+        setTotalCount((current) => (replace ? 0 : current))
+        setHasMore(false)
+        console.warn("Invoice list fetch failed:", error)
+        return
+      }
+
+      try {
+        const cachedRows = await getCachedInvoiceList()
+        const searchTerm = search.trim().toLowerCase()
+
+        const filteredRows = cachedRows
+          .filter((row) => !row.archived_at)
+          .filter((row) => {
+            if (!searchTerm) return true
+            const invoiceNumber = String(row.invoice_number || "").toLowerCase()
+            const clientName = String(row.client_name || "").toLowerCase()
+            return invoiceNumber.includes(searchTerm) || clientName.includes(searchTerm)
+          })
+          .filter((row) => clientFilter === "All" || row.client_name === clientFilter)
+          .filter((row) => statusFilter === "All" || String(row.status || "").toLowerCase() === statusFilter.toLowerCase())
+          .filter((row) => {
+            if (dateFilter === "All Time") return true
+            if (!row.issue_date) return false
+
+            const issueTime = new Date(row.issue_date).getTime()
+            if (Number.isNaN(issueTime)) return false
+
+            const now = new Date()
+            if (dateFilter === "This Month") {
+              const fromDate = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+              return issueTime >= fromDate
+            }
+            if (dateFilter === "Last Month") {
+              const fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime()
+              const toDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999).getTime()
+              return issueTime >= fromDate && issueTime <= toDate
+            }
+            if (dateFilter === "This Year") {
+              const fromDate = new Date(now.getFullYear(), 0, 1).getTime()
+              return issueTime >= fromDate
+            }
+
+            return true
+          })
+          .sort((left, right) => {
+            if (sortBy === "Highest Value") {
+              return Number(right.total || 0) - Number(left.total || 0)
+            }
+            if (sortBy === "Lowest Value") {
+              return Number(left.total || 0) - Number(right.total || 0)
+            }
+
+            const leftTime = new Date(left.created_at || left.issue_date || 0).getTime() || 0
+            const rightTime = new Date(right.created_at || right.issue_date || 0).getTime() || 0
+            return sortBy === "Oldest" ? leftTime - rightTime : rightTime - leftTime
+          })
+
+        const nextRows = filteredRows.slice(from, to + 1)
+
+        setInvoices((current) => (replace ? nextRows : [...current, ...nextRows]))
+        setTotalCount(filteredRows.length)
+        setPage(pageIndex)
+        setHasMore(to + 1 < filteredRows.length)
+      } catch (cacheError) {
+        console.warn("Invoice list cache fallback failed:", cacheError)
+        setInvoices((current) => (replace ? [] : current))
+        setTotalCount((current) => (replace ? 0 : current))
+        setHasMore(false)
+      }
+    } finally {
+      setLoadingMore(false)
+    }
   }
 
   const fetchClientOptions = async () => {
-    const { data } = await supabase
-      .from("invoices")
-      .select("client_name")
-      .is("archived_at", null)
+    try {
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("client_name")
+        .is("archived_at", null)
 
-    const nextOptions = Array.from(
-      new Set((data || []).map((row) => row.client_name).filter(Boolean)),
-    ).sort((a, b) => a.localeCompare(b))
+      if (error) throw error
 
-    setClientOptions(nextOptions)
+      const nextOptions = Array.from(
+        new Set((data || []).map((row) => row.client_name).filter(Boolean)),
+      ).sort((a, b) => a.localeCompare(b))
+
+      setClientOptions(nextOptions)
+    } catch (error) {
+      if (!canUseInvoiceCacheFallback()) {
+        console.warn("Invoice client options fetch failed:", error)
+        setClientOptions([])
+        return
+      }
+
+      try {
+        const cachedRows = await getCachedInvoiceList()
+        const nextOptions = Array.from(
+          new Set((cachedRows || []).map((row) => row.client_name).filter(Boolean)),
+        ).sort((a, b) => a.localeCompare(b))
+        setClientOptions(nextOptions)
+      } catch (cacheError) {
+        console.warn("Invoice client options cache fallback failed:", cacheError)
+        setClientOptions([])
+      }
+    }
   }
 
   useEffect(() => {

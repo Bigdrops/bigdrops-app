@@ -1,7 +1,27 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { supabase } from '@/supabase'
+import { canUseNativeSqlite } from '@/lib/native/capacitor'
+import {
+  cacheInvoiceDetail,
+  getCachedInvoiceDetail,
+} from '@/lib/native/invoiceCache'
 import { fetchInvoiceChildDocuments, fetchProjectSummary } from '@/domain/documentRelationships'
+
+function canUseInvoiceCacheFallback() {
+  return (
+    canUseNativeSqlite() &&
+    typeof navigator !== 'undefined' &&
+    navigator.onLine === false
+  )
+}
+
+function canWriteInvoiceCache() {
+  return (
+    canUseNativeSqlite() &&
+    (typeof navigator === 'undefined' || navigator.onLine !== false)
+  )
+}
 
 export function useInvoiceDetailData(id) {
   const [invoice, setInvoice] = useState(null)
@@ -26,6 +46,7 @@ export function useInvoiceDetailData(id) {
       setInvoice(null)
       setLinkedProject(null)
       setClient(null)
+      if (canUseInvoiceCacheFallback()) throw invoiceError
       return
     }
     setInvoice(data)
@@ -81,11 +102,15 @@ export function useInvoiceDetailData(id) {
   }, [id])
 
   const fetchItems = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error: itemsError } = await supabase
       .from('invoice_items')
       .select('*')
       .eq('invoice_id', id)
       .order('sort_order')
+
+    if (itemsError && canUseInvoiceCacheFallback()) {
+      throw itemsError
+    }
 
     const loaded = (data || []).map((item) => ({
       ...item,
@@ -103,41 +128,91 @@ export function useInvoiceDetailData(id) {
     if (!id) return
     setLoading(true)
     setError(null)
-    const { data: currentSession } = await supabase.auth.getSession()
-    setSession(currentSession.session || null)
+    try {
+      const { data: currentSession } = await supabase.auth.getSession()
+      setSession(currentSession.session || null)
 
-    await Promise.all([
-      fetchInvoice(),
-      fetchItems(),
-      fetchPayments(),
-      fetchInvoiceRelationships(),
-      fetchInvoiceFinancials(),
-      supabase
-        .from('signatories')
-        .select('*')
-        .order('name')
-        .then(({ data }) => {
-          setSignatories(data || [])
-        }),
-      supabase
-        .from('bank_accounts')
-        .select('*')
-        .order('is_default', { ascending: false })
-        .then(({ data }) => {
-          setBankAccounts(data || [])
-        }),
-      supabase
-        .from('settings')
-        .select('*')
-        .eq('id', 1)
-        .single()
-        .then(({ data }) => {
-          if (data) setSettings(data)
-        }),
-    ])
+      await Promise.all([
+        fetchInvoice(),
+        fetchItems(),
+        fetchPayments(),
+        fetchInvoiceRelationships(),
+        fetchInvoiceFinancials(),
+        supabase
+          .from('signatories')
+          .select('*')
+          .order('name')
+          .then(({ data, error: signatoriesError }) => {
+            if (signatoriesError) throw signatoriesError
+            setSignatories(data || [])
+          }),
+        supabase
+          .from('bank_accounts')
+          .select('*')
+          .order('is_default', { ascending: false })
+          .then(({ data, error: bankAccountsError }) => {
+            if (bankAccountsError) throw bankAccountsError
+            setBankAccounts(data || [])
+          }),
+        supabase
+          .from('settings')
+          .select('*')
+          .eq('id', 1)
+          .single()
+          .then(({ data, error: settingsError }) => {
+            if (settingsError) throw settingsError
+            if (data) setSettings(data)
+          }),
+      ])
+    } catch (refreshError) {
+      if (!canUseInvoiceCacheFallback()) {
+        setError(refreshError)
+        setInvoice(null)
+        setItems([])
+        setPayments([])
+        setInvoiceFinancials(null)
+        setClient(null)
+        setLinkedProject(null)
+        setRelatedCsrs([])
+        setRelatedWaybills([])
+        console.warn('Invoice detail fetch failed:', refreshError)
+        setLoading(false)
+        return
+      }
 
-    setLoading(false)
+      try {
+        const cachedDetail = await getCachedInvoiceDetail(id)
+        setInvoice(cachedDetail.invoice)
+        setItems(cachedDetail.items)
+        setPayments([])
+        setInvoiceFinancials(null)
+        setClient(null)
+        setSettings({})
+        setBankAccounts([])
+        setSignatories([])
+        setLinkedProject(null)
+        setRelatedCsrs([])
+        setRelatedWaybills([])
+        setSession(null)
+        setError(null)
+      } catch (cacheError) {
+        console.warn('Invoice detail cache fallback failed:', cacheError)
+        setError(cacheError)
+        setInvoice(null)
+        setItems([])
+      }
+    } finally {
+      setLoading(false)
+    }
   }, [fetchInvoice, fetchInvoiceFinancials, fetchInvoiceRelationships, fetchItems, fetchPayments, id])
+
+  useEffect(() => {
+    if (!invoice?.id || !canWriteInvoiceCache()) return
+
+    void cacheInvoiceDetail(invoice, items).catch((cacheError) => {
+      console.warn('Invoice detail cache write failed:', cacheError)
+    })
+  }, [invoice, items])
 
   useEffect(() => {
     void refresh()
