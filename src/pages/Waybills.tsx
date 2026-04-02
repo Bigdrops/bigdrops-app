@@ -10,6 +10,8 @@ import MobileFab from '../components/layout/MobileFab'
 import MobileSegmentedControl from '../components/layout/MobileSegmentedControl'
 import ListActionSheet from '../components/layout/ListActionSheet'
 import MobileListPageShell from '../components/layout/MobileListPageShell'
+import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
+import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
@@ -28,6 +30,8 @@ export default function Waybills() {
   const [activeWaybillProject, setActiveWaybillProject] = useState<{ id: string; name?: string | null } | null>(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
+  const [showAttachInvoice, setShowAttachInvoice] = useState(false)
+  const [pendingAttachInvoice, setPendingAttachInvoice] = useState<{ id: string; invoice_number?: string | null } | null>(null)
 
   const loadWaybills = async () => {
     const { data } = await supabase
@@ -115,14 +119,25 @@ export default function Waybills() {
       key: 'source',
       title: 'Source',
       description: 'Documents this waybill is linked to.',
-      items: activeWaybillInvoice
-        ? [{
-            key: `invoice-${activeWaybillInvoice.id}`,
-            label: `Invoice ${activeWaybillInvoice.invoice_number || activeWaybillInvoice.id}`,
-            subtitle: 'Open linked invoice',
-            onClick: () => navigate(`/invoices/${activeWaybillInvoice.id}`),
-          }]
-        : [],
+      items: [
+        {
+          key: 'attach-invoice',
+          label: 'Attach to Invoice',
+          subtitle: 'Search and link an invoice',
+          onClick: () => {
+            setShowLinkedDocuments(false)
+            setShowAttachInvoice(true)
+          },
+        },
+        ...(activeWaybillInvoice
+          ? [{
+              key: `invoice-${activeWaybillInvoice.id}`,
+              label: `Invoice ${activeWaybillInvoice.invoice_number || activeWaybillInvoice.id}`,
+              subtitle: 'Open linked invoice',
+              onClick: () => navigate(`/invoices/${activeWaybillInvoice.id}`),
+            }]
+          : []),
+      ],
     },
     {
       key: 'project',
@@ -138,6 +153,29 @@ export default function Waybills() {
         : [],
     },
   ] : []
+
+  const attachInvoice = async (invoice: { id: string }) => {
+    if (!activeWaybill?.id || !invoice?.id) return
+    await supabase.from('waybills').update({ invoice_id: invoice.id }).eq('id', activeWaybill.id)
+    await loadWaybills()
+    if (activeWaybill?.id) {
+      const { data } = await supabase.from('waybills').select('*').eq('id', activeWaybill.id).single()
+      if (data) {
+        setActiveWaybill(mapDbWaybill(data))
+        setActiveWaybillInvoice(data.invoice_id ? await fetchInvoiceSummary(data.invoice_id) : null)
+      }
+    }
+    setShowAttachInvoice(false)
+  }
+
+  const handleAttachInvoice = (invoice: { id: string }) => {
+    if (!activeWaybill?.id || !invoice?.id) return
+    if (activeWaybill.invoice_id && activeWaybill.invoice_id !== invoice.id) {
+      setPendingAttachInvoice(invoice)
+      return
+    }
+    void attachInvoice(invoice)
+  }
 
   return (
     <Layout title="Waybills" hidePageHeader>
@@ -293,6 +331,33 @@ export default function Waybills() {
         title="Linked Documents"
         subtitle={activeWaybill?.waybill_number || 'Waybill'}
         sections={activeWaybillLinkedSections}
+      />
+      <AttachExistingDocumentSheet
+        open={showAttachInvoice}
+        onOpenChange={setShowAttachInvoice}
+        title="Attach to Invoice"
+        description={activeWaybill?.waybill_number || 'Waybill'}
+        table="invoices"
+        numberField="invoice_number"
+        clientField="client_name"
+        poField="po_number"
+        currentClientName={activeWaybill?.client_name}
+        searchPlaceholder="Search invoice number, client, or PO"
+        onAttach={handleAttachInvoice}
+      />
+      <ConfirmActionDialog
+        open={Boolean(pendingAttachInvoice)}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setPendingAttachInvoice(null)
+        }}
+        title="Reassign linked waybill?"
+        description="This waybill is already linked to a different invoice. Reassigning will detach it from the previous invoice."
+        confirmLabel="Reassign"
+        onConfirm={() => {
+          const invoice = pendingAttachInvoice
+          setPendingAttachInvoice(null)
+          if (invoice) void attachInvoice(invoice)
+        }}
       />
       <ProjectLinkDialog
         open={showProjectLinkDialog}

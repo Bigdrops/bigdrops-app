@@ -15,6 +15,7 @@ import {
 } from '../components/waybill/waybillUtils'
 import type { Waybill, WaybillStatus } from '../components/waybill/waybillUtils'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
+import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { Button } from '@/components/ui/button'
@@ -39,6 +40,8 @@ export default function ViewWaybill() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
+  const [showAttachInvoice, setShowAttachInvoice] = useState(false)
+  const [pendingAttachInvoice, setPendingAttachInvoice] = useState<{ id: string; invoice_number?: string | null } | null>(null)
   const moreRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -109,6 +112,24 @@ export default function ViewWaybill() {
     navigate('/waybills')
   }
 
+  const attachInvoice = async (invoice: { id: string }) => {
+    if (!waybill?.id || !invoice?.id) return
+    await supabase.from('waybills').update({ invoice_id: invoice.id }).eq('id', waybill.id)
+    setWaybill((current) => (current ? { ...current, invoice_id: invoice.id } : current))
+    const { data } = await supabase.from('invoices').select('id, invoice_number').eq('id', invoice.id).single()
+    setLinkedInvoice((data as { id: string; invoice_number: string } | null) ?? null)
+    setShowAttachInvoice(false)
+  }
+
+  const handleAttachInvoice = (invoice: { id: string }) => {
+    if (!invoice?.id) return
+    if (waybill?.invoice_id && waybill.invoice_id !== invoice.id) {
+      setPendingAttachInvoice(invoice)
+      return
+    }
+    void attachInvoice(invoice)
+  }
+
   if (loading) return <Layout title="Waybill"><div className="py-16 text-center text-sm text-muted-foreground">Loading…</div></Layout>
   if (!waybill) return <Layout title="Waybill"><div className="py-16 text-center text-sm text-red-600">Waybill not found.</div></Layout>
 
@@ -133,14 +154,25 @@ export default function ViewWaybill() {
       key: 'source',
       title: 'Source',
       description: 'Documents this waybill is linked to.',
-      items: linkedInvoice
-        ? [{
-            key: `invoice-${linkedInvoice.id}`,
-            label: `Invoice ${linkedInvoice.invoice_number}`,
-            subtitle: 'Open linked invoice',
-            onClick: () => navigate(`/invoices/${linkedInvoice.id}`),
-          }]
-        : [],
+      items: [
+        {
+          key: 'attach-invoice',
+          label: 'Attach to Invoice',
+          subtitle: 'Search and link an invoice',
+          onClick: () => {
+            setShowLinkedDocuments(false)
+            setShowAttachInvoice(true)
+          },
+        },
+        ...(linkedInvoice
+          ? [{
+              key: `invoice-${linkedInvoice.id}`,
+              label: `Invoice ${linkedInvoice.invoice_number}`,
+              subtitle: 'Open linked invoice',
+              onClick: () => navigate(`/invoices/${linkedInvoice.id}`),
+            }]
+          : []),
+      ],
     },
     {
       key: 'project',
@@ -357,6 +389,33 @@ export default function ViewWaybill() {
           </Button>
         </div>
       </div>
+      <ConfirmActionDialog
+        open={Boolean(pendingAttachInvoice)}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setPendingAttachInvoice(null)
+        }}
+        title="Reassign linked waybill?"
+        description="This waybill is already linked to a different invoice. Reassigning will detach it from the previous invoice."
+        confirmLabel="Reassign"
+        onConfirm={() => {
+          const invoice = pendingAttachInvoice
+          setPendingAttachInvoice(null)
+          if (invoice) void attachInvoice(invoice)
+        }}
+      />
+      <AttachExistingDocumentSheet
+        open={showAttachInvoice}
+        onOpenChange={setShowAttachInvoice}
+        title="Attach to Invoice"
+        description={waybill.waybill_number || 'Waybill'}
+        table="invoices"
+        numberField="invoice_number"
+        clientField="client_name"
+        poField="po_number"
+        currentClientName={waybill.client_name}
+        searchPlaceholder="Search invoice number, client, or PO"
+        onAttach={handleAttachInvoice}
+      />
       <ConfirmActionDialog
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}

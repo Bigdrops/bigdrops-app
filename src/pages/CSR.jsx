@@ -9,6 +9,7 @@ import Layout from "../components/Layout"
 import ListActionSheet from "../components/layout/ListActionSheet"
 import MobileFab from "../components/layout/MobileFab"
 import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
+import AttachExistingDocumentSheet from "@/components/document/AttachExistingDocumentSheet"
 import ProjectLinkDialog from "@/components/document/ProjectLinkDialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
@@ -32,6 +33,8 @@ export default function CSR() {
   const [showFilters, setShowFilters] = useState(false)
   const [csrToDelete, setCsrToDelete] = useState(null)
   const [activeCsr, setActiveCsr] = useState(null)
+  const [showAttachInvoice, setShowAttachInvoice] = useState(false)
+  const [pendingAttachInvoice, setPendingAttachInvoice] = useState(null)
   const [activeCsrInvoice, setActiveCsrInvoice] = useState(null)
   const [activeCsrProject, setActiveCsrProject] = useState(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
@@ -125,14 +128,25 @@ export default function CSR() {
       key: 'source',
       title: 'Source',
       description: 'Documents this CSR is linked to.',
-      items: activeCsrInvoice
-        ? [{
-            key: `invoice-${activeCsrInvoice.id}`,
-            label: `Invoice ${activeCsrInvoice.invoice_number || activeCsrInvoice.id}`,
-            subtitle: 'Open linked invoice',
-            onClick: () => navigate(`/invoices/${activeCsrInvoice.id}`),
-          }]
-        : [],
+      items: [
+        {
+          key: 'attach-invoice',
+          label: 'Attach to Invoice',
+          subtitle: 'Search and link an invoice',
+          onClick: () => {
+            setShowLinkedDocuments(false)
+            setShowAttachInvoice(true)
+          },
+        },
+        ...(activeCsrInvoice
+          ? [{
+              key: `invoice-${activeCsrInvoice.id}`,
+              label: `Invoice ${activeCsrInvoice.invoice_number || activeCsrInvoice.id}`,
+              subtitle: 'Open linked invoice',
+              onClick: () => navigate(`/invoices/${activeCsrInvoice.id}`),
+            }]
+          : []),
+      ],
     },
     {
       key: 'project',
@@ -148,6 +162,26 @@ export default function CSR() {
         : [],
     },
   ] : []
+
+  const attachInvoice = async (invoice) => {
+    if (!activeCsr?.id || !invoice?.id) return
+    await supabase.from("csrs").update({ linked_invoice_id: invoice.id }).eq("id", activeCsr.id)
+    const { data } = await supabase.from("csrs").select("*").eq("id", activeCsr.id).single()
+    if (data) {
+      setActiveCsr(data)
+      setActiveCsrInvoice(data.linked_invoice_id ? await fetchInvoiceSummary(data.linked_invoice_id) : null)
+    }
+    setShowAttachInvoice(false)
+  }
+
+  const handleAttachInvoice = (invoice) => {
+    if (!activeCsr?.id || !invoice?.id) return
+    if (activeCsr.linked_invoice_id && activeCsr.linked_invoice_id !== invoice.id) {
+      setPendingAttachInvoice(invoice)
+      return
+    }
+    void attachInvoice(invoice)
+  }
 
   const filteredCsrs = useMemo(() => {
     const now = new Date()
@@ -413,6 +447,33 @@ export default function CSR() {
         title="Linked Documents"
         subtitle={activeCsr?.csr_number || 'CSR'}
         sections={activeCsrLinkedSections}
+      />
+      <AttachExistingDocumentSheet
+        open={showAttachInvoice}
+        onOpenChange={setShowAttachInvoice}
+        title="Attach to Invoice"
+        description={activeCsr?.csr_number || 'CSR'}
+        table="invoices"
+        numberField="invoice_number"
+        clientField="client_name"
+        poField="po_number"
+        currentClientName={activeCsr?.client_name}
+        searchPlaceholder="Search invoice number, client, or PO"
+        onAttach={handleAttachInvoice}
+      />
+      <ConfirmActionDialog
+        open={Boolean(pendingAttachInvoice)}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setPendingAttachInvoice(null)
+        }}
+        title="Reassign linked CSR?"
+        description="This CSR is already linked to a different invoice. Reassigning will detach it from the previous invoice."
+        confirmLabel="Reassign"
+        onConfirm={() => {
+          const invoice = pendingAttachInvoice
+          setPendingAttachInvoice(null)
+          void attachInvoice(invoice)
+        }}
       />
       <ProjectLinkDialog
         open={showProjectLinkDialog}

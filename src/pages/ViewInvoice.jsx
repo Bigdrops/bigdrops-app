@@ -50,6 +50,7 @@ import { toast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
+import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import InvoiceActionsSheet from '@/components/invoice/InvoiceActionsSheet'
 import RevertInvoiceDialog from '@/components/invoice/RevertInvoiceDialog'
@@ -87,6 +88,8 @@ export default function ViewInvoice() {
 
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
+  const [attachKind, setAttachKind] = useState(null)
+  const [showAttachSheet, setShowAttachSheet] = useState(false)
 
   const {
     invoice,
@@ -215,6 +218,26 @@ export default function ViewInvoice() {
       title: 'Generated / Child Documents',
       description: 'Documents created from this invoice.',
       items: [
+        {
+          key: 'attach-csr',
+          label: 'Attach Existing CSR',
+          subtitle: 'Search and link a CSR to this invoice',
+          onClick: () => {
+            setShowLinkedDocuments(false)
+            setAttachKind('csr')
+            setShowAttachSheet(true)
+          },
+        },
+        {
+          key: 'attach-waybill',
+          label: 'Attach Existing Waybill',
+          subtitle: 'Search and link a waybill to this invoice',
+          onClick: () => {
+            setShowLinkedDocuments(false)
+            setAttachKind('waybill')
+            setShowAttachSheet(true)
+          },
+        },
         ...(invoiceRelatedDocs.csrs || []).map((csr) => ({
           key: `csr-${csr.id}`,
           label: `CSR ${csr.csr_number || csr.id}`,
@@ -243,6 +266,19 @@ export default function ViewInvoice() {
         : [],
     },
   ]
+
+  const handleAttachExisting = async (item) => {
+    if (!item?.id || !attachKind) return
+    if (attachKind === 'csr') {
+      await supabase.from('csrs').update({ linked_invoice_id: invoice.id }).eq('id', item.id)
+    }
+    if (attachKind === 'waybill') {
+      await supabase.from('waybills').update({ invoice_id: invoice.id }).eq('id', item.id)
+    }
+    setShowAttachSheet(false)
+    setAttachKind(null)
+    await refresh()
+  }
   const handleDownloadPDF = async () => {
     if (pdfGenerating) return
     setPdfGenerating(true)
@@ -1017,6 +1053,22 @@ export default function ViewInvoice() {
           title="Linked Documents"
           subtitle={invoice.invoice_number || 'Invoice'}
           sections={linkedDocumentsSections}
+        />
+
+        <AttachExistingDocumentSheet
+          open={showAttachSheet}
+          onOpenChange={setShowAttachSheet}
+          title={attachKind === 'csr' ? 'Attach Existing CSR' : 'Attach Existing Waybill'}
+          description={invoice.invoice_number || 'Invoice'}
+          table={attachKind === 'csr' ? 'csrs' : 'waybills'}
+          numberField={attachKind === 'csr' ? 'csr_number' : 'waybill_number'}
+          clientField="client_name"
+          poField="po_number"
+          linkedInvoiceField={attachKind === 'csr' ? 'linked_invoice_id' : 'invoice_id'}
+          currentInvoiceId={invoice.id}
+          currentClientName={invoice.client_name}
+          searchPlaceholder={attachKind === 'csr' ? 'Search CSR number, client, or PO' : 'Search waybill number, client, or PO'}
+          onAttach={handleAttachExisting}
         />
 
         <ProjectLinkDialog
