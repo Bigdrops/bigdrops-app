@@ -12,7 +12,8 @@ import ListActionSheet from '../components/layout/ListActionSheet'
 import MobileListPageShell from '../components/layout/MobileListPageShell'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
-import { fetchInvoiceSummary, fetchProjectSummary, hasWaybillRelatedDocuments } from '@/domain/documentRelationships'
+import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
+import { fetchInvoiceSummary, fetchProjectSummary } from '@/domain/documentRelationships'
 
 type FilterTab = 'all' | 'internal' | 'external'
 
@@ -103,7 +104,12 @@ export default function Waybills() {
     setActiveWaybill(null)
   }
 
-  const activeWaybillHasLinkedDocuments = hasWaybillRelatedDocuments(activeWaybill)
+  const waybillProjectState = getProjectActionState({ projectId: activeWaybill?.project_id, project: activeWaybillProject })
+  const waybillDocumentState = getDocumentActionState({
+    sourceDocument: activeWaybillInvoice,
+    relatedDocuments: [],
+  })
+  const activeWaybillHasLinkedDocuments = waybillDocumentState.hasLinkedDocuments
   const activeWaybillLinkedSections = activeWaybill ? [
     {
       key: 'source',
@@ -256,8 +262,8 @@ export default function Waybills() {
           },
           {
             key: 'project',
-            label: activeWaybill.project_id ? 'View Project' : 'Link to Project',
-            icon: activeWaybill.project_id ? <FolderOpen size={20} /> : <FolderPlus size={20} />,
+            label: waybillProjectState.label,
+            icon: waybillProjectState.hasProject ? <FolderOpen size={20} /> : <FolderPlus size={20} />,
             onClick: () => {
               if (activeWaybill.project_id) {
                 navigate(`/projects/${activeWaybill.project_id}`)
@@ -265,11 +271,11 @@ export default function Waybills() {
               }
               setShowProjectLinkDialog(true)
             },
-            closeOnClick: !!activeWaybill.project_id,
+            closeOnClick: waybillProjectState.hasProject,
           },
           {
             key: 'documents',
-            label: activeWaybillHasLinkedDocuments ? 'Linked Documents' : 'Link Documents',
+            label: waybillDocumentState.label,
             icon: activeWaybillHasLinkedDocuments ? <Workflow size={20} /> : <GitBranchPlus size={20} />,
             onClick: () => setShowLinkedDocuments(true),
             closeOnClick: false,

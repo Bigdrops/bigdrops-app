@@ -12,7 +12,8 @@ import { toast } from '@/hooks/use-toast'
 import { DocumentActionSheet } from '@/components/document/DocumentViewShell'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
-import { fetchInvoiceSummary, fetchProjectSummary, hasCsrRelatedDocuments } from '@/domain/documentRelationships'
+import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
+import { fetchInvoiceSummary, fetchProjectSummary } from '@/domain/documentRelationships'
 
 export default function ViewCSR() {
   const { id } = useParams()
@@ -70,7 +71,12 @@ export default function ViewCSR() {
 
   const previewData = buildCsrPreviewData(csr, { signatories })
   const branding = getCsrBranding(settings)
-  const hasLinkedDocuments = hasCsrRelatedDocuments(csr)
+  const projectActionState = getProjectActionState({ projectId: csr?.project_id, project: linkedProject })
+  const documentActionState = getDocumentActionState({
+    sourceDocument: linkedInvoice,
+    relatedDocuments: [],
+  })
+  const hasLinkedDocuments = documentActionState.hasLinkedDocuments
   const linkedDocumentsSections = [
     {
       key: 'source',
@@ -127,8 +133,8 @@ export default function ViewCSR() {
 
   const moreActions = [
     {
-      label: csr.project_id ? 'View Project' : 'Link to Project',
-      subtitle: csr.project_id ? (linkedProject?.name || 'Open the linked project workspace') : 'Attach this CSR to a project',
+      label: projectActionState.label,
+      subtitle: projectActionState.hasProject ? (linkedProject?.name || 'Open the linked project workspace') : 'Attach this CSR to a project',
       action: () => {
         if (csr.project_id) {
           navigate(`/projects/${csr.project_id}`)
@@ -136,10 +142,10 @@ export default function ViewCSR() {
         }
         setShowProjectLinkDialog(true)
       },
-      iconKey: csr.project_id ? 'projectView' : 'projectLink',
+      iconKey: projectActionState.hasProject ? 'projectView' : 'projectLink',
     },
     {
-      label: hasLinkedDocuments ? 'Linked Documents' : 'Link Documents',
+      label: documentActionState.label,
       subtitle: hasLinkedDocuments ? 'View source and related records' : 'Connect this CSR to related records',
       action: () => setShowLinkedDocuments(true),
       iconKey: hasLinkedDocuments ? 'documentsView' : 'documentsLink',

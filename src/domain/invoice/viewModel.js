@@ -1,4 +1,4 @@
-import { hasInvoiceRelatedDocuments } from '@/domain/documentRelationships'
+import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 
 function toNumber(value) {
   const parsed = Number(value || 0)
@@ -13,6 +13,7 @@ export function buildInvoiceViewModel({
   relatedWaybills,
   financials,
   project,
+  sourceDocument,
 }) {
   const safeInvoice = invoice || {}
   const safePayments = Array.isArray(payments) ? payments : []
@@ -53,12 +54,9 @@ export function buildInvoiceViewModel({
     return sum + toNumber(payment.cash_amount) + toNumber(payment.wht_amount)
   }, 0)
 
-  const relatedDocs = { csrs: safeRelatedCsrs, waybills: safeRelatedWaybills }
-  const hasLinkedDocuments = hasInvoiceRelatedDocuments(safeInvoice, relatedDocs)
-  const hasProject = Boolean(project?.id || safeInvoice.project_id)
-
-  const projectActionLabel = hasProject ? 'View Project' : 'Link to Project'
-  const documentActionLabel = hasLinkedDocuments ? 'Linked Documents' : 'Link Documents'
+  const relatedDocuments = [...safeRelatedCsrs, ...safeRelatedWaybills]
+  const projectState = getProjectActionState({ projectId: safeInvoice.project_id, project })
+  const documentState = getDocumentActionState({ sourceDocument, relatedDocuments })
 
   const statusBadgeClass =
     computedStatus === 'paid'
@@ -86,10 +84,10 @@ export function buildInvoiceViewModel({
     activePaymentCount,
     paymentTotal,
     activePaymentTotal,
-    hasLinkedDocuments,
-    hasProject,
+    hasLinkedDocuments: documentState.hasLinkedDocuments,
+    hasProject: projectState.hasProject,
     canRecordPayment,
-    projectActionLabel,
-    documentActionLabel,
+    projectActionLabel: projectState.label,
+    documentActionLabel: documentState.label,
   }
 }

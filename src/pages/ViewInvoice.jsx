@@ -131,6 +131,7 @@ export default function ViewInvoice() {
     relatedWaybills,
     financials: invoiceFinancials,
     project: linkedProject,
+    sourceDocument,
   })
   const {
     computedStatus,

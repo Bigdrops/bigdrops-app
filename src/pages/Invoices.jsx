@@ -11,7 +11,8 @@ import ListActionSheet from "../components/layout/ListActionSheet"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"
 import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
 import ProjectLinkDialog from "@/components/document/ProjectLinkDialog"
-import { fetchInvoiceChildDocuments, fetchProjectSummary, getInvoiceSourceDocument, hasInvoiceRelatedDocuments } from "@/domain/documentRelationships"
+import { getDocumentActionState, getProjectActionState } from "@/domain/document/documentActionState"
+import { fetchInvoiceChildDocuments, fetchProjectSummary, getInvoiceSourceDocument } from "@/domain/documentRelationships"
 
 const PAGE_SIZE = 25
 
@@ -229,7 +230,12 @@ export default function Invoices() {
 
   const isStandalone = activeInvoice && !activeInvoice.thread_id
   const activeInvoiceSource = activeInvoice ? getInvoiceSourceDocument(activeInvoice) : null
-  const activeInvoiceHasLinkedDocuments = activeInvoice ? hasInvoiceRelatedDocuments(activeInvoice, activeInvoiceRelatedDocs) : false
+  const invoiceProjectState = getProjectActionState({ projectId: activeInvoice?.project_id, project: activeInvoiceProject })
+  const invoiceDocumentState = getDocumentActionState({
+    sourceDocument: activeInvoiceSource,
+    relatedDocuments: [...(activeInvoiceRelatedDocs.csrs || []), ...(activeInvoiceRelatedDocs.waybills || [])],
+  })
+  const activeInvoiceHasLinkedDocuments = invoiceDocumentState.hasLinkedDocuments
   const activeInvoiceLinkedSections = activeInvoice ? [
     {
       key: "source",
@@ -464,16 +470,16 @@ export default function Invoices() {
           { key: "edit", label: "Edit", icon: <Pencil className="h-6 w-6" />, onClick: handleEdit },
           {
             key: "project",
-            label: activeInvoice.project_id ? "View Project" : "Link to Project",
-            icon: activeInvoice.project_id ? <FolderOpen className="h-6 w-6" /> : <FolderPlus className="h-6 w-6" />,
+            label: invoiceProjectState.label,
+            icon: invoiceProjectState.hasProject ? <FolderOpen className="h-6 w-6" /> : <FolderPlus className="h-6 w-6" />,
             onClick: () => {
               activeInvoice.project_id ? navigate(`/projects/${activeInvoice.project_id}`) : setShowProjectLinkDialog(true)
             },
-            closeOnClick: activeInvoice.project_id,
+            closeOnClick: invoiceProjectState.hasProject,
           },
           {
             key: "documents",
-            label: activeInvoiceHasLinkedDocuments ? "Linked Documents" : "Link Documents",
+            label: invoiceDocumentState.label,
             icon: activeInvoiceHasLinkedDocuments ? <Workflow className="h-6 w-6" /> : <GitBranchPlus className="h-6 w-6" />,
             onClick: () => {
               setShowLinkedDocuments(true)

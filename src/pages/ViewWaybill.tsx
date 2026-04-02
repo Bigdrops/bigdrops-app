@@ -20,7 +20,7 @@ import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/use-toast'
 import { useSettings } from '../hooks/useSettings'
-import { hasWaybillRelatedDocuments } from '@/domain/documentRelationships'
+import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 
 function Badge({ className, label }: { className: string; label: string }) {
   return <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${className}`}>{label}</span>
@@ -122,7 +122,12 @@ export default function ViewWaybill() {
   const receiverSignature = getWaybillSignature(waybill, 'receiver')
   const projectReferenceName = linkedProject?.name || customFields?.references?.linkedProjectName || ''
   const invoiceReference = linkedInvoice?.invoice_number || customFields?.references?.linkedInvoiceNumber || ''
-  const hasLinkedDocuments = hasWaybillRelatedDocuments(waybill)
+  const projectActionState = getProjectActionState({ projectId: waybill?.project_id, project: linkedProject })
+  const documentActionState = getDocumentActionState({
+    sourceDocument: linkedInvoice,
+    relatedDocuments: [],
+  })
+  const hasLinkedDocuments = documentActionState.hasLinkedDocuments
   const linkedDocumentsSections = [
     {
       key: 'source',
@@ -188,8 +193,8 @@ export default function ViewWaybill() {
                     }}
                     className="flex w-full items-center gap-2 rounded-xl px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
-                    {waybill.project_id ? <FolderOpen className="h-4 w-4" /> : <FolderPlus className="h-4 w-4" />}
-                    <span>{waybill.project_id ? 'View Project' : 'Link to Project'}</span>
+                    {projectActionState.hasProject ? <FolderOpen className="h-4 w-4" /> : <FolderPlus className="h-4 w-4" />}
+                    <span>{projectActionState.label}</span>
                   </button>
                   <button
                     type="button"
@@ -200,7 +205,7 @@ export default function ViewWaybill() {
                     className="flex w-full items-center gap-2 rounded-xl px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
                     {hasLinkedDocuments ? <Workflow className="h-4 w-4" /> : <GitBranchPlus className="h-4 w-4" />}
-                    <span>{hasLinkedDocuments ? 'Linked Documents' : 'Link Documents'}</span>
+                    <span>{documentActionState.label}</span>
                   </button>
                   <div className="my-1 h-px bg-border" />
                   {waybill.status === 'draft' ? <button type="button" onClick={() => void handleStatusChange('dispatched')} className="w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium text-blue-600 hover:bg-blue-50">Mark as Dispatched</button> : null}

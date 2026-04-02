@@ -12,7 +12,8 @@ import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
 import ProjectLinkDialog from "@/components/document/ProjectLinkDialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
-import { fetchInvoiceSummary, fetchProjectSummary, hasCsrRelatedDocuments } from "@/domain/documentRelationships"
+import { getDocumentActionState, getProjectActionState } from "@/domain/document/documentActionState"
+import { fetchInvoiceSummary, fetchProjectSummary } from "@/domain/documentRelationships"
 
 function normalizeStatus(status) {
   return (status || "").trim().toLowerCase()
@@ -113,7 +114,12 @@ export default function CSR() {
     return Array.from(new Set(csrs.map((csr) => csr.client_name).filter(Boolean))).sort((a, b) => a.localeCompare(b))
   }, [csrs])
 
-  const activeCsrHasLinkedDocuments = hasCsrRelatedDocuments(activeCsr)
+  const csrProjectState = getProjectActionState({ projectId: activeCsr?.project_id, project: activeCsrProject })
+  const csrDocumentState = getDocumentActionState({
+    sourceDocument: activeCsrInvoice,
+    relatedDocuments: [],
+  })
+  const activeCsrHasLinkedDocuments = csrDocumentState.hasLinkedDocuments
   const activeCsrLinkedSections = activeCsr ? [
     {
       key: 'source',
@@ -376,8 +382,8 @@ export default function CSR() {
           },
           {
             key: 'project',
-            label: activeCsr.project_id ? 'View Project' : 'Link to Project',
-            icon: activeCsr.project_id ? <FolderOpen className="h-6 w-6" /> : <FolderPlus className="h-6 w-6" />,
+            label: csrProjectState.label,
+            icon: csrProjectState.hasProject ? <FolderOpen className="h-6 w-6" /> : <FolderPlus className="h-6 w-6" />,
             onClick: () => {
               if (activeCsr.project_id) {
                 navigate(`/projects/${activeCsr.project_id}`)
@@ -385,11 +391,11 @@ export default function CSR() {
               }
               setShowProjectLinkDialog(true)
             },
-            closeOnClick: !!activeCsr.project_id,
+            closeOnClick: csrProjectState.hasProject,
           },
           {
             key: 'documents',
-            label: activeCsrHasLinkedDocuments ? 'Linked Documents' : 'Link Documents',
+            label: csrDocumentState.label,
             icon: activeCsrHasLinkedDocuments ? <Workflow className="h-6 w-6" /> : <GitBranchPlus className="h-6 w-6" />,
             onClick: () => setShowLinkedDocuments(true),
             closeOnClick: false,

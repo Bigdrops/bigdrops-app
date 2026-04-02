@@ -27,7 +27,8 @@ import {
 } from '@/components/ui/select'
 import type { DbQuotation } from '@/domain/quotation'
 import { getNextQuotationNumber, mapDbQuotation } from '@/domain/quotation'
-import { fetchProjectSummary, getQuotationDocumentRelations, hasQuotationRelatedDocuments } from '@/domain/documentRelationships'
+import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
+import { fetchProjectSummary, getQuotationDocumentRelations } from '@/domain/documentRelationships'
 import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
 import ListActionSheet from '@/components/layout/ListActionSheet'
 import MobileFab from '@/components/layout/MobileFab'
@@ -195,7 +196,12 @@ export default function QuotationList() {
   const activeQuotationIsArchiving = activeQuotation ? busyAction === `archive:${activeQuotation.id}` : false
   const activeQuotationIsDeleting = activeQuotation ? busyAction === `delete:${activeQuotation.id}` : false
   const activeQuotationRelations = activeQuotation ? getQuotationDocumentRelations(activeQuotation) : { source: null, derived: [] }
-  const activeQuotationHasLinkedDocuments = activeQuotation ? hasQuotationRelatedDocuments(activeQuotation) : false
+  const quotationProjectState = getProjectActionState({ projectId: activeQuotation?.project_id, project: activeQuotationProject })
+  const quotationDocumentState = getDocumentActionState({
+    sourceDocument: activeQuotationRelations.source,
+    relatedDocuments: activeQuotationRelations.derived || [],
+  })
+  const activeQuotationHasLinkedDocuments = quotationDocumentState.hasLinkedDocuments
   const activeQuotationLinkedSections = activeQuotation ? [
     {
       key: 'source',
@@ -409,8 +415,8 @@ export default function QuotationList() {
           },
           {
             key: 'project',
-            label: activeQuotation.project_id ? 'View Project' : 'Link to Project',
-            icon: activeQuotation.project_id ? <FolderOpen className="h-6 w-6" /> : <FolderPlus className="h-6 w-6" />,
+            label: quotationProjectState.label,
+            icon: quotationProjectState.hasProject ? <FolderOpen className="h-6 w-6" /> : <FolderPlus className="h-6 w-6" />,
             onClick: () => {
               if (activeQuotation.project_id) {
                 navigate(`/projects/${activeQuotation.project_id}`)
@@ -418,11 +424,11 @@ export default function QuotationList() {
               }
               setShowProjectLinkDialog(true)
             },
-            closeOnClick: !!activeQuotation.project_id,
+            closeOnClick: quotationProjectState.hasProject,
           },
           {
             key: 'documents',
-            label: activeQuotationHasLinkedDocuments ? 'Linked Documents' : 'Link Documents',
+            label: quotationDocumentState.label,
             icon: activeQuotationHasLinkedDocuments ? <Workflow className="h-6 w-6" /> : <GitBranchPlus className="h-6 w-6" />,
             onClick: () => setShowLinkedDocuments(true),
             closeOnClick: false,
