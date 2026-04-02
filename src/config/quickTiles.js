@@ -115,6 +115,12 @@ export const QUICK_TILE_REGISTRY = {
 
 export const ALL_QUICK_TILE_IDS = Object.keys(QUICK_TILE_REGISTRY)
 export const DEFAULT_QUICK_TILES = ['invoices', 'quotations', 'csr', 'projects']
+export const DEFAULT_CREATE_ACTION_TILES = [
+  'new_invoice',
+  'new_quotation',
+  'new_csr',
+  'new_waybill',
+]
 
 const LEGACY_ACTION_DEFAULTS = ['new_invoice', 'new_quotation', 'new_csr', 'new_project']
 
@@ -131,7 +137,7 @@ export function sanitizeQuickTileIds(tileIds) {
 
 function normalizeQuickTiles(tileIds) {
   const sanitized = sanitizeQuickTileIds(tileIds)
-  const nextTiles = [...sanitized]
+  const nextTiles = sanitized.filter((tileId) => !tileId.startsWith('new_'))
 
   for (const tileId of DEFAULT_QUICK_TILES) {
     if (nextTiles.length >= QUICK_TILE_COUNT) break
@@ -147,11 +153,28 @@ export function loadStoredQuickTiles() {
   try {
     const savedTiles = localStorage.getItem(QUICK_TILE_STORAGE_KEY)
     if (!savedTiles) return [...DEFAULT_QUICK_TILES]
+
     const parsedTiles = JSON.parse(savedTiles)
     if (!Array.isArray(parsedTiles)) return [...DEFAULT_QUICK_TILES]
+
     const isLegacyDefault = LEGACY_ACTION_DEFAULTS.every((tileId, index) => parsedTiles[index] === tileId)
     if (isLegacyDefault) return [...DEFAULT_QUICK_TILES]
-    return normalizeQuickTiles(parsedTiles)
+
+    const normalized = normalizeQuickTiles(parsedTiles)
+
+    const hadCreateActionTile = parsedTiles.some(
+      (tileId) => typeof tileId === 'string' && tileId.startsWith('new_')
+    )
+
+    if (hadCreateActionTile) {
+      try {
+        localStorage.setItem(QUICK_TILE_STORAGE_KEY, JSON.stringify(normalized))
+      } catch {
+        // ignore localStorage write failures
+      }
+    }
+
+    return normalized
   } catch {
     return [...DEFAULT_QUICK_TILES]
   }
@@ -165,4 +188,10 @@ export function saveStoredQuickTiles(tileIds) {
 
 export function getQuickTiles(tileIds = DEFAULT_QUICK_TILES) {
   return normalizeQuickTiles(tileIds).map((tileId) => QUICK_TILE_REGISTRY[tileId])
+}
+
+export function getCreateActions(tileIds = DEFAULT_CREATE_ACTION_TILES) {
+  return sanitizeQuickTileIds(tileIds)
+    .filter((tileId) => tileId.startsWith('new_'))
+    .map((tileId) => QUICK_TILE_REGISTRY[tileId])
 }

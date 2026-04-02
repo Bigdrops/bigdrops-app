@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import Layout, { MobileChromeContext } from '../components/Layout'
-import { getQuickTiles, loadStoredQuickTiles } from '../config/quickTiles'
+import { getCreateActions, getQuickTiles, loadStoredQuickTiles } from '../config/quickTiles'
 import { supabase } from '../supabase'
 
 const naira = (amount) => `₦${Math.round(Number(amount || 0)).toLocaleString()}`
@@ -33,40 +33,6 @@ const typeStyle = {
   Waybill: { badge: 'bg-slate-50 text-slate-700 border-slate-200', dot: 'bg-slate-700', icon: Truck, path: 'waybills' },
 }
 
-const CREATE_ACTIONS = [
-  {
-    key: 'invoice',
-    label: 'New invoice',
-    description: 'Create a billing document',
-    path: '/invoices/new',
-    icon: FileText,
-    iconBg: 'bg-gradient-to-br from-[#5f85ff] to-[#4166ff]',
-  },
-  {
-    key: 'quotation',
-    label: 'New quotation',
-    description: 'Start a proposal for a client',
-    path: '/quotations/new',
-    icon: FileSignature,
-    iconBg: 'bg-gradient-to-br from-[#9b6bff] to-[#7b4dff]',
-  },
-  {
-    key: 'csr',
-    label: 'New CSR',
-    description: 'Log a new service request',
-    path: '/csr/new',
-    icon: ClipboardCheck,
-    iconBg: 'bg-gradient-to-br from-[#f5a524] to-[#f28d35]',
-  },
-  {
-    key: 'waybill',
-    label: 'New waybill',
-    description: 'Create a dispatch record',
-    path: '/waybills/new',
-    icon: Truck,
-    iconBg: 'bg-gradient-to-br from-[#2fcf93] to-[#12b76a]',
-  },
-]
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -163,9 +129,368 @@ function buildPriorityItems(projects, invoices, quotations) {
   return items.slice(0, 3)
 }
 
+
+function MobileDashboardView({
+  userName,
+  heroStats,
+  quickTiles,
+  priorityItems,
+  loading,
+  recentDocs,
+  summary,
+  createActions,
+  createOpen,
+  setCreateOpen,
+  navigate,
+}) {
+  const mobileChrome = React.useContext(MobileChromeContext)
+
+  return (
+    <div className="md:hidden w-full overflow-x-hidden bg-[#f6f6f4] text-foreground">
+      <div
+        className="pb-6"
+        style={{
+          background:
+            'radial-gradient(220px 220px at -30px 82%, rgba(255,255,255,.78), transparent 62%), radial-gradient(180px 180px at calc(100% + 20px) 32%, rgba(0,0,0,.96), transparent 62%), linear-gradient(180deg, #050607 0 255px, #f6f6f4 255px)',
+        }}
+      >
+        <section className="px-4 pt-[18px] text-white">
+          <div className="mb-[18px] flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => mobileChrome.openSidebar()}
+              aria-label="Open menu"
+              className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-[18px] border border-white/10 bg-white/[0.05] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_24px_rgba(0,0,0,0.18)] backdrop-blur"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            </button>
+
+            <div className="min-w-0">
+              <div className="mb-1 truncate text-[12px] font-bold uppercase tracking-[0.22em] text-white/60">
+                Workspace
+              </div>
+              <h1 className="truncate text-2xl font-black tracking-[-0.04em] text-white">
+                {getGreeting()}, {userName}
+              </h1>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 gap-3 px-4 min-[390px]:grid-cols-2">
+          <article className="rounded-[24px] border border-black/10 bg-white px-4 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
+            <label className="block text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#6d7a8f]">
+              Collections
+            </label>
+            <strong className="mt-3 block text-[28px] font-black tracking-[-0.05em] text-[#111111]">
+              {naira(heroStats.collections)}
+            </strong>
+            <span className="mt-2 block text-sm text-[#748197]">
+              Tracking ahead of last month’s pace.
+            </span>
+          </article>
+
+          <article className="rounded-[24px] border border-black/10 bg-white px-4 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
+            <label className="block text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#6d7a8f]">
+              Open work
+            </label>
+            <strong className="mt-3 block text-[28px] font-black tracking-[-0.05em] text-[#111111]">
+              {heroStats.openWork}
+            </strong>
+            <span className="mt-2 block text-sm text-[#748197]">
+              7 invoices pending, 3 drafts need review.
+            </span>
+          </article>
+        </section>
+      </div>
+
+      <div className="px-4 pt-6">
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <h2 className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6c788d]">
+              Quick actions
+            </h2>
+            <button type="button" className="text-[13px] font-bold text-[#4769d8]">
+              See all
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-[14px] min-[390px]:grid-cols-2">
+            {quickTiles.map((tile) => {
+              const Icon = tile.icon
+              return (
+                <button
+                  key={tile.id}
+                  type="button"
+                  onClick={() => navigate(tile.path)}
+                  className={cn(
+                    'relative overflow-hidden rounded-[26px] border p-[18px] text-left shadow-[0_20px_50px_rgba(0,0,0,0.08)] transition active:scale-[0.99]',
+                    tile.tint
+                  )}
+                >
+                  <span className="pointer-events-none absolute -left-5 -top-7 h-[120px] w-[120px] rounded-full bg-white/40" />
+                  <span className={cn('relative z-[1] grid h-14 w-14 place-items-center rounded-[18px] shadow-sm', tile.iconBg)}>
+                    <Icon className="h-6 w-6 text-white" />
+                  </span>
+                  <div className="relative z-[1] mt-5 text-[19px] font-black tracking-[-0.03em] text-foreground">
+                    {tile.label}
+                  </div>
+                  <div className="relative z-[1] mt-1 text-sm leading-[1.45] text-muted-foreground">
+                    {tile.tileHint || tile.description}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
+        <section className="mt-6 space-y-3">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <h2 className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6c788d]">
+              Priority follow-up
+            </h2>
+            <button type="button" className="text-[13px] font-bold text-[#4769d8]">
+              View queue
+            </button>
+          </div>
+
+          <div className="rounded-[30px] border border-black/10 bg-white/85 p-[18px] shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-2xl font-black tracking-[-0.05em] text-[#111111]">
+                  {priorityItems.length || 0} reminders need action
+                </h3>
+                <p className="mt-1 text-sm leading-[1.45] text-[#6d7787]">
+                  Use this space for stale project updates and invoice payments that still need to be recorded.
+                </p>
+              </div>
+              <span className="inline-flex h-[34px] min-w-[76px] items-center justify-center rounded-full border border-black/10 bg-slate-50 px-3 text-xs font-bold text-[#111111]">
+                Today
+              </span>
+            </div>
+
+            <div className="grid gap-[10px]">
+              {priorityItems.length === 0 ? (
+                <div className="rounded-[20px] border border-black/5 bg-[#fafaf8] px-4 py-4 text-sm text-muted-foreground">
+                  No reminders right now.
+                </div>
+              ) : (
+                priorityItems.map((item) => (
+                  <div
+                    key={item.key}
+                    className="grid grid-cols-[auto,1fr] gap-3 rounded-[20px] border border-black/5 bg-[#fafaf8] px-3.5 py-3.5 min-[390px]:grid-cols-[auto,1fr,auto] min-[390px]:items-center"
+                  >
+                    <span
+                      className={cn('mt-1 h-3 w-3 rounded-full min-[390px]:mt-0', item.dotClassName)}
+                      style={{ boxShadow: item.dotShadow }}
+                    />
+                    <div className="min-w-0">
+                      <strong className="block text-[15px] leading-[1.25] text-[#111111]">
+                        {item.title}
+                      </strong>
+                      <span className="block text-[13px] leading-[1.35] text-[#6e7787]">
+                        {item.meta}
+                      </span>
+                    </div>
+                    <span className={cn('mt-2 inline-flex h-8 w-fit min-w-[78px] items-center justify-center rounded-full border px-3 text-xs font-bold min-[390px]:mt-0', item.badgeClassName)}>
+                      {item.badgeLabel}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 space-y-3">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <h2 className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6c788d]">
+              Recent documents
+            </h2>
+          </div>
+
+          <div className="grid gap-3">
+            {loading ? (
+              <div className="rounded-[28px] border border-black/10 bg-white px-4 py-8 text-center text-sm text-muted-foreground shadow-[0_12px_30px_rgba(0,0,0,0.06)]">
+                Loading documents...
+              </div>
+            ) : recentDocs.length === 0 ? (
+              <div className="rounded-[28px] border border-black/10 bg-white px-4 py-8 text-center text-sm text-muted-foreground shadow-[0_12px_30px_rgba(0,0,0,0.06)]">
+                No recent documents yet.
+              </div>
+            ) : (
+              recentDocs.map((doc) => {
+                const type = typeStyle[doc.type]
+                const status = getStatusStyle(doc.status)
+                const amountText = doc.amount != null ? naira(doc.amount) : 'Open'
+
+                return (
+                  <button
+                    key={`${doc.type}-${doc.id}`}
+                    type="button"
+                    onClick={() => navigate(`/${type.path}/${doc.id}`)}
+                    className="rounded-[28px] border border-black/10 bg-white px-[18px] py-4 text-left shadow-[0_12px_30px_rgba(0,0,0,0.06)] transition hover:bg-muted/40"
+                  >
+                    <div className="flex flex-col gap-3 min-[390px]:flex-row min-[390px]:items-start min-[390px]:justify-between">
+                      <div className="min-w-0">
+                        <div className="mb-1.5 flex min-w-0 flex-wrap items-center gap-2">
+                          <Badge variant="outline" className={cn('rounded-full', type.badge)}>
+                            <span className={cn('mr-2 inline-block h-1.5 w-1.5 rounded-full', type.dot)} />
+                            {doc.type}
+                          </Badge>
+                          <span className="truncate text-[17px] font-black tracking-[-0.03em] text-[#111111]">
+                            {doc.number}
+                          </span>
+                        </div>
+                        <div className="truncate text-[13px] text-[#748094]">
+                          {doc.client} • {new Date(doc.date).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}
+                        </div>
+                        {doc.meta ? (
+                          <div className="truncate text-[13px] text-[#748094]">
+                            {doc.meta}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="flex items-center justify-between gap-3 min-[390px]:block min-[390px]:min-w-[102px] min-[390px]:text-right">
+                        <span className="block text-base font-black tracking-[-0.03em] text-[#111111] min-[390px]:mb-2">
+                          {amountText}
+                        </span>
+                        <Badge variant="outline" className={cn('rounded-full', status.badge)}>
+                          {status.label}
+                        </Badge>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })
+            )}
+          </div>
+        </section>
+
+        <section className="mt-6 space-y-3 pb-2">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <h2 className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6c788d]">
+              Snapshot
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 gap-[14px] min-[390px]:grid-cols-2">
+            <article className="rounded-[28px] border border-black/10 p-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.06)]" style={{ background: 'linear-gradient(180deg, rgba(255,241,242,.92), rgba(255,255,255,.78))' }}>
+              <label className="block text-xs font-extrabold uppercase tracking-[0.18em] text-[#b33f4a]">
+                Overdue
+              </label>
+              <strong className="mt-4 block text-[30px] font-black tracking-[-0.05em] text-[#111111]">
+                {naira(summary.overdue)}
+              </strong>
+              <span className="mt-2 block text-sm leading-[1.45] text-[#747e8d]">
+                No unpaid balance has crossed due date today.
+              </span>
+            </article>
+
+            <article className="rounded-[28px] border border-black/10 p-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.06)]" style={{ background: 'linear-gradient(180deg, rgba(255,248,235,.95), rgba(255,255,255,.78))' }}>
+              <label className="block text-xs font-extrabold uppercase tracking-[0.18em] text-[#ad770e]">
+                Due this week
+              </label>
+              <strong className="mt-4 block text-[30px] font-black tracking-[-0.05em] text-[#111111]">
+                {naira(summary.dueThisWeek)}
+              </strong>
+              <span className="mt-2 block text-sm leading-[1.45] text-[#747e8d]">
+                Your receivables calendar is currently clear.
+              </span>
+            </article>
+
+            <article className="rounded-[28px] border border-black/10 p-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.06)]" style={{ background: 'linear-gradient(180deg, rgba(237,252,244,.96), rgba(255,255,255,.78))' }}>
+              <label className="block text-xs font-extrabold uppercase tracking-[0.18em] text-[#0e8b5d]">
+                Collected
+              </label>
+              <strong className="mt-4 block text-[30px] font-black tracking-[-0.05em] text-[#111111]">
+                {naira(summary.thisMonthCollections)}
+              </strong>
+              <span className="mt-2 block text-sm leading-[1.45] text-[#747e8d]">
+                Collection counter updates when payments are captured.
+              </span>
+            </article>
+
+            <article className="rounded-[28px] border border-black/10 bg-white/85 p-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.06)]">
+              <label className="block text-xs font-extrabold uppercase tracking-[0.18em] text-[#6f7785]">
+                Pending follow-up
+              </label>
+              <strong className="mt-4 block text-[30px] font-black tracking-[-0.05em] text-[#111111]">
+                {priorityItems.length || summary.pendingFollowUp}
+              </strong>
+              <span className="mt-2 block text-sm leading-[1.45] text-[#747e8d]">
+                Two projects and one payment need attention today.
+              </span>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      {createActions.length > 0 ? (
+        <>
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            aria-label="Create new"
+            className="fixed bottom-[76px] left-1/2 z-[25] grid h-[62px] w-[62px] -translate-x-1/2 place-items-center rounded-[20px] bg-[#111111] text-white shadow-[0_18px_34px_rgba(0,0,0,0.20)]"
+          >
+            <Plus className="h-7 w-7" />
+          </button>
+
+          <Sheet open={createOpen} onOpenChange={setCreateOpen}>
+            <SheetContent side="bottom" className="p-0">
+              <div className="rounded-t-[28px] bg-white">
+                <div className="mx-auto mt-2 h-[5px] w-[52px] rounded-full bg-[#d8deea]" />
+                <SheetHeader className="px-4 pb-3 pt-4 text-left">
+                  <SheetTitle className="text-2xl font-black tracking-[-0.04em] text-[#111111]">
+                    Create new
+                  </SheetTitle>
+                </SheetHeader>
+
+                <div className="grid gap-[10px] px-4 pb-5">
+                  {createActions.map((action) => {
+                    const Icon = action.icon
+
+                    return (
+                      <button
+                        key={action.id}
+                        type="button"
+                        onClick={() => {
+                          navigate(action.path)
+                          setCreateOpen(false)
+                        }}
+                        className="grid grid-cols-[52px,1fr,auto] items-center gap-3 rounded-[20px] border border-black/10 bg-[#fafcff] px-3.5 py-3.5 text-left"
+                      >
+                        <span className={cn('grid h-[52px] w-[52px] place-items-center rounded-[16px] text-white', action.iconBg)}>
+                          <Icon className="h-6 w-6" />
+                        </span>
+                        <span>
+                          <span className="block text-[15px] font-bold text-[#111111]">
+                            {action.label}
+                          </span>
+                          <span className="block text-[13px] text-[#738096]">
+                            {action.description}
+                          </span>
+                        </span>
+                        <ChevronRight className="h-[18px] w-[18px] text-[#64748b]" />
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </>
+      ) : null}
+    </div>
+  )
+}
+
+
 export default function Dashboard({ session }) {
   const navigate = useNavigate()
-  const mobileChrome = React.useContext(MobileChromeContext)
 
   const [quickAccessOpen, setQuickAccessOpen] = React.useState(false)
   const [createOpen, setCreateOpen] = React.useState(false)
@@ -177,7 +502,7 @@ export default function Dashboard({ session }) {
   const [summary, setSummary] = React.useState({ overdue: 0, dueThisWeek: 0, thisMonthCollections: 0, pendingFollowUp: 0 })
 
   const quickTiles = React.useMemo(() => getQuickTiles(loadStoredQuickTiles()), [])
-  const createActions = React.useMemo(() => CREATE_ACTIONS, [])
+  const createActions = React.useMemo(() => getCreateActions(), [])
 
   React.useEffect(() => {
     const load = async () => {
@@ -301,348 +626,19 @@ export default function Dashboard({ session }) {
   return (
     <Layout title="Dashboard" session={session} hideMobileHomeHeader>
       <>
-        <div className="md:hidden w-full overflow-x-hidden bg-[#f6f6f4] text-foreground">
-          <div
-            className="pb-6"
-            style={{
-              background:
-                'radial-gradient(220px 220px at -30px 82%, rgba(255,255,255,.78), transparent 62%), radial-gradient(180px 180px at calc(100% + 20px) 32%, rgba(0,0,0,.96), transparent 62%), linear-gradient(180deg, #050607 0 255px, #f6f6f4 255px)',
-            }}
-          >
-            <section className="px-4 pt-[18px] text-white">
-              <div className="mb-[18px] flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => mobileChrome?.openSidebar?.()}
-                    aria-label="Open menu"
-                    className="grid h-[50px] w-[50px] place-items-center rounded-[18px] border border-white/10 bg-white/[0.05] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_24px_rgba(0,0,0,0.18)] backdrop-blur"
-                  >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                      <path d="M4 7h16M4 12h16M4 17h16" />
-                    </svg>
-                  </button>
-
-                  <div className="min-w-0">
-                    <div className="mb-1 truncate text-[12px] font-bold uppercase tracking-[0.22em] text-white/60">
-                      Workspace
-                    </div>
-                    <h1 className="truncate text-2xl font-black tracking-[-0.04em] text-white">
-                      {getGreeting()}, {userName}
-                    </h1>
-                  </div>
-                </div>
-
-                <div className="grid h-[50px] w-[50px] place-items-center rounded-[18px] border border-white/10 bg-white/[0.05] text-base font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_24px_rgba(0,0,0,0.18)] backdrop-blur">
-                  BD
-                </div>
-              </div>
-            </section>
-
-            <section className="grid grid-cols-2 gap-3 px-4">
-              <article className="rounded-[24px] border border-black/10 bg-white px-4 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
-                <label className="block text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#6d7a8f]">
-                  Collections
-                </label>
-                <strong className="mt-3 block text-[28px] font-black tracking-[-0.05em] text-[#111111]">
-                  {naira(heroStats.collections)}
-                </strong>
-                <span className="mt-2 block text-sm text-[#748197]">
-                  Tracking ahead of last month’s pace.
-                </span>
-              </article>
-
-              <article className="rounded-[24px] border border-black/10 bg-white px-4 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
-                <label className="block text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#6d7a8f]">
-                  Open work
-                </label>
-                <strong className="mt-3 block text-[28px] font-black tracking-[-0.05em] text-[#111111]">
-                  {heroStats.openWork}
-                </strong>
-                <span className="mt-2 block text-sm text-[#748197]">
-                  7 invoices pending, 3 drafts need review.
-                </span>
-              </article>
-            </section>
-          </div>
-
-          <div className="px-4 pt-6">
-            <section className="space-y-3">
-              <div className="flex items-center justify-between gap-3 px-1">
-                <h2 className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6c788d]">
-                  Quick actions
-                </h2>
-                <button type="button" className="text-[13px] font-bold text-[#4769d8]">
-                  See all
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-[14px]">
-                {quickTiles.map((tile) => {
-                  const Icon = tile.icon
-                  return (
-                    <button
-                      key={tile.id}
-                      type="button"
-                      onClick={() => navigate(tile.path)}
-                      className={cn(
-                        'relative overflow-hidden rounded-[26px] border p-[18px] text-left shadow-[0_20px_50px_rgba(0,0,0,0.08)] transition active:scale-[0.99]',
-                        tile.tint
-                      )}
-                    >
-                      <span className="pointer-events-none absolute -left-5 -top-7 h-[120px] w-[120px] rounded-full bg-white/40" />
-                      <span className={cn('relative z-[1] grid h-14 w-14 place-items-center rounded-[18px] shadow-sm', tile.iconBg)}>
-                        <Icon className="h-6 w-6 text-white" />
-                      </span>
-                      <div className="relative z-[1] mt-5 text-[19px] font-black tracking-[-0.03em] text-foreground">
-                        {tile.label}
-                      </div>
-                      <div className="relative z-[1] mt-1 text-sm leading-[1.45] text-muted-foreground">
-                        {tile.tileHint || tile.description}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </section>
-
-            <section className="mt-6 space-y-3">
-              <div className="flex items-center justify-between gap-3 px-1">
-                <h2 className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6c788d]">
-                  Priority follow-up
-                </h2>
-                <button type="button" className="text-[13px] font-bold text-[#4769d8]">
-                  View queue
-                </button>
-              </div>
-
-              <div className="rounded-[30px] border border-black/10 bg-white/85 p-[18px] shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-2xl font-black tracking-[-0.05em] text-[#111111]">
-                      {priorityItems.length || 0} reminders need action
-                    </h3>
-                    <p className="mt-1 text-sm leading-[1.45] text-[#6d7787]">
-                      Use this space for stale project updates and invoice payments that still need to be recorded.
-                    </p>
-                  </div>
-                  <span className="inline-flex h-[34px] min-w-[76px] items-center justify-center rounded-full border border-black/10 bg-slate-50 px-3 text-xs font-bold text-[#111111]">
-                    Today
-                  </span>
-                </div>
-
-                <div className="grid gap-[10px]">
-                  {priorityItems.length === 0 ? (
-                    <div className="rounded-[20px] border border-black/5 bg-[#fafaf8] px-4 py-4 text-sm text-muted-foreground">
-                      No reminders right now.
-                    </div>
-                  ) : (
-                    priorityItems.map((item) => (
-                      <div
-                        key={item.key}
-                        className="grid grid-cols-[auto,1fr,auto] items-center gap-3 rounded-[20px] border border-black/5 bg-[#fafaf8] px-3.5 py-3.5"
-                      >
-                        <span
-                          className={cn('h-3 w-3 rounded-full', item.dotClassName)}
-                          style={{ boxShadow: item.dotShadow }}
-                        />
-                        <div className="min-w-0">
-                          <strong className="block text-[15px] leading-[1.25] text-[#111111]">
-                            {item.title}
-                          </strong>
-                          <span className="block text-[13px] leading-[1.35] text-[#6e7787]">
-                            {item.meta}
-                          </span>
-                        </div>
-                        <span className={cn('inline-flex h-8 min-w-[78px] items-center justify-center rounded-full border px-3 text-xs font-bold', item.badgeClassName)}>
-                          {item.badgeLabel}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </section>
-
-            <section className="mt-6 space-y-3">
-              <div className="flex items-center justify-between gap-3 px-1">
-                <h2 className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6c788d]">
-                  Recent documents
-                </h2>
-              </div>
-
-              <div className="grid gap-3">
-                {loading ? (
-                  <div className="rounded-[28px] border border-black/10 bg-white px-4 py-8 text-center text-sm text-muted-foreground shadow-[0_12px_30px_rgba(0,0,0,0.06)]">
-                    Loading documents...
-                  </div>
-                ) : recentDocs.length === 0 ? (
-                  <div className="rounded-[28px] border border-black/10 bg-white px-4 py-8 text-center text-sm text-muted-foreground shadow-[0_12px_30px_rgba(0,0,0,0.06)]">
-                    No recent documents yet.
-                  </div>
-                ) : (
-                  recentDocs.map((doc) => {
-                    const type = typeStyle[doc.type]
-                    const status = getStatusStyle(doc.status)
-                    const amountText = doc.amount != null ? naira(doc.amount) : 'Open'
-
-                    return (
-                      <button
-                        key={`${doc.type}-${doc.id}`}
-                        type="button"
-                        onClick={() => navigate(`/${type.path}/${doc.id}`)}
-                        className="grid grid-cols-[1fr,auto] items-center gap-3 rounded-[28px] border border-black/10 bg-white px-[18px] py-4 text-left shadow-[0_12px_30px_rgba(0,0,0,0.06)] transition hover:bg-muted/40"
-                      >
-                        <div className="min-w-0">
-                          <div className="mb-1.5 flex min-w-0 flex-wrap items-center gap-2">
-                            <Badge variant="outline" className={cn('rounded-full', type.badge)}>
-                              <span className={cn('mr-2 inline-block h-1.5 w-1.5 rounded-full', type.dot)} />
-                              {doc.type}
-                            </Badge>
-                            <span className="truncate text-[17px] font-black tracking-[-0.03em] text-[#111111]">
-                              {doc.number}
-                            </span>
-                          </div>
-                          <div className="truncate text-[13px] text-[#748094]">
-                            {doc.client} • {new Date(doc.date).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}
-                          </div>
-                          {doc.meta ? (
-                            <div className="truncate text-[13px] text-[#748094]">
-                              {doc.meta}
-                            </div>
-                          ) : null}
-                        </div>
-
-                        <div className="min-w-[102px] text-right">
-                          <span className="mb-2 block text-base font-black tracking-[-0.03em] text-[#111111]">
-                            {amountText}
-                          </span>
-                          <Badge variant="outline" className={cn('rounded-full', status.badge)}>
-                            {status.label}
-                          </Badge>
-                        </div>
-                      </button>
-                    )
-                  })
-                )}
-              </div>
-            </section>
-
-            <section className="mt-6 space-y-3 pb-2">
-              <div className="flex items-center justify-between gap-3 px-1">
-                <h2 className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6c788d]">
-                  Snapshot
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-2 gap-[14px]">
-                <article className="rounded-[28px] border border-black/10 p-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.06)]" style={{ background: 'linear-gradient(180deg, rgba(255,241,242,.92), rgba(255,255,255,.78))' }}>
-                  <label className="block text-xs font-extrabold uppercase tracking-[0.18em] text-[#b33f4a]">
-                    Overdue
-                  </label>
-                  <strong className="mt-4 block text-[30px] font-black tracking-[-0.05em] text-[#111111]">
-                    {naira(summary.overdue)}
-                  </strong>
-                  <span className="mt-2 block text-sm leading-[1.45] text-[#747e8d]">
-                    No unpaid balance has crossed due date today.
-                  </span>
-                </article>
-
-                <article className="rounded-[28px] border border-black/10 p-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.06)]" style={{ background: 'linear-gradient(180deg, rgba(255,248,235,.95), rgba(255,255,255,.78))' }}>
-                  <label className="block text-xs font-extrabold uppercase tracking-[0.18em] text-[#ad770e]">
-                    Due this week
-                  </label>
-                  <strong className="mt-4 block text-[30px] font-black tracking-[-0.05em] text-[#111111]">
-                    {naira(summary.dueThisWeek)}
-                  </strong>
-                  <span className="mt-2 block text-sm leading-[1.45] text-[#747e8d]">
-                    Your receivables calendar is currently clear.
-                  </span>
-                </article>
-
-                <article className="rounded-[28px] border border-black/10 p-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.06)]" style={{ background: 'linear-gradient(180deg, rgba(237,252,244,.96), rgba(255,255,255,.78))' }}>
-                  <label className="block text-xs font-extrabold uppercase tracking-[0.18em] text-[#0e8b5d]">
-                    Collected
-                  </label>
-                  <strong className="mt-4 block text-[30px] font-black tracking-[-0.05em] text-[#111111]">
-                    {naira(summary.thisMonthCollections)}
-                  </strong>
-                  <span className="mt-2 block text-sm leading-[1.45] text-[#747e8d]">
-                    Collection counter updates when payments are captured.
-                  </span>
-                </article>
-
-                <article className="rounded-[28px] border border-black/10 bg-white/85 p-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.06)]">
-                  <label className="block text-xs font-extrabold uppercase tracking-[0.18em] text-[#6f7785]">
-                    Pending follow-up
-                  </label>
-                  <strong className="mt-4 block text-[30px] font-black tracking-[-0.05em] text-[#111111]">
-                    {priorityItems.length || summary.pendingFollowUp}
-                  </strong>
-                  <span className="mt-2 block text-sm leading-[1.45] text-[#747e8d]">
-                    Two projects and one payment need attention today.
-                  </span>
-                </article>
-              </div>
-            </section>
-          </div>
-
-          {createActions.length > 0 ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setCreateOpen(true)}
-                aria-label="Create new"
-                className="fixed bottom-[76px] left-1/2 z-[25] grid h-[62px] w-[62px] -translate-x-1/2 place-items-center rounded-[20px] bg-[#111111] text-white shadow-[0_18px_34px_rgba(0,0,0,0.20)]"
-              >
-                <Plus className="h-7 w-7" />
-              </button>
-
-              <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-                <SheetContent side="bottom" className="p-0">
-                  <div className="rounded-t-[28px] bg-white">
-                    <div className="mx-auto mt-2 h-[5px] w-[52px] rounded-full bg-[#d8deea]" />
-                    <SheetHeader className="px-4 pb-3 pt-4 text-left">
-                      <SheetTitle className="text-2xl font-black tracking-[-0.04em] text-[#111111]">
-                        Create new
-                      </SheetTitle>
-                    </SheetHeader>
-
-                    <div className="grid gap-[10px] px-4 pb-5">
-                      {createActions.map((action) => {
-                        const Icon = action.icon
-                        return (
-                          <button
-                            key={action.key}
-                            type="button"
-                            onClick={() => {
-                              navigate(action.path)
-                              setCreateOpen(false)
-                            }}
-                            className="grid grid-cols-[52px,1fr,auto] items-center gap-3 rounded-[20px] border border-black/10 bg-[#fafcff] px-3.5 py-3.5 text-left"
-                          >
-                            <span className={cn('grid h-[52px] w-[52px] place-items-center rounded-[16px] text-white', action.iconBg)}>
-                              <Icon className="h-6 w-6" />
-                            </span>
-                            <span>
-                              <span className="block text-[15px] font-bold text-[#111111]">
-                                {action.label}
-                              </span>
-                              <span className="block text-[13px] text-[#738096]">
-                                {action.description}
-                              </span>
-                            </span>
-                            <ChevronRight className="h-[18px] w-[18px] text-[#64748b]" />
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </>
-          ) : null}
-        </div>
+        <MobileDashboardView
+          userName={userName}
+          heroStats={heroStats}
+          quickTiles={quickTiles}
+          priorityItems={priorityItems}
+          loading={loading}
+          recentDocs={recentDocs}
+          summary={summary}
+          createActions={createActions}
+          createOpen={createOpen}
+          setCreateOpen={setCreateOpen}
+          navigate={navigate}
+        />
 
         <div className="hidden md:block w-full overflow-x-hidden px-4 pb-2 md:px-0">
           <div className="space-y-3">
