@@ -62,6 +62,34 @@ type UseInvoiceMutationsArgs = {
   setShowAttachSheet: (value: boolean) => void
 }
 
+export type RevertInvoiceToQuotationCommand = {
+  endpoint: string
+  method: 'POST'
+  body: {
+    reason: string | null
+    confirmedInvoiceNumber: string | null
+  }
+}
+
+export function buildRevertInvoiceToQuotationCommand({
+  invoiceId,
+  reason,
+  confirmedInvoiceNumber,
+}: {
+  invoiceId: string
+  reason?: string | null
+  confirmedInvoiceNumber?: string | null
+}): RevertInvoiceToQuotationCommand {
+  return {
+    endpoint: `/api/invoices/${invoiceId}/revert-to-quotation`,
+    method: 'POST',
+    body: {
+      reason: reason ?? null,
+      confirmedInvoiceNumber: confirmedInvoiceNumber ?? null,
+    },
+  }
+}
+
 export function useInvoiceMutations({
   id,
   invoice,
