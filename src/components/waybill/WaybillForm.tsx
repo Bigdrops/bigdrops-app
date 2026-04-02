@@ -12,6 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/hooks/use-toast'
+import { canUseNativeSqlite } from '@/lib/native/capacitor'
+import {
+  createOfflineWaybillDraft,
+  peekNextOfflineWaybillNumber,
+} from '@/lib/native/waybillOffline'
 import {
   CONDITION_OPTIONS,
   WAYBILL_COLUMN_LIMIT,
@@ -58,6 +63,10 @@ type ProjectPrefillState = {
 
 const hasInvoicePrefillDetails = (invoice?: ProjectPrefillState['sourceInvoice']) =>
   Boolean(invoice?.invoiceNumber || invoice?.clientId || invoice?.clientName || invoice?.poNumber)
+
+function canUseOfflineWaybillDrafts() {
+  return canUseNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine === false
+}
 
 function Field({ label, help, required, children }: { label: string; help?: string; required?: boolean; children: React.ReactNode }) {
   return (
@@ -404,6 +413,19 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
     setWaybill((current) => ({ ...current, custom_fields: buildWaybillCustomFields(current.custom_fields, patch) }))
 
   const ensureNextNumber = async (type: WaybillType) => {
+    if (!isEdit && canUseOfflineWaybillDrafts()) {
+      try {
+        updateWaybill('waybill_number', await peekNextOfflineWaybillNumber())
+      } catch (offlineNumberError) {
+        setError(
+          offlineNumberError instanceof Error
+            ? offlineNumberError.message
+            : 'Could not generate an offline waybill number.',
+        )
+      }
+      return
+    }
+
     const prefix = type === 'internal' ? 'SASWB-I%' : 'SASWB-E%'
     const { data } = await supabase.from('waybills').select('waybill_number').ilike('waybill_number', prefix)
     const numbers = (data || []).map((row: { waybill_number: string }) => row.waybill_number)
@@ -560,6 +582,12 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
     setInvoiceSearch(query)
     updateWaybill('invoice_id', '')
     updateCustomFields({ references: { ...customFields.references, linkedInvoiceNumber: query } })
+
+    if (canUseOfflineWaybillDrafts()) {
+      setInvoiceSuggestions([])
+      return
+    }
+
     if (!query.trim()) {
       setInvoiceSuggestions([])
       return
@@ -654,6 +682,34 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
     }
 
     setSaving(true)
+
+    if (!isEdit && canUseOfflineWaybillDrafts()) {
+      try {
+        const localDraft = await createOfflineWaybillDraft(payload)
+        setWaybill((current) => ({ ...current, waybill_number: localDraft.waybillNumber }))
+        toast({
+          title: 'Saved offline',
+          description: `${localDraft.waybillNumber} was saved locally and queued for sync.`,
+        })
+        navigate('/waybills')
+      } catch (offlineSaveError) {
+        setError(
+          offlineSaveError instanceof Error
+            ? offlineSaveError.message
+            : 'Could not save this waybill offline.',
+        )
+      } finally {
+        setSaving(false)
+      }
+      return
+    }
+
+    if (isEdit && canUseOfflineWaybillDrafts()) {
+      setError('Offline editing is not available yet. Reconnect to update this waybill.')
+      setSaving(false)
+      return
+    }
+
     const query = isEdit
       ? supabase.from('waybills').update(payload).eq('id', waybillId).select('id').single()
       : supabase.from('waybills').insert([payload]).select('id').single()
