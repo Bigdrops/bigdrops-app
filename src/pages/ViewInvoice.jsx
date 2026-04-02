@@ -36,8 +36,8 @@ import {
 } from '@/domain/documentConversion'
 import {
   getInvoiceSourceDocument,
-  hasInvoiceRelatedDocuments,
 } from '@/domain/documentRelationships'
+import { buildInvoiceViewModel } from '@/domain/invoice/viewModel'
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { computeDocument } from '@/lib/Calculations'
 import { PDF_TEMPLATES, DEFAULT_TEMPLATE } from '@/components/pdf/pdfTemplates'
@@ -121,35 +121,34 @@ export default function ViewInvoice() {
     return parsed.toLocaleDateString()
   }
   const isAdmin = ADMIN_EMAILS.includes(session?.user?.email || '')
-  const computedStatus = invoiceFinancials?.computed_status || invoice.status || 'draft'
-  const invoiceTotal = Number(invoice.total || 0)
-  const cashReceived = Number(invoiceFinancials?.cash_received || 0)
-  const settledTotal = Number(invoiceFinancials?.settled_total || cashReceived)
-  const balanceDue = Math.max(0, Number(invoiceFinancials?.balance_due ?? invoiceTotal - settledTotal))
-  const paymentHistory = (() => {
-    let runningBalance = invoiceTotal
-    return payments.map((payment) => {
-      const cash = Number(payment.cash_amount || 0)
-      const total = cash + Number(payment.wht_amount || 0)
-      if (!payment.voided_at) {
-        runningBalance = Math.max(0, runningBalance - total)
-      }
-      return {
-        ...payment,
-        cash,
-        total,
-        runningBalance,
-      }
-    })
-  })()
-  const activePaymentCount = payments.filter((payment) => !payment.voided_at).length
-  const activePaymentTotal = payments.reduce((sum, payment) => {
-    if (payment.voided_at) return sum
-    return sum + Number(payment.cash_amount || 0) + Number(payment.wht_amount || 0)
-  }, 0)
   const sourceDocument = getInvoiceSourceDocument(invoice)
   const invoiceRelatedDocs = { csrs: relatedCsrs, waybills: relatedWaybills }
-  const hasLinkedDocuments = hasInvoiceRelatedDocuments(invoice, invoiceRelatedDocs)
+  const viewModel = buildInvoiceViewModel({
+    invoice,
+    items,
+    payments,
+    relatedCsrs,
+    relatedWaybills,
+    financials: invoiceFinancials,
+    project: linkedProject,
+  })
+  const {
+    computedStatus,
+    statusLabel,
+    statusBadgeClass,
+    invoiceTotal,
+    cashReceived,
+    settledTotal,
+    balanceDue,
+    paymentHistory,
+    activePaymentCount,
+    activePaymentTotal,
+    hasLinkedDocuments,
+    hasProject,
+    canRecordPayment,
+    projectActionLabel,
+    documentActionLabel,
+  } = viewModel
   const linkedDocumentsSections = [
     {
       key: 'source',
@@ -556,16 +555,7 @@ export default function ViewInvoice() {
     setPendingVoidPaymentId(null)
     setVoidReason('')
   }
-  const shellStatusClass =
-    computedStatus === 'paid'
-      ? 'bg-emerald-50 text-emerald-700'
-      : computedStatus === 'overdue'
-        ? 'bg-red-50 text-red-700'
-        : computedStatus === 'sent'
-          ? 'bg-blue-50 text-blue-700'
-          : computedStatus === 'partial'
-            ? 'bg-amber-50 text-amber-700'
-            : 'bg-slate-100 text-slate-700'
+  const shellStatusClass = statusBadgeClass
 
   const shellStatusItems = ['draft', 'sent', 'partial', 'paid', 'overdue'].map((status) => ({
     label: String(status).replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()),
@@ -741,7 +731,7 @@ export default function ViewInvoice() {
         <DocumentTopBar
           title={invoice.invoice_number}
           subtitle="Invoice"
-          statusLabel={String(computedStatus).replace(/_/g, ' ')}
+          statusLabel={statusLabel}
           statusClassName={shellStatusClass}
           onBack={() => navigate('/invoices')}
           onMore={() => setShowMore(true)}
@@ -764,7 +754,7 @@ export default function ViewInvoice() {
         <DocumentActionGrid
           actions={[
             { key: 'pdf', label: 'PDF', onClick: () => setShowPdfSheet(true), variant: 'dark' },
-            { key: 'payment', label: 'Payment', onClick: () => setShowPaymentModal(true), variant: 'emerald', disabled: computedStatus === 'paid' },
+            { key: 'payment', label: 'Payment', onClick: () => setShowPaymentModal(true), variant: 'emerald', disabled: !canRecordPayment },
             { key: 'edit', label: 'Edit', onClick: () => navigate('/invoices/edit/' + id), variant: 'blue' },
             { key: 'more', label: 'More', onClick: () => setShowMore(true), variant: 'outline' },
           ]}
@@ -785,7 +775,7 @@ export default function ViewInvoice() {
           meta={[
             { label: 'Issue Date', value: invoice.issue_date || 'Not set' },
             { label: 'Due Date', value: invoice.due_date || 'Open' },
-            { label: 'Status', value: String(computedStatus).replace(/_/g, ' ') },
+            { label: 'Status', value: statusLabel },
           ]}
           detailRows={previewDetailRows}
           items={previewItems}
@@ -918,19 +908,19 @@ export default function ViewInvoice() {
           open={showMore}
           onOpenChange={setShowMore}
           invoiceNumber={invoice.invoice_number}
-          projectActionLabel={invoice.project_id ? 'View Project' : 'Link to Project'}
-          projectActionSubtitle={invoice.project_id ? (linkedProject?.name || 'Open the linked project workspace') : 'Attach this invoice to a project'}
+          projectActionLabel={projectActionLabel}
+          projectActionSubtitle={hasProject ? (linkedProject?.name || 'Open the linked project workspace') : 'Attach this invoice to a project'}
           onProjectAction={() => {
             setShowMore(false)
             invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectLinkDialog(true)
           }}
-          documentActionLabel={hasLinkedDocuments ? 'Linked Documents' : 'Link Documents'}
+          documentActionLabel={documentActionLabel}
           documentActionSubtitle={hasLinkedDocuments ? 'View source, generated, and related records' : 'Connect this invoice to related records'}
           onLinkedDocumentsAction={() => {
             setShowMore(false)
             setShowLinkedDocuments(true)
           }}
-          showRecordPayment={invoice.status !== 'paid'}
+          showRecordPayment={canRecordPayment}
           onRecordPayment={() => {
             setShowMore(false)
             setShowPaymentModal(true)
@@ -946,7 +936,7 @@ export default function ViewInvoice() {
           onMarkSent={handleMarkSent}
           onArchiveInvoice={handleArchive}
           onDeleteInvoice={handleDelete}
-          hasProject={!!invoice.project_id}
+          hasProject={hasProject}
           hasLinkedDocuments={hasLinkedDocuments}
         />
 
