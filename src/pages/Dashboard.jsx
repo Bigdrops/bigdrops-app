@@ -207,16 +207,13 @@ function MobileDashboardView({
 
       <div className="px-4 pt-6">
         <section className="space-y-3">
-          <div className="flex items-center justify-between gap-3 px-1">
+          <div className="px-1">
             <h2 className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6c788d]">
               Quick actions
             </h2>
-            <button type="button" className="text-[13px] font-bold text-[#4769d8]">
-              See all
-            </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-[14px] min-[390px]:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2">
             {quickTiles.map((tile) => {
               const Icon = tile.icon
               return (
@@ -246,13 +243,10 @@ function MobileDashboardView({
         </section>
 
         <section className="mt-6 space-y-3">
-          <div className="flex items-center justify-between gap-3 px-1">
+          <div className="px-1">
             <h2 className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6c788d]">
               Priority follow-up
             </h2>
-            <button type="button" className="text-[13px] font-bold text-[#4769d8]">
-              View queue
-            </button>
           </div>
 
           <div className="rounded-[30px] border border-black/10 bg-white/85 p-[18px] shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
@@ -332,34 +326,45 @@ function MobileDashboardView({
                     onClick={() => navigate(`/${type.path}/${doc.id}`)}
                     className="rounded-[28px] border border-black/10 bg-white px-[18px] py-4 text-left shadow-[0_12px_30px_rgba(0,0,0,0.06)] transition hover:bg-muted/40"
                   >
-                    <div className="flex flex-col gap-3 min-[390px]:flex-row min-[390px]:items-start min-[390px]:justify-between">
-                      <div className="min-w-0">
-                        <div className="mb-1.5 flex min-w-0 flex-wrap items-center gap-2">
-                          <Badge variant="outline" className={cn('rounded-full', type.badge)}>
-                            <span className={cn('mr-2 inline-block h-1.5 w-1.5 rounded-full', type.dot)} />
-                            {doc.type}
-                          </Badge>
-                          <span className="truncate text-[17px] font-black tracking-[-0.03em] text-[#111111]">
-                            {doc.number}
-                          </span>
-                        </div>
-                        <div className="truncate text-[13px] text-[#748094]">
-                          {doc.client} • {new Date(doc.date).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}
-                        </div>
-                        {doc.meta ? (
-                          <div className="truncate text-[13px] text-[#748094]">
-                            {doc.meta}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div className="flex items-center justify-between gap-3 min-[390px]:block min-[390px]:min-w-[102px] min-[390px]:text-right">
-                        <span className="block text-base font-black tracking-[-0.03em] text-[#111111] min-[390px]:mb-2">
-                          {amountText}
-                        </span>
+                    <div className="space-y-3">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <Badge variant="outline" className={cn('rounded-full', type.badge)}>
+                          <span className={cn('mr-2 inline-block h-1.5 w-1.5 rounded-full', type.dot)} />
+                          {doc.type}
+                        </Badge>
                         <Badge variant="outline" className={cn('rounded-full', status.badge)}>
                           {status.label}
                         </Badge>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="min-w-0 text-[18px] font-black leading-[1.2] tracking-[-0.03em] text-[#111111]">
+                          {doc.number}
+                        </div>
+                        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="truncate text-[13px] text-[#748094]">
+                              {doc.client}
+                            </div>
+                            <div className="text-[13px] text-[#748094]">
+                              {new Date(doc.date).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}
+                            </div>
+                            {doc.meta ? (
+                              <div className="truncate text-[13px] text-[#748094]">
+                                {doc.meta}
+                              </div>
+                            ) : null}
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <span className="block text-[17px] font-black tracking-[-0.03em] text-[#111111]">
+                              {amountText}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end">
+                        <ChevronRight className="h-5 w-5 text-slate-300" />
                       </div>
                     </div>
                   </button>

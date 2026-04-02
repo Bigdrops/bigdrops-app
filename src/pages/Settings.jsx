@@ -1081,16 +1081,16 @@ function DashboardSection() {
         return (
           <div
             key={tileId}
-            className={`flex items-center justify-between gap-3 py-3.5 transition-colors ${
+            className={`space-y-3 py-4 transition-colors ${
               flashTile === tileId ? 'bg-emerald-50/70' : ''
             } ${index < QUICK_TILE_COUNT - 1 ? 'border-b border-slate-100' : ''}`}
           >
-            <div className="flex min-w-0 items-center gap-3">
+            <div className="flex min-w-0 flex-wrap items-start gap-3">
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] ${tile.iconBg}`}>
                 <Icon size={18} className="text-white" />
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
                   <p className="text-sm font-semibold text-foreground">Tile {index + 1}</p>
                   <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-700">
                     {tile.label}
@@ -1099,9 +1099,9 @@ function DashboardSection() {
                 <p className="text-[11px] text-muted-foreground">{tile.description}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="min-w-0">
               <Select value={tileId} onValueChange={(nextValue) => updateTileAt(index, nextValue)}>
-                <SelectTrigger className="h-10 w-[170px] rounded-xl border-border bg-card text-sm">
+                <SelectTrigger className="h-10 w-full min-w-0 rounded-xl border-border bg-card text-sm">
                   <SelectValue placeholder="Choose tile" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1115,6 +1115,8 @@ function DashboardSection() {
                   })}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => moveTile(index, 'up')}
