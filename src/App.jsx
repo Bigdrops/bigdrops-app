@@ -8,6 +8,7 @@ import PageLoader from '@/components/app/PageLoader'
 import SplashOverlay from '@/components/app/SplashOverlay'
 import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
 import { isInvalidSessionError } from '@/auth/sessionErrors'
+import { hydrateLocalDeviceProfile } from '@/lib/native/deviceHydration'
 
 const Login = lazy(() => import('./pages/Login'))
 const PendingApproval = lazy(() => import('./pages/PendingApproval'))
@@ -146,6 +147,10 @@ function App() {
           profileRef.current = nextProfile
           setProfile(nextProfile)
           setResolvedProfileUserId(userId)
+
+          void hydrateLocalDeviceProfile({ userId }).catch((error) => {
+            console.warn('Local device hydration skipped:', error)
+          })
         },
         onError: (err) => {
           debugAuth('loadProfile:onError', { userId, error: err })
