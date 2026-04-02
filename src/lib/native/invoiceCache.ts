@@ -59,6 +59,18 @@ export type InvoiceItemCacheRow = {
   updated_at: string | null;
 };
 
+export type PaymentCacheRow = {
+  id: string;
+  invoice_id: string;
+  cash_amount: number | null;
+  wht_amount: number | null;
+  date: string | null;
+  method: string | null;
+  reference: string | null;
+  voided_at: string | null;
+  created_at: string | null;
+};
+
 type InvoiceCacheRowDb = Omit<InvoiceCacheRow, "custom_fields"> & {
   custom_fields: string | null;
 };
@@ -173,6 +185,19 @@ function hydrateItemRow(row: InvoiceItemCacheRowDb): InvoiceItemCacheRow {
     ...row,
     install_rate_override: row.install_rate_override === 1,
     custom_data: parseJsonField(row.custom_data) ?? {},
+  };
+}
+
+function normalizePaymentRow(row: PaymentCacheRow): PaymentCacheRow {
+  return {
+    ...row,
+    cash_amount: toNumberValue(row.cash_amount),
+    wht_amount: toNumberValue(row.wht_amount),
+    date: row.date ?? null,
+    method: row.method ?? null,
+    reference: row.reference ?? null,
+    voided_at: row.voided_at ?? null,
+    created_at: row.created_at ?? null,
   };
 }
 
@@ -357,6 +382,22 @@ export async function bootstrapInvoiceCache(): Promise<void> {
           `,
         },
         {
+          statement: `
+            CREATE TABLE IF NOT EXISTS invoice_payments_cache (
+              id TEXT PRIMARY KEY NOT NULL,
+              invoice_id TEXT NOT NULL,
+              cash_amount REAL,
+              wht_amount REAL,
+              date TEXT,
+              method TEXT,
+              reference TEXT,
+              voided_at TEXT,
+              created_at TEXT,
+              cached_at TEXT NOT NULL
+            );
+          `,
+        },
+        {
           statement:
             "CREATE INDEX IF NOT EXISTS idx_invoices_cache_created_at ON invoices_cache (created_at);",
         },
@@ -367,6 +408,10 @@ export async function bootstrapInvoiceCache(): Promise<void> {
         {
           statement:
             "CREATE INDEX IF NOT EXISTS idx_invoice_items_cache_invoice_sort ON invoice_items_cache (invoice_id, sort_order);",
+        },
+        {
+          statement:
+            "CREATE INDEX IF NOT EXISTS idx_invoice_payments_cache_invoice_date ON invoice_payments_cache (invoice_id, date, created_at);",
         },
       ]),
     );
@@ -502,4 +547,81 @@ export async function getCachedInvoiceDetail(
     invoice: invoiceRows[0] ? hydrateInvoiceRow(invoiceRows[0]) : null,
     items: itemRows.map(hydrateItemRow),
   };
+}
+
+export async function cacheInvoicePayments(
+  invoiceId: string,
+  payments: PaymentCacheRow[],
+): Promise<void> {
+  await bootstrapInvoiceCache();
+  await run("DELETE FROM invoice_payments_cache WHERE invoice_id = ?;", [
+    invoiceId,
+  ]);
+
+  if (payments.length === 0) {
+    return;
+  }
+
+  const cachedAt = new Date().toISOString();
+
+  await executeSet(
+    payments.map((payment) => {
+      const row = normalizePaymentRow(payment);
+
+      return {
+        statement: `
+          INSERT INTO invoice_payments_cache (
+            id,
+            invoice_id,
+            cash_amount,
+            wht_amount,
+            date,
+            method,
+            reference,
+            voided_at,
+            created_at,
+            cached_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        `,
+        values: [
+          row.id,
+          row.invoice_id,
+          row.cash_amount,
+          row.wht_amount,
+          row.date,
+          row.method,
+          row.reference,
+          row.voided_at,
+          row.created_at,
+          cachedAt,
+        ],
+      };
+    }),
+  );
+}
+
+export async function getCachedInvoicePayments(
+  invoiceId: string,
+): Promise<PaymentCacheRow[]> {
+  await bootstrapInvoiceCache();
+
+  return query<PaymentCacheRow>(
+    `
+      SELECT
+        id,
+        invoice_id,
+        cash_amount,
+        wht_amount,
+        date,
+        method,
+        reference,
+        voided_at,
+        created_at
+      FROM invoice_payments_cache
+      WHERE invoice_id = ?
+      ORDER BY date ASC, created_at ASC, id ASC;
+    `,
+    [invoiceId],
+  );
 }

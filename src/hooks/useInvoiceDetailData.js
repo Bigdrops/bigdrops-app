@@ -4,7 +4,9 @@ import { supabase } from '@/supabase'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
 import {
   cacheInvoiceDetail,
+  cacheInvoicePayments,
   getCachedInvoiceDetail,
+  getCachedInvoicePayments,
 } from '@/lib/native/invoiceCache'
 import { fetchInvoiceChildDocuments, fetchProjectSummary } from '@/domain/documentRelationships'
 
@@ -21,6 +23,28 @@ function canWriteInvoiceCache() {
     canUseNativeSqlite() &&
     (typeof navigator === 'undefined' || navigator.onLine !== false)
   )
+}
+
+function buildCachedInvoiceFinancials(invoiceRow, paymentRows) {
+  const invoiceTotal = Number(invoiceRow?.total || 0)
+  const settledTotal = (paymentRows || []).reduce((sum, payment) => {
+    if (payment?.voided_at) return sum
+    return sum + Number(payment?.cash_amount || 0) + Number(payment?.wht_amount || 0)
+  }, 0)
+  const balanceDue = Math.max(0, invoiceTotal - settledTotal)
+
+  return {
+    id: invoiceRow?.id || null,
+    cash_received: settledTotal,
+    settled_total: settledTotal,
+    balance_due: balanceDue,
+    computed_status:
+      balanceDue <= 0 && invoiceTotal > 0
+        ? 'paid'
+        : settledTotal > 0
+          ? 'partial'
+          : invoiceRow?.status || 'draft',
+  }
 }
 
 export function useInvoiceDetailData(id) {
@@ -66,7 +90,10 @@ export function useInvoiceDetailData(id) {
   }, [id])
 
   const fetchPayments = useCallback(async () => {
-    const [{ data: activePayments }, { data: voidedPayments }] = await Promise.all([
+    const [
+      { data: activePayments, error: activePaymentsError },
+      { data: voidedPayments, error: voidedPaymentsError },
+    ] = await Promise.all([
       supabase
         .from('payments')
         .select('*')
@@ -80,6 +107,11 @@ export function useInvoiceDetailData(id) {
         .not('voided_at', 'is', null)
         .order('date', { ascending: true }),
     ])
+
+    const paymentError = activePaymentsError || voidedPaymentsError
+    if (paymentError && canUseInvoiceCacheFallback()) {
+      throw paymentError
+    }
 
     const mergedPayments = [...(activePayments || []), ...(voidedPayments || [])].sort((a, b) => {
       const dateCompare = String(a.date || '').localeCompare(String(b.date || ''))
@@ -182,10 +214,16 @@ export function useInvoiceDetailData(id) {
 
       try {
         const cachedDetail = await getCachedInvoiceDetail(id)
+        const cachedPayments = await getCachedInvoicePayments(id)
+
         setInvoice(cachedDetail.invoice)
         setItems(cachedDetail.items)
-        setPayments([])
-        setInvoiceFinancials(null)
+        setPayments(cachedPayments)
+        setInvoiceFinancials(
+          cachedDetail.invoice
+            ? buildCachedInvoiceFinancials(cachedDetail.invoice, cachedPayments)
+            : null,
+        )
         setClient(null)
         setSettings({})
         setBankAccounts([])
@@ -207,12 +245,20 @@ export function useInvoiceDetailData(id) {
   }, [fetchInvoice, fetchInvoiceFinancials, fetchInvoiceRelationships, fetchItems, fetchPayments, id])
 
   useEffect(() => {
-    if (!invoice?.id || !canWriteInvoiceCache()) return
+    if (loading || !invoice?.id || !canWriteInvoiceCache()) return
 
     void cacheInvoiceDetail(invoice, items).catch((cacheError) => {
       console.warn('Invoice detail cache write failed:', cacheError)
     })
-  }, [invoice, items])
+  }, [invoice, items, loading])
+
+  useEffect(() => {
+    if (loading || error || !id || !canWriteInvoiceCache()) return
+
+    void cacheInvoicePayments(id, payments).catch((cacheError) => {
+      console.warn('Invoice payment cache write failed:', cacheError)
+    })
+  }, [error, id, loading, payments])
 
   useEffect(() => {
     void refresh()
