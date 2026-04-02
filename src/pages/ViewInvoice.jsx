@@ -26,19 +26,12 @@ import {
   getInvoicePdfOutput,
   getInvoiceSignatoryId,
   parseCustomFields,
-  toDbItem,
 } from '@/domain/invoice'
-import {
-  buildTrailLink,
-  parseDocumentCustomFields,
-  toQuotationItemRow,
-  withSourceTrail,
-} from '@/domain/documentConversion'
+import { parseDocumentCustomFields } from '@/domain/documentConversion'
 import {
   getInvoiceSourceDocument,
 } from '@/domain/documentRelationships'
 import { buildInvoiceViewModel } from '@/domain/invoice/viewModel'
-import { getNextQuotationNumber } from '@/domain/quotation'
 import { computeDocument } from '@/lib/Calculations'
 import { PDF_TEMPLATES, DEFAULT_TEMPLATE } from '@/components/pdf/pdfTemplates'
 import {
@@ -60,6 +53,7 @@ import { getInvoiceDetailActionDefs } from '@/domain/invoice/actions'
 import { buildInvoicePreviewModel } from '@/domain/invoice/previewModel'
 import { Card, CardContent } from '@/components/ui/card'
 import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
+import { useInvoiceMutations } from '@/hooks/useInvoiceMutations'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
 
@@ -268,18 +262,49 @@ export default function ViewInvoice() {
     },
   ]
 
-  const handleAttachExisting = async (item) => {
-    if (!item?.id || !attachKind) return
-    if (attachKind === 'csr') {
-      await supabase.from('csrs').update({ linked_invoice_id: invoice.id }).eq('id', item.id)
-    }
-    if (attachKind === 'waybill') {
-      await supabase.from('waybills').update({ invoice_id: invoice.id }).eq('id', item.id)
-    }
-    setShowAttachSheet(false)
-    setAttachKind(null)
-    await refresh()
-  }
+  // ── Custom fields ───────────────────────────────────────────────────────────
+  const customFieldObject = parseCustomFields(invoice.custom_fields)
+  const selectedSignatory = signatories.find((signatory) => signatory.id === getInvoiceSignatoryId(customFieldObject)) || null
+
+  const {
+    handleAttachExisting,
+    handleGenerateCsr,
+    handleGenerateWaybill,
+    openRevertConfirm,
+    handleStatusChange,
+    handleClone,
+    handleConvertToQuote,
+    handleMarkSent,
+    handleDelete,
+    confirmDelete,
+    handleArchive,
+    confirmArchive,
+    handleVoidPayment,
+    confirmVoidPayment,
+  } = useInvoiceMutations({
+    id,
+    invoice,
+    items,
+    poNumber,
+    customFieldObject,
+    converting,
+    pendingVoidPaymentId,
+    voidReason,
+    attachKind,
+    refresh,
+    navigate,
+    setShowMore,
+    setShowDeleteConfirm,
+    setShowArchiveConfirm,
+    setShowRevertConfirm,
+    setShowVoidDialog,
+    setPendingVoidPaymentId,
+    setVoidReason,
+    setVoidingPaymentId,
+    setConverting,
+    setAttachKind,
+    setShowAttachSheet,
+  })
   const handleDownloadPDF = async () => {
     if (pdfGenerating) return
     setPdfGenerating(true)
@@ -360,223 +385,6 @@ export default function ViewInvoice() {
     }
   }
 
-  const buildInvoiceChildPrefill = () => ({
-    invoiceId: invoice.id,
-    invoiceNumber: invoice.invoice_number || '',
-    clientId: invoice.client_id || '',
-    clientName: invoice.client_name || '',
-    poNumber: poNumber || '',
-  })
-
-  const handleGenerateCsr = () => {
-    setShowMore(false)
-    navigate('/csr/new', {
-      state: {
-        sourceInvoice: buildInvoiceChildPrefill(),
-      },
-    })
-  }
-
-  const handleGenerateWaybill = () => {
-    setShowMore(false)
-    navigate('/waybills/new', {
-      state: {
-        sourceInvoice: buildInvoiceChildPrefill(),
-      },
-    })
-  }
-
-  const openRevertConfirm = () => {
-    setShowMore(false)
-    setShowRevertConfirm(true)
-  }
-
-  // ── Status change ───────────────────────────────────────────────────────────
-  const handleStatusChange = async (newStatus) => {
-    if (newStatus === invoice.status) return
-    await supabase.from('invoices').update({ status: newStatus }).eq('id', id)
-    await refresh()
-  }
-
-  // ── Record Payment ──────────────────────────────────────────────────────────
-  const handleClone = async () => {
-    setShowMore(false)
-    try {
-      const { data: all } = await supabase
-        .from('invoices')
-        .select('invoice_number')
-        .like('invoice_number', 'SASINV-B%')
-        .order('created_at', { ascending: false })
-      let nextNum = 1
-      if (all && all.length > 0) {
-        const nums = all.map((i) => parseInt(i.invoice_number.replace('SASINV-B', ''))).filter((n) => !isNaN(n))
-        nextNum = Math.max(...nums) + 1
-      }
-      const newNumber = 'SASINV-B' + String(nextNum).padStart(3, '0')
-      navigate('/invoices/new', {
-        state: {
-          prefill: {
-            ...invoice,
-            invoice_number: newNumber,
-            client_id: null,
-            client_name: '',
-            status: 'draft',
-            issue_date: new Date().toISOString().split('T')[0],
-            due_date: null,
-            // Strip thread/advance fields — clone is standalone
-            thread_id: null,
-            thread_role: null,
-            thread_position: 1,
-          },
-          prefillItems: items.map((it) => ({ ...it, id: null })),
-        },
-      })
-    } catch (err) {
-      toast({ title: 'Clone failed', description: err.message, variant: 'destructive' })
-    }
-  }
-
-  // ── Misc More menu actions ──────────────────────────────────────────────────
-  const handleConvertToQuote = async () => {
-    if (converting) return
-    setShowRevertConfirm(false)
-    setConverting(true)
-    try {
-      const [{ data: quotationRows }, { data: latestInvoice }] = await Promise.all([
-        supabase.from('quotations').select('quotation_number'),
-        supabase.from('invoices').select('custom_fields').eq('id', id).single(),
-      ])
-
-      const nextQuotationNumber = getNextQuotationNumber(quotationRows || [])
-      const sourceInvoiceFields = parseDocumentCustomFields(latestInvoice?.custom_fields || customFieldObject)
-      const poValue = poNumber || null
-      const sourceLink = buildTrailLink({
-        id: invoice.id,
-        type: 'invoice',
-        number: invoice.invoice_number,
-        project_id: invoice.project_id || null,
-        po_number: poValue,
-      })
-
-      const quotationCustomFields = withSourceTrail(
-        {
-          ...sourceInvoiceFields,
-          quotationTitle: invoice.invoice_title || '',
-          clientName: invoice.client_name || '',
-          notesHtml: invoice.notes || '',
-          termsHtml: invoice.terms || '',
-        },
-        sourceLink
-      )
-
-      const quotationPayload = {
-        quotation_number: nextQuotationNumber,
-        po_number: poValue,
-        quotation_title: invoice.invoice_title || null,
-        client_id: invoice.client_id || null,
-        client_name: invoice.client_name || '',
-        project_id: invoice.project_id || null,
-        issue_date: invoice.issue_date || new Date().toISOString().split('T')[0],
-        valid_until: invoice.due_date || null,
-        status: 'draft',
-        notes: invoice.notes || '',
-        terms: invoice.terms || '',
-        workmanship: Number(invoice.workmanship || 0),
-        transportation: Number(invoice.transportation || 0),
-        shipping: Number(invoice.shipping || 0),
-        discount: Number(invoice.discount || 0),
-        vat: Number(invoice.vat || 0),
-        wht: Number(invoice.wht || 0),
-        subtotal: Number(invoice.subtotal || 0),
-        install_rate_total: Number(invoice.install_rate_total || 0),
-        total: Number(invoice.total || 0),
-        amount_in_words: invoice.amount_in_words || '',
-        custom_fields: JSON.stringify(quotationCustomFields),
-      }
-
-      const { data: createdQuotation, error: quotationError } = await supabase
-        .from('quotations')
-        .insert([quotationPayload])
-        .select()
-        .single()
-
-      if (quotationError || !createdQuotation) throw new Error(quotationError?.message || 'Failed to create quotation')
-
-      const itemRows = items
-        .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-        .map((item, index) => toQuotationItemRow(item, createdQuotation.id, index))
-
-      if (itemRows.length > 0) {
-        const { error: itemError } = await supabase.from('quotation_items').insert(itemRows)
-        if (itemError) {
-          await supabase.from('quotations').delete().eq('id', createdQuotation.id)
-          throw new Error(itemError.message)
-        }
-      }
-
-      const { error: deleteItemsError } = await supabase.from('invoice_items').delete().eq('invoice_id', id)
-      if (deleteItemsError) {
-        await supabase.from('quotation_items').delete().eq('quotation_id', createdQuotation.id)
-        await supabase.from('quotations').delete().eq('id', createdQuotation.id)
-        throw new Error(deleteItemsError.message)
-      }
-
-      const { error: deleteInvoiceError } = await supabase.from('invoices').delete().eq('id', id)
-      if (deleteInvoiceError) {
-        await supabase.from('invoice_items').insert(
-          items
-            .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-            .map((item, index) => toDbItem(item, id, index))
-        )
-        await supabase.from('quotation_items').delete().eq('quotation_id', createdQuotation.id)
-        await supabase.from('quotations').delete().eq('id', createdQuotation.id)
-        throw new Error(deleteInvoiceError.message)
-      }
-
-      navigate(`/quotations/${createdQuotation.id}`)
-    } catch (err) {
-      toast({
-        title: 'Revert to quotation failed',
-        description: (err && err.message) || 'Unknown error',
-        variant: 'destructive',
-      })
-    } finally {
-      setConverting(false)
-    }
-  }
-  const handleMarkSent = () => {
-    handleStatusChange('sent')
-    setShowMore(false)
-  }
-
-  // ── Delete invoice ──────────────────────────────────────────────────────────
-  const handleDelete = async () => {
-    setShowMore(false)
-    setShowDeleteConfirm(true)
-  }
-
-  const confirmDelete = async () => {
-    setShowDeleteConfirm(false)
-    await supabase.from('invoice_items').delete().eq('invoice_id', id)
-    await supabase.from('invoices').delete().eq('id', id)
-    navigate('/invoices')
-  }
-
-  // ── Archive invoice ─────────────────────────────────────────────────────────
-  const handleArchive = async () => {
-    setShowMore(false)
-    setShowArchiveConfirm(true)
-  }
-
-  const confirmArchive = async () => {
-    setShowArchiveConfirm(false)
-    await supabase.from('invoices').update({ archived_at: new Date().toISOString() }).eq('id', id)
-    navigate('/invoices')
-  }
-
-  // ── Custom fields ───────────────────────────────────────────────────────────
-  const customFieldObject = parseCustomFields(invoice.custom_fields)
-  const selectedSignatory = signatories.find((signatory) => signatory.id === getInvoiceSignatoryId(customFieldObject)) || null
   const handlePdfOutputChange = async (next) => {
     setPdfOutput(next)
     const updatedCf = {
@@ -589,52 +397,6 @@ export default function ViewInvoice() {
         custom_fields: JSON.stringify(updatedCf)
       })
       .eq('id', id)
-  }
-  const syncInvoiceStatusFromFinancials = async () => {
-    const { data } = await supabase
-      .from('invoice_financials_v')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (data?.computed_status) {
-      await supabase
-        .from('invoices')
-        .update({ status: data.computed_status })
-        .eq('id', id)
-    }
-  }
-  const handleVoidPayment = async (paymentId) => {
-    setPendingVoidPaymentId(paymentId)
-    setVoidReason('')
-    setShowVoidDialog(true)
-  }
-
-  const confirmVoidPayment = async () => {
-    if (!pendingVoidPaymentId || !voidReason.trim()) return
-    const reason = voidReason.trim()
-    setShowVoidDialog(false)
-
-    setVoidingPaymentId(pendingVoidPaymentId)
-    const { error } = await supabase
-      .from('payments')
-      .update({
-        voided_at: new Date().toISOString(),
-        void_reason: reason,
-      })
-      .eq('id', pendingVoidPaymentId)
-
-    if (error) {
-      toast({ title: 'Void failed', description: error.message, variant: 'destructive' })
-      setVoidingPaymentId(null)
-      return
-    }
-
-    await syncInvoiceStatusFromFinancials()
-    await refresh()
-    setVoidingPaymentId(null)
-    setPendingVoidPaymentId(null)
-    setVoidReason('')
   }
   const shellStatusClass = statusBadgeClass
 
