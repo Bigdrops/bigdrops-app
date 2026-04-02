@@ -54,10 +54,10 @@ import AttachExistingDocumentSheet from '@/components/document/AttachExistingDoc
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import InvoiceActionsSheet from '@/components/invoice/InvoiceActionsSheet'
 import RevertInvoiceDialog from '@/components/invoice/RevertInvoiceDialog'
+import InvoicePaymentSection from '@/components/invoice/InvoicePaymentSection'
+import VoidPaymentDialog from '@/components/invoice/VoidPaymentDialog'
 import { getInvoiceDetailActionDefs } from '@/domain/invoice/actions'
 import { Card, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
@@ -950,39 +950,15 @@ export default function ViewInvoice() {
           </Card>
         </DocumentSection>
 
-        <DocumentSection title="Payment History">
-          <Card className="rounded-[24px] border-border shadow-sm">
-            <CardContent className="space-y-3 p-4">
-              {paymentHistory.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-6 text-sm text-muted-foreground">
-                  No payments recorded yet.
-                </div>
-              ) : (
-                paymentHistory.map((payment) => (
-                  <div key={payment.id} className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
-                    <div className={payment.voided_at ? 'line-through text-slate-400' : ''}>
-                      <div className="text-sm font-bold text-foreground">{formatMoney(payment.total)}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatDate(payment.date)} · {payment.method || 'Payment'}
-                        {payment.reference ? ` · ${payment.reference}` : ''}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className={`text-xs font-bold ${payment.runningBalance > 0 ? 'text-red-600' : 'text-emerald-600'} ${payment.voided_at ? 'line-through text-slate-400' : ''}`}>
-                        {formatMoney(payment.runningBalance)}
-                      </div>
-                      {isAdmin && !payment.voided_at ? (
-                        <Button type="button" variant="outline" size="sm" disabled={voidingPaymentId === payment.id} onClick={() => handleVoidPayment(payment.id)}>
-                          {voidingPaymentId === payment.id ? 'Voiding...' : 'Void'}
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </DocumentSection>
+        <InvoicePaymentSection
+          variant="simple"
+          paymentHistory={paymentHistory}
+          formatMoney={formatMoney}
+          formatDate={formatDate}
+          isAdmin={isAdmin}
+          voidingPaymentId={voidingPaymentId}
+          onVoidPayment={handleVoidPayment}
+        />
 
         <InvoiceActionsSheet
           open={showMore}
@@ -1031,21 +1007,15 @@ export default function ViewInvoice() {
           onConfirm={() => void handleConvertToQuote()}
         />
 
-        <Dialog open={showVoidDialog} onOpenChange={setShowVoidDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Void payment</DialogTitle>
-              <DialogDescription>Enter a reason for voiding this payment:</DialogDescription>
-            </DialogHeader>
-            <Input value={voidReason} onChange={(e) => setVoidReason(e.target.value)} placeholder="Reason for voiding" autoFocus />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowVoidDialog(false)}>Cancel</Button>
-              <Button type="button" variant="destructive" disabled={!voidReason.trim() || voidingPaymentId !== null} onClick={() => void confirmVoidPayment()}>
-                {voidingPaymentId !== null ? 'Voiding...' : 'Void Payment'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <VoidPaymentDialog
+          open={showVoidDialog}
+          onOpenChange={setShowVoidDialog}
+          reason={voidReason}
+          onReasonChange={setVoidReason}
+          submitting={voidingPaymentId !== null}
+          onConfirm={() => void confirmVoidPayment()}
+          onCancel={() => setShowVoidDialog(false)}
+        />
 
         <LinkedDocumentsSheet
           open={showLinkedDocuments}
@@ -1621,97 +1591,22 @@ export default function ViewInvoice() {
             </div>
           </div>
 
-          <Card className="mb-6 border-border shadow-none">
-            <CardContent className="space-y-4 p-4">
-              <div className="grid gap-3 sm:grid-cols-4">
-                <div className="rounded-xl border border-border bg-muted/50 p-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Invoice Total</div>
-                  <div className="mt-1 text-sm font-bold text-foreground">{formatMoney(invoiceTotal)}</div>
-                </div>
-                <div className="rounded-xl border border-border bg-muted/50 p-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Cash Received</div>
-                  <div className="mt-1 text-sm font-bold text-foreground">{formatMoney(cashReceived)}</div>
-                </div>
-                <div className="rounded-xl border border-border bg-muted/50 p-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Balance Due</div>
-                  <div className={`mt-1 text-sm font-bold ${balanceDue > 0 ? 'text-red-600' : 'text-emerald-600'}`}>{formatMoney(balanceDue)}</div>
-                </div>
-                <div className="rounded-xl border border-border bg-muted/50 p-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Status</div>
-                  <div className="mt-2">
-                    <Badge className={`capitalize ${statusBadgeClass}`}>{String(computedStatus).replace(/_/g, ' ')}</Badge>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-sm font-semibold text-foreground">Payment History</div>
-                  <div className="text-xs text-muted-foreground">Running balance reflects non-voided settlements in date order.</div>
-                </div>
-                {computedStatus !== 'paid' ? (
-                  <Button type="button" size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => setShowPaymentModal(true)}>
-                    Record Payment
-                  </Button>
-                ) : null}
-              </div>
-
-              {paymentHistory.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border bg-muted/50 px-4 py-6 text-sm text-muted-foreground">
-                  No payments recorded yet.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Method</TableHead>
-                        <TableHead>Reference</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                        <TableHead className="text-right">Settlement</TableHead>
-                        <TableHead className="text-right">Balance</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paymentHistory.map((payment) => {
-                        const rowClassName = payment.voided_at ? 'line-through text-slate-400' : ''
-                        return (
-                          <TableRow key={payment.id}>
-                            <TableCell className={rowClassName}>
-                              <div className="flex items-center gap-2">
-                                <span>{formatDate(payment.date)}</span>
-                                {payment.voided_at ? <Badge variant="outline">Voided</Badge> : null}
-                              </div>
-                            </TableCell>
-                            <TableCell className={rowClassName}>{payment.method || '-'}</TableCell>
-                            <TableCell className={rowClassName}>{payment.reference || '-'}</TableCell>
-                            <TableCell className={`text-right ${rowClassName}`}>{formatMoney(payment.total)}</TableCell>
-                            <TableCell className={`text-right font-semibold ${rowClassName}`}>{formatMoney(payment.total)}</TableCell>
-                            <TableCell className={`text-right font-semibold ${payment.runningBalance > 0 ? 'text-red-600' : 'text-emerald-600'} ${rowClassName}`}>{formatMoney(payment.runningBalance)}</TableCell>
-                            <TableCell className="text-right">
-                              {isAdmin && !payment.voided_at ? (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={voidingPaymentId === payment.id}
-                                  onClick={() => handleVoidPayment(payment.id)}
-                                >
-                                  {voidingPaymentId === payment.id ? 'Voiding...' : 'Void'}
-                                </Button>
-                              ) : null}
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <InvoicePaymentSection
+            variant="detailed"
+            paymentHistory={paymentHistory}
+            formatMoney={formatMoney}
+            formatDate={formatDate}
+            isAdmin={isAdmin}
+            voidingPaymentId={voidingPaymentId}
+            onVoidPayment={handleVoidPayment}
+            onRecordPayment={() => setShowPaymentModal(true)}
+            showRecordPaymentButton={computedStatus !== 'paid'}
+            invoiceTotal={invoiceTotal}
+            cashReceived={cashReceived}
+            balanceDue={balanceDue}
+            computedStatus={computedStatus}
+            statusBadgeClass={statusBadgeClass}
+          />
 
           {invoice.amount_in_words && (
             <div
@@ -1883,26 +1778,15 @@ export default function ViewInvoice() {
           onConfirm={() => void confirmArchive()}
         />
 
-        <Dialog open={showVoidDialog} onOpenChange={setShowVoidDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Void payment</DialogTitle>
-              <DialogDescription>Enter a reason for voiding this payment:</DialogDescription>
-            </DialogHeader>
-            <Input
-              value={voidReason}
-              onChange={(e) => setVoidReason(e.target.value)}
-              placeholder="Reason for voiding"
-              autoFocus
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowVoidDialog(false)}>Cancel</Button>
-              <Button type="button" variant="destructive" disabled={!voidReason.trim() || voidingPaymentId !== null} onClick={() => void confirmVoidPayment()}>
-                {voidingPaymentId !== null ? 'Voiding...' : 'Void Payment'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <VoidPaymentDialog
+          open={showVoidDialog}
+          onOpenChange={setShowVoidDialog}
+          reason={voidReason}
+          onReasonChange={setVoidReason}
+          submitting={voidingPaymentId !== null}
+          onConfirm={() => void confirmVoidPayment()}
+          onCancel={() => setShowVoidDialog(false)}
+        />
       </div>
     </Layout>
   )
