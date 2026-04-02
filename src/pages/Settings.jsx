@@ -15,7 +15,7 @@ import {
   Building2, CreditCard, ImageIcon, FileText,
   Shield, Check, Loader2, ChevronRight, Upload, X,
   Pencil, Plus, UserCheck, UserX, Trash2, Smartphone, LayoutDashboard,
-  ArchiveRestore, ClipboardList
+  ArchiveRestore, ClipboardList, FolderKanban
 } from 'lucide-react'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']

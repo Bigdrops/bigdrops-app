@@ -9,8 +9,10 @@ import OfflineAccessBlocked from '@/components/app/OfflineAccessBlocked'
 import SplashOverlay from '@/components/app/SplashOverlay'
 import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
 import { isInvalidSessionError } from '@/auth/sessionErrors'
+import { canUseNativeSqlite } from '@/lib/native/capacitor'
 import { hydrateLocalDeviceProfile } from '@/lib/native/deviceHydration'
 import { getOfflineAccessState } from '@/lib/native/offlineAccess'
+import { processNextPendingWaybillCreate } from '@/lib/native/waybillSync'
 
 const Login = lazy(() => import('./pages/Login'))
 const PendingApproval = lazy(() => import('./pages/PendingApproval'))
@@ -57,6 +59,7 @@ function App() {
   const lastRecoveryAtRef = useRef(0)
   const profileRef = useRef(null)
   const sessionRef = useRef(null)
+  const waybillSyncingRef = useRef(false)
 
   const { runLatest: runLatestProfileTask, cancel: cancelProfileTask } = useSafeAsyncTask()
 
@@ -128,6 +131,40 @@ function App() {
       }
       setOfflineAccessState(fallbackAccessState)
       return fallbackAccessState
+    }
+  }
+
+  const processOnePendingWaybillCreateSync = async (reason) => {
+    if (!canUseNativeSqlite()) return
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return
+    if (waybillSyncingRef.current) return
+
+    waybillSyncingRef.current = true
+
+    try {
+      const result = await processNextPendingWaybillCreate()
+
+      if (result.status === 'synced') {
+        debugAuth('waybillSync:oneShotSynced', {
+          reason,
+          queueItemId: result.queueItemId || null,
+          localWaybillId: result.localWaybillId || null,
+          remoteWaybillId: result.remoteWaybillId || null,
+        })
+      }
+
+      if (result.status === 'failed') {
+        console.warn('One-shot waybill sync failed:', {
+          reason,
+          queueItemId: result.queueItemId || null,
+          localWaybillId: result.localWaybillId || null,
+          error: result.error || null,
+        })
+      }
+    } catch (error) {
+      console.warn(`One-shot waybill sync crashed during ${reason}:`, error)
+    } finally {
+      waybillSyncingRef.current = false
     }
   }
 
@@ -411,6 +448,8 @@ function App() {
           setProfile(null)
           setResolvedProfileUserId(null)
         }
+
+        await processOnePendingWaybillCreateSync('app bootstrap')
       } finally {
         if (isActive) {
           setAuthLoading(false)
@@ -450,7 +489,9 @@ function App() {
       if (!hiddenAtRef.current) return
       void refreshOfflineAccessState().then((nextAccessState) => {
         if (nextAccessState.allowed) {
-          void recoverAppState('visibility')
+          void recoverAppState('visibility').then(() => {
+            void processOnePendingWaybillCreateSync('visibility')
+          })
         }
       })
     }
@@ -458,7 +499,9 @@ function App() {
     const handleOnline = () => {
       void refreshOfflineAccessState().then((nextAccessState) => {
         if (nextAccessState.allowed) {
-          void recoverAppState('online', { force: true })
+          void recoverAppState('online', { force: true }).then(() => {
+            void processOnePendingWaybillCreateSync('online')
+          })
         }
       })
     }

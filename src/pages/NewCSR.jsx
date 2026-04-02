@@ -15,6 +15,8 @@ import {
   serializeCsrMaterials,
 } from '../components/csr/csrUtils'
 import { getCsrPdfDocument } from '../components/csr/CSRPreviewTemplates'
+import { canUseNativeSqlite } from '../lib/native/capacitor'
+import { createOfflineCsrDraft, peekNextOfflineCsrNumber } from '../lib/native/csrOffline'
 
 const EMPTY_BRANDING = {
   companyName: '',
@@ -25,6 +27,9 @@ const EMPTY_BRANDING = {
 
 const hasInvoicePrefillDetails = (invoice) =>
   Boolean(invoice?.invoiceNumber || invoice?.clientId || invoice?.clientName || invoice?.poNumber)
+
+const canUseOfflineCsrDrafts = () =>
+  canUseNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine === false
 
 export default function NewCSR() {
   const navigate = useNavigate()
@@ -43,6 +48,22 @@ export default function NewCSR() {
     let mounted = true
 
     const load = async () => {
+      if (canUseOfflineCsrDrafts()) {
+        try {
+          const nextNumber = await peekNextOfflineCsrNumber()
+          if (mounted) {
+            setCsr((current) => ({
+              ...current,
+              csr_number: current.csr_number || nextNumber,
+              status: isField ? 'Field Entry Pending' : current.status,
+            }))
+          }
+        } catch (error) {
+          console.warn('Failed to prepare offline CSR number', error)
+        }
+        return
+      }
+
       const { data: latestRows } = await supabase
         .from('csrs')
         .select('csr_number')
@@ -152,6 +173,28 @@ export default function NewCSR() {
       linked_invoice_id: csr.linked_invoice_id || null,
       show_po: Boolean(String(csr.po_number || '').trim()),
       materials_used: serializeCsrMaterials(materialsRows, csrMeta),
+    }
+
+    if (canUseOfflineCsrDrafts()) {
+      setSaving(true)
+      try {
+        const savedDraft = await createOfflineCsrDraft(csrData)
+        setCsr((current) => ({ ...current, csr_number: savedDraft.csrNumber }))
+        toast({
+          title: 'Saved offline',
+          description: 'CSR draft saved on this device and queued for sync when you are back online.',
+        })
+        navigate('/csr')
+      } catch (error) {
+        toast({
+          title: 'Offline save failed',
+          description: error instanceof Error ? error.message : 'Could not save this CSR offline.',
+          variant: 'destructive',
+        })
+      } finally {
+        setSaving(false)
+      }
+      return
     }
 
     const { data: existing } = await supabase.from('csrs').select('id').eq('csr_number', csrData.csr_number)
