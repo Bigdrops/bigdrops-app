@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Plus, Trash2, Truck, Workflow } from 'lucide-react'
+import { Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, Pencil, Plus, RefreshCw, Trash2, Truck, Workflow } from 'lucide-react'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -14,13 +14,22 @@ import AttachExistingDocumentSheet from '@/components/document/AttachExistingDoc
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
+import { Button } from '@/components/ui/button'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 import { fetchInvoiceSummary, fetchProjectSummary } from '@/domain/documentRelationships'
+import { useToast } from '@/hooks/use-toast'
+import { canUseNativeSqlite } from '@/lib/native/capacitor'
+import {
+  listPendingOrFailedWaybillCreateQueueItems,
+  processWaybillCreateQueueItem,
+  type WaybillCreateQueueItem,
+} from '@/lib/native/waybillSync'
 
 type FilterTab = 'all' | 'internal' | 'external'
 
 export default function Waybills() {
   const navigate = useNavigate()
+  const { toast } = useToast()
   const [waybills, setWaybills] = useState<Waybill[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -32,6 +41,10 @@ export default function Waybills() {
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const [showAttachInvoice, setShowAttachInvoice] = useState(false)
   const [pendingAttachInvoice, setPendingAttachInvoice] = useState<{ id: string; invoice_number?: string | null } | null>(null)
+  const [syncQueueItems, setSyncQueueItems] = useState<WaybillCreateQueueItem[]>([])
+  const [syncQueueLoading, setSyncQueueLoading] = useState(() => canUseNativeSqlite())
+  const [retryingQueueItemId, setRetryingQueueItemId] = useState<string | null>(null)
+  const showWaybillSyncRecovery = useMemo(() => canUseNativeSqlite(), [])
 
   const loadWaybills = async () => {
     const { data } = await supabase
@@ -43,9 +56,19 @@ export default function Waybills() {
     setLoading(false)
   }
 
+  const loadWaybillSyncQueue = async () => {
+    if (!showWaybillSyncRecovery) return
+
+    setSyncQueueLoading(true)
+    const items = await listPendingOrFailedWaybillCreateQueueItems()
+    setSyncQueueItems(items)
+    setSyncQueueLoading(false)
+  }
+
   useEffect(() => {
     const timer = setTimeout(() => {
       void loadWaybills()
+      void loadWaybillSyncQueue()
     }, 0)
     return () => clearTimeout(timer)
   }, [])
@@ -106,6 +129,34 @@ export default function Waybills() {
     await supabase.from('waybills').delete().eq('id', activeWaybill.id)
     setWaybills((prev) => prev.filter((w) => w.id !== activeWaybill.id))
     setActiveWaybill(null)
+  }
+
+  const handleRetryQueueItem = async (queueItemId: string) => {
+    setRetryingQueueItemId(queueItemId)
+
+    const result = await processWaybillCreateQueueItem(queueItemId)
+
+    if (result.status === 'synced') {
+      toast({
+        title: 'Waybill synced',
+        description: 'The offline waybill was uploaded successfully.',
+      })
+      await Promise.all([loadWaybills(), loadWaybillSyncQueue()])
+    } else if (result.status === 'failed') {
+      toast({
+        title: 'Retry failed',
+        description: result.error || 'Unable to sync this waybill right now.',
+        variant: 'destructive',
+      })
+      await loadWaybillSyncQueue()
+    } else {
+      toast({
+        title: 'Retry skipped',
+        description: 'Connect to the internet before retrying this waybill sync.',
+      })
+    }
+
+    setRetryingQueueItemId(null)
   }
 
   const waybillProjectState = getProjectActionState({ projectId: activeWaybill?.project_id, project: activeWaybillProject })
@@ -190,6 +241,95 @@ export default function Waybills() {
           searchPlaceholder="Search waybills..."
           segmentedControl={<MobileSegmentedControl options={tabs} value={tab} onChange={(value) => setTab(value as FilterTab)} />}
       >
+        {showWaybillSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
+          <div className="mb-4 rounded-[22px] border border-amber-200 bg-amber-50/60 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
+                  Offline sync recovery
+                </div>
+                <div className="mt-1 text-sm text-slate-700">
+                  Retry pending or failed waybill uploads from this device.
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-lg"
+                onClick={loadWaybillSyncQueue}
+                disabled={syncQueueLoading || retryingQueueItemId != null}
+                className="h-10 w-10 rounded-2xl border-amber-200 bg-white text-amber-700 hover:bg-amber-100"
+                aria-label="Refresh waybill sync queue"
+              >
+                {syncQueueLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+
+            {syncQueueItems.length > 0 ? (
+              <div className="mt-4 space-y-2">
+                {syncQueueItems.map((item) => {
+                  const isRetrying = retryingQueueItemId === item.id
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-2xl border border-amber-200 bg-white p-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="truncate text-sm font-bold text-slate-900">
+                              {item.waybillNumber || item.localWaybillId || `Queue #${item.id}`}
+                            </div>
+                            <span
+                              className={`inline-flex h-6 items-center rounded-full px-2 text-[10px] font-black uppercase tracking-[0.12em] ${
+                                item.status === 'failed'
+                                  ? 'bg-red-50 text-red-700'
+                                  : 'bg-amber-100 text-amber-700'
+                              }`}
+                            >
+                              {item.status}
+                            </span>
+                          </div>
+
+                          <div className="mt-1 truncate text-xs text-muted-foreground">
+                            {item.clientName || 'No client / internal movement'} · Attempts {item.attempts}
+                          </div>
+
+                          {item.error ? (
+                            <div className="mt-2 text-xs leading-5 text-red-600">
+                              {item.error}
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRetryQueueItem(item.id)}
+                          disabled={retryingQueueItemId != null}
+                          className="h-9 rounded-xl border-amber-200 bg-white px-3 text-xs font-bold text-amber-700 hover:bg-amber-50"
+                        >
+                          {isRetrying ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          )}
+                          Retry
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {loading ? (
           <div className="rounded-[22px] border border-slate-200 bg-white px-5 py-16 text-center text-sm text-muted-foreground">Loading…</div>

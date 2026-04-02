@@ -19,7 +19,10 @@ type WaybillCreateQueuePayload = {
 type PendingWaybillQueueRow = {
   id: number;
   payload: string | null;
+  status: string;
   attempts: number;
+  created_at: string;
+  updated_at: string;
 };
 
 type LocalWaybillRow = {
@@ -53,6 +56,18 @@ type WaybillSyncResult = {
   localWaybillId?: string;
   remoteWaybillId?: string;
   error?: string;
+};
+
+export type WaybillCreateQueueItem = {
+  id: string;
+  status: "pending" | "failed";
+  attempts: number;
+  localWaybillId?: string;
+  waybillNumber?: string;
+  clientName?: string;
+  error?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 function isOnline(): boolean {
@@ -97,43 +112,9 @@ async function updateQueueStatus(
   );
 }
 
-async function updateLocalWaybillStatus(
-  localWaybillId: string,
-  syncStatus: "synced" | "failed",
-): Promise<void> {
-  await run(
-    `
-      UPDATE waybills_local
-      SET sync_status = ?, updated_at = ?
-      WHERE id = ?;
-    `,
-    [syncStatus, new Date().toISOString(), localWaybillId],
-  );
-}
-
-export async function processNextPendingWaybillCreate(): Promise<WaybillSyncResult> {
-  if (!canUseNativeSqlite() || !isOnline()) {
-    return { status: "skipped" };
-  }
-
-  await bootstrapAppStorage();
-  await bootstrapWaybillOffline();
-
-  const queueRows = await query<PendingWaybillQueueRow>(
-    `
-      SELECT id, payload, attempts
-      FROM sync_queue
-      WHERE status = 'pending' AND queue_key = 'waybill.create'
-      ORDER BY created_at ASC, id ASC
-      LIMIT 1;
-    `,
-  );
-
-  const queueRow = queueRows[0];
-  if (!queueRow) {
-    return { status: "skipped" };
-  }
-
+async function processWaybillCreateQueueRow(
+  queueRow: PendingWaybillQueueRow,
+): Promise<WaybillSyncResult> {
   const queuePayload = parseQueuePayload(queueRow.payload);
   const localWaybillId = queuePayload.localId;
 
@@ -264,4 +245,149 @@ export async function processNextPendingWaybillCreate(): Promise<WaybillSyncResu
       error,
     };
   }
+}
+
+async function updateLocalWaybillStatus(
+  localWaybillId: string,
+  syncStatus: "synced" | "failed",
+): Promise<void> {
+  await run(
+    `
+      UPDATE waybills_local
+      SET sync_status = ?, updated_at = ?
+      WHERE id = ?;
+    `,
+    [syncStatus, new Date().toISOString(), localWaybillId],
+  );
+}
+
+export async function processNextPendingWaybillCreate(): Promise<WaybillSyncResult> {
+  if (!canUseNativeSqlite() || !isOnline()) {
+    return { status: "skipped" };
+  }
+
+  await bootstrapAppStorage();
+  await bootstrapWaybillOffline();
+
+  const queueRows = await query<PendingWaybillQueueRow>(
+    `
+      SELECT id, payload, status, attempts, created_at, updated_at
+      FROM sync_queue
+      WHERE status = 'pending' AND queue_key = 'waybill.create'
+      ORDER BY created_at ASC, id ASC
+      LIMIT 1;
+    `,
+  );
+
+  const queueRow = queueRows[0];
+  if (!queueRow) {
+    return { status: "skipped" };
+  }
+
+  return processWaybillCreateQueueRow(queueRow);
+}
+
+export async function processWaybillCreateQueueItem(
+  queueItemId: string,
+): Promise<{
+  status: "synced" | "failed" | "skipped";
+  queueItemId: string;
+  localWaybillId?: string;
+  remoteWaybillId?: string;
+  error?: string;
+}> {
+  if (!canUseNativeSqlite() || !isOnline()) {
+    return { status: "skipped", queueItemId };
+  }
+
+  await bootstrapAppStorage();
+  await bootstrapWaybillOffline();
+
+  const queueRows = await query<PendingWaybillQueueRow>(
+    `
+      SELECT id, payload, status, attempts, created_at, updated_at
+      FROM sync_queue
+      WHERE id = ?
+        AND queue_key = 'waybill.create'
+        AND status IN ('pending', 'failed')
+      LIMIT 1;
+    `,
+    [Number(queueItemId)],
+  );
+
+  const queueRow = queueRows[0];
+  if (!queueRow) {
+    return { status: "skipped", queueItemId };
+  }
+
+  return {
+    queueItemId,
+    ...(await processWaybillCreateQueueRow(queueRow)),
+  };
+}
+
+export async function listPendingOrFailedWaybillCreateQueueItems(): Promise<
+  WaybillCreateQueueItem[]
+> {
+  if (!canUseNativeSqlite()) {
+    return [];
+  }
+
+  await bootstrapAppStorage();
+  await bootstrapWaybillOffline();
+
+  const queueRows = await query<PendingWaybillQueueRow>(
+    `
+      SELECT id, payload, status, attempts, created_at, updated_at
+      FROM sync_queue
+      WHERE queue_key = 'waybill.create'
+        AND status IN ('pending', 'failed')
+      ORDER BY updated_at DESC, id DESC;
+    `,
+  );
+
+  if (queueRows.length === 0) {
+    return [];
+  }
+
+  const parsedRows = queueRows.map((queueRow) => ({
+    queueRow,
+    payload: parseQueuePayload(queueRow.payload),
+  }));
+  const localIds = parsedRows
+    .map((entry) => entry.payload.localId)
+    .filter((localId): localId is string => Boolean(localId));
+
+  const waybillRows = localIds.length
+    ? await query<Pick<LocalWaybillRow, "id" | "waybill_number" | "client_name">>(
+        `
+          SELECT id, waybill_number, client_name
+          FROM waybills_local
+          WHERE id IN (${localIds.map(() => "?").join(", ")});
+        `,
+        localIds,
+      )
+    : [];
+  const waybillLookup = new Map(
+    waybillRows.map((waybillRow) => [waybillRow.id, waybillRow]),
+  );
+
+  return parsedRows.map(({ queueRow, payload }) => {
+    const localWaybill = payload.localId
+      ? waybillLookup.get(payload.localId)
+      : null;
+
+    return {
+      id: String(queueRow.id),
+      status: queueRow.status === "failed" ? "failed" : "pending",
+      attempts: queueRow.attempts,
+      localWaybillId: payload.localId,
+      waybillNumber:
+        localWaybill?.waybill_number || payload.waybillNumber || undefined,
+      clientName: localWaybill?.client_name || undefined,
+      error: payload.error || undefined,
+      createdAt: queueRow.created_at,
+      updatedAt: queueRow.updated_at,
+    };
+  });
 }
