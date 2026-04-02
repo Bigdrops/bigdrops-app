@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ClipboardList, Eye, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Plus, Trash2, Workflow } from "lucide-react"
+import { ClipboardList, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, Pencil, Plus, RefreshCw, Trash2, Workflow } from "lucide-react"
 
 import ConfirmActionDialog from "@/components/ConfirmActionDialog"
 import { supabase } from "../supabase"
@@ -11,10 +11,16 @@ import MobileFab from "../components/layout/MobileFab"
 import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
 import AttachExistingDocumentSheet from "@/components/document/AttachExistingDocumentSheet"
 import ProjectLinkDialog from "@/components/document/ProjectLinkDialog"
+import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
 import { getDocumentActionState, getProjectActionState } from "@/domain/document/documentActionState"
 import { fetchInvoiceSummary, fetchProjectSummary } from "@/domain/documentRelationships"
+import { canUseNativeSqlite } from "@/lib/native/capacitor"
+import {
+  listPendingOrFailedCsrCreateQueueItems,
+  processCsrCreateQueueItem,
+} from "@/lib/native/csrSync"
 
 function normalizeStatus(status) {
   return (status || "").trim().toLowerCase()
@@ -39,6 +45,10 @@ export default function CSR() {
   const [activeCsrProject, setActiveCsrProject] = useState(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
+  const [syncQueueItems, setSyncQueueItems] = useState([])
+  const [syncQueueLoading, setSyncQueueLoading] = useState(() => canUseNativeSqlite())
+  const [retryingQueueItemId, setRetryingQueueItemId] = useState(null)
+  const showCsrSyncRecovery = useMemo(() => canUseNativeSqlite(), [])
 
   const fetchCsrs = async () => {
     setLoading(true)
@@ -52,9 +62,19 @@ export default function CSR() {
     setLoading(false)
   }
 
+  const loadCsrSyncQueue = async () => {
+    if (!showCsrSyncRecovery) return
+
+    setSyncQueueLoading(true)
+    const items = await listPendingOrFailedCsrCreateQueueItems()
+    setSyncQueueItems(items)
+    setSyncQueueLoading(false)
+  }
+
   useEffect(() => {
     const timer = setTimeout(() => {
       void fetchCsrs()
+      void loadCsrSyncQueue()
     }, 0)
 
     return () => clearTimeout(timer)
@@ -241,6 +261,34 @@ export default function CSR() {
     await fetchCsrs()
   }
 
+  const handleRetryQueueItem = async (queueItemId) => {
+    setRetryingQueueItemId(queueItemId)
+
+    const result = await processCsrCreateQueueItem(queueItemId)
+
+    if (result.status === "synced") {
+      toast({
+        title: "CSR synced",
+        description: "The offline CSR was uploaded successfully.",
+      })
+      await Promise.all([fetchCsrs(), loadCsrSyncQueue()])
+    } else if (result.status === "failed") {
+      toast({
+        title: "Retry failed",
+        description: result.error || "Unable to sync this CSR right now.",
+        variant: "destructive",
+      })
+      await loadCsrSyncQueue()
+    } else {
+      toast({
+        title: "Retry skipped",
+        description: "Connect to the internet before retrying this CSR sync.",
+      })
+    }
+
+    setRetryingQueueItemId(null)
+  }
+
   const filterSelectClass = "h-10 rounded-[14px] border border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 outline-none"
   const hasActiveFilters =
     !!search || clientFilter !== "All" || statusFilter !== "All" || dateFilter !== "All Time"
@@ -306,6 +354,96 @@ export default function CSR() {
             </div>
           ) : null}
       >
+        {showCsrSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
+          <div className="mb-4 rounded-[22px] border border-amber-200 bg-amber-50/60 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
+                  Offline sync recovery
+                </div>
+                <div className="mt-1 text-sm text-slate-700">
+                  Retry pending or failed CSR uploads from this device.
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-lg"
+                onClick={loadCsrSyncQueue}
+                disabled={syncQueueLoading || retryingQueueItemId != null}
+                className="h-10 w-10 rounded-2xl border-amber-200 bg-white text-amber-700 hover:bg-amber-100"
+                aria-label="Refresh CSR sync queue"
+              >
+                {syncQueueLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+
+            {syncQueueItems.length > 0 ? (
+              <div className="mt-4 space-y-2">
+                {syncQueueItems.map((item) => {
+                  const isRetrying = retryingQueueItemId === item.id
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-2xl border border-amber-200 bg-white p-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="truncate text-sm font-bold text-slate-900">
+                              {item.csrNumber || item.localCsrId || `Queue #${item.id}`}
+                            </div>
+                            <span
+                              className={`inline-flex h-6 items-center rounded-full px-2 text-[10px] font-black uppercase tracking-[0.12em] ${
+                                item.status === "failed"
+                                  ? "bg-red-50 text-red-700"
+                                  : "bg-amber-100 text-amber-700"
+                              }`}
+                            >
+                              {item.status}
+                            </span>
+                          </div>
+
+                          <div className="mt-1 truncate text-xs text-muted-foreground">
+                            {item.clientName || "No client"} · Attempts {item.attempts}
+                          </div>
+
+                          {item.error ? (
+                            <div className="mt-2 text-xs leading-5 text-red-600">
+                              {item.error}
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRetryQueueItem(item.id)}
+                          disabled={retryingQueueItemId != null}
+                          className="h-9 rounded-xl border-amber-200 bg-white px-3 text-xs font-bold text-amber-700 hover:bg-amber-50"
+                        >
+                          {isRetrying ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          )}
+                          Retry
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
 
         {loading ? (
           <div className="rounded-[22px] border border-slate-200 bg-white px-5 py-16 text-center text-sm text-muted-foreground">

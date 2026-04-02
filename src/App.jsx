@@ -10,6 +10,7 @@ import SplashOverlay from '@/components/app/SplashOverlay'
 import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
 import { isInvalidSessionError } from '@/auth/sessionErrors'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
+import { processNextPendingCsrCreate } from '@/lib/native/csrSync'
 import { hydrateLocalDeviceProfile } from '@/lib/native/deviceHydration'
 import { getOfflineAccessState } from '@/lib/native/offlineAccess'
 import { processNextPendingWaybillCreate } from '@/lib/native/waybillSync'
@@ -60,6 +61,7 @@ function App() {
   const profileRef = useRef(null)
   const sessionRef = useRef(null)
   const waybillSyncingRef = useRef(false)
+  const csrSyncingRef = useRef(false)
 
   const { runLatest: runLatestProfileTask, cancel: cancelProfileTask } = useSafeAsyncTask()
 
@@ -165,6 +167,40 @@ function App() {
       console.warn(`One-shot waybill sync crashed during ${reason}:`, error)
     } finally {
       waybillSyncingRef.current = false
+    }
+  }
+
+  const processOnePendingCsrCreateSync = async (reason) => {
+    if (!canUseNativeSqlite()) return
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return
+    if (csrSyncingRef.current) return
+
+    csrSyncingRef.current = true
+
+    try {
+      const result = await processNextPendingCsrCreate()
+
+      if (result.status === 'synced') {
+        debugAuth('csrSync:oneShotSynced', {
+          reason,
+          queueItemId: result.queueItemId || null,
+          localCsrId: result.localCsrId || null,
+          remoteCsrId: result.remoteCsrId || null,
+        })
+      }
+
+      if (result.status === 'failed') {
+        console.warn('One-shot CSR sync failed:', {
+          reason,
+          queueItemId: result.queueItemId || null,
+          localCsrId: result.localCsrId || null,
+          error: result.error || null,
+        })
+      }
+    } catch (error) {
+      console.warn(`One-shot CSR sync crashed during ${reason}:`, error)
+    } finally {
+      csrSyncingRef.current = false
     }
   }
 
@@ -450,6 +486,7 @@ function App() {
         }
 
         await processOnePendingWaybillCreateSync('app bootstrap')
+        await processOnePendingCsrCreateSync('app bootstrap')
       } finally {
         if (isActive) {
           setAuthLoading(false)
@@ -491,6 +528,7 @@ function App() {
         if (nextAccessState.allowed) {
           void recoverAppState('visibility').then(() => {
             void processOnePendingWaybillCreateSync('visibility')
+            void processOnePendingCsrCreateSync('visibility')
           })
         }
       })
@@ -501,6 +539,7 @@ function App() {
         if (nextAccessState.allowed) {
           void recoverAppState('online', { force: true }).then(() => {
             void processOnePendingWaybillCreateSync('online')
+            void processOnePendingCsrCreateSync('online')
           })
         }
       })
