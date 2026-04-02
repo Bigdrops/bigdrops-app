@@ -53,6 +53,7 @@ import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import InvoiceActionsSheet from '@/components/invoice/InvoiceActionsSheet'
 import RevertInvoiceDialog from '@/components/invoice/RevertInvoiceDialog'
+import { getInvoiceDetailActionDefs } from '@/domain/invoice/actions'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -150,6 +151,48 @@ export default function ViewInvoice() {
     projectActionLabel,
     documentActionLabel,
   } = viewModel
+
+  const detailActionDefs = getInvoiceDetailActionDefs({
+    invoiceNumber: invoice.invoice_number || '',
+    projectActionLabel,
+    projectActionSubtitle: hasProject ? (linkedProject?.name || 'Open the linked project workspace') : 'Attach this invoice to a project',
+    hasProject,
+    documentActionLabel,
+    documentActionSubtitle: hasLinkedDocuments ? 'View source, generated, and related records' : 'Connect this invoice to related records',
+    hasLinkedDocuments,
+    canRecordPayment,
+    reverting: converting,
+    showMarkSent: invoice.status === 'draft',
+  })
+
+  const detailActionHandlers = {
+    project: () => {
+      setShowMore(false)
+      invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectLinkDialog(true)
+    },
+    documents: () => {
+      setShowMore(false)
+      setShowLinkedDocuments(true)
+    },
+    payment: () => {
+      setShowMore(false)
+      setShowPaymentModal(true)
+    },
+    export: handleDownloadCsv,
+    'copy-number': () => { void handleCopy(invoice.invoice_number || '', 'Invoice number') },
+    clone: handleClone,
+    revert: openRevertConfirm,
+    'generate-csr': handleGenerateCsr,
+    'generate-waybill': handleGenerateWaybill,
+    'mark-sent': handleMarkSent,
+    archive: handleArchive,
+    delete: handleDelete,
+  }
+
+  const detailActions = detailActionDefs.map((action) => ({
+    ...action,
+    onClick: detailActionHandlers[action.key],
+  }))
   const linkedDocumentsSections = [
     {
       key: 'source',
@@ -909,36 +952,7 @@ export default function ViewInvoice() {
           open={showMore}
           onOpenChange={setShowMore}
           invoiceNumber={invoice.invoice_number}
-          projectActionLabel={projectActionLabel}
-          projectActionSubtitle={hasProject ? (linkedProject?.name || 'Open the linked project workspace') : 'Attach this invoice to a project'}
-          onProjectAction={() => {
-            setShowMore(false)
-            invoice.project_id ? navigate(`/projects/${invoice.project_id}`) : setShowProjectLinkDialog(true)
-          }}
-          documentActionLabel={documentActionLabel}
-          documentActionSubtitle={hasLinkedDocuments ? 'View source, generated, and related records' : 'Connect this invoice to related records'}
-          onLinkedDocumentsAction={() => {
-            setShowMore(false)
-            setShowLinkedDocuments(true)
-          }}
-          showRecordPayment={canRecordPayment}
-          onRecordPayment={() => {
-            setShowMore(false)
-            setShowPaymentModal(true)
-          }}
-          onExportCsv={handleDownloadCsv}
-          onCopyInvoiceNumber={() => { void handleCopy(invoice.invoice_number || '', 'Invoice number') }}
-          onCloneInvoice={handleClone}
-          onRevertToQuotation={openRevertConfirm}
-          reverting={converting}
-          onGenerateCsr={handleGenerateCsr}
-          onGenerateWaybill={handleGenerateWaybill}
-          showMarkSent={invoice.status === 'draft'}
-          onMarkSent={handleMarkSent}
-          onArchiveInvoice={handleArchive}
-          onDeleteInvoice={handleDelete}
-          hasProject={hasProject}
-          hasLinkedDocuments={hasLinkedDocuments}
+          actions={detailActions}
         />
 
         <DocumentPdfSheet

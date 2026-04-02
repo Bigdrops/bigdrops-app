@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Eye, Pencil, Copy, DollarSign, Send, Archive, Trash2, FileOutput, Truck, Wrench, FolderOpen, FolderPlus, GitBranchPlus, Workflow } from "lucide-react"
+import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Send, Trash2, Truck, Wrench, Workflow } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
@@ -12,6 +12,7 @@ import ConfirmActionDialog from "../components/ConfirmActionDialog"
 import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
 import ProjectLinkDialog from "@/components/document/ProjectLinkDialog"
 import { getDocumentActionState, getProjectActionState } from "@/domain/document/documentActionState"
+import { getInvoiceListActionDefs, getInvoiceListDeleteActionDef } from "@/domain/invoice/actions"
 import { fetchInvoiceChildDocuments, fetchProjectSummary, getInvoiceSourceDocument } from "@/domain/documentRelationships"
 
 const PAGE_SIZE = 25
@@ -465,37 +466,68 @@ export default function Invoices() {
         eyebrow={activeInvoice ? `Invoice ${activeInvoice.invoice_number}` : "Invoice"}
         title={activeInvoice?.client_name || "No client"}
         amount={activeInvoice ? `₦${Number(activeInvoice.total || 0).toLocaleString()}` : null}
-        actions={activeInvoice ? [
-          { key: "view", label: "View", icon: <Eye className="h-6 w-6" />, onClick: handleView },
-          { key: "edit", label: "Edit", icon: <Pencil className="h-6 w-6" />, onClick: handleEdit },
-          {
-            key: "project",
-            label: invoiceProjectState.label,
-            icon: invoiceProjectState.hasProject ? <FolderOpen className="h-6 w-6" /> : <FolderPlus className="h-6 w-6" />,
-            onClick: () => {
+        actions={activeInvoice ? (() => {
+          const actionDefs = getInvoiceListActionDefs({
+            projectActionLabel: invoiceProjectState.label,
+            hasProject: invoiceProjectState.hasProject,
+            documentActionLabel: invoiceDocumentState.label,
+            hasLinkedDocuments: invoiceDocumentState.hasLinkedDocuments,
+            isPaid: activeInvoice.status === "paid",
+            isStandalone,
+            showMarkSent: activeInvoice.status === "draft",
+          })
+
+          const iconMap = {
+            eye: <Eye className="h-6 w-6" />,
+            pencil: <Pencil className="h-6 w-6" />,
+            folderOpen: <FolderOpen className="h-6 w-6" />,
+            folderPlus: <FolderPlus className="h-6 w-6" />,
+            workflow: <Workflow className="h-6 w-6" />,
+            gitBranchPlus: <GitBranchPlus className="h-6 w-6" />,
+            dollarSign: <DollarSign className="h-6 w-6" />,
+            copy: <Copy className="h-6 w-6" />,
+            fileOutput: <FileOutput className="h-6 w-6" />,
+            wrench: <Wrench className="h-6 w-6" />,
+            truck: <Truck className="h-6 w-6" />,
+            send: <Send className="h-6 w-6" />,
+            archive: <Archive className="h-6 w-6" />,
+            trash: <Trash2 className="h-6 w-6" />,
+          }
+
+          const handlers = {
+            view: handleView,
+            edit: handleEdit,
+            project: () => {
               activeInvoice.project_id ? navigate(`/projects/${activeInvoice.project_id}`) : setShowProjectLinkDialog(true)
             },
-            closeOnClick: invoiceProjectState.hasProject,
-          },
-          {
-            key: "documents",
-            label: invoiceDocumentState.label,
-            icon: activeInvoiceHasLinkedDocuments ? <Workflow className="h-6 w-6" /> : <GitBranchPlus className="h-6 w-6" />,
-            onClick: () => {
-              setShowLinkedDocuments(true)
-            },
-            closeOnClick: false,
-          },
-          ...(activeInvoice.status !== "paid" ? [{ key: "payment", label: "Payment", icon: <DollarSign className="h-6 w-6" />, onClick: () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) } }] : []),
-          { key: "clone", label: "Clone", icon: <Copy className="h-6 w-6" />, onClick: handleClone },
-          ...(isStandalone ? [{ key: "advance", label: "Advance", icon: <DollarSign className="h-6 w-6" />, onClick: handleAdvance }] : []),
-          { key: "quote", label: "To Quote", icon: <FileOutput className="h-6 w-6" />, onClick: () => { closeSheet(); toast({ title: "Coming soon", description: "Quotations module coming soon." }) } },
-          { key: "csr", label: "Gen. CSR", icon: <Wrench className="h-6 w-6" />, onClick: () => { closeSheet(); toast({ title: "Coming soon", description: "Coming soon." }) } },
-          { key: "waybill", label: "Waybill", icon: <Truck className="h-6 w-6" />, onClick: () => { closeSheet(); toast({ title: "Coming soon", description: "Coming soon." }) } },
-          ...(activeInvoice.status === "draft" ? [{ key: "mark-sent", label: "Mark Sent", icon: <Send className="h-6 w-6" />, onClick: handleMarkSent }] : []),
-          { key: "archive", label: "Archive", icon: <Archive className="h-6 w-6" />, onClick: () => setShowArchiveWarn(true), closeOnClick: false },
-        ] : []}
-        deleteAction={activeInvoice ? { label: "Delete Invoice", icon: <Trash2 className="h-6 w-6" />, onClick: () => setShowDeleteWarn(true), closeOnClick: false } : undefined}
+            documents: () => setShowLinkedDocuments(true),
+            payment: () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) },
+            clone: handleClone,
+            advance: handleAdvance,
+            quote: () => { closeSheet(); toast({ title: "Coming soon", description: "Quotations module coming soon." }) },
+            csr: () => { closeSheet(); toast({ title: "Coming soon", description: "Coming soon." }) },
+            waybill: () => { closeSheet(); toast({ title: "Coming soon", description: "Coming soon." }) },
+            "mark-sent": handleMarkSent,
+            archive: () => setShowArchiveWarn(true),
+          }
+
+          return actionDefs.map((action) => ({
+            key: action.key,
+            label: action.label,
+            icon: iconMap[action.iconKey],
+            onClick: handlers[action.key],
+            closeOnClick: action.closeOnClick,
+          }))
+        })() : []}
+        deleteAction={activeInvoice ? (() => {
+          const deleteDef = getInvoiceListDeleteActionDef()
+          return {
+            label: deleteDef.label,
+            icon: <Trash2 className="h-6 w-6" />,
+            onClick: () => setShowDeleteWarn(true),
+            closeOnClick: deleteDef.closeOnClick,
+          }
+        })() : undefined}
       />
       <ConfirmActionDialog
         open={showArchiveWarn}
