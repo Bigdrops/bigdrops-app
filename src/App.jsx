@@ -5,10 +5,12 @@ import { Toaster } from '@/components/ui/toaster'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import AppShell from '@/components/app/AppShell'
 import PageLoader from '@/components/app/PageLoader'
+import OfflineAccessBlocked from '@/components/app/OfflineAccessBlocked'
 import SplashOverlay from '@/components/app/SplashOverlay'
 import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
 import { isInvalidSessionError } from '@/auth/sessionErrors'
 import { hydrateLocalDeviceProfile } from '@/lib/native/deviceHydration'
+import { getOfflineAccessState } from '@/lib/native/offlineAccess'
 
 const Login = lazy(() => import('./pages/Login'))
 const PendingApproval = lazy(() => import('./pages/PendingApproval'))
@@ -33,6 +35,12 @@ const withBoundary = (element) => <ErrorBoundary>{element}</ErrorBoundary>
 
 function App() {
   const [authLoading, setAuthLoading] = useState(true)
+  const [offlineAccessLoading, setOfflineAccessLoading] = useState(true)
+  const [offlineAccessState, setOfflineAccessState] = useState({
+    allowed: true,
+    expiresAt: null,
+    reason: 'not_native',
+  })
   const [profileLoading, setProfileLoading] = useState(false)
   const [showSplash, setShowSplash] = useState(true)
   const [session, setSession] = useState(null)
@@ -103,6 +111,23 @@ function App() {
 
       // Preserve last known good session on transient failures.
       return sessionRef.current
+    }
+  }
+
+  const refreshOfflineAccessState = async () => {
+    try {
+      const nextAccessState = await getOfflineAccessState()
+      setOfflineAccessState(nextAccessState)
+      return nextAccessState
+    } catch (error) {
+      console.warn('Offline access state check failed:', error)
+      const fallbackAccessState = {
+        allowed: true,
+        expiresAt: null,
+        reason: 'not_native',
+      }
+      setOfflineAccessState(fallbackAccessState)
+      return fallbackAccessState
     }
   }
 
@@ -368,6 +393,9 @@ function App() {
       setAuthLoading(true)
 
       try {
+        const nextAccessState = await refreshOfflineAccessState()
+        if (!isActive || !nextAccessState.allowed) return
+
         const restoredSession = await resolveSessionSafely('app bootstrap')
         if (!isActive) return
 
@@ -386,6 +414,7 @@ function App() {
       } finally {
         if (isActive) {
           setAuthLoading(false)
+          setOfflineAccessLoading(false)
         }
       }
 
@@ -419,11 +448,19 @@ function App() {
       }
 
       if (!hiddenAtRef.current) return
-      void recoverAppState('visibility')
+      void refreshOfflineAccessState().then((nextAccessState) => {
+        if (nextAccessState.allowed) {
+          void recoverAppState('visibility')
+        }
+      })
     }
 
     const handleOnline = () => {
-      void recoverAppState('online')
+      void refreshOfflineAccessState().then((nextAccessState) => {
+        if (nextAccessState.allowed) {
+          void recoverAppState('online', { force: true })
+        }
+      })
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -436,7 +473,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    const loadingDone = !authLoading && !profileLoading
+    const loadingDone = !authLoading && !profileLoading && !offlineAccessLoading
     if (!loadingDone) return
 
     const elapsed = Date.now() - splashStartRef.current
@@ -448,7 +485,7 @@ function App() {
     }, remaining)
 
     return () => clearTimeout(timer)
-  }, [authLoading, profileLoading])
+  }, [authLoading, offlineAccessLoading, profileLoading])
 
   useEffect(() => {
     debugAuth('profileState', profile)
@@ -457,7 +494,10 @@ function App() {
   const currentSessionUserId = session?.user?.id || null
   const profileResolvedForCurrentSession =
     !currentSessionUserId || resolvedProfileUserId === currentSessionUserId
-  const approved = profileResolvedForCurrentSession && profile?.is_approved === true
+  const approved =
+    profileResolvedForCurrentSession &&
+    (profile?.is_approved === true ||
+      (!profile && currentSessionUserId && offlineAccessState.reason === 'within_window'))
   const waitingForProfileResolution =
     !!currentSessionUserId && (!profileResolvedForCurrentSession || profileLoading)
 
@@ -494,10 +534,16 @@ function App() {
               path="/*"
               element={
                 !session
-                  ? withBoundary(<Login />)
+                  ? !offlineAccessState.allowed
+                    ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState} />)
+                    : offlineAccessLoading
+                      ? withBoundary(<PageLoader />)
+                      : withBoundary(<Login />)
                   : waitingForProfileResolution
                     ? withBoundary(<PageLoader />)
-                    : !approved
+                    : !offlineAccessState.allowed
+                      ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState} />)
+                      : !approved
                       ? withBoundary(<PendingApproval email={session?.user?.email || ''} />)
                       : withBoundary(
                           <AppShell
