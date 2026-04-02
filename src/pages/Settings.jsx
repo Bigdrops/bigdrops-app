@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
+import DashboardQuickTilesSettings from '../components/settings/DashboardQuickTilesSettings'
 import { useSettings, uploadFile, saveSettings } from '../hooks/useSettings'
 import { ALL_QUICK_TILE_IDS, QUICK_TILE_COUNT, QUICK_TILE_REGISTRY, loadStoredQuickTiles, saveStoredQuickTiles } from '../config/quickTiles'
 import {
@@ -14,7 +15,7 @@ import {
   Building2, CreditCard, ImageIcon, FileText,
   Shield, Check, Loader2, ChevronRight, Upload, X,
   Pencil, Plus, UserCheck, UserX, Trash2, Smartphone, LayoutDashboard,
-  ArchiveRestore, ClipboardList, ArrowUp, ArrowDown
+  ArchiveRestore, ClipboardList
 } from 'lucide-react'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
@@ -1066,84 +1067,14 @@ function DashboardSection() {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card">
-      <div className="border-b border-border px-5 py-4">
-        <h3 className="text-sm font-bold text-foreground">Quick Tiles</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Local mobile preference only. Keep exactly four dashboard tiles on this device and swap each slot to the feature or create-action you want.
-        </p>
-      </div>
-      <div className="px-5">
-      {activeTiles.slice(0, QUICK_TILE_COUNT).map((tileId, index) => {
-        const tile = QUICK_TILE_REGISTRY[tileId]
-        const Icon = tile.icon
-
-        return (
-          <div
-            key={tileId}
-            className={`space-y-3 py-4 transition-colors ${
-              flashTile === tileId ? 'bg-emerald-50/70' : ''
-            } ${index < QUICK_TILE_COUNT - 1 ? 'border-b border-slate-100' : ''}`}
-          >
-            <div className="flex min-w-0 flex-wrap items-start gap-3">
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] ${tile.iconBg}`}>
-                <Icon size={18} className="text-white" />
-              </div>
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-semibold text-foreground">Tile {index + 1}</p>
-                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-700">
-                    {tile.label}
-                  </span>
-                </div>
-                <p className="text-[11px] text-muted-foreground">{tile.description}</p>
-              </div>
-            </div>
-            <div className="min-w-0">
-              <Select value={tileId} onValueChange={(nextValue) => updateTileAt(index, nextValue)}>
-                <SelectTrigger className="h-10 w-full min-w-0 rounded-xl border-border bg-card text-sm">
-                  <SelectValue placeholder="Choose tile" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ALL_QUICK_TILE_IDS.map((optionId) => {
-                    const option = QUICK_TILE_REGISTRY[optionId]
-                    return (
-                      <SelectItem key={optionId} value={optionId}>
-                        {option.label}
-                      </SelectItem>
-                    )
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => moveTile(index, 'up')}
-                disabled={index <= 0}
-                className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-card text-slate-700 transition hover:bg-muted/50 disabled:opacity-40"
-                aria-label={`Move tile ${index + 1} up`}
-              >
-                <ArrowUp size={15} />
-              </button>
-              <button
-                type="button"
-                onClick={() => moveTile(index, 'down')}
-                disabled={index >= activeTiles.length - 1}
-                className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-card text-slate-700 transition hover:bg-muted/50 disabled:opacity-40"
-                aria-label={`Move tile ${index + 1} down`}
-              >
-                <ArrowDown size={15} />
-              </button>
-            </div>
-          </div>
-        )
-      })}
-      </div>
-      <p className="px-5 pb-4 pt-3 text-center text-[11px] text-muted-foreground">
-        Exactly four tiles stay visible. Saved only on this device, and desktop navigation stays unchanged.
-      </p>
-    </div>
+    <DashboardQuickTilesSettings
+      activeTiles={activeTiles.slice(0, QUICK_TILE_COUNT)}
+      flashTile={flashTile}
+      onSelectTile={updateTileAt}
+      onMoveTile={moveTile}
+      registry={QUICK_TILE_REGISTRY}
+      optionIds={ALL_QUICK_TILE_IDS}
+    />
   )
 }
 
