@@ -276,8 +276,9 @@ export function calcTotals({
   let grandTotal = taxableBase + vatAmount + fixedChargesTotal + installRateTotal + extraWithoutTax + customColTotal
   if (discountTiming === 'after') grandTotal -= discountAmount
 
+  const whtBase = Math.max(grandTotal - vatAmount, 0)
   const whtAmount = whtType === 'percent'
-    ? grandTotal * (Number(invoice.wht || 0) / 100)
+    ? whtBase * (Number(invoice.wht || 0) / 100)
     : Number(invoice.wht || 0)
   const totalPayable = grandTotal - whtAmount
 

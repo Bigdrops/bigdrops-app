@@ -84,7 +84,7 @@ function ColumnRow({
           <div className="space-y-1">
             <div className="text-xs text-zinc-500">
               Multiplier. Example: <strong>0.1</strong> means 10% of Qty x Rate.
-              Leave blank for manual row entry.
+              Show this column only when you need manual row install overrides; use Reset Row Overrides below to clear them.
             </div>
             <Input
               type="number"

@@ -18,10 +18,8 @@
  *   Correct for mixed row VAT behavior (overrides, exempt rows, taxable install).
  *
  * WHT base
- *   Subtotal after discount, before VAT.
- *   = (merchandise subtotal + install rate total) − total discount
- *   VAT is excluded. Extra charges are excluded.
- *   This is the net commercial value before tax.
+ *   Total Contract Value - VAT
+ *   WHT must not be applied on VAT itself.
  *
  * ─── SOURCE RULES ─────────────────────────────────────────────────────────
  *
@@ -424,14 +422,17 @@ export function calculateDocument(input: DocumentInput): DocumentResult {
 
   // ── 6. WHT base (EXPLICIT RULE) ───────────────────────────────────────────
   //
-  // WHT applies to: subtotal after discount, before VAT.
-  // = (merchandise subtotal + install rate total) − total discount
-  // VAT is excluded. Extra charges are excluded.
-  // This is the net commercial value before tax.
+  // WHT = (Total Contract Value - VAT) × Applicable Rate
+  // Total Contract Value here is grand total before WHT, so the WHT base is
+  // the VAT-exclusive contract amount.
 
-  const whtBase = docSubtotal
-    .plus(docInstallTotal)
-    .minus(totalDiscount)
+  const whtBase = Decimal.max(
+    docSubtotal
+      .plus(docInstallTotal)
+      .plus(extraChargesTotal)
+      .minus(totalDiscount),
+    0,
+  )
 
   let whtAmount: Decimal
   if (whtType === 'percent') {

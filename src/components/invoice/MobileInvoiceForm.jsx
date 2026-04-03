@@ -19,7 +19,6 @@ import {
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
 import ClientSelector from '@/components/ClientSelector'
 import ColumnManager from '@/components/ColumnManager'
 import RichTextEditor from '@/components/RichTextEditor'
@@ -102,6 +101,23 @@ function SegmentedControl({ value, onChange, options }) {
         )
       })}
     </div>
+  )
+}
+
+function CompactSelectField({ value, onChange, options, className = '' }) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className={`${fieldCls} min-w-0 justify-between px-3 ${className}`}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }
 
@@ -599,8 +615,8 @@ export default function MobileInvoiceForm(props) {
           <div>
             <SectionLabel color="#d97706">Commercial Terms</SectionLabel>
             <div className={`${pageCardCls} space-y-4 p-4`}>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
+              <div className="grid grid-cols-[minmax(0,1fr)_96px] gap-2">
+                <div className="min-w-0">
                   <label className={labelCls}>Payment Terms</label>
                   <Select value={paymentTermValue} onValueChange={(value) => updateInvoice('payment_terms', value)}>
                     <SelectTrigger className={`${fieldCls} justify-between`}>
@@ -617,7 +633,7 @@ export default function MobileInvoiceForm(props) {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label className={labelCls}>{dueValidityLabel}</label>
                   <Input
                     value={invoice.custom_payment_terms || ''}
@@ -628,34 +644,9 @@ export default function MobileInvoiceForm(props) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>Discount Type</label>
-                  <SegmentedControl
-                    value={discountType}
-                    onChange={setDiscountType}
-                    options={[
-                      { value: 'fixed', label: 'Amount' },
-                      { value: 'percent', label: '%' },
-                    ]}
-                  />
-                </div>
-                <div>
-                  <label className={labelCls}>Apply Discount</label>
-                  <SegmentedControl
-                    value={discountTiming}
-                    onChange={setDiscountTiming}
-                    options={[
-                      { value: 'before', label: 'Before Tax' },
-                      { value: 'after', label: 'After Tax' },
-                    ]}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>Discount Value</label>
+              <div className="grid grid-cols-[minmax(0,1fr)_88px_112px] items-end gap-2">
+                <div className="min-w-0">
+                  <label className={labelCls}>Discount</label>
                   <Input
                     type="number"
                     min="0"
@@ -664,21 +655,32 @@ export default function MobileInvoiceForm(props) {
                     className={fieldCls}
                   />
                 </div>
-                <div>
-                  <label className={labelCls}>WHT Type</label>
-                  <SegmentedControl
-                    value={whtType}
-                    onChange={setWhtType}
+                <div className="min-w-0">
+                  <label className={labelCls}>Type</label>
+                  <CompactSelectField
+                    value={discountType}
+                    onChange={setDiscountType}
                     options={[
-                      { value: 'percent', label: '%' },
                       { value: 'fixed', label: 'NGN' },
+                      { value: 'percent', label: '%' },
+                    ]}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <label className={labelCls}>Apply</label>
+                  <CompactSelectField
+                    value={discountTiming}
+                    onChange={setDiscountTiming}
+                    options={[
+                      { value: 'before', label: 'Before' },
+                      { value: 'after', label: 'After' },
                     ]}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
+              <div className="grid grid-cols-[minmax(0,1fr)_88px] items-end gap-2">
+                <div className="min-w-0">
                   <label className={labelCls}>WHT Value</label>
                   <Input
                     type="number"
@@ -688,7 +690,21 @@ export default function MobileInvoiceForm(props) {
                     className={fieldCls}
                   />
                 </div>
-                <div>
+                <div className="min-w-0">
+                  <label className={labelCls}>WHT Type</label>
+                  <CompactSelectField
+                    value={whtType}
+                    onChange={setWhtType}
+                    options={[
+                      { value: 'fixed', label: 'NGN' },
+                      { value: 'percent', label: '%' },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
+                <div className="min-w-0">
                   <label className={labelCls}>Work Duration</label>
                   <Input
                     value={invoice.work_duration || ''}
@@ -705,7 +721,7 @@ export default function MobileInvoiceForm(props) {
                   ['transportation', transportation],
                   ['shipping', shipping],
                 ].map(([key, value]) => (
-                  <div key={key} className="grid grid-cols-[minmax(0,1fr)_120px] gap-2 max-[520px]:grid-cols-1">
+                  <div key={key} className="grid grid-cols-[minmax(0,1fr)_104px] gap-2">
                     <Input
                       value={chargeLabels[key] || ''}
                       onChange={(event) => onChargeLabelChange(key, event.target.value)}
@@ -733,7 +749,7 @@ export default function MobileInvoiceForm(props) {
                 </div>
                 <div className="space-y-2">
                   {extraCharges.map((charge) => (
-                    <div key={charge.id} className="grid grid-cols-[minmax(0,1.35fr)_110px_96px_42px] items-center gap-2 max-[520px]:grid-cols-1">
+                    <div key={charge.id} className="grid grid-cols-[minmax(0,1fr)_88px_94px_42px] items-center gap-2">
                       <Input
                         value={charge.label || ''}
                         onChange={(event) => onUpdateExtraCharge(charge.id, 'label', event.target.value)}
@@ -747,13 +763,14 @@ export default function MobileInvoiceForm(props) {
                         onChange={(event) => onUpdateExtraCharge(charge.id, 'value', Number(event.target.value))}
                         className={`${fieldCls} text-right`}
                       />
-                      <div className="flex h-11 items-center justify-between rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3">
-                        <span className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">VAT</span>
-                        <Switch
-                          checked={charge.withTax !== false}
-                          onCheckedChange={(value) => onUpdateExtraCharge(charge.id, 'withTax', value)}
-                        />
-                      </div>
+                      <CompactSelectField
+                        value={charge.withTax === false ? 'after_tax' : 'before_tax'}
+                        onChange={(value) => onUpdateExtraCharge(charge.id, 'withTax', value === 'before_tax')}
+                        options={[
+                          { value: 'before_tax', label: 'Before' },
+                          { value: 'after_tax', label: 'After' },
+                        ]}
+                      />
                       <button
                         type="button"
                         onClick={() => onRemoveExtraCharge(charge.id)}

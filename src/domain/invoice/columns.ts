@@ -9,9 +9,9 @@ import type {
 export const BUILTIN_COLUMNS: ColumnConfig[] = [
   { key: 'make', label: 'Make', visible: true, removable: false },
   { key: 'unit', label: 'Unit', visible: true, removable: false },
-  { key: 'install_rate', label: 'Install Rate', type: 'install_rate', visible: true, removable: false, includeInTotal: true, formula: '' },
-  { key: 'vat_rate', label: 'VAT Rate', type: 'vat_rate', visible: true, removable: false },
-  { key: 'discount_rate', label: 'Discount Rate', type: 'discount_rate', visible: true, removable: false },
+  { key: 'install_rate', label: 'Install Rate', type: 'install_rate', visible: false, removable: false, includeInTotal: true, formula: '' },
+  { key: 'vat_rate', label: 'VAT Rate', type: 'vat_rate', visible: false, removable: false },
+  { key: 'discount_rate', label: 'Discount Rate', type: 'discount_rate', visible: false, removable: false },
 ]
 
 export const COLUMN_TYPES: ColumnTypeOption[] = [

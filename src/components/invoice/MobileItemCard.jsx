@@ -78,7 +78,6 @@ export default function MobileItemCard({
   const discountValue = item.discount_rate
   const hasDiscountOverride = discountValue !== null && discountValue !== undefined
   const discountExcluded = discountValue === 0
-  const hasInstallOverride = item.install_rate_override === true
 
   const handleImageUpload = async (event) => {
     const file = event.target.files?.[0]
@@ -171,12 +170,12 @@ export default function MobileItemCard({
 
         <div className={`grid gap-2 ${isVisible('make') && isVisible('unit') ? 'grid-cols-4' : isVisible('make') || isVisible('unit') ? 'grid-cols-3' : 'grid-cols-2'}`}>
           {isVisible('make') ? (
-            <div>
-              <label className={labelCls}>Make / Brand</label>
+            <div className="min-w-0">
+              <label className={labelCls}>Make</label>
               <Input
                 value={item.make || ''}
                 onChange={(event) => onUpdate(index, 'make', event.target.value)}
-                placeholder="Brand"
+                placeholder="Make"
                 className={inputCls}
               />
             </div>
@@ -194,7 +193,7 @@ export default function MobileItemCard({
           </div>
 
           {isVisible('unit') ? (
-            <div>
+            <div className="min-w-0">
               <label className={labelCls}>Unit</label>
               <div className="[&>div>input]:h-11 [&>div>input]:rounded-[12px] [&>div>input]:border-[1.5px] [&>div>input]:border-[#e2e8f0] [&>div>input]:bg-[#f8fafc] [&>div>input]:px-3">
                 <UnitInput value={item.unit || ''} onChange={(value) => onUpdate(index, 'unit', value)} />
@@ -202,7 +201,7 @@ export default function MobileItemCard({
             </div>
           ) : null}
 
-          <div>
+          <div className="min-w-0">
             <label className={labelCls}>Unit Price</label>
             <Input
               type="number"
@@ -378,11 +377,6 @@ export default function MobileItemCard({
           {hasDiscountOverride && !discountExcluded && Number(discountValue) > 0 ? (
             <span className="rounded-full border border-[#fcd34d] bg-[#fffbeb] px-2.5 py-1 text-[#b45309]">
               {discountValue}% row discount
-            </span>
-          ) : null}
-          {hasInstallOverride ? (
-            <span className="rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-2.5 py-1 text-[#1d4ed8]">
-              Install override
             </span>
           ) : null}
           {item.image_url ? (
