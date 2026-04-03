@@ -9,6 +9,7 @@ export function getInvoiceDetailActionDefs({
   canRecordPayment,
   reverting,
   showMarkSent,
+  isStandalone,
 }) {
   const actions = [
     {
@@ -45,6 +46,13 @@ export function getInvoiceDetailActionDefs({
       subtitle: invoiceNumber || 'Copy the current document number',
       iconKey: 'copy',
       visible: true,
+    },
+    {
+      key: 'advance',
+      label: 'Advance Invoice',
+      subtitle: 'Create a child advance invoice from this source',
+      iconKey: 'payment',
+      visible: isStandalone,
     },
     {
       key: 'clone',
@@ -130,7 +138,7 @@ export function getInvoiceListActionDefs({
     },
     { key: 'payment', label: 'Payment', iconKey: 'dollarSign', visible: !isPaid },
     { key: 'clone', label: 'Clone', iconKey: 'copy', visible: true },
-    { key: 'advance', label: 'Advance', iconKey: 'dollarSign', visible: isStandalone },
+    { key: 'advance', label: 'Advance Invoice', iconKey: 'dollarSign', visible: isStandalone },
     { key: 'quote', label: 'To Quote', iconKey: 'fileOutput', visible: true },
     { key: 'csr', label: 'Gen. CSR', iconKey: 'wrench', visible: true },
     { key: 'waybill', label: 'Waybill', iconKey: 'truck', visible: true },

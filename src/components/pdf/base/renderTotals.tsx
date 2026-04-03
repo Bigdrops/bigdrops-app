@@ -17,6 +17,7 @@ type RenderTotalsArgs = {
   amountInWords?: string | null
   totalLabel?: string
   includeGrandTotal?: boolean
+  showBalanceDue?: boolean
 }
 
 export function renderTotals({
@@ -26,6 +27,7 @@ export function renderTotals({
   amountInWords,
   totalLabel = 'Balance Due',
   includeGrandTotal = true,
+  showBalanceDue = true,
 }: RenderTotalsArgs) {
   const grandTotal = Number(result.grandTotal ?? result.totalPayable ?? 0)
   const cashReceived = Number(result.cashReceived ?? result.settledTotal ?? 0)
@@ -86,17 +88,19 @@ export function renderTotals({
             </React.View>
           ) : null}
 
-          <React.View style={styles.payableRow || styles.totalRowStrong}>
-            <React.Text style={styles.payableLabel || styles.totalLabelStrong}>{totalLabel}</React.Text>
-            <React.Text
-              style={[
-                styles.payableValue || styles.totalValueStrong,
-                { color: balanceDue > 0 ? styles.payableNegativeColor || '#DC2626' : styles.payablePositiveColor || '#059669' },
-              ]}
-            >
-              NGN {balanceDue.toLocaleString()}
-            </React.Text>
-          </React.View>
+          {showBalanceDue ? (
+            <React.View style={styles.payableRow || styles.totalRowStrong}>
+              <React.Text style={styles.payableLabel || styles.totalLabelStrong}>{totalLabel}</React.Text>
+              <React.Text
+                style={[
+                  styles.payableValue || styles.totalValueStrong,
+                  { color: balanceDue > 0 ? styles.payableNegativeColor || '#DC2626' : styles.payablePositiveColor || '#059669' },
+                ]}
+              >
+                NGN {balanceDue.toLocaleString()}
+              </React.Text>
+            </React.View>
+          ) : null}
         </React.View>
       </React.View>
 

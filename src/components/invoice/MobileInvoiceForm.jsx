@@ -243,6 +243,7 @@ export default function MobileInvoiceForm(props) {
     showColumnManager,
     setShowColumnManager,
     isMobile,
+    invoiceNumberReadOnly = false,
   } = props
 
   const [showImportSheet, setShowImportSheet] = useState(false)
@@ -421,7 +422,8 @@ export default function MobileInvoiceForm(props) {
                       <Input
                         value={invoice.invoice_number || ''}
                         onChange={(event) => updateInvoice('invoice_number', event.target.value)}
-                        className={`${fieldCls} pl-9 font-mono font-bold`}
+                        readOnly={invoiceNumberReadOnly}
+                        className={`${fieldCls} pl-9 font-mono font-bold ${invoiceNumberReadOnly ? 'opacity-70' : ''}`}
                       />
                     </div>
                   </div>

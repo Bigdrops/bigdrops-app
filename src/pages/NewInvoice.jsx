@@ -490,6 +490,7 @@ export default function NewInvoice() {
             }))}
             companyTagline={settingsData?.company_tagline || ''}
             footerText={settingsData?.footer_text || ''}
+            showBalanceDueOption
           />
         </div>
       </div>

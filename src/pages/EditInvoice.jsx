@@ -28,6 +28,10 @@ import {
 import { computeDocument } from '../lib/Calculations'
 import { numberToWords } from '../hooks/useInvoiceForm'
 import { toast } from '@/hooks/use-toast'
+import { composeAdvanceInvoiceNumber, extractAdvanceSuffix } from '@/domain/invoice/advance'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 export default function EditInvoice() {
   const navigate = useNavigate()
@@ -195,9 +199,47 @@ export default function EditInvoice() {
     load()
   }, [id, navigate, setColumns])
 
-  const updateInvoice = (field, value) => setInvoice((current) => ({ ...current, [field]: value }))
+  const advanceStage = baseCustomFields?.advanceStage && typeof baseCustomFields.advanceStage === 'object'
+    ? baseCustomFields.advanceStage
+    : null
+  const sourceNumberPrefix = String(advanceStage?.sourceNumberPrefix || advanceStage?.sourceInvoiceNumber || '').trim()
+  const sourceInvoiceId = String(advanceStage?.sourceInvoiceId || '').trim()
+  const sourceInvoiceTotal = Number(advanceStage?.sourceInvoiceTotal || 0)
+  const advanceAmount = Number(advanceStage?.amountDueNow || invoice?.total || 0)
+  const remainingBalance = Number(advanceStage?.remainingBalance || Math.max(0, sourceInvoiceTotal - advanceAmount))
+  const isAdvanceChild = Boolean(invoice?.thread_role === 'advance' || advanceStage?.kind === 'advance')
+  const currentSuffix = sourceNumberPrefix
+    ? extractAdvanceSuffix(String(invoice?.invoice_number || ''), sourceNumberPrefix)
+    : ''
+  const isLockedField = (field) => isAdvanceChild && !['invoice_number', 'notes', 'terms', 'status'].includes(field)
+
+  const handleAdvanceSuffixChange = (suffix) => {
+    if (!isAdvanceChild || !sourceNumberPrefix) return
+    setInvoice((current) => {
+      if (!current) return current
+      return { ...current, invoice_number: composeAdvanceInvoiceNumber(sourceNumberPrefix, suffix) }
+    })
+  }
+
+  const updateInvoice = (field, value) => {
+    if (isLockedField(field)) return
+    setInvoice((current) => {
+      if (!current) return current
+      if (field === 'invoice_number' && isAdvanceChild && sourceNumberPrefix) {
+        const raw = String(value || '').trim()
+        const suffix = raw.startsWith(sourceNumberPrefix)
+          ? extractAdvanceSuffix(raw, sourceNumberPrefix)
+          : raw
+        return { ...current, invoice_number: composeAdvanceInvoiceNumber(sourceNumberPrefix, suffix) }
+      }
+      return { ...current, [field]: value }
+    })
+  }
 
   const updateItem = (index, field, value) =>
+    isAdvanceChild
+      ? undefined
+      :
     setItems((current) =>
       current.map((item, itemIndex) => {
         if (itemIndex !== index) return item
@@ -209,6 +251,9 @@ export default function EditInvoice() {
     )
 
   const resetItemOverrides = (fields) =>
+    isAdvanceChild
+      ? undefined
+      :
     setItems((current) =>
       current.map((item) => {
         if (item.row_type !== 'standard') return item
@@ -221,6 +266,7 @@ export default function EditInvoice() {
     )
 
   const addUngroupedItem = (insertAt = null) => {
+    if (isAdvanceChild) return
     setItems((current) => {
       const newItem = { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }
       if (insertAt === null || insertAt >= current.length) {
@@ -234,9 +280,13 @@ export default function EditInvoice() {
 
   const addItem = () => addUngroupedItem()
   const removeItem = (index) =>
+    isAdvanceChild
+      ? undefined
+      :
     setItems((current) => current.filter((_, itemIndex) => itemIndex !== index).map((item, itemIndex) => ({ ...item, sort_order: itemIndex })))
   const insertItemAfter = (index) => addUngroupedItem(index + 1)
   const moveItem = (index, direction) => {
+    if (isAdvanceChild) return
     const nextIndex = index + direction
     if (nextIndex < 0 || nextIndex >= items.length) return
     setItems((current) => {
@@ -247,6 +297,7 @@ export default function EditInvoice() {
   }
 
   const addGroup = () => {
+    if (isAdvanceChild) return
     const baseGroup = makeEmptyGroup()
     const group = {
       ...baseGroup,
@@ -268,14 +319,19 @@ export default function EditInvoice() {
   }
 
   const updateGroupName = (groupId, name) => {
+    if (isAdvanceChild) return
     setGroups((current) => current.map((group) => (group.id === groupId ? { ...group, name } : group)))
     setItems((current) => current.map((item) => (item.group_id === groupId ? { ...item, group_name: name } : item)))
   }
 
   const toggleGroupSubtotal = (groupId) =>
+    isAdvanceChild
+      ? undefined
+      :
     setGroups((current) => current.map((group) => (group.id === groupId ? { ...group, showSubtotal: !group.showSubtotal } : group)))
 
   const deleteGroup = (groupId) => {
+    if (isAdvanceChild) return
     setGroups((current) => current.filter((group) => group.id !== groupId))
     setItems((current) =>
       current
@@ -289,6 +345,7 @@ export default function EditInvoice() {
   }
 
   const addItemToGroup = (groupId) => {
+    if (isAdvanceChild) return
     const group = groups.find((entry) => entry.id === groupId)
     if (!group) return
 
@@ -315,6 +372,7 @@ export default function EditInvoice() {
   }
 
   const handleImportApply = (result) => {
+    if (isAdvanceChild) return
     invoiceImportAdapter.applyResult({
       result,
       setColumns,
@@ -379,32 +437,42 @@ export default function EditInvoice() {
       pdfOutput,
     }
 
+    const updatePayload = isAdvanceChild
+      ? {
+          invoice_number: invoice.invoice_number,
+          status,
+          notes: invoice.notes,
+          terms: invoice.terms,
+          custom_fields: JSON.stringify(customFieldsData),
+        }
+      : {
+          invoice_title: invoiceTitle || null,
+          po_number: String(invoice.po_number || '').trim() || null,
+          client_id: invoice.client_id || null,
+          client_name: invoice.client_name,
+          issue_date: invoice.issue_date,
+          due_date: invoice.due_date || null,
+          status,
+          payment_terms: paymentTermsValue,
+          notes: invoice.notes,
+          terms: invoice.terms,
+          workmanship: Number(invoice.workmanship || 0),
+          transportation: Number(invoice.transportation || 0),
+          shipping: Number(invoice.shipping || 0),
+          discount: documentTotals.discount,
+          vat: documentTotals.vat,
+          wht: documentTotals.wht,
+          custom_fields: JSON.stringify(customFieldsData),
+          work_duration: invoice.work_duration,
+          subtotal: documentTotals.subtotal,
+          install_rate_total: documentTotals.installRateTotal,
+          total: documentTotals.totalPayable,
+          amount_in_words: numberToWords(documentTotals.totalPayable),
+        }
+
     const { error } = await supabase
       .from('invoices')
-      .update({
-        invoice_title: invoiceTitle || null,
-        po_number: String(invoice.po_number || '').trim() || null,
-        client_id: invoice.client_id || null,
-        client_name: invoice.client_name,
-        issue_date: invoice.issue_date,
-        due_date: invoice.due_date || null,
-        status,
-        payment_terms: paymentTermsValue,
-        notes: invoice.notes,
-        terms: invoice.terms,
-        workmanship: Number(invoice.workmanship || 0),
-        transportation: Number(invoice.transportation || 0),
-        shipping: Number(invoice.shipping || 0),
-        discount: documentTotals.discount,
-        vat: documentTotals.vat,
-        wht: documentTotals.wht,
-        custom_fields: JSON.stringify(customFieldsData),
-        work_duration: invoice.work_duration,
-        subtotal: documentTotals.subtotal,
-        install_rate_total: documentTotals.installRateTotal,
-        total: documentTotals.totalPayable,
-        amount_in_words: numberToWords(documentTotals.totalPayable),
-      })
+      .update(updatePayload)
       .eq('id', id)
 
     if (error) {
@@ -413,23 +481,25 @@ export default function EditInvoice() {
       return
     }
 
-    const itemsToSave = items
-      .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-      .map((item, index) => toDbItem(item, id, index))
+    if (!isAdvanceChild) {
+      const itemsToSave = items
+        .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
+        .map((item, index) => toDbItem(item, id, index))
 
-    const { error: deleteError } = await supabase.from('invoice_items').delete().eq('invoice_id', id)
-    if (deleteError) {
-      toast({ title: 'Save failed', description: 'Error clearing previous items: ' + deleteError.message, variant: 'destructive' })
-      setSaving(false)
-      return
-    }
-
-    if (itemsToSave.length > 0) {
-      const { error: insertError } = await supabase.from('invoice_items').insert(itemsToSave)
-      if (insertError) {
-        toast({ title: 'Save failed', description: 'Error saving items: ' + insertError.message, variant: 'destructive' })
+      const { error: deleteError } = await supabase.from('invoice_items').delete().eq('invoice_id', id)
+      if (deleteError) {
+        toast({ title: 'Save failed', description: 'Error clearing previous items: ' + deleteError.message, variant: 'destructive' })
         setSaving(false)
         return
+      }
+
+      if (itemsToSave.length > 0) {
+        const { error: insertError } = await supabase.from('invoice_items').insert(itemsToSave)
+        if (insertError) {
+          toast({ title: 'Save failed', description: 'Error saving items: ' + insertError.message, variant: 'destructive' })
+          setSaving(false)
+          return
+        }
       }
     }
 
@@ -440,12 +510,68 @@ export default function EditInvoice() {
   return (
     <Layout title="Edit Invoice" hidePageHeader>
       <div className="space-y-6">
+        {isAdvanceChild ? (
+          <div className="mx-auto w-full max-w-2xl px-4 pt-4 sm:px-6">
+            <div className="space-y-3">
+              <Card className="border-border bg-muted/40 shadow-none">
+                <CardContent className="space-y-3 p-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Locked from source</div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-foreground">Source Invoice</div>
+                      <div className="text-xs text-muted-foreground">{advanceStage?.sourceInvoiceNumber || sourceNumberPrefix || '-'}</div>
+                    </div>
+                    {sourceInvoiceId ? (
+                      <Button type="button" variant="outline" size="sm" onClick={() => navigate(`/invoices/${sourceInvoiceId}`)}>
+                        View source invoice
+                      </Button>
+                    ) : null}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Client, line items, and pricing basis are source-controlled for this advance invoice.
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border shadow-sm">
+                <CardContent className="space-y-2 p-4 text-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Advance Summary</div>
+                  <div className="flex items-center justify-between"><span className="text-muted-foreground">Source Total</span><span className="font-semibold">{`₦${sourceInvoiceTotal.toLocaleString()}`}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-muted-foreground">Advance Amount</span><span className="font-semibold">{`₦${advanceAmount.toLocaleString()}`}</span></div>
+                  <div className="flex items-center justify-between border-t border-border pt-2"><span className="text-muted-foreground">Remaining Balance</span><span className="font-semibold">{`₦${remainingBalance.toLocaleString()}`}</span></div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border bg-card shadow-none">
+                <CardContent className="space-y-3 p-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Editable for this invoice</div>
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-xl border border-border bg-muted/50 px-3 py-2 font-mono text-sm">{sourceNumberPrefix || invoice.invoice_number || '-'}</div>
+                    <span className="text-sm text-muted-foreground">-</span>
+                    <Input
+                      value={currentSuffix}
+                      onChange={(event) => handleAdvanceSuffixChange(event.target.value)}
+                      className="h-9 w-20 text-center font-mono"
+                      placeholder="A"
+                    />
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Notes, terms, signature, attachments, and footer fields remain editable.
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        ) : null}
         <MobileInvoiceForm
-          title="Edit Invoice"
+          title={isAdvanceChild ? 'Edit Advance Invoice' : 'Edit Invoice'}
           modeLabel="Edit Invoice"
           invoice={invoice}
           invoiceTitle={invoiceTitle}
-          setInvoiceTitle={setInvoiceTitle}
+          setInvoiceTitle={(next) => {
+            if (isAdvanceChild) return
+            setInvoiceTitle(next)
+          }}
           updateInvoice={updateInvoice}
           items={items}
           groups={groups}
@@ -463,16 +589,16 @@ export default function EditInvoice() {
           signatoryId={signatoryId}
           onSignatoryChange={setSignatoryId}
           mergeQtyUnit={mergeQtyUnit}
-          setMergeQtyUnit={setMergeQtyUnit}
+          setMergeQtyUnit={(next) => { if (!isAdvanceChild) setMergeQtyUnit(next) }}
           columns={columns}
           isVisible={isVisible}
           getColumn={getColumn}
-          toggleVisible={toggleVisible}
-          updateColumn={updateColumn}
-          addCustomColumn={addCustomColumn}
-          removeCustomColumn={removeCustomColumn}
-          resetColumns={resetColumns}
-          moveColumn={moveColumn}
+          toggleVisible={(...args) => { if (!isAdvanceChild) toggleVisible(...args) }}
+          updateColumn={(...args) => { if (!isAdvanceChild) updateColumn(...args) }}
+          addCustomColumn={(...args) => { if (!isAdvanceChild) addCustomColumn(...args) }}
+          removeCustomColumn={(...args) => { if (!isAdvanceChild) removeCustomColumn(...args) }}
+          resetColumns={() => { if (!isAdvanceChild) resetColumns() }}
+          moveColumn={(...args) => { if (!isAdvanceChild) moveColumn(...args) }}
           customColumns={customColumns}
           computedItems={documentTotals.items}
           computedGroups={documentTotals.groups}
@@ -485,18 +611,18 @@ export default function EditInvoice() {
           totalPayable={documentTotals.totalPayable}
           amountInWords={numberToWords(documentTotals.totalPayable)}
           discountType={discountType}
-          setDiscountType={setDiscountType}
+          setDiscountType={(next) => { if (!isAdvanceChild) setDiscountType(next) }}
           discountTiming={discountTiming}
-          setDiscountTiming={setDiscountTiming}
+          setDiscountTiming={(next) => { if (!isAdvanceChild) setDiscountTiming(next) }}
           whtType={whtType}
-          setWhtType={setWhtType}
+          setWhtType={(next) => { if (!isAdvanceChild) setWhtType(next) }}
           saving={saving}
           primaryLabel="Save Changes"
           onSaveSent={() => handleSave('sent')}
           onSaveDraft={() => handleSave('draft')}
           onFloatingSave={() => handleSave('draft')}
           onCancel={() => navigate('/invoices/' + id)}
-          onApplyImport={handleImportApply}
+          onApplyImport={isAdvanceChild ? () => {} : handleImportApply}
           importAdapter={invoiceImportAdapter}
           onAddItem={addItem}
           onAddGroup={addGroup}
@@ -509,25 +635,29 @@ export default function EditInvoice() {
           onUpdateGroupName={updateGroupName}
           onToggleGroupSubtotal={toggleGroupSubtotal}
           onDeleteGroup={deleteGroup}
-          onAddHeaderField={() => setCustomFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])}
+          onAddHeaderField={() => {
+            if (isAdvanceChild) return
+            setCustomFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])
+          }}
           onUpdateHeaderField={(fieldId, field, value) =>
-            setCustomFields((current) => current.map((entry) => (entry.id === fieldId ? { ...entry, [field]: value } : entry)))
+            !isAdvanceChild && setCustomFields((current) => current.map((entry) => (entry.id === fieldId ? { ...entry, [field]: value } : entry)))
           }
-          onRemoveHeaderField={(fieldId) => setCustomFields((current) => current.filter((entry) => entry.id !== fieldId))}
+          onRemoveHeaderField={(fieldId) => !isAdvanceChild && setCustomFields((current) => current.filter((entry) => entry.id !== fieldId))}
           onAddBottomField={() => setBottomFields((current) => [...current, makeFieldEntry({ text: '' })])}
           onUpdateBottomField={(fieldId, value) =>
             setBottomFields((current) => current.map((entry) => (entry.id === fieldId ? { ...entry, text: value } : entry)))
           }
           onRemoveBottomField={(fieldId) => setBottomFields((current) => current.filter((entry) => entry.id !== fieldId))}
-          onChargeLabelChange={(key, value) => setChargeLabels((current) => ({ ...current, [key]: value }))}
-          onAddExtraCharge={(withTax) => setExtraCharges((current) => [...current, makeExtraCharge({ withTax })])}
+          onChargeLabelChange={(key, value) => !isAdvanceChild && setChargeLabels((current) => ({ ...current, [key]: value }))}
+          onAddExtraCharge={(withTax) => !isAdvanceChild && setExtraCharges((current) => [...current, makeExtraCharge({ withTax })])}
           onUpdateExtraCharge={(chargeId, field, value) =>
-            setExtraCharges((current) => current.map((charge) => (charge.id === chargeId ? { ...charge, [field]: value } : charge)))
+            !isAdvanceChild && setExtraCharges((current) => current.map((charge) => (charge.id === chargeId ? { ...charge, [field]: value } : charge)))
           }
-          onRemoveExtraCharge={(chargeId) => setExtraCharges((current) => current.filter((charge) => charge.id !== chargeId))}
-          showColumnManager={showColumnManager}
-          setShowColumnManager={setShowColumnManager}
+          onRemoveExtraCharge={(chargeId) => !isAdvanceChild && setExtraCharges((current) => current.filter((charge) => charge.id !== chargeId))}
+          showColumnManager={isAdvanceChild ? false : showColumnManager}
+          setShowColumnManager={(open) => { if (!isAdvanceChild) setShowColumnManager(open) }}
           isMobile={isMobile}
+          invoiceNumberReadOnly={isAdvanceChild}
         />
 
         <div className="mx-auto w-full max-w-2xl px-4 pb-6 sm:px-6">
@@ -544,6 +674,7 @@ export default function EditInvoice() {
             }))}
             companyTagline={settingsData?.company_tagline || ''}
             footerText={settingsData?.footer_text || ''}
+            showBalanceDueOption
           />
         </div>
       </div>
