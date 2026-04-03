@@ -10,6 +10,7 @@ import {
   Loader2,
   Pencil,
   Plus,
+  RefreshCw,
   Trash2,
   Workflow,
 } from 'lucide-react'
@@ -33,6 +34,13 @@ import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
 import ListActionSheet from '@/components/layout/ListActionSheet'
 import MobileFab from '@/components/layout/MobileFab'
 import MobileListPageShell from '@/components/layout/MobileListPageShell'
+import { Button } from '@/components/ui/button'
+import { canUseNativeSqlite } from '@/lib/native/capacitor'
+import {
+  listPendingOrFailedQuotationCreateQueueItems,
+  processQuotationCreateQueueItem,
+  type QuotationCreateQueueItem,
+} from '@/lib/native/quotationSync'
 
 function formatMoney(value: number | string | null | undefined) {
   const parsed = Number(value || 0)
@@ -54,6 +62,10 @@ export default function QuotationList() {
   const [activeQuotationProject, setActiveQuotationProject] = useState<{ id: string; name?: string | null } | null>(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
+  const [syncQueueItems, setSyncQueueItems] = useState<QuotationCreateQueueItem[]>([])
+  const [syncQueueLoading, setSyncQueueLoading] = useState(() => canUseNativeSqlite())
+  const [retryingQueueItemId, setRetryingQueueItemId] = useState<string | null>(null)
+  const showQuotationSyncRecovery = useMemo(() => canUseNativeSqlite(), [])
 
   const loadQuotations = async () => {
     const { data } = await supabase
@@ -64,8 +76,22 @@ export default function QuotationList() {
     setQuotations((data || []) as DbQuotation[])
   }
 
+  const loadQuotationSyncQueue = async () => {
+    if (!showQuotationSyncRecovery) return
+
+    setSyncQueueLoading(true)
+    const items = await listPendingOrFailedQuotationCreateQueueItems()
+    setSyncQueueItems(items)
+    setSyncQueueLoading(false)
+  }
+
   useEffect(() => {
-    loadQuotations()
+    const timer = setTimeout(() => {
+      void loadQuotations()
+      void loadQuotationSyncQueue()
+    }, 0)
+
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
@@ -165,6 +191,34 @@ export default function QuotationList() {
     setActiveQuotation(null)
     await loadQuotations()
     navigate(`/quotations/${createdQuotation.id}`)
+  }
+
+  const handleRetryQueueItem = async (queueItemId: string) => {
+    setRetryingQueueItemId(queueItemId)
+
+    const result = await processQuotationCreateQueueItem(queueItemId)
+
+    if (result.status === 'synced') {
+      toast({
+        title: 'Quotation synced',
+        description: 'The offline quotation was uploaded successfully.',
+      })
+      await Promise.all([loadQuotations(), loadQuotationSyncQueue()])
+    } else if (result.status === 'failed') {
+      toast({
+        title: 'Retry failed',
+        description: result.error || 'Unable to sync this quotation right now.',
+        variant: 'destructive',
+      })
+      await loadQuotationSyncQueue()
+    } else {
+      toast({
+        title: 'Retry skipped',
+        description: 'Connect to the internet before retrying this quotation sync.',
+      })
+    }
+
+    setRetryingQueueItemId(null)
   }
 
   const filteredQuotations = useMemo(() => {
@@ -295,6 +349,95 @@ export default function QuotationList() {
           </div>
         ) : null}
       >
+      {showQuotationSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
+        <div className="mb-4 rounded-[22px] border border-amber-200 bg-amber-50/60 p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
+                Offline sync recovery
+              </div>
+              <div className="mt-1 text-sm text-slate-700">
+                Retry pending or failed quotation uploads from this device.
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-lg"
+              onClick={loadQuotationSyncQueue}
+              disabled={syncQueueLoading || retryingQueueItemId != null}
+              className="h-10 w-10 rounded-2xl border-amber-200 bg-white text-amber-700 hover:bg-amber-100"
+              aria-label="Refresh quotation sync queue"
+            >
+              {syncQueueLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+
+          {syncQueueItems.length > 0 ? (
+            <div className="mt-4 space-y-2">
+              {syncQueueItems.map((item) => {
+                const isRetrying = retryingQueueItemId === item.id
+
+                return (
+                  <div
+                    key={item.id}
+                    className="rounded-2xl border border-amber-200 bg-white p-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="truncate text-sm font-bold text-slate-900">
+                            {item.quotationNumber || item.localQuotationId || `Queue #${item.id}`}
+                          </div>
+                          <span
+                            className={`inline-flex h-6 items-center rounded-full px-2 text-[10px] font-black uppercase tracking-[0.12em] ${
+                              item.status === 'failed'
+                                ? 'bg-red-50 text-red-700'
+                                : 'bg-amber-100 text-amber-700'
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        </div>
+
+                        <div className="mt-1 truncate text-xs text-muted-foreground">
+                          {item.clientName || 'No client'} · Attempts {item.attempts}
+                        </div>
+
+                        {item.error ? (
+                          <div className="mt-2 text-xs leading-5 text-red-600">
+                            {item.error}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRetryQueueItem(item.id)}
+                        disabled={retryingQueueItemId != null}
+                        className="h-9 rounded-xl border-amber-200 bg-white px-3 text-xs font-bold text-amber-700 hover:bg-amber-50"
+                      >
+                        {isRetrying ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-3.5 w-3.5" />
+                        )}
+                        Retry
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {filteredQuotations.length === 0 ? (
         <div className="rounded-[22px] border border-dashed border-zinc-300 bg-white px-6 py-12 text-center text-sm text-muted-foreground">

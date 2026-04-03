@@ -13,6 +13,7 @@ import { canUseNativeSqlite } from '@/lib/native/capacitor'
 import { processNextPendingCsrCreate } from '@/lib/native/csrSync'
 import { hydrateLocalDeviceProfile } from '@/lib/native/deviceHydration'
 import { getOfflineAccessState } from '@/lib/native/offlineAccess'
+import { processNextPendingQuotationCreate } from '@/lib/native/quotationSync'
 import { processNextPendingWaybillCreate } from '@/lib/native/waybillSync'
 
 const Login = lazy(() => import('./pages/Login'))
@@ -62,6 +63,7 @@ function App() {
   const sessionRef = useRef(null)
   const waybillSyncingRef = useRef(false)
   const csrSyncingRef = useRef(false)
+  const quotationSyncingRef = useRef(false)
 
   const { runLatest: runLatestProfileTask, cancel: cancelProfileTask } = useSafeAsyncTask()
 
@@ -201,6 +203,40 @@ function App() {
       console.warn(`One-shot CSR sync crashed during ${reason}:`, error)
     } finally {
       csrSyncingRef.current = false
+    }
+  }
+
+  const processOnePendingQuotationCreateSync = async (reason) => {
+    if (!canUseNativeSqlite()) return
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return
+    if (quotationSyncingRef.current) return
+
+    quotationSyncingRef.current = true
+
+    try {
+      const result = await processNextPendingQuotationCreate()
+
+      if (result.status === 'synced') {
+        debugAuth('quotationSync:oneShotSynced', {
+          reason,
+          queueItemId: result.queueItemId || null,
+          localQuotationId: result.localQuotationId || null,
+          remoteQuotationId: result.remoteQuotationId || null,
+        })
+      }
+
+      if (result.status === 'failed') {
+        console.warn('One-shot quotation sync failed:', {
+          reason,
+          queueItemId: result.queueItemId || null,
+          localQuotationId: result.localQuotationId || null,
+          error: result.error || null,
+        })
+      }
+    } catch (error) {
+      console.warn(`One-shot quotation sync crashed during ${reason}:`, error)
+    } finally {
+      quotationSyncingRef.current = false
     }
   }
 
@@ -487,6 +523,7 @@ function App() {
 
         await processOnePendingWaybillCreateSync('app bootstrap')
         await processOnePendingCsrCreateSync('app bootstrap')
+        await processOnePendingQuotationCreateSync('app bootstrap')
       } finally {
         if (isActive) {
           setAuthLoading(false)
@@ -529,6 +566,7 @@ function App() {
           void recoverAppState('visibility').then(() => {
             void processOnePendingWaybillCreateSync('visibility')
             void processOnePendingCsrCreateSync('visibility')
+            void processOnePendingQuotationCreateSync('visibility')
           })
         }
       })
@@ -540,6 +578,7 @@ function App() {
           void recoverAppState('online', { force: true }).then(() => {
             void processOnePendingWaybillCreateSync('online')
             void processOnePendingCsrCreateSync('online')
+            void processOnePendingQuotationCreateSync('online')
           })
         }
       })
