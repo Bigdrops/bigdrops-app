@@ -24,6 +24,11 @@ import {
 } from '@/domain/quotation'
 import type { ApplyImportResult } from '@/domain/import/types'
 import { computeDocument } from '@/lib/Calculations'
+import { canUseNativeSqlite } from '@/lib/native/capacitor'
+import {
+  createOfflineQuotationDraft,
+  peekNextOfflineQuotationNumber,
+} from '@/lib/native/quotationOffline'
 import { toast } from '@/hooks/use-toast'
 import { formatQuotationStatus } from './quotationStatus'
 
@@ -35,6 +40,10 @@ function useIsMobile() {
     return () => window.removeEventListener('resize', handler)
   }, [])
   return isMobile
+}
+
+function canUseOfflineQuotationDrafts() {
+  return canUseNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine === false
 }
 
 function makeQuotationGroupId() {
@@ -302,6 +311,26 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
   useEffect(() => {
     const load = async () => {
+      if (!isEdit && canUseOfflineQuotationDrafts()) {
+        try {
+          const nextQuotationNumber = await peekNextOfflineQuotationNumber()
+          setQuotation((current) => ({
+            ...current,
+            quotation_number: current.quotation_number || nextQuotationNumber,
+          }))
+        } catch (error) {
+          console.warn('Failed to prepare offline quotation number', error)
+        }
+
+        setAttachments([])
+        setExtraCharges([])
+        setGroups([])
+        setSignatoryId(null)
+        setPdfOutput(defaultPdfOutput)
+        setLoading(false)
+        return
+      }
+
       const [signatoriesResult, bankAccountsResult, settingsResult] = await Promise.all([
         supabase.from('signatories').select('*').order('name'),
         supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
@@ -622,6 +651,34 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       ),
     }
 
+    const persistableItems = normalizedItems.filter((item) =>
+      item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim(),
+    )
+
+    if (!isEdit && canUseOfflineQuotationDrafts()) {
+      try {
+        const localDraft = await createOfflineQuotationDraft({
+          ...payload,
+          items: persistableItems.map((item, index) => ({ ...item, sort_order: index })),
+        })
+        setQuotation((current) => ({ ...current, quotation_number: localDraft.quotationNumber }))
+        toast({
+          title: 'Saved offline',
+          description: `${localDraft.quotationNumber} was saved locally and queued for sync.`,
+        })
+        navigate('/quotations')
+      } catch (error) {
+        toast({
+          title: 'Offline save failed',
+          description: error instanceof Error ? error.message : 'Could not save this quotation offline.',
+          variant: 'destructive',
+        })
+      } finally {
+        setSaving(false)
+      }
+      return
+    }
+
     if (!isEdit) {
       let candidateNumber = payload.quotation_number
       const { data: existing } = await supabase
@@ -651,9 +708,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     }
 
     const resolvedId = String(savedQuotation.id)
-    const itemRows = normalizedItems
-      .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-      .map((item, index) => toQuotationItem(item, resolvedId, index))
+    const itemRows = persistableItems.map((item, index) => toQuotationItem(item, resolvedId, index))
 
     const { error: deleteError } = await supabase.from('quotation_items').delete().eq('quotation_id', resolvedId)
     if (deleteError) {
