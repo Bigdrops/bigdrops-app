@@ -14,6 +14,7 @@ export const DEFAULT_INVOICE_PDF_OUTPUT: InvoicePdfOutput = {
   bankAccountId: null,
   showFooter: true,
   showTagline: true,
+  showBalanceDue: true,
 }
 
 export function toNumber(value: unknown, fallback = 0): number {
@@ -84,6 +85,7 @@ export function getInvoicePdfOutput(value: unknown): InvoicePdfOutput {
     bankAccountId: typeof savedPdfOutput.bankAccountId === 'string' ? savedPdfOutput.bankAccountId : DEFAULT_INVOICE_PDF_OUTPUT.bankAccountId,
     showFooter: typeof savedPdfOutput.showFooter === 'boolean' ? savedPdfOutput.showFooter : DEFAULT_INVOICE_PDF_OUTPUT.showFooter,
     showTagline: typeof savedPdfOutput.showTagline === 'boolean' ? savedPdfOutput.showTagline : DEFAULT_INVOICE_PDF_OUTPUT.showTagline,
+    showBalanceDue: typeof savedPdfOutput.showBalanceDue === 'boolean' ? savedPdfOutput.showBalanceDue : DEFAULT_INVOICE_PDF_OUTPUT.showBalanceDue,
   }
 }
 
