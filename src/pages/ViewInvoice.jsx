@@ -48,8 +48,21 @@ import VoidPaymentDialog from '@/components/invoice/VoidPaymentDialog'
 import { getInvoiceDetailActionDefs } from '@/domain/invoice/actions'
 import { buildInvoicePreviewModel } from '@/domain/invoice/previewModel'
 import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
 import { useInvoiceMutations } from '@/hooks/useInvoiceMutations'
+import { createAdvanceInvoiceFromSource, validateAdvanceInput } from '@/domain/invoice/advance'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
 
@@ -74,6 +87,11 @@ export default function ViewInvoice() {
 
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [converting, setConverting] = useState(false)
+  const [showAdvanceDialog, setShowAdvanceDialog] = useState(false)
+  const [creatingAdvance, setCreatingAdvance] = useState(false)
+  const [advanceMode, setAdvanceMode] = useState('percent')
+  const [advanceValue, setAdvanceValue] = useState('')
+  const [advanceSuffix, setAdvanceSuffix] = useState('A')
 
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
@@ -162,6 +180,10 @@ export default function ViewInvoice() {
   } = viewModel
 
   const customFieldObject = parseCustomFields(invoice.custom_fields)
+  const advanceStage = customFieldObject?.advanceStage && typeof customFieldObject.advanceStage === 'object'
+    ? customFieldObject.advanceStage
+    : null
+  const isAdvanceInvoice = invoice.thread_role === 'advance' || advanceStage?.kind === 'advance'
   const selectedSignatory =
     signatories.find((signatory) => signatory.id === getInvoiceSignatoryId(customFieldObject)) || null
 
@@ -252,7 +274,51 @@ export default function ViewInvoice() {
     canRecordPayment,
     reverting: converting,
     showMarkSent: invoice.status === 'draft',
+    isStandalone: !invoice.thread_id,
   })
+
+  const openAdvanceDialog = () => {
+    setShowMore(false)
+    setAdvanceMode('percent')
+    setAdvanceValue('')
+    setAdvanceSuffix('A')
+    setShowAdvanceDialog(true)
+  }
+
+  const handleCreateAdvanceInvoice = async () => {
+    if (creatingAdvance) return
+    const sourceTotal = Number(invoice.total || 0)
+    const numericValue = Number(advanceValue)
+    const validationError = validateAdvanceInput({
+      sourceTotal,
+      mode: advanceMode,
+      value: numericValue,
+    })
+    if (validationError) {
+      toast({ title: 'Invalid advance input', description: validationError, variant: 'destructive' })
+      return
+    }
+
+    setCreatingAdvance(true)
+    try {
+      const child = await createAdvanceInvoiceFromSource({
+        sourceInvoice: invoice,
+        mode: advanceMode,
+        value: numericValue,
+        suffix: advanceSuffix,
+      })
+      setShowAdvanceDialog(false)
+      navigate(`/invoices/edit/${child.id}`)
+    } catch (error) {
+      toast({
+        title: 'Advance invoice failed',
+        description: error?.message || 'Unable to create advance invoice.',
+        variant: 'destructive',
+      })
+    } finally {
+      setCreatingAdvance(false)
+    }
+  }
 
   const detailActionHandlers = {
     project: () => {
@@ -272,6 +338,7 @@ export default function ViewInvoice() {
       void handleCopy(invoice.invoice_number || '', 'Invoice number')
     },
     clone: handleClone,
+    advance: openAdvanceDialog,
     revert: openRevertConfirm,
     'generate-csr': handleGenerateCsr,
     'generate-waybill': handleGenerateWaybill,
@@ -558,7 +625,7 @@ export default function ViewInvoice() {
 
         <DocumentTopBar
           title={invoice.invoice_number}
-          subtitle="Invoice"
+          subtitle={isAdvanceInvoice ? 'Advance Invoice' : 'Invoice'}
           statusLabel={statusLabel}
           statusClassName={shellStatusClass}
           onBack={() => navigate('/invoices')}
@@ -622,6 +689,9 @@ export default function ViewInvoice() {
             { label: 'Issue Date', value: invoice.issue_date || 'Not set' },
             { label: 'Due Date', value: invoice.due_date || 'Open' },
             { label: 'Status', value: statusLabel },
+            ...(isAdvanceInvoice && advanceStage?.sourceInvoiceNumber
+              ? [{ label: 'Source', value: String(advanceStage.sourceInvoiceNumber) }]
+              : []),
           ]}
           detailRows={previewDetailRows}
           items={previewItems}
@@ -682,6 +752,7 @@ export default function ViewInvoice() {
                     onChange={handlePdfOutputChange}
                     companyTagline={settings.company_tagline || ''}
                     footerText={settings.footer_text || ''}
+                    showBalanceDueOption
                   />
                 ),
               },
@@ -769,6 +840,26 @@ export default function ViewInvoice() {
           onOpenChange={setShowPdfSheet}
           title="Download & Export"
           subtitle={`Using ${activePdfTemplate.label} as the saved invoice PDF preset on this device.`}
+          settingsNode={(
+            <Card className="rounded-[20px] border-border shadow-sm">
+              <CardContent className="flex items-center justify-between gap-3 p-4">
+                <div className="text-sm font-semibold text-foreground">Show Balance Due</div>
+                <button
+                  type="button"
+                  onClick={() => void handlePdfOutputChange({ ...pdfOutput, showBalanceDue: !pdfOutput.showBalanceDue })}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
+                    pdfOutput.showBalanceDue ? 'bg-emerald-500' : 'bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-card shadow-md transition-transform duration-200 ${
+                      pdfOutput.showBalanceDue ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </CardContent>
+            </Card>
+          )}
           actions={[
             { label: 'Export CSV', onClick: handleDownloadCsv, variant: 'outline' },
             {
@@ -859,6 +950,54 @@ export default function ViewInvoice() {
         />
 
         <DocumentFloatingFab onClick={() => setShowPdfSheet(true)} />
+
+        <Dialog open={showAdvanceDialog} onOpenChange={setShowAdvanceDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Advance Invoice</DialogTitle>
+              <DialogDescription>
+                Create a child invoice from {invoice.invoice_number || 'this invoice'}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Mode</Label>
+                <Select value={advanceMode} onValueChange={setAdvanceMode}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="percent">Percent</SelectItem>
+                    <SelectItem value="fixed">Fixed Amount</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{advanceMode === 'percent' ? 'Percent Value' : 'Fixed Amount'}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step={advanceMode === 'percent' ? '0.01' : '1'}
+                  value={advanceValue}
+                  onChange={(event) => setAdvanceValue(event.target.value)}
+                  placeholder={advanceMode === 'percent' ? 'e.g. 30' : 'e.g. 50000'}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Invoice Suffix</Label>
+                <Input value={advanceSuffix} onChange={(event) => setAdvanceSuffix(event.target.value)} placeholder="A" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowAdvanceDialog(false)} disabled={creatingAdvance}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={() => void handleCreateAdvanceInvoice()} disabled={creatingAdvance}>
+                {creatingAdvance ? 'Creating…' : 'Create Advance'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <DocumentBottomBar
           actions={[

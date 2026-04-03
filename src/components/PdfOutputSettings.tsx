@@ -25,6 +25,7 @@ type PdfOutputSettingsValue = {
   bankAccountId: string | null
   showFooter: boolean
   showTagline: boolean
+  showBalanceDue: boolean
 }
 
 export type { PdfOutputSettingsValue }
@@ -45,6 +46,7 @@ type PdfOutputSettingsProps = {
    */
   companyTagline?: string
   footerText?: string
+  showBalanceDueOption?: boolean
 }
 
 const PLACEHOLDER_BANKS: BankAccount[] = [
@@ -86,6 +88,7 @@ function mergeOutputState(value: Partial<PdfOutputSettingsValue> | undefined, de
     bankAccountId: value?.bankAccountId ?? defaultBank?.id ?? null,
     showFooter: value?.showFooter ?? true,
     showTagline: value?.showTagline ?? true,
+    showBalanceDue: value?.showBalanceDue ?? true,
   }
 }
 
@@ -194,7 +197,8 @@ export function PdfSupportingOptions({
   onChange,
   companyTagline = 'Reliable power for every site',
   footerText = 'Thank you for your business. Payment is due within 7 days unless otherwise agreed.',
-}: Pick<PdfOutputSettingsProps, 'value' | 'onChange' | 'companyTagline' | 'footerText'>) {
+  showBalanceDueOption = false,
+}: Pick<PdfOutputSettingsProps, 'value' | 'onChange' | 'companyTagline' | 'footerText' | 'showBalanceDueOption'>) {
   const state = mergeOutputState(value, null)
 
   function update(patch: Partial<PdfOutputSettingsValue>) {
@@ -214,6 +218,15 @@ export function PdfSupportingOptions({
           </div>
         ) : null}
       </div>
+
+      {showBalanceDueOption ? (
+        <div className="rounded-[20px] border border-border bg-card px-4 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-semibold text-foreground">Show Balance Due</div>
+            <OutputToggle checked={state.showBalanceDue} onToggle={() => update({ showBalanceDue: !state.showBalanceDue })} />
+          </div>
+        </div>
+      ) : null}
 
       <div className="rounded-[20px] border border-border bg-card px-4 py-4">
         <div className="flex items-center justify-between gap-3">
@@ -236,13 +249,14 @@ export function PdfOutputSettings({
   bankAccounts,
   companyTagline = "Reliable power for every site",
   footerText = "Thank you for your business. Payment is due within 7 days unless otherwise agreed.",
+  showBalanceDueOption = false,
 }: PdfOutputSettingsProps) {
   const banks = resolveBanks(bankAccounts)
   const defaultBank = getDefaultBank(banks)
 
   const initialState = React.useMemo<PdfOutputSettingsValue>(() => {
     return mergeOutputState(value, defaultBank)
-  }, [value?.showBankDetails, value?.bankAccountId, value?.showFooter, value?.showTagline, defaultBank?.id])
+  }, [value?.showBankDetails, value?.bankAccountId, value?.showFooter, value?.showTagline, value?.showBalanceDue, defaultBank?.id])
 
   const [state, setState] = React.useState<PdfOutputSettingsValue>(initialState)
   const [bankSheetOpen, setBankSheetOpen] = React.useState(false)
@@ -357,6 +371,12 @@ export function PdfOutputSettings({
               <span className="text-sm font-medium text-slate-700">Show Footer</span>
               <OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />
             </div>
+            {showBalanceDueOption ? (
+              <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
+                <span className="text-sm font-medium text-slate-700">Show Balance Due</span>
+                <OutputToggle checked={state.showBalanceDue} onToggle={() => update({ showBalanceDue: !state.showBalanceDue })} />
+              </div>
+            ) : null}
             {state.showFooter ? (
               <div className="bg-amber-50 px-3 py-3">
                 <div className="rounded-md border-l-4 border-amber-500 bg-card p-3">

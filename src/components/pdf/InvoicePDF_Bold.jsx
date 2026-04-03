@@ -112,7 +112,7 @@ function createStyles(designPreset) {
 })
 }
 
-export default function InvoicePDF_Bold({ document, items = [], client, settings = {}, computedResult, designPreset }) {
+export default function InvoicePDF_Bold({ document, items = [], client, settings = {}, computedResult, pdfOutput, designPreset }) {
   const invoice = document
   const d = extractInvoiceData(document, items, client, settings, computedResult)
   const s = createStyles(designPreset)
@@ -181,6 +181,7 @@ export default function InvoicePDF_Bold({ document, items = [], client, settings
             styles: s,
             showInstallRate: d.isColVisible('install_rate'),
             amountInWords: invoice.amount_in_words,
+            showBalanceDue: pdfOutput?.showBalanceDue !== false,
           })}
           {invoice.notes && stripHtml(invoice.notes) ? <View style={s.notesBox}><Text style={[s.sectionLabel, { marginBottom: 4 }]}>{d.cf.notesTitle || 'Notes'}</Text><Text style={s.notesText}>{stripHtml(invoice.notes)}</Text></View> : null}
           {invoice.terms && stripHtml(invoice.terms) ? <View style={[s.notesBox, { marginBottom: 14 }]}><Text style={[s.sectionLabel, { marginBottom: 4 }]}>{d.cf.termsTitle || 'Terms and Conditions'}</Text><Text style={s.notesText}>{stripHtml(invoice.terms)}</Text></View> : null}

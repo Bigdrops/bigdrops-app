@@ -2,6 +2,17 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Send, Trash2, Truck, Wrench, Workflow } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
 import { canUseNativeSqlite } from "@/lib/native/capacitor"
@@ -20,6 +31,7 @@ import ProjectLinkDialog from "@/components/document/ProjectLinkDialog"
 import { getDocumentActionState, getProjectActionState } from "@/domain/document/documentActionState"
 import { getInvoiceListActionDefs, getInvoiceListDeleteActionDef } from "@/domain/invoice/actions"
 import { fetchInvoiceChildDocuments, fetchProjectSummary, getInvoiceSourceDocument } from "@/domain/documentRelationships"
+import { createAdvanceInvoiceFromSource, validateAdvanceInput } from "@/domain/invoice/advance"
 
 const PAGE_SIZE = 25
 
@@ -53,6 +65,12 @@ export default function Invoices() {
   const [activeInvoiceProject, setActiveInvoiceProject] = useState(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
+  const [showAdvanceDialog, setShowAdvanceDialog] = useState(false)
+  const [creatingAdvance, setCreatingAdvance] = useState(false)
+  const [advanceMode, setAdvanceMode] = useState("percent")
+  const [advanceValue, setAdvanceValue] = useState("")
+  const [advanceSuffix, setAdvanceSuffix] = useState("A")
+  const [advanceSourceInvoice, setAdvanceSourceInvoice] = useState(null)
   const navigate = useNavigate()
 
   const buildInvoiceQuery = () => {
@@ -287,7 +305,50 @@ export default function Invoices() {
 
   const handleView  = () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) }
   const handleEdit  = () => { closeSheet(); navigate(`/invoices/edit/${activeInvoice.id}`) }
-  const handleAdvance = () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) }
+  const handleAdvance = () => {
+    setAdvanceSourceInvoice(activeInvoice)
+    setAdvanceMode("percent")
+    setAdvanceValue("")
+    setAdvanceSuffix("A")
+    setShowAdvanceDialog(true)
+  }
+
+  const handleCreateAdvanceInvoice = async () => {
+    const source = advanceSourceInvoice
+    if (!source?.id || creatingAdvance) return
+    const numericValue = Number(advanceValue)
+    const validationError = validateAdvanceInput({
+      sourceTotal: Number(source.total || 0),
+      mode: advanceMode,
+      value: numericValue,
+    })
+    if (validationError) {
+      toast({ title: "Invalid advance input", description: validationError, variant: "destructive" })
+      return
+    }
+
+    setCreatingAdvance(true)
+    try {
+      const child = await createAdvanceInvoiceFromSource({
+        sourceInvoice: source,
+        mode: advanceMode,
+        value: numericValue,
+        suffix: advanceSuffix,
+      })
+      setShowAdvanceDialog(false)
+      setAdvanceSourceInvoice(null)
+      closeSheet()
+      navigate(`/invoices/edit/${child.id}`)
+    } catch (error) {
+      toast({
+        title: "Advance invoice failed",
+        description: error?.message || "Unable to create advance invoice.",
+        variant: "destructive",
+      })
+    } finally {
+      setCreatingAdvance(false)
+    }
+  }
 
   const handleClone = async () => {
     const inv = activeInvoice
@@ -732,9 +793,59 @@ export default function Invoices() {
           setActiveInvoice(null)
         }}
       />
+      <Dialog
+        open={showAdvanceDialog}
+        onOpenChange={(open) => {
+          setShowAdvanceDialog(open)
+          if (!open) setAdvanceSourceInvoice(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Advance Invoice</DialogTitle>
+            <DialogDescription>
+              Create a child advance invoice from {advanceSourceInvoice?.invoice_number || "this invoice"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Mode</Label>
+              <Select value={advanceMode} onValueChange={setAdvanceMode}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="percent">Percent</SelectItem>
+                  <SelectItem value="fixed">Fixed Amount</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{advanceMode === "percent" ? "Percent Value" : "Fixed Amount"}</Label>
+              <Input
+                type="number"
+                min="0"
+                step={advanceMode === "percent" ? "0.01" : "1"}
+                value={advanceValue}
+                onChange={(event) => setAdvanceValue(event.target.value)}
+                placeholder={advanceMode === "percent" ? "e.g. 30" : "e.g. 50000"}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Invoice Suffix</Label>
+              <Input value={advanceSuffix} onChange={(event) => setAdvanceSuffix(event.target.value)} placeholder="A" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setShowAdvanceDialog(false)} disabled={creatingAdvance}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={() => void handleCreateAdvanceInvoice()} disabled={creatingAdvance}>
+              {creatingAdvance ? "Creating…" : "Create Advance"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   )
 }
-
-
-

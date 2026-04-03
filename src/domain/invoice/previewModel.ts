@@ -101,6 +101,7 @@ type CustomFieldObjectLike = {
 
 type PdfOutputLike = {
   bankAccountId?: string | null
+  showBalanceDue?: boolean
 }
 
 export type BuildInvoicePreviewModelInput = {
@@ -233,7 +234,14 @@ export function buildInvoicePreviewModel({
     ...(Number(invoice.wht || 0) > 0 ? [{ label: 'WHT', value: formatMoney(Number(invoice.wht || 0)) }] : []),
     { label: 'Total', value: formatMoney(invoiceTotal), emphasis: true, valueClassName: 'text-slate-950' },
     { label: 'Cash Received', value: formatMoney(cashReceived) },
-    { label: 'Balance Due', value: formatMoney(balanceDue), emphasis: true, valueClassName: balanceDue > 0 ? 'text-red-200' : 'text-emerald-200' },
+    ...(pdfOutput?.showBalanceDue === false
+      ? []
+      : [{
+          label: 'Balance Due',
+          value: formatMoney(balanceDue),
+          emphasis: true,
+          valueClassName: balanceDue > 0 ? 'text-red-200' : 'text-emerald-200',
+        }]),
   ]
 
   const previewNotesSections: PreviewNoteSection[] = [

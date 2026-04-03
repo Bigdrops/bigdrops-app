@@ -22,6 +22,7 @@ export interface InvoicePdfOutput {
   bankAccountId: string | null
   showFooter: boolean
   showTagline: boolean
+  showBalanceDue: boolean
 }
 
 export interface Payment {
