@@ -682,6 +682,7 @@ export default function ViewInvoice() {
                     onChange={handlePdfOutputChange}
                     companyTagline={settings.company_tagline || ''}
                     footerText={settings.footer_text || ''}
+                    showBalanceDueOption
                   />
                 ),
               },
@@ -769,6 +770,26 @@ export default function ViewInvoice() {
           onOpenChange={setShowPdfSheet}
           title="Download & Export"
           subtitle={`Using ${activePdfTemplate.label} as the saved invoice PDF preset on this device.`}
+          settingsNode={(
+            <Card className="rounded-[20px] border-border shadow-sm">
+              <CardContent className="flex items-center justify-between gap-3 p-4">
+                <div className="text-sm font-semibold text-foreground">Show Balance Due</div>
+                <button
+                  type="button"
+                  onClick={() => void handlePdfOutputChange({ ...pdfOutput, showBalanceDue: !pdfOutput.showBalanceDue })}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
+                    pdfOutput.showBalanceDue ? 'bg-emerald-500' : 'bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-card shadow-md transition-transform duration-200 ${
+                      pdfOutput.showBalanceDue ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </CardContent>
+            </Card>
+          )}
           actions={[
             { label: 'Export CSV', onClick: handleDownloadCsv, variant: 'outline' },
             {

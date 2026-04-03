@@ -544,6 +544,7 @@ export default function EditInvoice() {
             }))}
             companyTagline={settingsData?.company_tagline || ''}
             footerText={settingsData?.footer_text || ''}
+            showBalanceDueOption
           />
         </div>
       </div>

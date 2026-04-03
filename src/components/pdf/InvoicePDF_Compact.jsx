@@ -194,6 +194,7 @@ export default function InvoicePDF_Compact({
           showInstallRate: d.isColVisible('install_rate'),
           amountInWords: invoice.amount_in_words,
           totalLabel: 'Balance Due',
+          showBalanceDue: pdfOutput?.showBalanceDue !== false,
         })}
 
         {selectedBank ? (
