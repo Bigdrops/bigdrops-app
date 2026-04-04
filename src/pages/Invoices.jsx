@@ -287,7 +287,14 @@ export default function Invoices() {
 
   const handleView  = () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) }
   const handleEdit  = () => { closeSheet(); navigate(`/invoices/edit/${activeInvoice.id}`) }
-  const handleAdvance = () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) }
+  const handleAdvance = () => {
+    const invoiceId = activeInvoice?.id
+    closeSheet()
+    if (!invoiceId) return
+    navigate(`/invoices/${invoiceId}`, {
+      state: { openAdvanceSheet: true },
+    })
+  }
 
   const handleClone = async () => {
     const inv = activeInvoice

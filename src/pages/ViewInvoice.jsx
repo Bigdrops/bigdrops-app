@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useLocation, useParams, useNavigate } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -26,6 +26,7 @@ import {
   getInvoicePdfOutput,
   getInvoiceSignatoryId,
   parseCustomFields,
+  toDbItem,
 } from '@/domain/invoice'
 import { parseDocumentCustomFields } from '@/domain/documentConversion'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
@@ -48,13 +49,19 @@ import VoidPaymentDialog from '@/components/invoice/VoidPaymentDialog'
 import { getInvoiceDetailActionDefs } from '@/domain/invoice/actions'
 import { buildInvoicePreviewModel } from '@/domain/invoice/previewModel'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
+import { numberToWords } from '@/hooks/useInvoiceForm'
 import { useInvoiceMutations } from '@/hooks/useInvoiceMutations'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
 
 export default function ViewInvoice() {
   const { id } = useParams()
+  const location = useLocation()
   const navigate = useNavigate()
 
   const [showMore, setShowMore] = useState(false)
@@ -79,6 +86,9 @@ export default function ViewInvoice() {
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const [attachKind, setAttachKind] = useState(null)
   const [showAttachSheet, setShowAttachSheet] = useState(false)
+  const [showAdvanceDialog, setShowAdvanceDialog] = useState(false)
+  const [advancePercentage, setAdvancePercentage] = useState('50')
+  const [advanceSaving, setAdvanceSaving] = useState(false)
 
   const {
     invoice,
@@ -100,6 +110,12 @@ export default function ViewInvoice() {
   useEffect(() => {
     setPdfOutput(getInvoicePdfOutput(invoice?.custom_fields))
   }, [invoice?.custom_fields])
+
+  useEffect(() => {
+    if (!invoice || !location.state?.openAdvanceSheet || invoice.thread_id) return
+    setShowAdvanceDialog(true)
+    navigate(`/invoices/${id}`, { replace: true, state: {} })
+  }, [id, invoice?.thread_id, location.state?.openAdvanceSheet, navigate])
 
   if (loading) {
     return (
@@ -129,6 +145,8 @@ export default function ViewInvoice() {
   }
 
   const isAdmin = ADMIN_EMAILS.includes(session?.user?.email || '')
+  const isStandaloneInvoice = !invoice.thread_id
+  const isAdvanceInvoice = invoice.thread_role === 'advance' || invoice.is_advance === true
   const sourceDocument = getInvoiceSourceDocument(invoice)
   const invoiceRelatedDocs = { csrs: relatedCsrs, waybills: relatedWaybills }
 
@@ -160,6 +178,8 @@ export default function ViewInvoice() {
     projectActionLabel,
     documentActionLabel,
   } = viewModel
+
+  const canManagePayment = canRecordPayment && isStandaloneInvoice
 
   const customFieldObject = parseCustomFields(invoice.custom_fields)
   const selectedSignatory =
@@ -194,6 +214,111 @@ export default function ViewInvoice() {
         description: `Could not copy ${label.toLowerCase()}.`,
         variant: 'destructive',
       })
+    }
+  }
+
+  const handleCreateAdvanceInvoice = async () => {
+    const safePercent = Number(advancePercentage || 0)
+    if (!Number.isFinite(safePercent) || safePercent <= 0 || safePercent > 100) {
+      toast({
+        title: 'Invalid advance percentage',
+        description: 'Enter a percentage between 1 and 100.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setAdvanceSaving(true)
+
+    try {
+      const { data: existingNumbers, error: numberError } = await supabase
+        .from('invoices')
+        .select('invoice_number')
+        .like('invoice_number', 'SASINV-B%')
+        .order('created_at', { ascending: false })
+
+      if (numberError) throw numberError
+
+      const nextNumber = Math.max(
+        0,
+        ...(existingNumbers || [])
+          .map((entry) => parseInt(String(entry.invoice_number || '').replace('SASINV-B', ''), 10))
+          .filter((value) => Number.isFinite(value)),
+      ) + 1
+
+      const advanceTotal = Number(invoiceTotal || 0) * (safePercent / 100)
+      const customFieldPayload = JSON.stringify(parseCustomFields(invoice.custom_fields))
+
+      const { data: createdInvoice, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert([
+          {
+            invoice_number: `SASINV-B${String(nextNumber).padStart(3, '0')}`,
+            po_number: String(invoice.po_number || '').trim() || null,
+            invoice_title: invoice.invoice_title || null,
+            client_id: invoice.client_id || null,
+            client_name: invoice.client_name || '',
+            project_id: invoice.project_id || null,
+            issue_date: new Date().toISOString().split('T')[0],
+            due_date: invoice.due_date || null,
+            status: 'draft',
+            document_type: invoice.document_type || 'INVOICE',
+            payment_terms: invoice.payment_terms || 'Custom',
+            notes: invoice.notes || '',
+            terms: invoice.terms || '',
+            workmanship: Number(invoice.workmanship || 0),
+            transportation: Number(invoice.transportation || 0),
+            shipping: Number(invoice.shipping || 0),
+            discount: Number(invoice.discount || 0),
+            vat: Number(invoice.vat || 0),
+            wht: Number(invoice.wht || 0),
+            subtotal: Number(invoice.subtotal || 0),
+            install_rate_total: Number(invoice.install_rate_total || 0),
+            total: advanceTotal,
+            amount_in_words: numberToWords(advanceTotal),
+            custom_fields: customFieldPayload,
+            thread_id: invoice.id,
+            thread_role: 'advance',
+            thread_position: 1,
+            total_contract_value: Number(invoiceTotal || 0),
+            advance_mode: 'percent',
+            advance_value: safePercent,
+            is_advance: true,
+          },
+        ])
+        .select()
+        .single()
+
+      if (invoiceError || !createdInvoice) {
+        throw new Error(invoiceError?.message || 'Could not create advance invoice.')
+      }
+
+      const childItems = items
+        .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
+        .map((item, index) => toDbItem(item, createdInvoice.id, index))
+
+      if (childItems.length > 0) {
+        const { error: itemError } = await supabase.from('invoice_items').insert(childItems)
+        if (itemError) {
+          await supabase.from('invoices').delete().eq('id', createdInvoice.id)
+          throw itemError
+        }
+      }
+
+      setShowAdvanceDialog(false)
+      setAdvancePercentage('50')
+      toast({
+        title: 'Advance invoice created',
+        description: `${createdInvoice.invoice_number || 'Advance invoice'} was created from this invoice.`,
+      })
+    } catch (error) {
+      toast({
+        title: 'Advance creation failed',
+        description: error?.message || 'Could not create advance invoice.',
+        variant: 'destructive',
+      })
+    } finally {
+      setAdvanceSaving(false)
     }
   }
 
@@ -249,7 +374,8 @@ export default function ViewInvoice() {
       ? 'View source, generated, and related records'
       : 'Connect this invoice to related records',
     hasLinkedDocuments,
-    canRecordPayment,
+    canRecordPayment: canManagePayment,
+    isStandalone: isStandaloneInvoice,
     reverting: converting,
     showMarkSent: invoice.status === 'draft',
   })
@@ -266,6 +392,10 @@ export default function ViewInvoice() {
     payment: () => {
       setShowMore(false)
       setShowPaymentModal(true)
+    },
+    advance: () => {
+      setShowMore(false)
+      setShowAdvanceDialog(true)
     },
     export: handleDownloadCsv,
     'copy-number': () => {
@@ -381,9 +511,15 @@ export default function ViewInvoice() {
 
       const computedResult = {
         ...baseComputedResult,
+        ...(isAdvanceInvoice
+          ? {
+              grandTotal: invoiceTotal,
+              totalPayable: invoiceTotal,
+            }
+          : {}),
         cashReceived,
         settledTotal,
-        balanceDue,
+        balanceDue: isAdvanceInvoice ? Math.max(0, invoiceTotal - settledTotal) : balanceDue,
       }
 
       const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
@@ -599,7 +735,7 @@ export default function ViewInvoice() {
               label: 'Payment',
               onClick: () => setShowPaymentModal(true),
               variant: 'emerald',
-              disabled: !canRecordPayment,
+              disabled: !canManagePayment,
             },
             { key: 'edit', label: 'Edit', onClick: () => navigate('/invoices/edit/' + id), variant: 'blue' },
             { key: 'more', label: 'More', onClick: () => setShowMore(true), variant: 'outline' },
@@ -840,6 +976,71 @@ export default function ViewInvoice() {
           onCancel={() => setShowVoidDialog(false)}
         />
 
+        <Dialog
+          open={showAdvanceDialog}
+          onOpenChange={(nextOpen) => {
+            if (advanceSaving) return
+            setShowAdvanceDialog(nextOpen)
+          }}
+        >
+          <DialogContent className="max-w-[calc(100%-1rem)] rounded-2xl bg-card sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create Advance Invoice</DialogTitle>
+              <DialogDescription>
+                Generate an advance draft directly from {invoice.invoice_number || 'this invoice'}.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                  Source Invoice
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-950">
+                  {invoice.invoice_number || 'Invoice'} · {formatMoney(invoiceTotal)}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="advance-percentage">Advance Percentage</Label>
+                <Input
+                  id="advance-percentage"
+                  type="number"
+                  min="1"
+                  max="100"
+                  step="1"
+                  inputMode="decimal"
+                  value={advancePercentage}
+                  onChange={(event) => setAdvancePercentage(event.target.value)}
+                  disabled={advanceSaving}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Advance total: {formatMoney(invoiceTotal * (Number(advancePercentage || 0) / 100))}
+                </p>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAdvanceDialog(false)}
+                disabled={advanceSaving}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void handleCreateAdvanceInvoice()}
+                disabled={advanceSaving}
+                className="bg-slate-950 text-white hover:bg-slate-800"
+              >
+                {advanceSaving ? 'Creating...' : 'Create Advance'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <LinkedDocumentsSheet
           open={showLinkedDocuments}
           onOpenChange={setShowLinkedDocuments}
@@ -889,7 +1090,7 @@ export default function ViewInvoice() {
               label: computedStatus === 'paid' ? 'Paid in Full' : 'Record Payment',
               onClick: () => setShowPaymentModal(true),
               className: 'bg-emerald-600 text-white hover:bg-emerald-700',
-              disabled: computedStatus === 'paid',
+              disabled: computedStatus === 'paid' || !isStandaloneInvoice,
             },
           ]}
         />

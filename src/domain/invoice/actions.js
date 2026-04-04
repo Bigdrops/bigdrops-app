@@ -7,6 +7,7 @@ export function getInvoiceDetailActionDefs({
   documentActionSubtitle,
   hasLinkedDocuments,
   canRecordPayment,
+  isStandalone,
   reverting,
   showMarkSent,
 }) {
@@ -52,6 +53,13 @@ export function getInvoiceDetailActionDefs({
       subtitle: 'Duplicate this invoice as a new draft',
       iconKey: 'clone',
       visible: true,
+    },
+    {
+      key: 'advance',
+      label: 'Advance Invoice',
+      subtitle: 'Create an advance draft from this invoice',
+      iconKey: 'payment',
+      visible: isStandalone,
     },
     {
       key: 'revert',
