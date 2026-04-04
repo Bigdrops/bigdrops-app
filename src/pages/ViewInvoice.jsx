@@ -10,10 +10,10 @@ import {
   DocumentDesignPanel,
   DocumentDesignStyleEditor,
   DocumentFloatingFab,
+  DocumentHeroCard,
   DocumentLivePreviewCard,
   DocumentPdfSheet,
   DocumentSection,
-  DocumentSummaryDisclosure,
   DocumentStatusStrip,
   DocumentTemplatePicker,
   DocumentTopBar,
@@ -946,7 +946,7 @@ export default function ViewInvoice() {
           onMore={() => setShowMore(true)}
         />
 
-        <DocumentSummaryDisclosure
+        <DocumentHeroCard
           eyebrow="Total Payable"
           value={formatMoney(invoiceTotal)}
           helper={invoice.amount_in_words || invoice.invoice_title || 'Invoice ready for payment tracking.'}
@@ -967,9 +967,6 @@ export default function ViewInvoice() {
               className: 'text-white',
             },
           ]}
-          compactLabel="Invoice Summary"
-          openLabel="Open summary"
-          closeLabel="Collapse summary"
         />
 
         <DocumentActionGrid
@@ -990,13 +987,8 @@ export default function ViewInvoice() {
                   onClick: () => openAdvanceSheet(),
                   variant: 'outline',
                 }
-              : {
-                  key: 'more',
-                  label: 'More',
-                  onClick: () => setShowMore(true),
-                  variant: 'outline',
-                },
-          ]}
+              : null,
+          ].filter(Boolean)}
         />
 
         <DocumentStatusStrip items={shellStatusItems} />
