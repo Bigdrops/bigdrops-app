@@ -9,13 +9,20 @@ import {
 } from '../components/csr/csrUtils'
 import CSRPreviewPanel from '../components/csr/CSRPreviewPanel'
 import { toast } from '@/hooks/use-toast'
-import { DocumentActionSheet } from '@/components/document/DocumentViewShell'
+import {
+  DocumentActionSheet,
+  DocumentDesignPanel,
+  DocumentFillableWritingEditor,
+  DocumentSection,
+} from '@/components/document/DocumentViewShell'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 import { fetchInvoiceSummary, fetchProjectSummary } from '@/domain/documentRelationships'
+import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { isDocumentFillableEnabled } from '@/lib/documentFillableSettings'
 
 export default function ViewCSR() {
   const { id } = useParams()
@@ -38,6 +45,7 @@ export default function ViewCSR() {
       return '4'
     }
   })
+  const [pdfDesignPreset, setPdfDesignPresetState] = useState(() => getPdfDesignPreset('csr'))
 
   useEffect(() => {
     supabase.from('csrs').select('*').eq('id', id).single().then(({ data }) => {
@@ -75,6 +83,7 @@ export default function ViewCSR() {
 
   const previewData = buildCsrPreviewData(csr, { signatories })
   const branding = getCsrBranding(settings)
+  const showCsrFillableControls = isDocumentFillableEnabled(settings?.document_fillable_settings, 'csr')
   const projectActionState = getProjectActionState({ projectId: csr?.project_id, project: linkedProject })
   const documentActionState = getDocumentActionState({
     sourceDocument: linkedInvoice,
@@ -147,7 +156,7 @@ export default function ViewCSR() {
       import('../components/csr/CSRPreviewTemplates'),
     ])
     const blob = await pdf(
-      getCsrPdfDocument({ csr: previewData, branding, template })
+      getCsrPdfDocument({ csr: previewData, branding, template, designPreset: pdfDesignPreset })
     ).toBlob()
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -205,6 +214,15 @@ export default function ViewCSR() {
     },
   ]
 
+  const handlePdfDesignPresetChange = (nextPreset) => {
+    const resolvedPreset = {
+      ...nextPreset,
+      fillableFontMode: 'custom',
+    }
+    setPdfDesignPresetState(resolvedPreset)
+    setPdfDesignPreset('csr', resolvedPreset)
+  }
+
   return (
     <Layout title={previewData.csr_number}>
       <div style={{ maxWidth: '900px', width: '100%' }}>
@@ -247,7 +265,30 @@ export default function ViewCSR() {
           template={template}
           onTemplateChange={setTemplate}
           branding={branding}
+          designPreset={pdfDesignPreset}
         />
+
+        {showCsrFillableControls ? (
+          <DocumentSection title="Customize" defaultOpen>
+            <DocumentDesignPanel
+              title="Customize"
+              subtitle="Fillable-writing controls for CSR preview and PDF export."
+              badge="CSR"
+              sections={[
+                {
+                  key: 'fillable-writing',
+                  title: 'Fillable Writing',
+                  content: (
+                    <DocumentFillableWritingEditor
+                      value={pdfDesignPreset}
+                      onChange={handlePdfDesignPresetChange}
+                    />
+                  ),
+                },
+              ]}
+            />
+          </DocumentSection>
+        ) : null}
 
         <DocumentActionSheet
           open={showMore}

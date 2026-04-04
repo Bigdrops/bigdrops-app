@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { getEffectiveFillableFont, resolvePdfWebFontFamily } from '@/lib/pdfDesignPreset'
 import {
   CSR_READING_FIELDS,
   CSR_STATUS_OPTIONS,
@@ -188,7 +189,7 @@ function renderPreviewHeader({ csr, branding, theme, compact }) {
   )
 }
 
-export default function CSRPreviewPanel({ csr, template, onTemplateChange, branding = {} }) {
+export default function CSRPreviewPanel({ csr, template, onTemplateChange, branding = {}, designPreset }) {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640)
 
   useEffect(() => {
@@ -204,7 +205,9 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
   const hasBranding = Boolean(branding.companyName || branding.companyTagline || branding.contactLine)
   const showDocumentHeader = hasBranding || theme.headerMode === 'compactRibbon' || theme.headerMode === 'editorialSplit'
   const lbl = { fontSize: compact ? '10px' : '11px', fontWeight: '700', color: theme.accent, textTransform: 'uppercase', letterSpacing: compact ? '0.24px' : '0.3px', display: 'block', marginBottom: '4px' }
-  const val = { fontSize: compact ? '12px' : '13px', color: theme.pageFg || '#1a1a1a' }
+  const fillableFontFamily = resolvePdfWebFontFamily(getEffectiveFillableFont(designPreset))
+  const fillableColor = designPreset?.fillableColor || theme.pageFg || '#1a1a1a'
+  const val = { fontSize: compact ? '12px' : '13px', color: fillableColor, fontFamily: fillableFontFamily }
   const sec = {
     backgroundColor: theme.sectionBg || 'white',
     borderRadius: isMobile ? '8px' : '10px',

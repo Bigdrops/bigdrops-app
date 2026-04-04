@@ -1,4 +1,4 @@
-export type PdfDesignPresetDocument = 'invoice' | 'quotation'
+export type PdfDesignPresetDocument = 'invoice' | 'quotation' | 'csr' | 'waybill'
 export type PdfFontChoice =
   | 'Inter'
   | 'Roboto'
@@ -10,16 +10,22 @@ export type PdfFontChoice =
   | 'Orbitron'
   | 'Source Sans Pro'
   | 'Roboto Condensed'
-  | 'Biro Script'
-  | 'Ballpoint Handwriting'
-  | 'Ballpoint Rush'
+export type PdfFillableHandwritingChoice =
+  | 'Patrick Hand'
+  | 'Handlee'
+  | 'Caveat'
+  | 'Sue Ellen Francisco'
+  | 'Kalam'
+  | 'Reenie Beanie'
+type LegacyPdfFillableChoice = 'Biro Script' | 'Ballpoint Handwriting' | 'Ballpoint Rush'
+export type PdfFillableFontChoice = PdfFontChoice | PdfFillableHandwritingChoice
 export type PdfFillableFontMode = 'auto' | 'custom'
 
 export type PdfDesignPreset = {
   accentColor: string
   headerFont: PdfFontChoice
   bodyFont: PdfFontChoice
-  fillableFont: PdfFontChoice
+  fillableFont: PdfFillableFontChoice
   fillableFontMode: PdfFillableFontMode
   fillableColor: string
 }
@@ -27,6 +33,8 @@ export type PdfDesignPreset = {
 const DESIGN_PRESET_KEYS: Record<PdfDesignPresetDocument, string> = {
   invoice: 'invoice_pdf_design_preset',
   quotation: 'quotation_pdf_design_preset',
+  csr: 'csr_pdf_design_preset',
+  waybill: 'waybill_pdf_design_preset',
 }
 
 const PDF_FONT_VALUES: PdfFontChoice[] = [
@@ -40,9 +48,16 @@ const PDF_FONT_VALUES: PdfFontChoice[] = [
   'Orbitron',
   'Source Sans Pro',
   'Roboto Condensed',
-  'Biro Script',
-  'Ballpoint Handwriting',
-  'Ballpoint Rush',
+]
+
+const PDF_FILLABLE_FONT_VALUES: PdfFillableFontChoice[] = [
+  ...PDF_FONT_VALUES,
+  'Patrick Hand',
+  'Handlee',
+  'Caveat',
+  'Sue Ellen Francisco',
+  'Kalam',
+  'Reenie Beanie',
 ]
 
 export const PDF_FONT_OPTIONS: Array<{ value: PdfFontChoice; label: string; description: string }> = [
@@ -56,9 +71,16 @@ export const PDF_FONT_OPTIONS: Array<{ value: PdfFontChoice; label: string; desc
   { value: 'Orbitron', label: 'Orbitron', description: 'Tech-inspired display' },
   { value: 'Source Sans Pro', label: 'Source Sans Pro', description: 'Balanced document text' },
   { value: 'Roboto Condensed', label: 'Roboto Condensed', description: 'Compact structured text' },
-  { value: 'Biro Script', label: 'Biro Script', description: 'Formal script accent' },
-  { value: 'Ballpoint Handwriting', label: 'Ballpoint Handwriting', description: 'Casual handwritten note' },
-  { value: 'Ballpoint Rush', label: 'Ballpoint Rush', description: 'Energetic handwritten accent' },
+]
+
+export const PDF_FILLABLE_FONT_OPTIONS: Array<{ value: PdfFillableFontChoice; label: string; description: string }> = [
+  ...PDF_FONT_OPTIONS,
+  { value: 'Patrick Hand', label: 'Patrick Hand', description: 'Friendly handwritten print' },
+  { value: 'Handlee', label: 'Handlee', description: 'Smooth casual handwriting' },
+  { value: 'Caveat', label: 'Caveat', description: 'Expressive note-style script' },
+  { value: 'Sue Ellen Francisco', label: 'Sue Ellen Francisco', description: 'Tall neat handwritten strokes' },
+  { value: 'Kalam', label: 'Kalam', description: 'Rounded handwritten marker feel' },
+  { value: 'Reenie Beanie', label: 'Reenie Beanie', description: 'Loose scribbled handwriting' },
 ]
 
 export const PDF_ACCENT_SWATCHES = ['#14b8a6', '#3b82f6', '#ef4444', '#f59e0b', '#6366f1', '#111827']
@@ -80,6 +102,22 @@ const DEFAULT_PRESETS: Record<PdfDesignPresetDocument, PdfDesignPreset> = {
     fillableFontMode: 'auto',
     fillableColor: '#0f172a',
   },
+  csr: {
+    accentColor: '#0f172a',
+    headerFont: 'Inter',
+    bodyFont: 'Inter',
+    fillableFont: 'Patrick Hand',
+    fillableFontMode: 'custom',
+    fillableColor: '#0f172a',
+  },
+  waybill: {
+    accentColor: '#0f172a',
+    headerFont: 'Inter',
+    bodyFont: 'Inter',
+    fillableFont: 'Patrick Hand',
+    fillableFontMode: 'custom',
+    fillableColor: '#0f172a',
+  },
 }
 
 function normalizeHexColor(value: unknown, fallback: string) {
@@ -95,6 +133,19 @@ function normalizeFontChoice(value: unknown, fallback: PdfFontChoice): PdfFontCh
   if (normalized === 'serif') return 'Lato'
   if (normalized === 'mono') return 'Roboto Condensed'
   return PDF_FONT_VALUES.includes(normalized as PdfFontChoice) ? (normalized as PdfFontChoice) : fallback
+}
+
+function normalizeFillableFontChoice(value: unknown, fallback: PdfFillableFontChoice): PdfFillableFontChoice {
+  const normalized = String(value || '').trim()
+  if (normalized === 'sans') return 'Inter'
+  if (normalized === 'serif') return 'Lato'
+  if (normalized === 'mono') return 'Roboto Condensed'
+  if ((['Biro Script', 'Ballpoint Handwriting', 'Ballpoint Rush'] as LegacyPdfFillableChoice[]).includes(normalized as LegacyPdfFillableChoice)) {
+    return 'Patrick Hand'
+  }
+  return PDF_FILLABLE_FONT_VALUES.includes(normalized as PdfFillableFontChoice)
+    ? (normalized as PdfFillableFontChoice)
+    : fallback
 }
 
 function normalizeFillableFontMode(value: unknown): PdfFillableFontMode {
@@ -115,7 +166,7 @@ export function sanitizePdfDesignPreset(
     accentColor: normalizeHexColor(value?.accentColor, fallback.accentColor),
     headerFont: normalizeFontChoice(value?.headerFont, fallback.headerFont),
     bodyFont: normalizeFontChoice(value?.bodyFont, fallback.bodyFont),
-    fillableFont: normalizeFontChoice(value?.fillableFont, fallback.fillableFont),
+    fillableFont: normalizeFillableFontChoice(value?.fillableFont, fallback.fillableFont),
     fillableFontMode: normalizeFillableFontMode(value?.fillableFontMode),
     fillableColor: normalizeHexColor(value?.fillableColor, fallback.fillableColor),
   }
@@ -143,32 +194,50 @@ export function setPdfDesignPreset(documentType: PdfDesignPresetDocument, preset
   }
 }
 
-export function getEffectiveFillableFont(preset: PdfDesignPreset): PdfFontChoice {
+export function getEffectiveFillableFont(preset: PdfDesignPreset): PdfFillableFontChoice {
   return preset.fillableFontMode === 'custom' ? preset.fillableFont : preset.bodyFont
 }
 
 export function resolvePdfFontFamily(
-  choice: PdfFontChoice,
+  choice: PdfFontChoice | PdfFillableFontChoice | LegacyPdfFillableChoice,
   variant: 'regular' | 'bold' | 'italic' | 'boldItalic' = 'regular',
 ) {
-  if (choice === 'Biro Script' || choice === 'Ballpoint Handwriting' || choice === 'Ballpoint Rush') {
+  if (choice === 'Patrick Hand' || choice === 'Handlee' || choice === 'Biro Script') {
     if (variant === 'bold') return 'Times-Bold'
     if (variant === 'italic') return 'Times-Italic'
     if (variant === 'boldItalic') return 'Times-BoldItalic'
     return 'Times-Roman'
   }
 
-  if (choice === 'Orbitron' || choice === 'Roboto Condensed') {
+  if (choice === 'Caveat' || choice === 'Kalam' || choice === 'Orbitron' || choice === 'Roboto Condensed') {
     if (variant === 'bold') return 'Courier-Bold'
     if (variant === 'italic') return 'Courier-Oblique'
     if (variant === 'boldItalic') return 'Courier-BoldOblique'
     return 'Courier'
   }
 
+  if (choice === 'Sue Ellen Francisco' || choice === 'Reenie Beanie' || choice === 'Ballpoint Handwriting' || choice === 'Ballpoint Rush') {
+    if (variant === 'bold') return 'Helvetica-BoldOblique'
+    if (variant === 'italic') return 'Helvetica-Oblique'
+    if (variant === 'boldItalic') return 'Helvetica-BoldOblique'
+    return 'Helvetica-Oblique'
+  }
+
   if (variant === 'bold') return 'Helvetica-Bold'
   if (variant === 'italic') return 'Helvetica-Oblique'
   if (variant === 'boldItalic') return 'Helvetica-BoldOblique'
   return 'Helvetica'
+}
+
+export function resolvePdfWebFontFamily(choice: PdfFontChoice | PdfFillableFontChoice | LegacyPdfFillableChoice) {
+  if (choice === 'Patrick Hand') return '"Patrick Hand", "Segoe Print", "Bradley Hand", cursive'
+  if (choice === 'Handlee') return '"Handlee", "Segoe Print", "Comic Sans MS", cursive'
+  if (choice === 'Caveat') return '"Caveat", "Bradley Hand", "Comic Sans MS", cursive'
+  if (choice === 'Sue Ellen Francisco') return '"Sue Ellen Francisco", "Segoe Print", "Bradley Hand", cursive'
+  if (choice === 'Kalam') return '"Kalam", "Segoe Print", "Comic Sans MS", cursive'
+  if (choice === 'Reenie Beanie') return '"Reenie Beanie", "Segoe Script", "Bradley Hand", cursive'
+  if (choice === 'Orbitron' || choice === 'Roboto Condensed') return '"Courier New", Courier, monospace'
+  return 'Inter, Arial, sans-serif'
 }
 
 function clampChannel(value: number) {

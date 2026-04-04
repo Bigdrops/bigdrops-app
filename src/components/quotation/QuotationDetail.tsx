@@ -22,6 +22,7 @@ import { calcTotals } from '@/components/useInvoiceColumns.jsx'
 import { computeDocument } from '@/lib/Calculations'
 import { PDF_TEMPLATES, DEFAULT_TEMPLATE, type PdfTemplateId } from '@/components/pdf/pdfTemplates'
 import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { isDocumentFillableEnabled } from '@/lib/documentFillableSettings'
 import { getPdfTemplatePreset, setPdfTemplatePreset } from '@/lib/pdfTemplatePreset'
 import { toast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
@@ -607,6 +608,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
 
   const shellQuotationTotal = totals?.totalPayable ?? Number(quotation.total || 0)
   const activePdfTemplate = PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || PDF_TEMPLATES[0]
+  const showQuotationFillableControls = isDocumentFillableEnabled(settings?.document_fillable_settings, 'quotation')
   const handlePdfTemplateChange = (nextTemplate: PdfTemplateId) => {
     setPdfTemplate(nextTemplate)
     setPdfTemplatePreset('quotation', nextTemplate)
@@ -745,6 +747,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       <DocumentSection title="Customize Design">
         <DocumentDesignPanel
           title="Design"
+          subtitle="Template, document styling, and supporting output controls for quotation PDFs."
           badge={activePdfTemplate.label}
           sections={[
             {
@@ -758,7 +761,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
               key: 'styling',
               title: 'Fonts & Color',
               content: (
-                <DocumentDesignStyleEditor value={pdfDesignPreset} onChange={handlePdfDesignPresetChange} />
+                <DocumentDesignStyleEditor value={pdfDesignPreset} onChange={handlePdfDesignPresetChange} showFillableControls={showQuotationFillableControls} />
               ),
             },
             {

@@ -5,12 +5,17 @@ import DashboardQuickTilesSettings from '../components/settings/DashboardQuickTi
 import { useSettings, uploadFile, saveSettings } from '../hooks/useSettings'
 import { ALL_QUICK_TILE_IDS, QUICK_TILE_COUNT, QUICK_TILE_REGISTRY, loadStoredQuickTiles, saveStoredQuickTiles } from '../config/quickTiles'
 import {
+  normalizeDocumentFillableSettings,
+  serializeDocumentFillableSettings,
+} from '@/lib/documentFillableSettings'
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import {
   Building2, CreditCard, ImageIcon, FileText,
   Shield, Check, Loader2, ChevronRight, Upload, X,
@@ -1078,6 +1083,118 @@ function DashboardSection() {
   )
 }
 
+function DocumentsSection({ onToast }) {
+  const { settings, loading } = useSettings()
+  const [activePanel, setActivePanel] = useState(null)
+  const [fillableSettings, setFillableSettings] = useState(() => normalizeDocumentFillableSettings(null))
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    if (!loading) {
+      setFillableSettings(normalizeDocumentFillableSettings(settings?.document_fillable_settings))
+    }
+  }, [loading, settings])
+
+  const updateEntry = (key, enabled) => {
+    setFillableSettings((current) => ({
+      ...current,
+      [key]: {
+        ...current[key],
+        enabled,
+      },
+    }))
+  }
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await saveSettings({
+        document_fillable_settings: serializeDocumentFillableSettings(fillableSettings),
+      })
+      setSaved(true)
+      onToast('Document fillable settings saved')
+      setTimeout(() => setSaved(false), 2500)
+    } catch (error) {
+      onToast('Save failed: ' + error.message)
+    }
+    setSaving(false)
+  }
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-slate-300" /></div>
+
+  if (activePanel !== 'fillable-writing') {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-border bg-muted/50 px-4 py-4">
+          <div className="text-sm font-bold text-foreground">Documents</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            Control which document view pages expose fillable-writing controls inside Customize.
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setActivePanel('fillable-writing')}
+          className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-4 text-left shadow-sm transition hover:bg-muted/30"
+        >
+          <div>
+            <div className="text-sm font-bold text-foreground">Fillable Writing</div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              Show or hide fillable font and color controls on supported document view pages.
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-slate-300" />
+        </button>
+      </div>
+    )
+  }
+
+  const rows = [
+    { key: 'csr', label: 'CSR', description: 'Show fillable-writing controls under Customize on CSR pages.' },
+    { key: 'waybill', label: 'Waybill', description: 'Show fillable-writing controls under Customize on Waybill pages.' },
+    { key: 'invoice', label: 'Invoice', description: 'Show fillable-writing controls inside invoice Customize.' },
+    { key: 'quotation', label: 'Quotation', description: 'Show fillable-writing controls inside quotation Customize.' },
+  ]
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-4">
+        <div>
+          <div className="text-sm font-bold text-foreground">Fillable Writing</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            This only controls whether the font and color controls appear under Customize. It does not pick the fonts here.
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setActivePanel(null)}
+          className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-muted/50"
+        >
+          Back
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {rows.map((row) => (
+          <div key={row.key} className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card px-4 py-4 shadow-sm">
+            <div className="min-w-0">
+              <div className="text-sm font-bold text-foreground">{row.label}</div>
+              <div className="mt-1 text-xs text-muted-foreground">{row.description}</div>
+            </div>
+            <Switch
+              checked={fillableSettings[row.key].enabled}
+              onCheckedChange={(next) => updateEntry(row.key, next)}
+            />
+          </div>
+        ))}
+      </div>
+
+      <SaveBtn saving={saving} saved={saved} onClick={save} />
+    </div>
+  )
+}
+
 function SummaryField({ label, value }) {
   return (
     <div className="rounded-xl border border-border bg-muted/50 px-4 py-3">
@@ -1550,6 +1667,7 @@ const SECTIONS = [
   { id: 'company',  label: 'Company Info',    icon: Building2,  desc: 'Name, address, contact' },
   { id: 'banking',  label: 'Banking',          icon: CreditCard, desc: 'Account & bank details' },
   { id: 'branding', label: 'Logo & Branding',  icon: ImageIcon,  desc: 'Logo and footer text' },
+  { id: 'documents', label: 'Documents',       icon: FolderKanban, desc: 'Customize document control availability' },
   { id: 'signatories', label: 'Signatories', icon: UserCheck, desc: 'Manage document signatories' },
   { id: 'dashboard', label: 'Dashboard',       icon: LayoutDashboard, desc: 'Quick tiles on dashboard header' },
   { id: 'archives', label: 'Archives',         icon: ArchiveRestore, desc: 'Restore archived invoices, quotations, and projects' },
@@ -1577,6 +1695,7 @@ export default function Settings() {
       case 'company':  return <CompanySection onToast={showToast} />
       case 'banking':  return <BankingSection onToast={showToast} />
       case 'branding': return <BrandingSection onToast={showToast} />
+      case 'documents': return <DocumentsSection onToast={showToast} />
       case 'signatories': return <SignatoriesSection onToast={showToast} />
       case 'dashboard': return <DashboardSection />
       case 'archives': return <ArchivesSection onToast={showToast} />

@@ -13,6 +13,7 @@ import {
   DocumentLivePreviewCard,
   DocumentPdfSheet,
   DocumentSection,
+  DocumentSummaryDisclosure,
   DocumentStatusStrip,
   DocumentTemplatePicker,
   DocumentTopBar,
@@ -36,6 +37,7 @@ import {
   getPdfDesignPreset,
   setPdfDesignPreset,
 } from '@/lib/pdfDesignPreset'
+import { isDocumentFillableEnabled } from '@/lib/documentFillableSettings'
 import { getPdfTemplatePreset, setPdfTemplatePreset } from '@/lib/pdfTemplatePreset'
 import { toast } from '@/hooks/use-toast'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
@@ -49,9 +51,9 @@ import { getInvoiceDetailActionDefs } from '@/domain/invoice/actions'
 import { buildInvoicePreviewModel } from '@/domain/invoice/previewModel'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
 import { numberToWords } from '@/hooks/useInvoiceForm'
 import { useInvoiceMutations } from '@/hooks/useInvoiceMutations'
@@ -85,8 +87,10 @@ export default function ViewInvoice() {
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const [attachKind, setAttachKind] = useState(null)
   const [showAttachSheet, setShowAttachSheet] = useState(false)
-  const [showAdvanceDialog, setShowAdvanceDialog] = useState(false)
-  const [advancePercentage, setAdvancePercentage] = useState('50')
+  const [showAdvanceSheet, setShowAdvanceSheet] = useState(false)
+  const [advanceSheetMode, setAdvanceSheetMode] = useState('create')
+  const [advanceMode, setAdvanceMode] = useState('percent')
+  const [advanceInputValue, setAdvanceInputValue] = useState('50')
   const [advanceInvoice, setAdvanceInvoice] = useState(null)
   const [advanceSaving, setAdvanceSaving] = useState(false)
   const [advancePdfGenerating, setAdvancePdfGenerating] = useState(false)
@@ -143,7 +147,8 @@ export default function ViewInvoice() {
 
   useEffect(() => {
     if (!invoice || !location.state?.openAdvanceSheet || invoice.thread_id) return
-    setShowAdvanceDialog(true)
+    setAdvanceSheetMode('create')
+    setShowAdvanceSheet(true)
     navigate(`/invoices/${id}`, { replace: true, state: {} })
   }, [id, invoice?.thread_id, location.state?.openAdvanceSheet, navigate])
 
@@ -177,6 +182,7 @@ export default function ViewInvoice() {
   const isAdmin = ADMIN_EMAILS.includes(session?.user?.email || '')
   const isStandaloneInvoice = !invoice.thread_id
   const isAdvanceInvoice = invoice.thread_role === 'advance' || invoice.is_advance === true
+  const contractValue = Number(invoiceTotal || 0)
   const sourceDocument = getInvoiceSourceDocument(invoice)
   const invoiceRelatedDocs = { csrs: relatedCsrs, waybills: relatedWaybills }
 
@@ -215,6 +221,50 @@ export default function ViewInvoice() {
   const selectedSignatory =
     signatories.find((signatory) => signatory.id === getInvoiceSignatoryId(customFieldObject)) || null
 
+  const syncAdvanceForm = useCallback((nextAdvanceInvoice) => {
+    const nextMode = nextAdvanceInvoice?.advance_mode === 'fixed' ? 'fixed' : 'percent'
+    const rawValue =
+      nextAdvanceInvoice?.advance_value !== null
+      && nextAdvanceInvoice?.advance_value !== undefined
+        ? String(nextAdvanceInvoice.advance_value)
+        : nextMode === 'fixed'
+          ? String(nextAdvanceInvoice?.total || '')
+          : '50'
+
+    setAdvanceMode(nextMode)
+    setAdvanceInputValue(rawValue)
+  }, [])
+
+  useEffect(() => {
+    if (advanceInvoice && advanceSheetMode === 'create') {
+      setAdvanceSheetMode('view')
+      syncAdvanceForm(advanceInvoice)
+    }
+  }, [advanceInvoice, advanceSheetMode, syncAdvanceForm])
+
+  const openAdvanceSheet = (mode = advanceInvoice ? 'view' : 'create') => {
+    if (mode === 'edit' && advanceInvoice) {
+      syncAdvanceForm(advanceInvoice)
+    }
+    if (mode === 'create' && !advanceInvoice) {
+      setAdvanceMode('percent')
+      setAdvanceInputValue('50')
+    }
+    if (mode === 'view' && advanceInvoice) {
+      syncAdvanceForm(advanceInvoice)
+    }
+    setAdvanceSheetMode(mode)
+    setShowAdvanceSheet(true)
+  }
+
+  const parsedAdvanceInput = Number(advanceInputValue || 0)
+  const safeAdvanceInput = Number.isFinite(parsedAdvanceInput) ? parsedAdvanceInput : 0
+  const currentAdvanceAmount = advanceMode === 'fixed'
+    ? safeAdvanceInput
+    : contractValue * (safeAdvanceInput / 100)
+  const advanceAmount = Math.min(Math.max(currentAdvanceAmount, 0), contractValue)
+  const balanceRemaining = Math.max(0, contractValue - advanceAmount)
+
   const handleDownloadCsv = () => {
     const csv = buildInvoiceCsv({
       invoice,
@@ -247,12 +297,29 @@ export default function ViewInvoice() {
     }
   }
 
-  const handleCreateAdvanceInvoice = async () => {
-    const safePercent = Number(advancePercentage || 0)
-    if (!Number.isFinite(safePercent) || safePercent <= 0 || safePercent > 100) {
+  const handleSaveAdvance = async () => {
+    if (!Number.isFinite(safeAdvanceInput) || safeAdvanceInput <= 0) {
+      toast({
+        title: 'Invalid advance value',
+        description: advanceMode === 'fixed'
+          ? 'Enter a valid advance amount.'
+          : 'Enter a percentage between 1 and 100.',
+        variant: 'destructive',
+      })
+      return
+    }
+    if (advanceMode === 'percent' && safeAdvanceInput > 100) {
       toast({
         title: 'Invalid advance percentage',
         description: 'Enter a percentage between 1 and 100.',
+        variant: 'destructive',
+      })
+      return
+    }
+    if (advanceAmount <= 0 || advanceAmount > contractValue) {
+      toast({
+        title: 'Invalid advance value',
+        description: 'Advance must be greater than zero and not exceed the contract value.',
         variant: 'destructive',
       })
       return
@@ -261,91 +328,105 @@ export default function ViewInvoice() {
     setAdvanceSaving(true)
 
     try {
-      const { data: existingNumbers, error: numberError } = await supabase
-        .from('invoices')
-        .select('invoice_number')
-        .like('invoice_number', 'SASINV-B%')
-        .order('created_at', { ascending: false })
+      if (advanceInvoice) {
+        const { error: updateError } = await supabase
+          .from('invoices')
+          .update({
+            total: advanceAmount,
+            amount_in_words: numberToWords(advanceAmount),
+            advance_mode: advanceMode,
+            advance_value: safeAdvanceInput,
+          })
+          .eq('id', advanceInvoice.id)
 
-      if (numberError) throw numberError
+        if (updateError) throw updateError
+      } else {
+        const { data: existingNumbers, error: numberError } = await supabase
+          .from('invoices')
+          .select('invoice_number')
+          .like('invoice_number', 'SASINV-B%')
+          .order('created_at', { ascending: false })
 
-      const nextNumber = Math.max(
-        0,
-        ...(existingNumbers || [])
-          .map((entry) => parseInt(String(entry.invoice_number || '').replace('SASINV-B', ''), 10))
-          .filter((value) => Number.isFinite(value)),
-      ) + 1
+        if (numberError) throw numberError
 
-      const advanceTotal = Number(invoiceTotal || 0) * (safePercent / 100)
-      const customFieldPayload = JSON.stringify(parseCustomFields(invoice.custom_fields))
+        const nextNumber = Math.max(
+          0,
+          ...(existingNumbers || [])
+            .map((entry) => parseInt(String(entry.invoice_number || '').replace('SASINV-B', ''), 10))
+            .filter((value) => Number.isFinite(value)),
+        ) + 1
 
-      const { data: createdInvoice, error: invoiceError } = await supabase
-        .from('invoices')
-        .insert([
-          {
-            invoice_number: `SASINV-B${String(nextNumber).padStart(3, '0')}`,
-            po_number: String(invoice.po_number || '').trim() || null,
-            invoice_title: invoice.invoice_title || null,
-            client_id: invoice.client_id || null,
-            client_name: invoice.client_name || '',
-            project_id: invoice.project_id || null,
-            issue_date: new Date().toISOString().split('T')[0],
-            due_date: invoice.due_date || null,
-            status: 'draft',
-            document_type: invoice.document_type || 'INVOICE',
-            payment_terms: invoice.payment_terms || 'Custom',
-            notes: invoice.notes || '',
-            terms: invoice.terms || '',
-            workmanship: Number(invoice.workmanship || 0),
-            transportation: Number(invoice.transportation || 0),
-            shipping: Number(invoice.shipping || 0),
-            discount: Number(invoice.discount || 0),
-            vat: Number(invoice.vat || 0),
-            wht: Number(invoice.wht || 0),
-            subtotal: Number(invoice.subtotal || 0),
-            install_rate_total: Number(invoice.install_rate_total || 0),
-            total: advanceTotal,
-            amount_in_words: numberToWords(advanceTotal),
-            custom_fields: customFieldPayload,
-            thread_id: invoice.id,
-            thread_role: 'advance',
-            thread_position: 1,
-            total_contract_value: Number(invoiceTotal || 0),
-            advance_mode: 'percent',
-            advance_value: safePercent,
-            is_advance: true,
-          },
-        ])
-        .select()
-        .single()
+        const customFieldPayload = JSON.stringify(parseCustomFields(invoice.custom_fields))
 
-      if (invoiceError || !createdInvoice) {
-        throw new Error(invoiceError?.message || 'Could not create advance invoice.')
-      }
+        const { data: createdInvoice, error: invoiceError } = await supabase
+          .from('invoices')
+          .insert([
+            {
+              invoice_number: `SASINV-B${String(nextNumber).padStart(3, '0')}`,
+              po_number: String(invoice.po_number || '').trim() || null,
+              invoice_title: invoice.invoice_title || null,
+              client_id: invoice.client_id || null,
+              client_name: invoice.client_name || '',
+              project_id: invoice.project_id || null,
+              issue_date: new Date().toISOString().split('T')[0],
+              due_date: invoice.due_date || null,
+              status: 'draft',
+              document_type: invoice.document_type || 'INVOICE',
+              payment_terms: invoice.payment_terms || 'Custom',
+              notes: invoice.notes || '',
+              terms: invoice.terms || '',
+              workmanship: Number(invoice.workmanship || 0),
+              transportation: Number(invoice.transportation || 0),
+              shipping: Number(invoice.shipping || 0),
+              discount: Number(invoice.discount || 0),
+              vat: Number(invoice.vat || 0),
+              wht: Number(invoice.wht || 0),
+              subtotal: Number(invoice.subtotal || 0),
+              install_rate_total: Number(invoice.install_rate_total || 0),
+              total: advanceAmount,
+              amount_in_words: numberToWords(advanceAmount),
+              custom_fields: customFieldPayload,
+              thread_id: invoice.id,
+              thread_role: 'advance',
+              thread_position: 1,
+              total_contract_value: contractValue,
+              advance_mode: advanceMode,
+              advance_value: safeAdvanceInput,
+              is_advance: true,
+            },
+          ])
+          .select()
+          .single()
 
-      const childItems = items
-        .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-        .map((item, index) => toDbItem(item, createdInvoice.id, index))
+        if (invoiceError || !createdInvoice) {
+          throw new Error(invoiceError?.message || 'Could not create advance invoice.')
+        }
 
-      if (childItems.length > 0) {
-        const { error: itemError } = await supabase.from('invoice_items').insert(childItems)
-        if (itemError) {
-          await supabase.from('invoices').delete().eq('id', createdInvoice.id)
-          throw itemError
+        const childItems = items
+          .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
+          .map((item, index) => toDbItem(item, createdInvoice.id, index))
+
+        if (childItems.length > 0) {
+          const { error: itemError } = await supabase.from('invoice_items').insert(childItems)
+          if (itemError) {
+            await supabase.from('invoices').delete().eq('id', createdInvoice.id)
+            throw itemError
+          }
         }
       }
 
-      setShowAdvanceDialog(false)
-      setAdvancePercentage('50')
       await loadAdvanceInvoice()
+      setAdvanceSheetMode('view')
       toast({
-        title: 'Advance invoice created',
-        description: `${createdInvoice.invoice_number || 'Advance invoice'} was created from this invoice.`,
+        title: advanceInvoice ? 'Advance updated' : 'Advance invoice created',
+        description: advanceInvoice
+          ? 'Advance values were updated.'
+          : 'Advance invoice was created from this invoice.',
       })
     } catch (error) {
       toast({
-        title: 'Advance creation failed',
-        description: error?.message || 'Could not create advance invoice.',
+        title: advanceInvoice ? 'Advance update failed' : 'Advance creation failed',
+        description: error?.message || 'Could not save advance invoice.',
         variant: 'destructive',
       })
     } finally {
@@ -460,8 +541,10 @@ export default function ViewInvoice() {
       if (deleteInvoiceError) throw deleteInvoiceError
 
       setAdvanceInvoice(null)
-      setShowAdvanceDialog(false)
-      setAdvancePercentage('50')
+      setShowAdvanceSheet(false)
+      setAdvanceSheetMode('create')
+      setAdvanceMode('percent')
+      setAdvanceInputValue('50')
       toast({ title: 'Advance removed', description: 'The advance invoice was deleted.' })
     } catch (error) {
       toast({
@@ -547,7 +630,7 @@ export default function ViewInvoice() {
     },
     advance: () => {
       setShowMore(false)
-      setShowAdvanceDialog(true)
+      openAdvanceSheet()
     },
     export: handleDownloadCsv,
     'copy-number': () => {
@@ -747,6 +830,7 @@ export default function ViewInvoice() {
   }))
 
   const activePdfTemplate = PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || PDF_TEMPLATES[0]
+  const showInvoiceFillableControls = isDocumentFillableEnabled(settings?.document_fillable_settings, 'invoice')
 
   const handlePdfTemplateChange = (nextTemplate) => {
     setPdfTemplate(nextTemplate)
@@ -853,6 +937,32 @@ export default function ViewInvoice() {
           onMore={() => setShowMore(true)}
         />
 
+        <DocumentSummaryDisclosure
+          eyebrow="Total Payable"
+          value={formatMoney(invoiceTotal)}
+          helper={invoice.amount_in_words || invoice.invoice_title || 'Invoice ready for payment tracking.'}
+          stats={[
+            {
+              label: 'Balance Due',
+              value: formatMoney(balanceDue),
+              className: balanceDue > 0 ? 'text-red-400' : 'text-emerald-300',
+            },
+            {
+              label: 'Received',
+              value: formatMoney(cashReceived),
+              className: 'text-emerald-300',
+            },
+            {
+              label: 'Due Date',
+              value: invoice.due_date || 'Open',
+              className: 'text-white',
+            },
+          ]}
+          compactLabel="Invoice Summary"
+          openLabel="Open summary"
+          closeLabel="Collapse summary"
+        />
+
         <DocumentActionGrid
           actions={[
             { key: 'pdf', label: 'PDF', onClick: () => setShowPdfSheet(true), variant: 'dark' },
@@ -867,8 +977,8 @@ export default function ViewInvoice() {
             isStandaloneInvoice
               ? {
                   key: 'advance',
-                  label: advanceInvoice ? 'View Advance' : 'Generate Advance Invoice',
-                  onClick: () => setShowAdvanceDialog(true),
+                  label: advanceInvoice ? 'View Advance' : 'Advance',
+                  onClick: () => openAdvanceSheet(),
                   variant: 'outline',
                 }
               : {
@@ -944,6 +1054,7 @@ export default function ViewInvoice() {
                   <DocumentDesignStyleEditor
                     value={pdfDesignPreset}
                     onChange={handlePdfDesignPresetChange}
+                    showFillableControls={showInvoiceFillableControls}
                   />
                 ),
               },
@@ -964,7 +1075,8 @@ export default function ViewInvoice() {
           />
         </DocumentSection>
 
-        <DocumentSection title="Line Items">
+        <div className="space-y-3">
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Line Items</div>
           <Card className="rounded-[24px] border-border shadow-sm">
             <CardContent className="space-y-3 p-4">
               {(() => {
@@ -1020,7 +1132,7 @@ export default function ViewInvoice() {
               })()}
             </CardContent>
           </Card>
-        </DocumentSection>
+        </div>
 
         <InvoicePaymentSection
           variant="simple"
@@ -1114,119 +1226,191 @@ export default function ViewInvoice() {
           onCancel={() => setShowVoidDialog(false)}
         />
 
-        <Dialog
-          open={showAdvanceDialog}
+        <Sheet
+          open={showAdvanceSheet}
           onOpenChange={(nextOpen) => {
-            if (advanceSaving) return
-            setShowAdvanceDialog(nextOpen)
+            if (advanceSaving || advancePdfGenerating) return
+            setShowAdvanceSheet(nextOpen)
           }}
         >
-          <DialogContent className="max-w-[calc(100%-1rem)] rounded-2xl bg-card sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{advanceInvoice ? 'Advance Invoice' : 'Create Advance Invoice'}</DialogTitle>
-              <DialogDescription>
-                {advanceInvoice
-                  ? 'View, edit, download, or remove the advance invoice from this parent invoice.'
-                  : `Generate an advance draft directly from ${invoice.invoice_number || 'this invoice'}.`}
-              </DialogDescription>
-            </DialogHeader>
+          <SheetContent side="bottom" className="max-h-[92vh] rounded-t-[28px] bg-card p-0 [&>[data-slot=sheet-close]]:hidden">
+            <div className="flex h-full flex-col">
+              <SheetHeader className="border-b border-border px-5 pb-4 pt-5 text-left">
+                <SheetTitle className="text-base font-semibold text-foreground">
+                  {advanceSheetMode === 'edit'
+                    ? 'Edit Advance'
+                    : advanceInvoice && advanceSheetMode === 'view'
+                      ? 'View Advance'
+                      : 'Create Advance'}
+                </SheetTitle>
+                <SheetDescription>
+                  For {invoice.invoice_number || 'this invoice'}
+                </SheetDescription>
+              </SheetHeader>
 
-            {advanceInvoice ? (
-              <>
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                    <p className="text-sm font-bold text-slate-950">
-                      {advanceInvoice.invoice_number || 'Advance Invoice'}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {formatMoney(advanceInvoice.total || 0)}
-                    </p>
+              <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Invoice No</div>
+                      <div className="mt-1 text-sm font-bold text-foreground">{invoice.invoice_number || 'Invoice'}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Contract Value</div>
+                      <div className="mt-1 text-sm font-bold text-foreground">{formatMoney(contractValue)}</div>
+                    </div>
                   </div>
                 </div>
 
-                <DialogFooter className="gap-2 sm:justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowAdvanceDeleteConfirm(true)}
-                    disabled={advanceSaving || advancePdfGenerating}
-                    className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                  >
-                    Remove
-                  </Button>
-                  <div className="flex gap-2">
+                {advanceSheetMode === 'view' && advanceInvoice ? (
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Advance Invoice</div>
+                      <div className="mt-1 text-sm font-bold text-foreground">{advanceInvoice.invoice_number || 'Advance Invoice'}</div>
+                      <div className="mt-1 text-sm text-muted-foreground">{formatMoney(advanceInvoice.total || 0)}</div>
+                    </div>
+
+                    <div className="rounded-2xl bg-slate-950 px-4 py-4 text-white">
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <div>
+                          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Contract Value</div>
+                          <div className="mt-1 text-base font-extrabold">{formatMoney(contractValue)}</div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">This Advance</div>
+                          <div className="mt-1 text-base font-extrabold">{formatMoney(Number(advanceInvoice.total || 0))}</div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Balance Remaining</div>
+                          <div className="mt-1 text-base font-extrabold">{formatMoney(Math.max(0, contractValue - Number(advanceInvoice.total || 0)))}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-3">
+                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Mode</div>
+                      <div className="inline-flex rounded-full border border-border bg-muted/30 p-1">
+                        <button
+                          type="button"
+                          onClick={() => setAdvanceMode('percent')}
+                          className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+                            advanceMode === 'percent' ? 'bg-slate-950 text-white' : 'text-slate-600'
+                          }`}
+                        >
+                          Percent
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdvanceMode('fixed')}
+                          className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+                            advanceMode === 'fixed' ? 'bg-slate-950 text-white' : 'text-slate-600'
+                          }`}
+                        >
+                          Fixed
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="advance-value">
+                        {advanceMode === 'fixed' ? 'Advance Amount' : 'Advance Percentage'}
+                      </Label>
+                      <Input
+                        id="advance-value"
+                        type="number"
+                        min="0"
+                        max={advanceMode === 'fixed' ? String(contractValue) : '100'}
+                        step={advanceMode === 'fixed' ? '0.01' : '1'}
+                        inputMode="decimal"
+                        value={advanceInputValue}
+                        onChange={(event) => setAdvanceInputValue(event.target.value)}
+                        disabled={advanceSaving}
+                        className="h-12 rounded-2xl"
+                      />
+                    </div>
+
+                    <div className="rounded-2xl bg-slate-950 px-4 py-4 text-white">
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <div>
+                          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Contract Value</div>
+                          <div className="mt-1 text-base font-extrabold">{formatMoney(contractValue)}</div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">This Advance</div>
+                          <div className="mt-1 text-base font-extrabold">{formatMoney(advanceAmount)}</div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Balance Remaining</div>
+                          <div className="mt-1 text-base font-extrabold">{formatMoney(balanceRemaining)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="sticky bottom-0 border-t border-border bg-card px-5 py-4">
+                {advanceSheetMode === 'view' && advanceInvoice ? (
+                  <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => void handleDownloadAdvancePDF()}
+                      onClick={() => setShowAdvanceDeleteConfirm(true)}
                       disabled={advanceSaving || advancePdfGenerating}
+                      className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
                     >
-                      {advancePdfGenerating ? 'Preparing...' : 'Download PDF'}
+                      Remove
+                    </Button>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => void handleDownloadAdvancePDF()}
+                        disabled={advanceSaving || advancePdfGenerating}
+                      >
+                        {advancePdfGenerating ? 'Preparing...' : 'Download PDF'}
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => openAdvanceSheet('edit')}
+                        disabled={advanceSaving || advancePdfGenerating}
+                        className="bg-slate-950 text-white hover:bg-slate-800"
+                      >
+                        Edit Advance
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowAdvanceSheet(false)
+                        if (advanceInvoice) setAdvanceSheetMode('view')
+                      }}
+                      disabled={advanceSaving}
+                    >
+                      Cancel
                     </Button>
                     <Button
                       type="button"
-                      onClick={() => {
-                        setShowAdvanceDialog(false)
-                        navigate(`/invoices/edit/${advanceInvoice.id}`)
-                      }}
-                      disabled={advanceSaving || advancePdfGenerating}
+                      onClick={() => void handleSaveAdvance()}
+                      disabled={advanceSaving}
                       className="bg-slate-950 text-white hover:bg-slate-800"
                     >
-                      Edit
+                      {advanceSaving
+                        ? advanceSheetMode === 'edit' ? 'Saving...' : 'Creating...'
+                        : advanceSheetMode === 'edit' ? 'Save Advance' : 'Create Advance'}
                     </Button>
                   </div>
-                </DialogFooter>
-              </>
-            ) : (
-              <>
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                    <p className="text-sm font-bold text-slate-950">
-                      {invoice.invoice_number || 'Invoice'} · {formatMoney(invoiceTotal)}
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="advance-percentage">Advance Percentage</Label>
-                    <Input
-                      id="advance-percentage"
-                      type="number"
-                      min="1"
-                      max="100"
-                      step="1"
-                      inputMode="decimal"
-                      value={advancePercentage}
-                      onChange={(event) => setAdvancePercentage(event.target.value)}
-                      disabled={advanceSaving}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Advance total: {formatMoney(invoiceTotal * (Number(advancePercentage || 0) / 100))}
-                    </p>
-                  </div>
-                </div>
-
-                <DialogFooter className="gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowAdvanceDialog(false)}
-                    disabled={advanceSaving}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => void handleCreateAdvanceInvoice()}
-                    disabled={advanceSaving}
-                    className="bg-slate-950 text-white hover:bg-slate-800"
-                  >
-                    {advanceSaving ? 'Creating...' : 'Create Advance'}
-                  </Button>
-                </DialogFooter>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
+                )}
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
 
         <ConfirmActionDialog
           open={showAdvanceDeleteConfirm}

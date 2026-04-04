@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils'
 import {
   getEffectiveFillableFont,
   PDF_ACCENT_SWATCHES,
+  PDF_FILLABLE_FONT_OPTIONS,
   PDF_FONT_OPTIONS,
 } from '@/lib/pdfDesignPreset'
 import { Button } from '@/components/ui/button'
@@ -94,7 +95,7 @@ export function DocumentTemplatePicker({ value, onChange, templates }) {
   )
 }
 
-export function DocumentDesignPanel({ title, subtitle, badge = 'Persistent preset', sections }) {
+export function DocumentDesignPanel({ title, subtitle = '', badge = 'Persistent preset', sections }) {
   const [openSections, setOpenSections] = React.useState(() =>
     Object.fromEntries(sections.map((section, index) => [section.key || String(index), section.defaultOpen !== false])),
   )
@@ -148,9 +149,97 @@ export function DocumentDesignPanel({ title, subtitle, badge = 'Persistent prese
   )
 }
 
-export function DocumentDesignStyleEditor({ value, onChange, accentLabel = 'Accent Color' }) {
+function FillableWritingControls({ value, onChange, showModeToggle = true }) {
   const effectiveFillableFont = getEffectiveFillableFont(value)
 
+  const update = (patch) => {
+    onChange({
+      ...value,
+      ...patch,
+    })
+  }
+
+  return (
+    <div className="rounded-[18px] border border-border bg-muted/30 p-4">
+      {showModeToggle ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Fillable Font</div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              Auto uses the current body font until you switch to a manual fillable font.
+            </div>
+          </div>
+          <div className="inline-flex rounded-full border border-border bg-white p-1">
+            <button
+              type="button"
+              onClick={() => update({ fillableFontMode: 'auto' })}
+              className={cn(
+                'rounded-full px-3 py-1.5 text-xs font-bold transition',
+                value.fillableFontMode === 'auto' ? 'bg-slate-950 text-white' : 'text-slate-600',
+              )}
+            >
+              Auto
+            </button>
+            <button
+              type="button"
+              onClick={() => update({ fillableFontMode: 'custom' })}
+              className={cn(
+                'rounded-full px-3 py-1.5 text-xs font-bold transition',
+                value.fillableFontMode === 'custom' ? 'bg-slate-950 text-white' : 'text-slate-600',
+              )}
+            >
+              Custom
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Fillable Writing</div>
+          <div className="mt-1 text-sm text-muted-foreground">
+            Control the handwriting-style font and color used for dynamic document values.
+          </div>
+        </div>
+      )}
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Fillable Font Choice</div>
+            <Select
+              value={value.fillableFontMode === 'custom' ? value.fillableFont : effectiveFillableFont}
+              onValueChange={(next) => update({ fillableFont: next, fillableFontMode: 'custom' })}
+              disabled={showModeToggle && value.fillableFontMode !== 'custom'}
+            >
+              <SelectTrigger className="h-11 rounded-[14px] bg-white disabled:opacity-70">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PDF_FILLABLE_FONT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="text-xs text-muted-foreground">
+              Effective fillable font: {PDF_FONT_OPTIONS.find((option) => option.value === effectiveFillableFont)?.label}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Fillable Color</div>
+            <Input
+              value={value.fillableColor}
+              onChange={(event) => update({ fillableColor: event.target.value })}
+              className="h-11 rounded-[14px] bg-white font-mono"
+              placeholder="#0f172a"
+            />
+          </div>
+        </div>
+      </div>
+  )
+}
+
+export function DocumentDesignStyleEditor({ value, onChange, accentLabel = 'Accent Color', showFillableControls = true }) {
   const update = (patch) => {
     onChange({
       ...value,
@@ -230,75 +319,13 @@ export function DocumentDesignStyleEditor({ value, onChange, accentLabel = 'Acce
         </div>
       </div>
 
-      <div className="rounded-[18px] border border-border bg-muted/30 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Fillable Font</div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              Auto uses the current body font until you switch to a manual fillable font.
-            </div>
-          </div>
-          <div className="inline-flex rounded-full border border-border bg-white p-1">
-            <button
-              type="button"
-              onClick={() => update({ fillableFontMode: 'auto' })}
-              className={cn(
-                'rounded-full px-3 py-1.5 text-xs font-bold transition',
-                value.fillableFontMode === 'auto' ? 'bg-slate-950 text-white' : 'text-slate-600',
-              )}
-            >
-              Auto
-            </button>
-            <button
-              type="button"
-              onClick={() => update({ fillableFontMode: 'custom' })}
-              className={cn(
-                'rounded-full px-3 py-1.5 text-xs font-bold transition',
-                value.fillableFontMode === 'custom' ? 'bg-slate-950 text-white' : 'text-slate-600',
-              )}
-            >
-              Custom
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Fillable Font Choice</div>
-            <Select
-              value={value.fillableFontMode === 'custom' ? value.fillableFont : effectiveFillableFont}
-              onValueChange={(next) => update({ fillableFont: next, fillableFontMode: 'custom' })}
-              disabled={value.fillableFontMode !== 'custom'}
-            >
-              <SelectTrigger className="h-11 rounded-[14px] bg-white disabled:opacity-70">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PDF_FONT_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="text-xs text-muted-foreground">
-              Effective fillable font: {PDF_FONT_OPTIONS.find((option) => option.value === effectiveFillableFont)?.label}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Fillable Color</div>
-            <Input
-              value={value.fillableColor}
-              onChange={(event) => update({ fillableColor: event.target.value })}
-              className="h-11 rounded-[14px] bg-white font-mono"
-              placeholder="#0f172a"
-            />
-          </div>
-        </div>
-      </div>
+      {showFillableControls ? <FillableWritingControls value={value} onChange={onChange} /> : null}
     </div>
   )
+}
+
+export function DocumentFillableWritingEditor({ value, onChange }) {
+  return <FillableWritingControls value={value} onChange={onChange} showModeToggle={false} />
 }
 
 export function DocumentTopBar({
@@ -470,7 +497,7 @@ export function DocumentStatusStrip({ items }) {
   )
 }
 
-export function DocumentSection({ title, children, className = '', defaultOpen = false, summary }) {
+export function DocumentSection({ title, children, className = '', defaultOpen = false, summary = '' }) {
   const [open, setOpen] = React.useState(defaultOpen)
 
   return (

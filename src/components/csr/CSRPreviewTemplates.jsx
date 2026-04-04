@@ -5,6 +5,11 @@ import {
   CSR_STATUS_OPTIONS_PDF,
   getCsrTemplateVariant,
 } from './CSRPreviewContent'
+import {
+  getDefaultPdfDesignPreset,
+  getEffectiveFillableFont,
+  resolvePdfFontFamily,
+} from '../../lib/pdfDesignPreset'
 
 const safe = (value) => String(value || '').trim()
 const hasText = (value) => !!safe(value)
@@ -79,6 +84,16 @@ function getTechnicianSignatureUrl(csr) {
 
 function getLayoutDensity(csr) {
   return csr.layoutDensity || 'comfortable'
+}
+
+function getFillablePdfTheme(designPreset) {
+  const preset = designPreset || getDefaultPdfDesignPreset('csr')
+  const fillableChoice = getEffectiveFillableFont(preset)
+  return {
+    fillableColor: preset.fillableColor || '#0f172a',
+    fillableRegular: resolvePdfFontFamily(fillableChoice, 'regular'),
+    fillableBold: resolvePdfFontFamily(fillableChoice, 'bold'),
+  }
 }
 
 function PdfSignatureCard({ styles, label, name = '', role = '', signatureUrl = '' }) {
@@ -389,9 +404,10 @@ function SharedEquipmentSection({ styles, csr }) {
 
 /* ---------------- PulseFrame ---------------- */
 
-function createPulseFrameStyles(density = 'comfortable') {
+function createPulseFrameStyles(density = 'comfortable', designPreset) {
   const compact = density !== 'comfortable'
   const tight = density === 'tight'
+  const { fillableColor, fillableRegular, fillableBold } = getFillablePdfTheme(designPreset)
   return StyleSheet.create({
     page: {
       paddingTop: tight ? 10 : compact ? 12 : 14,
@@ -430,7 +446,7 @@ function createPulseFrameStyles(density = 'comfortable') {
     identityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     identityFull: { width: '100%' },
     metaLabel: { fontSize: 6.5, color: '#E2E8F0', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    metaValue: { fontSize: 9, color: '#ffffff', fontFamily: 'Helvetica-Bold', marginTop: 2 },
+    metaValue: { fontSize: 9, color: '#ffffff', fontFamily: fillableBold, marginTop: 2 },
 
     summaryRow: {
       marginTop: tight ? -20 : compact ? -22 : -24,
@@ -447,8 +463,8 @@ function createPulseFrameStyles(density = 'comfortable') {
       padding: tight ? 5 : compact ? 6 : 7,
     },
     fieldLabel: { fontSize: 6.5, textTransform: 'uppercase', color: '#64748b', fontFamily: 'Helvetica-Bold', marginBottom: 3 },
-    fieldValue: { fontSize: tight ? 8 : compact ? 8.5 : 9, color: '#0f172a', fontFamily: 'Helvetica-Bold', lineHeight: 1.15 },
-    blockText: { fontSize: tight ? 7.2 : compact ? 7.6 : 8, color: '#1e293b', lineHeight: tight ? 1.25 : 1.35 },
+    fieldValue: { fontSize: tight ? 8 : compact ? 8.5 : 9, color: fillableColor, fontFamily: fillableBold, lineHeight: 1.15 },
+    blockText: { fontSize: tight ? 7.2 : compact ? 7.6 : 8, color: fillableColor, fontFamily: fillableRegular, lineHeight: tight ? 1.25 : 1.35 },
     section: {
       marginBottom: compact ? 5 : 7,
       borderWidth: 1,
@@ -489,7 +505,7 @@ function createPulseFrameStyles(density = 'comfortable') {
       alignItems: 'center',
     },
     readingLabel: { fontSize: 6.1, color: '#475569', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 2, textAlign: 'center' },
-    readingValue: { fontSize: 10, color: '#0f172a', fontFamily: 'Helvetica-Bold' },
+    readingValue: { fontSize: 10, color: fillableColor, fontFamily: fillableBold },
     pillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, padding: compact ? 6 : 8 },
     pill: {
       paddingVertical: 4,
@@ -499,7 +515,7 @@ function createPulseFrameStyles(density = 'comfortable') {
       borderColor: '#93c5fd',
       borderRadius: 999,
     },
-    pillText: { fontSize: 7.5, color: '#1d4ed8', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
+    pillText: { fontSize: 7.5, color: fillableColor, fontFamily: fillableBold, textTransform: 'uppercase' },
     serviceGrid: { flexDirection: 'row' },
     serviceCard: {
       flex: 1,
@@ -524,7 +540,7 @@ function createPulseFrameStyles(density = 'comfortable') {
     },
     statusDot: { width: 8, height: 8, borderRadius: 99, borderWidth: 1.5, borderColor: '#94a3b8', backgroundColor: '#ffffff' },
     statusDotActive: { borderColor: '#1d4ed8', backgroundColor: '#1d4ed8' },
-    statusText: { fontSize: 6.8, color: '#0f172a', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
+    statusText: { fontSize: 6.8, color: fillableColor, fontFamily: fillableBold, textTransform: 'uppercase' },
     textAreaOnly: { padding: compact ? 6 : 8, minHeight: tight ? 24 : 30 },
     ackGrid: { flexDirection: 'row', flexWrap: 'wrap' },
     signRow: { flexDirection: 'row', gap: compact ? 6 : 8, padding: compact ? 6 : 8 },
@@ -550,8 +566,8 @@ function createPulseFrameStyles(density = 'comfortable') {
   })
 }
 
-function PulseFrameTemplate({ csr, branding }) {
-  const styles = createPulseFrameStyles(getLayoutDensity(csr))
+function PulseFrameTemplate({ csr, branding, designPreset }) {
+  const styles = createPulseFrameStyles(getLayoutDensity(csr), designPreset)
   const status = getStatusValue(csr)
 
   return (
@@ -614,9 +630,10 @@ function PulseFrameTemplate({ csr, branding }) {
 
 /* ---------------- SignalBands ---------------- */
 
-function createSignalBandsStyles(density = 'comfortable') {
+function createSignalBandsStyles(density = 'comfortable', designPreset) {
   const compact = density !== 'comfortable'
   const tight = density === 'tight'
+  const { fillableColor, fillableBold, fillableRegular } = getFillablePdfTheme(designPreset)
   return StyleSheet.create({
     page: {
       paddingTop: tight ? 10 : 12,
@@ -652,7 +669,7 @@ function createSignalBandsStyles(density = 'comfortable') {
     identityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     identityFull: { width: '100%' },
     metaLabel: { fontSize: 6.4, color: '#FDECEC', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    metaValue: { fontSize: 8.8, color: '#ffffff', fontFamily: 'Helvetica-Bold', marginTop: 2 },
+    metaValue: { fontSize: 8.8, color: '#ffffff', fontFamily: fillableBold, marginTop: 2 },
 
     band: {
       flexDirection: 'row',
@@ -691,9 +708,9 @@ function createSignalBandsStyles(density = 'comfortable') {
       backgroundColor: '#fffdfa',
     },
     fieldLabel: { fontSize: 6.5, color: '#78716c', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 3 },
-    fieldValue: { fontSize: 9.5, color: '#231f20', fontFamily: 'Helvetica-Bold', lineHeight: 1.2 },
+    fieldValue: { fontSize: 9.5, color: fillableColor, fontFamily: fillableBold, lineHeight: 1.2 },
     blockCard: { paddingVertical: tight ? 5 : 6, paddingHorizontal: tight ? 7 : 8, minHeight: tight ? 30 : compact ? 34 : 38 },
-    blockText: { fontSize: tight ? 7.1 : compact ? 7.4 : 7.8, color: '#292524', lineHeight: tight ? 1.22 : 1.3 },
+    blockText: { fontSize: tight ? 7.1 : compact ? 7.4 : 7.8, color: fillableColor, fontFamily: fillableRegular, lineHeight: tight ? 1.22 : 1.3 },
 
     readingStrip: {
       flexDirection: 'row',
@@ -709,7 +726,7 @@ function createSignalBandsStyles(density = 'comfortable') {
     },
     readingStripCellLast: { borderRightWidth: 0 },
     readingLabel: { fontSize: 6.1, color: '#78716c', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginTop: 2, textAlign: 'center' },
-    readingValue: { fontSize: 10, color: '#231f20', fontFamily: 'Helvetica-Bold' },
+    readingValue: { fontSize: 10, color: fillableColor, fontFamily: fillableBold },
 
     pillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, padding: compact ? 6 : 8 },
     pill: {
@@ -720,7 +737,7 @@ function createSignalBandsStyles(density = 'comfortable') {
       borderColor: '#fdba74',
       borderRadius: 999,
     },
-    pillText: { fontSize: 7.2, color: '#9a3412', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
+    pillText: { fontSize: 7.2, color: fillableColor, fontFamily: fillableBold, textTransform: 'uppercase' },
 
     statusGrid: {
       padding: compact ? 6 : 8,
@@ -761,7 +778,7 @@ function createSignalBandsStyles(density = 'comfortable') {
       alignItems: 'center',
     },
     checkMark: { color: '#ffffff', fontSize: 7, fontFamily: 'Helvetica-Bold' },
-    statusText: { fontSize: 6.8, color: '#231f20', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
+    statusText: { fontSize: 6.8, color: fillableColor, fontFamily: fillableBold, textTransform: 'uppercase' },
 
     textAreaOnly: { padding: compact ? 6 : 8, minHeight: tight ? 24 : 28 },
     ackGrid: { flexDirection: 'row', flexWrap: 'wrap' },
@@ -796,8 +813,8 @@ function createSignalBandsStyles(density = 'comfortable') {
   })
 }
 
-function SignalBandsTemplate({ csr, branding }) {
-  const styles = createSignalBandsStyles(getLayoutDensity(csr))
+function SignalBandsTemplate({ csr, branding, designPreset }) {
+  const styles = createSignalBandsStyles(getLayoutDensity(csr), designPreset)
   const status = getStatusValue(csr)
 
   const Band = ({ colorStyle, title, sub, children }) => (
@@ -899,9 +916,10 @@ function SignalBandsTemplate({ csr, branding }) {
 
 /* ---------------- Zinc ---------------- */
 
-function createZincStyles(density = 'comfortable') {
+function createZincStyles(density = 'comfortable', designPreset) {
   const compact = density !== 'comfortable'
   const tight = density === 'tight'
+  const { fillableColor, fillableBold, fillableRegular } = getFillablePdfTheme(designPreset)
   return StyleSheet.create({
     page: {
       paddingTop: tight ? 10 : 12,
@@ -923,7 +941,7 @@ function createZincStyles(density = 'comfortable') {
     contactLine: { fontSize: 7, color: '#71717a', marginTop: 3 },
     idBox: { alignItems: 'flex-end' },
     idLabel: { fontSize: 6.5, color: '#71717a', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    idValue: { fontSize: 12, color: '#09090b', fontFamily: 'Courier-Bold', marginTop: 2 },
+    idValue: { fontSize: 12, color: fillableColor, fontFamily: fillableBold, marginTop: 2 },
     idDate: { fontSize: 7.5, color: '#71717a', marginTop: 4 },
     section: { marginBottom: compact ? 6 : 8 },
     sectionTitle: {
@@ -938,7 +956,7 @@ function createZincStyles(density = 'comfortable') {
     },
     fieldCard: { width: '33.33%', paddingRight: compact ? 5 : 6, marginBottom: compact ? 4 : 5 },
     fieldLabel: { fontSize: 6.5, color: '#71717a', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 3 },
-    fieldValue: { fontSize: tight ? 7.8 : compact ? 8.2 : 8.5, color: '#09090b', fontFamily: 'Helvetica-Bold', lineHeight: 1.15 },
+    fieldValue: { fontSize: tight ? 7.8 : compact ? 8.2 : 8.5, color: fillableColor, fontFamily: fillableBold, lineHeight: 1.15 },
     grid3: { flexDirection: 'row', flexWrap: 'wrap' },
     grid4: { flexDirection: 'row', flexWrap: 'wrap' },
     blockCard: {
@@ -950,7 +968,7 @@ function createZincStyles(density = 'comfortable') {
       borderRadius: 4,
       minHeight: tight ? 28 : compact ? 30 : 34,
     },
-    blockText: { fontSize: tight ? 7 : compact ? 7.3 : 7.7, color: '#09090b', lineHeight: tight ? 1.22 : 1.3 },
+    blockText: { fontSize: tight ? 7 : compact ? 7.3 : 7.7, color: fillableColor, fontFamily: fillableRegular, lineHeight: tight ? 1.22 : 1.3 },
     readingStrip: {
       flexDirection: 'row',
       backgroundColor: '#f4f4f5',
@@ -968,7 +986,7 @@ function createZincStyles(density = 'comfortable') {
     },
     readingStripCellLast: { borderRightWidth: 0 },
     readingLabel: { fontSize: 6.2, color: '#71717a', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginTop: 3 },
-    readingValue: { fontSize: 9.5, color: '#09090b', fontFamily: 'Courier-Bold' },
+    readingValue: { fontSize: 9.5, color: fillableColor, fontFamily: fillableBold },
     lifecycleBox: {
       backgroundColor: '#09090b',
       borderRadius: 6,
@@ -998,7 +1016,7 @@ function createZincStyles(density = 'comfortable') {
     lifecycleLabelActive: { color: '#ffffff' },
     lifecycleFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
     lifecycleCurrentLabel: { fontSize: 6.4, color: '#a1a1aa', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    lifecycleCurrentText: { fontSize: 8.5, color: '#ffffff', fontFamily: 'Helvetica-Bold', marginTop: 2 },
+    lifecycleCurrentText: { fontSize: 8.5, color: '#ffffff', fontFamily: fillableBold, marginTop: 2 },
     lifecycleBadge: { backgroundColor: '#ffffff', borderRadius: 4, paddingVertical: 2, paddingHorizontal: 6 },
     lifecycleBadgeText: { fontSize: 6.6, color: '#000000', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
 
@@ -1026,8 +1044,8 @@ function createZincStyles(density = 'comfortable') {
     },
     tableCell: {
       fontSize: 8,
-      color: '#09090b',
-      fontFamily: 'Helvetica-Bold',
+      color: fillableColor,
+      fontFamily: fillableBold,
       paddingVertical: tight ? 4 : 5,
       paddingHorizontal: 3,
       borderRightWidth: 1,
@@ -1046,8 +1064,8 @@ function createZincStyles(density = 'comfortable') {
   })
 }
 
-function ZincTemplate({ csr, branding }) {
-  const styles = createZincStyles(getLayoutDensity(csr))
+function ZincTemplate({ csr, branding, designPreset }) {
+  const styles = createZincStyles(getLayoutDensity(csr), designPreset)
   const status = getStatusValue(csr)
   const technicianName = getTechnicianName(csr)
   const technicianRole = getTechnicianRole(csr)
@@ -1212,9 +1230,10 @@ function ZincTemplate({ csr, branding }) {
 
 /* ---------------- Crimson ---------------- */
 
-function createCrimsonStyles(density = 'comfortable') {
+function createCrimsonStyles(density = 'comfortable', designPreset) {
   const compact = density !== 'comfortable'
   const tight = density === 'tight'
+  const { fillableColor, fillableBold, fillableRegular } = getFillablePdfTheme(designPreset)
   return StyleSheet.create({
     page: {
       paddingTop: tight ? 8 : 12,
@@ -1273,7 +1292,7 @@ function createCrimsonStyles(density = 'comfortable') {
       alignItems: 'flex-end',
     },
     idLabel: { fontSize: 6.1, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    idValue: { fontSize: 12.2, color: '#ffffff', fontFamily: 'Courier-Bold', marginTop: 2 },
+    idValue: { fontSize: 12.2, color: '#ffffff', fontFamily: fillableBold, marginTop: 2 },
     idDate: { fontSize: 7, color: '#e2e8f0', marginTop: 3, fontFamily: 'Helvetica-Bold' },
     docKicker: { fontSize: 6.3, color: '#64748b', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', letterSpacing: 0.5 },
     docTitle: { fontSize: tight ? 10 : 11.5, color: '#0f172a', fontFamily: 'Helvetica-Bold', marginTop: 3, textTransform: 'uppercase' },
@@ -1289,7 +1308,7 @@ function createCrimsonStyles(density = 'comfortable') {
       paddingHorizontal: tight ? 6 : 8,
     },
     summaryPillLabel: { fontSize: 5.8, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    summaryPillValue: { fontSize: 7.3, color: '#0f172a', fontFamily: 'Helvetica-Bold', marginTop: 2 },
+    summaryPillValue: { fontSize: 7.3, color: fillableColor, fontFamily: fillableBold, marginTop: 2 },
 
     section: { marginBottom: tight ? 4 : compact ? 6 : 8 },
     sectionTitle: {
@@ -1307,8 +1326,8 @@ function createCrimsonStyles(density = 'comfortable') {
     },
 
     fieldLabel: { fontSize: tight ? 5.6 : 6.1, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 2 },
-    fieldValue: { fontSize: tight ? 7.1 : compact ? 7.9 : 8.2, color: '#1e293b', fontFamily: 'Helvetica-Bold', lineHeight: 1.1 },
-    blockText: { fontSize: tight ? 6.5 : compact ? 7.2 : 7.5, color: '#334155', lineHeight: tight ? 1.12 : 1.26 },
+    fieldValue: { fontSize: tight ? 7.1 : compact ? 7.9 : 8.2, color: fillableColor, fontFamily: fillableBold, lineHeight: 1.1 },
+    blockText: { fontSize: tight ? 6.5 : compact ? 7.2 : 7.5, color: fillableColor, fontFamily: fillableRegular, lineHeight: tight ? 1.12 : 1.26 },
 
     grid4: { flexDirection: 'row', flexWrap: 'wrap', gap: compact ? 4 : 6 },
     fieldCard: {
@@ -1357,7 +1376,7 @@ function createCrimsonStyles(density = 'comfortable') {
     },
     readingStripCellLast: { borderRightWidth: 0 },
     readingLabel: { fontSize: 5.7, color: '#cbd5e1', textTransform: 'uppercase', marginTop: 2, fontFamily: 'Helvetica-Bold' },
-    readingValue: { fontSize: 8.8, color: '#ffffff', fontFamily: 'Courier-Bold' },
+    readingValue: { fontSize: 8.8, color: '#ffffff', fontFamily: fillableBold },
 
     tableHeaderRow: {
       flexDirection: 'row',
@@ -1383,8 +1402,8 @@ function createCrimsonStyles(density = 'comfortable') {
     },
     tableCell: {
       fontSize: tight ? 6.9 : 7.8,
-      color: '#1e293b',
-      fontFamily: 'Helvetica-Bold',
+      color: fillableColor,
+      fontFamily: fillableBold,
       paddingVertical: tight ? 3 : 5,
       paddingHorizontal: tight ? 4 : 6,
       borderRightWidth: 1,
@@ -1444,10 +1463,10 @@ function createCrimsonStyles(density = 'comfortable') {
   })
 }
 
-function CrimsonTemplate({ csr, branding }) {
+function CrimsonTemplate({ csr, branding, designPreset }) {
   const layoutDensity = getLayoutDensity(csr)
   const tightLayout = layoutDensity === 'tight'
-  const styles = createCrimsonStyles(layoutDensity)
+  const styles = createCrimsonStyles(layoutDensity, designPreset)
   const status = getStatusValue(csr)
   const serviceStart = [safe(csr.start_date), safe(csr.start_time)].filter(Boolean).join(' / ')
   const serviceEnd = [safe(csr.end_date), safe(csr.end_time)].filter(Boolean).join(' / ')
@@ -1609,27 +1628,27 @@ function CrimsonTemplate({ csr, branding }) {
   )
 }
 
-export function Template1({ csr, branding = {} }) {
-  return <PulseFrameTemplate csr={csr} branding={getBranding(branding)} />
+export function Template1({ csr, branding = {}, designPreset }) {
+  return <PulseFrameTemplate csr={csr} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
-export function Template2({ csr, branding = {} }) {
-  return <SignalBandsTemplate csr={csr} branding={getBranding(branding)} />
+export function Template2({ csr, branding = {}, designPreset }) {
+  return <SignalBandsTemplate csr={csr} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
-export function Template3({ csr, branding = {} }) {
-  return <ZincTemplate csr={csr} branding={getBranding(branding)} />
+export function Template3({ csr, branding = {}, designPreset }) {
+  return <ZincTemplate csr={csr} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
-export function Template4({ csr, branding = {} }) {
-  return <CrimsonTemplate csr={csr} branding={getBranding(branding)} />
+export function Template4({ csr, branding = {}, designPreset }) {
+  return <CrimsonTemplate csr={csr} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
-export function getCsrPdfDocument({ csr, branding = {}, template = '4' }) {
+export function getCsrPdfDocument({ csr, branding = {}, template = '4', designPreset }) {
   const variant = getCsrTemplateVariant(template)
 
-  if (variant === 'pulseframe') return <Template1 csr={csr} branding={branding} />
-  if (variant === 'signalbands') return <Template2 csr={csr} branding={branding} />
-  if (variant === 'zinc') return <Template3 csr={csr} branding={branding} />
-  return <Template4 csr={csr} branding={branding} />
+  if (variant === 'pulseframe') return <Template1 csr={csr} branding={branding} designPreset={designPreset} />
+  if (variant === 'signalbands') return <Template2 csr={csr} branding={branding} designPreset={designPreset} />
+  if (variant === 'zinc') return <Template3 csr={csr} branding={branding} designPreset={designPreset} />
+  return <Template4 csr={csr} branding={branding} designPreset={designPreset} />
 }

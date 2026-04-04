@@ -18,10 +18,17 @@ import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
+import {
+  DocumentDesignPanel,
+  DocumentFillableWritingEditor,
+  DocumentSection,
+} from '@/components/document/DocumentViewShell'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/use-toast'
 import { useSettings } from '../hooks/useSettings'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
+import { getPdfDesignPreset, getEffectiveFillableFont, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { isDocumentFillableEnabled } from '@/lib/documentFillableSettings'
 
 function Badge({ className, label }: { className: string; label: string }) {
   return <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${className}`}>{label}</span>
@@ -43,6 +50,7 @@ export default function ViewWaybill() {
   const [showAttachInvoice, setShowAttachInvoice] = useState(false)
   const [pendingAttachInvoice, setPendingAttachInvoice] = useState<{ id: string; invoice_number?: string | null } | null>(null)
   const moreRef = useRef<HTMLDivElement>(null)
+  const [pdfDesignPreset, setPdfDesignPresetState] = useState(() => getPdfDesignPreset('waybill'))
 
   useEffect(() => {
     supabase.from('waybills').select('*').eq('id', id).single().then(({ data }) => {
@@ -80,7 +88,7 @@ export default function ViewWaybill() {
         import('@react-pdf/renderer'),
         import('../components/waybill/WaybillPDF'),
       ])
-      const blob = await pdf(WaybillPDF({ waybill, settings: settings ?? {} })).toBlob()
+      const blob = await pdf(WaybillPDF({ waybill, settings: settings ?? {}, designPreset: pdfDesignPreset })).toBlob()
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
@@ -144,6 +152,11 @@ export default function ViewWaybill() {
   const projectReferenceName = linkedProject?.name || customFields?.references?.linkedProjectName || ''
   const invoiceReference = linkedInvoice?.invoice_number || customFields?.references?.linkedInvoiceNumber || ''
   const projectActionState = getProjectActionState({ projectId: waybill?.project_id, project: linkedProject })
+  const showWaybillFillableControls = isDocumentFillableEnabled(settings?.document_fillable_settings, 'waybill')
+  const fillablePreviewStyle = {
+    fontFamily: resolvePdfWebFontFamily(getEffectiveFillableFont(pdfDesignPreset)),
+    color: pdfDesignPreset.fillableColor,
+  }
   const documentActionState = getDocumentActionState({
     sourceDocument: linkedInvoice,
     relatedDocuments: [],
@@ -188,6 +201,15 @@ export default function ViewWaybill() {
         : [],
     },
   ]
+
+  const handlePdfDesignPresetChange = (nextPreset: typeof pdfDesignPreset) => {
+    const resolvedPreset = {
+      ...nextPreset,
+      fillableFontMode: 'custom' as const,
+    }
+    setPdfDesignPresetState(resolvedPreset)
+    setPdfDesignPreset('waybill', resolvedPreset)
+  }
 
   return (
     <Layout title={waybill.waybill_number || 'Waybill'} hidePageHeader>
@@ -269,7 +291,7 @@ export default function ViewWaybill() {
               </div>
               <div className="text-right">
                 <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{typeContent.pdfTitle}</div>
-                <div className="text-base font-bold text-foreground">{waybill.waybill_number}</div>
+                <div className="text-base font-bold text-foreground" style={fillablePreviewStyle}>{waybill.waybill_number}</div>
               </div>
             </div>
 
@@ -286,7 +308,7 @@ export default function ViewWaybill() {
               ].map((entry) => (
                 <div key={entry.label} className="rounded-xl bg-slate-50 px-3 py-2">
                   <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{entry.label}</div>
-                  <div className="mt-0.5 text-sm font-medium text-foreground">{entry.value}</div>
+                  <div className="mt-0.5 text-sm font-medium text-foreground" style={fillablePreviewStyle}>{entry.value}</div>
                 </div>
               ))}
             </div>
@@ -294,13 +316,13 @@ export default function ViewWaybill() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-3">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">{typeContent.senderPdfLabel}</div>
-                <div className="mt-1 text-sm font-bold text-foreground">{waybill.sender_name || '—'}</div>
-                {customFields?.partyNotes?.sender ? <div className="mt-2 text-xs text-blue-900">{customFields.partyNotes.sender}</div> : null}
+                <div className="mt-1 text-sm font-bold text-foreground" style={fillablePreviewStyle}>{waybill.sender_name || '—'}</div>
+                {customFields?.partyNotes?.sender ? <div className="mt-2 text-xs text-blue-900" style={fillablePreviewStyle}>{customFields.partyNotes.sender}</div> : null}
               </div>
               <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-3">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600">{typeContent.receiverPdfLabel}</div>
-                <div className="mt-1 text-sm font-bold text-foreground">{waybill.receiver_name || '—'}</div>
-                {customFields?.partyNotes?.receiver ? <div className="mt-2 text-xs text-emerald-900">{customFields.partyNotes.receiver}</div> : null}
+                <div className="mt-1 text-sm font-bold text-foreground" style={fillablePreviewStyle}>{waybill.receiver_name || '—'}</div>
+                {customFields?.partyNotes?.receiver ? <div className="mt-2 text-xs text-emerald-900" style={fillablePreviewStyle}>{customFields.partyNotes.receiver}</div> : null}
               </div>
             </div>
 
@@ -323,12 +345,12 @@ export default function ViewWaybill() {
                   {items.map((item, index) => (
                     <tr key={`${item.description}-${index}`} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
                       <td className="px-3 py-2.5 text-xs text-muted-foreground">{index + 1}</td>
-                      <td className="px-3 py-2.5 text-sm text-foreground">{item.description || '—'}</td>
-                      <td className="px-3 py-2.5 text-right text-sm font-medium text-foreground">{item.quantity ?? '—'}</td>
-                      <td className="px-3 py-2.5 text-xs text-muted-foreground">{item.unit || '—'}</td>
-                      <td className="px-3 py-2.5 text-xs text-muted-foreground">{item.condition || '—'}</td>
+                      <td className="px-3 py-2.5 text-sm text-foreground" style={fillablePreviewStyle}>{item.description || '—'}</td>
+                      <td className="px-3 py-2.5 text-right text-sm font-medium text-foreground" style={fillablePreviewStyle}>{item.quantity ?? '—'}</td>
+                      <td className="px-3 py-2.5 text-xs text-muted-foreground" style={fillablePreviewStyle}>{item.unit || '—'}</td>
+                      <td className="px-3 py-2.5 text-xs text-muted-foreground" style={fillablePreviewStyle}>{item.condition || '—'}</td>
                       {customColumns.map((column) => (
-                        <td key={column.key} className="px-3 py-2.5 text-xs text-muted-foreground">{String(item.custom_data?.[column.key] || '—')}</td>
+                        <td key={column.key} className="px-3 py-2.5 text-xs text-muted-foreground" style={fillablePreviewStyle}>{String(item.custom_data?.[column.key] || '—')}</td>
                       ))}
                     </tr>
                   ))}
@@ -336,22 +358,44 @@ export default function ViewWaybill() {
               </table>
             </div>
 
-            {waybill.notes ? <div className="mt-4 rounded-xl border border-border bg-slate-50 px-3 py-3 text-sm text-foreground">{waybill.notes}</div> : null}
+            {waybill.notes ? <div className="mt-4 rounded-xl border border-border bg-slate-50 px-3 py-3 text-sm text-foreground" style={fillablePreviewStyle}>{waybill.notes}</div> : null}
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {[{ title: typeContent.senderSignatureLabel, signature: senderSignature, fallbackName: waybill.sender_name || '—' }, { title: typeContent.receiverSignatureLabel, signature: receiverSignature, fallbackName: waybill.receiver_name || 'Acknowledgement pending' }].map((entry) => (
                 <div key={entry.title} className="rounded-xl border border-border bg-slate-50 p-3">
                   <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{entry.title}</div>
                   {entry.signature.image_url || entry.signature.drawn_data_url ? <img src={entry.signature.image_url || entry.signature.drawn_data_url} alt={entry.title} className="mt-3 max-h-24 rounded-xl border border-border bg-white object-contain" /> : null}
-                  <div className="mt-3 text-sm font-medium text-foreground">
+                  <div className="mt-3 text-sm font-medium text-foreground" style={fillablePreviewStyle}>
                     {entry.signature.present === false ? 'Pending acknowledgement' : entry.fallbackName}
                   </div>
-                  {entry.signature.description ? <div className="mt-1 text-xs text-muted-foreground">{entry.signature.description}</div> : null}
-                  {entry.signature.confidence ? <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Confidence: {entry.signature.confidence}</div> : null}
+                  {entry.signature.description ? <div className="mt-1 text-xs text-muted-foreground" style={fillablePreviewStyle}>{entry.signature.description}</div> : null}
+                  {entry.signature.confidence ? <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground" style={fillablePreviewStyle}>Confidence: {entry.signature.confidence}</div> : null}
                 </div>
               ))}
             </div>
           </div>
+
+          {showWaybillFillableControls ? (
+            <DocumentSection title="Customize" defaultOpen>
+              <DocumentDesignPanel
+                title="Customize"
+                subtitle="Fillable-writing controls for Waybill preview and PDF export."
+                badge="Waybill"
+                sections={[
+                  {
+                    key: 'fillable-writing',
+                    title: 'Fillable Writing',
+                    content: (
+                      <DocumentFillableWritingEditor
+                        value={pdfDesignPreset}
+                        onChange={handlePdfDesignPresetChange}
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </DocumentSection>
+          ) : null}
 
           {linkedInvoice || linkedProject ? (
             <div className="rounded-2xl border border-purple-200 bg-purple-50 p-4">
