@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
+import { ImagePlus, LoaderCircle } from 'lucide-react'
 
 const CLOUD_NAME = 'ddhqvv77g'
 const UPLOAD_PRESET = 'ml_default'
@@ -51,10 +52,10 @@ export default function ItemImageUpload({ value, onChange }) {
           />
         </a>
         <div className="mt-1 flex gap-2">
-          <Button type="button" variant="link" size="xs" className="h-auto p-0 text-[11px] text-indigo-500 no-underline hover:no-underline" onClick={() => ref.current.click()}>
+          <Button type="button" variant="outline" size="sm" className="h-8 rounded-md px-2 text-xs text-slate-600" onClick={() => ref.current.click()}>
             Change
           </Button>
-          <Button type="button" variant="link" size="xs" className="h-auto p-0 text-[11px] text-red-700 no-underline hover:no-underline" onClick={() => onChange(null)}>
+          <Button type="button" variant="outline" size="sm" className="h-8 rounded-md px-2 text-xs text-red-700 hover:bg-red-50 hover:text-red-700" onClick={() => onChange(null)}>
             Remove
           </Button>
         </div>
@@ -64,22 +65,24 @@ export default function ItemImageUpload({ value, onChange }) {
   }
 
   return (
-    <div
+    <button
+      type="button"
       onClick={() => ref.current.click()}
       onDrop={handleDrop}
       onDragOver={e => e.preventDefault()}
-      className={`mt-1.5 flex h-14 w-14 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md border-2 border-dashed text-center ${
-        uploading ? 'border-zinc-300 bg-zinc-50 text-[10px] text-zinc-400' : 'border-zinc-300 bg-white text-xl text-zinc-400'
+      className={`mt-1.5 flex h-14 w-14 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md border-2 border-dashed text-center transition ${
+        uploading ? 'border-zinc-300 bg-zinc-50 text-[10px] text-zinc-400' : 'border-zinc-300 bg-white text-zinc-400 hover:bg-zinc-50'
       }`}
       title="Add image"
+      aria-label="Add image"
     >
       {uploading ? (
         <>
-          <div className="text-sm">⏳</div>
+          <LoaderCircle className="h-4 w-4 animate-spin" />
           <div className="text-[9px] text-zinc-400">Uploading</div>
         </>
-      ) : '🖼'}
+      ) : <ImagePlus className="h-5 w-5" />}
       <input ref={ref} type="file" accept="image/*" className="hidden" onChange={e => handleFile(e.target.files[0])} />
-    </div>
+    </button>
   )
 }

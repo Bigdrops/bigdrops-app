@@ -34,15 +34,35 @@ const fieldCls =
   'h-11 rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 text-[14px] text-[#0f172a] shadow-none transition focus:border-[#94a3b8] focus:bg-white focus:ring-0 focus-visible:ring-0'
 const labelCls = 'mb-1 block text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]'
 
+function getSectionDotClass(color) {
+  return {
+    '#0f172a': 'bg-slate-900',
+    '#7c3aed': 'bg-violet-600',
+    '#475569': 'bg-slate-600',
+    '#059669': 'bg-emerald-600',
+    '#d97706': 'bg-amber-600',
+    '#2563eb': 'bg-blue-600',
+  }[color] || 'bg-slate-400'
+}
+
+function getIconToneClass(iconTone) {
+  const key = `${iconTone?.bg}|${iconTone?.fg}`
+  return {
+    '#f5f3ff|#7c3aed': 'bg-violet-50 text-violet-600',
+    '#eff6ff|#2563eb': 'bg-blue-50 text-blue-600',
+    '#f0fdf4|#059669': 'bg-emerald-50 text-emerald-600',
+  }[key] || 'bg-slate-100 text-slate-600'
+}
+
 function formatCurrency(value) {
   return `NGN ${Number(value || 0).toLocaleString()}`
 }
 
 function SectionLabel({ color, children, trailing }) {
   return (
-    <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
+      <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
       <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#64748b]">
-        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+        <span className={`h-2 w-2 rounded-full ${getSectionDotClass(color)}`} />
         <span>{children}</span>
       </div>
       {trailing}
@@ -131,8 +151,7 @@ function CollapseCard({ icon: Icon, iconTone, title, subtitle, open, onToggle, c
       >
         <div className="flex items-center gap-3">
           <div
-            className="flex h-[38px] w-[38px] items-center justify-center rounded-[11px]"
-            style={{ backgroundColor: iconTone.bg, color: iconTone.fg }}
+            className={`flex h-[38px] w-[38px] items-center justify-center rounded-[11px] ${getIconToneClass(iconTone)}`}
           >
             <Icon className="h-4.5 w-4.5" />
           </div>
@@ -142,7 +161,7 @@ function CollapseCard({ icon: Icon, iconTone, title, subtitle, open, onToggle, c
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {sectionColor ? <span className="h-2 w-2 rounded-full" style={{ backgroundColor: sectionColor }} /> : null}
+          {sectionColor ? <span className={`h-2 w-2 rounded-full ${getSectionDotClass(sectionColor)}`} /> : null}
           {open ? <ChevronUp className="h-4 w-4 text-[#94a3b8]" /> : <ChevronRight className="h-4 w-4 text-[#94a3b8]" />}
         </div>
       </button>

@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Paperclip, Plus, Trash2 } from 'lucide-react'
 
 const SUGGESTED_LABELS = [
   'Technical Specification',
@@ -15,7 +16,7 @@ const SUGGESTED_LABELS = [
 
 const emptyAttachment = () => ({ label: '', customLabel: '', url: '', _isCustom: false })
 
-const fieldClassName = 'h-9 rounded-md border-zinc-300 bg-background px-3 text-sm text-zinc-900'
+const fieldClassName = 'h-10 rounded-lg border-zinc-300 bg-background px-3 text-sm text-zinc-900'
 
 export default function AttachmentsPanel({ attachments = [], onChange }) {
 
@@ -40,8 +41,10 @@ export default function AttachmentsPanel({ attachments = [], onChange }) {
       {attachments.length > 0 && (
         <div className="mb-2.5 space-y-2.5">
           {attachments.map((att, idx) => (
-            <div key={idx} className="flex items-start gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
-              <span className="mt-1 shrink-0 text-lg" aria-hidden="true">📎</span>
+            <div key={idx} className="flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-3">
+              <span className="mt-2 shrink-0 text-zinc-500" aria-hidden="true">
+                <Paperclip className="h-4 w-4" />
+              </span>
               <div className="flex flex-1 flex-col gap-1.5">
                 <Select
                   value={att._isCustom ? 'Custom' : (att.label || '__none__')}
@@ -89,26 +92,27 @@ export default function AttachmentsPanel({ attachments = [], onChange }) {
               <Button
                 type="button"
                 variant="ghost"
-                size="icon-sm"
-                className="mt-0.5 shrink-0 text-red-700 hover:bg-red-50 hover:text-red-700"
+                size="icon"
+                className="mt-1 h-10 w-10 shrink-0 rounded-lg text-red-700 hover:bg-red-50 hover:text-red-700"
                 onClick={() => removeRow(idx)}
                 aria-label={`Remove attachment ${idx + 1}`}
               >
-                ×
+                <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           ))}
         </div>
       )}
 
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={addRow}
-        className="flex w-full items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-zinc-300 px-3.5 py-2.5 text-center text-sm text-zinc-400 transition hover:bg-zinc-50"
+        className="h-10 w-full rounded-lg border-dashed border-zinc-300 text-sm font-medium text-zinc-500 hover:bg-zinc-50"
       >
-        <span className="text-base" aria-hidden="true">+</span>
+        <Plus className="h-4 w-4" aria-hidden="true" />
         <span>Add Supporting Document</span>
-      </button>
+      </Button>
 
       {attachments.length > 0 && (
         <div className="mt-2 text-center text-[11px] text-zinc-400">

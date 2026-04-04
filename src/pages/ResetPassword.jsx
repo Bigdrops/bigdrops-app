@@ -98,7 +98,7 @@ export default function ResetPassword() {
 
           <Button
             type="button"
-            className="mt-3 h-10 w-full rounded-full bg-[#CC0000] text-sm font-semibold text-white hover:bg-[#b30000]"
+            className="mt-3 h-10 w-full rounded-lg bg-[#CC0000] text-sm font-semibold text-white hover:bg-[#b30000]"
             onClick={handleUpdatePassword}
             disabled={loading}
           >

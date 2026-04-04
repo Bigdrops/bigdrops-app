@@ -2,6 +2,7 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import AndroidBackHandler from '@/components/app/AndroidBackHandler'
 import PageLoader from '@/components/app/PageLoader'
 import SetPasswordModal from '@/components/app/SetPasswordModal'
 
@@ -54,6 +55,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
 
   return (
     <>
+      <AndroidBackHandler />
       {showSetPassword && <SetPasswordModal onComplete={onProfileUpdate} />}
       <Suspense fallback={<PageLoader />}>
         <Routes>

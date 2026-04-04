@@ -54,6 +54,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { operationalEmptyStateClassName } from '@/components/ui/operational-card-styles'
 import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
 import { numberToWords } from '@/hooks/useInvoiceForm'
 import { useInvoiceMutations } from '@/hooks/useInvoiceMutations'
@@ -176,7 +177,9 @@ export default function ViewInvoice() {
   if (loading) {
     return (
       <Layout title="Invoice">
-        <p style={{ padding: 30 }}>Loading...</p>
+        <Card className={operationalEmptyStateClassName}>
+          <CardContent className="p-0">Loading...</CardContent>
+        </Card>
       </Layout>
     )
   }
@@ -184,7 +187,9 @@ export default function ViewInvoice() {
   if (!invoice) {
     return (
       <Layout title="Invoice">
-        <p style={{ padding: 30 }}>Invoice not found.</p>
+        <Card className={operationalEmptyStateClassName}>
+          <CardContent className="p-0">Invoice not found.</CardContent>
+        </Card>
       </Layout>
     )
   }

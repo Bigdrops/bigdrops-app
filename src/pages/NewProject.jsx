@@ -7,12 +7,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { pageFormCardClassName, pageFormFieldClassName, pageFormLabelClassName, pageFormPrimaryActionClassName } from '@/components/ui/form-page-styles'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import ClientSelector from '../components/ClientSelector'
-
-const fieldClassName = 'h-10 rounded-[10px] border-slate-200 bg-white px-3.5 text-sm text-slate-800'
-const labelClassName = 'text-[12px] font-bold uppercase tracking-[0.04em] text-slate-600'
 
 export default function NewProject() {
   const navigate = useNavigate()
@@ -59,7 +57,7 @@ export default function NewProject() {
   return (
     <Layout title="New Project">
       <div className="max-w-[600px]">
-        <Card className="rounded-[14px] border-slate-200 bg-white shadow-none">
+        <Card className={pageFormCardClassName}>
           <CardHeader className="gap-1">
             <CardTitle className="text-xl font-extrabold text-slate-900">New Project</CardTitle>
             <CardDescription className="text-[13px] text-slate-400">
@@ -69,9 +67,9 @@ export default function NewProject() {
 
           <CardContent className="space-y-5">
             <div className="space-y-1.5">
-              <Label className={labelClassName}>Project Name *</Label>
+              <Label className={pageFormLabelClassName}>Project Name *</Label>
               <Input
-                className={fieldClassName}
+                className={pageFormFieldClassName}
                 value={form.name}
                 onChange={e => set('name', e.target.value)}
                 placeholder="e.g. Transformer Maintenance – Dangote Cement"
@@ -80,7 +78,7 @@ export default function NewProject() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className={labelClassName}>Client</Label>
+              <Label className={pageFormLabelClassName}>Client</Label>
               <ClientSelector
                 value={form.client_id}
                 clientName={form.client_name}
@@ -89,10 +87,10 @@ export default function NewProject() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className={labelClassName}>Start Date</Label>
+              <Label className={pageFormLabelClassName}>Start Date</Label>
               <Input
                 type="date"
-                className={fieldClassName}
+                className={pageFormFieldClassName}
                 value={form.start_date}
                 onChange={e => set('start_date', e.target.value)}
               />
@@ -100,24 +98,24 @@ export default function NewProject() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className={labelClassName}>Project Value (₦)</Label>
-              <div className="flex items-center overflow-hidden rounded-[10px] border border-slate-200 bg-white">
-                <span className="bg-slate-50 px-3.5 text-base leading-10 text-slate-400 border-r border-slate-200">₦</span>
+              <Label className={pageFormLabelClassName}>Project Value (₦)</Label>
+              <div className="flex h-10 items-center overflow-hidden rounded-lg border border-zinc-300 bg-white">
+                <span className="flex h-full items-center border-r border-zinc-300 bg-slate-50 px-3 text-sm text-slate-500">₦</span>
                 <Input
                   type="number"
                   min="0"
                   value={form.project_value}
                   onChange={e => set('project_value', e.target.value)}
                   placeholder="Optional"
-                  className="h-10 rounded-none border-0 shadow-none focus-visible:ring-0"
+                  className="h-full rounded-none border-0 px-3 shadow-none focus-visible:ring-0"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label className={labelClassName}>Site / Location</Label>
+              <Label className={pageFormLabelClassName}>Site / Location</Label>
               <Input
-                className={fieldClassName}
+                className={pageFormFieldClassName}
                 value={form.location}
                 onChange={e => set('location', e.target.value)}
                 placeholder="e.g. Block B, Dangote Cement Plant, Ibese"
@@ -125,9 +123,9 @@ export default function NewProject() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className={labelClassName}>P.O. Number</Label>
+              <Label className={pageFormLabelClassName}>P.O. Number</Label>
               <Input
-                className={fieldClassName}
+                className={pageFormFieldClassName}
                 value={form.po_number}
                 onChange={e => set('po_number', e.target.value)}
                 placeholder="Optional — can be added later"
@@ -135,9 +133,9 @@ export default function NewProject() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className={labelClassName}>Status</Label>
+              <Label className={pageFormLabelClassName}>Status</Label>
               <Select value={form.status} onValueChange={(value) => set('status', value)}>
-                <SelectTrigger className="h-10 rounded-[10px] border-slate-200 bg-white text-sm text-slate-800">
+                <SelectTrigger className="h-10 rounded-lg border-zinc-300 bg-white px-3 text-sm text-slate-800">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -150,9 +148,9 @@ export default function NewProject() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className={labelClassName}>Notes</Label>
+              <Label className={pageFormLabelClassName}>Notes</Label>
               <Textarea
-                className="min-h-20 rounded-[10px] border-slate-200 bg-white text-sm text-slate-800"
+                className="min-h-20 rounded-lg border-zinc-300 bg-white px-3 py-2 text-sm text-slate-800"
                 value={form.notes}
                 onChange={e => set('notes', e.target.value)}
                 placeholder="Optional internal notes about this project"
@@ -165,14 +163,14 @@ export default function NewProject() {
           <Button
             type="button"
             variant="outline"
-            className="h-11 flex-1 rounded-[10px] border-slate-200 bg-white text-sm font-semibold text-slate-500 hover:bg-slate-50"
+            className="h-10 flex-1 rounded-lg border-zinc-300 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50"
             onClick={() => navigate('/projects')}
           >
             Cancel
           </Button>
           <Button
             type="button"
-            className="h-11 flex-[2] rounded-[10px] bg-slate-900 text-sm font-bold text-white hover:bg-slate-800"
+            className={`${pageFormPrimaryActionClassName} flex-[2] bg-slate-900 text-white hover:bg-slate-800`}
             onClick={handleSave}
             disabled={saving}
           >

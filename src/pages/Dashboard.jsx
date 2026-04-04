@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { operationalEmptyStateClassName, operationalPanelClassName } from '@/components/ui/operational-card-styles'
 import Layout, { MobileChromeContext } from '../components/Layout'
 import { getCreateActions, getQuickTiles, loadStoredQuickTiles } from '../config/quickTiles'
 import { supabase } from '../supabase'
@@ -81,7 +82,7 @@ function buildPriorityItems(projects, invoices, quotations) {
       title: `Update project status — ${projects[0].name}`,
       meta: `${projects[0].client_name || 'Open project'} • no movement recorded recently`,
       dotClassName: 'bg-emerald-500',
-      dotShadow: '0 0 0 6px rgba(16,185,129,0.14)',
+      dotRingClassName: 'ring-[6px] ring-emerald-500/15',
       badgeLabel: 'Project',
       badgeClassName: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     })
@@ -98,7 +99,7 @@ function buildPriorityItems(projects, invoices, quotations) {
       title: `Record payment — ${paymentInvoice.invoice_number}`,
       meta: `${paymentInvoice.client_name || 'Walking Client'} • ${naira(paymentInvoice.total)}`,
       dotClassName: 'bg-blue-500',
-      dotShadow: '0 0 0 6px rgba(59,130,246,0.14)',
+      dotRingClassName: 'ring-[6px] ring-blue-500/15',
       badgeLabel: 'Payment',
       badgeClassName: 'bg-blue-50 text-blue-700 border-blue-200',
     })
@@ -110,7 +111,7 @@ function buildPriorityItems(projects, invoices, quotations) {
       title: `Confirm progress — ${projects[1].name}`,
       meta: `${projects[1].client_name || 'Open project'} • team follow-up needed`,
       dotClassName: 'bg-amber-500',
-      dotShadow: '0 0 0 6px rgba(245,158,11,0.14)',
+      dotRingClassName: 'ring-[6px] ring-amber-500/15',
       badgeLabel: 'Review',
       badgeClassName: 'bg-amber-50 text-amber-700 border-amber-200',
     })
@@ -120,7 +121,7 @@ function buildPriorityItems(projects, invoices, quotations) {
       title: `Follow up quotation — ${quotations[0].quotation_number}`,
       meta: `${quotations[0].client_name || 'Walking Client'} • awaiting response`,
       dotClassName: 'bg-violet-500',
-      dotShadow: '0 0 0 6px rgba(139,92,246,0.14)',
+      dotRingClassName: 'ring-[6px] ring-violet-500/15',
       badgeLabel: 'Quote',
       badgeClassName: 'bg-violet-50 text-violet-700 border-violet-200',
     })
@@ -276,8 +277,7 @@ function MobileDashboardView({
                     className="grid grid-cols-[auto,1fr] gap-3 rounded-[20px] border border-black/5 bg-[#fafaf8] px-3.5 py-3.5 min-[390px]:grid-cols-[auto,1fr,auto] min-[390px]:items-center"
                   >
                     <span
-                      className={cn('mt-1 h-3 w-3 rounded-full min-[390px]:mt-0', item.dotClassName)}
-                      style={{ boxShadow: item.dotShadow }}
+                      className={cn('mt-1 h-3 w-3 rounded-full min-[390px]:mt-0', item.dotClassName, item.dotRingClassName)}
                     />
                     <div className="min-w-0">
                       <strong className="block text-[15px] leading-[1.25] text-[#111111]">
@@ -306,11 +306,11 @@ function MobileDashboardView({
 
           <div className="grid gap-3">
             {loading ? (
-              <div className="rounded-[28px] border border-black/10 bg-white px-4 py-8 text-center text-sm text-muted-foreground shadow-[0_12px_30px_rgba(0,0,0,0.06)]">
+              <div className={operationalEmptyStateClassName}>
                 Loading documents...
               </div>
             ) : recentDocs.length === 0 ? (
-              <div className="rounded-[28px] border border-black/10 bg-white px-4 py-8 text-center text-sm text-muted-foreground shadow-[0_12px_30px_rgba(0,0,0,0.06)]">
+              <div className={operationalEmptyStateClassName}>
                 No recent documents yet.
               </div>
             ) : (
@@ -324,7 +324,7 @@ function MobileDashboardView({
                     key={`${doc.type}-${doc.id}`}
                     type="button"
                     onClick={() => navigate(`/${type.path}/${doc.id}`)}
-                    className="rounded-[28px] border border-black/10 bg-white px-[18px] py-4 text-left shadow-[0_12px_30px_rgba(0,0,0,0.06)] transition hover:bg-muted/40"
+                    className={`${operationalPanelClassName} px-[18px] py-4 text-left transition hover:bg-muted/40`}
                   >
                     <div className="flex items-center gap-3">
                       <div className="min-w-0 flex-1 space-y-2">
@@ -371,7 +371,7 @@ function MobileDashboardView({
           </div>
 
           <div className="grid grid-cols-1 gap-[14px] min-[390px]:grid-cols-2">
-            <article className="rounded-[28px] border border-black/10 p-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.06)]" style={{ background: 'linear-gradient(180deg, rgba(255,241,242,.92), rgba(255,255,255,.78))' }}>
+            <article className={`${operationalPanelClassName} bg-gradient-to-b from-rose-50/90 to-white/80 p-[18px]`}>
               <label className="block text-xs font-extrabold uppercase tracking-[0.18em] text-[#b33f4a]">
                 Overdue
               </label>
@@ -383,7 +383,7 @@ function MobileDashboardView({
               </span>
             </article>
 
-            <article className="rounded-[28px] border border-black/10 p-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.06)]" style={{ background: 'linear-gradient(180deg, rgba(255,248,235,.95), rgba(255,255,255,.78))' }}>
+            <article className={`${operationalPanelClassName} bg-gradient-to-b from-amber-50/90 to-white/80 p-[18px]`}>
               <label className="block text-xs font-extrabold uppercase tracking-[0.18em] text-[#ad770e]">
                 Due this week
               </label>
@@ -395,7 +395,7 @@ function MobileDashboardView({
               </span>
             </article>
 
-            <article className="rounded-[28px] border border-black/10 p-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.06)]" style={{ background: 'linear-gradient(180deg, rgba(237,252,244,.96), rgba(255,255,255,.78))' }}>
+            <article className={`${operationalPanelClassName} bg-gradient-to-b from-emerald-50/90 to-white/80 p-[18px]`}>
               <label className="block text-xs font-extrabold uppercase tracking-[0.18em] text-[#0e8b5d]">
                 Collected
               </label>
