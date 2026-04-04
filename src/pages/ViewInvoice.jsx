@@ -152,6 +152,27 @@ export default function ViewInvoice() {
     navigate(`/invoices/${id}`, { replace: true, state: {} })
   }, [id, invoice, invoice?.thread_id, location.state?.openAdvanceSheet, navigate])
 
+  const syncAdvanceForm = useCallback((nextAdvanceInvoice) => {
+    const nextMode = nextAdvanceInvoice?.advance_mode === 'fixed' ? 'fixed' : 'percent'
+    const rawValue =
+      nextAdvanceInvoice?.advance_value !== null &&
+      nextAdvanceInvoice?.advance_value !== undefined
+        ? String(nextAdvanceInvoice.advance_value)
+        : nextMode === 'fixed'
+          ? String(nextAdvanceInvoice?.total || '')
+          : '50'
+
+    setAdvanceMode(nextMode)
+    setAdvanceInputValue(rawValue)
+  }, [])
+
+  useEffect(() => {
+    if (advanceInvoice && advanceSheetMode === 'create') {
+      setAdvanceSheetMode('view')
+      syncAdvanceForm(advanceInvoice)
+    }
+  }, [advanceInvoice, advanceSheetMode, syncAdvanceForm])
+
   if (loading) {
     return (
       <Layout title="Invoice">
@@ -221,27 +242,6 @@ export default function ViewInvoice() {
   const customFieldObject = parseCustomFields(invoice.custom_fields)
   const selectedSignatory =
     signatories.find((signatory) => signatory.id === getInvoiceSignatoryId(customFieldObject)) || null
-
-  const syncAdvanceForm = useCallback((nextAdvanceInvoice) => {
-    const nextMode = nextAdvanceInvoice?.advance_mode === 'fixed' ? 'fixed' : 'percent'
-    const rawValue =
-      nextAdvanceInvoice?.advance_value !== null
-      && nextAdvanceInvoice?.advance_value !== undefined
-        ? String(nextAdvanceInvoice.advance_value)
-        : nextMode === 'fixed'
-          ? String(nextAdvanceInvoice?.total || '')
-          : '50'
-
-    setAdvanceMode(nextMode)
-    setAdvanceInputValue(rawValue)
-  }, [])
-
-  useEffect(() => {
-    if (advanceInvoice && advanceSheetMode === 'create') {
-      setAdvanceSheetMode('view')
-      syncAdvanceForm(advanceInvoice)
-    }
-  }, [advanceInvoice, advanceSheetMode, syncAdvanceForm])
 
   const openAdvanceSheet = (mode = advanceInvoice ? 'view' : 'create') => {
     if (mode === 'edit' && advanceInvoice) {
