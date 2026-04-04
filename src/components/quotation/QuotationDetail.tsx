@@ -704,6 +704,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         amountInWords={quotation.amount_in_words || ''}
         bankDetails={pdfOutput.showBankDetails && selectedPreviewBank ? selectedPreviewBank : null}
         notesSections={previewNotesSections}
+        signatory={null}
         accentColor={pdfDesignPreset.accentColor}
       />
 
@@ -801,6 +802,10 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         onOpenChange={setShowPdfSettings}
         title="Download & Export"
         subtitle={`Using ${activePdfTemplate.label} as the saved quotation PDF preset on this device.`}
+        settingsNode={null}
+        templateValue={null}
+        onTemplateChange={undefined}
+        templates={[]}
         actions={[
           { label: 'Export CSV', onClick: handleDownloadCsv, variant: 'outline' },
           { label: pdfGenerating ? 'Generating...' : 'Download PDF', onClick: () => void handleDownloadPdf(), className: 'bg-slate-950 text-white hover:bg-slate-800', disabled: pdfGenerating },

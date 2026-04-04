@@ -14,7 +14,7 @@ import {
   useInvoiceColumns,
 } from '@/components/useInvoiceColumns.jsx'
 import { toDbItem } from '@/domain/invoice'
-import type { ColumnConfig, InvoiceFieldEntry, InvoiceItem } from '@/domain/invoice'
+import type { ColumnConfig, ExtraCharge, InvoiceFieldEntry, InvoiceItem } from '@/domain/invoice'
 import {
   buildQuotationFormState,
   type DbQuotation,
@@ -52,6 +52,33 @@ function makeQuotationGroupId() {
 
 function toGroupMetaMap(groups: Array<{ id: string; name: string; showSubtotal?: boolean }>) {
   return Object.fromEntries(groups.map((group) => [group.id, { name: group.name, showSubtotal: !!group.showSubtotal }]))
+}
+
+function parseGroupMeta(value: unknown): Record<string, { name?: string; showSubtotal?: boolean }> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, entry]) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [key, {}]
+      const record = entry as Record<string, unknown>
+      return [
+        key,
+        {
+          name: typeof record.name === 'string' ? record.name : undefined,
+          showSubtotal: record.showSubtotal === true,
+        },
+      ]
+    }),
+  )
+}
+
+function parseChargeLabels(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, label]) => [
+      key,
+      typeof label === 'string' ? label : String(label || ''),
+    ]),
+  )
 }
 
 function normalizeQuotationGrouping(
@@ -160,7 +187,7 @@ function buildCustomFields({
   showItemImages: boolean
   groups: Array<{ id: string; name: string; showSubtotal?: boolean }>
   attachments: Array<Record<string, unknown>>
-  extraCharges: Array<Record<string, unknown>>
+  extraCharges: ExtraCharge[]
   chargeLabels: Record<string, string>
   signatoryId: string | null
   pdfOutput: PdfOutputState
@@ -268,7 +295,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const [notesTitle, setNotesTitle] = useState('Notes')
   const [termsTitle, setTermsTitle] = useState('Terms and Conditions')
   const [attachments, setAttachments] = useState<Array<Record<string, unknown>>>([])
-  const [extraCharges, setExtraCharges] = useState<Array<Record<string, unknown>>>([])
+  const [extraCharges, setExtraCharges] = useState<ExtraCharge[]>([])
   const [chargeLabels, setChargeLabels] = useState({
     workmanship: 'Workmanship',
     transportation: 'Transportation',
@@ -354,7 +381,10 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         }
 
         const state = buildQuotationFormState(quotationRow as DbQuotation, (itemRows || []) as DbQuotationItem[])
-        const normalizedGrouping = normalizeQuotationGrouping(state.items, state.quotation.custom_fields?.groupMeta || {})
+        const normalizedGrouping = normalizeQuotationGrouping(
+          state.items,
+          parseGroupMeta(state.quotation.custom_fields?.groupMeta),
+        )
 
         setQuotation({
           ...state.quotation,
@@ -383,11 +413,15 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
             : defaultPdfOutput,
         )
         setExtraCharges(
-          normalizeExtraCharges(Array.isArray(state.quotation.custom_fields?.extraCharges) ? state.quotation.custom_fields?.extraCharges : []) as Array<Record<string, unknown>>,
+          normalizeExtraCharges(
+            Array.isArray(state.quotation.custom_fields?.extraCharges)
+              ? state.quotation.custom_fields?.extraCharges
+              : [],
+          ),
         )
         setChargeLabels((current) => ({
           ...current,
-          ...(state.quotation.custom_fields?.chargeLabels || {}),
+          ...parseChargeLabels(state.quotation.custom_fields?.chargeLabels),
         }))
         setGroups(normalizedGrouping.groups)
         setLoading(false)
@@ -464,7 +498,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
   const addUngroupedItem = (insertAt: number | null = null) => {
     commitGrouping((current) => {
-      const newItem = { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }
+      const newItem: InvoiceItem = { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }
       if (insertAt === null || insertAt >= current.length) return [...current, { ...newItem, sort_order: current.length }]
       const next = [...current]
       next.splice(insertAt, 0, { ...newItem, sort_order: insertAt })
@@ -481,10 +515,21 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     const group = { ...base, id: groupId, name: base.name || `Group ${groups.length + 1}`, showSubtotal: !!base.showSubtotal }
 
     commitGrouping(
-      (current) => [
-        ...current.map((item, index) => ({ ...item, sort_order: index })),
-        { ...makeEmptyItem(), row_type: 'group_header', group_id: group.id, group_name: group.name, description: '', sort_order: current.length },
-      ],
+      (current) => {
+        const groupHeader: InvoiceItem = {
+          ...makeEmptyItem(),
+          row_type: 'group_header',
+          group_id: group.id,
+          group_name: group.name,
+          description: '',
+          sort_order: current.length,
+        }
+
+        return [
+          ...current.map((item, index) => ({ ...item, sort_order: index })),
+          groupHeader,
+        ]
+      },
       (current) => [...current, group],
     )
   }
@@ -540,7 +585,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       setColumns,
       setItems: (nextItems) => commitGrouping(nextItems),
       updateTopLevelField: (field, value) => updateQuotation(field, value),
-      setExtraCharges: (charges) => setExtraCharges(charges as Array<Record<string, unknown>>),
+      setExtraCharges: (charges) => setExtraCharges(charges),
     })
   }
 

@@ -9,6 +9,7 @@ import {
   formatWaybillTime,
   getStatusMeta,
   getTypeMeta,
+  parseWaybillCustomFields,
   getWaybillSignature,
   getWaybillTypeContent,
   mapDbWaybill,
@@ -159,7 +160,7 @@ export default function ViewWaybill() {
 
   if (loading) {
     return (
-      <Layout title="Waybill">
+      <Layout title="Waybill" session={null}>
         <Card className={operationalEmptyStateClassName}>
           <CardContent className="p-0">Loading waybill...</CardContent>
         </Card>
@@ -168,7 +169,7 @@ export default function ViewWaybill() {
   }
   if (!waybill) {
     return (
-      <Layout title="Waybill">
+      <Layout title="Waybill" session={null}>
         <Card className={operationalEmptyStateClassName}>
           <CardContent className="p-0">Waybill not found.</CardContent>
         </Card>
@@ -180,7 +181,7 @@ export default function ViewWaybill() {
   const statusMeta = getStatusMeta(waybill.status)
   const typeMeta = getTypeMeta(waybill.type)
   const typeContent = getWaybillTypeContent(waybill.type)
-  const customFields = typeof waybill.custom_fields === 'string' ? mapDbWaybill(waybill).custom_fields : waybill.custom_fields || {}
+  const customFields = parseWaybillCustomFields(waybill.custom_fields)
   const customColumns = customFields?.customColumns || []
   const senderSignature = getWaybillSignature(waybill, 'sender')
   const receiverSignature = getWaybillSignature(waybill, 'receiver')
@@ -290,6 +291,7 @@ export default function ViewWaybill() {
   return (
     <Layout
       title={waybill.waybill_number || 'Waybill'}
+      session={null}
       hidePageHeader
       contentClassName="w-full px-4 pb-32 pt-4 md:px-6 md:pt-6"
     >
@@ -564,6 +566,8 @@ export default function ViewWaybill() {
         numberField="invoice_number"
         clientField="client_name"
         poField="po_number"
+        linkedInvoiceField={null}
+        currentInvoiceId={null}
         currentClientName={waybill.client_name}
         searchPlaceholder="Search invoice number, client, or PO"
         onAttach={handleAttachInvoice}
