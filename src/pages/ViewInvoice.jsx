@@ -150,7 +150,7 @@ export default function ViewInvoice() {
     setAdvanceSheetMode('create')
     setShowAdvanceSheet(true)
     navigate(`/invoices/${id}`, { replace: true, state: {} })
-  }, [id, invoice?.thread_id, location.state?.openAdvanceSheet, navigate])
+  }, [id, invoice, invoice?.thread_id, location.state?.openAdvanceSheet, navigate])
 
   if (loading) {
     return (
@@ -170,7 +170,7 @@ export default function ViewInvoice() {
 
   const poNumber = String(invoice.po_number || '').trim()
 
-  const formatMoney = (value) => `\u20A6${Number(value || 0).toLocaleString()}`
+  const formatMoney = (value) => `₦${Number(value || 0).toLocaleString()}`
 
   const formatDate = (value) => {
     if (!value) return '-'
@@ -182,7 +182,6 @@ export default function ViewInvoice() {
   const isAdmin = ADMIN_EMAILS.includes(session?.user?.email || '')
   const isStandaloneInvoice = !invoice.thread_id
   const isAdvanceInvoice = invoice.thread_role === 'advance' || invoice.is_advance === true
-  const contractValue = Number(invoiceTotal || 0)
   const sourceDocument = getInvoiceSourceDocument(invoice)
   const invoiceRelatedDocs = { csrs: relatedCsrs, waybills: relatedWaybills }
 
@@ -214,6 +213,8 @@ export default function ViewInvoice() {
     projectActionLabel,
     documentActionLabel,
   } = viewModel
+
+  const contractValue = Number(invoiceTotal || 0)
 
   const canManagePayment = canRecordPayment && isStandaloneInvoice
 
