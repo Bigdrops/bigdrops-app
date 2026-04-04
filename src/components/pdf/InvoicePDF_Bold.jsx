@@ -9,6 +9,9 @@ import {
   lightenHex,
   resolvePdfFontFamily,
 } from '@/lib/pdfDesignPreset'
+import { registerPdfFillableFonts } from '@/lib/pdfFontRegistry'
+
+registerPdfFillableFonts()
 
 function createStyles(designPreset) {
   const preset = designPreset || getDefaultPdfDesignPreset('invoice')

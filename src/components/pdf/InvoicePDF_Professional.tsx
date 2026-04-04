@@ -12,7 +12,10 @@ import {
   type PdfDesignPreset,
   type PdfDesignPresetDocument,
 } from '@/lib/pdfDesignPreset'
+import { registerPdfFillableFonts } from '@/lib/pdfFontRegistry'
 import type { DocumentResult } from '@/lib/Calculations'
+
+registerPdfFillableFonts()
 
 type ProfessionalPdfDocument = {
   invoice_number?: string | null

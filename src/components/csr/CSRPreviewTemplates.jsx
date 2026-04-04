@@ -10,6 +10,9 @@ import {
   getEffectiveFillableFont,
   resolvePdfFontFamily,
 } from '../../lib/pdfDesignPreset'
+import { registerPdfFillableFonts } from '../../lib/pdfFontRegistry'
+
+registerPdfFillableFonts()
 
 const safe = (value) => String(value || '').trim()
 const hasText = (value) => !!safe(value)

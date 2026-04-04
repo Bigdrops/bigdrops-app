@@ -23,6 +23,7 @@ import { getDocumentActionState, getProjectActionState } from '@/domain/document
 import { fetchInvoiceSummary, fetchProjectSummary } from '@/domain/documentRelationships'
 import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { isDocumentFillableEnabled } from '@/lib/documentFillableSettings'
+import { ensureFillableWebFontsLoaded } from '@/lib/pdfFontRegistry'
 
 export default function ViewCSR() {
   const { id } = useParams()
@@ -46,6 +47,10 @@ export default function ViewCSR() {
     }
   })
   const [pdfDesignPreset, setPdfDesignPresetState] = useState(() => getPdfDesignPreset('csr'))
+
+  useEffect(() => {
+    void ensureFillableWebFontsLoaded()
+  }, [])
 
   useEffect(() => {
     supabase.from('csrs').select('*').eq('id', id).single().then(({ data }) => {

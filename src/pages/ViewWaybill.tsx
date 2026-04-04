@@ -29,6 +29,7 @@ import { useSettings } from '../hooks/useSettings'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 import { getPdfDesignPreset, getEffectiveFillableFont, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { isDocumentFillableEnabled } from '@/lib/documentFillableSettings'
+import { ensureFillableWebFontsLoaded } from '@/lib/pdfFontRegistry'
 
 function Badge({ className, label }: { className: string; label: string }) {
   return <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${className}`}>{label}</span>
@@ -51,6 +52,10 @@ export default function ViewWaybill() {
   const [pendingAttachInvoice, setPendingAttachInvoice] = useState<{ id: string; invoice_number?: string | null } | null>(null)
   const moreRef = useRef<HTMLDivElement>(null)
   const [pdfDesignPreset, setPdfDesignPresetState] = useState(() => getPdfDesignPreset('waybill'))
+
+  useEffect(() => {
+    void ensureFillableWebFontsLoaded()
+  }, [])
 
   useEffect(() => {
     supabase.from('waybills').select('*').eq('id', id).single().then(({ data }) => {

@@ -17,6 +17,9 @@ import {
   resolvePdfFontFamily,
   type PdfDesignPreset,
 } from '@/lib/pdfDesignPreset'
+import { registerPdfFillableFonts } from '@/lib/pdfFontRegistry'
+
+registerPdfFillableFonts()
 
 type QuotationPdfProps = {
   document: Quotation

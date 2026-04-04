@@ -5,6 +5,7 @@ import {
   resolvePdfFontFamily,
   type PdfDesignPreset,
 } from '@/lib/pdfDesignPreset'
+import { registerPdfFillableFonts } from '@/lib/pdfFontRegistry'
 
 import {
   formatWaybillDate,
@@ -28,6 +29,8 @@ interface WaybillPDFProps {
   settings: Settings
   designPreset?: PdfDesignPreset
 }
+
+registerPdfFillableFonts()
 
 function createStyles(designPreset?: PdfDesignPreset) {
   const preset = designPreset || getDefaultPdfDesignPreset('waybill')

@@ -1,3 +1,5 @@
+import { getRegisteredFillablePdfFontFamily, getRegisteredFillableWebFontFamily } from '@/lib/pdfFontRegistry'
+
 export type PdfDesignPresetDocument = 'invoice' | 'quotation' | 'csr' | 'waybill'
 export type PdfFontChoice =
   | 'Inter'
@@ -202,25 +204,21 @@ export function resolvePdfFontFamily(
   choice: PdfFontChoice | PdfFillableFontChoice | LegacyPdfFillableChoice,
   variant: 'regular' | 'bold' | 'italic' | 'boldItalic' = 'regular',
 ) {
-  if (choice === 'Patrick Hand' || choice === 'Handlee' || choice === 'Biro Script') {
-    if (variant === 'bold') return 'Times-Bold'
-    if (variant === 'italic') return 'Times-Italic'
-    if (variant === 'boldItalic') return 'Times-BoldItalic'
-    return 'Times-Roman'
+  const normalizedChoice =
+    choice === 'Biro Script' || choice === 'Ballpoint Handwriting' || choice === 'Ballpoint Rush'
+      ? 'Patrick Hand'
+      : choice
+
+  const registeredFillableFont = getRegisteredFillablePdfFontFamily(normalizedChoice, variant)
+  if (registeredFillableFont) {
+    return registeredFillableFont
   }
 
-  if (choice === 'Caveat' || choice === 'Kalam' || choice === 'Orbitron' || choice === 'Roboto Condensed') {
+  if (normalizedChoice === 'Orbitron' || normalizedChoice === 'Roboto Condensed') {
     if (variant === 'bold') return 'Courier-Bold'
     if (variant === 'italic') return 'Courier-Oblique'
     if (variant === 'boldItalic') return 'Courier-BoldOblique'
     return 'Courier'
-  }
-
-  if (choice === 'Sue Ellen Francisco' || choice === 'Reenie Beanie' || choice === 'Ballpoint Handwriting' || choice === 'Ballpoint Rush') {
-    if (variant === 'bold') return 'Helvetica-BoldOblique'
-    if (variant === 'italic') return 'Helvetica-Oblique'
-    if (variant === 'boldItalic') return 'Helvetica-BoldOblique'
-    return 'Helvetica-Oblique'
   }
 
   if (variant === 'bold') return 'Helvetica-Bold'
@@ -230,13 +228,16 @@ export function resolvePdfFontFamily(
 }
 
 export function resolvePdfWebFontFamily(choice: PdfFontChoice | PdfFillableFontChoice | LegacyPdfFillableChoice) {
-  if (choice === 'Patrick Hand') return '"Patrick Hand", "Segoe Print", "Bradley Hand", cursive'
-  if (choice === 'Handlee') return '"Handlee", "Segoe Print", "Comic Sans MS", cursive'
-  if (choice === 'Caveat') return '"Caveat", "Bradley Hand", "Comic Sans MS", cursive'
-  if (choice === 'Sue Ellen Francisco') return '"Sue Ellen Francisco", "Segoe Print", "Bradley Hand", cursive'
-  if (choice === 'Kalam') return '"Kalam", "Segoe Print", "Comic Sans MS", cursive'
-  if (choice === 'Reenie Beanie') return '"Reenie Beanie", "Segoe Script", "Bradley Hand", cursive'
-  if (choice === 'Orbitron' || choice === 'Roboto Condensed') return '"Courier New", Courier, monospace'
+  const normalizedChoice =
+    choice === 'Biro Script' || choice === 'Ballpoint Handwriting' || choice === 'Ballpoint Rush'
+      ? 'Patrick Hand'
+      : choice
+
+  const registeredFillableWebFont = getRegisteredFillableWebFontFamily(normalizedChoice)
+  if (registeredFillableWebFont) {
+    return `"${registeredFillableWebFont}", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive`
+  }
+  if (normalizedChoice === 'Orbitron' || normalizedChoice === 'Roboto Condensed') return '"Courier New", Courier, monospace'
   return 'Inter, Arial, sans-serif'
 }
 
