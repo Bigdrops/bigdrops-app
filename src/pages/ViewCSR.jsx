@@ -18,6 +18,11 @@ import {
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
+import {
+  createLinkedDocumentItem,
+  createLinkedDocumentsSection,
+  createLinkedProjectSection,
+} from '@/components/document/linkedDocumentSections'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { Button } from '@/components/ui/button'
 import {
@@ -114,12 +119,12 @@ export default function ViewCSR() {
   })
   const hasLinkedDocuments = documentActionState.hasLinkedDocuments
   const linkedDocumentsSections = [
-    {
+    createLinkedDocumentsSection({
       key: 'source',
       title: 'Source',
       description: 'Documents this CSR is linked to.',
       items: [
-        {
+        createLinkedDocumentItem({
           key: 'attach-invoice',
           label: 'Attach to Invoice',
           subtitle: 'Search and link an invoice',
@@ -127,30 +132,22 @@ export default function ViewCSR() {
             setShowLinkedDocuments(false)
             setShowAttachInvoice(true)
           },
-        },
-        ...(linkedInvoice
-          ? [{
+        }),
+        linkedInvoice
+          ? createLinkedDocumentItem({
               key: `invoice-${linkedInvoice.id}`,
               label: `Invoice ${linkedInvoice.invoice_number || linkedInvoice.id}`,
               subtitle: 'Open linked invoice',
               onClick: () => navigate(`/invoices/${linkedInvoice.id}`),
-            }]
-          : []),
+            })
+          : null,
       ],
-    },
-    {
-      key: 'project',
-      title: 'Project',
+    }),
+    createLinkedProjectSection({
+      project: linkedProject,
       description: 'Project connected to this CSR.',
-      items: linkedProject
-        ? [{
-            key: `project-${linkedProject.id}`,
-            label: linkedProject.name || linkedProject.id,
-            subtitle: 'Open linked project',
-            onClick: () => navigate(`/projects/${linkedProject.id}`),
-          }]
-        : [],
-    },
+      onOpenProject: () => navigate(`/projects/${linkedProject.id}`),
+    }),
   ]
 
   const attachInvoice = async (invoice) => {

@@ -10,10 +10,10 @@ import {
   DocumentDesignPanel,
   DocumentDesignStyleEditor,
   DocumentFloatingFab,
-  DocumentHeroCard,
   DocumentLivePreviewCard,
   DocumentPdfSheet,
   DocumentSection,
+  DocumentSummaryDisclosure,
   DocumentStatusStrip,
   DocumentTemplatePicker,
   DocumentTopBar,
@@ -43,6 +43,11 @@ import { toast } from '@/hooks/use-toast'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
+import {
+  createLinkedDocumentItem,
+  createLinkedDocumentsSection,
+  createLinkedProjectSection,
+} from '@/components/document/linkedDocumentSections'
 import InvoiceActionsSheet from '@/components/invoice/InvoiceActionsSheet'
 import RevertInvoiceDialog from '@/components/invoice/RevertInvoiceDialog'
 import InvoicePaymentSection from '@/components/invoice/InvoicePaymentSection'
@@ -58,6 +63,8 @@ import { operationalEmptyStateClassName } from '@/components/ui/operational-card
 import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
 import { numberToWords } from '@/hooks/useInvoiceForm'
 import { useInvoiceMutations } from '@/hooks/useInvoiceMutations'
+import { formatDisplayDate } from '@/lib/formatters/date'
+import { formatNaira } from '@/lib/formatters/money'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
 
@@ -196,14 +203,9 @@ export default function ViewInvoice() {
 
   const poNumber = String(invoice.po_number || '').trim()
 
-  const formatMoney = (value) => `₦${Number(value || 0).toLocaleString()}`
+  const formatMoney = formatNaira
 
-  const formatDate = (value) => {
-    if (!value) return '-'
-    const parsed = new Date(value)
-    if (Number.isNaN(parsed.getTime())) return value
-    return parsed.toLocaleDateString()
-  }
+  const formatDate = (value) => formatDisplayDate(value, { fallback: '-', locale: undefined })
 
   const isAdmin = ADMIN_EMAILS.includes(session?.user?.email || '')
   const isStandaloneInvoice = !invoice.thread_id
@@ -661,13 +663,13 @@ export default function ViewInvoice() {
   }))
 
   const linkedDocumentsSections = [
-    {
+    createLinkedDocumentsSection({
       key: 'source',
       title: 'Source',
       description: 'Documents this invoice came from.',
       items: sourceDocument
         ? [
-            {
+            createLinkedDocumentItem({
               key: `source-${sourceDocument.id || sourceDocument.number || 'invoice-source'}`,
               label: `${sourceDocument.type === 'quotation' ? 'Quotation' : 'Document'} ${
                 sourceDocument.number || sourceDocument.id || 'Linked source'
@@ -681,16 +683,16 @@ export default function ViewInvoice() {
                 }
               },
               disabled: !sourceDocument.id,
-            },
+            }),
           ]
         : [],
-    },
-    {
+    }),
+    createLinkedDocumentsSection({
       key: 'generated',
       title: 'Generated / Child Documents',
       description: 'Documents created from this invoice.',
       items: [
-        {
+        createLinkedDocumentItem({
           key: 'attach-csr',
           label: 'Attach Existing CSR',
           subtitle: 'Search and link a CSR to this invoice',
@@ -699,8 +701,8 @@ export default function ViewInvoice() {
             setAttachKind('csr')
             setShowAttachSheet(true)
           },
-        },
-        {
+        }),
+        createLinkedDocumentItem({
           key: 'attach-waybill',
           label: 'Attach Existing Waybill',
           subtitle: 'Search and link a waybill to this invoice',
@@ -709,36 +711,26 @@ export default function ViewInvoice() {
             setAttachKind('waybill')
             setShowAttachSheet(true)
           },
-        },
-        ...(invoiceRelatedDocs.csrs || []).map((csr) => ({
+        }),
+        ...(invoiceRelatedDocs.csrs || []).map((csr) => createLinkedDocumentItem({
           key: `csr-${csr.id}`,
           label: `CSR ${csr.csr_number || csr.id}`,
           subtitle: 'Open linked CSR',
           onClick: () => navigate(`/csr/${csr.id}`),
         })),
-        ...(invoiceRelatedDocs.waybills || []).map((waybill) => ({
+        ...(invoiceRelatedDocs.waybills || []).map((waybill) => createLinkedDocumentItem({
           key: `waybill-${waybill.id}`,
           label: `Waybill ${waybill.waybill_number || waybill.id}`,
           subtitle: 'Open linked waybill',
           onClick: () => navigate(`/waybills/${waybill.id}`),
         })),
       ],
-    },
-    {
-      key: 'project',
-      title: 'Project',
+    }),
+    createLinkedProjectSection({
+      project: linkedProject,
       description: 'Project connected to this invoice.',
-      items: linkedProject
-        ? [
-            {
-              key: `project-${linkedProject.id}`,
-              label: linkedProject.name || linkedProject.id,
-              subtitle: 'Open linked project',
-              onClick: () => navigate(`/projects/${linkedProject.id}`),
-            },
-          ]
-        : [],
-    },
+      onOpenProject: () => navigate(`/projects/${linkedProject.id}`),
+    }),
   ]
 
   const handleDownloadPDF = async () => {
@@ -951,10 +943,11 @@ export default function ViewInvoice() {
           onMore={() => setShowMore(true)}
         />
 
-        <DocumentHeroCard
+        <DocumentSummaryDisclosure
           eyebrow="Total Payable"
           value={formatMoney(invoiceTotal)}
           helper={invoice.amount_in_words || invoice.invoice_title || 'Invoice ready for payment tracking.'}
+          defaultOpen={false}
           stats={[
             {
               label: 'Balance Due',

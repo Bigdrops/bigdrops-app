@@ -1,3 +1,5 @@
+import { formatDisplayDate } from '@/lib/formatters/date'
+
 export type WaybillType = 'internal' | 'external'
 export type WaybillStatus = 'draft' | 'dispatched' | 'delivered'
 export type ItemCondition = 'good' | 'damaged' | 'partial'
@@ -406,10 +408,11 @@ export function getTypeMeta(type: string) {
 }
 
 export function formatWaybillDate(value: string | null | undefined): string {
-  if (!value) return '—'
-  const d = new Date(value)
-  if (isNaN(d.getTime())) return value
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatDisplayDate(value, {
+    fallback: '—',
+    locale: 'en-GB',
+    dateOptions: { day: '2-digit', month: 'short', year: 'numeric' },
+  })
 }
 
 export function formatWaybillTime(value: string | null | undefined): string {

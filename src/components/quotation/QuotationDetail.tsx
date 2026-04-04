@@ -29,6 +29,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
+import {
+  createLinkedDocumentItem,
+  createLinkedDocumentsSection,
+  createLinkedProjectSection,
+} from '@/components/document/linkedDocumentSections'
 import { operationalEmptyStateClassName } from '@/components/ui/operational-card-styles'
 import { toDbItem, type InvoiceItem } from '@/domain/invoice'
 import {
@@ -45,6 +50,7 @@ import type { DbQuotation, DbQuotationItem, Quotation } from '@/domain/quotation
 import { buildQuotationFormState, getNextQuotationNumber } from '@/domain/quotation'
 import { buildQuotationCsv, downloadQuotationCsv } from './exportQuotationCsv'
 import { QUOTATION_STATUSES, formatQuotationStatus, quotationStatusTone } from './quotationStatus'
+import { formatNaira } from '@/lib/formatters/money'
 
 type BankAccountRow = {
   id: string
@@ -90,17 +96,8 @@ function useIsNarrow() {
   return isNarrow
 }
 
-function formatMoney(value: number | string | null | undefined) {
-  const parsed =
-    typeof value === 'string'
-      ? Number(value.replace(/[^0-9.-]/g, '') || 0)
-      : Number(value || 0)
-  const safe = Number.isFinite(parsed) ? parsed : 0
-  return `₦${safe.toLocaleString('en-NG', {
-    minimumFractionDigits: Math.abs(safe % 1) > 0.000001 ? 2 : 0,
-    maximumFractionDigits: Math.abs(safe % 1) > 0.000001 ? 2 : 0,
-  })}`
-}
+const formatMoney = (value: number | string | null | undefined) =>
+  formatNaira(value, { preserveFraction: true })
 
 export default function QuotationDetail({ quotationId }: { quotationId: string }) {
   const navigate = useNavigate()
@@ -202,48 +199,44 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     relatedDocuments: derivedInvoices,
   })
   const linkedDocumentsSections = [
-    {
+    createLinkedDocumentsSection({
       key: 'source',
       title: 'Source',
       description: 'Documents this quotation came from.',
       items: quotationRelations.source
-        ? [{
-            key: `source-${quotationRelations.source.id || quotationRelations.source.number || 'quotation-source'}`,
-            label: `${quotationRelations.source.type === 'invoice' ? 'Invoice' : 'Quotation'} ${quotationRelations.source.number || quotationRelations.source.id || 'Linked source'}`,
-            subtitle: 'Open the source document',
-            onClick: () => {
-              if (quotationRelations.source?.id) {
-                navigate(`/${quotationRelations.source.type === 'invoice' ? 'invoices' : 'quotations'}/${quotationRelations.source.id}`)
-              }
-            },
-            disabled: !quotationRelations.source?.id,
-          }]
+        ? [
+            createLinkedDocumentItem({
+              key: `source-${quotationRelations.source.id || quotationRelations.source.number || 'quotation-source'}`,
+              label: `${quotationRelations.source.type === 'invoice' ? 'Invoice' : 'Quotation'} ${quotationRelations.source.number || quotationRelations.source.id || 'Linked source'}`,
+              subtitle: 'Open the source document',
+              onClick: () => {
+                if (quotationRelations.source?.id) {
+                  navigate(`/${quotationRelations.source.type === 'invoice' ? 'invoices' : 'quotations'}/${quotationRelations.source.id}`)
+                }
+              },
+              disabled: !quotationRelations.source?.id,
+            }),
+          ]
         : [],
-    },
-    {
+    }),
+    createLinkedDocumentsSection({
       key: 'generated',
       title: 'Generated / Child Documents',
       description: 'Documents created from this quotation.',
-      items: derivedInvoices.map((entry) => ({
+      items: derivedInvoices.map((entry) => createLinkedDocumentItem({
         key: `invoice-${entry.id}`,
         label: `Invoice ${entry.number || entry.id}`,
         subtitle: 'Open generated invoice',
         onClick: () => navigate(`/invoices/${entry.id}`),
       })),
-    },
-    {
-      key: 'project',
-      title: 'Project',
+    }),
+    createLinkedProjectSection({
+      project: linkedProject,
       description: 'Project connected to this quotation.',
-      items: linkedProject
-        ? [{
-            key: `project-${linkedProject.id}`,
-            label: linkedProject.name || linkedProject.id,
-            subtitle: 'Open linked project',
-            onClick: () => navigate(`/projects/${linkedProject.id}`),
-          }]
-        : [],
-    },
+      onOpenProject: () => {
+        if (linkedProject?.id) navigate(`/projects/${linkedProject.id}`)
+      },
+    }),
   ]
 
   const companyIdentity = useMemo(() => {
@@ -756,7 +749,8 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
           />
         </DocumentSection>
 
-      <DocumentSection title="Line Items">
+      <section className="space-y-2">
+        <div className="px-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Line Items</div>
         <Card className="rounded-[24px] border-border shadow-sm">
           <CardContent className="space-y-3 p-4">
             {(() => {
@@ -792,7 +786,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             })()}
           </CardContent>
         </Card>
-      </DocumentSection>
+      </section>
 
       <DocumentActionSheet
         open={showMobileActions}

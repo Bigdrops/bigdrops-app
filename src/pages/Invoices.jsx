@@ -17,9 +17,17 @@ import ConfirmActionDialog from "../components/ConfirmActionDialog"
 import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
 import AttachExistingDocumentSheet from "@/components/document/AttachExistingDocumentSheet"
 import ProjectLinkDialog from "@/components/document/ProjectLinkDialog"
+import {
+  createLinkedDocumentItem,
+  createLinkedDocumentsSection,
+  createLinkedProjectSection,
+} from "@/components/document/linkedDocumentSections"
 import { getDocumentActionState, getProjectActionState } from "@/domain/document/documentActionState"
 import { getInvoiceListActionDefs, getInvoiceListDeleteActionDef } from "@/domain/invoice/actions"
 import { fetchInvoiceChildDocuments, fetchProjectSummary, getInvoiceSourceDocument } from "@/domain/documentRelationships"
+import { formatDisplayDate } from "@/lib/formatters/date"
+import { formatNaira } from "@/lib/formatters/money"
+import { formatStatusLabel } from "@/lib/formatters/status"
 
 const PAGE_SIZE = 25
 
@@ -377,26 +385,28 @@ export default function Invoices() {
   })
   const activeInvoiceHasLinkedDocuments = invoiceDocumentState.hasLinkedDocuments
   const activeInvoiceLinkedSections = activeInvoice ? [
-    {
+    createLinkedDocumentsSection({
       key: "source",
       title: "Source",
       description: "Documents this invoice came from.",
-      items: activeInvoiceSource ? [{
-        key: `source-${activeInvoiceSource.id || activeInvoiceSource.number || "invoice-source"}`,
-        label: `${activeInvoiceSource.type === "quotation" ? "Quotation" : "Document"} ${activeInvoiceSource.number || activeInvoiceSource.id || "Linked source"}`,
-        subtitle: activeInvoiceSource.po_number ? `PO ${activeInvoiceSource.po_number}` : "Open the source document",
-        onClick: () => {
-          if (activeInvoiceSource.id) navigate(`/${activeInvoiceSource.type === "quotation" ? "quotations" : "invoices"}/${activeInvoiceSource.id}`)
-        },
-        disabled: !activeInvoiceSource.id,
-      }] : [],
-    },
-    {
+      items: activeInvoiceSource ? [
+        createLinkedDocumentItem({
+          key: `source-${activeInvoiceSource.id || activeInvoiceSource.number || "invoice-source"}`,
+          label: `${activeInvoiceSource.type === "quotation" ? "Quotation" : "Document"} ${activeInvoiceSource.number || activeInvoiceSource.id || "Linked source"}`,
+          subtitle: activeInvoiceSource.po_number ? `PO ${activeInvoiceSource.po_number}` : "Open the source document",
+          onClick: () => {
+            if (activeInvoiceSource.id) navigate(`/${activeInvoiceSource.type === "quotation" ? "quotations" : "invoices"}/${activeInvoiceSource.id}`)
+          },
+          disabled: !activeInvoiceSource.id,
+        }),
+      ] : [],
+    }),
+    createLinkedDocumentsSection({
       key: "generated",
       title: "Generated / Child Documents",
       description: "Documents created from this invoice.",
       items: [
-        {
+        createLinkedDocumentItem({
           key: "attach-csr",
           label: "Attach Existing CSR",
           subtitle: "Search and link a CSR to this invoice",
@@ -405,8 +415,8 @@ export default function Invoices() {
             setAttachKind("csr")
             setShowAttachSheet(true)
           },
-        },
-        {
+        }),
+        createLinkedDocumentItem({
           key: "attach-waybill",
           label: "Attach Existing Waybill",
           subtitle: "Search and link a waybill to this invoice",
@@ -415,32 +425,26 @@ export default function Invoices() {
             setAttachKind("waybill")
             setShowAttachSheet(true)
           },
-        },
-        ...(activeInvoiceRelatedDocs.csrs || []).map((csr) => ({
+        }),
+        ...(activeInvoiceRelatedDocs.csrs || []).map((csr) => createLinkedDocumentItem({
           key: `csr-${csr.id}`,
           label: `CSR ${csr.csr_number || csr.id}`,
           subtitle: "Open linked CSR",
           onClick: () => navigate(`/csr/${csr.id}`),
         })),
-        ...(activeInvoiceRelatedDocs.waybills || []).map((waybill) => ({
+        ...(activeInvoiceRelatedDocs.waybills || []).map((waybill) => createLinkedDocumentItem({
           key: `waybill-${waybill.id}`,
           label: `Waybill ${waybill.waybill_number || waybill.id}`,
           subtitle: "Open linked waybill",
           onClick: () => navigate(`/waybills/${waybill.id}`),
         })),
       ],
-    },
-    {
-      key: "project",
-      title: "Project",
+    }),
+    createLinkedProjectSection({
+      project: activeInvoiceProject,
       description: "Project connected to this invoice.",
-      items: activeInvoiceProject ? [{
-        key: `project-${activeInvoiceProject.id}`,
-        label: activeInvoiceProject.name || activeInvoiceProject.id,
-        subtitle: "Open linked project",
-        onClick: () => navigate(`/projects/${activeInvoiceProject.id}`),
-      }] : [],
-    },
+      onOpenProject: () => navigate(`/projects/${activeInvoiceProject.id}`),
+    }),
   ] : []
 
   const handleAttachExisting = async (item) => {
@@ -457,16 +461,16 @@ export default function Invoices() {
     setAttachKind(null)
   }
 
-  const formatInvoiceDate = (value) => {
-    if (!value) return ""
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return ""
-    return date.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
-  }
+  const formatInvoiceDate = (value) => formatDisplayDate(value, {
+    fallback: "",
+    invalidFallback: "",
+    locale: "en-GB",
+    dateOptions: {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    },
+  })
 
   const getInvoiceStatusStyle = (status) => {
     const normalized = (status || "draft").toLowerCase()
@@ -477,10 +481,7 @@ export default function Invoices() {
     return { backgroundColor: "#F1F5F9", color: "#64748B" }
   }
 
-  const formatStatusLabel = (status) => {
-    const value = (status || "draft").toLowerCase()
-    return value.charAt(0).toUpperCase() + value.slice(1)
-  }
+  const formatInvoiceStatusLabel = (status) => formatStatusLabel(status, { fallback: "draft", lowercase: true })
 
   const resetFilters = () => {
     setSearch("")
@@ -561,8 +562,8 @@ export default function Invoices() {
           <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
             {invoices.map((inv, index) => {
               const statusStyle = getInvoiceStatusStyle(inv.status)
-              const statusLabel = formatStatusLabel(inv.status)
-              const amount = `₦${Number(inv.total || 0).toLocaleString()}`
+              const statusLabel = formatInvoiceStatusLabel(inv.status)
+              const amount = formatNaira(inv.total)
               const meta = `${inv.invoice_number}${formatInvoiceDate(inv.issue_date) ? ` • ${formatInvoiceDate(inv.issue_date)}` : ""}`
 
               return (
@@ -626,7 +627,7 @@ export default function Invoices() {
         }}
         eyebrow={activeInvoice ? `Invoice ${activeInvoice.invoice_number}` : "Invoice"}
         title={activeInvoice?.client_name || "No client"}
-        amount={activeInvoice ? `₦${Number(activeInvoice.total || 0).toLocaleString()}` : null}
+        amount={activeInvoice ? formatNaira(activeInvoice.total) : null}
         actions={activeInvoice ? (() => {
           const actionDefs = getInvoiceListActionDefs({
             projectActionLabel: invoiceProjectState.label,

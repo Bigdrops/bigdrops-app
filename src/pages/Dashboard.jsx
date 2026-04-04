@@ -24,8 +24,10 @@ import { operationalEmptyStateClassName, operationalPanelClassName } from '@/com
 import Layout, { MobileChromeContext } from '../components/Layout'
 import { getCreateActions, getQuickTiles, loadStoredQuickTiles } from '../config/quickTiles'
 import { supabase } from '../supabase'
+import { formatNaira } from '@/lib/formatters/money'
+import { formatStatusLabel } from '@/lib/formatters/status'
 
-const naira = (amount) => `₦${Math.round(Number(amount || 0)).toLocaleString()}`
+const naira = (amount) => formatNaira(amount, { round: true })
 
 const typeStyle = {
   Invoice: { badge: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-600', icon: FileText, path: 'invoices' },
@@ -59,18 +61,20 @@ function getUserDisplayName(session) {
   return 'there'
 }
 
-function formatStatus(status) {
-  const raw = String(status || 'draft').replace(/_/g, ' ')
-  return raw.charAt(0).toUpperCase() + raw.slice(1)
-}
-
 function getStatusStyle(status) {
-  const label = formatStatus(status)
+  const label = formatStatusLabel(status, { fallback: 'draft' })
   if (label === 'Paid' || label === 'Approved' || label === 'Delivered') return { badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: BadgeCheck, label }
   if (label === 'Overdue') return { badge: 'bg-red-50 text-red-700 border-red-200', icon: AlertCircle, label }
   if (label === 'In progress') return { badge: 'bg-slate-50 text-slate-700 border-slate-200', icon: Clock, label: 'In Progress' }
   if (label === 'Sent' || label === 'Dispatched') return { badge: 'bg-blue-50 text-blue-700 border-blue-200', icon: BadgeCheck, label }
   return { badge: 'bg-slate-50 text-slate-700 border-slate-200', icon: Clock, label }
+}
+
+function shouldShowInvoiceInRecentDocs(invoice) {
+  const threadRole = String(invoice?.thread_role || '').toLowerCase()
+  const isAdvanceInvoice = invoice?.is_advance === true || String(invoice?.is_advance || '').toLowerCase() === 'true'
+
+  return threadRole !== 'advance' && !isAdvanceInvoice
 }
 
 function buildPriorityItems(projects, invoices, quotations) {
@@ -512,7 +516,13 @@ export default function Dashboard({ session }) {
       endOfWeek.setHours(23, 59, 59, 999)
 
       const [invoiceRes, quotationRes, csrRes, waybillRes, financialsRes, projectsRes] = await Promise.all([
-        supabase.from('invoices').select('id, invoice_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
+        supabase
+          .from('invoices')
+          .select('id, invoice_number, client_name, status, created_at, total, thread_role, is_advance')
+          .or('thread_role.is.null,thread_role.neq.advance')
+          .or('is_advance.is.null,is_advance.eq.false')
+          .order('created_at', { ascending: false })
+          .limit(8),
         supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
         supabase.from('csrs').select('id, csr_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
         supabase.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
@@ -520,7 +530,7 @@ export default function Dashboard({ session }) {
         supabase.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
       ])
 
-      const invoices = invoiceRes.data || []
+      const invoices = (invoiceRes.data || []).filter(shouldShowInvoiceInRecentDocs)
       const quotations = quotationRes.data || []
       const csrs = csrRes.data || []
       const waybills = waybillRes.data || []

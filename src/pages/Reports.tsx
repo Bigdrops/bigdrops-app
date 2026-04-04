@@ -27,6 +27,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { formatDisplayDate } from '@/lib/formatters/date'
+import { formatNaira } from '@/lib/formatters/money'
 
 type ReportTab = 'receivables' | 'collections' | 'projects' | 'tax'
 type DatePreset = 'this_month' | 'last_month' | 'this_quarter' | 'custom'
@@ -114,14 +116,14 @@ const dateChips: Array<{ label: string; value: DatePreset }> = [
   { label: 'Custom', value: 'custom' },
 ]
 
-const formatMoney = (value: number | null | undefined) => `₦${Number(value || 0).toLocaleString()}`
+const formatMoney = (value: number | null | undefined) => formatNaira(value)
 
-const formatDate = (value: string | null | undefined) => {
-  if (!value) return '—'
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return value
-  return parsed.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
-}
+const formatDate = (value: string | null | undefined) =>
+  formatDisplayDate(value, {
+    fallback: '—',
+    locale: 'en-NG',
+    dateOptions: { day: 'numeric', month: 'short', year: 'numeric' },
+  })
 
 const startOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1)
 const endOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0)

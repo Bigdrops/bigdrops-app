@@ -21,6 +21,13 @@ import {
   listPendingOrFailedCsrCreateQueueItems,
   processCsrCreateQueueItem,
 } from "@/lib/native/csrSync"
+import {
+  createLinkedDocumentItem,
+  createLinkedDocumentsSection,
+  createLinkedProjectSection,
+} from "@/components/document/linkedDocumentSections"
+import { formatDisplayDate } from "@/lib/formatters/date"
+import { formatStatusLabel } from "@/lib/formatters/status"
 
 function normalizeStatus(status) {
   return (status || "").trim().toLowerCase()
@@ -117,21 +124,17 @@ export default function CSR() {
     return normalized
   }
 
-  const formatStatusLabel = (status) => {
-    const key = getCsrStatusKey(status)
-    return key.charAt(0).toUpperCase() + key.slice(1)
-  }
+  const formatCsrStatusLabel = (status) => formatStatusLabel(getCsrStatusKey(status), { fallback: "draft" })
 
-  const formatCardDate = (value) => {
-    if (!value) return "-"
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return value
-    return date.toLocaleDateString("en-GB", {
+  const formatCardDate = (value) => formatDisplayDate(value, {
+    fallback: "-",
+    locale: "en-GB",
+    dateOptions: {
       day: "2-digit",
       month: "short",
       year: "numeric",
-    })
-  }
+    },
+  })
 
   const clientOptions = useMemo(() => {
     return Array.from(new Set(csrs.map((csr) => csr.client_name).filter(Boolean))).sort((a, b) => a.localeCompare(b))
@@ -144,12 +147,12 @@ export default function CSR() {
   })
   const activeCsrHasLinkedDocuments = csrDocumentState.hasLinkedDocuments
   const activeCsrLinkedSections = activeCsr ? [
-    {
+    createLinkedDocumentsSection({
       key: 'source',
       title: 'Source',
       description: 'Documents this CSR is linked to.',
       items: [
-        {
+        createLinkedDocumentItem({
           key: 'attach-invoice',
           label: 'Attach to Invoice',
           subtitle: 'Search and link an invoice',
@@ -157,30 +160,22 @@ export default function CSR() {
             setShowLinkedDocuments(false)
             setShowAttachInvoice(true)
           },
-        },
-        ...(activeCsrInvoice
-          ? [{
+        }),
+        activeCsrInvoice
+          ? createLinkedDocumentItem({
               key: `invoice-${activeCsrInvoice.id}`,
               label: `Invoice ${activeCsrInvoice.invoice_number || activeCsrInvoice.id}`,
               subtitle: 'Open linked invoice',
               onClick: () => navigate(`/invoices/${activeCsrInvoice.id}`),
-            }]
-          : []),
+            })
+          : null,
       ],
-    },
-    {
-      key: 'project',
-      title: 'Project',
+    }),
+    createLinkedProjectSection({
+      project: activeCsrProject,
       description: 'Project connected to this CSR.',
-      items: activeCsrProject
-        ? [{
-            key: `project-${activeCsrProject.id}`,
-            label: activeCsrProject.name || activeCsrProject.id,
-            subtitle: 'Open linked project',
-            onClick: () => navigate(`/projects/${activeCsrProject.id}`),
-          }]
-        : [],
-    },
+      onOpenProject: () => navigate(`/projects/${activeCsrProject.id}`),
+    }),
   ] : []
 
   const attachInvoice = async (invoice) => {
@@ -503,7 +498,7 @@ export default function CSR() {
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusClasses}`}>
-                    {formatStatusLabel(csr.status)}
+                    {formatCsrStatusLabel(csr.status)}
                   </span>
                   {secondaryLabel ? (
                     <span className="inline-flex h-7 items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 text-xs font-semibold text-slate-500">

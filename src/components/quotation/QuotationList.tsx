@@ -41,12 +41,9 @@ import {
   processQuotationCreateQueueItem,
   type QuotationCreateQueueItem,
 } from '@/lib/native/quotationSync'
+import { formatNaira } from '@/lib/formatters/money'
 
-function formatMoney(value: number | string | null | undefined) {
-  const parsed = Number(value || 0)
-  const safe = Number.isFinite(parsed) ? parsed : 0
-  return `₦${safe.toLocaleString('en-NG')}`
-}
+const formatMoney = (value: number | string | null | undefined) => formatNaira(value)
 
 export default function QuotationList() {
   const navigate = useNavigate()

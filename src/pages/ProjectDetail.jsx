@@ -24,6 +24,9 @@ import ProjectDocumentCard from '@/components/project/ProjectDocumentCard'
 import ProjectDocumentSheet from '@/components/project/ProjectDocumentSheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
+import { formatDisplayDate } from '@/lib/formatters/date'
+import { formatNaira } from '@/lib/formatters/money'
+import { formatStatusLabel } from '@/lib/formatters/status'
 import { supabase } from '../supabase'
 
 const PROJECT_STATUS_CONFIG = {
@@ -73,26 +76,23 @@ const inputClassName =
 
 const cardClassName = 'rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-100'
 
-function formatCurrency(value) {
-  return `₦${Number(value || 0).toLocaleString()}`
-}
+const formatCurrency = (value) => formatNaira(value)
 
-function formatDate(value) {
-  if (!value) return ''
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return ''
-
-  return date.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+const formatDate = (value) =>
+  formatDisplayDate(value, {
+    fallback: '',
+    invalidFallback: '',
+    locale: 'en-GB',
+    dateOptions: {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    },
   })
-}
 
 function getPaymentStatusConfig(status) {
   return PAYMENT_STATUS_CONFIG[status] || {
-    label: status ? status.replace(/_/g, ' ') : 'Open',
+    label: status ? formatStatusLabel(status) : 'Open',
     className: 'bg-slate-500 text-white',
   }
 }
