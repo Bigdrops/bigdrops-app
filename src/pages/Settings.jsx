@@ -1087,39 +1087,57 @@ function DocumentsSection({ onToast }) {
   const { settings, loading } = useSettings()
   const [activePanel, setActivePanel] = useState(null)
   const [fillableSettings, setFillableSettings] = useState(() => normalizeDocumentFillableSettings(null))
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const fillableSettingsRef = useRef(fillableSettings)
 
   useEffect(() => {
     if (!loading) {
-      setFillableSettings(normalizeDocumentFillableSettings(settings?.document_fillable_settings))
+      const normalized = normalizeDocumentFillableSettings(settings?.document_fillable_settings)
+      setFillableSettings(normalized)
+      fillableSettingsRef.current = normalized
     }
   }, [loading, settings])
 
-  const updateEntry = (key, enabled) => {
-    setFillableSettings((current) => ({
-      ...current,
+  useEffect(() => {
+    fillableSettingsRef.current = fillableSettings
+  }, [fillableSettings])
+
+  const updateEntry = async (key, enabled) => {
+    const previousSettings = fillableSettingsRef.current
+    const nextSettings = {
+      ...previousSettings,
       [key]: {
-        ...current[key],
+        ...previousSettings[key],
         enabled,
       },
-    }))
-  }
+    }
 
-  const save = async () => {
-    setSaving(true)
+    setFillableSettings(nextSettings)
+    fillableSettingsRef.current = nextSettings
+
     try {
       await saveSettings({
-        document_fillable_settings: serializeDocumentFillableSettings(fillableSettings),
+        document_fillable_settings: serializeDocumentFillableSettings(nextSettings),
       })
-      setSaved(true)
-      onToast('Document fillable settings saved')
-      setTimeout(() => setSaved(false), 2500)
     } catch (error) {
+      setFillableSettings(previousSettings)
+      fillableSettingsRef.current = previousSettings
       onToast('Save failed: ' + error.message)
     }
-    setSaving(false)
   }
+
+  const toggleEntry = (key) => {
+    const currentValue = fillableSettingsRef.current?.[key]?.enabled
+    updateEntry(key, !currentValue)
+  }
+
+  const rowKeyDown = (event, key) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      toggleEntry(key)
+    }
+  }
+
+  const rowClassName = 'flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-border bg-card px-4 py-4 shadow-sm transition hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40'
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-slate-300" /></div>
 
@@ -1177,7 +1195,16 @@ function DocumentsSection({ onToast }) {
 
       <div className="space-y-3">
         {rows.map((row) => (
-          <div key={row.key} className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card px-4 py-4 shadow-sm">
+          <div
+            key={row.key}
+            role="button"
+            tabIndex={0}
+            aria-label={`${row.label} fillable writing`}
+            aria-pressed={fillableSettings[row.key].enabled}
+            onClick={() => toggleEntry(row.key)}
+            onKeyDown={(event) => rowKeyDown(event, row.key)}
+            className={rowClassName}
+          >
             <div className="min-w-0">
               <div className="text-sm font-bold text-foreground">{row.label}</div>
               <div className="mt-1 text-xs text-muted-foreground">{row.description}</div>
@@ -1185,12 +1212,12 @@ function DocumentsSection({ onToast }) {
             <Switch
               checked={fillableSettings[row.key].enabled}
               onCheckedChange={(next) => updateEntry(row.key, next)}
+              onClick={(event) => event.stopPropagation()}
+              className="border border-slate-300 bg-slate-200 shadow-sm data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 [&>span]:bg-white"
             />
           </div>
         ))}
       </div>
-
-      <SaveBtn saving={saving} saved={saved} onClick={save} />
     </div>
   )
 }
