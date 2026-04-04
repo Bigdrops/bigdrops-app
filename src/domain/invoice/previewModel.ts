@@ -1,3 +1,5 @@
+import { getAdvanceSummaryValues } from './advanceSummary'
+
 export type PreviewBankAccount = {
   id: string
   bankName: string
@@ -30,6 +32,9 @@ export type PreviewNoteSection =
   | { title: string; kind: 'links'; links: { label: string; url: string }[] }
 
 type InvoiceLike = {
+  thread_role?: string | null
+  is_advance?: boolean | null
+  total_contract_value?: number | string | null
   client_name?: string | null
   payment_terms?: string | null
   invoice_title?: string | null
@@ -224,25 +229,40 @@ export function buildInvoicePreviewModel({
     }
   })
 
-  const previewTotals: PreviewTotalRow[] = [
-    { label: 'Subtotal', value: formatMoney(Number(invoice.subtotal || 0)) },
-    ...(Number(invoice.vat || 0) > 0 ? [{ label: 'VAT', value: formatMoney(Number(invoice.vat || 0)) }] : []),
-    ...(Number(invoice.workmanship || 0) > 0 ? [{ label: 'Workmanship', value: formatMoney(Number(invoice.workmanship || 0)) }] : []),
-    ...(Number(invoice.transportation || 0) > 0 ? [{ label: 'Transportation', value: formatMoney(Number(invoice.transportation || 0)) }] : []),
-    ...(Number(invoice.shipping || 0) > 0 ? [{ label: 'Shipping', value: formatMoney(Number(invoice.shipping || 0)) }] : []),
-    ...(Number(invoice.discount || 0) > 0 ? [{ label: 'Discount', value: formatMoney(Number(invoice.discount || 0)), valueClassName: 'text-red-600' }] : []),
-    ...(Number(invoice.wht || 0) > 0 ? [{ label: 'WHT', value: formatMoney(Number(invoice.wht || 0)) }] : []),
-    { label: 'Total', value: formatMoney(invoiceTotal), emphasis: true, valueClassName: 'text-slate-950' },
-    { label: 'Cash Received', value: formatMoney(cashReceived) },
-    ...(pdfOutput?.showBalanceDue === false
-      ? []
-      : [{
-          label: 'Balance Due',
-          value: formatMoney(balanceDue),
-          emphasis: true,
-          valueClassName: balanceDue > 0 ? 'text-red-200' : 'text-emerald-200',
-        }]),
-  ]
+  const advanceSummary = getAdvanceSummaryValues(invoice)
+
+  const previewTotals: PreviewTotalRow[] = advanceSummary
+    ? [
+        { label: 'Contract Value', value: formatMoney(advanceSummary.contractValue) },
+        { label: 'This Advance', value: formatMoney(advanceSummary.thisAdvance), emphasis: true, valueClassName: 'text-slate-950' },
+        ...(pdfOutput?.showBalanceDue === false
+          ? []
+          : [{
+              label: 'Balance Remaining',
+              value: formatMoney(advanceSummary.balanceRemaining),
+              emphasis: true,
+              valueClassName: advanceSummary.balanceRemaining > 0 ? 'text-red-200' : 'text-emerald-200',
+            }]),
+      ]
+    : [
+        { label: 'Subtotal', value: formatMoney(Number(invoice.subtotal || 0)) },
+        ...(Number(invoice.vat || 0) > 0 ? [{ label: 'VAT', value: formatMoney(Number(invoice.vat || 0)) }] : []),
+        ...(Number(invoice.workmanship || 0) > 0 ? [{ label: 'Workmanship', value: formatMoney(Number(invoice.workmanship || 0)) }] : []),
+        ...(Number(invoice.transportation || 0) > 0 ? [{ label: 'Transportation', value: formatMoney(Number(invoice.transportation || 0)) }] : []),
+        ...(Number(invoice.shipping || 0) > 0 ? [{ label: 'Shipping', value: formatMoney(Number(invoice.shipping || 0)) }] : []),
+        ...(Number(invoice.discount || 0) > 0 ? [{ label: 'Discount', value: formatMoney(Number(invoice.discount || 0)), valueClassName: 'text-red-600' }] : []),
+        ...(Number(invoice.wht || 0) > 0 ? [{ label: 'WHT', value: formatMoney(Number(invoice.wht || 0)) }] : []),
+        { label: 'Total', value: formatMoney(invoiceTotal), emphasis: true, valueClassName: 'text-slate-950' },
+        { label: 'Cash Received', value: formatMoney(cashReceived) },
+        ...(pdfOutput?.showBalanceDue === false
+          ? []
+          : [{
+              label: 'Balance Due',
+              value: formatMoney(balanceDue),
+              emphasis: true,
+              valueClassName: balanceDue > 0 ? 'text-red-200' : 'text-emerald-200',
+            }]),
+      ]
 
   const previewNotesSections: PreviewNoteSection[] = [
     invoice.notes

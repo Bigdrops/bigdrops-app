@@ -471,6 +471,10 @@ export default function ViewInvoice() {
         ...baseComputedResult,
         grandTotal: advanceTotal,
         totalPayable: advanceTotal,
+        thread_role: advanceInvoice.thread_role,
+        is_advance: advanceInvoice.is_advance,
+        total_contract_value: advanceInvoice.total_contract_value,
+        total: advanceInvoice.total,
         cashReceived: 0,
         settledTotal: 0,
         balanceDue: advanceTotal,
@@ -750,6 +754,10 @@ export default function ViewInvoice() {
           ? {
               grandTotal: invoiceTotal,
               totalPayable: invoiceTotal,
+              thread_role: invoice.thread_role,
+              is_advance: invoice.is_advance,
+              total_contract_value: invoice.total_contract_value,
+              total: invoice.total,
             }
           : {}),
         cashReceived,
