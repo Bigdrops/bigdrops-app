@@ -13,7 +13,6 @@ import {
   DocumentLivePreviewCard,
   DocumentPdfSheet,
   DocumentSection,
-  DocumentSummaryDisclosure,
   DocumentStatusStrip,
   DocumentTemplatePicker,
   DocumentTopBar,
@@ -694,20 +693,6 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         statusClassName={quotationStatusTone(quotation.status)}
         onBack={() => navigate('/quotations')}
         onMore={() => setShowMobileActions(true)}
-      />
-
-      <DocumentSummaryDisclosure
-        eyebrow="Total Quote"
-        value={formatMoney(shellQuotationTotal)}
-        helper={quotation.quotation_title || 'Quotation prepared for client review.'}
-        stats={[
-          { label: 'Valid Until', value: quotation.valid_until || 'Open' },
-          { label: 'Issue Date', value: quotation.issue_date || 'Not set' },
-          { label: 'Client', value: quotation.client_name || 'Unassigned' },
-        ]}
-        compactLabel="Quotation Summary"
-        openLabel="Open summary"
-        closeLabel="Collapse summary"
       />
 
       <DocumentActionGrid

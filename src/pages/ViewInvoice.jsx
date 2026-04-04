@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useState, useEffect } from 'react'
 import { useLocation, useParams, useNavigate } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { supabase } from '../supabase'
@@ -13,7 +13,6 @@ import {
   DocumentLivePreviewCard,
   DocumentPdfSheet,
   DocumentSection,
-  DocumentSummaryDisclosure,
   DocumentStatusStrip,
   DocumentTemplatePicker,
   DocumentTopBar,
@@ -88,7 +87,10 @@ export default function ViewInvoice() {
   const [showAttachSheet, setShowAttachSheet] = useState(false)
   const [showAdvanceDialog, setShowAdvanceDialog] = useState(false)
   const [advancePercentage, setAdvancePercentage] = useState('50')
+  const [advanceInvoice, setAdvanceInvoice] = useState(null)
   const [advanceSaving, setAdvanceSaving] = useState(false)
+  const [advancePdfGenerating, setAdvancePdfGenerating] = useState(false)
+  const [showAdvanceDeleteConfirm, setShowAdvanceDeleteConfirm] = useState(false)
 
   const {
     invoice,
@@ -110,6 +112,34 @@ export default function ViewInvoice() {
   useEffect(() => {
     setPdfOutput(getInvoicePdfOutput(invoice?.custom_fields))
   }, [invoice?.custom_fields])
+
+  const loadAdvanceInvoice = useCallback(async () => {
+    if (!invoice?.id || invoice.thread_id) {
+      setAdvanceInvoice(null)
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('invoices')
+      .select('*')
+      .eq('thread_id', invoice.id)
+      .eq('thread_role', 'advance')
+      .is('archived_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (error) {
+      console.warn('Advance invoice fetch failed:', error)
+      setAdvanceInvoice(null)
+      return
+    }
+
+    setAdvanceInvoice(data?.[0] || null)
+  }, [invoice?.id, invoice?.thread_id])
+
+  useEffect(() => {
+    void loadAdvanceInvoice()
+  }, [loadAdvanceInvoice])
 
   useEffect(() => {
     if (!invoice || !location.state?.openAdvanceSheet || invoice.thread_id) return
@@ -307,6 +337,7 @@ export default function ViewInvoice() {
 
       setShowAdvanceDialog(false)
       setAdvancePercentage('50')
+      await loadAdvanceInvoice()
       toast({
         title: 'Advance invoice created',
         description: `${createdInvoice.invoice_number || 'Advance invoice'} was created from this invoice.`,
@@ -315,6 +346,127 @@ export default function ViewInvoice() {
       toast({
         title: 'Advance creation failed',
         description: error?.message || 'Could not create advance invoice.',
+        variant: 'destructive',
+      })
+    } finally {
+      setAdvanceSaving(false)
+    }
+  }
+
+  const handleDownloadAdvancePDF = async () => {
+    if (!advanceInvoice?.id || advancePdfGenerating) return
+    setAdvancePdfGenerating(true)
+
+    try {
+      const { data: advanceItems, error: advanceItemsError } = await supabase
+        .from('invoice_items')
+        .select('*')
+        .eq('invoice_id', advanceInvoice.id)
+        .order('sort_order')
+
+      if (advanceItemsError) throw advanceItemsError
+
+      const loadedAdvanceItems = (advanceItems || []).map((item) => ({
+        ...item,
+        custom_data:
+          typeof item.custom_data === 'string'
+            ? JSON.parse(item.custom_data || '{}')
+            : item.custom_data || {},
+        install_rate_override: item.install_rate_override === true,
+        install_rate: item.install_rate === undefined ? null : item.install_rate,
+        vat_rate: item.vat_rate === undefined ? null : item.vat_rate,
+        discount_rate: item.discount_rate === undefined ? null : item.discount_rate,
+        image_url: item.image_url || null,
+      }))
+
+      const advanceTotal = Number(advanceInvoice.total || 0)
+      const baseComputedResult = computeDocument({
+        items: loadedAdvanceItems,
+        document: advanceInvoice,
+        cf: parseDocumentCustomFields(advanceInvoice.custom_fields || {}),
+      })
+
+      const computedResult = {
+        ...baseComputedResult,
+        grandTotal: advanceTotal,
+        totalPayable: advanceTotal,
+        cashReceived: 0,
+        settledTotal: 0,
+        balanceDue: advanceTotal,
+      }
+
+      const advanceCustomFields = parseCustomFields(advanceInvoice.custom_fields)
+      const advanceSignatory =
+        signatories.find((signatory) => signatory.id === getInvoiceSignatoryId(advanceCustomFields)) || null
+
+      const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('../components/InvoicePDF'),
+      ])
+
+      const blob = await pdf(
+        <InvoicePDF
+          document={advanceInvoice}
+          items={loadedAdvanceItems}
+          client={client}
+          settings={settings}
+          computedResult={computedResult}
+          template={pdfTemplate}
+          designPreset={pdfDesignPreset}
+          bankAccounts={bankAccounts}
+          pdfOutput={getInvoicePdfOutput(advanceInvoice.custom_fields)}
+          signatory={advanceSignatory}
+        />
+      ).toBlob()
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${advanceInvoice.invoice_number || 'advance-invoice'}.pdf`
+      document.body.appendChild(a)
+      a.click()
+
+      setTimeout(() => {
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }, 100)
+    } catch (error) {
+      toast({
+        title: 'Advance PDF failed',
+        description: error?.message || 'Could not download advance PDF.',
+        variant: 'destructive',
+      })
+    } finally {
+      setAdvancePdfGenerating(false)
+    }
+  }
+
+  const confirmDeleteAdvanceInvoice = async () => {
+    if (!advanceInvoice?.id) return
+    setShowAdvanceDeleteConfirm(false)
+    setAdvanceSaving(true)
+
+    try {
+      const { error: deleteItemsError } = await supabase
+        .from('invoice_items')
+        .delete()
+        .eq('invoice_id', advanceInvoice.id)
+      if (deleteItemsError) throw deleteItemsError
+
+      const { error: deleteInvoiceError } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', advanceInvoice.id)
+      if (deleteInvoiceError) throw deleteInvoiceError
+
+      setAdvanceInvoice(null)
+      setShowAdvanceDialog(false)
+      setAdvancePercentage('50')
+      toast({ title: 'Advance removed', description: 'The advance invoice was deleted.' })
+    } catch (error) {
+      toast({
+        title: 'Advance removal failed',
+        description: error?.message || 'Could not remove advance invoice.',
         variant: 'destructive',
       })
     } finally {
@@ -701,32 +853,6 @@ export default function ViewInvoice() {
           onMore={() => setShowMore(true)}
         />
 
-        <DocumentSummaryDisclosure
-          eyebrow="Total Payable"
-          value={formatMoney(invoiceTotal)}
-          helper={invoice.amount_in_words || invoice.invoice_title || 'Invoice ready for payment tracking.'}
-          stats={[
-            {
-              label: 'Balance Due',
-              value: formatMoney(balanceDue),
-              className: balanceDue > 0 ? 'text-red-400' : 'text-emerald-300',
-            },
-            {
-              label: 'Received',
-              value: formatMoney(cashReceived),
-              className: 'text-emerald-300',
-            },
-            {
-              label: 'Due Date',
-              value: invoice.due_date || 'Open',
-              className: 'text-white',
-            },
-          ]}
-          compactLabel="Invoice Summary"
-          openLabel="Open summary"
-          closeLabel="Collapse summary"
-        />
-
         <DocumentActionGrid
           actions={[
             { key: 'pdf', label: 'PDF', onClick: () => setShowPdfSheet(true), variant: 'dark' },
@@ -738,7 +864,19 @@ export default function ViewInvoice() {
               disabled: !canManagePayment,
             },
             { key: 'edit', label: 'Edit', onClick: () => navigate('/invoices/edit/' + id), variant: 'blue' },
-            { key: 'more', label: 'More', onClick: () => setShowMore(true), variant: 'outline' },
+            isStandaloneInvoice
+              ? {
+                  key: 'advance',
+                  label: advanceInvoice ? 'View Advance' : 'Generate Advance Invoice',
+                  onClick: () => setShowAdvanceDialog(true),
+                  variant: 'outline',
+                }
+              : {
+                  key: 'more',
+                  label: 'More',
+                  onClick: () => setShowMore(true),
+                  variant: 'outline',
+                },
           ]}
         />
 
@@ -985,61 +1123,119 @@ export default function ViewInvoice() {
         >
           <DialogContent className="max-w-[calc(100%-1rem)] rounded-2xl bg-card sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Create Advance Invoice</DialogTitle>
+              <DialogTitle>{advanceInvoice ? 'Advance Invoice' : 'Create Advance Invoice'}</DialogTitle>
               <DialogDescription>
-                Generate an advance draft directly from {invoice.invoice_number || 'this invoice'}.
+                {advanceInvoice
+                  ? 'View, edit, download, or remove the advance invoice from this parent invoice.'
+                  : `Generate an advance draft directly from ${invoice.invoice_number || 'this invoice'}.`}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-                  Source Invoice
-                </p>
-                <p className="mt-1 text-sm font-bold text-slate-950">
-                  {invoice.invoice_number || 'Invoice'} · {formatMoney(invoiceTotal)}
-                </p>
-              </div>
+            {advanceInvoice ? (
+              <>
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-sm font-bold text-slate-950">
+                      {advanceInvoice.invoice_number || 'Advance Invoice'}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {formatMoney(advanceInvoice.total || 0)}
+                    </p>
+                  </div>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="advance-percentage">Advance Percentage</Label>
-                <Input
-                  id="advance-percentage"
-                  type="number"
-                  min="1"
-                  max="100"
-                  step="1"
-                  inputMode="decimal"
-                  value={advancePercentage}
-                  onChange={(event) => setAdvancePercentage(event.target.value)}
-                  disabled={advanceSaving}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Advance total: {formatMoney(invoiceTotal * (Number(advancePercentage || 0) / 100))}
-                </p>
-              </div>
-            </div>
+                <DialogFooter className="gap-2 sm:justify-between">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowAdvanceDeleteConfirm(true)}
+                    disabled={advanceSaving || advancePdfGenerating}
+                    className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  >
+                    Remove
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => void handleDownloadAdvancePDF()}
+                      disabled={advanceSaving || advancePdfGenerating}
+                    >
+                      {advancePdfGenerating ? 'Preparing...' : 'Download PDF'}
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setShowAdvanceDialog(false)
+                        navigate(`/invoices/edit/${advanceInvoice.id}`)
+                      }}
+                      disabled={advanceSaving || advancePdfGenerating}
+                      className="bg-slate-950 text-white hover:bg-slate-800"
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                </DialogFooter>
+              </>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-sm font-bold text-slate-950">
+                      {invoice.invoice_number || 'Invoice'} · {formatMoney(invoiceTotal)}
+                    </p>
+                  </div>
 
-            <DialogFooter className="gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowAdvanceDialog(false)}
-                disabled={advanceSaving}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={() => void handleCreateAdvanceInvoice()}
-                disabled={advanceSaving}
-                className="bg-slate-950 text-white hover:bg-slate-800"
-              >
-                {advanceSaving ? 'Creating...' : 'Create Advance'}
-              </Button>
-            </DialogFooter>
+                  <div className="space-y-2">
+                    <Label htmlFor="advance-percentage">Advance Percentage</Label>
+                    <Input
+                      id="advance-percentage"
+                      type="number"
+                      min="1"
+                      max="100"
+                      step="1"
+                      inputMode="decimal"
+                      value={advancePercentage}
+                      onChange={(event) => setAdvancePercentage(event.target.value)}
+                      disabled={advanceSaving}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Advance total: {formatMoney(invoiceTotal * (Number(advancePercentage || 0) / 100))}
+                    </p>
+                  </div>
+                </div>
+
+                <DialogFooter className="gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowAdvanceDialog(false)}
+                    disabled={advanceSaving}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => void handleCreateAdvanceInvoice()}
+                    disabled={advanceSaving}
+                    className="bg-slate-950 text-white hover:bg-slate-800"
+                  >
+                    {advanceSaving ? 'Creating...' : 'Create Advance'}
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
           </DialogContent>
         </Dialog>
+
+        <ConfirmActionDialog
+          open={showAdvanceDeleteConfirm}
+          onOpenChange={setShowAdvanceDeleteConfirm}
+          title="Remove advance invoice?"
+          description="This deletes the advance invoice generated from this invoice."
+          confirmLabel="Remove Advance"
+          onConfirm={() => void confirmDeleteAdvanceInvoice()}
+        />
 
         <LinkedDocumentsSheet
           open={showLinkedDocuments}

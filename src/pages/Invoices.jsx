@@ -60,6 +60,7 @@ export default function Invoices() {
       .from("invoices")
       .select("*", { count: "exact" })
       .is("archived_at", null)
+      .or("thread_role.is.null,thread_role.neq.advance")
 
     const searchTerm = search.trim()
     if (searchTerm) {
@@ -143,6 +144,7 @@ export default function Invoices() {
 
         const filteredRows = cachedRows
           .filter((row) => !row.archived_at)
+          .filter((row) => String(row.thread_role || "").toLowerCase() !== "advance")
           .filter((row) => {
             if (!searchTerm) return true
             const invoiceNumber = String(row.invoice_number || "").toLowerCase()
@@ -445,13 +447,6 @@ export default function Invoices() {
     setAttachKind(null)
   }
 
-  const roleColor = (role) => {
-    if (role === "advance")  return "bg-blue-100 text-blue-700"
-    if (role === "final")    return "bg-emerald-100 text-emerald-700"
-    if (role === "progress") return "bg-amber-100 text-amber-700"
-    return ""
-  }
-
   const formatInvoiceDate = (value) => {
     if (!value) return ""
     const date = new Date(value)
@@ -581,11 +576,6 @@ export default function Invoices() {
                     >
                       {statusLabel}
                     </span>
-                    {inv.thread_role ? (
-                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase ${roleColor(inv.thread_role)}`}>
-                        {inv.thread_role}
-                      </span>
-                    ) : null}
                   </div>
                   <button
                     type="button"
