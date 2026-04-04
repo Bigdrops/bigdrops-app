@@ -3,180 +3,41 @@ import {
   BriefcaseBusiness,
   ChevronDown,
   ChevronRight,
-  ChevronUp,
   FileInput,
   FolderPlus,
   Hash,
   Layers3,
   Link2,
   MoreHorizontal,
-  NotebookText,
   Plus,
-  Save,
   Settings2,
-  Signature,
   X,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import ClientSelector from '@/components/ClientSelector'
 import ColumnManager from '@/components/ColumnManager'
-import RichTextEditor from '@/components/RichTextEditor'
-import SignatoryPicker from '@/components/SignatoryPicker'
 import ActionsSheet from './ActionsSheet'
 import MobileItemCard from './MobileItemCard'
 import MobileGroupCard from './MobileGroupCard'
 import JsonItemsImportSheet from '@/components/items/JsonItemsImportSheet'
-
-const pageCardCls =
-  'rounded-[20px] border border-[#e2e8f0] bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]'
-const fieldCls =
-  'h-11 rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 text-[14px] text-[#0f172a] shadow-none transition focus:border-[#94a3b8] focus:bg-white focus:ring-0 focus-visible:ring-0'
-const labelCls = 'mb-1 block text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]'
-
-function getSectionDotClass(color) {
-  return {
-    '#0f172a': 'bg-slate-900',
-    '#7c3aed': 'bg-violet-600',
-    '#475569': 'bg-slate-600',
-    '#059669': 'bg-emerald-600',
-    '#d97706': 'bg-amber-600',
-    '#2563eb': 'bg-blue-600',
-  }[color] || 'bg-slate-400'
-}
-
-function getIconToneClass(iconTone) {
-  const key = `${iconTone?.bg}|${iconTone?.fg}`
-  return {
-    '#f5f3ff|#7c3aed': 'bg-violet-50 text-violet-600',
-    '#eff6ff|#2563eb': 'bg-blue-50 text-blue-600',
-    '#f0fdf4|#059669': 'bg-emerald-50 text-emerald-600',
-  }[key] || 'bg-slate-100 text-slate-600'
-}
-
-function formatCurrency(value) {
-  return `NGN ${Number(value || 0).toLocaleString()}`
-}
-
-function SectionLabel({ color, children, trailing }) {
-  return (
-      <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
-      <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#64748b]">
-        <span className={`h-2 w-2 rounded-full ${getSectionDotClass(color)}`} />
-        <span>{children}</span>
-      </div>
-      {trailing}
-    </div>
-  )
-}
-
-function ChipButton({ active = false, className = '', children, ...props }) {
-  return (
-    <button
-      type="button"
-      className={`inline-flex h-8 items-center gap-2 rounded-full border-[1.5px] px-[13px] text-[12px] font-bold transition ${
-        active
-          ? 'border-[#0f172a] bg-[#0f172a] text-white'
-          : 'border-[#e2e8f0] bg-white text-[#334155]'
-      } ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  )
-}
-
-function ToolbarButton({ active = false, className = '', children, ...props }) {
-  return (
-    <button
-      type="button"
-      className={`inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] px-3 text-[13px] font-bold transition ${
-        active
-          ? 'border-[#0f172a] bg-[#0f172a] text-white'
-          : 'border-[#e2e8f0] bg-white text-[#334155]'
-      } ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  )
-}
-
-function SegmentedControl({ value, onChange, options }) {
-  return (
-    <div className="flex gap-[3px] rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] p-[3px]">
-      {options.map((option) => {
-        const active = value === option.value
-        return (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => onChange(option.value)}
-            className={`h-9 flex-1 rounded-[9px] text-[12px] font-extrabold transition ${
-              active ? 'bg-[#0f172a] text-white' : 'text-[#64748b]'
-            }`}
-          >
-            {option.label}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-function CompactSelectField({ value, onChange, options, className = '' }) {
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className={`${fieldCls} min-w-0 justify-between px-3 ${className}`}>
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  )
-}
-
-function CollapseCard({ icon: Icon, iconTone, title, subtitle, open, onToggle, children, sectionColor }) {
-  return (
-    <div className={pageCardCls}>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left"
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className={`flex h-[38px] w-[38px] items-center justify-center rounded-[11px] ${getIconToneClass(iconTone)}`}
-          >
-            <Icon className="h-4.5 w-4.5" />
-          </div>
-          <div>
-            <div className="text-[14px] font-bold text-[#0f172a]">{title}</div>
-            <div className="text-[11px] text-[#94a3b8]">{subtitle}</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {sectionColor ? <span className={`h-2 w-2 rounded-full ${getSectionDotClass(sectionColor)}`} /> : null}
-          {open ? <ChevronUp className="h-4 w-4 text-[#94a3b8]" /> : <ChevronRight className="h-4 w-4 text-[#94a3b8]" />}
-        </div>
-      </button>
-      {open ? <div className="border-t border-[#e2e8f0] px-4 pb-4 pt-4">{children}</div> : null}
-    </div>
-  )
-}
-
-function asLinkAttachment(entry) {
-  if (!entry || typeof entry !== 'object') return { label: '', url: '' }
-  return {
-    label: typeof entry.label === 'string' ? entry.label : '',
-    url: typeof entry.url === 'string' ? entry.url : '',
-  }
-}
+import {
+  asLinkAttachment,
+  ChipButton,
+  CompactSelectField,
+  fieldCls,
+  formatCurrency,
+  labelCls,
+  pageCardCls,
+  SectionLabel,
+  ToolbarButton,
+} from '@/components/invoice/mobile/mobileFormPrimitives'
+import {
+  MobileInvoiceFooterActions,
+  MobileInvoiceNotesTermsSection,
+  MobileInvoiceReferenceLinksSection,
+  MobileInvoiceSignatorySection,
+} from '@/components/invoice/mobile/MobileInvoiceCollapsibleSections'
 
 export default function MobileInvoiceForm(props) {
   const {
@@ -887,163 +748,48 @@ export default function MobileInvoiceForm(props) {
           </div>
 
           <div ref={notesTermsRef}>
-            <CollapseCard
-              icon={NotebookText}
-              iconTone={{ bg: '#f5f3ff', fg: '#7c3aed' }}
-              title="Notes & Terms"
-              subtitle="Optional rich text blocks"
+            <MobileInvoiceNotesTermsSection
+              notesTitle={notesTitle}
+              setNotesTitle={setNotesTitle}
+              termsTitle={termsTitle}
+              setTermsTitle={setTermsTitle}
+              invoice={invoice}
+              updateInvoice={updateInvoice}
               open={showNotesTerms}
               onToggle={() => setShowNotesTerms((current) => !current)}
-              sectionColor="#7c3aed"
-            >
-              <div className="space-y-4">
-                <div>
-                  <label className={labelCls}>Notes Title</label>
-                  <Input value={notesTitle} onChange={(event) => setNotesTitle(event.target.value)} className={fieldCls} />
-                  <div className="mt-3">
-                    <RichTextEditor
-                      value={invoice.notes || ''}
-                      onChange={(value) => updateInvoice('notes', value)}
-                      placeholder="Notes..."
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className={labelCls}>Terms Title</label>
-                  <Input value={termsTitle} onChange={(event) => setTermsTitle(event.target.value)} className={fieldCls} />
-                  <div className="mt-3">
-                    <RichTextEditor
-                      value={invoice.terms || ''}
-                      onChange={(value) => updateInvoice('terms', value)}
-                      placeholder="Terms..."
-                    />
-                  </div>
-                </div>
-              </div>
-            </CollapseCard>
+            />
           </div>
 
-          <CollapseCard
-            icon={Signature}
-            iconTone={{ bg: '#eff6ff', fg: '#2563eb' }}
-            title="Signatory"
-            subtitle="Who signs this document"
+          <MobileInvoiceSignatorySection
+            signatoryId={signatoryId}
+            onSignatoryChange={onSignatoryChange}
+            signatories={signatories}
+            afterSignatorySlot={afterSignatorySlot}
             open={showSignatory}
             onToggle={() => setShowSignatory((current) => !current)}
-            sectionColor="#2563eb"
-          >
-            <div className="space-y-4">
-              <SignatoryPicker
-                value={signatoryId}
-                onChange={onSignatoryChange}
-                signatories={signatories.map((s) => ({
-                  id: s.id,
-                  name: s.name,
-                  role: s.role,
-                  signatureUrl: s.signature_url || s.signatureUrl,
-                }))}
-              />
-              {afterSignatorySlot ? afterSignatorySlot : null}
-            </div>
-          </CollapseCard>
+          />
 
           <div ref={linksRef}>
-            <CollapseCard
-              icon={Link2}
-              iconTone={{ bg: '#f0fdf4', fg: '#059669' }}
-              title="Reference Links"
-              subtitle="Paste URLs instead of uploading files"
+            <MobileInvoiceReferenceLinksSection
+              referenceLinks={referenceLinks}
+              updateReferenceLink={updateReferenceLink}
+              removeReferenceLink={removeReferenceLink}
+              addReferenceLink={addReferenceLink}
               open={showLinks}
               onToggle={() => setShowLinks((current) => !current)}
-              sectionColor="#059669"
-            >
-              <div className="space-y-2">
-                {referenceLinks.length === 0 ? (
-                  <div className="rounded-[16px] border border-dashed border-[#bbf7d0] bg-[#f0fdf4] px-4 py-5 text-[13px] text-[#15803d]">
-                    No reference links yet.
-                  </div>
-                ) : (
-                  referenceLinks.map((link, index) => (
-                    <div key={`${link.label}-${index}`} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_42px] items-center gap-2 max-[520px]:grid-cols-1">
-                      <Input
-                        value={link.label}
-                        onChange={(event) => updateReferenceLink(index, 'label', event.target.value)}
-                        placeholder="Link label"
-                        className={fieldCls}
-                      />
-                      <Input
-                        value={link.url}
-                        onChange={(event) => updateReferenceLink(index, 'url', event.target.value)}
-                        placeholder="https://..."
-                        className={fieldCls}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeReferenceLink(index)}
-                        className="flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#e2e8f0] bg-[#f8fafc] text-[#94a3b8]"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))
-                )}
-
-                <button
-                  type="button"
-                  onClick={addReferenceLink}
-                  className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-[14px] border-2 border-dashed border-[#e2e8f0] bg-[#f8fafc] text-[13px] font-bold text-[#64748b]"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add link
-                </button>
-              </div>
-            </CollapseCard>
+            />
           </div>
         </div>
       </div>
 
-      <div className="px-3 pb-5 pt-3 sm:px-4">
-        <div className="mx-auto max-w-3xl">
-          <div className={`${pageCardCls} p-2`}>
-            <div className="grid grid-cols-[1fr_1fr_1.35fr] gap-2">
-              <button
-                type="button"
-                onClick={onCancel}
-                disabled={saving}
-                className="h-[52px] rounded-[14px] border-[1.5px] border-[#e2e8f0] bg-white text-[14px] font-bold text-[#475569] disabled:opacity-60"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={onSaveDraft}
-                disabled={saving}
-                className="h-[52px] rounded-[14px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] text-[14px] font-bold text-[#475569] disabled:opacity-60"
-              >
-                Draft
-              </button>
-              <button
-                type="button"
-                onClick={onSaveSent}
-                disabled={saving}
-                className="h-[52px] rounded-[14px] border-0 bg-[#0f172a] text-[15px] font-extrabold text-white shadow-[0_4px_18px_rgba(15,23,42,0.22)] disabled:opacity-60"
-              >
-                {saving ? 'Saving…' : primaryLabel}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={onFloatingSave}
-        disabled={saving}
-        className="fixed bottom-[92px] right-4 z-[60] flex h-[52px] w-[52px] items-center justify-center rounded-[16px] bg-[#0f172a] text-white shadow-[0_8px_24px_rgba(15,23,42,0.28)] disabled:opacity-60"
-      >
-        <Save className="h-5 w-5" />
-      </button>
+      <MobileInvoiceFooterActions
+        onCancel={onCancel}
+        onSaveDraft={onSaveDraft}
+        onSaveSent={onSaveSent}
+        onFloatingSave={onFloatingSave}
+        saving={saving}
+        primaryLabel={primaryLabel}
+      />
 
       <ActionsSheet
         open={showActionsSheet}

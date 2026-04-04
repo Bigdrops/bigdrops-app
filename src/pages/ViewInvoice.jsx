@@ -1,6 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react'
 import { useLocation, useParams, useNavigate } from 'react-router-dom'
-import DOMPurify from 'dompurify'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
@@ -43,12 +42,14 @@ import { toast } from '@/hooks/use-toast'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
-import {
-  createLinkedDocumentItem,
-  createLinkedDocumentsSection,
-  createLinkedProjectSection,
-} from '@/components/document/linkedDocumentSections'
 import InvoiceActionsSheet from '@/components/invoice/InvoiceActionsSheet'
+import InvoiceAdvanceSheet from '@/components/invoice/view/InvoiceAdvanceSheet'
+import InvoiceLineItemsCard from '@/components/invoice/view/InvoiceLineItemsCard'
+import {
+  buildInvoiceLinkedDocumentSections,
+  buildInvoiceShellStatusItems,
+  mapInvoicePreviewNotesContent,
+} from '@/components/invoice/view/invoiceDetailHelpers'
 import RevertInvoiceDialog from '@/components/invoice/RevertInvoiceDialog'
 import InvoicePaymentSection from '@/components/invoice/InvoicePaymentSection'
 import VoidPaymentDialog from '@/components/invoice/VoidPaymentDialog'
@@ -56,9 +57,6 @@ import { getInvoiceDetailActionDefs } from '@/domain/invoice/actions'
 import { buildInvoicePreviewModel } from '@/domain/invoice/previewModel'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { operationalEmptyStateClassName } from '@/components/ui/operational-card-styles'
 import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
 import { numberToWords } from '@/hooks/useInvoiceForm'
@@ -662,76 +660,22 @@ export default function ViewInvoice() {
     onClick: detailActionHandlers[action.key],
   }))
 
-  const linkedDocumentsSections = [
-    createLinkedDocumentsSection({
-      key: 'source',
-      title: 'Source',
-      description: 'Documents this invoice came from.',
-      items: sourceDocument
-        ? [
-            createLinkedDocumentItem({
-              key: `source-${sourceDocument.id || sourceDocument.number || 'invoice-source'}`,
-              label: `${sourceDocument.type === 'quotation' ? 'Quotation' : 'Document'} ${
-                sourceDocument.number || sourceDocument.id || 'Linked source'
-              }`,
-              subtitle: sourceDocument.po_number
-                ? `PO ${sourceDocument.po_number}`
-                : 'Open the source document',
-              onClick: () => {
-                if (sourceDocument.id) {
-                  navigate(`/${sourceDocument.type === 'quotation' ? 'quotations' : 'invoices'}/${sourceDocument.id}`)
-                }
-              },
-              disabled: !sourceDocument.id,
-            }),
-          ]
-        : [],
-    }),
-    createLinkedDocumentsSection({
-      key: 'generated',
-      title: 'Generated / Child Documents',
-      description: 'Documents created from this invoice.',
-      items: [
-        createLinkedDocumentItem({
-          key: 'attach-csr',
-          label: 'Attach Existing CSR',
-          subtitle: 'Search and link a CSR to this invoice',
-          onClick: () => {
-            setShowLinkedDocuments(false)
-            setAttachKind('csr')
-            setShowAttachSheet(true)
-          },
-        }),
-        createLinkedDocumentItem({
-          key: 'attach-waybill',
-          label: 'Attach Existing Waybill',
-          subtitle: 'Search and link a waybill to this invoice',
-          onClick: () => {
-            setShowLinkedDocuments(false)
-            setAttachKind('waybill')
-            setShowAttachSheet(true)
-          },
-        }),
-        ...(invoiceRelatedDocs.csrs || []).map((csr) => createLinkedDocumentItem({
-          key: `csr-${csr.id}`,
-          label: `CSR ${csr.csr_number || csr.id}`,
-          subtitle: 'Open linked CSR',
-          onClick: () => navigate(`/csr/${csr.id}`),
-        })),
-        ...(invoiceRelatedDocs.waybills || []).map((waybill) => createLinkedDocumentItem({
-          key: `waybill-${waybill.id}`,
-          label: `Waybill ${waybill.waybill_number || waybill.id}`,
-          subtitle: 'Open linked waybill',
-          onClick: () => navigate(`/waybills/${waybill.id}`),
-        })),
-      ],
-    }),
-    createLinkedProjectSection({
-      project: linkedProject,
-      description: 'Project connected to this invoice.',
-      onOpenProject: () => navigate(`/projects/${linkedProject.id}`),
-    }),
-  ]
+  const linkedDocumentsSections = buildInvoiceLinkedDocumentSections({
+    sourceDocument,
+    relatedDocs: invoiceRelatedDocs,
+    linkedProject,
+    navigate,
+    onAttachCsr: () => {
+      setShowLinkedDocuments(false)
+      setAttachKind('csr')
+      setShowAttachSheet(true)
+    },
+    onAttachWaybill: () => {
+      setShowLinkedDocuments(false)
+      setAttachKind('waybill')
+      setShowAttachSheet(true)
+    },
+  })
 
   const handleDownloadPDF = async () => {
     if (pdfGenerating) return
@@ -823,17 +767,10 @@ export default function ViewInvoice() {
 
   const shellStatusClass = statusBadgeClass
 
-  const shellStatusItems = ['draft', 'sent', 'partial', 'paid', 'overdue'].map((status) => ({
-    label: String(status)
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase()),
-    active: computedStatus === status,
-    onClick: () => {
-      if (status === 'partial' || status === 'paid' || status === 'overdue') return
-      void handleStatusChange(status)
-    },
-    disabled: status === 'partial' || status === 'paid' || status === 'overdue',
-  }))
+  const shellStatusItems = buildInvoiceShellStatusItems({
+    computedStatus,
+    onStatusChange: handleStatusChange,
+  })
 
   const activePdfTemplate = PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || PDF_TEMPLATES[0]
   const showInvoiceFillableControls = isDocumentFillableEnabled(settings?.document_fillable_settings, 'invoice')
@@ -875,45 +812,7 @@ export default function ViewInvoice() {
     previewNotesSections,
   } = previewModel
 
-  const previewNotesContent = previewNotesSections.map((section) => {
-    if (section.kind === 'html') {
-      return {
-        title: section.title,
-        content: (
-          <div
-            className="prose prose-sm max-w-none break-words text-foreground"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.html) }}
-          />
-        ),
-      }
-    }
-
-    if (section.kind === 'links') {
-      return {
-        title: section.title,
-        content: (
-          <div className="space-y-2">
-            {section.links.map((link) => (
-              <a
-                key={`${link.label}-${link.url}`}
-                href={link.url}
-                target="_blank"
-                rel="noreferrer"
-                className="block break-all text-sm font-medium text-blue-700 underline decoration-blue-300 underline-offset-4"
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
-        ),
-      }
-    }
-
-    return {
-      title: section.title,
-      content: <div className="whitespace-pre-wrap break-words">{section.text}</div>,
-    }
-  })
+  const previewNotesContent = mapInvoicePreviewNotesContent(previewNotesSections)
 
   return (
     <Layout
@@ -1074,64 +973,7 @@ export default function ViewInvoice() {
           />
         </DocumentSection>
 
-        <div className="space-y-3">
-          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Line Items</div>
-          <Card className="rounded-[24px] border-border shadow-sm">
-            <CardContent className="space-y-3 p-4">
-              {(() => {
-                let itemNumber = 0
-                return items.map((item, index) => {
-                  if (item.row_type === 'group_header') {
-                    return (
-                      <div
-                        key={item._uiKey || item.id || index}
-                        className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-slate-300"
-                      >
-                        {item.group_name || `Group ${index + 1}`}
-                      </div>
-                    )
-                  }
-
-                  itemNumber += 1
-
-                  return (
-                    <div
-                      key={item._uiKey || item.id || index}
-                      className="flex gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0"
-                    >
-                      <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-[10px] font-extrabold text-slate-500">
-                        {itemNumber}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-bold text-foreground">
-                          {item.description || 'Untitled item'}
-                        </div>
-                        {item.sub_description ? (
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            {item.sub_description}
-                          </div>
-                        ) : null}
-                        <div className="mt-2 text-xs text-muted-foreground">
-                          Qty {item.quantity || 0}
-                          {item.unit ? ` ${item.unit}` : ''}
-                          {item.make ? ` · ${item.make}` : ''}
-                        </div>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <div className="text-sm font-extrabold text-foreground">
-                          {formatMoney(item.amount || item.quantity * item.unit_price || 0)}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {formatMoney(item.unit_price || 0)} each
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })
-              })()}
-            </CardContent>
-          </Card>
-        </div>
+        <InvoiceLineItemsCard items={items} formatMoney={formatMoney} />
 
         <InvoicePaymentSection
           variant="simple"
@@ -1225,199 +1067,32 @@ export default function ViewInvoice() {
           onCancel={() => setShowVoidDialog(false)}
         />
 
-        <Sheet
+        <InvoiceAdvanceSheet
           open={showAdvanceSheet}
           onOpenChange={(nextOpen) => {
-            if (advanceSaving || advancePdfGenerating) return
             setShowAdvanceSheet(nextOpen)
+            if (!nextOpen && advanceInvoice) setAdvanceSheetMode('view')
           }}
-        >
-          <SheetContent side="bottom" className="max-h-[92vh] rounded-t-[28px] bg-card p-0 [&>[data-slot=sheet-close]]:hidden">
-            <div className="flex h-full flex-col">
-              <SheetHeader className="border-b border-border px-5 pb-4 pt-5 text-left">
-                <SheetTitle className="text-base font-semibold text-foreground">
-                  {advanceSheetMode === 'edit'
-                    ? 'Edit Advance'
-                    : advanceInvoice && advanceSheetMode === 'view'
-                      ? 'View Advance'
-                      : 'Create Advance'}
-                </SheetTitle>
-                <SheetDescription>
-                  For {invoice.invoice_number || 'this invoice'}
-                </SheetDescription>
-              </SheetHeader>
-
-              <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Invoice No</div>
-                      <div className="mt-1 text-sm font-bold text-foreground">{invoice.invoice_number || 'Invoice'}</div>
-                    </div>
-                    <div>
-                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Contract Value</div>
-                      <div className="mt-1 text-sm font-bold text-foreground">{formatMoney(contractValue)}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {advanceSheetMode === 'view' && advanceInvoice ? (
-                  <div className="space-y-4">
-                    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Advance Invoice</div>
-                      <div className="mt-1 text-sm font-bold text-foreground">{advanceInvoice.invoice_number || 'Advance Invoice'}</div>
-                      <div className="mt-1 text-sm text-muted-foreground">{formatMoney(advanceInvoice.total || 0)}</div>
-                    </div>
-
-                    <div className="rounded-2xl bg-slate-950 px-4 py-4 text-white">
-                      <div className="grid gap-3 sm:grid-cols-3">
-                        <div>
-                          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Contract Value</div>
-                          <div className="mt-1 text-base font-extrabold">{formatMoney(contractValue)}</div>
-                        </div>
-                        <div>
-                          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">This Advance</div>
-                          <div className="mt-1 text-base font-extrabold">{formatMoney(Number(advanceInvoice.total || 0))}</div>
-                        </div>
-                        <div>
-                          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Balance Remaining</div>
-                          <div className="mt-1 text-base font-extrabold">{formatMoney(Math.max(0, contractValue - Number(advanceInvoice.total || 0)))}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-3">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Mode</div>
-                      <div className="inline-flex rounded-full border border-border bg-muted/30 p-1">
-                        <button
-                          type="button"
-                          onClick={() => setAdvanceMode('percent')}
-                          className={`rounded-full px-4 py-2 text-sm font-bold transition ${
-                            advanceMode === 'percent' ? 'bg-slate-950 text-white' : 'text-slate-600'
-                          }`}
-                        >
-                          Percent
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setAdvanceMode('fixed')}
-                          className={`rounded-full px-4 py-2 text-sm font-bold transition ${
-                            advanceMode === 'fixed' ? 'bg-slate-950 text-white' : 'text-slate-600'
-                          }`}
-                        >
-                          Fixed
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="advance-value">
-                        {advanceMode === 'fixed' ? 'Advance Amount' : 'Advance Percentage'}
-                      </Label>
-                      <Input
-                        id="advance-value"
-                        type="number"
-                        min="0"
-                        max={advanceMode === 'fixed' ? String(contractValue) : '100'}
-                        step={advanceMode === 'fixed' ? '0.01' : '1'}
-                        inputMode="decimal"
-                        value={advanceInputValue}
-                        onChange={(event) => setAdvanceInputValue(event.target.value)}
-                        disabled={advanceSaving}
-                        className="h-12 rounded-2xl"
-                      />
-                    </div>
-
-                    <div className="rounded-2xl bg-slate-950 px-4 py-4 text-white">
-                      <div className="grid gap-3 sm:grid-cols-3">
-                        <div>
-                          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Contract Value</div>
-                          <div className="mt-1 text-base font-extrabold">{formatMoney(contractValue)}</div>
-                        </div>
-                        <div>
-                          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">This Advance</div>
-                          <div className="mt-1 text-base font-extrabold">{formatMoney(advanceAmount)}</div>
-                        </div>
-                        <div>
-                          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Balance Remaining</div>
-                          <div className="mt-1 text-base font-extrabold">{formatMoney(balanceRemaining)}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className="sticky bottom-0 border-t border-border bg-card px-5 py-4">
-                {advanceSheetMode === 'view' && advanceInvoice ? (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowAdvanceDeleteConfirm(true)}
-                      disabled={advanceSaving || advancePdfGenerating}
-                      className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                    >
-                      Remove
-                    </Button>
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => void handleDownloadAdvancePDF()}
-                        disabled={advanceSaving || advancePdfGenerating}
-                      >
-                        {advancePdfGenerating ? 'Preparing...' : 'Download PDF'}
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => openAdvanceSheet('edit')}
-                        disabled={advanceSaving || advancePdfGenerating}
-                        className="bg-slate-950 text-white hover:bg-slate-800"
-                      >
-                        Edit Advance
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setShowAdvanceSheet(false)
-                        if (advanceInvoice) setAdvanceSheetMode('view')
-                      }}
-                      disabled={advanceSaving}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => void handleSaveAdvance()}
-                      disabled={advanceSaving}
-                      className="bg-slate-950 text-white hover:bg-slate-800"
-                    >
-                      {advanceSaving
-                        ? advanceSheetMode === 'edit' ? 'Saving...' : 'Creating...'
-                        : advanceSheetMode === 'edit' ? 'Save Advance' : 'Create Advance'}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        <ConfirmActionDialog
-          open={showAdvanceDeleteConfirm}
-          onOpenChange={setShowAdvanceDeleteConfirm}
-          title="Remove advance invoice?"
-          description="This deletes the advance invoice generated from this invoice."
-          confirmLabel="Remove Advance"
-          onConfirm={() => void confirmDeleteAdvanceInvoice()}
+          invoiceNumber={invoice.invoice_number}
+          contractValue={contractValue}
+          formatMoney={formatMoney}
+          advanceSheetMode={advanceSheetMode}
+          advanceInvoice={advanceInvoice}
+          advanceSaving={advanceSaving}
+          advancePdfGenerating={advancePdfGenerating}
+          advanceMode={advanceMode}
+          setAdvanceMode={setAdvanceMode}
+          advanceInputValue={advanceInputValue}
+          setAdvanceInputValue={setAdvanceInputValue}
+          advanceAmount={advanceAmount}
+          balanceRemaining={balanceRemaining}
+          onSave={() => void handleSaveAdvance()}
+          onDownloadPdf={() => void handleDownloadAdvancePDF()}
+          onEdit={() => openAdvanceSheet('edit')}
+          onRequestDelete={() => setShowAdvanceDeleteConfirm(true)}
+          deleteConfirmOpen={showAdvanceDeleteConfirm}
+          onDeleteConfirmOpenChange={setShowAdvanceDeleteConfirm}
+          onDeleteConfirm={() => void confirmDeleteAdvanceInvoice()}
         />
 
         <LinkedDocumentsSheet
