@@ -10,33 +10,7 @@ import {
   ListOrdered,
   Eraser,
 } from 'lucide-react'
-
-const toolbarBtnStyle = (active) => ({
-  height: '38px',
-  minWidth: '38px',
-  padding: '0 12px',
-  border: '1px solid #e4e4e7',
-  borderRadius: '10px',
-  cursor: 'pointer',
-  fontSize: '13px',
-  fontWeight: 500,
-  backgroundColor: active ? '#18181b' : '#ffffff',
-  color: active ? '#ffffff' : '#3f3f46',
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '6px',
-  transition: 'all 0.15s ease',
-  flexShrink: 0,
-})
-
-const dividerStyle = {
-  width: '1px',
-  height: '24px',
-  backgroundColor: '#e4e4e7',
-  margin: '0 2px',
-  flexShrink: 0,
-}
+import { cn } from '@/lib/utils'
 
 function ToolbarBtn({ onClick, active, title, children, wide = false }) {
   return (
@@ -47,10 +21,11 @@ function ToolbarBtn({ onClick, active, title, children, wide = false }) {
         onClick()
       }}
       title={title}
-      style={{
-        ...toolbarBtnStyle(active),
-        minWidth: wide ? '76px' : '38px',
-      }}
+      className={cn(
+        'inline-flex h-[38px] shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-[10px] border border-zinc-200 px-3 text-[13px] font-medium transition-colors',
+        wide ? 'min-w-[76px]' : 'min-w-[38px]',
+        active ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-700 hover:bg-zinc-50',
+      )}
     >
       {children}
     </button>
@@ -67,8 +42,7 @@ export default function RichTextEditor({ value, onChange, placeholder = '' }) {
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
     editorProps: {
       attributes: {
-        style:
-          'min-height: 150px; padding: 14px 16px; outline: none; font-size: 15px; color: #18181b; line-height: 1.7;',
+        class: 'min-h-[150px] px-4 py-3.5 text-[15px] leading-[1.7] text-zinc-900 outline-none',
       },
     },
   })
@@ -86,26 +60,8 @@ export default function RichTextEditor({ value, onChange, placeholder = '' }) {
   const isEmpty = !value || value === '<p></p>'
 
   return (
-    <div
-      style={{
-        border: '1px solid #d4d4d8',
-        borderRadius: '16px',
-        overflow: 'hidden',
-        backgroundColor: '#ffffff',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '12px',
-          borderBottom: '1px solid #e4e4e7',
-          backgroundColor: '#fafafa',
-        }}
-      >
+    <div className="overflow-hidden rounded-2xl border border-zinc-300 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 bg-zinc-50 p-3">
         <ToolbarBtn
           onClick={() => editor.chain().focus().toggleBold().run()}
           active={editor.isActive('bold')}
@@ -130,7 +86,7 @@ export default function RichTextEditor({ value, onChange, placeholder = '' }) {
           <UnderlineIcon size={16} />
         </ToolbarBtn>
 
-        <div style={dividerStyle} />
+        <div className="mx-0.5 h-6 w-px shrink-0 bg-zinc-200" />
 
         <ToolbarBtn
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -152,7 +108,7 @@ export default function RichTextEditor({ value, onChange, placeholder = '' }) {
           <span>List</span>
         </ToolbarBtn>
 
-        <div style={dividerStyle} />
+        <div className="mx-0.5 h-6 w-px shrink-0 bg-zinc-200" />
 
         <ToolbarBtn
           onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
@@ -165,25 +121,9 @@ export default function RichTextEditor({ value, onChange, placeholder = '' }) {
         </ToolbarBtn>
       </div>
 
-      <div
-        style={{
-          minHeight: '150px',
-          position: 'relative',
-          backgroundColor: '#ffffff',
-        }}
-      >
+      <div className="relative min-h-[150px] bg-white">
         {isEmpty && (
-          <div
-            style={{
-              position: 'absolute',
-              top: '14px',
-              left: '16px',
-              color: '#a1a1aa',
-              fontSize: '15px',
-              pointerEvents: 'none',
-              userSelect: 'none',
-            }}
-          >
+          <div className="pointer-events-none absolute left-4 top-3.5 select-none text-[15px] text-zinc-400">
             {placeholder}
           </div>
         )}

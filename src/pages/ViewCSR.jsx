@@ -19,6 +19,12 @@ import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
+import { Button } from '@/components/ui/button'
+import {
+  documentDetailHeaderCardClassName,
+  documentDetailStatusBadgeClassName,
+} from '@/components/ui/document-detail-styles'
+import { operationalEmptyStateClassName } from '@/components/ui/operational-card-styles'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 import { fetchInvoiceSummary, fetchProjectSummary } from '@/domain/documentRelationships'
 import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
@@ -83,8 +89,20 @@ export default function ViewCSR() {
     }
   }, [template])
 
-  if (loading) return <Layout title="CSR"><p style={{ padding: 30 }}>Loading...</p></Layout>
-  if (!csr) return <Layout title="CSR"><p style={{ padding: 30 }}>CSR not found.</p></Layout>
+  if (loading) {
+    return (
+      <Layout title="CSR">
+        <div className={operationalEmptyStateClassName}>Loading CSR...</div>
+      </Layout>
+    )
+  }
+  if (!csr) {
+    return (
+      <Layout title="CSR">
+        <div className={operationalEmptyStateClassName}>CSR not found.</div>
+      </Layout>
+    )
+  }
 
   const previewData = buildCsrPreviewData(csr, { signatories })
   const branding = getCsrBranding(settings)
@@ -230,36 +248,36 @@ export default function ViewCSR() {
 
   return (
     <Layout title={previewData.csr_number}>
-      <div style={{ maxWidth: '900px', width: '100%' }}>
-        <div
-          style={{
-            background: 'linear-gradient(180deg, #F8FAFC 0%, #EEF4FF 100%)',
-            border: '1px solid #DBE5F3',
-            borderRadius: '16px',
-            padding: '18px',
-            marginBottom: '18px',
-            boxShadow: '0 16px 40px rgba(15, 23, 42, 0.08)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div className="w-full max-w-[900px]">
+        <div className={`${documentDetailHeaderCardClassName} bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF4FF_100%)]`}>
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '999px', backgroundColor: '#ffffff', border: '1px solid #D6E0EF', fontSize: '12px', fontWeight: '700', color: '#0F172A', marginBottom: '10px' }}>
+              <div className={`mb-2.5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white text-slate-900 ${documentDetailStatusBadgeClassName}`}>
                 Customer Service Report
               </div>
-              <div style={{ fontSize: '26px', fontWeight: '700', color: '#0F172A', marginBottom: '4px' }}>{previewData.csr_number}</div>
-              <div style={{ fontSize: '14px', color: '#475569', lineHeight: 1.6 }}>
+              <div className="mb-1 text-[26px] font-bold text-slate-900">{previewData.csr_number}</div>
+              <div className="text-sm leading-[1.6] text-slate-600">
                 {previewData.client_name || 'Unassigned client'}{previewData.date ? ` • ${previewData.date}` : ''}
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <button type="button" onClick={() => navigate('/csr')} style={{ padding: '9px 16px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', border: '1px solid #d1d5db', backgroundColor: 'white', fontWeight: '600', color: '#0F172A' }}>Back</button>
-              <button type="button" onClick={handleDownload} style={{ padding: '10px 18px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', backgroundColor: '#0056B3', color: 'white', fontWeight: '700', border: 'none', boxShadow: '0 10px 24px rgba(0, 86, 179, 0.18)' }}>Download PDF</button>
-              <button type="button" onClick={() => navigate('/csr/edit/' + id)} style={{ display: 'none' }}>Edit CSR</button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Button type="button" variant="outline" className="h-10 rounded-[10px] px-4 text-[13px] font-semibold" onClick={() => navigate('/csr')}>
+                Back
+              </Button>
+              <Button type="button" className="h-10 rounded-[10px] bg-blue-700 px-[18px] text-[13px] font-bold shadow-[0_10px_24px_rgba(0,86,179,0.18)] hover:bg-blue-800" onClick={handleDownload}>
+                Download PDF
+              </Button>
+              <button type="button" onClick={() => navigate('/csr/edit/' + id)} className="hidden">Edit CSR</button>
               <div>
-                <button type="button" onClick={() => setShowMore(true)} style={{ padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', border: '1px solid #CBD5E1', backgroundColor: 'white', fontWeight: '700', color: '#0F172A' }}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 rounded-[10px] px-4 text-[13px] font-bold"
+                  onClick={() => setShowMore(true)}
+                >
                   More actions
-                </button>
+                </Button>
               </div>
             </div>
           </div>

@@ -232,16 +232,7 @@ export default function RecordPaymentModal({
 
         <div className="space-y-4 px-5 py-4">
           <div
-            style={{
-              backgroundColor: "#F0FDF4",
-              borderLeft: "4px solid #16A34A",
-              borderRadius: "10px",
-              padding: "12px 16px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "12px",
-            }}
+            className="flex items-center justify-between gap-3 rounded-[10px] border-l-4 border-emerald-600 bg-emerald-50 px-4 py-3"
           >
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Invoice Total</div>
@@ -251,16 +242,7 @@ export default function RecordPaymentModal({
           </div>
 
           <div
-            style={{
-              backgroundColor: "#EFF6FF",
-              borderLeft: "4px solid #2563EB",
-              borderRadius: "10px",
-              padding: "12px 16px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "12px",
-            }}
+            className="flex items-center justify-between gap-3 rounded-[10px] border-l-4 border-blue-600 bg-blue-50 px-4 py-3"
           >
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Current Balance</div>
             <div className="flex items-center gap-2 text-sm font-bold text-red-600">
@@ -279,14 +261,9 @@ export default function RecordPaymentModal({
                     key={type}
                     type="button"
                     onClick={() => setField("type", type)}
-                    style={{
-                      padding: "10px",
-                      backgroundColor: active ? "#16A34A" : "white",
-                      color: active ? "white" : "#475569",
-                      fontSize: "14px",
-                      fontWeight: "700",
-                      textTransform: "capitalize",
-                    }}
+                    className={`px-2.5 py-2.5 text-sm font-bold capitalize transition-colors ${
+                      active ? "bg-emerald-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
+                    }`}
                   >
                     {type === "full" ? "Full Payment" : "Partial Payment"}
                   </button>

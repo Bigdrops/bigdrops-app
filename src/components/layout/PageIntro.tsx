@@ -1,58 +1,16 @@
-import type { CSSProperties, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Menu } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { operationalPanelClassName } from '@/components/ui/operational-card-styles'
 
-const accentColors = {
-  slate: '#0f172a',
-  blue: '#3b82f6',
-  violet: '#a855f7',
-  emerald: '#22c55e',
-  amber: '#f59e0b',
-  cyan: '#06b6d4',
+const accentBarClasses = {
+  slate: 'bg-slate-900',
+  blue: 'bg-blue-500',
+  violet: 'bg-violet-500',
+  emerald: 'bg-emerald-500',
+  amber: 'bg-amber-500',
+  cyan: 'bg-cyan-500',
 } as const
-
-const SHELL_CARD: CSSProperties = {
-  background: '#fff',
-  border: '1px solid hsl(214,32%,91%)',
-  borderRadius: 28,
-  overflow: 'hidden',
-  boxShadow: '0 1px 2px rgba(15,23,42,.05), 0 10px 30px rgba(15,23,42,.08)',
-}
-
-const ICON_BTN: CSSProperties = {
-  width: 42,
-  height: 42,
-  borderRadius: 14,
-  border: '1px solid hsl(214,32%,91%)',
-  background: '#fff',
-  boxShadow: '0 1px 2px rgba(15,23,42,.05)',
-  display: 'grid',
-  placeItems: 'center',
-  cursor: 'pointer',
-  color: '#0f172a',
-}
-
-const EYEBROW: CSSProperties = {
-  fontSize: 11,
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: '.18em',
-  color: 'hsl(215,16%,47%)',
-}
-
-const TITLE_H2: CSSProperties = {
-  margin: '8px 0 0',
-  fontSize: 28,
-  lineHeight: 1.05,
-  letterSpacing: '-0.045em',
-  fontWeight: 900,
-  color: '#0f172a',
-}
-
-const SUMMARY: CSSProperties = {
-  marginTop: 4,
-  color: 'hsl(215,16%,47%)',
-  fontSize: 14,
-}
 
 type PageIntroProps = {
   eyebrow?: string
@@ -62,7 +20,7 @@ type PageIntroProps = {
   actions?: ReactNode
   toolbar?: ReactNode
   className?: string
-  tone?: keyof typeof accentColors
+  tone?: keyof typeof accentBarClasses
   compact?: boolean
 }
 
@@ -76,25 +34,27 @@ export default function PageIntro({
   className,
   tone = 'slate',
 }: PageIntroProps) {
-  const accent = accentColors[tone]
-
   return (
-    <div style={SHELL_CARD} className={className}>
-      <div style={{ height: 4, background: accent }} />
-      <div style={{ padding: 16, background: 'linear-gradient(180deg,rgba(248,250,252,.9),#fff)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <button type="button" style={ICON_BTN} aria-label="Open navigation">
+    <div className={cn(operationalPanelClassName, 'overflow-hidden', className)}>
+      <div className={cn('h-1', accentBarClasses[tone])} />
+      <div className="bg-[linear-gradient(180deg,rgba(248,250,252,0.9),#fff)] p-4">
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            aria-label="Open navigation"
+            className="grid h-[42px] w-[42px] place-items-center rounded-[14px] border border-slate-200 bg-white text-slate-900 shadow-sm"
+          >
             <Menu size={18} />
           </button>
-          {actions ? <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{actions}</div> : null}
+          {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
         </div>
 
-        {eyebrow ? <div style={{ marginTop: 16, ...EYEBROW }}>{eyebrow}</div> : null}
-        <h2 style={TITLE_H2}>{title}</h2>
-        {meta ? <div style={SUMMARY}>{meta}</div> : null}
-        {description ? <div style={{ ...SUMMARY, marginTop: 10, lineHeight: 1.55 }}>{description}</div> : null}
+        {eyebrow ? <div className="mt-4 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</div> : null}
+        <h2 className="mt-2 text-[28px] font-black leading-[1.05] tracking-[-0.045em] text-slate-900">{title}</h2>
+        {meta ? <div className="mt-1 text-sm text-slate-500">{meta}</div> : null}
+        {description ? <div className="mt-2.5 text-sm leading-[1.55] text-slate-500">{description}</div> : null}
 
-        {toolbar ? <div style={{ marginTop: 16 }}>{toolbar}</div> : null}
+        {toolbar ? <div className="mt-4">{toolbar}</div> : null}
       </div>
     </div>
   )

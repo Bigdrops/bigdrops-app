@@ -22,8 +22,7 @@ import { COLUMN_TYPES } from './useInvoiceColumns.jsx'
 function RowShell({ children, muted = false }) {
   return (
     <div
-      className={`flex items-start gap-3 border-b border-zinc-200 py-3 ${muted ? 'opacity-60' : ''}`}
-      style={{ backgroundColor: '#ffffff' }}
+      className={`flex items-start gap-3 border-b border-zinc-200 bg-white py-3 ${muted ? 'opacity-60' : ''}`}
     >
       {children}
     </div>
@@ -199,18 +198,15 @@ export default function ColumnManager({
 
   return (
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/55 p-4"
     >
       <div className="absolute inset-0" onClick={onClose} />
 
       <Card
-        className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border-zinc-200 shadow-2xl"
-        style={{ backgroundColor: '#ffffff' }}
+        className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border-zinc-200 bg-white shadow-2xl"
       >
         <div
-          className="flex items-center justify-between border-b border-zinc-200 px-5 py-4"
-          style={{ backgroundColor: '#ffffff' }}
+          className="flex items-center justify-between border-b border-zinc-200 bg-white px-5 py-4"
         >
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700">
@@ -237,14 +233,10 @@ export default function ColumnManager({
           </Button>
         </div>
 
-        <div
-          className="flex-1 overflow-y-auto px-5 py-4"
-          style={{ backgroundColor: '#ffffff' }}
-        >
+        <div className="flex-1 overflow-y-auto bg-white px-5 py-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList
-              className="mb-4 grid w-full grid-cols-2 rounded-xl border border-zinc-200 p-1"
-              style={{ backgroundColor: '#f4f4f5' }}
+              className="mb-4 grid w-full grid-cols-2 rounded-xl border border-zinc-200 bg-zinc-100 p-1"
             >
               <TabsTrigger
                 value="table"
@@ -446,10 +438,7 @@ export default function ColumnManager({
           </Tabs>
         </div>
 
-        <div
-          className="flex gap-3 border-t border-zinc-200 px-5 py-4"
-          style={{ backgroundColor: '#ffffff' }}
-        >
+        <div className="flex gap-3 border-t border-zinc-200 bg-white px-5 py-4">
           <Button
             type="button"
             variant="outline"

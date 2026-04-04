@@ -31,6 +31,13 @@ function canUseInvoiceCacheFallback() {
   )
 }
 
+function shouldShowInvoiceInList(invoice) {
+  const threadRole = String(invoice?.thread_role || "").toLowerCase()
+  const isAdvanceInvoice = invoice?.is_advance === true || String(invoice?.is_advance || "").toLowerCase() === "true"
+
+  return threadRole !== "advance" && !isAdvanceInvoice
+}
+
 export default function Invoices() {
   const [invoices, setInvoices]           = useState([])
   const [activeInvoice, setActiveInvoice] = useState(null)
@@ -61,6 +68,7 @@ export default function Invoices() {
       .select("*", { count: "exact" })
       .is("archived_at", null)
       .or("thread_role.is.null,thread_role.neq.advance")
+      .or("is_advance.is.null,is_advance.eq.false")
 
     const searchTerm = search.trim()
     if (searchTerm) {
@@ -117,7 +125,7 @@ export default function Invoices() {
       const { data, count, error } = await buildInvoiceQuery().range(from, to)
       if (error) throw error
 
-      const nextRows = data || []
+      const nextRows = (data || []).filter(shouldShowInvoiceInList)
 
       setInvoices((current) => (replace ? nextRows : [...current, ...nextRows]))
       setTotalCount(count || 0)
@@ -144,7 +152,7 @@ export default function Invoices() {
 
         const filteredRows = cachedRows
           .filter((row) => !row.archived_at)
-          .filter((row) => String(row.thread_role || "").toLowerCase() !== "advance")
+          .filter(shouldShowInvoiceInList)
           .filter((row) => {
             if (!searchTerm) return true
             const invoiceNumber = String(row.invoice_number || "").toLowerCase()
@@ -213,11 +221,13 @@ export default function Invoices() {
         .from("invoices")
         .select("client_name")
         .is("archived_at", null)
+        .or("thread_role.is.null,thread_role.neq.advance")
+        .or("is_advance.is.null,is_advance.eq.false")
 
       if (error) throw error
 
       const nextOptions = Array.from(
-        new Set((data || []).map((row) => row.client_name).filter(Boolean)),
+        new Set((data || []).filter(shouldShowInvoiceInList).map((row) => row.client_name).filter(Boolean)),
       ).sort((a, b) => a.localeCompare(b))
 
       setClientOptions(nextOptions)
@@ -231,7 +241,7 @@ export default function Invoices() {
       try {
         const cachedRows = await getCachedInvoiceList()
         const nextOptions = Array.from(
-          new Set((cachedRows || []).map((row) => row.client_name).filter(Boolean)),
+          new Set((cachedRows || []).filter(shouldShowInvoiceInList).map((row) => row.client_name).filter(Boolean)),
         ).sort((a, b) => a.localeCompare(b))
         setClientOptions(nextOptions)
       } catch (cacheError) {
