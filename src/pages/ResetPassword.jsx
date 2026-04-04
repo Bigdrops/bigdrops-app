@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { supabase } from '../supabase'
+
+const fieldClassName = 'mt-1 h-10 rounded-lg border-zinc-200 bg-white px-3 text-sm'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
@@ -55,128 +61,54 @@ export default function ResetPassword() {
     }
   }
 
-  const containerStyle = {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F7F7F5',
-    padding: '20px',
-  }
-
-  const cardStyle = {
-    width: '100%',
-    maxWidth: '420px',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
-    padding: '28px',
-  }
-
-  const titleStyle = {
-    fontSize: '20px',
-    fontWeight: 700,
-    marginBottom: '6px',
-    textAlign: 'center',
-    color: '#111827',
-  }
-
-  const descriptionStyle = {
-    fontSize: '13px',
-    color: '#6B7280',
-    marginBottom: '18px',
-    textAlign: 'center',
-  }
-
-  const labelStyle = {
-    display: 'block',
-    fontSize: '12px',
-    fontWeight: 600,
-    color: '#374151',
-    marginBottom: '4px',
-  }
-
-  const inputStyle = {
-    width: '100%',
-    padding: '9px 11px',
-    borderRadius: '8px',
-    border: '1px solid #E5E7EB',
-    fontSize: '13px',
-    outline: 'none',
-    boxSizing: 'border-box',
-    backgroundColor: '#FFFFFF',
-  }
-
-  const primaryButtonStyle = {
-    width: '100%',
-    padding: '10px 12px',
-    borderRadius: '999px',
-    border: 'none',
-    backgroundColor: '#CC0000',
-    color: 'white',
-    fontWeight: 600,
-    fontSize: '14px',
-    cursor: 'pointer',
-    marginTop: '12px',
-  }
-
-  const errorStyle = {
-    marginTop: '10px',
-    padding: '8px 10px',
-    borderRadius: '8px',
-    backgroundColor: '#FEF2F2',
-    color: '#B91C1C',
-    fontSize: '12px',
-  }
-
-  const messageStyle = {
-    marginTop: '10px',
-    padding: '8px 10px',
-    borderRadius: '8px',
-    backgroundColor: '#ECFDF3',
-    color: '#166534',
-    fontSize: '12px',
-  }
-
   return (
-    <div style={containerStyle}>
-      <div style={cardStyle}>
-        <div style={titleStyle}>Set New Password</div>
-        <div style={descriptionStyle}>Enter a new password for your account.</div>
+    <div className="flex min-h-screen items-center justify-center bg-[#F7F7F5] p-5">
+      <Card className="w-full max-w-[420px] rounded-xl bg-white py-0 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
+        <CardHeader className="px-7 pt-7 text-center">
+          <CardTitle className="justify-center text-xl font-bold text-gray-900">Set New Password</CardTitle>
+          <CardDescription className="text-[13px] text-gray-500">
+            Enter a new password for your account.
+          </CardDescription>
+        </CardHeader>
 
-        <div style={{ marginBottom: '12px' }}>
-          <label style={labelStyle}>New Password</label>
-          <input
-            type="password"
-            style={inputStyle}
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="New password"
-          />
-        </div>
+        <CardContent className="space-y-3 px-7 pb-7">
+          <div>
+            <Label htmlFor="new-password" className="text-xs font-semibold text-gray-700">New Password</Label>
+            <Input
+              id="new-password"
+              type="password"
+              className={fieldClassName}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="New password"
+            />
+          </div>
 
-        <div style={{ marginBottom: '8px' }}>
-          <label style={labelStyle}>Confirm New Password</label>
-          <input
-            type="password"
-            style={inputStyle}
-            value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
-            placeholder="Confirm new password"
-          />
-        </div>
+          <div>
+            <Label htmlFor="confirm-password" className="text-xs font-semibold text-gray-700">Confirm New Password</Label>
+            <Input
+              id="confirm-password"
+              type="password"
+              className={fieldClassName}
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+            />
+          </div>
 
-        <button
-          type="button"
-          style={{ ...primaryButtonStyle, opacity: loading ? 0.7 : 1, pointerEvents: loading ? 'none' : 'auto' }}
-          onClick={handleUpdatePassword}
-        >
-          {loading ? 'Updating...' : 'Update Password'}
-        </button>
+          <Button
+            type="button"
+            className="mt-3 h-10 w-full rounded-full bg-[#CC0000] text-sm font-semibold text-white hover:bg-[#b30000]"
+            onClick={handleUpdatePassword}
+            disabled={loading}
+          >
+            {loading ? 'Updating...' : 'Update Password'}
+          </Button>
 
-        {error && <div style={errorStyle}>{error}</div>}
-        {message && <div style={messageStyle}>{message}</div>}
-      </div>
+          {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
+          {message && <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">{message}</div>}
+        </CardContent>
+      </Card>
     </div>
   )
 }

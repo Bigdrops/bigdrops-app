@@ -1,21 +1,18 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from '@/hooks/use-toast'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import ClientSelector from '../components/ClientSelector'
 
-const inputStyle = {
-  width: '100%', boxSizing: 'border-box',
-  padding: '10px 14px', border: '1px solid #E2E8F0',
-  borderRadius: 10, fontSize: 14, color: '#1E293B',
-  background: 'white', outline: 'none',
-}
-const labelStyle = {
-  display: 'block', fontSize: 12, fontWeight: 700,
-  color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em',
-}
+const fieldClassName = 'h-10 rounded-[10px] border-slate-200 bg-white px-3.5 text-sm text-slate-800'
+const labelClassName = 'text-[12px] font-bold uppercase tracking-[0.04em] text-slate-600'
 
 export default function NewProject() {
   const navigate = useNavigate()
@@ -61,142 +58,127 @@ export default function NewProject() {
 
   return (
     <Layout title="New Project">
-      <div style={{ maxWidth: 600 }}>
+      <div className="max-w-[600px]">
+        <Card className="rounded-[14px] border-slate-200 bg-white shadow-none">
+          <CardHeader className="gap-1">
+            <CardTitle className="text-xl font-extrabold text-slate-900">New Project</CardTitle>
+            <CardDescription className="text-[13px] text-slate-400">
+              Create a project tree for a job or contract
+            </CardDescription>
+          </CardHeader>
 
-        <div style={{ marginBottom: 28 }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0F172A' }}>New Project</h2>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#94A3B8' }}>Create a project tree for a job or contract</p>
-        </div>
-
-        <div style={{ backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: 14, padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-          {/* Project name */}
-          <div>
-            <label style={labelStyle}>Project Name *</label>
-            <input
-              style={inputStyle}
-              value={form.name}
-              onChange={e => set('name', e.target.value)}
-              placeholder="e.g. Transformer Maintenance – Dangote Cement"
-              autoFocus
-            />
-          </div>
-
-          {/* Client */}
-          <div>
-            <label style={labelStyle}>Client</label>
-            <ClientSelector
-              value={form.client_id}
-              clientName={form.client_name}
-              onClientChange={(id, name) => { set('client_id', id); set('client_name', name) }}
-            />
-          </div>
-
-          {/* Start date */}
-          <div>
-            <label style={labelStyle}>Start Date</label>
-            <input
-              type="date"
-              style={inputStyle}
-              value={form.start_date}
-              onChange={e => set('start_date', e.target.value)}
-            />
-            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>Auto-set to today. Edit if the job started earlier.</div>
-          </div>
-
-          {/* Project value */}
-          <div>
-            <label style={labelStyle}>Project Value (₦)</label>
-            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #E2E8F0', borderRadius: 10, overflow: 'hidden' }}>
-              <span style={{ padding: '0 14px', fontSize: 16, color: '#94A3B8', borderRight: '1px solid #E2E8F0', lineHeight: '42px', backgroundColor: '#F8FAFC' }}>₦</span>
-              <input
-                type="number"
-                min="0"
-                value={form.project_value}
-                onChange={e => set('project_value', e.target.value)}
-                placeholder="Optional"
-                style={{ ...inputStyle, border: 'none', borderRadius: 0 }}
+          <CardContent className="space-y-5">
+            <div className="space-y-1.5">
+              <Label className={labelClassName}>Project Name *</Label>
+              <Input
+                className={fieldClassName}
+                value={form.name}
+                onChange={e => set('name', e.target.value)}
+                placeholder="e.g. Transformer Maintenance – Dangote Cement"
+                autoFocus
               />
             </div>
-          </div>
 
-          {/* Location */}
-          <div>
-            <label style={labelStyle}>Site / Location</label>
-            <input
-              style={inputStyle}
-              value={form.location}
-              onChange={e => set('location', e.target.value)}
-              placeholder="e.g. Block B, Dangote Cement Plant, Ibese"
-            />
-          </div>
+            <div className="space-y-1.5">
+              <Label className={labelClassName}>Client</Label>
+              <ClientSelector
+                value={form.client_id}
+                clientName={form.client_name}
+                onClientChange={(id, name) => { set('client_id', id); set('client_name', name) }}
+              />
+            </div>
 
-          {/* P.O. Number */}
-          <div>
-            <label style={labelStyle}>P.O. Number</label>
-            <input
-              style={inputStyle}
-              value={form.po_number}
-              onChange={e => set('po_number', e.target.value)}
-              placeholder="Optional — can be added later"
-            />
-          </div>
+            <div className="space-y-1.5">
+              <Label className={labelClassName}>Start Date</Label>
+              <Input
+                type="date"
+                className={fieldClassName}
+                value={form.start_date}
+                onChange={e => set('start_date', e.target.value)}
+              />
+              <p className="text-[11px] text-slate-400">Auto-set to today. Edit if the job started earlier.</p>
+            </div>
 
-          {/* Status */}
-          <div>
-            <label style={labelStyle}>Status</label>
-            <Select value={form.status} onValueChange={(value) => set('status', value)}>
-              <SelectTrigger style={{ ...inputStyle, cursor: 'pointer' }}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="on_hold">On Hold</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-1.5">
+              <Label className={labelClassName}>Project Value (₦)</Label>
+              <div className="flex items-center overflow-hidden rounded-[10px] border border-slate-200 bg-white">
+                <span className="bg-slate-50 px-3.5 text-base leading-10 text-slate-400 border-r border-slate-200">₦</span>
+                <Input
+                  type="number"
+                  min="0"
+                  value={form.project_value}
+                  onChange={e => set('project_value', e.target.value)}
+                  placeholder="Optional"
+                  className="h-10 rounded-none border-0 shadow-none focus-visible:ring-0"
+                />
+              </div>
+            </div>
 
-          {/* Notes */}
-          <div>
-            <label style={labelStyle}>Notes</label>
-            <textarea
-              style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }}
-              value={form.notes}
-              onChange={e => set('notes', e.target.value)}
-              placeholder="Optional internal notes about this project"
-            />
-          </div>
+            <div className="space-y-1.5">
+              <Label className={labelClassName}>Site / Location</Label>
+              <Input
+                className={fieldClassName}
+                value={form.location}
+                onChange={e => set('location', e.target.value)}
+                placeholder="e.g. Block B, Dangote Cement Plant, Ibese"
+              />
+            </div>
 
-        </div>
+            <div className="space-y-1.5">
+              <Label className={labelClassName}>P.O. Number</Label>
+              <Input
+                className={fieldClassName}
+                value={form.po_number}
+                onChange={e => set('po_number', e.target.value)}
+                placeholder="Optional — can be added later"
+              />
+            </div>
 
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
-          <button
+            <div className="space-y-1.5">
+              <Label className={labelClassName}>Status</Label>
+              <Select value={form.status} onValueChange={(value) => set('status', value)}>
+                <SelectTrigger className="h-10 rounded-[10px] border-slate-200 bg-white text-sm text-slate-800">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="on_hold">On Hold</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className={labelClassName}>Notes</Label>
+              <Textarea
+                className="min-h-20 rounded-[10px] border-slate-200 bg-white text-sm text-slate-800"
+                value={form.notes}
+                onChange={e => set('notes', e.target.value)}
+                placeholder="Optional internal notes about this project"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="mt-5 flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 flex-1 rounded-[10px] border-slate-200 bg-white text-sm font-semibold text-slate-500 hover:bg-slate-50"
             onClick={() => navigate('/projects')}
-            style={{
-              flex: 1, padding: '12px', border: '1px solid #E2E8F0',
-              borderRadius: 10, background: 'white', fontSize: 14,
-              color: '#64748B', cursor: 'pointer', fontWeight: 600,
-            }}
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            className="h-11 flex-[2] rounded-[10px] bg-slate-900 text-sm font-bold text-white hover:bg-slate-800"
             onClick={handleSave}
             disabled={saving}
-            style={{
-              flex: 2, padding: '12px', border: 'none',
-              borderRadius: 10, background: saving ? '#94A3B8' : '#0F172A',
-              fontSize: 14, color: 'white', cursor: saving ? 'not-allowed' : 'pointer',
-              fontWeight: 700,
-            }}
           >
             {saving ? 'Creating...' : 'Create Project'}
-          </button>
+          </Button>
         </div>
-
       </div>
     </Layout>
   )

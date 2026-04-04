@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 const DEFAULT_UNITS = [
   'M', 'KM', 'CM', 'MM', 'IN', 'FT', 'YD', 'MI',
@@ -84,7 +86,7 @@ export default function UnitInput({ value, onChange }) {
   }
 
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
+    <div ref={ref} className="relative">
       <Input
         value={query}
         onChange={handleInput}
@@ -94,25 +96,26 @@ export default function UnitInput({ value, onChange }) {
         className="w-full"
       />
       {open && (
-        <div style={{
-          position: 'absolute', top: '100%', left: 0, zIndex: 100,
-          backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '6px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)', minWidth: '160px',
-          maxHeight: '220px', overflowY: 'auto'
-        }}>
+        <Card className="absolute left-0 top-full z-[100] mt-1 min-w-40 max-h-[220px] overflow-y-auto rounded-md border border-zinc-300 bg-white py-0 shadow-xl">
           {filtered.length === 0 && !addingNew && (
-            <div style={{ padding: '10px 14px', color: '#888', fontSize: '13px' }}>No matches</div>
+            <div className="px-3.5 py-2.5 text-sm text-zinc-500">No matches</div>
           )}
           {filtered.map(unit => (
-            <div key={unit} onClick={() => handleSelect(unit)} style={{ padding: '8px 14px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', color: '#1a1a1a' }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F0F4FF'}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
+            <button
+              key={unit}
+              type="button"
+              onClick={() => handleSelect(unit)}
+              className={cn(
+                'w-full px-3.5 py-2 text-left text-sm font-bold text-zinc-900 transition',
+                'hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none'
+              )}
+            >
               {unit}
-            </div>
+            </button>
           ))}
-          <div style={{ borderTop: '1px solid #eee' }}>
+          <div className="border-t border-zinc-200">
             {addingNew ? (
-              <div style={{ padding: '8px', display: 'flex', gap: '6px' }}>
+              <div className="flex gap-1.5 p-2">
                 <Input
                   autoFocus
                   value={newUnit}
@@ -120,20 +123,21 @@ export default function UnitInput({ value, onChange }) {
                   onKeyDown={e => e.key === 'Enter' && handleAddUnit()}
                   placeholder="New unit..."
                 />
-                <Button size="sm" onClick={handleAddUnit}>Add</Button>
+                <Button type="button" size="sm" onClick={handleAddUnit}>Add</Button>
               </div>
             ) : (
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
-                className="w-full justify-start text-red-600 hover:text-red-600 hover:bg-red-50"
+                className="w-full justify-start rounded-none px-3 text-red-600 hover:bg-red-50 hover:text-red-600"
                 onClick={() => setAddingNew(true)}
               >
                 + Add Unit
               </Button>
             )}
           </div>
-        </div>
+        </Card>
       )}
     </div>
   )

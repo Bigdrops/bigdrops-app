@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { toast } from '@/hooks/use-toast'
+import { Button } from '@/components/ui/button'
 
 const CLOUD_NAME = 'ddhqvv77g'
 const UPLOAD_PRESET = 'ml_default'
@@ -41,19 +42,23 @@ export default function ItemImageUpload({ value, onChange }) {
 
   if (value) {
     return (
-      <div style={{ marginTop: '6px' }}>
+      <div className="mt-1.5">
         <a href={value} target="_blank" rel="noreferrer">
           <img
             src={value}
             alt="Item"
-            style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #eee', display: 'block', cursor: 'pointer' }}
+            className="block h-14 w-14 cursor-pointer rounded-md border border-zinc-200 object-cover"
           />
         </a>
-        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-          <div onClick={() => ref.current.click()} style={{ fontSize: '11px', color: '#6366F1', cursor: 'pointer' }}>Change</div>
-          <div onClick={() => onChange(null)} style={{ fontSize: '11px', color: '#CC0000', cursor: 'pointer' }}>Remove</div>
+        <div className="mt-1 flex gap-2">
+          <Button type="button" variant="link" size="xs" className="h-auto p-0 text-[11px] text-indigo-500 no-underline hover:no-underline" onClick={() => ref.current.click()}>
+            Change
+          </Button>
+          <Button type="button" variant="link" size="xs" className="h-auto p-0 text-[11px] text-red-700 no-underline hover:no-underline" onClick={() => onChange(null)}>
+            Remove
+          </Button>
         </div>
-        <input ref={ref} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
+        <input ref={ref} type="file" accept="image/*" className="hidden" onChange={e => handleFile(e.target.files[0])} />
       </div>
     )
   }
@@ -63,23 +68,18 @@ export default function ItemImageUpload({ value, onChange }) {
       onClick={() => ref.current.click()}
       onDrop={handleDrop}
       onDragOver={e => e.preventDefault()}
-      style={{
-        marginTop: '6px', width: '56px', height: '56px',
-        border: '2px dashed #ddd', borderRadius: '6px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', color: '#bbb', fontSize: uploading ? '10px' : '20px',
-        flexDirection: 'column', gap: '2px', textAlign: 'center',
-        backgroundColor: uploading ? '#f9f9f9' : 'white',
-      }}
+      className={`mt-1.5 flex h-14 w-14 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md border-2 border-dashed text-center ${
+        uploading ? 'border-zinc-300 bg-zinc-50 text-[10px] text-zinc-400' : 'border-zinc-300 bg-white text-xl text-zinc-400'
+      }`}
       title="Add image"
     >
       {uploading ? (
         <>
-          <div style={{ fontSize: '14px' }}>⏳</div>
-          <div style={{ fontSize: '9px', color: '#aaa' }}>Uploading</div>
+          <div className="text-sm">⏳</div>
+          <div className="text-[9px] text-zinc-400">Uploading</div>
         </>
       ) : '🖼'}
-      <input ref={ref} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
+      <input ref={ref} type="file" accept="image/*" className="hidden" onChange={e => handleFile(e.target.files[0])} />
     </div>
   )
 }
