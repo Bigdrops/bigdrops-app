@@ -1,9 +1,10 @@
-export type PdfTemplateId = 'proforma' | 'bold' | 'compact' | 'quotation'
+export type PdfTemplateId = 'proforma' | 'bold' | 'compact' | 'professional' | 'quotation'
 
 export const PDF_TEMPLATES = [
   { id: 'proforma' as PdfTemplateId, label: 'Proforma', description: 'Green · Centered' },
   { id: 'bold' as PdfTemplateId, label: 'Bold', description: 'Dark band · Strong' },
   { id: 'compact' as PdfTemplateId, label: 'Compact', description: 'Tight · Dense' },
+  { id: 'professional' as PdfTemplateId, label: 'Professional', description: 'Muted · Premium' },
   { id: 'quotation' as PdfTemplateId, label: 'Standard', description: 'Clean · Formal' },
 ]
 

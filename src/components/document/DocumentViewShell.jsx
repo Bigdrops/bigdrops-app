@@ -52,6 +52,10 @@ const templatePreviewById = {
     shell: 'bg-slate-50',
     nodes: ['h-1 w-full rounded-full bg-slate-300', 'h-0.5 w-full rounded-full bg-slate-200', 'h-0.5 w-full rounded-full bg-slate-200', 'h-0.5 w-4/5 rounded-full bg-slate-200'],
   },
+  professional: {
+    shell: 'bg-slate-100',
+    nodes: ['h-1.5 w-16 rounded-full bg-slate-700', 'h-1 w-14 rounded-full bg-slate-300', 'mt-1 h-3 w-full rounded-sm bg-slate-200', 'h-1 w-3/5 rounded-full bg-slate-300'],
+  },
   quotation: {
     shell: 'bg-slate-50',
     nodes: ['h-1.5 w-12 rounded-full bg-slate-950', 'h-1 w-full rounded-full bg-slate-300', 'h-1 w-3/5 rounded-full bg-slate-200'],

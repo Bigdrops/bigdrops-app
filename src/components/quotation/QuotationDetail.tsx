@@ -305,6 +305,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       const templateMap = {
         bold: () => import('@/components/pdf/InvoicePDF_Bold'),
         compact: () => import('@/components/pdf/InvoicePDF_Compact'),
+        professional: () => import('@/components/pdf/InvoicePDF_Professional'),
         proforma: () => import('@/components/pdf/InvoicePDF_Proforma'),
         quotation: () => import('./QuotationPDF'),
       }
@@ -313,7 +314,16 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         (templateMap[pdfTemplate] ?? templateMap.proforma)(),
       ])
       const blob = await pdf(
-        <TemplatePDF document={quotation} items={items} client={client} settings={settings} computedResult={computedResult} designPreset={pdfDesignPreset} />
+        <TemplatePDF
+          document={quotation}
+          items={items}
+          client={client}
+          settings={settings}
+          computedResult={computedResult}
+          designPreset={pdfDesignPreset}
+          bankAccounts={bankAccounts}
+          pdfOutput={pdfOutput}
+        />
       ).toBlob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -1159,7 +1169,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
                   return (
                     <div
                       key={t.id}
-                      onClick={() => setPdfTemplate(t.id)}
+                      onClick={() => handlePdfTemplateChange(t.id)}
                       style={{
                         flexShrink: 0,
                         width: 110,
