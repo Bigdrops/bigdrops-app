@@ -7,7 +7,7 @@ export default function EditWaybill() {
   const { id } = useParams<{ id: string }>()
 
   return (
-    <Layout title="Edit Waybill">
+    <Layout title="Edit Waybill" session={null}>
       <WaybillForm mode="edit" waybillId={id} />
     </Layout>
   )

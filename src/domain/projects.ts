@@ -74,6 +74,38 @@ export function extractProjectCodeSequence(code: unknown, prefix: string) {
   return Number.isFinite(sequence) ? sequence : 0
 }
 
+type ProjectCodeError = {
+  code?: string | null
+  message?: string | null
+  details?: string | null
+  hint?: string | null
+}
+
+type CreateProjectPayload = {
+  name: string
+  client_id?: string | null
+  client_name?: string | null
+  status: string
+  start_date: string
+  project_value?: number | null
+  po_number?: string | null
+  notes?: string | null
+  location?: string | null
+}
+
+function errorMentionsProjectCode(error: ProjectCodeError | null | undefined) {
+  const haystack = [error?.message, error?.details, error?.hint]
+    .map((value) => normalizeText(value))
+    .filter(Boolean)
+    .join(' ')
+
+  return haystack.includes('project_code')
+}
+
+export function isProjectCodeConflict(error: ProjectCodeError | null | undefined) {
+  return error?.code === '23505' && errorMentionsProjectCode(error)
+}
+
 export async function generateNextProjectCode(
   supabaseClient: {
     from: (table: string) => {
@@ -98,4 +130,52 @@ export async function generateNextProjectCode(
     (data || []).reduce((max, project) => Math.max(max, extractProjectCodeSequence(project.project_code, prefix)), 0) + 1
 
   return `${prefix}${String(nextSequence).padStart(3, '0')}`
+}
+
+export async function createProjectWithGeneratedCode(
+  supabaseClient: {
+    from: (table: string) => {
+      select: (columns: string) => {
+        ilike: (column: string, pattern: string) => Promise<{ data?: Array<{ project_code?: string | null }>; error?: ProjectCodeError | null }>
+      }
+      insert: (payload: Record<string, unknown>) => {
+        select: () => {
+          single: () => Promise<{ data?: { id: string }; error?: ProjectCodeError | null }>
+        }
+      }
+    }
+  },
+  payload: CreateProjectPayload,
+  maxRetries = 2,
+) {
+  let lastError: ProjectCodeError | Error | null = null
+
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+    try {
+      const projectCode = await generateNextProjectCode(supabaseClient)
+      const result = await supabaseClient
+        .from('projects')
+        .insert({
+          project_code: projectCode,
+          ...payload,
+        })
+        .select()
+        .single()
+
+      if (!result.error) {
+        return result
+      }
+
+      if (!isProjectCodeConflict(result.error)) {
+        return result
+      }
+
+      lastError = result.error
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Could not create project.')
+      break
+    }
+  }
+
+  return { data: null, error: lastError }
 }
