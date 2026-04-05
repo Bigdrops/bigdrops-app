@@ -1,8 +1,8 @@
+import { lazy, Suspense } from 'react'
 import type { ReactNode } from 'react'
 
 import { Link2, NotebookText, Plus, Save, Signature, X } from 'lucide-react'
 
-import RichTextEditor from '@/components/RichTextEditor'
 import SignatoryPicker from '@/components/SignatoryPicker'
 import { Input } from '@/components/ui/input'
 import {
@@ -12,6 +12,16 @@ import {
   pageCardCls,
   type LinkAttachment,
 } from './mobileFormPrimitives'
+
+const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
+
+function EditorLoadingState() {
+  return (
+    <div className="rounded-2xl border border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      Loading editor...
+    </div>
+  )
+}
 
 interface InvoiceTextFields {
   notes?: string | null
@@ -54,11 +64,13 @@ export function MobileInvoiceNotesTermsSection({
           <label className={labelCls}>Notes Title</label>
           <Input value={notesTitle} onChange={(event) => setNotesTitle(event.target.value)} className={fieldCls} />
           <div className="mt-3">
-            <RichTextEditor
-              value={invoice.notes || ''}
-              onChange={(value: string) => updateInvoice('notes', value)}
-              placeholder="Notes..."
-            />
+            <Suspense fallback={<EditorLoadingState />}>
+              <RichTextEditor
+                value={invoice.notes || ''}
+                onChange={(value: string) => updateInvoice('notes', value)}
+                placeholder="Notes..."
+              />
+            </Suspense>
           </div>
         </div>
 
@@ -66,11 +78,13 @@ export function MobileInvoiceNotesTermsSection({
           <label className={labelCls}>Terms Title</label>
           <Input value={termsTitle} onChange={(event) => setTermsTitle(event.target.value)} className={fieldCls} />
           <div className="mt-3">
-            <RichTextEditor
-              value={invoice.terms || ''}
-              onChange={(value: string) => updateInvoice('terms', value)}
-              placeholder="Terms..."
-            />
+            <Suspense fallback={<EditorLoadingState />}>
+              <RichTextEditor
+                value={invoice.terms || ''}
+                onChange={(value: string) => updateInvoice('terms', value)}
+                placeholder="Terms..."
+              />
+            </Suspense>
           </div>
         </div>
       </div>

@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useMemo, useRef, useState } from 'react'
 import {
   BriefcaseBusiness,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   FileInput,
   FolderPlus,
   Hash,
@@ -16,11 +17,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import ClientSelector from '@/components/ClientSelector'
-import ColumnManager from '@/components/ColumnManager'
 import ActionsSheet from './ActionsSheet'
 import MobileItemCard from './MobileItemCard'
 import MobileGroupCard from './MobileGroupCard'
-import JsonItemsImportSheet from '@/components/items/JsonItemsImportSheet'
 import {
   asLinkAttachment,
   ChipButton,
@@ -38,6 +37,17 @@ import {
   MobileInvoiceReferenceLinksSection,
   MobileInvoiceSignatorySection,
 } from '@/components/invoice/mobile/MobileInvoiceCollapsibleSections'
+
+const ColumnManager = lazy(() => import('@/components/ColumnManager'))
+const JsonItemsImportSheet = lazy(() => import('@/components/items/JsonItemsImportSheet'))
+
+function SheetLoadingState({ label }) {
+  return (
+    <div className={`${pageCardCls} mx-3 p-4 text-sm text-[#64748b] sm:mx-4 md:mx-auto md:max-w-3xl`}>
+      Loading {label}...
+    </div>
+  )
+}
 
 export default function MobileInvoiceForm(props) {
   const {
@@ -809,37 +819,43 @@ export default function MobileInvoiceForm(props) {
         }}
       />
 
-      <JsonItemsImportSheet
-        open={showImportSheet}
-        onOpenChange={setShowImportSheet}
-        onApplyImport={onApplyImport}
-        items={items}
-        columns={columns}
-        adapter={importAdapter}
-        title="Import JSON"
-        side="bottom"
-        contentClassName="sm:mx-auto sm:max-w-2xl"
-      />
+      {showImportSheet ? (
+        <Suspense fallback={<SheetLoadingState label="import tools" />}>
+          <JsonItemsImportSheet
+            open={showImportSheet}
+            onOpenChange={setShowImportSheet}
+            onApplyImport={onApplyImport}
+            items={items}
+            columns={columns}
+            adapter={importAdapter}
+            title="Import JSON"
+            side="bottom"
+            contentClassName="sm:mx-auto sm:max-w-2xl"
+          />
+        </Suspense>
+      ) : null}
 
       {showColumnManager ? (
-        <ColumnManager
-          columns={columns}
-          onUpdate={updateColumn}
-          onToggle={toggleVisible}
-          onAddCustom={addCustomColumn}
-          onRemoveCustom={removeCustomColumn}
-          onReset={resetColumns}
-          onMove={moveColumn}
-          onClose={() => setShowColumnManager(false)}
-          vat={Number(invoice.vat || 0)}
-          setVat={(value) => updateInvoice('vat', value)}
-          wht={Number(invoice.wht || 0)}
-          setWht={(value) => updateInvoice('wht', value)}
-          whtType={whtType}
-          setWhtType={setWhtType}
-          items={items}
-          onResetItemOverrides={onResetItemOverrides}
-        />
+        <Suspense fallback={<SheetLoadingState label="column settings" />}>
+          <ColumnManager
+            columns={columns}
+            onUpdate={updateColumn}
+            onToggle={toggleVisible}
+            onAddCustom={addCustomColumn}
+            onRemoveCustom={removeCustomColumn}
+            onReset={resetColumns}
+            onMove={moveColumn}
+            onClose={() => setShowColumnManager(false)}
+            vat={Number(invoice.vat || 0)}
+            setVat={(value) => updateInvoice('vat', value)}
+            wht={Number(invoice.wht || 0)}
+            setWht={(value) => updateInvoice('wht', value)}
+            whtType={whtType}
+            setWhtType={setWhtType}
+            items={items}
+            onResetItemOverrides={onResetItemOverrides}
+          />
+        </Suspense>
       ) : null}
     </>
   )

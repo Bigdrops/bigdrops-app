@@ -10,11 +10,6 @@ import SplashOverlay from '@/components/app/SplashOverlay'
 import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
 import { isInvalidSessionError } from '@/auth/sessionErrors'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
-import { processNextPendingCsrCreate } from '@/lib/native/csrSync'
-import { hydrateLocalDeviceProfile } from '@/lib/native/deviceHydration'
-import { getOfflineAccessState } from '@/lib/native/offlineAccess'
-import { processNextPendingQuotationCreate } from '@/lib/native/quotationSync'
-import { processNextPendingWaybillCreate } from '@/lib/native/waybillSync'
 
 const Login = lazy(() => import('./pages/Login'))
 const PendingApproval = lazy(() => import('./pages/PendingApproval'))
@@ -29,6 +24,47 @@ const SPLASH_TIPS = [
 const RECOVERY_COOLDOWN_MS = 1500
 
 const AUTH_DEBUG = import.meta.env.DEV
+
+let offlineAccessModulePromise
+let deviceHydrationModulePromise
+let waybillSyncModulePromise
+let csrSyncModulePromise
+let quotationSyncModulePromise
+
+const loadOfflineAccessModule = () => {
+  if (!offlineAccessModulePromise) {
+    offlineAccessModulePromise = import('@/lib/native/offlineAccess')
+  }
+  return offlineAccessModulePromise
+}
+
+const loadDeviceHydrationModule = () => {
+  if (!deviceHydrationModulePromise) {
+    deviceHydrationModulePromise = import('@/lib/native/deviceHydration')
+  }
+  return deviceHydrationModulePromise
+}
+
+const loadWaybillSyncModule = () => {
+  if (!waybillSyncModulePromise) {
+    waybillSyncModulePromise = import('@/lib/native/waybillSync')
+  }
+  return waybillSyncModulePromise
+}
+
+const loadCsrSyncModule = () => {
+  if (!csrSyncModulePromise) {
+    csrSyncModulePromise = import('@/lib/native/csrSync')
+  }
+  return csrSyncModulePromise
+}
+
+const loadQuotationSyncModule = () => {
+  if (!quotationSyncModulePromise) {
+    quotationSyncModulePromise = import('@/lib/native/quotationSync')
+  }
+  return quotationSyncModulePromise
+}
 
 function debugAuth(...args) {
   if (!AUTH_DEBUG) return
@@ -122,7 +158,18 @@ function App() {
   }
 
   const refreshOfflineAccessState = async () => {
+    if (!canUseNativeSqlite()) {
+      const fallbackAccessState = {
+        allowed: true,
+        expiresAt: null,
+        reason: 'not_native',
+      }
+      setOfflineAccessState(fallbackAccessState)
+      return fallbackAccessState
+    }
+
     try {
+      const { getOfflineAccessState } = await loadOfflineAccessModule()
       const nextAccessState = await getOfflineAccessState()
       setOfflineAccessState(nextAccessState)
       return nextAccessState
@@ -146,6 +193,7 @@ function App() {
     waybillSyncingRef.current = true
 
     try {
+      const { processNextPendingWaybillCreate } = await loadWaybillSyncModule()
       const result = await processNextPendingWaybillCreate()
 
       if (result.status === 'synced') {
@@ -180,6 +228,7 @@ function App() {
     csrSyncingRef.current = true
 
     try {
+      const { processNextPendingCsrCreate } = await loadCsrSyncModule()
       const result = await processNextPendingCsrCreate()
 
       if (result.status === 'synced') {
@@ -214,6 +263,7 @@ function App() {
     quotationSyncingRef.current = true
 
     try {
+      const { processNextPendingQuotationCreate } = await loadQuotationSyncModule()
       const result = await processNextPendingQuotationCreate()
 
       if (result.status === 'synced') {
@@ -282,9 +332,13 @@ function App() {
           setProfile(nextProfile)
           setResolvedProfileUserId(userId)
 
-          void hydrateLocalDeviceProfile({ userId }).catch((error) => {
-            console.warn('Local device hydration skipped:', error)
-          })
+          if (canUseNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine !== false) {
+            void loadDeviceHydrationModule()
+              .then(({ hydrateLocalDeviceProfile }) => hydrateLocalDeviceProfile({ userId }))
+              .catch((error) => {
+                console.warn('Local device hydration skipped:', error)
+              })
+          }
         },
         onError: (err) => {
           debugAuth('loadProfile:onError', { userId, error: err })
