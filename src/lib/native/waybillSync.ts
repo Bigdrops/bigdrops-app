@@ -1,8 +1,9 @@
 import { supabase } from "../../supabase";
 
-import { canUseNativeSqlite } from "./capacitor";
+import { canUseAndroidNativeSqlite } from "./capacitor";
 import { bootstrapAppStorage } from "./appStorage";
 import { bootstrapWaybillOffline } from "./waybillOffline";
+import { getOfflineNumberConflictMessage } from "./syncErrors";
 import { query, run } from "./sqlite";
 
 type WaybillCreateQueuePayload = {
@@ -219,10 +220,16 @@ async function processWaybillCreateQueueRow(
       remoteWaybillId,
     };
   } catch (syncError) {
+    const conflictError = getOfflineNumberConflictMessage({
+      error: syncError,
+      documentLabel: "Waybill",
+      numberValue: localWaybill.waybill_number,
+    });
     const error =
-      syncError instanceof Error
+      conflictError ||
+      (syncError instanceof Error
         ? syncError.message
-        : "Waybill sync failed for an unknown reason.";
+        : "Waybill sync failed for an unknown reason.");
 
     await updateLocalWaybillStatus(localWaybillId, "failed");
     await updateQueueStatus(
@@ -262,7 +269,7 @@ async function updateLocalWaybillStatus(
 }
 
 export async function processNextPendingWaybillCreate(): Promise<WaybillSyncResult> {
-  if (!canUseNativeSqlite() || !isOnline()) {
+  if (!canUseAndroidNativeSqlite() || !isOnline()) {
     return { status: "skipped" };
   }
 
@@ -296,7 +303,7 @@ export async function processWaybillCreateQueueItem(
   remoteWaybillId?: string;
   error?: string;
 }> {
-  if (!canUseNativeSqlite() || !isOnline()) {
+  if (!canUseAndroidNativeSqlite() || !isOnline()) {
     return { status: "skipped", queueItemId };
   }
 
@@ -329,7 +336,7 @@ export async function processWaybillCreateQueueItem(
 export async function listPendingOrFailedWaybillCreateQueueItems(): Promise<
   WaybillCreateQueueItem[]
 > {
-  if (!canUseNativeSqlite()) {
+  if (!canUseAndroidNativeSqlite()) {
     return [];
   }
 

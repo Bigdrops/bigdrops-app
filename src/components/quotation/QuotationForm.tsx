@@ -24,7 +24,7 @@ import {
 } from '@/domain/quotation'
 import type { ApplyImportResult } from '@/domain/import/types'
 import { computeDocument } from '@/lib/Calculations'
-import { canUseNativeSqlite } from '@/lib/native/capacitor'
+import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import { type ProjectLookupClient, type ProjectPrefillState, validateProjectAssignment } from '@/domain/projects'
 import {
   createOfflineQuotationDraft,
@@ -44,7 +44,7 @@ function useIsMobile() {
 }
 
 function canUseOfflineQuotationDrafts() {
-  return canUseNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine === false
+  return canUseAndroidNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine === false
 }
 
 function makeQuotationGroupId() {

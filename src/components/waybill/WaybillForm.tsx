@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/hooks/use-toast'
-import { canUseNativeSqlite } from '@/lib/native/capacitor'
+import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import { type ProjectLookupClient, validateProjectAssignment } from '@/domain/projects'
 import {
   createOfflineWaybillDraft,
@@ -67,7 +67,7 @@ const hasInvoicePrefillDetails = (invoice?: ProjectPrefillState['sourceInvoice']
   Boolean(invoice?.invoiceNumber || invoice?.clientId || invoice?.clientName || invoice?.poNumber)
 
 function canUseOfflineWaybillDrafts() {
-  return canUseNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine === false
+  return canUseAndroidNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine === false
 }
 
 function Field({ label, help, required, children }: { label: string; help?: string; required?: boolean; children: React.ReactNode }) {

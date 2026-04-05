@@ -34,7 +34,7 @@ import { getDocumentActionState, getProjectActionState } from '@/domain/document
 import { fetchInvoiceSummary, fetchProjectSummary } from '@/domain/documentRelationships'
 import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { isDocumentFillableEnabled } from '@/lib/documentFillableSettings'
-import { ensureFillableWebFontsLoaded } from '@/lib/pdfFontRegistry'
+import { ensureFillableWebFontsLoaded } from '@/lib/pdfFillableFonts'
 
 export default function ViewCSR() {
   const { id } = useParams()

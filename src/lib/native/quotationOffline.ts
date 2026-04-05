@@ -1,12 +1,13 @@
-import { canUseNativeSqlite } from "./capacitor";
+import { canUseAndroidNativeSqlite } from "./capacitor";
 import {
   bootstrapAppStorage,
   enqueueSyncQueueItem,
   getAppMetaValue,
   setAppMetaValue,
 } from "./appStorage";
+import { requireAndroidDeviceAssignment } from "./deviceAssignment";
 import { getOfflineAccessState } from "./offlineAccess";
-import { executeSet, query, run } from "./sqlite";
+import { executeSet, run } from "./sqlite";
 
 export type OfflineQuotationStatus = "draft" | "sent" | "accepted" | "rejected";
 
@@ -36,14 +37,10 @@ export type CreateOfflineQuotationInput = {
   items: unknown[];
 };
 
-type LocalDeviceProfileRow = {
-  device_id: string | null;
-};
-
 let quotationOfflineBootstrapPromise: Promise<void> | null = null;
 
 function assertNativeOfflineContext(): void {
-  if (!canUseNativeSqlite()) {
+  if (!canUseAndroidNativeSqlite()) {
     throw new Error("Offline quotation drafts are only available in the native Android app.");
   }
 }
@@ -57,7 +54,7 @@ function createLocalId(): string {
 }
 
 function normalizeDeviceCode(value: string): string {
-  return value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return value.trim().toUpperCase().replace(/[^A-Z]/g, "");
 }
 
 function getQuotationCounterKey(deviceCode: string): string {
@@ -99,20 +96,9 @@ async function requireOfflineAccessWindow(): Promise<void> {
 }
 
 async function getAssignedDeviceCode(): Promise<string> {
-  await bootstrapAppStorage();
-
-  const rows = await query<LocalDeviceProfileRow>(
-    `
-      SELECT device_id
-      FROM device_profile
-      WHERE device_id IS NOT NULL AND TRIM(device_id) <> ''
-      ORDER BY datetime(updated_at) DESC
-      LIMIT 1;
-    `,
-  );
-
-  const deviceCode = normalizeDeviceCode(String(rows[0]?.device_id || ""));
-  if (!deviceCode) {
+  const assignment = await requireAndroidDeviceAssignment();
+  const deviceCode = normalizeDeviceCode(assignment.deviceCode);
+  if (!/^[A-Z]{2}$/.test(deviceCode)) {
     throw new Error(
       "No local device profile is available for offline quotation numbering. Sign in online first.",
     );

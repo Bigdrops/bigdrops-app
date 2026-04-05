@@ -1,12 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Loader2, Smartphone, Trash2, UserCheck, UserX } from 'lucide-react'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
 import { supabase } from '@/supabase'
 import { getErrorMessage } from './settings-helpers'
 import type { SettingsSession, SettingsToastFn } from './settings-types'
@@ -22,7 +16,15 @@ type AdminUser = {
 }
 
 type DeviceRow = {
+  id: string
+  installation_id?: string | null
   device_code: string
+  device_name?: string | null
+  platform?: string | null
+  active?: boolean | null
+  assigned_at?: string | null
+  last_seen_at?: string | null
+  assigned_automatically?: boolean | null
   user_id?: string | null
   profiles?: { email?: string | null } | null
 }
@@ -91,12 +93,6 @@ function ConfirmModal({
           <p className="mt-2 text-xs text-muted-foreground">
             Their data is preserved. You can reactivate them at any time.
           </p>
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-            <span className="mt-0.5 text-sm text-amber-500">⚠️</span>
-            <p className="text-xs font-semibold text-amber-700">
-              If they are currently logged in, they will be blocked on their next action.
-            </p>
-          </div>
         </>
       ),
       confirmLabel: 'Yes, Deactivate',
@@ -117,7 +113,7 @@ function ConfirmModal({
             Their invoice and CSR history is preserved, but their login access is gone forever.
           </p>
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
-            <span className="mt-0.5 text-sm text-red-500">🚨</span>
+            <span className="mt-0.5 text-sm text-red-500">!</span>
             <p className="text-xs font-semibold text-red-700">
               This cannot be undone. Type the email address below to confirm.
             </p>
@@ -185,15 +181,14 @@ function ConfirmModal({
 export function AdminSettingsSection({
   onToast,
   session,
-  deviceCodes,
 }: {
   onToast: SettingsToastFn
   session: SettingsSession
-  deviceCodes: string[]
 }) {
   const [tab, setTab] = useState<'users' | 'devices'>('users')
   const [users, setUsers] = useState<AdminUser[]>([])
   const [devices, setDevices] = useState<DeviceRow[]>([])
+  const [deviceCodeDrafts, setDeviceCodeDrafts] = useState<Record<string, string>>({})
   const [fetching, setFetching] = useState(true)
   const [actionId, setActionId] = useState<string | null>(null)
   const [modal, setModal] = useState<{ type: ConfirmType; user: AdminUser } | null>(null)
@@ -202,10 +197,22 @@ export function AdminSettingsSection({
     setFetching(true)
     const [{ data: profiles }, { data: deviceRows }] = await Promise.all([
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-      supabase.from('devices').select('*, profiles(email)'),
+      supabase
+        .from('device_installations')
+        .select('id, installation_id, user_id, platform, device_code, device_name, active, assigned_at, last_seen_at, assigned_automatically, profiles(email)')
+        .order('assigned_at', { ascending: false }),
     ])
+
+    const normalizedDevices = ((deviceRows as DeviceRow[]) || []).map((row) => ({
+      ...row,
+      device_code: String(row.device_code || '').toUpperCase(),
+    }))
+
     setUsers((profiles as AdminUser[]) || [])
-    setDevices((deviceRows as DeviceRow[]) || [])
+    setDevices(normalizedDevices)
+    setDeviceCodeDrafts(
+      Object.fromEntries(normalizedDevices.map((row) => [row.id, row.device_code || ''])),
+    )
     setFetching(false)
   }, [])
 
@@ -238,17 +245,30 @@ export function AdminSettingsSection({
     setModal(null)
   }
 
-  const assignDevice = async (code: string, userId: string) => {
-    setActionId(code)
-    if (userId === '') {
-      await supabase.from('devices').update({ user_id: null }).eq('device_code', code)
-    } else {
-      await supabase.from('devices').upsert({ device_code: code, user_id: userId })
-      await supabase.from('profiles').update({ assigned_device_code: code }).eq('id', userId)
+  const updateDeviceCode = async (device: DeviceRow) => {
+    const nextCode = String(deviceCodeDrafts[device.id] || '').trim().toUpperCase()
+
+    if (!/^[A-Z]{2}$/.test(nextCode)) {
+      onToast('Device codes must be exactly two uppercase letters.')
+      return
     }
-    await fetchAll()
-    setActionId(null)
-    onToast('Device updated')
+
+    setActionId(device.id)
+
+    try {
+      const { error } = await supabase.rpc('admin_update_device_assignment_code', {
+        p_assignment_id: device.id,
+        p_device_code: nextCode,
+      })
+      if (error) throw error
+
+      await fetchAll()
+      onToast(`Device code updated to ${nextCode}`)
+    } catch (error) {
+      onToast('Error: ' + getErrorMessage(error))
+    } finally {
+      setActionId(null)
+    }
   }
 
   const isLoading = (id: string, suffix: string) => actionId === id + '_' + suffix
@@ -274,7 +294,7 @@ export function AdminSettingsSection({
               tab === currentTab ? 'bg-slate-900 text-white' : 'border border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
             }`}
           >
-            {currentTab === 'users' ? 'Manage Users' : 'Device Codes'}
+            {currentTab === 'users' ? 'Manage Users' : 'Device Assignments'}
           </button>
         ))}
       </div>
@@ -305,7 +325,7 @@ export function AdminSettingsSection({
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
                       {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
                       {user.assigned_device_code ? (
-                        <span className="ml-2 font-bold text-muted-foreground">· {user.assigned_device_code}</span>
+                        <span className="ml-2 font-bold text-muted-foreground">· {String(user.assigned_device_code).toUpperCase()}</span>
                       ) : null}
                     </p>
                   </div>
@@ -318,7 +338,7 @@ export function AdminSettingsSection({
                   </span>
                 </div>
                 {isSelf ? (
-                  <p className="py-1 text-center text-[11px] font-bold text-blue-400">🔒 Cannot modify your own account</p>
+                  <p className="py-1 text-center text-[11px] font-bold text-blue-400">Cannot modify your own account</p>
                 ) : (
                   <div className="flex gap-2">
                     {!user.is_approved ? (
@@ -357,44 +377,71 @@ export function AdminSettingsSection({
         </div>
       ) : (
         <div className="space-y-3">
-          {deviceCodes.map((code) => {
-            const device = devices.find((row) => row.device_code === code)
+          {devices.map((device) => {
+            const codeValue = deviceCodeDrafts[device.id] ?? device.device_code ?? ''
             return (
-              <div key={code} className="rounded-xl border border-border bg-card p-4">
+              <div key={device.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="mb-3 flex items-center gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
                     <Smartphone size={15} className="text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-foreground">Device {code}</p>
-                    <p className="text-[11px] text-muted-foreground">{device?.profiles?.email || 'Unassigned'}</p>
+                    <p className="text-sm font-black text-foreground">{device.device_name || 'Android Device'}</p>
+                    <p className="text-[11px] text-muted-foreground">{device.profiles?.email || 'Unassigned'}</p>
                   </div>
-                  {device?.profiles ? (
-                    <span className="ml-auto rounded-full bg-blue-50 px-2 py-1 text-[10px] font-black text-blue-600">
-                      Assigned
-                    </span>
-                  ) : null}
+                  <span
+                    className={`ml-auto rounded-full px-2 py-1 text-[10px] font-black ${
+                      device.active ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {device.active ? 'Active' : 'Inactive'}
+                  </span>
                 </div>
-                <Select
-                  value={device?.user_id || '__unassigned__'}
-                  onValueChange={(value) => assignDevice(code, value === '__unassigned__' ? '' : value)}
-                  disabled={actionId === code}
-                >
-                  <SelectTrigger className="w-full text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__unassigned__">— Unassign —</SelectItem>
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+                <div className="mb-3 grid gap-2 rounded-xl bg-muted/30 p-3 text-[11px] text-muted-foreground">
+                  <div>Current code: <span className="font-bold text-foreground">{device.device_code || '—'}</span></div>
+                  <div>Platform: <span className="font-medium text-foreground">{device.platform || 'android'}</span></div>
+                  <div>Installation: <span className="font-mono text-foreground">{device.installation_id || 'legacy-device-row'}</span></div>
+                  <div>Assigned: <span className="font-medium text-foreground">{device.assigned_at ? new Date(device.assigned_at).toLocaleString() : '—'}</span></div>
+                  <div>Last seen: <span className="font-medium text-foreground">{device.last_seen_at ? new Date(device.last_seen_at).toLocaleString() : '—'}</span></div>
+                  <div>Mode: <span className="font-medium text-foreground">{device.assigned_automatically ? 'Auto-assigned' : 'Manual / migrated'}</span></div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Input
+                    value={codeValue}
+                    onChange={(event) =>
+                      setDeviceCodeDrafts((current) => ({
+                        ...current,
+                        [device.id]: event.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2),
+                      }))
+                    }
+                    placeholder="AA"
+                    className="font-mono text-sm font-semibold uppercase"
+                    maxLength={2}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => updateDeviceCode(device)}
+                    disabled={actionId === device.id || codeValue === device.device_code}
+                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+                  >
+                    {actionId === device.id ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Loader2 size={11} className="animate-spin" />
+                        Saving
+                      </span>
+                    ) : (
+                      'Update Code'
+                    )}
+                  </button>
+                </div>
               </div>
             )
           })}
+          {devices.length === 0 ? (
+            <p className="py-8 text-center text-xs font-bold text-muted-foreground">NO DEVICE ASSIGNMENTS FOUND</p>
+          ) : null}
         </div>
       )}
     </div>

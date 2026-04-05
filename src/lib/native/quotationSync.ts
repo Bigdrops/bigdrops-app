@@ -2,8 +2,9 @@ import { toDbItem } from "@/domain/invoice";
 import { supabase } from "../../supabase";
 
 import { bootstrapAppStorage } from "./appStorage";
-import { canUseNativeSqlite } from "./capacitor";
+import { canUseAndroidNativeSqlite } from "./capacitor";
 import { bootstrapQuotationOffline } from "./quotationOffline";
+import { getOfflineNumberConflictMessage } from "./syncErrors";
 import { query, run } from "./sqlite";
 
 type QuotationCreateQueuePayload = {
@@ -290,10 +291,16 @@ async function processQuotationCreateQueueRow(
       remoteQuotationId,
     };
   } catch (syncError) {
+    const conflictError = getOfflineNumberConflictMessage({
+      error: syncError,
+      documentLabel: "Quotation",
+      numberValue: localQuotation.quotation_number,
+    });
     const error =
-      syncError instanceof Error
+      conflictError ||
+      (syncError instanceof Error
         ? syncError.message
-        : "Quotation sync failed for an unknown reason.";
+        : "Quotation sync failed for an unknown reason.");
 
     await updateLocalQuotationStatus(localQuotationId, "failed");
     await updateQueueStatus(
@@ -319,7 +326,7 @@ async function processQuotationCreateQueueRow(
 }
 
 export async function processNextPendingQuotationCreate(): Promise<QuotationSyncResult> {
-  if (!canUseNativeSqlite() || !isOnline()) {
+  if (!canUseAndroidNativeSqlite() || !isOnline()) {
     return { status: "skipped" };
   }
 
@@ -353,7 +360,7 @@ export async function processQuotationCreateQueueItem(
   remoteQuotationId?: string;
   error?: string;
 }> {
-  if (!canUseNativeSqlite() || !isOnline()) {
+  if (!canUseAndroidNativeSqlite() || !isOnline()) {
     return { status: "skipped", queueItemId };
   }
 
@@ -386,7 +393,7 @@ export async function processQuotationCreateQueueItem(
 export async function listPendingOrFailedQuotationCreateQueueItems(): Promise<
   QuotationCreateQueueItem[]
 > {
-  if (!canUseNativeSqlite()) {
+  if (!canUseAndroidNativeSqlite()) {
     return [];
   }
 

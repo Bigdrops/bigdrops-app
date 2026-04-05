@@ -9,7 +9,7 @@ import OfflineAccessBlocked from '@/components/app/OfflineAccessBlocked'
 import SplashOverlay from '@/components/app/SplashOverlay'
 import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
 import { isInvalidSessionError } from '@/auth/sessionErrors'
-import { canUseNativeSqlite } from '@/lib/native/capacitor'
+import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 
 const Login = lazy(() => import('./pages/Login'))
 const PendingApproval = lazy(() => import('./pages/PendingApproval'))
@@ -158,7 +158,7 @@ function App() {
   }
 
   const refreshOfflineAccessState = async () => {
-    if (!canUseNativeSqlite()) {
+    if (!canUseAndroidNativeSqlite()) {
       const fallbackAccessState = {
         allowed: true,
         expiresAt: null,
@@ -186,7 +186,7 @@ function App() {
   }
 
   const processOnePendingWaybillCreateSync = async (reason) => {
-    if (!canUseNativeSqlite()) return
+    if (!canUseAndroidNativeSqlite()) return
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return
     if (waybillSyncingRef.current) return
 
@@ -221,7 +221,7 @@ function App() {
   }
 
   const processOnePendingCsrCreateSync = async (reason) => {
-    if (!canUseNativeSqlite()) return
+    if (!canUseAndroidNativeSqlite()) return
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return
     if (csrSyncingRef.current) return
 
@@ -256,7 +256,7 @@ function App() {
   }
 
   const processOnePendingQuotationCreateSync = async (reason) => {
-    if (!canUseNativeSqlite()) return
+    if (!canUseAndroidNativeSqlite()) return
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return
     if (quotationSyncingRef.current) return
 
@@ -332,7 +332,7 @@ function App() {
           setProfile(nextProfile)
           setResolvedProfileUserId(userId)
 
-          if (canUseNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine !== false) {
+          if (canUseAndroidNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine !== false) {
             void loadDeviceHydrationModule()
               .then(({ hydrateLocalDeviceProfile }) => hydrateLocalDeviceProfile({ userId }))
               .catch((error) => {

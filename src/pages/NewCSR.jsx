@@ -15,7 +15,7 @@ import {
   serializeCsrMaterials,
 } from '../components/csr/csrUtils'
 import { getCsrPdfDocument } from '../components/csr/CSRPreviewTemplates'
-import { canUseNativeSqlite } from '../lib/native/capacitor'
+import { canUseAndroidNativeSqlite } from '../lib/native/capacitor'
 import { createOfflineCsrDraft, peekNextOfflineCsrNumber } from '../lib/native/csrOffline'
 import { validateProjectAssignment } from '@/domain/projects'
 
@@ -30,7 +30,7 @@ const hasInvoicePrefillDetails = (invoice) =>
   Boolean(invoice?.invoiceNumber || invoice?.clientId || invoice?.clientName || invoice?.poNumber)
 
 const canUseOfflineCsrDrafts = () =>
-  canUseNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine === false
+  canUseAndroidNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine === false
 
 export default function NewCSR() {
   const navigate = useNavigate()
@@ -179,6 +179,22 @@ export default function NewCSR() {
     )
   }
 
+  const handleApplyImport = (result) => {
+    setCsr((current) => ({ ...current, ...result.fields }))
+
+    if (result.hasMaterials) {
+      setMaterialsRows(
+        result.materials.length > 0
+          ? result.materials.map((row) => ({ ...DEFAULT_MATERIAL_ROW, ...row }))
+          : [{ ...DEFAULT_MATERIAL_ROW }],
+      )
+    }
+
+    if (result.hasOperationalReadings) {
+      setCsrMeta((current) => ({ ...current, showOperationalReadings: true }))
+    }
+  }
+
   const handleSave = async () => {
     if (!isField && !csr.client_id) {
       toast({ title: 'Client required', description: 'Please select a client before saving', variant: 'destructive' })
@@ -284,6 +300,7 @@ export default function NewCSR() {
         onUpdateMaterialRow={updateMaterialRow}
         onAddMaterialRow={addMaterialRow}
         onRemoveMaterialRow={removeMaterialRow}
+        onApplyImport={handleApplyImport}
         onSave={handleSave}
       />
     </Layout>

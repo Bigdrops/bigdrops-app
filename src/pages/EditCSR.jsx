@@ -74,6 +74,22 @@ export default function EditCSR() {
     )
   }
 
+  const handleApplyImport = (result) => {
+    setCsr((current) => ({ ...current, ...result.fields }))
+
+    if (result.hasMaterials) {
+      setMaterialsRows(
+        result.materials.length > 0
+          ? result.materials.map((row) => ({ ...DEFAULT_MATERIAL_ROW, ...row }))
+          : [{ ...DEFAULT_MATERIAL_ROW }],
+      )
+    }
+
+    if (result.hasOperationalReadings) {
+      setCsrMeta((current) => ({ ...current, showOperationalReadings: true }))
+    }
+  }
+
   const handleSave = async () => {
     if (!csr.client_id) {
       toast({ title: 'Client required', description: 'Please select a client before saving', variant: 'destructive' })
@@ -129,6 +145,7 @@ export default function EditCSR() {
         onUpdateMaterialRow={updateMaterialRow}
         onAddMaterialRow={addMaterialRow}
         onRemoveMaterialRow={removeMaterialRow}
+        onApplyImport={handleApplyImport}
         onSave={handleSave}
       />
     </Layout>

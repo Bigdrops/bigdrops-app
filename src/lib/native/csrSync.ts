@@ -1,8 +1,9 @@
 import { supabase } from "../../supabase";
 
 import { bootstrapAppStorage } from "./appStorage";
-import { canUseNativeSqlite } from "./capacitor";
+import { canUseAndroidNativeSqlite } from "./capacitor";
 import { bootstrapCsrOffline } from "./csrOffline";
+import { getOfflineNumberConflictMessage } from "./syncErrors";
 import { query, run } from "./sqlite";
 
 type CsrCreateQueuePayload = {
@@ -252,10 +253,16 @@ async function processCsrCreateQueueRow(
       remoteCsrId,
     };
   } catch (syncError) {
+    const conflictError = getOfflineNumberConflictMessage({
+      error: syncError,
+      documentLabel: "CSR",
+      numberValue: localCsr.csr_number,
+    });
     const error =
-      syncError instanceof Error
+      conflictError ||
+      (syncError instanceof Error
         ? syncError.message
-        : "CSR sync failed for an unknown reason.";
+        : "CSR sync failed for an unknown reason.");
 
     await updateLocalCsrStatus(localCsrId, "failed");
     await updateQueueStatus(
@@ -281,7 +288,7 @@ async function processCsrCreateQueueRow(
 }
 
 export async function processNextPendingCsrCreate(): Promise<CsrSyncResult> {
-  if (!canUseNativeSqlite() || !isOnline()) {
+  if (!canUseAndroidNativeSqlite() || !isOnline()) {
     return { status: "skipped" };
   }
 
@@ -315,7 +322,7 @@ export async function processCsrCreateQueueItem(
   remoteCsrId?: string;
   error?: string;
 }> {
-  if (!canUseNativeSqlite() || !isOnline()) {
+  if (!canUseAndroidNativeSqlite() || !isOnline()) {
     return { status: "skipped", queueItemId };
   }
 
@@ -348,7 +355,7 @@ export async function processCsrCreateQueueItem(
 export async function listPendingOrFailedCsrCreateQueueItems(): Promise<
   CsrCreateQueueItem[]
 > {
-  if (!canUseNativeSqlite()) {
+  if (!canUseAndroidNativeSqlite()) {
     return [];
   }
 

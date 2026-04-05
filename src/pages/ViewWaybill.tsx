@@ -57,7 +57,7 @@ import { useSettings } from '../hooks/useSettings'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 import { getPdfDesignPreset, getEffectiveFillableFont, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { isDocumentFillableEnabled } from '@/lib/documentFillableSettings'
-import { ensureFillableWebFontsLoaded } from '@/lib/pdfFontRegistry'
+import { ensureFillableWebFontsLoaded } from '@/lib/pdfFillableFonts'
 
 export default function ViewWaybill() {
   const { id } = useParams<{ id: string }>()

@@ -3,6 +3,12 @@ import { executeSet, initDatabase, query, run } from "./sqlite";
 export type DeviceProfileRecord = {
   id: string;
   device_id: string | null;
+  assignment_id: string | null;
+  installation_id: string | null;
+  user_id: string | null;
+  device_code: string | null;
+  device_name: string | null;
+  active: number;
   platform: string | null;
   app_version: string | null;
   last_seen_at: string | null;
@@ -13,6 +19,12 @@ export type DeviceProfileRecord = {
 export type DeviceProfileInput = {
   id?: string;
   deviceId?: string | null;
+  assignmentId?: string | null;
+  installationId?: string | null;
+  userId?: string | null;
+  deviceCode?: string | null;
+  deviceName?: string | null;
+  active?: boolean;
   platform?: string | null;
   appVersion?: string | null;
   lastSeenAt?: string | null;
@@ -36,6 +48,37 @@ function toIsoTimestamp(value?: string | null): string {
   return value ?? new Date().toISOString();
 }
 
+async function ensureDeviceProfileColumns(): Promise<void> {
+  const columnRows = await query<{ name: string }>("PRAGMA table_info(device_profile);");
+  const columnNames = new Set(columnRows.map((row) => row.name));
+  const addColumnStatements: string[] = [];
+
+  if (!columnNames.has("assignment_id")) {
+    addColumnStatements.push("ALTER TABLE device_profile ADD COLUMN assignment_id TEXT;");
+  }
+  if (!columnNames.has("installation_id")) {
+    addColumnStatements.push("ALTER TABLE device_profile ADD COLUMN installation_id TEXT;");
+  }
+  if (!columnNames.has("user_id")) {
+    addColumnStatements.push("ALTER TABLE device_profile ADD COLUMN user_id TEXT;");
+  }
+  if (!columnNames.has("device_code")) {
+    addColumnStatements.push("ALTER TABLE device_profile ADD COLUMN device_code TEXT;");
+  }
+  if (!columnNames.has("device_name")) {
+    addColumnStatements.push("ALTER TABLE device_profile ADD COLUMN device_name TEXT;");
+  }
+  if (!columnNames.has("active")) {
+    addColumnStatements.push(
+      "ALTER TABLE device_profile ADD COLUMN active INTEGER NOT NULL DEFAULT 0;",
+    );
+  }
+
+  for (const statement of addColumnStatements) {
+    await run(statement);
+  }
+}
+
 export async function bootstrapAppStorage(): Promise<void> {
   if (!bootstrapPromise) {
     bootstrapPromise = initDatabase().then(() =>
@@ -53,6 +96,12 @@ export async function bootstrapAppStorage(): Promise<void> {
             CREATE TABLE IF NOT EXISTS device_profile (
               id TEXT PRIMARY KEY NOT NULL,
               device_id TEXT,
+              assignment_id TEXT,
+              installation_id TEXT,
+              user_id TEXT,
+              device_code TEXT,
+              device_name TEXT,
+              active INTEGER NOT NULL DEFAULT 0,
               platform TEXT,
               app_version TEXT,
               last_seen_at TEXT,
@@ -79,7 +128,7 @@ export async function bootstrapAppStorage(): Promise<void> {
             "CREATE INDEX IF NOT EXISTS idx_sync_queue_status_created_at ON sync_queue (status, created_at);",
         },
       ]),
-    );
+    ).then(() => ensureDeviceProfileColumns());
   }
 
   return bootstrapPromise;
@@ -131,15 +180,27 @@ export async function upsertDeviceProfile(
       INSERT INTO device_profile (
         id,
         device_id,
+        assignment_id,
+        installation_id,
+        user_id,
+        device_code,
+        device_name,
+        active,
         platform,
         app_version,
         last_seen_at,
         created_at,
         updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         device_id = excluded.device_id,
+        assignment_id = excluded.assignment_id,
+        installation_id = excluded.installation_id,
+        user_id = excluded.user_id,
+        device_code = excluded.device_code,
+        device_name = excluded.device_name,
+        active = excluded.active,
         platform = excluded.platform,
         app_version = excluded.app_version,
         last_seen_at = excluded.last_seen_at,
@@ -148,6 +209,12 @@ export async function upsertDeviceProfile(
     [
       profileId,
       input.deviceId ?? null,
+      input.assignmentId ?? null,
+      input.installationId ?? null,
+      input.userId ?? null,
+      input.deviceCode ?? input.deviceId ?? null,
+      input.deviceName ?? null,
+      input.active ? 1 : 0,
       input.platform ?? null,
       input.appVersion ?? null,
       toIsoTimestamp(input.lastSeenAt),

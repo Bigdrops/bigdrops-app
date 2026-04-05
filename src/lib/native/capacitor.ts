@@ -11,3 +11,7 @@ export function isAndroidNative(): boolean {
 export function canUseNativeSqlite(): boolean {
   return isNativePlatform() && Capacitor.isPluginAvailable("CapacitorSQLite");
 }
+
+export function canUseAndroidNativeSqlite(): boolean {
+  return isAndroidNative() && canUseNativeSqlite();
+}

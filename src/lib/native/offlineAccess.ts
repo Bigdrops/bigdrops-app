@@ -1,6 +1,8 @@
-import { canUseNativeSqlite } from "./capacitor";
+import { supabase } from "../../supabase";
+
+import { canUseAndroidNativeSqlite } from "./capacitor";
 import { getAppMetaValue } from "./appStorage";
-import { query } from "./sqlite";
+import { getCachedDeviceAssignment, getOrCreateInstallationId } from "./deviceAssignment";
 
 export type OfflineAccessState =
   | {
@@ -11,7 +13,11 @@ export type OfflineAccessState =
   | {
       allowed: false;
       expiresAt: string | null;
-      reason: "expired_offline_window" | "missing_window";
+      reason:
+        | "expired_offline_window"
+        | "missing_window"
+        | "missing_assignment"
+        | "user_mismatch";
     };
 
 function isOnline(): boolean {
@@ -31,16 +37,8 @@ function isValidExpiryValue(expiresAt: string | null): boolean {
   return Boolean(expiresAt) && !Number.isNaN(Date.parse(String(expiresAt)));
 }
 
-async function hasLocalDeviceProfile(): Promise<boolean> {
-  const rows = await query<{ id: string }>(
-    "SELECT id FROM device_profile ORDER BY updated_at DESC LIMIT 1;",
-  );
-
-  return Boolean(rows[0]?.id);
-}
-
 export async function getOfflineAccessState(): Promise<OfflineAccessState> {
-  if (!canUseNativeSqlite()) {
+  if (!canUseAndroidNativeSqlite()) {
     return {
       allowed: true,
       expiresAt: null,
@@ -49,6 +47,28 @@ export async function getOfflineAccessState(): Promise<OfflineAccessState> {
   }
 
   const expiresAt = await getAppMetaValue("offline_access_expires_at");
+  const installationId = await getOrCreateInstallationId();
+  const assignment = await getCachedDeviceAssignment();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const currentUserId = String(session?.user?.id || "").trim();
+
+  if (!installationId || !assignment || !assignment.active) {
+    return {
+      allowed: false,
+      expiresAt: expiresAt ?? null,
+      reason: "missing_assignment",
+    };
+  }
+
+  if (currentUserId && assignment.userId !== currentUserId) {
+    return {
+      allowed: false,
+      expiresAt: expiresAt ?? null,
+      reason: "user_mismatch",
+    };
+  }
 
   if (isOnline()) {
     return {
@@ -58,8 +78,7 @@ export async function getOfflineAccessState(): Promise<OfflineAccessState> {
     };
   }
 
-  const hasProfile = await hasLocalDeviceProfile();
-  if (!hasProfile || !isValidExpiryValue(expiresAt)) {
+  if (!isValidExpiryValue(expiresAt)) {
     return {
       allowed: false,
       expiresAt: expiresAt ?? null,

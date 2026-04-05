@@ -1,17 +1,17 @@
 import { supabase } from "../../supabase";
 
-import { canUseNativeSqlite, isAndroidNative } from "./capacitor";
-import { setAppMetaValue, upsertDeviceProfile } from "./appStorage";
+import { canUseAndroidNativeSqlite } from "./capacitor";
+import { setAppMetaValue } from "./appStorage";
+import {
+  ensureAndroidDeviceAssignment,
+  getOrCreateInstallationId,
+  seedOfflineCountersFromServer,
+} from "./deviceAssignment";
 
 const OFFLINE_ACCESS_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 export type HydrateDeviceProfileArgs = {
   userId: string;
-};
-
-type RemoteDeviceAssignment = {
-  device_code: string;
-  user_id: string | null;
 };
 
 function isOnline(): boolean {
@@ -22,29 +22,10 @@ function getOfflineAccessExpiry(lastOnlineAt: Date): string {
   return new Date(lastOnlineAt.getTime() + OFFLINE_ACCESS_WINDOW_MS).toISOString();
 }
 
-async function fetchAssignedDevice(
-  userId: string,
-): Promise<RemoteDeviceAssignment | null> {
-  // Assumption: one active row in `devices` is assigned to the current user via `user_id`.
-  const { data, error } = await supabase
-    .from("devices")
-    .select("device_code,user_id")
-    .eq("user_id", userId)
-    .order("device_code", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  return data ?? null;
-}
-
 export async function hydrateLocalDeviceProfile(
   args: HydrateDeviceProfileArgs,
 ): Promise<void> {
-  if (!args.userId || !isOnline() || !canUseNativeSqlite()) {
+  if (!args.userId || !isOnline() || !canUseAndroidNativeSqlite()) {
     return;
   }
 
@@ -62,15 +43,17 @@ export async function hydrateLocalDeviceProfile(
   }
 
   const lastOnlineAt = new Date();
-  const assignedDevice = await fetchAssignedDevice(args.userId);
+  const installationId = await getOrCreateInstallationId();
+  if (!installationId) {
+    return;
+  }
 
-  await upsertDeviceProfile({
-    id: args.userId,
-    deviceId: assignedDevice?.device_code ?? null,
-    platform: isAndroidNative() ? "android" : "native",
-    appVersion: null,
-    lastSeenAt: lastOnlineAt.toISOString(),
+  const assignment = await ensureAndroidDeviceAssignment({
+    installationId,
+    userId: args.userId,
+    deviceName: "Android Device",
   });
+  await seedOfflineCountersFromServer(assignment);
 
   await setAppMetaValue("last_online_at", lastOnlineAt.toISOString());
   await setAppMetaValue(

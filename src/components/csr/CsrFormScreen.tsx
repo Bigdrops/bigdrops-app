@@ -4,8 +4,10 @@ import { Hash, MoreHorizontal, Save } from 'lucide-react'
 import { supabase } from '@/supabase'
 import ClientSelector from '@/components/ClientSelector'
 import UnitInput from '@/components/UnitInput'
+import CsrImportSheet from '@/components/csr/CsrImportSheet'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import type { ParsedCsrImport } from '@/components/csr/csrImport'
 
 type SignatoryRow = {
   id: string
@@ -45,6 +47,7 @@ type Props = {
   onUpdateMaterialRow: (index: number, field: string, value: string) => void
   onAddMaterialRow: () => void
   onRemoveMaterialRow: (index: number) => void
+  onApplyImport: (result: ParsedCsrImport) => void
   onSave: () => void
 }
 
@@ -170,10 +173,12 @@ export default function CsrFormScreen({
   onUpdateMaterialRow,
   onAddMaterialRow,
   onRemoveMaterialRow,
+  onApplyImport,
   onSave,
 }: Props) {
   const [signatories, setSignatories] = React.useState<SignatoryRow[]>([])
   const [signatorySheetOpen, setSignatorySheetOpen] = React.useState(false)
+  const [importSheetOpen, setImportSheetOpen] = React.useState(false)
   const [materialsTitle, setMaterialsTitle] = React.useState('Materials Used')
   const [recipientSignatureName, setRecipientSignatureName] = React.useState('')
   const recipientSignatureInputRef = React.useRef<HTMLInputElement | null>(null)
@@ -281,8 +286,8 @@ export default function CsrFormScreen({
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              disabled
-              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[#e2e8f0] bg-white px-3 text-[13px] font-bold text-[#334155] opacity-70"
+              onClick={() => setImportSheetOpen(true)}
+              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[#e2e8f0] bg-white px-3 text-[13px] font-bold text-[#334155]"
             >
               Import
             </button>
@@ -763,6 +768,12 @@ export default function CsrFormScreen({
           </div>
         </SheetContent>
       </Sheet>
+
+      <CsrImportSheet
+        open={importSheetOpen}
+        onOpenChange={setImportSheetOpen}
+        onApplyImport={onApplyImport}
+      />
     </div>
   )
 }

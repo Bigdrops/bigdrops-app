@@ -27,7 +27,6 @@ import {
 } from 'lucide-react'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
-const DEVICE_CODES = ['La', 'Lb', 'Lc', 'Ld']
 
 // ─── Main Settings Page ────────────────────────────────────────────────────────
 const SECTIONS = [
@@ -67,7 +66,7 @@ export default function Settings() {
       case 'dashboard': return <DashboardSettingsSection />
       case 'archives': return <ArchivesSettingsSection onToast={showToast} />
       case 'user':     return <UserSettingsSection session={session} onToast={showToast} />
-      case 'admin':    return <AdminSettingsSection onToast={showToast} session={session} deviceCodes={DEVICE_CODES} />
+      case 'admin':    return <AdminSettingsSection onToast={showToast} session={session} />
       default:         return null
     }
   }
