@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -246,45 +247,49 @@ export default function ViewCSR() {
   return (
     <Layout title={previewData.csr_number}>
       <div className="w-full max-w-[900px]">
-        <div className={`${documentDetailHeaderCardClassName} bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF4FF_100%)]`}>
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className={`mb-2.5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white text-slate-900 ${documentDetailStatusBadgeClassName}`}>
-                Customer Service Report
-              </div>
-              <div className="mb-1 text-[26px] font-bold text-slate-900">{previewData.csr_number}</div>
-              <div className="text-sm leading-[1.6] text-slate-600">
-                {previewData.client_name || 'Unassigned client'}{previewData.date ? ` • ${previewData.date}` : ''}
-              </div>
-            </div>
+        
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => navigate('/csr')}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-border bg-card text-slate-600 shadow-sm transition hover:bg-muted/60"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+        </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Button type="button" variant="outline" className="h-10 rounded-[10px] px-4 text-[13px] font-semibold" onClick={() => navigate('/csr')}>
-                Back
-              </Button>
-              <Button type="button" className="h-10 rounded-[10px] bg-blue-700 px-[18px] text-[13px] font-bold shadow-[0_10px_24px_rgba(0,86,179,0.18)] hover:bg-blue-800" onClick={handleDownload}>
-                Download PDF
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 rounded-[10px] px-4 text-[13px] font-bold"
-                onClick={() => navigate('/csr/edit/' + id)}
-              >
-                Edit CSR
-              </Button>
-              <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-10 rounded-[10px] px-4 text-[13px] font-bold"
-                  onClick={() => setShowMore(true)}
-                >
-                  More actions
-                </Button>
-              </div>
+        <div className={`${documentDetailHeaderCardClassName} bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF4FF_100%)]`}>
+          <div>
+            <div className={`mb-2.5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white text-slate-900 ${documentDetailStatusBadgeClassName}`}>
+              Customer Service Report
+            </div>
+            <div className="mb-1 text-[26px] font-bold text-slate-900">{previewData.csr_number}</div>
+            <div className="text-sm leading-[1.6] text-slate-600">
+              {previewData.client_name || 'Unassigned client'}{previewData.date ? ` • ${previewData.date}` : ''}
             </div>
           </div>
+        </div>
+
+        <div className="mt-4 mb-6 grid grid-cols-3 gap-2">
+          <Button type="button" className="h-[44px] w-full rounded-[12px] bg-blue-700 text-[13px] font-bold shadow-[0_10px_24px_rgba(0,86,179,0.18)] hover:bg-blue-800" onClick={handleDownload}>
+            PDF
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-[44px] w-full rounded-[12px] text-[13px] font-bold"
+            onClick={() => navigate('/csr/edit/' + id)}
+          >
+            Edit
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-[44px] w-full rounded-[12px] text-[13px] font-bold"
+            onClick={() => setShowMore(true)}
+          >
+            More
+          </Button>
         </div>
 
         <CSRPreviewPanel
