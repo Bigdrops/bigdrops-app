@@ -24,6 +24,7 @@ import ProjectDocumentCard from '@/components/project/ProjectDocumentCard'
 import ProjectDocumentSheet from '@/components/project/ProjectDocumentSheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
+import { getClientMismatchMessage, isClientMismatch } from '@/domain/projects'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
@@ -227,47 +228,65 @@ export default function ProjectDetail() {
     setLinkError('')
     const val = linkDocId.trim()
     if (!val) {
-      setLinkError('Enter a document number or ID')
+      setLinkError('Enter a document number')
       return
     }
 
     setLinking(true)
+    const linkConfig = {
+      invoice: { table: 'invoices', numberField: 'invoice_number' },
+      csr: { table: 'csrs', numberField: 'csr_number' },
+      quotation: { table: 'quotations', numberField: 'quotation_number' },
+      waybill: { table: 'waybills', numberField: 'waybill_number' },
+    }
+    const selectedConfig = linkConfig[linkType]
+    const { data, error } = await supabase
+      .from(selectedConfig.table)
+      .select(`id, ${selectedConfig.numberField}, client_id, client_name`)
+      .is('project_id', null)
+      .ilike(selectedConfig.numberField, val)
+      .maybeSingle()
 
-    let found = false
-    if (linkType === 'invoice') {
-      const isUUID = /^[0-9a-f-]{36}$/i.test(val)
-      let query = supabase.from('invoices').select('id, invoice_number').is('project_id', null)
-      query = isUUID ? query.eq('id', val) : query.ilike('invoice_number', val)
-      const { data } = await query.maybeSingle()
-      if (data) {
-        await supabase.from('invoices').update({ project_id: id }).eq('id', data.id)
-        found = true
-      }
-    } else if (linkType === 'csr') {
-      const isUUID = /^[0-9a-f-]{36}$/i.test(val)
-      let query = supabase.from('csrs').select('id, csr_number').is('project_id', null)
-      query = isUUID ? query.eq('id', val) : query.ilike('csr_number', val)
-      const { data } = await query.maybeSingle()
-      if (data) {
-        await supabase.from('csrs').update({ project_id: id }).eq('id', data.id)
-        found = true
-      }
-    } else if (linkType === 'waybill') {
-      const isUUID = /^[0-9a-f-]{36}$/i.test(val)
-      let query = supabase.from('waybills').select('id, waybill_number').is('project_id', null)
-      query = isUUID ? query.eq('id', val) : query.ilike('waybill_number', val)
-      const { data } = await query.maybeSingle()
-      if (data) {
-        await supabase.from('waybills').update({ project_id: id }).eq('id', data.id)
-        found = true
-      }
+    if (error) {
+      setLinking(false)
+      setLinkError(error.message)
+      return
     }
 
-    setLinking(false)
-    if (!found) {
+    if (!data) {
+      setLinking(false)
       setLinkError(
-        `No unlinked ${linkType} found with that number. Check the document number and make sure it is not already linked to another project.`
+        `No unlinked ${linkType} found with that document number. Check the number and make sure it is not already linked to another project.`,
       )
+      return
+    }
+
+    if (
+      isClientMismatch({
+        documentClientId: data.client_id,
+        documentClientName: data.client_name,
+        projectClientId: project?.client_id,
+        projectClientName: project?.client_name,
+      })
+    ) {
+      setLinking(false)
+      setLinkError(
+        getClientMismatchMessage({
+          documentClientName: data.client_name,
+          projectClientName: project?.client_name,
+        }),
+      )
+      return
+    }
+
+    const { error: updateError } = await supabase
+      .from(selectedConfig.table)
+      .update({ project_id: id })
+      .eq('id', data.id)
+
+    setLinking(false)
+    if (updateError) {
+      setLinkError(updateError.message)
       return
     }
 
@@ -369,6 +388,7 @@ export default function ProjectDetail() {
       className: 'bg-emerald-600 text-white hover:bg-emerald-700',
       state: {
         projectId: id,
+        projectCode: project.project_code,
         projectName: project.name,
         clientId: project.client_id,
         clientName: project.client_name,
@@ -380,6 +400,7 @@ export default function ProjectDetail() {
       className: 'bg-blue-600 text-white hover:bg-blue-700',
       state: {
         projectId: id,
+        projectCode: project.project_code,
         projectName: project.name,
         clientId: project.client_id,
         clientName: project.client_name,
@@ -391,7 +412,10 @@ export default function ProjectDetail() {
       className: 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
       state: {
         projectId: id,
+        projectCode: project.project_code,
         projectName: project.name,
+        clientId: project.client_id,
+        clientName: project.client_name,
       },
     },
     {
@@ -400,6 +424,7 @@ export default function ProjectDetail() {
       className: 'border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100',
       state: {
         projectId: id,
+        projectCode: project.project_code,
         projectName: project.name,
         clientId: project.client_id,
         clientName: project.client_name,
@@ -424,6 +449,12 @@ export default function ProjectDetail() {
                     {projectStatus.label}
                   </span>
                 </div>
+
+                {project.project_code ? (
+                  <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    {project.project_code}
+                  </div>
+                ) : null}
 
                 <div className="mb-2 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
                   {project.client_name ? (
@@ -779,7 +810,7 @@ export default function ProjectDetail() {
                 <div>
                   <h3 className="text-lg font-extrabold tracking-tight text-foreground">Link Existing Document</h3>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Type the document number exactly as it appears on the document, like <strong>SASINV-B021</strong> or{' '}
+                    Search by the exact document number, like <strong>SASINV-B021</strong>, <strong>SASQ-0012</strong>, or{' '}
                     <strong>CSR-004</strong>.
                   </p>
                 </div>
@@ -800,7 +831,7 @@ export default function ProjectDetail() {
                 <div>
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Document Type</div>
                   <div className="grid grid-cols-2 gap-2">
-                    {['invoice', 'csr', 'waybill'].map((type) => {
+                    {['invoice', 'quotation', 'csr', 'waybill'].map((type) => {
                       const active = linkType === type
                       return (
                         <button
@@ -822,7 +853,7 @@ export default function ProjectDetail() {
 
                 <div>
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Document Number or ID
+                    Document Number
                   </div>
                   <input
                     className={inputClassName}
@@ -831,7 +862,15 @@ export default function ProjectDetail() {
                       setLinkDocId(e.target.value)
                       setLinkError('')
                     }}
-                    placeholder={linkType === 'invoice' ? 'e.g. SASINV-B021' : linkType === 'csr' ? 'e.g. CSR-004' : 'e.g. SASWB-E003'}
+                    placeholder={
+                      linkType === 'invoice'
+                        ? 'e.g. SASINV-B021'
+                        : linkType === 'quotation'
+                          ? 'e.g. SASQ-0012'
+                          : linkType === 'csr'
+                            ? 'e.g. CSR-004'
+                            : 'e.g. SASWB-E003'
+                    }
                     autoFocus
                     onKeyDown={(e) => e.key === 'Enter' && handleLink()}
                   />

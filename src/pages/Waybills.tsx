@@ -229,7 +229,7 @@ export default function Waybills() {
   }
 
   return (
-    <Layout title="Waybills" hidePageHeader>
+    <Layout title="Waybills" hidePageHeader session={null}>
       <MobileListPageShell
           eyebrow="Logistics"
           title="Waybills"
@@ -481,6 +481,8 @@ export default function Waybills() {
         numberField="invoice_number"
         clientField="client_name"
         poField="po_number"
+        linkedInvoiceField={null}
+        currentInvoiceId={null}
         currentClientName={activeWaybill?.client_name}
         searchPlaceholder="Search invoice number, client, or PO"
         onAttach={handleAttachInvoice}

@@ -37,7 +37,13 @@ export default function NewCSR() {
   const [searchParams] = useSearchParams()
   const type = searchParams.get('type')
   const isField = type === 'field'
-  const sourceInvoice = location.state?.sourceInvoice || null
+  const routeState = location.state || {}
+  const sourceInvoice = routeState.sourceInvoice || null
+  const projectPrefill = {
+    projectId: String(routeState.projectId || ''),
+    clientId: String(routeState.clientId || ''),
+    clientName: String(routeState.clientName || ''),
+  }
 
   const [saving, setSaving] = useState(false)
   const [csr, setCsr] = useState(() => createDefaultCsr(isField))
@@ -88,6 +94,17 @@ export default function NewCSR() {
       mounted = false
     }
   }, [isField])
+
+  useEffect(() => {
+    if (!projectPrefill.projectId && !projectPrefill.clientId && !projectPrefill.clientName) return
+
+    setCsr((current) => ({
+      ...current,
+      project_id: current.project_id || projectPrefill.projectId || '',
+      client_id: current.client_id || projectPrefill.clientId || '',
+      client_name: current.client_name || projectPrefill.clientName || '',
+    }))
+  }, [projectPrefill.clientId, projectPrefill.clientName, projectPrefill.projectId])
 
   useEffect(() => {
     let active = true
@@ -169,6 +186,7 @@ export default function NewCSR() {
 
     const csrData = {
       ...csr,
+      project_id: csr.project_id || null,
       client_id: csr.client_id || null,
       linked_invoice_id: csr.linked_invoice_id || null,
       show_po: Boolean(String(csr.po_number || '').trim()),

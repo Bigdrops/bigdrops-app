@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { pageFormCardClassName, pageFormFieldClassName, pageFormLabelClassName, pageFormPrimaryActionClassName } from '@/components/ui/form-page-styles'
+import { generateNextProjectCode } from '@/domain/projects'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import ClientSelector from '../components/ClientSelector'
@@ -35,17 +36,42 @@ export default function NewProject() {
       return
     }
     setSaving(true)
-    const { data, error } = await supabase.from('projects').insert({
-      name:          form.name.trim(),
-      client_id:     form.client_id || null,
-      client_name:   form.client_name || null,
-      status:        form.status,
-      start_date:    form.start_date,
-      project_value: form.project_value ? parseFloat(form.project_value) : null,
-      po_number:     form.po_number.trim() || null,
-      notes:         form.notes.trim() || null,
-      location:      form.location.trim() || null,
-    }).select().single()
+    let data = null
+    let error = null
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      let projectCode = ''
+
+      try {
+        projectCode = await generateNextProjectCode(supabase)
+      } catch (generationError) {
+        error = generationError
+        break
+      }
+
+      const result = await supabase
+        .from('projects')
+        .insert({
+          project_code:  projectCode,
+          name:          form.name.trim(),
+          client_id:     form.client_id || null,
+          client_name:   form.client_name || null,
+          status:        form.status,
+          start_date:    form.start_date,
+          project_value: form.project_value ? parseFloat(form.project_value) : null,
+          po_number:     form.po_number.trim() || null,
+          notes:         form.notes.trim() || null,
+          location:      form.location.trim() || null,
+        })
+        .select()
+        .single()
+
+      data = result.data
+      error = result.error
+
+      if (!error || error.code !== '23505') break
+    }
+
     setSaving(false)
     if (error) {
       toast({ title: 'Create failed', description: error.message, variant: 'destructive' })

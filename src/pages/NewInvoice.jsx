@@ -28,8 +28,14 @@ import { toast } from '@/hooks/use-toast'
 export default function NewInvoice() {
   const navigate = useNavigate()
   const location = useLocation()
-  const prefill = location.state?.prefill
-  const prefillItems = location.state?.prefillItems
+  const routeState = location.state || {}
+  const prefill = routeState.prefill
+  const prefillItems = routeState.prefillItems
+  const projectPrefill = {
+    projectId: String(routeState.projectId || prefill?.project_id || ''),
+    clientId: String(routeState.clientId || prefill?.client_id || ''),
+    clientName: String(routeState.clientName || prefill?.client_name || ''),
+  }
 
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
   const [saving, setSaving] = useState(false)
@@ -75,6 +81,7 @@ export default function NewInvoice() {
       : {
           invoice_number: '',
           po_number: '',
+          project_id: projectPrefill.projectId,
           client_id: '',
           client_name: '',
           issue_date: new Date().toISOString().split('T')[0],
@@ -116,6 +123,16 @@ export default function NewInvoice() {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  useEffect(() => {
+    if (!projectPrefill.projectId && !projectPrefill.clientId && !projectPrefill.clientName) return
+    setInvoice((current) => ({
+      ...current,
+      project_id: current.project_id || projectPrefill.projectId || '',
+      client_id: current.client_id || projectPrefill.clientId || '',
+      client_name: current.client_name || projectPrefill.clientName || '',
+    }))
+  }, [projectPrefill.clientId, projectPrefill.clientName, projectPrefill.projectId])
 
   useEffect(() => {
     if (prefill) return
@@ -339,6 +356,7 @@ export default function NewInvoice() {
           invoice_number: invoice.invoice_number,
           po_number: String(invoice.po_number || '').trim() || null,
           invoice_title: invoiceTitle || null,
+          project_id: invoice.project_id || null,
           client_id: invoice.client_id || null,
           client_name: invoice.client_name,
           issue_date: invoice.issue_date,

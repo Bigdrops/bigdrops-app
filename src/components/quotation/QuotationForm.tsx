@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import MobileInvoiceForm from '@/components/invoice/MobileInvoiceForm'
 import { PdfOutputSettings } from '@/components/PdfOutputSettings'
@@ -25,6 +25,7 @@ import {
 import type { ApplyImportResult } from '@/domain/import/types'
 import { computeDocument } from '@/lib/Calculations'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
+import { type ProjectPrefillState } from '@/domain/projects'
 import {
   createOfflineQuotationDraft,
   peekNextOfflineQuotationNumber,
@@ -234,6 +235,7 @@ function toQuotationItem(item: InvoiceItem, quotationId: string, sortOrder: numb
 
 type QuotationGroupState = { id: string; name: string; showSubtotal: boolean }
 type QuotationEditorState = Quotation & {
+  project_id?: string
   payment_terms?: string
   custom_payment_terms?: string
 }
@@ -262,6 +264,8 @@ const defaultPdfOutput: PdfOutputState = {
 
 export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'edit'; quotationId?: string }) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const prefill = (location.state || {}) as ProjectPrefillState
   const isMobile = useIsMobile()
   const isEdit = mode === 'edit'
   const [loading, setLoading] = useState(isEdit)
@@ -270,6 +274,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const [quotation, setQuotation] = useState<QuotationEditorState>({
     quotation_number: '',
     po_number: '',
+    project_id: prefill.projectId || '',
     client_id: '',
     client_name: '',
     issue_date: new Date().toISOString().split('T')[0],
@@ -335,6 +340,18 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   useEffect(() => {
     groupsRef.current = groups
   }, [groups])
+
+  useEffect(() => {
+    if (isEdit) return
+    if (!prefill.projectId && !prefill.clientId && !prefill.clientName) return
+
+    setQuotation((current) => ({
+      ...current,
+      project_id: current.project_id || String(prefill.projectId || ''),
+      client_id: current.client_id || String(prefill.clientId || ''),
+      client_name: current.client_name || String(prefill.clientName || ''),
+    }))
+  }, [isEdit, prefill.clientId, prefill.clientName, prefill.projectId])
 
   useEffect(() => {
     const load = async () => {
@@ -656,6 +673,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       quotation_number: quotation.quotation_number || '',
       po_number: poNumber || null,
       quotation_title: quotation.quotation_title || null,
+      project_id: quotation.project_id || null,
       client_id: quotation.client_id || null,
       client_name: quotation.client_name || '',
       issue_date: quotation.issue_date || null,

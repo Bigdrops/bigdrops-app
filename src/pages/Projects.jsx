@@ -43,14 +43,18 @@ export default function Projects() {
 
     if (data?.length) {
       const ids = data.map(p => p.id)
-      const [invRes, csrRes] = await Promise.all([
+      const [invRes, csrRes, quotationRes, waybillRes] = await Promise.all([
         supabase.from('invoices').select('project_id').in('project_id', ids).is('archived_at', null),
         supabase.from('csrs').select('project_id').in('project_id', ids),
+        supabase.from('quotations').select('project_id').in('project_id', ids),
+        supabase.from('waybills').select('project_id').in('project_id', ids),
       ])
       const counts = {}
       ids.forEach(id => { counts[id] = 0 })
       ;(invRes.data || []).forEach(r => { counts[r.project_id] = (counts[r.project_id] || 0) + 1 })
       ;(csrRes.data || []).forEach(r => { counts[r.project_id] = (counts[r.project_id] || 0) + 1 })
+      ;(quotationRes.data || []).forEach(r => { counts[r.project_id] = (counts[r.project_id] || 0) + 1 })
+      ;(waybillRes.data || []).forEach(r => { counts[r.project_id] = (counts[r.project_id] || 0) + 1 })
       setDocCounts(counts)
     } else {
       setDocCounts({})
@@ -83,6 +87,7 @@ export default function Projects() {
     const list = projects.filter(project => {
       const normalizedStatus = (project.status || '').replace('_', ' ')
       const matchSearch = !searchTerm
+        || project.project_code?.toLowerCase().includes(searchTerm)
         || project.name?.toLowerCase().includes(searchTerm)
         || project.client_name?.toLowerCase().includes(searchTerm)
       const matchClient = clientFilter === 'All' || (project.client_name || '') === clientFilter
@@ -239,6 +244,9 @@ export default function Projects() {
                     </button>
                   </div>
                   <div className="mt-3 text-lg font-bold leading-[1.18] tracking-[-0.03em] text-slate-950">{project.name}</div>
+                  {project.project_code ? (
+                    <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{project.project_code}</div>
+                  ) : null}
                   <div className="mt-1 text-sm text-slate-500">{project.client_name || 'No client'}</div>
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-slate-500">
                     <span>{count} doc{count !== 1 ? 's' : ''}</span>

@@ -29,6 +29,7 @@ import {
   getWaybillSignature,
   getWaybillTypeContent,
   mapDbWaybill,
+  parseWaybillCustomFields,
   normalizeSignatureEvidence,
   normalizeWaybillImport,
   normalizeWaybillItems,
@@ -484,15 +485,18 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
         client_id: current.client_id || String(invoice.clientId || ''),
         client_name: current.client_name || String(invoice.clientName || ''),
         po_number: current.po_number || String(invoice.poNumber || ''),
-        custom_fields: buildWaybillCustomFields(current.custom_fields, {
-          references: {
-            ...(current.custom_fields?.references || {}),
+        custom_fields: (() => {
+          const currentFields = buildWaybillCustomFields(current.custom_fields, {})
+          const nextReferences = {
+            ...(currentFields.references || {}),
             linkedInvoiceNumber:
-              current.custom_fields?.references?.linkedInvoiceNumber || String(invoice.invoiceNumber || ''),
+              currentFields.references?.linkedInvoiceNumber || String(invoice.invoiceNumber || ''),
             sourceDocumentNumber:
-              current.custom_fields?.references?.sourceDocumentNumber || String(invoice.invoiceNumber || ''),
-          },
-        }),
+              currentFields.references?.sourceDocumentNumber || String(invoice.invoiceNumber || ''),
+          }
+
+          return buildWaybillCustomFields(current.custom_fields, { references: nextReferences })
+        })(),
       }))
 
       if (!invoiceSearch) {
@@ -728,7 +732,7 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
 
   const senderSignature = getWaybillSignature(waybill, 'sender')
   const receiverSignature = getWaybillSignature(waybill, 'receiver')
-  const projectName = customFields.references?.linkedProjectName || ''
+  const projectName = parseWaybillCustomFields(waybill.custom_fields).references?.linkedProjectName || ''
 
   return (
     <>
