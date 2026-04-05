@@ -38,7 +38,7 @@ function normalizeCategory(cat?: string | null) {
   return c.length ? c : "Uncategorized"
 }
 
-export default function Clients(): JSX.Element {
+export default function Clients() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [query, setQuery] = useState<string>("")
@@ -107,7 +107,7 @@ export default function Clients(): JSX.Element {
   }
 
   return (
-    <Layout title="Clients" hidePageHeader>
+    <Layout title="Clients" session={null} hidePageHeader>
       <MobileListPageShell
           eyebrow="Clients"
           title="Clients"

@@ -196,7 +196,7 @@ export default function ClientDetail() {
 
   if (loading) {
     return (
-      <Layout title="Client" hidePageHeader contentClassName="w-full max-w-none p-0 pb-24 md:max-w-2xl md:px-4 md:pb-10">
+      <Layout title="Client" session={null} hidePageHeader contentClassName="w-full max-w-none p-0 pb-24 md:max-w-2xl md:px-4 md:pb-10">
         <div className="w-full px-4 py-8 text-sm text-muted-foreground">Loading client...</div>
       </Layout>
     )
@@ -204,7 +204,7 @@ export default function ClientDetail() {
 
   if (!client) {
     return (
-      <Layout title="Client" hidePageHeader contentClassName="w-full max-w-none p-0 pb-24 md:max-w-2xl md:px-4 md:pb-10">
+      <Layout title="Client" session={null} hidePageHeader contentClassName="w-full max-w-none p-0 pb-24 md:max-w-2xl md:px-4 md:pb-10">
         <div className="w-full px-4 py-8">
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
             {error || 'Client not found'}
@@ -215,7 +215,7 @@ export default function ClientDetail() {
   }
 
   return (
-    <Layout title={client.name || 'Client'} hidePageHeader contentClassName="w-full max-w-none p-0 pb-24 md:max-w-2xl md:px-4 md:pb-10">
+    <Layout title={client.name || 'Client'} session={null} hidePageHeader contentClassName="w-full max-w-none p-0 pb-24 md:max-w-2xl md:px-4 md:pb-10">
       <div className="w-full">
         <div className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background px-4 py-3">
           <Button type="button" variant="ghost" size="icon-sm" className="rounded-full" onClick={() => navigate('/clients')}>

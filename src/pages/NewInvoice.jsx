@@ -24,6 +24,7 @@ import {
 import { computeDocument } from '../lib/Calculations'
 import { numberToWords } from '../hooks/useInvoiceForm'
 import { toast } from '@/hooks/use-toast'
+import { validateProjectAssignment } from '@/domain/projects'
 
 export default function NewInvoice() {
   const navigate = useNavigate()
@@ -320,6 +321,17 @@ export default function NewInvoice() {
   })
 
   const handleSave = async (status) => {
+    const { project: validatedProject, error: projectError } = await validateProjectAssignment(supabase, {
+      projectId: invoice.project_id,
+      documentClientId: invoice.client_id,
+      documentClientName: invoice.client_name,
+    })
+
+    if (projectError) {
+      toast({ title: 'Project link invalid', description: projectError, variant: 'destructive' })
+      return
+    }
+
     setSaving(true)
 
     const groupMeta = {}
@@ -356,7 +368,7 @@ export default function NewInvoice() {
           invoice_number: invoice.invoice_number,
           po_number: String(invoice.po_number || '').trim() || null,
           invoice_title: invoiceTitle || null,
-          project_id: invoice.project_id || null,
+          project_id: validatedProject?.id || null,
           client_id: invoice.client_id || null,
           client_name: invoice.client_name,
           issue_date: invoice.issue_date,

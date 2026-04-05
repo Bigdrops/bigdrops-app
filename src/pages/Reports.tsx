@@ -986,7 +986,7 @@ export default function Reports() {
   }, [filteredTaxInvoices, filteredCollections])
 
   return (
-    <Layout title="Reports" hidePageHeader contentClassName="w-full max-w-none bg-slate-50 p-0 pb-24 md:px-4 md:pb-10">
+    <Layout title="Reports" session={null} hidePageHeader contentClassName="w-full max-w-none bg-slate-50 p-0 pb-24 md:px-4 md:pb-10">
       <div className="w-full py-4">
         <div className="space-y-4">
           <SectionHeader title="Reports" subtitle="Live receivables, collections, project finance snapshots, and a tax placeholder for the next phase." />

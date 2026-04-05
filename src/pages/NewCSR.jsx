@@ -17,6 +17,7 @@ import {
 import { getCsrPdfDocument } from '../components/csr/CSRPreviewTemplates'
 import { canUseNativeSqlite } from '../lib/native/capacitor'
 import { createOfflineCsrDraft, peekNextOfflineCsrNumber } from '../lib/native/csrOffline'
+import { validateProjectAssignment } from '@/domain/projects'
 
 const EMPTY_BRANDING = {
   companyName: '',
@@ -184,9 +185,20 @@ export default function NewCSR() {
       return
     }
 
+    const { project: validatedProject, error: projectError } = await validateProjectAssignment(supabase, {
+      projectId: csr.project_id,
+      documentClientId: csr.client_id,
+      documentClientName: csr.client_name,
+    })
+
+    if (projectError) {
+      toast({ title: 'Project link invalid', description: projectError, variant: 'destructive' })
+      return
+    }
+
     const csrData = {
       ...csr,
-      project_id: csr.project_id || null,
+      project_id: validatedProject?.id || null,
       client_id: csr.client_id || null,
       linked_invoice_id: csr.linked_invoice_id || null,
       show_po: Boolean(String(csr.po_number || '').trim()),

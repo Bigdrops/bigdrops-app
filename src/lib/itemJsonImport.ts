@@ -12,7 +12,18 @@ type ImportJsonOptions = {
   createItem: () => InvoiceItem
 }
 
-const FIELD_ALIASES: Record<string, keyof InvoiceItem | 'install_rate'> = {
+type ImportField =
+  | 'make'
+  | 'description'
+  | 'sub_description'
+  | 'quantity'
+  | 'unit'
+  | 'unit_price'
+  | 'install_rate'
+
+type StringImportField = Exclude<ImportField, 'quantity' | 'unit_price' | 'install_rate'>
+
+const FIELD_ALIASES: Record<string, ImportField> = {
   brand: 'make',
   description: 'description',
   detail: 'sub_description',
@@ -104,7 +115,7 @@ function makeCustomColumn(rawKey: string, existingColumns: ColumnConfig[], value
   } satisfies ColumnConfig
 }
 
-function applyKnownField(item: InvoiceItem, field: keyof InvoiceItem | 'install_rate', value: unknown) {
+function applyKnownField(item: InvoiceItem, field: ImportField, value: unknown) {
   if (field === 'quantity') {
     const quantity = parseNumber(value)
     if (quantity !== null) item.quantity = quantity
@@ -126,7 +137,8 @@ function applyKnownField(item: InvoiceItem, field: keyof InvoiceItem | 'install_
     return
   }
 
-  item[field] = String(value ?? '')
+  const stringField = field as StringImportField
+  item[stringField] = String(value ?? '')
 }
 
 function mapExistingColumn(

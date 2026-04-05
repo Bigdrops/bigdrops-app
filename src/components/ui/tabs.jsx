@@ -5,6 +5,7 @@ import { cn } from "../../lib/utils"
 
 const Tabs = TabsPrimitive.Root
 
+/** @type {import("react").ForwardRefExoticComponent<import("react").ComponentPropsWithoutRef<typeof TabsPrimitive.List> & import("react").RefAttributes<HTMLDivElement>>} */
 const TabsList = React.forwardRef(function TabsList(
   { className, ...props },
   ref
@@ -21,6 +22,7 @@ const TabsList = React.forwardRef(function TabsList(
   )
 })
 
+/** @type {import("react").ForwardRefExoticComponent<import("react").ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger> & import("react").RefAttributes<HTMLButtonElement>>} */
 const TabsTrigger = React.forwardRef(function TabsTrigger(
   { className, ...props },
   ref
@@ -40,6 +42,7 @@ const TabsTrigger = React.forwardRef(function TabsTrigger(
   )
 })
 
+/** @type {import("react").ForwardRefExoticComponent<import("react").ComponentPropsWithoutRef<typeof TabsPrimitive.Content> & import("react").RefAttributes<HTMLDivElement>>} */
 const TabsContent = React.forwardRef(function TabsContent(
   { className, ...props },
   ref

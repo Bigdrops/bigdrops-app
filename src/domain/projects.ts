@@ -106,6 +106,67 @@ export function isProjectCodeConflict(error: ProjectCodeError | null | undefined
   return error?.code === '23505' && errorMentionsProjectCode(error)
 }
 
+export async function validateProjectAssignment(
+  supabaseClient: {
+    from: (table: string) => {
+      select: (columns: string) => {
+        eq: (column: string, value: string) => {
+          is: (column: string, value: null) => {
+            maybeSingle: () => Promise<{ data?: { id: string; project_code?: string | null; name?: string | null; client_id?: string | null; client_name?: string | null }; error?: ProjectCodeError | null }>
+          }
+        }
+      }
+    }
+  },
+  {
+    projectId,
+    documentClientId,
+    documentClientName,
+  }: {
+    projectId?: string | null
+    documentClientId?: string | null
+    documentClientName?: string | null
+  },
+) {
+  const resolvedProjectId = normalizeValue(projectId)
+  if (!resolvedProjectId) {
+    return { project: null, error: null }
+  }
+
+  const { data: project, error } = await supabaseClient
+    .from('projects')
+    .select('id, project_code, name, client_id, client_name')
+    .eq('id', resolvedProjectId)
+    .is('archived_at', null)
+    .maybeSingle()
+
+  if (error || !project) {
+    return {
+      project: null,
+      error: error?.message || 'Selected project could not be found.',
+    }
+  }
+
+  if (
+    isClientMismatch({
+      documentClientId,
+      documentClientName,
+      projectClientId: project.client_id,
+      projectClientName: project.client_name,
+    })
+  ) {
+    return {
+      project,
+      error: getClientMismatchMessage({
+        documentClientName,
+        projectClientName: project.client_name,
+      }),
+    }
+  }
+
+  return { project, error: null }
+}
+
 export async function generateNextProjectCode(
   supabaseClient: {
     from: (table: string) => {

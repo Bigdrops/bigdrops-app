@@ -111,6 +111,14 @@ export default function ProjectLinkDialog({
 
     if (!recordId || !selectedProjectId) return
 
+    if (
+      documentRecord?.project_id &&
+      String(documentRecord.project_id) !== String(selectedProjectId)
+    ) {
+      setError(`This ${documentLabel.toLowerCase()} is already linked to a project. Open that project first before changing the assignment.`)
+      return
+    }
+
     const { data: confirmedProject, error: projectError } = await supabase
       .from('projects')
       .select('id, project_code, name, client_id, client_name')

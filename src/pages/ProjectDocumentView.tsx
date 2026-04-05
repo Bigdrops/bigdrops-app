@@ -100,7 +100,7 @@ export default function ProjectDocumentView() {
 
   if (loading) {
     return (
-      <Layout title="Document">
+      <Layout title="Document" session={null}>
         <div className="px-4 py-10 text-sm text-muted-foreground">Loading document...</div>
       </Layout>
     )
@@ -108,14 +108,14 @@ export default function ProjectDocumentView() {
 
   if (!documentRecord) {
     return (
-      <Layout title="Document">
+      <Layout title="Document" session={null}>
         <div className="px-4 py-10 text-sm text-red-600">Document not found.</div>
       </Layout>
     )
   }
 
   return (
-    <Layout title={mainLabel} hidePageHeader>
+    <Layout title={mainLabel} session={null} hidePageHeader>
       <div className="mx-auto w-full max-w-5xl space-y-4 px-3 pb-20 pt-4 sm:px-4 sm:pt-6">
         <div className="rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

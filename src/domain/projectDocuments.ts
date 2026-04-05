@@ -38,6 +38,10 @@ function hasText(value: unknown) {
   return String(value || '').trim().length > 0
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
 function firstText(...values: unknown[]) {
   for (const value of values) {
     if (hasText(value)) return String(value).trim()
@@ -201,7 +205,7 @@ export function getProjectDocumentKeyFields(document: ProjectDocumentRecord) {
   }
 
   if (type === 'receiving_waybill') {
-    const items = Array.isArray(data.items) ? data.items : []
+    const items = Array.isArray(data.items) ? data.items.filter(isRecord) : []
     if (items.length > 0) {
       fields.push({
         label: 'Items',
@@ -227,7 +231,7 @@ export function getProjectDocumentKeyFields(document: ProjectDocumentRecord) {
 export function getProjectDocumentItemsTable(document: ProjectDocumentRecord): ProjectDocumentItemsTable | null {
   const type = getProjectDocumentType(document)
   const data = getProjectDocumentData(document)
-  const items = Array.isArray(data.items) ? data.items : []
+  const items = Array.isArray(data.items) ? data.items.filter(isRecord) : []
   if (items.length === 0) return null
 
   const preferredColumns =
@@ -237,15 +241,13 @@ export function getProjectDocumentItemsTable(document: ProjectDocumentRecord): P
         ? ['description', 'quantity', 'unit', 'condition']
         : Array.from(
             items.reduce((set, item) => {
-              if (item && typeof item === 'object') {
-                Object.keys(item).forEach((key) => set.add(key))
-              }
+              Object.keys(item).forEach((key) => set.add(key))
               return set
             }, new Set<string>()),
           )
 
   const columns = preferredColumns.filter((column) =>
-    items.some((item) => item && typeof item === 'object' && item[column] !== undefined && item[column] !== null && item[column] !== ''),
+    items.some((item) => item[column] !== undefined && item[column] !== null && item[column] !== ''),
   )
 
   if (columns.length === 0) return null
@@ -255,7 +257,7 @@ export function getProjectDocumentItemsTable(document: ProjectDocumentRecord): P
     rows: items.map((item) => {
       const row: Record<string, string> = {}
       columns.forEach((column) => {
-        const value = item && typeof item === 'object' ? item[column] : ''
+        const value = item[column]
         if (typeof value === 'number') {
           row[column] = ['amount', 'unit_price', 'total', 'price'].includes(column)
             ? formatProjectDocumentCurrency(value)

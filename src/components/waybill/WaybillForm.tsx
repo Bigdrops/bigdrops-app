@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/hooks/use-toast'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
+import { validateProjectAssignment } from '@/domain/projects'
 import {
   createOfflineWaybillDraft,
   peekNextOfflineWaybillNumber,
@@ -646,6 +647,17 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
       return
     }
 
+    const { project: validatedProject, error: projectError } = await validateProjectAssignment(supabase, {
+      projectId: waybill.project_id,
+      documentClientId: waybill.client_id,
+      documentClientName: waybill.client_name,
+    })
+
+    if (projectError) {
+      setError(projectError)
+      return
+    }
+
     const senderSignature = getWaybillSignature(waybill, 'sender')
     const receiverSignature = getWaybillSignature(waybill, 'receiver')
     const payload = {
@@ -659,7 +671,7 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
       receiver_description: customFields.partyNotes?.receiver || null,
       client_id: waybill.client_id || null,
       client_name: String(waybill.client_name || '').trim() || null,
-      project_id: waybill.project_id || null,
+      project_id: validatedProject?.id || null,
       invoice_id: waybill.invoice_id || null,
       po_number: String(waybill.po_number || '').trim() || null,
       vehicle_plate: String(waybill.vehicle_plate || '').trim() || null,

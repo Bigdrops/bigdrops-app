@@ -50,7 +50,7 @@ export default function SetPasswordModal({ onComplete }: SetPasswordModalProps) 
 
   return (
     <Dialog open>
-      <DialogContent className="sm:max-w-md" hideClose>
+      <DialogContent className="sm:max-w-md" showCloseButton={false}>
         <DialogHeader>
           <DialogTitle>Set System Password</DialogTitle>
           <DialogDescription>
