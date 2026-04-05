@@ -3,7 +3,7 @@ export type WhtReceiptStatus = 'pending' | 'requested' | 'received' | 'verified'
 
 export interface TaxSettings {
   id: string
-  entity_id: number
+  settings_id: number
   tin: string | null
   vat_enabled: boolean
   vat_threshold: number
@@ -18,7 +18,6 @@ export interface TaxSettings {
 
 export interface WhtReceipt {
   id: string
-  entity_id: number
   payment_id: string
   invoice_id: string | null
   client_name: string | null

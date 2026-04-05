@@ -53,7 +53,6 @@ export default function ComplianceHub() {
           supabase
             .from('wht_receipts')
             .select('*')
-            .eq('entity_id', 1)
         ])
 
         if (cancelled) return

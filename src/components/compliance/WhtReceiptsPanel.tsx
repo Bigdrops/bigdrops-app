@@ -50,7 +50,6 @@ export default function WhtReceiptsPanel({ payments, receipts, loading }: WhtRec
     try {
       setProcessingId(payment.id)
       const newRecord: Partial<WhtReceipt> = {
-        entity_id: 1,
         payment_id: payment.id,
         invoice_id: payment.invoice_id,
         client_name: payment.client_name,

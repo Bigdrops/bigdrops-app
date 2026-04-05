@@ -20,7 +20,7 @@ export default function ComplianceSettingsPanel() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState<Partial<TaxSettings>>({
-    entity_id: 1, // Default entity for Phase 2A
+    settings_id: 1, // Global settings
     tin: '',
     vat_enabled: false,
     vat_threshold: 0,
@@ -34,7 +34,7 @@ export default function ComplianceSettingsPanel() {
         const { data, error } = await supabase
           .from('tax_settings')
           .select('*')
-          .eq('entity_id', 1)
+          .eq('settings_id', 1)
           .single()
         
         if (error && error.code !== 'PGRST116') throw error
@@ -54,10 +54,10 @@ export default function ComplianceSettingsPanel() {
       const { error } = await supabase
         .from('tax_settings')
         .upsert({ 
-          entity_id: 1, 
+          settings_id: 1, 
           ...settings,
           updated_at: new Date().toISOString()
-        }, { onConflict: 'entity_id' })
+        }, { onConflict: 'settings_id' })
 
       if (error) throw error
       toast.success('Tax settings updated successfully')
