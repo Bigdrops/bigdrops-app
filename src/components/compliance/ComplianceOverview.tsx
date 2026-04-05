@@ -91,14 +91,14 @@ export default function ComplianceOverview({
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-sm font-semibold text-slate-800">Verify WHT Receipts</div>
-                  <div className="text-xs text-slate-500 mt-1">Found {recentPayments.length} payments needing receipt uploads.</div>
+                  <div className="text-xs text-slate-500 mt-1">Found {recentPayments.filter(p => Number(p.wht_amount || 0) > 0).length} payments needing receipt uploads.</div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-blue-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
               </div>
             </div>
             <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm opacity-60">
-              <div className="text-sm font-semibold text-slate-800">Filing Deadline</div>
-              <div className="text-xs text-slate-500 mt-1">VAT filing for last month is due in 12 days.</div>
+              <div className="text-sm font-semibold text-slate-800">Compliance Tracking</div>
+              <div className="text-xs text-slate-500 mt-1">Automatic deadline reminders and filing alerts will appear here in Phase 2.</div>
             </div>
           </CardContent>
         </Card>

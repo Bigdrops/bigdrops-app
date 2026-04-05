@@ -26,11 +26,11 @@ export default function VatInputsPanel() {
         </CardContent>
       </Card>
 
-      <div className="rounded-2xl bg-blue-600 p-6 text-white shadow-lg overflow-hidden relative">
+      <div className="rounded-2xl bg-slate-800 p-6 text-white shadow-lg overflow-hidden relative">
         <div className="relative z-10">
           <div className="text-lg font-black tracking-tight">Understanding VAT Inputs</div>
-          <p className="mt-2 text-sm text-blue-100 leading-relaxed">
-            VAT inputs are the taxes you pay on business-related purchases. In many jurisdictions, you can deduct these from the VAT you collect (VAT Output) to arrive at your net VAT payable.
+          <p className="mt-2 text-sm text-slate-300 leading-relaxed">
+            VAT inputs refer to the tax paid on business purchases. These can often be deducted from the VAT you collect on sales to determine your net tax liability.
           </p>
         </div>
         <div className="absolute top-0 right-0 -translate-y-4 translate-x-4 opacity-10">
