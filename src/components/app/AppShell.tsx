@@ -2,9 +2,8 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import AndroidBackHandler from '@/components/app/AndroidBackHandler'
 import PageLoader from '@/components/app/PageLoader'
-import SetPasswordModal from '@/components/app/SetPasswordModal'
+import { isAndroidNative } from '@/lib/native/capacitor'
 
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
 const Invoices = lazy(() => import('@/pages/Invoices'))
@@ -33,6 +32,8 @@ const Waybills = lazy(() => import('@/pages/Waybills'))
 const NewWaybill = lazy(() => import('@/pages/NewWaybill'))
 const EditWaybill = lazy(() => import('@/pages/EditWaybill'))
 const ViewWaybill = lazy(() => import('@/pages/ViewWaybill'))
+const AndroidBackHandler = lazy(() => import('@/components/app/AndroidBackHandler'))
+const SetPasswordModal = lazy(() => import('@/components/app/SetPasswordModal'))
 
 type Profile = {
   id: string
@@ -52,11 +53,20 @@ const withBoundary = (element: ReactNode) => <ErrorBoundary>{element}</ErrorBoun
 export default function AppShell({ session, profile, onProfileUpdate }: AppShellProps) {
   const provider = session?.user?.app_metadata?.provider
   const showSetPassword = Boolean(profile && !profile.has_password && provider !== 'email')
+  const showAndroidBackHandler = isAndroidNative()
 
   return (
     <>
-      <AndroidBackHandler />
-      {showSetPassword && <SetPasswordModal onComplete={onProfileUpdate} />}
+      {showAndroidBackHandler && (
+        <Suspense fallback={null}>
+          <AndroidBackHandler />
+        </Suspense>
+      )}
+      {showSetPassword && (
+        <Suspense fallback={null}>
+          <SetPasswordModal onComplete={onProfileUpdate} />
+        </Suspense>
+      )}
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={withBoundary(<Dashboard session={session} />)} />
