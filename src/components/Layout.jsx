@@ -41,10 +41,10 @@ const tabs = [
 ]
 
 const salesPicker = [
-  { key: 'invoices',   label: 'Invoices',   icon: Receipt,       tint: 'bg-blue-50 border-blue-200',   iconBg: 'bg-blue-600' },
-  { key: 'quotations', label: 'Quotations', icon: FileSignature, tint: 'bg-violet-50 border-violet-200', iconBg: 'bg-violet-600' },
-  { key: 'csr',        label: 'CSR',        icon: ClipboardCheck, tint: 'bg-orange-50 border-orange-200', iconBg: 'bg-orange-600' },
-  { key: 'waybills',   label: 'Waybills',   icon: Truck,          tint: 'bg-slate-50 border-slate-200',  iconBg: 'bg-slate-700' },
+  { key: 'invoices',   label: 'Invoices',   icon: Receipt,       tint: 'tone-info-panel',    iconBg: 'tone-info-icon' },
+  { key: 'quotations', label: 'Quotations', icon: FileSignature, tint: 'tone-accent-panel',  iconBg: 'tone-accent-icon' },
+  { key: 'csr',        label: 'CSR',        icon: ClipboardCheck, tint: 'tone-warning-panel', iconBg: 'tone-warning-icon' },
+  { key: 'waybills',   label: 'Waybills',   icon: Truck,          tint: 'tone-neutral-panel', iconBg: 'tone-neutral-icon' },
 ]
 
 const moreGroups = [
@@ -68,6 +68,12 @@ const mobileDrawerUtilityNav = [
   { key: 'reports', label: 'Reports', icon: BarChart3, path: '/reports' },
   { key: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
 ]
+
+const activeNavItemClassName = 'surface-strong shadow-sm'
+const activeNavIconClassName = 'surface-strong-soft'
+const inactiveNavItemClassName = 'text-foreground/80 hover:bg-muted/50'
+const inactiveNavIconClassName = 'bg-muted'
+const inactiveNavIconColorClassName = 'text-foreground/80'
 
 function getSalesPath(key) {
   const pathByKey = {
@@ -106,7 +112,7 @@ export function BusinessSwitcher() {
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm"
       >
-        <span className="grid h-6 w-6 place-items-center rounded-full bg-slate-900 text-white">
+        <span className="grid h-6 w-6 place-items-center rounded-full surface-strong">
           <Building2 className="h-3.5 w-3.5" />
         </span>
         <span className="max-w-[140px] truncate">{activeName}</span>
@@ -114,7 +120,7 @@ export function BusinessSwitcher() {
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-4" onClick={() => setOpen(false)}>
+        <div className="surface-overlay fixed inset-0 z-[70] flex items-end justify-center p-4" onClick={() => setOpen(false)}>
           <div className="w-full max-w-md rounded-t-3xl border border-border bg-card shadow-2xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <div>
@@ -128,7 +134,7 @@ export function BusinessSwitcher() {
             <div className="p-5">
               <div className="rounded-2xl border border-border bg-muted/50 p-4">
                 <div className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-900 text-white">
+                  <div className="grid h-10 w-10 place-items-center rounded-2xl surface-strong">
                     {(settings?.company_name || 'B').charAt(0)}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -230,10 +236,10 @@ export default function Layout({
                       key={item.key}
                       type="button"
                       onClick={() => onTabClick(item.key)}
-                      className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}
+                      className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? activeNavItemClassName : inactiveNavItemClassName)}
                     >
-                      <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-muted')}>
-                        <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
+                      <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? activeNavIconClassName : inactiveNavIconClassName)}>
+                        <Icon className={cn('h-5 w-5', isActive ? '' : inactiveNavIconColorClassName)} />
                       </span>
                       <span className="font-semibold">{item.label}</span>
                     </button>
@@ -252,7 +258,7 @@ export default function Layout({
                     <button key={item.key} type="button" onClick={() => handleSalesPick(item.key)} className={cn('flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left shadow-sm transition hover:brightness-[0.99]', item.tint)}>
                       <div className="flex items-center gap-3">
                         <span className={cn('grid h-9 w-9 place-items-center rounded-xl', item.iconBg)}>
-                          <Icon className="h-5 w-5 text-white" />
+                          <Icon className="h-5 w-5" />
                         </span>
                         <span className="font-semibold text-foreground">{item.label}</span>
                       </div>
@@ -273,7 +279,7 @@ export default function Layout({
                       <button key={item.key} type="button" onClick={() => handleMorePick(item.key)} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-3 py-2 text-sm shadow-sm transition hover:bg-muted/50">
                         <div className="flex items-center gap-3">
                           <span className="grid h-9 w-9 place-items-center rounded-xl bg-muted">
-                            <Icon className="h-5 w-5 text-slate-700" />
+                            <Icon className="h-5 w-5 text-foreground/80" />
                           </span>
                           <span className="font-semibold text-foreground">{item.label}</span>
                         </div>
@@ -290,7 +296,7 @@ export default function Layout({
         <main className="flex-1">
           {!isHome && !hidePageHeader ? (
             <div className="mx-auto w-full max-w-5xl px-6 pt-6">
-              <div className="rounded-2xl border-l-4 border-l-blue-500 border border-border bg-card px-5 py-4 shadow-sm">
+              <div className="rounded-2xl border border-border border-l-4 border-l-[var(--tone-info)] bg-card px-5 py-4 shadow-sm">
                 <div className="text-lg font-bold text-foreground">{title}</div>
               </div>
             </div>
@@ -305,7 +311,7 @@ export default function Layout({
             <MobilePageHeader
               title={APP_NAME}
               subtitle={settings?.company_name || 'Invoicing and Projects'}
-              accentClassName="bg-blue-500"
+              accentClassName="tone-info-accent"
               onMenuClick={() => setSidebarOpen(true)}
             />
           </div>
@@ -313,7 +319,7 @@ export default function Layout({
 
         {!isHome && !hidePageHeader ? (
           <div className="w-full px-4 pt-4">
-            <div className="rounded-2xl border-l-4 border-l-blue-500 border border-border bg-card px-5 py-4 shadow-sm">
+            <div className="rounded-2xl border border-border border-l-4 border-l-[var(--tone-info)] bg-card px-5 py-4 shadow-sm">
               <div className="text-base font-bold text-foreground">{title}</div>
             </div>
           </div>
@@ -346,9 +352,9 @@ export default function Layout({
                 const Icon = item.icon
                 const isActive = isPathActive(location.pathname, item.path)
                 return (
-                  <button key={item.key} type="button" onClick={() => { navigate(item.path); setSidebarOpen(false) }} className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}>
-                    <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-muted')}>
-                      <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
+                  <button key={item.key} type="button" onClick={() => { navigate(item.path); setSidebarOpen(false) }} className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? activeNavItemClassName : inactiveNavItemClassName)}>
+                    <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? activeNavIconClassName : inactiveNavIconClassName)}>
+                      <Icon className={cn('h-5 w-5', isActive ? '' : inactiveNavIconColorClassName)} />
                     </span>
                     <span className="font-semibold">{item.label}</span>
                   </button>
@@ -361,11 +367,11 @@ export default function Layout({
                 <button
                   type="button"
                   onClick={() => setDrawerSalesOpen((open) => !open)}
-                  className={cn('flex w-full items-center justify-between rounded-[18px] px-2 py-2 text-sm transition', salesRouteActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}
+                  className={cn('flex w-full items-center justify-between rounded-[18px] px-2 py-2 text-sm transition', salesRouteActive ? activeNavItemClassName : inactiveNavItemClassName)}
                 >
                   <div className="flex items-center gap-3">
-                    <span className={cn('grid h-9 w-9 place-items-center rounded-xl', salesRouteActive ? 'bg-white/10' : 'bg-muted')}>
-                      <Receipt className={cn('h-5 w-5', salesRouteActive ? 'text-white' : 'text-slate-700')} />
+                    <span className={cn('grid h-9 w-9 place-items-center rounded-xl', salesRouteActive ? activeNavIconClassName : inactiveNavIconClassName)}>
+                      <Receipt className={cn('h-5 w-5', salesRouteActive ? '' : inactiveNavIconColorClassName)} />
                     </span>
                     <span className="font-semibold">Sales</span>
                   </div>
@@ -382,10 +388,10 @@ export default function Layout({
                           key={item.key}
                           type="button"
                           onClick={() => handleSalesPick(item.key)}
-                          className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}
+                          className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm transition', isActive ? activeNavItemClassName : inactiveNavItemClassName)}
                         >
-                          <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-muted')}>
-                            <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
+                          <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? activeNavIconClassName : inactiveNavIconClassName)}>
+                            <Icon className={cn('h-5 w-5', isActive ? '' : inactiveNavIconColorClassName)} />
                           </span>
                           <span className="font-semibold">{item.label}</span>
                         </button>
@@ -406,10 +412,10 @@ export default function Layout({
                       navigate(item.path)
                       setSidebarOpen(false)
                     }}
-                    className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-muted/50')}
+                    className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition', isActive ? activeNavItemClassName : inactiveNavItemClassName)}
                   >
-                    <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? 'bg-white/10' : 'bg-muted')}>
-                      <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-700')} />
+                    <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? activeNavIconClassName : inactiveNavIconClassName)}>
+                      <Icon className={cn('h-5 w-5', isActive ? '' : inactiveNavIconColorClassName)} />
                     </span>
                     <span className="font-semibold">{item.label}</span>
                   </button>
@@ -419,7 +425,7 @@ export default function Layout({
               <button type="button" onClick={() => handleMorePick('signout')} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-3 py-2 text-sm shadow-sm transition hover:bg-muted/50">
                 <div className="flex items-center gap-3">
                   <span className="grid h-9 w-9 place-items-center rounded-xl bg-muted">
-                    <LogOut className="h-5 w-5 text-slate-700" />
+                    <LogOut className="h-5 w-5 text-foreground/80" />
                   </span>
                   <span className="font-semibold text-foreground">Sign Out</span>
                 </div>
@@ -432,7 +438,7 @@ export default function Layout({
         <Sheet open={salesOpen} onOpenChange={setSalesOpen}>
           <SheetContent side="bottom" className="p-0">
             <div className="rounded-t-3xl">
-              <SheetHeader className="rounded-t-3xl bg-slate-900 px-5 py-4 text-white">
+              <SheetHeader className="surface-strong rounded-t-3xl px-5 py-4">
                 <SheetTitle className="text-base font-black tracking-tight">Sales</SheetTitle>
               </SheetHeader>
               <div className="bg-muted/50 px-4 py-4">
@@ -443,7 +449,7 @@ export default function Layout({
                       <button key={item.key} type="button" onClick={() => handleSalesPick(item.key)} className={cn('flex w-full items-center justify-between rounded-2xl border px-4 py-4 text-left shadow-sm transition hover:brightness-[0.99]', item.tint)}>
                         <div className="flex items-center gap-3">
                           <span className={cn('grid h-11 w-11 place-items-center rounded-2xl shadow-sm', item.iconBg)}>
-                            <Icon className="h-6 w-6 text-white" />
+                            <Icon className="h-6 w-6" />
                           </span>
                           <div>
                             <div className="text-sm font-bold text-foreground">{item.label}</div>
@@ -466,7 +472,7 @@ export default function Layout({
         <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
           <SheetContent side="bottom" className="p-0">
             <div className="rounded-t-3xl">
-              <SheetHeader className="rounded-t-3xl bg-slate-900 px-5 py-4 text-white">
+              <SheetHeader className="surface-strong rounded-t-3xl px-5 py-4">
                 <SheetTitle className="text-base font-black tracking-tight">{APP_NAME}</SheetTitle>
               </SheetHeader>
               <div className="bg-muted/50 px-4 py-4">
@@ -480,7 +486,7 @@ export default function Layout({
                           <button key={item.key} type="button" onClick={() => handleMorePick(item.key)} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm transition hover:bg-muted/50">
                             <div className="flex items-center gap-3">
                               <span className="grid h-10 w-10 place-items-center rounded-2xl bg-muted">
-                                <Icon className="h-5 w-5 text-slate-700" />
+                                <Icon className="h-5 w-5 text-foreground/80" />
                               </span>
                               <div className="text-sm font-semibold text-foreground">{item.label}</div>
                             </div>

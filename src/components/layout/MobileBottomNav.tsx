@@ -17,17 +17,17 @@ export default function MobileBottomNav({
   onSelect: (key: string) => void
 }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/92 backdrop-blur-xl">
-      <div className="grid h-[92px] w-full grid-cols-5 gap-1 px-2.5 pb-4 pt-2.5 shadow-[0_-10px_30px_-20px_rgba(15,23,42,0.35)]">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-xl">
+      <div className="grid h-[92px] w-full grid-cols-5 gap-1 px-2.5 pb-4 pt-2.5 shadow-lg">
         {items.map((item) => {
           const Icon = item.icon
           const isActive = active === item.key
           return (
-            <button key={item.key} type="button" onClick={() => onSelect(item.key)} className="flex flex-col items-center gap-1.5 text-[11px] font-medium text-slate-500">
-              <span className={cn('grid h-[42px] w-[42px] place-items-center rounded-[14px] border border-transparent', isActive && 'border-slate-950 bg-slate-950 text-white')}>
+            <button key={item.key} type="button" onClick={() => onSelect(item.key)} className="flex flex-col items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+              <span className={cn('grid h-[42px] w-[42px] place-items-center rounded-[14px] border border-transparent', isActive && 'border-transparent surface-strong')}>
                 <Icon className="h-[18px] w-[18px]" />
               </span>
-              <span className={cn(isActive && 'font-bold text-slate-950')}>{item.label}</span>
+              <span className={cn(isActive && 'font-bold text-foreground')}>{item.label}</span>
             </button>
           )
         })}

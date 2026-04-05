@@ -19,7 +19,7 @@ export default function MobilePageHeader({
   title,
   subtitle,
   eyebrow,
-  accentClassName = 'bg-slate-400',
+  accentClassName = 'tone-neutral-accent',
   onMenuClick,
   actions,
   className,

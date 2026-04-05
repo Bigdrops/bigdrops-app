@@ -37,6 +37,31 @@
   --ring: 235 70% 45%;
 
   --radius: 0.75rem;
+
+  --surface-strong: oklch(0.28 0.02 257);
+  --surface-strong-foreground: oklch(0.98 0 0);
+  --surface-overlay-soft: color-mix(in oklab, var(--surface-strong) 40%, transparent);
+  --surface-overlay-strong: color-mix(in oklab, var(--surface-strong) 80%, transparent);
+
+  --tone-neutral: oklch(0.44 0.02 257);
+  --tone-info: oklch(0.63 0.15 255);
+  --tone-accent: oklch(0.62 0.19 310);
+  --tone-success: oklch(0.68 0.17 150);
+  --tone-warning: oklch(0.77 0.14 75);
+  --tone-data: oklch(0.71 0.11 220);
+
+  --tone-neutral-soft: color-mix(in oklab, var(--tone-neutral) 8%, white);
+  --tone-neutral-border: color-mix(in oklab, var(--tone-neutral) 18%, white);
+  --tone-info-soft: color-mix(in oklab, var(--tone-info) 8%, white);
+  --tone-info-border: color-mix(in oklab, var(--tone-info) 18%, white);
+  --tone-accent-soft: color-mix(in oklab, var(--tone-accent) 8%, white);
+  --tone-accent-border: color-mix(in oklab, var(--tone-accent) 18%, white);
+  --tone-success-soft: color-mix(in oklab, var(--tone-success) 8%, white);
+  --tone-success-border: color-mix(in oklab, var(--tone-success) 18%, white);
+  --tone-warning-soft: color-mix(in oklab, var(--tone-warning) 10%, white);
+  --tone-warning-border: color-mix(in oklab, var(--tone-warning) 20%, white);
+  --tone-data-soft: color-mix(in oklab, var(--tone-data) 8%, white);
+  --tone-data-border: color-mix(in oklab, var(--tone-data) 18%, white);
 }
 
 .dark {
@@ -75,5 +100,125 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .surface-strong {
+    background-color: var(--surface-strong);
+    color: var(--surface-strong-foreground);
+  }
+
+  .surface-strong-soft {
+    background-color: color-mix(in oklab, var(--surface-strong-foreground) 10%, transparent);
+  }
+
+  .surface-overlay {
+    background-color: var(--surface-overlay-soft);
+  }
+
+  .surface-overlay-strong {
+    background-color: var(--surface-overlay-strong);
+  }
+
+  .page-intro-surface {
+    background: linear-gradient(180deg, color-mix(in oklab, var(--tone-neutral) 4%, white), white);
+  }
+
+  .shell-surface-neutral {
+    background-color: color-mix(in oklab, var(--tone-neutral) 3%, white);
+    background-image: radial-gradient(circle at top, color-mix(in oklab, var(--tone-neutral) 12%, transparent), transparent 30%);
+  }
+
+  .shell-surface-info {
+    background-color: color-mix(in oklab, var(--tone-info) 3%, white);
+    background-image: radial-gradient(circle at top, color-mix(in oklab, var(--tone-info) 12%, transparent), transparent 30%);
+  }
+
+  .shell-surface-accent {
+    background-color: color-mix(in oklab, var(--tone-accent) 3%, white);
+    background-image: radial-gradient(circle at top, color-mix(in oklab, var(--tone-accent) 12%, transparent), transparent 30%);
+  }
+
+  .shell-surface-success {
+    background-color: color-mix(in oklab, var(--tone-success) 3%, white);
+    background-image: radial-gradient(circle at top, color-mix(in oklab, var(--tone-success) 12%, transparent), transparent 30%);
+  }
+
+  .shell-surface-warning {
+    background-color: color-mix(in oklab, var(--tone-warning) 4%, white);
+    background-image: radial-gradient(circle at top, color-mix(in oklab, var(--tone-warning) 14%, transparent), transparent 30%);
+  }
+
+  .shell-surface-data {
+    background-color: color-mix(in oklab, var(--tone-data) 3%, white);
+    background-image: radial-gradient(circle at top, color-mix(in oklab, var(--tone-data) 12%, transparent), transparent 30%);
+  }
+
+  .tone-neutral-accent { background-color: var(--tone-neutral); }
+  .tone-info-accent { background-color: var(--tone-info); }
+  .tone-accent-accent { background-color: var(--tone-accent); }
+  .tone-success-accent { background-color: var(--tone-success); }
+  .tone-warning-accent { background-color: var(--tone-warning); }
+  .tone-data-accent { background-color: var(--tone-data); }
+
+  .tone-neutral-panel {
+    background-color: var(--tone-neutral-soft);
+    border-color: var(--tone-neutral-border);
+  }
+
+  .tone-info-panel {
+    background-color: var(--tone-info-soft);
+    border-color: var(--tone-info-border);
+  }
+
+  .tone-accent-panel {
+    background-color: var(--tone-accent-soft);
+    border-color: var(--tone-accent-border);
+  }
+
+  .tone-success-panel {
+    background-color: var(--tone-success-soft);
+    border-color: var(--tone-success-border);
+  }
+
+  .tone-warning-panel {
+    background-color: var(--tone-warning-soft);
+    border-color: var(--tone-warning-border);
+  }
+
+  .tone-data-panel {
+    background-color: var(--tone-data-soft);
+    border-color: var(--tone-data-border);
+  }
+
+  .tone-neutral-icon {
+    background-color: var(--tone-neutral);
+    color: var(--surface-strong-foreground);
+  }
+
+  .tone-info-icon {
+    background-color: var(--tone-info);
+    color: var(--surface-strong-foreground);
+  }
+
+  .tone-accent-icon {
+    background-color: var(--tone-accent);
+    color: var(--surface-strong-foreground);
+  }
+
+  .tone-success-icon {
+    background-color: var(--tone-success);
+    color: var(--surface-strong-foreground);
+  }
+
+  .tone-warning-icon {
+    background-color: var(--tone-warning);
+    color: var(--surface-strong-foreground);
+  }
+
+  .tone-data-icon {
+    background-color: var(--tone-data);
+    color: var(--surface-strong-foreground);
   }
 }

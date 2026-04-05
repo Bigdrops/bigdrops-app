@@ -26,7 +26,7 @@ export function PageShell({
       data-slot="page-shell"
       className={cn(
         widthClasses[width],
-        'min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.08),transparent_30%),hsl(220,20%,98%)] font-["DM_Sans",sans-serif]',
+        'shell-surface-info min-h-screen font-["DM_Sans",sans-serif]',
         padded && 'px-4 pb-[120px] pt-5',
         className,
       )}

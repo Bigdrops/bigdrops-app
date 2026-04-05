@@ -9,24 +9,24 @@ import { MobileChromeContext } from '@/components/Layout'
 
 const toneStyles = {
   blue: {
-    accent: 'bg-blue-500',
-    glow: 'bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.08),transparent_30%),hsl(220,20%,98%)]',
+    accent: 'tone-info-accent',
+    glow: 'shell-surface-info',
   },
   emerald: {
-    accent: 'bg-emerald-500',
-    glow: 'bg-[radial-gradient(circle_at_top,rgba(34,197,94,0.08),transparent_30%),hsl(220,20%,98%)]',
+    accent: 'tone-success-accent',
+    glow: 'shell-surface-success',
   },
   amber: {
-    accent: 'bg-amber-500',
-    glow: 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.08),transparent_30%),hsl(220,20%,98%)]',
+    accent: 'tone-warning-accent',
+    glow: 'shell-surface-warning',
   },
   cyan: {
-    accent: 'bg-cyan-500',
-    glow: 'bg-[radial-gradient(circle_at_top,rgba(6,182,212,0.08),transparent_30%),hsl(220,20%,98%)]',
+    accent: 'tone-data-accent',
+    glow: 'shell-surface-data',
   },
   violet: {
-    accent: 'bg-violet-500',
-    glow: 'bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.08),transparent_30%),hsl(220,20%,98%)]',
+    accent: 'tone-accent-accent',
+    glow: 'shell-surface-accent',
   },
 } as const
 

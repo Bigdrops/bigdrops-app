@@ -1,7 +1,7 @@
 export const documentDetailShellClassName = 'rounded-2xl border border-border bg-card p-4 shadow-sm'
 export const documentDetailHeaderCardClassName = 'mb-5 rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-6'
 export const documentDetailMetaGridClassName = 'grid grid-cols-2 gap-3 sm:grid-cols-4'
-export const documentDetailMetaItemClassName = 'rounded-xl border border-border/70 bg-slate-50 px-3 py-2.5'
+export const documentDetailMetaItemClassName = 'rounded-xl border border-border/70 bg-muted/35 px-3 py-2.5'
 export const documentDetailMetaLabelClassName = 'text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'
 export const documentDetailMetaValueClassName = 'mt-1 text-sm font-medium text-foreground'
 export const documentDetailIconButtonClassName = 'grid h-10 w-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:bg-muted/50'
