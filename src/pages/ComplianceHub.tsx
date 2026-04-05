@@ -27,6 +27,7 @@ export default function ComplianceHub() {
   const [tab, setTab] = useState<ComplianceTab>('overview')
   const [invoices, setInvoices] = useState<any[]>([])
   const [payments, setPayments] = useState<any[]>([])
+  const [receipts, setReceipts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -38,7 +39,7 @@ export default function ComplianceHub() {
       setError('')
 
       try {
-        const [invoicesResult, paymentsResult] = await Promise.all([
+        const [invoicesResult, paymentsResult, receiptsResult] = await Promise.all([
           supabase
             .from('invoices')
             .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
@@ -48,15 +49,21 @@ export default function ComplianceHub() {
             .from('payments')
             .select('*, invoices(invoice_number, client_name)')
             .is('voided_at', null)
-            .order('date', { ascending: false })
+            .order('date', { ascending: false }),
+          supabase
+            .from('wht_receipts')
+            .select('*')
+            .eq('entity_id', 1)
         ])
 
         if (cancelled) return
 
         if (invoicesResult.error) throw invoicesResult.error
         if (paymentsResult.error) throw paymentsResult.error
+        if (receiptsResult.error) throw receiptsResult.error
 
         setInvoices(invoicesResult.data || [])
+        setReceipts(receiptsResult.data || [])
         
         // Flatten payments with joined records
         const flattenedPayments = (paymentsResult.data || []).map(p => {
@@ -104,7 +111,7 @@ export default function ComplianceHub() {
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-2">
                 <div className="bg-blue-500 rounded-full h-2 w-2 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">Phase 1: Operational Area</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">Phase 2A: Data Persistent</span>
               </div>
               <h1 className="text-2xl font-black tracking-tight">Compliance Hub</h1>
               <p className="mt-2 text-sm text-slate-300 leading-relaxed max-w-md">
@@ -178,10 +185,15 @@ export default function ComplianceHub() {
                       netPosition={taxMetrics.netPosition}
                       recentInvoices={invoices}
                       recentPayments={payments}
+                      receipts={receipts}
                     />
                   </TabsContent>
                   <TabsContent value="wht" className="mt-0">
-                    <WhtReceiptsPanel payments={payments} loading={loading} />
+                    <WhtReceiptsPanel 
+                      payments={payments} 
+                      receipts={receipts}
+                      loading={loading} 
+                    />
                   </TabsContent>
                   <TabsContent value="vat" className="mt-0">
                     <VatInputsPanel />

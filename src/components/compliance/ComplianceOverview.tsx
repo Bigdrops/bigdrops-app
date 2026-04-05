@@ -5,11 +5,13 @@ import {
   Wallet, 
   Banknote, 
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  ClipboardList
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatDisplayDate } from '@/lib/formatters/date'
+import { WhtReceipt } from '@/domain/compliance/types'
 
 type MetricTone = 'green' | 'red' | 'amber' | 'blue'
 
@@ -26,6 +28,7 @@ interface ComplianceOverviewProps {
   netPosition: number
   recentInvoices: any[]
   recentPayments: any[]
+  receipts: WhtReceipt[]
 }
 
 const getMetricToneClasses = (tone: MetricTone) => {
@@ -61,7 +64,8 @@ export default function ComplianceOverview({
   whtDeducted, 
   netPosition,
   recentInvoices,
-  recentPayments
+  recentPayments,
+  receipts
 }: ComplianceOverviewProps) {
   
   const metrics: Metric[] = [
@@ -69,6 +73,12 @@ export default function ComplianceOverview({
     { label: 'WHT Deducted', value: formatNaira(whtDeducted), tone: 'red', icon: <Banknote className="h-5 w-5" /> },
     { label: 'Net Position', value: formatNaira(netPosition), tone: netPosition >= 0 ? 'blue' : 'red', icon: <Wallet className="h-5 w-5" /> },
   ]
+
+  const untrackedWHTCount = recentPayments.filter(p => 
+    Number(p.wht_amount || 0) > 0 && !receipts.some(r => r.payment_id === p.id)
+  ).length
+
+  const requestedReceiptsCount = receipts.filter(r => r.receipt_status === 'requested').length
 
   return (
     <div className="space-y-6">
@@ -80,25 +90,45 @@ export default function ComplianceOverview({
       <div className="grid gap-6 md:grid-cols-2">
         {/* Next Actions */}
         <Card className="border-blue-100 bg-blue-50/30">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 border-b border-white/40">
             <CardTitle className="text-sm font-bold flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-blue-600" />
               Next Actions
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group">
+          <CardContent className="p-4 space-y-3">
+            <div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm hover:border-blue-300 transition-colors group">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-slate-800">Verify WHT Receipts</div>
-                  <div className="text-xs text-slate-500 mt-1">Found {recentPayments.filter(p => Number(p.wht_amount || 0) > 0).length} payments needing receipt uploads.</div>
+                  <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                    Initialize Tracking
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    {untrackedWHTCount} WHT payments have not been initialized as tracking records yet.
+                  </div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-blue-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
               </div>
             </div>
-            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm opacity-60">
-              <div className="text-sm font-semibold text-slate-800">Compliance Tracking</div>
-              <div className="text-xs text-slate-500 mt-1">Automatic deadline reminders and filing alerts will appear here in Phase 2.</div>
+
+            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm group">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">Review Requested Receipts</div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    {requestedReceiptsCount} certificates are currently in "requested" status.
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-100 bg-white/40 p-4 shadow-sm opacity-60">
+              <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <ClipboardList className="h-3 w-3" />
+                Filing Goal
+              </div>
+              <div className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-black">Coming in Phase 2B</div>
             </div>
           </CardContent>
         </Card>
