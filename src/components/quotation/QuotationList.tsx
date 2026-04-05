@@ -151,8 +151,21 @@ export default function QuotationList() {
     }
 
     const { data: quotationRows } = await supabase.from('quotations').select('quotation_number')
+    
+    let safeProjectId = quotationRow.project_id || null
+    if (safeProjectId) {
+      const { validateProjectAssignment } = await import('@/domain/projects')
+      const { project, error: projectError } = await validateProjectAssignment(supabase as any, {
+        projectId: safeProjectId,
+        documentClientId: quotationRow.client_id,
+        documentClientName: quotationRow.client_name,
+      })
+      if (projectError || !project) safeProjectId = null
+    }
+
     const payload = {
       ...quotationRow,
+      project_id: safeProjectId,
       quotation_number: getNextQuotationNumber((quotationRows || []) as Array<{ quotation_number?: string | null }>),
       status: 'draft',
       issue_date: new Date().toISOString().split('T')[0],

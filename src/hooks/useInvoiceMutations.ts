@@ -185,6 +185,7 @@ export function useInvoiceMutations({
             invoice_number: newNumber,
             client_id: null,
             client_name: '',
+            project_id: null,
             status: 'draft',
             issue_date: new Date().toISOString().split('T')[0],
             due_date: null,
@@ -205,6 +206,17 @@ export function useInvoiceMutations({
     setShowRevertConfirm(false)
     setConverting(true)
     try {
+      let safeProjectId = invoice.project_id || null
+      if (safeProjectId) {
+        const { validateProjectAssignment } = await import('@/domain/projects')
+        const { project, error: projectError } = await validateProjectAssignment(supabase as any, {
+          projectId: safeProjectId,
+          documentClientId: invoice.client_id,
+          documentClientName: invoice.client_name,
+        })
+        if (projectError || !project) safeProjectId = null
+      }
+
       const [{ data: quotationRows }, { data: latestInvoice }] = await Promise.all([
         supabase.from('quotations').select('quotation_number'),
         supabase.from('invoices').select('custom_fields').eq('id', id).single(),
@@ -238,7 +250,7 @@ export function useInvoiceMutations({
         quotation_title: invoice.invoice_title || null,
         client_id: invoice.client_id || null,
         client_name: invoice.client_name || '',
-        project_id: invoice.project_id || null,
+        project_id: safeProjectId,
         issue_date: invoice.issue_date || new Date().toISOString().split('T')[0],
         valid_until: invoice.due_date || null,
         status: 'draft',

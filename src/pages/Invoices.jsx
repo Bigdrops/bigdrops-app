@@ -336,6 +336,7 @@ export default function Invoices() {
             invoice_number: newNumber,
             client_id: null,
             client_name: "",
+            project_id: null,
             status: "draft",
             issue_date: new Date().toISOString().split("T")[0],
             due_date: null,

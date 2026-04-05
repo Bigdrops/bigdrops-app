@@ -382,6 +382,16 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const handleClone = async () => {
     if (!quotation) return
     try {
+      let safeProjectId = quotation.project_id || null
+      if (safeProjectId) {
+        const { validateProjectAssignment } = await import('@/domain/projects')
+        const { project, error: projectError } = await validateProjectAssignment(supabase as any, {
+          projectId: safeProjectId,
+          documentClientId: quotation.client_id,
+          documentClientName: quotation.client_name,
+        })
+        if (projectError || !project) safeProjectId = null
+      }
       const { data: quotationRows } = await supabase.from('quotations').select('quotation_number')
       const nextQuotationNumber = getNextQuotationNumber((quotationRows || []) as Array<{ quotation_number?: string | null }>)
       const customFields = parseDocumentCustomFields(quotation.custom_fields || {})
@@ -392,7 +402,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         quotation_title: quotation.quotation_title || null,
         client_id: quotation.client_id || null,
         client_name: quotation.client_name || '',
-        project_id: quotation.project_id || null,
+        project_id: safeProjectId,
         issue_date: new Date().toISOString().split('T')[0],
         valid_until: quotation.valid_until || null,
         status: 'draft',
@@ -452,6 +462,16 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     if (!quotation || converting) return
     setConverting(true)
     try {
+      let safeProjectId = quotation.project_id || null
+      if (safeProjectId) {
+        const { validateProjectAssignment } = await import('@/domain/projects')
+        const { project, error: projectError } = await validateProjectAssignment(supabase as any, {
+          projectId: safeProjectId,
+          documentClientId: quotation.client_id,
+          documentClientName: quotation.client_name,
+        })
+        if (projectError || !project) safeProjectId = null
+      }
       const [{ data: invoiceRows }, { data: latestQuotation }] = await Promise.all([
         supabase.from('invoices').select('invoice_number'),
         supabase.from('quotations').select('custom_fields').eq('id', quotationId).single(),
@@ -474,7 +494,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         invoice_title: quotation.quotation_title || null,
         client_id: quotation.client_id || null,
         client_name: quotation.client_name || '',
-        project_id: quotation.project_id || null,
+        project_id: safeProjectId,
         issue_date: quotation.issue_date || new Date().toISOString().split('T')[0],
         due_date: quotation.valid_until || null,
         status: 'draft',
