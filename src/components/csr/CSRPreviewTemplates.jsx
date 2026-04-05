@@ -332,15 +332,6 @@ function PulseAcknowledgementBlock({ styles, csr }) {
 
   return (
     <PdfSection styles={styles} title="Acknowledgement">
-      {csr.showAcknowledgement ? (
-        <View style={styles.ackGrid}>
-          <PdfField styles={styles} label="Recipient" value={csr.acknowledgement_name} />
-          <PdfField styles={styles} label="Recipient Title" value={csr.recipientTitle} />
-          <PdfField styles={styles} label="Recipient Role" value={csr.recipientRole} />
-          <PdfField styles={styles} label="Signature" value="________________" />
-        </View>
-      ) : null}
-
       <View style={styles.signRow}>
         {csr.showTechnicianSignLine ? (
           <PdfSignatureCard
@@ -1256,18 +1247,11 @@ function ZincTemplate({ csr, branding, designPreset }) {
             ) : null}
 
             {csr.showAcknowledgement ? (
-              <View style={{ flex: 2 }}>
-                <View style={[styles.grid3, { marginBottom: 8 }]}>
-                  <PdfField styles={styles} label="Customer Name" value={csr.acknowledgement_name} />
-                  <PdfField styles={styles} label="Recipient Title" value={csr.recipientTitle} />
-                  <PdfField styles={styles} label="Recipient Role" value={csr.recipientRole} />
+              <View style={[styles.signCard, { flex: 2, padding: 8, backgroundColor: '#f4f4f5', borderRadius: 6, borderWidth: 1, borderColor: '#e4e4e7' }]}>
+                <Text style={[styles.signLabel, { color: '#09090b' }]}>Recipient / Signature</Text>
+                <View style={{ marginTop: 6 }}>
+                  <Text style={[styles.fieldLabel, { fontSize: 6.5 }]}>Comment</Text>
                 </View>
-                <PdfSignatureCard
-                  styles={styles}
-                  label="Customer Acknowledgement"
-                  name={safe(csr.acknowledgement_name)}
-                  role={safe(csr.recipientRole)}
-                />
               </View>
             ) : null}
           </View>
