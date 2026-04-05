@@ -30,6 +30,16 @@ type QuotationPdfProps = {
   designPreset?: PdfDesignPreset
 } & Partial<PdfDocumentProps<Quotation, InvoiceItem, Record<string, unknown> | null, Record<string, unknown> | null>>
 
+type PdfStyleExtras = {
+  groupDividerColor: string
+  rowNumberColor: string
+  cellMutedColor: string
+  cellValueColor: string
+  negativeValueColor: string
+  payableNegativeColor: string
+  payablePositiveColor: string
+}
+
 function createStyles(designPreset?: PdfDesignPreset) {
   const preset = designPreset || getDefaultPdfDesignPreset('quotation')
   const accent = preset.accentColor
@@ -43,7 +53,7 @@ function createStyles(designPreset?: PdfDesignPreset) {
   const fillableBold = resolvePdfFontFamily(fillableChoice, 'bold')
   const fillableColor = preset.fillableColor
 
-  return StyleSheet.create({
+  const baseStyles = StyleSheet.create({
   page: {
     fontFamily: bodyRegular,
     fontSize: 10,
@@ -316,14 +326,22 @@ function createStyles(designPreset?: PdfDesignPreset) {
     lineHeight: 1.45,
     marginBottom: 3,
   },
-  groupDividerColor: accentBorder,
-  rowNumberColor: accentDark,
-  cellMutedColor: accentDark,
-  cellValueColor: fillableColor,
-  negativeValueColor: '#b91c1c',
-  payableNegativeColor: '#DC2626',
-  payablePositiveColor: accentDark,
 })
+
+  const colorExtras: PdfStyleExtras = {
+    groupDividerColor: accentBorder,
+    rowNumberColor: accentDark,
+    cellMutedColor: accentDark,
+    cellValueColor: fillableColor,
+    negativeValueColor: '#b91c1c',
+    payableNegativeColor: '#DC2626',
+    payablePositiveColor: accentDark,
+  }
+
+  return {
+    ...baseStyles,
+    ...colorExtras,
+  } as typeof baseStyles & PdfStyleExtras
 }
 
 function stripHtml(value?: string) {
@@ -364,6 +382,19 @@ function formatNaira(value: number | string | null | undefined) {
     minimumFractionDigits: hasFraction ? 2 : 0,
     maximumFractionDigits: hasFraction ? 2 : 0,
   })}`
+}
+
+type GroupMeta = Record<string, { showSubtotal?: boolean }>
+
+function toGroupMeta(value: unknown): GroupMeta {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, entry]) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [key, {}]
+      const record = entry as Record<string, unknown>
+      return [key, { showSubtotal: record.showSubtotal === true }]
+    }),
+  )
 }
 
 function cleanUnit(value: unknown) {
@@ -414,7 +445,7 @@ export default function QuotationPDF({
     rawItems: items,
     computedItems: computedResult.items,
     groups: computedResult.groups,
-    groupMeta: customFields.groupMeta || {},
+    groupMeta: toGroupMeta(customFields.groupMeta),
   })
   const itemColumns = getPdfColumns(columns)
     .filter((column) => ['num', 'description', 'quantity', 'unit_price', 'amount', 'install_rate'].includes(column.key))
