@@ -28,6 +28,7 @@ const NewProject = lazy(() => import('@/pages/NewProject'))
 const ProjectDetail = lazy(() => import('@/pages/ProjectDetail'))
 const ProjectDocumentView = lazy(() => import('@/pages/ProjectDocumentView'))
 const Reports = lazy(() => import('@/pages/Reports'))
+const ComplianceHub = lazy(() => import('@/pages/ComplianceHub'))
 const Waybills = lazy(() => import('@/pages/Waybills'))
 const NewWaybill = lazy(() => import('@/pages/NewWaybill'))
 const EditWaybill = lazy(() => import('@/pages/EditWaybill'))
@@ -95,6 +96,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           />
           <Route path="/projects/:id" element={withBoundary(<ProjectDetail />)} />
           <Route path="/reports" element={withBoundary(<Reports />)} />
+          <Route path="/compliance" element={withBoundary(<ComplianceHub />)} />
           <Route path="/waybills" element={withBoundary(<Waybills />)} />
           <Route path="/waybills/new" element={withBoundary(<NewWaybill />)} />
           <Route path="/waybills/:id/edit" element={withBoundary(<EditWaybill />)} />

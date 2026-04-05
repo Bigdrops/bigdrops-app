@@ -48,7 +48,13 @@ const salesPicker = [
 ]
 
 const moreGroups = [
-  { group: 'Finance', items: [{ key: 'reports', label: 'Reports', icon: BarChart3 }] },
+  {
+    group: 'Finance',
+    items: [
+      { key: 'reports', label: 'Reports', icon: BarChart3 },
+      { key: 'compliance', label: 'Compliance Hub', icon: ClipboardCheck },
+    ],
+  },
   { group: 'System', items: [{ key: 'settings', label: 'Settings', icon: Settings }, { key: 'signout', label: 'Sign Out', icon: LogOut }] },
 ]
 
@@ -66,6 +72,7 @@ const mobileDrawerPrimaryNav = [
 
 const mobileDrawerUtilityNav = [
   { key: 'reports', label: 'Reports', icon: BarChart3, path: '/reports' },
+  { key: 'compliance', label: 'Compliance Hub', icon: ClipboardCheck, path: '/compliance' },
   { key: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
 ]
 
@@ -96,7 +103,7 @@ function getActiveTab(pathname) {
   if (pathname.startsWith('/projects')) return 'projects'
   if (pathname.startsWith('/clients')) return 'clients'
   if (pathname.startsWith('/invoices') || pathname.startsWith('/quotations') || pathname.startsWith('/csr') || pathname.startsWith('/waybills')) return 'sales'
-  if (pathname.startsWith('/reports') || pathname.startsWith('/settings')) return 'more'
+  if (pathname.startsWith('/reports') || pathname.startsWith('/compliance') || pathname.startsWith('/settings')) return 'more'
   return 'home'
 }
 
@@ -188,6 +195,7 @@ export default function Layout({
 
     const pathByKey = {
       reports: '/reports',
+      compliance: '/compliance',
       settings: '/settings',
     }
     setMoreOpen(false)
@@ -388,7 +396,7 @@ export default function Layout({
                           key={item.key}
                           type="button"
                           onClick={() => handleSalesPick(item.key)}
-                          className={cn('flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm transition', isActive ? activeNavItemClassName : inactiveNavItemClassName)}
+                          className={cn('flex w-full items-center gap-3 rounded-2xl px-4 py-2 text-left text-sm transition', isActive ? activeNavItemClassName : inactiveNavItemClassName)}
                         >
                           <span className={cn('grid h-9 w-9 place-items-center rounded-xl', isActive ? activeNavIconClassName : inactiveNavIconClassName)}>
                             <Icon className={cn('h-5 w-5', isActive ? '' : inactiveNavIconColorClassName)} />

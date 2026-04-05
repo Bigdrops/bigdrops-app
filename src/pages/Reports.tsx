@@ -410,101 +410,62 @@ type TaxReportProps = {
 function TaxReport({ rows, collections, loading }: TaxReportProps) {
   if (loading) return <LoadingState label="tax data" />
 
-  const vatRows = rows.filter((row) =>
-    Number(row.vat || 0) > 0 &&
-    !['draft', 'cancelled'].includes(String(row.status || '').toLowerCase()),
-  )
-  const whtRows = collections.filter((row) => Number(row.wht_amount || 0) > 0)
+  const vatCharged = rows.reduce((sum, row) => sum + Number(row.vat || 0), 0)
+  const whtDeducted = collections.reduce((sum, row) => sum + Number(row.wht_amount || 0), 0)
+  const netPosition = vatCharged - whtDeducted
 
   return (
     <div className="space-y-4">
-      <Card className="border-amber-200 bg-card shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold text-foreground">VAT Charged by Invoice</CardTitle>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card className="border-amber-200 bg-amber-50/50 shadow-sm transition hover:shadow-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-amber-700">VAT Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-black text-slate-900">{formatMoney(vatCharged)}</div>
+            <p className="mt-1 text-[11px] text-muted-foreground">Total VAT charged on active invoices for this period.</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-red-200 bg-red-50/50 shadow-sm transition hover:shadow-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-red-700">WHT Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-black text-slate-900">{formatMoney(whtDeducted)}</div>
+            <p className="mt-1 text-[11px] text-muted-foreground">Total WHT deducted from payments received this period.</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-blue-200 bg-blue-50/60 shadow-lg relative overflow-hidden group">
+        <div className="absolute top-0 right-0 -translate-y-4 translate-x-4 opacity-5 group-hover:scale-110 transition-transform">
+          <Receipt className="h-40 w-40" />
+        </div>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-600 rounded-full h-2 w-2 animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Compliance Operations</span>
+          </div>
+          <CardTitle className="text-lg font-black tracking-tight mt-1">Operational Compliance Hub</CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
-          {vatRows.length === 0 ? (
-            <EmptyState title="No VAT charged" description="No invoices with VAT in the selected period." tone="amber" />
-          ) : (
-            <div className="space-y-3">
-              {vatRows.map((row) => (
-                <div key={row.id} className="rounded-2xl border border-border border-l-4 border-l-amber-400 bg-card p-4 shadow-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-bold text-foreground">
-                        <Link to={`/invoices/${row.id}`} className="hover:text-blue-700 hover:underline">
-                          {row.invoice_number || '—'}
-                        </Link>
-                      </div>
-                      <div className="mt-1 text-xs text-muted-foreground">{row.client_name || '—'} · {formatDate(row.issue_date)}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs text-muted-foreground">Invoice Total</div>
-                      <div className="text-sm font-semibold text-foreground">{formatMoney(row.total)}</div>
-                    </div>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    <div>
-                      <div className="text-[11px] text-muted-foreground">VAT Amount</div>
-                      <div className="text-base font-black text-amber-700">{formatMoney(row.vat)}</div>
-                    </div>
-                    <div>
-                      <div className="text-[11px] text-muted-foreground">Status</div>
-                      <Badge className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusClass(row.status)}`}>
-                        {row.status || 'draft'}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        <CardContent className="space-y-4">
+          <p className="text-sm text-slate-600 leading-relaxed max-w-lg">
+            Detailed VAT input tracking, WHT receipts workspace, and tax filing management have moved to the new Compliance Hub.
+          </p>
+          <Link to="/compliance" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-xl hover:bg-slate-800 transition transform hover:-translate-y-0.5 active:translate-y-0">
+            Open Compliance Hub
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </CardContent>
       </Card>
-
-      <Card className="border-red-200 bg-card shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold text-foreground">WHT Deductions from Payments</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {whtRows.length === 0 ? (
-            <EmptyState title="No WHT recorded" description="No payments with WHT deductions in the selected period." tone="red" />
-          ) : (
-            <div className="space-y-3">
-              {whtRows.map((row) => (
-                <div key={row.id} className="rounded-2xl border border-border border-l-4 border-l-red-400 bg-card p-4 shadow-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-bold text-foreground">
-                        {row.invoice_id ? (
-                          <Link to={`/invoices/${row.invoice_id}`} className="hover:text-blue-700 hover:underline">
-                            {row.invoice_number || '—'}
-                          </Link>
-                        ) : (
-                          row.invoice_number || '—'
-                        )}
-                      </div>
-                      <div className="mt-1 text-xs text-muted-foreground">{row.client_name || '—'} · {formatDate(row.date)}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs text-muted-foreground">Cash Amount</div>
-                      <div className="text-sm font-semibold text-emerald-700">{formatMoney(row.cash_amount)}</div>
-                    </div>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3">
-                    <div>
-                      <div className="text-[11px] text-muted-foreground">WHT Deducted</div>
-                      <div className="text-base font-black text-red-600">{formatMoney(row.wht_amount)}</div>
-                    </div>
-                    <div>
-                      <div className="text-[11px] text-muted-foreground">Method</div>
-                      <div className="text-sm font-semibold text-foreground">{row.method || '—'}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+      
+      <Card className="border-slate-100 bg-slate-50/50">
+        <CardContent className="p-4 flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-500" />
+          <div className="text-xs text-muted-foreground font-medium">
+            Net tax position for this period is <span className={netPosition >= 0 ? "text-blue-700 font-bold" : "text-red-700 font-bold"}>{formatMoney(netPosition)}</span>
+          </div>
         </CardContent>
       </Card>
     </div>
