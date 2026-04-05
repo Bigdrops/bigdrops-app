@@ -13,7 +13,7 @@
   --popover: 210 30% 98%;
   --popover-foreground: 222 25% 12%;
 
-  /* A calm, minimalist ???ink??? primary (neutral-first UI) */
+  /* A calm, minimalist ink primary */
   --primary: 235 70% 45%;
   --primary-foreground: 0 0% 98%;
 
@@ -33,7 +33,7 @@
   --border: 215 16% 84%;
   --input: 215 16% 84%;
 
-  /* Focus ring should be visible (minimal ??? faint) */
+  /* Focus ring should be visible */
   --ring: 235 70% 45%;
 
   --radius: 0.75rem;
@@ -98,6 +98,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -127,40 +128,81 @@
 
   .shell-surface-neutral {
     background-color: color-mix(in oklab, var(--tone-neutral) 3%, white);
-    background-image: radial-gradient(circle at top, color-mix(in oklab, var(--tone-neutral) 12%, transparent), transparent 30%);
+    background-image: radial-gradient(
+      circle at top,
+      color-mix(in oklab, var(--tone-neutral) 12%, transparent),
+      transparent 30%
+    );
   }
 
   .shell-surface-info {
     background-color: color-mix(in oklab, var(--tone-info) 3%, white);
-    background-image: radial-gradient(circle at top, color-mix(in oklab, var(--tone-info) 12%, transparent), transparent 30%);
+    background-image: radial-gradient(
+      circle at top,
+      color-mix(in oklab, var(--tone-info) 12%, transparent),
+      transparent 30%
+    );
   }
 
   .shell-surface-accent {
     background-color: color-mix(in oklab, var(--tone-accent) 3%, white);
-    background-image: radial-gradient(circle at top, color-mix(in oklab, var(--tone-accent) 12%, transparent), transparent 30%);
+    background-image: radial-gradient(
+      circle at top,
+      color-mix(in oklab, var(--tone-accent) 12%, transparent),
+      transparent 30%
+    );
   }
 
   .shell-surface-success {
     background-color: color-mix(in oklab, var(--tone-success) 3%, white);
-    background-image: radial-gradient(circle at top, color-mix(in oklab, var(--tone-success) 12%, transparent), transparent 30%);
+    background-image: radial-gradient(
+      circle at top,
+      color-mix(in oklab, var(--tone-success) 12%, transparent),
+      transparent 30%
+    );
   }
 
   .shell-surface-warning {
     background-color: color-mix(in oklab, var(--tone-warning) 4%, white);
-    background-image: radial-gradient(circle at top, color-mix(in oklab, var(--tone-warning) 14%, transparent), transparent 30%);
+    background-image: radial-gradient(
+      circle at top,
+      color-mix(in oklab, var(--tone-warning) 14%, transparent),
+      transparent 30%
+    );
   }
 
   .shell-surface-data {
     background-color: color-mix(in oklab, var(--tone-data) 3%, white);
-    background-image: radial-gradient(circle at top, color-mix(in oklab, var(--tone-data) 12%, transparent), transparent 30%);
+    background-image: radial-gradient(
+      circle at top,
+      color-mix(in oklab, var(--tone-data) 12%, transparent),
+      transparent 30%
+    );
   }
 
-  .tone-neutral-accent { background-color: var(--tone-neutral); }
-  .tone-info-accent { background-color: var(--tone-info); }
-  .tone-accent-accent { background-color: var(--tone-accent); }
-  .tone-success-accent { background-color: var(--tone-success); }
-  .tone-warning-accent { background-color: var(--tone-warning); }
-  .tone-data-accent { background-color: var(--tone-data); }
+  .tone-neutral-accent {
+    background-color: var(--tone-neutral);
+  }
+
+  .tone-info-accent {
+    background-color: var(--tone-info);
+  }
+
+  .tone-accent-accent {
+    background-color: var(--tone-accent);
+  }
+
+  .tone-success-accent {
+    background-color: var(--tone-success);
+  }
+
+  .tone-warning-accent {
+    background-color: var(--tone-warning);
+  }
+
+  .tone-data-accent {
+    background-color: var(--tone-data);
+  }
 
   .tone-neutral-panel {
     background-color: var(--tone-neutral-soft);
@@ -220,5 +262,109 @@
   .tone-data-icon {
     background-color: var(--tone-data);
     color: var(--surface-strong-foreground);
+  }
+}
+
+/* BigDrops launch overlay motion */
+@keyframes bd-sheet-rear {
+  0%,
+  100% {
+    transform: translate(-4px, -4px);
+    opacity: 0.92;
+  }
+
+  25% {
+    transform: translate(-2px, -2px);
+    opacity: 0.96;
+  }
+
+  45%,
+  70% {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+
+  85% {
+    transform: translate(-3px, -2px);
+    opacity: 0.94;
+  }
+}
+
+@keyframes bd-sheet-front {
+  0%,
+  100% {
+    transform: translate(4px, 4px);
+  }
+
+  28% {
+    transform: translate(2px, 2px);
+  }
+
+  48% {
+    transform: translate(0, 0);
+  }
+
+  58% {
+    transform: translate(0.5px, 0.5px);
+  }
+
+  72% {
+    transform: translate(0, 0);
+  }
+
+  88% {
+    transform: translate(3px, 2px);
+  }
+}
+
+@keyframes bd-mark {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  40%,
+  68% {
+    transform: translateY(-0.5px);
+  }
+}
+
+@keyframes bd-halo {
+  0%,
+  100% {
+    transform: translate(-50%, -56%) scale(0.96);
+    opacity: 0.65;
+  }
+
+  50% {
+    transform: translate(-50%, -56%) scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes bd-progress {
+  0% {
+    transform: translateX(0%);
+    opacity: 0.35;
+  }
+
+  30% {
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translateX(340%);
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
