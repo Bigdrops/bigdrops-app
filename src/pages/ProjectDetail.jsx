@@ -120,6 +120,8 @@ export default function ProjectDetail() {
   const [linkType, setLinkType] = useState('invoice')
   const [linking, setLinking] = useState(false)
   const [linkError, setLinkError] = useState('')
+  const [confirmingReassign, setConfirmingReassign] = useState(false)
+  const [pendingReassignData, setPendingReassignData] = useState(null)
 
   const [editForm, setEditForm] = useState({})
 
@@ -242,8 +244,7 @@ export default function ProjectDetail() {
     const selectedConfig = linkConfig[linkType]
     const { data, error } = await supabase
       .from(selectedConfig.table)
-      .select(`id, ${selectedConfig.numberField}, client_id, client_name`)
-      .is('project_id', null)
+      .select(`id, ${selectedConfig.numberField}, client_id, client_name, project_id`)
       .ilike(selectedConfig.numberField, val)
       .maybeSingle()
 
@@ -256,10 +257,33 @@ export default function ProjectDetail() {
     if (!data) {
       setLinking(false)
       setLinkError(
-        `No unlinked ${linkType} found with that document number. Check the number and make sure it is not already linked to another project.`,
+        `No ${linkType} found with that document number. Check the number and try again.`,
       )
       return
     }
+
+    if (data.project_id && String(data.project_id) !== String(id)) {
+      setLinking(false)
+      setPendingReassignData(data)
+      setConfirmingReassign(true)
+      return
+    }
+
+    await executeLink(data)
+  }
+
+  const executeLink = async (dataToLink) => {
+    setConfirmingReassign(false)
+    setLinking(true)
+    const linkConfig = {
+      invoice: { table: 'invoices', numberField: 'invoice_number' },
+      csr: { table: 'csrs', numberField: 'csr_number' },
+      quotation: { table: 'quotations', numberField: 'quotation_number' },
+      waybill: { table: 'waybills', numberField: 'waybill_number' },
+    }
+    const selectedConfig = linkConfig[linkType]
+    
+    const data = dataToLink || pendingReassignData
 
     if (
       isClientMismatch({
@@ -918,6 +942,19 @@ export default function ProjectDetail() {
           onConfirm={() => {
             if (projectDocumentToDelete) void handleDeleteProjectDocument(projectDocumentToDelete)
           }}
+        />
+
+        <ConfirmActionDialog
+          open={confirmingReassign}
+          onOpenChange={setConfirmingReassign}
+          title={`Reassign ${linkType}?`}
+          description={
+            linkType === 'invoice' || linkType === 'quotation'
+              ? `This ${linkType} is already linked to another project. Are you sure you want to reassign it? The existing financial connection will be broken and moved to this project. Make sure this is correct.`
+              : `This ${linkType} is already linked to another project. Are you sure you want to reassign it?`
+          }
+          confirmLabel="Yes, Reassign"
+          onConfirm={() => void executeLink()}
         />
       </div>
     </Layout>

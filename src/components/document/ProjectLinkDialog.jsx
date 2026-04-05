@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, Search } from 'lucide-react'
+import { Check, Search, AlertTriangle } from 'lucide-react'
 
 import { supabase } from '@/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { cn } from '@/lib/utils'
 import { getClientMismatchMessage, isClientMismatch } from '@/domain/projects'
 
@@ -33,6 +34,9 @@ export default function ProjectLinkDialog({
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [confirmingReassign, setConfirmingReassign] = useState(false)
+  const [confirmingDetach, setConfirmingDetach] = useState(false)
+  const isFinancialDoc = tableName === 'invoices' || tableName === 'quotations'
 
   useEffect(() => {
     if (!open) {
@@ -115,9 +119,15 @@ export default function ProjectLinkDialog({
       documentRecord?.project_id &&
       String(documentRecord.project_id) !== String(selectedProjectId)
     ) {
-      setError(`This ${documentLabel.toLowerCase()} is already linked to a project. Open that project first before changing the assignment.`)
+      setConfirmingReassign(true)
       return
     }
+
+    await executeLink()
+  }
+
+  const executeLink = async () => {
+    setConfirmingReassign(false)
 
     const { data: confirmedProject, error: projectError } = await supabase
       .from('projects')
@@ -164,6 +174,29 @@ export default function ProjectLinkDialog({
     toast({
       title: 'Project linked',
       description: `${documentLabel} is now attached to ${confirmedProject.project_code || confirmedProject.name}.`,
+    })
+    await onLinked?.()
+  }
+
+  const executeDetach = async () => {
+    setConfirmingDetach(false)
+    setSaving(true)
+    const { error: updateError } = await supabase
+      .from(tableName)
+      .update({ project_id: null })
+      .eq('id', recordId)
+    setSaving(false)
+
+    if (updateError) {
+      setError(updateError.message)
+      toast({ title: 'Failed to detach project', description: updateError.message, variant: 'destructive' })
+      return
+    }
+
+    onOpenChange(false)
+    toast({
+      title: 'Project detached',
+      description: `${documentLabel} is no longer attached to the project.`,
     })
     await onLinked?.()
   }
@@ -252,19 +285,49 @@ export default function ProjectLinkDialog({
         </div>
 
         <DialogFooter className="gap-2 sm:justify-between">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
           <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => { onOpenChange(false); navigate('/projects') }}>
-              Go to Projects
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
             </Button>
+            {documentRecord?.project_id ? (
+              <Button type="button" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setConfirmingDetach(true)}>
+                Unlink Project
+              </Button>
+            ) : null}
+          </div>
+          <div className="flex gap-2">
             <Button type="button" onClick={() => void handleLink()} disabled={saving || !selectedProjectId}>
               {saving ? 'Linking...' : 'Link Project'}
             </Button>
           </div>
         </DialogFooter>
       </DialogContent>
+      
+      <ConfirmActionDialog
+        open={confirmingReassign}
+        onOpenChange={setConfirmingReassign}
+        title={`Reassign ${documentLabel}?`}
+        description={
+          isFinancialDoc
+            ? `This ${documentLabel.toLowerCase()} is already linked to a project. Are you sure you want to reassign it? The existing financial connection will be broken and moved to the new project. Make sure this is correct.`
+            : `This ${documentLabel.toLowerCase()} is already linked to another project. Are you sure you want to reassign it?`
+        }
+        confirmLabel="Yes, Reassign"
+        onConfirm={executeLink}
+      />
+
+      <ConfirmActionDialog
+        open={confirmingDetach}
+        onOpenChange={setConfirmingDetach}
+        title={`Detach ${documentLabel}?`}
+        description={
+          isFinancialDoc
+            ? `Are you sure you want to remove this ${documentLabel.toLowerCase()} from its project? Linked financial history is not deleted, but this document will no longer appear under the project.`
+            : `Are you sure you want to remove this ${documentLabel.toLowerCase()} from its project?`
+        }
+        confirmLabel="Yes, Detach"
+        onConfirm={executeDetach}
+      />
     </Dialog>
   )
 }
