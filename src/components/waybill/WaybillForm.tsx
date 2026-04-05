@@ -13,7 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/hooks/use-toast'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
-import { validateProjectAssignment } from '@/domain/projects'
+import { type ProjectLookupClient, validateProjectAssignment } from '@/domain/projects'
 import {
   createOfflineWaybillDraft,
   peekNextOfflineWaybillNumber,
@@ -647,11 +647,14 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
       return
     }
 
-    const { project: validatedProject, error: projectError } = await validateProjectAssignment(supabase, {
-      projectId: waybill.project_id,
-      documentClientId: waybill.client_id,
-      documentClientName: waybill.client_name,
-    })
+    const { project: validatedProject, error: projectError } = await validateProjectAssignment(
+      supabase as unknown as ProjectLookupClient,
+      {
+        projectId: waybill.project_id,
+        documentClientId: waybill.client_id,
+        documentClientName: waybill.client_name,
+      },
+    )
 
     if (projectError) {
       setError(projectError)

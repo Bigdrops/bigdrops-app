@@ -106,18 +106,31 @@ export function isProjectCodeConflict(error: ProjectCodeError | null | undefined
   return error?.code === '23505' && errorMentionsProjectCode(error)
 }
 
-export async function validateProjectAssignment(
-  supabaseClient: {
-    from: (table: string) => {
-      select: (columns: string) => {
-        eq: (column: string, value: string) => {
-          is: (column: string, value: null) => {
-            maybeSingle: () => Promise<{ data?: { id: string; project_code?: string | null; name?: string | null; client_id?: string | null; client_name?: string | null }; error?: ProjectCodeError | null }>
-          }
+type ProjectLookupResponse = {
+  data?: {
+    id: string
+    project_code?: string | null
+    name?: string | null
+    client_id?: string | null
+    client_name?: string | null
+  }
+  error?: ProjectCodeError | null
+}
+
+export type ProjectLookupClient = {
+  from: (table: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        is: (column: string, value: null) => {
+          maybeSingle: () => PromiseLike<ProjectLookupResponse>
         }
       }
     }
-  },
+  }
+}
+
+export async function validateProjectAssignment(
+  supabaseClient: ProjectLookupClient,
   {
     projectId,
     documentClientId,

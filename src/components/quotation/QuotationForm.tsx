@@ -25,7 +25,7 @@ import {
 import type { ApplyImportResult } from '@/domain/import/types'
 import { computeDocument } from '@/lib/Calculations'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
-import { type ProjectPrefillState, validateProjectAssignment } from '@/domain/projects'
+import { type ProjectLookupClient, type ProjectPrefillState, validateProjectAssignment } from '@/domain/projects'
 import {
   createOfflineQuotationDraft,
   peekNextOfflineQuotationNumber,
@@ -667,11 +667,14 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   }
 
   const handleSave = async (status: Quotation['status']) => {
-    const { project: validatedProject, error: projectError } = await validateProjectAssignment(supabase, {
+    const { project: validatedProject, error: projectError } = await validateProjectAssignment(
+      supabase as unknown as ProjectLookupClient,
+      {
       projectId: quotation.project_id,
       documentClientId: quotation.client_id,
       documentClientName: quotation.client_name,
-    })
+      },
+    )
 
     if (projectError) {
       toast({ title: 'Project link invalid', description: projectError, variant: 'destructive' })
