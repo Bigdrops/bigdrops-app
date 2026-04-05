@@ -324,6 +324,47 @@ function AcknowledgementBlock({ styles, csr }) {
   )
 }
 
+function PulseAcknowledgementBlock({ styles, csr }) {
+  if (!csr.showAcknowledgement && !csr.showTechnicianSignLine) return null
+  const technicianName = getTechnicianName(csr)
+  const technicianRole = getTechnicianRole(csr)
+  const technicianSignatureUrl = getTechnicianSignatureUrl(csr)
+
+  return (
+    <PdfSection styles={styles} title="Acknowledgement">
+      {csr.showAcknowledgement ? (
+        <View style={styles.ackGrid}>
+          <PdfField styles={styles} label="Recipient" value={csr.acknowledgement_name} />
+          <PdfField styles={styles} label="Recipient Title" value={csr.recipientTitle} />
+          <PdfField styles={styles} label="Recipient Role" value={csr.recipientRole} />
+          <PdfField styles={styles} label="Signature" value="________________" />
+        </View>
+      ) : null}
+
+      <View style={styles.signRow}>
+        {csr.showTechnicianSignLine ? (
+          <PdfSignatureCard
+            styles={styles}
+            label="Technician Signature"
+            name={technicianName}
+            role={technicianRole}
+            signatureUrl={technicianSignatureUrl}
+          />
+        ) : null}
+
+        {csr.showAcknowledgement ? (
+          <View style={styles.signCard}>
+            <View style={[styles.fieldLabel, { fontSize: 6, marginBottom: 2 }]}>Recipient / Signature</View>
+            <View style={{ marginTop: 4 }}>
+              <Text style={[styles.fieldLabel, { fontSize: 6 }]}>Comment</Text>
+            </View>
+          </View>
+        ) : null}
+      </View>
+    </PdfSection>
+  )
+}
+
 function StructuredTopIdentity({ styles, csr, branding }) {
   return (
     <>
@@ -623,7 +664,7 @@ function PulseFrameTemplate({ csr, branding, designPreset }) {
 
         <ServiceTimeSection styles={styles} csr={csr} />
         <CustomerFeedbackSection styles={styles} csr={csr} />
-        <AcknowledgementBlock styles={styles} csr={csr} />
+        <PulseAcknowledgementBlock styles={styles} csr={csr} />
 
         {branding.footerText ? <Text style={styles.footer}>{branding.footerText}</Text> : null}
       </Page>
@@ -1215,12 +1256,19 @@ function ZincTemplate({ csr, branding, designPreset }) {
             ) : null}
 
             {csr.showAcknowledgement ? (
-              <PdfSignatureCard
-                styles={styles}
-                label="Customer Acknowledgement"
-                name={safe(csr.acknowledgement_name)}
-                role={safe(csr.recipientRole)}
-              />
+              <View style={{ flex: 2 }}>
+                <View style={[styles.grid3, { marginBottom: 8 }]}>
+                  <PdfField styles={styles} label="Customer Name" value={csr.acknowledgement_name} />
+                  <PdfField styles={styles} label="Recipient Title" value={csr.recipientTitle} />
+                  <PdfField styles={styles} label="Recipient Role" value={csr.recipientRole} />
+                </View>
+                <PdfSignatureCard
+                  styles={styles}
+                  label="Customer Acknowledgement"
+                  name={safe(csr.acknowledgement_name)}
+                  role={safe(csr.recipientRole)}
+                />
+              </View>
             ) : null}
           </View>
         ) : null}
@@ -1484,29 +1532,15 @@ function CrimsonTemplate({ csr, branding, designPreset }) {
           <View style={styles.headerTop}>
             <View style={styles.brandBox}>
               <PdfLogoSlot styles={styles} branding={branding} fallback="L" />
-              <PdfBrandBlock styles={styles} branding={branding} />
+                <View>
+                  <PdfBrandBlock styles={styles} branding={branding} />
+                  <Text style={[styles.docTitle, { marginTop: 4, letterSpacing: 1 }]}>Customer Service Report</Text>
+                </View>
             </View>
             <View style={styles.idBox}>
               <Text style={styles.idLabel}>Service Report Number</Text>
               <Text style={styles.idValue}>{safe(csr.csr_number)}</Text>
               <Text style={styles.idDate}>{safe(csr.date)}</Text>
-            </View>
-          </View>
-          <View style={styles.headerBottom}>
-            <View>
-              <Text style={styles.docKicker}>Corporate Service Documentation</Text>
-              <Text style={styles.docTitle}>Customer Service Report</Text>
-              {!tightLayout ? <Text style={styles.docSubtext}>Technician record and customer sign-off.</Text> : null}
-            </View>
-            <View style={styles.summaryPillRow}>
-              <View style={styles.summaryPill}>
-                <Text style={styles.summaryPillLabel}>Status</Text>
-                <Text style={styles.summaryPillValue}>{status || 'Pending'}</Text>
-              </View>
-              <View style={styles.summaryPill}>
-                <Text style={styles.summaryPillLabel}>Issue Date</Text>
-                <Text style={styles.summaryPillValue}>{safe(csr.date) || 'Not set'}</Text>
-              </View>
             </View>
           </View>
         </View>
@@ -1612,11 +1646,10 @@ function CrimsonTemplate({ csr, branding, designPreset }) {
 
               {csr.showAcknowledgement ? (
                 <View style={styles.signCard}>
-                  <View style={styles.signSpace} />
-                  <Text style={styles.signLabel}>Recipient Name / Role</Text>
-                  <Text style={styles.fieldValue}>
-                    {[safe(csr.acknowledgement_name), safe(csr.recipientRole)].filter(Boolean).join(' / ')}
-                  </Text>
+                  <Text style={styles.signLabel}>Recipient / Signature</Text>
+                  <View style={{ marginTop: 4 }}>
+                    <Text style={[styles.fieldLabel, { fontSize: 6 }]}>Comment</Text>
+                  </View>
                 </View>
               ) : null}
             </View>

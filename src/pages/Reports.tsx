@@ -12,6 +12,7 @@ import {
   Receipt,
   Search,
   Wallet,
+  AlertCircle,
 } from 'lucide-react'
 
 import Layout from '../components/Layout'
