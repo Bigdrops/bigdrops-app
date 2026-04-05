@@ -265,7 +265,14 @@ export default function ViewCSR() {
               <Button type="button" className="h-10 rounded-[10px] bg-blue-700 px-[18px] text-[13px] font-bold shadow-[0_10px_24px_rgba(0,86,179,0.18)] hover:bg-blue-800" onClick={handleDownload}>
                 Download PDF
               </Button>
-              <button type="button" onClick={() => navigate('/csr/edit/' + id)} className="hidden">Edit CSR</button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 rounded-[10px] px-4 text-[13px] font-bold"
+                onClick={() => navigate('/csr/edit/' + id)}
+              >
+                Edit CSR
+              </Button>
               <div>
                 <Button
                   type="button"
