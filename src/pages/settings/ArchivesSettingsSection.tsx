@@ -62,6 +62,8 @@ export function ArchivesSettingsSection({ onToast }: { onToast: SettingsToastFn 
         .from('invoices')
         .select('id, invoice_number, client_name, total, status, issue_date, archived_at')
         .not('archived_at', 'is', null)
+        .or('thread_role.is.null,thread_role.neq.advance')
+        .or('is_advance.is.null,is_advance.eq.false')
         .order('archived_at', { ascending: false }),
       supabase
         .from('quotations')

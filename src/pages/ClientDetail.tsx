@@ -152,7 +152,7 @@ export default function ClientDetail() {
 
       const [clientResult, invoiceResult, quotationResult, csrResult] = await Promise.all([
         supabase.from('clients').select('*').eq('id', id).single(),
-        supabase.from('invoices').select('*').eq('client_id', id).is('archived_at', null).order('issue_date', { ascending: false }),
+        supabase.from('invoices').select('*').eq('client_id', id).is('archived_at', null).or('thread_role.is.null,thread_role.neq.advance').or('is_advance.is.null,is_advance.eq.false').order('issue_date', { ascending: false }),
         supabase.from('quotations').select('*').eq('client_id', id).order('issue_date', { ascending: false }),
         supabase.from('csrs').select('*').eq('client_id', id).order('created_at', { ascending: false }),
       ])

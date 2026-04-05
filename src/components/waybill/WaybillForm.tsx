@@ -598,7 +598,12 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
       return
     }
 
-    const { data } = await supabase.from('invoices').select('id, invoice_number').ilike('invoice_number', `%${query}%`).limit(6)
+    const { data } = await supabase.from('invoices')
+      .select('id, invoice_number')
+      .ilike('invoice_number', `%${query}%`)
+      .or('thread_role.is.null,thread_role.neq.advance')
+      .or('is_advance.is.null,is_advance.eq.false')
+      .limit(6)
     setInvoiceSuggestions((data as { id: string; invoice_number: string }[]) || [])
   }
 

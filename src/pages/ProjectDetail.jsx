@@ -139,6 +139,8 @@ export default function ProjectDetail() {
         .select('id, invoice_number, invoice_title, status, total, issue_date, document_type')
         .eq('project_id', id)
         .is('archived_at', null)
+        .or('thread_role.is.null,thread_role.neq.advance')
+        .or('is_advance.is.null,is_advance.eq.false')
         .order('issue_date', { ascending: false }),
       supabase
         .from('csrs')

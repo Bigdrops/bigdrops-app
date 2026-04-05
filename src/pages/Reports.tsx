@@ -747,6 +747,8 @@ export default function Reports() {
         .from('invoices')
         .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
         .not('status', 'in', '("draft","cancelled","archived")')
+        .or('thread_role.is.null,thread_role.neq.advance')
+        .or('is_advance.is.null,is_advance.eq.false')
         .order('issue_date', { ascending: false })
 
       const startDate = safeDate(queryStart)
