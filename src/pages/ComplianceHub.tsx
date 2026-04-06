@@ -29,6 +29,7 @@ export default function ComplianceHub() {
   const [payments, setPayments] = useState<any[]>([])
   const [receipts, setReceipts] = useState<any[]>([])
   const [taxInputs, setTaxInputs] = useState<any[]>([])
+  const [filings, setFilings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -40,7 +41,7 @@ export default function ComplianceHub() {
       setError('')
 
       try {
-        const [invoicesResult, paymentsResult, receiptsResult, taxInputsResult] = await Promise.all([
+        const [invoicesResult, paymentsResult, receiptsResult, taxInputsResult, filingsResult] = await Promise.all([
           supabase
             .from('invoices')
             .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
@@ -57,7 +58,11 @@ export default function ComplianceHub() {
           supabase
             .from('tax_input_entries')
             .select('*')
-            .order('date', { ascending: false })
+            .order('date', { ascending: false }),
+          supabase
+            .from('tax_filings')
+            .select('*')
+            .order('period_start', { ascending: false })
         ])
 
         if (cancelled) return
@@ -66,10 +71,12 @@ export default function ComplianceHub() {
         if (paymentsResult.error) throw paymentsResult.error
         if (receiptsResult.error) throw receiptsResult.error
         if (taxInputsResult.error) throw taxInputsResult.error
+        if (filingsResult.error) throw filingsResult.error
 
         setInvoices(invoicesResult.data || [])
         setReceipts(receiptsResult.data || [])
         setTaxInputs(taxInputsResult.data || [])
+        setFilings(filingsResult.data || [])
         
         // Flatten payments with joined records
         const flattenedPayments = (paymentsResult.data || []).map(p => {
@@ -117,7 +124,7 @@ export default function ComplianceHub() {
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-2">
                 <div className="bg-blue-500 rounded-full h-2 w-2 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">Phase 2A: Data Persistent</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">Phase 2C: Filing Register</span>
               </div>
               <h1 className="text-2xl font-black tracking-tight">Compliance Hub</h1>
               <p className="mt-2 text-sm text-slate-300 leading-relaxed max-w-md">
@@ -185,7 +192,7 @@ export default function ComplianceHub() {
               ) : (
                 <Suspense fallback={<PageLoader />}>
                   <TabsContent value="overview" className="mt-0">
-                    <ComplianceOverview 
+                    <ComplianceOverview
                       vatCharged={taxMetrics.vatCharged}
                       whtDeducted={taxMetrics.whtDeducted}
                       netPosition={taxMetrics.netPosition}
@@ -193,6 +200,7 @@ export default function ComplianceHub() {
                       recentPayments={payments}
                       receipts={receipts}
                       taxInputs={taxInputs}
+                      filings={filings}
                     />
                   </TabsContent>
                   <TabsContent value="wht" className="mt-0">
@@ -212,7 +220,13 @@ export default function ComplianceHub() {
                     />
                   </TabsContent>
                   <TabsContent value="filings" className="mt-0">
-                    <TaxFilingsPanel />
+                    <TaxFilingsPanel
+                      filings={filings}
+                      onFilingsChanged={() => {
+                        supabase.from('tax_filings').select('*').order('period_start', { ascending: false })
+                          .then(({ data }) => { if (data) setFilings(data) })
+                      }}
+                    />
                   </TabsContent>
                   <TabsContent value="settings" className="mt-0">
                     <ComplianceSettingsPanel />

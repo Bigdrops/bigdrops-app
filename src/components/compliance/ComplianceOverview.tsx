@@ -11,7 +11,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatDisplayDate } from '@/lib/formatters/date'
-import { WhtReceipt, TaxInputEntry } from '@/domain/compliance/types'
+import { WhtReceipt, TaxInputEntry, TaxFiling } from '@/domain/compliance/types'
 
 type MetricTone = 'green' | 'red' | 'amber' | 'blue'
 
@@ -30,6 +30,7 @@ interface ComplianceOverviewProps {
   recentPayments: any[]
   receipts: WhtReceipt[]
   taxInputs: TaxInputEntry[]
+  filings: TaxFiling[]
 }
 
 const getMetricToneClasses = (tone: MetricTone) => {
@@ -67,7 +68,8 @@ export default function ComplianceOverview({
   recentInvoices,
   recentPayments,
   receipts,
-  taxInputs
+  taxInputs,
+  filings
 }: ComplianceOverviewProps) {
   
   const recoverableVatTotal = taxInputs
@@ -91,6 +93,10 @@ export default function ComplianceOverview({
   ).length
 
   const requestedReceiptsCount = receipts.filter(r => r.receipt_status === 'requested').length
+
+  const openFilingsCount = filings.filter(f => f.status === 'draft' || f.status === 'ready').length
+  const overdueFilingsCount = filings.filter(f => f.status === 'overdue').length
+  const paidFilingsCount = filings.filter(f => f.status === 'paid').length
 
   return (
     <div className="space-y-6">
@@ -149,6 +155,30 @@ export default function ComplianceOverview({
                   Note: {formatNaira(nonRecoverableVatTotal)} marked as non-recoverable
                 </div>
               )}
+            </div>
+
+            {/* Filing summary */}
+            <div className="rounded-xl border border-emerald-100 bg-white p-4 shadow-sm">
+              <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <ClipboardList className="h-3.5 w-3.5 text-emerald-500" />
+                Filing Records
+              </div>
+              <div className="mt-2 flex flex-wrap gap-4">
+                <div>
+                  <span className="text-lg font-bold text-slate-900">{openFilingsCount}</span>
+                  <span className="ml-1 text-[10px] text-slate-500 uppercase font-black">Open</span>
+                </div>
+                <div>
+                  <span className="text-lg font-bold text-emerald-700">{paidFilingsCount}</span>
+                  <span className="ml-1 text-[10px] text-slate-500 uppercase font-black">Paid</span>
+                </div>
+                {overdueFilingsCount > 0 && (
+                  <div>
+                    <span className="text-lg font-bold text-red-600">{overdueFilingsCount}</span>
+                    <span className="ml-1 text-[10px] text-slate-500 uppercase font-black">Overdue</span>
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

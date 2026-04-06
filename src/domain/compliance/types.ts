@@ -1,5 +1,7 @@
 export type CitCategory = 'small' | 'medium' | 'large' | 'exempt'
 export type WhtReceiptStatus = 'pending' | 'requested' | 'received' | 'verified'
+export type TaxFilingTaxType = 'vat' | 'wht' | 'cit'
+export type TaxFilingStatus = 'draft' | 'ready' | 'filed' | 'paid' | 'overdue'
 
 export interface TaxSettings {
   id: string
@@ -43,6 +45,23 @@ export interface TaxInputEntry {
   net_amount: number
   vat_amount: number
   is_recoverable: boolean
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface TaxFiling {
+  id: string
+  settings_id: number
+  tax_type: TaxFilingTaxType
+  period_start: string
+  period_end: string
+  amount_due: number
+  amount_paid: number
+  status: TaxFilingStatus
+  submitted_at: string | null
+  receipt_reference: string | null
+  portal_reference: string | null
   notes: string | null
   created_at: string
   updated_at: string
