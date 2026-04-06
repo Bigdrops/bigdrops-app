@@ -45,5 +45,7 @@ export function mapAdvanceConfigToInvoice(parentInvoice: Invoice, config: Advanc
     thread_role: 'advance',
     // thread_id is used by some logic to find the father
     thread_id: parentInvoice.id,
+    advance_primary_label: config.primaryLabel,
+    advance_secondary_label: config.secondaryLabel,
   }
 }

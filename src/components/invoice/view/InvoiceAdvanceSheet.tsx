@@ -10,8 +10,11 @@ type AdvanceMode = 'percent' | 'fixed'
 type AdvanceSheetMode = 'create' | 'edit' | 'view'
 
 interface AdvanceInvoiceSummary {
+  id?: string | null
   invoice_number?: string | null
   total?: number | string | null
+  advance_primary_label?: string | null
+  advance_secondary_label?: string | null
 }
 
 interface InvoiceAdvanceSheetProps {
@@ -30,6 +33,10 @@ interface InvoiceAdvanceSheetProps {
   setAdvanceInputValue: Dispatch<SetStateAction<string>>
   advanceSuffixValue: string
   setAdvanceSuffixValue: Dispatch<SetStateAction<string>>
+  advancePrimaryLabel: string
+  setAdvancePrimaryLabel: Dispatch<SetStateAction<string>>
+  advanceSecondaryLabel: string
+  setAdvanceSecondaryLabel: Dispatch<SetStateAction<string>>
   advanceAmount: number
   balanceRemaining: number
   onSave: () => void
@@ -57,6 +64,10 @@ export default function InvoiceAdvanceSheet({
   setAdvanceInputValue,
   advanceSuffixValue,
   setAdvanceSuffixValue,
+  advancePrimaryLabel,
+  setAdvancePrimaryLabel,
+  advanceSecondaryLabel,
+  setAdvanceSecondaryLabel,
   advanceAmount,
   balanceRemaining,
   onSave,
@@ -110,12 +121,16 @@ export default function InvoiceAdvanceSheet({
                   <div className="rounded-[24px] border border-slate-200 bg-slate-950 px-6 py-6 text-white shadow-xl">
                     <div className="flex flex-col gap-4">
                       <div className="flex flex-col">
-                        <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Advance Payable Now</div>
+                        <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                          {(advanceInvoice.advance_primary_label || 'Advance Payable Now') + ` (${Math.round((Number(advanceInvoice.total || 0) / contractValue) * 100)}%)`}
+                        </div>
                         <div className="mt-1 text-3xl font-black tracking-tight">{formatMoney(Number(advanceInvoice.total || 0))}</div>
                       </div>
                       <div className="h-px bg-white/10" />
                       <div className="flex items-center justify-between opacity-70">
-                        <div className="text-[11px] font-bold uppercase tracking-[0.1em]">Remaining Balance upon completion</div>
+                        <div className="text-[11px] font-bold uppercase tracking-[0.1em]">
+                          {(advanceInvoice.advance_secondary_label || 'Balance upon Completion') + ` (${Math.round((Math.max(0, contractValue - Number(advanceInvoice.total || 0)) / contractValue) * 100)}%)`}
+                        </div>
                         <div className="text-sm font-bold">{formatMoney(Math.max(0, contractValue - Number(advanceInvoice.total || 0)))}</div>
                       </div>
                     </div>
@@ -147,7 +162,7 @@ export default function InvoiceAdvanceSheet({
                     </div>
                   </div>
 
-                   <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="advance-value">
                         {advanceMode === 'fixed' ? 'Advance Amount' : 'Advance Percentage'}
@@ -187,15 +202,47 @@ export default function InvoiceAdvanceSheet({
                     </div>
                   </div>
 
+                  <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Summary Customization</div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="primary-label">Primary Label</Label>
+                        <Input
+                          id="primary-label"
+                          placeholder="e.g. Advance Payable Now"
+                          value={advancePrimaryLabel}
+                          onChange={(e) => setAdvancePrimaryLabel(e.target.value)}
+                          disabled={advanceSaving}
+                          className="h-10 rounded-xl"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="secondary-label">Secondary Label</Label>
+                        <Input
+                          id="secondary-label"
+                          placeholder="e.g. Balance upon Completion"
+                          value={advanceSecondaryLabel}
+                          onChange={(e) => setAdvanceSecondaryLabel(e.target.value)}
+                          disabled={advanceSaving}
+                          className="h-10 rounded-xl"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="rounded-[24px] border border-slate-200 bg-slate-950 px-6 py-6 text-white shadow-xl">
                     <div className="flex flex-col gap-4">
                       <div className="flex flex-col">
-                        <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Advance Payable Now</div>
+                        <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                          {(advancePrimaryLabel || 'Advance Payable Now') + ` (${Math.round((advanceAmount / contractValue) * 100)}%)`}
+                        </div>
                         <div className="mt-1 text-3xl font-black tracking-tight">{formatMoney(advanceAmount)}</div>
                       </div>
                       <div className="h-px bg-white/10" />
                       <div className="flex items-center justify-between opacity-70">
-                        <div className="text-[11px] font-bold uppercase tracking-[0.1em]">Remaining Balance upon completion</div>
+                        <div className="text-[11px] font-bold uppercase tracking-[0.1em]">
+                          {(advanceSecondaryLabel || 'Balance upon Completion') + ` (${Math.round((balanceRemaining / contractValue) * 100)}%)`}
+                        </div>
                         <div className="text-sm font-bold">{formatMoney(balanceRemaining)}</div>
                       </div>
                     </div>

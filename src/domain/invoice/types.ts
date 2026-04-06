@@ -22,6 +22,8 @@ export interface AdvanceConfig {
   mode: 'percent' | 'fixed'
   value: number
   suffix?: string
+  primaryLabel?: string
+  secondaryLabel?: string
 }
 
 export interface InvoicePdfOutput {
@@ -186,6 +188,8 @@ export interface Invoice extends InvoiceTotalsSource {
   total_contract_value?: number
   thread_id?: string | null
   thread_role?: string | null
+  advance_primary_label?: string
+  advance_secondary_label?: string
 
   work_duration?: string
   amount_in_words?: string

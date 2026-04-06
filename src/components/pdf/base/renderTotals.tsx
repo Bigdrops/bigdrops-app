@@ -51,17 +51,17 @@ export function renderTotals({
               </React.View>
 
               <React.View style={styles.grandTotalRow}>
-                <React.Text style={styles.grandLabel}>This Advance</React.Text>
+                <React.Text style={styles.grandLabel}>{advanceSummary.primaryLabel} ({advanceSummary.advancePercent}%)</React.Text>
                 <React.Text style={styles.grandValue}>NGN {advanceSummary.thisAdvance.toLocaleString()}</React.Text>
               </React.View>
 
               {showBalanceDue ? (
                 <React.View style={styles.payableRow || styles.totalRowStrong}>
-                  <React.Text style={styles.payableLabel || styles.totalLabelStrong}>Balance Remaining</React.Text>
+                  <React.Text style={[styles.payableLabel || styles.totalLabelStrong, { fontSize: 8, opacity: 0.7 }]}>{advanceSummary.secondaryLabel} ({advanceSummary.balancePercent}%)</React.Text>
                   <React.Text
                     style={[
                       styles.payableValue || styles.totalValueStrong,
-                      { color: advanceSummary.balanceRemaining > 0 ? styles.payableNegativeColor || '#DC2626' : styles.payablePositiveColor || '#059669' },
+                      { color: '#475569', fontSize: 9 },
                     ]}
                   >
                     NGN {advanceSummary.balanceRemaining.toLocaleString()}

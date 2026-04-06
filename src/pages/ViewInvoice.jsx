@@ -100,6 +100,8 @@ export default function ViewInvoice() {
   const [advanceMode, setAdvanceMode] = useState('percent')
   const [advanceInputValue, setAdvanceInputValue] = useState('50')
   const [advanceSuffixValue, setAdvanceSuffixValue] = useState('A')
+  const [advancePrimaryLabel, setAdvancePrimaryLabel] = useState('Advance Payable Now')
+  const [advanceSecondaryLabel, setAdvanceSecondaryLabel] = useState('Balance upon Completion')
   const [advanceInvoice, setAdvanceInvoice] = useState(null)
   const [advanceSaving, setAdvanceSaving] = useState(false)
   const [advancePdfGenerating, setAdvancePdfGenerating] = useState(false)
@@ -183,6 +185,8 @@ export default function ViewInvoice() {
     setAdvanceMode(nextMode)
     setAdvanceInputValue(rawValue)
     setAdvanceSuffixValue(nextAdvanceInvoice?.suffix ?? 'A')
+    setAdvancePrimaryLabel(nextAdvanceInvoice?.advance_primary_label || 'Advance Payable Now')
+    setAdvanceSecondaryLabel(nextAdvanceInvoice?.advance_secondary_label || 'Balance upon Completion')
   }, [])
 
   useEffect(() => {
@@ -269,6 +273,8 @@ export default function ViewInvoice() {
       setAdvanceMode('percent')
       setAdvanceInputValue('50')
       setAdvanceSuffixValue('A')
+      setAdvancePrimaryLabel('Advance Payable Now')
+      setAdvanceSecondaryLabel('Balance upon Completion')
     }
     if (mode === 'view' && advanceInvoice) {
       syncAdvanceForm(advanceInvoice)
@@ -355,6 +361,8 @@ export default function ViewInvoice() {
           mode: advanceMode,
           value: safeAdvanceInput,
           suffix: advanceSuffixValue === null ? '' : advanceSuffixValue,
+          primaryLabel: advancePrimaryLabel,
+          secondaryLabel: advanceSecondaryLabel,
         },
       }
 
@@ -1051,6 +1059,10 @@ export default function ViewInvoice() {
           setAdvanceInputValue={setAdvanceInputValue}
           advanceSuffixValue={advanceSuffixValue}
           setAdvanceSuffixValue={setAdvanceSuffixValue}
+          advancePrimaryLabel={advancePrimaryLabel}
+          setAdvancePrimaryLabel={setAdvancePrimaryLabel}
+          advanceSecondaryLabel={advanceSecondaryLabel}
+          setAdvanceSecondaryLabel={setAdvanceSecondaryLabel}
           advanceAmount={advanceAmount}
           balanceRemaining={balanceRemaining}
           onSave={() => void handleSaveAdvance()}
