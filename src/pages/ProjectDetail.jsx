@@ -6,6 +6,7 @@ import {
   Calendar,
   ChevronRight,
   ClipboardList,
+  Copy,
   DollarSign,
   FileText,
   FolderKanban,
@@ -188,7 +189,7 @@ export default function ProjectDetail() {
     setInvoices(enrichedInvoices)
     setCsrs(csrRes.data || [])
     setQuotations(quotationRes.data || [])
-    setWaybills(waybillRes.data || [])
+    setWaybills(waybillsRes.data || [])
     setProjectDocs(projectDocsRes.data || [])
     setEditForm({
       name: projectData?.name || '',
@@ -477,8 +478,25 @@ export default function ProjectDetail() {
                 </div>
 
                 {project.project_code ? (
-                  <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    {project.project_code}
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1 font-mono text-xs font-bold tracking-widest text-slate-700 ring-1 ring-slate-200">
+                      {project.project_code}
+                    </span>
+                    <button
+                      type="button"
+                      title="Copy project code"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(project.project_code)
+                          toast({ title: 'Copied', description: `${project.project_code} copied to clipboard.` })
+                        } catch {
+                          toast({ title: 'Copy failed', variant: 'destructive' })
+                        }
+                      }}
+                      className="rounded p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    >
+                      <Copy size={12} />
+                    </button>
                   </div>
                 ) : null}
 
@@ -486,7 +504,7 @@ export default function ProjectDetail() {
                   {project.client_name ? (
                     <span className="inline-flex items-center gap-2">
                       <Building2 size={14} className="text-muted-foreground" />
-                      <span className="font-medium text-slate-700">{project.client_name}</span>
+                      <span className="font-semibold text-slate-800">{project.client_name}</span>
                     </span>
                   ) : null}
 
@@ -501,15 +519,8 @@ export default function ProjectDetail() {
                     <span className="inline-flex items-center gap-2">
                       <Hash size={14} className="text-muted-foreground" />
                       <span>
-                        PO: <span className="font-medium text-slate-700">{String(project.po_number || '').trim()}</span>
+                        PO: <span className="font-semibold text-slate-700">{String(project.po_number || '').trim()}</span>
                       </span>
-                    </span>
-                  ) : null}
-
-                  {project.project_value ? (
-                    <span className="inline-flex items-center gap-2">
-                      <DollarSign size={14} className="text-muted-foreground" />
-                      <span>{formatCurrency(project.project_value)}</span>
                     </span>
                   ) : null}
 
@@ -520,6 +531,13 @@ export default function ProjectDetail() {
                     </span>
                   ) : null}
                 </div>
+
+                {project.project_value ? (
+                  <div className="mb-1 inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-1.5 ring-1 ring-emerald-100">
+                    <DollarSign size={13} className="text-emerald-600" />
+                    <span className="text-sm font-bold text-emerald-700">{formatCurrency(project.project_value)}</span>
+                  </div>
+                ) : null}
 
                 {project.notes ? <p className="text-sm italic text-muted-foreground">{project.notes}</p> : null}
               </div>
@@ -659,8 +677,16 @@ export default function ProjectDetail() {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_280px] md:items-start">
           <div>
+            {/* ── Section header ───────────────────────────────────────── */}
             <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-sm font-semibold text-slate-700">Documents ({docCount})</div>
+              <div className="text-sm font-semibold text-slate-700">
+                Documents
+                {docCount > 0 ? (
+                  <span className="ml-1.5 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">
+                    {docCount}
+                  </span>
+                ) : null}
+              </div>
               <button
                 type="button"
                 onClick={() => setShowLink(true)}
@@ -671,116 +697,179 @@ export default function ProjectDetail() {
               </button>
             </div>
 
-            {timeline.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-emerald-200 bg-card p-10 text-center shadow-sm ring-1 ring-emerald-50">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
-                  <FolderKanban size={24} />
-                </div>
-                <div className="mb-1 text-sm font-semibold text-slate-700">No documents yet</div>
-                <div className="text-sm text-muted-foreground">
-                  Create a document from the quick actions panel, or link an existing one.
-                </div>
+            {/* ── Commercial documents: Quotations + Invoices ─────────── */}
+            <div className="mb-4">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Commercial</span>
+                {quotations.length + invoices.length > 0 ? (
+                  <span className="inline-flex items-center rounded-full bg-violet-50 px-1.5 py-0.5 text-[10px] font-bold text-violet-500 ring-1 ring-violet-100">
+                    {quotations.length + invoices.length}
+                  </span>
+                ) : null}
               </div>
-            ) : (
-              <div className="space-y-3">
-                {timeline.map((doc) => {
-                  const cfg = DOC_TYPE[doc._type] || DOC_TYPE.invoice
-                  const Icon = cfg.icon
-                  const docNumber = doc.invoice_number || doc.csr_number || doc.quotation_number || '—'
-                  const docTitle = doc.invoice_title || doc.title || ''
-                  const docDate = formatDate(doc._date)
-                  const docPath =
-                    doc._type === 'invoice'
-                      ? `/invoices/${doc.id}`
-                      : doc._type === 'quotation'
-                        ? `/quotations/${doc.id}`
-                      : doc._type === 'waybill'
-                        ? `/waybills/${doc.id}`
-                        : `/csr/${doc.id}`
 
-                  const invoiceFinancials = doc.invoiceFinancials
-                  const paymentStatus = doc._type === 'invoice' ? getPaymentStatusConfig(invoiceFinancials?.computed_status) : null
-                  const balanceDue = Number(invoiceFinancials?.balance_due || 0)
-
-                  return (
-                    <button
-                      key={`${doc._type}-${doc.id}`}
-                      type="button"
-                      onClick={() => navigate(docPath)}
-                      className="group flex w-full items-start gap-4 rounded-2xl border border-border bg-card p-4 text-left shadow-sm ring-1 ring-ring transition hover:border-border hover:shadow-md"
-                    >
-                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${cfg.iconWrapClassName}`}>
-                        <Icon size={18} />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-2 flex flex-wrap items-center gap-2">
-                          <span className={`text-xs font-semibold uppercase tracking-wide ${cfg.labelClassName}`}>
-                            {cfg.label}
-                          </span>
-                          <span className="text-sm font-bold text-foreground">{docNumber}</span>
-                          {paymentStatus ? (
-                            <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${paymentStatus.className}`}>
-                              {paymentStatus.label}
-                            </span>
-                          ) : null}
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                          {docTitle ? <span className="truncate text-muted-foreground">{docTitle}</span> : null}
-                          {docDate ? <span>{docDate}</span> : null}
-                        </div>
-
-                        {doc._type === 'invoice' ? (
-                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                            {balanceDue > 0 ? (
-                              <span className="font-semibold text-red-600">{formatCurrency(balanceDue)} outstanding</span>
-                            ) : (
-                              <span className="font-semibold text-emerald-600">Paid</span>
-                            )}
-                            {invoiceFinancials?.cash_received ? (
-                              <span className="text-emerald-600">
-                                Collected {formatCurrency(invoiceFinancials.cash_received)}
-                              </span>
+              {quotations.length + invoices.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-center">
+                  <div className="text-sm font-semibold text-slate-600">No quotations or invoices yet</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">Use Quick Actions to create one, or link an existing document.</div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {[...quotations.map(q => ({ ...q, _type: 'quotation', _date: q.issue_date })),
+                    ...invoices.map(inv => ({ ...inv, _type: 'invoice', _date: inv.issue_date }))]
+                    .sort((a, b) => new Date(b._date) - new Date(a._date))
+                    .map((doc) => {
+                      const cfg = DOC_TYPE[doc._type]
+                      const Icon = cfg.icon
+                      const docNumber = doc.invoice_number || doc.quotation_number || '—'
+                      const docTitle = doc.invoice_title || ''
+                      const docPath = doc._type === 'invoice' ? `/invoices/${doc.id}` : `/quotations/${doc.id}`
+                      const invoiceFinancials = doc.invoiceFinancials
+                      const paymentStatus = doc._type === 'invoice' ? getPaymentStatusConfig(invoiceFinancials?.computed_status) : null
+                      const balanceDue = Number(invoiceFinancials?.balance_due || 0)
+                      return (
+                        <button
+                          key={`${doc._type}-${doc.id}`}
+                          type="button"
+                          onClick={() => navigate(docPath)}
+                          className="group flex w-full items-start gap-4 rounded-2xl border border-border bg-card p-4 text-left shadow-sm ring-1 ring-ring transition hover:border-border hover:shadow-md"
+                        >
+                          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${cfg.iconWrapClassName}`}>
+                            <Icon size={18} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-2 flex flex-wrap items-center gap-2">
+                              <span className={`text-xs font-semibold uppercase tracking-wide ${cfg.labelClassName}`}>{cfg.label}</span>
+                              <span className="text-sm font-bold text-foreground">{docNumber}</span>
+                              {paymentStatus ? (
+                                <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${paymentStatus.className}`}>
+                                  {paymentStatus.label}
+                                </span>
+                              ) : null}
+                              {doc.status && doc._type === 'quotation' ? (
+                                <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 capitalize">{doc.status}</span>
+                              ) : null}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                              {docTitle ? <span className="truncate">{docTitle}</span> : null}
+                              {doc._date ? <span>{formatDate(doc._date)}</span> : null}
+                            </div>
+                            {doc._type === 'invoice' ? (
+                              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                                {balanceDue > 0 ? (
+                                  <span className="font-semibold text-red-600">{formatCurrency(balanceDue)} outstanding</span>
+                                ) : (
+                                  <span className="font-semibold text-emerald-600">Paid</span>
+                                )}
+                                {invoiceFinancials?.cash_received ? (
+                                  <span className="text-emerald-600">Collected {formatCurrency(invoiceFinancials.cash_received)}</span>
+                                ) : null}
+                              </div>
                             ) : null}
                           </div>
-                        ) : null}
-                      </div>
-
-                      <div className="flex shrink-0 items-center gap-3">
-                        {doc.total ? (
-                          <div className={`text-sm font-bold ${doc._type === 'invoice' && balanceDue > 0 ? 'text-red-600' : 'text-slate-700'}`}>
-                            {formatCurrency(doc.total)}
+                          <div className="flex shrink-0 items-center gap-3">
+                            {doc.total ? (
+                              <div className={`text-sm font-bold ${doc._type === 'invoice' && balanceDue > 0 ? 'text-red-600' : 'text-slate-700'}`}>
+                                {formatCurrency(doc.total)}
+                              </div>
+                            ) : null}
+                            <ChevronRight size={16} className="text-slate-300 transition group-hover:text-muted-foreground" />
                           </div>
-                        ) : null}
-                        <ChevronRight size={16} className="text-slate-300 transition group-hover:text-muted-foreground" />
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
+                        </button>
+                      )
+                    })}
+                </div>
+              )}
+            </div>
 
-            <div className="mt-5 rounded-2xl border-l-4 border-l-amber-500 border border-border bg-card p-4 shadow-sm ring-1 ring-amber-50">
+            {/* ── Field / operational docs: CSRs + Waybills ───────────── */}
+            <div className="mb-4">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Field</span>
+                {csrs.length + waybills.length > 0 ? (
+                  <span className="inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600 ring-1 ring-emerald-100">
+                    {csrs.length + waybills.length}
+                  </span>
+                ) : null}
+              </div>
+
+              {csrs.length + waybills.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-center">
+                  <div className="text-sm font-semibold text-slate-600">No CSRs or waybills yet</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">Use Quick Actions to create one, or link an existing document.</div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {[...csrs.map(c => ({ ...c, _type: 'csr', _date: c.created_at })),
+                    ...waybills.map(w => ({ ...w, _type: 'waybill', _date: w.date || w.created_at }))]
+                    .sort((a, b) => new Date(b._date) - new Date(a._date))
+                    .map((doc) => {
+                      const cfg = DOC_TYPE[doc._type]
+                      const Icon = cfg.icon
+                      const docNumber = doc.csr_number || doc.waybill_number || '—'
+                      const docTitle = doc.title || ''
+                      const docPath = doc._type === 'csr' ? `/csr/${doc.id}` : `/waybills/${doc.id}`
+                      return (
+                        <button
+                          key={`${doc._type}-${doc.id}`}
+                          type="button"
+                          onClick={() => navigate(docPath)}
+                          className="group flex w-full items-start gap-4 rounded-2xl border border-border bg-card p-4 text-left shadow-sm ring-1 ring-ring transition hover:border-border hover:shadow-md"
+                        >
+                          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${cfg.iconWrapClassName}`}>
+                            <Icon size={18} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-1 flex flex-wrap items-center gap-2">
+                              <span className={`text-xs font-semibold uppercase tracking-wide ${cfg.labelClassName}`}>{cfg.label}</span>
+                              <span className="text-sm font-bold text-foreground">{docNumber}</span>
+                              {doc.status ? (
+                                <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 capitalize">{doc.status}</span>
+                              ) : null}
+                            </div>
+                            {(docTitle || doc._date) ? (
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                                {docTitle ? <span className="truncate">{docTitle}</span> : null}
+                                {doc._date ? <span>{formatDate(doc._date)}</span> : null}
+                              </div>
+                            ) : null}
+                          </div>
+                          <ChevronRight size={16} className="mt-1 shrink-0 text-slate-300 transition group-hover:text-muted-foreground" />
+                        </button>
+                      )
+                    })}
+                </div>
+              )}
+            </div>
+
+            {/* ── External documents ───────────────────────────────────── */}
+            <div className="mt-5 rounded-2xl border border-border border-l-4 border-l-amber-500 bg-card p-4 shadow-sm ring-1 ring-amber-50">
               <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-slate-700">External Documents ({projectDocs.length})</div>
-                  <div className="mt-1 text-sm text-muted-foreground">POs, receipts, waybills, and other third-party project records.</div>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                    External Documents
+                    {projectDocs.length > 0 ? (
+                      <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+                        {projectDocs.length}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">POs, receipts, and other third-party project files.</div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowProjectDocumentSheet(true)}
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
                 >
-                  + Add Document
+                  + Add File
                 </button>
               </div>
 
               {projectDocs.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50 px-4 py-8 text-center">
-                  <div className="text-sm font-semibold text-slate-700">No external documents yet</div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    Use the AI prompt to extract JSON, then save a readable project record for purchase orders, receipts, waybills, and other files.
+                <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50 px-4 py-6 text-center">
+                  <div className="text-sm font-semibold text-slate-700">No external files yet</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Add purchase orders, receipts, or other project records using the button above.
                   </div>
                 </div>
               ) : (
@@ -857,20 +946,21 @@ export default function ProjectDetail() {
                 <div>
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Document Type</div>
                   <div className="grid grid-cols-2 gap-2">
-                    {['invoice', 'quotation', 'csr', 'waybill'].map((type) => {
+                    {(['invoice', 'quotation', 'csr', 'waybill']).map((type) => {
+                      const typeLabels = { invoice: 'Invoice', quotation: 'Quotation', csr: 'CSR', waybill: 'Waybill' }
                       const active = linkType === type
                       return (
                         <button
                           key={type}
                           type="button"
                           onClick={() => setLinkType(type)}
-                          className={`rounded-lg px-3 py-2 text-sm font-semibold capitalize transition ${
+                          className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
                             active
                               ? 'bg-blue-600 text-white'
                               : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                           }`}
                         >
-                          {type}
+                          {typeLabels[type]}
                         </button>
                       )
                     })}
