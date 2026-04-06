@@ -1,5 +1,5 @@
-import { TaxInputEntry, TaxFiling, WhtReceipt } from '../types'
-import { ComplianceRecordType } from './contracts'
+import { TaxInputEntry, TaxFiling, WhtReceipt } from '@/domain/compliance/types'
+import { ComplianceRecordType } from '@/domain/compliance/import/contracts'
 
 export type PartialRecord<T> = Partial<T> & Record<string, any>
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ClipboardList, FileText, PackageCheck, Receipt, Rows3, Trash2 } from 'lucide-react'
+import { Wand2, Copy, Check, ClipboardCheck, ClipboardList, FileText, PackageCheck, Receipt, Rows3, Trash2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -255,6 +256,7 @@ export default function ProjectDocumentSheet({
   const [parseError, setParseError] = useState('')
   const [form, setForm] = useState<DocumentFormState>(makeInitialForm())
   const [saving, setSaving] = useState(false)
+  const [copied, setCopied] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -281,7 +283,9 @@ export default function ProjectDocumentSheet({
   const handleCopyPrompt = async () => {
     try {
       await navigator.clipboard.writeText(promptText)
+      setCopied(true)
       toast({ title: 'Copied', description: `${config.label} AI prompt copied.` })
+      setTimeout(() => setCopied(false), 2000)
     } catch {
       toast({ title: 'Copy failed', description: 'Could not copy AI prompt.', variant: 'destructive' })
     }
@@ -395,25 +399,39 @@ export default function ProjectDocumentSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[94vh] rounded-t-[28px] bg-card p-0 [&>[data-slot=sheet-close]]:hidden">
-        <SheetHeader className="border-b border-zinc-200 bg-zinc-50 px-5 py-4 text-left">
-          <SheetTitle className="text-base font-semibold text-zinc-900">Add Project Document</SheetTitle>
-          <SheetDescription className="text-sm text-zinc-500">
-            Use the AI prompt to extract structured JSON, then paste only the JSON object here for review before saving.
-          </SheetDescription>
+      <SheetContent side="bottom" className="max-h-[94vh] rounded-t-[28px] bg-slate-50 p-0 border-none sm:mx-auto sm:max-w-3xl overflow-y-auto [&>[data-slot=sheet-close]]:hidden">
+        <SheetHeader className="p-5 border-b bg-white rounded-t-[28px] flex flex-row items-center justify-between text-left">
+          <div className="space-y-1">
+            <SheetTitle className="text-lg font-black text-slate-900 flex items-center gap-2">
+              <Wand2 className="h-5 w-5 text-emerald-600" />
+              Import {config.label}
+            </SheetTitle>
+            <SheetDescription className="text-xs font-medium text-slate-500 italic">
+              AI Prompt → Paste JSON → Review → Save. 
+            </SheetDescription>
+          </div>
+          {step === 2 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleCopyPrompt}
+              className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3"
+            >
+              {copied ? <Check className="h-3 w-3 mr-1.5" /> : <Copy className="h-3 w-3 mr-1.5" />}
+              {copied ? 'Copied' : 'AI Prompt'}
+            </Button>
+          )}
         </SheetHeader>
 
-        <div className="space-y-4 overflow-y-auto p-5">
-          <div className="flex items-center gap-2">
+        <div className="space-y-4 p-5">
+          <div className="flex items-center gap-1.5 mb-2">
             {[1, 2, 3].map((current) => (
               <div
                 key={current}
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
-                  step === current ? 'bg-blue-600 text-white' : 'bg-zinc-100 text-zinc-500'
+                className={`h-1 flex-1 rounded-full ${
+                  step >= current ? 'bg-emerald-500' : 'bg-slate-200'
                 }`}
-              >
-                {current}
-              </div>
+              />
             ))}
           </div>
 
@@ -468,9 +486,9 @@ export default function ProjectDocumentSheet({
                 </div>
               </div>
 
-              <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
-                <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Prompt Preview</div>
-                <div className="whitespace-pre-wrap rounded-2xl border border-zinc-200 bg-card p-3 text-xs leading-6 text-zinc-700">
+              <div className="rounded-[24px] border border-slate-200 bg-slate-50/50 p-4">
+                <div className="mb-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Prompt Preview (Hidden in clipboard)</div>
+                <div className="whitespace-pre-wrap rounded-2xl border border-slate-200 bg-white p-3 text-xs leading-5 text-slate-600 line-clamp-2 italic">
                   {promptText}
                 </div>
               </div>

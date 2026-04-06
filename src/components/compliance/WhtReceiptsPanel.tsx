@@ -320,6 +320,7 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
         open={importOpen}
         onOpenChange={setImportOpen}
         type="wht_receipt"
+        payments={payments}
         onSuccess={() => onReceiptsChanged?.()}
       />
     </div>
