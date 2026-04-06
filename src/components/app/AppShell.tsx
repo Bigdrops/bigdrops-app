@@ -1,9 +1,11 @@
-import { lazy, Suspense, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, type ReactNode } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import PageLoader from '@/components/app/PageLoader'
 import { isAndroidNative } from '@/lib/native/capacitor'
+import { useSettings } from '@/hooks/useSettings'
+import { normalizeHexColor, hexToHslTriplet } from '@/lib/colorTheme'
 
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
 const Invoices = lazy(() => import('@/pages/Invoices'))
@@ -52,9 +54,26 @@ type AppShellProps = {
 const withBoundary = (element: ReactNode) => <ErrorBoundary>{element}</ErrorBoundary>
 
 export default function AppShell({ session, profile, onProfileUpdate }: AppShellProps) {
+  const { settings } = useSettings()
   const provider = session?.user?.app_metadata?.provider
   const showSetPassword = Boolean(profile && !profile.has_password && provider !== 'email')
   const showAndroidBackHandler = isAndroidNative()
+
+  useEffect(() => {
+    const customColor = settings?.app_background_color
+    const normalized = customColor ? normalizeHexColor(customColor) : null
+
+    if (normalized) {
+      const hslTriplet = hexToHslTriplet(normalized)
+      document.documentElement.style.setProperty('--background', hslTriplet)
+    } else {
+      document.documentElement.style.removeProperty('--background')
+    }
+
+    return () => {
+      document.documentElement.style.removeProperty('--background')
+    }
+  }, [settings?.app_background_color])
 
   return (
     <>

@@ -3,6 +3,7 @@ import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import {
   AdminSettingsSection,
+  AppearanceSettingsSection,
   ArchivesSettingsSection,
   BankingSettingsSection,
   BrandingSettingsSection,
@@ -22,6 +23,7 @@ import {
   FolderKanban,
   ImageIcon,
   LayoutDashboard,
+  Palette,
   Shield,
   UserCheck,
 } from 'lucide-react'
@@ -33,6 +35,7 @@ const SECTIONS = [
   { id: 'company',  label: 'Company Info',    icon: Building2,  desc: 'Name, address, contact' },
   { id: 'banking',  label: 'Banking',          icon: CreditCard, desc: 'Account & bank details' },
   { id: 'branding', label: 'Logo & Branding',  icon: ImageIcon,  desc: 'Logo and footer text' },
+  { id: 'appearance', label: 'Appearance',    icon: Palette,    desc: 'Change app background color' },
   { id: 'documents', label: 'Documents',       icon: FolderKanban, desc: 'Customize document control availability' },
   { id: 'signatories', label: 'Signatories', icon: UserCheck, desc: 'Manage document signatories' },
   { id: 'dashboard', label: 'Dashboard',       icon: LayoutDashboard, desc: 'Quick tiles on dashboard header' },
@@ -61,6 +64,7 @@ export default function Settings() {
       case 'company':  return <CompanySettingsSection onToast={showToast} />
       case 'banking':  return <BankingSettingsSection onToast={showToast} />
       case 'branding': return <BrandingSettingsSection onToast={showToast} />
+      case 'appearance': return <AppearanceSettingsSection onToast={showToast} />
       case 'documents': return <DocumentsSettingsSection onToast={showToast} />
       case 'signatories': return <SignatoriesSettingsSection onToast={showToast} />
       case 'dashboard': return <DashboardSettingsSection />
