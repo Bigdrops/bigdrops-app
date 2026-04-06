@@ -120,6 +120,11 @@ export default function InvoiceAdvanceSheet({
 
                   <div className="rounded-[24px] border border-slate-200 bg-slate-950 px-6 py-6 text-white shadow-xl">
                     <div className="flex flex-col gap-4">
+                      <div className="flex items-center justify-between opacity-60">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.1em]">Grand Total</div>
+                        <div className="text-xs font-bold">{formatMoney(contractValue)}</div>
+                      </div>
+                      <div className="h-px bg-white/10" />
                       <div className="flex flex-col">
                         <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
                           {(advanceInvoice.advance_primary_label || 'Advance Payable Now') + ` (${Math.round((Number(advanceInvoice.total || 0) / contractValue) * 100)}%)`}
@@ -232,6 +237,11 @@ export default function InvoiceAdvanceSheet({
 
                   <div className="rounded-[24px] border border-slate-200 bg-slate-950 px-6 py-6 text-white shadow-xl">
                     <div className="flex flex-col gap-4">
+                      <div className="flex items-center justify-between opacity-60">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.1em]">Grand Total</div>
+                        <div className="text-xs font-bold">{formatMoney(contractValue)}</div>
+                      </div>
+                      <div className="h-px bg-white/10" />
                       <div className="flex flex-col">
                         <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
                           {(advancePrimaryLabel || 'Advance Payable Now') + ` (${Math.round((advanceAmount / contractValue) * 100)}%)`}

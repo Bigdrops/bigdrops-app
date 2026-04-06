@@ -43,100 +43,96 @@ export function renderTotals({
     <>
       <React.View style={[styles.totalsSection, { marginTop: 10 }]} wrap={false}>
         <React.View style={styles.totalsBox}>
+          {/* 1. Original Summary Backbone (Always rendered) */}
+          <React.View style={styles.totalRow}>
+            <React.Text style={styles.totalLabel}>Subtotal</React.Text>
+            <React.Text style={styles.totalValue}>NGN {Number(result.subtotal || 0).toLocaleString()}</React.Text>
+          </React.View>
+
+          {showInstallRate && result.installRateTotal > 0 ? (
+            <React.View style={styles.totalRow}>
+              <React.Text style={styles.totalLabel}>Install Rate</React.Text>
+              <React.Text style={styles.totalValue}>NGN {Number(result.installRateTotal || 0).toLocaleString()}</React.Text>
+            </React.View>
+          ) : null}
+
+          {result.extraChargesTotal > 0 ? (
+            <React.View style={styles.totalRow}>
+              <React.Text style={styles.totalLabel}>Extra Charges</React.Text>
+              <React.Text style={styles.totalValue}>NGN {Number(result.extraChargesTotal || 0).toLocaleString()}</React.Text>
+            </React.View>
+          ) : null}
+
+          {result.vat > 0 ? (
+            <React.View style={styles.totalRow}>
+              <React.Text style={styles.totalLabel}>VAT</React.Text>
+              <React.Text style={styles.totalValue}>NGN {Number(result.vat || 0).toLocaleString()}</React.Text>
+            </React.View>
+          ) : null}
+
+          {result.discount > 0 ? (
+            <React.View style={styles.totalRow}>
+              <React.Text style={styles.totalLabel}>Discount</React.Text>
+              <React.Text style={[styles.totalValue, { color: styles.negativeValueColor || '#CC0000' }]}>
+                - NGN {Number(result.discount || 0).toLocaleString()}
+              </React.Text>
+            </React.View>
+          ) : null}
+
+          {includeGrandTotal ? (
+            <React.View style={styles.grandTotalRow}>
+              <React.Text style={styles.grandLabel}>Grand Total</React.Text>
+              <React.Text style={styles.grandValue}>NGN {grandTotal.toLocaleString()}</React.Text>
+            </React.View>
+          ) : null}
+
+          {result.wht > 0 ? (
+            <React.View style={styles.whtRow}>
+              <React.Text style={[styles.totalLabel, { color: styles.negativeValueColor || '#CC0000' }]}>Less: WHT</React.Text>
+              <React.Text style={[styles.totalValue, { color: styles.negativeValueColor || '#CC0000' }]}>
+                - NGN {Number(result.wht || 0).toLocaleString()}
+              </React.Text>
+            </React.View>
+          ) : null}
+
+          {/* 2. Advance-specific Layering (Only when advance exists) */}
           {advanceSummary ? (
             <>
-              <React.View style={styles.totalRow}>
-                <React.Text style={styles.totalLabel}>Contract Value</React.Text>
-                <React.Text style={styles.totalValue}>NGN {advanceSummary.contractValue.toLocaleString()}</React.Text>
+              <React.View style={styles.payableRow || styles.totalRowStrong}>
+                <React.Text style={styles.payableLabel || styles.totalLabelStrong}>
+                  {advanceSummary.primaryLabel} ({advanceSummary.advancePercent}%)
+                </React.Text>
+                <React.Text style={styles.payableValue || styles.totalValueStrong}>
+                  NGN {advanceSummary.thisAdvance.toLocaleString()}
+                </React.Text>
               </React.View>
 
-              <React.View style={styles.grandTotalRow}>
-                <React.Text style={styles.grandLabel}>{advanceSummary.primaryLabel} ({advanceSummary.advancePercent}%)</React.Text>
-                <React.Text style={styles.grandValue}>NGN {advanceSummary.thisAdvance.toLocaleString()}</React.Text>
+              <React.View style={[styles.totalRow, { opacity: 0.7, marginTop: 2 }]}>
+                <React.Text style={[styles.totalLabel, { fontSize: 8 }]}>
+                  {advanceSummary.secondaryLabel} ({advanceSummary.balancePercent}%)
+                </React.Text>
+                <React.Text style={[styles.totalValue, { fontSize: 8 }]}>
+                  NGN {advanceSummary.balanceRemaining.toLocaleString()}
+                </React.Text>
               </React.View>
-
-              {showBalanceDue ? (
-                <React.View style={styles.payableRow || styles.totalRowStrong}>
-                  <React.Text style={[styles.payableLabel || styles.totalLabelStrong, { fontSize: 8, opacity: 0.7 }]}>{advanceSummary.secondaryLabel} ({advanceSummary.balancePercent}%)</React.Text>
-                  <React.Text
-                    style={[
-                      styles.payableValue || styles.totalValueStrong,
-                      { color: '#475569', fontSize: 9 },
-                    ]}
-                  >
-                    NGN {advanceSummary.balanceRemaining.toLocaleString()}
-                  </React.Text>
-                </React.View>
-              ) : null}
             </>
           ) : (
-            <>
-              <React.View style={styles.totalRow}>
-                <React.Text style={styles.totalLabel}>Subtotal</React.Text>
-                <React.Text style={styles.totalValue}>NGN {Number(result.subtotal || 0).toLocaleString()}</React.Text>
+            /* 3. Normal Balance Due (Fallback if no advance) */
+            showBalanceDue ? (
+              <React.View style={styles.payableRow || styles.totalRowStrong}>
+                <React.Text style={styles.payableLabel || styles.totalLabelStrong}>{totalLabel}</React.Text>
+                <React.Text
+                  style={[
+                    styles.payableValue || styles.totalValueStrong,
+                    { color: balanceDue > 0 ? styles.payableNegativeColor || '#DC2626' : styles.payablePositiveColor || '#059669' },
+                  ]}
+                >
+                  NGN {balanceDue.toLocaleString()}
+                </React.Text>
               </React.View>
-
-              {showInstallRate && result.installRateTotal > 0 ? (
-                <React.View style={styles.totalRow}>
-                  <React.Text style={styles.totalLabel}>Install Rate</React.Text>
-                  <React.Text style={styles.totalValue}>NGN {Number(result.installRateTotal || 0).toLocaleString()}</React.Text>
-                </React.View>
-              ) : null}
-
-              {result.extraChargesTotal > 0 ? (
-                <React.View style={styles.totalRow}>
-                  <React.Text style={styles.totalLabel}>Extra Charges</React.Text>
-                  <React.Text style={styles.totalValue}>NGN {Number(result.extraChargesTotal || 0).toLocaleString()}</React.Text>
-                </React.View>
-              ) : null}
-
-              {result.vat > 0 ? (
-                <React.View style={styles.totalRow}>
-                  <React.Text style={styles.totalLabel}>VAT</React.Text>
-                  <React.Text style={styles.totalValue}>NGN {Number(result.vat || 0).toLocaleString()}</React.Text>
-                </React.View>
-              ) : null}
-
-              {result.discount > 0 ? (
-                <React.View style={styles.totalRow}>
-                  <React.Text style={styles.totalLabel}>Discount</React.Text>
-                  <React.Text style={[styles.totalValue, { color: styles.negativeValueColor || '#CC0000' }]}>
-                    - NGN {Number(result.discount || 0).toLocaleString()}
-                  </React.Text>
-                </React.View>
-              ) : null}
-
-              {includeGrandTotal ? (
-                <React.View style={styles.grandTotalRow}>
-                  <React.Text style={styles.grandLabel}>Grand Total</React.Text>
-                  <React.Text style={styles.grandValue}>NGN {grandTotal.toLocaleString()}</React.Text>
-                </React.View>
-              ) : null}
-
-              {result.wht > 0 ? (
-                <React.View style={styles.whtRow}>
-                  <React.Text style={[styles.totalLabel, { color: styles.negativeValueColor || '#CC0000' }]}>Less: WHT</React.Text>
-                  <React.Text style={[styles.totalValue, { color: styles.negativeValueColor || '#CC0000' }]}>
-                    - NGN {Number(result.wht || 0).toLocaleString()}
-                  </React.Text>
-                </React.View>
-              ) : null}
-
-              {showBalanceDue ? (
-                <React.View style={styles.payableRow || styles.totalRowStrong}>
-                  <React.Text style={styles.payableLabel || styles.totalLabelStrong}>{totalLabel}</React.Text>
-                  <React.Text
-                    style={[
-                      styles.payableValue || styles.totalValueStrong,
-                      { color: balanceDue > 0 ? styles.payableNegativeColor || '#DC2626' : styles.payablePositiveColor || '#059669' },
-                    ]}
-                  >
-                    NGN {balanceDue.toLocaleString()}
-                  </React.Text>
-                </React.View>
-              ) : null}
-            </>
+            ) : null
           )}
+
         </React.View>
       </React.View>
 
