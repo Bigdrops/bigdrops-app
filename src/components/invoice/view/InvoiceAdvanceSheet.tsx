@@ -166,16 +166,24 @@ export default function InvoiceAdvanceSheet({
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="advance-suffix">Invoice Suffix</Label>
-                      <Input
-                        id="advance-suffix"
-                        type="text"
-                        placeholder="e.g. A"
-                        value={advanceSuffixValue}
-                        onChange={(event) => setAdvanceSuffixValue(event.target.value)}
-                        disabled={advanceSaving}
-                        className="h-12 rounded-2xl"
-                      />
+                      <Label>Invoice Numbering</Label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-12 flex-1 items-center rounded-2xl border border-slate-200 bg-slate-100 px-4 text-sm font-bold text-slate-500">
+                          {invoiceNumber || 'INV-000'}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xl font-bold text-slate-400">-</span>
+                          <Input
+                            id="advance-suffix"
+                            type="text"
+                            placeholder="e.g. A"
+                            value={advanceSuffixValue}
+                            onChange={(event) => setAdvanceSuffixValue(event.target.value)}
+                            disabled={advanceSaving}
+                            className="h-12 w-20 rounded-2xl text-center font-black"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
 

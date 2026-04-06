@@ -40,10 +40,7 @@ function canUseInvoiceCacheFallback() {
 }
 
 function shouldShowInvoiceInList(invoice) {
-  const threadRole = String(invoice?.thread_role || "").toLowerCase()
-  const isAdvanceInvoice = invoice?.is_advance === true || String(invoice?.is_advance || "").toLowerCase() === "true"
-
-  return threadRole !== "advance" && !isAdvanceInvoice
+  return true
 }
 
 export default function Invoices() {
@@ -75,8 +72,6 @@ export default function Invoices() {
       .from("invoices")
       .select("*", { count: "exact" })
       .is("archived_at", null)
-      .or("thread_role.is.null,thread_role.neq.advance")
-      .or("is_advance.is.null,is_advance.eq.false")
 
     const searchTerm = search.trim()
     if (searchTerm) {
@@ -229,8 +224,6 @@ export default function Invoices() {
         .from("invoices")
         .select("client_name")
         .is("archived_at", null)
-        .or("thread_role.is.null,thread_role.neq.advance")
-        .or("is_advance.is.null,is_advance.eq.false")
 
       if (error) throw error
 
