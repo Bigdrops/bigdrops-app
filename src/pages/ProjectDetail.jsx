@@ -431,32 +431,38 @@ export default function ProjectDetail() {
     {
       label: 'Create Invoice',
       path: '/invoices/new',
-      className: 'bg-emerald-600 text-white hover:bg-emerald-700',
+      className: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm',
       state: projectState,
+      icon: FileText,
     },
     {
       label: 'Create Quotation',
       path: '/quotations/new',
-      className: 'bg-blue-600 text-white hover:bg-blue-700',
+      className: 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm',
       state: projectState,
+      icon: ClipboardList,
     },
     {
       label: 'Create CSR',
       path: '/csr/new',
       className: 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
       state: projectState,
+      icon: Wrench,
     },
     {
       label: 'Create Waybill',
       path: '/waybills/new',
       className: 'border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100',
       state: projectState,
+      icon: Truck,
     },
   ]
 
+  const [actionsOpen, setActionsOpen] = useState(false)
+
   return (
     <Layout title={project.name}>
-      <div className="mx-auto max-w-6xl space-y-4">
+      <div className="mx-auto max-w-6xl space-y-6 pb-24 sm:pb-12">
         <div className={`${cardClassName} border-l-4 border-l-emerald-500 p-5 sm:p-6`}>
           {!editing ? (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -670,27 +676,66 @@ export default function ProjectDetail() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_280px] md:items-start">
-          <div>
-            {/* ── Section header ───────────────────────────────────────── */}
-            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-sm font-semibold text-slate-700">
-                Documents
-                {docCount > 0 ? (
-                  <span className="ml-1.5 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">
-                    {docCount}
-                  </span>
-                ) : null}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_300px] md:items-start">
+          <div className="space-y-6">
+            {/* ── Recent Activity / Operating Stream ─────────────────── */}
+            <div className={`${cardClassName} overflow-hidden border-t-4 border-t-slate-800`}>
+              <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-5 py-3">
+                <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Operating Stream</div>
+                <div className="text-[10px] font-medium text-slate-400">Latest activity</div>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowLink(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
-              >
-                <Link2 size={14} />
-                Link Existing
-              </button>
+              <div className="divide-y divide-slate-50 px-5 py-1">
+                {timeline.length === 0 ? (
+                  <div className="py-6 text-center text-sm text-muted-foreground">No activity recorded yet for this project.</div>
+                ) : (
+                  timeline.slice(0, 10).map((event, idx) => {
+                    const cfg = DOC_TYPE[event._type]
+                    const Icon = cfg.icon
+                    const docNumber = event.invoice_number || event.quotation_number || event.csr_number || event.waybill_number || '—'
+                    const docPath = event._type === 'invoice' ? `/invoices/${event.id}` : event._type === 'quotation' ? `/quotations/${event.id}` : event._type === 'csr' ? `/csr/${event.id}` : `/waybills/${event.id}`
+
+                    return (
+                      <div key={`${event._type}-${event.id}-${idx}`} className="flex items-center gap-4 py-3">
+                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${cfg.iconWrapClassName} scale-90`}>
+                          <Icon size={14} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="truncate text-sm font-medium text-slate-900">
+                              {cfg.label} <span className="font-bold">{docNumber}</span> {event.total ? `(${(event.total / 1000).toFixed(1)}k)` : ''}
+                            </div>
+                            <div className="shrink-0 text-[10px] text-slate-400 capitalize">{formatDate(event._date)}</div>
+                          </div>
+                          {event.status ? (
+                            <div className="mt-0.5 flex items-center gap-2">
+                              <span className="text-[10px] text-slate-500 capitalize">Status: {event.status}</span>
+                            </div>
+                          ) : null}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => navigate(docPath)}
+                          className="rounded-full p-1 text-slate-300 transition hover:bg-slate-50 hover:text-slate-600"
+                        >
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
             </div>
+
+            {/* ── Section header ───────────────────────────────────────── */}
+            <div className="pt-2">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-bold text-slate-800">Job Documents</h3>
+                {docCount > 0 && (
+                   <span className="inline-flex h-5 items-center rounded-full bg-slate-100 px-2 text-[10px] font-bold text-slate-500">
+                    {docCount} total
+                  </span>
+                )}
+              </div>
 
             {/* ── Commercial documents: Quotations + Invoices ─────────── */}
             <div className="mb-4">
@@ -877,33 +922,106 @@ export default function ProjectDetail() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className={`${cardClassName} border-t-4 border-t-blue-500 p-4`}>
-              <div className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Create</div>
-              <div className="mb-3 space-y-2">
+          </div>
+
+          <div className="sticky top-6 hidden space-y-4 md:block">
+            <div className={`${cardClassName} border-t-4 border-t-emerald-600 p-5`}>
+              <div className="mb-4 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Record Control</div>
+              <div className="space-y-2">
                 {quickActions.map((action) => (
                   <button
                     key={action.label}
                     type="button"
                     onClick={() => navigate(action.path, { state: action.state })}
-                    className={`w-full rounded-lg px-4 py-2.5 text-left text-sm font-semibold transition ${action.className}`}
+                    className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-left text-sm font-semibold transition ring-1 ring-inset ring-transparent hover:ring-slate-100 ${action.className}`}
                   >
+                    <action.icon size={16} className="shrink-0" />
                     {action.label}
                   </button>
                 ))}
               </div>
-              <div className="border-t border-border pt-3">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Link</div>
+              <div className="mt-4 border-t border-slate-100 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowLink(true)}
-                  className="w-full rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-left text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-center text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
                 >
-                  Link Existing Document
+                  <Link2 size={16} />
+                  Link Existing
                 </button>
               </div>
             </div>
+
+            <div className={`${cardClassName} p-5`}>
+              <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Project Stats</div>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Health</div>
+                  <div className="mt-1 flex items-center gap-2">
+                     <div className={`h-2 w-2 rounded-full ${project.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></div>
+                     <span className="text-xs font-bold text-slate-700 capitalize">{project.status}</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Financial Burn</div>
+                  <div className="mt-2 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500"
+                      style={{ width: `${Math.min(100, (Number(financials?.cash_collected || 0) / Math.max(1, Number(financials?.total_invoiced || 1))) * 100)}%` }}
+                    ></div>
+                  </div>
+                  <div className="mt-2 flex justify-between text-[10px] font-bold text-slate-500">
+                    <span>COLLECTED</span>
+                    <span>{Math.round((Number(financials?.cash_collected || 0) / Math.max(1, Number(financials?.total_invoiced || 1))) * 100)}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* ── Mobile Action Trigger ──────────────────────────────── */}
+        <div className="fixed bottom-6 right-6 z-50 md:hidden">
+          <button
+            type="button"
+            onClick={() => setActionsOpen(!actionsOpen)}
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-white shadow-2xl transition hover:scale-110 active:scale-95"
+          >
+            {actionsOpen ? <X size={24} /> : <FileText size={24} />}
+          </button>
+
+          {actionsOpen && (
+            <div className="absolute bottom-16 right-0 mb-4 flex w-56 flex-col gap-2 rounded-2xl bg-white p-3 shadow-2xl ring-1 ring-slate-200 animate-in fade-in slide-in-from-bottom-5">
+              <div className="mb-1 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Actions</div>
+              {quickActions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  onClick={() => {
+                    navigate(action.path, { state: action.state })
+                    setActionsOpen(false)
+                  }}
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold ${action.className}`}
+                >
+                   <action.icon size={14} className="shrink-0" />
+                   {action.label}
+                </button>
+              ))}
+              <div className="mt-1 border-t border-slate-50 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowLink(true)
+                    setActionsOpen(false)
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-left text-xs font-bold text-blue-700"
+                >
+                  <Link2 size={14} />
+                  Link Existing
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <ProjectDocumentSheet
