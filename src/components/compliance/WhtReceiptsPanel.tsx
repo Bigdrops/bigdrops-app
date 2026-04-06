@@ -16,8 +16,10 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  Loader2
+  Loader2,
+  FileJson
 } from 'lucide-react'
+import ComplianceJsonImportSheet from './import/ComplianceJsonImportSheet'
 import { supabase } from '@/supabase'
 import { toast } from 'sonner'
 import { WhtReceipt, WhtReceiptStatus } from '@/domain/compliance/types'
@@ -26,6 +28,7 @@ interface WhtReceiptsPanelProps {
   payments: any[]
   receipts: WhtReceipt[]
   loading: boolean
+  onReceiptsChanged?: () => void
 }
 
 const statusTones: Record<WhtReceiptStatus, string> = {
@@ -35,9 +38,10 @@ const statusTones: Record<WhtReceiptStatus, string> = {
   verified: 'bg-emerald-50 text-emerald-700 border-emerald-200'
 }
 
-export default function WhtReceiptsPanel({ payments, receipts, loading }: WhtReceiptsPanelProps) {
+export default function WhtReceiptsPanel({ payments, receipts, loading, onReceiptsChanged }: WhtReceiptsPanelProps) {
   const [localReceipts, setLocalReceipts] = useState<WhtReceipt[]>(receipts)
   const [processingId, setProcessingId] = useState<string | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
 
   const whtPayments = payments.filter(p => Number(p.wht_amount || 0) > 0)
 
@@ -118,6 +122,10 @@ export default function WhtReceiptsPanel({ payments, receipts, loading }: WhtRec
             <ReceiptIcon className="h-4 w-4 text-red-600" />
             WHT Deductions Tracking
           </CardTitle>
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 border-emerald-100 bg-emerald-50/50 hover:bg-emerald-50">
+            <FileJson className="h-3 w-3 mr-1.5" />
+            Import JSON
+          </Button>
         </CardHeader>
         <CardContent className="p-4">
           {whtPayments.length === 0 ? (
@@ -308,6 +316,12 @@ export default function WhtReceiptsPanel({ payments, receipts, loading }: WhtRec
           </div>
         </CardContent>
       </Card>
+      <ComplianceJsonImportSheet 
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        type="wht_receipt"
+        onSuccess={() => onReceiptsChanged?.()}
+      />
     </div>
   )
 }

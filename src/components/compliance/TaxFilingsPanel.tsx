@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ClipboardList, PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react'
+import { ClipboardList, PlusCircle, Edit, Trash2, Loader2, FileJson } from 'lucide-react'
+import ComplianceJsonImportSheet from './import/ComplianceJsonImportSheet'
 import { supabase } from '@/supabase'
 import { toast } from 'sonner'
 import { TaxFiling, TaxFilingStatus, TaxFilingTaxType } from '@/domain/compliance/types'
@@ -42,6 +43,7 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
   const [editingFiling, setEditingFiling] = useState<Partial<TaxFiling> | null>(null)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
 
   const openNew = () => {
     const today = new Date().toISOString().split('T')[0]
@@ -125,14 +127,20 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
             <ClipboardList className="h-4 w-4 text-emerald-600" />
             Tax Filing Records
           </CardTitle>
-          <Button
-            size="sm"
-            onClick={openNew}
-            className="h-8 rounded-full px-4 text-xs font-bold bg-slate-900 border border-slate-800 shadow hover:bg-slate-800"
-          >
-            <PlusCircle className="h-3 w-3 mr-2" />
-            Add Filing
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 border-emerald-100 bg-emerald-50/50 hover:bg-emerald-50">
+              <FileJson className="h-3 w-3 mr-1.5" />
+              Import JSON
+            </Button>
+            <Button
+              size="sm"
+              onClick={openNew}
+              className="h-8 rounded-full px-4 text-xs font-bold bg-slate-900 border border-slate-800 shadow hover:bg-slate-800"
+            >
+              <PlusCircle className="h-3 w-3 mr-2" />
+              Add Filing
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {filings.length === 0 ? (
@@ -351,6 +359,12 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
           </div>
         </SheetContent>
       </Sheet>
+      <ComplianceJsonImportSheet 
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        type="tax_filing"
+        onSuccess={onFilingsChanged}
+      />
     </div>
   )
 }

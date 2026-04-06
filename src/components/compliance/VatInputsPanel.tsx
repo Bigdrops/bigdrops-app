@@ -11,6 +11,8 @@ import { TaxInputEntry } from '@/domain/compliance/types'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { FileJson } from 'lucide-react'
+import ComplianceJsonImportSheet from './import/ComplianceJsonImportSheet'
 
 interface VatInputsPanelProps {
   taxInputs: TaxInputEntry[]
@@ -21,6 +23,7 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
   const [editingEntry, setEditingEntry] = useState<Partial<TaxInputEntry> | null>(null)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
 
   const handleSave = async () => {
     if (!editingEntry?.date || editingEntry.net_amount === undefined || editingEntry.vat_amount === undefined) {
@@ -86,10 +89,16 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
             <Wallet className="h-4 w-4 text-amber-600" />
             VAT Input Entries
           </CardTitle>
-          <Button size="sm" onClick={() => setEditingEntry({ date: new Date().toISOString().split('T')[0], is_recoverable: true, net_amount: 0, vat_amount: 0 })} className="h-8 rounded-full px-4 text-xs font-bold bg-slate-900 border border-slate-800 shadow hover:bg-slate-800">
-            <PlusCircle className="h-3 w-3 mr-2" />
-            Add Entry
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 border-emerald-100 bg-emerald-50/50 hover:bg-emerald-50">
+              <FileJson className="h-3 w-3 mr-1.5" />
+              Import JSON
+            </Button>
+            <Button size="sm" onClick={() => setEditingEntry({ date: new Date().toISOString().split('T')[0], is_recoverable: true, net_amount: 0, vat_amount: 0 })} className="h-8 rounded-full px-4 text-xs font-bold bg-slate-900 border border-slate-800 shadow hover:bg-slate-800">
+              <PlusCircle className="h-3 w-3 mr-2" />
+              Add Entry
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {taxInputs.length === 0 ? (
@@ -219,6 +228,12 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
           </div>
         </div>
       </div>
+      <ComplianceJsonImportSheet 
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        type="vat_input"
+        onSuccess={onInputsChanged}
+      />
     </div>
   )
 }

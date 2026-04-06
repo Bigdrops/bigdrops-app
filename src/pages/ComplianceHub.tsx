@@ -133,7 +133,7 @@ export default function ComplianceHub() {
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-2">
                 <div className="bg-blue-500 rounded-full h-2 w-2 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">Phase 3A: Obligations Layer</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">Phase 3B: Efficiency Pass</span>
               </div>
               <h1 className="text-2xl font-black tracking-tight">Compliance Hub</h1>
               <p className="mt-2 text-sm text-slate-300 leading-relaxed max-w-md">
@@ -224,7 +224,11 @@ export default function ComplianceHub() {
                     <WhtReceiptsPanel 
                       payments={payments} 
                       receipts={receipts}
-                      loading={loading} 
+                      loading={loading}
+                      onReceiptsChanged={() => {
+                        supabase.from('wht_receipts').select('*')
+                          .then(({ data }) => { if (data) setReceipts(data) })
+                      }}
                     />
                   </TabsContent>
                   <TabsContent value="vat" className="mt-0">
