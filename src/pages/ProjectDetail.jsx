@@ -275,6 +275,8 @@ export default function ProjectDetail() {
     await executeLink(data)
   }
 
+  const DOC_TYPE_LABELS = { invoice: 'Invoice', quotation: 'Quotation', csr: 'CSR', waybill: 'Waybill' }
+
   const executeLink = async (dataToLink) => {
     setConfirmingReassign(false)
     setLinking(true)
@@ -285,7 +287,7 @@ export default function ProjectDetail() {
       waybill: { table: 'waybills', numberField: 'waybill_number' },
     }
     const selectedConfig = linkConfig[linkType]
-    
+
     const data = dataToLink || pendingReassignData
 
     if (
@@ -317,8 +319,10 @@ export default function ProjectDetail() {
       return
     }
 
+    const docLabel = DOC_TYPE_LABELS[linkType] || linkType
     setLinkDocId('')
     setShowLink(false)
+    toast({ title: `${docLabel} linked`, description: `${linkDocId.trim() || docLabel} has been linked to this project.` })
     fetchAll()
   }
 
@@ -330,6 +334,7 @@ export default function ProjectDetail() {
     }
 
     setProjectDocumentToDelete(null)
+    toast({ title: 'File removed', description: 'The external file has been removed from this project.' })
     fetchAll()
   }
 
@@ -408,54 +413,38 @@ export default function ProjectDetail() {
     },
   ]
 
+  const projectState = {
+    projectId: id,
+    projectCode: project.project_code,
+    projectName: project.name,
+    clientId: project.client_id,
+    clientName: project.client_name,
+  }
+
   const quickActions = [
     {
-      label: '+ New Invoice',
+      label: 'Create Invoice',
       path: '/invoices/new',
       className: 'bg-emerald-600 text-white hover:bg-emerald-700',
-      state: {
-        projectId: id,
-        projectCode: project.project_code,
-        projectName: project.name,
-        clientId: project.client_id,
-        clientName: project.client_name,
-      },
+      state: projectState,
     },
     {
-      label: '+ New Quotation',
+      label: 'Create Quotation',
       path: '/quotations/new',
       className: 'bg-blue-600 text-white hover:bg-blue-700',
-      state: {
-        projectId: id,
-        projectCode: project.project_code,
-        projectName: project.name,
-        clientId: project.client_id,
-        clientName: project.client_name,
-      },
+      state: projectState,
     },
     {
-      label: '+ New CSR',
+      label: 'Create CSR',
       path: '/csr/new',
       className: 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
-      state: {
-        projectId: id,
-        projectCode: project.project_code,
-        projectName: project.name,
-        clientId: project.client_id,
-        clientName: project.client_name,
-      },
+      state: projectState,
     },
     {
-      label: '+ New Waybill',
+      label: 'Create Waybill',
       path: '/waybills/new',
       className: 'border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100',
-      state: {
-        projectId: id,
-        projectCode: project.project_code,
-        projectName: project.name,
-        clientId: project.client_id,
-        clientName: project.client_name,
-      },
+      state: projectState,
     },
   ]
 
@@ -884,8 +873,8 @@ export default function ProjectDetail() {
 
           <div className="space-y-4">
             <div className={`${cardClassName} border-t-4 border-t-blue-500 p-4`}>
-              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Quick Actions</div>
-              <div className="space-y-2">
+              <div className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Create</div>
+              <div className="mb-3 space-y-2">
                 {quickActions.map((action) => (
                   <button
                     key={action.label}
@@ -896,6 +885,16 @@ export default function ProjectDetail() {
                     {action.label}
                   </button>
                 ))}
+              </div>
+              <div className="border-t border-border pt-3">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Link</div>
+                <button
+                  type="button"
+                  onClick={() => setShowLink(true)}
+                  className="w-full rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-left text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                >
+                  Link Existing Document
+                </button>
               </div>
             </div>
           </div>
@@ -1039,13 +1038,13 @@ export default function ProjectDetail() {
         <ConfirmActionDialog
           open={confirmingReassign}
           onOpenChange={setConfirmingReassign}
-          title={`Reassign ${linkType}?`}
+          title={`Reassign ${DOC_TYPE_LABELS[linkType] || linkType}?`}
           description={
             linkType === 'invoice' || linkType === 'quotation'
-              ? `This ${linkType} is already linked to another project. Are you sure you want to reassign it? The existing financial connection will be broken and moved to this project. Make sure this is correct.`
-              : `This ${linkType} is already linked to another project. Are you sure you want to reassign it?`
+              ? `This ${DOC_TYPE_LABELS[linkType] || linkType} is already linked to another project. Reassigning will move it to this project and break the existing project connection. Make sure this is correct.`
+              : `This ${DOC_TYPE_LABELS[linkType] || linkType} is already linked to another project. Are you sure you want to reassign it?`
           }
-          confirmLabel="Yes, Reassign"
+          confirmLabel="Reassign"
           onConfirm={() => void executeLink()}
         />
       </div>
