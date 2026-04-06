@@ -202,7 +202,7 @@ export default function ProjectDocumentPDF({ document, projectName, settings = n
 
         {keyFields.length > 0 ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Key Information</Text>
+            <Text style={styles.sectionTitle}>Details</Text>
             <View style={styles.keyGrid}>
               {keyFields.map((field) => (
                 <View key={`${field.label}-${field.value}`} style={styles.keyCard}>

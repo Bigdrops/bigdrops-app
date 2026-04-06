@@ -8,6 +8,7 @@ import {
   formatProjectDocumentDate,
   getProjectDocumentFileName,
   getProjectDocumentDate,
+  getProjectDocumentImages,
   getProjectDocumentItemsTable,
   getProjectDocumentKeyFields,
   getProjectDocumentMainLabel,
@@ -57,6 +58,7 @@ export default function ProjectDocumentView() {
   const notes = documentRecord ? getProjectDocumentNotes(documentRecord) : ''
   const rawJson = documentRecord ? getProjectDocumentRawJson(documentRecord) : ''
   const documentDate = documentRecord ? formatProjectDocumentDate(getProjectDocumentDate(documentRecord)) : ''
+  const images = documentRecord ? getProjectDocumentImages(documentRecord) : []
 
   const handleCopyJson = async () => {
     if (!documentRecord) return
@@ -192,6 +194,38 @@ export default function ProjectDocumentView() {
             <div className="mb-3 text-sm font-semibold text-slate-700">Notes</div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-foreground">
               {notes}
+            </div>
+          </section>
+        ) : null}
+
+        {images.length > 0 ? (
+          <section className="rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-6">
+            <div className="mb-4 text-sm font-semibold text-slate-700">Images</div>
+            <div className="space-y-3">
+              {images.slice(0, 4).map((image, index) => (
+                <div
+                  key={`img-${index}`}
+                  className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
+                >
+                  <img
+                    src={image.url}
+                    alt={image.label || `Document image ${index + 1}`}
+                    className="w-full object-contain"
+                    style={{ maxHeight: index === 0 ? '320px' : '180px' }}
+                    onError={(e) => {
+                      ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+                    }}
+                  />
+                  {image.label ? (
+                    <div className="px-3 py-2 text-xs font-medium text-muted-foreground">{image.label}</div>
+                  ) : null}
+                </div>
+              ))}
+              {images.length > 4 ? (
+                <div className="text-xs text-muted-foreground">
+                  +{images.length - 4} more image{images.length - 4 === 1 ? '' : 's'} stored in JSON
+                </div>
+              ) : null}
             </div>
           </section>
         ) : null}

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import {
   formatProjectDocumentCurrency,
   getProjectDocumentFileName,
+  getProjectDocumentImages,
   getProjectDocumentKeyFields,
   getProjectDocumentMainLabel,
   getProjectDocumentRawJson,
@@ -53,6 +54,8 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
   const rawJson = getProjectDocumentRawJson(document)
   const totalField = keyFields.find((field) => field.label === 'Total' || field.label === 'Amount')
   const meta = getProjectDocumentTypeMeta(document)
+  const images = getProjectDocumentImages(document)
+  const previewImage = images.length > 0 ? images[0] : null
 
   const handleCopyJson = async () => {
     try {
@@ -113,6 +116,22 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
               <div className="mt-1 text-sm font-medium text-zinc-900">{field.value}</div>
             </div>
           ))}
+        </div>
+      ) : null}
+
+      {previewImage ? (
+        <div className="mt-3 overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50">
+          <img
+            src={previewImage.url}
+            alt={previewImage.label || 'Document image'}
+            className="h-28 w-full object-cover"
+            onError={(e) => {
+              ;(e.currentTarget as HTMLImageElement).parentElement!.style.display = 'none'
+            }}
+          />
+          {previewImage.label ? (
+            <div className="px-3 py-1.5 text-[11px] font-medium text-zinc-500">{previewImage.label}</div>
+          ) : null}
         </div>
       ) : null}
 

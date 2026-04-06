@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
 import { getProjectDocumentMainLabel } from '@/domain/projectDocuments'
+import { getProjectDocumentPrompt } from '@/domain/projectDocumentPrompts'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/supabase'
 
@@ -60,90 +61,28 @@ const typeConfig = {
     accent: 'border-l-blue-500',
     iconWrap: 'bg-blue-50 text-blue-700 ring-1 ring-blue-100',
     icon: ClipboardList,
-    prompt: `Extract this Purchase Order into JSON only.
-No explanation. Use exactly this structure:
-{
-  "reference_number": "",
-  "voucher_number": "",
-  "date": "YYYY-MM-DD",
-  "from_party": "",
-  "to_party": "",
-  "items": [
-    { "description": "", "quantity": 0,
-      "unit": "", "unit_price": 0, "amount": 0 }
-  ],
-  "subtotal": 0,
-  "vat": 0,
-  "vat_rate": 0,
-  "wht": 0,
-  "wht_rate": 0,
-  "total": 0,
-  "currency": "NGN",
-  "notes": ""
-}
-Rules:
-- Use reference_number for PO Number
-- Use voucher_number for Voucher No if present
-- If VAT not present set vat and vat_rate to 0
-- If WHT not present set wht and wht_rate to 0
-- Return only the JSON object, nothing else`,
   },
   receipt: {
     label: 'Receipt',
     accent: 'border-l-emerald-500',
     iconWrap: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100',
     icon: Receipt,
-    prompt: `Extract this Receipt into JSON only.
-No explanation. Use exactly this structure:
-{
-  "reference_number": "",
-  "date": "YYYY-MM-DD",
-  "from_party": "",
-  "to_party": "",
-  "description": "",
-  "amount": 0,
-  "vat": 0,
-  "wht": 0,
-  "payment_method": "",
-  "currency": "NGN",
-  "notes": ""
-}
-Return only the JSON object, nothing else.`,
   },
   receiving_waybill: {
     label: 'Receiving Waybill',
     accent: 'border-l-orange-500',
     iconWrap: 'bg-orange-50 text-orange-700 ring-1 ring-orange-100',
     icon: PackageCheck,
-    prompt: `Extract this Waybill into JSON only.
-No explanation. Use exactly this structure:
-{
-  "reference_number": "",
-  "date": "YYYY-MM-DD",
-  "from_party": "",
-  "to_party": "",
-  "items": [
-    { "description": "", "quantity": 0,
-      "unit": "", "condition": "good" }
-  ],
-  "received_by": "",
-  "notes": ""
-}
-Return only the JSON object, nothing else.`,
   },
   other: {
     label: 'Other',
     accent: 'border-l-slate-500',
     iconWrap: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200',
     icon: FileText,
-    prompt: `Extract this document into JSON only.
-No explanation. Capture all fields you find.
-Use snake_case keys.
-Return only the JSON object, nothing else.`,
   },
 } satisfies Record<
   ProjectDocumentType,
-  { label: string; accent: string; iconWrap: string; icon: typeof ClipboardList; prompt: string }
+  { label: string; accent: string; iconWrap: string; icon: typeof ClipboardList }
 >
 
 function toNumber(value: unknown) {
@@ -300,6 +239,7 @@ function buildDataFromForm(type: ProjectDocumentType, form: DocumentFormState) {
     from_party: form.from_party,
     to_party: form.to_party,
     notes: form.notes,
+    images: form.extraData.images,
   }
 }
 
@@ -328,6 +268,7 @@ export default function ProjectDocumentSheet({
   }, [open])
 
   const config = typeConfig[docType]
+  const promptText = useMemo(() => getProjectDocumentPrompt(docType), [docType])
 
   const purchaseOrderTotal = useMemo(() => {
     const subtotal = form.purchaseOrderItems.reduce(
@@ -339,7 +280,7 @@ export default function ProjectDocumentSheet({
 
   const handleCopyPrompt = async () => {
     try {
-      await navigator.clipboard.writeText(config.prompt)
+      await navigator.clipboard.writeText(promptText)
       toast({ title: 'Copied', description: `${config.label} AI prompt copied.` })
     } catch {
       toast({ title: 'Copy failed', description: 'Could not copy AI prompt.', variant: 'destructive' })
@@ -530,7 +471,7 @@ export default function ProjectDocumentSheet({
               <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Prompt Preview</div>
                 <div className="whitespace-pre-wrap rounded-2xl border border-zinc-200 bg-card p-3 text-xs leading-6 text-zinc-700">
-                  {config.prompt}
+                  {promptText}
                 </div>
               </div>
 

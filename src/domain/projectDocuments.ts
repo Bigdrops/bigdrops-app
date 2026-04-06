@@ -1,5 +1,17 @@
 export type ProjectDocumentType = 'purchase_order' | 'receipt' | 'receiving_waybill' | 'other'
 
+/**
+ * A structured image entry attached to an external document.
+ * url is a resolvable image URL (https or data-uri).
+ * label is a short human-readable caption (optional).
+ * type hints at what kind of image this is (e.g. 'main', 'detail', 'signature').
+ */
+export type ProjectDocumentImage = {
+  url: string
+  label?: string | null
+  type?: 'main' | 'detail' | 'signature' | string | null
+}
+
 export type ProjectDocumentRecord = Record<string, any> & {
   id?: string
   project_id?: string
@@ -216,12 +228,22 @@ export function getProjectDocumentKeyFields(document: ProjectDocumentRecord) {
   }
 
   if (type === 'other') {
-    const skipKeys = new Set(['title', 'reference_number', 'date', 'from_party', 'to_party', 'notes', 'items'])
+    const skipKeys = new Set([
+      'title', 'reference_number', 'date', 'from_party', 'to_party',
+      'notes', 'items', 'images', 'image_url', 'image', 'description',
+    ])
     for (const [key, value] of Object.entries(data)) {
       if (fields.length >= 8) break
       if (skipKeys.has(key)) continue
       if (Array.isArray(value) || (value && typeof value === 'object')) continue
+      // Skip URL-like strings — they belong in the images section, not key fields
+      if (typeof value === 'string' && value.startsWith('http') && value.length > 80) continue
       pushField(fields, formatKeyLabel(key), value)
+    }
+    // Surface description as a regular key field for 'other' docs
+    const description = String(data.description || '').trim()
+    if (description && !fields.find((f) => f.label === 'Description')) {
+      fields.unshift({ label: 'Description', value: description })
     }
   }
 
@@ -278,6 +300,35 @@ export function getProjectDocumentItemsTable(document: ProjectDocumentRecord): P
 export function getProjectDocumentNotes(document: ProjectDocumentRecord) {
   const data = getProjectDocumentData(document)
   return firstText(data.notes, document.notes)
+}
+
+/**
+ * Returns a normalised array of image entries from a document's data field.
+ * Handles both the new structured format (data.images[]) and a legacy single
+ * image_url string for backward compatibility.
+ */
+export function getProjectDocumentImages(document: ProjectDocumentRecord): ProjectDocumentImage[] {
+  const data = getProjectDocumentData(document)
+
+  // New structured format: data.images is an array of { url, label?, type? }
+  if (Array.isArray(data.images)) {
+    return (data.images as unknown[])
+      .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
+      .filter((entry) => typeof entry.url === 'string' && entry.url.trim().length > 0)
+      .map((entry) => ({
+        url: String(entry.url).trim(),
+        label: entry.label ? String(entry.label) : null,
+        type: entry.type ? String(entry.type) : null,
+      }))
+  }
+
+  // Legacy fallback: a single image_url string on the data object
+  const legacyUrl = String(data.image_url || '').trim()
+  if (legacyUrl) {
+    return [{ url: legacyUrl, label: null, type: 'main' }]
+  }
+
+  return []
 }
 
 export function getProjectDocumentRawJson(document: ProjectDocumentRecord) {
