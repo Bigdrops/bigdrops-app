@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Info, Wand2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { Textarea } from '@/components/ui/textarea'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { useToast } from '@/hooks/use-toast'
 import { buildApplyResult } from '@/domain/import/apply'
 import { normalizeImportData } from '@/domain/import/normalize'
@@ -14,6 +14,7 @@ import { getUnknownColumnCandidates, resolveImportColumns } from '@/domain/impor
 import { validateImportData } from '@/domain/import/validate'
 import type { ApplyImportResult, CustomColumnDecision, ImportMode, ValidatedImportData } from '@/domain/import/types'
 import type { ColumnConfig, InvoiceItem } from '@/domain/invoice'
+import { JsonImportUI } from '@/components/import/JsonImportLayout'
 
 type ImportAdapter = {
   documentType: 'invoice' | 'quotation'
@@ -44,7 +45,7 @@ export default function JsonItemsImportSheet({
   items,
   columns,
   adapter,
-  title = 'Import JSON',
+  title = 'Import Items',
   side = 'bottom',
   contentClassName = '',
 }: JsonItemsImportSheetProps) {
@@ -89,19 +90,6 @@ export default function JsonItemsImportSheet({
     }
   }, [open, standardRowCount])
 
-  const handleClose = (nextOpen: boolean) => {
-    onOpenChange(nextOpen)
-  }
-
-  const copyPrompt = async () => {
-    try {
-      await navigator.clipboard.writeText(adapter.prompts[mode])
-      toast({ title: 'Copied', description: `${adapter.documentType === 'invoice' ? 'Invoice' : 'Quotation'} prompt copied.` })
-    } catch {
-      toast({ title: 'Copy failed', description: 'Could not copy prompt.', variant: 'destructive' })
-    }
-  }
-
   const runResolve = (data: ValidatedImportData) => {
     const resolvedResult = resolveImportColumns({
       validated: data,
@@ -135,10 +123,10 @@ export default function JsonItemsImportSheet({
       title: 'Import applied',
       description:
         mode === 'Create Rows'
-          ? `${draftResult.createdRowCount} rows imported${draftResult.skippedRows.length ? `, ${draftResult.skippedRows.length} skipped` : ''}.`
+          ? `${draftResult.createdRowCount} rows imported.`
           : `Updated ${draftResult.updatedRowNumbers.length} rows.`,
     })
-    handleClose(false)
+    onOpenChange(false)
   }
 
   const handleStartImport = () => {
@@ -214,7 +202,7 @@ export default function JsonItemsImportSheet({
       description: `Updated ${finalResult.updatedRowNumbers.length} rows.`,
     })
     setShowOverwriteDialog(false)
-    handleClose(false)
+    onOpenChange(false)
   }
 
   const overwritePreview = useMemo(() => {
@@ -236,273 +224,183 @@ export default function JsonItemsImportSheet({
     })
   }, [adapter.createItem, columns, decisions, items, mode, validated])
 
+  const helpText = `Quick Guide: Choose a mode, copy the AI prompt, paste your extracted JSON, resolve any new columns, and save.`
+
   return (
     <>
-      <Sheet open={open} onOpenChange={handleClose}>
+      <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side={side}
-          className={`rounded-t-[28px] bg-card p-0 [&>[data-slot=sheet-close]]:hidden ${contentClassName}`.trim()}
+          className={`max-h-[94vh] rounded-t-[28px] bg-slate-50 p-0 border-none sm:max-w-2xl sm:mx-auto overflow-y-auto ${contentClassName}`.trim()}
         >
-          <SheetHeader className="border-b border-zinc-200 px-5 py-4 text-left">
-            <SheetTitle className="text-base font-semibold text-zinc-900">{title}</SheetTitle>
-          </SheetHeader>
-
-          <div className="space-y-5 p-5">
-            <div className="rounded-[20px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700">
-              <div className="font-medium text-zinc-900">Use the exact conversion prompt from this screen.</div>
-              <div className="mt-1 text-xs text-zinc-600">The full prompt stays collapsed here by default.</div>
-              <Button
-                type="button"
-                variant="link"
-                className="mt-1 h-auto p-0 text-xs font-semibold text-zinc-900"
-                onClick={copyPrompt}
+          <JsonImportUI
+            title={title}
+            description={`Import data into this ${adapter.documentType}.`}
+            promptText={adapter.prompts[mode]}
+            rawInput={pastedText}
+            onRawInputChange={(val) => { setPastedText(val); setValidated(null); }}
+            onPreview={handleStartImport}
+            onSave={() => (validated && unresolvedCandidates.length > 0 ? runResolve(validated) : handleStartImport())}
+            isParsed={!!validated}
+            helpText={helpText}
+            additionalActions={
+              <Button 
+                variant="ghost" 
+                onClick={() => { setValidated(null); setPastedText(''); }}
+                className="w-full text-slate-400 text-xs font-bold hover:text-slate-600"
               >
-                Copy Prompt
+                Clear and Start Over
               </Button>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Mode</div>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  variant={mode === 'Create Rows' ? 'default' : 'outline'}
-                  className="h-11 rounded-2xl"
-                  onClick={() => {
-                    setMode('Create Rows')
-                    setValidated(null)
-                    setDecisions({})
-                  }}
-                >
-                  Create Rows
-                </Button>
-                <Button
-                  type="button"
-                  variant={mode === 'Update Table' ? 'default' : 'outline'}
-                  className="h-11 rounded-2xl"
-                  disabled={standardRowCount === 0}
-                  onClick={() => {
-                    setMode('Update Table')
-                    setValidated(null)
-                    setDecisions({})
-                  }}
-                >
-                  Update Table
-                </Button>
-              </div>
-              {standardRowCount === 0 ? (
-                <div className="text-xs text-zinc-500">Update Table becomes available after the table has at least one row.</div>
-              ) : null}
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Paste Raw JSON</div>
-              <Textarea
-                value={pastedText}
-                onChange={(event) => {
-                  setPastedText(event.target.value)
-                  setValidated(null)
-                  setDecisions({})
-                }}
-                placeholder={`{ "items": [ { "description": "", "quantity": 1, "unit_price": 0 } ] }`}
-                className="min-h-56 rounded-[24px] border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900"
-              />
-            </div>
-
-            {validated && unresolvedCandidates.length > 0 ? (
-              <div className="space-y-4 rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
-                <div>
-                  <div className="text-sm font-semibold text-zinc-900">Resolve unknown columns</div>
-                  <div className="text-xs text-zinc-600">Choose Create new column, Map to existing column, or Ignore column for each key.</div>
+            }
+            previewContent={
+              <div className="space-y-4">
+                <div className="space-y-2 px-1">
+                  <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Import Mode</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant={mode === 'Create Rows' ? 'default' : 'outline'}
+                      className={`h-11 rounded-xl text-xs font-bold ${mode === 'Create Rows' ? 'bg-slate-900 shadow-lg' : 'border-slate-200'}`}
+                      onClick={() => { setMode('Create Rows'); setValidated(null); }}
+                    >
+                      Create Rows
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={mode === 'Update Table' ? 'default' : 'outline'}
+                      className={`h-11 rounded-xl text-xs font-bold ${mode === 'Update Table' ? 'bg-slate-900 shadow-lg' : 'border-slate-200'}`}
+                      disabled={standardRowCount === 0}
+                      onClick={() => { setMode('Update Table'); setValidated(null); }}
+                    >
+                      Update Table
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="space-y-4">
-                  {unresolvedCandidates.map((candidate) => {
-                    const decision = decisions[candidate.key] || makeDefaultDecision(candidate.key, candidate.sourceLabels[0] || candidate.key)
+                {validated && unresolvedCandidates.length > 0 && (
+                  <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-4 w-4 text-blue-500 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <div className="text-sm font-bold text-slate-900">Resolve Columns</div>
+                        <div className="text-xs text-slate-500 font-medium">Map unknown keys to your table.</div>
+                      </div>
+                    </div>
 
-                    return (
-                      <div key={candidate.key} className="rounded-2xl border border-zinc-200 bg-white p-3">
-                        <div className="text-sm font-medium text-zinc-900">{candidate.sourceLabels[0] || candidate.key}</div>
-                        <div className="mt-1 text-xs text-zinc-500">
-                          Sample: {candidate.sampleValues.length ? candidate.sampleValues.join(', ') : 'No sample value'}
-                        </div>
-
-                        <div className="mt-3 space-y-3">
-                          <Select
-                            value={decision.action}
-                            onValueChange={(value: 'create' | 'map' | 'drop') =>
-                              setDecisions((current) => ({
-                                ...current,
-                                [candidate.key]:
-                                  value === 'create'
-                                    ? { action: 'create', label: decision.action === 'create' ? decision.label : candidate.sourceLabels[0] || candidate.key }
-                                    : value === 'map'
-                                      ? { action: 'map', columnKey: existingCustomColumns[0]?.key || '' }
-                                      : { action: 'drop' },
-                              }))
-                            }
-                          >
-                            <SelectTrigger className="h-11 rounded-2xl border-zinc-200 bg-white text-sm">
-                              <SelectValue placeholder="Choose an action" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="create">Create new column</SelectItem>
-                              <SelectItem value="map">Map to existing column</SelectItem>
-                              <SelectItem value="drop">Ignore column</SelectItem>
-                            </SelectContent>
-                          </Select>
-
-                          {decision.action === 'create' ? (
-                            <Input
-                              value={decision.label || ''}
-                              onChange={(event) =>
-                                setDecisions((current) => ({
-                                  ...current,
-                                  [candidate.key]: { action: 'create', label: event.target.value },
+                    <div className="space-y-3">
+                      {unresolvedCandidates.map((candidate) => {
+                        const decision = decisions[candidate.key] || makeDefaultDecision(candidate.key, candidate.sourceLabels[0] || candidate.key)
+                        return (
+                          <div key={candidate.key} className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs font-bold text-slate-700">{candidate.sourceLabels[0] || candidate.key}</span>
+                              <span className="text-[10px] text-slate-400 font-mono italic">{String(candidate.sampleValues[0] || '').slice(0, 20)}...</span>
+                            </div>
+                            
+                            <Select
+                              value={decision.action}
+                              onValueChange={(val: 'create' | 'map' | 'drop') =>
+                                setDecisions(curr => ({
+                                  ...curr,
+                                  [candidate.key]: val === 'create' ? { action: 'create', label: candidate.sourceLabels[0] || candidate.key }
+                                                 : val === 'map' ? { action: 'map', columnKey: existingCustomColumns[0]?.key || '' }
+                                                 : { action: 'drop' }
                                 }))
                               }
-                              className="h-11 rounded-2xl border-zinc-200 bg-white"
-                              placeholder="Column label"
-                            />
-                          ) : null}
+                            >
+                              <SelectTrigger className="h-9 rounded-lg bg-white border-slate-200 text-xs font-black uppercase tracking-wider">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="create">Create Column</SelectItem>
+                                <SelectItem value="map">Map Existing</SelectItem>
+                                <SelectItem value="drop">Ignore Key</SelectItem>
+                              </SelectContent>
+                            </Select>
 
-                          {decision.action === 'map' ? (
-                            existingCustomColumns.length > 0 ? (
+                            {decision.action === 'create' && (
+                              <Input 
+                                value={decision.label} 
+                                onChange={e => setDecisions(curr => ({ ...curr, [candidate.key]: { ...decision, label: e.target.value } }))}
+                                className="h-9 rounded-lg border-slate-200 text-xs font-bold placeholder:text-slate-300"
+                                placeholder={candidate.sourceLabels[0] || candidate.key}
+                              />
+                            )}
+
+                            {decision.action === 'map' && (
                               <Select
                                 value={decision.columnKey}
-                                onValueChange={(value) =>
-                                  setDecisions((current) => ({
-                                    ...current,
-                                    [candidate.key]: { action: 'map', columnKey: value },
-                                  }))
-                                }
+                                onValueChange={val => setDecisions(curr => ({ ...curr, [candidate.key]: { ...decision, columnKey: val } }))}
                               >
-                                <SelectTrigger className="h-11 rounded-2xl border-zinc-200 bg-white text-sm">
-                                  <SelectValue placeholder="Choose a custom column" />
+                                <SelectTrigger className="h-9 rounded-lg bg-white border-slate-200 text-xs font-bold">
+                                  <SelectValue placeholder="Target column..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {existingCustomColumns.map((column) => (
-                                    <SelectItem key={column.key} value={column.key}>
-                                      {column.label}
-                                    </SelectItem>
+                                  {existingCustomColumns.map(col => (
+                                    <SelectItem key={col.key} value={col.key}>{col.label}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
-                            ) : (
-                              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                                No existing custom columns are available to map into.
-                              </div>
-                            )
-                          ) : null}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-            ) : null}
-
-            {validated?.skippedRows.length ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
-                {validated.skippedRows.length} rows will be skipped because description is required in Create Rows mode.
-              </div>
-            ) : null}
-
-            <div className="flex items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 rounded-2xl border-zinc-200 bg-card"
-                onClick={() => {
-                  setPastedText('')
-                  setValidated(null)
-                  setDecisions({})
-                }}
-              >
-                Clear
-              </Button>
-              <Button
-                type="button"
-                className="h-10 rounded-2xl bg-zinc-900 text-white hover:bg-zinc-800"
-                onClick={() => {
-                  if (validated && unresolvedCandidates.length > 0) {
-                    runResolve(validated)
-                    return
-                  }
-                  handleStartImport()
-                }}
-              >
-                {validated && unresolvedCandidates.length > 0 ? 'Continue Import' : 'Import'}
-              </Button>
-            </div>
-          </div>
+            }
+          />
         </SheetContent>
       </Sheet>
 
       <Dialog open={showOverwriteDialog} onOpenChange={setShowOverwriteDialog}>
-        <DialogContent className="h-[100dvh] max-w-none rounded-none sm:h-[100dvh] sm:max-w-none">
-          <DialogHeader>
-            <DialogTitle>Overwrite review</DialogTitle>
-            <DialogDescription>
-              {overwritePreview?.overwriteTargets.length || 0} cells already contain data and will be overwritten unless you exempt them.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-y-auto">
-            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-              <div className="text-sm font-medium text-zinc-900">This warning covers the screen by default.</div>
-              <div className="mt-1 text-xs text-zinc-600">Expand the affected cells, then exempt any updates you want removed from the final patch.</div>
-              <Button
-                type="button"
-                variant="link"
-                className="mt-1 h-auto p-0 text-xs font-semibold text-zinc-900"
-                onClick={() => setOverwriteExpanded((current) => !current)}
-              >
-                {overwriteExpanded ? 'Hide affected cells' : 'Review affected cells'}
-              </Button>
-            </div>
-
-            {overwriteExpanded && overwritePreview ? (
-              <div className="mt-4 space-y-3">
-                {overwritePreview.overwriteTargets.map((target) => {
-                  const exempted = exemptOverwriteIds.includes(target.id)
-
-                  return (
-                    <button
-                      key={target.id}
-                      type="button"
-                      onClick={() =>
-                        setExemptOverwriteIds((current) =>
-                          exempted ? current.filter((entry) => entry !== target.id) : [...current, target.id],
-                        )
-                      }
-                      className={`w-full rounded-2xl border p-4 text-left ${
-                        exempted ? 'border-emerald-400 bg-emerald-50' : 'border-zinc-200 bg-white'
-                      }`}
-                    >
-                      <div className="text-sm font-medium text-zinc-900">
-                        Row {target.rowNumber} - {target.columnLabel}
-                      </div>
-                      <div className="mt-1 text-xs text-zinc-600">Current: {String(target.currentValue)}</div>
-                      <div className="text-xs text-zinc-600">Incoming: {String(target.nextValue)}</div>
-                      <div className="mt-2 text-xs font-semibold text-zinc-900">
-                        {exempted ? 'Exempted from final patch' : 'Tap to exempt this overwrite'}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            ) : null}
+        <DialogContent className="max-w-md rounded-[28px] bg-slate-50 p-0 border-none overflow-hidden select-none shadow-2xl">
+          <div className="p-5 border-b bg-white">
+            <h3 className="text-base font-black text-slate-900 flex items-center gap-1.5 leading-tight">
+              <Wand2 className="h-4 w-4 text-emerald-600" />
+              Overwrite Review
+            </h3>
+            <p className="text-[11px] font-medium text-slate-500 leading-tight">
+              {overwritePreview?.overwriteTargets.length || 0} cells will be updated. Review and exempt any if needed.
+            </p>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setShowOverwriteDialog(false)}>
-              Back
+          <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-[10px] font-black uppercase tracking-widest text-slate-400 p-0 h-auto hover:bg-transparent"
+              onClick={() => setOverwriteExpanded(!overwriteExpanded)}
+            >
+              {overwriteExpanded ? 'Hide Details' : 'Review Details'}
             </Button>
-            <Button type="button" onClick={handleApplyOverwriteDecision}>
-              Apply Import
-            </Button>
-          </DialogFooter>
+
+            {overwriteExpanded && overwritePreview?.overwriteTargets.map(target => {
+              const exempted = exemptOverwriteIds.includes(target.id)
+              return (
+                <button
+                  key={target.id}
+                  onClick={() => setExemptOverwriteIds(curr => exempted ? curr.filter(id => id !== target.id) : [...curr, target.id])}
+                  className={`w-full p-4 rounded-2xl border-2 text-left transition-all active:scale-[0.98] ${exempted ? 'bg-red-50 border-red-100' : 'bg-white border-slate-100 shadow-sm'}`}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="text-[11px] font-extrabold text-slate-900">Row {target.rowNumber} • {target.columnLabel}</span>
+                    {exempted && <span className="text-[9px] font-black uppercase tracking-widest text-red-600 bg-red-100 px-2 py-0.5 rounded-full">Exempt</span>}
+                  </div>
+                  <div className="mt-1.5 text-[10px] font-medium text-slate-500 line-clamp-2">
+                    <span className="text-slate-400">Current:</span> {String(target.currentValue)}
+                    <br />
+                    <span className="text-slate-400">New:</span> {String(target.nextValue)}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="p-4 bg-white border-t flex gap-2">
+            <Button variant="outline" onClick={() => setShowOverwriteDialog(false)} className="flex-1 h-12 rounded-xl border-slate-200 font-bold text-slate-600">Back</Button>
+            <Button onClick={handleApplyOverwriteDecision} className="flex-[2] h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black shadow-lg transition-all active:scale-[0.98]">Apply Import</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </>

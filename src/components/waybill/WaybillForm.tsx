@@ -240,7 +240,7 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
         await createOfflineWaybillDraft({
             ...waybill,
             items,
-            custom_fields: finalFields
+            custom_fields: finalFields as any
         })
         toast({ title: 'Saved offline', description: 'Draft preserved locally.' })
         navigate('/waybills')
@@ -418,7 +418,7 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
                       </Field>
                       
                       <Field label="Condition">
-                        <Select value={item.condition} onValueChange={(value) => updateItem(index, 'condition', value)}>
+                        <Select value={item.condition} onValueChange={(value: any) => updateItem(index, 'condition', value)}>
                           <SelectTrigger className="rounded-xl">
                             <SelectValue />
                           </SelectTrigger>
