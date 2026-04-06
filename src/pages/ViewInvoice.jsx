@@ -26,6 +26,8 @@ import {
   getInvoiceSignatoryId,
   parseCustomFields,
   toDbItem,
+  getAdvanceConfig,
+  mapAdvanceConfigToInvoice,
 } from '@/domain/invoice'
 import { parseDocumentCustomFields } from '@/domain/documentConversion'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
@@ -97,6 +99,7 @@ export default function ViewInvoice() {
   const [advanceSheetMode, setAdvanceSheetMode] = useState('create')
   const [advanceMode, setAdvanceMode] = useState('percent')
   const [advanceInputValue, setAdvanceInputValue] = useState('50')
+  const [advanceSuffixValue, setAdvanceSuffixValue] = useState('A')
   const [advanceInvoice, setAdvanceInvoice] = useState(null)
   const [advanceSaving, setAdvanceSaving] = useState(false)
   const [advancePdfGenerating, setAdvancePdfGenerating] = useState(false)
@@ -129,6 +132,15 @@ export default function ViewInvoice() {
       return
     }
 
+    // 1. Primary source: Parent-owned config
+    const config = getAdvanceConfig(invoice.custom_fields)
+    if (config && config.enabled) {
+      const virtualAdvance = mapAdvanceConfigToInvoice(invoice, config)
+      setAdvanceInvoice({ ...virtualAdvance, suffix: config.suffix }) // Attach suffix for form sync
+      return
+    }
+
+    // 2. Fallback: Old child row architecture (Legacy read)
     const { data, error } = await supabase
       .from('invoices')
       .select('*')
@@ -139,13 +151,13 @@ export default function ViewInvoice() {
       .limit(1)
 
     if (error) {
-      console.warn('Advance invoice fetch failed:', error)
+      console.warn('Advance invoice legacy fetch failed:', error)
       setAdvanceInvoice(null)
       return
     }
 
     setAdvanceInvoice(data?.[0] || null)
-  }, [invoice?.id, invoice?.thread_id])
+  }, [invoice])
 
   useEffect(() => {
     void loadAdvanceInvoice()
@@ -170,6 +182,7 @@ export default function ViewInvoice() {
 
     setAdvanceMode(nextMode)
     setAdvanceInputValue(rawValue)
+    setAdvanceSuffixValue(nextAdvanceInvoice?.suffix ?? 'A')
   }, [])
 
   useEffect(() => {
@@ -255,6 +268,7 @@ export default function ViewInvoice() {
     if (mode === 'create' && !advanceInvoice) {
       setAdvanceMode('percent')
       setAdvanceInputValue('50')
+      setAdvanceSuffixValue('A')
     }
     if (mode === 'view' && advanceInvoice) {
       syncAdvanceForm(advanceInvoice)
@@ -334,105 +348,35 @@ export default function ViewInvoice() {
     setAdvanceSaving(true)
 
     try {
-      if (advanceInvoice) {
-        const { error: updateError } = await supabase
-          .from('invoices')
-          .update({
-            total: advanceAmount,
-            amount_in_words: numberToWords(advanceAmount),
-            advance_mode: advanceMode,
-            advance_value: safeAdvanceInput,
-          })
-          .eq('id', advanceInvoice.id)
-
-        if (updateError) throw updateError
-      } else {
-        const { data: existingNumbers, error: numberError } = await supabase
-          .from('invoices')
-          .select('invoice_number')
-          .like('invoice_number', 'SASINV-B%')
-          .order('created_at', { ascending: false })
-
-        if (numberError) throw numberError
-
-        const nextNumber = Math.max(
-          0,
-          ...(existingNumbers || [])
-            .map((entry) => parseInt(String(entry.invoice_number || '').replace('SASINV-B', ''), 10))
-            .filter((value) => Number.isFinite(value)),
-        ) + 1
-
-        const customFieldPayload = JSON.stringify(parseCustomFields(invoice.custom_fields))
-
-        const { data: createdInvoice, error: invoiceError } = await supabase
-          .from('invoices')
-          .insert([
-            {
-              invoice_number: `SASINV-B${String(nextNumber).padStart(3, '0')}`,
-              po_number: String(invoice.po_number || '').trim() || null,
-              invoice_title: invoice.invoice_title || null,
-              client_id: invoice.client_id || null,
-              client_name: invoice.client_name || '',
-              project_id: invoice.project_id || null,
-              issue_date: new Date().toISOString().split('T')[0],
-              due_date: invoice.due_date || null,
-              status: 'draft',
-              document_type: invoice.document_type || 'INVOICE',
-              payment_terms: invoice.payment_terms || 'Custom',
-              notes: invoice.notes || '',
-              terms: invoice.terms || '',
-              workmanship: Number(invoice.workmanship || 0),
-              transportation: Number(invoice.transportation || 0),
-              shipping: Number(invoice.shipping || 0),
-              discount: Number(invoice.discount || 0),
-              vat: Number(invoice.vat || 0),
-              wht: Number(invoice.wht || 0),
-              subtotal: Number(invoice.subtotal || 0),
-              install_rate_total: Number(invoice.install_rate_total || 0),
-              total: advanceAmount,
-              amount_in_words: numberToWords(advanceAmount),
-              custom_fields: customFieldPayload,
-              thread_id: invoice.id,
-              thread_role: 'advance',
-              thread_position: 1,
-              total_contract_value: contractValue,
-              advance_mode: advanceMode,
-              advance_value: safeAdvanceInput,
-              is_advance: true,
-            },
-          ])
-          .select()
-          .single()
-
-        if (invoiceError || !createdInvoice) {
-          throw new Error(invoiceError?.message || 'Could not create advance invoice.')
-        }
-
-        const childItems = items
-          .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-          .map((item, index) => toDbItem(item, createdInvoice.id, index))
-
-        if (childItems.length > 0) {
-          const { error: itemError } = await supabase.from('invoice_items').insert(childItems)
-          if (itemError) {
-            await supabase.from('invoices').delete().eq('id', createdInvoice.id)
-            throw itemError
-          }
-        }
+      const updatedCf = {
+        ...(customFieldObject || {}),
+        advance_invoice: {
+          enabled: true,
+          mode: advanceMode,
+          value: safeAdvanceInput,
+          suffix: advanceSuffixValue === null ? '' : advanceSuffixValue,
+        },
       }
 
-      await loadAdvanceInvoice()
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({
+          custom_fields: JSON.stringify(updatedCf),
+        })
+        .eq('id', invoice.id)
+
+      if (updateError) throw updateError
+
+      await refresh()
       setAdvanceSheetMode('view')
       toast({
         title: advanceInvoice ? 'Advance updated' : 'Advance invoice created',
-        description: advanceInvoice
-          ? 'Advance values were updated.'
-          : 'Advance invoice was created from this invoice.',
+        description: 'Advance configuration saved to parent invoice.',
       })
     } catch (error) {
       toast({
         title: advanceInvoice ? 'Advance update failed' : 'Advance creation failed',
-        description: error?.message || 'Could not save advance invoice.',
+        description: error?.message || 'Could not save advance configuration.',
         variant: 'destructive',
       })
     } finally {
@@ -440,35 +384,46 @@ export default function ViewInvoice() {
     }
   }
 
+
   const handleDownloadAdvancePDF = async () => {
     if (!advanceInvoice?.id || advancePdfGenerating) return
     setAdvancePdfGenerating(true)
 
     try {
-      const { data: advanceItems, error: advanceItemsError } = await supabase
-        .from('invoice_items')
-        .select('*')
-        .eq('invoice_id', advanceInvoice.id)
-        .order('sort_order')
+      const isVirtual = String(advanceInvoice.id || '').startsWith('virtual-advance')
+      let advanceItems = []
 
-      if (advanceItemsError) throw advanceItemsError
+      if (isVirtual) {
+        advanceItems = items.map((item) => ({
+          ...item,
+          custom_data: item.custom_data || {},
+        }))
+      } else {
+        const { data, error: advanceItemsError } = await supabase
+          .from('invoice_items')
+          .select('*')
+          .eq('invoice_id', advanceInvoice.id)
+          .order('sort_order')
 
-      const loadedAdvanceItems = (advanceItems || []).map((item) => ({
-        ...item,
-        custom_data:
-          typeof item.custom_data === 'string'
-            ? JSON.parse(item.custom_data || '{}')
-            : item.custom_data || {},
-        install_rate_override: item.install_rate_override === true,
-        install_rate: item.install_rate === undefined ? null : item.install_rate,
-        vat_rate: item.vat_rate === undefined ? null : item.vat_rate,
-        discount_rate: item.discount_rate === undefined ? null : item.discount_rate,
-        image_url: item.image_url || null,
-      }))
+        if (advanceItemsError) throw advanceItemsError
+
+        advanceItems = (data || []).map((item) => ({
+          ...item,
+          custom_data:
+            typeof item.custom_data === 'string'
+              ? JSON.parse(item.custom_data || '{}')
+              : item.custom_data || {},
+          install_rate_override: item.install_rate_override === true,
+          install_rate: item.install_rate === undefined ? null : item.install_rate,
+          vat_rate: item.vat_rate === undefined ? null : item.vat_rate,
+          discount_rate: item.discount_rate === undefined ? null : item.discount_rate,
+          image_url: item.image_url || null,
+        }))
+      }
 
       const advanceTotal = Number(advanceInvoice.total || 0)
       const baseComputedResult = computeDocument({
-        items: loadedAdvanceItems,
+        items: advanceItems,
         document: advanceInvoice,
         cf: parseDocumentCustomFields(advanceInvoice.custom_fields || {}),
       })
@@ -498,7 +453,7 @@ export default function ViewInvoice() {
       const blob = await pdf(
         <InvoicePDF
           document={advanceInvoice}
-          items={loadedAdvanceItems}
+          items={advanceItems}
           client={client}
           settings={settings}
           computedResult={computedResult}
@@ -507,7 +462,7 @@ export default function ViewInvoice() {
           bankAccounts={bankAccounts}
           pdfOutput={getInvoicePdfOutput(advanceInvoice.custom_fields)}
           signatory={advanceSignatory}
-        />
+        />,
       ).toBlob()
 
       const url = URL.createObjectURL(blob)
@@ -532,40 +487,50 @@ export default function ViewInvoice() {
     }
   }
 
+
   const confirmDeleteAdvanceInvoice = async () => {
-    if (!advanceInvoice?.id) return
+    if (!advanceInvoice) return
     setShowAdvanceDeleteConfirm(false)
     setAdvanceSaving(true)
 
     try {
-      const { error: deleteItemsError } = await supabase
-        .from('invoice_items')
-        .delete()
-        .eq('invoice_id', advanceInvoice.id)
-      if (deleteItemsError) throw deleteItemsError
+      // 1. Clear from parent config
+      const updatedCf = { ...(customFieldObject || {}) }
+      delete updatedCf.advance_invoice
 
-      const { error: deleteInvoiceError } = await supabase
+      const { error: updateError } = await supabase
         .from('invoices')
-        .delete()
-        .eq('id', advanceInvoice.id)
-      if (deleteInvoiceError) throw deleteInvoiceError
+        .update({
+          custom_fields: JSON.stringify(updatedCf),
+        })
+        .eq('id', invoice.id)
 
-      setAdvanceInvoice(null)
+      if (updateError) throw updateError
+
+      // 2. Clear legacy child row if it exists
+      const isVirtual = String(advanceInvoice.id || '').startsWith('virtual-advance')
+      if (!isVirtual && advanceInvoice.id) {
+        await supabase.from('invoice_items').delete().eq('invoice_id', advanceInvoice.id)
+        await supabase.from('invoices').delete().eq('id', advanceInvoice.id)
+      }
+
+      await refresh()
       setShowAdvanceSheet(false)
       setAdvanceSheetMode('create')
       setAdvanceMode('percent')
       setAdvanceInputValue('50')
-      toast({ title: 'Advance removed', description: 'The advance invoice was deleted.' })
+      toast({ title: 'Advance removed', description: 'The advance configuration was cleared.' })
     } catch (error) {
       toast({
         title: 'Advance removal failed',
-        description: error?.message || 'Could not remove advance invoice.',
+        description: error?.message || 'Could not remove advance configuration.',
         variant: 'destructive',
       })
     } finally {
       setAdvanceSaving(false)
     }
   }
+
 
   const {
     handleAttachExisting,
@@ -1084,6 +1049,8 @@ export default function ViewInvoice() {
           setAdvanceMode={setAdvanceMode}
           advanceInputValue={advanceInputValue}
           setAdvanceInputValue={setAdvanceInputValue}
+          advanceSuffixValue={advanceSuffixValue}
+          setAdvanceSuffixValue={setAdvanceSuffixValue}
           advanceAmount={advanceAmount}
           balanceRemaining={balanceRemaining}
           onSave={() => void handleSaveAdvance()}

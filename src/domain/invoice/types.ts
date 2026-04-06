@@ -17,7 +17,15 @@ export interface InvoiceAttachment {
   [key: string]: unknown
 }
 
+export interface AdvanceConfig {
+  enabled: boolean
+  mode: 'percent' | 'fixed'
+  value: number
+  suffix?: string
+}
+
 export interface InvoicePdfOutput {
+
   showBankDetails: boolean
   bankAccountId: string | null
   showFooter: boolean
@@ -173,6 +181,12 @@ export interface Invoice extends InvoiceTotalsSource {
   total?: number
   is_advance?: boolean
   advance_percentage?: number
+  advance_mode?: 'percent' | 'fixed' | string
+  advance_value?: number
+  total_contract_value?: number
+  thread_id?: string | null
+  thread_role?: string | null
+
   work_duration?: string
   amount_in_words?: string
   invoice_title?: string
@@ -279,8 +293,10 @@ export interface InvoiceCustomFields {
   header?: Array<Record<string, unknown>>
   bottom?: Array<Record<string, unknown>>
   conversionTrail?: DocumentConversionTrail
+  advance_invoice?: AdvanceConfig
   [key: string]: unknown
 }
+
 
 export interface PdfCellValueHelpers {
   amount?: number
