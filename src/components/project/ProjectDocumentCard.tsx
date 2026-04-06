@@ -111,7 +111,7 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
       {keyFields.length > 0 ? (
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           {keyFields.slice(0, 4).map((field) => (
-            <div key={`${field.label}-${field.value}`} className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+            <div key={`${field.label}-${field.value}`} className="rounded-2xl border border-zinc-200 bg-background px-3 py-2.5">
               <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{field.label}</div>
               <div className="mt-1 text-sm font-medium text-zinc-900">{field.value}</div>
             </div>
@@ -120,7 +120,7 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
       ) : null}
 
       {previewImage ? (
-        <div className="mt-3 overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50">
+        <div className="mt-3 overflow-hidden rounded-2xl border border-zinc-200 bg-background">
           <img
             src={previewImage.url}
             alt={previewImage.label || 'Document image'}

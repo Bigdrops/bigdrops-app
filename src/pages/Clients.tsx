@@ -142,13 +142,13 @@ export default function Clients() {
         {loading ? (
           <div className="grid gap-3">
             {Array.from({ length: 5 }).map((_, index) => (
-              <div key={index} className="rounded-[22px] border border-border bg-white p-4 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
+              <div key={index} className="rounded-[22px] border border-border bg-card p-4 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
                 <div className="h-20 animate-pulse rounded-[16px] bg-slate-100" />
               </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-border bg-white p-10 text-center shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
+          <div className="rounded-[22px] border border-dashed border-border bg-card p-10 text-center shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] bg-muted/60">
               <Users className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -165,7 +165,7 @@ export default function Clients() {
                 <div
                   key={client.id}
                   onClick={() => navigate(`/clients/${client.id}`)}
-                  className="cursor-pointer rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                  className="cursor-pointer rounded-[22px] border border-slate-200 bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
                   <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
                     <div className="grid h-12 w-12 place-items-center rounded-2xl border border-violet-100 bg-violet-50 text-sm font-extrabold text-violet-700">
@@ -181,7 +181,7 @@ export default function Clients() {
                         event.stopPropagation()
                         setActiveClient(client)
                       }}
-                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-card text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                       aria-label={`Open actions for ${client.name}`}
                     >
                       ⋯

@@ -25,7 +25,7 @@ export default function ProjectListCard({
   return (
     <div
       onClick={onClick}
-      className="relative cursor-pointer rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+      className="relative cursor-pointer rounded-[22px] border border-slate-200 bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
     >
       <div className="absolute inset-y-0 left-0 w-1 rounded-l-[22px] bg-emerald-500" />
       <div className="flex items-center justify-between gap-3">
@@ -36,7 +36,7 @@ export default function ProjectListCard({
             event.stopPropagation()
             onAction()
           }}
-          className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-slate-900"
+          className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-card text-slate-900"
         >
           <MoreHorizontal className="h-4 w-4" />
         </button>

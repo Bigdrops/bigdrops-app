@@ -66,8 +66,8 @@ export function getPaymentStatusConfig(status) {
   }
 }
 
-export const cardClassName = 'rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-100'
-export const inputClassName = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+export const cardClassName = 'rounded-2xl border border-slate-200 bg-card shadow-sm ring-1 ring-slate-100'
+export const inputClassName = 'w-full rounded-lg border border-slate-200 bg-background px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
 export const DOC_TYPE_LABELS = {
   invoice: 'Invoice',
   quotation: 'Quotation',

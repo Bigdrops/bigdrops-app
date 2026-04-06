@@ -40,7 +40,7 @@ export default function ProjectDocumentGroups({
         </div>
 
         {commercialDocs.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-center">
+          <div className="rounded-xl border border-dashed border-slate-200 bg-card px-4 py-5 text-center">
             <div className="text-sm font-semibold text-slate-600">No quotations or invoices yet</div>
             <div className="mt-0.5 text-xs text-muted-foreground">
               Use Quick Actions to create one, or link an existing document.
@@ -138,7 +138,7 @@ export default function ProjectDocumentGroups({
         </div>
 
         {fieldDocs.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-center">
+          <div className="rounded-xl border border-dashed border-slate-200 bg-card px-4 py-5 text-center">
             <div className="text-sm font-semibold text-slate-600">No CSRs or waybills yet</div>
             <div className="mt-0.5 text-xs text-muted-foreground">
               Use Quick Actions to create one, or link an existing document.

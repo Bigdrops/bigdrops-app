@@ -131,7 +131,7 @@ export default function ClientDetail() {
 
   if (loading) {
     return (
-      <Layout title="Client Workspace">
+      <Layout title="Client Workspace" session={null}>
         <div className="px-6 py-10 text-sm text-muted-foreground animate-pulse">Loading Client Workspace...</div>
       </Layout>
     )
@@ -139,7 +139,7 @@ export default function ClientDetail() {
 
   if (!client) {
     return (
-      <Layout title="Client Workspace">
+      <Layout title="Client Workspace" session={null}>
         <div className="px-6 py-10">
           <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
             {error || 'Client not found.'}
@@ -161,6 +161,7 @@ export default function ClientDetail() {
   return (
     <Layout
       title={client.name || 'Client Workspace'}
+      session={null}
       hidePageHeader
       contentClassName="w-full max-w-none p-0 pb-24 md:px-4 md:pb-10"
     >

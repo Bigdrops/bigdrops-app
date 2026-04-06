@@ -34,7 +34,7 @@ export default function EntityListCard({
   return (
     <div
       onClick={onClick}
-      className="cursor-pointer rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+      className="cursor-pointer rounded-[22px] border border-slate-200 bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
     >
       <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
         <div>{leading}</div>
@@ -49,7 +49,7 @@ export default function EntityListCard({
             event.stopPropagation()
             onAction()
           }}
-          className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-slate-900"
+          className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-card text-slate-900"
         >
           <MoreHorizontal className="h-4 w-4" />
         </button>

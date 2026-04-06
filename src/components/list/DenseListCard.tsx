@@ -15,7 +15,7 @@ type Row = {
 
 export default function DenseListCard({ rows }: { rows: Row[] }) {
   return (
-    <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+    <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
       {rows.map((row, index) => (
         <div
           key={row.key}
@@ -38,7 +38,7 @@ export default function DenseListCard({ rows }: { rows: Row[] }) {
               event.stopPropagation()
               row.onAction()
             }}
-            className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-slate-900"
+            className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-card text-slate-900"
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
