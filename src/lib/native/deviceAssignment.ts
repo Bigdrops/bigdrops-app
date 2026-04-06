@@ -220,6 +220,17 @@ export async function ensureAndroidDeviceAssignment(args: {
     throw new Error("Backend returned an invalid Android device assignment.");
   }
 
+  // CORE INTEGRITY: Force profile synchronization to match what the device claims
+  const uppercaseCode = normalized.deviceCode;
+  const { error: profileSyncError } = await supabase
+    .from("profiles")
+    .update({ assigned_device_code: uppercaseCode })
+    .eq("id", args.userId);
+
+  if (profileSyncError) {
+    console.warn("Failed to synchronize profile.assigned_device_code upon local hydration:", profileSyncError);
+  }
+
   await cacheDeviceAssignment({
     ...normalized,
     lastSeenAt: new Date().toISOString(),
@@ -268,5 +279,61 @@ export async function seedOfflineCountersFromServer(
     await Promise.all(updates);
   } catch {
     // Counter seeding is best-effort only.
+  }
+}
+
+export async function adminUpdateDeviceAssignment(args: {
+  assignmentId: string;
+  userId?: string | null;
+  newDeviceCode: string;
+}): Promise<void> {
+  const nextCode = normalizeDeviceCode(args.newDeviceCode);
+
+  if (!DEVICE_CODE_FORMAT.test(nextCode)) {
+    throw new Error("Device codes must be exactly two uppercase letters.");
+  }
+
+  // 1. Conflict Prevention (Installation Level)
+  const { data: duplicateDevices, error: dupErr1 } = await supabase
+    .from("device_installations")
+    .select("id")
+    .eq("device_code", nextCode)
+    .neq("id", args.assignmentId)
+    .eq("active", true);
+
+  if (dupErr1) throw dupErr1;
+  if (duplicateDevices && duplicateDevices.length > 0) {
+    throw new Error(`Conflict: Code ${nextCode} is active on another device.`);
+  }
+
+  // 2. Conflict Prevention (Profile Level)
+  const { data: duplicateProfiles, error: dupErr2 } = await supabase
+    .from("profiles")
+    .select("id")
+    .ilike("assigned_device_code", nextCode);
+
+  if (dupErr2) throw dupErr2;
+  if (duplicateProfiles && duplicateProfiles.length > 0 && args.userId) {
+    if (duplicateProfiles.some((p) => p.id !== args.userId)) {
+      throw new Error(`Conflict: Code ${nextCode} is mapped to another user's profile.`);
+    }
+  }
+
+  // 3. Update installation code via original RPC path
+  const { error: rpcError } = await supabase.rpc("admin_update_device_assignment_code", {
+    p_assignment_id: args.assignmentId,
+    p_device_code: nextCode,
+  });
+
+  if (rpcError) throw rpcError;
+
+  // 4. Force consistency on the profile
+  if (args.userId) {
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ assigned_device_code: nextCode })
+      .eq("id", args.userId);
+
+    if (profileError) throw profileError;
   }
 }

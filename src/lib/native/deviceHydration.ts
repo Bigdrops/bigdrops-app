@@ -25,8 +25,14 @@ function getOfflineAccessExpiry(lastOnlineAt: Date): string {
 export async function hydrateLocalDeviceProfile(
   args: HydrateDeviceProfileArgs,
 ): Promise<void> {
-  if (!args.userId || !isOnline() || !canUseAndroidNativeSqlite()) {
-    return;
+  if (!args.userId) {
+    throw new Error("No user ID provided for device hydration.");
+  }
+  if (!canUseAndroidNativeSqlite()) {
+    throw new Error("Device assignment is only supported on native Android apps.");
+  }
+  if (!isOnline()) {
+    throw new Error("Re-registration requires an active online connection.");
   }
 
   const {
@@ -39,13 +45,13 @@ export async function hydrateLocalDeviceProfile(
   }
 
   if (session?.user?.id !== args.userId) {
-    return;
+    throw new Error("Hydration user ID mismatch with active session.");
   }
 
   const lastOnlineAt = new Date();
   const installationId = await getOrCreateInstallationId();
   if (!installationId) {
-    return;
+    throw new Error("Failed to resolve or generate device installation ID.");
   }
 
   const assignment = await ensureAndroidDeviceAssignment({

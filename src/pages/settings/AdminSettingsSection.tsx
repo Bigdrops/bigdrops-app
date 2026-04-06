@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Loader2, Smartphone, Trash2, UserCheck, UserX } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/supabase'
+import { adminUpdateDeviceAssignment } from '@/lib/native/deviceAssignment'
 import { getErrorMessage } from './settings-helpers'
 import type { SettingsSession, SettingsToastFn } from './settings-types'
 
@@ -257,7 +258,7 @@ export function AdminSettingsSection({
       } else if (type === 'revoke') {
         const uppercaseCode = String(user.assigned_device_code).toUpperCase()
         await supabase.from('profiles').update({ assigned_device_code: null }).eq('id', user.id)
-        await supabase.from('device_installations').update({ user_id: null, active: false }).eq('user_id', user.id)
+        await supabase.from('device_installations').update({ user_id: null }).eq('user_id', user.id)
         onToast('Device access revoked for ' + user.email)
       }
       await fetchAll()
@@ -271,39 +272,14 @@ export function AdminSettingsSection({
   const updateDeviceCode = async (device: DeviceRow) => {
     const nextCode = String(deviceCodeDrafts[device.id] || '').trim().toUpperCase()
 
-    if (!/^[A-Z]{2}$/.test(nextCode)) {
-      onToast('Device codes must be exactly two uppercase letters.')
-      return
-    }
-
-    if (devices.some(d => d.id !== device.id && d.device_code === nextCode && d.active)) {
-      onToast(`Conflict: Code ${nextCode} is active on another device.`)
-      return
-    }
-
     setActionId(device.id)
 
     try {
-      const { data: existingProfiles, error: fetchErr } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .ilike('assigned_device_code', nextCode)
-
-      if (fetchErr) throw fetchErr
-      if (existingProfiles && existingProfiles.length > 0 && existingProfiles.some(p => p.id !== device.user_id)) {
-        onToast(`Conflict: Code ${nextCode} is mapped to another user's profile.`)
-        return
-      }
-
-      const { error } = await supabase.rpc('admin_update_device_assignment_code', {
-        p_assignment_id: device.id,
-        p_device_code: nextCode,
+      await adminUpdateDeviceAssignment({
+        assignmentId: device.id,
+        userId: device.user_id,
+        newDeviceCode: nextCode,
       })
-      if (error) throw error
-
-      if (device.user_id) {
-        await supabase.from('profiles').update({ assigned_device_code: nextCode }).eq('id', device.user_id)
-      }
 
       await fetchAll()
       onToast(`Device code updated to ${nextCode}`)
