@@ -60,20 +60,33 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
   const showAndroidBackHandler = isAndroidNative()
 
   useEffect(() => {
-    const customColor = settings?.app_background_color
-    const normalized = customColor ? normalizeHexColor(customColor) : null
+    const bgSetting = settings?.app_background_color
+    const cardSetting = settings?.app_card_color
+    
+    const normBg = bgSetting ? normalizeHexColor(bgSetting) : null
+    const normCard = cardSetting ? normalizeHexColor(cardSetting) : null
 
-    if (normalized) {
-      const hslTriplet = hexToHslTriplet(normalized)
-      document.documentElement.style.setProperty('--background', hslTriplet)
+    if (normBg) {
+      document.documentElement.style.setProperty('--background', hexToHslTriplet(normBg))
     } else {
       document.documentElement.style.removeProperty('--background')
     }
 
+    if (normCard) {
+      const cardHsl = hexToHslTriplet(normCard)
+      document.documentElement.style.setProperty('--card', cardHsl)
+      document.documentElement.style.setProperty('--popover', cardHsl)
+    } else {
+      document.documentElement.style.removeProperty('--card')
+      document.documentElement.style.removeProperty('--popover')
+    }
+
     return () => {
       document.documentElement.style.removeProperty('--background')
+      document.documentElement.style.removeProperty('--card')
+      document.documentElement.style.removeProperty('--popover')
     }
-  }, [settings?.app_background_color])
+  }, [settings?.app_background_color, settings?.app_card_color])
 
   return (
     <>
