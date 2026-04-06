@@ -4,6 +4,7 @@ import { Menu } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { GlobalSearch } from '@/components/layout/GlobalSearch'
 
 type MobilePageHeaderProps = {
   title: string
@@ -13,6 +14,7 @@ type MobilePageHeaderProps = {
   onMenuClick: () => void
   actions?: ReactNode
   className?: string
+  hideGlobalSearch?: boolean
 }
 
 export default function MobilePageHeader({
@@ -23,6 +25,7 @@ export default function MobilePageHeader({
   onMenuClick,
   actions,
   className,
+  hideGlobalSearch = false,
 }: MobilePageHeaderProps) {
   return (
     <div className={cn('rounded-[20px] border border-border/80 bg-background/95 px-3.5 py-3 shadow-sm', className)}>
@@ -53,7 +56,10 @@ export default function MobilePageHeader({
                 <div className="mt-0.5 truncate text-xs text-muted-foreground">{subtitle}</div>
               ) : null}
             </div>
-            {actions ? <div className="flex shrink-0 items-center gap-1">{actions}</div> : null}
+            <div className="flex shrink-0 items-center gap-1">
+              {actions}
+              {!hideGlobalSearch && <GlobalSearch />}
+            </div>
           </div>
         </div>
       </div>

@@ -7,7 +7,7 @@ import { isAndroidNative } from '@/lib/native/capacitor'
 import { useSettings } from '@/hooks/useSettings'
 import { normalizeHexColor, hexToHslTriplet } from '@/lib/colorTheme'
 
-const Dashboard = lazy(() => import('@/pages/Dashboard'))
+const Dashboard = lazy(() => import('@/pages/DashboardRedesign'))
 const Invoices = lazy(() => import('@/pages/Invoices'))
 const Quotations = lazy(() => import('@/pages/Quotations'))
 const NewQuotation = lazy(() => import('@/pages/NewQuotation'))

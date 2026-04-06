@@ -26,6 +26,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Separator } from '@/components/ui/separator'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import MobilePageHeader from '@/components/layout/MobilePageHeader'
+import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { useSettings } from '../hooks/useSettings'
 import { supabase } from '../supabase'
 
@@ -321,14 +322,18 @@ export default function Layout({
               subtitle={settings?.company_name || 'Invoicing and Projects'}
               accentClassName="tone-info-accent"
               onMenuClick={() => setSidebarOpen(true)}
+              actions={<GlobalSearch />}
             />
           </div>
         ) : null}
 
         {!isHome && !hidePageHeader ? (
           <div className="w-full px-4 pt-4">
-            <div className="rounded-2xl border border-border border-l-4 border-l-[var(--tone-info)] bg-card px-5 py-4 shadow-sm">
-              <div className="text-base font-bold text-foreground">{title}</div>
+            <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-3 shadow-sm">
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-bold text-foreground truncate">{title}</div>
+              </div>
+              <GlobalSearch />
             </div>
           </div>
         ) : null}
