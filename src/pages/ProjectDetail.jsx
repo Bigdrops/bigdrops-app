@@ -54,6 +54,7 @@ export default function ProjectDetail() {
   const [pendingReassignData, setPendingReassignData] = useState(null)
 
   const [editForm, setEditForm] = useState({})
+  const [actionsOpen, setActionsOpen] = useState(false)
 
   useEffect(() => {
     fetchAll()
@@ -314,7 +315,6 @@ export default function ProjectDetail() {
   }
 
   const projectStatus = PROJECT_STATUS_CONFIG[project.status] || PROJECT_STATUS_CONFIG.active
-  const [actionsOpen, setActionsOpen] = useState(false)
 
   const projectState = {
     projectId: id,
