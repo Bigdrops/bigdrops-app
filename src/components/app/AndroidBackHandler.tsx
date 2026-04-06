@@ -17,8 +17,6 @@ const ROOT_PATHS = new Set([
   '/waybills',
 ])
 
-const DOUBLE_BACK_EXIT_WINDOW_MS = 2000
-
 function isVisible(element: Element | null): element is HTMLElement {
   if (!(element instanceof HTMLElement)) return false
   if (element.hidden) return false
@@ -137,7 +135,10 @@ async function tryCloseOverlay() {
     return true
   }
 
-  if (dismissibleOverlay instanceof HTMLElement && dismissibleOverlay.dataset.backCloseClickDismiss === 'true') {
+  if (
+    dismissibleOverlay instanceof HTMLElement &&
+    dismissibleOverlay.dataset.backCloseClickDismiss === 'true'
+  ) {
     dismissibleOverlay.click()
     return true
   }
@@ -149,7 +150,6 @@ export default function AndroidBackHandler() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const lastBackPressAtRef = useRef(0)
   const pathnameRef = useRef(location.pathname)
   const stateRef = useRef(location.state)
   const isRootRouteRef = useRef(ROOT_PATHS.has(location.pathname))
@@ -177,6 +177,12 @@ export default function AndroidBackHandler() {
         const pathname = pathnameRef.current
         const routeState = stateRef.current
         const isRootRoute = isRootRouteRef.current
+        const historyIndex = Number(window.history.state?.idx ?? 0)
+
+        if (canGoBack || historyIndex > 0) {
+          navigate(-1)
+          return
+        }
 
         const logicalTarget = getLogicalBackTarget(pathname, routeState)
         if (logicalTarget && logicalTarget !== pathname) {
@@ -185,23 +191,10 @@ export default function AndroidBackHandler() {
         }
 
         if (isRootRoute) {
-          const now = Date.now()
-
-          if (now - lastBackPressAtRef.current < DOUBLE_BACK_EXIT_WINDOW_MS) {
-            await CapacitorApp.exitApp()
-            return
-          }
-
-          lastBackPressAtRef.current = now
           toast({
-            title: 'Press back again to exit',
-            description: 'Android will only close the app from a root screen.',
+            title: 'Top level screen',
+            description: 'Use the navigation bar to switch areas or your home button to minimize.',
           })
-          return
-        }
-
-        if (canGoBack || Number(window.history.state?.idx ?? 0) > 0) {
-          navigate(-1)
           return
         }
 
