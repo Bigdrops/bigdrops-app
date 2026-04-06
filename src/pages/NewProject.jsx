@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -15,11 +15,14 @@ import ClientSelector from '../components/ClientSelector'
 
 export default function NewProject() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const prefill = location.state || {}
+
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
     name: '',
-    client_id: null,
-    client_name: '',
+    client_id: prefill.clientId || null,
+    client_name: prefill.clientName || '',
     status: 'active',
     project_value: '',
     po_number: '',
