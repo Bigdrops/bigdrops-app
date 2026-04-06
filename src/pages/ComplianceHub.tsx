@@ -6,7 +6,8 @@ import {
   Wallet, 
   History, 
   Settings2,
-  AlertCircle
+  AlertCircle,
+  Bell
 } from 'lucide-react'
 
 import Layout from '../components/Layout'
@@ -19,9 +20,10 @@ import ComplianceOverview from '@/components/compliance/ComplianceOverview'
 import WhtReceiptsPanel from '@/components/compliance/WhtReceiptsPanel'
 import VatInputsPanel from '@/components/compliance/VatInputsPanel'
 import TaxFilingsPanel from '@/components/compliance/TaxFilingsPanel'
+import TaxRemindersPanel from '@/components/compliance/TaxRemindersPanel'
 import ComplianceSettingsPanel from '@/components/compliance/ComplianceSettingsPanel'
 
-type ComplianceTab = 'overview' | 'wht' | 'vat' | 'filings' | 'settings'
+type ComplianceTab = 'overview' | 'wht' | 'vat' | 'filings' | 'settings' | 'reminders'
 
 export default function ComplianceHub() {
   const [tab, setTab] = useState<ComplianceTab>('overview')
@@ -30,6 +32,7 @@ export default function ComplianceHub() {
   const [receipts, setReceipts] = useState<any[]>([])
   const [taxInputs, setTaxInputs] = useState<any[]>([])
   const [filings, setFilings] = useState<any[]>([])
+  const [reminders, setReminders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -41,7 +44,7 @@ export default function ComplianceHub() {
       setError('')
 
       try {
-        const [invoicesResult, paymentsResult, receiptsResult, taxInputsResult, filingsResult] = await Promise.all([
+        const [invoicesResult, paymentsResult, receiptsResult, taxInputsResult, filingsResult, remindersResult] = await Promise.all([
           supabase
             .from('invoices')
             .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
@@ -62,7 +65,11 @@ export default function ComplianceHub() {
           supabase
             .from('tax_filings')
             .select('*')
-            .order('period_start', { ascending: false })
+            .order('period_start', { ascending: false }),
+          supabase
+            .from('tax_reminders')
+            .select('*')
+            .order('due_date', { ascending: true })
         ])
 
         if (cancelled) return
@@ -72,11 +79,13 @@ export default function ComplianceHub() {
         if (receiptsResult.error) throw receiptsResult.error
         if (taxInputsResult.error) throw taxInputsResult.error
         if (filingsResult.error) throw filingsResult.error
+        if (remindersResult.error) throw remindersResult.error
 
         setInvoices(invoicesResult.data || [])
         setReceipts(receiptsResult.data || [])
         setTaxInputs(taxInputsResult.data || [])
         setFilings(filingsResult.data || [])
+        setReminders(remindersResult.data || [])
         
         // Flatten payments with joined records
         const flattenedPayments = (paymentsResult.data || []).map(p => {
@@ -124,7 +133,7 @@ export default function ComplianceHub() {
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-2">
                 <div className="bg-blue-500 rounded-full h-2 w-2 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">Phase 2C: Filing Register</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">Phase 3A: Obligations Layer</span>
               </div>
               <h1 className="text-2xl font-black tracking-tight">Compliance Hub</h1>
               <p className="mt-2 text-sm text-slate-300 leading-relaxed max-w-md">
@@ -145,6 +154,13 @@ export default function ComplianceHub() {
             <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sticky top-4 z-40">
               <div className="overflow-x-auto">
                 <TabsList className="inline-flex h-auto w-max gap-2 bg-transparent p-0">
+                  <TabsTrigger 
+                    value="reminders" 
+                    className="rounded-xl px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[#0F172A] data-[state=active]:text-white flex items-center gap-2"
+                  >
+                    <Bell className="h-3.5 w-3.5" />
+                    Obligations
+                  </TabsTrigger>
                   <TabsTrigger 
                     value="overview" 
                     className="rounded-xl px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[#0F172A] data-[state=active]:text-white flex items-center gap-2"
@@ -201,6 +217,7 @@ export default function ComplianceHub() {
                       receipts={receipts}
                       taxInputs={taxInputs}
                       filings={filings}
+                      reminders={reminders}
                     />
                   </TabsContent>
                   <TabsContent value="wht" className="mt-0">
@@ -217,6 +234,16 @@ export default function ComplianceHub() {
                         supabase.from('tax_input_entries').select('*').order('date', { ascending: false })
                           .then(({ data }) => { if (data) setTaxInputs(data) })
                       }} 
+                    />
+                  </TabsContent>
+                  <TabsContent value="reminders" className="mt-0">
+                    <TaxRemindersPanel
+                      reminders={reminders}
+                      filings={filings}
+                      onRemindersChanged={() => {
+                        supabase.from('tax_reminders').select('*').order('due_date', { ascending: true })
+                          .then(({ data }) => { if (data) setReminders(data) })
+                      }}
                     />
                   </TabsContent>
                   <TabsContent value="filings" className="mt-0">

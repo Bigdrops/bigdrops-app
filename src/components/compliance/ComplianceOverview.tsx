@@ -6,12 +6,13 @@ import {
   Banknote, 
   AlertCircle,
   ArrowRight,
-  ClipboardList
+  ClipboardList,
+  Bell
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatDisplayDate } from '@/lib/formatters/date'
-import { WhtReceipt, TaxInputEntry, TaxFiling } from '@/domain/compliance/types'
+import { WhtReceipt, TaxInputEntry, TaxFiling, TaxReminder } from '@/domain/compliance/types'
 
 type MetricTone = 'green' | 'red' | 'amber' | 'blue'
 
@@ -31,6 +32,7 @@ interface ComplianceOverviewProps {
   receipts: WhtReceipt[]
   taxInputs: TaxInputEntry[]
   filings: TaxFiling[]
+  reminders: TaxReminder[]
 }
 
 const getMetricToneClasses = (tone: MetricTone) => {
@@ -69,7 +71,8 @@ export default function ComplianceOverview({
   recentPayments,
   receipts,
   taxInputs,
-  filings
+  filings,
+  reminders
 }: ComplianceOverviewProps) {
   
   const recoverableVatTotal = taxInputs
@@ -98,6 +101,10 @@ export default function ComplianceOverview({
   const overdueFilingsCount = filings.filter(f => f.status === 'overdue').length
   const paidFilingsCount = filings.filter(f => f.status === 'paid').length
 
+  const overdueRemindersCount = reminders.filter(r => r.status === 'overdue').length
+  const upcomingRemindersCount = reminders.filter(r => r.status === 'upcoming' || r.status === 'due').length
+  const nextReminder = reminders.find(r => r.status === 'upcoming' || r.status === 'due')
+
   return (
     <div className="space-y-6">
       {/* Summary Metrics */}
@@ -115,31 +122,61 @@ export default function ComplianceOverview({
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-3">
-            <div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm hover:border-blue-300 transition-colors group">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                    Initialize Tracking
+            {overdueRemindersCount > 0 ? (
+              <div className="rounded-xl border border-red-100 bg-red-50 p-4 shadow-sm group">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="text-sm font-black text-red-800 flex items-center gap-2 uppercase tracking-tight">
+                      Attention Required
+                    </div>
+                    <div className="text-xs text-red-700 mt-1 font-bold">
+                      {overdueRemindersCount} overdue tax obligations need immediate resolution.
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    {untrackedWHTCount} WHT payments have not been initialized as tracking records yet.
-                  </div>
+                  <ArrowRight className="h-4 w-4 text-red-400 group-hover:text-red-600 group-hover:translate-x-1 transition-all" />
                 </div>
-                <ArrowRight className="h-4 w-4 text-blue-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
               </div>
-            </div>
+            ) : (
+              <div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm hover:border-blue-300 transition-colors group">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                      Initialize Tracking
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {untrackedWHTCount} WHT payments have not been initialized as tracking records yet.
+                    </div>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-blue-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                </div>
+              </div>
+            )}
 
-            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm group">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-sm font-semibold text-slate-800">Review Requested Receipts</div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    {requestedReceiptsCount} certificates are currently in "requested" status.
+            {nextReminder ? (
+              <div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm group">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-800">Next Due: {formatDisplayDate(nextReminder.due_date)}</div>
+                    <div className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-black">
+                      {nextReminder.tax_type} Periodical 
+                    </div>
                   </div>
+                  <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                 </div>
-                <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
               </div>
-            </div>
+            ) : (
+              <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm group">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-800">Review Requested Receipts</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {requestedReceiptsCount} certificates are currently in "requested" status.
+                    </div>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                </div>
+              </div>
+            )}
 
             <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm group">
               <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
@@ -161,20 +198,33 @@ export default function ComplianceOverview({
             <div className="rounded-xl border border-emerald-100 bg-white p-4 shadow-sm">
               <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
                 <ClipboardList className="h-3.5 w-3.5 text-emerald-500" />
-                Filing Records
+                Filing Health
               </div>
               <div className="mt-2 flex flex-wrap gap-4">
                 <div>
                   <span className="text-lg font-bold text-slate-900">{openFilingsCount}</span>
-                  <span className="ml-1 text-[10px] text-slate-500 uppercase font-black">Open</span>
+                  <span className="ml-1 text-[10px] text-slate-500 uppercase font-black">Drafts</span>
                 </div>
                 <div>
                   <span className="text-lg font-bold text-emerald-700">{paidFilingsCount}</span>
-                  <span className="ml-1 text-[10px] text-slate-500 uppercase font-black">Paid</span>
+                  <span className="ml-1 text-[10px] text-slate-500 uppercase font-black">Settled</span>
                 </div>
-                {overdueFilingsCount > 0 && (
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm">
+              <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <Bell className="h-3.5 w-3.5 text-blue-500" />
+                Next Obligations
+              </div>
+              <div className="mt-2 flex flex-wrap gap-4">
+                <div>
+                  <span className="text-lg font-bold text-blue-700">{upcomingRemindersCount}</span>
+                  <span className="ml-1 text-[10px] text-slate-500 uppercase font-black">Upcoming</span>
+                </div>
+                {overdueRemindersCount > 0 && (
                   <div>
-                    <span className="text-lg font-bold text-red-600">{overdueFilingsCount}</span>
+                    <span className="text-lg font-bold text-red-600">{overdueRemindersCount}</span>
                     <span className="ml-1 text-[10px] text-slate-500 uppercase font-black">Overdue</span>
                   </div>
                 )}

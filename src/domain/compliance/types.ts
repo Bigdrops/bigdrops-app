@@ -2,6 +2,7 @@ export type CitCategory = 'small' | 'medium' | 'large' | 'exempt'
 export type WhtReceiptStatus = 'pending' | 'requested' | 'received' | 'verified'
 export type TaxFilingTaxType = 'vat' | 'wht' | 'cit'
 export type TaxFilingStatus = 'draft' | 'ready' | 'filed' | 'paid' | 'overdue'
+export type TaxReminderStatus = 'upcoming' | 'due' | 'overdue' | 'resolved' | 'cancelled'
 
 export interface TaxSettings {
   id: string
@@ -62,6 +63,20 @@ export interface TaxFiling {
   submitted_at: string | null
   receipt_reference: string | null
   portal_reference: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface TaxReminder {
+  id: string
+  settings_id: number
+  tax_type: TaxFilingTaxType
+  period_start: string | null
+  period_end: string | null
+  due_date: string
+  status: TaxReminderStatus
+  linked_filing_id: string | null
   notes: string | null
   created_at: string
   updated_at: string
