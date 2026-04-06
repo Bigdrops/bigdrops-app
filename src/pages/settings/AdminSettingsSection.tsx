@@ -5,7 +5,7 @@ import { supabase } from '@/supabase'
 import { getErrorMessage } from './settings-helpers'
 import type { SettingsSession, SettingsToastFn } from './settings-types'
 
-type ConfirmType = 'approve' | 'deactivate' | 'remove'
+type ConfirmType = 'approve' | 'deactivate' | 'remove' | 'revoke'
 
 type AdminUser = {
   id: string
@@ -132,6 +132,24 @@ function ConfirmModal({
       confirmClass: emailMatch ? 'bg-red-600 text-white hover:bg-red-700' : 'cursor-not-allowed bg-slate-200 text-slate-400',
       canConfirm: emailMatch,
     },
+    revoke: {
+      title: 'Revoke Device Access',
+      icon: <Smartphone size={22} className="text-amber-600" />,
+      iconBg: 'bg-amber-50',
+      body: (
+        <>
+          <p className="text-sm leading-relaxed text-slate-700">
+            You are about to revoke device code <span className="font-bold text-amber-700">{String(user.assigned_device_code).toUpperCase()}</span> for <span className="font-bold text-foreground">{user.email}</span>.
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            This clears the code from their profile and deactivates any matching installation mapping.
+          </p>
+        </>
+      ),
+      confirmLabel: 'Yes, Revoke',
+      confirmClass: 'bg-amber-600 text-white hover:bg-amber-700',
+      canConfirm: true,
+    },
   }
 
   const currentConfig = config[type]
@@ -236,6 +254,11 @@ export function AdminSettingsSection({
       } else if (type === 'remove') {
         await supabase.from('profiles').delete().eq('id', user.id)
         onToast(user.email + ' removed')
+      } else if (type === 'revoke') {
+        const uppercaseCode = String(user.assigned_device_code).toUpperCase()
+        await supabase.from('profiles').update({ assigned_device_code: null }).eq('id', user.id)
+        await supabase.from('device_installations').update({ user_id: null, active: false }).eq('user_id', user.id)
+        onToast('Device access revoked for ' + user.email)
       }
       await fetchAll()
     } catch (error) {
@@ -253,14 +276,34 @@ export function AdminSettingsSection({
       return
     }
 
+    if (devices.some(d => d.id !== device.id && d.device_code === nextCode && d.active)) {
+      onToast(`Conflict: Code ${nextCode} is active on another device.`)
+      return
+    }
+
     setActionId(device.id)
 
     try {
+      const { data: existingProfiles, error: fetchErr } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .ilike('assigned_device_code', nextCode)
+
+      if (fetchErr) throw fetchErr
+      if (existingProfiles && existingProfiles.length > 0 && existingProfiles.some(p => p.id !== device.user_id)) {
+        onToast(`Conflict: Code ${nextCode} is mapped to another user's profile.`)
+        return
+      }
+
       const { error } = await supabase.rpc('admin_update_device_assignment_code', {
         p_assignment_id: device.id,
         p_device_code: nextCode,
       })
       if (error) throw error
+
+      if (device.user_id) {
+        await supabase.from('profiles').update({ assigned_device_code: nextCode }).eq('id', device.user_id)
+      }
 
       await fetchAll()
       onToast(`Device code updated to ${nextCode}`)
@@ -360,18 +403,28 @@ export function AdminSettingsSection({
                         Deactivate
                       </button>
                     )}
-                    <button
-                      onClick={() => setModal({ type: 'remove', user })}
-                      disabled={isLoading(user.id, 'r')}
-                      className="flex items-center justify-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
-                    >
-                      {isLoading(user.id, 'r') ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
-                      Remove
-                    </button>
-                  </div>
-                )}
-              </div>
-            )
+                      <button
+                        onClick={() => setModal({ type: 'remove', user })}
+                        disabled={isLoading(user.id, 'r')}
+                        className="flex items-center justify-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                      >
+                        {isLoading(user.id, 'r') ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                        Remove
+                      </button>
+                      {user.assigned_device_code ? (
+                        <button
+                          onClick={() => setModal({ type: 'revoke', user })}
+                          disabled={isLoading(user.id, 'rv')}
+                          className="flex items-center justify-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-600 transition-colors hover:bg-amber-100 disabled:opacity-50"
+                        >
+                          {isLoading(user.id, 'rv') ? <Loader2 size={11} className="animate-spin" /> : <Smartphone size={11} />}
+                          Revoke Device
+                        </button>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              )
           })}
           {users.length === 0 ? <p className="py-8 text-center text-xs font-bold text-muted-foreground">NO USERS FOUND</p> : null}
         </div>

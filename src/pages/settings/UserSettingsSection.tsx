@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { SettingsField } from './SettingsFormPrimitives'
+import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import type { SettingsSession, SettingsToastFn } from './settings-types'
 
 type PasswordForm = {
@@ -24,6 +25,7 @@ export function UserSettingsSection({
     confirmPassword: '',
   })
   const [saving, setSaving] = useState(false)
+  const [hydrating, setHydrating] = useState(false)
   const [error, setError] = useState('')
   const email = session?.user?.email || ''
   const requirements = {
@@ -84,6 +86,19 @@ export function UserSettingsSection({
     onToast('Password updated')
   }
 
+  const retryDeviceHydration = async () => {
+    try {
+      setHydrating(true)
+      const { hydrateLocalDeviceProfile } = await import('@/lib/native/deviceHydration')
+      await hydrateLocalDeviceProfile({ userId: session!.user!.id })
+      onToast('Device successfully registered/hydrated on this device')
+    } catch (e) {
+      onToast(e instanceof Error ? e.message : 'Failed to register device')
+    } finally {
+      setHydrating(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-4">
@@ -103,6 +118,22 @@ export function UserSettingsSection({
           Change Password
         </button>
       </div>
+
+      {canUseAndroidNativeSqlite() ? (
+        <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-4 mt-4">
+          <div className="min-w-0">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Device Assignment</div>
+            <div className="mt-1 text-sm font-medium text-foreground">Offline device registration</div>
+          </div>
+          <button
+            onClick={retryDeviceHydration}
+            disabled={hydrating}
+            className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-muted/50 disabled:opacity-50"
+          >
+            {hydrating ? 'Registering...' : 'Retry Registration'}
+          </button>
+        </div>
+      ) : null}
 
       {open ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
