@@ -133,74 +133,80 @@ export default function ProjectDetail() {
   const fetchAll = async () => {
     setLoading(true)
 
-    const [projectRes, invoiceRes, csrRes, quotationRes, waybillRes, financialsRes, projectDocsRes] = await Promise.all([
-      supabase.from('projects').select('*').eq('id', id).single(),
-      supabase
-        .from('invoices')
-        .select('id, invoice_number, invoice_title, status, total, issue_date, document_type')
-        .eq('project_id', id)
-        .is('archived_at', null)
-        .or('thread_role.is.null,thread_role.neq.advance')
-        .or('is_advance.is.null,is_advance.eq.false')
-        .order('issue_date', { ascending: false }),
-      supabase
-        .from('csrs')
-        .select('id, csr_number, title, status, created_at')
-        .eq('project_id', id)
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('quotations')
-        .select('id, quotation_number, status, total, issue_date')
-        .eq('project_id', id)
-        .order('issue_date', { ascending: false }),
-      supabase
-        .from('waybills')
-        .select('id, waybill_number, status, date, created_at, type')
-        .eq('project_id', id)
-        .order('created_at', { ascending: false }),
-      supabase.from('project_financials_v').select('*').eq('project_id', id).single(),
-      supabase.from('project_documents').select('*').eq('project_id', id).order('created_at', { ascending: false }),
-    ])
+    try {
+      const [projectRes, invoiceRes, csrRes, quotationRes, waybillRes, financialsRes, projectDocsRes] = await Promise.all([
+        supabase.from('projects').select('*').eq('id', id).single(),
+        supabase
+          .from('invoices')
+          .select('id, invoice_number, invoice_title, status, total, issue_date, document_type')
+          .eq('project_id', id)
+          .is('archived_at', null)
+          .or('thread_role.is.null,thread_role.neq.advance')
+          .or('is_advance.is.null,is_advance.eq.false')
+          .order('issue_date', { ascending: false }),
+        supabase
+          .from('csrs')
+          .select('id, csr_number, title, status, created_at')
+          .eq('project_id', id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('quotations')
+          .select('id, quotation_number, status, total, issue_date')
+          .eq('project_id', id)
+          .order('issue_date', { ascending: false }),
+        supabase
+          .from('waybills')
+          .select('id, waybill_number, status, date, created_at, type')
+          .eq('project_id', id)
+          .order('created_at', { ascending: false }),
+        supabase.from('project_financials_v').select('*').eq('project_id', id).single(),
+        supabase.from('project_documents').select('*').eq('project_id', id).order('created_at', { ascending: false }),
+      ])
 
-    const projectData = projectRes.data
-    const invoiceRows = invoiceRes.data || []
-    const invoiceIds = invoiceRows.map((invoice) => invoice.id)
+      const projectData = projectRes.data
+      const invoiceRows = invoiceRes.data || []
+      const invoiceIds = invoiceRows.map((invoice) => invoice.id)
 
-    let invoiceFinancialsById = {}
-    if (invoiceIds.length > 0) {
-      const { data: invoiceFinancialsRows } = await supabase
-        .from('invoice_financials_v')
-        .select('id, balance_due, computed_status, cash_received')
-        .in('id', invoiceIds)
+      let invoiceFinancialsById = {}
+      if (invoiceIds.length > 0) {
+        const { data: invoiceFinancialsRows } = await supabase
+          .from('invoice_financials_v')
+          .select('id, balance_due, computed_status, cash_received')
+          .in('id', invoiceIds)
 
-      invoiceFinancialsById = (invoiceFinancialsRows || []).reduce((acc, row) => {
-        acc[row.id] = row
-        return acc
-      }, {})
+        invoiceFinancialsById = (invoiceFinancialsRows || []).reduce((acc, row) => {
+          acc[row.id] = row
+          return acc
+        }, {})
+      }
+
+      const enrichedInvoices = invoiceRows.map((invoice) => ({
+        ...invoice,
+        invoiceFinancials: invoiceFinancialsById[invoice.id] || null,
+      }))
+
+      setProject(projectData)
+      setFinancials(financialsRes.data || null)
+      setInvoices(enrichedInvoices)
+      setCsrs(csrRes.data || [])
+      setQuotations(quotationRes.data || [])
+      setWaybills(waybillRes.data || [])
+      setProjectDocs(projectDocsRes.data || [])
+      setEditForm({
+        name: projectData?.name || '',
+        status: projectData?.status || 'active',
+        project_value: projectData?.project_value || '',
+        po_number: projectData?.po_number || '',
+        start_date: projectData?.start_date || '',
+        notes: projectData?.notes || '',
+        location: projectData?.location || '',
+      })
+    } catch (err) {
+      console.error('[ProjectDetail] fetchAll error:', err)
+      toast({ title: 'Failed to load project', description: 'Please refresh and try again.', variant: 'destructive' })
+    } finally {
+      setLoading(false)
     }
-
-    const enrichedInvoices = invoiceRows.map((invoice) => ({
-      ...invoice,
-      invoiceFinancials: invoiceFinancialsById[invoice.id] || null,
-    }))
-
-    setProject(projectData)
-    setFinancials(financialsRes.data || null)
-    setInvoices(enrichedInvoices)
-    setCsrs(csrRes.data || [])
-    setQuotations(quotationRes.data || [])
-    setWaybills(waybillsRes.data || [])
-    setProjectDocs(projectDocsRes.data || [])
-    setEditForm({
-      name: projectData?.name || '',
-      status: projectData?.status || 'active',
-      project_value: projectData?.project_value || '',
-      po_number: projectData?.po_number || '',
-      start_date: projectData?.start_date || '',
-      notes: projectData?.notes || '',
-      location: projectData?.location || '',
-    })
-    setLoading(false)
   }
 
   const handleSaveEdit = async () => {
