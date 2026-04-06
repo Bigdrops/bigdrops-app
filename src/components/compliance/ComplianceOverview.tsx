@@ -11,7 +11,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatDisplayDate } from '@/lib/formatters/date'
-import { WhtReceipt } from '@/domain/compliance/types'
+import { WhtReceipt, TaxInputEntry } from '@/domain/compliance/types'
 
 type MetricTone = 'green' | 'red' | 'amber' | 'blue'
 
@@ -29,6 +29,7 @@ interface ComplianceOverviewProps {
   recentInvoices: any[]
   recentPayments: any[]
   receipts: WhtReceipt[]
+  taxInputs: TaxInputEntry[]
 }
 
 const getMetricToneClasses = (tone: MetricTone) => {
@@ -65,13 +66,24 @@ export default function ComplianceOverview({
   netPosition,
   recentInvoices,
   recentPayments,
-  receipts
+  receipts,
+  taxInputs
 }: ComplianceOverviewProps) {
   
+  const recoverableVatTotal = taxInputs
+    .filter(ti => ti.is_recoverable)
+    .reduce((sum, ti) => sum + Number(ti.vat_amount || 0), 0)
+
+  const nonRecoverableVatTotal = taxInputs
+    .filter(ti => !ti.is_recoverable)
+    .reduce((sum, ti) => sum + Number(ti.vat_amount || 0), 0)
+
+  const netVatPosition = vatCharged - recoverableVatTotal
+
   const metrics: Metric[] = [
     { label: 'VAT Charged', value: formatNaira(vatCharged), tone: 'amber', icon: <Receipt className="h-5 w-5" /> },
-    { label: 'WHT Deducted', value: formatNaira(whtDeducted), tone: 'red', icon: <Banknote className="h-5 w-5" /> },
-    { label: 'Net Position', value: formatNaira(netPosition), tone: netPosition >= 0 ? 'blue' : 'red', icon: <Wallet className="h-5 w-5" /> },
+    { label: 'Recoverable VAT', value: formatNaira(recoverableVatTotal), tone: 'green', icon: <Wallet className="h-5 w-5" /> },
+    { label: 'Net VAT Position', value: formatNaira(netVatPosition), tone: netVatPosition >= 0 ? 'blue' : 'red', icon: <ClipboardList className="h-5 w-5" /> },
   ]
 
   const untrackedWHTCount = recentPayments.filter(p => 
@@ -123,12 +135,20 @@ export default function ComplianceOverview({
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-100 bg-white/40 p-4 shadow-sm opacity-60">
+            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm group">
               <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                <ClipboardList className="h-3 w-3" />
-                Filing Goal
+                <ClipboardList className="h-3.5 w-3.5 text-slate-400" />
+                Input VAT Efficiency
               </div>
-              <div className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-black">Coming in Phase 2B</div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-lg font-bold text-slate-900">{taxInputs.length}</span>
+                <span className="text-[10px] text-slate-500 uppercase font-black">Entries Captured</span>
+              </div>
+              {nonRecoverableVatTotal > 0 && (
+                <div className="mt-1 text-[11px] text-amber-600 font-medium italic">
+                  Note: {formatNaira(nonRecoverableVatTotal)} marked as non-recoverable
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

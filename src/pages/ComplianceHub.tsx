@@ -28,6 +28,7 @@ export default function ComplianceHub() {
   const [invoices, setInvoices] = useState<any[]>([])
   const [payments, setPayments] = useState<any[]>([])
   const [receipts, setReceipts] = useState<any[]>([])
+  const [taxInputs, setTaxInputs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -39,7 +40,7 @@ export default function ComplianceHub() {
       setError('')
 
       try {
-        const [invoicesResult, paymentsResult, receiptsResult] = await Promise.all([
+        const [invoicesResult, paymentsResult, receiptsResult, taxInputsResult] = await Promise.all([
           supabase
             .from('invoices')
             .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
@@ -52,7 +53,11 @@ export default function ComplianceHub() {
             .order('date', { ascending: false }),
           supabase
             .from('wht_receipts')
+            .select('*'),
+          supabase
+            .from('tax_input_entries')
             .select('*')
+            .order('date', { ascending: false })
         ])
 
         if (cancelled) return
@@ -60,9 +65,11 @@ export default function ComplianceHub() {
         if (invoicesResult.error) throw invoicesResult.error
         if (paymentsResult.error) throw paymentsResult.error
         if (receiptsResult.error) throw receiptsResult.error
+        if (taxInputsResult.error) throw taxInputsResult.error
 
         setInvoices(invoicesResult.data || [])
         setReceipts(receiptsResult.data || [])
+        setTaxInputs(taxInputsResult.data || [])
         
         // Flatten payments with joined records
         const flattenedPayments = (paymentsResult.data || []).map(p => {
@@ -185,6 +192,7 @@ export default function ComplianceHub() {
                       recentInvoices={invoices}
                       recentPayments={payments}
                       receipts={receipts}
+                      taxInputs={taxInputs}
                     />
                   </TabsContent>
                   <TabsContent value="wht" className="mt-0">
@@ -195,7 +203,13 @@ export default function ComplianceHub() {
                     />
                   </TabsContent>
                   <TabsContent value="vat" className="mt-0">
-                    <VatInputsPanel />
+                    <VatInputsPanel 
+                      taxInputs={taxInputs} 
+                      onInputsChanged={() => {
+                        supabase.from('tax_input_entries').select('*').order('date', { ascending: false })
+                          .then(({ data }) => { if (data) setTaxInputs(data) })
+                      }} 
+                    />
                   </TabsContent>
                   <TabsContent value="filings" className="mt-0">
                     <TaxFilingsPanel />

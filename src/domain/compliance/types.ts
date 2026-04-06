@@ -32,3 +32,18 @@ export interface WhtReceipt {
   created_at: string
   updated_at: string
 }
+
+export interface TaxInputEntry {
+  id: string
+  settings_id: number
+  date: string
+  vendor_name: string | null
+  category: string | null
+  reference: string | null
+  net_amount: number
+  vat_amount: number
+  is_recoverable: boolean
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
