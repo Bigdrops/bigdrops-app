@@ -28,6 +28,7 @@ import { GlobalSearch } from '@/components/layout/GlobalSearch'
 const quickActions = [
   { id: 'new-invoice', label: 'Invoice', path: '/invoices/new', icon: FileText, color: 'bg-blue-600' },
   { id: 'new-quote', label: 'Quotation', path: '/quotations/new', icon: FileSignature, color: 'bg-violet-600' },
+  { id: 'new-rfq', label: 'RFQ', path: '/rfqs/new', icon: Zap, color: 'bg-amber-500' },
   { id: 'new-waybill', label: 'Waybill', path: '/waybills/new', icon: Truck, color: 'bg-slate-700' },
   { id: 'new-csr', label: 'CSR', path: '/csr/new', icon: ClipboardCheck, color: 'bg-orange-600' },
   { id: 'new-client', label: 'Client', path: '/clients/new', icon: Users, color: 'bg-indigo-600' },
