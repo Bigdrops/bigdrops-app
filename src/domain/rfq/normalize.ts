@@ -1,37 +1,49 @@
-import { Rfq, DbRfq, RfqItem, DbRfqItem } from './types';
+import { Rfq, DbRfq, RfqItem, DbRfqItem } from './types'
+
+const normalizeDate = (value?: string | null): string | null =>
+  value && value.trim() ? value : null
 
 export const normalizeDbRfq = (dbRfq: any, dbItems: any[] = []): Rfq => {
   return {
     ...dbRfq,
-    custom_fields: typeof dbRfq.custom_fields === 'string' 
-      ? JSON.parse(dbRfq.custom_fields) 
-      : (dbRfq.custom_fields || {}),
-    items: dbItems.map((item, idx) => ({
-      ...item,
-      _uiKey: item.id || crypto.randomUUID(),
-      sort_order: item.sort_order ?? idx,
-      quantity: Number(item.quantity || 0),
-    })).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)),
-  };
-};
+    issue_date: dbRfq.issue_date || '',
+    expiry_date: dbRfq.expiry_date || '',
+    custom_fields:
+      typeof dbRfq.custom_fields === 'string'
+        ? JSON.parse(dbRfq.custom_fields)
+        : (dbRfq.custom_fields || {}),
+    items: dbItems
+      .map((item, idx) => ({
+        ...item,
+        _uiKey: item.id || crypto.randomUUID(),
+        sort_order: item.sort_order ?? idx,
+        quantity: Number(item.quantity || 0),
+      }))
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)),
+  }
+}
 
 export const denormalizeToDbRfq = (rfq: Rfq): DbRfq => {
-  const { items, ...rest } = rfq;
+  const { items, ...rest } = rfq
+
   return {
     ...rest,
+    issue_date: normalizeDate(rfq.issue_date),
+    expiry_date: normalizeDate(rfq.expiry_date),
     custom_fields: rfq.custom_fields || {},
-  };
-};
+  }
+}
 
 export const denormalizeToDbRfqItem = (item: RfqItem, rfqId: string): DbRfqItem => {
-  const { _uiKey, ...rest } = item;
+  const { _uiKey, ...rest } = item
+
   return {
     ...rest,
     rfq_id: rfqId,
     quantity: Number(item.quantity || 0),
     sort_order: Number(item.sort_order || 0),
-  };
-};
+  }
+}
 
 export function getNextRfqNumber(
   rows: Array<{ rfq_number: string }>,
