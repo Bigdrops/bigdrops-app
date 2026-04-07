@@ -24,7 +24,16 @@ export const normalizeDbRfq = (dbRfq: any, dbItems: any[] = []): Rfq => {
 }
 
 export const denormalizeToDbRfq = (rfq: Rfq): DbRfq => {
-  const { items, ...rest } = rfq
+  const {
+    id,
+    created_at,
+    updated_at,
+    items,
+    ...rest
+  } = rfq as Rfq & {
+    created_at?: string
+    updated_at?: string
+  }
 
   return {
     ...rest,
@@ -35,7 +44,16 @@ export const denormalizeToDbRfq = (rfq: Rfq): DbRfq => {
 }
 
 export const denormalizeToDbRfqItem = (item: RfqItem, rfqId: string): DbRfqItem => {
-  const { _uiKey, ...rest } = item
+  const {
+    id,
+    _uiKey,
+    created_at,
+    updated_at,
+    ...rest
+  } = item as RfqItem & {
+    created_at?: string
+    updated_at?: string
+  }
 
   return {
     ...rest,
