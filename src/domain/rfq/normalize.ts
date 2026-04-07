@@ -1,5 +1,4 @@
 import { Rfq, DbRfq, RfqItem, DbRfqItem } from './types';
-import { v4 as uuidv4 } from 'uuid';
 
 export const normalizeDbRfq = (dbRfq: any, dbItems: any[] = []): Rfq => {
   return {
@@ -9,7 +8,7 @@ export const normalizeDbRfq = (dbRfq: any, dbItems: any[] = []): Rfq => {
       : (dbRfq.custom_fields || {}),
     items: dbItems.map((item, idx) => ({
       ...item,
-      _uiKey: item.id || uuidv4(),
+      _uiKey: item.id || crypto.randomUUID(),
       sort_order: item.sort_order ?? idx,
       quantity: Number(item.quantity || 0),
     })).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)),

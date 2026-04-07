@@ -1,8 +1,7 @@
 import { Rfq, RfqItem } from './types';
-import { v4 as uuidv4 } from 'uuid';
 
 export const createEmptyRfqItem = (sort_order: number): RfqItem => ({
-  _uiKey: uuidv4(),
+  _uiKey: crypto.randomUUID(),
   sort_order,
   description: '',
   quantity: 0,

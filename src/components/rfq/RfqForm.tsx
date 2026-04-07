@@ -194,7 +194,7 @@ export const RfqForm: React.FC<RfqFormProps> = ({
           </div>
 
           <Button
-            variant="dashed"
+            variant="outline"
             className="w-full h-14 border-2 rounded-xl group hover:border-primary/50"
             onClick={addItem}
           >
