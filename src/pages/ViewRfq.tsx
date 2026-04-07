@@ -10,6 +10,10 @@ import { Pencil, ArrowLeft, Download, Share2, Trash2, MoreVertical, FileOutput }
 import { toast } from '@/hooks/use-toast'
 import ListActionSheet from '@/components/layout/ListActionSheet'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
+import { RfqExportController } from '@/components/rfq/RfqExportController'
+import { RfqImagePreviewGrid } from '@/components/rfq/RfqImagePreviewGrid'
+import { pdf } from '@react-pdf/renderer'
+import { RfqPdfDocument } from '@/components/rfq/RfqPdfDocument'
 
 export default function ViewRfq() {
   const { id } = useParams();
@@ -18,6 +22,10 @@ export default function ViewRfq() {
   const [loading, setLoading] = useState(true);
   const [showActions, setShowActions] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  const [exportState, setExportState] = useState<'idle' | 'capturing' | 'reviewing'>('idle');
+  const [capturedImages, setCapturedImages] = useState<string[]>([]);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -50,13 +58,51 @@ export default function ViewRfq() {
   };
 
   const handleExportImage = () => {
-     toast({ title: 'Exporting...', description: 'Preparing segmented mobile image.' });
-     // Placeholder for future segmented image export
+    setShowActions(false);
+    setExportState('capturing');
   };
 
-  const handleExportPdf = () => {
-     toast({ title: 'Exporting...', description: 'Generating PDF document.' });
-     // Placeholder for future PDF export using @react-pdf/renderer
+  const handleExportPdf = async () => {
+    if (!rfq || pdfGenerating) return;
+    setShowActions(false);
+    setPdfGenerating(true);
+    toast({ title: 'Exporting...', description: 'Generating PDF document.' });
+
+    try {
+      const blob = await pdf(<RfqPdfDocument rfq={rfq} items={rfq.items || []} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `RFQ_${rfq.rfq_number}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: 'PDF Ready', description: 'Document downloaded successfully.' });
+    } catch (e) {
+      console.error('PDF generation failed', e);
+      toast({ title: 'Export failed', description: 'Could not generate PDF.', variant: 'destructive' });
+    } finally {
+      setPdfGenerating(false);
+    }
+  };
+
+  const handleDownloadAllImages = () => {
+    if (capturedImages.length === 0) return;
+    
+    // Download each segment (browser standard behavior)
+    capturedImages.forEach((src, idx) => {
+      const a = document.createElement('a');
+      a.href = src;
+      a.download = `RFQ_${rfq?.rfq_number}_Segment_${idx + 1}.png`;
+      document.body.appendChild(a);
+      setTimeout(() => {
+        a.click();
+        document.body.removeChild(a);
+      }, idx * 250); // Stagger downloads to avoid browser blocking
+    });
+    
+    toast({ title: 'Download Started', description: `Downloading ${capturedImages.length} image segments.` });
   };
 
   if (loading || !rfq) {
@@ -173,6 +219,27 @@ export default function ViewRfq() {
         confirmLabel="Delete RFQ"
         onConfirm={handleDelete}
       />
+
+      {exportState === 'capturing' && (
+        <RfqExportController 
+          rfq={rfq}
+          items={rfq.items || []}
+          onDone={(images) => {
+            setCapturedImages(images);
+            setExportState('reviewing');
+          }}
+          onCancel={() => setExportState('idle')}
+        />
+      )}
+
+      {exportState === 'reviewing' && (
+        <RfqImagePreviewGrid 
+          images={capturedImages}
+          rfqNumber={rfq.rfq_number}
+          onClose={() => setExportState('idle')}
+          onDownloadAll={handleDownloadAllImages}
+        />
+      )}
     </Layout>
   );
 }
