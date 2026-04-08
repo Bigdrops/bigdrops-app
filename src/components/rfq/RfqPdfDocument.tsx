@@ -1,13 +1,12 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
-import { Rfq, RfqItem, RFQ_PALETTES } from '@/domain/rfq/types';
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Rfq, RfqItem } from '@/domain/rfq/types';
 import { chunkRfqItems, getReshuffledItems } from '@/domain/rfq/exportHelpers';
 
 // Simplified styles for PDF to ensure high accuracy with components
 const styles = StyleSheet.create({
   page: {
     padding: 0,
-    backgroundColor: 'white',
   },
   segmentContainer: {
     flex: 1,
@@ -18,31 +17,30 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 25,
+    marginBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
     paddingBottom: 15,
   },
   titleBlock: {
     flexDirection: 'column',
   },
   brandName: {
-    fontSize: 18,
+    fontSize: 14,
     fontFamily: 'Helvetica-Bold',
     textTransform: 'uppercase',
     marginBottom: 4,
   },
   docTitle: {
-    fontSize: 10,
+    fontSize: 18,
     fontFamily: 'Helvetica-Bold',
     textTransform: 'uppercase',
-    opacity: 0.6,
   },
   rfqNumber: {
-    fontSize: 8,
+    fontSize: 9,
     fontFamily: 'Helvetica',
-    opacity: 0.4,
+    opacity: 0.6,
     marginTop: 2,
+    textTransform: 'uppercase',
   },
   vendorBlock: {
     textAlign: 'right',
@@ -55,7 +53,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   vendorName: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Helvetica-Bold',
     textTransform: 'uppercase',
   },
@@ -65,63 +63,73 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     marginTop: 2,
   },
-  itemContainer: {
-    flexGrow: 1,
+  
+  // Table Styles
+  table: {
+    width: '100%',
   },
-  itemRow: {
-    flexDirection: 'column',
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-  },
-  itemUpper: {
+  tableHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    borderBottomWidth: 2,
+    paddingBottom: 4,
+    marginBottom: 8,
   },
-  itemDetails: {
-    flex: 1,
-    marginRight: 15,
+  tableHeaderCell: {
+    fontSize: 8,
+    fontFamily: 'Helvetica-Bold',
+    textTransform: 'uppercase',
+    opacity: 0.4,
   },
+  tableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    paddingVertical: 10,
+  },
+  tableCell: {
+    fontSize: 10,
+    fontFamily: 'Helvetica',
+  },
+  cellIndex: { width: 30 },
+  cellDesc: { flex: 1, paddingRight: 10 },
+  cellSpec: { flex: 0.8, paddingRight: 10 },
+  cellQty: { width: 40, textAlign: 'right' },
+  cellUnit: { width: 40, paddingLeft: 10 },
+  
   itemDesc: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: 'Helvetica-Bold',
     marginBottom: 2,
   },
   itemSpec: {
     fontSize: 9,
     fontFamily: 'Helvetica',
-    opacity: 0.6,
+    opacity: 0.7,
     lineHeight: 1.3,
   },
-  itemQtyBlock: {
-    textAlign: 'right',
-    minWidth: 40,
+  
+  noteRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    paddingBottom: 8,
+    marginTop: -4,
   },
-  itemQty: {
-    fontSize: 16,
-    fontFamily: 'Helvetica-Bold',
+  noteCell: {
+    flex: 1,
+    marginLeft: 30,
+    borderLeftWidth: 2,
+    paddingLeft: 8,
+    paddingTop: 4,
   },
-  itemUnit: {
-    fontSize: 7,
-    fontFamily: 'Helvetica-Bold',
-    textTransform: 'uppercase',
-    opacity: 0.4,
-  },
-  itemNotes: {
-    marginTop: 6,
-    paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.03)',
+  noteText: {
     fontSize: 9,
     fontFamily: 'Helvetica-Oblique',
     opacity: 0.6,
   },
+
   footer: {
     marginTop: 20,
     paddingTop: 15,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
@@ -146,61 +154,76 @@ interface RfqPdfDocumentProps {
 
 export const RfqPdfDocument: React.FC<RfqPdfDocumentProps> = ({ rfq, items }) => {
   const displayItems = getReshuffledItems(rfq, items);
-  const chunks = chunkRfqItems(displayItems, 6);
+  const chunks = chunkRfqItems(displayItems, 8);
 
-  const getColors = () => {
-    if (rfq.background_mode === 'palette') {
-       const palette = RFQ_PALETTES.find(p => p.name === rfq.palette_name) || RFQ_PALETTES[0];
-       return { bg: palette.colors[1], text: rfq.text_color || palette.colors[3] };
-    }
-    return { bg: rfq.background_primary || 'white', text: rfq.text_color || '#111' };
+  const colors = {
+    bg: rfq.background_color,
+    text: rfq.text_color,
+    border: rfq.border_color,
+    accent: rfq.accent_color,
   };
-
-  const c = getColors();
 
   return (
     <Document>
       {chunks.map((chunk, i) => (
-        <Page key={`pdf_pg_${i}`} size="A4" style={[styles.page, { backgroundColor: c.bg, color: c.text }]}>
-          <View style={styles.segmentContainer}>
+        <Page key={`pdf_pg_${i}`} size="A4" style={[styles.page, { backgroundColor: colors.bg, color: colors.text }]}>
+          <View style={[styles.segmentContainer]}>
             {/* Header */}
-            <View style={[styles.header, { borderBottomColor: `${c.text}20` }]}>
+            <View style={[styles.header, { borderBottomColor: colors.border }]}>
                <View style={styles.titleBlock}>
                  {i === 0 && rfq.show_brand_name ? (
-                     <Text style={[styles.brandName, { color: c.text }]}>{rfq.brand_name_override || 'BIGDROPS'}</Text>
+                     <Text style={[styles.brandName, { color: colors.accent }]}>{rfq.brand_name_override || 'BIGDROPS'}</Text>
                  ) : null}
                  <Text style={styles.docTitle}>{rfq.title || 'REQUEST FOR QUOTE'}</Text>
-                 <Text style={styles.rfqNumber}>#{rfq.rfq_number}</Text>
+                 <Text style={styles.rfqNumber}>NO. {rfq.rfq_number}</Text>
                </View>
-               <View style={styles.vendorBlock}>
-                 <Text style={styles.vendorLabel}>Prepared For</Text>
-                 <Text style={styles.vendorName}>{rfq.vendor_name || 'GUEST VENDOR'}</Text>
-                 <Text style={styles.issueDate}>{rfq.issue_date}</Text>
-               </View>
+               
+               {rfq.show_vendor_identity && (
+                 <View style={styles.vendorBlock}>
+                   <Text style={styles.vendorLabel}>Prepared For</Text>
+                   <Text style={styles.vendorName}>{rfq.vendor_name || 'GUEST VENDOR'}</Text>
+                   <Text style={styles.issueDate}>{rfq.issue_date}</Text>
+                 </View>
+               )}
             </View>
 
-            {/* Content Row */}
-            <View style={styles.itemContainer}>
+            {/* Table */}
+            <View style={styles.table}>
+               <View style={[styles.tableHeader, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.tableHeaderCell, styles.cellIndex]}>#</Text>
+                  <Text style={[styles.tableHeaderCell, styles.cellDesc]}>Item / Description</Text>
+                  <Text style={[styles.tableHeaderCell, styles.cellSpec]}>Specification</Text>
+                  <Text style={[styles.tableHeaderCell, styles.cellQty]}>Qty</Text>
+                  <Text style={[styles.tableHeaderCell, styles.cellUnit]}>Unit</Text>
+               </View>
+
                {chunk.map((item, idx) => (
-                   <View key={item.id} style={[styles.itemRow, { borderColor: `${c.text}10`, backgroundColor: `${c.text}08` }]}>
-                      <View style={styles.itemUpper}>
-                         <View style={styles.itemDetails}>
-                            <Text style={styles.itemDesc}>{item.description || 'Untitled Item'}</Text>
-                            {item.specification && <Text style={styles.itemSpec}>{item.specification}</Text>}
-                         </View>
-                         <View style={styles.itemQtyBlock}>
-                            <Text style={styles.itemQty}>{item.quantity}</Text>
-                            <Text style={styles.itemUnit}>{item.unit || 'UNITS'}</Text>
-                         </View>
+                 <React.Fragment key={item.id || idx}>
+                   <View style={[styles.tableRow, { borderBottomColor: colors.border }]}>
+                      <Text style={[styles.tableCell, styles.cellIndex, { opacity: 0.4 }]}>{String(idx + 1 + (i * 8)).padStart(2, '0')}</Text>
+                      <View style={styles.cellDesc}>
+                         <Text style={styles.itemDesc}>{item.description || 'Untitled Item'}</Text>
                       </View>
-                      {item.notes && <Text style={styles.itemNotes}>{item.notes}</Text>}
+                      <View style={styles.cellSpec}>
+                         {item.specification ? <Text style={styles.itemSpec}>{item.specification}</Text> : null}
+                      </View>
+                      <Text style={[styles.tableCell, styles.cellQty, { fontFamily: 'Helvetica-Bold' }]}>{item.quantity}</Text>
+                      <Text style={[styles.tableCell, styles.cellUnit, { opacity: 0.6, fontSize: 8 }]}>{item.unit || '-'}</Text>
                    </View>
+                   {item.notes ? (
+                     <View style={[styles.noteRow, { borderBottomColor: colors.border }]}>
+                        <View style={[styles.noteCell, { borderLeftColor: colors.accent }]}>
+                           <Text style={styles.noteText}>{item.notes}</Text>
+                        </View>
+                     </View>
+                   ) : null}
+                 </React.Fragment>
                ))}
             </View>
 
             {/* Page Footer */}
-            <View style={[styles.footer, { borderTopColor: `${c.text}10` }]}>
-               <Text style={styles.footerBrand}>Bigdrops RFQ-PDF v1.0</Text>
+            <View style={[styles.footer, { borderTopColor: colors.border }]}>
+               <Text style={styles.footerBrand}>Bigdrops Procurement Protocol</Text>
                <Text style={styles.pageNumber}>{i + 1} / {chunks.length}</Text>
             </View>
           </View>

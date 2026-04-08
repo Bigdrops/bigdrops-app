@@ -66,9 +66,9 @@ export const RfqForm: React.FC<RfqFormProps> = ({
             <List className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Items</span>
           </TabsTrigger>
-          <TabsTrigger value="style">
+          <TabsTrigger value="output">
             <Layout className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Style</span>
+            <span className="hidden sm:inline">Output</span>
           </TabsTrigger>
         </TabsList>
 
@@ -125,30 +125,6 @@ export const RfqForm: React.FC<RfqFormProps> = ({
               </div>
             </div>
 
-            <div className="space-y-4 pt-4 border-t border-border">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className={pageFormLabelClassName}>Show Brand Name</Label>
-                  <p className="text-[10px] text-muted-foreground">Toggle "BIGDROPS" or custom header</p>
-                </div>
-                <Switch
-                  checked={rfq.show_brand_name}
-                  onCheckedChange={(checked) => onUpdateRfq({ show_brand_name: checked })}
-                />
-              </div>
-              {rfq.show_brand_name && (
-                <div className="animate-in slide-in-from-top-2 duration-200">
-                  <Label className={pageFormLabelClassName}>Brand Name Override</Label>
-                  <Input
-                    value={rfq.brand_name_override}
-                    onChange={(e) => onUpdateRfq({ brand_name_override: e.target.value })}
-                    placeholder="e.g. PREMIUM SUPPLY CO."
-                    className="mt-1 font-black uppercase tracking-tight"
-                  />
-                </div>
-              )}
-            </div>
-
             <div className="pt-4 border-t border-border">
               <Label className={pageFormLabelClassName}>General Notes / Conditions</Label>
               <Textarea
@@ -166,15 +142,6 @@ export const RfqForm: React.FC<RfqFormProps> = ({
             <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground/60">
               {items.length} items listed
             </h3>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={reshuffle}
-              className="h-8 gap-1.5 text-[10px] font-bold uppercase"
-            >
-              <Shuffle className="h-3 w-3" />
-              Reshuffle View
-            </Button>
           </div>
 
           <div className="space-y-4">
@@ -207,8 +174,77 @@ export const RfqForm: React.FC<RfqFormProps> = ({
           </Button>
         </TabsContent>
 
-        <TabsContent value="style" className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
-          <RfqStyleControls rfq={rfq} onUpdate={onUpdateRfq} />
+        <TabsContent value="output" className="space-y-8 animate-in slide-in-from-bottom-2 duration-300">
+          <div className="space-y-4 px-1">
+             <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className={pageFormLabelClassName}>Vendor Identity</Label>
+                    <p className="text-[10px] text-muted-foreground">Show vendor name and contact</p>
+                  </div>
+                  <Switch
+                    checked={rfq.show_vendor_identity}
+                    onCheckedChange={(checked) => onUpdateRfq({ show_vendor_identity: checked })}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className={pageFormLabelClassName}>Brand Identity</Label>
+                    <p className="text-[10px] text-muted-foreground">Show "BIGDROPS" or custom header</p>
+                  </div>
+                  <Switch
+                    checked={rfq.show_brand_name}
+                    onCheckedChange={(checked) => onUpdateRfq({ show_brand_name: checked })}
+                  />
+                </div>
+
+                {rfq.show_brand_name && (
+                  <div className="pl-4 border-l-2 border-border animate-in slide-in-from-top-2 duration-200">
+                    <Label className={pageFormLabelClassName}>Brand Name Override</Label>
+                    <Input
+                      value={rfq.brand_name_override}
+                      onChange={(e) => onUpdateRfq({ brand_name_override: e.target.value })}
+                      placeholder="e.g. PREMIUM SUPPLY CO."
+                      className="mt-1 font-black uppercase tracking-tight"
+                    />
+                  </div>
+                )}
+             </div>
+
+             <div className="pt-4 border-t border-border flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className={pageFormLabelClassName}>Reshuffle Order</Label>
+                  <p className="text-[10px] text-muted-foreground">Randomize item presentation</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={reshuffle}
+                  className="h-8 gap-1.5 text-[10px] font-bold uppercase"
+                >
+                  <Shuffle className="h-3 w-3" />
+                  Reshuffle
+                </Button>
+             </div>
+          </div>
+
+          <div className="pt-2">
+            <RfqStyleControls rfq={rfq} onUpdate={onUpdateRfq} />
+          </div>
+
+          {rfq.id && (
+            <div className="pt-6 border-t border-border">
+               <Button 
+                 variant="secondary"
+                 className="w-full h-12 font-bold uppercase tracking-widest gap-2"
+                 onClick={() => window.open(`/rfqs/${rfq.id}`, '_blank')}
+               >
+                 <Eye className="h-4 w-4" />
+                 Open Final View
+               </Button>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

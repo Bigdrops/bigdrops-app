@@ -1,26 +1,46 @@
-export type BackgroundMode = 'solid' | 'gradient' | 'palette';
-
-export interface RfqPalette {
+export interface RfqPreset {
   name: string;
-  colors: string[];
+  background: string;
+  text: string;
+  border: string;
+  accent: string;
 }
 
-export const RFQ_PALETTES: RfqPalette[] = [
+export const RFQ_PRESETS: RfqPreset[] = [
   {
-    name: 'Arctic Pearl',
-    colors: ['#F7FBFD', '#D6E6EF', '#7FA6B8', '#2A3E4B'],
+    name: 'Clean Slate',
+    background: '#FFFFFF',
+    text: '#1F2937',
+    border: '#D1D5DB',
+    accent: '#1D4ED8',
   },
   {
-    name: 'Midnight Sapphire',
-    colors: ['#FFF1E8', '#8FAADC', '#2F5DA8', '#0C1F3F'],
+    name: 'Ocean Mist',
+    background: '#EAEBED',
+    text: '#1F2A33',
+    border: '#A7BBC4',
+    accent: '#006989',
   },
   {
-    name: 'Coastal Midnight',
-    colors: ['#447794', '#2D5B75', '#123249', '#061222'],
+    name: 'Moss Paper',
+    background: '#F8F5F2',
+    text: '#2D3A33',
+    border: '#CFC7BE',
+    accent: '#385144',
   },
   {
-    name: 'Verdant Luxe',
-    colors: ['#B67E7D', '#5DA87A', '#2E6B46', '#17402A'],
+    name: 'Matcha Coal',
+    background: '#EAF2EA',
+    text: '#222222',
+    border: '#B9CBB9',
+    accent: '#4A6A55',
+  },
+  {
+    name: 'Amber Ledger',
+    background: '#F2E0D0',
+    text: '#2F241C',
+    border: '#D4BEAA',
+    accent: '#6E88B0',
   },
 ];
 
@@ -44,16 +64,16 @@ export interface Rfq {
   title: string;
   vendor_name: string;
   vendor_contact: string;
+  show_vendor_identity: boolean;
   issue_date: string;
   expiry_date: string;
   show_brand_name: boolean;
   brand_name_override: string;
-  background_mode: BackgroundMode;
-  background_primary: string;
-  background_secondary: string;
-  palette_name: string;
+  background_color: string;
   text_color: string;
+  border_color: string;
   accent_color: string;
+  preset_name: string;
   export_order_seed: number;
   notes: string;
   custom_fields: Record<string, any>;

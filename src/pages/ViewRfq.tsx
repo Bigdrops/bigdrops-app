@@ -127,26 +127,43 @@ export default function ViewRfq() {
         </header>
 
         {/* Scrollable Preview Area */}
-        <main className="flex-1 overflow-y-auto px-4 py-8 flex flex-col items-center">
-           <div className="w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <main className="flex-1 overflow-y-auto px-4 py-12 flex flex-col items-center bg-slate-50/50">
+           <div className="w-full max-w-4xl bg-white shadow-2xl shadow-slate-200/60 rounded-3xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
               <RfqPreview rfq={rfq} items={rfq.items || []} />
            </div>
            
-           <div className="mt-8 mb-24 w-full max-w-sm space-y-3">
+           <div className="mt-12 mb-32 w-full max-w-md space-y-4">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-px flex-1 bg-slate-200" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Share & Export</span>
+                <div className="h-px flex-1 bg-slate-200" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <Button 
+                  className="h-16 bg-slate-950 text-white rounded-2xl font-bold gap-3 text-sm shadow-xl shadow-slate-200 hover:scale-[1.02] transition-all"
+                  onClick={handleExportImage}
+                >
+                  <Share2 className="h-5 w-5" />
+                  Image
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="h-16 border-slate-200 bg-white text-slate-900 rounded-2xl font-bold gap-3 text-sm shadow-sm hover:bg-slate-50 hover:scale-[1.02] transition-all"
+                  onClick={handleExportPdf}
+                >
+                  <Download className="h-5 w-5" />
+                  PDF
+                </Button>
+              </div>
+
               <Button 
-                className="w-full h-14 bg-slate-950 text-white rounded-2xl font-bold gap-2 text-base shadow-lg shadow-slate-200"
-                onClick={handleExportImage}
+                variant="ghost"
+                className="w-full h-12 text-slate-500 font-bold gap-2 text-xs uppercase tracking-widest"
+                onClick={() => navigate(`/rfqs/edit/${id}`)}
               >
-                <Share2 className="h-5 w-5" />
-                Share as Image
-              </Button>
-              <Button 
-                variant="outline"
-                className="w-full h-14 border-slate-200 bg-white text-slate-900 rounded-2xl font-bold gap-2 text-base shadow-sm"
-                onClick={handleExportPdf}
-              >
-                <Download className="h-5 w-5" />
-                Download PDF
+                <Pencil className="h-3.5 w-3.5" />
+                Edit Document
               </Button>
            </div>
         </main>

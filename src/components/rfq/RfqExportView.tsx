@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
-import { Rfq, RfqItem, RFQ_PALETTES } from '@/domain/rfq/types'
-import { cn } from '@/lib/utils'
+import { Rfq, RfqItem } from '@/domain/rfq/types'
 
 interface RfqExportSegmentProps {
   rfq: Rfq;
@@ -14,8 +13,7 @@ interface RfqExportSegmentProps {
 
 /**
  * Single segmented view for RFQ export.
- * This should match the styling of RfqPreview but be optimized for reliable image/PDF export.
- * Dimensions are kept stable (iPhone-ish screen aspect ratio) for mobile sharing compatibility.
+ * This matches the table-first styling of RfqPreview but is optimized for reliable image/PDF export.
  */
 export const RfqExportSegment: React.FC<RfqExportSegmentProps> = ({ 
     rfq, 
@@ -26,93 +24,103 @@ export const RfqExportSegment: React.FC<RfqExportSegmentProps> = ({
     isLastPage,
     onRef
 }) => {
-  const bgStyle = useMemo(() => {
-    if (rfq.background_mode === 'palette') {
-      const palette = RFQ_PALETTES.find(p => p.name === rfq.palette_name) || RFQ_PALETTES[0];
-      return {
-        background: `linear-gradient(135deg, ${palette.colors[0]} 0%, ${palette.colors[1]} 100%)`,
-        color: rfq.text_color || palette.colors[3]
-      };
+  const styles = {
+    container: {
+      backgroundColor: rfq.background_color,
+      color: rfq.text_color,
+    },
+    border: {
+      borderColor: rfq.border_color,
+    },
+    accent: {
+      color: rfq.accent_color,
+    },
+    accentBg: {
+      backgroundColor: rfq.accent_color,
     }
-    if (rfq.background_mode === 'gradient') {
-      return {
-        background: `linear-gradient(135deg, ${rfq.background_primary} 0%, ${rfq.background_secondary} 100%)`,
-        color: rfq.text_color
-      };
-    }
-    return {
-      backgroundColor: rfq.background_primary,
-      color: rfq.text_color
-    };
-  }, [rfq.background_mode, rfq.palette_name, rfq.background_primary, rfq.background_secondary, rfq.text_color]);
+  };
 
   return (
     <div 
       ref={onRef}
-      className="w-[375px] min-h-[700px] flex flex-col p-8 font-sans overflow-hidden box-border shadow-none"
-      style={bgStyle}
+      className="w-[375px] min-h-[700px] flex flex-col p-6 font-sans overflow-hidden box-border shadow-none border"
+      style={{ ...styles.container, ...styles.border }}
     >
-      {/* Header - Only on first page or as a mini header? Let's do mini on other pages. */}
-      <div className="flex justify-between items-start mb-8 border-b-2 pb-4 border-current/10">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-6 border-b pb-4" style={styles.border}>
         <div>
           {isFirstPage ? (
               <>
                 {rfq.show_brand_name && (
-                    <h1 className="text-xl font-black tracking-tight uppercase mb-1 leading-none">
-                    {rfq.brand_name_override || 'BIGDROPS'}
+                    <h1 className="text-sm font-black tracking-tighter uppercase mb-0.5 leading-none" style={styles.accent}>
+                      {rfq.brand_name_override || 'BIGDROPS'}
                     </h1>
                 )}
-                <div className="text-[11px] font-bold opacity-60 uppercase tracking-[0.2em]">{rfq.title || 'REQUEST FOR QUOTE'}</div>
-                <div className="text-[9px] font-mono mt-0.5 opacity-40 tabular-nums">#{rfq.rfq_number || '---'}</div>
+                <div className="text-[12px] font-black uppercase tracking-tight leading-none mb-1">{rfq.title || 'REQUEST FOR QUOTE'}</div>
+                <div className="text-[9px] font-mono opacity-40 tabular-nums">#{rfq.rfq_number || '---'}</div>
               </>
           ) : (
              <div className="flex flex-col">
-                <div className="text-[11px] font-bold uppercase tracking-[0.2em]">{rfq.rfq_number}</div>
-                <div className="text-[9px] opacity-40 uppercase">CONTINUED — PAGE {pageIndex + 1} OF {totalPages}</div>
+                <div className="text-[11px] font-bold uppercase tracking-tight" style={styles.accent}>{rfq.rfq_number}</div>
+                <div className="text-[8px] opacity-40 uppercase font-mono tracking-widest">CONTINUED — {pageIndex + 1} OF {totalPages}</div>
              </div>
           )}
         </div>
-        <div className="text-right">
-           <div className="text-[9px] font-bold opacity-40 uppercase mb-0.5">Prepared For</div>
-           <div className="text-sm font-black uppercase tracking-tight">{rfq.vendor_name || 'GUEST VENDOR'}</div>
-           <div className="text-[10px] font-medium opacity-50">{rfq.issue_date}</div>
-        </div>
-      </div>
-
-      {/* Segment Items */}
-      <div className="flex-1 space-y-3">
-        {items.map((item, idx) => (
-          <div 
-            key={item.id || item._uiKey}
-            className="p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-1"
-          >
-            <div className="flex justify-between items-start gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="text-[14px] font-bold leading-tight truncate">{item.description || 'Untitled Item'}</div>
-                {item.specification && (
-                  <div className="text-[10px] font-medium opacity-60 mt-0.5 leading-snug whitespace-pre-wrap line-clamp-3 italic">{item.specification}</div>
-                )}
-              </div>
-              <div className="text-right shrink-0">
-                <div className="text-lg font-black tabular-nums leading-none">{item.quantity}</div>
-                <div className="text-[8px] font-bold uppercase opacity-40 mt-0.5">{item.unit || 'UNITS'}</div>
-              </div>
-            </div>
-            {item.notes && (
-                <div className="mt-2 pt-2 border-t border-current/5">
-                    <div className="text-[10px] opacity-60 italic leading-snug">{item.notes}</div>
-                </div>
-            )}
+        
+        {rfq.show_vendor_identity && (
+          <div className="text-right">
+             <div className="text-[8px] font-bold opacity-40 uppercase mb-0.5 tracking-widest">To Vendor</div>
+             <div className="text-[10px] font-black uppercase tracking-tight leading-none mb-1">{rfq.vendor_name || 'GUEST VENDOR'}</div>
+             <div className="text-[8px] font-medium opacity-50 tabular-nums">{rfq.issue_date}</div>
           </div>
-        ))}
+        )}
       </div>
 
-      {/* Footer - Only on last page */}
-      <div className="mt-8 pt-6 border-t-2 border-current/10 flex justify-between items-end">
-        <div className="text-[9px] font-mono opacity-20 uppercase tracking-widest">
-           Bigdrops RFQ-EXP v1.0
-        </div>
-        <div className="text-[10px] font-black opacity-40 uppercase tracking-widest tabular-nums">
+      {/* Segment Items - Table Structure */}
+      <div className="flex-1">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b" style={styles.border}>
+              <th className="py-1 px-0.5 text-[8px] font-black uppercase tracking-widest opacity-40 w-5">#</th>
+              <th className="py-1 px-1 text-[8px] font-black uppercase tracking-widest opacity-40">Item</th>
+              <th className="py-1 px-1 text-[8px] font-black uppercase tracking-widest opacity-40 text-right w-10">Qty</th>
+              <th className="py-1 px-1 text-[8px] font-black uppercase tracking-widest opacity-40 w-10">Unit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item, idx) => (
+              <React.Fragment key={item.id || item._uiKey}>
+                <tr className="border-b" style={styles.border}>
+                  <td className="py-2 px-0.5 align-top font-mono text-[9px] opacity-30">{String(idx + 1 + (pageIndex * items.length)).padStart(2, '0')}</td>
+                  <td className="py-2 px-1 align-top">
+                    <div className="text-[11px] font-bold leading-tight line-clamp-2">{item.description || 'Untitled Item'}</div>
+                    {item.specification && (
+                      <div className="text-[9px] font-medium opacity-60 mt-0.5 leading-snug line-clamp-3">{item.specification}</div>
+                    )}
+                  </td>
+                  <td className="py-2 px-1 align-top text-right font-black tabular-nums text-xs">{item.quantity}</td>
+                  <td className="py-2 px-1 align-top text-[8px] font-bold uppercase opacity-50">{item.unit || '-'}</td>
+                </tr>
+                {item.notes && (
+                  <tr className="border-b" style={styles.border}>
+                    <td className="py-1 px-0.5"></td>
+                    <td colSpan={3} className="py-1.5 px-1 pb-3">
+                      <div className="flex items-start gap-1.5 border-l-2 pl-2" style={styles.border}>
+                         <div className="text-[9px] opacity-60 italic leading-snug">{item.notes}</div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Footer Branding - Only on last page */}
+      <div className="mt-8 pt-4 border-t opacity-20 flex justify-between items-end border-current/10" style={styles.border}>
+        <div className="text-[8px] font-mono tracking-tighter uppercase">Bigdrops Procurement Protocol</div>
+        <div className="text-[9px] font-bold tabular-nums uppercase">
            {pageIndex + 1} / {totalPages}
         </div>
       </div>

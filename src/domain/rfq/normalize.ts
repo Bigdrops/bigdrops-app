@@ -4,14 +4,23 @@ const normalizeDate = (value?: string | null): string | null =>
   value && value.trim() ? value : null
 
 export const normalizeDbRfq = (dbRfq: any, dbItems: any[] = []): Rfq => {
+  const customFields =
+    typeof dbRfq.custom_fields === 'string'
+      ? JSON.parse(dbRfq.custom_fields)
+      : (dbRfq.custom_fields || {});
+
   return {
     ...dbRfq,
     issue_date: dbRfq.issue_date || '',
     expiry_date: dbRfq.expiry_date || '',
-    custom_fields:
-      typeof dbRfq.custom_fields === 'string'
-        ? JSON.parse(dbRfq.custom_fields)
-        : (dbRfq.custom_fields || {}),
+    show_vendor_identity: customFields.show_vendor_identity ?? false,
+    show_brand_name: dbRfq.show_brand_name ?? false,
+    background_color: dbRfq.background_primary || '#FFFFFF',
+    text_color: dbRfq.text_color || '#1F2937',
+    border_color: dbRfq.background_secondary || '#D1D5DB',
+    accent_color: dbRfq.accent_color || '#1D4ED8',
+    preset_name: dbRfq.palette_name || 'Clean Slate',
+    custom_fields: customFields,
     items: dbItems
       .map((item, idx) => ({
         ...item,
@@ -29,17 +38,30 @@ export const denormalizeToDbRfq = (rfq: Rfq): DbRfq => {
     created_at,
     updated_at,
     items,
+    show_vendor_identity,
+    background_color,
+    text_color,
+    border_color,
+    accent_color,
+    preset_name,
     ...rest
-  } = rfq as Rfq & {
-    created_at?: string
-    updated_at?: string
-  }
+  } = rfq as any
+
+  const custom_fields = {
+    ...(rfq.custom_fields || {}),
+    show_vendor_identity,
+  };
 
   return {
     ...rest,
     issue_date: normalizeDate(rfq.issue_date),
     expiry_date: normalizeDate(rfq.expiry_date),
-    custom_fields: rfq.custom_fields || {},
+    background_primary: background_color,
+    background_secondary: border_color,
+    text_color: text_color,
+    accent_color: accent_color,
+    palette_name: preset_name,
+    custom_fields,
   }
 }
 
