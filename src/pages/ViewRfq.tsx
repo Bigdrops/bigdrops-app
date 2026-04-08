@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Copy, Download, Images, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Copy, Download, FileOutput, Images, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { pdf } from '@react-pdf/renderer'
 
 import Layout from '@/components/Layout'
@@ -12,7 +12,6 @@ import {
   DocumentFloatingFab,
   DocumentPdfSheet,
   DocumentSection,
-  DocumentSummaryDisclosure,
   DocumentTopBar,
 } from '@/components/document/DocumentViewShell'
 import { RfqCustomizationPanel } from '@/components/rfq/RfqCustomizationPanel'
@@ -183,15 +182,28 @@ export default function ViewRfq() {
     }
   }
 
-  const summaryStats = useMemo(() => {
-    if (!rfq) return []
+  const handleConvertToQuotation = () => {
+    if (!rfq) return
 
-    return [
-      { label: 'Items', value: String((rfq.items || []).length), className: 'text-white' },
-      { label: 'Issue Date', value: rfq.issue_date || 'Open', className: 'text-slate-200' },
-      { label: 'Preset', value: rfq.preset_name || 'Custom', className: 'text-slate-200' },
-    ]
-  }, [rfq])
+    navigate('/quotations/new', {
+      state: {
+        sourceRfq: {
+          rfqId: rfq.id || '',
+          rfqNumber: rfq.rfq_number || '',
+          title: rfq.title || '',
+          notes: rfq.notes || '',
+          items: (rfq.items || []).map((item, index) => ({
+            id: `rfq-item-${index}`,
+            description: item.description || '',
+            quantity: Number(item.quantity || 0),
+            unit: item.unit || '',
+            specification: item.specification || '',
+            notes: item.notes || '',
+          })),
+        },
+      },
+    })
+  }
 
   if (loading || !rfq) {
     return (
@@ -214,20 +226,6 @@ export default function ViewRfq() {
           subtitle="Request for Quote"
           onBack={() => navigate('/rfqs')}
           onMore={() => setShowActions(true)}
-        />
-
-        <DocumentSummaryDisclosure
-          compactLabel="Document Summary"
-          eyebrow="RFQ Snapshot"
-          value={rfq.title || rfq.rfq_number || 'Request for Quote'}
-          helper={
-            rfq.notes?.trim() ||
-            'Final RFQ view for export, reshuffle, and appearance updates.'
-          }
-          stats={summaryStats}
-          defaultOpen={false}
-          openLabel="Show snapshot"
-          closeLabel="Hide snapshot"
         />
 
         <DocumentActionGrid
@@ -318,6 +316,12 @@ export default function ViewRfq() {
               onClick: () => void handleExportPdf(),
               iconKey: 'pdf',
               disabled: pdfGenerating,
+            },
+            {
+              label: 'Convert to Quotation',
+              subtitle: 'Start a new quotation from this RFQ',
+              onClick: handleConvertToQuotation,
+              iconKey: 'convert',
             },
             {
               label: 'Delete RFQ',

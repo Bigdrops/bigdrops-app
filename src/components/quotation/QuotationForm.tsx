@@ -255,6 +255,23 @@ type PdfOutputState = {
   showTagline: boolean
 }
 
+type RfqConversionPrefillState = ProjectPrefillState & {
+  sourceRfq?: {
+    rfqId?: string
+    rfqNumber?: string
+    title?: string
+    notes?: string
+    items?: Array<{
+      id?: string
+      description?: string
+      quantity?: number
+      unit?: string
+      specification?: string
+      notes?: string
+    }>
+  }
+}
+
 const defaultPdfOutput: PdfOutputState = {
   showBankDetails: false,
   bankAccountId: null,
@@ -265,7 +282,7 @@ const defaultPdfOutput: PdfOutputState = {
 export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'edit'; quotationId?: string }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const prefill = (location.state || {}) as ProjectPrefillState
+  const prefill = (location.state || {}) as RfqConversionPrefillState
   const isMobile = useIsMobile()
   const isEdit = mode === 'edit'
   const [loading, setLoading] = useState(isEdit)
@@ -352,6 +369,42 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       client_name: current.client_name || String(prefill.clientName || ''),
     }))
   }, [isEdit, prefill.clientId, prefill.clientName, prefill.projectId])
+
+  useEffect(() => {
+    if (isEdit) return
+    if (!prefill.sourceRfq) return
+
+    setQuotation((current) => ({
+      ...current,
+      quotation_title: current.quotation_title || String(prefill.sourceRfq?.title || ''),
+      notes: current.notes || String(prefill.sourceRfq?.notes || ''),
+    }))
+
+    const nextItems = Array.isArray(prefill.sourceRfq.items)
+      ? prefill.sourceRfq.items
+          .filter((item) => String(item?.description || '').trim())
+          .map((item, index) =>
+            ensureUiKey({
+              ...makeEmptyItem(),
+              id: null,
+              description: String(item?.description || ''),
+              quantity: Number(item?.quantity || 0),
+              unit: String(item?.unit || ''),
+              sub_description: String(item?.specification || ''),
+              notes: String(item?.notes || ''),
+              row_type: 'standard',
+              group_id: null,
+              group_name: '',
+              sort_order: index,
+              custom_data: {},
+            }),
+          )
+      : []
+
+    if (nextItems.length > 0) {
+      commitGrouping(nextItems)
+    }
+  }, [isEdit, prefill.sourceRfq])
 
   useEffect(() => {
     const load = async () => {
