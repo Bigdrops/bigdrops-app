@@ -28,6 +28,7 @@ interface JsonImportUIProps {
   whtNotice?: boolean
   whtHasPayments?: boolean
   onEditJson?: () => void
+  saveLabel?: string
 }
 
 interface JsonImportLayoutProps extends JsonImportUIProps {
@@ -53,6 +54,7 @@ export function JsonImportUI({
   whtNotice = false,
   whtHasPayments = true,
   onEditJson,
+  saveLabel = 'Save Record',
 }: JsonImportUIProps) {
   const [copied, setCopied] = React.useState(false)
 
@@ -68,25 +70,60 @@ export function JsonImportUI({
 
   return (
     <div className="flex flex-col h-full bg-slate-50 select-none">
-      <div className="p-4 border-b bg-white flex flex-row items-center justify-between text-left shrink-0">
-        <div className="space-y-0.5">
-          <h3 className="text-base font-black text-slate-900 flex items-center gap-1.5 leading-tight">
-            <Wand2 className="h-4 w-4 text-emerald-600" />
-            {title}
-          </h3>
-          <p className="text-[11px] font-medium text-slate-500 leading-tight">
-            {description}
-          </p>
+      <div className="sticky top-0 z-30 border-b bg-white shadow-sm shrink-0">
+        <div className="flex flex-row items-center justify-between p-4 text-left">
+          <div className="space-y-0.5">
+            <h3 className="text-base font-black text-slate-900 flex items-center gap-1.5 leading-tight">
+              <Wand2 className="h-4 w-4 text-emerald-600" />
+              {title}
+            </h3>
+            <p className="text-[11px] font-medium text-slate-500 leading-tight">
+              {description}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopyPrompt}
+              className="h-8 rounded-lg text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-2.5 transition-colors"
+            >
+              {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+              {copied ? 'Copied' : 'AI Prompt'}
+            </Button>
+            {isParsed ? (
+              <Button
+                onClick={onSave}
+                disabled={isSaving}
+                size="sm"
+                className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-200 transition-all active:scale-[0.98] px-5"
+              >
+                {isSaving ? 'Saving...' : saveLabel}
+              </Button>
+            ) : null}
+          </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleCopyPrompt}
-          className="h-8 rounded-lg text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-2.5 transition-colors"
-        >
-          {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
-          {copied ? 'Copied' : 'AI Prompt'}
-        </Button>
+        {isParsed ? (
+          <div className="border-t border-emerald-100 px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Review Extraction</span>
+                <div className="mt-0.5 flex items-center gap-1.5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-emerald-700">Validated JSON</span>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onEditJson || onPreview}
+                className="h-8 rounded-lg px-0 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:bg-transparent hover:text-slate-900"
+              >
+                Edit JSON
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="p-4 space-y-4 overflow-y-auto">
@@ -126,14 +163,7 @@ export function JsonImportUI({
         ) : (
           <div className="space-y-4 pb-6">
             <div className="flex items-center justify-between px-1">
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Step 2: Verify & Save</span>
-              <Button
-                variant="ghost"
-                onClick={onEditJson || onPreview}
-                className="h-6 text-[9px] font-bold text-slate-500 hover:text-slate-900 p-0"
-              >
-                Edit JSON
-              </Button>
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Step 2: Verify Data</span>
             </div>
 
             {whtNotice && (
@@ -150,16 +180,11 @@ export function JsonImportUI({
 
             {previewContent}
 
-            <div className="pt-2 space-y-2">
-              <Button
-                onClick={onSave}
-                disabled={isSaving}
-                className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base rounded-xl shadow-lg shadow-emerald-200 transition-all active:scale-[0.98]"
-              >
-                {isSaving ? 'Saving...' : 'Save Record'}
-              </Button>
-              {additionalActions}
-            </div>
+            {additionalActions && (
+              <div className="pt-2 space-y-2">
+                {additionalActions}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -187,4 +212,3 @@ export function JsonImportLayout({
     </Sheet>
   )
 }
-

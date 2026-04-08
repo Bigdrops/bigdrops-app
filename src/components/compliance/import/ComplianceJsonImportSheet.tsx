@@ -199,6 +199,7 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
       }}
       onPreview={handlePreview}
       onSave={handleSave}
+      saveLabel={`Save ${contract.label}`}
       isSaving={isSaving}
       isParsed={!!parsedData}
       error={error}
@@ -222,4 +223,3 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
     />
   )
 }
-

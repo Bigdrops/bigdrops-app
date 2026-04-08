@@ -54,6 +54,7 @@ export const RfqImportSheet: React.FC<RfqImportSheetProps> = ({
       onRawInputChange={setRawInput}
       onPreview={handlePreview}
       onSave={handleSave}
+      saveLabel="Apply RFQ"
       isParsed={!!parsed}
       error={error}
       onEditJson={() => setParsed(null)}

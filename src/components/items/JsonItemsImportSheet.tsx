@@ -241,6 +241,7 @@ export default function JsonItemsImportSheet({
             onRawInputChange={(val) => { setPastedText(val); setValidated(null); }}
             onPreview={handleStartImport}
             onSave={() => (validated && unresolvedCandidates.length > 0 ? runResolve(validated) : handleStartImport())}
+            saveLabel="Apply Import"
             isParsed={!!validated}
             helpText={helpText}
             additionalActions={
