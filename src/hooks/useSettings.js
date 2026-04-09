@@ -5,6 +5,8 @@ import { useSafeAsyncTask } from './useSafeAsyncTask'
 let cachedSettings = null
 let listeners = []
 let lastLocalUpdateAt = 0
+const THEME_KEYS = ['app_theme_preset_id', 'app_background_color', 'app_card_color']
+const LOCAL_THEME_GRACE_MS = 6000
 
 export async function fetchSettings() {
   const requestStartedAt = Date.now()
@@ -12,7 +14,22 @@ export async function fetchSettings() {
   if (lastLocalUpdateAt > requestStartedAt) {
     return cachedSettings || {}
   }
-  cachedSettings = data || {}
+  const nextData = data || {}
+  const hasLocalTheme = THEME_KEYS.some((key) => cachedSettings?.[key] != null)
+  const withinThemeGrace = Date.now() - lastLocalUpdateAt < LOCAL_THEME_GRACE_MS
+  const merged = { ...nextData }
+
+  if (cachedSettings && (hasLocalTheme || withinThemeGrace)) {
+    THEME_KEYS.forEach((key) => {
+      const cachedValue = cachedSettings?.[key]
+      const incomingValue = nextData?.[key]
+      if (cachedValue != null && (incomingValue == null || withinThemeGrace)) {
+        merged[key] = cachedValue
+      }
+    })
+  }
+
+  cachedSettings = merged
   listeners.forEach(fn => fn(cachedSettings))
   return cachedSettings
 }
@@ -30,7 +47,7 @@ export function useSettings() {
     } else {
       void runLatest(fetchSettings, {
         onSuccess: (nextSettings) => setSettings(nextSettings),
-        onError: () => setSettings({}),
+        onError: () => setSettings(cachedSettings || {}),
         onSettled: () => setLoading(false),
       })
     }
