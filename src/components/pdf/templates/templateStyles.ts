@@ -3,8 +3,27 @@ import { TEMPLATE_TOKENS } from './templateTokens'
 import type { RefrensTemplateId } from './types'
 import { darkenHex, lightenHex, resolvePdfFontFamily, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 
+type PdfStyleValue = string | number | boolean
+type PdfStyleShape = Record<string, PdfStyleValue | null | undefined>
+
 function safeNumber(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+function safeText(value: unknown, fallback: string): string {
+  return typeof value === 'string' && value.trim().length > 0 ? value : fallback
+}
+
+function sanitizeStyle(style: PdfStyleShape): PdfStyleShape {
+  const next: PdfStyleShape = {}
+
+  for (const [key, value] of Object.entries(style)) {
+    if (value === undefined || value === null) continue
+    if (typeof value === 'number' && !Number.isFinite(value)) continue
+    next[key] = value
+  }
+
+  return next
 }
 
 export function createTemplateStyles(templateId: RefrensTemplateId, designPreset?: PdfDesignPreset) {
@@ -14,21 +33,21 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
   const useColorOverride = designPreset?.useCustomColors === true
   const useFontOverride = designPreset?.useCustomFonts === true
 
-  const accentColor = useColorOverride ? designPreset?.accentColor! : tokens.accent
+  const accentColor = useColorOverride ? safeText(designPreset?.accentColor, tokens.accent) : tokens.accent
   const accentDark = useColorOverride ? darkenHex(accentColor, 15) : tokens.grandTotalColor
   const accentSoft = lightenHex(accentColor, 40)
   const accentBorder = lightenHex(accentColor, 30)
 
-  const headerFont = useFontOverride ? resolvePdfFontFamily(designPreset?.headerFont!, 'bold') : 'Helvetica-Bold'
-  const bodyFont = useFontOverride ? resolvePdfFontFamily(designPreset?.bodyFont!, 'regular') : 'Helvetica'
-  const bodyBoldFont = useFontOverride ? resolvePdfFontFamily(designPreset?.bodyFont!, 'bold') : 'Helvetica-Bold'
+  const headerFont = useFontOverride ? resolvePdfFontFamily(safeText(designPreset?.headerFont, 'Inter'), 'bold') : 'Helvetica-Bold'
+  const bodyFont = useFontOverride ? resolvePdfFontFamily(safeText(designPreset?.bodyFont, 'Inter'), 'regular') : 'Helvetica'
+  const bodyBoldFont = useFontOverride ? resolvePdfFontFamily(safeText(designPreset?.bodyFont, 'Inter'), 'bold') : 'Helvetica-Bold'
 
   const isDarkHeader = templateId === 'modern' || templateId === 'bold'
   const isElegant = templateId === 'elegant'
   const isMinimal = templateId === 'minimal'
   const headerBorderBottomColor = isMinimal ? tokens.tableBorder : accentColor
 
-  return StyleSheet.create({
+  const rawStyles: Record<string, PdfStyleShape> = {
     page: {
       paddingTop: safeNumber(tokens.pagePaddingTop, 32),
       paddingRight: safeNumber(tokens.pagePaddingRight, 32),
@@ -345,5 +364,11 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
       fontSize: 8,
       color: tokens.mutedText,
     },
-  })
+  }
+
+  const sanitizedStyles = Object.fromEntries(
+    Object.entries(rawStyles).map(([name, style]) => [name, sanitizeStyle(style)]),
+  )
+
+  return StyleSheet.create(sanitizedStyles)
 }
