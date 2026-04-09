@@ -27,12 +27,14 @@ export interface AdvanceConfig {
 }
 
 export interface InvoicePdfOutput {
-
   showBankDetails: boolean
   bankAccountId: string | null
   showFooter: boolean
   showTagline: boolean
   showBalanceDue: boolean
+  showVatPercentage: boolean
+  showWhtPercentage: boolean
+  showDiscountPercentage: boolean
 }
 
 export interface Payment {

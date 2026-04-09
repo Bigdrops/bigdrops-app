@@ -133,6 +133,38 @@ export function DocumentSummaryDisclosure({
   )
 }
 
+export function DocumentTextSummaryDisclosure({
+  summary,
+  helper,
+  children,
+  defaultOpen = false,
+  openLabel = 'Show full summary',
+  closeLabel = 'Hide full summary',
+}) {
+  const [open, setOpen] = React.useState(defaultOpen)
+
+  return (
+    <div className="space-y-3 border-b border-slate-200/80 pb-4">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-start justify-between gap-3 text-left"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold leading-6 text-foreground">{summary}</div>
+          {helper ? <div className="mt-1 text-sm leading-6 text-muted-foreground">{helper}</div> : null}
+        </div>
+        <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-600">
+          <span>{open ? closeLabel : openLabel}</span>
+          {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </div>
+      </button>
+
+      {open ? children : null}
+    </div>
+  )
+}
+
 export function DocumentActionGrid({ actions }) {
   const iconByKey = {
     pdf: FileText,

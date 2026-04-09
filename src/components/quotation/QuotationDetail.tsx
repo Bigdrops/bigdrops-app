@@ -66,6 +66,9 @@ type PdfOutputState = {
   bankAccountId: string | null
   showFooter: boolean
   showTagline: boolean
+  showVatPercentage: boolean
+  showWhtPercentage: boolean
+  showDiscountPercentage: boolean
 }
 
 const defaultPdfOutput: PdfOutputState = {
@@ -73,6 +76,9 @@ const defaultPdfOutput: PdfOutputState = {
   bankAccountId: null,
   showFooter: true,
   showTagline: true,
+  showVatPercentage: true,
+  showWhtPercentage: true,
+  showDiscountPercentage: true,
 }
 
 function renderRichText(value?: string) {
@@ -779,45 +785,6 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
           ]}
           />
         </DocumentSection>
-
-      <section className="space-y-2">
-        <div className="px-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Line Items</div>
-        <Card className="rounded-[24px] border-border shadow-sm">
-          <CardContent className="space-y-3 p-4">
-            {(() => {
-              let itemNumber = 0
-              return items.map((item, index) => {
-                if (item.row_type === 'group_header') {
-                  return (
-                    <div key={item._uiKey || item.id || index} className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-slate-300">
-                      {item.group_name || `Group ${index + 1}`}
-                    </div>
-                  )
-                }
-                itemNumber += 1
-                return (
-                  <div key={item._uiKey || item.id || index} className="flex gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
-                    <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-[10px] font-extrabold text-slate-500">{itemNumber}</div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-bold text-foreground">{item.description || 'Untitled item'}</div>
-                      {item.sub_description ? <div className="mt-1 text-xs text-muted-foreground">{item.sub_description}</div> : null}
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        Qty {item.quantity || 0}
-                        {item.unit ? ` ${item.unit}` : ''}
-                        {item.make ? ` · ${item.make}` : ''}
-                      </div>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <div className="text-sm font-extrabold text-foreground">{formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0))}</div>
-                      <div className="text-[11px] text-muted-foreground">{formatMoney(item.unit_price || 0)} each</div>
-                    </div>
-                  </div>
-                )
-              })
-            })()}
-          </CardContent>
-        </Card>
-      </section>
 
       <DocumentActionSheet
         open={showMobileActions}

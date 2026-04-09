@@ -26,6 +26,9 @@ type PdfOutputSettingsValue = {
   showFooter: boolean
   showTagline: boolean
   showBalanceDue: boolean
+  showVatPercentage: boolean
+  showWhtPercentage: boolean
+  showDiscountPercentage: boolean
 }
 
 export type { PdfOutputSettingsValue }
@@ -89,6 +92,9 @@ function mergeOutputState(value: Partial<PdfOutputSettingsValue> | undefined, de
     showFooter: value?.showFooter ?? true,
     showTagline: value?.showTagline ?? true,
     showBalanceDue: value?.showBalanceDue ?? true,
+    showVatPercentage: value?.showVatPercentage ?? true,
+    showWhtPercentage: value?.showWhtPercentage ?? true,
+    showDiscountPercentage: value?.showDiscountPercentage ?? true,
   }
 }
 
@@ -229,6 +235,27 @@ export function PdfSupportingOptions({
       ) : null}
 
       <div className="rounded-[20px] border border-border bg-card px-4 py-4">
+        <div className="text-sm font-semibold text-foreground">Totals Labels</div>
+        <div className="mt-3 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm text-foreground">Show VAT percentage in brackets</div>
+            <OutputToggle checked={state.showVatPercentage} onToggle={() => update({ showVatPercentage: !state.showVatPercentage })} />
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm text-foreground">Show WHT percentage in brackets</div>
+            <OutputToggle checked={state.showWhtPercentage} onToggle={() => update({ showWhtPercentage: !state.showWhtPercentage })} />
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm text-foreground">Show Discount percentage in brackets</div>
+            <OutputToggle
+              checked={state.showDiscountPercentage}
+              onToggle={() => update({ showDiscountPercentage: !state.showDiscountPercentage })}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[20px] border border-border bg-card px-4 py-4">
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-semibold text-foreground">Footer</div>
           <OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />
@@ -256,7 +283,17 @@ export function PdfOutputSettings({
 
   const initialState = React.useMemo<PdfOutputSettingsValue>(() => {
     return mergeOutputState(value, defaultBank)
-  }, [value?.showBankDetails, value?.bankAccountId, value?.showFooter, value?.showTagline, value?.showBalanceDue, defaultBank?.id])
+  }, [
+    value?.showBankDetails,
+    value?.bankAccountId,
+    value?.showFooter,
+    value?.showTagline,
+    value?.showBalanceDue,
+    value?.showVatPercentage,
+    value?.showWhtPercentage,
+    value?.showDiscountPercentage,
+    defaultBank?.id,
+  ])
 
   const [state, setState] = React.useState<PdfOutputSettingsValue>(initialState)
   const [bankSheetOpen, setBankSheetOpen] = React.useState(false)
@@ -377,6 +414,21 @@ export function PdfOutputSettings({
                 <OutputToggle checked={state.showBalanceDue} onToggle={() => update({ showBalanceDue: !state.showBalanceDue })} />
               </div>
             ) : null}
+            <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
+              <span className="text-sm font-medium text-slate-700">Show VAT percentage in brackets</span>
+              <OutputToggle checked={state.showVatPercentage} onToggle={() => update({ showVatPercentage: !state.showVatPercentage })} />
+            </div>
+            <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
+              <span className="text-sm font-medium text-slate-700">Show WHT percentage in brackets</span>
+              <OutputToggle checked={state.showWhtPercentage} onToggle={() => update({ showWhtPercentage: !state.showWhtPercentage })} />
+            </div>
+            <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
+              <span className="text-sm font-medium text-slate-700">Show Discount percentage in brackets</span>
+              <OutputToggle
+                checked={state.showDiscountPercentage}
+                onToggle={() => update({ showDiscountPercentage: !state.showDiscountPercentage })}
+              />
+            </div>
             {state.showFooter ? (
               <div className="bg-amber-50 px-3 py-3">
                 <div className="rounded-md border-l-4 border-amber-500 bg-card p-3">

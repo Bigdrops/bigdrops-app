@@ -181,6 +181,10 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
       paddingHorizontal: 9,
       backgroundColor: templateId === 'elegant' ? '#fffaf0' : '#f9fafb',
     },
+    columnDivider: {
+      borderRightColor: templateId === 'modern' || templateId === 'bold' ? 'rgba(255,255,255,0.32)' : '#d5dde8',
+      borderRightWidth: 1,
+    },
     groupRow: {
       flexDirection: 'row',
       backgroundColor: tokens.tableHeaderBackground,
@@ -336,7 +340,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
     },
     signatureColumn: {
       flex: 1,
-      justifyContent: 'space-between',
+      justifyContent: 'flex-end',
       minHeight: 120,
     },
     supportTitle: {
@@ -383,11 +387,6 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
       lineHeight: 1.5,
       marginBottom: 4,
     },
-    signatureHint: {
-      fontSize: 9,
-      color: '#9ca3af',
-      textAlign: 'right',
-    },
     signatureBlock: {
       alignItems: 'flex-end',
       marginTop: 20,
@@ -396,20 +395,12 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
       fontSize: 10.3,
       fontFamily: 'Helvetica-Bold',
       color: tokens.bodyText,
-      marginBottom: 6,
-    },
-    signatureLine: {
-      width: 160,
-      borderBottomWidth: 1,
-      borderBottomColor: '#d1d5db',
-      paddingBottom: 28,
-      marginBottom: 6,
+      marginTop: 8,
     },
     signatureImage: {
       width: 120,
       height: 40,
       objectFit: 'contain',
-      marginBottom: 6,
     },
     signatureRole: {
       fontSize: 10,

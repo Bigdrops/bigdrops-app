@@ -18,6 +18,9 @@ export type PdfOutputState = {
   showFooter?: boolean
   showTagline?: boolean
   showBalanceDue?: boolean
+  showVatPercentage?: boolean
+  showWhtPercentage?: boolean
+  showDiscountPercentage?: boolean
 }
 
 export type DocumentMetaEntry = {
@@ -63,6 +66,11 @@ export type RefrensPdfModel = {
   columnConfig: ColumnConfig[]
   descriptionExtras: (item: InvoiceItem) => string[]
   supportBlocks: RenderableSupportBlock[]
+  summaryLabels: {
+    vat: string
+    wht: string
+    discount: string
+  }
   footerText?: string
   amountInWords?: string
   totalLabel: string

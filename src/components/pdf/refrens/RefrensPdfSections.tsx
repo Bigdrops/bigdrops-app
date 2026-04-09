@@ -24,7 +24,7 @@ export function HeaderSection({ model, styles }: SectionProps) {
       <View style={styles.headerMeta}>
         {model.logoUrl ? <Image src={model.logoUrl} style={styles.logo} /> : null}
         <Text style={styles.documentLabel}>{model.documentLabel}</Text>
-        <Text style={styles.documentNumber}>#{model.documentNumber}</Text>
+        <Text style={styles.documentNumber}>{model.documentNumber}</Text>
         {model.metaEntries.map((entry) => (
           <View key={`${entry.label}_${entry.value}`} style={styles.metaRow}>
             <Text style={styles.metaLabel}>{entry.label}:</Text>
@@ -86,8 +86,10 @@ export function TotalsSection({ model, styles }: SectionProps) {
     { label: 'Subtotal', value: Number(result.subtotal || 0), type: 'normal' as const },
     ...(Number(result.installRateTotal || 0) > 0 ? [{ label: 'Install Rate', value: Number(result.installRateTotal || 0), type: 'normal' as const }] : []),
     ...(Number(result.extraChargesTotal || 0) > 0 ? [{ label: 'Additional Charges', value: Number(result.extraChargesTotal || 0), type: 'normal' as const }] : []),
-    ...(Number(result.discount || 0) > 0 ? [{ label: 'Discount', value: Number(result.discount || 0), type: 'negative' as const }] : []),
-    ...(Number(result.vat || 0) > 0 ? [{ label: 'VAT', value: Number(result.vat || 0), type: 'normal' as const }] : []),
+    ...(Number(result.discount || 0) > 0
+      ? [{ label: model.summaryLabels.discount, value: Number(result.discount || 0), type: 'negative' as const }]
+      : []),
+    ...(Number(result.vat || 0) > 0 ? [{ label: model.summaryLabels.vat, value: Number(result.vat || 0), type: 'normal' as const }] : []),
   ]
 
   return (
@@ -111,7 +113,7 @@ export function TotalsSection({ model, styles }: SectionProps) {
 
           {Number(result.wht || 0) > 0 ? (
             <View style={[styles.totalRow, styles.totalDivider]}>
-              <Text style={styles.totalLabel}>Less: WHT</Text>
+              <Text style={styles.totalLabel}>{model.summaryLabels.wht}</Text>
               <Text style={styles.totalValue}>- NGN {Number(result.wht || 0).toLocaleString()}</Text>
             </View>
           ) : null}
@@ -143,77 +145,69 @@ export function SupportSection({ model, styles }: SectionProps) {
 
   return (
     <View style={styles.supportWrap}>
-      <View style={styles.supportColumn}>
-        {nonSignatureBlocks.map((block, index) => {
-          if (block.type === 'bank') {
+      {nonSignatureBlocks.length ? (
+        <View style={styles.supportColumn}>
+          {nonSignatureBlocks.map((block, index) => {
+            if (block.type === 'bank') {
+              return (
+                <View key={`bank_${index}`} wrap={false}>
+                  <Text style={styles.supportTitle}>{block.title}</Text>
+                  <View style={styles.supportBox}>
+                    {block.rows.map((row) => (
+                      <View key={row.label} style={styles.supportRow}>
+                        <Text style={styles.supportLabel}>{row.label}</Text>
+                        <Text style={styles.supportValue}>{row.value}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )
+            }
+
+            if (block.type === 'links') {
+              return (
+                <View key={`links_${index}`} wrap={false}>
+                  <Text style={styles.supportTitle}>{block.title}</Text>
+                  <View style={styles.supportBox}>
+                    {block.links.map((link) => (
+                      <Link key={link.url} src={link.url} style={styles.linkText}>
+                        {link.label}
+                      </Link>
+                    ))}
+                  </View>
+                </View>
+              )
+            }
+
             return (
-              <View key={`bank_${index}`} wrap={false}>
+              <View key={`text_${index}`} wrap={false}>
                 <Text style={styles.supportTitle}>{block.title}</Text>
                 <View style={styles.supportBox}>
-                  {block.rows.map((row) => (
-                    <View key={row.label} style={styles.supportRow}>
-                      <Text style={styles.supportLabel}>{row.label}</Text>
-                      <Text style={styles.supportValue}>{row.value}</Text>
-                    </View>
-                  ))}
+                  <Text style={styles.supportText}>{block.text}</Text>
                 </View>
               </View>
             )
-          }
-
-          if (block.type === 'links') {
-            return (
-              <View key={`links_${index}`} wrap={false}>
-                <Text style={styles.supportTitle}>{block.title}</Text>
-                <View style={styles.supportBox}>
-                  {block.links.map((link) => (
-                    <Link key={link.url} src={link.url} style={styles.linkText}>
-                      {link.label}
-                    </Link>
-                  ))}
-                </View>
-              </View>
-            )
-          }
-
-          return (
-            <View key={`text_${index}`} wrap={false}>
-              <Text style={styles.supportTitle}>{block.title}</Text>
-              <View style={styles.supportBox}>
-                <Text style={styles.supportText}>{block.text}</Text>
-              </View>
-            </View>
-          )
-        })}
-      </View>
-
-      <View style={styles.signatureColumn}>
-        <Text style={styles.signatureHint}>
-          This document was generated from the app&apos;s current invoice/quotation data.
-        </Text>
-        <View style={styles.signatureBlock}>
-          {signatureBlock?.type === 'signature' && signatureBlock.name ? (
-            <Text style={styles.signatureName}>For {signatureBlock.name}</Text>
-          ) : null}
-          <View style={styles.signatureLine}>
-            {signatureBlock?.type === 'signature' && signatureBlock.signatureUrl ? (
-              <Image src={signatureBlock.signatureUrl} style={styles.signatureImage} />
-            ) : null}
-          </View>
-          <Text style={styles.signatureRole}>
-            {signatureBlock?.type === 'signature' ? signatureBlock.role || 'Authorised Signatory' : 'Authorised Signatory'}
-          </Text>
+          })}
         </View>
-      </View>
+      ) : null}
+
+      {signatureBlock?.type === 'signature' && signatureBlock.signatureUrl ? (
+        <View style={styles.signatureColumn}>
+          <View style={styles.signatureBlock}>
+            <Image src={signatureBlock.signatureUrl} style={styles.signatureImage} />
+            {signatureBlock.name ? <Text style={styles.signatureName}>For {signatureBlock.name}</Text> : null}
+            {signatureBlock.role ? <Text style={styles.signatureRole}>{signatureBlock.role}</Text> : null}
+          </View>
+        </View>
+      ) : null}
     </View>
   )
 }
 
 export function FooterSection({ model, styles }: SectionProps) {
-  const footerLines = [
-    model.footerText,
-    'This is a computer-generated document and does not require a physical signature.',
-  ].filter(Boolean)
+  const footerLines = [model.footerText].filter(Boolean)
+
+  if (!footerLines.length) return null
 
   return (
     <View style={styles.footerNote} wrap={false}>

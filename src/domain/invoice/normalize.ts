@@ -15,6 +15,9 @@ export const DEFAULT_INVOICE_PDF_OUTPUT: InvoicePdfOutput = {
   showFooter: true,
   showTagline: true,
   showBalanceDue: true,
+  showVatPercentage: true,
+  showWhtPercentage: true,
+  showDiscountPercentage: true,
 }
 
 export function toNumber(value: unknown, fallback = 0): number {
@@ -86,6 +89,18 @@ export function getInvoicePdfOutput(value: unknown): InvoicePdfOutput {
     showFooter: typeof savedPdfOutput.showFooter === 'boolean' ? savedPdfOutput.showFooter : DEFAULT_INVOICE_PDF_OUTPUT.showFooter,
     showTagline: typeof savedPdfOutput.showTagline === 'boolean' ? savedPdfOutput.showTagline : DEFAULT_INVOICE_PDF_OUTPUT.showTagline,
     showBalanceDue: typeof savedPdfOutput.showBalanceDue === 'boolean' ? savedPdfOutput.showBalanceDue : DEFAULT_INVOICE_PDF_OUTPUT.showBalanceDue,
+    showVatPercentage:
+      typeof savedPdfOutput.showVatPercentage === 'boolean'
+        ? savedPdfOutput.showVatPercentage
+        : DEFAULT_INVOICE_PDF_OUTPUT.showVatPercentage,
+    showWhtPercentage:
+      typeof savedPdfOutput.showWhtPercentage === 'boolean'
+        ? savedPdfOutput.showWhtPercentage
+        : DEFAULT_INVOICE_PDF_OUTPUT.showWhtPercentage,
+    showDiscountPercentage:
+      typeof savedPdfOutput.showDiscountPercentage === 'boolean'
+        ? savedPdfOutput.showDiscountPercentage
+        : DEFAULT_INVOICE_PDF_OUTPUT.showDiscountPercentage,
   }
 }
 

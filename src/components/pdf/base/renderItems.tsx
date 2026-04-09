@@ -120,11 +120,23 @@ export function renderItemsTable({
   return (
     <React.View style={styles.table}>
       <React.View style={styles.tableHeader}>
-        {resolvedColumns.map((column) => (
-          <React.Text key={column.key} style={[styles.thText, columnStyle(column)]}>
-            {column.label}
-          </React.Text>
-        ))}
+        {resolvedColumns.map((column, columnIndex) => {
+          const isLastColumn = columnIndex === resolvedColumns.length - 1
+          return (
+            <React.View
+              key={column.key}
+              style={{
+                flex: column.pdfFlex,
+                paddingRight: isLastColumn ? 0 : 6,
+                marginRight: isLastColumn ? 0 : 6,
+                borderRightWidth: isLastColumn ? 0 : 1,
+                borderRightColor: styles.columnDivider?.borderRightColor || '#d5dde8',
+              }}
+            >
+              <React.Text style={[styles.thText, columnStyle(column)]}>{column.label}</React.Text>
+            </React.View>
+          )
+        })}
       </React.View>
 
       {resolvedRows.map((row, index) => {
@@ -183,32 +195,44 @@ export function renderItemsTable({
 
         return (
           <React.View key={('type' in row ? row.key : `item_${index}`) || index} style={rowStyle} wrap={false}>
-            {resolvedColumns.map((column) => {
+            {resolvedColumns.map((column, columnIndex) => {
+              const isLastColumn = columnIndex === resolvedColumns.length - 1
+              const cellWrapStyle = {
+                flex: column.pdfFlex,
+                paddingRight: isLastColumn ? 0 : 6,
+                marginRight: isLastColumn ? 0 : 6,
+                borderRightWidth: isLastColumn ? 0 : 1,
+                borderRightColor: styles.columnDivider?.borderRightColor || '#d5dde8',
+              }
+
               if (column.key === 'num') {
                 return (
-                  <React.Text
-                    key={column.key}
-                    style={[columnStyle(column), { color: styles.rowNumberColor || '#999', alignSelf: 'flex-start' }]}
-                  >
-                    {itemCount}
-                  </React.Text>
+                  <React.View key={column.key} style={cellWrapStyle}>
+                    <React.Text
+                      style={[columnStyle(column), { color: styles.rowNumberColor || '#999', alignSelf: 'flex-start' }]}
+                    >
+                      {itemCount}
+                    </React.Text>
+                  </React.View>
                 )
               }
 
               if (column.key === 'description') {
                 return (
-                  <React.View key={column.key} style={columnStyle(column, { alignSelf: 'flex-start' })}>
-                    <React.Text style={styles.descText}>{rawItem.description}</React.Text>
-                    {rawItem.sub_description ? (
-                      <React.Text style={styles.subDescText}>{rawItem.sub_description}</React.Text>
-                    ) : null}
-                    {getDescriptionExtras
-                      ? getDescriptionExtras(rawItem).map((line, lineIndex) => (
-                          <React.Text key={`${column.key}_extra_${lineIndex}`} style={styles.subDescText}>
-                            {line}
-                          </React.Text>
-                        ))
-                      : null}
+                  <React.View key={column.key} style={cellWrapStyle}>
+                    <React.View style={columnStyle(column, { alignSelf: 'flex-start' })}>
+                      <React.Text style={styles.descText}>{rawItem.description}</React.Text>
+                      {rawItem.sub_description ? (
+                        <React.Text style={styles.subDescText}>{rawItem.sub_description}</React.Text>
+                      ) : null}
+                      {getDescriptionExtras
+                        ? getDescriptionExtras(rawItem).map((line, lineIndex) => (
+                            <React.Text key={`${column.key}_extra_${lineIndex}`} style={styles.subDescText}>
+                              {line}
+                            </React.Text>
+                          ))
+                        : null}
+                    </React.View>
                   </React.View>
                 )
               }
@@ -217,12 +241,13 @@ export function renderItemsTable({
                 const qty = Number(rawItem.quantity || 0).toLocaleString()
                 const unit = String(rawItem.unit || '').trim()
                 return (
-                  <React.Text
-                    key={column.key}
-                    style={[columnStyle(column, { alignSelf: 'flex-start', color: styles.cellMutedColor || '#555' })]}
-                  >
-                    {unit ? `${qty} ${unit}` : qty}
-                  </React.Text>
+                  <React.View key={column.key} style={cellWrapStyle}>
+                    <React.Text
+                      style={[columnStyle(column, { alignSelf: 'flex-start', color: styles.cellMutedColor || '#555' })]}
+                    >
+                      {unit ? `${qty} ${unit}` : qty}
+                    </React.Text>
+                  </React.View>
                 )
               }
 
@@ -231,20 +256,21 @@ export function renderItemsTable({
               }
 
               return (
-                <React.Text
-                  key={column.key}
-                  style={[
-                    columnStyle(column, {
-                      alignSelf: 'flex-start',
-                      color: column.align === 'right' ? styles.cellValueColor || '#1a1a1a' : styles.cellMutedColor || '#555',
-                    }),
-                  ]}
-                >
-                  {getPdfCellValue(column, rawItem, {
-                    amount,
-                    installValue,
-                  })}
-                </React.Text>
+                <React.View key={column.key} style={cellWrapStyle}>
+                  <React.Text
+                    style={[
+                      columnStyle(column, {
+                        alignSelf: 'flex-start',
+                        color: column.align === 'right' ? styles.cellValueColor || '#1a1a1a' : styles.cellMutedColor || '#555',
+                      }),
+                    ]}
+                  >
+                    {getPdfCellValue(column, rawItem, {
+                      amount,
+                      installValue,
+                    })}
+                  </React.Text>
+                </React.View>
               )
             })}
           </React.View>

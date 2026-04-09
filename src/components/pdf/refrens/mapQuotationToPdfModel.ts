@@ -1,5 +1,6 @@
 import type { Quotation } from '@/domain/quotation'
 import type { MapperContext, RefrensPdfModel } from './types'
+import { getPdfSummaryLabels } from './summaryLabels'
 import {
   asText,
   buildItemDescriptionExtras,
@@ -108,6 +109,7 @@ export function mapQuotationToPdfModel({
     columnConfig,
     descriptionExtras: (item) => buildItemDescriptionExtras(item, columnConfig),
     supportBlocks,
+    summaryLabels: getPdfSummaryLabels(document, output),
     footerText: output.showFooter === false ? undefined : asText(settings?.footer_text) || undefined,
     amountInWords: asText(document.amount_in_words) || undefined,
     totalLabel: 'Total Payable',

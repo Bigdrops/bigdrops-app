@@ -11,7 +11,7 @@ import {
   DocumentLivePreviewCard,
   DocumentPdfSheet,
   DocumentSection,
-  DocumentSummaryDisclosure,
+  DocumentTextSummaryDisclosure,
   DocumentStatusStrip,
   DocumentTemplatePicker,
   DocumentTopBar,
@@ -40,7 +40,6 @@ import AttachExistingDocumentSheet from '@/components/document/AttachExistingDoc
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import InvoiceActionsSheet from '@/components/invoice/InvoiceActionsSheet'
 import InvoiceAdvanceSheet from '@/components/invoice/view/InvoiceAdvanceSheet'
-import InvoiceLineItemsCard from '@/components/invoice/view/InvoiceLineItemsCard'
 import {
   buildInvoiceLinkedDocumentSections,
   buildInvoiceShellStatusItems,
@@ -771,6 +770,13 @@ export default function ViewInvoice() {
   } = previewModel
 
   const previewNotesContent = mapInvoicePreviewNotesContent(previewNotesSections)
+  const invoiceSummaryText = [
+    `Total ${formatMoney(invoiceTotal)}`,
+    `Balance ${formatMoney(balanceDue)}`,
+    `Received ${formatMoney(cashReceived)}`,
+    `Due ${invoice.due_date || 'Open'}`,
+  ].join(' · ')
+  const invoiceSummaryHelper = invoice.amount_in_words || invoice.invoice_title || 'Invoice ready for payment tracking.'
 
   return (
     <Layout
@@ -800,29 +806,26 @@ export default function ViewInvoice() {
           onMore={() => setShowMore(true)}
         />
 
-        <DocumentSummaryDisclosure
-          eyebrow="Total Payable"
-          value={formatMoney(invoiceTotal)}
-          helper={invoice.amount_in_words || invoice.invoice_title || 'Invoice ready for payment tracking.'}
-          defaultOpen={false}
-          stats={[
-            {
-              label: 'Balance Due',
-              value: formatMoney(balanceDue),
-              className: balanceDue > 0 ? 'text-red-400' : 'text-emerald-300',
-            },
-            {
-              label: 'Received',
-              value: formatMoney(cashReceived),
-              className: 'text-emerald-300',
-            },
-            {
-              label: 'Due Date',
-              value: invoice.due_date || 'Open',
-              className: 'text-white',
-            },
-          ]}
-        />
+        <DocumentTextSummaryDisclosure summary={invoiceSummaryText} helper={invoiceSummaryHelper} defaultOpen={false}>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div>
+              <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Total Payable</div>
+              <div className="mt-1 text-sm font-semibold text-foreground">{formatMoney(invoiceTotal)}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Balance Due</div>
+              <div className={`mt-1 text-sm font-semibold ${balanceDue > 0 ? 'text-red-500' : 'text-emerald-600'}`}>{formatMoney(balanceDue)}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Received</div>
+              <div className="mt-1 text-sm font-semibold text-foreground">{formatMoney(cashReceived)}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Due Date</div>
+              <div className="mt-1 text-sm font-semibold text-foreground">{invoice.due_date || 'Open'}</div>
+            </div>
+          </div>
+        </DocumentTextSummaryDisclosure>
 
         <DocumentActionGrid
           actions={[
@@ -929,8 +932,6 @@ export default function ViewInvoice() {
             ]}
           />
         </DocumentSection>
-
-        <InvoiceLineItemsCard items={items} formatMoney={formatMoney} />
 
         <InvoicePaymentSection
           variant="simple"

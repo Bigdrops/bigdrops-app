@@ -1,6 +1,7 @@
 import { getAdvanceSummaryValues } from '@/domain/invoice/advanceSummary'
 import type { Invoice } from '@/domain/invoice'
 import type { MapperContext, RefrensPdfModel } from './types'
+import { getPdfSummaryLabels } from './summaryLabels'
 import {
   asText,
   buildItemDescriptionExtras,
@@ -77,12 +78,12 @@ export function mapInvoiceToPdfModel({
     })
   }
 
-  if (signatory && (hasText(signatory.signature_url) || hasText(signatory.name) || hasText(signatory.role))) {
+  if (signatory && hasText(signatory.signature_url)) {
     supportBlocks.push({
       type: 'signature',
-      title: 'Authorised Signatory',
       name: asText(signatory.name) || undefined,
-      role: asText(signatory.role) || 'Authorised Signatory',
+      title: asText(signatory.role) || 'Signature',
+      role: asText(signatory.role) || undefined,
       signatureUrl: asText(signatory.signature_url) || undefined,
     })
   }
@@ -123,6 +124,7 @@ export function mapInvoiceToPdfModel({
     columnConfig,
     descriptionExtras: (item) => buildItemDescriptionExtras(item, columnConfig),
     supportBlocks,
+    summaryLabels: getPdfSummaryLabels(document, output),
     footerText: output.showFooter === false ? undefined : asText(settings?.footer_text) || undefined,
     amountInWords: asText(document.amount_in_words) || undefined,
     totalLabel: advanceSummary ? advanceSummary.primaryLabel : 'Balance Due',
