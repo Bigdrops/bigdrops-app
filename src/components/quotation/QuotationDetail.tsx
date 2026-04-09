@@ -8,7 +8,6 @@ import {
   DocumentActionSheet,
   DocumentBottomBar,
   DocumentDesignPanel,
-  DocumentDesignStyleEditor,
   DocumentFloatingFab,
   DocumentLivePreviewCard,
   DocumentPdfSheet,
@@ -17,13 +16,14 @@ import {
   DocumentTemplatePicker,
   DocumentTopBar,
 } from '@/components/document/DocumentViewShell'
+import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { supabase } from '@/supabase'
 import { calcTotals } from '@/components/useInvoiceColumns.jsx'
 import { computeDocument } from '@/lib/Calculations'
 import { DEFAULT_QUOTATION_TEMPLATE, QUOTATION_PDF_TEMPLATES, type PdfTemplateId } from '@/components/pdf/pdfTemplates'
 import { getPdfSummaryLabels } from '@/components/pdf/refrens/summaryLabels'
-import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
-import { isDocumentFillableEnabled } from '@/lib/documentFillableSettings'
+import { getPdfDesignPreset, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { resolveTemplateDesignPreset } from '@/lib/pdfTemplateDesign'
 import { getPdfTemplatePreset, setPdfTemplatePreset } from '@/lib/pdfTemplatePreset'
 import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
@@ -290,7 +290,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
           client={client}
           settings={settings}
           computedResult={computedResult}
-          designPreset={pdfDesignPreset}
+          designPreset={resolveTemplateDesignPreset('quotation', pdfTemplate, pdfDesignPreset)}
           bankAccounts={bankAccounts}
           pdfOutput={pdfOutput}
         />
@@ -598,8 +598,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
 
   const shellQuotationTotal = totals?.totalPayable ?? Number(quotation.total || 0)
   const activePdfTemplate = QUOTATION_PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || QUOTATION_PDF_TEMPLATES[0]
-  const showQuotationFillableControls = isDocumentFillableEnabled(settings?.document_fillable_settings, 'quotation')
-  const quotationUsesLegacyStyling = pdfTemplate === 'standard'
+  const resolvedPdfDesignPreset = resolveTemplateDesignPreset('quotation', pdfTemplate, pdfDesignPreset)
   const handlePdfTemplateChange = (nextTemplate: PdfTemplateId) => {
     setPdfTemplate(nextTemplate)
     setPdfTemplatePreset('quotation', nextTemplate)
@@ -743,15 +742,9 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         bankDetails={pdfOutput.showBankDetails && selectedPreviewBank ? selectedPreviewBank : null}
         notesSections={previewNotesSections}
         signatory={null}
-        accentColor={
-          pdfTemplate === 'standard'
-            ? pdfDesignPreset.accentColor
-            : pdfTemplate === 'elegant'
-              ? '#d97706'
-              : pdfTemplate === 'bold'
-                ? '#1f2937'
-                : '#7c3aed'
-        }
+        accentColor={resolvedPdfDesignPreset.accentColor}
+        headerFontFamily={resolvePdfWebFontFamily(resolvedPdfDesignPreset.headerFont)}
+        bodyFontFamily={resolvePdfWebFontFamily(resolvedPdfDesignPreset.bodyFont)}
       />
 
       <PdfBankControls
@@ -775,17 +768,13 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             },
             {
               key: 'styling',
-              title: quotationUsesLegacyStyling ? 'Fonts & Color' : 'Template Fidelity',
-              content: quotationUsesLegacyStyling
-                ? (
-                    <DocumentDesignStyleEditor value={pdfDesignPreset} onChange={handlePdfDesignPresetChange} showFillableControls={showQuotationFillableControls} />
-                  )
-                : (
-                    <div className="rounded-[18px] border border-border bg-muted/30 p-4 text-sm leading-6 text-muted-foreground">
-                      The new quotation-capable Refrens templates use fixed styling to match the reference layouts closely.
-                      Output controls like bank details, tagline, and footer still apply.
-                    </div>
-                  ),
+              title: 'Template Overrides',
+              content: (
+                <DocumentTemplateDesignOverrides
+                  value={pdfDesignPreset}
+                  onChange={handlePdfDesignPresetChange}
+                />
+              ),
             },
             {
               key: 'output',

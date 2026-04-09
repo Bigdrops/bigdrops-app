@@ -8,14 +8,15 @@ import {
   DocumentBottomBar,
   DocumentDesignPanel,
   DocumentFloatingFab,
+  DocumentHeroCard,
   DocumentLivePreviewCard,
   DocumentPdfSheet,
   DocumentSection,
-  DocumentTextSummaryDisclosure,
   DocumentStatusStrip,
   DocumentTemplatePicker,
   DocumentTopBar,
 } from '@/components/document/DocumentViewShell'
+import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import RecordPaymentModal from '@/components/RecordPaymentModal'
 import { PdfBankControls, PdfSupportingOptions } from '@/components/PdfOutputSettings'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '../components/invoice/exportInvoiceCsv'
@@ -33,6 +34,8 @@ import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
 import { buildInvoiceViewModel } from '@/domain/invoice/viewModel'
 import { computeDocument } from '@/lib/Calculations'
 import { DEFAULT_INVOICE_TEMPLATE, INVOICE_PDF_TEMPLATES } from '@/components/pdf/pdfTemplates'
+import { getPdfDesignPreset, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { resolveTemplateDesignPreset } from '@/lib/pdfTemplateDesign'
 import { getPdfTemplatePreset, setPdfTemplatePreset } from '@/lib/pdfTemplatePreset'
 import { toast } from '@/hooks/use-toast'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
@@ -70,6 +73,7 @@ export default function ViewInvoice() {
   const [showPdfSheet, setShowPdfSheet] = useState(false)
   const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
   const [pdfTemplate, setPdfTemplate] = useState(() => getPdfTemplatePreset('invoice', DEFAULT_INVOICE_TEMPLATE))
+  const [pdfDesignPreset, setPdfDesignPresetState] = useState(() => getPdfDesignPreset('invoice'))
 
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [voidingPaymentId, setVoidingPaymentId] = useState(null)
@@ -108,6 +112,7 @@ export default function ViewInvoice() {
     settings,
     bankAccounts,
     signatories,
+    creatorProfile,
     session,
     linkedProject,
     relatedCsrs,
@@ -461,6 +466,7 @@ export default function ViewInvoice() {
           bankAccounts={bankAccounts}
           pdfOutput={getInvoicePdfOutput(advanceInvoice.custom_fields)}
           signatory={advanceSignatory}
+          designPreset={resolvedPdfDesignPreset}
         />,
       ).toBlob()
 
@@ -687,6 +693,7 @@ export default function ViewInvoice() {
           bankAccounts={bankAccounts}
           pdfOutput={pdfOutput}
           signatory={selectedSignatory}
+          designPreset={resolvedPdfDesignPreset}
         />
       ).toBlob()
 
@@ -736,10 +743,16 @@ export default function ViewInvoice() {
   })
 
   const activePdfTemplate = INVOICE_PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || INVOICE_PDF_TEMPLATES[0]
+  const resolvedPdfDesignPreset = resolveTemplateDesignPreset('invoice', pdfTemplate, pdfDesignPreset)
 
   const handlePdfTemplateChange = (nextTemplate) => {
     setPdfTemplate(nextTemplate)
     setPdfTemplatePreset('invoice', nextTemplate)
+  }
+
+  const handlePdfDesignPresetChange = (nextPreset) => {
+    setPdfDesignPresetState(nextPreset)
+    setPdfDesignPreset('invoice', nextPreset)
   }
 
   const previewModel = buildInvoicePreviewModel({
@@ -770,13 +783,26 @@ export default function ViewInvoice() {
   } = previewModel
 
   const previewNotesContent = mapInvoicePreviewNotesContent(previewNotesSections)
-  const invoiceSummaryText = [
-    `Total ${formatMoney(invoiceTotal)}`,
-    `Balance ${formatMoney(balanceDue)}`,
-    `Received ${formatMoney(cashReceived)}`,
-    `Due ${invoice.due_date || 'Open'}`,
-  ].join(' · ')
-  const invoiceSummaryHelper = invoice.amount_in_words || invoice.invoice_title || 'Invoice ready for payment tracking.'
+  const creatorName = [
+    creatorProfile?.full_name,
+    creatorProfile?.display_name,
+    creatorProfile?.name,
+    creatorProfile?.email,
+    invoice?.created_by === session?.user?.id
+      ? session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || session?.user?.email
+      : null,
+  ].find((value) => String(value || '').trim()) || 'Unknown creator'
+  const dueStatusText =
+    computedStatus === 'paid'
+      ? 'Paid in full'
+      : computedStatus === 'overdue'
+        ? 'Overdue'
+        : invoice.due_date
+          ? `Due ${formatDate(invoice.due_date)}`
+          : 'Open'
+  const amountInWordsText = String(invoice.amount_in_words || '').trim()
+  const summaryOpenLabel = 'Show full summary'
+  const summaryCloseLabel = 'Hide full summary'
 
   return (
     <Layout
@@ -806,26 +832,27 @@ export default function ViewInvoice() {
           onMore={() => setShowMore(true)}
         />
 
-        <DocumentTextSummaryDisclosure summary={invoiceSummaryText} helper={invoiceSummaryHelper} defaultOpen={false}>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div>
-              <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Total Payable</div>
-              <div className="mt-1 text-sm font-semibold text-foreground">{formatMoney(invoiceTotal)}</div>
-            </div>
-            <div>
-              <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Balance Due</div>
-              <div className={`mt-1 text-sm font-semibold ${balanceDue > 0 ? 'text-red-500' : 'text-emerald-600'}`}>{formatMoney(balanceDue)}</div>
-            </div>
-            <div>
-              <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Received</div>
-              <div className="mt-1 text-sm font-semibold text-foreground">{formatMoney(cashReceived)}</div>
-            </div>
-            <div>
-              <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Due Date</div>
-              <div className="mt-1 text-sm font-semibold text-foreground">{invoice.due_date || 'Open'}</div>
-            </div>
-          </div>
-        </DocumentTextSummaryDisclosure>
+        <CompactInvoiceSummary
+          totalText={formatMoney(invoiceTotal)}
+          balanceText={formatMoney(balanceDue)}
+          receivedText={formatMoney(cashReceived)}
+          dueStatusText={dueStatusText}
+          amountInWordsText={amountInWordsText || 'Amount in words not provided.'}
+          creatorName={creatorName}
+          openLabel={summaryOpenLabel}
+          closeLabel={summaryCloseLabel}
+        >
+          <DocumentHeroCard
+            eyebrow={`Invoice Summary · ${statusLabel}`}
+            value={formatMoney(invoiceTotal)}
+            helper={`${dueStatusText}. Created by ${creatorName}.${amountInWordsText ? ` ${amountInWordsText}` : ''}`}
+            stats={[
+              { label: 'Balance', value: formatMoney(balanceDue), className: balanceDue > 0 ? 'text-rose-300' : 'text-emerald-300' },
+              { label: 'Received', value: formatMoney(cashReceived) },
+              { label: 'Due / Open', value: dueStatusText },
+            ]}
+          />
+        </CompactInvoiceSummary>
 
         <DocumentActionGrid
           actions={[
@@ -881,7 +908,9 @@ export default function ViewInvoice() {
                 }
               : null
           }
-          accentColor={activePdfTemplate.id === 'elegant' ? '#d97706' : activePdfTemplate.id === 'bold' ? '#1f2937' : '#7c3aed'}
+          accentColor={resolvedPdfDesignPreset.accentColor}
+          headerFontFamily={resolvePdfWebFontFamily(resolvedPdfDesignPreset.headerFont)}
+          bodyFontFamily={resolvePdfWebFontFamily(resolvedPdfDesignPreset.bodyFont)}
         />
 
         <PdfBankControls
@@ -908,12 +937,12 @@ export default function ViewInvoice() {
               },
               {
                 key: 'styling',
-                title: 'Template Fidelity',
+                title: 'Template Overrides',
                 content: (
-                  <div className="rounded-[18px] border border-border bg-muted/30 p-4 text-sm leading-6 text-muted-foreground">
-                    The new invoice templates use fixed high-fidelity styling from the reference system.
-                    Output controls like bank details, tagline, footer, and balance due still apply.
-                  </div>
+                  <DocumentTemplateDesignOverrides
+                    value={pdfDesignPreset}
+                    onChange={handlePdfDesignPresetChange}
+                  />
                 ),
               },
               {
@@ -1114,5 +1143,42 @@ export default function ViewInvoice() {
         />
       </div>
     </Layout>
+  )
+}
+
+function CompactInvoiceSummary({
+  totalText,
+  balanceText,
+  receivedText,
+  dueStatusText,
+  amountInWordsText,
+  creatorName,
+  openLabel,
+  closeLabel,
+  children,
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="space-y-3 border-b border-slate-200/80 pb-4">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-start justify-between gap-3 text-left"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold leading-6 text-foreground">
+            {`Total ${totalText} · Balance ${balanceText} · Received ${receivedText} · ${dueStatusText}`}
+          </div>
+          <div className="mt-1 text-sm leading-6 text-muted-foreground">{amountInWordsText}</div>
+          <div className="text-sm leading-6 text-muted-foreground">Creator: {creatorName}</div>
+        </div>
+        <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-600">
+          <span>{open ? closeLabel : openLabel}</span>
+        </div>
+      </button>
+
+      {open ? children : null}
+    </div>
   )
 }

@@ -26,6 +26,7 @@ export function mapQuotationToPdfModel({
   computedResult,
   pdfOutput,
   bankAccounts,
+  designPreset,
 }: MapperContext<Quotation>): RefrensPdfModel {
   const customFields = parsePdfCustomFields(document.custom_fields)
   const output = pdfOutput || resolvePdfOutput(document.custom_fields)
@@ -95,6 +96,7 @@ export function mapQuotationToPdfModel({
 
   return {
     templateId,
+    designPreset,
     documentLabel: 'Quotation',
     documentNumber: asText(document.quotation_number) || 'Quotation',
     title: asText(document.quotation_title) || undefined,

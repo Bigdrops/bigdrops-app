@@ -1,10 +1,19 @@
 import { StyleSheet } from '@react-pdf/renderer'
 import { TEMPLATE_TOKENS } from './templateTokens'
 import type { RefrensTemplateId } from './types'
+import { darkenHex, lightenHex, resolvePdfFontFamily, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 
-export function createTemplateStyles(templateId: RefrensTemplateId) {
+export function createTemplateStyles(templateId: RefrensTemplateId, designPreset?: PdfDesignPreset) {
   const tokens = TEMPLATE_TOKENS[templateId]
   const isDarkHeader = templateId === 'modern' || templateId === 'bold'
+  const accentColor = designPreset?.accentColor || tokens.accent
+  const accentDark = designPreset ? darkenHex(accentColor, 24) : tokens.accent
+  const accentSoft = designPreset ? lightenHex(accentColor, 46) : tokens.amountWordsBackground
+  const accentBorder = designPreset ? lightenHex(accentColor, 34) : tokens.amountWordsBorder
+  const headerBorder = designPreset ? accentColor : tokens.headerBand
+  const headerFont = designPreset ? resolvePdfFontFamily(designPreset.headerFont, 'bold') : 'Helvetica-Bold'
+  const bodyFont = designPreset ? resolvePdfFontFamily(designPreset.bodyFont, 'regular') : 'Helvetica'
+  const bodyBoldFont = designPreset ? resolvePdfFontFamily(designPreset.bodyFont, 'bold') : 'Helvetica-Bold'
 
   return StyleSheet.create({
     page: {
@@ -14,7 +23,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
       paddingLeft: 32,
       backgroundColor: tokens.pageBackground,
       color: tokens.bodyText,
-      fontFamily: 'Helvetica',
+      fontFamily: bodyFont,
       fontSize: 10,
     },
     headerWrap: {
@@ -29,7 +38,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
       marginBottom: 20,
       marginLeft: isDarkHeader ? -32 : 0,
       borderBottomWidth: isDarkHeader ? 0 : templateId === 'minimal' ? 1 : 3,
-      borderBottomColor: tokens.headerBand,
+      borderBottomColor: headerBorder,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
@@ -41,8 +50,8 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
     },
     businessName: {
       fontSize: 17,
-      fontFamily: 'Helvetica-Bold',
-      color: templateId === 'elegant' ? tokens.accent : tokens.headerText,
+      fontFamily: headerFont,
+      color: templateId === 'elegant' ? accentColor : tokens.headerText,
       marginBottom: 5,
       lineHeight: 1.2,
     },
@@ -71,15 +80,15 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
     },
     documentLabel: {
       fontSize: 14,
-      fontFamily: 'Helvetica-Bold',
-      color: isDarkHeader ? 'rgba(255,255,255,0.92)' : tokens.accent,
+      fontFamily: headerFont,
+      color: isDarkHeader ? 'rgba(255,255,255,0.92)' : accentColor,
       textTransform: 'uppercase',
       letterSpacing: 1,
       marginBottom: 2,
     },
     documentNumber: {
       fontSize: 13,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: headerFont,
       color: tokens.headerText,
       marginBottom: 6,
     },
@@ -95,14 +104,14 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
     },
     metaValue: {
       fontSize: 10,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: bodyBoldFont,
       color: tokens.headerText,
       maxWidth: 120,
       textAlign: 'right',
     },
     title: {
       fontSize: 12.5,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: headerFont,
       color: '#111827',
       marginBottom: 12,
       lineHeight: 1.3,
@@ -122,7 +131,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
     },
     partyLabel: {
       fontSize: 8.5,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: headerFont,
       textTransform: 'uppercase',
       letterSpacing: 0.8,
       color: '#9ca3af',
@@ -130,7 +139,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
     },
     partyName: {
       fontSize: 12,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: headerFont,
       color: '#111827',
       marginBottom: 4,
       lineHeight: 1.3,
@@ -156,7 +165,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
     },
     thText: {
       fontSize: 7.8,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: bodyBoldFont,
       textTransform: 'uppercase',
       letterSpacing: 0.4,
       color: tokens.tableHeaderText,
@@ -201,7 +210,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
     },
     groupText: {
       fontSize: 8.2,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: bodyBoldFont,
       color: tokens.tableHeaderText,
       textTransform: 'uppercase',
     },
@@ -284,30 +293,30 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
       alignItems: 'flex-start',
       gap: 10,
       borderTopWidth: 2,
-      borderTopColor: tokens.accent,
+      borderTopColor: accentColor,
       marginTop: 7,
       paddingTop: 8,
       paddingBottom: 2,
     },
     grandLabel: {
       fontSize: 13,
-      fontFamily: 'Helvetica-Bold',
-      color: tokens.grandTotalColor,
+      fontFamily: headerFont,
+      color: designPreset ? accentDark : tokens.grandTotalColor,
     },
     grandValue: {
       fontSize: 13,
-      fontFamily: 'Helvetica-Bold',
-      color: tokens.grandTotalColor,
+      fontFamily: headerFont,
+      color: designPreset ? accentDark : tokens.grandTotalColor,
       textAlign: 'right',
     },
     balanceLabel: {
       fontSize: 11,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: headerFont,
       color: '#dc2626',
     },
     balanceValue: {
       fontSize: 11,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: headerFont,
       color: '#dc2626',
       textAlign: 'right',
     },
@@ -315,15 +324,15 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
       marginTop: 12,
       paddingVertical: 10,
       paddingHorizontal: 14,
-      backgroundColor: tokens.amountWordsBackground,
+      backgroundColor: accentSoft,
       borderWidth: 1,
-      borderColor: tokens.amountWordsBorder,
+      borderColor: accentBorder,
       borderRadius: 6,
     },
     amountWordsLead: {
       fontSize: 8.8,
-      fontFamily: 'Helvetica-Bold',
-      color: tokens.accent,
+      fontFamily: headerFont,
+      color: accentDark,
       textTransform: 'uppercase',
       letterSpacing: 0.4,
     },
@@ -349,7 +358,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
     },
     supportTitle: {
       fontSize: 8.5,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: headerFont,
       textTransform: 'uppercase',
       letterSpacing: 0.8,
       color: '#9ca3af',
@@ -386,7 +395,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
     },
     linkText: {
       fontSize: 10.3,
-      color: tokens.accent,
+      color: accentColor,
       textDecoration: 'underline',
       lineHeight: 1.5,
       marginBottom: 4,
@@ -397,7 +406,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
     },
     signatureName: {
       fontSize: 10.3,
-      fontFamily: 'Helvetica-Bold',
+      fontFamily: bodyBoldFont,
       color: tokens.bodyText,
       marginTop: 8,
     },

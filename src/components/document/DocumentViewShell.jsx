@@ -269,6 +269,8 @@ export function DocumentLivePreviewCard({
   notesSections = [],
   signatory,
   accentColor = '#0f172a',
+  headerFontFamily,
+  bodyFontFamily,
 }) {
   const previewItems = items.slice(0, 16)
   const previewNotes = notesSections.filter((section) => section?.title && section?.content)
@@ -285,17 +287,22 @@ export function DocumentLivePreviewCard({
 
         <div className="overflow-hidden border-t border-slate-200 bg-white sm:mx-2 sm:mb-2 sm:rounded-[24px] sm:border sm:shadow-[0_18px_34px_rgba(15,23,42,0.08)]">
           <div className="h-1.5 w-full" style={{ backgroundColor: accentColor }} />
-          <div className="space-y-5 px-3 py-4 sm:px-5 sm:py-6">
+          <div className="space-y-5 px-3 py-4 sm:px-5 sm:py-6" style={{ fontFamily: bodyFontFamily }}>
             <div className="space-y-4 border-b border-slate-200 pb-5">
               <div className="space-y-2">
                 <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">{documentLabel}</div>
-                <div className="break-words text-[2rem] font-black leading-none tracking-[-0.05em] text-foreground">{documentNumber || documentLabel}</div>
+                <div
+                  className="break-words text-[2rem] font-black leading-none tracking-[-0.05em] text-foreground"
+                  style={{ fontFamily: headerFontFamily }}
+                >
+                  {documentNumber || documentLabel}
+                </div>
               </div>
 
               <div className="space-y-4 sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,0.88fr)] sm:gap-4 sm:space-y-0">
                 <div className="min-w-0 space-y-2">
                   <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">From</div>
-                  <div className="break-words text-base font-bold text-foreground">{companyName || documentLabel}</div>
+                  <div className="break-words text-base font-bold text-foreground" style={{ fontFamily: headerFontFamily }}>{companyName || documentLabel}</div>
                   {companyTagline ? <div className="text-sm text-slate-500">{companyTagline}</div> : null}
                   {companyLines.length > 0 ? (
                     <div className="space-y-1 text-sm leading-6 text-slate-600">
@@ -306,7 +313,7 @@ export function DocumentLivePreviewCard({
 
                 <div className="min-w-0 rounded-[20px] bg-slate-50 px-4 py-4">
                   <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">{recipientLabel}</div>
-                  <div className="mt-2 break-words text-base font-bold text-foreground">{recipientName || 'Unassigned'}</div>
+                  <div className="mt-2 break-words text-base font-bold text-foreground" style={{ fontFamily: headerFontFamily }}>{recipientName || 'Unassigned'}</div>
                   {recipientLines.length > 0 ? (
                     <div className="mt-2 space-y-1 text-sm leading-6 text-slate-600">
                       {recipientLines.map((line) => <div key={line}>{line}</div>)}

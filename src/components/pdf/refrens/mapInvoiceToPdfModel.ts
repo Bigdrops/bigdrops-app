@@ -28,6 +28,7 @@ export function mapInvoiceToPdfModel({
   pdfOutput,
   bankAccounts,
   signatory,
+  designPreset,
 }: MapperContext<Invoice>): RefrensPdfModel {
   const customFields = parsePdfCustomFields(document.custom_fields)
   const output = pdfOutput || resolvePdfOutput(document.custom_fields)
@@ -103,6 +104,7 @@ export function mapInvoiceToPdfModel({
 
   return {
     templateId,
+    designPreset,
     documentLabel: asText(document.document_type) || 'Invoice',
     documentNumber: asText(document.invoice_number) || 'Invoice',
     title: asText(document.invoice_title) || undefined,

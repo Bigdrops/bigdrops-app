@@ -56,6 +56,7 @@ export function useInvoiceDetailData(id) {
   const [settings, setSettings] = useState({})
   const [bankAccounts, setBankAccounts] = useState([])
   const [signatories, setSignatories] = useState([])
+  const [creatorProfile, setCreatorProfile] = useState(null)
   const [session, setSession] = useState(null)
   const [linkedProject, setLinkedProject] = useState(null)
   const [relatedCsrs, setRelatedCsrs] = useState([])
@@ -75,12 +76,16 @@ export function useInvoiceDetailData(id) {
     }
     setInvoice(data)
     setLinkedProject(data?.project_id ? await fetchProjectSummary(data.project_id) : null)
-    if (data?.client_id) {
-      const { data: c } = await supabase.from('clients').select('*').eq('id', data.client_id).single()
-      setClient(c || null)
-    } else {
-      setClient(null)
-    }
+    const [clientResponse, creatorResponse] = await Promise.all([
+      data?.client_id
+        ? supabase.from('clients').select('*').eq('id', data.client_id).single()
+        : Promise.resolve({ data: null }),
+      data?.created_by
+        ? supabase.from('profiles').select('*').eq('id', data.created_by).single()
+        : Promise.resolve({ data: null }),
+    ])
+    setClient(clientResponse.data || null)
+    setCreatorProfile(creatorResponse.data || null)
   }, [id])
 
   const fetchInvoiceRelationships = useCallback(async () => {
@@ -207,6 +212,7 @@ export function useInvoiceDetailData(id) {
         setLinkedProject(null)
         setRelatedCsrs([])
         setRelatedWaybills([])
+        setCreatorProfile(null)
         console.warn('Invoice detail fetch failed:', refreshError)
         setLoading(false)
         return
@@ -231,6 +237,7 @@ export function useInvoiceDetailData(id) {
         setLinkedProject(null)
         setRelatedCsrs([])
         setRelatedWaybills([])
+        setCreatorProfile(null)
         setSession(null)
         setError(null)
       } catch (cacheError) {
@@ -275,6 +282,7 @@ export function useInvoiceDetailData(id) {
     settings,
     bankAccounts,
     signatories,
+    creatorProfile,
     session,
     linkedProject,
     loading,

@@ -219,7 +219,14 @@ function FillableWritingControls({ value, onChange, showModeToggle = true }) {
   )
 }
 
-export function DocumentDesignStyleEditor({ value, onChange, accentLabel = 'Accent Color', showFillableControls = true }) {
+export function DocumentDesignStyleEditor({
+  value,
+  onChange,
+  accentLabel = 'Accent Color',
+  showAccentControls = true,
+  showFontControls = true,
+  showFillableControls = true,
+}) {
   const update = (patch) => {
     onChange({
       ...value,
@@ -229,75 +236,79 @@ export function DocumentDesignStyleEditor({ value, onChange, accentLabel = 'Acce
 
   return (
     <div className="space-y-5">
-      <div>
-        <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">{accentLabel}</div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {PDF_ACCENT_SWATCHES.map((swatch) => {
-            const active = value.accentColor.toLowerCase() === swatch.toLowerCase()
-            return (
-              <button
-                key={swatch}
-                type="button"
-                onClick={() => update({ accentColor: swatch })}
-                className={cn(
-                  'h-9 w-9 rounded-xl border-2 shadow-sm transition',
-                  active ? 'border-slate-950 scale-[1.03]' : 'border-white/80',
-                )}
-                style={{ backgroundColor: swatch }}
-                aria-label={`Use accent color ${swatch}`}
-              />
-            )
-          })}
-        </div>
-        <div className="mt-3">
-          <Input
-            value={value.accentColor}
-            onChange={(event) => update({ accentColor: event.target.value })}
-            className="h-11 rounded-[14px] bg-white font-mono"
-            placeholder="#14b8a6"
-          />
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Header Font</div>
-          <Select value={value.headerFont} onValueChange={(next) => update({ headerFont: next })}>
-            <SelectTrigger className="h-11 rounded-[14px] bg-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PDF_FONT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="text-xs text-muted-foreground">
-            {PDF_FONT_OPTIONS.find((option) => option.value === value.headerFont)?.description}
+      {showAccentControls ? (
+        <div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">{accentLabel}</div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {PDF_ACCENT_SWATCHES.map((swatch) => {
+              const active = value.accentColor.toLowerCase() === swatch.toLowerCase()
+              return (
+                <button
+                  key={swatch}
+                  type="button"
+                  onClick={() => update({ accentColor: swatch })}
+                  className={cn(
+                    'h-9 w-9 rounded-xl border-2 shadow-sm transition',
+                    active ? 'border-slate-950 scale-[1.03]' : 'border-white/80',
+                  )}
+                  style={{ backgroundColor: swatch }}
+                  aria-label={`Use accent color ${swatch}`}
+                />
+              )
+            })}
+          </div>
+          <div className="mt-3">
+            <Input
+              value={value.accentColor}
+              onChange={(event) => update({ accentColor: event.target.value })}
+              className="h-11 rounded-[14px] bg-white font-mono"
+              placeholder="#14b8a6"
+            />
           </div>
         </div>
+      ) : null}
 
-        <div className="space-y-2">
-          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Body Font</div>
-          <Select value={value.bodyFont} onValueChange={(next) => update({ bodyFont: next })}>
-            <SelectTrigger className="h-11 rounded-[14px] bg-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PDF_FONT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="text-xs text-muted-foreground">
-            {PDF_FONT_OPTIONS.find((option) => option.value === value.bodyFont)?.description}
+      {showFontControls ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Header Font</div>
+            <Select value={value.headerFont} onValueChange={(next) => update({ headerFont: next })}>
+              <SelectTrigger className="h-11 rounded-[14px] bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PDF_FONT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="text-xs text-muted-foreground">
+              {PDF_FONT_OPTIONS.find((option) => option.value === value.headerFont)?.description}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Body Font</div>
+            <Select value={value.bodyFont} onValueChange={(next) => update({ bodyFont: next })}>
+              <SelectTrigger className="h-11 rounded-[14px] bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PDF_FONT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="text-xs text-muted-foreground">
+              {PDF_FONT_OPTIONS.find((option) => option.value === value.bodyFont)?.description}
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       {showFillableControls ? <FillableWritingControls value={value} onChange={onChange} /> : null}
     </div>

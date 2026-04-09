@@ -24,6 +24,8 @@ export type PdfFillableFontChoice = PdfFontChoice | PdfFillableHandwritingChoice
 export type PdfFillableFontMode = 'auto' | 'custom'
 
 export type PdfDesignPreset = {
+  useCustomColors: boolean
+  useCustomFonts: boolean
   accentColor: string
   headerFont: PdfFontChoice
   bodyFont: PdfFontChoice
@@ -89,6 +91,8 @@ export const PDF_ACCENT_SWATCHES = ['#14b8a6', '#3b82f6', '#ef4444', '#f59e0b', 
 
 const DEFAULT_PRESETS: Record<PdfDesignPresetDocument, PdfDesignPreset> = {
   invoice: {
+    useCustomColors: false,
+    useCustomFonts: false,
     accentColor: '#14b8a6',
     headerFont: 'Inter',
     bodyFont: 'Inter',
@@ -97,6 +101,8 @@ const DEFAULT_PRESETS: Record<PdfDesignPresetDocument, PdfDesignPreset> = {
     fillableColor: '#0f172a',
   },
   quotation: {
+    useCustomColors: false,
+    useCustomFonts: false,
     accentColor: '#0f172a',
     headerFont: 'Inter',
     bodyFont: 'Inter',
@@ -105,6 +111,8 @@ const DEFAULT_PRESETS: Record<PdfDesignPresetDocument, PdfDesignPreset> = {
     fillableColor: '#0f172a',
   },
   csr: {
+    useCustomColors: false,
+    useCustomFonts: false,
     accentColor: '#0f172a',
     headerFont: 'Inter',
     bodyFont: 'Inter',
@@ -113,6 +121,8 @@ const DEFAULT_PRESETS: Record<PdfDesignPresetDocument, PdfDesignPreset> = {
     fillableColor: '#0f172a',
   },
   waybill: {
+    useCustomColors: false,
+    useCustomFonts: false,
     accentColor: '#0f172a',
     headerFont: 'Inter',
     bodyFont: 'Inter',
@@ -165,6 +175,8 @@ export function sanitizePdfDesignPreset(
   const fallback = getDefaultPdfDesignPreset(documentType)
 
   return {
+    useCustomColors: value?.useCustomColors === true,
+    useCustomFonts: value?.useCustomFonts === true,
     accentColor: normalizeHexColor(value?.accentColor, fallback.accentColor),
     headerFont: normalizeFontChoice(value?.headerFont, fallback.headerFont),
     bodyFont: normalizeFontChoice(value?.bodyFont, fallback.bodyFont),

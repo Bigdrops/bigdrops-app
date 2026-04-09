@@ -5,6 +5,7 @@ import type { InvoiceItem } from '@/domain/invoice'
 import type { Quotation } from '@/domain/quotation'
 import type { DocumentResult } from '@/lib/Calculations'
 import type { PdfBankAccount, PdfOutputState, RefrensTemplateId } from '@/components/pdf/refrens/types'
+import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 
 type QuotationTemplatePdfProps = {
   template?: 'standard' | RefrensTemplateId
@@ -15,7 +16,7 @@ type QuotationTemplatePdfProps = {
   computedResult: DocumentResult
   bankAccounts?: PdfBankAccount[]
   pdfOutput?: PdfOutputState
-  designPreset?: unknown
+  designPreset?: PdfDesignPreset
 }
 
 export default function QuotationTemplatePDF({
@@ -37,7 +38,7 @@ export default function QuotationTemplatePDF({
         client={client}
         settings={settings}
         computedResult={computedResult}
-        designPreset={designPreset as never}
+        designPreset={designPreset}
       />
     )
   }
@@ -51,6 +52,7 @@ export default function QuotationTemplatePDF({
     computedResult,
     bankAccounts,
     pdfOutput,
+    designPreset,
   })
 
   return <RefrensPdfDocument model={model} />

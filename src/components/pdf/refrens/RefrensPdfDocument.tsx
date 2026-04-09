@@ -1,5 +1,5 @@
 import { Document, Page, Text } from '@react-pdf/renderer'
-import { HeaderSection, FooterSection, ItemsTableSection, PartiesSection, SupportSection, TotalsSection } from './RefrensPdfSections'
+import { HeaderSection, FooterSection, ItemsTableSection, PartiesSection, SupportSection, TotalsSection } from './TemplatePdfSections'
 import { createTemplateStyles } from './templateStyles'
 import type { RefrensPdfModel } from './types'
 
@@ -8,7 +8,7 @@ type RefrensPdfDocumentProps = {
 }
 
 export default function RefrensPdfDocument({ model }: RefrensPdfDocumentProps) {
-  const styles = createTemplateStyles(model.templateId)
+  const styles = createTemplateStyles(model.templateId, model.designPreset)
 
   return (
     <Document>
