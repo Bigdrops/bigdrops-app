@@ -3,8 +3,12 @@ import { TEMPLATE_TOKENS } from './templateTokens'
 import type { RefrensTemplateId } from './types'
 import { darkenHex, lightenHex, resolvePdfFontFamily, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 
+function safeNumber(value: unknown, fallback = 0): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
 export function createTemplateStyles(templateId: RefrensTemplateId, designPreset?: PdfDesignPreset) {
-  const tokens = TEMPLATE_TOKENS[templateId]
+  const tokens = TEMPLATE_TOKENS[templateId] || TEMPLATE_TOKENS.minimal
   
   // Customization overrides
   const useColorOverride = designPreset?.useCustomColors === true
@@ -19,16 +23,16 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
   const bodyFont = useFontOverride ? resolvePdfFontFamily(designPreset?.bodyFont!, 'regular') : 'Helvetica'
   const bodyBoldFont = useFontOverride ? resolvePdfFontFamily(designPreset?.bodyFont!, 'bold') : 'Helvetica-Bold'
 
-  const isDarkHeader = templateId === 'modern' || templateId === 'bold'
   const isElegant = templateId === 'elegant'
   const isMinimal = templateId === 'minimal'
+  const headerBorderBottomColor = isMinimal ? tokens.tableBorder : accentColor
 
   return StyleSheet.create({
     page: {
-      paddingTop: 32,
-      paddingRight: 32,
-      paddingBottom: 32,
-      paddingLeft: 32,
+      paddingTop: safeNumber(tokens.pagePaddingTop, 32),
+      paddingRight: safeNumber(tokens.pagePaddingRight, 32),
+      paddingBottom: safeNumber(tokens.pagePaddingBottom, 32),
+      paddingLeft: safeNumber(tokens.pagePaddingLeft, 32),
       backgroundColor: tokens.pageBackground,
       color: tokens.bodyText,
       fontFamily: bodyFont,
@@ -38,16 +42,16 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     headerWrap: {
       backgroundColor: tokens.headerBackground,
       color: tokens.headerText,
-      paddingTop: isDarkHeader ? 24 : 0,
-      paddingRight: isDarkHeader ? 24 : 0,
-      paddingBottom: 24,
-      paddingLeft: isDarkHeader ? 24 : 0,
-      marginTop: isDarkHeader ? -32 : 0,
-      marginRight: isDarkHeader ? -32 : 0,
-      marginLeft: isDarkHeader ? -32 : 0,
-      marginBottom: 20,
-      borderBottomWidth: isDarkHeader ? 0 : isMinimal ? 1 : 2,
-      borderBottomColor: isMinimal ? tokens.tableBorder : accentColor,
+      paddingTop: safeNumber(tokens.headerPaddingTop),
+      paddingRight: safeNumber(tokens.headerPaddingRight),
+      paddingBottom: safeNumber(tokens.headerPaddingBottom, 24),
+      paddingLeft: safeNumber(tokens.headerPaddingLeft),
+      marginTop: safeNumber(tokens.headerMarginTop),
+      marginRight: safeNumber(tokens.headerMarginRight),
+      marginLeft: safeNumber(tokens.headerMarginLeft),
+      marginBottom: safeNumber(tokens.headerMarginBottom, 20),
+      borderBottomWidth: safeNumber(tokens.headerBorderBottomWidth),
+      borderBottomColor: headerBorderBottomColor,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
@@ -126,10 +130,10 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     partyCard: {
       flex: 1,
-      padding: 12,
+      padding: safeNumber(tokens.partyCardPadding, 12),
       borderRadius: 4,
       backgroundColor: tokens.cardBackground,
-      borderWidth: isMinimal ? 1 : 0,
+      borderWidth: safeNumber(tokens.partyCardBorderWidth),
       borderColor: tokens.tableBorder,
     },
     partyLabel: {
@@ -158,41 +162,41 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     tableHeader: {
       flexDirection: 'row',
       backgroundColor: tokens.tableHeaderBackground,
-      borderBottomWidth: 1,
+      borderBottomWidth: safeNumber(tokens.tableHeaderBorderBottomWidth, 1),
       borderBottomColor: tokens.tableBorder,
-      borderTopWidth: isMinimal ? 1 : 0,
+      borderTopWidth: safeNumber(tokens.tableHeaderBorderTopWidth),
       borderTopColor: tokens.tableBorder,
     },
     thText: {
       fontSize: 8,
       fontFamily: bodyBoldFont,
-      paddingVertical: 8,
-      paddingHorizontal: 6,
+      paddingVertical: safeNumber(tokens.tableCellPaddingVertical, 8),
+      paddingHorizontal: safeNumber(tokens.tableCellPaddingHorizontal, 6),
       color: tokens.tableHeaderText,
       textTransform: 'uppercase',
     },
     tableRow: {
       flexDirection: 'row',
-      borderBottomWidth: 1,
+      borderBottomWidth: safeNumber(tokens.tableRowBorderBottomWidth, 1),
       borderBottomColor: tokens.tableBorder,
     },
     tableRowAlt: {
       flexDirection: 'row',
-      borderBottomWidth: 1,
+      borderBottomWidth: safeNumber(tokens.tableRowBorderBottomWidth, 1),
       borderBottomColor: tokens.tableBorder,
       backgroundColor: isElegant ? '#fffdf4' : tokens.tableHeaderBackground,
     },
     tdText: {
       fontSize: 9,
-      paddingVertical: 8,
-      paddingHorizontal: 6,
+      paddingVertical: safeNumber(tokens.tableCellPaddingVertical, 8),
+      paddingHorizontal: safeNumber(tokens.tableCellPaddingHorizontal, 6),
       color: tokens.bodyText,
     },
     tdBoldText: {
       fontSize: 9,
       fontFamily: bodyBoldFont,
-      paddingVertical: 8,
-      paddingHorizontal: 6,
+      paddingVertical: safeNumber(tokens.tableCellPaddingVertical, 8),
+      paddingHorizontal: safeNumber(tokens.tableCellPaddingHorizontal, 6),
       color: tokens.bodyText,
     },
     descText: {
@@ -211,7 +215,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
       marginTop: 16,
     },
     totalsBox: {
-      width: 220,
+      width: safeNumber(tokens.totalsBoxWidth, 220),
     },
     totalRow: {
       flexDirection: 'row',
@@ -230,9 +234,9 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     grandRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      marginTop: 8,
-      paddingTop: 8,
-      borderTopWidth: 2,
+      marginTop: safeNumber(tokens.grandRowMarginTop, 8),
+      paddingTop: safeNumber(tokens.grandRowPaddingTop, 8),
+      borderTopWidth: safeNumber(tokens.grandRowBorderTopWidth, 2),
       borderTopColor: accentColor,
     },
     grandLabel: {
@@ -248,10 +252,10 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     // Amount in words
     amountWordsBox: {
-      marginTop: 20,
-      padding: 12,
+      marginTop: safeNumber(tokens.amountWordsMarginTop, 20),
+      padding: safeNumber(tokens.amountWordsPadding, 12),
       backgroundColor: accentSoft,
-      borderWidth: 1,
+      borderWidth: safeNumber(tokens.amountWordsBorderWidth, 1),
       borderColor: accentBorder,
       borderRadius: 4,
     },
@@ -269,7 +273,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     // Support Sections (Notes, Bank, etc.)
     supportWrap: {
-      marginTop: 24,
+      marginTop: safeNumber(tokens.supportWrapMarginTop, 24),
       flexDirection: 'row',
       gap: 20,
     },
@@ -282,17 +286,17 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
       justifyContent: 'flex-end',
     },
     supportBlock: {
-      marginBottom: 16,
+      marginBottom: safeNumber(tokens.supportBlockMarginBottom, 16),
     },
     supportTitle: {
       fontSize: 8,
       fontFamily: headerFont,
       textTransform: 'uppercase',
       color: tokens.mutedText,
-      marginBottom: 6,
-      borderBottomWidth: 1,
+      marginBottom: safeNumber(tokens.supportTitleMarginBottom, 6),
+      borderBottomWidth: safeNumber(tokens.supportTitleBorderBottomWidth, 1),
       borderBottomColor: tokens.subtleBorder,
-      paddingBottom: 2,
+      paddingBottom: safeNumber(tokens.supportTitlePaddingBottom, 2),
     },
     supportText: {
       fontSize: 9,
@@ -314,8 +318,8 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
       color: tokens.bodyText,
     },
     signatureImage: {
-      width: 120,
-      height: 48,
+      width: safeNumber(tokens.signatureImageWidth, 120),
+      height: safeNumber(tokens.signatureImageHeight, 48),
       objectFit: 'contain',
     },
     signatureName: {
@@ -330,12 +334,12 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     // Footer
     footerNote: {
       position: 'absolute',
-      bottom: 32,
-      left: 32,
-      right: 32,
-      borderTopWidth: 1,
+      bottom: safeNumber(tokens.footerBottom, 32),
+      left: safeNumber(tokens.footerInsetLeft, 32),
+      right: safeNumber(tokens.footerInsetRight, 32),
+      borderTopWidth: safeNumber(tokens.footerBorderTopWidth, 1),
       borderTopColor: tokens.footerBorder,
-      paddingTop: 10,
+      paddingTop: safeNumber(tokens.footerPaddingTop, 10),
       textAlign: 'center',
       fontSize: 8,
       color: tokens.mutedText,

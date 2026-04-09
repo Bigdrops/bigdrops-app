@@ -103,22 +103,25 @@ export function GlobalSearch() {
         size="icon"
         onClick={toggle}
         className={cn(
-          "h-8 w-8 rounded-xl bg-muted/40 text-foreground transition-all duration-300 active:scale-95",
-          isOpen ? "scale-90 opacity-0 pointer-events-none" : "scale-100 opacity-100"
+          "h-10 w-10 shrink-0 rounded-xl bg-muted/50 text-foreground/80 hover:bg-muted active:scale-95",
+          isOpen ? "scale-90 opacity-0 pointer-events-none" : "scale-100 opacity-100 transition-all duration-300"
         )}
         aria-label="Search"
       >
-        <Search className="h-[18px] w-[18px]" />
+        <Search className="h-5 w-5" />
       </Button>
 
       {/* Global Search Backdrop for mobile focus */}
       {isOpen && (
-        <div className="fixed inset-0 z-[60] bg-background/20 backdrop-blur-sm transition-opacity duration-300 md:hidden" />
+        <div 
+          className="fixed inset-0 z-[60] bg-background/60 backdrop-blur-sm transition-all duration-300 md:hidden" 
+          onClick={() => setIsOpen(false)}
+        />
       )}
 
       <div
         className={cn(
-          "fixed right-4 top-4 z-[70] w-[calc(100vw-32px)] overflow-hidden rounded-[26px] border border-border bg-card shadow-2xl transition-all duration-300 ease-out sm:absolute sm:right-0 sm:top-0 sm:w-[420px]",
+          "fixed right-4 top-4 z-[70] w-[calc(100vw-32px)] overflow-hidden rounded-[26px] border border-border/80 bg-card shadow-2xl transition-all duration-300 ease-out sm:absolute sm:right-0 sm:top-0 sm:w-[420px]",
           isOpen
             ? "translate-y-0 opacity-100 scale-100 visible"
             : "-translate-y-4 opacity-0 scale-95 invisible"

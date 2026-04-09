@@ -20,12 +20,17 @@ export function ItemsTableSection({ model, styles }: Props) {
   // Group items by their calculated types
   const items = model.computedResult.items || []
   let displayCounter = 0
+  const safeColumns = columns.map((column) => ({
+    ...column,
+    pdfFlex: Number.isFinite(column.pdfFlex) ? column.pdfFlex : 1,
+    align: column.align || 'left',
+  }))
 
   return (
     <View style={styles.table}>
       {/* Header */}
       <View style={styles.tableHeader} fixed>
-        {columns.map((col) => (
+        {safeColumns.map((col) => (
           <View key={col.key} style={{ flex: col.pdfFlex }}>
             <Text style={[styles.thText, { textAlign: col.align }]}>{col.label}</Text>
           </View>
@@ -43,7 +48,7 @@ export function ItemsTableSection({ model, styles }: Props) {
 
         return (
           <View key={rawItem.id || index} style={rowStyle} wrap={false}>
-            {columns.map((col) => (
+            {safeColumns.map((col) => (
               <View key={col.key} style={{ flex: col.pdfFlex }}>
                 {col.key === 'num' ? (
                   <Text style={[styles.tdText, { textAlign: col.align }]}>{displayCounter}</Text>

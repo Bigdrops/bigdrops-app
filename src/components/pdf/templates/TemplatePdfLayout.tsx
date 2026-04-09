@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { Document, Page } from '@react-pdf/renderer'
+import { Document, Page, Text } from '@react-pdf/renderer'
 import { createTemplateStyles } from './templateStyles'
 import { HeaderSection } from './sections/HeaderSection'
 import { PartiesSection } from './sections/PartiesSection'
@@ -15,12 +15,13 @@ type Props = {
 
 export default function TemplatePdfLayout({ model }: Props) {
   const styles = useMemo(() => createTemplateStyles(model.templateId, model.designPreset), [model.templateId, model.designPreset])
+  const hasTitle = typeof model.title === 'string' && model.title.trim().length > 0
 
   return (
     <Document title={`${model.documentLabel} ${model.documentNumber}`}>
       <Page size="A4" style={styles.page}>
         <HeaderSection model={model} styles={styles} />
-        {model.title ? <Text style={styles.title}>{model.title}</Text> : null}
+        {hasTitle ? <Text style={styles.title}>{model.title}</Text> : null}
         <PartiesSection model={model} styles={styles} />
         <ItemsTableSection model={model} styles={styles} />
         <TotalsSection model={model} styles={styles} />

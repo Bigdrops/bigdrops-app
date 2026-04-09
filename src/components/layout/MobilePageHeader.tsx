@@ -32,13 +32,13 @@ export default function MobilePageHeader({
       <div className="flex items-start gap-3">
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="icon"
           onClick={onMenuClick}
-          className="mt-0.5 h-9 w-9 rounded-xl border-border bg-muted/40 text-foreground shadow-none"
+          className="mt-0.5 h-10 w-10 shrink-0 rounded-xl bg-muted/50 text-foreground/80 hover:bg-muted active:scale-95"
           aria-label="Open navigation menu"
         >
-          <Menu className="h-4 w-4" />
+          <Menu className="h-5 w-5" />
         </Button>
 
         <div className="min-w-0 flex-1">
