@@ -154,7 +154,7 @@ export default function Login() {
         {/* left content */}
         <div className="mb-8 hidden lg:block">
           <div className="max-w-xl">
-            <div className="mb-4 inline-flex rounded-full border border-black/10 bg-white/70 px-4 py-1 text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground backdrop-blur">
+            <div className="brand-wordmark mb-4 inline-flex rounded-full border border-black/10 bg-white/70 px-4 py-1 text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground backdrop-blur">
               BigDrops ERP
             </div>
 
@@ -224,7 +224,7 @@ export default function Login() {
               ) : (
                 <>
                   <div className="mb-6 text-center lg:text-left">
-                    <div className="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">
+                    <div className="brand-wordmark text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">
                       BigDrops ERP
                     </div>
                     <h2 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">

@@ -105,6 +105,11 @@
 }
 
 @layer utilities {
+  .brand-wordmark {
+    font-family: 'Broken Planet', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 400;
+  }
+
   .surface-strong {
     background-color: var(--surface-strong);
     color: var(--surface-strong-foreground);

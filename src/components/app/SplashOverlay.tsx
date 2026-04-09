@@ -42,7 +42,7 @@ export default function SplashOverlay({
         <div className="flex flex-col items-center">
           {variant === 'ordered-intake' ? <OrderedIntakeMark /> : <FolderTabMark />}
 
-          <h1 className="mt-4 text-[20px] font-semibold tracking-[-0.02em] text-foreground">
+          <h1 className="brand-wordmark mt-4 text-[20px] font-semibold tracking-[-0.02em] text-foreground">
             BigDrops
           </h1>
 
