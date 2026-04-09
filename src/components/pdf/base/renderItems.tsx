@@ -127,13 +127,11 @@ export function renderItemsTable({
               key={column.key}
               style={{
                 flex: column.pdfFlex,
-                paddingRight: isLastColumn ? 0 : 6,
-                marginRight: isLastColumn ? 0 : 6,
-                borderRightWidth: isLastColumn ? 0 : 1,
-                borderRightColor: styles.columnDivider?.borderRightColor || '#d5dde8',
+                position: 'relative' as const,
               }}
             >
               <React.Text style={[styles.thText, columnStyle(column)]}>{column.label}</React.Text>
+              {!isLastColumn ? <React.View style={styles.columnDivider} /> : null}
             </React.View>
           )
         })}
@@ -199,10 +197,7 @@ export function renderItemsTable({
               const isLastColumn = columnIndex === resolvedColumns.length - 1
               const cellWrapStyle = {
                 flex: column.pdfFlex,
-                paddingRight: isLastColumn ? 0 : 6,
-                marginRight: isLastColumn ? 0 : 6,
-                borderRightWidth: isLastColumn ? 0 : 1,
-                borderRightColor: styles.columnDivider?.borderRightColor || '#d5dde8',
+                position: 'relative' as const,
               }
 
               if (column.key === 'num') {
@@ -213,6 +208,7 @@ export function renderItemsTable({
                     >
                       {itemCount}
                     </React.Text>
+                    {!isLastColumn ? <React.View style={styles.columnDivider} /> : null}
                   </React.View>
                 )
               }
@@ -233,6 +229,7 @@ export function renderItemsTable({
                           ))
                         : null}
                     </React.View>
+                    {!isLastColumn ? <React.View style={styles.columnDivider} /> : null}
                   </React.View>
                 )
               }
@@ -247,6 +244,7 @@ export function renderItemsTable({
                     >
                       {unit ? `${qty} ${unit}` : qty}
                     </React.Text>
+                    {!isLastColumn ? <React.View style={styles.columnDivider} /> : null}
                   </React.View>
                 )
               }
@@ -270,6 +268,7 @@ export function renderItemsTable({
                       installValue,
                     })}
                   </React.Text>
+                  {!isLastColumn ? <React.View style={styles.columnDivider} /> : null}
                 </React.View>
               )
             })}

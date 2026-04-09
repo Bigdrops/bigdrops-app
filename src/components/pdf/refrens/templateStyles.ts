@@ -182,8 +182,12 @@ export function createTemplateStyles(templateId: RefrensTemplateId) {
       backgroundColor: templateId === 'elegant' ? '#fffaf0' : '#f9fafb',
     },
     columnDivider: {
-      borderRightColor: templateId === 'modern' || templateId === 'bold' ? 'rgba(255,255,255,0.32)' : '#d5dde8',
-      borderRightWidth: 1,
+      position: 'absolute',
+      top: -7,
+      bottom: -7,
+      right: 0,
+      width: 1,
+      backgroundColor: templateId === 'modern' || templateId === 'bold' ? 'rgba(255,255,255,0.32)' : '#d5dde8',
     },
     groupRow: {
       flexDirection: 'row',
