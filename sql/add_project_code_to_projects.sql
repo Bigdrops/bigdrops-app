@@ -8,7 +8,7 @@ with ranked_projects as (
     row_number() over (
       partition by to_char(coalesce(created_at, now()), 'YYYY')
       order by coalesce(created_at, now()), id
-    ) as project_sequence
+    ) as project_sequence , 
   from public.projects
   where project_code is null
 )
@@ -22,3 +22,4 @@ on public.projects (project_code);
 
 alter table public.projects
 alter column project_code set not null;
+ 

@@ -791,7 +791,12 @@ export default function ViewInvoice() {
     invoice?.created_by === session?.user?.id
       ? session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || session?.user?.email
       : null,
-  ].find((value) => String(value || '').trim()) || 'Unknown creator'
+  ].find((value) => {
+    const text = String(value || '').trim()
+    if (!text) return false
+    const lowered = text.toLowerCase()
+    return lowered !== 'unknown' && lowered !== 'unknown creator' && lowered !== 'n/a'
+  }) || null
   const dueStatusText =
     computedStatus === 'paid'
       ? 'Paid in full'
@@ -801,8 +806,6 @@ export default function ViewInvoice() {
           ? `Due ${formatDate(invoice.due_date)}`
           : 'Open'
   const amountInWordsText = String(invoice.amount_in_words || '').trim()
-  const summaryOpenLabel = 'Show full summary'
-  const summaryCloseLabel = 'Hide full summary'
 
   return (
     <Layout
@@ -839,13 +842,13 @@ export default function ViewInvoice() {
           dueStatusText={dueStatusText}
           amountInWordsText={amountInWordsText || 'Amount in words not provided.'}
           creatorName={creatorName}
-          openLabel={summaryOpenLabel}
-          closeLabel={summaryCloseLabel}
+          openLabel="Show summary"
+          closeLabel="Hide summary"
         >
           <DocumentHeroCard
             eyebrow={`Invoice Summary · ${statusLabel}`}
             value={formatMoney(invoiceTotal)}
-            helper={`${dueStatusText}. Created by ${creatorName}.${amountInWordsText ? ` ${amountInWordsText}` : ''}`}
+            helper={`${dueStatusText}.${creatorName ? ` Created by ${creatorName}.` : ''}${amountInWordsText ? ` ${amountInWordsText}` : ''}`}
             stats={[
               { label: 'Balance', value: formatMoney(balanceDue), className: balanceDue > 0 ? 'text-rose-300' : 'text-emerald-300' },
               { label: 'Received', value: formatMoney(cashReceived) },
@@ -1160,25 +1163,27 @@ function CompactInvoiceSummary({
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="space-y-3 border-b border-slate-200/80 pb-4">
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-start justify-between gap-3 text-left"
-      >
+    <div className="border-b border-slate-200/80 pb-3">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold leading-6 text-foreground">
+          <div className="text-sm font-semibold leading-5 text-foreground">
             {`Total ${totalText} · Balance ${balanceText} · Received ${receivedText} · ${dueStatusText}`}
           </div>
-          <div className="mt-1 text-sm leading-6 text-muted-foreground">{amountInWordsText}</div>
-          <div className="text-sm leading-6 text-muted-foreground">Creator: {creatorName}</div>
+          <div className="mt-0.5 line-clamp-2 text-xs leading-4 text-muted-foreground">{amountInWordsText}</div>
+          {creatorName ? (
+            <div className="mt-0.5 text-xs leading-4 text-muted-foreground">{creatorName}</div>
+          ) : null}
         </div>
-        <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-600">
-          <span>{open ? closeLabel : openLabel}</span>
-        </div>
-      </button>
+        <button
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          className="shrink-0 text-[11px] font-semibold leading-4 text-muted-foreground underline-offset-2 transition hover:text-foreground hover:underline"
+        >
+          {open ? closeLabel : openLabel}
+        </button>
+      </div>
 
-      {open ? children : null}
+      {open ? <div className="pt-2">{children}</div> : null}
     </div>
   )
 }
