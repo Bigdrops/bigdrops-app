@@ -16,10 +16,12 @@ function safeText(value: unknown, fallback: string): string {
 
 function sanitizeStyle(style: PdfStyleShape): PdfStyleShape {
   const next: PdfStyleShape = {}
+  const BORDER_WIDTH_KEY_PATTERN = /^border(?:Top|Right|Bottom|Left)?Width$/
 
   for (const [key, value] of Object.entries(style)) {
     if (value === undefined || value === null) continue
     if (typeof value === 'number' && !Number.isFinite(value)) continue
+    if (typeof value === 'number' && BORDER_WIDTH_KEY_PATTERN.test(key) && value <= 0) continue
     next[key] = value
   }
 
@@ -38,9 +40,11 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
   const accentSoft = lightenHex(accentColor, 40)
   const accentBorder = lightenHex(accentColor, 30)
 
-  const headerFont = useFontOverride ? resolvePdfFontFamily(safeText(designPreset?.headerFont, 'Inter'), 'bold') : 'Helvetica-Bold'
-  const bodyFont = useFontOverride ? resolvePdfFontFamily(safeText(designPreset?.bodyFont, 'Inter'), 'regular') : 'Helvetica'
-  const bodyBoldFont = useFontOverride ? resolvePdfFontFamily(safeText(designPreset?.bodyFont, 'Inter'), 'bold') : 'Helvetica-Bold'
+  const headerFontChoice = designPreset?.headerFont ?? 'Inter'
+  const bodyFontChoice = designPreset?.bodyFont ?? 'Inter'
+  const headerFont = useFontOverride ? resolvePdfFontFamily(headerFontChoice, 'bold') : 'Helvetica-Bold'
+  const bodyFont = useFontOverride ? resolvePdfFontFamily(bodyFontChoice, 'regular') : 'Helvetica'
+  const bodyBoldFont = useFontOverride ? resolvePdfFontFamily(bodyFontChoice, 'bold') : 'Helvetica-Bold'
 
   const isDarkHeader = templateId === 'modern' || templateId === 'bold'
   const isElegant = templateId === 'elegant'
