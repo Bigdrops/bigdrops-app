@@ -1,3 +1,5 @@
+import { getPdfSummaryLabels } from '@/components/pdf/refrens/summaryLabels'
+
 import { getAdvanceSummaryValues } from './advanceSummary'
 
 export type PreviewBankAccount = {
@@ -32,6 +34,7 @@ export type PreviewNoteSection =
   | { title: string; kind: 'links'; links: { label: string; url: string }[] }
 
 type InvoiceLike = {
+  custom_fields?: unknown
   thread_role?: string | null
   is_advance?: boolean | null
   total_contract_value?: number | string | null
@@ -107,6 +110,9 @@ type CustomFieldObjectLike = {
 type PdfOutputLike = {
   bankAccountId?: string | null
   showBalanceDue?: boolean
+  showVatPercentage?: boolean
+  showWhtPercentage?: boolean
+  showDiscountPercentage?: boolean
 }
 
 export type BuildInvoicePreviewModelInput = {
@@ -230,6 +236,7 @@ export function buildInvoicePreviewModel({
   })
 
   const advanceSummary = getAdvanceSummaryValues(invoice)
+  const summaryLabels = getPdfSummaryLabels(invoice, pdfOutput)
 
   const previewTotals: PreviewTotalRow[] = advanceSummary
     ? [
@@ -246,12 +253,12 @@ export function buildInvoicePreviewModel({
       ]
     : [
         { label: 'Subtotal', value: formatMoney(Number(invoice.subtotal || 0)) },
-        ...(Number(invoice.vat || 0) > 0 ? [{ label: 'VAT', value: formatMoney(Number(invoice.vat || 0)) }] : []),
+        ...(Number(invoice.vat || 0) > 0 ? [{ label: summaryLabels.vat, value: formatMoney(Number(invoice.vat || 0)) }] : []),
         ...(Number(invoice.workmanship || 0) > 0 ? [{ label: 'Workmanship', value: formatMoney(Number(invoice.workmanship || 0)) }] : []),
         ...(Number(invoice.transportation || 0) > 0 ? [{ label: 'Transportation', value: formatMoney(Number(invoice.transportation || 0)) }] : []),
         ...(Number(invoice.shipping || 0) > 0 ? [{ label: 'Shipping', value: formatMoney(Number(invoice.shipping || 0)) }] : []),
-        ...(Number(invoice.discount || 0) > 0 ? [{ label: 'Discount', value: formatMoney(Number(invoice.discount || 0)), valueClassName: 'text-red-600' }] : []),
-        ...(Number(invoice.wht || 0) > 0 ? [{ label: 'WHT', value: formatMoney(Number(invoice.wht || 0)) }] : []),
+        ...(Number(invoice.discount || 0) > 0 ? [{ label: summaryLabels.discount, value: formatMoney(Number(invoice.discount || 0)), valueClassName: 'text-red-600' }] : []),
+        ...(Number(invoice.wht || 0) > 0 ? [{ label: summaryLabels.wht, value: formatMoney(Number(invoice.wht || 0)) }] : []),
         { label: 'Total', value: formatMoney(invoiceTotal), emphasis: true, valueClassName: 'text-slate-950' },
         { label: 'Cash Received', value: formatMoney(cashReceived) },
         ...(pdfOutput?.showBalanceDue === false

@@ -21,6 +21,7 @@ import { supabase } from '@/supabase'
 import { calcTotals } from '@/components/useInvoiceColumns.jsx'
 import { computeDocument } from '@/lib/Calculations'
 import { DEFAULT_QUOTATION_TEMPLATE, QUOTATION_PDF_TEMPLATES, type PdfTemplateId } from '@/components/pdf/pdfTemplates'
+import { getPdfSummaryLabels } from '@/components/pdf/refrens/summaryLabels'
 import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { isDocumentFillableEnabled } from '@/lib/documentFillableSettings'
 import { getPdfTemplatePreset, setPdfTemplatePreset } from '@/lib/pdfTemplatePreset'
@@ -657,12 +658,13 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       facts: itemFacts,
     }
   })
+  const previewSummaryLabels = getPdfSummaryLabels(quotation, pdfOutput)
   const previewTotals = [
     { label: 'Subtotal', value: formatMoney(totals?.rawSubtotal || 0) },
     ...(Number(totals?.installRateTotal || 0) > 0 ? [{ label: 'Install Rate', value: formatMoney(totals?.installRateTotal || 0) }] : []),
-    ...(Number(totals?.vatAmount || 0) > 0 ? [{ label: 'VAT', value: formatMoney(totals?.vatAmount || 0) }] : []),
-    ...(Number(totals?.discountAmount || 0) > 0 ? [{ label: 'Discount', value: formatMoney(totals?.discountAmount || 0), valueClassName: 'text-red-600' }] : []),
-    ...(Number(totals?.whtAmount || 0) > 0 ? [{ label: 'WHT', value: formatMoney(totals?.whtAmount || 0) }] : []),
+    ...(Number(totals?.vatAmount || 0) > 0 ? [{ label: previewSummaryLabels.vat, value: formatMoney(totals?.vatAmount || 0) }] : []),
+    ...(Number(totals?.discountAmount || 0) > 0 ? [{ label: previewSummaryLabels.discount, value: formatMoney(totals?.discountAmount || 0), valueClassName: 'text-red-600' }] : []),
+    ...(Number(totals?.whtAmount || 0) > 0 ? [{ label: previewSummaryLabels.wht, value: formatMoney(totals?.whtAmount || 0) }] : []),
     { label: 'Total', value: formatMoney(shellQuotationTotal), emphasis: true, valueClassName: 'text-slate-950' },
   ]
   const previewNotesSections = [
