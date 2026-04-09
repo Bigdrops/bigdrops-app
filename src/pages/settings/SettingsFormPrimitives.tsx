@@ -35,7 +35,7 @@ export function SettingsInput({
       value={value || ''}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-colors placeholder:text-slate-300 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-ring/10"
+      className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-colors placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
     />
   )
 }
@@ -53,7 +53,7 @@ export function SettingsSaveButton({
     <button
       onClick={onClick}
       disabled={saving}
-      className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+      className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
     >
       {saving ? (
         <Loader2 size={15} className="animate-spin" />

@@ -38,17 +38,17 @@
 
   --radius: 0.75rem;
 
-  --surface-strong: oklch(0.28 0.02 257);
-  --surface-strong-foreground: oklch(0.98 0 0);
+  --surface-strong: color-mix(in oklab, hsl(var(--foreground)) 88%, hsl(var(--background)));
+  --surface-strong-foreground: hsl(var(--background));
   --surface-overlay-soft: color-mix(in oklab, var(--surface-strong) 40%, transparent);
   --surface-overlay-strong: color-mix(in oklab, var(--surface-strong) 80%, transparent);
 
-  --tone-neutral: oklch(0.44 0.02 257);
-  --tone-info: oklch(0.63 0.15 255);
-  --tone-accent: oklch(0.62 0.19 310);
-  --tone-success: oklch(0.68 0.17 150);
-  --tone-warning: oklch(0.77 0.14 75);
-  --tone-data: oklch(0.71 0.11 220);
+  --tone-neutral: color-mix(in oklab, hsl(var(--foreground)) 28%, hsl(var(--background)));
+  --tone-info: color-mix(in oklab, hsl(var(--primary)) 78%, hsl(var(--background)));
+  --tone-accent: color-mix(in oklab, hsl(var(--accent)) 78%, hsl(var(--background)));
+  --tone-success: color-mix(in oklab, hsl(var(--primary)) 54%, hsl(var(--accent)) 46%);
+  --tone-warning: color-mix(in oklab, hsl(var(--accent)) 60%, hsl(var(--secondary)) 40%);
+  --tone-data: color-mix(in oklab, hsl(var(--ring)) 70%, hsl(var(--background)));
 
   --tone-neutral-soft: color-mix(in oklab, var(--tone-neutral) 8%, hsl(var(--background)));
   --tone-neutral-border: color-mix(in oklab, var(--tone-neutral) 18%, hsl(var(--background)));

@@ -1,55 +1,119 @@
-import { useEffect, useState } from 'react'
-import { Palette, RotateCcw } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { CheckCircle2, Palette, RotateCcw, Sparkles } from 'lucide-react'
 import { saveSettings, useSettings } from '@/hooks/useSettings'
-import { SettingsField, SettingsSaveButton, SettingsInput } from './SettingsFormPrimitives'
+import { normalizeHexColor } from '@/lib/colorTheme'
+import { THEME_PRESETS, type ThemePresetId, resolveThemeMode } from '@/lib/themePresets'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
+import { SettingsField, SettingsInput, SettingsSaveButton } from './SettingsFormPrimitives'
 import { SettingsLoadingState } from './SettingsLoadingState'
 import { getErrorMessage } from './settings-helpers'
 import type { SettingsToastFn } from './settings-types'
-import { normalizeHexColor } from '@/lib/colorTheme'
 
-type Preset = {
-  label: string
-  background: string
-  card: string
+const DEFAULT_BACKGROUND = '#F5F5F5'
+const DEFAULT_CARD = '#FAFAFA'
+
+type PresetCardProps = {
+  title: string
+  description: string
+  preview: {
+    background: string
+    card: string
+    primary: string
+    accent: string
+  }
+  selected: boolean
+  onSelect: () => void
 }
 
-const PRESETS: Preset[] = [
-  { label: 'Default', background: '#F5F5F5', card: '#FAFAFA' },
-  { label: 'Soft Grey', background: '#E2E8F0', card: '#F1F5F9' },
-  { label: 'Warm Paper', background: '#FDFCF0', card: '#FEFEF7' },
-]
+function PresetCard({ title, description, preview, selected, onSelect }: PresetCardProps) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        'text-left transition-transform active:scale-[0.99]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30'
+      )}
+    >
+      <Card
+        className={cn(
+          'h-full border bg-card/95 shadow-sm ring-1 ring-transparent transition-colors',
+          selected
+            ? 'border-primary bg-primary/5 ring-primary/20'
+            : 'border-border hover:border-primary/30 hover:bg-muted/30'
+        )}
+      >
+        <CardHeader className="gap-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+              <CardDescription className="text-[11px] leading-relaxed">
+                {description}
+              </CardDescription>
+            </div>
+            {selected ? <CheckCircle2 className="h-4 w-4 text-primary" /> : null}
+          </div>
+          <div
+            className="rounded-xl border border-border/70 p-2"
+            style={{ backgroundColor: preview.background }}
+          >
+            <div className="flex items-center gap-2 rounded-lg p-2" style={{ backgroundColor: preview.card }}>
+              <div className="h-6 w-6 rounded-md" style={{ backgroundColor: preview.primary }} />
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="h-2.5 w-16 rounded-full bg-black/15" />
+                <div className="h-2 w-12 rounded-full bg-black/10" />
+              </div>
+              <div
+                className="h-6 w-10 rounded-md"
+                style={{ backgroundColor: preview.accent }}
+              />
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+    </button>
+  )
+}
 
 export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn }) {
   const { settings, loading } = useSettings()
+  const [selectedMode, setSelectedMode] = useState<ThemePresetId>('custom')
   const [background, setBackground] = useState('')
   const [card, setCard] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    if (!loading && settings) {
-      setBackground(settings.app_background_color || '')
-      setCard(settings.app_card_color || '')
-    }
+    if (loading || !settings) return
+
+    setSelectedMode(resolveThemeMode(settings) ?? 'custom')
+    setBackground(settings.app_background_color || '')
+    setCard(settings.app_card_color || '')
   }, [loading, settings])
 
-  const handleReset = async () => {
-    setSaving(true)
-    try {
-      await saveSettings({ 
-        app_background_color: null,
-        app_card_color: null
-      })
-      setBackground('')
-      setCard('')
-      onToast('Theme reset to default')
-    } catch (error) {
-      onToast(getErrorMessage(error))
-    }
-    setSaving(false)
-  }
+  const selectedPreset = useMemo(
+    () => THEME_PRESETS.find((preset) => preset.id === selectedMode) ?? null,
+    [selectedMode]
+  )
 
   const handleSave = async () => {
+    if (selectedMode !== 'custom') {
+      setSaving(true)
+      try {
+        await saveSettings({ app_theme_preset_id: selectedMode })
+        setSaved(true)
+        onToast(`${selectedPreset?.label ?? 'Theme preset'} applied`)
+        setTimeout(() => setSaved(false), 2500)
+      } catch (error) {
+        onToast(getErrorMessage(error))
+      }
+      setSaving(false)
+      return
+    }
+
     const normBg = background ? normalizeHexColor(background) : null
     const normCard = card ? normalizeHexColor(card) : null
 
@@ -64,12 +128,13 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
     setSaving(true)
     try {
-      await saveSettings({ 
+      await saveSettings({
+        app_theme_preset_id: 'custom',
         app_background_color: normBg,
-        app_card_color: normCard
+        app_card_color: normCard,
       })
       setSaved(true)
-      onToast('App Theme updated')
+      onToast('Custom app theme updated')
       setTimeout(() => setSaved(false), 2500)
     } catch (error) {
       onToast(getErrorMessage(error))
@@ -77,92 +142,179 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
     setSaving(false)
   }
 
-  const applyPreset = (preset: Preset) => {
-    setBackground(preset.background)
-    setCard(preset.card)
+  const handleReset = async () => {
+    setSaving(true)
+    try {
+      await saveSettings({
+        app_theme_preset_id: 'custom',
+        app_background_color: null,
+        app_card_color: null,
+      })
+      setSelectedMode('custom')
+      setBackground('')
+      setCard('')
+      onToast('Theme reset to default')
+    } catch (error) {
+      onToast(getErrorMessage(error))
+    }
+    setSaving(false)
   }
 
   if (loading) return <SettingsLoadingState />
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-border bg-muted/50 p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white">
-            <Palette size={20} />
-          </div>
-          <div>
-            <div className="text-sm font-bold text-foreground">App Theme</div>
-            <div className="text-xs text-muted-foreground">
-              Customize the look and feel of the authenticated app environment.
+      <Card className="border-border bg-muted/40">
+        <CardHeader className="gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <Palette size={18} />
+            </div>
+            <div className="space-y-1">
+              <CardTitle className="text-sm font-semibold">App Theme</CardTitle>
+              <CardDescription className="text-xs leading-relaxed">
+                Pick a preset for the whole product, or switch to Custom to keep using
+                manual background and card colors.
+              </CardDescription>
             </div>
           </div>
+        </CardHeader>
+      </Card>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold text-foreground">Presets</div>
+            <div className="text-xs text-muted-foreground">
+              One selection updates the full semantic token bundle.
+            </div>
+          </div>
+          <Badge variant="secondary" className="gap-1">
+            <Sparkles className="h-3 w-3" />
+            Global
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {THEME_PRESETS.map((preset) => (
+            <PresetCard
+              key={preset.id}
+              title={preset.label}
+              description={preset.description}
+              preview={preset.preview}
+              selected={selectedMode === preset.id}
+              onSelect={() => setSelectedMode(preset.id)}
+            />
+          ))}
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {PRESETS.map((p) => (
-          <button
-            key={p.label}
-            onClick={() => applyPreset(p)}
-            className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-muted/50"
+      <div className="space-y-3">
+        <div>
+          <div className="text-sm font-semibold text-foreground">Custom</div>
+          <div className="text-xs text-muted-foreground">
+            Use manual colors only when you want to override the default neutral base.
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setSelectedMode('custom')}
+          className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+        >
+          <Card
+            className={cn(
+              'border transition-colors',
+              selectedMode === 'custom'
+                ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                : 'border-border hover:border-primary/30 hover:bg-muted/20'
+            )}
           >
-            {p.label}
-          </button>
-        ))}
+            <CardHeader className="gap-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-sm font-semibold">Custom Theme</CardTitle>
+                  <CardDescription className="text-[11px] leading-relaxed">
+                    Manual background and card surface editor. Existing saved custom values are
+                    preserved here.
+                  </CardDescription>
+                </div>
+                {selectedMode === 'custom' ? (
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                ) : null}
+              </div>
+            </CardHeader>
+          </Card>
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <SettingsField label="Page Background">
-          <div className="flex gap-2">
-            <SettingsInput
-              value={background}
-              onChange={setBackground}
-              placeholder="#F5F5F5"
-            />
-            <input
-              type="color"
-              value={normalizeHexColor(background) || '#F5F5F5'}
-              onChange={(e) => setBackground(e.target.value.toUpperCase())}
-              className="h-[42px] w-12 cursor-pointer rounded-lg border border-input bg-background p-1"
-            />
-          </div>
-        </SettingsField>
+      {selectedMode === 'custom' ? (
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">Custom Color Editor</CardTitle>
+            <CardDescription className="text-xs leading-relaxed">
+              These values apply only when Custom mode is selected.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <SettingsField label="Page Background">
+                <div className="flex gap-2">
+                  <SettingsInput
+                    value={background}
+                    onChange={setBackground}
+                    placeholder={DEFAULT_BACKGROUND}
+                  />
+                  <input
+                    type="color"
+                    value={normalizeHexColor(background) || DEFAULT_BACKGROUND}
+                    onChange={(e) => setBackground(e.target.value.toUpperCase())
+                    }
+                    className="h-[42px] w-12 cursor-pointer rounded-lg border border-input bg-background p-1"
+                  />
+                </div>
+              </SettingsField>
 
-        <SettingsField label="Card / Box Surface">
-          <div className="flex gap-2">
-            <SettingsInput
-              value={card}
-              onChange={setCard}
-              placeholder="#FAFAFA"
-            />
-            <input
-              type="color"
-              value={normalizeHexColor(card) || '#FAFAFA'}
-              onChange={(e) => setCard(e.target.value.toUpperCase())}
-              className="h-[42px] w-12 cursor-pointer rounded-lg border border-input bg-background p-1"
-            />
-          </div>
-        </SettingsField>
-      </div>
+              <SettingsField label="Card / Box Surface">
+                <div className="flex gap-2">
+                  <SettingsInput
+                    value={card}
+                    onChange={setCard}
+                    placeholder={DEFAULT_CARD}
+                  />
+                  <input
+                    type="color"
+                    value={normalizeHexColor(card) || DEFAULT_CARD}
+                    onChange={(e) => setCard(e.target.value.toUpperCase())}
+                    className="h-[42px] w-12 cursor-pointer rounded-lg border border-input bg-background p-1"
+                  />
+                </div>
+              </SettingsField>
+            </div>
 
-      <div className="rounded-xl border border-slate-200 bg-blue-50/30 p-3">
-        <p className="text-[11px] leading-relaxed text-blue-700 font-medium">
-          Note: Theme settings are global. Changes reflect for all authenticated users.
-          The default neutral theme uses #F5F5F5 for pages and #FAFAFA for components.
-        </p>
-      </div>
+            <div className="rounded-xl border border-border bg-muted/40 p-3">
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Theme settings are global. Preset mode ignores these manual values until you
+                switch back to Custom.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="flex flex-col gap-3">
         <SettingsSaveButton saving={saving} saved={saved} onClick={handleSave} />
-        <button
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
           onClick={handleReset}
           disabled={saving}
-          className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-bold text-slate-600 transition-colors hover:bg-muted/50 disabled:opacity-50"
+          className="w-full gap-2 rounded-xl py-3 text-sm font-bold"
         >
           <RotateCcw size={15} />
           Reset to Default
-        </button>
+        </Button>
       </div>
     </div>
   )

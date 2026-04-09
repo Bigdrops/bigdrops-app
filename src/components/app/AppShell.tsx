@@ -6,6 +6,7 @@ import PageLoader from '@/components/app/PageLoader'
 import { isAndroidNative } from '@/lib/native/capacitor'
 import { useSettings } from '@/hooks/useSettings'
 import { normalizeHexColor, hexToHslTriplet } from '@/lib/colorTheme'
+import { getThemePreset, resolveThemeMode } from '@/lib/themePresets'
 import {
   applyThemeTokenBundle,
   clearThemeTokenBundle,
@@ -72,36 +73,46 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
   useEffect(() => {
     const bgSetting = settings?.app_background_color
     const cardSetting = settings?.app_card_color
-
-    // Future presets will provide a full semantic token bundle. For now this is optional
-    // and defaults to the CSS `:root` values in src/index.css.
     const rawBundle = (settings as unknown as { app_theme_tokens?: unknown })?.app_theme_tokens
     const normalizedBundle = normalizeThemeTokenBundle(rawBundle, { allowRadius: true })
+    const mode = resolveThemeMode(settings)
 
-    // Back-compat: manual background/card pickers (hex) override any bundle-provided values.
-    const legacyOverrides: ThemeTokenBundle = {}
-    const normBg = bgSetting ? normalizeHexColor(bgSetting) : null
-    const normCard = cardSetting ? normalizeHexColor(cardSetting) : null
+    let bundleToApply: ThemeTokenBundle = {}
 
-    if (normBg) {
-      legacyOverrides.background = hexToHslTriplet(normBg)
+    if (mode && mode !== 'custom') {
+      bundleToApply = getThemePreset(mode)?.bundle ?? {}
+    } else if (mode === 'custom') {
+      const legacyOverrides: ThemeTokenBundle = {}
+      const normBg = bgSetting ? normalizeHexColor(bgSetting) : null
+      const normCard = cardSetting ? normalizeHexColor(cardSetting) : null
+
+      if (normBg) {
+        legacyOverrides.background = hexToHslTriplet(normBg)
+      }
+
+      if (normCard) {
+        const cardHsl = hexToHslTriplet(normCard)
+        legacyOverrides.card = cardHsl
+        legacyOverrides.popover = cardHsl
+      }
+
+      bundleToApply = {
+        ...normalizedBundle,
+        ...legacyOverrides,
+      }
     }
 
-    if (normCard) {
-      const cardHsl = hexToHslTriplet(normCard)
-      legacyOverrides.card = cardHsl
-      legacyOverrides.popover = cardHsl
-    }
-
-    const applied = applyThemeTokenBundle({
-      ...normalizedBundle,
-      ...legacyOverrides,
-    })
+    const applied = applyThemeTokenBundle(bundleToApply)
 
     return () => {
       clearThemeTokenBundle(applied)
     }
-  }, [settings?.app_background_color, settings?.app_card_color, (settings as any)?.app_theme_tokens])
+  }, [
+    settings?.app_background_color,
+    settings?.app_card_color,
+    settings?.app_theme_preset_id,
+    (settings as any)?.app_theme_tokens,
+  ])
 
   return (
     <>
