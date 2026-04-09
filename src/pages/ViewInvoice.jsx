@@ -7,7 +7,6 @@ import {
   DocumentActionGrid,
   DocumentBottomBar,
   DocumentDesignPanel,
-  DocumentDesignStyleEditor,
   DocumentFloatingFab,
   DocumentLivePreviewCard,
   DocumentPdfSheet,
@@ -33,12 +32,7 @@ import { parseDocumentCustomFields } from '@/domain/documentConversion'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
 import { buildInvoiceViewModel } from '@/domain/invoice/viewModel'
 import { computeDocument } from '@/lib/Calculations'
-import { PDF_TEMPLATES, DEFAULT_TEMPLATE } from '@/components/pdf/pdfTemplates'
-import {
-  getPdfDesignPreset,
-  setPdfDesignPreset,
-} from '@/lib/pdfDesignPreset'
-import { isDocumentFillableEnabled } from '@/lib/documentFillableSettings'
+import { DEFAULT_INVOICE_TEMPLATE, INVOICE_PDF_TEMPLATES } from '@/components/pdf/pdfTemplates'
 import { getPdfTemplatePreset, setPdfTemplatePreset } from '@/lib/pdfTemplatePreset'
 import { toast } from '@/hooks/use-toast'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
@@ -76,8 +70,7 @@ export default function ViewInvoice() {
   const [showMore, setShowMore] = useState(false)
   const [showPdfSheet, setShowPdfSheet] = useState(false)
   const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
-  const [pdfTemplate, setPdfTemplate] = useState(() => getPdfTemplatePreset('invoice', DEFAULT_TEMPLATE))
-  const [pdfDesignPreset, setPdfDesignPresetState] = useState(() => getPdfDesignPreset('invoice'))
+  const [pdfTemplate, setPdfTemplate] = useState(() => getPdfTemplatePreset('invoice', DEFAULT_INVOICE_TEMPLATE))
 
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [voidingPaymentId, setVoidingPaymentId] = useState(null)
@@ -455,7 +448,7 @@ export default function ViewInvoice() {
 
       const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
         import('@react-pdf/renderer'),
-        import('../components/InvoicePDF'),
+        import('@/components/pdf/InvoicePDF'),
       ])
 
       const blob = await pdf(
@@ -466,7 +459,6 @@ export default function ViewInvoice() {
           settings={settings}
           computedResult={computedResult}
           template={pdfTemplate}
-          designPreset={pdfDesignPreset}
           bankAccounts={bankAccounts}
           pdfOutput={getInvoicePdfOutput(advanceInvoice.custom_fields)}
           signatory={advanceSignatory}
@@ -682,7 +674,7 @@ export default function ViewInvoice() {
 
       const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
         import('@react-pdf/renderer'),
-        import('../components/InvoicePDF'),
+        import('@/components/pdf/InvoicePDF'),
       ])
 
       const blob = await pdf(
@@ -693,7 +685,6 @@ export default function ViewInvoice() {
           settings={settings}
           computedResult={computedResult}
           template={pdfTemplate}
-          designPreset={pdfDesignPreset}
           bankAccounts={bankAccounts}
           pdfOutput={pdfOutput}
           signatory={selectedSignatory}
@@ -745,17 +736,11 @@ export default function ViewInvoice() {
     onStatusChange: handleStatusChange,
   })
 
-  const activePdfTemplate = PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || PDF_TEMPLATES[0]
-  const showInvoiceFillableControls = isDocumentFillableEnabled(settings?.document_fillable_settings, 'invoice')
+  const activePdfTemplate = INVOICE_PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || INVOICE_PDF_TEMPLATES[0]
 
   const handlePdfTemplateChange = (nextTemplate) => {
     setPdfTemplate(nextTemplate)
     setPdfTemplatePreset('invoice', nextTemplate)
-  }
-
-  const handlePdfDesignPresetChange = (nextPreset) => {
-    setPdfDesignPresetState(nextPreset)
-    setPdfDesignPreset('invoice', nextPreset)
   }
 
   const previewModel = buildInvoicePreviewModel({
@@ -893,7 +878,7 @@ export default function ViewInvoice() {
                 }
               : null
           }
-          accentColor={pdfDesignPreset.accentColor}
+          accentColor={activePdfTemplate.id === 'elegant' ? '#d97706' : activePdfTemplate.id === 'bold' ? '#1f2937' : '#7c3aed'}
         />
 
         <PdfBankControls
@@ -914,19 +899,18 @@ export default function ViewInvoice() {
                   <DocumentTemplatePicker
                     value={pdfTemplate}
                     onChange={handlePdfTemplateChange}
-                    templates={PDF_TEMPLATES}
+                    templates={INVOICE_PDF_TEMPLATES}
                   />
                 ),
               },
               {
                 key: 'styling',
-                title: 'Fonts & Color',
+                title: 'Template Fidelity',
                 content: (
-                  <DocumentDesignStyleEditor
-                    value={pdfDesignPreset}
-                    onChange={handlePdfDesignPresetChange}
-                    showFillableControls={showInvoiceFillableControls}
-                  />
+                  <div className="rounded-[18px] border border-border bg-muted/30 p-4 text-sm leading-6 text-muted-foreground">
+                    The new invoice templates use fixed high-fidelity styling from the reference system.
+                    Output controls like bank details, tagline, footer, and balance due still apply.
+                  </div>
                 ),
               },
               {

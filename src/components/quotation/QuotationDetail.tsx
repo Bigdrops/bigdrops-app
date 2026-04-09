@@ -20,7 +20,7 @@ import {
 import { supabase } from '@/supabase'
 import { calcTotals } from '@/components/useInvoiceColumns.jsx'
 import { computeDocument } from '@/lib/Calculations'
-import { PDF_TEMPLATES, DEFAULT_TEMPLATE, type PdfTemplateId } from '@/components/pdf/pdfTemplates'
+import { DEFAULT_QUOTATION_TEMPLATE, QUOTATION_PDF_TEMPLATES, type PdfTemplateId } from '@/components/pdf/pdfTemplates'
 import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { isDocumentFillableEnabled } from '@/lib/documentFillableSettings'
 import { getPdfTemplatePreset, setPdfTemplatePreset } from '@/lib/pdfTemplatePreset'
@@ -118,7 +118,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const [bankAccounts, setBankAccounts] = useState<BankAccountRow[]>([])
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfOutput, setPdfOutput] = useState<PdfOutputState>(defaultPdfOutput)
-  const [pdfTemplate, setPdfTemplate] = useState<PdfTemplateId>(() => getPdfTemplatePreset('quotation', DEFAULT_TEMPLATE))
+  const [pdfTemplate, setPdfTemplate] = useState<PdfTemplateId>(() => getPdfTemplatePreset('quotation', DEFAULT_QUOTATION_TEMPLATE))
   const [pdfDesignPreset, setPdfDesignPresetState] = useState(() => getPdfDesignPreset('quotation'))
   const [converting, setConverting] = useState(false)
   const [showMobileActions, setShowMobileActions] = useState(false)
@@ -271,19 +271,13 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         document: quotation,
         cf: quotation.custom_fields || {},
       })
-      const templateMap = {
-        bold: () => import('@/components/pdf/InvoicePDF_Bold'),
-        compact: () => import('@/components/pdf/InvoicePDF_Compact'),
-        professional: () => import('@/components/pdf/InvoicePDF_Professional'),
-        proforma: () => import('@/components/pdf/InvoicePDF_Proforma'),
-        quotation: () => import('./QuotationPDF'),
-      }
       const [{ pdf }, { default: TemplatePDF }] = await Promise.all([
         import('@react-pdf/renderer'),
-        (templateMap[pdfTemplate] ?? templateMap.proforma)(),
+        import('@/components/pdf/QuotationTemplatePDF'),
       ])
       const blob = await pdf(
         <TemplatePDF
+          template={pdfTemplate}
           document={quotation}
           items={items}
           client={client}
@@ -596,8 +590,9 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   ]
 
   const shellQuotationTotal = totals?.totalPayable ?? Number(quotation.total || 0)
-  const activePdfTemplate = PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || PDF_TEMPLATES[0]
+  const activePdfTemplate = QUOTATION_PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || QUOTATION_PDF_TEMPLATES[0]
   const showQuotationFillableControls = isDocumentFillableEnabled(settings?.document_fillable_settings, 'quotation')
+  const quotationUsesLegacyStyling = pdfTemplate === 'quotation'
   const handlePdfTemplateChange = (nextTemplate: PdfTemplateId) => {
     setPdfTemplate(nextTemplate)
     setPdfTemplatePreset('quotation', nextTemplate)
@@ -725,7 +720,15 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         bankDetails={pdfOutput.showBankDetails && selectedPreviewBank ? selectedPreviewBank : null}
         notesSections={previewNotesSections}
         signatory={null}
-        accentColor={pdfDesignPreset.accentColor}
+        accentColor={
+          pdfTemplate === 'quotation'
+            ? pdfDesignPreset.accentColor
+            : pdfTemplate === 'elegant'
+              ? '#d97706'
+              : pdfTemplate === 'bold'
+                ? '#1f2937'
+                : '#7c3aed'
+        }
       />
 
       <PdfBankControls
@@ -744,15 +747,22 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
               key: 'template',
               title: 'Template',
               content: (
-                <DocumentTemplatePicker value={pdfTemplate} onChange={handlePdfTemplateChange} templates={PDF_TEMPLATES} />
+                <DocumentTemplatePicker value={pdfTemplate} onChange={handlePdfTemplateChange} templates={QUOTATION_PDF_TEMPLATES} />
               ),
             },
             {
               key: 'styling',
-              title: 'Fonts & Color',
-              content: (
-                <DocumentDesignStyleEditor value={pdfDesignPreset} onChange={handlePdfDesignPresetChange} showFillableControls={showQuotationFillableControls} />
-              ),
+              title: quotationUsesLegacyStyling ? 'Fonts & Color' : 'Template Fidelity',
+              content: quotationUsesLegacyStyling
+                ? (
+                    <DocumentDesignStyleEditor value={pdfDesignPreset} onChange={handlePdfDesignPresetChange} showFillableControls={showQuotationFillableControls} />
+                  )
+                : (
+                    <div className="rounded-[18px] border border-border bg-muted/30 p-4 text-sm leading-6 text-muted-foreground">
+                      The new quotation-capable Refrens templates use fixed styling to match the reference layouts closely.
+                      Output controls like bank details, tagline, and footer still apply.
+                    </div>
+                  ),
             },
             {
               key: 'output',

@@ -17,25 +17,29 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const templatePreviewById = {
-  proforma: {
-    shell: 'bg-emerald-50',
-    nodes: ['mx-auto h-1.5 w-16 rounded-full bg-emerald-600', 'mx-auto h-1 w-12 rounded-full bg-emerald-200', 'mx-auto h-1 w-10 rounded-full bg-emerald-200'],
-  },
   bold: {
     shell: 'bg-slate-50',
-    nodes: ['-mx-1 h-2 rounded-t-sm bg-slate-950', 'h-1 w-14 rounded-full bg-slate-300', 'h-1 w-10 rounded-full bg-slate-200'],
-  },
-  compact: {
-    shell: 'bg-slate-50',
-    nodes: ['h-1 w-full rounded-full bg-slate-300', 'h-0.5 w-full rounded-full bg-slate-200', 'h-0.5 w-full rounded-full bg-slate-200', 'h-0.5 w-4/5 rounded-full bg-slate-200'],
-  },
-  professional: {
-    shell: 'bg-slate-100',
-    nodes: ['h-1.5 w-16 rounded-full bg-slate-700', 'h-1 w-14 rounded-full bg-slate-300', 'mt-1 h-3 w-full rounded-sm bg-slate-200', 'h-1 w-3/5 rounded-full bg-slate-300'],
+    nodes: ['-mx-1 h-2 rounded-t-sm bg-slate-900', 'h-1 w-full rounded-full bg-slate-300', 'h-1 w-3/4 rounded-full bg-slate-200'],
   },
   quotation: {
     shell: 'bg-slate-50',
     nodes: ['h-1.5 w-12 rounded-full bg-slate-950', 'h-1 w-full rounded-full bg-slate-300', 'h-1 w-3/5 rounded-full bg-slate-200'],
+  },
+  classic: {
+    shell: 'bg-violet-50',
+    nodes: ['h-1.5 w-16 rounded-full bg-violet-600', 'h-1 w-full rounded-full bg-violet-200', 'h-1 w-3/5 rounded-full bg-slate-200'],
+  },
+  minimal: {
+    shell: 'bg-white border border-slate-200',
+    nodes: ['h-1 w-full rounded-full bg-slate-300', 'h-0.5 w-full rounded-full bg-slate-200', 'h-0.5 w-4/5 rounded-full bg-slate-200'],
+  },
+  modern: {
+    shell: 'bg-violet-600',
+    nodes: ['h-1.5 w-14 rounded-full bg-white/90', 'h-1 w-full rounded-full bg-white/40', 'h-1 w-3/5 rounded-full bg-white/30'],
+  },
+  elegant: {
+    shell: 'bg-amber-50',
+    nodes: ['h-1.5 w-16 rounded-full bg-amber-600', 'h-1 w-full rounded-full bg-amber-200', 'h-1 w-3/5 rounded-full bg-stone-200'],
   },
 }
 
@@ -44,7 +48,7 @@ export function DocumentTemplatePicker({ value, onChange, templates }) {
     <div className="flex gap-2 overflow-x-auto pb-1">
       {templates.map((template) => {
         const active = value === template.id
-        const preview = templatePreviewById[template.id] || templatePreviewById.proforma
+        const preview = templatePreviewById[template.id] || templatePreviewById.classic
 
         return (
           <button
