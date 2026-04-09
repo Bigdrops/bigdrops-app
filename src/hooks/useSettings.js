@@ -4,9 +4,14 @@ import { useSafeAsyncTask } from './useSafeAsyncTask'
 
 let cachedSettings = null
 let listeners = []
+let lastLocalUpdateAt = 0
 
 export async function fetchSettings() {
+  const requestStartedAt = Date.now()
   const { data } = await supabase.from('settings').select('*').eq('id', 1).single()
+  if (lastLocalUpdateAt > requestStartedAt) {
+    return cachedSettings || {}
+  }
   cachedSettings = data || {}
   listeners.forEach(fn => fn(cachedSettings))
   return cachedSettings
@@ -50,6 +55,7 @@ export async function saveSettings(updates) {
   // Always upsert with id=1. If RLS blocks this, you need to run the SQL below in Supabase.
   const previousSettings = cachedSettings || {}
   const nextSettings = { ...previousSettings, ...updates }
+  lastLocalUpdateAt = Date.now()
   cachedSettings = nextSettings
   listeners.forEach(fn => fn(cachedSettings))
 

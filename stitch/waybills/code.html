@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Waybills Main - Architectural ERP</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#e5e1e6",
+                        "on-primary": "#faf6ff",
+                        "background": "#faf8ff",
+                        "surface-container-high": "#e2e7ff",
+                        "on-primary-fixed-variant": "#4647d3",
+                        "tertiary-fixed-dim": "#c0c9e6",
+                        "primary-fixed-dim": "#d1d0ff",
+                        "on-tertiary-container": "#424a63",
+                        "secondary-fixed": "#e5e1e6",
+                        "surface-variant": "#d9e2ff",
+                        "primary-dim": "#3c3dca",
+                        "surface-bright": "#faf8ff",
+                        "on-primary-fixed": "#2622b7",
+                        "inverse-surface": "#060e20",
+                        "tertiary-fixed": "#ced6f5",
+                        "surface-dim": "#cdd9ff",
+                        "error-dim": "#4f0116",
+                        "on-tertiary": "#f9f8ff",
+                        "tertiary-container": "#ced6f5",
+                        "on-primary-container": "#3b3cc9",
+                        "secondary": "#605e62",
+                        "outline": "#6079b7",
+                        "secondary-dim": "#545256",
+                        "on-tertiary-fixed-variant": "#4b546d",
+                        "primary": "#494bd6",
+                        "on-error": "#fff7f7",
+                        "on-background": "#113069",
+                        "on-secondary-fixed": "#403f43",
+                        "tertiary": "#565f78",
+                        "on-secondary-container": "#525155",
+                        "error-container": "#ff8b9a",
+                        "surface-container-highest": "#d9e2ff",
+                        "surface": "#faf8ff",
+                        "secondary-fixed-dim": "#d6d3d8",
+                        "tertiary-dim": "#4a536b",
+                        "on-surface": "#113069",
+                        "surface-container": "#eaedff",
+                        "on-surface-variant": "#445d99",
+                        "on-error-container": "#782232",
+                        "outline-variant": "#98b1f2",
+                        "on-tertiary-fixed": "#2f384f",
+                        "primary-container": "#e1e0ff",
+                        "on-secondary": "#fbf8fc",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#959cb5",
+                        "primary-fixed": "#e1e0ff",
+                        "surface-tint": "#494bd6",
+                        "error": "#9e3f4e",
+                        "on-secondary-fixed-variant": "#5c5b5f",
+                        "inverse-primary": "#8083ff",
+                        "surface-container-low": "#f2f3ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24 md:pb-0 md:pl-80">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#faf8ff]/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm dark:shadow-none flex justify-between items-center px-4 h-16 w-full">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-indigo-600 dark:text-indigo-400">menu</span>
+<h1 class="text-lg font-bold tracking-tighter text-[#113069] dark:text-slate-100 uppercase">ARCHITECTURAL ERP</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-indigo-600 dark:text-indigo-400">notifications</span>
+<div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center">
+<span class="text-xs font-bold text-primary">MA</span>
+</div>
+</div>
+</header>
+<!-- NavigationDrawer (Sidebar Desktop) -->
+<aside class="hidden md:flex fixed left-0 top-0 h-full w-80 bg-[#faf8ff] dark:bg-slate-950 flex-col p-6 space-y-2 z-40 shadow-[0_12px_40px_-12px_rgba(17,48,105,0.08)]">
+<div class="mb-8 pt-4">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary-dim flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">architecture</span>
+</div>
+<div>
+<h2 class="text-xl font-bold text-[#113069] dark:text-slate-100 leading-tight">Monolith Admin</h2>
+<p class="text-sm text-on-surface-variant">Lead Architect</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">request_quote</span>
+<span class="font-medium">Quotations</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">receipt</span>
+<span class="font-medium">Invoices</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-200 font-semibold rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">local_shipping</span>
+<span class="font-medium">Waybills</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-medium">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="font-medium">Projects</span>
+</a>
+</nav>
+<div class="pt-6 border-t border-outline-variant/15">
+<div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-4">System</div>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium">Settings</span>
+</a>
+<div class="mt-4 px-4">
+<span class="text-[10px] text-on-surface-variant opacity-50">V1.2.0 — PRECISE MONOLITH</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="pt-20 px-4 md:px-8 pb-12 max-w-7xl mx-auto">
+<!-- Header & Breadcrumb -->
+<header class="mb-8">
+<div class="flex items-center gap-2 text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">
+<span>Logistics</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary">Waybills</span>
+</div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<h2 class="text-2xl md:text-3xl font-semibold tracking-tight text-on-surface">Waybills Main</h2>
+<button class="bg-gradient-to-br from-primary to-primary-dim text-white px-6 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-sm">add</span>
+<span>New Waybill</span>
+</button>
+</div>
+</header>
+<!-- Summary Bento Grid -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+<div class="bg-surface-container-lowest p-5 rounded-xl shadow-ambient">
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+<span class="material-symbols-outlined">local_shipping</span>
+</div>
+<span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">+12%</span>
+</div>
+<div class="text-2xl font-bold text-on-surface">18</div>
+<div class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">In Transit</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl shadow-ambient">
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Optimal</span>
+</div>
+<div class="text-2xl font-bold text-on-surface">142</div>
+<div class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Delivered</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl shadow-ambient">
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-error-container/20 flex items-center justify-center text-error">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<span class="text-[10px] font-bold text-error bg-error-container/20 px-2 py-0.5 rounded-full">Action Required</span>
+</div>
+<div class="text-2xl font-bold text-on-surface">3</div>
+<div class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Delayed</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl shadow-ambient">
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">assignment_return</span>
+</div>
+<span class="text-[10px] font-bold text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">Static</span>
+</div>
+<div class="text-2xl font-bold text-on-surface">1</div>
+<div class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Returned</div>
+</div>
+</div>
+<div class="grid lg:grid-cols-3 gap-8">
+<!-- Logistical Table Section -->
+<div class="lg:col-span-2">
+<section class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-ambient">
+<div class="p-6 border-b border-outline-variant/10 flex items-center justify-between">
+<h3 class="font-bold text-on-surface">Active Logistical Flow</h3>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">filter_list</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">search</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Waybill #</th>
+<th class="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Client</th>
+<th class="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Route</th>
+<th class="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Status</th>
+<th class="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">ETA</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-6 py-5">
+<span class="text-sm font-semibold text-primary">WB-9902-A</span>
+</td>
+<td class="px-6 py-5">
+<div class="text-sm font-medium text-on-surface">Nexus Structures</div>
+<div class="text-[10px] text-on-surface-variant">Industrial Core</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-on-surface">HQ</span>
+<span class="material-symbols-outlined text-xs text-on-surface-variant">trending_flat</span>
+<span class="text-xs font-bold text-on-surface">Site 12</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700">
+<span class="w-1 h-1 rounded-full bg-indigo-700"></span>
+                                            IN TRANSIT
+                                        </span>
+</td>
+<td class="px-6 py-5">
+<div class="text-xs font-medium text-on-surface">Today, 14:30</div>
+</td>
+</tr>
+<tr class="bg-surface-container-low/20 hover:bg-surface-container-low/50 transition-colors">
+<td class="px-6 py-5">
+<span class="text-sm font-semibold text-primary">WB-9871-B</span>
+</td>
+<td class="px-6 py-5">
+<div class="text-sm font-medium text-on-surface">ArchiCorp Ltd.</div>
+<div class="text-[10px] text-on-surface-variant">Retail Plaza</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-on-surface">Whs 4</span>
+<span class="material-symbols-outlined text-xs text-on-surface-variant">trending_flat</span>
+<span class="text-xs font-bold text-on-surface">Site 08</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-error-container/20 text-error">
+<span class="w-1 h-1 rounded-full bg-error"></span>
+                                            DELAYED
+                                        </span>
+</td>
+<td class="px-6 py-5">
+<div class="text-xs font-medium text-error">Pending</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-6 py-5">
+<span class="text-sm font-semibold text-primary">WB-9865-C</span>
+</td>
+<td class="px-6 py-5">
+<div class="text-sm font-medium text-on-surface">Skyline Dev</div>
+<div class="text-[10px] text-on-surface-variant">Penthouse Proj.</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-on-surface">HQ</span>
+<span class="material-symbols-outlined text-xs text-on-surface-variant">trending_flat</span>
+<span class="text-xs font-bold text-on-surface">Site 22</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-700">
+<span class="w-1 h-1 rounded-full bg-green-700"></span>
+                                            DELIVERED
+                                        </span>
+</td>
+<td class="px-6 py-5">
+<div class="text-xs font-medium text-on-surface-variant">Completed</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-surface-container-low flex justify-center">
+<button class="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline">View All Waybills</button>
+</div>
+</section>
+</div>
+<!-- Delivery Exceptions Side Card -->
+<div class="lg:col-span-1">
+<section class="bg-surface-container-low rounded-xl p-6 shadow-ambient">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">report</span>
+<h3 class="font-bold text-on-surface">Delivery Exceptions</h3>
+</div>
+<div class="space-y-4">
+<!-- Delayed Item -->
+<div class="bg-surface-container-lowest p-4 rounded-lg border-l-4 border-error shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs font-bold text-on-surface">WB-9871-B</span>
+<span class="text-[9px] font-bold text-error bg-error/10 px-2 py-0.5 rounded">DELAYED</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-3">Weather delay at Central Hub. Estimated 24h fallback.</p>
+<div class="flex justify-end gap-2">
+<button class="text-[10px] font-bold text-primary">REROUTE</button>
+</div>
+</div>
+<!-- Missing POD -->
+<div class="bg-surface-container-lowest p-4 rounded-lg border-l-4 border-amber-500 shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs font-bold text-on-surface">WB-9850-X</span>
+<span class="text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">MISSING POD</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-3">Proof of Delivery not uploaded for Nexus Structures delivery.</p>
+<div class="flex justify-end gap-2">
+<button class="text-[10px] font-bold text-primary">REQUEST</button>
+</div>
+</div>
+<!-- Returned Item -->
+<div class="bg-surface-container-lowest p-4 rounded-lg border-l-4 border-slate-400 shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs font-bold text-on-surface">WB-9842-R</span>
+<span class="text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">RETURNED</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-3">Refused at Site 04: Incorrect panel dimensions.</p>
+<div class="flex justify-end gap-2">
+<button class="text-[10px] font-bold text-primary">INSPECT</button>
+</div>
+</div>
+</div>
+<div class="mt-8">
+<img alt="Logistics route map" class="w-full h-48 object-cover rounded-xl grayscale brightness-110 opacity-80" data-alt="clean minimal logistics map visualization with delicate blue lines showing transit routes and nodes on a pale background" data-location="Chicago" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz39MMC1VRIAISzJ5Np7kSWl_8aN_d_lCBkB9s8Z6BvOvhCGb3towyEpyrZLDqSRWnQ-TQ8PWgOYrF9IOlajTsCbCictNL1Ao2LqwWe2P2Naf4zUeV1btbFHwuBuK7emen7o1L-C1xp_KwNgNx1nqD9MKdpjvhLs4zTacVyDsDNrK-_rpF7nfLDIYZL45wZ1zp80xfzYWJ51v4ZQkmx8ZctUaRHSLrrUdIqWwnO_XLTCy0LI8y8NpAPkPGBb2Z5vxMK2mvl1YHk4JT"/>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-safe bg-[#ffffff]/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-[#98b1f2]/15 z-50 rounded-t-2xl shadow-[0_-4px_20px_-6px_rgba(17,48,105,0.05)]">
+<a class="flex flex-col items-center text-slate-400 dark:text-slate-500 hover:text-indigo-500" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-widest mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center text-slate-400 dark:text-slate-500 hover:text-indigo-500" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-widest mt-1">Sales</span>
+</a>
+<a class="flex flex-col items-center text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20 rounded-xl px-3 py-1 scale-110 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">description</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-widest mt-1">Waybills</span>
+</a>
+<a class="flex flex-col items-center text-slate-400 dark:text-slate-500 hover:text-indigo-500" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-widest mt-1">Clients</span>
+</a>
+<a class="flex flex-col items-center text-slate-400 dark:text-slate-500 hover:text-indigo-500" href="#">
+<span class="material-symbols-outlined">menu_open</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-widest mt-1">More</span>
+</a>
+</nav>
+</body></html>

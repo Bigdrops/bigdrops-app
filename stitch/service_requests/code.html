@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-container": "#e5e1e6",
+                    "on-primary": "#faf6ff",
+                    "background": "#faf8ff",
+                    "surface-container-high": "#e2e7ff",
+                    "on-primary-fixed-variant": "#4647d3",
+                    "tertiary-fixed-dim": "#c0c9e6",
+                    "primary-fixed-dim": "#d1d0ff",
+                    "on-tertiary-container": "#424a63",
+                    "secondary-fixed": "#e5e1e6",
+                    "surface-variant": "#d9e2ff",
+                    "primary-dim": "#3c3dca",
+                    "surface-bright": "#faf8ff",
+                    "on-primary-fixed": "#2622b7",
+                    "inverse-surface": "#060e20",
+                    "tertiary-fixed": "#ced6f5",
+                    "surface-dim": "#cdd9ff",
+                    "error-dim": "#4f0116",
+                    "on-tertiary": "#f9f8ff",
+                    "tertiary-container": "#ced6f5",
+                    "on-primary-container": "#3b3cc9",
+                    "secondary": "#605e62",
+                    "outline": "#6079b7",
+                    "secondary-dim": "#545256",
+                    "on-tertiary-fixed-variant": "#4b546d",
+                    "primary": "#494bd6",
+                    "on-error": "#fff7f7",
+                    "on-background": "#113069",
+                    "on-secondary-fixed": "#403f43",
+                    "tertiary": "#565f78",
+                    "on-secondary-container": "#525155",
+                    "error-container": "#ff8b9a",
+                    "surface-container-highest": "#d9e2ff",
+                    "surface": "#faf8ff",
+                    "secondary-fixed-dim": "#d6d3d8",
+                    "tertiary-dim": "#4a536b",
+                    "on-surface": "#113069",
+                    "surface-container": "#eaedff",
+                    "on-surface-variant": "#445d99",
+                    "on-error-container": "#782232",
+                    "outline-variant": "#98b1f2",
+                    "on-tertiary-fixed": "#2f384f",
+                    "primary-container": "#e1e0ff",
+                    "on-secondary": "#fbf8fc",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-on-surface": "#959cb5",
+                    "primary-fixed": "#e1e0ff",
+                    "surface-tint": "#494bd6",
+                    "error": "#9e3f4e",
+                    "on-secondary-fixed-variant": "#5c5b5f",
+                    "inverse-primary": "#8083ff",
+                    "surface-container-low": "#f2f3ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .shadow-ambient {
+            box-shadow: 0 12px 40px -12px rgba(17, 48, 105, 0.08);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#faf8ff]/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm dark:shadow-none h-16 flex justify-between items-center px-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-indigo-600 dark:text-indigo-400" data-icon="menu">menu</span>
+<h1 class="text-lg font-bold tracking-tighter text-[#113069] dark:text-slate-100 uppercase">ARCHITECTURAL ERP</h1>
+</div>
+<div class="flex items-center gap-2">
+<div class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-full relative">
+<span class="material-symbols-outlined text-slate-500" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</div>
+<img alt="User" class="w-8 h-8 rounded-full border border-outline-variant/15" data-alt="close-up portrait of a professional lead architect with a friendly expression in a modern office environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEBp170JHlBw9lMawOWQdhkLNFrgFc7H-4I6KgJ2twtkoxINrJ6uG0cXA_V5PWcaBtiXDRzGhJialKA7daqfBaNDKG4wemLQZfgZfGK5qQwBtCys-cV0-0Lr2D4oO0yi2NTKMzC-l3sZ6VPF6ny2xF3MZXoLd3dQA8MgoeJpFog4IXYhILyEBYP_djjJ2v9e2SWw2pIryqtFF5semebEye78ncG-NSpu-zK2cYCs-gY7m-FKZh-ElMAXNF6SkdbWZgs_iQEaS5pdLn"/>
+</div>
+</header>
+<main class="pt-20 pb-24 px-4 max-w-lg mx-auto">
+<!-- Dashboard Header -->
+<div class="mb-6">
+<h2 class="text-2xl font-semibold tracking-tight text-on-surface">CSR Main</h2>
+<p class="text-sm text-on-surface-variant">Customer Service Requests &amp; Support</p>
+</div>
+<!-- Summary Cards: Bento Grid Style -->
+<div class="grid grid-cols-2 gap-3 mb-8">
+<div class="bg-surface-container-low p-4 rounded-xl flex flex-col gap-1">
+<span class="text-[0.6875rem] font-700 uppercase tracking-widest text-on-surface-variant">Open</span>
+<span class="text-3xl font-bold text-primary">12</span>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl flex flex-col gap-1">
+<span class="text-[0.6875rem] font-700 uppercase tracking-widest text-on-surface-variant">Pending Customer</span>
+<span class="text-3xl font-bold text-on-surface">5</span>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl flex flex-col gap-1">
+<span class="text-[0.6875rem] font-700 uppercase tracking-widest text-on-surface-variant">Resolved</span>
+<span class="text-3xl font-bold text-on-surface-variant opacity-60">88</span>
+</div>
+<div class="bg-error-container/20 p-4 rounded-xl flex flex-col gap-1 border border-error/10">
+<span class="text-[0.6875rem] font-700 uppercase tracking-widest text-error">SLA Risk</span>
+<span class="text-3xl font-bold text-error">2</span>
+</div>
+</div>
+<!-- SLA Watchlist Card -->
+<section class="bg-surface-container-highest rounded-xl p-5 mb-8 shadow-ambient">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-sm font-bold uppercase tracking-widest text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-lg" data-icon="warning">warning</span>
+                    SLA Watchlist
+                </h3>
+<span class="text-[10px] font-bold bg-error text-on-primary px-2 py-0.5 rounded-full">CRITICAL</span>
+</div>
+<div class="space-y-4">
+<div class="flex items-start justify-between border-b border-outline-variant/10 pb-3">
+<div>
+<p class="text-sm font-semibold text-on-surface">Site Structural Variance</p>
+<p class="text-[11px] text-on-surface-variant">Ticket #CSR-902 • 4h remaining</p>
+</div>
+<div class="text-right">
+<span class="text-[11px] font-bold text-error">HIGH</span>
+</div>
+</div>
+<div class="flex items-start justify-between">
+<div>
+<p class="text-sm font-semibold text-on-surface">Material Grade Discrepancy</p>
+<p class="text-[11px] text-on-surface-variant">Ticket #CSR-884 • 12h remaining</p>
+</div>
+<div class="text-right">
+<span class="text-[11px] font-bold text-error">HIGH</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Filters & Search -->
+<div class="mb-6 space-y-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg" data-icon="search">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/50" placeholder="Search tickets, requesters..." type="text"/>
+</div>
+<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-primary text-on-primary text-[11px] font-bold uppercase tracking-widest">All Requests</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant text-[11px] font-bold uppercase tracking-widest hover:bg-surface-container-high transition-colors">Active</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant text-[11px] font-bold uppercase tracking-widest hover:bg-surface-container-high transition-colors">Resolved</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant text-[11px] font-bold uppercase tracking-widest hover:bg-surface-container-high transition-colors">Unassigned</button>
+</div>
+</div>
+<!-- Ticket List -->
+<div class="space-y-4">
+<!-- Ticket Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/5 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-error"></div>
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-error/10 text-error uppercase tracking-wider">High Priority</span>
+<span class="text-[11px] text-on-surface-variant font-medium">2d ago</span>
+</div>
+<h4 class="font-semibold text-on-surface mb-1">HVAC Layout Conflict - Zone 4</h4>
+<p class="text-xs text-on-surface-variant mb-4">Requester: Elena Rossi • Project: Monolith Center</p>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<img alt="Assignee" class="w-6 h-6 rounded-full" data-alt="professional architect headshot for corporate profile thumbnail" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAj-bZBj4SMOLtzD29am9gaxI-7btGbSUKqJxZtZGNlH44vmZivJvXx_eMlLLt6t4Pmzb4r47d1AI8gUUq0tcHefij1yJ7674t1Iocn3OEOiAwCmCvCYWqyrzOf6ueVQz9WSS2GEe0_zaovZIvVucSVA5pIp5vUtLCxwBBJx7FLTwd5SAl1FaWypEm_RiAEeSi2mQLEhaJ6DycioGErwTBNhBGDkyeaS-gccY29Vk5yFy3W0GUgp9klLc_BzQxP65eu72aMRd6j8Ia7"/>
+<span class="text-[11px] font-semibold text-on-surface">Marcus Chen</span>
+</div>
+<button class="text-primary text-xs font-bold flex items-center gap-1">
+                        VIEW
+                        <span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Ticket Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/5 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary uppercase tracking-wider">Medium Priority</span>
+<span class="text-[11px] text-on-surface-variant font-medium">5h ago</span>
+</div>
+<h4 class="font-semibold text-on-surface mb-1">Window Tint Specification Update</h4>
+<p class="text-xs text-on-surface-variant mb-4">Requester: David Miller • Project: Sky Residence</p>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant" data-icon="person">person</span>
+</div>
+<span class="text-[11px] font-semibold text-on-surface-variant">Unassigned</span>
+</div>
+<button class="text-primary text-xs font-bold flex items-center gap-1">
+                        VIEW
+                        <span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Ticket Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/5 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-on-surface-variant/20"></div>
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container uppercase tracking-wider">Low Priority</span>
+<span class="text-[11px] text-on-surface-variant font-medium">1d ago</span>
+</div>
+<h4 class="font-semibold text-on-surface mb-1">Update to Billing Address</h4>
+<p class="text-xs text-on-surface-variant mb-4">Requester: Urban Dev Inc. • Project: General</p>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<img alt="Assignee" class="w-6 h-6 rounded-full" data-alt="professional business portrait of a customer success manager" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDy1D03ki5bt-MhN776DuV1QuEyYXceGrfTSX6ZTxabn3Y7a185TBUlfzKfPBomWQj1UGGkQvgsFqx9Tt-4It21dlh5VLM4awxIvHqyoCC0LfN5ZFMC9mMklLiAeudJlqOJjiMC8ZDY9N65v4Im_BHjtPPZjGwSVu2bFqAPi0Tu4zeuRG9U9HuegCrKZpzVL31Q0bMgMCNqQmkgBYQtu6Do2Swc3m2Qw7jQzLq3fd0CKQJdITrUeDEs3jCQF0StpjPt79YPsD1FZuOF"/>
+<span class="text-[11px] font-semibold text-on-surface">Sarah Jenkins</span>
+</div>
+<button class="text-primary text-xs font-bold flex items-center gap-1">
+                        VIEW
+                        <span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB: Create New Ticket (Contextual) -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-br from-primary to-primary-dim text-on-primary rounded-full shadow-lg flex items-center justify-center z-40 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-2xl" data-icon="add">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-safe bg-[#ffffff]/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-[#98b1f2]/15 z-50 rounded-t-2xl shadow-[0_-4px_20px_-6px_rgba(17,48,105,0.05)]">
+<div class="flex flex-col items-center text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-all">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-widest mt-1">Home</span>
+</div>
+<div class="flex flex-col items-center text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-all">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-widest mt-1">Sales</span>
+</div>
+<div class="flex flex-col items-center text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-all">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-widest mt-1">Docs</span>
+</div>
+<div class="flex flex-col items-center text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20 rounded-xl px-3 py-1 scale-110 duration-200">
+<span class="material-symbols-outlined" data-icon="customer_service" style="font-variation-settings: 'FILL' 1;">contact_support</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-widest mt-1">CSR</span>
+</div>
+<div class="flex flex-col items-center text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-all">
+<span class="material-symbols-outlined" data-icon="menu_open">menu_open</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-widest mt-1">More</span>
+</div>
+</nav>
+</body></html>
