@@ -1,4 +1,4 @@
-import { TEMPLATE_TOKENS } from '@/components/pdf/refrens/templateTokens'
+import { TEMPLATE_TOKENS } from '@/components/pdf/templates/templateTokens'
 import type { PdfTemplateId } from '@/components/pdf/pdfTemplates'
 import {
   getDefaultPdfDesignPreset,

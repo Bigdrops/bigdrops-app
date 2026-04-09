@@ -1,10 +1,10 @@
 import QuotationPDF from '@/components/quotation/QuotationPDF'
-import RefrensPdfDocument from '@/components/pdf/refrens/RefrensPdfDocument'
-import { mapQuotationToPdfModel } from '@/components/pdf/refrens/mapQuotationToPdfModel'
+import TemplatePdfLayout from '@/components/pdf/templates/TemplatePdfLayout'
+import { mapQuotationToPdfModel } from '@/components/pdf/templates/mapQuotationToPdfModel'
 import type { InvoiceItem } from '@/domain/invoice'
 import type { Quotation } from '@/domain/quotation'
 import type { DocumentResult } from '@/lib/Calculations'
-import type { PdfBankAccount, PdfOutputState, RefrensTemplateId } from '@/components/pdf/refrens/types'
+import type { PdfBankAccount, PdfOutputState, RefrensTemplateId } from '@/components/pdf/templates/types'
 import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 
 type QuotationTemplatePdfProps = {
@@ -55,5 +55,5 @@ export default function QuotationTemplatePDF({
     designPreset,
   })
 
-  return <RefrensPdfDocument model={model} />
+  return <TemplatePdfLayout model={model} />
 }

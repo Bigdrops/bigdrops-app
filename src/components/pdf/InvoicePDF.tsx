@@ -1,10 +1,11 @@
 import QuotationPDF from '@/components/quotation/QuotationPDF'
-import RefrensPdfDocument from '@/components/pdf/refrens/RefrensPdfDocument'
-import { mapInvoiceToPdfModel } from '@/components/pdf/refrens/mapInvoiceToPdfModel'
+import TemplatePdfLayout from '@/components/pdf/templates/TemplatePdfLayout'
+import { mapInvoiceToPdfModel } from '@/components/pdf/templates/mapInvoiceToPdfModel'
 import type { Invoice, InvoiceItem } from '@/domain/invoice'
 import type { Quotation } from '@/domain/quotation'
 import type { DocumentResult } from '@/lib/Calculations'
-import type { PdfBankAccount, PdfOutputState, RefrensTemplateId } from '@/components/pdf/refrens/types'
+import type { PdfBankAccount, PdfOutputState, RefrensTemplateId } from '@/components/pdf/templates/types'
+import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 
 type InvoicePdfProps = {
   template?: 'quotation' | RefrensTemplateId
@@ -21,6 +22,7 @@ type InvoicePdfProps = {
   bankAccounts?: PdfBankAccount[]
   pdfOutput?: PdfOutputState
   signatory?: Record<string, unknown> | null
+  designPreset?: PdfDesignPreset
 }
 
 function isQuotationTemplate(template?: string): template is 'quotation' {
@@ -37,6 +39,7 @@ export default function InvoicePDF({
   bankAccounts = [],
   pdfOutput,
   signatory = null,
+  designPreset,
 }: InvoicePdfProps) {
   if (isQuotationTemplate(template)) {
     return (
@@ -60,8 +63,9 @@ export default function InvoicePDF({
     bankAccounts,
     pdfOutput,
     signatory,
+    designPreset,
   })
 
-  return <RefrensPdfDocument model={model} />
+  return <TemplatePdfLayout model={model} />
 }
  

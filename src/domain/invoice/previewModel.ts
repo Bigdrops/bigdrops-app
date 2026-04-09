@@ -1,4 +1,4 @@
-import { getPdfSummaryLabels } from '@/components/pdf/refrens/summaryLabels'
+import { getPdfSummaryLabels } from '@/components/pdf/templates/summaryLabels'
 import { getAdditionalFields } from './additionalFields'
 
 import { getAdvanceSummaryValues } from './advanceSummary'
