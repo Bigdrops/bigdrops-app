@@ -5,10 +5,9 @@ import type { Invoice, InvoiceItem } from '@/domain/invoice'
 import type { Quotation } from '@/domain/quotation'
 import type { DocumentResult } from '@/lib/Calculations'
 import type { PdfBankAccount, PdfOutputState, RefrensTemplateId } from '@/components/pdf/refrens/types'
-import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 
 type InvoicePdfProps = {
-  template?: 'standard' | RefrensTemplateId
+  template?: 'quotation' | RefrensTemplateId
   document: Invoice | Quotation
   items: InvoiceItem[]
   client?: Record<string, unknown> | null
@@ -22,11 +21,10 @@ type InvoicePdfProps = {
   bankAccounts?: PdfBankAccount[]
   pdfOutput?: PdfOutputState
   signatory?: Record<string, unknown> | null
-  designPreset?: PdfDesignPreset
 }
 
-function isStandardTemplate(template?: string): template is 'standard' {
-  return template === 'standard'
+function isQuotationTemplate(template?: string): template is 'quotation' {
+  return template === 'quotation'
 }
 
 export default function InvoicePDF({
@@ -39,9 +37,8 @@ export default function InvoicePDF({
   bankAccounts = [],
   pdfOutput,
   signatory = null,
-  designPreset,
 }: InvoicePdfProps) {
-  if (isStandardTemplate(template)) {
+  if (isQuotationTemplate(template)) {
     return (
       <QuotationPDF
         document={document as Quotation}
@@ -49,7 +46,6 @@ export default function InvoicePDF({
         client={client}
         settings={settings}
         computedResult={computedResult}
-        designPreset={designPreset}
       />
     )
   }
@@ -64,8 +60,8 @@ export default function InvoicePDF({
     bankAccounts,
     pdfOutput,
     signatory,
-    designPreset,
   })
 
   return <RefrensPdfDocument model={model} />
 }
+ 
