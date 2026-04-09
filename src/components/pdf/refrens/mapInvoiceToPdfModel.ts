@@ -5,6 +5,7 @@ import { getPdfSummaryLabels } from './summaryLabels'
 import {
   asText,
   buildItemDescriptionExtras,
+  getAdditionalFieldEntries,
   getAttachmentLinks,
   getBottomText,
   getClientLines,
@@ -60,13 +61,25 @@ export function mapInvoiceToPdfModel({
     })
   }
 
-  const bottomNotes = getBottomText(customFields)
-  if (bottomNotes.length) {
+  const additionalFields = getAdditionalFieldEntries(customFields)
+  if (additionalFields.length) {
     supportBlocks.push({
-      type: 'text',
-      title: 'Additional Info',
-      text: bottomNotes.join('\n'),
+      type: 'fields',
+      title: 'Additional Fields',
+      rows: additionalFields.map((field, index) => ({
+        label: field.label || `Field ${index + 1}`,
+        value: field.value,
+      })),
     })
+  } else {
+    const bottomNotes = getBottomText(customFields)
+    if (bottomNotes.length) {
+      supportBlocks.push({
+        type: 'text',
+        title: 'Additional Info',
+        text: bottomNotes.join('\n'),
+      })
+    }
   }
 
   const attachments = getAttachmentLinks(customFields)

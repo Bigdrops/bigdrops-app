@@ -15,15 +15,14 @@ import {
   X,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import ClientSelector from '@/components/ClientSelector'
 import ActionsSheet from './ActionsSheet'
+import CommercialTermsSection from '@/components/invoice/CommercialTermsSection'
 import MobileItemCard from './MobileItemCard'
 import MobileGroupCard from './MobileGroupCard'
 import {
   asLinkAttachment,
   ChipButton,
-  CompactSelectField,
   fieldCls,
   formatCurrency,
   labelCls,
@@ -60,7 +59,7 @@ export default function MobileInvoiceForm(props) {
     items,
     groups,
     customFields,
-    bottomFields,
+    additionalFields,
     extraCharges,
     chargeLabels,
     notesTitle,
@@ -122,10 +121,9 @@ export default function MobileInvoiceForm(props) {
     onAddHeaderField,
     onUpdateHeaderField,
     onRemoveHeaderField,
-    onAddBottomField,
-    onUpdateBottomField,
-    onRemoveBottomField,
-    onChargeLabelChange,
+    onAddAdditionalField,
+    onUpdateAdditionalField,
+    onRemoveAdditionalField,
     onAddExtraCharge,
     onUpdateExtraCharge,
     onRemoveExtraCharge,
@@ -219,8 +217,6 @@ export default function MobileInvoiceForm(props) {
     return rows
   }, [groupMap, items])
 
-  const paymentTermValue = invoice.payment_terms || undefined
-  const dueValidityLabel = isQuotation ? 'Validity' : 'Due / Validity'
   const referenceLinks = Array.isArray(attachments) ? attachments.map(asLinkAttachment) : []
   const workmanship = Number(invoice.workmanship || 0)
   const transportation = Number(invoice.transportation || 0)
@@ -502,213 +498,25 @@ export default function MobileInvoiceForm(props) {
             </div>
           </div>
 
-          <div>
-            <SectionLabel color="#d97706">Commercial Terms</SectionLabel>
-            <div className={`${pageCardCls} space-y-4 p-4`}>
-              <div className="grid grid-cols-[minmax(0,1fr)_96px] gap-2">
-                <div className="min-w-0">
-                  <label className={labelCls}>Payment Terms</label>
-                  <Select value={paymentTermValue} onValueChange={(value) => updateInvoice('payment_terms', value)}>
-                    <SelectTrigger className={`${fieldCls} justify-between`}>
-                      <SelectValue placeholder="Select payment terms" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="50% advance · 50% on delivery">50% advance · 50% on delivery</SelectItem>
-                      <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
-                      <SelectItem value="Net 15">Net 15</SelectItem>
-                      <SelectItem value="Net 30">Net 30</SelectItem>
-                      <SelectItem value="Net 45">Net 45</SelectItem>
-                      <SelectItem value="Net 60">Net 60</SelectItem>
-                      <SelectItem value="Custom">Custom</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="min-w-0">
-                  <label className={labelCls}>{dueValidityLabel}</label>
-                  <Input
-                    value={invoice.custom_payment_terms || ''}
-                    onChange={(event) => updateInvoice('custom_payment_terms', event.target.value)}
-                    placeholder={isQuotation ? 'e.g. Valid for 14 days' : 'e.g. Due in 14 days'}
-                    className={fieldCls}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-[minmax(0,1fr)_88px_112px] items-end gap-2">
-                <div className="min-w-0">
-                  <label className={labelCls}>Discount</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={Number(invoice.discount || 0)}
-                    onChange={(event) => updateInvoice('discount', Number(event.target.value))}
-                    className={fieldCls}
-                  />
-                </div>
-                <div className="min-w-0">
-                  <label className={labelCls}>Type</label>
-                  <CompactSelectField
-                    value={discountType}
-                    onChange={setDiscountType}
-                    options={[
-                      { value: 'fixed', label: 'NGN' },
-                      { value: 'percent', label: '%' },
-                    ]}
-                  />
-                </div>
-                <div className="min-w-0">
-                  <label className={labelCls}>Apply</label>
-                  <CompactSelectField
-                    value={discountTiming}
-                    onChange={setDiscountTiming}
-                    options={[
-                      { value: 'before', label: 'Before' },
-                      { value: 'after', label: 'After' },
-                    ]}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-[minmax(0,1fr)_88px] items-end gap-2">
-                <div className="min-w-0">
-                  <label className={labelCls}>WHT Value</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={Number(invoice.wht || 0)}
-                    onChange={(event) => updateInvoice('wht', Number(event.target.value))}
-                    className={fieldCls}
-                  />
-                </div>
-                <div className="min-w-0">
-                  <label className={labelCls}>WHT Type</label>
-                  <CompactSelectField
-                    value={whtType}
-                    onChange={setWhtType}
-                    options={[
-                      { value: 'fixed', label: 'NGN' },
-                      { value: 'percent', label: '%' },
-                    ]}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3">
-                <div className="min-w-0">
-                  <label className={labelCls}>Work Duration</label>
-                  <Input
-                    value={invoice.work_duration || ''}
-                    onChange={(event) => updateInvoice('work_duration', event.target.value)}
-                    placeholder="e.g. 7 working days"
-                    className={fieldCls}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {[
-                  ['workmanship', workmanship],
-                  ['transportation', transportation],
-                  ['shipping', shipping],
-                ].map(([key, value]) => (
-                  <div key={key} className="grid grid-cols-[minmax(0,1fr)_104px] gap-2">
-                    <Input
-                      value={chargeLabels[key] || ''}
-                      onChange={(event) => onChargeLabelChange(key, event.target.value)}
-                      placeholder={key}
-                      className={fieldCls}
-                    />
-                    <Input
-                      type="number"
-                      min="0"
-                      value={value}
-                      onChange={(event) => updateInvoice(key, Number(event.target.value))}
-                      className={`${fieldCls} text-right`}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <div className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">Extra Charges</div>
-                  <ChipButton className="bg-[#fffbeb] text-[#d97706]" onClick={() => onAddExtraCharge(true)}>
-                    <Plus className="h-3.5 w-3.5" />
-                    Add Charge
-                  </ChipButton>
-                </div>
-                <div className="space-y-2">
-                  {extraCharges.map((charge) => (
-                    <div key={charge.id} className="grid grid-cols-[minmax(0,1fr)_88px_94px_42px] items-center gap-2">
-                      <Input
-                        value={charge.label || ''}
-                        onChange={(event) => onUpdateExtraCharge(charge.id, 'label', event.target.value)}
-                        placeholder="Label"
-                        className={fieldCls}
-                      />
-                      <Input
-                        type="number"
-                        min="0"
-                        value={charge.value || 0}
-                        onChange={(event) => onUpdateExtraCharge(charge.id, 'value', Number(event.target.value))}
-                        className={`${fieldCls} text-right`}
-                      />
-                      <CompactSelectField
-                        value={charge.withTax === false ? 'after_tax' : 'before_tax'}
-                        onChange={(value) => onUpdateExtraCharge(charge.id, 'withTax', value === 'before_tax')}
-                        options={[
-                          { value: 'before_tax', label: 'Before' },
-                          { value: 'after_tax', label: 'After' },
-                        ]}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => onRemoveExtraCharge(charge.id)}
-                        className="flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#fecaca] bg-[#fff5f5] text-[#ef4444]"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <div className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">Additional Rows</div>
-                  <ChipButton className="bg-[#fffbeb] text-[#d97706]" onClick={onAddBottomField}>
-                    <Plus className="h-3.5 w-3.5" />
-                    Add Row
-                  </ChipButton>
-                </div>
-                <div className="space-y-2">
-                  {bottomFields.length === 0 ? (
-                    <div className="rounded-[16px] border border-dashed border-[#e2e8f0] bg-[#f8fafc] px-4 py-5 text-[13px] text-[#64748b]">
-                      No extra rows yet.
-                    </div>
-                  ) : (
-                    bottomFields.map((field) => (
-                      <div key={field.id} className="grid grid-cols-[minmax(0,1fr)_42px] gap-2">
-                        <Input
-                          value={field.text || ''}
-                          onChange={(event) => onUpdateBottomField(field.id, event.target.value)}
-                          placeholder="Additional row"
-                          className={fieldCls}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => onRemoveBottomField(field.id)}
-                          className="flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#e2e8f0] bg-[#f8fafc] text-[#94a3b8]"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <CommercialTermsSection
+            invoice={invoice}
+            isQuotation={isQuotation}
+            updateInvoice={updateInvoice}
+            discountType={discountType}
+            setDiscountType={setDiscountType}
+            discountTiming={discountTiming}
+            setDiscountTiming={setDiscountTiming}
+            whtType={whtType}
+            setWhtType={setWhtType}
+            extraCharges={extraCharges}
+            onAddExtraCharge={onAddExtraCharge}
+            onUpdateExtraCharge={onUpdateExtraCharge}
+            onRemoveExtraCharge={onRemoveExtraCharge}
+            additionalFields={additionalFields}
+            onAddAdditionalField={onAddAdditionalField}
+            onUpdateAdditionalField={onUpdateAdditionalField}
+            onRemoveAdditionalField={onRemoveAdditionalField}
+          />
 
           <div>
             <SectionLabel color="#059669">Totals Summary</SectionLabel>

@@ -18,7 +18,7 @@ export const stripHtml = (html) => {
 
 export const parseCF = (raw) => {
   const defaults = {
-    header: [], bottom: [], extraCharges: [], chargeLabels: {},
+    header: [], additionalFields: [], bottom: [], extraCharges: [], chargeLabels: {},
     mergeQtyUnit: false, showItemImages: false, attachments: [],
     notesTitle: 'Notes', termsTitle: 'Terms and Conditions',
     groupMeta: {}, columnConfig: [],

@@ -9,6 +9,8 @@ import {
   getInvoicePdfOutput,
   getInvoiceSignatoryId,
   invoiceImportAdapter,
+  filterPopulatedAdditionalFields,
+  normalizeAdditionalFieldEntries,
   parseCustomFields,
 } from '@/domain/invoice'
 import {
@@ -47,7 +49,7 @@ export default function EditInvoice() {
   const [customFields, setCustomFields] = useState([])
   const [signatoryId, setSignatoryId] = useState(null)
   const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
-  const [bottomFields, setBottomFields] = useState([])
+  const [additionalFields, setAdditionalFields] = useState([])
   const [extraCharges, setExtraCharges] = useState([])
   const [chargeLabels, setChargeLabels] = useState({
     workmanship: 'Workmanship',
@@ -111,7 +113,7 @@ export default function EditInvoice() {
         setPdfOutput(getInvoicePdfOutput(parsed))
         if (parsed && !Array.isArray(parsed)) {
           setCustomFields(normalizeFieldEntries(parsed.header, 'value'))
-          setBottomFields(normalizeFieldEntries(parsed.bottom, 'text'))
+          setAdditionalFields(normalizeAdditionalFieldEntries(parsed.additionalFields, parsed.bottom))
           setExtraCharges(normalizeExtraCharges(parsed.extraCharges))
           if (parsed.chargeLabels) setChargeLabels(parsed.chargeLabels)
           if (parsed.columnConfig) {
@@ -358,10 +360,13 @@ export default function EditInvoice() {
     })
 
     const paymentTermsValue = invoice.payment_terms === 'Custom' ? invoice.custom_payment_terms : invoice.payment_terms
+    const sanitizedBaseCustomFields = { ...baseCustomFields }
+    delete sanitizedBaseCustomFields.bottom
+
     const customFieldsData = {
-      ...baseCustomFields,
+      ...sanitizedBaseCustomFields,
       header: customFields.filter((field) => field.label && field.value),
-      bottom: bottomFields.filter((field) => field.text),
+      additionalFields: filterPopulatedAdditionalFields(additionalFields),
       extraCharges: extraCharges.filter((charge) => charge.label),
       chargeLabels,
       columnConfig: columns,
@@ -450,7 +455,7 @@ export default function EditInvoice() {
           items={items}
           groups={groups}
           customFields={customFields}
-          bottomFields={bottomFields}
+          additionalFields={additionalFields}
           extraCharges={extraCharges}
           chargeLabels={chargeLabels}
           notesTitle={notesTitle}
@@ -514,11 +519,13 @@ export default function EditInvoice() {
             setCustomFields((current) => current.map((entry) => (entry.id === fieldId ? { ...entry, [field]: value } : entry)))
           }
           onRemoveHeaderField={(fieldId) => setCustomFields((current) => current.filter((entry) => entry.id !== fieldId))}
-          onAddBottomField={() => setBottomFields((current) => [...current, makeFieldEntry({ text: '' })])}
-          onUpdateBottomField={(fieldId, value) =>
-            setBottomFields((current) => current.map((entry) => (entry.id === fieldId ? { ...entry, text: value } : entry)))
+          onAddAdditionalField={() => setAdditionalFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])}
+          onUpdateAdditionalField={(fieldId, field, value) =>
+            setAdditionalFields((current) =>
+              current.map((entry) => (entry.id === fieldId ? { ...entry, [field]: value } : entry)),
+            )
           }
-          onRemoveBottomField={(fieldId) => setBottomFields((current) => current.filter((entry) => entry.id !== fieldId))}
+          onRemoveAdditionalField={(fieldId) => setAdditionalFields((current) => current.filter((entry) => entry.id !== fieldId))}
           onChargeLabelChange={(key, value) => setChargeLabels((current) => ({ ...current, [key]: value }))}
           onAddExtraCharge={(withTax) => setExtraCharges((current) => [...current, makeExtraCharge({ withTax })])}
           onUpdateExtraCharge={(chargeId, field, value) =>

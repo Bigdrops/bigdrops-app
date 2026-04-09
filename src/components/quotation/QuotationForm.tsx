@@ -6,6 +6,8 @@ import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import { supabase } from '@/supabase'
 import {
   buildCalculationInputs,
+  ensureUiKey,
+  filterPopulatedAdditionalFields,
   makeEmptyGroup,
   makeEmptyItem,
   makeExtraCharge,
@@ -160,7 +162,7 @@ function buildCustomFields({
   quotation,
   columns,
   headerFields,
-  bottomFields,
+  additionalFields,
   discountType,
   discountTiming,
   whtType,
@@ -178,7 +180,7 @@ function buildCustomFields({
   quotation: QuotationEditorState
   columns: ColumnConfig[]
   headerFields: InvoiceFieldEntry[]
-  bottomFields: InvoiceFieldEntry[]
+  additionalFields: InvoiceFieldEntry[]
   discountType: 'fixed' | 'percent'
   discountTiming: 'before' | 'after'
   whtType: 'fixed' | 'percent'
@@ -201,7 +203,7 @@ function buildCustomFields({
     notesHtml: quotation.notes || '',
     termsHtml: quotation.terms || '',
     header: headerFields.filter((field) => field.label && field.value),
-    bottom: bottomFields.filter((field) => field.text),
+    additionalFields: filterPopulatedAdditionalFields(additionalFields),
     columnConfig: columns,
     notesTitle,
     termsTitle,
@@ -310,7 +312,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     custom_payment_terms: '',
   })
   const [headerFields, setHeaderFields] = useState<InvoiceFieldEntry[]>([])
-  const [bottomFields, setBottomFields] = useState<InvoiceFieldEntry[]>([])
+  const [additionalFields, setAdditionalFields] = useState<InvoiceFieldEntry[]>([])
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountTiming, setDiscountTiming] = useState<'before' | 'after'>('after')
   const [whtType, setWhtType] = useState<'fixed' | 'percent'>('percent')
@@ -391,7 +393,6 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
               quantity: Number(item?.quantity || 0),
               unit: String(item?.unit || ''),
               sub_description: String(item?.specification || ''),
-              notes: String(item?.notes || ''),
               row_type: 'standard',
               group_id: null,
               group_name: '',
@@ -464,7 +465,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         setItems(normalizedGrouping.items)
         setColumns(state.columns)
         setHeaderFields(state.headerFields)
-        setBottomFields(state.bottomFields)
+        setAdditionalFields(state.additionalFields)
         setDiscountType(state.discountType)
         setDiscountTiming(state.discountTiming)
         setWhtType(state.whtType)
@@ -691,7 +692,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       quotation,
       columns,
       headerFields,
-      bottomFields,
+      additionalFields,
       discountType,
       discountTiming,
       whtType,
@@ -763,7 +764,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           quotation,
           columns,
           headerFields,
-          bottomFields,
+          additionalFields,
           discountType,
           discountTiming,
           whtType,
@@ -962,7 +963,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         items={normalizedItems}
         groups={normalizedGroups}
         customFields={headerFields}
-        bottomFields={bottomFields}
+        additionalFields={additionalFields}
         extraCharges={extraCharges}
         chargeLabels={chargeLabels}
         notesTitle={notesTitle}
@@ -1034,13 +1035,11 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           setHeaderFields((current) => current.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry)))
         }
         onRemoveHeaderField={(id: string) => setHeaderFields((current) => current.filter((entry) => entry.id !== id))}
-        onAddBottomField={() =>
-          setBottomFields((current) => [...current, { id: `bottom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, text: '' }])
+        onAddAdditionalField={() => setAdditionalFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])}
+        onUpdateAdditionalField={(id: string, field: 'label' | 'value', value: string) =>
+          setAdditionalFields((current) => current.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry)))
         }
-        onUpdateBottomField={(id: string, text: string) =>
-          setBottomFields((current) => current.map((field) => (field.id === id ? { ...field, text } : field)))
-        }
-        onRemoveBottomField={(id: string) => setBottomFields((current) => current.filter((field) => field.id !== id))}
+        onRemoveAdditionalField={(id: string) => setAdditionalFields((current) => current.filter((field) => field.id !== id))}
         onChargeLabelChange={(key: string, value: string) => setChargeLabels((current) => ({ ...current, [key]: value }))}
         onAddExtraCharge={(withTax: boolean) => setExtraCharges((current) => [...current, makeExtraCharge({ withTax })])}
         onUpdateExtraCharge={(id: string, field: string, value: unknown) =>

@@ -5,4 +5,5 @@ export * from './normalize'
 export * from './factories'
 export * from './importAdapter'
 export * from './advanceConfig'
+export * from './additionalFields'
 

@@ -114,7 +114,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const [items, setItems] = useState<InvoiceItem[]>([])
   const [columns, setColumns] = useState<any[]>([])
   const [headerFields, setHeaderFields] = useState<any[]>([])
-  const [bottomFields, setBottomFields] = useState<any[]>([])
+  const [additionalFields, setAdditionalFields] = useState<any[]>([])
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountTiming, setDiscountTiming] = useState<'before' | 'after'>('after')
   const [whtType, setWhtType] = useState<'fixed' | 'percent'>('percent')
@@ -155,7 +155,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       setItems(state.items)
       setColumns(state.columns)
       setHeaderFields(state.headerFields)
-      setBottomFields(state.bottomFields)
+      setAdditionalFields(state.additionalFields)
       setDiscountType(state.discountType)
       setDiscountTiming(state.discountTiming)
       setWhtType(state.whtType)
@@ -670,12 +670,27 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const previewNotesSections = [
     quotation.notes ? { title: notesTitle, content: renderRichText(quotation.notes) } : null,
     quotation.terms ? { title: termsTitle, content: renderRichText(quotation.terms) } : null,
-    ...bottomFields
-      .filter((field) => field?.text)
-      .map((field, index) => ({
-        title: index === 0 ? 'Additional Notes' : `Additional Notes ${index + 1}`,
-        content: <div className="whitespace-pre-wrap break-words">{field.text}</div>,
-      })),
+    additionalFields.filter((field) => field?.label || field?.value).length > 0
+      ? {
+          title: 'Additional Fields',
+          content: (
+            <div className="space-y-3">
+              {additionalFields
+                .filter((field) => field?.label || field?.value)
+                .map((field, index) => (
+                  <div key={`preview-additional-field-${index}`} className="grid gap-1">
+                    {field.label ? (
+                      <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">
+                        {field.label}
+                      </div>
+                    ) : null}
+                    <div className="whitespace-pre-wrap break-words">{field.value || '—'}</div>
+                  </div>
+                ))}
+            </div>
+          ),
+        }
+      : null,
   ].filter(Boolean)
 
   return (

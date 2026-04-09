@@ -80,10 +80,6 @@ export default function TotalsPanel({
   transportation,
   shipping,
   chargeLabels,
-  onChargeLabelChange,
-  onWorkmanshipChange,
-  onTransportationChange,
-  onShippingChange,
   extraCharges,
   onAddExtraCharge,
   onUpdateExtraCharge,
@@ -105,9 +101,9 @@ export default function TotalsPanel({
   totalPayable,
   amountInWords,
 }) {
-  const [showCharges, setShowCharges] = useState(true)
-  const [showDiscount, setShowDiscount] = useState(true)
-  const [showWht, setShowWht] = useState(true)
+  const [showCharges, setShowCharges] = useState(false)
+  const [showDiscount, setShowDiscount] = useState(false)
+  const [showWht, setShowWht] = useState(false)
 
   const summaryRows = useMemo(
     () =>
@@ -177,33 +173,15 @@ export default function TotalsPanel({
         <SectionHeader color="#d97706" label="Adjustments" />
         <CollapseCard
           color="#d97706"
-          title="Charges & Adjustments"
-          subtitle="Update commercial extras and taxable add-ons"
+          title="Additional Charges"
+          subtitle="Add taxable or non-taxable charges only when needed"
           open={showCharges}
           onToggle={() => setShowCharges((current) => !current)}
         >
           <div className="space-y-3">
-            {[
-              ['workmanship', workmanship, onWorkmanshipChange],
-              ['transportation', transportation, onTransportationChange],
-              ['shipping', shipping, onShippingChange],
-            ].map(([key, value, onChange]) => (
-              <div key={key} className="grid grid-cols-[minmax(0,1fr)_120px] gap-2 max-[520px]:grid-cols-1">
-                <Input
-                  value={chargeLabels[key] || ''}
-                  onChange={(event) => onChargeLabelChange(key, event.target.value)}
-                  placeholder={key}
-                  className={inputCls}
-                />
-                <Input
-                  type="number"
-                  min="0"
-                  value={value}
-                  onChange={(event) => onChange(Number(event.target.value))}
-                  className={`${inputCls} text-right`}
-                />
-              </div>
-            ))}
+            <div className="rounded-[14px] border border-dashed border-[#fcd34d] bg-[#fffbeb] px-3 py-3 text-[12px] leading-5 text-[#92400e]">
+              Add charges like workmanship, transportation, or shipping here instead of using dedicated rows.
+            </div>
 
             <div className="pt-1">
               <div className="mb-2 flex items-center justify-between gap-3">

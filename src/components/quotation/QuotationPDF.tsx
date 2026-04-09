@@ -1,6 +1,7 @@
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import {
   BUILTIN_COLUMNS,
+  getAdditionalFields,
   getPdfColumns,
 } from '@/domain/invoice'
 import type { ColumnConfig, InvoiceCustomFields, InvoiceItem } from '@/domain/invoice'
@@ -439,7 +440,12 @@ export default function QuotationPDF({
   const showVatRate = isVisible('vat_rate')
   const showDiscountRate = isVisible('discount_rate')
   const hasInstallColumn = isVisible('install_rate') && computedResult.installRateTotal > 0
-  const bottomFields = Array.isArray(customFields.bottom) ? customFields.bottom : []
+  const additionalFields = getAdditionalFields(customFields)
+    .map((field) => ({
+      label: String(field.label || '').trim(),
+      value: String(field.value || '').trim(),
+    }))
+    .filter((field) => field.label || field.value)
   const headerFields = pickHeaderFields(Array.isArray(customFields.header) ? customFields.header : [])
   const renderRows = buildRenderRows({
     rawItems: items,
@@ -581,16 +587,15 @@ export default function QuotationPDF({
           </View>
         ) : null}
 
-        {bottomFields.filter((field) => field.text).length > 0 ? (
+        {additionalFields.length > 0 ? (
           <View style={styles.notesSection}>
-            <Text style={styles.notesTitle}>Additional Notes</Text>
-            {bottomFields
-              .filter((field) => field.text)
-              .map((field, index) => (
-                <Text key={`bottom_${index}`} style={styles.notesText}>
-                  {String(field.text)}
-                </Text>
-              ))}
+            <Text style={styles.notesTitle}>Additional Fields</Text>
+            {additionalFields.map((field, index) => (
+              <View key={`additional_field_${index}`} style={styles.metaRow}>
+                <Text style={styles.metaLabel}>{field.label || `Field ${index + 1}`}</Text>
+                <Text style={styles.metaValue}>{field.value || '-'}</Text>
+              </View>
+            ))}
           </View>
         ) : null}
       </Page>

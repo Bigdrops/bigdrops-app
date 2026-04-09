@@ -42,6 +42,7 @@ export type AttachmentLink = {
 export type RenderableSupportBlock =
   | { type: 'bank'; title: string; rows: Array<{ label: string; value: string }> }
   | { type: 'text'; title: string; text: string }
+  | { type: 'fields'; title: string; rows: Array<{ label: string; value: string }> }
   | { type: 'links'; title: string; links: AttachmentLink[] }
   | { type: 'signature'; title: string; name?: string; role?: string; signatureUrl?: string }
 

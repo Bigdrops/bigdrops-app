@@ -179,6 +179,22 @@ export function SupportSection({ model, styles }: SectionProps) {
               )
             }
 
+            if (block.type === 'fields') {
+              return (
+                <View key={`fields_${index}`} wrap={false}>
+                  <Text style={styles.supportTitle}>{block.title}</Text>
+                  <View style={styles.supportBox}>
+                    {block.rows.map((row) => (
+                      <View key={`${row.label}-${row.value}`} style={styles.supportRow}>
+                        <Text style={styles.supportLabel}>{row.label}</Text>
+                        <Text style={styles.supportValue}>{row.value}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )
+            }
+
             return (
               <View key={`text_${index}`} wrap={false}>
                 <Text style={styles.supportTitle}>{block.title}</Text>

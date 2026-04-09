@@ -70,6 +70,7 @@ export interface QuotationCustomFields extends InvoiceCustomFields {
   termsHtml?: string
   columnConfig?: ColumnConfig[]
   header?: InvoiceFieldEntry[]
+  additionalFields?: InvoiceFieldEntry[]
   bottom?: InvoiceFieldEntry[]
   conversionTrail?: DocumentConversionTrail
 }
@@ -108,7 +109,7 @@ export interface QuotationFormState {
   items: InvoiceItem[]
   columns: ColumnConfig[]
   headerFields: InvoiceFieldEntry[]
-  bottomFields: InvoiceFieldEntry[]
+  additionalFields: InvoiceFieldEntry[]
   discountType: 'fixed' | 'percent'
   discountTiming: 'before' | 'after'
   whtType: 'fixed' | 'percent'

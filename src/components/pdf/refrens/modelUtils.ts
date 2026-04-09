@@ -1,4 +1,4 @@
-import { parseCustomFields, getInvoicePdfOutput, type ColumnConfig } from '@/domain/invoice'
+import { getAdditionalFields, parseCustomFields, getInvoicePdfOutput, type ColumnConfig } from '@/domain/invoice'
 import { BUILTIN_COLUMNS, getPdfColumns } from '@/domain/invoice'
 import { buildRenderRows } from '@/components/pdf/base/renderItems'
 import { stripHtml } from '@/components/pdf/pdfUtils'
@@ -11,6 +11,7 @@ type CustomFieldShape = ReturnType<typeof parseCustomFields> & {
   notesTitle?: string
   termsTitle?: string
   header?: Array<{ label?: unknown; value?: unknown }>
+  additionalFields?: Array<{ label?: unknown; value?: unknown }>
   bottom?: Array<{ text?: unknown }>
   attachments?: Array<{ label?: unknown; name?: unknown; url?: unknown }>
   groupMeta?: Record<string, { showSubtotal?: boolean }>
@@ -73,6 +74,15 @@ export function getBottomText(customFields: CustomFieldShape) {
   return (customFields.bottom || [])
     .map((field) => asText(field?.text))
     .filter(hasText)
+}
+
+export function getAdditionalFieldEntries(customFields: CustomFieldShape) {
+  return getAdditionalFields(customFields)
+    .map((field) => ({
+      label: asText(field?.label),
+      value: asText(field?.value),
+    }))
+    .filter((field) => hasText(field.label) || hasText(field.value))
 }
 
 export function getAttachmentLinks(customFields: CustomFieldShape) {

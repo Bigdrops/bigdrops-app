@@ -180,7 +180,13 @@ interface PreviewTextSection {
   text: string
 }
 
-type PreviewNotesSection = PreviewHtmlSection | PreviewLinksSection | PreviewTextSection
+interface PreviewFieldsSection {
+  kind: 'fields'
+  title: string
+  fields: Array<{ label: string; value: string }>
+}
+
+type PreviewNotesSection = PreviewHtmlSection | PreviewLinksSection | PreviewTextSection | PreviewFieldsSection
 
 interface PreviewNotesContent {
   title: string
@@ -216,6 +222,28 @@ export function mapInvoicePreviewNotesContent(previewNotesSections: PreviewNotes
               >
                 {link.label}
               </a>
+            ))}
+          </div>
+        ),
+      }
+    }
+
+    if (section.kind === 'fields') {
+      return {
+        title: section.title,
+        content: (
+          <div className="space-y-3">
+            {section.fields.map((field, index) => (
+              <div key={`${field.label || 'field'}-${index}`} className="grid gap-1">
+                {field.label ? (
+                  <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">
+                    {field.label}
+                  </div>
+                ) : null}
+                <div className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
+                  {field.value || '—'}
+                </div>
+              </div>
             ))}
           </div>
         ),

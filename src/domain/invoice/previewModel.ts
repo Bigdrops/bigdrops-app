@@ -1,4 +1,5 @@
 import { getPdfSummaryLabels } from '@/components/pdf/refrens/summaryLabels'
+import { getAdditionalFields } from './additionalFields'
 
 import { getAdvanceSummaryValues } from './advanceSummary'
 
@@ -31,6 +32,7 @@ export type PreviewTotalRow = {
 export type PreviewNoteSection =
   | { title: string; kind: 'html'; html: string }
   | { title: string; kind: 'text'; text: string }
+  | { title: string; kind: 'fields'; fields: Array<{ label: string; value: string }> }
   | { title: string; kind: 'links'; links: { label: string; url: string }[] }
 
 type InvoiceLike = {
@@ -100,6 +102,7 @@ type BankAccountLike = {
 
 type CustomFieldObjectLike = {
   header?: Array<{ label?: string | null; value?: string | null }>
+  additionalFields?: Array<{ label?: string | null; value?: string | null }>
   bottom?: Array<{ text?: string | null }>
   attachments?: Array<{ url?: string | null; label?: string | null; name?: string | null }>
   columnConfig?: Array<{ visible?: boolean | null; key?: string | null; label?: string | null }>
@@ -179,9 +182,12 @@ export function buildInvoicePreviewModel({
     ? customFieldObject.header.filter((field) => field?.label && field?.value)
     : []
 
-  const bottomFields = Array.isArray(customFieldObject?.bottom)
-    ? customFieldObject.bottom.filter((field) => field?.text)
-    : []
+  const additionalFields = getAdditionalFields(customFieldObject)
+    .map((field) => ({
+      label: String(field.label || '').trim(),
+      value: String(field.value || '').trim(),
+    }))
+    .filter((field) => field.label || field.value)
 
   const attachmentLinks = Array.isArray(customFieldObject?.attachments)
     ? customFieldObject.attachments
@@ -286,11 +292,13 @@ export function buildInvoicePreviewModel({
           html: invoice.terms,
         }
       : null,
-    ...bottomFields.map((field, index) => ({
-      title: index === 0 ? 'Additional Notes' : `Additional Notes ${index + 1}`,
-      kind: 'text' as const,
-      text: field?.text || '',
-    })),
+    ...(additionalFields.length > 0
+      ? [{
+          title: 'Additional Fields',
+          kind: 'fields' as const,
+          fields: additionalFields,
+        }]
+      : []),
     ...(attachmentLinks.length > 0
       ? [{
           title: 'Reference Links',

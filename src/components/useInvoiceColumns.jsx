@@ -13,6 +13,7 @@ export {
   buildCalculationInputs,
   extractCalculationInputs,
   buildEditableCalculationInputs,
+  filterPopulatedAdditionalFields,
   resolveInstallRate,
   getActiveColumns,
   getPdfColumns,

@@ -297,6 +297,7 @@ export interface InvoiceCustomFields {
   extraCharges?: ExtraCharge[]
   attachments?: InvoiceAttachment[]
   header?: Array<Record<string, unknown>>
+  additionalFields?: InvoiceFieldEntry[]
   bottom?: Array<Record<string, unknown>>
   conversionTrail?: DocumentConversionTrail
   advance_invoice?: AdvanceConfig

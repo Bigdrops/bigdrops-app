@@ -1,5 +1,5 @@
 import { Document, Image, Link, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
-import { BUILTIN_COLUMNS, getPdfColumns, type ColumnConfig, type InvoiceItem } from '@/domain/invoice'
+import { BUILTIN_COLUMNS, getAdditionalFields, getPdfColumns, type ColumnConfig, type InvoiceItem } from '@/domain/invoice'
 import { buildRenderRows, renderItemsTable } from '@/components/pdf/base/renderItems'
 import { renderTotals } from '@/components/pdf/base/renderTotals'
 import { extractInvoiceData, getHeaderFields, hasDisplayValue, stripHtml } from '@/components/pdf/pdfUtils'
@@ -535,9 +535,12 @@ function normalizeInvoice(document: ProfessionalPdfDocument, items: InvoiceItem[
     termsTitle: d.cf.termsTitle || 'Terms and Conditions',
     notesText: stripHtml(asText(document.notes)),
     termsText: stripHtml(asText(document.terms)),
-    bottomFields: (d.cf.bottom || [])
-      .map((field: { text?: unknown }) => asText(field.text))
-      .filter((line: string) => hasDisplayValue(line)),
+    additionalFields: getAdditionalFields(d.cf)
+      .map((field, index) => ({
+        label: asText(field.label) || `Field ${index + 1}`,
+        value: asText(field.value),
+      }))
+      .filter((field) => hasDisplayValue(field.label) || hasDisplayValue(field.value)),
     attachments: d.validAttachments,
     footerText: asText(d.footerText),
     amountInWords: asText(document.amount_in_words),
@@ -599,9 +602,12 @@ function normalizeQuotation(document: ProfessionalPdfDocument, items: InvoiceIte
     termsTitle: cf.termsTitle || 'Terms and Conditions',
     notesText: stripHtml(asText(document.notes)),
     termsText: stripHtml(asText(document.terms)),
-    bottomFields: (cf.bottom || [])
-      .map((field) => asText(field?.text))
-      .filter((line) => hasDisplayValue(line)),
+    additionalFields: getAdditionalFields(cf)
+      .map((field, index) => ({
+        label: asText(field.label) || `Field ${index + 1}`,
+        value: asText(field.value),
+      }))
+      .filter((field) => hasDisplayValue(field.label) || hasDisplayValue(field.value)),
     attachments: (cf.attachments || [])
       .map((attachment) => ({
         label: asText(attachment.label) || asText(attachment.name),
@@ -751,13 +757,14 @@ export default function InvoicePDF_Professional({
           </View>
         ) : null}
 
-        {doc.bottomFields.length > 0 ? (
+        {doc.additionalFields.length > 0 ? (
           <View style={styles.supportCard} wrap={false}>
-            <Text style={styles.supportTitle}>Additional Notes</Text>
-            {doc.bottomFields.map((line, index) => (
-              <Text key={`bottom_${index}`} style={styles.supportText}>
-                {line}
-              </Text>
+            <Text style={styles.supportTitle}>Additional Fields</Text>
+            {doc.additionalFields.map((field, index) => (
+              <View key={`additional_field_${index}`} style={styles.totalRow}>
+                <Text style={styles.totalLabel}>{field.label}</Text>
+                <Text style={styles.totalValue}>{field.value || '-'}</Text>
+              </View>
             ))}
           </View>
         ) : null}
