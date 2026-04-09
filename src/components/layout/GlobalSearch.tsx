@@ -99,15 +99,16 @@ export function GlobalSearch() {
   return (
     <div className="relative" ref={searchRef}>
       <Button
-        variant="outline"
+        variant="ghost"
         size="icon"
         onClick={toggle}
         className={cn(
-          "h-10 w-10 rounded-full border-border bg-card shadow-sm transition-all duration-300",
-          isOpen ? "scale-90 opacity-0" : "scale-100 opacity-100"
+          "h-8 w-8 rounded-xl bg-muted/40 text-foreground transition-all duration-300 active:scale-95",
+          isOpen ? "scale-90 opacity-0 pointer-events-none" : "scale-100 opacity-100"
         )}
+        aria-label="Search"
       >
-        <Search className="h-[18px] w-[18px] text-foreground" />
+        <Search className="h-[18px] w-[18px]" />
       </Button>
 
       {/* Global Search Backdrop for mobile focus */}
