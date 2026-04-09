@@ -598,7 +598,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const shellQuotationTotal = totals?.totalPayable ?? Number(quotation.total || 0)
   const activePdfTemplate = QUOTATION_PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || QUOTATION_PDF_TEMPLATES[0]
   const showQuotationFillableControls = isDocumentFillableEnabled(settings?.document_fillable_settings, 'quotation')
-  const quotationUsesLegacyStyling = pdfTemplate === 'quotation'
+  const quotationUsesLegacyStyling = pdfTemplate === 'standard'
   const handlePdfTemplateChange = (nextTemplate: PdfTemplateId) => {
     setPdfTemplate(nextTemplate)
     setPdfTemplatePreset('quotation', nextTemplate)
@@ -727,7 +727,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         notesSections={previewNotesSections}
         signatory={null}
         accentColor={
-          pdfTemplate === 'quotation'
+          pdfTemplate === 'standard'
             ? pdfDesignPreset.accentColor
             : pdfTemplate === 'elegant'
               ? '#d97706'

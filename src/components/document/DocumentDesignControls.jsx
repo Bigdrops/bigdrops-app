@@ -21,7 +21,7 @@ const templatePreviewById = {
     shell: 'bg-slate-50',
     nodes: ['-mx-1 h-2 rounded-t-sm bg-slate-900', 'h-1 w-full rounded-full bg-slate-300', 'h-1 w-3/4 rounded-full bg-slate-200'],
   },
-  quotation: {
+  standard: {
     shell: 'bg-slate-50',
     nodes: ['h-1.5 w-12 rounded-full bg-slate-950', 'h-1 w-full rounded-full bg-slate-300', 'h-1 w-3/5 rounded-full bg-slate-200'],
   },

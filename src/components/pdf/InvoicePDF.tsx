@@ -7,7 +7,7 @@ import type { DocumentResult } from '@/lib/Calculations'
 import type { PdfBankAccount, PdfOutputState, RefrensTemplateId } from '@/components/pdf/refrens/types'
 
 type InvoicePdfProps = {
-  template?: 'quotation' | RefrensTemplateId
+  template?: 'standard' | RefrensTemplateId
   document: Invoice | Quotation
   items: InvoiceItem[]
   client?: Record<string, unknown> | null
@@ -23,8 +23,8 @@ type InvoicePdfProps = {
   signatory?: Record<string, unknown> | null
 }
 
-function isQuotationTemplate(template?: string): template is 'quotation' {
-  return template === 'quotation'
+function isStandardTemplate(template?: string): template is 'standard' {
+  return template === 'standard'
 }
 
 export default function InvoicePDF({
@@ -38,7 +38,7 @@ export default function InvoicePDF({
   pdfOutput,
   signatory = null,
 }: InvoicePdfProps) {
-  if (isQuotationTemplate(template)) {
+  if (isStandardTemplate(template)) {
     return (
       <QuotationPDF
         document={document as Quotation}

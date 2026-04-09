@@ -19,7 +19,8 @@ const LEGACY_TEMPLATE_MAP: Record<string, PdfTemplateId> = {
   compact: 'minimal',
   professional: 'elegant',
   bold: 'bold',
-  quotation: 'quotation',
+  quotation: 'standard',
+  standard: 'standard',
   classic: 'classic',
   minimal: 'minimal',
   modern: 'modern',
@@ -42,7 +43,6 @@ function normalizeTemplateId(
   if (!value) return fallback
   const mapped = LEGACY_TEMPLATE_MAP[value] || value
   if (!isPdfTemplateId(mapped)) return fallback
-  if (documentType === 'invoice' && mapped === 'quotation') return DEFAULT_INVOICE_TEMPLATE
   return mapped
 }
 

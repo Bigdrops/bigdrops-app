@@ -7,7 +7,7 @@ import type { DocumentResult } from '@/lib/Calculations'
 import type { PdfBankAccount, PdfOutputState, RefrensTemplateId } from '@/components/pdf/refrens/types'
 
 type QuotationTemplatePdfProps = {
-  template?: 'quotation' | RefrensTemplateId
+  template?: 'standard' | RefrensTemplateId
   document: Quotation
   items: InvoiceItem[]
   client?: Record<string, unknown> | null
@@ -19,7 +19,7 @@ type QuotationTemplatePdfProps = {
 }
 
 export default function QuotationTemplatePDF({
-  template = 'quotation',
+  template = 'standard',
   document,
   items,
   client = null,
@@ -29,7 +29,7 @@ export default function QuotationTemplatePDF({
   pdfOutput,
   designPreset,
 }: QuotationTemplatePdfProps) {
-  if (template === 'quotation') {
+  if (template === 'standard') {
     return (
       <QuotationPDF
         document={document}
