@@ -52,7 +52,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
       title="Dashboard"
       hideMobileHomeHeader
       hidePageHeader
-      contentClassName="pb-32 bg-slate-50/40"
+      contentClassName="pb-32 bg-background"
     >
       {/* 1. COMPACT PREMIUM MOBILE HEADER */}
       <div className="sticky top-0 z-[50] border-b border-border/40 bg-background/80 px-4 py-3 backdrop-blur-md md:hidden">

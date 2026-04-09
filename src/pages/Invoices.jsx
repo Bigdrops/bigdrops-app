@@ -466,13 +466,13 @@ export default function Invoices() {
     },
   })
 
-  const getInvoiceStatusStyle = (status) => {
+  const getInvoiceStatusClassName = (status) => {
     const normalized = (status || "draft").toLowerCase()
-    if (normalized === "sent") return { backgroundColor: "#E0F2FE", color: "#0369A1" }
-    if (normalized === "paid") return { backgroundColor: "#DCFCE7", color: "#16A34A" }
-    if (normalized === "overdue") return { backgroundColor: "#FEE2E2", color: "#DC2626" }
-    if (normalized === "partial") return { backgroundColor: "#FEF3C7", color: "#92400E" }
-    return { backgroundColor: "#F1F5F9", color: "#64748B" }
+    if (normalized === "sent") return "bg-sky-100 text-sky-700"
+    if (normalized === "paid") return "bg-emerald-100 text-emerald-700"
+    if (normalized === "overdue") return "bg-rose-100 text-rose-700"
+    if (normalized === "partial") return "bg-amber-100 text-amber-700"
+    return "bg-muted text-muted-foreground"
   }
 
   const formatInvoiceStatusLabel = (status) => formatStatusLabel(status, { fallback: "draft", lowercase: true })
@@ -485,7 +485,7 @@ export default function Invoices() {
     setSortBy("Newest")
   }
 
-  const filterSelectClass = "h-10 rounded-xl border border-border bg-background px-3 text-xs font-bold text-zinc-700 outline-none"
+  const filterSelectClass = "h-10 rounded-xl border border-border bg-background px-3 text-xs font-bold text-foreground outline-none"
 
   return (
     <Layout title="Invoices" hidePageHeader>
@@ -502,7 +502,7 @@ export default function Invoices() {
           filterPanel={showFilters ? (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Client</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Client</div>
                 <Select value={clientFilter} onValueChange={setClientFilter}>
                   <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -512,7 +512,7 @@ export default function Invoices() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Status</div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -521,7 +521,7 @@ export default function Invoices() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Date</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Date</div>
                 <Select value={dateFilter} onValueChange={setDateFilter}>
                   <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -530,7 +530,7 @@ export default function Invoices() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Sort</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Sort</div>
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -549,13 +549,13 @@ export default function Invoices() {
           ) : null}
       >
         {invoices.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center text-sm text-slate-500">
+          <div className="rounded-[22px] border border-dashed border-border bg-card px-6 py-16 text-center text-sm text-muted-foreground">
             No invoices match the current filters
           </div>
         ) : (
-          <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+          <div className="overflow-hidden rounded-[22px] border border-border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
             {invoices.map((inv, index) => {
-              const statusStyle = getInvoiceStatusStyle(inv.status)
+              const statusClassName = getInvoiceStatusClassName(inv.status)
               const statusLabel = formatInvoiceStatusLabel(inv.status)
               const amount = formatNaira(inv.total)
               const meta = `${inv.invoice_number}${formatInvoiceDate(inv.issue_date) ? ` • ${formatInvoiceDate(inv.issue_date)}` : ""}`
@@ -564,21 +564,17 @@ export default function Invoices() {
                 <div
                   key={inv.id}
                   onClick={() => navigate(`/invoices/${inv.id}`)}
-                  className="grid cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-4"
-                  style={{ borderTop: index === 0 ? "none" : "1px solid hsl(214,32%,91%)" }}
+                  className={`grid cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-4 ${index === 0 ? "" : "border-t border-border"}`}
                 >
                   <div className="min-w-0">
-                    <div className="truncate text-base font-bold leading-[1.18] tracking-[-0.03em] text-slate-950">
+                    <div className="truncate text-base font-bold leading-[1.18] tracking-[-0.03em] text-foreground">
                       {inv.client_name || "No client"}
                     </div>
-                    <div className="mt-1 text-[13px] leading-[1.45] text-slate-500">{meta}</div>
+                    <div className="mt-1 text-[13px] leading-[1.45] text-muted-foreground">{meta}</div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <div className="text-base font-extrabold tracking-[-0.03em] text-slate-950">{amount}</div>
-                    <span
-                      className="inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold"
-                      style={statusStyle}
-                    >
+                    <div className="text-base font-extrabold tracking-[-0.03em] text-foreground">{amount}</div>
+                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusClassName}`}>
                       {statusLabel}
                     </span>
                   </div>
@@ -588,7 +584,7 @@ export default function Invoices() {
                       event.stopPropagation()
                       setActiveInvoice(inv)
                     }}
-                    className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                    className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-[20px] leading-none text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                     aria-label={`Open actions for ${inv.invoice_number}`}
                   >
                     ⋯
@@ -605,10 +601,10 @@ export default function Invoices() {
               type="button"
               onClick={() => fetchInvoices(page + 1, false)}
               disabled={loadingMore}
-              className="h-11 rounded-2xl border border-border bg-white px-5 text-sm font-bold text-zinc-700 disabled:opacity-60"
-            >
-              {loadingMore ? "Loading..." : "Load more"}
-            </button>
+                className="h-11 rounded-2xl border border-border bg-card px-5 text-sm font-bold text-foreground disabled:opacity-60"
+              >
+                {loadingMore ? "Loading..." : "Load more"}
+              </button>
           </div>
         ) : null}
       </MobileListPageShell>

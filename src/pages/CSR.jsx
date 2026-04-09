@@ -284,7 +284,7 @@ export default function CSR() {
     setRetryingQueueItemId(null)
   }
 
-  const filterSelectClass = "h-10 rounded-[14px] border border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 outline-none"
+  const filterSelectClass = "h-10 rounded-[14px] border border-border bg-background px-3 text-xs font-bold text-foreground outline-none"
   const hasActiveFilters =
     !!search || clientFilter !== "All" || statusFilter !== "All" || dateFilter !== "All Time"
 
@@ -303,7 +303,7 @@ export default function CSR() {
           filterPanel={showFilters ? (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Client</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Client</div>
                 <Select value={clientFilter} onValueChange={setClientFilter}>
                   <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -313,7 +313,7 @@ export default function CSR() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Status</div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -322,7 +322,7 @@ export default function CSR() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Date</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Date</div>
                 <Select value={dateFilter} onValueChange={setDateFilter}>
                   <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -331,7 +331,7 @@ export default function CSR() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Sort</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Sort</div>
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -366,7 +366,7 @@ export default function CSR() {
                 size="icon-lg"
                 onClick={loadCsrSyncQueue}
                 disabled={syncQueueLoading || retryingQueueItemId != null}
-                className="h-10 w-10 rounded-2xl border-amber-200 bg-white text-amber-700 hover:bg-amber-100"
+                className="h-10 w-10 rounded-2xl border-amber-200 bg-background text-amber-700 hover:bg-amber-100"
                 aria-label="Refresh CSR sync queue"
               >
                 {syncQueueLoading ? (
@@ -385,12 +385,12 @@ export default function CSR() {
                   return (
                     <div
                       key={item.id}
-                      className="rounded-2xl border border-amber-200 bg-white p-3"
+                      className="rounded-2xl border border-amber-200 bg-background p-3"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <div className="truncate text-sm font-bold text-slate-900">
+                            <div className="truncate text-sm font-bold text-foreground">
                               {item.csrNumber || item.localCsrId || `Queue #${item.id}`}
                             </div>
                             <span
@@ -421,7 +421,7 @@ export default function CSR() {
                           size="sm"
                           onClick={() => handleRetryQueueItem(item.id)}
                           disabled={retryingQueueItemId != null}
-                          className="h-9 rounded-xl border-amber-200 bg-white px-3 text-xs font-bold text-amber-700 hover:bg-amber-50"
+                          className="h-9 rounded-xl border-amber-200 bg-background px-3 text-xs font-bold text-amber-700 hover:bg-amber-50"
                         >
                           {isRetrying ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -441,11 +441,11 @@ export default function CSR() {
 
 
         {loading ? (
-          <div className="rounded-[22px] border border-slate-200 bg-white px-5 py-16 text-center text-sm text-muted-foreground">
+          <div className="rounded-[22px] border border-border bg-card px-5 py-16 text-center text-sm text-muted-foreground">
             Loading service reports...
           </div>
         ) : filteredCsrs.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-slate-300 bg-white p-5 text-center">
+          <div className="rounded-[22px] border border-dashed border-border bg-card p-5 text-center">
             <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-[16px] bg-zinc-900 text-white">
               <ClipboardList className="h-5 w-5" />
             </div>
@@ -466,21 +466,21 @@ export default function CSR() {
                   ? "bg-rose-100 text-rose-700"
                   : statusKey === "pending"
                     ? "bg-amber-100 text-amber-700"
-                    : "bg-slate-100 text-slate-600"
+                    : "bg-muted text-muted-foreground"
               const secondaryLabel = csr.make || csr.equipment_type
 
               return (
               <div
                 key={csr.id}
                 onClick={() => navigate("/csr/" + csr.id)}
-                className="cursor-pointer rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                className="cursor-pointer rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
               >
                 <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
                   <div className="grid h-12 w-12 place-items-center rounded-2xl border border-amber-100 bg-amber-50 text-lg font-extrabold text-amber-700">S</div>
                   <div className="min-w-0">
-                    <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">CSR</div>
-                    <div className="mt-1 text-lg font-bold tracking-[-0.03em] text-slate-950">{csr.csr_number || "-"}</div>
-                    <div className="mt-1 text-sm text-slate-500">
+                    <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">CSR</div>
+                    <div className="mt-1 text-lg font-bold tracking-[-0.03em] text-foreground">{csr.csr_number || "-"}</div>
+                    <div className="mt-1 text-sm text-muted-foreground">
                       {[csr.client_name || "No client name", formatCardDate(csr.date)].filter(Boolean).join(" • ")}
                     </div>
                   </div>
@@ -490,7 +490,7 @@ export default function CSR() {
                       event.stopPropagation()
                       setActiveCsr(csr)
                     }}
-                    className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                    className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-[20px] leading-none text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                     aria-label={`Open actions for ${csr.csr_number || "CSR"}`}
                   >
                     ⋯
@@ -501,7 +501,7 @@ export default function CSR() {
                     {formatCsrStatusLabel(csr.status)}
                   </span>
                   {secondaryLabel ? (
-                    <span className="inline-flex h-7 items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 text-xs font-semibold text-slate-500">
+                    <span className="inline-flex h-7 items-center rounded-full border border-border bg-muted px-2.5 text-xs font-semibold text-muted-foreground">
                       {secondaryLabel}
                     </span>
                   ) : null}

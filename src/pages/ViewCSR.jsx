@@ -252,26 +252,26 @@ export default function ViewCSR() {
           <button
             type="button"
             onClick={() => navigate('/csr')}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-border bg-card text-slate-600 shadow-sm transition hover:bg-muted/60"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-border bg-card text-muted-foreground shadow-sm transition hover:bg-muted/60"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
         </div>
 
-        <div className={`${documentDetailHeaderCardClassName} bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF4FF_100%)]`}>
+        <div className={`${documentDetailHeaderCardClassName} page-intro-surface`}>
           <div>
-            <div className={`mb-2.5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white text-slate-900 ${documentDetailStatusBadgeClassName}`}>
+            <div className={`mb-2.5 inline-flex items-center gap-2 rounded-full border border-border bg-background text-foreground ${documentDetailStatusBadgeClassName}`}>
               Customer Service Report
             </div>
-            <div className="mb-1 text-[26px] font-bold text-slate-900">{previewData.csr_number}</div>
-            <div className="text-sm leading-[1.6] text-slate-600">
+            <div className="mb-1 text-[26px] font-bold text-foreground">{previewData.csr_number}</div>
+            <div className="text-sm leading-[1.6] text-muted-foreground">
               {previewData.client_name || 'Unassigned client'}{previewData.date ? ` • ${previewData.date}` : ''}
             </div>
           </div>
         </div>
 
         <div className="mt-4 mb-6 grid grid-cols-3 gap-2">
-          <Button type="button" className="h-[44px] w-full rounded-[12px] bg-blue-700 text-[13px] font-bold shadow-[0_10px_24px_rgba(0,86,179,0.18)] hover:bg-blue-800" onClick={handleDownload}>
+          <Button type="button" className="h-[44px] w-full rounded-[12px] bg-primary text-[13px] font-bold text-primary-foreground shadow-sm hover:bg-primary/90" onClick={handleDownload}>
             PDF
           </Button>
           <Button

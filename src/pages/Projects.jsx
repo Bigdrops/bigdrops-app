@@ -10,10 +10,10 @@ import MobileFab from '../components/layout/MobileFab'
 import MobileListPageShell from '../components/layout/MobileListPageShell'
 
 const STATUS_CONFIG = {
-  active:    { label: 'Active',    bg: '#DCFCE7', color: '#16A34A', dot: '#22C55E' },
-  completed: { label: 'Completed', bg: '#E0F2FE', color: '#0369A1', dot: '#0EA5E9' },
-  on_hold:   { label: 'On Hold',   bg: '#FEF3C7', color: '#92400E', dot: '#F59E0B' },
-  cancelled: { label: 'Cancelled', bg: '#FEE2E2', color: '#DC2626', dot: '#EF4444' },
+  active: { label: 'Active' },
+  completed: { label: 'Completed' },
+  on_hold: { label: 'On Hold' },
+  cancelled: { label: 'Cancelled' },
 }
 
 export default function Projects() {
@@ -155,7 +155,7 @@ export default function Projects() {
               <div className="space-y-2">
                 <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Client</div>
                 <Select value={clientFilter} onValueChange={setClientFilter}>
-                  <SelectTrigger className="h-10 rounded-xl bg-white"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="All">All</SelectItem>
                     {clientOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
@@ -165,7 +165,7 @@ export default function Projects() {
               <div className="space-y-2">
                 <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="h-10 rounded-xl bg-white"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {['All', 'Active', 'Completed', 'On Hold', 'Cancelled'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                   </SelectContent>
@@ -174,7 +174,7 @@ export default function Projects() {
               <div className="space-y-2">
                 <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Period</div>
                 <Select value={dateFilter} onValueChange={setDateFilter}>
-                  <SelectTrigger className="h-10 rounded-xl bg-white"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {['All Time', 'This Month', 'Last Month', 'This Year'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                   </SelectContent>
@@ -183,7 +183,7 @@ export default function Projects() {
               <div className="space-y-2">
                 <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Sort</div>
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="h-10 rounded-xl bg-white"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                   </SelectContent>
@@ -193,7 +193,7 @@ export default function Projects() {
                 <button
                   type="button"
                   onClick={resetFilters}
-                  className="h-10 rounded-xl border border-slate-200 px-4 text-xs font-bold uppercase text-slate-500 sm:col-span-2"
+                  className="h-10 rounded-xl border border-border px-4 text-xs font-bold uppercase text-muted-foreground transition hover:bg-muted/50 sm:col-span-2"
                 >
                   Clear
                 </button>
@@ -202,14 +202,14 @@ export default function Projects() {
           ) : null}
       >
         {loading ? (
-          <div className="rounded-[22px] border border-slate-200 bg-white px-5 py-16 text-center text-sm text-slate-500">Loading projects...</div>
+          <div className="rounded-[22px] border border-border bg-card px-5 py-16 text-center text-sm text-muted-foreground">Loading projects...</div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-500">
+          <div className="rounded-[22px] border border-dashed border-border bg-card px-6 py-16 text-center">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
               <FolderKanban className="h-7 w-7" />
             </div>
-            <div className="text-base font-semibold text-slate-900">{hasActiveFilters ? 'No matches found' : 'No projects yet'}</div>
-            <div className="mt-1 text-sm text-slate-500">{hasActiveFilters ? 'Try adjusting your filters' : 'Create your first project to get started'}</div>
+            <div className="text-base font-semibold text-foreground">{hasActiveFilters ? 'No matches found' : 'No projects yet'}</div>
+            <div className="mt-1 text-sm text-muted-foreground">{hasActiveFilters ? 'Try adjusting your filters' : 'Create your first project to get started'}</div>
           </div>
         ) : (
           <div className="grid gap-3">
@@ -224,7 +224,7 @@ export default function Projects() {
                 <div
                   key={project.id}
                   onClick={() => navigate(`/projects/${project.id}`)}
-                  className="relative cursor-pointer rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                  className="relative cursor-pointer rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
                   <div className="absolute inset-y-0 left-0 w-1 rounded-l-[22px] bg-emerald-500" />
                   <div className="flex items-center justify-between gap-3">
@@ -237,18 +237,18 @@ export default function Projects() {
                         event.stopPropagation()
                         setActiveProject(project)
                       }}
-                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-[20px] leading-none text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                       aria-label={`Open actions for ${project.name}`}
                     >
                       ⋯
                     </button>
                   </div>
-                  <div className="mt-3 text-lg font-bold leading-[1.18] tracking-[-0.03em] text-slate-950">{project.name}</div>
+                  <div className="mt-3 text-lg font-bold leading-[1.18] tracking-[-0.03em] text-foreground">{project.name}</div>
                   {project.project_code ? (
-                    <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{project.project_code}</div>
+                    <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{project.project_code}</div>
                   ) : null}
-                  <div className="mt-1 text-sm text-slate-500">{project.client_name || 'No client'}</div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-slate-500">
+                  <div className="mt-1 text-sm text-muted-foreground">{project.client_name || 'No client'}</div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-muted-foreground">
                     <span>{count} doc{count !== 1 ? 's' : ''}</span>
                     {startedText ? (
                       <>
@@ -257,11 +257,11 @@ export default function Projects() {
                       </>
                     ) : null}
                   </div>
-                  <div className="mt-[14px] flex items-center justify-between gap-3 border-t border-slate-200 pt-[14px]">
-                    <span className="inline-flex h-7 items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 text-xs font-semibold text-slate-500">
+                  <div className="mt-[14px] flex items-center justify-between gap-3 border-t border-border pt-[14px]">
+                    <span className="inline-flex h-7 items-center rounded-full border border-border bg-muted px-2.5 text-xs font-semibold text-muted-foreground">
                       Open project
                     </span>
-                    <div className="text-base font-extrabold tracking-[-0.03em] text-slate-950">{formattedValue}</div>
+                    <div className="text-base font-extrabold tracking-[-0.03em] text-foreground">{formattedValue}</div>
                   </div>
                 </div>
               )

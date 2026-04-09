@@ -1012,7 +1012,7 @@ export default function ViewInvoice() {
             {
               label: pdfGenerating ? 'Preparing...' : 'Download PDF',
               onClick: () => void handleDownloadPDF(),
-              className: 'bg-slate-950 text-white hover:bg-slate-800',
+              className: 'bg-foreground text-background hover:bg-foreground/90',
               disabled: pdfGenerating,
             },
           ]}
@@ -1139,7 +1139,7 @@ export default function ViewInvoice() {
             {
               label: computedStatus === 'paid' ? 'Paid in Full' : 'Record Payment',
               onClick: () => setShowPaymentModal(true),
-              className: 'bg-emerald-600 text-white hover:bg-emerald-700',
+              className: 'bg-primary text-primary-foreground hover:bg-primary/90',
               disabled: computedStatus === 'paid' || !isStandaloneInvoice,
             },
           ]}
@@ -1163,7 +1163,7 @@ function CompactInvoiceSummary({
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="border-b border-slate-200/80 pb-3">
+    <div className="border-b border-border/80 pb-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold leading-5 text-foreground">

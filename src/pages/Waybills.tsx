@@ -248,9 +248,9 @@ export default function Waybills() {
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
                   Offline sync recovery
                 </div>
-                <div className="mt-1 text-sm text-slate-700">
-                  Retry pending or failed waybill uploads from this device.
-                </div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                Retry pending or failed waybill uploads from this device.
+              </div>
               </div>
               <Button
                 type="button"
@@ -258,7 +258,7 @@ export default function Waybills() {
                 size="icon-lg"
                 onClick={loadWaybillSyncQueue}
                 disabled={syncQueueLoading || retryingQueueItemId != null}
-                className="h-10 w-10 rounded-2xl border-amber-200 bg-white text-amber-700 hover:bg-amber-100"
+                className="h-10 w-10 rounded-2xl border-amber-200 bg-background text-amber-700 hover:bg-amber-100"
                 aria-label="Refresh waybill sync queue"
               >
                 {syncQueueLoading ? (
@@ -277,12 +277,12 @@ export default function Waybills() {
                   return (
                     <div
                       key={item.id}
-                      className="rounded-2xl border border-amber-200 bg-white p-3"
+                      className="rounded-2xl border border-amber-200 bg-background p-3"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <div className="truncate text-sm font-bold text-slate-900">
+                            <div className="truncate text-sm font-bold text-foreground">
                               {item.waybillNumber || item.localWaybillId || `Queue #${item.id}`}
                             </div>
                             <span
@@ -313,7 +313,7 @@ export default function Waybills() {
                           size="sm"
                           onClick={() => handleRetryQueueItem(item.id)}
                           disabled={retryingQueueItemId != null}
-                          className="h-9 rounded-xl border-amber-200 bg-white px-3 text-xs font-bold text-amber-700 hover:bg-amber-50"
+                          className="h-9 rounded-xl border-amber-200 bg-background px-3 text-xs font-bold text-amber-700 hover:bg-amber-50"
                         >
                           {isRetrying ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -332,10 +332,10 @@ export default function Waybills() {
         ) : null}
 
         {loading ? (
-          <div className="rounded-[22px] border border-slate-200 bg-white px-5 py-16 text-center text-sm text-muted-foreground">Loading…</div>
+          <div className="rounded-[22px] border border-border bg-card px-5 py-16 text-center text-sm text-muted-foreground">Loading…</div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 rounded-[26px] border border-dashed border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] py-16 text-center shadow-[0_18px_36px_-30px_rgba(15,23,42,0.45)]">
-            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-500">
+            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
               <Truck className="h-7 w-7" />
             </div>
             <div>
@@ -364,14 +364,14 @@ export default function Waybills() {
                 <div
                   key={w.id}
                   onClick={() => navigate(`/waybills/${w.id}`)}
-                  className="cursor-pointer rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                  className="cursor-pointer rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
                   <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
                     <div className="grid h-12 w-12 place-items-center rounded-2xl border border-cyan-100 bg-cyan-50 text-lg font-extrabold text-cyan-500">W</div>
                     <div className="min-w-0">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Waybill</div>
-                      <div className="mt-1 text-lg font-bold tracking-[-0.03em] text-slate-950">{w.waybill_number || '—'}</div>
-                      <div className="mt-1 text-sm text-slate-500">{w.client_name || 'No client / internal movement'}</div>
+                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Waybill</div>
+                      <div className="mt-1 text-lg font-bold tracking-[-0.03em] text-foreground">{w.waybill_number || '—'}</div>
+                      <div className="mt-1 text-sm text-muted-foreground">{w.client_name || 'No client / internal movement'}</div>
                     </div>
                     <button
                       type="button"
@@ -379,7 +379,7 @@ export default function Waybills() {
                         event.stopPropagation()
                         setActiveWaybill(w)
                       }}
-                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-[20px] leading-none text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                       aria-label={`Open actions for ${w.waybill_number || 'waybill'}`}
                     >
                       ⋯
@@ -390,12 +390,12 @@ export default function Waybills() {
                     <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusMeta.label.toLowerCase() === 'delivered' ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-700'}`}>
                       {statusMeta.label}
                     </span>
-                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${w.type === 'internal' ? 'bg-cyan-100 text-cyan-700' : 'border border-slate-200 bg-slate-100 text-slate-500'}`}>
+                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${w.type === 'internal' ? 'bg-cyan-100 text-cyan-700' : 'border border-border bg-muted text-muted-foreground'}`}>
                       {typeMeta.label}
                     </span>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-slate-500">
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-muted-foreground">
                     <span>{formatWaybillDate(w.date)}</span>
                     {w.vehicle_plate ? (
                       <>
@@ -405,9 +405,9 @@ export default function Waybills() {
                     ) : null}
                   </div>
 
-                  <div className="my-[14px] h-px bg-slate-200" />
+                  <div className="my-[14px] h-px bg-border" />
 
-                  <div className="text-sm text-slate-600">Route: {w.delivery_location || '—'}</div>
+                  <div className="text-sm text-muted-foreground">Route: {w.delivery_location || '—'}</div>
                   {!w.project_id ? <div className="mt-2 text-sm font-medium text-amber-700">Project link pending</div> : null}
                 </div>
               )

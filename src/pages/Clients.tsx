@@ -126,8 +126,8 @@ export default function Clients() {
                   type="button"
                   onClick={() => setCategory(option)}
                   className={option === category
-                    ? "rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
-                    : "rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600"}
+                    ? "rounded-full bg-foreground px-3 py-1.5 text-xs font-semibold text-background"
+                    : "rounded-full bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground"}
                 >
                   {option}
                 </button>
@@ -143,7 +143,7 @@ export default function Clients() {
           <div className="grid gap-3">
             {Array.from({ length: 5 }).map((_, index) => (
               <div key={index} className="rounded-[22px] border border-border bg-card p-4 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
-                <div className="h-20 animate-pulse rounded-[16px] bg-slate-100" />
+                <div className="h-20 animate-pulse rounded-[16px] bg-muted" />
               </div>
             ))}
           </div>
@@ -165,15 +165,15 @@ export default function Clients() {
                 <div
                   key={client.id}
                   onClick={() => navigate(`/clients/${client.id}`)}
-                  className="cursor-pointer rounded-[22px] border border-slate-200 bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                  className="cursor-pointer rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
                   <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                    <div className="grid h-12 w-12 place-items-center rounded-2xl border border-violet-100 bg-violet-50 text-sm font-extrabold text-violet-700">
+                    <div className="grid h-12 w-12 place-items-center rounded-2xl border border-border bg-muted text-sm font-extrabold text-foreground">
                       {initials(client.name)}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-lg font-bold tracking-[-0.03em] text-slate-950">{client.name}</div>
-                      <div className="mt-1 text-sm text-slate-500">{formatLocation(client.city, client.state)}</div>
+                      <div className="text-lg font-bold tracking-[-0.03em] text-foreground">{client.name}</div>
+                      <div className="mt-1 text-sm text-muted-foreground">{formatLocation(client.city, client.state)}</div>
                     </div>
                     <button
                       type="button"
@@ -181,17 +181,17 @@ export default function Clients() {
                         event.stopPropagation()
                         setActiveClient(client)
                       }}
-                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-card text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-card text-[20px] leading-none text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                       aria-label={`Open actions for ${client.name}`}
                     >
                       ⋯
                     </button>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-slate-500">
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-muted-foreground">
                     <span>{client.phone ?? "—"}</span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${cat === "Client" ? "bg-violet-100 text-violet-700" : "border border-slate-200 bg-slate-100 text-slate-500"}`}>
+                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${cat === "Client" ? "bg-violet-100 text-violet-700" : "border border-border bg-muted text-muted-foreground"}`}>
                       {cat}
                     </span>
                   </div>

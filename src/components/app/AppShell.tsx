@@ -6,6 +6,12 @@ import PageLoader from '@/components/app/PageLoader'
 import { isAndroidNative } from '@/lib/native/capacitor'
 import { useSettings } from '@/hooks/useSettings'
 import { normalizeHexColor, hexToHslTriplet } from '@/lib/colorTheme'
+import {
+  applyThemeTokenBundle,
+  clearThemeTokenBundle,
+  normalizeThemeTokenBundle,
+  type ThemeTokenBundle,
+} from '@/lib/themeTokens'
 
 const Dashboard = lazy(() => import('@/pages/DashboardRedesign'))
 const Invoices = lazy(() => import('@/pages/Invoices'))
@@ -66,31 +72,36 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
   useEffect(() => {
     const bgSetting = settings?.app_background_color
     const cardSetting = settings?.app_card_color
-    
+
+    // Future presets will provide a full semantic token bundle. For now this is optional
+    // and defaults to the CSS `:root` values in src/index.css.
+    const rawBundle = (settings as unknown as { app_theme_tokens?: unknown })?.app_theme_tokens
+    const normalizedBundle = normalizeThemeTokenBundle(rawBundle, { allowRadius: true })
+
+    // Back-compat: manual background/card pickers (hex) override any bundle-provided values.
+    const legacyOverrides: ThemeTokenBundle = {}
     const normBg = bgSetting ? normalizeHexColor(bgSetting) : null
     const normCard = cardSetting ? normalizeHexColor(cardSetting) : null
 
     if (normBg) {
-      document.documentElement.style.setProperty('--background', hexToHslTriplet(normBg))
-    } else {
-      document.documentElement.style.removeProperty('--background')
+      legacyOverrides.background = hexToHslTriplet(normBg)
     }
 
     if (normCard) {
       const cardHsl = hexToHslTriplet(normCard)
-      document.documentElement.style.setProperty('--card', cardHsl)
-      document.documentElement.style.setProperty('--popover', cardHsl)
-    } else {
-      document.documentElement.style.removeProperty('--card')
-      document.documentElement.style.removeProperty('--popover')
+      legacyOverrides.card = cardHsl
+      legacyOverrides.popover = cardHsl
     }
 
+    const applied = applyThemeTokenBundle({
+      ...normalizedBundle,
+      ...legacyOverrides,
+    })
+
     return () => {
-      document.documentElement.style.removeProperty('--background')
-      document.documentElement.style.removeProperty('--card')
-      document.documentElement.style.removeProperty('--popover')
+      clearThemeTokenBundle(applied)
     }
-  }, [settings?.app_background_color, settings?.app_card_color])
+  }, [settings?.app_background_color, settings?.app_card_color, (settings as any)?.app_theme_tokens])
 
   return (
     <>
