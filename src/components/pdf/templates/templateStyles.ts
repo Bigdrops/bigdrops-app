@@ -23,6 +23,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
   const bodyFont = useFontOverride ? resolvePdfFontFamily(designPreset?.bodyFont!, 'regular') : 'Helvetica'
   const bodyBoldFont = useFontOverride ? resolvePdfFontFamily(designPreset?.bodyFont!, 'bold') : 'Helvetica-Bold'
 
+  const isDarkHeader = templateId === 'modern' || templateId === 'bold'
   const isElegant = templateId === 'elegant'
   const isMinimal = templateId === 'minimal'
   const headerBorderBottomColor = isMinimal ? tokens.tableBorder : accentColor
