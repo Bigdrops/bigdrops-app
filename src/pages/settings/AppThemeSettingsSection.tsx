@@ -94,25 +94,32 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
     setCard(settings.app_card_color || '')
   }, [loading, settings])
 
+  const handleSelectPreset = async (presetId: ThemePresetId) => {
+    setSelectedMode(presetId)
+    setSaving(true)
+    try {
+      await saveSettings({ app_theme_preset_id: presetId })
+      setSaved(true)
+      if (presetId !== 'custom') {
+        const label = THEME_PRESETS.find((preset) => preset.id === presetId)?.label
+        onToast(`${label ?? 'Theme preset'} applied`)
+      } else {
+        onToast('Custom mode active')
+      }
+      setTimeout(() => setSaved(false), 2000)
+    } catch (error) {
+      onToast(getErrorMessage(error))
+    }
+    setSaving(false)
+  }
+
   const selectedPreset = useMemo(
     () => THEME_PRESETS.find((preset) => preset.id === selectedMode) ?? null,
     [selectedMode]
   )
 
   const handleSave = async () => {
-    if (selectedMode !== 'custom') {
-      setSaving(true)
-      try {
-        await saveSettings({ app_theme_preset_id: selectedMode })
-        setSaved(true)
-        onToast(`${selectedPreset?.label ?? 'Theme preset'} applied`)
-        setTimeout(() => setSaved(false), 2500)
-      } catch (error) {
-        onToast(getErrorMessage(error))
-      }
-      setSaving(false)
-      return
-    }
+    if (selectedMode !== 'custom') return
 
     const normBg = background ? normalizeHexColor(background) : null
     const normCard = card ? normalizeHexColor(card) : null
@@ -203,7 +210,7 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
               description={preset.description}
               preview={preset.preview}
               selected={selectedMode === preset.id}
-              onSelect={() => setSelectedMode(preset.id)}
+              onSelect={() => handleSelectPreset(preset.id)}
             />
           ))}
         </div>
@@ -219,7 +226,7 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
         <button
           type="button"
-          onClick={() => setSelectedMode('custom')}
+          onClick={() => handleSelectPreset('custom')}
           className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
         >
           <Card
