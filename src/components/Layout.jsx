@@ -27,7 +27,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Separator } from '@/components/ui/separator'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import MobilePageHeader from '@/components/layout/MobilePageHeader'
-import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { useSettings } from '../hooks/useSettings'
 import { supabase } from '../supabase'
 
@@ -209,6 +208,7 @@ export default function Layout({
   const activeTab = getActiveTab(location.pathname)
   const isHome = location.pathname === '/'
   const salesRouteActive = activeTab === 'sales'
+  const openSidebar = React.useCallback(() => setSidebarOpen(true), [])
 
   const handleSalesPick = (key) => {
     setSalesOpen(false)
@@ -253,10 +253,16 @@ export default function Layout({
   const mobileContentClassName = contentClassName || 'w-full overflow-x-hidden px-0 pb-24 pt-0'
   const mobileChromeValue = React.useMemo(
     () => ({
-      openSidebar: () => setSidebarOpen(true),
+      openSidebar,
     }),
-    []
+    [openSidebar]
   )
+
+  React.useEffect(() => {
+    const handleExternalSidebarOpen = () => openSidebar()
+    window.addEventListener('bigdrops:open-mobile-drawer', handleExternalSidebarOpen)
+    return () => window.removeEventListener('bigdrops:open-mobile-drawer', handleExternalSidebarOpen)
+  }, [openSidebar])
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
@@ -386,19 +392,16 @@ export default function Layout({
               subtitle={settings?.company_name || 'Invoicing and Projects'}
               accentClassName="tone-info-accent"
               onMenuClick={() => setSidebarOpen(true)}
-              actions={<GlobalSearch />}
             />
           </div>
         ) : null}
 
         {!isHome && !hidePageHeader ? (
           <div className="w-full px-4 pt-4">
-            <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-3 shadow-sm">
-              <div className="flex-1 min-w-0">
-                <div className="truncate text-sm font-bold text-foreground">{title}</div>
-              </div>
-              <GlobalSearch />
-            </div>
+            <MobilePageHeader
+              title={title}
+              onMenuClick={() => setSidebarOpen(true)}
+            />
           </div>
         ) : null}
 

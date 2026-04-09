@@ -50,7 +50,13 @@ export default function DashboardRedesign({ session }: { session: Session }) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => mobileChrome.openSidebar()}
+              onClick={() => {
+                if (typeof mobileChrome?.openSidebar === 'function') {
+                  mobileChrome.openSidebar()
+                  return
+                }
+                window.dispatchEvent(new Event('bigdrops:open-mobile-drawer'))
+              }}
               className="h-10 w-10 shrink-0 rounded-xl bg-muted/30 text-foreground active:scale-95"
               aria-label="Open navigation menu"
             >
