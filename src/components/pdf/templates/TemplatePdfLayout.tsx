@@ -8,7 +8,7 @@ import { TotalsSection } from './sections/TotalsSection'
 import { SupportSection } from './sections/SupportSection'
 import { FooterSection } from './sections/FooterSection'
 import type { RefrensPdfModel } from './types'
-import { ensureSharedPdfFontRegistered, registerPdfFonts } from '@/lib/pdfFontRegistry'
+import { registerPdfFonts } from '@/lib/pdfFontRegistry'
 
 type Props = {
   model: RefrensPdfModel
@@ -16,8 +16,6 @@ type Props = {
 
 export default function TemplatePdfLayout({ model }: Props) {
   registerPdfFonts()
-  ensureSharedPdfFontRegistered(model.designPreset?.headerFont || 'Inter')
-  ensureSharedPdfFontRegistered(model.designPreset?.bodyFont || 'Inter')
   const styles = useMemo(() => createTemplateStyles(model.templateId, model.designPreset), [model.templateId, model.designPreset])
   const hasTitle = typeof model.title === 'string' && model.title.trim().length > 0
 

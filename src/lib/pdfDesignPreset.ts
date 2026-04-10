@@ -213,6 +213,25 @@ export function getEffectiveFillableFont(preset: PdfDesignPreset): PdfFillableFo
   return preset.fillableFontMode === 'custom' ? preset.fillableFont : preset.bodyFont
 }
 
+function resolveBuiltinPdfFontFamily(
+  choice: PdfFontChoice,
+  variant: 'regular' | 'bold' | 'italic' | 'boldItalic' = 'regular',
+) {
+  const family = choice === 'Orbitron' || choice === 'Roboto Condensed' ? 'Courier' : 'Helvetica'
+
+  if (family === 'Courier') {
+    if (variant === 'bold') return 'Courier-Bold'
+    if (variant === 'italic') return 'Courier-Oblique'
+    if (variant === 'boldItalic') return 'Courier-BoldOblique'
+    return 'Courier'
+  }
+
+  if (variant === 'bold') return 'Helvetica-Bold'
+  if (variant === 'italic') return 'Helvetica-Oblique'
+  if (variant === 'boldItalic') return 'Helvetica-BoldOblique'
+  return 'Helvetica'
+}
+
 export function resolvePdfFontFamily(
   choice: PdfFontChoice | PdfFillableFontChoice | LegacyPdfFillableChoice,
   variant: 'regular' | 'bold' | 'italic' | 'boldItalic' = 'regular',
@@ -223,7 +242,7 @@ export function resolvePdfFontFamily(
       : choice
 
   if (isRegisteredSharedFontChoice(normalizedChoice)) {
-    return normalizedChoice
+    return resolveBuiltinPdfFontFamily(normalizedChoice, variant)
   }
 
   const registeredFillableFont = getRegisteredFillablePdfFontFamily(normalizedChoice, variant)
