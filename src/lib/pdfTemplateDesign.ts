@@ -9,11 +9,7 @@ import {
 
 type SupportedTemplateDocument = Extract<PdfDesignPresetDocument, 'invoice' | 'quotation'>
 
-function getTemplateAccent(documentType: SupportedTemplateDocument, template: PdfTemplateId) {
-  if (template === 'standard') {
-    return getDefaultPdfDesignPreset(documentType).accentColor
-  }
-
+function getTemplateAccent(template: PdfTemplateId) {
   return TEMPLATE_TOKENS[template].accent
 }
 
@@ -27,7 +23,7 @@ export function getTemplateDefaultDesignPreset(
     ...fallback,
     useCustomColors: false,
     useCustomFonts: false,
-    accentColor: getTemplateAccent(documentType, template),
+    accentColor: getTemplateAccent(template),
   }
 }
 

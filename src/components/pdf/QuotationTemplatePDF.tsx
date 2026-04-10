@@ -1,4 +1,3 @@
-import QuotationPDF from '@/components/quotation/QuotationPDF'
 import TemplatePdfLayout from '@/components/pdf/templates/TemplatePdfLayout'
 import { mapQuotationToPdfModel } from '@/components/pdf/templates/mapQuotationToPdfModel'
 import type { InvoiceItem } from '@/domain/invoice'
@@ -8,7 +7,7 @@ import type { PdfBankAccount, PdfOutputState, RefrensTemplateId } from '@/compon
 import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 
 type QuotationTemplatePdfProps = {
-  template?: 'standard' | RefrensTemplateId
+  template?: RefrensTemplateId
   document: Quotation
   items: InvoiceItem[]
   client?: Record<string, unknown> | null
@@ -20,7 +19,7 @@ type QuotationTemplatePdfProps = {
 }
 
 export default function QuotationTemplatePDF({
-  template = 'standard',
+  template = 'classic',
   document,
   items,
   client = null,
@@ -30,19 +29,6 @@ export default function QuotationTemplatePDF({
   pdfOutput,
   designPreset,
 }: QuotationTemplatePdfProps) {
-  if (template === 'standard') {
-    return (
-      <QuotationPDF
-        document={document}
-        items={items}
-        client={client}
-        settings={settings}
-        computedResult={computedResult}
-        designPreset={designPreset}
-      />
-    )
-  }
-
   const model = mapQuotationToPdfModel({
     templateId: template,
     document,

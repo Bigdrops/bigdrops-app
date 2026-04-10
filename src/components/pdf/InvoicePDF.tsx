@@ -1,15 +1,13 @@
-import QuotationPDF from '@/components/quotation/QuotationPDF'
 import TemplatePdfLayout from '@/components/pdf/templates/TemplatePdfLayout'
 import { mapInvoiceToPdfModel } from '@/components/pdf/templates/mapInvoiceToPdfModel'
 import type { Invoice, InvoiceItem } from '@/domain/invoice'
-import type { Quotation } from '@/domain/quotation'
 import type { DocumentResult } from '@/lib/Calculations'
 import type { PdfBankAccount, PdfOutputState, RefrensTemplateId } from '@/components/pdf/templates/types'
 import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 
 type InvoicePdfProps = {
-  template?: 'quotation' | RefrensTemplateId
-  document: Invoice | Quotation
+  template?: RefrensTemplateId
+  document: Invoice
   items: InvoiceItem[]
   client?: Record<string, unknown> | null
   settings?: Record<string, unknown> | null
@@ -25,10 +23,6 @@ type InvoicePdfProps = {
   designPreset?: PdfDesignPreset
 }
 
-function isQuotationTemplate(template?: string): template is 'quotation' {
-  return template === 'quotation'
-}
-
 export default function InvoicePDF({
   template = 'classic',
   document,
@@ -41,21 +35,9 @@ export default function InvoicePDF({
   signatory = null,
   designPreset,
 }: InvoicePdfProps) {
-  if (isQuotationTemplate(template)) {
-    return (
-      <QuotationPDF
-        document={document as Quotation}
-        items={items}
-        client={client}
-        settings={settings}
-        computedResult={computedResult}
-      />
-    )
-  }
-
   const model = mapInvoiceToPdfModel({
     templateId: template,
-    document: document as Invoice,
+    document,
     items,
     client,
     settings,
