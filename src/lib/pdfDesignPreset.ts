@@ -1,4 +1,5 @@
 import { getRegisteredFillablePdfFontFamily, getRegisteredFillableWebFontFamily } from '@/lib/pdfFillableFonts'
+import { getRegisteredSharedPdfFontFamily, getRegisteredSharedWebFontFamily } from '@/lib/pdfSharedFonts'
 
 export type PdfDesignPresetDocument = 'invoice' | 'quotation' | 'csr' | 'waybill'
 export type PdfFontChoice =
@@ -221,6 +222,11 @@ export function resolvePdfFontFamily(
       ? 'Patrick Hand'
       : choice
 
+  const registeredSharedFont = getRegisteredSharedPdfFontFamily(normalizedChoice, variant)
+  if (registeredSharedFont) {
+    return registeredSharedFont
+  }
+
   const registeredFillableFont = getRegisteredFillablePdfFontFamily(normalizedChoice, variant)
   if (registeredFillableFont) {
     return registeredFillableFont
@@ -244,6 +250,11 @@ export function resolvePdfWebFontFamily(choice: PdfFontChoice | PdfFillableFontC
     choice === 'Biro Script' || choice === 'Ballpoint Handwriting' || choice === 'Ballpoint Rush'
       ? 'Patrick Hand'
       : choice
+
+  const registeredSharedWebFont = getRegisteredSharedWebFontFamily(normalizedChoice)
+  if (registeredSharedWebFont) {
+    return `"${registeredSharedWebFont}", Arial, sans-serif`
+  }
 
   const registeredFillableWebFont = getRegisteredFillableWebFontFamily(normalizedChoice)
   if (registeredFillableWebFont) {

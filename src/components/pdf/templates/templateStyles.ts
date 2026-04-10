@@ -1,7 +1,7 @@
 import { StyleSheet } from '@react-pdf/renderer'
 import { TEMPLATE_TOKENS } from './templateTokens'
 import type { RefrensTemplateId } from './types'
-import { darkenHex, lightenHex, resolvePdfFontFamily, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { darkenHex, lightenHex, resolvePdfFontFamily, type PdfDesignPreset, type PdfFontChoice } from '@/lib/pdfDesignPreset'
 
 type PdfStyleValue = string | number | boolean
 type PdfStyleShape = Record<string, PdfStyleValue | null | undefined>
@@ -30,21 +30,17 @@ function sanitizeStyle(style: PdfStyleShape): PdfStyleShape {
 
 export function createTemplateStyles(templateId: RefrensTemplateId, designPreset?: PdfDesignPreset) {
   const tokens = TEMPLATE_TOKENS[templateId] || TEMPLATE_TOKENS.minimal
-  
-  // Customization overrides
-  const useColorOverride = designPreset?.useCustomColors === true
-  const useFontOverride = designPreset?.useCustomFonts === true
 
-  const accentColor = useColorOverride ? safeText(designPreset?.accentColor, tokens.accent) : tokens.accent
-  const accentDark = useColorOverride ? darkenHex(accentColor, 15) : tokens.grandTotalColor
-  const accentSoft = lightenHex(accentColor, 40)
-  const accentBorder = lightenHex(accentColor, 30)
+  const accentColor = safeText(designPreset?.accentColor, tokens.accent)
+  const accentDark = designPreset?.accentColor ? darkenHex(accentColor, 15) : tokens.grandTotalColor
+  const accentSoft = designPreset?.accentColor ? lightenHex(accentColor, 40) : tokens.amountWordsBackground
+  const accentBorder = designPreset?.accentColor ? lightenHex(accentColor, 30) : tokens.amountWordsBorder
 
-  const headerFontChoice = designPreset?.headerFont ?? 'Inter'
-  const bodyFontChoice = designPreset?.bodyFont ?? 'Inter'
-  const headerFont = useFontOverride ? resolvePdfFontFamily(headerFontChoice, 'bold') : 'Helvetica-Bold'
-  const bodyFont = useFontOverride ? resolvePdfFontFamily(bodyFontChoice, 'regular') : 'Helvetica'
-  const bodyBoldFont = useFontOverride ? resolvePdfFontFamily(bodyFontChoice, 'bold') : 'Helvetica-Bold'
+  const headerFontChoice: PdfFontChoice = designPreset?.headerFont ?? 'Inter'
+  const bodyFontChoice: PdfFontChoice = designPreset?.bodyFont ?? 'Inter'
+  const headerFont = resolvePdfFontFamily(headerFontChoice, 'bold')
+  const bodyFont = resolvePdfFontFamily(bodyFontChoice, 'regular')
+  const bodyBoldFont = resolvePdfFontFamily(bodyFontChoice, 'bold')
 
   const isDarkHeader = templateId === 'modern' || templateId === 'bold'
   const isElegant = templateId === 'elegant'
@@ -87,7 +83,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     businessName: {
       fontSize: 18,
       fontFamily: headerFont,
-      color: isElegant && !useColorOverride ? tokens.accent : tokens.headerText,
+      color: isElegant ? accentColor : tokens.headerText,
       marginBottom: 4,
     },
     businessTagline: {

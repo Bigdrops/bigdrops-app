@@ -8,6 +8,9 @@ import { TotalsSection } from './sections/TotalsSection'
 import { SupportSection } from './sections/SupportSection'
 import { FooterSection } from './sections/FooterSection'
 import type { RefrensPdfModel } from './types'
+import { registerPdfFonts } from '@/lib/pdfFontRegistry'
+
+registerPdfFonts()
 
 type Props = {
   model: RefrensPdfModel
