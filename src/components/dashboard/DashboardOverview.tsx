@@ -183,7 +183,7 @@ export function DashboardOverview({
   const mobileChrome = React.useContext(MobileChromeContext)
 
   return (
-    <div className="mx-auto flex w-full max-w-[420px] flex-col px-[14px] pb-32 pt-[10px] md:pb-14">
+    <div className="mx-auto flex w-full max-w-[860px] flex-col px-[14px] pb-32 pt-[10px] md:px-5 md:pb-14">
       <section className="sticky top-0 z-30 -mx-[14px] bg-[linear-gradient(180deg,hsl(var(--background))_0%,color-mix(in_oklab,hsl(var(--background))_90%,transparent)_78%,transparent_100%)] px-[14px] pb-3 pt-[10px] backdrop-blur-[16px]">
         <div className="rounded-[22px] border border-border bg-card p-[14px] shadow-sm">
           <div className="flex items-start justify-between gap-[10px]">
@@ -218,7 +218,7 @@ export function DashboardOverview({
         </div>
       </section>
 
-      <section className="mt-1 grid grid-cols-2 gap-[10px]">
+      <section className="mt-4 grid grid-cols-2 gap-[10px]">
         {metricCards.map((metric) => {
           const Icon = metric.Icon
 
@@ -309,7 +309,7 @@ export function DashboardOverview({
                 key={item.key}
                 type="button"
                 onClick={() => onPrioritySelect(item)}
-                className="flex w-full items-start gap-[10px] rounded-[16px] border border-border bg-card px-[14px] py-[13px] text-left shadow-sm transition hover:bg-muted/20"
+                className="flex w-full items-start gap-[10px] rounded-[16px] border border-border bg-card px-[14px] py-[13px] text-left shadow-sm"
               >
                 <span className={cn('mt-[6px] h-2 w-2 shrink-0 rounded-full', item.dotClassName)} />
                 <div className="min-w-0 flex-1">
