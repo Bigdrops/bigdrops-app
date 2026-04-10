@@ -1,17 +1,19 @@
 import {
   AlertCircle,
-  ArrowRight,
+  Bell,
   ChevronRight,
   ClipboardCheck,
   FileSignature,
+  Menu,
   Receipt,
+  Search,
   TrendingUp,
   Truck,
 } from 'lucide-react'
 import type { ComponentType } from 'react'
 
+import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
 import { formatDisplayDate } from '@/lib/formatters/date'
@@ -47,6 +49,7 @@ type DashboardOverviewProps = {
   quickTiles: QuickTile[]
   priorityItems: PriorityItem[]
   recentDocs: RecentDoc[]
+  onOpenMenu: () => void
   onQuickAction: (path: string) => void
   onPrioritySelect: (item: PriorityItem) => void
   onRecentDocSelect: (doc: RecentDoc) => void
@@ -159,35 +162,54 @@ export function DashboardOverview({
   quickTiles,
   priorityItems,
   recentDocs,
+  onOpenMenu,
   onQuickAction,
   onPrioritySelect,
   onRecentDocSelect,
   onViewAllActivity,
 }: DashboardOverviewProps) {
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-32 pt-4 md:px-8 md:pb-12 md:pt-6">
-      <section className="sticky top-[72px] z-30 -mx-4 border-b border-border/50 bg-[linear-gradient(180deg,hsl(var(--background))_0%,color-mix(in_oklab,hsl(var(--background))_88%,transparent)_82%,transparent_100%)] px-4 pb-4 pt-2 backdrop-blur-xl md:static md:mx-0 md:border-none md:bg-transparent md:px-0 md:pb-0 md:pt-0">
-        <div className="rounded-[26px] border border-border/70 bg-card/95 p-4 shadow-sm md:p-5">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pb-32 pt-3 md:px-8 md:pb-12 md:pt-4">
+      <section className="sticky top-0 z-30 -mx-4 bg-[linear-gradient(180deg,hsl(var(--background))_0%,color-mix(in_oklab,hsl(var(--background))_90%,transparent)_78%,transparent_100%)] px-4 pb-3 pt-2 backdrop-blur-xl md:mx-0 md:px-0">
+        <div className="rounded-[22px] border border-border bg-card px-[14px] py-[14px] shadow-sm">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                {businessName}
+            <div className="flex min-w-0 items-start gap-[10px]">
+              <button
+                type="button"
+                onClick={onOpenMenu}
+                className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[13px] border border-border bg-card text-foreground shadow-sm"
+                aria-label="Open navigation menu"
+              >
+                <Menu className="h-[18px] w-[18px]" />
+              </button>
+              <div className="min-w-0">
+                <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                  {businessName}
+                </div>
+                <h1 className="mt-0.5 truncate text-[19px] font-extrabold tracking-[-0.03em] text-foreground">
+                  Good morning, {userName}
+                </h1>
+                <div className="mt-1 text-[12px] text-muted-foreground">
+                  Operations overview across sales, projects, and logistics.
+                </div>
               </div>
-              <h1 className="mt-1 text-[26px] font-black tracking-[-0.05em] text-foreground md:text-[30px]">
-                Good morning, {userName}
-              </h1>
-              <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-                Operations overview across sales, projects, and logistics.
-              </p>
             </div>
-            <div className="hidden rounded-full border border-border bg-muted/40 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground md:block">
-              Live dashboard
+            <div className="flex items-center gap-2">
+              <span className="hidden md:grid h-[38px] w-[38px] place-items-center rounded-[13px] bg-muted/55 text-foreground">
+                <Bell className="h-[18px] w-[18px]" />
+              </span>
+              <span className="hidden md:grid h-[38px] w-[38px] place-items-center rounded-[13px] bg-muted/55 text-foreground">
+                <Search className="h-[18px] w-[18px]" />
+              </span>
+              <div className="md:hidden">
+                <GlobalSearch />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+      <section className="grid grid-cols-2 gap-[10px] md:grid-cols-4 md:gap-[10px]">
         {metricCards.map((metric) => {
           const Icon = metric.Icon
 
@@ -195,43 +217,41 @@ export function DashboardOverview({
             <article
               key={metric.key}
               className={cn(
-                'rounded-[22px] border p-4 shadow-sm transition-transform hover:-translate-y-0.5',
+                'rounded-[20px] border px-[14px] py-[14px] shadow-sm',
                 metric.panelClassName
               )}
             >
-              <div className="flex items-center gap-2.5">
-                <div className={cn('grid h-9 w-9 place-items-center rounded-[14px]', metric.iconClassName)}>
-                  <Icon className="h-4.5 w-4.5" />
+              <div className="flex items-center gap-2">
+                <div className={cn('grid h-[34px] w-[34px] place-items-center rounded-[12px]', metric.iconClassName)}>
+                  <Icon className="h-[18px] w-[18px]" />
                 </div>
-                <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   {metric.label}
                 </div>
               </div>
-              <div className="mt-5 text-[28px] font-black tracking-[-0.06em] text-foreground md:text-[30px]">
+              <div className="mt-[14px] text-[24px] font-extrabold tracking-[-0.05em] text-foreground">
                 {metric.value(heroStats)}
               </div>
-              <div className="mt-1 text-sm text-muted-foreground">{metric.helper}</div>
-              <div className="mt-2 text-xs text-muted-foreground/90">{metric.foot(summary)}</div>
+              <div className="mt-[3px] text-[12px] text-muted-foreground">{metric.helper}</div>
+              <div className="mt-[5px] text-[11px] text-muted-foreground">{metric.foot(summary)}</div>
             </article>
           )
         })}
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-5">
         <div className="space-y-6">
-          <section className="rounded-[26px] border border-border bg-card p-4 shadow-sm md:p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                  Quick actions
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Real shortcuts synced with your saved dashboard tiles.
-                </p>
+          <section className="mt-[2px]">
+            <div className="mb-[10px] flex items-center justify-between gap-3">
+              <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                Quick actions
               </div>
+              <button type="button" className="text-[12px] font-bold text-primary">
+                Customize
+              </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 xl:grid-cols-2">
+            <div className="grid grid-cols-2 gap-[10px]">
               {quickTiles.map((tile) => {
                 const Icon = tile.icon
 
@@ -241,21 +261,18 @@ export function DashboardOverview({
                     type="button"
                     onClick={() => onQuickAction(tile.path)}
                     className={cn(
-                      'group rounded-[22px] border p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md',
+                      'rounded-[20px] border p-[14px] text-left shadow-sm',
                       tile.tint
                     )}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className={cn('grid h-11 w-11 place-items-center rounded-[16px] shadow-sm', tile.iconBg)}>
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                    <div className={cn('grid h-10 w-10 place-items-center rounded-[14px]', tile.iconBg)}>
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <div className="mt-5 text-[15px] font-black tracking-[-0.03em] text-foreground">
+                    <div className="mt-3 text-[14px] font-extrabold tracking-[-0.02em] text-foreground">
                       {tile.label}
                     </div>
-                    <div className="mt-1.5 text-[13px] leading-5 text-muted-foreground">
-                      {tile.tileHint || tile.description}
+                    <div className="mt-1 text-[12px] leading-[1.35] text-muted-foreground">
+                      {tile.description}
                     </div>
                   </button>
                 )
@@ -263,45 +280,35 @@ export function DashboardOverview({
             </div>
           </section>
 
-          <section className="rounded-[26px] border border-border bg-card p-4 shadow-sm md:p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                  Recent activity
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Latest documents and status movement across the workspace.
-                </p>
+          <section>
+            <div className="mb-[10px] flex items-center justify-between gap-3">
+              <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                Recent activity
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 rounded-full px-3 text-[11px] font-bold uppercase tracking-[0.16em] text-primary"
-                onClick={onViewAllActivity}
-              >
+              <button type="button" className="text-[12px] font-bold text-primary" onClick={onViewAllActivity}>
                 View all
-              </Button>
+              </button>
             </div>
 
-            <div className="overflow-hidden rounded-[22px] border border-border/80 bg-background/60">
+            <div className="overflow-hidden rounded-[20px] border border-border bg-card shadow-sm">
               {loading ? (
-                <div className="space-y-3 p-4">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="flex items-center gap-3 rounded-[18px] border border-border/60 bg-card/80 px-4 py-4">
-                      <div className="h-10 w-10 rounded-[14px] bg-muted/70" />
-                      <div className="flex-1 space-y-2">
+                <div className="divide-y divide-border">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="flex items-center gap-[10px] px-[14px] py-[14px]">
+                      <div className="h-[34px] w-[34px] rounded-[12px] bg-muted/70" />
+                      <div className="flex-1 space-y-1.5">
                         <div className="h-3.5 w-32 rounded bg-muted/70" />
-                        <div className="h-3 w-44 rounded bg-muted/50" />
+                        <div className="h-3 w-40 rounded bg-muted/50" />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : recentDocs.length === 0 ? (
-                <div className="px-5 py-10 text-center text-sm text-muted-foreground">
-                  No recent activity yet.
+                <div className="px-[14px] py-10 text-center text-sm text-muted-foreground">
+                  No recent documents yet.
                 </div>
               ) : (
-                <div className="divide-y divide-border/70">
+                <div className="divide-y divide-border">
                   {recentDocs.map((doc) => {
                     const meta = recentDocMeta[doc.type]
                     const Icon = meta.icon
@@ -311,30 +318,32 @@ export function DashboardOverview({
                         key={`${doc.type}-${doc.id}`}
                         type="button"
                         onClick={() => onRecentDocSelect(doc)}
-                        className="flex w-full items-center gap-3 px-4 py-4 text-left transition hover:bg-muted/20"
+                        className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-[10px] px-[14px] py-[14px] text-left transition hover:bg-muted/20"
                       >
-                        <div className={cn('grid h-10 w-10 shrink-0 place-items-center rounded-[14px] border border-transparent', meta.iconWrap)}>
-                          <Icon className="h-4.5 w-4.5" />
+                        <div className="flex min-w-0 items-center gap-[10px]">
+                          <div className={cn('grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[12px]', meta.iconWrap)}>
+                            <Icon className="h-[18px] w-[18px]" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="truncate text-[14px] font-bold tracking-[-0.02em] text-foreground">{doc.number}</div>
+                            <div className="mt-1 truncate text-[12px] text-muted-foreground">{formatDocSubline(doc)}</div>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-bold text-foreground">{doc.number}</div>
-                          <div className="mt-1 truncate text-[12px] text-muted-foreground">{formatDocSubline(doc)}</div>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                          {doc.amount != null ? (
-                            <div className="text-right text-sm font-bold tracking-[-0.03em] text-foreground">
-                              {formatNaira(doc.amount, { round: true })}
-                            </div>
-                          ) : (
-                            <Badge
-                              variant="outline"
-                              className={cn('h-6 rounded-full px-2.5 text-[10px] font-bold uppercase tracking-[0.14em]', getStatusBadgeClassName(doc.status))}
-                            >
-                              {formatStatusLabel(doc.status)}
-                            </Badge>
-                          )}
-                          <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
-                        </div>
+                        {doc.amount != null ? (
+                          <div className="text-[15px] font-extrabold tracking-[-0.03em] text-foreground">
+                            {formatNaira(doc.amount, { round: true })}
+                          </div>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className={cn('h-6 rounded-full px-2.5 text-[10px] font-bold uppercase tracking-[0.05em]', getStatusBadgeClassName(doc.status))}
+                          >
+                            {formatStatusLabel(doc.status)}
+                          </Badge>
+                        )}
+                        <button type="button" className="grid h-8 w-8 place-items-center rounded-[11px] bg-muted/55 text-muted-foreground" tabIndex={-1} aria-hidden="true">
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
                       </button>
                     )
                   })}
@@ -345,24 +354,19 @@ export function DashboardOverview({
         </div>
 
         <aside className="space-y-6">
-          <section className="rounded-[26px] border border-border bg-card p-4 shadow-sm md:p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                  Needs follow-up
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Priority reminders pulled from current project and payment activity.
-                </p>
+          <section>
+            <div className="mb-[10px] flex items-center justify-between gap-3">
+              <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                Needs follow-up
               </div>
-              <Badge className="h-7 rounded-full bg-destructive/10 px-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-destructive">
+              <Badge className="h-6 rounded-full border border-destructive/20 bg-destructive/10 px-2.5 text-[10px] font-bold uppercase tracking-[0.05em] text-destructive">
                 {priorityItems.length} alerts
               </Badge>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-[10px]">
               {priorityItems.length === 0 ? (
-                <div className="rounded-[18px] border border-dashed border-border bg-muted/30 px-4 py-6 text-sm text-muted-foreground">
+                <div className="rounded-[16px] border border-dashed border-border bg-muted/30 px-4 py-6 text-sm text-muted-foreground">
                   No follow-up items are waiting right now.
                 </div>
               ) : (
@@ -371,31 +375,22 @@ export function DashboardOverview({
                     key={item.key}
                     type="button"
                     onClick={() => onPrioritySelect(item)}
-                    className="flex w-full items-start gap-3 rounded-[18px] border border-border bg-background/70 px-4 py-4 text-left transition hover:bg-muted/20"
+                    className="flex w-full items-start gap-[10px] rounded-[16px] border border-border bg-card px-[14px] py-[13px] text-left shadow-sm transition hover:bg-muted/20"
                   >
-                    <span className={cn('mt-1 h-2.5 w-2.5 shrink-0 rounded-full', item.dotClassName)} />
+                    <span className={cn('mt-[6px] h-2 w-2 shrink-0 rounded-full', item.dotClassName)} />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[14px] font-bold leading-5 text-foreground">{item.title}</div>
-                      <div className="mt-1 text-[12px] leading-5 text-muted-foreground">{item.meta}</div>
+                      <div className="text-[13px] font-bold leading-[1.3] text-foreground">{item.title}</div>
+                      <div className="mt-[3px] text-[12px] text-muted-foreground">{item.meta}</div>
                     </div>
                     <Badge
                       variant="outline"
-                      className={cn('mt-0.5 h-6 rounded-full px-2.5 text-[10px] font-bold uppercase tracking-[0.14em]', item.badgeClassName)}
+                      className={cn('h-6 rounded-full px-2.5 text-[10px] font-bold uppercase tracking-[0.05em]', item.badgeClassName)}
                     >
                       {item.badgeLabel}
                     </Badge>
                   </button>
                 ))
               )}
-            </div>
-          </section>
-
-          <section className="rounded-[26px] border border-border bg-card p-4 shadow-sm md:p-5">
-            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Dashboard notes
-            </div>
-            <div className="mt-3 rounded-[20px] border border-dashed border-border bg-muted/30 px-4 py-4 text-sm leading-6 text-muted-foreground">
-              This pass keeps the existing shell, routing, search, and module launch logic intact while shifting the dashboard into the new neutral business dashboard system.
             </div>
           </section>
         </aside>

@@ -1,12 +1,10 @@
 import * as React from 'react'
-import { Menu, Zap } from 'lucide-react'
+import { Zap } from 'lucide-react'
 import type { Session } from '@supabase/supabase-js'
 import { useNavigate } from 'react-router-dom'
 
 import Layout, { MobileChromeContext } from '@/components/Layout'
 import { DashboardOverview } from '@/components/dashboard/DashboardOverview'
-import { GlobalSearch } from '@/components/layout/GlobalSearch'
-import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useSettings } from '@/hooks/useSettings'
 import { useDashboardData, type PriorityItem, type RecentDoc } from '@/hooks/useDashboardData'
@@ -62,58 +60,8 @@ export default function DashboardRedesign({ session }: { session: Session }) {
       title="Dashboard"
       hideMobileHomeHeader
       hidePageHeader
-      contentClassName="shell-surface-neutral pb-32"
+      contentClassName="pb-32 bg-background"
     >
-      <div className="sticky top-0 z-[60] border-b border-border/50 bg-background/85 px-4 py-3 backdrop-blur-xl md:hidden">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleOpenMenu}
-              className="h-10 w-10 shrink-0 rounded-[14px] border border-border/60 bg-card/80 shadow-sm"
-              aria-label="Open navigation menu"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-
-            <div className="min-w-0">
-              <div className="truncate text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                {businessName}
-              </div>
-              <div className="truncate text-sm font-black tracking-[-0.03em] text-foreground">
-                Dashboard
-              </div>
-            </div>
-          </div>
-
-          <GlobalSearch />
-        </div>
-      </div>
-
-      <div className="hidden border-b border-border/50 bg-background/70 px-8 py-4 backdrop-blur-xl md:block">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Dashboard
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              Neutral business overview aligned to the Bigdrops reference system.
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <GlobalSearch />
-            <Button
-              onClick={() => setCreateOpen(true)}
-              className="h-10 rounded-full px-5 text-[11px] font-bold uppercase tracking-[0.16em]"
-            >
-              <Zap className="mr-2 h-4 w-4" />
-              Quick create
-            </Button>
-          </div>
-        </div>
-      </div>
-
       <DashboardOverview
         businessName={businessName}
         userName={userName}
@@ -123,6 +71,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
         quickTiles={quickTiles}
         priorityItems={priorityItems}
         recentDocs={recentDocs}
+        onOpenMenu={handleOpenMenu}
         onQuickAction={(path) => navigate(path)}
         onPrioritySelect={handlePrioritySelect}
         onRecentDocSelect={handleRecentDocSelect}
