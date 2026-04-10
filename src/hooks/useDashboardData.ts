@@ -24,12 +24,36 @@ export type PriorityItem = {
   type: string
 }
 
+type HeroStats = {
+  collections: number
+  openWork: number
+  awaitingPaymentCount: number
+  inTransitWaybills: number
+}
+
+type SummaryStats = {
+  overdue: number
+  dueThisWeek: number
+  thisMonthCollections: number
+  pendingFollowUp: number
+}
+
 export function useDashboardData() {
   const [loading, setLoading] = React.useState(true)
   const [recentDocs, setRecentDocs] = React.useState<RecentDoc[]>([])
   const [priorityItems, setPriorityItems] = React.useState<PriorityItem[]>([])
-  const [heroStats, setHeroStats] = React.useState({ collections: 0, openWork: 0 })
-  const [summary, setSummary] = React.useState({ overdue: 0, dueThisWeek: 0, thisMonthCollections: 0, pendingFollowUp: 0 })
+  const [heroStats, setHeroStats] = React.useState<HeroStats>({
+    collections: 0,
+    openWork: 0,
+    awaitingPaymentCount: 0,
+    inTransitWaybills: 0,
+  })
+  const [summary, setSummary] = React.useState<SummaryStats>({
+    overdue: 0,
+    dueThisWeek: 0,
+    thisMonthCollections: 0,
+    pendingFollowUp: 0,
+  })
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -138,6 +162,11 @@ export function useDashboardData() {
         return dueDate >= now && dueDate <= endOfWeek
       }).length
 
+      const awaitingPaymentCount = invoiceFinancials.filter((row) => Number(row.balance_due || 0) > 0).length
+      const inTransitWaybills = (waybillRes.data || []).filter(
+        (row) => String(row.status || '').toLowerCase() === 'dispatched'
+      ).length
+
       // Build Priority Items
       const projects = projectsRes.data || []
       const reminders: PriorityItem[] = []
@@ -169,9 +198,32 @@ export function useDashboardData() {
         })
       }
 
+      const pendingQuotation = (quotationRes.data || []).find((quotation) => {
+        const status = String(quotation.status || '').toLowerCase()
+        return status === 'sent' || status === 'draft'
+      })
+
+      if (pendingQuotation) {
+        reminders.push({
+          key: `quotation-${pendingQuotation.id}`,
+          title: `Follow up quotation — ${pendingQuotation.quotation_number}`,
+          meta: `${pendingQuotation.client_name || 'Walking Client'} • status ${formatStatusLabel(pendingQuotation.status, { fallback: 'draft', lowercase: true })}`,
+          dotClassName: 'bg-blue-500',
+          dotRingClassName: 'ring-[6px] ring-blue-500/15',
+          badgeLabel: 'Quotation',
+          badgeClassName: 'bg-blue-50 text-blue-700 border-blue-200',
+          type: 'quotation'
+        })
+      }
+
       setRecentDocs(mergedDocs)
       setPriorityItems(reminders.slice(0, 3))
-      setHeroStats({ collections: thisMonthCollections, openWork: reminders.length || pendingFollowUpCount })
+      setHeroStats({
+        collections: thisMonthCollections,
+        openWork: reminders.length || pendingFollowUpCount,
+        awaitingPaymentCount,
+        inTransitWaybills,
+      })
       setSummary({ overdue, dueThisWeek, thisMonthCollections, pendingFollowUp: pendingFollowUpCount })
     } catch (error) {
       console.error('Dashboard data load failed:', error)
