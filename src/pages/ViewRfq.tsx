@@ -224,6 +224,8 @@ export default function ViewRfq() {
         <DocumentTopBar
           title={rfq.rfq_number || 'RFQ'}
           subtitle="Request for Quote"
+          statusLabel={null}
+          statusClassName=""
           onBack={() => navigate('/rfqs')}
           onMore={() => setShowActions(true)}
         />
@@ -338,6 +340,10 @@ export default function ViewRfq() {
           onOpenChange={setShowExportSheet}
           title="Download & Export"
           subtitle={`Export ${rfq.rfq_number} using the current RFQ preview styling.`}
+          settingsNode={null}
+          templateValue={null}
+          onTemplateChange={undefined}
+          templates={[]}
           actions={[
             {
               label: 'Export Images',
