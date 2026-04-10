@@ -38,9 +38,8 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
 
   const headerFontChoice: PdfFontChoice = designPreset?.headerFont ?? 'Inter'
   const bodyFontChoice: PdfFontChoice = designPreset?.bodyFont ?? 'Inter'
-  const headerFont = resolvePdfFontFamily(headerFontChoice, 'bold')
-  const bodyFont = resolvePdfFontFamily(bodyFontChoice, 'regular')
-  const bodyBoldFont = resolvePdfFontFamily(bodyFontChoice, 'bold')
+  const headerFontFamily = resolvePdfFontFamily(headerFontChoice, 'regular')
+  const bodyFontFamily = resolvePdfFontFamily(bodyFontChoice, 'regular')
 
   const isDarkHeader = templateId === 'modern' || templateId === 'bold'
   const isElegant = templateId === 'elegant'
@@ -55,7 +54,8 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
       paddingLeft: safeNumber(tokens.pagePaddingLeft, 32),
       backgroundColor: tokens.pageBackground,
       color: tokens.bodyText,
-      fontFamily: bodyFont,
+      fontFamily: bodyFontFamily,
+      fontWeight: 400,
       fontSize: 10,
     },
     // Header
@@ -82,7 +82,8 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     businessName: {
       fontSize: 18,
-      fontFamily: headerFont,
+      fontFamily: headerFontFamily,
+      fontWeight: 700,
       color: isElegant ? accentColor : tokens.headerText,
       marginBottom: 4,
     },
@@ -108,7 +109,8 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     documentLabel: {
       fontSize: 15,
-      fontFamily: headerFont,
+      fontFamily: headerFontFamily,
+      fontWeight: 700,
       color: isDarkHeader ? '#ffffff' : accentColor,
       textTransform: 'uppercase',
       letterSpacing: 1,
@@ -116,7 +118,8 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     documentNumber: {
       fontSize: 12,
-      fontFamily: headerFont,
+      fontFamily: headerFontFamily,
+      fontWeight: 700,
       color: tokens.headerText,
       marginBottom: 8,
     },
@@ -132,12 +135,14 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     metaValue: {
       fontSize: 9,
-      fontFamily: bodyBoldFont,
+      fontFamily: bodyFontFamily,
+      fontWeight: 700,
       color: tokens.headerText,
     },
     title: {
       fontSize: 12,
-      fontFamily: headerFont,
+      fontFamily: headerFontFamily,
+      fontWeight: 700,
       color: tokens.bodyText,
       marginTop: 8,
       marginBottom: 12,
@@ -158,7 +163,8 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     partyLabel: {
       fontSize: 8,
-      fontFamily: headerFont,
+      fontFamily: headerFontFamily,
+      fontWeight: 700,
       textTransform: 'uppercase',
       color: tokens.mutedText,
       marginBottom: 6,
@@ -166,7 +172,8 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     partyName: {
       fontSize: 11,
-      fontFamily: headerFont,
+      fontFamily: headerFontFamily,
+      fontWeight: 700,
       color: tokens.bodyText,
       marginBottom: 4,
     },
@@ -189,7 +196,8 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     thText: {
       fontSize: 8,
-      fontFamily: bodyBoldFont,
+      fontFamily: bodyFontFamily,
+      fontWeight: 700,
       paddingVertical: safeNumber(tokens.tableCellPaddingVertical, 8),
       paddingHorizontal: safeNumber(tokens.tableCellPaddingHorizontal, 6),
       color: tokens.tableHeaderText,
@@ -214,13 +222,15 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     tdBoldText: {
       fontSize: 9,
-      fontFamily: bodyBoldFont,
+      fontFamily: bodyFontFamily,
+      fontWeight: 700,
       paddingVertical: safeNumber(tokens.tableCellPaddingVertical, 8),
       paddingHorizontal: safeNumber(tokens.tableCellPaddingHorizontal, 6),
       color: tokens.bodyText,
     },
     descText: {
-      fontFamily: bodyBoldFont,
+      fontFamily: bodyFontFamily,
+      fontWeight: 700,
       fontSize: 9,
     },
     subDescText: {
@@ -261,12 +271,14 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     grandLabel: {
       fontSize: 12,
-      fontFamily: headerFont,
+      fontFamily: headerFontFamily,
+      fontWeight: 700,
       color: accentDark,
     },
     grandValue: {
       fontSize: 12,
-      fontFamily: headerFont,
+      fontFamily: headerFontFamily,
+      fontWeight: 700,
       color: accentDark,
       textAlign: 'right',
     },
@@ -281,13 +293,15 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     amountWordsLead: {
       fontSize: 8,
-      fontFamily: headerFont,
+      fontFamily: headerFontFamily,
+      fontWeight: 700,
       textTransform: 'uppercase',
       color: accentDark,
       marginBottom: 4,
     },
     amountWordsText: {
       fontSize: 9,
+      fontFamily: bodyFontFamily,
       color: tokens.bodyText,
       fontStyle: 'italic',
     },
@@ -310,7 +324,8 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     supportTitle: {
       fontSize: 8,
-      fontFamily: headerFont,
+      fontFamily: headerFontFamily,
+      fontWeight: 700,
       textTransform: 'uppercase',
       color: tokens.mutedText,
       marginBottom: safeNumber(tokens.supportTitleMarginBottom, 6),
@@ -344,7 +359,8 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
     },
     signatureName: {
       fontSize: 10,
-      fontFamily: bodyBoldFont,
+      fontFamily: bodyFontFamily,
+      fontWeight: 700,
       marginTop: 4,
     },
     signatureRole: {

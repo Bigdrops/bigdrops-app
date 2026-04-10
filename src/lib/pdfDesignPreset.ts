@@ -1,5 +1,5 @@
 import { getRegisteredFillablePdfFontFamily, getRegisteredFillableWebFontFamily } from '@/lib/pdfFillableFonts'
-import { getRegisteredSharedPdfFontFamily, getRegisteredSharedWebFontFamily } from '@/lib/pdfSharedFonts'
+import { getRegisteredSharedWebFontFamily, isRegisteredSharedFontChoice } from '@/lib/pdfSharedFonts'
 
 export type PdfDesignPresetDocument = 'invoice' | 'quotation' | 'csr' | 'waybill'
 export type PdfFontChoice =
@@ -222,21 +222,13 @@ export function resolvePdfFontFamily(
       ? 'Patrick Hand'
       : choice
 
-  const registeredSharedFont = getRegisteredSharedPdfFontFamily(normalizedChoice, variant)
-  if (registeredSharedFont) {
-    return registeredSharedFont
+  if (isRegisteredSharedFontChoice(normalizedChoice)) {
+    return normalizedChoice
   }
 
   const registeredFillableFont = getRegisteredFillablePdfFontFamily(normalizedChoice, variant)
   if (registeredFillableFont) {
     return registeredFillableFont
-  }
-
-  if (normalizedChoice === 'Orbitron' || normalizedChoice === 'Roboto Condensed') {
-    if (variant === 'bold') return 'Courier-Bold'
-    if (variant === 'italic') return 'Courier-Oblique'
-    if (variant === 'boldItalic') return 'Courier-BoldOblique'
-    return 'Courier'
   }
 
   if (variant === 'bold') return 'Helvetica-Bold'

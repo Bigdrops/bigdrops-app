@@ -26,171 +26,108 @@ import sourceSansProItalic from '@fontsource/source-sans-pro/files/source-sans-p
 import robotoCondensedRegular from '@fontsource/roboto-condensed/files/roboto-condensed-latin-400-normal.woff'
 import robotoCondensedBold from '@fontsource/roboto-condensed/files/roboto-condensed-latin-700-normal.woff'
 import robotoCondensedItalic from '@fontsource/roboto-condensed/files/roboto-condensed-latin-400-italic.woff'
+import type { PdfFontChoice } from '@/lib/pdfDesignPreset'
 
-export type RegisteredSharedPdfFontFamily =
-  | 'Inter'
-  | 'Inter Bold'
-  | 'Inter Italic'
-  | 'Inter Bold Italic'
-  | 'Roboto'
-  | 'Roboto Bold'
-  | 'Roboto Italic'
-  | 'Roboto Bold Italic'
-  | 'Open Sans'
-  | 'Open Sans Bold'
-  | 'Open Sans Italic'
-  | 'Open Sans Bold Italic'
-  | 'Lato'
-  | 'Lato Bold'
-  | 'Lato Italic'
-  | 'Lato Bold Italic'
-  | 'Montserrat'
-  | 'Montserrat Bold'
-  | 'Montserrat Italic'
-  | 'Montserrat Bold Italic'
-  | 'Poppins'
-  | 'Poppins Bold'
-  | 'Poppins Italic'
-  | 'Poppins Bold Italic'
-  | 'Raleway'
-  | 'Raleway Bold'
-  | 'Raleway Italic'
-  | 'Raleway Bold Italic'
-  | 'Orbitron'
-  | 'Orbitron Bold'
-  | 'Orbitron Italic'
-  | 'Orbitron Bold Italic'
-  | 'Source Sans Pro'
-  | 'Source Sans Pro Bold'
-  | 'Source Sans Pro Italic'
-  | 'Source Sans Pro Bold Italic'
-  | 'Roboto Condensed'
-  | 'Roboto Condensed Bold'
-  | 'Roboto Condensed Italic'
-  | 'Roboto Condensed Bold Italic'
-
-type RegisteredSharedFontConfig = {
-  regular: RegisteredSharedPdfFontFamily
-  bold: RegisteredSharedPdfFontFamily
-  italic: RegisteredSharedPdfFontFamily
-  boldItalic: RegisteredSharedPdfFontFamily
+export type RegisteredSharedFontConfig = {
+  family: PdfFontChoice
   webFamily: string
   regularSrc: string
   boldSrc?: string
   italicSrc?: string
+  boldItalicSrc?: string
 }
 
-export const REGISTERED_SHARED_FONTS: Record<string, RegisteredSharedFontConfig> = {
+export const REGISTERED_SHARED_FONTS: Record<PdfFontChoice, RegisteredSharedFontConfig> = {
   Inter: {
-    regular: 'Inter',
-    bold: 'Inter Bold',
-    italic: 'Inter Italic',
-    boldItalic: 'Inter Bold Italic',
+    family: 'Inter',
     webFamily: 'Inter Variable',
     regularSrc: interRegular,
     boldSrc: interRegular,
     italicSrc: interItalic,
+    boldItalicSrc: interItalic,
   },
   Roboto: {
-    regular: 'Roboto',
-    bold: 'Roboto Bold',
-    italic: 'Roboto Italic',
-    boldItalic: 'Roboto Bold Italic',
+    family: 'Roboto',
     webFamily: 'Roboto',
     regularSrc: robotoRegular,
     boldSrc: robotoBold,
     italicSrc: robotoItalic,
+    boldItalicSrc: robotoBold,
   },
   'Open Sans': {
-    regular: 'Open Sans',
-    bold: 'Open Sans Bold',
-    italic: 'Open Sans Italic',
-    boldItalic: 'Open Sans Bold Italic',
+    family: 'Open Sans',
     webFamily: 'Open Sans',
     regularSrc: openSansRegular,
     boldSrc: openSansBold,
     italicSrc: openSansItalic,
+    boldItalicSrc: openSansBold,
   },
   Lato: {
-    regular: 'Lato',
-    bold: 'Lato Bold',
-    italic: 'Lato Italic',
-    boldItalic: 'Lato Bold Italic',
+    family: 'Lato',
     webFamily: 'Lato',
     regularSrc: latoRegular,
     boldSrc: latoBold,
     italicSrc: latoItalic,
+    boldItalicSrc: latoBold,
   },
   Montserrat: {
-    regular: 'Montserrat',
-    bold: 'Montserrat Bold',
-    italic: 'Montserrat Italic',
-    boldItalic: 'Montserrat Bold Italic',
+    family: 'Montserrat',
     webFamily: 'Montserrat',
     regularSrc: montserratRegular,
     boldSrc: montserratBold,
     italicSrc: montserratItalic,
+    boldItalicSrc: montserratBold,
   },
   Poppins: {
-    regular: 'Poppins',
-    bold: 'Poppins Bold',
-    italic: 'Poppins Italic',
-    boldItalic: 'Poppins Bold Italic',
+    family: 'Poppins',
     webFamily: 'Poppins',
     regularSrc: poppinsRegular,
     boldSrc: poppinsBold,
     italicSrc: poppinsItalic,
+    boldItalicSrc: poppinsBold,
   },
   Raleway: {
-    regular: 'Raleway',
-    bold: 'Raleway Bold',
-    italic: 'Raleway Italic',
-    boldItalic: 'Raleway Bold Italic',
+    family: 'Raleway',
     webFamily: 'Raleway',
     regularSrc: ralewayRegular,
     boldSrc: ralewayBold,
     italicSrc: ralewayItalic,
+    boldItalicSrc: ralewayBold,
   },
   Orbitron: {
-    regular: 'Orbitron',
-    bold: 'Orbitron Bold',
-    italic: 'Orbitron Italic',
-    boldItalic: 'Orbitron Bold Italic',
+    family: 'Orbitron',
     webFamily: 'Orbitron',
     regularSrc: orbitronRegular,
     boldSrc: orbitronBold,
+    italicSrc: orbitronRegular,
+    boldItalicSrc: orbitronBold,
   },
   'Source Sans Pro': {
-    regular: 'Source Sans Pro',
-    bold: 'Source Sans Pro Bold',
-    italic: 'Source Sans Pro Italic',
-    boldItalic: 'Source Sans Pro Bold Italic',
+    family: 'Source Sans Pro',
     webFamily: 'Source Sans Pro',
     regularSrc: sourceSansProRegular,
     boldSrc: sourceSansProBold,
     italicSrc: sourceSansProItalic,
+    boldItalicSrc: sourceSansProBold,
   },
   'Roboto Condensed': {
-    regular: 'Roboto Condensed',
-    bold: 'Roboto Condensed Bold',
-    italic: 'Roboto Condensed Italic',
-    boldItalic: 'Roboto Condensed Bold Italic',
+    family: 'Roboto Condensed',
     webFamily: 'Roboto Condensed',
     regularSrc: robotoCondensedRegular,
     boldSrc: robotoCondensedBold,
     italicSrc: robotoCondensedItalic,
+    boldItalicSrc: robotoCondensedBold,
   },
 }
 
-export function getRegisteredSharedPdfFontFamily(
-  choice: string,
-  variant: 'regular' | 'bold' | 'italic' | 'boldItalic' = 'regular',
-) {
-  const config = REGISTERED_SHARED_FONTS[choice]
-  if (!config) return null
-  return config[variant]
+export function getRegisteredSharedFontConfig(choice: string) {
+  return REGISTERED_SHARED_FONTS[choice as PdfFontChoice] || null
 }
 
 export function getRegisteredSharedWebFontFamily(choice: string) {
-  return REGISTERED_SHARED_FONTS[choice]?.webFamily || null
+  return getRegisteredSharedFontConfig(choice)?.webFamily || null
+}
+
+export function isRegisteredSharedFontChoice(choice: string): choice is PdfFontChoice {
+  return choice in REGISTERED_SHARED_FONTS
 }
