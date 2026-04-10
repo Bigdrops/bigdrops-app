@@ -50,7 +50,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
       title="Dashboard"
       hideMobileHomeHeader
       hidePageHeader
-      contentClassName="pb-32 bg-background"
+      contentClassName="w-full max-w-none pb-32 bg-background"
     >
       <DashboardOverview
         businessName={businessName}
