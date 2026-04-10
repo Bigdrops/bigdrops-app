@@ -6,7 +6,7 @@ import PageLoader from '@/components/app/PageLoader'
 import { isAndroidNative } from '@/lib/native/capacitor'
 import { useSettings } from '@/hooks/useSettings'
 import { normalizeHexColor, hexToHslTriplet } from '@/lib/colorTheme'
-import { getThemePreset, resolveThemeMode } from '@/lib/themePresets'
+import { BASE_THEME_MODE, getThemePreset, resolveThemeMode } from '@/lib/themePresets'
 import {
   applyThemeTokenBundle,
   clearThemeTokenBundle,
@@ -79,7 +79,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
 
     let bundleToApply: ThemeTokenBundle = {}
 
-    if (mode && mode !== 'custom') {
+    if (mode && mode !== 'custom' && mode !== BASE_THEME_MODE) {
       bundleToApply = getThemePreset(mode)?.bundle ?? {}
     } else if (mode === 'custom') {
       const legacyOverrides: ThemeTokenBundle = {}

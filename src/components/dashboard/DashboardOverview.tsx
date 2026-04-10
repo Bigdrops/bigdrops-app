@@ -11,7 +11,9 @@ import {
   Truck,
 } from 'lucide-react'
 import type { ComponentType } from 'react'
+import * as React from 'react'
 
+import { MobileChromeContext } from '@/components/Layout'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { Badge } from '@/components/ui/badge'
 import { formatNaira } from '@/lib/formatters/money'
@@ -49,7 +51,6 @@ type DashboardOverviewProps = {
   quickTiles: QuickTile[]
   priorityItems: PriorityItem[]
   recentDocs: RecentDoc[]
-  onOpenMenu: () => void
   onQuickAction: (path: string) => void
   onPrioritySelect: (item: PriorityItem) => void
   onRecentDocSelect: (doc: RecentDoc) => void
@@ -162,12 +163,13 @@ export function DashboardOverview({
   quickTiles,
   priorityItems,
   recentDocs,
-  onOpenMenu,
   onQuickAction,
   onPrioritySelect,
   onRecentDocSelect,
   onViewAllActivity,
 }: DashboardOverviewProps) {
+  const mobileChrome = React.useContext(MobileChromeContext)
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pb-32 pt-3 md:px-8 md:pb-12 md:pt-4">
       <section className="sticky top-0 z-30 -mx-4 bg-[linear-gradient(180deg,hsl(var(--background))_0%,color-mix(in_oklab,hsl(var(--background))_90%,transparent)_78%,transparent_100%)] px-4 pb-3 pt-2 backdrop-blur-xl md:mx-0 md:px-0">
@@ -176,7 +178,7 @@ export function DashboardOverview({
             <div className="flex min-w-0 items-start gap-[10px]">
               <button
                 type="button"
-                onClick={onOpenMenu}
+                onClick={mobileChrome.openSidebar}
                 className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[13px] border border-border bg-card text-foreground shadow-sm"
                 aria-label="Open navigation menu"
               >

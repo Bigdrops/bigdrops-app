@@ -3,7 +3,7 @@ import { Zap } from 'lucide-react'
 import type { Session } from '@supabase/supabase-js'
 import { useNavigate } from 'react-router-dom'
 
-import Layout, { MobileChromeContext } from '@/components/Layout'
+import Layout from '@/components/Layout'
 import { DashboardOverview } from '@/components/dashboard/DashboardOverview'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useSettings } from '@/hooks/useSettings'
@@ -14,7 +14,6 @@ import { getCreateActions, getQuickTiles, loadStoredQuickTiles } from '@/config/
 export default function DashboardRedesign({ session }: { session: Session }) {
   const navigate = useNavigate()
   const { settings } = useSettings()
-  const mobileChrome = React.useContext(MobileChromeContext)
   const { loading, recentDocs, priorityItems, heroStats, summary } = useDashboardData()
   const [createOpen, setCreateOpen] = React.useState(false)
 
@@ -23,15 +22,6 @@ export default function DashboardRedesign({ session }: { session: Session }) {
 
   const userName = session?.user?.user_metadata?.full_name?.split(' ')[0] || 'there'
   const businessName = settings?.company_name || 'Bigdrops Workspace'
-
-  const handleOpenMenu = React.useCallback(() => {
-    if (mobileChrome && typeof mobileChrome.openSidebar === 'function') {
-      mobileChrome.openSidebar()
-      return
-    }
-
-    window.dispatchEvent(new Event('bigdrops:open-mobile-drawer'))
-  }, [mobileChrome])
 
   const handlePrioritySelect = React.useCallback((item: PriorityItem) => {
     const pathByType: Record<string, string> = {
@@ -71,7 +61,6 @@ export default function DashboardRedesign({ session }: { session: Session }) {
         quickTiles={quickTiles}
         priorityItems={priorityItems}
         recentDocs={recentDocs}
-        onOpenMenu={handleOpenMenu}
         onQuickAction={(path) => navigate(path)}
         onPrioritySelect={handlePrioritySelect}
         onRecentDocSelect={handleRecentDocSelect}

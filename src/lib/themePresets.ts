@@ -14,8 +14,9 @@ export const FIXED_THEME_PRESET_IDS = [
   "midnight-indigo",
 ] as const
 
+export const BASE_THEME_MODE = "base" as const
 export type FixedThemePresetId = (typeof FIXED_THEME_PRESET_IDS)[number]
-export type ThemePresetId = FixedThemePresetId | "custom"
+export type ThemeMode = typeof BASE_THEME_MODE | FixedThemePresetId | "custom"
 
 type ThemePresetDefinition = {
   id: FixedThemePresetId
@@ -345,16 +346,20 @@ export function getThemePreset(id: unknown): ThemePresetDefinition | null {
 }
 
 export function resolveThemeMode(
-  settings: { app_theme_preset_id?: unknown; app_background_color?: unknown; app_card_color?: unknown } | null | undefined,
-): ThemePresetId | null {
+  settings: {
+    app_theme_preset_id?: unknown
+    app_background_color?: unknown
+    app_card_color?: unknown
+    app_theme_tokens?: unknown
+  } | null | undefined,
+): ThemeMode {
   const presetId = settings?.app_theme_preset_id
   if (presetId === "custom" || isFixedThemePresetId(presetId)) return presetId
 
-  // Backwards compatibility: existing saved manual values should behave as custom mode.
-  if (settings?.app_background_color || settings?.app_card_color) {
+  // Backwards compatibility: explicit manual values should still behave as custom mode.
+  if (settings?.app_background_color || settings?.app_card_color || settings?.app_theme_tokens) {
     return "custom"
   }
 
-  return null
+  return BASE_THEME_MODE
 }
-

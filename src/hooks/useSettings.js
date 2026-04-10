@@ -5,7 +5,7 @@ import { useSafeAsyncTask } from './useSafeAsyncTask'
 let cachedSettings = null
 let listeners = []
 let lastLocalUpdateAt = 0
-const THEME_KEYS = ['app_theme_preset_id', 'app_background_color', 'app_card_color']
+const THEME_KEYS = ['app_theme_preset_id', 'app_background_color', 'app_card_color', 'app_theme_tokens']
 const LOCAL_THEME_GRACE_MS = 6000
 
 export async function fetchSettings() {

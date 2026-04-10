@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CheckCircle2, Palette, RotateCcw, Sparkles } from 'lucide-react'
 import { saveSettings, useSettings } from '@/hooks/useSettings'
 import { normalizeHexColor } from '@/lib/colorTheme'
-import { THEME_PRESETS, type ThemePresetId, resolveThemeMode } from '@/lib/themePresets'
+import { BASE_THEME_MODE, THEME_PRESETS, type FixedThemePresetId, type ThemeMode, resolveThemeMode } from '@/lib/themePresets'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,8 +12,12 @@ import { SettingsLoadingState } from './SettingsLoadingState'
 import { getErrorMessage } from './settings-helpers'
 import type { SettingsToastFn } from './settings-types'
 
-const DEFAULT_BACKGROUND = '#F5F5F5'
-const DEFAULT_CARD = '#FAFAFA'
+const BASE_BACKGROUND = '#EDF1F5'
+const BASE_CARD = '#FFFFFF'
+const BASE_PRIMARY = '#1F4ED8'
+const BASE_ACCENT = '#F1F5F9'
+const DEFAULT_BACKGROUND = BASE_BACKGROUND
+const DEFAULT_CARD = BASE_CARD
 
 type PresetCardProps = {
   title: string
@@ -80,7 +84,7 @@ function PresetCard({ title, description, preview, selected, onSelect }: PresetC
 
 export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn }) {
   const { settings, loading } = useSettings()
-  const [selectedMode, setSelectedMode] = useState<ThemePresetId>('custom')
+  const [selectedMode, setSelectedMode] = useState<ThemeMode>(BASE_THEME_MODE)
   const [background, setBackground] = useState('')
   const [card, setCard] = useState('')
   const [saving, setSaving] = useState(false)
@@ -89,22 +93,35 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
   useEffect(() => {
     if (loading || !settings) return
 
-    setSelectedMode(resolveThemeMode(settings) ?? 'custom')
+    setSelectedMode(resolveThemeMode(settings))
     setBackground(settings.app_background_color || '')
     setCard(settings.app_card_color || '')
   }, [loading, settings])
 
-  const handleSelectPreset = async (presetId: ThemePresetId) => {
+  const handleSelectPreset = async (presetId: FixedThemePresetId | typeof BASE_THEME_MODE | 'custom') => {
     setSelectedMode(presetId)
     setSaving(true)
     try {
-      await saveSettings({ app_theme_preset_id: presetId })
-      setSaved(true)
-      if (presetId !== 'custom') {
+      if (presetId === BASE_THEME_MODE) {
+        await saveSettings({
+          app_theme_preset_id: null,
+          app_background_color: null,
+          app_card_color: null,
+          app_theme_tokens: null,
+        })
+        setBackground('')
+        setCard('')
+        setSaved(true)
+        onToast('Default Bigdrops theme restored')
+      } else if (presetId === 'custom') {
+        await saveSettings({ app_theme_preset_id: 'custom' })
+        setSaved(true)
+        onToast('Custom mode active')
+      } else {
+        await saveSettings({ app_theme_preset_id: presetId })
+        setSaved(true)
         const label = THEME_PRESETS.find((preset) => preset.id === presetId)?.label
         onToast(`${label ?? 'Theme preset'} applied`)
-      } else {
-        onToast('Custom mode active')
       }
       setTimeout(() => setSaved(false), 2000)
     } catch (error) {
@@ -112,11 +129,6 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
     }
     setSaving(false)
   }
-
-  const selectedPreset = useMemo(
-    () => THEME_PRESETS.find((preset) => preset.id === selectedMode) ?? null,
-    [selectedMode]
-  )
 
   const handleSave = async () => {
     if (selectedMode !== 'custom') return
@@ -139,6 +151,7 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
         app_theme_preset_id: 'custom',
         app_background_color: normBg,
         app_card_color: normCard,
+        app_theme_tokens: null,
       })
       setSaved(true)
       onToast('Custom app theme updated')
@@ -153,14 +166,15 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
     setSaving(true)
     try {
       await saveSettings({
-        app_theme_preset_id: 'custom',
+        app_theme_preset_id: null,
         app_background_color: null,
         app_card_color: null,
+        app_theme_tokens: null,
       })
-      setSelectedMode('custom')
+      setSelectedMode(BASE_THEME_MODE)
       setBackground('')
       setCard('')
-      onToast('Theme reset to default')
+      onToast('Default Bigdrops theme restored')
     } catch (error) {
       onToast(getErrorMessage(error))
     }
@@ -220,9 +234,51 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
         <div>
           <div className="text-sm font-semibold text-foreground">Custom</div>
           <div className="text-xs text-muted-foreground">
-            Use manual colors only when you want to override the default neutral base.
+            Use manual colors only when you want to override the default Bigdrops base theme.
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => handleSelectPreset(BASE_THEME_MODE)}
+          className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+        >
+          <Card
+            className={cn(
+              'border transition-colors',
+              selectedMode === BASE_THEME_MODE
+                ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                : 'border-border hover:border-primary/30 hover:bg-muted/20'
+            )}
+          >
+            <CardHeader className="gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <CardTitle className="text-sm font-semibold">Default Bigdrops Theme</CardTitle>
+                  <CardDescription className="text-[11px] leading-relaxed">
+                    Restores the HTML reference base system from `docs/screen.html`.
+                  </CardDescription>
+                </div>
+                {selectedMode === BASE_THEME_MODE ? (
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                ) : null}
+              </div>
+              <div
+                className="rounded-xl border border-border/70 p-2"
+                style={{ backgroundColor: BASE_BACKGROUND }}
+              >
+                <div className="flex items-center gap-2 rounded-lg p-2" style={{ backgroundColor: BASE_CARD }}>
+                  <div className="h-6 w-6 rounded-md" style={{ backgroundColor: BASE_PRIMARY }} />
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="h-2.5 w-16 rounded-full bg-black/15" />
+                    <div className="h-2 w-12 rounded-full bg-black/10" />
+                  </div>
+                  <div className="h-6 w-10 rounded-md" style={{ backgroundColor: BASE_ACCENT }} />
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        </button>
 
         <button
           type="button"
@@ -242,8 +298,8 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
                 <div>
                   <CardTitle className="text-sm font-semibold">Custom Theme</CardTitle>
                   <CardDescription className="text-[11px] leading-relaxed">
-                    Manual background and card surface editor. Existing saved custom values are
-                    preserved here.
+                    Manual background and card surface editor. This mode is only active when
+                    explicitly selected.
                   </CardDescription>
                 </div>
                 {selectedMode === 'custom' ? (

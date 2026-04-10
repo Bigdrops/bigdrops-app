@@ -4,37 +4,36 @@
 
 /* Minimalist neutral theme tokens (shadcn-style) */
 :root {
-  --background: 0 0% 96%;
-  --foreground: 222 25% 12%;
+  --background: 210 29% 95%;
+  --foreground: 222 47% 11%;
 
-  --card: 0 0% 98%;
-  --card-foreground: 222 25% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
 
-  --popover: 0 0% 98%;
-  --popover-foreground: 222 25% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
 
-  /* A calm, minimalist ink primary */
-  --primary: 235 70% 45%;
+  /* Bigdrops HTML reference base theme */
+  --primary: 225 75% 48%;
   --primary-foreground: 0 0% 98%;
 
-  --secondary: 210 28% 92%;
-  --secondary-foreground: 222 25% 12%;
+  --secondary: 210 40% 98%;
+  --secondary-foreground: 222 47% 11%;
 
-  --muted: 210 28% 92%;
-  --muted-foreground: 220 10% 38%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
 
-  --accent: 210 28% 92%;
-  --accent-foreground: 222 25% 12%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222 47% 11%;
 
   --destructive: 0 70% 48%;
   --destructive-foreground: 0 0% 98%;
 
-  /* Minimal borders: present but quiet */
-  --border: 215 16% 84%;
-  --input: 215 16% 84%;
+  /* Borders from the HTML reference line system */
+  --border: 212 31% 89%;
+  --input: 212 31% 89%;
 
-  /* Focus ring should be visible */
-  --ring: 235 70% 45%;
+  --ring: 225 75% 48%;
 
   --radius: 0.75rem;
 
