@@ -78,7 +78,7 @@ export default function MobileListPageShell({
   }
 
   return (
-    <div className={`min-h-screen px-[14px] pb-32 pt-[14px] font-['DM_Sans',sans-serif] ${toneStyle.glow}`}>
+    <div className={`min-h-screen px-[14px] pb-32 pt-[8px] font-['DM_Sans',sans-serif] ${toneStyle.glow}`}>
       <MobilePageHeader
         eyebrow={eyebrow}
         title={title}
@@ -114,7 +114,7 @@ export default function MobileListPageShell({
       />
 
       {searchOpen ? (
-        <div className="mt-3 rounded-[18px] border border-border/80 bg-background/95 p-2 shadow-sm">
+        <div className="mt-2 rounded-[18px] border border-border/80 bg-background/95 p-2 shadow-sm">
           <div className="flex items-center gap-2">
             <Search className="ml-1 h-4 w-4 text-muted-foreground" />
             <Input
@@ -137,15 +137,15 @@ export default function MobileListPageShell({
         </div>
       ) : null}
 
-      {segmentedControl ? <div className="mt-3">{segmentedControl}</div> : null}
+      {segmentedControl ? <div className="mt-2.5">{segmentedControl}</div> : null}
 
       {filterPanel ? (
-        <div className="mt-3 rounded-[18px] border border-border/80 bg-background/95 p-3 shadow-sm">
+        <div className="mt-2.5 rounded-[18px] border border-border/80 bg-background/95 p-3 shadow-sm">
           {filterPanel}
         </div>
       ) : null}
 
-      <div className="mt-3 space-y-3">{children}</div>
+      <div className="mt-2.5 space-y-3">{children}</div>
     </div>
   )
 }

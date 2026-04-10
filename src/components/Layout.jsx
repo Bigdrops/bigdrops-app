@@ -386,7 +386,7 @@ export default function Layout({
 
       <div className="md:hidden">
         {isHome && !hideMobileHomeHeader ? (
-          <div className="w-full px-4 pt-4">
+          <div className="w-full px-4 pt-3">
             <MobilePageHeader
               title={APP_NAME}
               subtitle={settings?.company_name || 'Invoicing and Projects'}
@@ -397,7 +397,7 @@ export default function Layout({
         ) : null}
 
         {!isHome && !hidePageHeader ? (
-          <div className="w-full px-4 pt-4">
+          <div className="w-full px-4 pt-3">
             <MobilePageHeader
               title={title}
               onMenuClick={() => setSidebarOpen(true)}

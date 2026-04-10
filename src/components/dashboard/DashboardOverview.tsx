@@ -201,8 +201,8 @@ export function DashboardOverview({
   const mobileChrome = React.useContext(MobileChromeContext)
 
   return (
-    <div className="mx-auto flex w-full max-w-[760px] flex-col pb-32 pt-[54px] md:pb-16">
-      <section className="sticky top-0 z-30 border-b border-border bg-background/95 px-[14px] pb-3 pt-[14px] backdrop-blur-[18px] md:px-6">
+    <div className="mx-auto flex w-full max-w-[760px] flex-col pb-32 pt-[34px] md:pb-16">
+      <section className="sticky top-0 z-30 border-b border-border bg-background/95 px-[14px] pb-2.5 pt-[10px] backdrop-blur-[18px] md:px-6">
         <div className="flex items-center justify-between gap-[10px]">
           <div className="flex min-w-0 items-center gap-[10px]">
             <button
@@ -230,7 +230,7 @@ export function DashboardOverview({
         </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-[9px] px-[14px] pt-[14px] md:px-6">
+      <section className="grid grid-cols-2 gap-[9px] px-[14px] pt-[10px] md:px-6">
         {dashboardMetricCards.map((metric) => {
           const Icon = metric.Icon
 

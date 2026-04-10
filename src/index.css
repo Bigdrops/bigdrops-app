@@ -4,34 +4,34 @@
 
 /* Minimalist neutral theme tokens (shadcn-style) */
 :root {
-  --background: 210 29% 95%;
+  --background: 210 40% 98%;
   --foreground: 222 47% 11%;
 
-  --card: 0 0% 100%;
+  --card: 210 20% 99%;
   --card-foreground: 222 47% 11%;
 
-  --popover: 0 0% 100%;
+  --popover: 210 20% 99%;
   --popover-foreground: 222 47% 11%;
 
   /* Bigdrops HTML reference base theme */
   --primary: 225 75% 48%;
   --primary-foreground: 0 0% 98%;
 
-  --secondary: 210 40% 98%;
+  --secondary: 210 44% 98%;
   --secondary-foreground: 222 47% 11%;
 
-  --muted: 210 40% 96%;
+  --muted: 210 32% 95.5%;
   --muted-foreground: 215 16% 47%;
 
-  --accent: 210 40% 96%;
+  --accent: 210 34% 96%;
   --accent-foreground: 222 47% 11%;
 
   --destructive: 0 70% 48%;
   --destructive-foreground: 0 0% 98%;
 
   /* Borders from the HTML reference line system */
-  --border: 212 31% 89%;
-  --input: 212 31% 89%;
+  --border: 214 30% 88%;
+  --input: 214 30% 88%;
 
   --ring: 225 75% 48%;
 
@@ -100,6 +100,9 @@
 
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(circle at top, color-mix(in oklab, hsl(var(--primary)) 5%, transparent), transparent 32%),
+      linear-gradient(180deg, color-mix(in oklab, white 16%, hsl(var(--background))), hsl(var(--background)));
   }
 }
 
@@ -127,59 +130,63 @@
   }
 
   .page-intro-surface {
-    background: linear-gradient(180deg, color-mix(in oklab, var(--tone-neutral) 4%, hsl(var(--background))), hsl(var(--background)));
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, white 18%, hsl(var(--background))),
+      hsl(var(--background))
+    );
   }
 
   .shell-surface-neutral {
-    background-color: color-mix(in oklab, var(--tone-neutral) 3%, hsl(var(--background)));
+    background-color: color-mix(in oklab, white 22%, hsl(var(--background)));
     background-image: radial-gradient(
       circle at top,
-      color-mix(in oklab, var(--tone-neutral) 12%, transparent),
+      color-mix(in oklab, var(--tone-neutral) 10%, transparent),
       transparent 30%
     );
   }
 
   .shell-surface-info {
-    background-color: color-mix(in oklab, var(--tone-info) 3%, hsl(var(--background)));
+    background-color: color-mix(in oklab, white 20%, hsl(var(--background)));
     background-image: radial-gradient(
       circle at top,
-      color-mix(in oklab, var(--tone-info) 12%, transparent),
+      color-mix(in oklab, var(--tone-info) 10%, transparent),
       transparent 30%
     );
   }
 
   .shell-surface-accent {
-    background-color: color-mix(in oklab, var(--tone-accent) 3%, hsl(var(--background)));
+    background-color: color-mix(in oklab, white 20%, hsl(var(--background)));
     background-image: radial-gradient(
       circle at top,
-      color-mix(in oklab, var(--tone-accent) 12%, transparent),
+      color-mix(in oklab, var(--tone-accent) 10%, transparent),
       transparent 30%
     );
   }
 
   .shell-surface-success {
-    background-color: color-mix(in oklab, var(--tone-success) 3%, hsl(var(--background)));
+    background-color: color-mix(in oklab, white 20%, hsl(var(--background)));
     background-image: radial-gradient(
       circle at top,
-      color-mix(in oklab, var(--tone-success) 12%, transparent),
+      color-mix(in oklab, var(--tone-success) 10%, transparent),
       transparent 30%
     );
   }
 
   .shell-surface-warning {
-    background-color: color-mix(in oklab, var(--tone-warning) 4%, hsl(var(--background)));
+    background-color: color-mix(in oklab, white 20%, hsl(var(--background)));
     background-image: radial-gradient(
       circle at top,
-      color-mix(in oklab, var(--tone-warning) 14%, transparent),
+      color-mix(in oklab, var(--tone-warning) 12%, transparent),
       transparent 30%
     );
   }
 
   .shell-surface-data {
-    background-color: color-mix(in oklab, var(--tone-data) 3%, hsl(var(--background)));
+    background-color: color-mix(in oklab, white 20%, hsl(var(--background)));
     background-image: radial-gradient(
       circle at top,
-      color-mix(in oklab, var(--tone-data) 12%, transparent),
+      color-mix(in oklab, var(--tone-data) 10%, transparent),
       transparent 30%
     );
   }

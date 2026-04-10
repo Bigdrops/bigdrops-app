@@ -8,7 +8,6 @@ import { DashboardOverview } from '@/components/dashboard/DashboardOverview'
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -94,18 +93,15 @@ export default function DashboardRedesign({ session }: { session: Session }) {
 
           <SheetContent
             side="bottom"
-            className="h-[58vh] max-h-[82vh] rounded-t-[30px] border-x-0 border-b-0 border-t border-border/80 p-0 outline-none"
+            className="h-[49vh] max-h-[60vh] rounded-t-[30px] border-x-0 border-b-0 border-t border-border/80 p-0 outline-none"
           >
             <div className="flex h-full flex-col bg-card">
               <div className="px-5 pb-3 pt-3">
                 <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-border" />
-                <SheetHeader className="space-y-1 px-0 pb-0 pt-0 text-left">
+                <SheetHeader className="space-y-0.5 px-0 pb-0 pt-0 text-left">
                   <SheetTitle className="text-[22px] font-black tracking-[-0.04em] text-foreground">
                     Create
                   </SheetTitle>
-                  <SheetDescription className="text-sm leading-6 text-muted-foreground">
-                    Start a new record from the actions below.
-                  </SheetDescription>
                 </SheetHeader>
               </div>
 
@@ -136,9 +132,6 @@ export default function DashboardRedesign({ session }: { session: Session }) {
                         <div className="min-w-0">
                           <div className="truncate text-[14px] font-bold tracking-[-0.02em] text-foreground">
                             {action.label}
-                          </div>
-                          <div className="mt-1 truncate text-[12px] leading-5 text-muted-foreground">
-                            {action.description}
                           </div>
                         </div>
 
