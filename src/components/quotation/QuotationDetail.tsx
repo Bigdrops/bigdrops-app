@@ -745,6 +745,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         accentColor={resolvedPdfDesignPreset.accentColor}
         headerFontFamily={resolvePdfWebFontFamily(resolvedPdfDesignPreset.headerFont)}
         bodyFontFamily={resolvePdfWebFontFamily(resolvedPdfDesignPreset.bodyFont)}
+        previewNote="Browser preview may show web typography. Downloaded PDFs currently use safe built-in PDF fonts."
       />
 
       <PdfBankControls

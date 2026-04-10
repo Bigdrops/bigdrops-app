@@ -271,6 +271,7 @@ export function DocumentLivePreviewCard({
   accentColor = '#0f172a',
   headerFontFamily,
   bodyFontFamily,
+  previewNote = '',
 }) {
   const previewItems = items.slice(0, 16)
   const previewNotes = notesSections.filter((section) => section?.title && section?.content)
@@ -279,7 +280,10 @@ export function DocumentLivePreviewCard({
     <Card className="overflow-hidden rounded-[26px] border-border bg-[linear-gradient(180deg,#f8fafc,rgba(255,255,255,0.98))] shadow-sm">
       <CardContent className="p-0">
         <div className="flex items-center justify-between gap-3 px-3 py-3 sm:px-4">
-          <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Preview</div>
+          <div>
+            <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Preview</div>
+            {previewNote ? <div className="mt-1 text-xs text-muted-foreground">{previewNote}</div> : null}
+          </div>
           <div className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600">
             {templateLabel}
           </div>
