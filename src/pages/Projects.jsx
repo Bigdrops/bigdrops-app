@@ -153,7 +153,7 @@ export default function Projects() {
           filterPanel={showFilters ? (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Client</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Client</div>
                 <Select value={clientFilter} onValueChange={setClientFilter}>
                   <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -163,7 +163,7 @@ export default function Projects() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Status</div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -172,7 +172,7 @@ export default function Projects() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Period</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Period</div>
                 <Select value={dateFilter} onValueChange={setDateFilter}>
                   <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -181,7 +181,7 @@ export default function Projects() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Sort</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Sort</div>
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
                   <SelectContent>

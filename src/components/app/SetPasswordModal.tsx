@@ -76,7 +76,7 @@ export default function SetPasswordModal({ onComplete }: SetPasswordModalProps) 
               onChange={(e) => setConfirm(e.target.value)}
             />
             {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
               </div>
             )}

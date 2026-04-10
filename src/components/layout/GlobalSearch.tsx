@@ -27,12 +27,12 @@ const searchTypeLabels = {
 }
 
 const searchTypeColors = {
-  client: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  project: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  invoice: 'bg-blue-50 text-blue-700 border-blue-200',
-  quotation: 'bg-violet-50 text-violet-700 border-violet-200',
-  csr: 'bg-orange-50 text-orange-700 border-orange-200',
-  waybill: 'bg-slate-50 text-slate-700 border-slate-200',
+  client: 'bg-secondary text-secondary-foreground border-border',
+  project: 'bg-accent/15 text-accent-foreground border-accent/30',
+  invoice: 'bg-primary/10 text-primary border-primary/20',
+  quotation: 'bg-muted text-muted-foreground border-border',
+  csr: 'bg-accent/15 text-accent-foreground border-accent/30',
+  waybill: 'bg-muted text-muted-foreground border-border',
 }
 
 const quickModules = [
@@ -206,7 +206,7 @@ export function GlobalSearch() {
                     onClick={() => handleResultClick(result)}
                     className="flex w-full items-center gap-4 rounded-2xl px-3 py-3 text-left transition active:scale-[0.98] hover:bg-muted/50"
                   >
-                    <div className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", colorClass.split(' ')[0])}>
+                    <div className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", colorClass)}>
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">

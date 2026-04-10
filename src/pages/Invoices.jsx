@@ -468,10 +468,10 @@ export default function Invoices() {
 
   const getInvoiceStatusClassName = (status) => {
     const normalized = (status || "draft").toLowerCase()
-    if (normalized === "sent") return "bg-sky-100 text-sky-700"
-    if (normalized === "paid") return "bg-emerald-100 text-emerald-700"
-    if (normalized === "overdue") return "bg-rose-100 text-rose-700"
-    if (normalized === "partial") return "bg-amber-100 text-amber-700"
+    if (normalized === "sent") return "bg-primary/10 text-primary"
+    if (normalized === "paid") return "bg-secondary text-secondary-foreground"
+    if (normalized === "overdue") return "bg-destructive/10 text-destructive"
+    if (normalized === "partial") return "bg-accent/15 text-accent-foreground"
     return "bg-muted text-muted-foreground"
   }
 

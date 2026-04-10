@@ -141,7 +141,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
               <div className="group relative overflow-hidden rounded-[24px] border border-border/60 bg-card p-6 shadow-sm transition-all hover:shadow-md md:p-10">
                 <div className="absolute right-0 top-0 h-40 w-40 -translate-y-8 translate-x-8 rounded-full bg-amber-500/5 blur-3xl transition-all group-hover:bg-amber-500/10" />
                 <div className="relative flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 shadow-inner dark:bg-amber-500/10">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent/15 text-accent-foreground shadow-inner">
                     <AlertCircle className="h-5 w-5" />
                   </div>
                   <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
@@ -186,7 +186,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
                         tile.tint
                       )}
                     >
-                      <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm transition-all group-hover:scale-105", tile.iconBg)}>
+                      <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-all group-hover:scale-105", tile.iconBg)}>
                         <Icon className="h-6 w-6" />
                       </div>
                       <div className="min-w-0 text-left">
@@ -211,10 +211,10 @@ export default function DashboardRedesign({ session }: { session: Session }) {
             {priorityItems.length > 0 && (
               <section className="space-y-6">
                 <div className="flex items-center justify-between px-1">
-                  <h2 className="text-[12px] font-bold uppercase tracking-[0.2em] text-rose-600/90">
+                  <h2 className="text-[12px] font-bold uppercase tracking-[0.2em] text-destructive">
                     Action Required
                   </h2>
-                  <Badge className="rounded-full bg-rose-500 px-2 text-[10px] font-bold text-white">
+                  <Badge className="rounded-full bg-destructive px-2 text-[10px] font-bold text-destructive-foreground">
                     {priorityItems.length}
                   </Badge>
                 </div>
@@ -312,7 +312,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
                       onClick={() => { navigate(action.path); setCreateOpen(false); }}
                       className="group flex flex-col items-center gap-4 transition active:scale-95"
                     >
-                      <div className={cn("flex h-16 w-16 items-center justify-center rounded-[28px] text-white shadow-lg transition-transform group-hover:-translate-y-1", action.iconBg)}>
+                      <div className={cn("flex h-16 w-16 items-center justify-center rounded-[28px] shadow-lg transition-transform group-hover:-translate-y-1", action.iconBg)}>
                         <Icon className="h-7 w-7" />
                       </div>
                       <span className="text-[11px] font-black tracking-tight uppercase text-muted-foreground/80 group-hover:text-foreground">

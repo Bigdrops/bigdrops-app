@@ -242,10 +242,10 @@ export default function Waybills() {
           segmentedControl={<MobileSegmentedControl options={tabs} value={tab} onChange={(value) => setTab(value as FilterTab)} />}
       >
         {showWaybillSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
-          <div className="mb-4 rounded-[22px] border border-amber-200 bg-amber-50/60 p-4 shadow-sm">
+          <div className="mb-4 rounded-[22px] border border-accent/30 bg-accent/10 p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-accent-foreground">
                   Offline sync recovery
                 </div>
               <div className="mt-1 text-sm text-muted-foreground">
@@ -258,7 +258,7 @@ export default function Waybills() {
                 size="icon-lg"
                 onClick={loadWaybillSyncQueue}
                 disabled={syncQueueLoading || retryingQueueItemId != null}
-                className="h-10 w-10 rounded-2xl border-amber-200 bg-background text-amber-700 hover:bg-amber-100"
+                className="h-10 w-10 rounded-2xl border-accent/30 bg-background text-accent-foreground hover:bg-accent/10"
                 aria-label="Refresh waybill sync queue"
               >
                 {syncQueueLoading ? (
@@ -277,7 +277,7 @@ export default function Waybills() {
                   return (
                     <div
                       key={item.id}
-                      className="rounded-2xl border border-amber-200 bg-background p-3"
+                      className="rounded-2xl border border-accent/30 bg-background p-3"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
@@ -288,8 +288,8 @@ export default function Waybills() {
                             <span
                               className={`inline-flex h-6 items-center rounded-full px-2 text-[10px] font-black uppercase tracking-[0.12em] ${
                                 item.status === 'failed'
-                                  ? 'bg-red-50 text-red-700'
-                                  : 'bg-amber-100 text-amber-700'
+                                  ? 'bg-destructive/10 text-destructive'
+                                  : 'bg-accent/15 text-accent-foreground'
                               }`}
                             >
                               {item.status}
@@ -301,7 +301,7 @@ export default function Waybills() {
                           </div>
 
                           {item.error ? (
-                            <div className="mt-2 text-xs leading-5 text-red-600">
+                            <div className="mt-2 text-xs leading-5 text-destructive">
                               {item.error}
                             </div>
                           ) : null}
@@ -313,7 +313,7 @@ export default function Waybills() {
                           size="sm"
                           onClick={() => handleRetryQueueItem(item.id)}
                           disabled={retryingQueueItemId != null}
-                          className="h-9 rounded-xl border-amber-200 bg-background px-3 text-xs font-bold text-amber-700 hover:bg-amber-50"
+                          className="h-9 rounded-xl border-accent/30 bg-background px-3 text-xs font-bold text-accent-foreground hover:bg-accent/10"
                         >
                           {isRetrying ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -348,7 +348,7 @@ export default function Waybills() {
               <button
                 type="button"
                 onClick={() => navigate('/waybills/new')}
-                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
               >
                 <Plus className="h-4 w-4" />
                 New Waybill
@@ -367,7 +367,7 @@ export default function Waybills() {
                   className="cursor-pointer rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
                   <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                    <div className="grid h-12 w-12 place-items-center rounded-2xl border border-cyan-100 bg-cyan-50 text-lg font-extrabold text-cyan-500">W</div>
+                    <div className="grid h-12 w-12 place-items-center rounded-2xl border border-border bg-muted text-lg font-extrabold text-muted-foreground">W</div>
                     <div className="min-w-0">
                       <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Waybill</div>
                       <div className="mt-1 text-lg font-bold tracking-[-0.03em] text-foreground">{w.waybill_number || '—'}</div>
@@ -387,10 +387,10 @@ export default function Waybills() {
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusMeta.label.toLowerCase() === 'delivered' ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-700'}`}>
+                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusMeta.label.toLowerCase() === 'delivered' ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'}`}>
                       {statusMeta.label}
                     </span>
-                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${w.type === 'internal' ? 'bg-cyan-100 text-cyan-700' : 'border border-border bg-muted text-muted-foreground'}`}>
+                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${w.type === 'internal' ? 'bg-accent/15 text-accent-foreground' : 'border border-border bg-muted text-muted-foreground'}`}>
                       {typeMeta.label}
                     </span>
                   </div>
@@ -408,7 +408,7 @@ export default function Waybills() {
                   <div className="my-[14px] h-px bg-border" />
 
                   <div className="text-sm text-muted-foreground">Route: {w.delivery_location || '—'}</div>
-                  {!w.project_id ? <div className="mt-2 text-sm font-medium text-amber-700">Project link pending</div> : null}
+                  {!w.project_id ? <div className="mt-2 text-sm font-medium text-accent-foreground">Project link pending</div> : null}
                 </div>
               )
             })}
