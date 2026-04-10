@@ -85,6 +85,7 @@ export default function MobileListPageShell({
         subtitle={summary}
         accentClassName={toneStyle.accent}
         onMenuClick={mobileChrome.openSidebar}
+        hideGlobalSearch
         actions={
           <>
             <Button

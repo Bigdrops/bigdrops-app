@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import ConfirmActionDialog from '../components/ConfirmActionDialog'
 import Layout from '../components/Layout'
-import { Archive, Eye, FolderKanban, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Archive, Eye, FolderKanban, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import ListActionSheet from '../components/layout/ListActionSheet'
 import MobileFab from '../components/layout/MobileFab'
@@ -224,30 +224,39 @@ export default function Projects() {
                 <div
                   key={project.id}
                   onClick={() => navigate(`/projects/${project.id}`)}
-                  className="relative cursor-pointer rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                  className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
                   <div className="absolute inset-y-0 left-0 w-1 rounded-l-[22px] bg-emerald-500" />
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="inline-flex h-7 items-center rounded-full bg-emerald-100 px-2.5 text-xs font-semibold text-emerald-700">
-                      {(STATUS_CONFIG[project.status] || STATUS_CONFIG.active).label}
-                    </span>
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
+                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-700">
+                      <FolderKanban className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Project</div>
+                      <div className="mt-1 text-lg font-bold leading-[1.18] tracking-[-0.03em] text-foreground">{project.name}</div>
+                      <div className="mt-1 text-sm text-muted-foreground">{project.client_name || 'No client'}</div>
+                    </div>
                     <button
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation()
                         setActiveProject(project)
                       }}
-                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-[20px] leading-none text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                       aria-label={`Open actions for ${project.name}`}
                     >
-                      ⋯
+                      <MoreHorizontal className="h-5 w-5" />
                     </button>
                   </div>
-                  <div className="mt-3 text-lg font-bold leading-[1.18] tracking-[-0.03em] text-foreground">{project.name}</div>
+
                   {project.project_code ? (
-                    <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{project.project_code}</div>
+                    <div className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{project.project_code}</div>
                   ) : null}
-                  <div className="mt-1 text-sm text-muted-foreground">{project.client_name || 'No client'}</div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex h-7 items-center rounded-full bg-emerald-100 px-2.5 text-xs font-semibold text-emerald-700">
+                      {(STATUS_CONFIG[project.status] || STATUS_CONFIG.active).label}
+                    </span>
+                  </div>
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-muted-foreground">
                     <span>{count} doc{count !== 1 ? 's' : ''}</span>
                     {startedText ? (

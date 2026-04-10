@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, Pencil, Plus, RefreshCw, Trash2, Truck, Workflow } from 'lucide-react'
+import { Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, MoreHorizontal, Pencil, Plus, RefreshCw, Trash2, Truck, Workflow } from 'lucide-react'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -364,10 +364,13 @@ export default function Waybills() {
                 <div
                   key={w.id}
                   onClick={() => navigate(`/waybills/${w.id}`)}
-                  className="cursor-pointer rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                  className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
+                  <div className="absolute inset-y-0 left-0 w-1 rounded-l-[22px] bg-cyan-600" />
                   <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                    <div className="grid h-12 w-12 place-items-center rounded-2xl border border-border bg-muted text-lg font-extrabold text-muted-foreground">W</div>
+                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-cyan-100 text-cyan-700">
+                      <Truck className="h-5 w-5" />
+                    </div>
                     <div className="min-w-0">
                       <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Waybill</div>
                       <div className="mt-1 text-lg font-bold tracking-[-0.03em] text-foreground">{w.waybill_number || '—'}</div>
@@ -379,18 +382,18 @@ export default function Waybills() {
                         event.stopPropagation()
                         setActiveWaybill(w)
                       }}
-                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-[20px] leading-none text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                       aria-label={`Open actions for ${w.waybill_number || 'waybill'}`}
                     >
-                      ⋯
+                      <MoreHorizontal className="h-5 w-5" />
                     </button>
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusMeta.label.toLowerCase() === 'delivered' ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusMeta.label.toLowerCase() === 'delivered' ? 'bg-emerald-100 text-emerald-700' : statusMeta.label.toLowerCase() === 'in transit' ? 'bg-cyan-100 text-cyan-700' : 'bg-muted text-muted-foreground'}`}>
                       {statusMeta.label}
                     </span>
-                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${w.type === 'internal' ? 'bg-accent/15 text-accent-foreground' : 'border border-border bg-muted text-muted-foreground'}`}>
+                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${w.type === 'internal' ? 'bg-cyan-100 text-cyan-700' : 'border border-border bg-muted text-muted-foreground'}`}>
                       {typeMeta.label}
                     </span>
                   </div>

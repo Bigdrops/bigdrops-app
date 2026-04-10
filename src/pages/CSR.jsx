@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ClipboardList, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, Pencil, Plus, RefreshCw, Trash2, Workflow } from "lucide-react"
+import { ClipboardList, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, MoreHorizontal, Pencil, Plus, RefreshCw, Trash2, Workflow } from "lucide-react"
 
 import ConfirmActionDialog from "@/components/ConfirmActionDialog"
 import { supabase } from "../supabase"
@@ -473,10 +473,13 @@ export default function CSR() {
               <div
                 key={csr.id}
                 onClick={() => navigate("/csr/" + csr.id)}
-                className="cursor-pointer rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
               >
+                <div className="absolute inset-y-0 left-0 w-1 rounded-l-[22px] bg-amber-500" />
                 <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                  <div className="grid h-12 w-12 place-items-center rounded-2xl border border-accent/30 bg-accent/10 text-lg font-extrabold text-accent-foreground">S</div>
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl bg-amber-100 text-amber-700">
+                    <ClipboardList className="h-5 w-5" />
+                  </div>
                   <div className="min-w-0">
                     <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">CSR</div>
                     <div className="mt-1 text-lg font-bold tracking-[-0.03em] text-foreground">{csr.csr_number || "-"}</div>
@@ -490,10 +493,10 @@ export default function CSR() {
                       event.stopPropagation()
                       setActiveCsr(csr)
                     }}
-                    className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-[20px] leading-none text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                    className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                     aria-label={`Open actions for ${csr.csr_number || "CSR"}`}
                   >
-                    ⋯
+                    <MoreHorizontal className="h-5 w-5" />
                   </button>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">

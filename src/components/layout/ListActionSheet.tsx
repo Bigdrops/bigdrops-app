@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { ChevronRight } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 
 export default function ListActionSheet({
@@ -25,16 +26,24 @@ export default function ListActionSheet({
         showCloseButton={false}
         className="rounded-t-[24px] border-x-0 border-b-0 border-t border-border bg-card p-0 shadow-xl"
       >
-        <div className="px-4 pb-7 pt-5">
-          <div className="mx-auto mb-[22px] h-[5px] w-10 rounded-full bg-border" />
+        <div className="px-4 pb-7 pt-4">
+          <div className="mx-auto mb-5 h-[5px] w-10 rounded-full bg-border" />
 
-          <div className="mb-[22px]">
-            <div className="text-sm font-medium text-muted-foreground">{eyebrow}</div>
-            <div className="mt-2 text-[24px] font-bold leading-[1.05] tracking-[-0.03em] text-foreground">{title}</div>
-            {amount ? <div className="mt-2 text-[22px] font-bold tracking-[-0.03em] text-foreground">{amount}</div> : null}
+          <div className="mb-5">
+            <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+              {eyebrow}
+            </div>
+            <div className="mt-1 text-[24px] font-bold leading-[1.05] tracking-[-0.03em] text-foreground">
+              {title}
+            </div>
+            {amount ? (
+              <div className="mt-1.5 text-[20px] font-bold tracking-[-0.03em] text-foreground">
+                {amount}
+              </div>
+            ) : null}
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid gap-2.5">
             {actions.map((action) => (
               <button
                 key={action.key}
@@ -43,14 +52,23 @@ export default function ListActionSheet({
                   action.onClick()
                   if (action.closeOnClick !== false) onOpenChange(false)
                 }}
-                className={`flex min-h-[92px] flex-col items-center justify-center gap-[10px] rounded-[16px] px-[10px] py-[18px] ${
+                className={`grid w-full grid-cols-[44px,minmax(0,1fr),auto] items-center gap-3 rounded-[18px] border px-3.5 py-3.5 text-left ${
                   action.tone === "danger"
-                    ? "bg-destructive/10 text-destructive hover:bg-destructive/15"
-                    : "bg-muted text-foreground/90 hover:bg-muted/80"
+                    ? "border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/15"
+                    : "border-border bg-background text-foreground hover:bg-muted/40"
                 }`}
               >
-                <div className="flex h-7 w-7 items-center justify-center">{action.icon}</div>
-                <span className="text-center text-[13px] font-medium leading-[1.2]">{action.label}</span>
+                <div
+                  className={`grid h-11 w-11 place-items-center rounded-[14px] ${
+                    action.tone === "danger"
+                      ? "bg-destructive/15 text-destructive"
+                      : "bg-muted text-foreground/80"
+                  }`}
+                >
+                  {action.icon}
+                </div>
+                <span className="truncate text-[14px] font-semibold leading-[1.2]">{action.label}</span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
             ))}
           </div>
@@ -62,10 +80,13 @@ export default function ListActionSheet({
                 deleteAction.onClick()
                 if (deleteAction.closeOnClick !== false) onOpenChange(false)
               }}
-              className="mt-[14px] flex w-full flex-col items-center gap-[10px] rounded-[16px] bg-destructive/15 px-4 py-[18px] text-destructive hover:bg-destructive/20"
+              className="mt-3 grid w-full grid-cols-[44px,minmax(0,1fr),auto] items-center gap-3 rounded-[18px] border border-destructive/20 bg-destructive/10 px-3.5 py-3.5 text-left text-destructive hover:bg-destructive/15"
             >
-              <div className="flex h-7 w-7 items-center justify-center">{deleteAction.icon}</div>
-              <span className="text-[15px] font-semibold">{deleteAction.label}</span>
+              <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-destructive/15">
+                {deleteAction.icon}
+              </div>
+              <span className="text-[14px] font-semibold">{deleteAction.label}</span>
+              <ChevronRight className="h-4 w-4 text-destructive/70" />
             </button>
           ) : null}
         </div>

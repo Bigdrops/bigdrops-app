@@ -10,7 +10,7 @@ import ListActionSheet from "../components/layout/ListActionSheet"
 import MobileFab from "../components/layout/MobileFab"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
 
-import { Archive, Eye, Pencil, Plus, Trash2, Users } from "lucide-react"
+import { Archive, Eye, MoreHorizontal, Pencil, Plus, Trash2, Users } from "lucide-react"
 
 type Client = {
   id: string | number
@@ -126,8 +126,8 @@ export default function Clients() {
                   type="button"
                   onClick={() => setCategory(option)}
                   className={option === category
-                    ? "rounded-full bg-foreground px-3 py-1.5 text-xs font-semibold text-background"
-                    : "rounded-full bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground"}
+                    ? "rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white"
+                    : "rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground"}
                 >
                   {option}
                 </button>
@@ -165,13 +165,15 @@ export default function Clients() {
                 <div
                   key={client.id}
                   onClick={() => navigate(`/clients/${client.id}`)}
-                  className="cursor-pointer rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                  className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
+                  <div className="absolute inset-y-0 left-0 w-1 rounded-l-[22px] bg-violet-500" />
                   <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                    <div className="grid h-12 w-12 place-items-center rounded-2xl border border-border bg-muted text-sm font-extrabold text-foreground">
+                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-violet-100 text-sm font-extrabold text-violet-700">
                       {initials(client.name)}
                     </div>
                     <div className="min-w-0">
+                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Client</div>
                       <div className="text-lg font-bold tracking-[-0.03em] text-foreground">{client.name}</div>
                       <div className="mt-1 text-sm text-muted-foreground">{formatLocation(client.city, client.state)}</div>
                     </div>
@@ -181,10 +183,10 @@ export default function Clients() {
                         event.stopPropagation()
                         setActiveClient(client)
                       }}
-                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-card text-[20px] leading-none text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                       aria-label={`Open actions for ${client.name}`}
                     >
-                      ⋯
+                      <MoreHorizontal className="h-5 w-5" />
                     </button>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-muted-foreground">

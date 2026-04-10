@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Send, Trash2, Truck, Wrench, Workflow } from "lucide-react"
+import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, MoreHorizontal, Pencil, Receipt, Send, Trash2, Truck, Wrench, Workflow } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
@@ -553,8 +553,8 @@ export default function Invoices() {
             No invoices match the current filters
           </div>
         ) : (
-          <div className="overflow-hidden rounded-[22px] border border-border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
-            {invoices.map((inv, index) => {
+          <div className="grid gap-3">
+            {invoices.map((inv) => {
               const statusClassName = getInvoiceStatusClassName(inv.status)
               const statusLabel = formatInvoiceStatusLabel(inv.status)
               const amount = formatNaira(inv.total)
@@ -564,31 +564,41 @@ export default function Invoices() {
                 <div
                   key={inv.id}
                   onClick={() => navigate(`/invoices/${inv.id}`)}
-                  className={`grid cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-4 ${index === 0 ? "" : "border-t border-border"}`}
+                  className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
-                  <div className="min-w-0">
-                    <div className="truncate text-base font-bold leading-[1.18] tracking-[-0.03em] text-foreground">
-                      {inv.client_name || "No client"}
+                  <div className="absolute inset-y-0 left-0 w-1 rounded-l-[22px] bg-[hsl(var(--primary))]" />
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
+                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+                      <Receipt className="h-5 w-5" />
                     </div>
-                    <div className="mt-1 text-[13px] leading-[1.45] text-muted-foreground">{meta}</div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                        Invoice
+                      </div>
+                      <div className="mt-1 truncate text-lg font-bold leading-[1.18] tracking-[-0.03em] text-foreground">
+                        {inv.client_name || "No client"}
+                      </div>
+                      <div className="mt-1 text-[13px] leading-[1.45] text-muted-foreground">{meta}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setActiveInvoice(inv)
+                      }}
+                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                      aria-label={`Open actions for ${inv.invoice_number}`}
+                    >
+                      <MoreHorizontal className="h-5 w-5" />
+                    </button>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="text-base font-extrabold tracking-[-0.03em] text-foreground">{amount}</div>
+
+                  <div className="mt-3 flex items-center justify-between gap-3">
                     <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusClassName}`}>
                       {statusLabel}
                     </span>
+                    <div className="text-base font-extrabold tracking-[-0.03em] text-foreground">{amount}</div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      setActiveInvoice(inv)
-                    }}
-                    className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-[20px] leading-none text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-                    aria-label={`Open actions for ${inv.invoice_number}`}
-                  >
-                    ⋯
-                  </button>
                 </div>
               )
             })}
@@ -609,7 +619,9 @@ export default function Invoices() {
         ) : null}
       </MobileListPageShell>
 
-      <MobileFab onClick={() => navigate("/invoices/new")} ariaLabel="Create invoice">＋</MobileFab>
+      <MobileFab onClick={() => navigate("/invoices/new")} ariaLabel="Create invoice">
+        <Receipt className="h-6 w-6" />
+      </MobileFab>
       <ListActionSheet
         open={Boolean(activeInvoice) && !showArchiveWarn && !showDeleteWarn}
         onOpenChange={(open) => {
