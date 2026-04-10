@@ -81,19 +81,23 @@ const dashboardMetricCards = [
 const recentRecordMeta = {
   Invoice: {
     Icon: Receipt,
-    iconClassName: 'bg-muted text-muted-foreground',
+    iconClassName:
+      'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300',
   },
   Quotation: {
     Icon: FileSignature,
-    iconClassName: 'bg-muted text-muted-foreground',
+    iconClassName:
+      'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/15 dark:text-violet-300',
   },
   CSR: {
     Icon: ClipboardCheck,
-    iconClassName: 'bg-muted text-muted-foreground',
+    iconClassName:
+      'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300',
   },
   Waybill: {
     Icon: Truck,
-    iconClassName: 'bg-muted text-muted-foreground',
+    iconClassName:
+      'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-500/15 dark:text-cyan-300',
   },
 } as const
 
@@ -103,22 +107,6 @@ function getQuickActionHint(tile: QuickTile) {
   if (tile.id === 'projects') return 'Manage live jobs'
   if (tile.id === 'waybills') return 'Log dispatch records'
   return tile.description
-}
-
-function getQuickActionIconClassName(tileId: string) {
-  if (tileId === 'invoices') {
-    return 'bg-[hsl(var(--primary))] text-primary-foreground'
-  }
-  if (tileId === 'quotations') {
-    return 'bg-violet-700 text-white dark:bg-violet-500'
-  }
-  if (tileId === 'projects') {
-    return 'bg-emerald-700 text-white dark:bg-emerald-500'
-  }
-  if (tileId === 'waybills') {
-    return 'bg-cyan-700 text-white dark:bg-cyan-500'
-  }
-  return 'bg-muted text-foreground'
 }
 
 function getFollowUpBadgeClassName(item: PriorityItem) {
@@ -151,9 +139,11 @@ function getFollowUpDotClassName(item: PriorityItem) {
   return 'bg-emerald-600 dark:bg-emerald-400'
 }
 
-function formatGreeting(userName: string) {
+function getIdentityLine(userName: string, businessName: string) {
   const trimmedName = String(userName || '').trim()
-  return trimmedName ? `Hello, ${trimmedName} ðŸ‘‹` : 'Hello ðŸ‘‹'
+  const trimmedBusiness = String(businessName || '').trim()
+
+  return trimmedName || trimmedBusiness || 'Bigdrops Workspace'
 }
 
 function formatRecentRecordMeta(doc: RecentDoc) {
@@ -225,11 +215,8 @@ export function DashboardOverview({
             </button>
 
             <div className="min-w-0">
-              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-                {businessName}
-              </div>
-              <h1 className="mt-px truncate text-[16px] font-bold tracking-[-0.03em] text-foreground">
-                {formatGreeting(userName)}
+              <h1 className="truncate text-[16px] font-bold tracking-[-0.03em] text-foreground">
+                {getIdentityLine(userName, businessName)}
               </h1>
             </div>
           </div>
@@ -298,7 +285,7 @@ export function DashboardOverview({
                 <div
                   className={cn(
                     'grid h-[38px] w-[38px] place-items-center rounded-[12px] shadow-sm',
-                    getQuickActionIconClassName(tile.id),
+                    tile.iconBg,
                   )}
                 >
                   <Icon className="h-[17px] w-[17px]" />

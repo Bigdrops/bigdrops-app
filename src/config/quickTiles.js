@@ -18,8 +18,8 @@ export const QUICK_TILE_REGISTRY = {
     icon: Receipt,
     description: 'Open invoice records and billing activity',
     tileHint: 'Open module',
-    tint: 'bg-primary/10 border-primary/20',
-    iconBg: 'bg-primary text-primary-foreground',
+    tint: 'bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30',
+    iconBg: 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-white',
   },
   quotations: {
     id: 'quotations',
@@ -28,8 +28,8 @@ export const QUICK_TILE_REGISTRY = {
     icon: FileSignature,
     description: 'Review quotations and proposal drafts',
     tileHint: 'Open module',
-    tint: 'bg-secondary/60 border-border',
-    iconBg: 'bg-secondary text-secondary-foreground',
+    tint: 'bg-violet-50 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30',
+    iconBg: 'bg-violet-600 text-white dark:bg-violet-500 dark:text-white',
   },
   csr: {
     id: 'csr',
@@ -38,8 +38,8 @@ export const QUICK_TILE_REGISTRY = {
     icon: ClipboardCheck,
     description: 'Open customer service reports',
     tileHint: 'Open module',
-    tint: 'bg-accent/15 border-accent/30',
-    iconBg: 'bg-accent text-accent-foreground',
+    tint: 'bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30',
+    iconBg: 'bg-amber-400 text-slate-950 dark:bg-amber-400 dark:text-slate-950',
   },
   projects: {
     id: 'projects',
@@ -48,18 +48,18 @@ export const QUICK_TILE_REGISTRY = {
     icon: FolderKanban,
     description: 'Open project workspaces and updates',
     tileHint: 'Open module',
-    tint: 'bg-muted border-border',
-    iconBg: 'bg-muted text-muted-foreground',
+    tint: 'bg-sky-50 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30',
+    iconBg: 'bg-sky-600 text-white dark:bg-sky-500 dark:text-white',
   },
   new_invoice: {
     id: 'new_invoice',
     label: 'New Invoice',
     path: '/invoices/new',
-    icon: FileText,
+    icon: Receipt,
     description: 'Create and send a sales invoice',
     tileHint: 'Tap to start',
-    tint: 'bg-primary/10 border-primary/20',
-    iconBg: 'bg-primary text-primary-foreground',
+    tint: 'bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30',
+    iconBg: 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-white',
   },
   new_quotation: {
     id: 'new_quotation',
@@ -68,8 +68,8 @@ export const QUICK_TILE_REGISTRY = {
     icon: FileSignature,
     description: 'Build a quotation for a client',
     tileHint: 'Tap to start',
-    tint: 'bg-secondary/60 border-border',
-    iconBg: 'bg-secondary text-secondary-foreground',
+    tint: 'bg-violet-50 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30',
+    iconBg: 'bg-violet-600 text-white dark:bg-violet-500 dark:text-white',
   },
   new_csr: {
     id: 'new_csr',
@@ -78,8 +78,8 @@ export const QUICK_TILE_REGISTRY = {
     icon: ClipboardCheck,
     description: 'Log a customer service report',
     tileHint: 'Tap to start',
-    tint: 'bg-accent/15 border-accent/30',
-    iconBg: 'bg-accent text-accent-foreground',
+    tint: 'bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30',
+    iconBg: 'bg-amber-400 text-slate-950 dark:bg-amber-400 dark:text-slate-950',
   },
   new_project: {
     id: 'new_project',
@@ -88,8 +88,18 @@ export const QUICK_TILE_REGISTRY = {
     icon: FolderKanban,
     description: 'Start a new project workspace',
     tileHint: 'Tap to start',
-    tint: 'bg-muted border-border',
-    iconBg: 'bg-muted text-muted-foreground',
+    tint: 'bg-sky-50 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30',
+    iconBg: 'bg-sky-600 text-white dark:bg-sky-500 dark:text-white',
+  },
+  new_rfq: {
+    id: 'new_rfq',
+    label: 'New RFQ',
+    path: '/rfqs/new',
+    icon: FileText,
+    description: 'Create a request for quotation',
+    tileHint: 'Tap to start',
+    tint: 'bg-rose-50 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30',
+    iconBg: 'bg-rose-600 text-white dark:bg-rose-500 dark:text-white',
   },
   waybills: {
     id: 'waybills',
@@ -98,8 +108,8 @@ export const QUICK_TILE_REGISTRY = {
     icon: Truck,
     description: 'Track dispatches and delivery records',
     tileHint: 'Open module',
-    tint: 'bg-muted border-border',
-    iconBg: 'bg-muted text-muted-foreground',
+    tint: 'bg-cyan-50 border-cyan-200 dark:bg-cyan-500/10 dark:border-cyan-500/30',
+    iconBg: 'bg-cyan-700 text-white dark:bg-cyan-500 dark:text-white',
   },
   new_waybill: {
     id: 'new_waybill',
@@ -108,8 +118,8 @@ export const QUICK_TILE_REGISTRY = {
     icon: Truck,
     description: 'Create a dispatch or delivery waybill',
     tileHint: 'Tap to start',
-    tint: 'bg-muted border-border',
-    iconBg: 'bg-muted text-muted-foreground',
+    tint: 'bg-cyan-50 border-cyan-200 dark:bg-cyan-500/10 dark:border-cyan-500/30',
+    iconBg: 'bg-cyan-700 text-white dark:bg-cyan-500 dark:text-white',
   },
 }
 
@@ -117,6 +127,8 @@ export const ALL_QUICK_TILE_IDS = Object.keys(QUICK_TILE_REGISTRY)
 export const DEFAULT_QUICK_TILES = ['invoices', 'quotations', 'csr', 'projects']
 export const DEFAULT_CREATE_ACTION_TILES = [
   'new_invoice',
+  'new_project',
+  'new_rfq',
   'new_quotation',
   'new_csr',
   'new_waybill',
@@ -194,4 +206,10 @@ export function getCreateActions(tileIds = DEFAULT_CREATE_ACTION_TILES) {
   return sanitizeQuickTileIds(tileIds)
     .filter((tileId) => tileId.startsWith('new_'))
     .map((tileId) => QUICK_TILE_REGISTRY[tileId])
+    .filter((tile) => {
+      if (!tile) return false
+      const id = String(tile.id || '').toLowerCase()
+      const path = String(tile.path || '').toLowerCase()
+      return !id.includes('client') && !path.startsWith('/clients')
+    })
 }

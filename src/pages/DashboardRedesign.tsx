@@ -1,11 +1,18 @@
 import * as React from 'react'
-import { Plus } from 'lucide-react'
+import { ChevronRight, Plus } from 'lucide-react'
 import type { Session } from '@supabase/supabase-js'
 import { useNavigate } from 'react-router-dom'
 
 import Layout from '@/components/Layout'
 import { DashboardOverview } from '@/components/dashboard/DashboardOverview'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 import { useSettings } from '@/hooks/useSettings'
 import { useDashboardData, type PriorityItem, type RecentDoc } from '@/hooks/useDashboardData'
 import { cn } from '@/lib/utils'
@@ -87,44 +94,61 @@ export default function DashboardRedesign({ session }: { session: Session }) {
 
           <SheetContent
             side="bottom"
-            className="max-h-[85vh] overflow-y-auto rounded-t-[32px] border-none p-0 outline-none"
+            className="h-[58vh] max-h-[82vh] rounded-t-[30px] border-x-0 border-b-0 border-t border-border/80 p-0 outline-none"
           >
-            <div className="bg-card px-6 pb-14 pt-3">
-              <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-border" />
-              <SheetHeader className="mb-7">
-                <SheetTitle className="text-center text-2xl font-black tracking-[-0.04em]">
-                  Quick create
-                </SheetTitle>
-              </SheetHeader>
+            <div className="flex h-full flex-col bg-card">
+              <div className="px-5 pb-3 pt-3">
+                <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-border" />
+                <SheetHeader className="space-y-1 px-0 pb-0 pt-0 text-left">
+                  <SheetTitle className="text-[22px] font-black tracking-[-0.04em] text-foreground">
+                    Create
+                  </SheetTitle>
+                  <SheetDescription className="text-sm leading-6 text-muted-foreground">
+                    Start a new record from the actions below.
+                  </SheetDescription>
+                </SheetHeader>
+              </div>
 
-              <div className="grid grid-cols-3 gap-4 md:grid-cols-4">
-                {createActions.map((action) => {
-                  const Icon = action.icon
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8">
+                <div className="grid gap-2.5">
+                  {createActions.map((action) => {
+                    const Icon = action.icon
 
-                  return (
-                    <button
-                      key={action.id}
-                      type="button"
-                      onClick={() => {
-                        navigate(action.path)
-                        setCreateOpen(false)
-                      }}
-                      className="group flex flex-col items-center gap-3 rounded-[22px] border border-border bg-background/70 px-3 py-4 transition hover:bg-muted/20 active:scale-95"
-                    >
-                      <div
-                        className={cn(
-                          'flex h-14 w-14 items-center justify-center rounded-[20px] shadow-sm',
-                          action.iconBg,
-                        )}
+                    return (
+                      <button
+                        key={action.id}
+                        type="button"
+                        onClick={() => {
+                          navigate(action.path)
+                          setCreateOpen(false)
+                        }}
+                        className="grid w-full grid-cols-[48px,minmax(0,1fr),auto] items-center gap-3 rounded-[20px] border border-border bg-background px-3.5 py-3.5 text-left shadow-sm transition active:scale-[0.99]"
                       >
-                        <Icon className="h-6 w-6" />
-                      </div>
-                      <span className="text-center text-[11px] font-bold uppercase tracking-[0.14em] text-foreground">
-                        {action.label}
-                      </span>
-                    </button>
-                  )
-                })}
+                        <div
+                          className={cn(
+                            'grid h-12 w-12 place-items-center rounded-[16px] shadow-sm',
+                            action.iconBg,
+                          )}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="truncate text-[14px] font-bold tracking-[-0.02em] text-foreground">
+                            {action.label}
+                          </div>
+                          <div className="mt-1 truncate text-[12px] leading-5 text-muted-foreground">
+                            {action.description}
+                          </div>
+                        </div>
+
+                        <span className="grid h-8 w-8 place-items-center rounded-full bg-muted text-muted-foreground">
+                          <ChevronRight className="h-4 w-4" />
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </SheetContent>
