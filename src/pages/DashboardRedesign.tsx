@@ -70,8 +70,8 @@ export default function DashboardRedesign({ session }: { session: Session }) {
       {createActions.length > 0 && (
         <Sheet open={createOpen} onOpenChange={setCreateOpen}>
           <SheetTrigger asChild>
-            <button className="fixed bottom-26 left-1/2 z-[50] flex h-16 w-16 -translate-x-1/2 items-center justify-center rounded-[24px] surface-strong shadow-2xl shadow-black/20 transition active:scale-90 md:hidden">
-              <Zap className="h-7 w-7" />
+            <button className="fixed bottom-24 right-[18px] z-[50] flex h-[54px] w-[54px] items-center justify-center rounded-[18px] bg-primary text-primary-foreground shadow-2xl shadow-black/20 transition active:scale-90 md:hidden">
+              <Zap className="h-[22px] w-[22px]" />
             </button>
           </SheetTrigger>
           <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-[32px] border-none p-0 outline-none">
