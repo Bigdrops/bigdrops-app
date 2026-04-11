@@ -438,44 +438,48 @@ function MobileDashboardView({
           </button>
 
           <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-            <SheetContent side="bottom" className="p-0">
-              <div className="rounded-t-[28px] bg-white">
-                <div className="mx-auto mt-2 h-[5px] w-[52px] rounded-full bg-[#d8deea]" />
-                <SheetHeader className="px-4 pb-3 pt-4 text-left">
-                  <SheetTitle className="text-2xl font-black tracking-[-0.04em] text-[#111111]">
-                    Create new
-                  </SheetTitle>
-                </SheetHeader>
+            <SheetContent side="bottom" className="h-[min(640px,84vh)] max-h-[84vh] overflow-hidden p-0">
+              <div className="flex h-full flex-col rounded-t-[28px] bg-white">
+                <div className="shrink-0">
+                  <div className="mx-auto mt-2 h-[5px] w-[52px] rounded-full bg-[#d8deea]" />
+                  <SheetHeader className="px-4 pb-3 pt-4 text-left">
+                    <SheetTitle className="text-2xl font-black tracking-[-0.04em] text-[#111111]">
+                      Create new
+                    </SheetTitle>
+                  </SheetHeader>
+                </div>
 
-                <div className="grid gap-[10px] px-4 pb-5">
-                  {createActions.map((action) => {
-                    const Icon = action.icon
+                <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+                  <div className="grid gap-[10px]">
+                    {createActions.map((action) => {
+                      const Icon = action.icon
 
-                    return (
-                      <button
-                        key={action.id}
-                        type="button"
-                        onClick={() => {
-                          navigate(action.path)
-                          setCreateOpen(false)
-                        }}
-                        className="grid grid-cols-[52px,1fr,auto] items-center gap-3 rounded-[20px] border border-black/10 bg-[#fafcff] px-3.5 py-3.5 text-left"
-                      >
-                        <span className={cn('grid h-[52px] w-[52px] place-items-center rounded-[16px] text-white', action.iconBg)}>
-                          <Icon className="h-6 w-6" />
-                        </span>
-                        <span>
-                          <span className="block text-[15px] font-bold text-[#111111]">
-                            {action.label}
+                      return (
+                        <button
+                          key={action.id}
+                          type="button"
+                          onClick={() => {
+                            navigate(action.path)
+                            setCreateOpen(false)
+                          }}
+                          className="grid grid-cols-[52px,1fr,auto] items-center gap-3 rounded-[20px] border border-black/10 bg-[#fafcff] px-3.5 py-3.5 text-left"
+                        >
+                          <span className={cn('grid h-[52px] w-[52px] place-items-center rounded-[16px] text-white', action.iconBg)}>
+                            <Icon className="h-6 w-6" />
                           </span>
-                          <span className="block text-[13px] text-[#738096]">
-                            {action.description}
+                          <span>
+                            <span className="block text-[15px] font-bold text-[#111111]">
+                              {action.label}
+                            </span>
+                            <span className="block text-[13px] text-[#738096]">
+                              {action.description}
+                            </span>
                           </span>
-                        </span>
-                        <ChevronRight className="h-[18px] w-[18px] text-[#64748b]" />
-                      </button>
-                    )
-                  })}
+                          <ChevronRight className="h-[18px] w-[18px] text-[#64748b]" />
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             </SheetContent>
