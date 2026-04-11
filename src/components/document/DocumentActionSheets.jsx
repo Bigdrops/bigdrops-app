@@ -42,52 +42,64 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
   }
   const toneMap = {
     payment: {
-      tile: 'bg-emerald-50 text-emerald-700',
+      tile: 'bg-emerald-600 text-white',
       chevron: 'text-emerald-300',
+      row: 'hover:bg-emerald-50/60',
     },
     copy: {
-      tile: 'bg-blue-50 text-blue-700',
+      tile: 'bg-sky-600 text-white',
       chevron: 'text-blue-300',
+      row: 'hover:bg-sky-50/60',
     },
     clone: {
-      tile: 'bg-violet-50 text-violet-700',
+      tile: 'bg-violet-600 text-white',
       chevron: 'text-violet-300',
+      row: 'hover:bg-violet-50/60',
     },
     convert: {
-      tile: 'bg-amber-50 text-amber-700',
+      tile: 'bg-amber-500 text-slate-950',
       chevron: 'text-amber-300',
+      row: 'hover:bg-amber-50/60',
     },
     archive: {
-      tile: 'bg-slate-100 text-slate-700',
+      tile: 'bg-slate-700 text-white',
       chevron: 'text-slate-300',
+      row: 'hover:bg-slate-50/60',
     },
     open: {
-      tile: 'bg-blue-50 text-blue-700',
+      tile: 'bg-sky-600 text-white',
       chevron: 'text-blue-300',
+      row: 'hover:bg-sky-50/60',
     },
     export: {
-      tile: 'bg-blue-50 text-blue-700',
+      tile: 'bg-sky-600 text-white',
       chevron: 'text-blue-300',
+      row: 'hover:bg-sky-50/60',
     },
     pdf: {
-      tile: 'bg-slate-100 text-slate-700',
+      tile: 'bg-slate-700 text-white',
       chevron: 'text-slate-300',
+      row: 'hover:bg-slate-50/60',
     },
     projectLink: {
-      tile: 'bg-emerald-50 text-emerald-700',
+      tile: 'bg-emerald-600 text-white',
       chevron: 'text-emerald-300',
+      row: 'hover:bg-emerald-50/60',
     },
     projectView: {
-      tile: 'bg-emerald-50 text-emerald-700',
+      tile: 'bg-emerald-600 text-white',
       chevron: 'text-emerald-300',
+      row: 'hover:bg-emerald-50/60',
     },
     documentsLink: {
-      tile: 'bg-violet-50 text-violet-700',
+      tile: 'bg-cyan-700 text-white',
       chevron: 'text-violet-300',
+      row: 'hover:bg-cyan-50/60',
     },
     documentsView: {
-      tile: 'bg-violet-50 text-violet-700',
+      tile: 'bg-cyan-700 text-white',
       chevron: 'text-violet-300',
+      row: 'hover:bg-cyan-50/60',
     },
   }
 
@@ -95,7 +107,7 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="flex max-h-[min(72vh,620px)] flex-col rounded-t-[26px] px-0 pb-4"
+        className="flex h-[50vh] max-h-[50vh] flex-col overflow-hidden rounded-t-[26px] px-0 pb-4"
       >
         <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-slate-200" />
         <SheetHeader className="border-b border-border px-4 pb-3 pt-3 text-left">
@@ -121,14 +133,14 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
                     }}
                     className={cn(
                       'flex w-full items-center gap-2.5 rounded-[18px] px-3 py-2.5 text-left transition',
-                      danger ? 'hover:bg-red-50' : 'hover:bg-slate-50',
+                      danger ? 'hover:bg-red-50' : tone.row,
                       action.disabled && 'opacity-60',
                     )}
                   >
                     <span
                       className={cn(
-                        'grid h-9 w-9 shrink-0 place-items-center rounded-[12px]',
-                        danger ? 'bg-red-50 text-red-600' : tone.tile,
+                        'grid h-9 w-9 shrink-0 place-items-center rounded-[12px] shadow-sm',
+                        danger ? 'bg-red-600 text-white' : tone.tile,
                       )}
                     >
                       <Icon className="h-4 w-4" />
@@ -163,13 +175,13 @@ export function DocumentPdfSheet({
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto rounded-t-[30px] px-0 pb-6">
+      <SheetContent side="bottom" className="h-[50vh] max-h-[50vh] overflow-hidden rounded-t-[30px] px-0 pb-6">
         <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-slate-200" />
         <SheetHeader className="border-b border-border px-5 pb-4 pt-4 text-left">
           <SheetTitle className="text-base font-extrabold text-foreground">{title}</SheetTitle>
           {subtitle ? <SheetDescription>{subtitle}</SheetDescription> : null}
         </SheetHeader>
-        <div className="space-y-5 px-5 py-5">
+        <div className="min-h-0 space-y-5 overflow-y-auto px-5 py-5">
           {settingsNode ? settingsNode : null}
           {templateValue && onTemplateChange && templates?.length ? (
             <div className="space-y-2">

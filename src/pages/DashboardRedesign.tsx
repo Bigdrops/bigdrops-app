@@ -93,7 +93,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
 
           <SheetContent
             side="bottom"
-            className="h-[49vh] max-h-[60vh] rounded-t-[30px] border-x-0 border-b-0 border-t border-border/80 p-0 outline-none"
+            className="h-[50vh] max-h-[50vh] overflow-hidden rounded-t-[30px] border-x-0 border-b-0 border-t border-border/80 p-0 outline-none"
           >
             <div className="flex h-full flex-col bg-card">
               <div className="px-5 pb-3 pt-3">
@@ -122,7 +122,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
                       >
                         <div
                           className={cn(
-                            'grid h-12 w-12 place-items-center rounded-[16px] shadow-sm',
+                            'grid h-12 w-12 place-items-center rounded-[16px] shadow-sm ring-1 ring-black/5',
                             action.iconBg,
                           )}
                         >

@@ -87,7 +87,7 @@ export default function InvoiceAdvanceSheet({
           onOpenChange(nextOpen)
         }}
       >
-        <SheetContent side="bottom" className="max-h-[92vh] rounded-t-[28px] bg-card p-0 [&>[data-slot=sheet-close]]:hidden">
+        <SheetContent side="bottom" className="h-[50vh] max-h-[50vh] overflow-hidden rounded-t-[28px] bg-card p-0 [&>[data-slot=sheet-close]]:hidden">
           <div className="flex h-full flex-col">
             <SheetHeader className="border-b border-border px-5 pb-4 pt-5 text-left">
               <SheetTitle className="text-base font-semibold text-foreground">

@@ -153,7 +153,7 @@ function formatRecentRecordMeta(doc: RecentDoc) {
     dateOptions: { month: 'short', day: 'numeric' },
   })
 
-  return [doc.client, dateText, doc.meta].filter(Boolean).join(' Â· ')
+  return [doc.client, dateText, doc.meta].filter(Boolean).join(' · ')
 }
 
 function formatRecentRecordValue(doc: RecentDoc) {
