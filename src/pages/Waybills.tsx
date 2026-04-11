@@ -8,12 +8,12 @@ import { formatWaybillDate, getStatusMeta, getTypeMeta, mapDbWaybill } from '../
 import type { Waybill } from '../components/waybill/waybillUtils'
 import MobileFab from '../components/layout/MobileFab'
 import MobileSegmentedControl from '../components/layout/MobileSegmentedControl'
-import ListActionSheet from '../components/layout/ListActionSheet'
 import MobileListPageShell from '../components/layout/MobileListPageShell'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
+import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
 import { Button } from '@/components/ui/button'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 import { fetchInvoiceSummary, fetchProjectSummary } from '@/domain/documentRelationships'
@@ -356,62 +356,73 @@ export default function Waybills() {
             )}
           </div>
         ) : (
-          <div className="space-y-3">
-            {filtered.map((w) => {
+          <div className="overflow-hidden rounded-[24px] border border-border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+            {filtered.map((w, index) => {
               const statusMeta = getStatusMeta(w.status)
               const typeMeta = getTypeMeta(w.type)
+              const statusClassName =
+                statusMeta.label.toLowerCase() === 'delivered'
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                  : statusMeta.label.toLowerCase() === 'in transit'
+                    ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300'
+                    : 'bg-muted text-muted-foreground'
+              const typeClassName =
+                w.type === 'internal'
+                  ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300'
+                  : 'border border-border bg-muted text-muted-foreground'
+
               return (
                 <div
                   key={w.id}
                   onClick={() => navigate(`/waybills/${w.id}`)}
-                  className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                  className={`cursor-pointer px-4 py-4 transition hover:bg-muted/20 ${index === 0 ? '' : 'border-t border-border/80'}`}
                 >
-                  <div className="absolute inset-y-0 left-0 w-1 rounded-l-[22px] bg-cyan-600" />
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-cyan-100 text-cyan-700">
-                      <Truck className="h-5 w-5" />
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                    <div className="flex min-w-0 gap-3">
+                      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300">
+                        <Truck className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Waybill</div>
+                        <div className="mt-1 truncate text-[15px] font-extrabold leading-5 tracking-[-0.02em] text-foreground">
+                          {w.waybill_number || '—'}
+                        </div>
+                        <div className="mt-1 truncate text-[13px] leading-5 text-muted-foreground">
+                          {w.client_name || 'No client / internal movement'}
+                          {w.delivery_location ? ` · ${w.delivery_location}` : ''}
+                        </div>
+                        <div className="mt-1 truncate text-[12px] leading-5 text-muted-foreground">
+                          {formatWaybillDate(w.date)}
+                          {w.vehicle_plate ? ` · ${w.vehicle_plate}` : ''}
+                        </div>
+                        {!w.project_id ? (
+                          <div className="mt-1 text-[12px] font-medium leading-5 text-accent-foreground">Project link pending</div>
+                        ) : null}
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Waybill</div>
-                      <div className="mt-1 text-lg font-bold tracking-[-0.03em] text-foreground">{w.waybill_number || '—'}</div>
-                      <div className="mt-1 text-sm text-muted-foreground">{w.client_name || 'No client / internal movement'}</div>
+
+                    <div className="flex items-start gap-2">
+                      <div className="min-w-[88px] text-right">
+                        <div className={`inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-bold ${statusClassName}`}>
+                          {statusMeta.label}
+                        </div>
+                        <div className={`mt-2 inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold ${typeClassName}`}>
+                          {typeMeta.label}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          setActiveWaybill(w)
+                        }}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                        aria-label={`Open actions for ${w.waybill_number || 'waybill'}`}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setActiveWaybill(w)
-                      }}
-                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-                      aria-label={`Open actions for ${w.waybill_number || 'waybill'}`}
-                    >
-                      <MoreHorizontal className="h-5 w-5" />
-                    </button>
                   </div>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusMeta.label.toLowerCase() === 'delivered' ? 'bg-emerald-100 text-emerald-700' : statusMeta.label.toLowerCase() === 'in transit' ? 'bg-cyan-100 text-cyan-700' : 'bg-muted text-muted-foreground'}`}>
-                      {statusMeta.label}
-                    </span>
-                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${w.type === 'internal' ? 'bg-cyan-100 text-cyan-700' : 'border border-border bg-muted text-muted-foreground'}`}>
-                      {typeMeta.label}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-muted-foreground">
-                    <span>{formatWaybillDate(w.date)}</span>
-                    {w.vehicle_plate ? (
-                      <>
-                        <span>•</span>
-                        <span>{w.vehicle_plate}</span>
-                      </>
-                    ) : null}
-                  </div>
-
-                  <div className="my-[14px] h-px bg-border" />
-
-                  <div className="text-sm text-muted-foreground">Route: {w.delivery_location || '—'}</div>
-                  {!w.project_id ? <div className="mt-2 text-sm font-medium text-accent-foreground">Project link pending</div> : null}
                 </div>
               )
             })}
@@ -421,13 +432,18 @@ export default function Waybills() {
       <MobileFab onClick={() => navigate('/waybills/new')} ariaLabel="Create waybill">
         <Plus className="h-6 w-6" />
       </MobileFab>
-      <ListActionSheet
+      <InvoiceListActionSheet
         open={Boolean(activeWaybill)}
         onOpenChange={(open) => {
           if (!open) setActiveWaybill(null)
         }}
         eyebrow={activeWaybill ? (activeWaybill.type === 'internal' ? 'Internal Waybill' : 'External Waybill') : 'Waybill'}
         title={activeWaybill?.waybill_number || ''}
+        subtitle={
+          activeWaybill
+            ? `${activeWaybill.client_name || 'No client / internal movement'}${activeWaybill.delivery_location ? ` · ${activeWaybill.delivery_location}` : ''}`
+            : undefined
+        }
         actions={activeWaybill ? [
           {
             key: 'view',
@@ -463,6 +479,7 @@ export default function Waybills() {
           },
         ] : []}
         deleteAction={activeWaybill ? {
+          key: 'delete',
           label: 'Delete Waybill',
           icon: <Trash2 size={20} />,
           onClick: handleDeleteWaybill,

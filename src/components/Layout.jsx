@@ -42,26 +42,87 @@ const tabs = [
 ]
 
 const salesPicker = [
-  { key: 'invoices',   label: 'Invoices',   icon: Receipt,        tint: 'tone-info-panel',    iconBg: 'tone-info-icon' },
-  { key: 'quotations', label: 'Quotations', icon: FileSignature,  tint: 'tone-accent-panel',  iconBg: 'tone-accent-icon' },
-  { key: 'rfqs',       label: 'RFQ',        icon: FileText,       tint: 'tone-neutral-panel', iconBg: 'tone-neutral-icon' },
-  { key: 'csr',        label: 'CSR',        icon: ClipboardCheck, tint: 'tone-warning-panel', iconBg: 'tone-warning-icon' },
-  { key: 'waybills',   label: 'Waybills',   icon: Truck,          tint: 'tone-neutral-panel', iconBg: 'tone-neutral-icon' },
+  {
+    key: 'invoices',
+    label: 'Invoices',
+    subtitle: 'Create, send, collect, and reconcile.',
+    icon: Receipt,
+    tint: 'tone-info-panel',
+    iconBg: 'tone-info-icon',
+  },
+  {
+    key: 'quotations',
+    label: 'Quotations',
+    subtitle: 'Prepare pricing and convert when approved.',
+    icon: FileSignature,
+    tint: 'tone-accent-panel',
+    iconBg: 'tone-accent-icon',
+  },
+  {
+    key: 'rfqs',
+    label: 'RFQ',
+    subtitle: 'Source vendor pricing for procurement items.',
+    icon: FileText,
+    tint: 'tone-neutral-panel',
+    iconBg: 'tone-neutral-icon',
+  },
+  {
+    key: 'csr',
+    label: 'CSR',
+    subtitle: 'Track service reports and client sign-off.',
+    icon: ClipboardCheck,
+    tint: 'tone-warning-panel',
+    iconBg: 'tone-warning-icon',
+  },
+  {
+    key: 'waybills',
+    label: 'Waybills',
+    subtitle: 'Manage dispatch and proof of delivery.',
+    icon: Truck,
+    tint: 'tone-neutral-panel',
+    iconBg: 'tone-neutral-icon',
+  },
 ]
 
 const moreGroups = [
   {
     group: 'Finance',
+    sheetLabel: 'Finance & reporting',
     items: [
-      { key: 'reports', label: 'Reports', icon: BarChart3 },
-      { key: 'compliance', label: 'Compliance Hub', icon: ClipboardCheck },
+      {
+        key: 'reports',
+        label: 'Reports',
+        subtitle: 'Revenue, collections, workload, and trends.',
+        icon: BarChart3,
+        iconBg: 'bg-muted text-foreground',
+      },
+      {
+        key: 'compliance',
+        label: 'Compliance Hub',
+        subtitle: 'Approvals, policy logs, and audit trail.',
+        icon: ClipboardCheck,
+        iconBg: 'bg-muted text-foreground',
+      },
     ],
   },
   {
     group: 'System',
+    sheetLabel: 'Workspace',
     items: [
-      { key: 'settings', label: 'Settings', icon: Settings },
-      { key: 'signout', label: 'Sign Out', icon: LogOut },
+      {
+        key: 'settings',
+        label: 'Settings',
+        subtitle: 'Roles, preferences, notifications, and workspace controls.',
+        icon: Settings,
+        iconBg: 'bg-muted text-foreground',
+      },
+      {
+        key: 'signout',
+        label: 'Sign Out',
+        subtitle: 'Exit this workspace securely.',
+        icon: LogOut,
+        iconBg: 'bg-destructive/10 text-destructive',
+      },
     ],
   },
 ]
@@ -567,12 +628,25 @@ export default function Layout({
         </Sheet>
 
         <Sheet open={salesOpen} onOpenChange={setSalesOpen}>
-          <SheetContent side="bottom" className="p-0">
-            <div className="rounded-t-3xl">
-              <SheetHeader className="surface-strong rounded-t-3xl px-5 py-4">
-                <SheetTitle className="text-base font-black tracking-tight">Sales</SheetTitle>
-              </SheetHeader>
-              <div className="bg-muted/50 px-4 py-4">
+          <SheetContent
+            side="bottom"
+            showCloseButton={false}
+            className="h-[min(640px,84vh)] overflow-hidden rounded-t-[26px] border-x-0 border-b-0 border-t border-border bg-background p-0 shadow-2xl"
+          >
+            <div className="flex h-full flex-col">
+              <div className="shrink-0 border-b border-border/80 px-5 pb-4 pt-3">
+                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+                <SheetHeader className="space-y-0 p-0 text-left">
+                  <SheetTitle className="text-[20px] font-extrabold leading-[1.15] tracking-[-0.03em] text-foreground">
+                    Sales
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="mt-1.5 text-[13px] leading-5 text-muted-foreground">
+                  Fast navigation to commercial workflows
+                </div>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-3">
                 <div className="space-y-2">
                   {salesPicker.map((item) => {
                     const Icon = item.icon
@@ -581,33 +655,21 @@ export default function Layout({
                         key={item.key}
                         type="button"
                         onClick={() => handleSalesPick(item.key)}
-                        className={cn(
-                          'flex w-full items-center justify-between rounded-2xl border px-4 py-4 text-left shadow-sm transition hover:brightness-[0.99]',
-                          item.tint
-                        )}
+                        className="flex w-full items-center justify-between rounded-[18px] border border-border bg-background px-4 py-3 text-left transition hover:bg-muted/35"
                       >
-                        <div className="flex items-center gap-3">
-                          <span className={cn('grid h-11 w-11 place-items-center rounded-2xl shadow-sm', item.iconBg)}>
-                            <Icon className="h-6 w-6" />
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className={cn('grid h-11 w-11 shrink-0 place-items-center rounded-2xl', item.iconBg)}>
+                            <Icon className="h-5 w-5" />
                           </span>
-                          <div>
+                          <div className="min-w-0">
                             <div className="text-sm font-bold text-foreground">{item.label}</div>
-                            <div className="text-xs text-muted-foreground">Open</div>
+                            <div className="mt-0.5 text-xs leading-5 text-muted-foreground">{item.subtitle}</div>
                           </div>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                       </button>
                     )
                   })}
-                </div>
-                <div className="mt-4">
-                  <Button
-                    variant="outline"
-                    className="w-full rounded-2xl border-border bg-card"
-                    onClick={() => setSalesOpen(false)}
-                  >
-                    Close
-                  </Button>
                 </div>
               </div>
             </div>
@@ -615,16 +677,29 @@ export default function Layout({
         </Sheet>
 
         <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-          <SheetContent side="bottom" className="p-0">
-            <div className="rounded-t-3xl">
-              <SheetHeader className="surface-strong rounded-t-3xl px-5 py-4">
-                <SheetTitle className="text-base font-black tracking-tight">{APP_NAME}</SheetTitle>
-              </SheetHeader>
-              <div className="bg-muted/50 px-4 py-4">
-                {moreGroups.map((group) => (
-                  <div key={group.group} className="mb-4">
-                    <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      {group.group}
+          <SheetContent
+            side="bottom"
+            showCloseButton={false}
+            className="h-[min(640px,84vh)] overflow-hidden rounded-t-[26px] border-x-0 border-b-0 border-t border-border bg-background p-0 shadow-2xl"
+          >
+            <div className="flex h-full flex-col">
+              <div className="shrink-0 border-b border-border/80 px-5 pb-4 pt-3">
+                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+                <SheetHeader className="space-y-0 p-0 text-left">
+                  <SheetTitle className="text-[20px] font-extrabold leading-[1.15] tracking-[-0.03em] text-foreground">
+                    More
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="mt-1.5 text-[13px] leading-5 text-muted-foreground">
+                  Admin, reporting, and workspace utilities
+                </div>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-3">
+                {moreGroups.map((group, index) => (
+                  <div key={group.group} className={index === 0 ? '' : 'mt-4'}>
+                    <div className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                      {group.sheetLabel || group.group}
                     </div>
                     <div className="space-y-2">
                       {group.items.map((item) => {
@@ -634,28 +709,24 @@ export default function Layout({
                             key={item.key}
                             type="button"
                             onClick={() => handleMorePick(item.key)}
-                            className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-left shadow-sm transition hover:bg-muted/50"
+                            className="flex w-full items-center justify-between rounded-[18px] border border-border bg-background px-4 py-3 text-left transition hover:bg-muted/35"
                           >
-                            <div className="flex items-center gap-3">
-                              <span className="grid h-10 w-10 place-items-center rounded-2xl bg-muted">
-                                <Icon className="h-5 w-5 text-foreground/80" />
+                            <div className="flex min-w-0 items-center gap-3">
+                              <span className={cn('grid h-11 w-11 shrink-0 place-items-center rounded-2xl', item.iconBg)}>
+                                <Icon className="h-5 w-5" />
                               </span>
-                              <div className="text-sm font-semibold text-foreground">{item.label}</div>
+                              <div className="min-w-0">
+                                <div className="text-sm font-bold text-foreground">{item.label}</div>
+                                <div className="mt-0.5 text-xs leading-5 text-muted-foreground">{item.subtitle}</div>
+                              </div>
                             </div>
-                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                           </button>
                         )
                       })}
                     </div>
                   </div>
                 ))}
-                <Button
-                  variant="outline"
-                  className="w-full rounded-2xl border-border bg-card"
-                  onClick={() => setMoreOpen(false)}
-                >
-                  Close
-                </Button>
               </div>
             </div>
           </SheetContent>
