@@ -27,6 +27,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Separator } from '@/components/ui/separator'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import MobilePageHeader from '@/components/layout/MobilePageHeader'
+import { QUICK_TILE_REGISTRY } from '@/config/quickTiles'
 import { useSettings } from '../hooks/useSettings'
 import { supabase } from '../supabase'
 
@@ -46,41 +47,41 @@ const salesPicker = [
     key: 'invoices',
     label: 'Invoices',
     subtitle: 'Create, send, collect, and reconcile.',
-    icon: Receipt,
-    tint: 'tone-info-panel',
-    iconBg: 'tone-info-icon',
+    icon: QUICK_TILE_REGISTRY.invoices.icon,
+    tint: QUICK_TILE_REGISTRY.invoices.tint,
+    iconBg: QUICK_TILE_REGISTRY.invoices.iconBg,
   },
   {
     key: 'quotations',
     label: 'Quotations',
     subtitle: 'Prepare pricing and convert when approved.',
-    icon: FileSignature,
-    tint: 'tone-accent-panel',
-    iconBg: 'tone-accent-icon',
+    icon: QUICK_TILE_REGISTRY.quotations.icon,
+    tint: QUICK_TILE_REGISTRY.quotations.tint,
+    iconBg: QUICK_TILE_REGISTRY.quotations.iconBg,
   },
   {
     key: 'rfqs',
     label: 'RFQ',
     subtitle: 'Source vendor pricing for procurement items.',
-    icon: FileText,
-    tint: 'tone-neutral-panel',
-    iconBg: 'tone-neutral-icon',
+    icon: QUICK_TILE_REGISTRY.new_rfq.icon,
+    tint: QUICK_TILE_REGISTRY.new_rfq.tint,
+    iconBg: QUICK_TILE_REGISTRY.new_rfq.iconBg,
   },
   {
     key: 'csr',
     label: 'CSR',
     subtitle: 'Track service reports and client sign-off.',
-    icon: ClipboardCheck,
-    tint: 'tone-warning-panel',
-    iconBg: 'tone-warning-icon',
+    icon: QUICK_TILE_REGISTRY.csr.icon,
+    tint: QUICK_TILE_REGISTRY.csr.tint,
+    iconBg: QUICK_TILE_REGISTRY.csr.iconBg,
   },
   {
     key: 'waybills',
     label: 'Waybills',
     subtitle: 'Manage dispatch and proof of delivery.',
-    icon: Truck,
-    tint: 'tone-neutral-panel',
-    iconBg: 'tone-neutral-icon',
+    icon: QUICK_TILE_REGISTRY.waybills.icon,
+    tint: QUICK_TILE_REGISTRY.waybills.tint,
+    iconBg: QUICK_TILE_REGISTRY.waybills.iconBg,
   },
 ]
 
@@ -631,14 +632,14 @@ export default function Layout({
           <SheetContent
             side="bottom"
             showCloseButton={false}
-            className="h-[min(640px,84vh)] overflow-hidden rounded-t-[26px] border-x-0 border-b-0 border-t border-border bg-background p-0 shadow-2xl"
+            className="h-[min(640px,84vh)] max-h-[84vh] overflow-hidden rounded-t-[26px] border-x-0 border-b-0 border-t border-border bg-background p-0 shadow-2xl"
           >
             <div className="flex h-full flex-col">
               <div className="shrink-0 px-5 pb-2 pt-3">
                 <div className="mx-auto h-1 w-10 rounded-full bg-border" />
               </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2">
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2">
                 <div className="space-y-[10px]">
                   {salesPicker.map((item) => {
                     const Icon = item.icon

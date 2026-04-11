@@ -18,14 +18,6 @@ const STATUS_CONFIG = {
 
 const ACCENT_VARIANTS = [
   {
-    rail: 'bg-violet-500',
-    tile: 'bg-violet-100 text-violet-700 ring-1 ring-violet-200',
-    eyebrow: 'text-violet-700',
-    meta: 'text-violet-700/80',
-    chip: 'border border-violet-200 bg-violet-50 text-violet-700',
-    value: 'text-violet-700',
-  },
-  {
     rail: 'bg-emerald-500',
     tile: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200',
     eyebrow: 'text-emerald-700',
@@ -34,12 +26,12 @@ const ACCENT_VARIANTS = [
     value: 'text-emerald-700',
   },
   {
-    rail: 'bg-purple-500',
-    tile: 'bg-purple-100 text-purple-700 ring-1 ring-purple-200',
-    eyebrow: 'text-purple-700',
-    meta: 'text-purple-700/80',
-    chip: 'border border-purple-200 bg-purple-50 text-purple-700',
-    value: 'text-purple-700',
+    rail: 'bg-emerald-600',
+    tile: 'bg-emerald-200 text-emerald-800 ring-1 ring-emerald-300',
+    eyebrow: 'text-emerald-800',
+    meta: 'text-emerald-800/80',
+    chip: 'border border-emerald-300 bg-emerald-100 text-emerald-800',
+    value: 'text-emerald-800',
   },
   {
     rail: 'bg-green-500',
@@ -50,12 +42,20 @@ const ACCENT_VARIANTS = [
     value: 'text-green-700',
   },
   {
-    rail: 'bg-fuchsia-500',
-    tile: 'bg-fuchsia-100 text-fuchsia-700 ring-1 ring-fuchsia-200',
-    eyebrow: 'text-fuchsia-700',
-    meta: 'text-fuchsia-700/80',
-    chip: 'border border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700',
-    value: 'text-fuchsia-700',
+    rail: 'bg-green-600',
+    tile: 'bg-green-200 text-green-800 ring-1 ring-green-300',
+    eyebrow: 'text-green-800',
+    meta: 'text-green-800/80',
+    chip: 'border border-green-300 bg-green-100 text-green-800',
+    value: 'text-green-800',
+  },
+  {
+    rail: 'bg-emerald-700',
+    tile: 'bg-emerald-200 text-emerald-900 ring-1 ring-emerald-300',
+    eyebrow: 'text-emerald-900',
+    meta: 'text-emerald-900/80',
+    chip: 'border border-emerald-300 bg-emerald-100 text-emerald-900',
+    value: 'text-emerald-900',
   },
 ]
 
