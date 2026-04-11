@@ -16,6 +16,49 @@ const STATUS_CONFIG = {
   cancelled: { label: 'Cancelled' },
 }
 
+const ACCENT_VARIANTS = [
+  {
+    rail: 'bg-violet-500',
+    tile: 'bg-violet-100 text-violet-700 ring-1 ring-violet-200',
+    eyebrow: 'text-violet-700',
+    meta: 'text-violet-700/80',
+    chip: 'border border-violet-200 bg-violet-50 text-violet-700',
+    value: 'text-violet-700',
+  },
+  {
+    rail: 'bg-emerald-500',
+    tile: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200',
+    eyebrow: 'text-emerald-700',
+    meta: 'text-emerald-700/80',
+    chip: 'border border-emerald-200 bg-emerald-50 text-emerald-700',
+    value: 'text-emerald-700',
+  },
+  {
+    rail: 'bg-purple-500',
+    tile: 'bg-purple-100 text-purple-700 ring-1 ring-purple-200',
+    eyebrow: 'text-purple-700',
+    meta: 'text-purple-700/80',
+    chip: 'border border-purple-200 bg-purple-50 text-purple-700',
+    value: 'text-purple-700',
+  },
+  {
+    rail: 'bg-green-500',
+    tile: 'bg-green-100 text-green-700 ring-1 ring-green-200',
+    eyebrow: 'text-green-700',
+    meta: 'text-green-700/80',
+    chip: 'border border-green-200 bg-green-50 text-green-700',
+    value: 'text-green-700',
+  },
+  {
+    rail: 'bg-fuchsia-500',
+    tile: 'bg-fuchsia-100 text-fuchsia-700 ring-1 ring-fuchsia-200',
+    eyebrow: 'text-fuchsia-700',
+    meta: 'text-fuchsia-700/80',
+    chip: 'border border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700',
+    value: 'text-fuchsia-700',
+  },
+]
+
 export default function Projects() {
   const navigate = useNavigate()
   const [projects, setProjects] = useState([])
@@ -213,7 +256,8 @@ export default function Projects() {
           </div>
         ) : (
           <div className="grid gap-3">
-            {filtered.map(project => {
+            {filtered.map((project, index) => {
+              const accent = ACCENT_VARIANTS[index % ACCENT_VARIANTS.length]
               const count = docCounts[project.id] || 0
               const formattedValue = formatProjectValue(project.project_value)
               const startedText = project.start_date
@@ -235,13 +279,13 @@ export default function Projects() {
                   onClick={() => navigate(`/projects/${project.id}`)}
                   className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
-                  <div className="absolute inset-y-0 left-0 w-1 rounded-l-[22px] bg-emerald-500" />
+                  <div className={`absolute inset-y-0 left-0 w-1 rounded-l-[22px] ${accent.rail}`} />
                   <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-700">
+                    <div className={`grid h-12 w-12 place-items-center rounded-2xl ${accent.tile}`}>
                       <FolderKanban className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Project</div>
+                      <div className={`text-[11px] font-bold uppercase tracking-[0.16em] ${accent.eyebrow}`}>Project</div>
                       <div className="mt-1 text-[17px] font-bold leading-[1.22] tracking-[-0.03em] text-foreground">
                         {project.project_code ? `${project.project_code} · ` : ''}{project.name}
                       </div>
@@ -260,16 +304,20 @@ export default function Projects() {
                     </button>
                   </div>
 
-                  <div className="mt-3 text-[13px] leading-[1.5] text-muted-foreground">
-                    {count} linked document{count !== 1 ? 's' : ''}
-                    {startedText ? ` · Started ${startedText}` : ''}
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.5]">
+                    <span className={`inline-flex min-h-7 items-center rounded-full px-2.5 text-xs font-semibold ${accent.chip}`}>
+                      {count} linked document{count !== 1 ? 's' : ''}
+                    </span>
+                    {startedText ? (
+                      <span className={accent.meta}>Started {startedText}</span>
+                    ) : null}
                   </div>
 
                   <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/80 pt-4">
                     <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusTone}`}>
                       {statusLabel}
                     </span>
-                    <div className="text-base font-extrabold tracking-[-0.03em] text-foreground">{formattedValue}</div>
+                    <div className={`text-base font-extrabold tracking-[-0.03em] ${accent.value}`}>{formattedValue}</div>
                   </div>
                 </div>
               )

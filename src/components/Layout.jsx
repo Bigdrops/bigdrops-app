@@ -634,20 +634,12 @@ export default function Layout({
             className="h-[min(640px,84vh)] overflow-hidden rounded-t-[26px] border-x-0 border-b-0 border-t border-border bg-background p-0 shadow-2xl"
           >
             <div className="flex h-full flex-col">
-              <div className="shrink-0 border-b border-border/80 px-5 pb-4 pt-3">
-                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
-                <SheetHeader className="space-y-0 p-0 text-left">
-                  <SheetTitle className="text-[20px] font-extrabold leading-[1.15] tracking-[-0.03em] text-foreground">
-                    Sales
-                  </SheetTitle>
-                </SheetHeader>
-                <div className="mt-1.5 text-[13px] leading-5 text-muted-foreground">
-                  Fast navigation to commercial workflows
-                </div>
+              <div className="shrink-0 px-5 pb-2 pt-3">
+                <div className="mx-auto h-1 w-10 rounded-full bg-border" />
               </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-3">
-                <div className="space-y-2">
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2">
+                <div className="space-y-[10px]">
                   {salesPicker.map((item) => {
                     const Icon = item.icon
                     return (
@@ -655,17 +647,16 @@ export default function Layout({
                         key={item.key}
                         type="button"
                         onClick={() => handleSalesPick(item.key)}
-                        className="flex w-full items-center justify-between rounded-[18px] border border-border bg-background px-4 py-3 text-left transition hover:bg-muted/35"
+                        className="grid w-full grid-cols-[52px,1fr,auto] items-center gap-3 rounded-[20px] border border-black/10 bg-[#fafcff] px-3.5 py-3.5 text-left transition hover:bg-[#f4f7fb]"
                       >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <span className={cn('grid h-11 w-11 shrink-0 place-items-center rounded-2xl shadow-sm', item.iconBg)}>
-                            <Icon className="h-6 w-6 text-white" />
-                          </span>
-                          <div className="min-w-0">
-                            <div className="text-sm font-bold text-foreground">{item.label}</div>
-                          </div>
+                        <span className={cn('grid h-[52px] w-[52px] place-items-center rounded-[16px] shadow-sm', item.iconBg)}>
+                          <Icon className="h-6 w-6" />
+                        </span>
+                        <div className="min-w-0">
+                          <div className="text-[15px] font-bold text-[#111111]">{item.label}</div>
+                          <div className="text-[13px] text-[#738096]">{item.description}</div>
                         </div>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <ChevronRight className="h-[18px] w-[18px] shrink-0 text-[#64748b]" />
                       </button>
                     )
                   })}

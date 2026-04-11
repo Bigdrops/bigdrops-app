@@ -44,6 +44,44 @@ function getClientCategoryLabel(cat?: string | null) {
   return `${normalized} client`
 }
 
+const ACCENT_VARIANTS = [
+  {
+    rail: "bg-violet-500",
+    tile: "bg-violet-100 text-violet-700 ring-1 ring-violet-200",
+    eyebrow: "text-violet-700",
+    meta: "text-violet-700/80",
+    chip: "border border-violet-200 bg-violet-50 text-violet-700",
+  },
+  {
+    rail: "bg-emerald-500",
+    tile: "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200",
+    eyebrow: "text-emerald-700",
+    meta: "text-emerald-700/80",
+    chip: "border border-emerald-200 bg-emerald-50 text-emerald-700",
+  },
+  {
+    rail: "bg-purple-500",
+    tile: "bg-purple-100 text-purple-700 ring-1 ring-purple-200",
+    eyebrow: "text-purple-700",
+    meta: "text-purple-700/80",
+    chip: "border border-purple-200 bg-purple-50 text-purple-700",
+  },
+  {
+    rail: "bg-green-500",
+    tile: "bg-green-100 text-green-700 ring-1 ring-green-200",
+    eyebrow: "text-green-700",
+    meta: "text-green-700/80",
+    chip: "border border-green-200 bg-green-50 text-green-700",
+  },
+  {
+    rail: "bg-fuchsia-500",
+    tile: "bg-fuchsia-100 text-fuchsia-700 ring-1 ring-fuchsia-200",
+    eyebrow: "text-fuchsia-700",
+    meta: "text-fuchsia-700/80",
+    chip: "border border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700",
+  },
+]
+
 export default function Clients() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -165,7 +203,8 @@ export default function Clients() {
           </div>
         ) : (
           <div className="grid gap-3">
-            {filtered.map((client) => {
+            {filtered.map((client, index) => {
+              const accent = ACCENT_VARIANTS[index % ACCENT_VARIANTS.length]
               const cat = normalizeCategory(client.category)
               const location = formatLocation(client.city, client.state)
               return (
@@ -174,13 +213,13 @@ export default function Clients() {
                   onClick={() => navigate(`/clients/${client.id}`)}
                   className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
-                  <div className="absolute inset-y-0 left-0 w-1 rounded-l-[22px] bg-violet-500" />
+                  <div className={`absolute inset-y-0 left-0 w-1 rounded-l-[22px] ${accent.rail}`} />
                   <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-violet-100 text-sm font-extrabold text-violet-700">
+                    <div className={`grid h-12 w-12 place-items-center rounded-2xl text-sm font-extrabold ${accent.tile}`}>
                       {initials(client.name)}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                      <div className={`text-[11px] font-bold uppercase tracking-[0.16em] ${accent.eyebrow}`}>
                         {getClientCategoryLabel(client.category)}
                       </div>
                       <div className="text-lg font-bold tracking-[-0.03em] text-foreground">{client.name}</div>
@@ -198,11 +237,11 @@ export default function Clients() {
                       <MoreHorizontal className="h-5 w-5" />
                     </button>
                   </div>
-                  <div className="mt-3 text-[13px] leading-[1.5] text-muted-foreground">
+                  <div className={`mt-3 text-[13px] leading-[1.5] ${accent.meta}`}>
                     {client.phone ?? "No phone number saved"}
                   </div>
                   <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/80 pt-4">
-                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${cat === "Client" ? "bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300" : "border border-border bg-muted text-muted-foreground"}`}>
+                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${accent.chip}`}>
                       {cat}
                     </span>
                     <div className="text-[12px] font-medium text-muted-foreground">
