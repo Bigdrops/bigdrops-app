@@ -510,6 +510,13 @@ export default function Invoices() {
     },
   ]), [clientFilter, clientOptions, dateFilter, sortBy, statusFilter])
 
+  const hasActiveFilters = (
+    clientFilter !== "All" ||
+    statusFilter !== "All" ||
+    dateFilter !== "All Time" ||
+    sortBy !== "Newest"
+  )
+
   const renderInvoiceRowMeta = (invoice) => {
     const issuedDate = formatInvoiceDate(invoice.issue_date)
     const dueDate = formatInvoiceDate(invoice.due_date)
@@ -533,18 +540,23 @@ export default function Invoices() {
   return (
     <Layout title="Invoices" hidePageHeader>
       <InvoiceListPageSection
+        eyebrow="Sales"
+        title="Invoices"
         summary={`${totalCount} invoices total`}
         searchValue={search}
         onSearchChange={setSearch}
+        searchPlaceholder="Search by invoice number or client..."
         filters={filterOptions}
+        hasActiveFilters={hasActiveFilters}
         onResetFilters={resetFilters}
-        invoices={invoices}
+        records={invoices}
         onRowClick={(invoice) => navigate(`/invoices/${invoice.id}`)}
         onRowActionClick={setActiveInvoice}
         renderAmount={formatNaira}
         renderStatusLabel={formatInvoiceStatusLabel}
         renderIssueMeta={renderInvoiceRowMeta}
         renderStatusClassName={getInvoiceStatusClassName}
+        loadMoreLabel="Load more invoices"
         emptyState={(
           <div className="rounded-[20px] border border-dashed border-border bg-card px-6 py-16 text-center text-sm text-muted-foreground shadow-sm">
             No invoices match the current filters
@@ -683,5 +695,5 @@ export default function Invoices() {
   )
 }
 
-
+ 
 

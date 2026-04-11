@@ -19,21 +19,12 @@ import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { toast } from '@/hooks/use-toast'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import type { DbQuotation } from '@/domain/quotation'
 import { getNextQuotationNumber, mapDbQuotation } from '@/domain/quotation'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 import { fetchProjectSummary, getQuotationDocumentRelations } from '@/domain/documentRelationships'
 import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
-import ListActionSheet from '@/components/layout/ListActionSheet'
 import MobileFab from '@/components/layout/MobileFab'
-import MobileListPageShell from '@/components/layout/MobileListPageShell'
 import { Button } from '@/components/ui/button'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
 import {
@@ -42,6 +33,8 @@ import {
   type QuotationCreateQueueItem,
 } from '@/lib/native/quotationSync'
 import { formatNaira } from '@/lib/formatters/money'
+import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
+import InvoiceListPageSection from '@/components/invoice/InvoiceListPageSection'
 
 const formatMoney = (value: number | string | null | undefined) => formatNaira(value)
 
@@ -51,7 +44,6 @@ export default function QuotationList() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [sortBy, setSortBy] = useState('Newest')
-  const [showFilters, setShowFilters] = useState(false)
   const [busyAction, setBusyAction] = useState<string | null>(null)
   const [archiveId, setArchiveId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -257,8 +249,21 @@ export default function QuotationList() {
     return next
   }, [quotations, search, sortBy, statusFilter])
 
+  const mappedQuotations = useMemo(
+    () =>
+      filteredQuotations
+        .map((row) => mapDbQuotation(row))
+        .filter((quotation) => Boolean(quotation.id))
+        .map((quotation) => ({
+          ...quotation,
+          id: quotation.id,
+        })),
+    [filteredQuotations],
+  )
+
   const activeQuotationIsArchiving = activeQuotation ? busyAction === `archive:${activeQuotation.id}` : false
   const activeQuotationIsDeleting = activeQuotation ? busyAction === `delete:${activeQuotation.id}` : false
+  const hasActiveFilters = statusFilter !== 'All' || sortBy !== 'Newest'
   const activeQuotationRelations = activeQuotation ? getQuotationDocumentRelations(activeQuotation) : { source: null, derived: [] }
   const quotationProjectState = getProjectActionState({ projectId: activeQuotation?.project_id, project: activeQuotationProject })
   const quotationDocumentState = getDocumentActionState({
@@ -313,210 +318,169 @@ export default function QuotationList() {
     },
   ] : []
 
-  return (
-    <MobileListPageShell
-        eyebrow="Sales"
-        title="Quotations"
-        summary={`${quotations.length} quotations total`}
-        tone="blue"
-        onPrimaryAction={() => navigate('/quotations/new')}
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search quotations..."
-        onFilterClick={() => setShowFilters((prev) => !prev)}
-        filterPanel={showFilters ? (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-2">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Status</div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-11 rounded-[14px] bg-white">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {['All', 'Draft', 'Sent', 'Accepted', 'Rejected'].map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Sort</div>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="h-11 rounded-[14px] bg-white">
-                  <SelectValue placeholder="Sort quotations" />
-                </SelectTrigger>
-                <SelectContent>
-                  {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+  const filterOptions = [
+    {
+      label: 'Status',
+      value: statusFilter,
+      options: ['All', 'Draft', 'Sent', 'Accepted', 'Rejected'],
+      onChange: setStatusFilter,
+    },
+    {
+      label: 'Sort',
+      value: sortBy,
+      options: ['Newest', 'Oldest', 'Highest Value', 'Lowest Value'],
+      onChange: setSortBy,
+    },
+  ]
+
+  const renderQuotationRowMeta = (quotation: ReturnType<typeof mapDbQuotation>) => {
+    const parts = [quotation.quotation_number || 'Draft quotation']
+    if (quotation.issue_date) {
+      parts.push(`Issued ${quotation.issue_date}`)
+    }
+    if (String(quotation.po_number || '').trim()) {
+      parts.push(`PO ${String(quotation.po_number || '').trim()}`)
+    }
+    return parts.join(' · ')
+  }
+
+  const getQuotationStatusClassName = (status: string | null | undefined) => {
+    const tone = quotationStatusTone(status)
+    if (tone.includes('emerald')) {
+      return 'border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300'
+    }
+    if (tone.includes('rose')) {
+      return 'border border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-300'
+    }
+    if (tone.includes('blue')) {
+      return 'border border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-300'
+    }
+    return 'border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300'
+  }
+
+  const syncRecoveryBanner = showQuotationSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
+    <div className="mb-4 rounded-[22px] border border-amber-200 bg-amber-50/60 p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
+            Offline sync recovery
           </div>
-        ) : null}
-      >
-      {showQuotationSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
-        <div className="mb-4 rounded-[22px] border border-amber-200 bg-amber-50/60 p-4 shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
-                Offline sync recovery
-              </div>
-              <div className="mt-1 text-sm text-slate-700">
-                Retry pending or failed quotation uploads from this device.
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-lg"
-              onClick={loadQuotationSyncQueue}
-              disabled={syncQueueLoading || retryingQueueItemId != null}
-              className="h-10 w-10 rounded-2xl border-amber-200 bg-white text-amber-700 hover:bg-amber-100"
-              aria-label="Refresh quotation sync queue"
-            >
-              {syncQueueLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-            </Button>
+          <div className="mt-1 text-sm text-slate-700">
+            Retry pending or failed quotation uploads from this device.
           </div>
-
-          {syncQueueItems.length > 0 ? (
-            <div className="mt-4 space-y-2">
-              {syncQueueItems.map((item) => {
-                const isRetrying = retryingQueueItemId === item.id
-
-                return (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-amber-200 bg-white p-3"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="truncate text-sm font-bold text-slate-900">
-                            {item.quotationNumber || item.localQuotationId || `Queue #${item.id}`}
-                          </div>
-                          <span
-                            className={`inline-flex h-6 items-center rounded-full px-2 text-[10px] font-black uppercase tracking-[0.12em] ${
-                              item.status === 'failed'
-                                ? 'bg-red-50 text-red-700'
-                                : 'bg-amber-100 text-amber-700'
-                            }`}
-                          >
-                            {item.status}
-                          </span>
-                        </div>
-
-                        <div className="mt-1 truncate text-xs text-muted-foreground">
-                          {item.clientName || 'No client'} · Attempts {item.attempts}
-                        </div>
-
-                        {item.error ? (
-                          <div className="mt-2 text-xs leading-5 text-red-600">
-                            {item.error}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRetryQueueItem(item.id)}
-                        disabled={retryingQueueItemId != null}
-                        className="h-9 rounded-xl border-amber-200 bg-white px-3 text-xs font-bold text-amber-700 hover:bg-amber-50"
-                      >
-                        {isRetrying ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-3.5 w-3.5" />
-                        )}
-                        Retry
-                      </Button>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : null}
         </div>
-      ) : null}
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-lg"
+          onClick={loadQuotationSyncQueue}
+          disabled={syncQueueLoading || retryingQueueItemId != null}
+          className="h-10 w-10 rounded-2xl border-amber-200 bg-white text-amber-700 hover:bg-amber-100"
+          aria-label="Refresh quotation sync queue"
+        >
+          {syncQueueLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
 
-      {filteredQuotations.length === 0 ? (
-        <div className="rounded-[22px] border border-dashed border-zinc-300 bg-white px-6 py-12 text-center text-sm text-muted-foreground">
-          No quotations yet. Create the first one when you are ready to send a quote.
-        </div>
-      ) : (
-        <div className="grid gap-3">
-          {filteredQuotations.map((row) => {
-            const quotation = mapDbQuotation(row)
-            const issueDateLabel = quotation.issue_date || 'Not set'
-            const statusTone = quotationStatusTone(quotation.status)
-            const statusClasses = {
-              draft: 'bg-amber-50 text-amber-800',
-              sent: 'bg-sky-100 text-sky-700',
-              accepted: 'bg-emerald-100 text-emerald-700',
-              rejected: 'bg-rose-100 text-rose-700',
-              paid: 'bg-emerald-100 text-emerald-700',
-            }[statusTone] || 'bg-slate-100 text-slate-600'
+      {syncQueueItems.length > 0 ? (
+        <div className="mt-4 space-y-2">
+          {syncQueueItems.map((item) => {
+            const isRetrying = retryingQueueItemId === item.id
 
             return (
               <div
-                key={quotation.id}
-                onClick={() => navigate(`/quotations/${quotation.id}`)}
-                className="cursor-pointer rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                key={item.id}
+                className="rounded-2xl border border-amber-200 bg-white p-3"
               >
-                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                  <div className="grid h-12 w-12 place-items-center rounded-2xl border border-blue-100 bg-blue-50 text-lg font-extrabold text-blue-600">Q</div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Quotation</div>
-                    <div className="mt-1 text-lg font-bold tracking-[-0.03em] text-slate-950">{quotation.quotation_number}</div>
-                    <div className="mt-1 text-sm text-slate-500">{quotation.client_name || 'No client selected'}</div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="truncate text-sm font-bold text-slate-900">
+                        {item.quotationNumber || item.localQuotationId || `Queue #${item.id}`}
+                      </div>
+                      <span
+                        className={`inline-flex h-6 items-center rounded-full px-2 text-[10px] font-black uppercase tracking-[0.12em] ${
+                          item.status === 'failed'
+                            ? 'bg-red-50 text-red-700'
+                            : 'bg-amber-100 text-amber-700'
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                    </div>
+
+                    <div className="mt-1 truncate text-xs text-muted-foreground">
+                      {item.clientName || 'No client'} · Attempts {item.attempts}
+                    </div>
+
+                    {item.error ? (
+                      <div className="mt-2 text-xs leading-5 text-red-600">
+                        {item.error}
+                      </div>
+                    ) : null}
                   </div>
-                  <button
+
+                  <Button
                     type="button"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      setActiveQuotation(quotation)
-                    }}
-                    className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-[20px] leading-none text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-                    aria-label={`Open actions for ${quotation.quotation_number}`}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRetryQueueItem(item.id)}
+                    disabled={retryingQueueItemId != null}
+                    className="h-9 rounded-xl border-amber-200 bg-white px-3 text-xs font-bold text-amber-700 hover:bg-amber-50"
                   >
-                    ⋯
-                  </button>
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-slate-500">
-                  <span>Issue date: {issueDateLabel}</span>
-                  {String(quotation.po_number || '').trim() ? (
-                    <>
-                      <span>•</span>
-                      <span>P.O: {String(quotation.po_number || '').trim()}</span>
-                    </>
-                  ) : null}
-                </div>
-
-                <div className="my-[14px] h-px bg-slate-200" />
-
-                <div className="flex items-center justify-between gap-3">
-                  <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusClasses}`}>
-                    {formatQuotationStatus(quotation.status)}
-                  </span>
-                  <div className="text-base font-extrabold tracking-[-0.03em] text-slate-950">{formatMoney(quotation.total || 0)}</div>
+                    {isRetrying ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    )}
+                    Retry
+                  </Button>
                 </div>
               </div>
             )
           })}
         </div>
-      )}
+      ) : null}
+    </div>
+  ) : null
 
+  return (
+    <>
+      <InvoiceListPageSection
+        eyebrow="Sales"
+        title="Quotations"
+        summary={`${quotations.length} quotations total`}
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search quotations..."
+        filters={filterOptions}
+        hasActiveFilters={hasActiveFilters}
+        onResetFilters={() => {
+          setStatusFilter('All')
+          setSortBy('Newest')
+          setSearch('')
+        }}
+        records={mappedQuotations}
+        onRowClick={(quotation) => navigate(`/quotations/${quotation.id}`)}
+        onRowActionClick={(quotation) => setActiveQuotation(quotation)}
+        renderAmount={(value) => formatMoney(value || 0)}
+        renderStatusLabel={formatQuotationStatus}
+        renderIssueMeta={(quotation) => renderQuotationRowMeta(quotation)}
+        renderStatusClassName={getQuotationStatusClassName}
+        beforeListContent={syncRecoveryBanner}
+        emptyState={(
+          <div className="rounded-[22px] border border-dashed border-zinc-300 bg-white px-6 py-12 text-center text-sm text-muted-foreground">
+            No quotations yet. Create the first one when you are ready to send a quote.
+          </div>
+        )}
+        hasMore={false}
+        loadingMore={false}
+        onLoadMore={() => {}}
+      />
       <MobileFab onClick={() => navigate('/quotations/new')} ariaLabel="Create quotation">
         <Plus className="h-7 w-7" />
       </MobileFab>
@@ -545,14 +509,14 @@ export default function QuotationList() {
           if (deleteId) void handleDelete(deleteId)
         }}
       />
-      <ListActionSheet
-        open={Boolean(activeQuotation)}
+      <InvoiceListActionSheet
+        open={Boolean(activeQuotation) && !archiveId && !deleteId}
         onOpenChange={(open) => {
           if (!open) setActiveQuotation(null)
         }}
-        eyebrow={activeQuotation ? `Quotation ${activeQuotation.quotation_number}` : "Quotation"}
-        title={activeQuotation?.client_name || "No client selected"}
-        amount={activeQuotation ? formatMoney(activeQuotation.total || 0) : null}
+        eyebrow="Quotation"
+        title={activeQuotation ? `${activeQuotation.client_name || 'No client selected'} · ${activeQuotation.quotation_number || 'Draft'}` : 'Quotation'}
+        subtitle={activeQuotation ? `${formatMoney(activeQuotation.total || 0)} · Fast access actions from list context` : null}
         actions={activeQuotation ? [
           {
             key: "view",
@@ -592,11 +556,20 @@ export default function QuotationList() {
             icon: busyAction === `clone:${activeQuotation.id}` ? <Loader2 className="h-6 w-6 animate-spin" /> : <Copy className="h-6 w-6" />,
             onClick: () => void handleClone(activeQuotation.id),
           },
+          {
+            key: 'archive',
+            label: activeQuotationIsArchiving ? 'Archiving...' : 'Archive',
+            icon: activeQuotationIsArchiving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6" />,
+            onClick: () => setArchiveId(activeQuotation.id),
+            closeOnClick: false,
+          },
         ] : []}
         deleteAction={activeQuotation ? {
+          key: 'delete',
           label: activeQuotationIsDeleting ? "Deleting..." : "Delete Quotation",
           icon: activeQuotationIsDeleting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Trash2 className="h-6 w-6" />,
           onClick: () => setDeleteId(activeQuotation.id),
+          closeOnClick: false,
         } : undefined}
       />
       <LinkedDocumentsSheet
@@ -617,6 +590,6 @@ export default function QuotationList() {
           setActiveQuotation(null)
         }}
       />
-    </MobileListPageShell>
+    </>
   )
 }
