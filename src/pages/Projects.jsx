@@ -5,9 +5,9 @@ import ConfirmActionDialog from '../components/ConfirmActionDialog'
 import Layout from '../components/Layout'
 import { Archive, Eye, FolderKanban, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import ListActionSheet from '../components/layout/ListActionSheet'
 import MobileFab from '../components/layout/MobileFab'
 import MobileListPageShell from '../components/layout/MobileListPageShell'
+import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
 
 const STATUS_CONFIG = {
   active: { label: 'Active' },
@@ -219,6 +219,15 @@ export default function Projects() {
               const startedText = project.start_date
                 ? new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                 : null
+              const statusLabel = (STATUS_CONFIG[project.status] || STATUS_CONFIG.active).label
+              const statusTone =
+                project.status === 'completed'
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                  : project.status === 'on_hold'
+                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
+                    : project.status === 'cancelled'
+                      ? 'bg-destructive/10 text-destructive'
+                      : 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300'
 
               return (
                 <div
@@ -233,7 +242,9 @@ export default function Projects() {
                     </div>
                     <div className="min-w-0">
                       <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Project</div>
-                      <div className="mt-1 text-lg font-bold leading-[1.18] tracking-[-0.03em] text-foreground">{project.name}</div>
+                      <div className="mt-1 text-[17px] font-bold leading-[1.22] tracking-[-0.03em] text-foreground">
+                        {project.project_code ? `${project.project_code} · ` : ''}{project.name}
+                      </div>
                       <div className="mt-1 text-sm text-muted-foreground">{project.client_name || 'No client'}</div>
                     </div>
                     <button
@@ -249,26 +260,14 @@ export default function Projects() {
                     </button>
                   </div>
 
-                  {project.project_code ? (
-                    <div className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{project.project_code}</div>
-                  ) : null}
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span className="inline-flex h-7 items-center rounded-full bg-emerald-100 px-2.5 text-xs font-semibold text-emerald-700">
-                      {(STATUS_CONFIG[project.status] || STATUS_CONFIG.active).label}
-                    </span>
+                  <div className="mt-3 text-[13px] leading-[1.5] text-muted-foreground">
+                    {count} linked document{count !== 1 ? 's' : ''}
+                    {startedText ? ` · Started ${startedText}` : ''}
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-muted-foreground">
-                    <span>{count} doc{count !== 1 ? 's' : ''}</span>
-                    {startedText ? (
-                      <>
-                        <span>•</span>
-                        <span>{startedText}</span>
-                      </>
-                    ) : null}
-                  </div>
-                  <div className="mt-[14px] flex items-center justify-between gap-3 border-t border-border pt-[14px]">
-                    <span className="inline-flex h-7 items-center rounded-full border border-border bg-muted px-2.5 text-xs font-semibold text-muted-foreground">
-                      Open project
+
+                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/80 pt-4">
+                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusTone}`}>
+                      {statusLabel}
                     </span>
                     <div className="text-base font-extrabold tracking-[-0.03em] text-foreground">{formattedValue}</div>
                   </div>
@@ -294,14 +293,18 @@ export default function Projects() {
           if (projectToDelete) void handleDelete(projectToDelete)
         }}
       />
-      <ListActionSheet
+      <InvoiceListActionSheet
         open={Boolean(activeProject)}
         onOpenChange={(open) => {
           if (!open) setActiveProject(null)
         }}
-        eyebrow={activeProject ? `Project ${activeProject.name}` : 'Project'}
-        title={activeProject?.client_name || 'No client'}
-        amount={activeProject ? formatProjectValue(activeProject.project_value) : null}
+        eyebrow={activeProject?.project_code ? `Project ${activeProject.project_code}` : 'Project'}
+        title={activeProject?.name || 'Untitled project'}
+        subtitle={
+          activeProject
+            ? `${activeProject.client_name || 'No client'}${activeProject.project_value ? ` · ${formatProjectValue(activeProject.project_value)}` : ''}`
+            : undefined
+        }
         actions={activeProject ? [
           {
             key: 'view',
@@ -323,6 +326,7 @@ export default function Projects() {
           },
         ] : []}
         deleteAction={activeProject ? {
+          key: 'delete',
           label: 'Delete Project',
           icon: <Trash2 className="h-6 w-6" />,
           onClick: () => setProjectToDelete(activeProject),

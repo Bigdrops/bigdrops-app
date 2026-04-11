@@ -6,7 +6,6 @@ import ConfirmActionDialog from "@/components/ConfirmActionDialog"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
 import Layout from "../components/Layout"
-import ListActionSheet from "../components/layout/ListActionSheet"
 import MobileFab from "../components/layout/MobileFab"
 import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
 import AttachExistingDocumentSheet from "@/components/document/AttachExistingDocumentSheet"
@@ -14,6 +13,7 @@ import ProjectLinkDialog from "@/components/document/ProjectLinkDialog"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
+import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 import { getDocumentActionState, getProjectActionState } from "@/domain/document/documentActionState"
 import { fetchInvoiceSummary, fetchProjectSummary } from "@/domain/documentRelationships"
 import { canUseNativeSqlite } from "@/lib/native/capacitor"
@@ -457,8 +457,8 @@ export default function CSR() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-3">
-            {filteredCsrs.map((csr) => {
+          <div className="overflow-hidden rounded-[24px] border border-border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+            {filteredCsrs.map((csr, index) => {
               const statusKey = getCsrStatusKey(csr.status)
               const statusClasses = statusKey === "completed"
                 ? "bg-secondary text-secondary-foreground"
@@ -470,47 +470,53 @@ export default function CSR() {
               const secondaryLabel = csr.make || csr.equipment_type
 
               return (
-              <div
-                key={csr.id}
-                onClick={() => navigate("/csr/" + csr.id)}
-                className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-              >
-                <div className="absolute inset-y-0 left-0 w-1 rounded-l-[22px] bg-amber-500" />
-                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                  <div className="grid h-12 w-12 place-items-center rounded-2xl bg-amber-100 text-amber-700">
-                    <ClipboardList className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">CSR</div>
-                    <div className="mt-1 text-lg font-bold tracking-[-0.03em] text-foreground">{csr.csr_number || "-"}</div>
-                    <div className="mt-1 text-sm text-muted-foreground">
-                      {[csr.client_name || "No client name", formatCardDate(csr.date)].filter(Boolean).join(" • ")}
+                <div
+                  key={csr.id}
+                  onClick={() => navigate("/csr/" + csr.id)}
+                  className={`cursor-pointer px-4 py-4 transition hover:bg-muted/20 ${index === 0 ? '' : 'border-t border-border/80'}`}
+                >
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                    <div className="flex min-w-0 gap-3">
+                      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                        <ClipboardList className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">CSR</div>
+                        <div className="mt-1 truncate text-[15px] font-extrabold leading-5 tracking-[-0.02em] text-foreground">
+                          {csr.csr_number || "-"}
+                        </div>
+                        <div className="mt-1 truncate text-[13px] leading-5 text-muted-foreground">
+                          {csr.client_name || "No client name"}
+                        </div>
+                        <div className="mt-1 truncate text-[12px] leading-5 text-muted-foreground">
+                          {formatCardDate(csr.date)}
+                          {secondaryLabel ? ` · ${secondaryLabel}` : ""}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                      <div className="min-w-[92px] text-right">
+                        <div className={`inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold ${statusClasses}`}>
+                          {formatCsrStatusLabel(csr.status)}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          setActiveCsr(csr)
+                        }}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+                        aria-label={`Open actions for ${csr.csr_number || "CSR"}`}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      setActiveCsr(csr)
-                    }}
-                    className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-                    aria-label={`Open actions for ${csr.csr_number || "CSR"}`}
-                  >
-                    <MoreHorizontal className="h-5 w-5" />
-                  </button>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusClasses}`}>
-                    {formatCsrStatusLabel(csr.status)}
-                  </span>
-                  {secondaryLabel ? (
-                    <span className="inline-flex h-7 items-center rounded-full border border-border bg-muted px-2.5 text-xs font-semibold text-muted-foreground">
-                      {secondaryLabel}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            )})}
+              )
+            })}
           </div>
         )}
 
@@ -530,13 +536,18 @@ export default function CSR() {
           if (csrToDelete) void handleDelete(csrToDelete)
         }}
       />
-      <ListActionSheet
+      <InvoiceListActionSheet
         open={Boolean(activeCsr)}
         onOpenChange={(open) => {
           if (!open) setActiveCsr(null)
         }}
         eyebrow={activeCsr ? `CSR ${activeCsr.csr_number || ""}`.trim() : "CSR"}
-        title={activeCsr?.client_name || "No client"}
+        title={activeCsr?.csr_number || "CSR"}
+        subtitle={
+          activeCsr
+            ? `${activeCsr.client_name || "No client"}${activeCsr.date ? ` · ${formatCardDate(activeCsr.date)}` : ""}`
+            : undefined
+        }
         actions={activeCsr ? [
           {
             key: "view",
@@ -572,6 +583,7 @@ export default function CSR() {
           },
         ] : []}
         deleteAction={activeCsr ? {
+          key: "delete",
           label: "Delete CSR",
           icon: <Trash2 className="h-6 w-6" />,
           onClick: () => setCsrToDelete(activeCsr),

@@ -6,9 +6,9 @@ import ConfirmActionDialog from "../components/ConfirmActionDialog"
 import { toast } from "../hooks/use-toast"
 
 import { Button } from "../components/ui/button"
-import ListActionSheet from "../components/layout/ListActionSheet"
 import MobileFab from "../components/layout/MobileFab"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
+import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 
 import { Archive, Eye, MoreHorizontal, Pencil, Plus, Trash2, Users } from "lucide-react"
 
@@ -36,6 +36,12 @@ function formatLocation(city?: string | null, state?: string | null) {
 function normalizeCategory(cat?: string | null) {
   const c = (cat ?? "").trim()
   return c.length ? c : "Uncategorized"
+}
+
+function getClientCategoryLabel(cat?: string | null) {
+  const normalized = normalizeCategory(cat)
+  if (normalized === "Uncategorized") return "Client"
+  return `${normalized} client`
 }
 
 export default function Clients() {
@@ -161,6 +167,7 @@ export default function Clients() {
           <div className="grid gap-3">
             {filtered.map((client) => {
               const cat = normalizeCategory(client.category)
+              const location = formatLocation(client.city, client.state)
               return (
                 <div
                   key={client.id}
@@ -173,9 +180,11 @@ export default function Clients() {
                       {initials(client.name)}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Client</div>
+                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                        {getClientCategoryLabel(client.category)}
+                      </div>
                       <div className="text-lg font-bold tracking-[-0.03em] text-foreground">{client.name}</div>
-                      <div className="mt-1 text-sm text-muted-foreground">{formatLocation(client.city, client.state)}</div>
+                      <div className="mt-1 text-sm text-muted-foreground">{location}</div>
                     </div>
                     <button
                       type="button"
@@ -189,13 +198,16 @@ export default function Clients() {
                       <MoreHorizontal className="h-5 w-5" />
                     </button>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.45] text-muted-foreground">
-                    <span>{client.phone ?? "—"}</span>
+                  <div className="mt-3 text-[13px] leading-[1.5] text-muted-foreground">
+                    {client.phone ?? "No phone number saved"}
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${cat === "Client" ? "bg-violet-100 text-violet-700" : "border border-border bg-muted text-muted-foreground"}`}>
+                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/80 pt-4">
+                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${cat === "Client" ? "bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300" : "border border-border bg-muted text-muted-foreground"}`}>
                       {cat}
                     </span>
+                    <div className="text-[12px] font-medium text-muted-foreground">
+                      {location}
+                    </div>
                   </div>
                 </div>
               )
@@ -219,13 +231,18 @@ export default function Clients() {
           if (clientToDelete !== null) void handleDelete(clientToDelete)
         }}
       />
-      <ListActionSheet
+      <InvoiceListActionSheet
         open={Boolean(activeClient)}
         onOpenChange={(open) => {
           if (!open) setActiveClient(null)
         }}
         eyebrow="Client"
         title={activeClient?.name || "Unknown client"}
+        subtitle={
+          activeClient
+            ? `${formatLocation(activeClient.city, activeClient.state)}${activeClient.phone ? ` · ${activeClient.phone}` : ''}`
+            : undefined
+        }
         actions={activeClient ? [
           {
             key: "view",
@@ -253,6 +270,7 @@ export default function Clients() {
           },
         ] : []}
         deleteAction={activeClient ? {
+          key: "delete",
           label: "Delete Client",
           icon: <Trash2 className="h-6 w-6" />,
           onClick: () => setClientToDelete(activeClient.id),

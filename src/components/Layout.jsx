@@ -658,12 +658,11 @@ export default function Layout({
                         className="flex w-full items-center justify-between rounded-[18px] border border-border bg-background px-4 py-3 text-left transition hover:bg-muted/35"
                       >
                         <div className="flex min-w-0 items-center gap-3">
-                          <span className={cn('grid h-11 w-11 shrink-0 place-items-center rounded-2xl', item.iconBg)}>
-                            <Icon className="h-5 w-5" />
+                          <span className={cn('grid h-11 w-11 shrink-0 place-items-center rounded-2xl shadow-sm', item.iconBg)}>
+                            <Icon className="h-6 w-6 text-white" />
                           </span>
                           <div className="min-w-0">
                             <div className="text-sm font-bold text-foreground">{item.label}</div>
-                            <div className="mt-0.5 text-xs leading-5 text-muted-foreground">{item.subtitle}</div>
                           </div>
                         </div>
                         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -712,12 +711,11 @@ export default function Layout({
                             className="flex w-full items-center justify-between rounded-[18px] border border-border bg-background px-4 py-3 text-left transition hover:bg-muted/35"
                           >
                             <div className="flex min-w-0 items-center gap-3">
-                              <span className={cn('grid h-11 w-11 shrink-0 place-items-center rounded-2xl', item.iconBg)}>
+                              <span className={cn('grid h-11 w-11 shrink-0 place-items-center rounded-2xl shadow-sm', item.iconBg)}>
                                 <Icon className="h-5 w-5" />
                               </span>
                               <div className="min-w-0">
                                 <div className="text-sm font-bold text-foreground">{item.label}</div>
-                                <div className="mt-0.5 text-xs leading-5 text-muted-foreground">{item.subtitle}</div>
                               </div>
                             </div>
                             <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
