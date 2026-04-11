@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Rfq, RfqItem } from '@/domain/rfq/types'
 import { createEmptyRfq, createEmptyRfqItem } from '@/domain/rfq/factories'
 import { RfqForm } from './RfqForm'
@@ -95,7 +95,12 @@ export const RfqEditor: React.FC<RfqEditorProps> = ({
           showPreview ? "block md:w-1/2" : "hidden"
         )}>
           <div className="w-full max-w-sm sticky top-0 animate-in fade-in zoom-in-95 duration-300">
-             <RfqPreview rfq={rfq} items={items} />
+             <RfqPreview
+               rfq={rfq}
+               items={items}
+               rows={rfq.table_rows}
+               columns={rfq.table_columns}
+             />
              <div className="mt-8 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Mobile Layout Preview</p>
              </div>

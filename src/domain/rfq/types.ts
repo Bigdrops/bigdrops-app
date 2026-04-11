@@ -1,3 +1,5 @@
+import type { TableDocumentColumn, TableDocumentRow, TableTemplateId } from '@/domain/table-document/types'
+
 export interface RfqPreset {
   name: string;
   background: string;
@@ -61,6 +63,7 @@ export interface RfqItem {
 export interface Rfq {
   id?: string;
   rfq_number: string;
+  template_id?: TableTemplateId;
   title: string;
   vendor_name: string;
   vendor_contact: string;
@@ -77,6 +80,8 @@ export interface Rfq {
   export_order_seed: number;
   notes: string;
   custom_fields: Record<string, any>;
+  table_rows?: TableDocumentRow[];
+  table_columns?: TableDocumentColumn[];
   created_at?: string;
   updated_at?: string;
   items?: RfqItem[];

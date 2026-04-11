@@ -1,5 +1,7 @@
 import { Rfq, RfqItem } from './types';
 import { createRfqFromContract } from './factories';
+import { createEmptyTableRow } from '@/domain/table-document/rows';
+import { getDefaultColumnsForDocument } from '@/domain/table-document/templateRegistry';
 
 export const rfqImportAdapter = {
   parseJson: (raw: string): Partial<Rfq> | null => {
@@ -10,7 +12,20 @@ export const rfqImportAdapter = {
       // Basic validation: must have items or some RFQ fields
       if (!data.items && !data.title && !data.vendor_name) return null;
 
-      return createRfqFromContract(data);
+      const rfq = createRfqFromContract(data);
+      return {
+        ...rfq,
+        template_id: rfq.template_id || 'modern',
+        table_columns: rfq.table_columns || getDefaultColumnsForDocument('rfq'),
+        table_rows: (rfq.items || []).map((item, index) => ({
+          ...createEmptyTableRow(index, 'item'),
+          description: item.description || '',
+          specification: item.specification || '',
+          quantity: Number(item.quantity || 0),
+          unit: item.unit || '',
+          notes: item.notes || '',
+        })),
+      };
     } catch (e) {
       console.error('Failed to parse RFQ JSON', e);
       return null;

@@ -1,4 +1,5 @@
 import { Rfq, RfqItem } from './types';
+import type { TableDocumentRow } from '@/domain/table-document/types';
 
 /**
  * Splits items into chunks based on a limit.
@@ -8,6 +9,14 @@ export function chunkRfqItems(items: RfqItem[], chunkSize: number = 6): RfqItem[
   const chunks: RfqItem[][] = [];
   for (let i = 0; i < items.length; i += chunkSize) {
     chunks.push(items.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
+
+export function chunkTableRows(rows: TableDocumentRow[], chunkSize: number = 10): TableDocumentRow[][] {
+  const chunks: TableDocumentRow[][] = [];
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    chunks.push(rows.slice(i, i + chunkSize));
   }
   return chunks;
 }

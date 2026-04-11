@@ -21,6 +21,8 @@ import { RfqPdfDocument } from '@/components/rfq/RfqPdfDocument'
 import { RfqPreview } from '@/components/rfq/RfqPreview'
 import { normalizeDbRfq, denormalizeToDbRfq } from '@/domain/rfq/normalize'
 import type { Rfq } from '@/domain/rfq/types'
+import type { TableTemplateId } from '@/domain/table-document/types'
+import { SHARED_TABLE_TEMPLATES, getTemplateLabel } from '@/domain/table-document/templateRegistry'
 import { toast } from '@/hooks/use-toast'
 import { supabase } from '@/supabase'
 
@@ -125,7 +127,7 @@ export default function ViewRfq() {
     toast({ title: 'Exporting...', description: 'Generating RFQ PDF document.' })
 
     try {
-      const blob = await pdf(<RfqPdfDocument rfq={rfq} items={rfq.items || []} />).toBlob()
+      const blob = await pdf(<RfqPdfDocument rfq={rfq} items={rfq.items || []} rows={rfq.table_rows} columns={rfq.table_columns} />).toBlob()
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
@@ -247,7 +249,7 @@ export default function ViewRfq() {
             </div>
           </div>
           <div className="bg-slate-100/60 p-3 sm:p-5">
-            <RfqPreview rfq={rfq} items={rfq.items || []} />
+            <RfqPreview rfq={rfq} items={rfq.items || []} rows={rfq.table_rows} columns={rfq.table_columns} />
           </div>
         </div>
 
@@ -339,11 +341,13 @@ export default function ViewRfq() {
           open={showExportSheet}
           onOpenChange={setShowExportSheet}
           title="Download & Export"
-          subtitle={`Export ${rfq.rfq_number} using the current RFQ preview styling.`}
+          subtitle={`Export ${rfq.rfq_number} using the saved ${getTemplateLabel(rfq.template_id || 'modern')} template.`}
           settingsNode={null}
-          templateValue={null}
-          onTemplateChange={undefined}
-          templates={[]}
+          templateValue={rfq.template_id || 'modern'}
+          onTemplateChange={(templateId) => {
+            void applyRfqUpdates({ template_id: templateId as TableTemplateId })
+          }}
+          templates={SHARED_TABLE_TEMPLATES}
           actions={[
             {
               label: 'Export Images',
@@ -371,7 +375,8 @@ export default function ViewRfq() {
         {exportState === 'capturing' ? (
           <RfqExportController
             rfq={rfq}
-            items={rfq.items || []}
+            rows={rfq.table_rows || []}
+            columns={rfq.table_columns || []}
             onDone={(images) => {
               setCapturedImages(images)
               setExportState('reviewing')

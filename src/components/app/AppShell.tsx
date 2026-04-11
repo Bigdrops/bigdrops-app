@@ -46,6 +46,10 @@ const Rfqs = lazy(() => import('@/pages/Rfqs'))
 const NewRfq = lazy(() => import('@/pages/NewRfq'))
 const EditRfq = lazy(() => import('@/pages/EditRfq'))
 const ViewRfq = lazy(() => import('@/pages/ViewRfq'))
+const Boqs = lazy(() => import('@/pages/Boqs'))
+const NewBoq = lazy(() => import('@/pages/NewBoq'))
+const EditBoq = lazy(() => import('@/pages/EditBoq'))
+const ViewBoq = lazy(() => import('@/pages/ViewBoq'))
 const AndroidBackHandler = lazy(() => import('@/components/app/AndroidBackHandler'))
 const SetPasswordModal = lazy(() => import('@/components/app/SetPasswordModal'))
 
@@ -163,6 +167,10 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/rfqs/new" element={withBoundary(<NewRfq />)} />
           <Route path="/rfqs/edit/:id" element={withBoundary(<EditRfq />)} />
           <Route path="/rfqs/:id" element={withBoundary(<ViewRfq />)} />
+          <Route path="/boqs" element={withBoundary(<Boqs />)} />
+          <Route path="/boqs/new" element={withBoundary(<NewBoq />)} />
+          <Route path="/boqs/edit/:id" element={withBoundary(<EditBoq />)} />
+          <Route path="/boqs/:id" element={withBoundary(<ViewBoq />)} />
         </Routes>
       </Suspense>
     </>

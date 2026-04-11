@@ -3,11 +3,14 @@ import { Eye, Shuffle } from 'lucide-react'
 
 import { Rfq } from '@/domain/rfq/types'
 import { RfqStyleControls } from '@/components/rfq/RfqStyleControls'
+import { TableColumnControls } from '@/components/table-document/TableColumnControls'
 import { Button } from '@/components/ui/button'
+import { DocumentTemplatePicker } from '@/components/document/DocumentViewShell'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { pageFormLabelClassName } from '@/components/ui/form-page-styles'
+import { SHARED_TABLE_TEMPLATES } from '@/domain/table-document/templateRegistry'
 
 type RfqCustomizationPanelProps = {
   rfq: Rfq
@@ -79,6 +82,31 @@ export const RfqCustomizationPanel: React.FC<RfqCustomizationPanelProps> = ({
       </div>
 
       <RfqStyleControls rfq={rfq} onUpdate={onUpdateRfq} />
+
+      <div className="space-y-4 border-t border-border pt-6">
+        <div>
+          <Label className={pageFormLabelClassName}>Template</Label>
+          <div className="mt-2">
+            <DocumentTemplatePicker
+              value={rfq.template_id || 'modern'}
+              onChange={(templateId) => onUpdateRfq({ template_id: templateId })}
+              templates={SHARED_TABLE_TEMPLATES}
+            />
+          </div>
+        </div>
+
+        {Array.isArray(rfq.table_columns) ? (
+          <div>
+            <Label className={pageFormLabelClassName}>Columns</Label>
+            <div className="mt-2">
+              <TableColumnControls
+                columns={rfq.table_columns}
+                onChange={(table_columns) => onUpdateRfq({ table_columns })}
+              />
+            </div>
+          </div>
+        ) : null}
+      </div>
 
       {showOpenFinalView && rfq.id ? (
         <div className="border-t border-border pt-6">

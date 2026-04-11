@@ -1,15 +1,16 @@
 import React from 'react';
 import { Rfq, RfqItem } from '@/domain/rfq/types'
-import { createEmptyRfqItem } from '@/domain/rfq/factories'
-import { RfqItemCard } from './RfqItemCard'
 import { RfqCustomizationPanel } from './RfqCustomizationPanel'
+import { TableRowsEditor } from '@/components/table-document/TableRowsEditor'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, FileText, Layout, List } from 'lucide-react'
+import { FileText, Layout, List } from 'lucide-react'
 import { pageFormLabelClassName } from '@/components/ui/form-page-styles'
+import { createEmptyTableRow } from '@/domain/table-document/rows'
+import { getDefaultColumnsForDocument } from '@/domain/table-document/templateRegistry'
+import type { TableDocumentRow } from '@/domain/table-document/types'
 
 interface RfqFormProps {
   rfq: Rfq;
@@ -24,34 +25,55 @@ export const RfqForm: React.FC<RfqFormProps> = ({
   onUpdateRfq,
   onUpdateItems,
 }) => {
-  const addItem = () => {
-    onUpdateItems([...items, createEmptyRfqItem(items.length)]);
-  };
-
-  const updateItem = (index: number, updates: Partial<RfqItem>) => {
-    const newItems = [...items];
-    newItems[index] = { ...newItems[index], ...updates };
-    onUpdateItems(newItems);
-  };
-
-  const removeItem = (index: number) => {
-    onUpdateItems(items.filter((_, i) => i !== index));
-  };
-
-  const moveItem = (fromIndex: number, toIndex: number) => {
-    if (toIndex < 0 || toIndex >= items.length) return;
-    const newItems = [...items];
-    const [movedItem] = newItems.splice(fromIndex, 1);
-    newItems.splice(toIndex, 0, movedItem);
-    
-    // Refresh sort orders
-    const normalized = newItems.map((item, idx) => ({ ...item, sort_order: idx }));
-    onUpdateItems(normalized);
-  };
-
   const reshuffle = () => {
     onUpdateRfq({ export_order_seed: Math.floor(Math.random() * 1000000) });
   };
+
+  const tableRows: TableDocumentRow[] = rfq.table_rows && rfq.table_rows.length > 0
+    ? rfq.table_rows
+    : items.map((item, index) => ({
+        id: item.id,
+        _uiKey: item._uiKey,
+        row_type: 'item',
+        sort_order: item.sort_order ?? index,
+        section_title: '',
+        description: item.description || '',
+        specification: item.specification || '',
+        quantity: Number(item.quantity || 0),
+        unit: item.unit || '',
+        notes: item.notes || '',
+        make_brand: '',
+        cp: '',
+        sp: '',
+      }))
+
+  const tableColumns = rfq.table_columns && rfq.table_columns.length > 0
+    ? rfq.table_columns
+    : getDefaultColumnsForDocument('rfq')
+
+  const handleRowsChange = (nextRows: TableDocumentRow[]) => {
+    onUpdateRfq({ table_rows: nextRows })
+    const legacyItems: RfqItem[] = nextRows
+      .filter((row) => row.row_type === 'item')
+      .map((row, index) => ({
+        _uiKey: row._uiKey || `rfq-item-${index}`,
+        sort_order: index,
+        description: row.description || '',
+        quantity: Number(row.quantity || 0),
+        unit: row.unit || '',
+        specification: row.specification || '',
+        notes: row.notes || '',
+      }))
+    onUpdateItems(legacyItems.length > 0 ? legacyItems : [{
+      _uiKey: createEmptyTableRow(0, 'item')._uiKey,
+      sort_order: 0,
+      description: '',
+      quantity: 0,
+      unit: '',
+      specification: '',
+      notes: '',
+    }])
+  }
 
   return (
     <div className="w-full">
@@ -139,38 +161,16 @@ export const RfqForm: React.FC<RfqFormProps> = ({
         <TabsContent value="items" className="space-y-4 animate-in slide-in-from-right-2 duration-300">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground/60">
-              {items.length} items listed
+              {tableRows.length} rows listed
             </h3>
           </div>
 
-          <div className="space-y-4">
-            {items.map((item, index) => (
-              <RfqItemCard
-                key={item.id || item._uiKey}
-                item={item}
-                index={index}
-                onUpdate={(updates) => updateItem(index, updates)}
-                onRemove={() => removeItem(index)}
-                onMoveUp={() => moveItem(index, index - 1)}
-                onMoveDown={() => moveItem(index, index + 1)}
-                isFirst={index === 0}
-                isLast={index === items.length - 1}
-              />
-            ))}
-          </div>
-
-          <Button
-            variant="outline"
-            className="w-full h-14 border-2 rounded-xl group hover:border-primary/50"
-            onClick={addItem}
-          >
-            <div className="flex items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
-              <div className="h-6 w-6 rounded-full border border-current flex items-center justify-center">
-                <Plus className="h-3 w-3" />
-              </div>
-              <span className="text-xs font-bold uppercase tracking-widest">Add Item</span>
-            </div>
-          </Button>
+          <TableRowsEditor
+            rows={tableRows}
+            columns={tableColumns}
+            onChange={handleRowsChange}
+            addItemLabel="Add Item Row"
+          />
         </TabsContent>
 
         <TabsContent value="output" className="space-y-8 animate-in slide-in-from-bottom-2 duration-300">

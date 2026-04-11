@@ -61,7 +61,7 @@ export const RfqImportSheet: React.FC<RfqImportSheetProps> = ({
       previewContent={
         parsed && (
           <div className="border rounded-2xl overflow-hidden scale-[0.8] origin-top border-border">
-             <RfqPreview rfq={parsed.rfq} items={parsed.items} />
+             <RfqPreview rfq={parsed.rfq} items={parsed.items} rows={parsed.rfq.table_rows} columns={parsed.rfq.table_columns} />
           </div>
         )
       }

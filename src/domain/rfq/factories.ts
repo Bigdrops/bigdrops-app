@@ -1,4 +1,6 @@
 import { Rfq, RfqItem, RFQ_PRESETS } from './types';
+import { createEmptyTableRow } from '@/domain/table-document/rows';
+import { getDefaultColumnsForDocument, DEFAULT_TABLE_TEMPLATE } from '@/domain/table-document/templateRegistry';
 
 export const createEmptyRfqItem = (sort_order: number): RfqItem => ({
   _uiKey: crypto.randomUUID(),
@@ -14,6 +16,7 @@ export const createEmptyRfq = (): Rfq => {
   const defaultPreset = RFQ_PRESETS[0]; // Clean Slate
   
   return {
+    template_id: DEFAULT_TABLE_TEMPLATE,
     rfq_number: '',
     title: '',
     vendor_name: '',
@@ -31,6 +34,8 @@ export const createEmptyRfq = (): Rfq => {
     export_order_seed: Math.floor(Math.random() * 1000000),
     notes: '',
     custom_fields: {},
+    table_rows: [createEmptyTableRow(0, 'item')],
+    table_columns: getDefaultColumnsForDocument('rfq'),
     items: [createEmptyRfqItem(0)],
   };
 };

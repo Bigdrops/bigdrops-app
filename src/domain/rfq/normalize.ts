@@ -1,7 +1,38 @@
 import { Rfq, DbRfq, RfqItem, DbRfqItem } from './types'
+import { DEFAULT_TABLE_TEMPLATE, getDefaultColumnsForDocument } from '@/domain/table-document/templateRegistry'
+import { createEmptyTableRow, ensureTableRowKeys } from '@/domain/table-document/rows'
+import type { TableDocumentRow } from '@/domain/table-document/types'
 
 const normalizeDate = (value?: string | null): string | null =>
   value && value.trim() ? value : null
+
+function mapLegacyItemToRow(item: any, idx: number): TableDocumentRow {
+  return {
+    ...createEmptyTableRow(idx, 'item'),
+    id: item.id,
+    _uiKey: item.id || crypto.randomUUID(),
+    sort_order: item.sort_order ?? idx,
+    description: item.description || '',
+    specification: item.specification || '',
+    quantity: Number(item.quantity || 0),
+    unit: item.unit || '',
+    notes: item.notes || '',
+  }
+}
+
+function getStoredRows(customFields: Record<string, any>, dbItems: any[]): TableDocumentRow[] {
+  if (Array.isArray(customFields.table_rows) && customFields.table_rows.length > 0) {
+    return ensureTableRowKeys(
+      customFields.table_rows.map((row: any, idx: number) => ({
+        ...createEmptyTableRow(idx, row?.row_type === 'section' ? 'section' : 'item'),
+        ...row,
+        quantity: Number(row?.quantity || 0),
+      })),
+    )
+  }
+
+  return ensureTableRowKeys(dbItems.map(mapLegacyItemToRow))
+}
 
 export const normalizeDbRfq = (dbRfq: any, dbItems: any[] = []): Rfq => {
   const customFields =
@@ -11,6 +42,7 @@ export const normalizeDbRfq = (dbRfq: any, dbItems: any[] = []): Rfq => {
 
   return {
     ...dbRfq,
+    template_id: customFields.template_id || DEFAULT_TABLE_TEMPLATE,
     issue_date: dbRfq.issue_date || '',
     expiry_date: dbRfq.expiry_date || '',
     show_vendor_identity: customFields.show_vendor_identity ?? false,
@@ -21,6 +53,10 @@ export const normalizeDbRfq = (dbRfq: any, dbItems: any[] = []): Rfq => {
     accent_color: dbRfq.accent_color || '#1D4ED8',
     preset_name: dbRfq.palette_name || 'Clean Slate',
     custom_fields: customFields,
+    table_rows: getStoredRows(customFields, dbItems),
+    table_columns: Array.isArray(customFields.table_columns) && customFields.table_columns.length > 0
+      ? customFields.table_columns
+      : getDefaultColumnsForDocument('rfq'),
     items: dbItems
       .map((item, idx) => ({
         ...item,
@@ -50,6 +86,9 @@ export const denormalizeToDbRfq = (rfq: Rfq): DbRfq => {
   const custom_fields = {
     ...(rfq.custom_fields || {}),
     show_vendor_identity,
+    template_id: rfq.template_id || DEFAULT_TABLE_TEMPLATE,
+    table_rows: rfq.table_rows || [],
+    table_columns: rfq.table_columns || getDefaultColumnsForDocument('rfq'),
   };
 
   return {
