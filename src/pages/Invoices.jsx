@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, MoreHorizontal, Pencil, Receipt, Send, Trash2, Truck, Wrench, Workflow } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Receipt, Send, Trash2, Truck, Wrench, Workflow } from "lucide-react"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
 import { canUseNativeSqlite } from "@/lib/native/capacitor"
@@ -11,8 +10,6 @@ import {
 } from "@/lib/native/invoiceCache"
 import Layout from "../components/Layout"
 import MobileFab from "../components/layout/MobileFab"
-import MobileListPageShell from "../components/layout/MobileListPageShell"
-import ListActionSheet from "../components/layout/ListActionSheet"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"
 import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
 import AttachExistingDocumentSheet from "@/components/document/AttachExistingDocumentSheet"
@@ -28,6 +25,8 @@ import { fetchInvoiceChildDocuments, fetchProjectSummary, getInvoiceSourceDocume
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
 import { formatStatusLabel } from "@/lib/formatters/status"
+import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
+import InvoiceListPageSection from "@/components/invoice/InvoiceListPageSection"
 
 const PAGE_SIZE = 25
 
@@ -51,7 +50,6 @@ export default function Invoices() {
   const [statusFilter, setStatusFilter]   = useState("All")
   const [dateFilter, setDateFilter]       = useState("All Time")
   const [sortBy, setSortBy]               = useState("Newest")
-  const [showFilters, setShowFilters]     = useState(false)
   const [showArchiveWarn, setShowArchiveWarn] = useState(false)
   const [showDeleteWarn,  setShowDeleteWarn]  = useState(false)
   const [attachKind, setAttachKind] = useState(null)
@@ -468,11 +466,11 @@ export default function Invoices() {
 
   const getInvoiceStatusClassName = (status) => {
     const normalized = (status || "draft").toLowerCase()
-    if (normalized === "sent") return "bg-primary/10 text-primary"
-    if (normalized === "paid") return "bg-secondary text-secondary-foreground"
-    if (normalized === "overdue") return "bg-destructive/10 text-destructive"
-    if (normalized === "partial") return "bg-accent/15 text-accent-foreground"
-    return "bg-muted text-muted-foreground"
+    if (normalized === "sent") return "border border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-300"
+    if (normalized === "paid") return "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300"
+    if (normalized === "overdue") return "border border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300"
+    if (normalized === "partial") return "border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300"
+    return "border border-border bg-muted text-muted-foreground"
   }
 
   const formatInvoiceStatusLabel = (status) => formatStatusLabel(status, { fallback: "draft", lowercase: true })
@@ -485,151 +483,89 @@ export default function Invoices() {
     setSortBy("Newest")
   }
 
-  const filterSelectClass = "h-10 rounded-xl border border-border bg-background px-3 text-xs font-bold text-foreground outline-none"
+  const filterOptions = useMemo(() => ([
+    {
+      label: "Client",
+      value: clientFilter,
+      options: ["All", ...clientOptions],
+      onChange: setClientFilter,
+    },
+    {
+      label: "Status",
+      value: statusFilter,
+      options: ["All", "Draft", "Sent", "Paid", "Overdue", "Partial"],
+      onChange: setStatusFilter,
+    },
+    {
+      label: "Date",
+      value: dateFilter,
+      options: ["All Time", "This Month", "Last Month", "This Year"],
+      onChange: setDateFilter,
+    },
+    {
+      label: "Sort",
+      value: sortBy,
+      options: ["Newest", "Oldest", "Highest Value", "Lowest Value"],
+      onChange: setSortBy,
+    },
+  ]), [clientFilter, clientOptions, dateFilter, sortBy, statusFilter])
+
+  const renderInvoiceRowMeta = (invoice) => {
+    const issuedDate = formatInvoiceDate(invoice.issue_date)
+    const dueDate = formatInvoiceDate(invoice.due_date)
+
+    const parts = [invoice.invoice_number || "Draft invoice"]
+    if (issuedDate) {
+      parts.push(`Issued ${issuedDate}`)
+    }
+
+    if (dueDate) {
+      parts.push(`Due ${dueDate}`)
+    } else if (invoice.status === "partial") {
+      parts.push("Part payment received")
+    } else if (invoice.status === "sent") {
+      parts.push("Sent")
+    }
+
+    return parts.join(" · ")
+  }
 
   return (
     <Layout title="Invoices" hidePageHeader>
-      <MobileListPageShell
-          eyebrow="Sales"
-          title="Invoices"
-          summary={`${totalCount} invoices total`}
-          tone="blue"
-          onPrimaryAction={() => navigate("/invoices/new")}
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search invoices..."
-          onFilterClick={() => setShowFilters((prev) => !prev)}
-          filterPanel={showFilters ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Client</div>
-                <Select value={clientFilter} onValueChange={setClientFilter}>
-                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All</SelectItem>
-                    {clientOptions.map((client) => <SelectItem key={client} value={client}>{client}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Status</div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["All", "Draft", "Sent", "Paid", "Overdue", "Partial"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Date</div>
-                <Select value={dateFilter} onValueChange={setDateFilter}>
-                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["All Time", "This Month", "Last Month", "This Year"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Sort</div>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["Newest", "Oldest", "Highest Value", "Lowest Value"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="h-10 rounded-xl border border-border px-4 text-xs font-black uppercase text-muted-foreground transition hover:bg-muted/50 sm:col-span-2"
-              >
-                Clear
-              </button>
-            </div>
-          ) : null}
-      >
-        {invoices.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-border bg-card px-6 py-16 text-center text-sm text-muted-foreground">
+      <InvoiceListPageSection
+        summary={`${totalCount} invoices total`}
+        searchValue={search}
+        onSearchChange={setSearch}
+        filters={filterOptions}
+        onResetFilters={resetFilters}
+        invoices={invoices}
+        onRowClick={(invoice) => navigate(`/invoices/${invoice.id}`)}
+        onRowActionClick={setActiveInvoice}
+        renderAmount={formatNaira}
+        renderStatusLabel={formatInvoiceStatusLabel}
+        renderIssueMeta={renderInvoiceRowMeta}
+        renderStatusClassName={getInvoiceStatusClassName}
+        emptyState={(
+          <div className="rounded-[20px] border border-dashed border-border bg-card px-6 py-16 text-center text-sm text-muted-foreground shadow-sm">
             No invoices match the current filters
           </div>
-        ) : (
-          <div className="grid gap-3">
-            {invoices.map((inv) => {
-              const statusClassName = getInvoiceStatusClassName(inv.status)
-              const statusLabel = formatInvoiceStatusLabel(inv.status)
-              const amount = formatNaira(inv.total)
-              const meta = `${inv.invoice_number}${formatInvoiceDate(inv.issue_date) ? ` • ${formatInvoiceDate(inv.issue_date)}` : ""}`
-
-              return (
-                <div
-                  key={inv.id}
-                  onClick={() => navigate(`/invoices/${inv.id}`)}
-                  className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-                >
-                  <div className="absolute inset-y-0 left-0 w-1 rounded-l-[22px] bg-[hsl(var(--primary))]" />
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
-                      <Receipt className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                        Invoice
-                      </div>
-                      <div className="mt-1 truncate text-lg font-bold leading-[1.18] tracking-[-0.03em] text-foreground">
-                        {inv.client_name || "No client"}
-                      </div>
-                      <div className="mt-1 text-[13px] leading-[1.45] text-muted-foreground">{meta}</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setActiveInvoice(inv)
-                      }}
-                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-                      aria-label={`Open actions for ${inv.invoice_number}`}
-                    >
-                      <MoreHorizontal className="h-5 w-5" />
-                    </button>
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusClassName}`}>
-                      {statusLabel}
-                    </span>
-                    <div className="text-base font-extrabold tracking-[-0.03em] text-foreground">{amount}</div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
         )}
-
-        {hasMore ? (
-          <div className="flex justify-center pt-1">
-            <button
-              type="button"
-              onClick={() => fetchInvoices(page + 1, false)}
-              disabled={loadingMore}
-                className="h-11 rounded-2xl border border-border bg-card px-5 text-sm font-bold text-foreground disabled:opacity-60"
-              >
-                {loadingMore ? "Loading..." : "Load more"}
-              </button>
-          </div>
-        ) : null}
-      </MobileListPageShell>
+        hasMore={hasMore}
+        loadingMore={loadingMore}
+        onLoadMore={() => fetchInvoices(page + 1, false)}
+      />
 
       <MobileFab onClick={() => navigate("/invoices/new")} ariaLabel="Create invoice">
         <Receipt className="h-6 w-6" />
       </MobileFab>
-      <ListActionSheet
+      <InvoiceListActionSheet
         open={Boolean(activeInvoice) && !showArchiveWarn && !showDeleteWarn}
         onOpenChange={(open) => {
           if (!open) setActiveInvoice(null)
         }}
-        eyebrow={activeInvoice ? `Invoice ${activeInvoice.invoice_number}` : "Invoice"}
-        title={activeInvoice?.client_name || "No client"}
-        amount={activeInvoice ? formatNaira(activeInvoice.total) : null}
+        eyebrow="Invoice"
+        title={activeInvoice ? `${activeInvoice.client_name || "No client"} · ${activeInvoice.invoice_number || "Draft"}` : "Invoice"}
+        subtitle={activeInvoice ? `${formatNaira(activeInvoice.total)} · Fast access actions from list context` : null}
         actions={activeInvoice ? (() => {
           const actionDefs = getInvoiceListActionDefs({
             projectActionLabel: invoiceProjectState.label,
@@ -686,6 +622,7 @@ export default function Invoices() {
         deleteAction={activeInvoice ? (() => {
           const deleteDef = getInvoiceListDeleteActionDef()
           return {
+            key: deleteDef.key,
             label: deleteDef.label,
             icon: <Trash2 className="h-6 w-6" />,
             onClick: () => setShowDeleteWarn(true),
