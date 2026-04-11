@@ -19,6 +19,7 @@ import {
   Check,
   Building2,
   Truck,
+  ClipboardList,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -60,14 +61,6 @@ const salesPicker = [
     iconBg: QUICK_TILE_REGISTRY.quotations.iconBg,
   },
   {
-    key: 'rfqs',
-    label: 'RFQ',
-    subtitle: 'Source vendor pricing for procurement items.',
-    icon: QUICK_TILE_REGISTRY.new_rfq.icon,
-    tint: QUICK_TILE_REGISTRY.new_rfq.tint,
-    iconBg: QUICK_TILE_REGISTRY.new_rfq.iconBg,
-  },
-  {
     key: 'csr',
     label: 'CSR',
     subtitle: 'Track service reports and client sign-off.',
@@ -82,6 +75,25 @@ const salesPicker = [
     icon: QUICK_TILE_REGISTRY.waybills.icon,
     tint: QUICK_TILE_REGISTRY.waybills.tint,
     iconBg: QUICK_TILE_REGISTRY.waybills.iconBg,
+  },
+]
+
+const presalesPicker = [
+  {
+    key: 'rfqs',
+    label: 'RFQ',
+    subtitle: 'Source vendor pricing for procurement items.',
+    icon: QUICK_TILE_REGISTRY.new_rfq.icon,
+    tint: QUICK_TILE_REGISTRY.new_rfq.tint,
+    iconBg: QUICK_TILE_REGISTRY.new_rfq.iconBg,
+  },
+  {
+    key: 'boqs',
+    label: 'BOQ',
+    subtitle: 'Build and review pre-sales bills of quantities.',
+    icon: ClipboardList,
+    tint: 'bg-slate-50 border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/30',
+    iconBg: 'bg-slate-700 text-white dark:bg-slate-500 dark:text-white',
   },
 ]
 
@@ -156,9 +168,17 @@ function getSalesPath(key) {
   const pathByKey = {
     invoices: '/invoices',
     quotations: '/quotations',
-    rfqs: '/rfqs',
     csr: '/csr',
     waybills: '/waybills',
+  }
+
+  return pathByKey[key] || '/'
+}
+
+function getPreSalesPath(key) {
+  const pathByKey = {
+    rfqs: '/rfqs',
+    boqs: '/boqs',
   }
 
   return pathByKey[key] || '/'
@@ -176,11 +196,12 @@ function getActiveTab(pathname) {
   if (
     pathname.startsWith('/invoices') ||
     pathname.startsWith('/quotations') ||
-    pathname.startsWith('/rfqs') ||
     pathname.startsWith('/csr') ||
     pathname.startsWith('/waybills')
   ) return 'sales'
   if (
+    pathname.startsWith('/rfqs') ||
+    pathname.startsWith('/boqs') ||
     pathname.startsWith('/reports') ||
     pathname.startsWith('/compliance') ||
     pathname.startsWith('/settings')
@@ -267,6 +288,7 @@ export default function Layout({
   const [salesOpen, setSalesOpen] = React.useState(false)
   const [moreOpen, setMoreOpen] = React.useState(false)
   const [drawerSalesOpen, setDrawerSalesOpen] = React.useState(false)
+  const presalesRouteActive = isPathActive(location.pathname, '/rfqs') || isPathActive(location.pathname, '/boqs')
   const activeTab = getActiveTab(location.pathname)
   const isHome = location.pathname === '/'
   const salesRouteActive = activeTab === 'sales'
@@ -288,6 +310,8 @@ export default function Layout({
     }
 
     const pathByKey = {
+      rfqs: '/rfqs',
+      boqs: '/boqs',
       reports: '/reports',
       compliance: '/compliance',
       settings: '/settings',
@@ -580,6 +604,58 @@ export default function Layout({
                     })}
                   </div>
                 ) : null}
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card p-1 shadow-sm">
+                <div
+                  className={cn(
+                    'flex w-full items-center justify-between rounded-[18px] px-2 py-2 text-sm transition',
+                    presalesRouteActive ? activeNavItemClassName : inactiveNavItemClassName
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={cn(
+                        'grid h-9 w-9 place-items-center rounded-xl',
+                        presalesRouteActive ? activeNavIconClassName : inactiveNavIconClassName
+                      )}
+                    >
+                      <ClipboardList className={cn('h-5 w-5', presalesRouteActive ? '' : inactiveNavIconColorClassName)} />
+                    </span>
+                    <span className="font-semibold">Pre-Sales</span>
+                  </div>
+                </div>
+
+                <div className="mt-1 space-y-1 pb-1 pl-2">
+                  {presalesPicker.map((item) => {
+                    const Icon = item.icon
+                    const isActive = isPathActive(location.pathname, getPreSalesPath(item.key))
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => {
+                          navigate(getPreSalesPath(item.key))
+                          setSidebarOpen(false)
+                        }}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-2xl px-4 py-2 text-left text-sm transition',
+                          isActive ? activeNavItemClassName : inactiveNavItemClassName
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'grid h-9 w-9 place-items-center rounded-xl',
+                            isActive ? activeNavIconClassName : inactiveNavIconClassName
+                          )}
+                        >
+                          <Icon className={cn('h-5 w-5', isActive ? '' : inactiveNavIconColorClassName)} />
+                        </span>
+                        <span className="font-semibold">{item.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               {mobileDrawerUtilityNav.map((item) => {
