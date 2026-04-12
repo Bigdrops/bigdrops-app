@@ -4,6 +4,7 @@ import { pdf } from '@react-pdf/renderer'
 import { Images, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 
 import Layout from '@/components/Layout'
+import { CenteredSpinner, SkeletonCard } from '@/components/loading/AppLoadingStates'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import {
   DocumentActionGrid,
@@ -45,7 +46,15 @@ export default function ViewBoq() {
   }, [id, navigate])
 
   if (!boq) {
-    return <Layout title="Loading..." session={null} hidePageHeader><div className="p-12 text-center text-muted-foreground">Loading document...</div></Layout>
+    return (
+      <Layout title="BOQ" session={null} hidePageHeader>
+        <div className="mx-auto max-w-3xl space-y-4 px-4 pb-32 pt-4 md:px-6 md:pt-6">
+          <SkeletonCard className="h-[92px]" />
+          <SkeletonCard className="h-[320px]" />
+          <CenteredSpinner />
+        </div>
+      </Layout>
+    )
   }
 
   const persist = (patch: Partial<Boq>) => {

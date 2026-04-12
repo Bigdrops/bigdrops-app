@@ -19,6 +19,7 @@ import Layout from '../components/Layout'
 import { supabase } from '../supabase'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CenteredSpinner, SkeletonCard } from '@/components/loading/AppLoadingStates'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -370,7 +371,11 @@ function Filters({
 function LoadingState({ label }: { label: string }) {
   return (
     <Card className="border-border bg-card shadow-sm">
-      <CardContent className="p-6 text-sm text-muted-foreground">Loading {label}...</CardContent>
+      <CardContent className="space-y-3 p-6">
+        <SkeletonCard className="h-[72px] rounded-2xl border-0 p-0 shadow-none" />
+        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Syncing {label}</div>
+        <CenteredSpinner />
+      </CardContent>
     </Card>
   )
 }

@@ -31,6 +31,7 @@ import {
   documentDetailStatusBadgeClassName,
 } from '@/components/ui/document-detail-styles'
 import { operationalEmptyStateClassName } from '@/components/ui/operational-card-styles'
+import { CenteredSpinner, SkeletonCard } from '@/components/loading/AppLoadingStates'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 import { fetchInvoiceSummary, fetchProjectSummary } from '@/domain/documentRelationships'
 import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
@@ -98,7 +99,10 @@ export default function ViewCSR() {
   if (loading) {
     return (
       <Layout title="CSR">
-        <div className={operationalEmptyStateClassName}>Loading CSR...</div>
+        <div className="space-y-3">
+          <SkeletonCard className="h-[100px]" />
+          <div className={operationalEmptyStateClassName}><CenteredSpinner /></div>
+        </div>
       </Layout>
     )
   }

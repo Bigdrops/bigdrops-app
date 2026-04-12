@@ -56,6 +56,7 @@ import { buildInvoicePreviewModel } from '@/domain/invoice/previewModel'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { operationalEmptyStateClassName } from '@/components/ui/operational-card-styles'
+import { CenteredSpinner, SkeletonCard } from '@/components/loading/AppLoadingStates'
 import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
 import { numberToWords } from '@/hooks/useInvoiceForm'
 import { useInvoiceMutations } from '@/hooks/useInvoiceMutations'
@@ -196,9 +197,11 @@ export default function ViewInvoice() {
   if (loading) {
     return (
       <Layout title="Invoice">
-        <Card className={operationalEmptyStateClassName}>
-          <CardContent className="p-0">Loading...</CardContent>
-        </Card>
+        <div className="space-y-3">
+          <SkeletonCard className="h-[110px]" />
+          <SkeletonCard className="h-[260px]" />
+          <Card className={operationalEmptyStateClassName}><CardContent className="p-0"><CenteredSpinner /></CardContent></Card>
+        </div>
       </Layout>
     )
   }

@@ -301,7 +301,13 @@ export default function ProjectDetail() {
   if (loading) {
     return (
       <Layout title="Project">
-        <div className="px-6 py-10 text-sm text-muted-foreground">Loading...</div>
+        <div className="space-y-3 px-4 py-4">
+          <SkeletonCard className="h-[120px]" />
+          <SkeletonRow />
+          <SkeletonRow />
+          <SkeletonRow />
+          <CenteredSpinner />
+        </div>
       </Layout>
     )
   }
