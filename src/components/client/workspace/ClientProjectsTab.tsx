@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FolderKanban, ChevronRight, PieChart } from 'lucide-react'
+import { EmptyState } from '@/components/layout/EmptyState'
 import { Badge } from '@/components/ui/badge'
 import { ProjectRecord, formatCurrency, formatDateShort } from '@/domain/clientWorkspace'
 
@@ -20,13 +21,14 @@ export const ClientProjectsTab: React.FC<Props> = ({ projects }) => {
 
   if (projects.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="rounded-full bg-muted p-6 text-muted-foreground shadow-sm ring-1 ring-border/50">
-           <FolderKanban className="size-8" />
-        </div>
-        <h3 className="mt-4 text-sm font-bold text-zinc-950">No active projects</h3>
-        <p className="mt-1 text-xs text-muted-foreground">Add a project to start tracking jobs for this client.</p>
-      </div>
+      <EmptyState
+        icon={<FolderKanban className="size-6 text-muted-foreground" />}
+        title="No projects yet"
+        description="Add a project to start tracking jobs for this client."
+        actionLabel="Create Project"
+        onAction={() => navigate('/projects/new')}
+        className="py-16"
+      />
     )
   }
 

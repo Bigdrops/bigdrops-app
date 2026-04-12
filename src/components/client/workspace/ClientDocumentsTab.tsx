@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FileText, ClipboardList, Wrench, Truck, ChevronRight } from 'lucide-react'
+import { EmptyState } from '@/components/layout/EmptyState'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDateShort } from '@/domain/clientWorkspace'
 
@@ -43,13 +44,14 @@ export const ClientDocumentsTab: React.FC<Props> = ({ type, documents }) => {
 
   if (documents.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="rounded-full bg-muted p-6 text-muted-foreground shadow-sm ring-1 ring-border/50">
-           <Icon className="size-8" />
-        </div>
-        <h3 className="mt-4 text-sm font-bold text-zinc-950">No {cfg.label.toLowerCase()} yet</h3>
-        <p className="mt-1 text-xs text-muted-foreground">Any {cfg.label.toLowerCase()} linked to this client will appear here.</p>
-      </div>
+      <EmptyState
+        icon={<Icon className="size-6 text-muted-foreground" />}
+        title={`No ${cfg.label.toLowerCase()} yet`}
+        description={`Any ${cfg.label.toLowerCase()} linked to this client will appear here.`}
+        actionLabel={`Create ${cfg.label.slice(0, -1)}`}
+        onAction={() => navigate(`${cfg.path}/new`)}
+        className="py-16"
+      />
     )
   }
 

@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast"
 import Layout from "../components/Layout"
 import ListActionSheet from "../components/layout/ListActionSheet"
 import MobileFab from "../components/layout/MobileFab"
+import { EmptyState } from "@/components/layout/EmptyState"
 import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
 import AttachExistingDocumentSheet from "@/components/document/AttachExistingDocumentSheet"
 import ProjectLinkDialog from "@/components/document/ProjectLinkDialog"
@@ -445,17 +446,21 @@ export default function CSR() {
             Loading service reports...
           </div>
         ) : filteredCsrs.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-border bg-card p-5 text-center">
-            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-[16px] bg-foreground text-background">
-              <ClipboardList className="h-5 w-5" />
-            </div>
-            <div className="text-base font-semibold text-foreground">
-              {hasActiveFilters ? "No service reports found" : "No service reports yet"}
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              {hasActiveFilters ? "Try a different search or filter." : "Create your first CSR to start tracking service activity."}
-            </div>
-          </div>
+          <EmptyState
+            icon={<ClipboardList className="h-6 w-6 text-muted-foreground" />}
+            title={hasActiveFilters ? "No results found" : "No service reports yet"}
+            description={
+              hasActiveFilters
+                ? "Try adjusting your search or filters."
+                : "Create your first CSR to start tracking service activity."
+            }
+            actionLabel={hasActiveFilters ? "Clear filters" : "Create CSR"}
+            onAction={
+              hasActiveFilters
+                ? resetFilters
+                : () => navigate("/csr/new")
+            }
+          />
         ) : (
           <div className="grid gap-3">
             {filteredCsrs.map((csr) => {

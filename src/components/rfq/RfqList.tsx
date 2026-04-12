@@ -5,6 +5,7 @@ import { supabase } from '@/supabase'
 import { Rfq } from '@/domain/rfq/types'
 import { normalizeDbRfq } from '@/domain/rfq/normalize'
 import MobileListPageShell from '@/components/layout/MobileListPageShell'
+import { EmptyState } from '@/components/layout/EmptyState'
 import MobileFab from '@/components/layout/MobileFab'
 import ListActionSheet from '@/components/layout/ListActionSheet'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
@@ -57,6 +58,7 @@ export const RfqList: React.FC = () => {
       r.title.toLowerCase().includes(query)
     );
   }, [rfqs, search]);
+  const hasActiveSearch = Boolean(search.trim())
 
   return (
     <MobileListPageShell
@@ -73,9 +75,16 @@ export const RfqList: React.FC = () => {
         {loading && rfqs.length === 0 ? (
           <div className="p-12 flex justify-center italic text-muted-foreground opacity-50">Loading RFQs...</div>
         ) : filteredRfqs.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-zinc-300 bg-white px-6 py-12 text-center text-sm text-muted-foreground">
-            {search ? 'No matches found' : 'No RFQs yet. Create one to request prices from vendors.'}
-          </div>
+          <EmptyState
+            title={hasActiveSearch ? 'No results found' : 'No RFQs yet'}
+            description={
+              hasActiveSearch
+                ? 'Try a different search term.'
+                : 'Create your first RFQ to request vendor pricing.'
+            }
+            actionLabel={hasActiveSearch ? 'Clear search' : 'Create RFQ'}
+            onAction={hasActiveSearch ? () => setSearch('') : () => navigate('/rfqs/new')}
+          />
         ) : (
           filteredRfqs.map((rfq) => (
             <div

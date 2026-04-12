@@ -32,6 +32,7 @@ import { getDocumentActionState, getProjectActionState } from '@/domain/document
 import { fetchProjectSummary, getQuotationDocumentRelations } from '@/domain/documentRelationships'
 import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
 import ListActionSheet from '@/components/layout/ListActionSheet'
+import { EmptyState } from '@/components/layout/EmptyState'
 import MobileFab from '@/components/layout/MobileFab'
 import MobileListPageShell from '@/components/layout/MobileListPageShell'
 import { Button } from '@/components/ui/button'
@@ -256,6 +257,12 @@ export default function QuotationList() {
 
     return next
   }, [quotations, search, sortBy, statusFilter])
+  const hasActiveFilters = Boolean(search.trim()) || statusFilter !== 'All'
+  const clearFilters = () => {
+    setSearch('')
+    setStatusFilter('All')
+    setSortBy('Newest')
+  }
 
   const activeQuotationIsArchiving = activeQuotation ? busyAction === `archive:${activeQuotation.id}` : false
   const activeQuotationIsDeleting = activeQuotation ? busyAction === `delete:${activeQuotation.id}` : false
@@ -450,9 +457,16 @@ export default function QuotationList() {
       ) : null}
 
       {filteredQuotations.length === 0 ? (
-        <div className="rounded-[22px] border border-dashed border-zinc-300 bg-white px-6 py-12 text-center text-sm text-muted-foreground">
-          No quotations yet. Create the first one when you are ready to send a quote.
-        </div>
+        <EmptyState
+          title={hasActiveFilters ? 'No results found' : 'No quotations yet'}
+          description={
+            hasActiveFilters
+              ? 'Try adjusting your search or filters.'
+              : 'Create your first quotation to get started.'
+          }
+          actionLabel={hasActiveFilters ? 'Clear filters' : 'Create Quotation'}
+          onAction={hasActiveFilters ? clearFilters : () => navigate('/quotations/new')}
+        />
       ) : (
         <div className="grid gap-3">
           {filteredQuotations.map((row) => {

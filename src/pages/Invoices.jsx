@@ -13,6 +13,7 @@ import Layout from "../components/Layout"
 import MobileFab from "../components/layout/MobileFab"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
 import ListActionSheet from "../components/layout/ListActionSheet"
+import { EmptyState } from "@/components/layout/EmptyState"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"
 import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
 import AttachExistingDocumentSheet from "@/components/document/AttachExistingDocumentSheet"
@@ -66,6 +67,11 @@ export default function Invoices() {
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const navigate = useNavigate()
+  const hasActiveFilters =
+    Boolean(search.trim()) ||
+    clientFilter !== "All" ||
+    statusFilter !== "All" ||
+    dateFilter !== "All Time"
 
   const buildInvoiceQuery = () => {
     let query = supabase
@@ -549,9 +555,17 @@ export default function Invoices() {
           ) : null}
       >
         {invoices.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-border bg-card px-6 py-16 text-center text-sm text-muted-foreground">
-            No invoices match the current filters
-          </div>
+          <EmptyState
+            title={hasActiveFilters ? "No results found" : "No invoices yet"}
+            description={
+              hasActiveFilters
+                ? "Try adjusting your filters or search."
+                : "Create your first invoice to get started."
+            }
+            actionLabel={hasActiveFilters ? "Clear filters" : "Create Invoice"}
+            onAction={hasActiveFilters ? resetFilters : () => navigate("/invoices/new")}
+            hint={hasActiveFilters ? undefined : "You can send and track payment status after creating it."}
+          />
         ) : (
           <div className="overflow-hidden rounded-[22px] border border-border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
             {invoices.map((inv, index) => {
@@ -733,6 +747,5 @@ export default function Invoices() {
     </Layout>
   )
 }
-
 
 

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/layout/EmptyState'
 import { formatNaira } from '@/lib/formatters/money'
 
 const searchTypeIcons = {
@@ -229,12 +230,15 @@ export function GlobalSearch() {
           )}
 
           {query && results.length === 0 && !loading && (
-            <div className="py-12 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted/60">
-                <Search className="h-6 w-6 text-muted-foreground opacity-40" />
-              </div>
-              <div className="mt-4 text-sm font-semibold text-foreground">No matches found</div>
-              <p className="mt-1 text-xs text-muted-foreground px-8">No results for "{query}". Try checking the spelling or use a more specific term.</p>
+            <div className="py-6">
+              <EmptyState
+                icon={<Search className="h-5 w-5 text-muted-foreground" />}
+                className="border-0 bg-transparent py-6 shadow-none"
+                title="No results found"
+                description={`No matches for "${query}". Try another search term.`}
+                actionLabel="Clear search"
+                onAction={() => setQuery('')}
+              />
             </div>
           )}
         </div>

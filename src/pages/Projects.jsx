@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import ListActionSheet from '../components/layout/ListActionSheet'
 import MobileFab from '../components/layout/MobileFab'
 import MobileListPageShell from '../components/layout/MobileListPageShell'
+import { EmptyState } from '@/components/layout/EmptyState'
 
 const STATUS_CONFIG = {
   active: { label: 'Active' },
@@ -204,13 +205,13 @@ export default function Projects() {
         {loading ? (
           <div className="rounded-[22px] border border-border bg-card px-5 py-16 text-center text-sm text-muted-foreground">Loading projects...</div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-border bg-card px-6 py-16 text-center">
-            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
-              <FolderKanban className="h-7 w-7" />
-            </div>
-            <div className="text-base font-semibold text-foreground">{hasActiveFilters ? 'No matches found' : 'No projects yet'}</div>
-            <div className="mt-1 text-sm text-muted-foreground">{hasActiveFilters ? 'Try adjusting your filters' : 'Create your first project to get started'}</div>
-          </div>
+          <EmptyState
+            icon={<FolderKanban className="h-6 w-6 text-muted-foreground" />}
+            title={hasActiveFilters ? 'No results found' : 'No projects yet'}
+            description={hasActiveFilters ? 'Try adjusting your filters.' : 'Create your first project to get started.'}
+            actionLabel={hasActiveFilters ? 'Clear filters' : 'Create Project'}
+            onAction={hasActiveFilters ? resetFilters : () => navigate('/projects/new')}
+          />
         ) : (
           <div className="grid gap-3">
             {filtered.map(project => {

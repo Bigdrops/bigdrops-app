@@ -10,6 +10,7 @@ import MobileFab from '../components/layout/MobileFab'
 import MobileSegmentedControl from '../components/layout/MobileSegmentedControl'
 import ListActionSheet from '../components/layout/ListActionSheet'
 import MobileListPageShell from '../components/layout/MobileListPageShell'
+import { EmptyState } from '@/components/layout/EmptyState'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
@@ -334,27 +335,24 @@ export default function Waybills() {
         {loading ? (
           <div className="rounded-[22px] border border-border bg-card px-5 py-16 text-center text-sm text-muted-foreground">Loading…</div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-[26px] border border-dashed border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,248,252,0.98))] py-16 text-center shadow-[0_18px_36px_-30px_rgba(15,23,42,0.45)]">
-            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
-              <Truck className="h-7 w-7" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-foreground">No waybills found</div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                {search ? 'Try a different search term' : 'Create your first waybill to get started'}
-              </div>
-            </div>
-            {!search && (
-              <button
-                type="button"
-                onClick={() => navigate('/waybills/new')}
-                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-              >
-                <Plus className="h-4 w-4" />
-                New Waybill
-              </button>
-            )}
-          </div>
+          <EmptyState
+            icon={<Truck className="h-6 w-6 text-muted-foreground" />}
+            title={search || tab !== 'all' ? 'No results found' : 'No waybills yet'}
+            description={
+              search || tab !== 'all'
+                ? 'Try adjusting your search or filters.'
+                : 'Create your first waybill to get started.'
+            }
+            actionLabel={search || tab !== 'all' ? 'Clear filters' : 'Create Waybill'}
+            onAction={
+              search || tab !== 'all'
+                ? () => {
+                    setSearch('')
+                    setTab('all')
+                  }
+                : () => navigate('/waybills/new')
+            }
+          />
         ) : (
           <div className="space-y-3">
             {filtered.map((w) => {

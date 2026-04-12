@@ -9,6 +9,7 @@ import { Button } from "../components/ui/button"
 import ListActionSheet from "../components/layout/ListActionSheet"
 import MobileFab from "../components/layout/MobileFab"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
+import { EmptyState } from "@/components/layout/EmptyState"
 
 import { Archive, Eye, Pencil, Plus, Trash2, Users } from "lucide-react"
 
@@ -48,6 +49,7 @@ export default function Clients() {
   const [activeClient, setActiveClient] = useState<Client | null>(null)
 
   const navigate = useNavigate()
+  const hasActiveFilters = Boolean(query.trim()) || category !== "All"
 
   useEffect(() => {
     let mounted = true
@@ -148,15 +150,24 @@ export default function Clients() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-border bg-card p-10 text-center shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] bg-muted/60">
-              <Users className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <h3 className="mt-4 text-base font-semibold text-foreground">No clients found</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Try a different search or add your first client.
-            </p>
-          </div>
+          <EmptyState
+            icon={<Users className="h-6 w-6 text-muted-foreground" />}
+            title={hasActiveFilters ? "No results found" : "No clients yet"}
+            description={
+              hasActiveFilters
+                ? "Try adjusting your search or filters."
+                : "Add your first client to get started."
+            }
+            actionLabel={hasActiveFilters ? "Clear filters" : "Add Client"}
+            onAction={
+              hasActiveFilters
+                ? () => {
+                    setQuery("")
+                    setCategory("All")
+                  }
+                : () => navigate("/clients/new")
+            }
+          />
         ) : (
           <div className="grid gap-3">
             {filtered.map((client) => {
