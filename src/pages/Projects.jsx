@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import MobileFab from '../components/layout/MobileFab'
 import MobileListPageShell from '../components/layout/MobileListPageShell'
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
+import { SkeletonRow } from '@/components/loading/AppLoadingStates'
 
 const STATUS_CONFIG = {
   active: { label: 'Active' },
@@ -245,7 +246,11 @@ export default function Projects() {
           ) : null}
       >
         {loading ? (
-          <div className="rounded-[22px] border border-border bg-card px-5 py-16 text-center text-sm text-muted-foreground">Loading projects...</div>
+          <div className="grid gap-3">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <SkeletonRow key={index} />
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-[22px] border border-dashed border-border bg-card px-6 py-16 text-center">
             <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">

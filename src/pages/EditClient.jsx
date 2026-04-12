@@ -4,6 +4,8 @@ import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { ButtonLoading } from '@/components/loading/AppLoadingStates'
 import { pageFormCardClassName, pageFormFieldClassName, pageFormPrimaryActionClassName } from '@/components/ui/form-page-styles'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -48,7 +50,7 @@ export default function EditClient() {
     }
   }
 
-  if (loading) return <Layout title="Edit Client"><p className="p-8">Loading...</p></Layout>
+  if (loading) return (<Layout title="Edit Client"><Card className={pageFormCardClassName}><CardHeader><Skeleton className="h-6 w-32" /></CardHeader><CardContent className="space-y-3">{Array.from({ length: 7 }).map((_, idx) => <Skeleton key={idx} className="h-11 w-full rounded-xl" />)}<Skeleton className="ml-auto h-10 w-24 rounded-xl" /></CardContent></Card></Layout>)
 
   return (
     <Layout title="Edit Client">
@@ -101,8 +103,8 @@ export default function EditClient() {
             onChange={e => update('state', e.target.value)}
           />
           <div className="flex justify-end pt-2">
-            <Button type="button" className={pageFormPrimaryActionClassName} onClick={handleSave}>
-              {saving ? 'Saving...' : 'Save'}
+            <Button type="button" className={pageFormPrimaryActionClassName} onClick={handleSave} disabled={saving}>
+              <ButtonLoading loading={saving} loadingLabel="Saving" idleLabel="Save" />
             </Button>
           </div>
         </CardContent>

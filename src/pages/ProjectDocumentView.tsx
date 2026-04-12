@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronDown, ChevronUp, Copy, Download } from 'lucide-react'
 
 import Layout from '@/components/Layout'
 import { Button } from '@/components/ui/button'
+import { ButtonLoading, CenteredSpinner, SkeletonCard } from '@/components/loading/AppLoadingStates'
 import {
   formatProjectDocumentDate,
   getProjectDocumentFileName,
@@ -103,7 +104,11 @@ export default function ProjectDocumentView() {
   if (loading) {
     return (
       <Layout title="Document" session={null}>
-        <div className="px-4 py-10 text-sm text-muted-foreground">Loading document...</div>
+        <div className="space-y-3 px-4 py-4">
+          <SkeletonCard className="h-[96px]" />
+          <SkeletonCard className="h-[180px]" />
+          <CenteredSpinner />
+        </div>
       </Layout>
     )
   }
@@ -138,8 +143,8 @@ export default function ProjectDocumentView() {
                 Back to Project
               </Button>
               <Button type="button" className="w-full bg-blue-600 text-white hover:bg-blue-700" onClick={handleExportPdf} disabled={pdfLoading}>
-                <Download className="mr-2 h-4 w-4" />
-                {pdfLoading ? 'Generating PDF...' : 'Export PDF'}
+                {!pdfLoading ? <Download className="mr-2 h-4 w-4" /> : null}
+                <ButtonLoading loading={pdfLoading} loadingLabel="Generating PDF" idleLabel="Export PDF" />
               </Button>
             </div>
           </div>

@@ -36,6 +36,7 @@ import {
 } from '@/components/document/DocumentViewShell'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { CenteredSpinner, SkeletonCard } from '@/components/loading/AppLoadingStates'
 import {
   documentDetailMetaGridClassName,
   documentDetailMetaItemClassName,
@@ -161,9 +162,10 @@ export default function ViewWaybill() {
   if (loading) {
     return (
       <Layout title="Waybill" session={null}>
-        <Card className={operationalEmptyStateClassName}>
-          <CardContent className="p-0">Loading waybill...</CardContent>
-        </Card>
+        <div className="space-y-3">
+          <SkeletonCard className="h-[100px]" />
+          <Card className={operationalEmptyStateClassName}><CardContent className="p-0"><CenteredSpinner /></CardContent></Card>
+        </div>
       </Layout>
     )
   }
@@ -539,7 +541,7 @@ export default function ViewWaybill() {
           actions={[
             { label: 'Back', onClick: () => navigate('/waybills'), variant: 'outline' },
             { label: 'Edit', onClick: () => navigate(`/waybills/${id}/edit`), variant: 'outline' },
-            { label: pdfLoading ? 'Generating...' : 'Download PDF', onClick: () => void handleDownloadPDF(), className: 'bg-slate-950 text-white hover:bg-slate-800', disabled: pdfLoading },
+            { label: pdfLoading ? 'Generating PDF' : 'Download PDF', onClick: () => void handleDownloadPDF(), className: 'bg-slate-950 text-white hover:bg-slate-800', disabled: pdfLoading },
           ]}
         />
       </div>

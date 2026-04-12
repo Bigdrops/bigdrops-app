@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { operationalEmptyStateClassName, operationalPanelClassName } from '@/components/ui/operational-card-styles'
+import { SkeletonCard, SkeletonRow } from '@/components/loading/AppLoadingStates'
 import Layout, { MobileChromeContext } from '../components/Layout'
 import { getCreateActions, getQuickTiles, loadStoredQuickTiles } from '../config/quickTiles'
 import { supabase } from '../supabase'
@@ -310,8 +311,8 @@ function MobileDashboardView({
 
           <div className="grid gap-3">
             {loading ? (
-              <div className={operationalEmptyStateClassName}>
-                Loading documents...
+              <div className="grid gap-3">
+                {Array.from({ length: 4 }).map((_, idx) => (<SkeletonRow key={idx} />))}
               </div>
             ) : recentDocs.length === 0 ? (
               <div className={operationalEmptyStateClassName}>
@@ -695,7 +696,11 @@ export default function Dashboard({ session }) {
               <Card className="max-w-full overflow-hidden rounded-2xl border-border bg-card shadow-sm">
                 <div className="divide-y divide-border">
                   {loading ? (
-                    <div className="px-4 py-8 text-center text-sm text-muted-foreground">Loading activity...</div>
+                    <div className="space-y-3 p-4">
+                      <SkeletonCard className="h-[84px]" />
+                      <SkeletonCard className="h-[84px]" />
+                      <SkeletonCard className="h-[84px]" />
+                    </div>
                   ) : recentDocs.length === 0 ? (
                     <div className="px-4 py-8 text-center text-sm text-muted-foreground">No recent documents yet.</div>
                   ) : (

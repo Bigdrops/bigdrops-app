@@ -5,6 +5,7 @@ import { MoreHorizontal, Search, SlidersHorizontal, X } from "lucide-react"
 
 import { MobileChromeContext } from "@/components/Layout"
 import MobilePageHeader from "@/components/layout/MobilePageHeader"
+import { ButtonLoading } from "@/components/loading/AppLoadingStates"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -275,7 +276,7 @@ export default function InvoiceListPageSection<T extends ListRecord>({
               disabled={loadingMore}
               className="h-9 rounded-full border-border bg-background px-4 text-[12px] font-bold shadow-sm"
             >
-              {loadingMore ? "Loading..." : loadMoreLabel}
+              <ButtonLoading loading={loadingMore} loadingLabel="Loading more" idleLabel={loadMoreLabel} />
             </Button>
           </div>
         ) : null}

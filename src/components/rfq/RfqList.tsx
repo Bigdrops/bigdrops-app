@@ -9,6 +9,7 @@ import MobileFab from '@/components/layout/MobileFab'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
 import { toast } from '@/hooks/use-toast'
+import { SkeletonRow } from '@/components/loading/AppLoadingStates'
 
 const formatCompactDate = (value?: string) => {
   if (!value) return null
@@ -127,7 +128,11 @@ export const RfqList: React.FC = () => {
     >
       <div className="px-1">
         {loading && rfqs.length === 0 ? (
-          <div className="p-12 flex justify-center italic text-muted-foreground opacity-50">Loading RFQs...</div>
+          <div className="grid gap-3">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <SkeletonRow key={idx} />
+            ))}
+          </div>
         ) : filteredRfqs.length === 0 ? (
           <div className="rounded-[22px] border border-dashed border-zinc-300 bg-white px-6 py-12 text-center text-sm text-muted-foreground">
             {search ? 'No matches found' : 'No RFQs yet. Create one to request prices from vendors.'}

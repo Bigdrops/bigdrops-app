@@ -21,6 +21,7 @@ import { ClientActionHeader } from '@/components/client/workspace/ClientActionHe
 import { ClientOverviewTab } from '@/components/client/workspace/ClientOverviewTab'
 import { ClientProjectsTab } from '@/components/client/workspace/ClientProjectsTab'
 import { ClientDocumentsTab } from '@/components/client/workspace/ClientDocumentsTab'
+import { CenteredSpinner, SkeletonCard, SkeletonRow } from '@/components/loading/AppLoadingStates'
 
 export default function ClientDetail() {
   const { id } = useParams()
@@ -132,7 +133,12 @@ export default function ClientDetail() {
   if (loading) {
     return (
       <Layout title="Client Workspace" session={null}>
-        <div className="px-6 py-10 text-sm text-muted-foreground animate-pulse">Loading Client Workspace...</div>
+        <div className="space-y-3 px-4 py-4">
+          <SkeletonCard className="h-[116px]" />
+          <SkeletonRow />
+          <SkeletonRow />
+          <CenteredSpinner />
+        </div>
       </Layout>
     )
   }

@@ -5,6 +5,7 @@ import { supabase } from '../supabase'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
+import { ButtonLoading } from '@/components/loading/AppLoadingStates'
 import { Label } from '../components/ui/label'
 
 function GoogleIcon(props) {
@@ -309,8 +310,11 @@ export default function Login() {
                       disabled={loading}
                       className="h-12 w-full rounded-xl bg-[#111111] text-white hover:bg-black"
                     >
-                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      {loading ? 'Please wait...' : isSignup ? 'Create Account' : 'Sign In'}
+                      <ButtonLoading
+                        loading={loading}
+                        loadingLabel={isSignup ? 'Creating account' : 'Signing in'}
+                        idleLabel={isSignup ? 'Create Account' : 'Sign In'}
+                      />
                     </Button>
 
                     <Button
