@@ -110,17 +110,23 @@
     overflow-x: hidden;
   }
 
-  body::before,
-  body::after {
+  .app-ambient {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .app-ambient::before,
+  .app-ambient::after {
     content: "";
-    position: fixed;
+    position: absolute;
     inset: -12%;
     pointer-events: none;
-    z-index: -1;
+    z-index: 0;
     will-change: transform, opacity;
   }
 
-  body::before {
+  .app-ambient::before {
     background:
       radial-gradient(circle at 20% 30%, hsl(var(--primary) / 0.08), transparent 34%),
       radial-gradient(circle at 82% 36%, hsl(var(--accent-foreground) / 0.035), transparent 28%),
@@ -129,12 +135,17 @@
     animation: app-wave-float-1 24s ease-in-out infinite;
   }
 
-  body::after {
+  .app-ambient::after {
     background:
       linear-gradient(90deg, transparent 0%, hsl(var(--primary) / 0.045) 50%, transparent 100%);
     filter: blur(72px);
     opacity: 0.55;
     animation: app-wave-sweep 20s linear infinite;
+  }
+
+  .app-ambient > * {
+    position: relative;
+    z-index: 1;
   }
 }
 
@@ -452,8 +463,8 @@
     scroll-behavior: auto !important;
   }
 
-  body::before,
-  body::after {
+  .app-ambient::before,
+  .app-ambient::after {
     opacity: 0.35;
     transform: none !important;
   }

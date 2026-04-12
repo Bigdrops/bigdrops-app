@@ -351,7 +351,7 @@ export default function Layout({
   }, [openSidebar])
 
   return (
-    <div className="min-h-dvh bg-background text-foreground">
+    <div className="app-ambient min-h-dvh bg-background text-foreground">
       <div className="hidden md:flex">
         <aside className="w-72 border-r border-border bg-background">
           <div className="px-5 py-5">

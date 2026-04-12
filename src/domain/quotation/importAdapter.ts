@@ -26,6 +26,7 @@ Return JSON only.
 Rules:
 - Extract main table → items
 - Keep rows in the same order as the source
+- Add mode creates new rows only
 - description is required
 - sub_description = extra details under the same item
 - Include quantity, unit, unit_price only if clearly present
@@ -46,30 +47,29 @@ export const quotationUpdateTablePrompt = `Convert the source content into JSON 
 Return JSON only.
 
 {
-  "po_number": "",
-  "notes": "",
-  "terms": "",
-  "extra_charges": [
-    { "label": "", "value": 0 }
-  ],
   "items": [
     {
-      "row_number": 1,
-      "description": "",
-      "sub_description": "",
-      "quantity": 0,
-      "unit": "",
-      "unit_price": 0
+      "row_number": 3,
+      "quantity": 12
+    },
+    {
+      "row_number": 5,
+      "unit_price": 4800,
+      "sub_description": "Powder-coated finish"
     }
   ]
 }
 
 Rules:
-- Use row_number to target existing rows
-- Keep rows in the same order as the source
-- Include only rows that should be updated
-- Include only fields that should be updated
+- row_number refers to the current visible table row numbering starting at 1
+- row_number only targets existing visible standard rows
+- Include only rows that should change
+- Include only fields that should change inside each row
+- Omitted rows remain unchanged
+- Omitted fields remain unchanged
 - Do not create new rows
+- Do not renumber, infer, or auto-match rows
+- Sparse updates are valid and expected (for example rows 3, 5-14, and 18-20)
 - Normalize obvious unit spellings where clear (e.g. kilometer → km)
 - Include extra item fields only if clearly labeled as separate columns in the source
 - Do not invent or rename fields
@@ -85,8 +85,8 @@ Rules:
 export const quotationImportAdapter = {
   documentType: 'quotation' as const,
   prompts: {
-    'Create Rows': quotationImportPrompt,
-    'Update Table': quotationUpdateTablePrompt,
+    Add: quotationImportPrompt,
+    Update: quotationUpdateTablePrompt,
   },
   createItem: () => makeEmptyItem(),
   applyResult({

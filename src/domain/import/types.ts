@@ -1,6 +1,6 @@
 import type { ColumnConfig, InvoiceItem } from '@/domain/invoice'
 
-export type ImportMode = 'Create Rows' | 'Update Table'
+export type ImportMode = 'Add' | 'Update'
 
 export type ImportFieldKey =
   | 'description'

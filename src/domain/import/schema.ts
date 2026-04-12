@@ -11,7 +11,7 @@ const extraChargeSchema = z.object({
 
 function buildItemSchema(mode: ImportMode) {
   return unknownRecordSchema.superRefine((item, ctx) => {
-    if (mode !== 'Update Table') return
+    if (mode !== 'Update') return
     if (!Object.prototype.hasOwnProperty.call(item, 'row_number')) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

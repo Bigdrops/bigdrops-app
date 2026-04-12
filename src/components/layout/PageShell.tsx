@@ -26,7 +26,7 @@ export function PageShell({
       data-slot="page-shell"
       className={cn(
         widthClasses[width],
-        'shell-surface-info min-h-screen font-["DM_Sans",sans-serif]',
+        'app-ambient shell-surface-info min-h-screen font-["DM_Sans",sans-serif]',
         padded && 'px-4 pb-[120px] pt-5',
         className,
       )}

@@ -47,9 +47,9 @@ export function buildApplyResult({
   createItem,
 }: BuildApplyResultOptions) {
   const exemptSet = new Set(exemptOverwriteIds)
-  const overwriteTargets = mode === 'Update Table' ? detectOverwriteTargets(resolved, existingItems) : []
+  const overwriteTargets = mode === 'Update' ? detectOverwriteTargets(resolved, existingItems) : []
 
-  if (mode === 'Create Rows') {
+  if (mode === 'Add') {
     const importedItems = resolved.items.map((item, index) => {
       const nextItem = assignResolvedFields(
         {

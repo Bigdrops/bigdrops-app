@@ -78,7 +78,7 @@ export default function MobileListPageShell({
   }
 
   return (
-    <div className={`min-h-screen px-[14px] pb-32 pt-[8px] font-['DM_Sans',sans-serif] ${toneStyle.glow}`}>
+    <div className={`app-ambient min-h-screen px-[14px] pb-32 pt-[8px] font-['DM_Sans',sans-serif] ${toneStyle.glow}`}>
       <MobilePageHeader
         eyebrow={eyebrow}
         title={title}

@@ -1,6 +1,7 @@
 import type { InvoiceItem } from '@/domain/invoice'
 
 import type { ImportMode, NormalizedImportData, ValidatedImportData } from './types'
+import { hasMeaningfulStandardRows } from './tableState'
 import { MAX_IMPORTED_ROWS, getStandardRowEntries } from './utils'
 
 export function validateImportData(
@@ -15,7 +16,7 @@ export function validateImportData(
     }
   }
 
-  if (mode === 'Create Rows') {
+  if (mode === 'Add') {
     const validItems = []
     const skippedRows = []
 
@@ -50,10 +51,10 @@ export function validateImportData(
   }
 
   const standardRows = getStandardRowEntries(existingItems)
-  if (standardRows.length === 0) {
+  if (standardRows.length === 0 || !hasMeaningfulStandardRows(existingItems)) {
     return {
       ok: false,
-      message: 'Update Table is only available when the table already has rows.',
+      message: 'Update is only available after the table has at least one real item row.',
     }
   }
 
@@ -72,7 +73,7 @@ export function validateImportData(
     if (usedRowNumbers.has(rowNumber)) {
       return {
         ok: false,
-        message: `Duplicate row_number ${rowNumber} is not allowed in Update Table mode.`,
+        message: `Duplicate row_number ${rowNumber} is not allowed in Update mode.`,
       }
     }
 

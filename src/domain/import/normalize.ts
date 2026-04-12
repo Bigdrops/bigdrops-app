@@ -67,14 +67,14 @@ export function normalizeImportData(
 
       if (key === 'description' || key === 'sub_description') {
         const value = normalizeText(rawValue)
-        if (mode === 'Update Table' && !value) return
+        if (mode === 'Update' && !value) return
         if (value !== undefined) baseFields[key] = value
         return
       }
 
       if (key === 'unit') {
         const value = normalizeUnitValue(rawValue)
-        if (mode === 'Update Table' && !value) return
+        if (mode === 'Update' && !value) return
         if (value !== undefined) baseFields.unit = value
         return
       }
@@ -87,7 +87,7 @@ export function normalizeImportData(
 
       if (!BASE_FIELDS.has(key)) {
         const normalizedValue = normalizeScalar(rawValue)
-        if (mode === 'Update Table' && (normalizedValue === undefined || normalizedValue === '')) return
+        if (mode === 'Update' && (normalizedValue === undefined || normalizedValue === '')) return
         if (normalizedValue === undefined) return
         extraFields[key] = normalizedValue
 
@@ -114,9 +114,9 @@ export function normalizeImportData(
     ok: true,
     data: {
       topLevel: {
-        po_number: mode === 'Update Table' && !poNumber ? undefined : poNumber,
-        notes: mode === 'Update Table' && !notes ? undefined : notes,
-        terms: mode === 'Update Table' && !terms ? undefined : terms,
+        po_number: mode === 'Update' && !poNumber ? undefined : poNumber,
+        notes: mode === 'Update' && !notes ? undefined : notes,
+        terms: mode === 'Update' && !terms ? undefined : terms,
         extra_charges: Array.isArray(input.extra_charges)
           ? input.extra_charges
               .map((entry) => ({

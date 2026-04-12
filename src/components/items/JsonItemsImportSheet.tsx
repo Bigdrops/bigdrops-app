@@ -1,20 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Info, Wand2 } from 'lucide-react'
+import { Copy, Info, Sparkles } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { useToast } from '@/hooks/use-toast'
+import { Textarea } from '@/components/ui/textarea'
 import { buildApplyResult } from '@/domain/import/apply'
 import { normalizeImportData } from '@/domain/import/normalize'
 import { parseImportText } from '@/domain/import/parse'
 import { getUnknownColumnCandidates, resolveImportColumns } from '@/domain/import/resolve'
+import { hasMeaningfulStandardRows } from '@/domain/import/tableState'
 import { validateImportData } from '@/domain/import/validate'
 import type { ApplyImportResult, CustomColumnDecision, ImportMode, ValidatedImportData } from '@/domain/import/types'
 import type { ColumnConfig, InvoiceItem } from '@/domain/invoice'
-import { JsonImportUI } from '@/components/import/JsonImportLayout'
+import { useToast } from '@/hooks/use-toast'
+import { cn } from '@/lib/utils'
 
 type ImportAdapter = {
   documentType: 'invoice' | 'quotation'
@@ -34,6 +35,56 @@ type JsonItemsImportSheetProps = {
   contentClassName?: string
 }
 
+const MODE_COPY: Record<
+  ImportMode,
+  {
+    title: string
+    subtitle: string
+    helper: string
+    placeholder: string
+    applyLabel: string
+  }
+> = {
+  Add: {
+    title: 'Add',
+    subtitle: 'Append brand-new rows from JSON.',
+    helper:
+      'Use Add when you want to create fresh line items. The pasted JSON should describe new rows to append, not changes to existing ones.',
+    placeholder: `{
+  "items": [
+    {
+      "description": "Supply and install LED floodlights",
+      "sub_description": "150W IP66 outdoor fittings",
+      "quantity": 12,
+      "unit": "pcs",
+      "unit_price": 48000
+    }
+  ]
+}`,
+    applyLabel: 'Add rows',
+  },
+  Update: {
+    title: 'Update',
+    subtitle: 'Patch existing visible rows only.',
+    helper:
+      'Use Update for sparse patches. row_number matches the current visible table numbering starting at 1. Include only the rows and fields that should change. Omitted rows and omitted fields stay exactly as they are.',
+    placeholder: `{
+  "items": [
+    {
+      "row_number": 3,
+      "quantity": 12
+    },
+    {
+      "row_number": 5,
+      "unit_price": 48000,
+      "sub_description": "Powder-coated finish"
+    }
+  ]
+}`,
+    applyLabel: 'Apply update',
+  },
+}
+
 function makeDefaultDecision(candidateKey: string, label: string): CustomColumnDecision {
   return { action: 'create', label: label || candidateKey }
 }
@@ -49,19 +100,15 @@ export default function JsonItemsImportSheet({
   side = 'bottom',
   contentClassName = '',
 }: JsonItemsImportSheetProps) {
-  const [mode, setMode] = useState<ImportMode>('Create Rows')
+  const { toast } = useToast()
+  const [mode, setMode] = useState<ImportMode>('Add')
   const [pastedText, setPastedText] = useState('')
   const [validated, setValidated] = useState<ValidatedImportData | null>(null)
   const [decisions, setDecisions] = useState<Record<string, CustomColumnDecision>>({})
-  const [showOverwriteDialog, setShowOverwriteDialog] = useState(false)
-  const [overwriteExpanded, setOverwriteExpanded] = useState(false)
-  const [exemptOverwriteIds, setExemptOverwriteIds] = useState<string[]>([])
-  const { toast } = useToast()
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
-  const standardRowCount = useMemo(
-    () => items.filter((item) => item.row_type !== 'group_header').length,
-    [items],
-  )
+  const updateEnabled = useMemo(() => hasMeaningfulStandardRows(items), [items])
 
   const existingCustomColumns = useMemo(
     () => columns.filter((column) => column.key.startsWith('custom_')),
@@ -75,22 +122,52 @@ export default function JsonItemsImportSheet({
 
   useEffect(() => {
     if (!open) {
+      setMode('Add')
       setPastedText('')
       setValidated(null)
       setDecisions({})
-      setMode('Create Rows')
-      setShowOverwriteDialog(false)
-      setOverwriteExpanded(false)
-      setExemptOverwriteIds([])
+      setErrorMessage(null)
+      setCopied(false)
       return
     }
 
-    if (standardRowCount === 0) {
-      setMode('Create Rows')
+    if (!updateEnabled && mode === 'Update') {
+      setMode('Add')
     }
-  }, [open, standardRowCount])
+  }, [mode, open, updateEnabled])
 
-  const runResolve = (data: ValidatedImportData) => {
+  const activeMode = MODE_COPY[mode]
+
+  const handleCopyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(adapter.prompts[mode])
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast({
+        title: 'Copy failed',
+        description: 'Could not copy the prompt. You can still copy it manually from the popup.',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleModeChange = (nextMode: ImportMode) => {
+    if (nextMode === 'Update' && !updateEnabled) return
+    setMode(nextMode)
+    setValidated(null)
+    setDecisions({})
+    setErrorMessage(null)
+  }
+
+  const handleTextChange = (value: string) => {
+    setPastedText(value)
+    setValidated(null)
+    setDecisions({})
+    setErrorMessage(null)
+  }
+
+  const applyImport = (data: ValidatedImportData) => {
     const resolvedResult = resolveImportColumns({
       validated: data,
       existingColumns: columns,
@@ -98,91 +175,7 @@ export default function JsonItemsImportSheet({
     })
 
     if (resolvedResult.ok === false) {
-      toast({ title: 'Import blocked', description: resolvedResult.message, variant: 'destructive' })
-      return
-    }
-
-    const draftResult = buildApplyResult({
-      mode,
-      existingItems: items,
-      existingColumns: columns,
-      resolved: resolvedResult.data,
-      skippedRows: data.skippedRows,
-      createItem: adapter.createItem,
-    })
-
-    if (mode === 'Update Table' && draftResult.overwriteTargets.length > 0) {
-      setShowOverwriteDialog(true)
-      setOverwriteExpanded(false)
-      setExemptOverwriteIds([])
-      return
-    }
-
-    onApplyImport(draftResult)
-    toast({
-      title: 'Import applied',
-      description:
-        mode === 'Create Rows'
-          ? `${draftResult.createdRowCount} rows imported.`
-          : `Updated ${draftResult.updatedRowNumbers.length} rows.`,
-    })
-    onOpenChange(false)
-  }
-
-  const handleStartImport = () => {
-    if (!pastedText.trim()) {
-      toast({ title: 'Paste JSON', description: 'Paste JSON before importing.', variant: 'destructive' })
-      return
-    }
-
-    const parsed = parseImportText(pastedText, mode)
-    if (parsed.ok === false) {
-      toast({ title: 'Invalid JSON', description: parsed.error.message, variant: 'destructive' })
-      return
-    }
-
-    const normalized = normalizeImportData(parsed.data, mode)
-    if (normalized.ok === false) {
-      toast({ title: 'Import failed', description: normalized.message, variant: 'destructive' })
-      return
-    }
-
-    const validatedResult = validateImportData(mode, normalized.data, items)
-    if (validatedResult.ok === false) {
-      toast({ title: 'Import failed', description: validatedResult.message, variant: 'destructive' })
-      return
-    }
-
-    const nextValidated = validatedResult.data
-    setValidated(nextValidated)
-
-    const candidates = getUnknownColumnCandidates(nextValidated, columns)
-    if (candidates.length === 0) {
-      runResolve(nextValidated)
-      return
-    }
-
-    setDecisions(
-      Object.fromEntries(
-        candidates.map((candidate) => [
-          candidate.key,
-          decisions[candidate.key] || makeDefaultDecision(candidate.key, candidate.sourceLabels[0] || candidate.key),
-        ]),
-      ),
-    )
-  }
-
-  const handleApplyOverwriteDecision = () => {
-    if (!validated) return
-
-    const resolvedResult = resolveImportColumns({
-      validated,
-      existingColumns: columns,
-      decisions,
-    })
-
-    if (resolvedResult.ok === false) {
-      toast({ title: 'Import blocked', description: resolvedResult.message, variant: 'destructive' })
+      setErrorMessage(resolvedResult.message)
       return
     }
 
@@ -191,219 +184,307 @@ export default function JsonItemsImportSheet({
       existingItems: items,
       existingColumns: columns,
       resolved: resolvedResult.data,
-      skippedRows: validated.skippedRows,
-      exemptOverwriteIds,
+      skippedRows: data.skippedRows,
       createItem: adapter.createItem,
     })
 
     onApplyImport(finalResult)
     toast({
-      title: 'Import applied',
-      description: `Updated ${finalResult.updatedRowNumbers.length} rows.`,
+      title: mode === 'Add' ? 'Rows added' : 'Updates applied',
+      description:
+        mode === 'Add'
+          ? `${finalResult.createdRowCount} row${finalResult.createdRowCount === 1 ? '' : 's'} appended.`
+          : `Patched ${finalResult.updatedRowNumbers.length} row${finalResult.updatedRowNumbers.length === 1 ? '' : 's'}.`,
     })
-    setShowOverwriteDialog(false)
     onOpenChange(false)
   }
 
-  const overwritePreview = useMemo(() => {
-    if (!validated) return null
-    const resolvedResult = resolveImportColumns({
-      validated,
-      existingColumns: columns,
-      decisions,
-    })
-    if (resolvedResult.ok === false) return null
+  const handleApply = () => {
+    if (!pastedText.trim()) {
+      setErrorMessage('Paste JSON before applying.')
+      return
+    }
 
-    return buildApplyResult({
-      mode,
-      existingItems: items,
-      existingColumns: columns,
-      resolved: resolvedResult.data,
-      skippedRows: validated.skippedRows,
-      createItem: adapter.createItem,
-    })
-  }, [adapter.createItem, columns, decisions, items, mode, validated])
+    const parsed = parseImportText(pastedText, mode)
+    if (parsed.ok === false) {
+      setErrorMessage(parsed.error.message)
+      return
+    }
 
-  const helpText = `Quick Guide: Choose a mode, copy the AI prompt, paste your extracted JSON, resolve any new columns, and save.`
+    const normalized = normalizeImportData(parsed.data, mode)
+    if (normalized.ok === false) {
+      setErrorMessage(normalized.message)
+      return
+    }
+
+    const validatedResult = validateImportData(mode, normalized.data, items)
+    if (validatedResult.ok === false) {
+      setErrorMessage(validatedResult.message)
+      return
+    }
+
+    const nextValidated = validatedResult.data
+    const candidates = getUnknownColumnCandidates(nextValidated, columns)
+
+    setValidated(nextValidated)
+    setErrorMessage(null)
+
+    if (candidates.length > 0) {
+      setDecisions((current) =>
+        Object.fromEntries(
+          candidates.map((candidate) => [
+            candidate.key,
+            current[candidate.key] || makeDefaultDecision(candidate.key, candidate.sourceLabels[0] || candidate.key),
+          ]),
+        ),
+      )
+      return
+    }
+
+    applyImport(nextValidated)
+  }
+
+  const handleFinalizeColumnChoices = () => {
+    if (!validated) return
+    applyImport(validated)
+  }
 
   return (
-    <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent
-          side={side}
-          className={`max-h-[94vh] rounded-t-[28px] bg-slate-50 p-0 border-none sm:max-w-2xl sm:mx-auto overflow-y-auto ${contentClassName}`.trim()}
-        >
-          <JsonImportUI
-            title={title}
-            description={`Import data into this ${adapter.documentType}.`}
-            promptText={adapter.prompts[mode]}
-            rawInput={pastedText}
-            onRawInputChange={(val) => { setPastedText(val); setValidated(null); }}
-            onPreview={handleStartImport}
-            onSave={() => (validated && unresolvedCandidates.length > 0 ? runResolve(validated) : handleStartImport())}
-            saveLabel="Apply Import"
-            isParsed={!!validated}
-            helpText={helpText}
-            additionalActions={
-              <Button 
-                variant="ghost" 
-                onClick={() => { setValidated(null); setPastedText(''); }}
-                className="w-full text-slate-400 text-xs font-bold hover:text-slate-600"
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side={side}
+        className={cn(
+          'max-h-[94vh] rounded-t-[28px] border-none bg-slate-50 p-0 sm:mx-auto sm:max-w-2xl',
+          contentClassName,
+        )}
+      >
+        <div className="flex h-full flex-col overflow-hidden">
+          <div className="border-b border-slate-200 bg-white px-4 py-4 sm:px-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-slate-900">
+                  <Sparkles className="h-4 w-4 text-emerald-600" />
+                  <h2 className="text-base font-black">{title}</h2>
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  Choose a mode first, copy the prompt, paste the JSON, then apply it in this same popup.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCopyPrompt}
+                className="h-9 rounded-xl border-emerald-200 bg-emerald-50 px-3 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100"
               >
-                Clear and Start Over
+                <Copy className="mr-1.5 h-3.5 w-3.5" />
+                {copied ? 'Copied' : 'Copy prompt'}
               </Button>
-            }
-            previewContent={
-              <div className="space-y-4">
-                <div className="space-y-2 px-1">
-                  <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Import Mode</div>
-                  <div className="grid grid-cols-2 gap-2">
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Mode</div>
+              <div className="grid grid-cols-2 gap-2">
+                {(['Add', 'Update'] as ImportMode[]).map((entry) => {
+                  const selected = mode === entry
+                  const disabled = entry === 'Update' && !updateEnabled
+
+                  return (
                     <Button
+                      key={entry}
                       type="button"
-                      variant={mode === 'Create Rows' ? 'default' : 'outline'}
-                      className={`h-11 rounded-xl text-xs font-bold ${mode === 'Create Rows' ? 'bg-slate-900 shadow-lg' : 'border-slate-200'}`}
-                      onClick={() => { setMode('Create Rows'); setValidated(null); }}
+                      variant="outline"
+                      disabled={disabled}
+                      onClick={() => handleModeChange(entry)}
+                      className={cn(
+                        'h-auto min-h-14 rounded-2xl border px-3 py-3 text-left transition-colors',
+                        selected
+                          ? 'border-slate-900 bg-slate-900 text-white hover:bg-slate-900'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50',
+                        disabled && 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-55 hover:bg-slate-100',
+                      )}
                     >
-                      Create Rows
+                      <div className="w-full">
+                        <div className="text-sm font-black">{MODE_COPY[entry].title}</div>
+                        <div className={cn('mt-1 text-[11px] leading-relaxed', selected ? 'text-slate-200' : 'text-slate-500')}>
+                          {MODE_COPY[entry].subtitle}
+                        </div>
+                      </div>
                     </Button>
-                    <Button
-                      type="button"
-                      variant={mode === 'Update Table' ? 'default' : 'outline'}
-                      className={`h-11 rounded-xl text-xs font-bold ${mode === 'Update Table' ? 'bg-slate-900 shadow-lg' : 'border-slate-200'}`}
-                      disabled={standardRowCount === 0}
-                      onClick={() => { setMode('Update Table'); setValidated(null); }}
-                    >
-                      Update Table
-                    </Button>
-                  </div>
+                  )
+                })}
+              </div>
+              <p className="text-[11px] leading-relaxed text-slate-500">
+                {updateEnabled
+                  ? 'Update is available because the table already has at least one real line item. It will target the current visible row numbers.'
+                  : 'Update stays unavailable until the table has at least one real line item. The default blank starter row does not count.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
+            <div className="rounded-2xl border border-blue-100 bg-blue-50/80 p-3">
+              <div className="flex items-start gap-2">
+                <Info className="mt-0.5 h-4 w-4 text-blue-600" />
+                <div>
+                  <div className="text-sm font-bold text-slate-900">{activeMode.title} mode</div>
+                  <p className="mt-1 text-[12px] leading-relaxed text-slate-600">{activeMode.helper}</p>
+                </div>
+              </div>
+            </div>
+
+            <section className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">AI Prompt</div>
+                  <div className="mt-1 text-sm font-semibold text-slate-900">{activeMode.subtitle}</div>
+                </div>
+              </div>
+              <Textarea
+                value={adapter.prompts[mode]}
+                readOnly
+                className="min-h-[220px] rounded-2xl border-slate-200 bg-white font-mono text-[11px] leading-5 text-slate-700"
+              />
+            </section>
+
+            <section className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Paste JSON</div>
+                <div className="text-[11px] text-slate-400">{mode === 'Update' ? 'Sparse patches allowed' : 'New rows only'}</div>
+              </div>
+              <Textarea
+                value={pastedText}
+                onChange={(event) => handleTextChange(event.target.value)}
+                placeholder={activeMode.placeholder}
+                className="min-h-[220px] rounded-2xl border-slate-200 bg-white font-mono text-[12px] leading-5 text-slate-800"
+              />
+            </section>
+
+            {errorMessage ? (
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700">
+                {errorMessage}
+              </div>
+            ) : null}
+
+            {unresolvedCandidates.length > 0 ? (
+              <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div>
+                  <div className="text-sm font-bold text-slate-900">Handle new JSON keys</div>
+                  <p className="mt-1 text-[12px] leading-relaxed text-slate-500">
+                    Choose whether each new key should create a column, map to an existing custom column, or be ignored. You will stay in this same popup.
+                  </p>
                 </div>
 
-                {validated && unresolvedCandidates.length > 0 && (
-                  <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex items-start gap-2">
-                      <Info className="h-4 w-4 text-blue-500 mt-0.5" />
-                      <div className="space-y-0.5">
-                        <div className="text-sm font-bold text-slate-900">Resolve Columns</div>
-                        <div className="text-xs text-slate-500 font-medium">Map unknown keys to your table.</div>
-                      </div>
-                    </div>
+                <div className="space-y-3">
+                  {unresolvedCandidates.map((candidate) => {
+                    const decision = decisions[candidate.key] || makeDefaultDecision(candidate.key, candidate.sourceLabels[0] || candidate.key)
 
-                    <div className="space-y-3">
-                      {unresolvedCandidates.map((candidate) => {
-                        const decision = decisions[candidate.key] || makeDefaultDecision(candidate.key, candidate.sourceLabels[0] || candidate.key)
-                        return (
-                          <div key={candidate.key} className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 space-y-3">
-                            <div className="flex justify-between items-center">
-                              <span className="text-xs font-bold text-slate-700">{candidate.sourceLabels[0] || candidate.key}</span>
-                              <span className="text-[10px] text-slate-400 font-mono italic">{String(candidate.sampleValues[0] || '').slice(0, 20)}...</span>
+                    return (
+                      <div key={candidate.key} className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-bold text-slate-900">{candidate.sourceLabels[0] || candidate.key}</div>
+                            <div className="mt-1 text-[12px] text-slate-500">
+                              Sample: {String(candidate.sampleValues[0] ?? '').trim() || 'Empty'}
                             </div>
-                            
+                          </div>
+                          <div className="rounded-full bg-slate-200 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600">
+                            {candidate.inferredType}
+                          </div>
+                        </div>
+
+                        <div className="mt-3 space-y-3">
+                          <Select
+                            value={decision.action}
+                            onValueChange={(value: 'create' | 'map' | 'drop') =>
+                              setDecisions((current) => ({
+                                ...current,
+                                [candidate.key]:
+                                  value === 'create'
+                                    ? { action: 'create', label: candidate.sourceLabels[0] || candidate.key }
+                                    : value === 'map'
+                                      ? { action: 'map', columnKey: existingCustomColumns[0]?.key || '' }
+                                      : { action: 'drop' },
+                              }))
+                            }
+                          >
+                            <SelectTrigger className="h-10 rounded-xl border-slate-200 bg-white text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="create">Create column</SelectItem>
+                              <SelectItem value="map">Map existing</SelectItem>
+                              <SelectItem value="drop">Ignore key</SelectItem>
+                            </SelectContent>
+                          </Select>
+
+                          {decision.action === 'create' ? (
+                            <Input
+                              value={decision.label || ''}
+                              onChange={(event) =>
+                                setDecisions((current) => ({
+                                  ...current,
+                                  [candidate.key]: { action: 'create', label: event.target.value },
+                                }))
+                              }
+                              placeholder="Column label"
+                              className="h-10 rounded-xl border-slate-200 bg-white"
+                            />
+                          ) : null}
+
+                          {decision.action === 'map' ? (
                             <Select
-                              value={decision.action}
-                              onValueChange={(val: 'create' | 'map' | 'drop') =>
-                                setDecisions(curr => ({
-                                  ...curr,
-                                  [candidate.key]: val === 'create' ? { action: 'create', label: candidate.sourceLabels[0] || candidate.key }
-                                                 : val === 'map' ? { action: 'map', columnKey: existingCustomColumns[0]?.key || '' }
-                                                 : { action: 'drop' }
+                              value={decision.columnKey}
+                              onValueChange={(value) =>
+                                setDecisions((current) => ({
+                                  ...current,
+                                  [candidate.key]: { action: 'map', columnKey: value },
                                 }))
                               }
                             >
-                              <SelectTrigger className="h-9 rounded-lg bg-white border-slate-200 text-xs font-black uppercase tracking-wider">
-                                <SelectValue />
+                              <SelectTrigger className="h-10 rounded-xl border-slate-200 bg-white text-sm">
+                                <SelectValue placeholder="Choose a custom column" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="create">Create Column</SelectItem>
-                                <SelectItem value="map">Map Existing</SelectItem>
-                                <SelectItem value="drop">Ignore Key</SelectItem>
+                                {existingCustomColumns.map((column) => (
+                                  <SelectItem key={column.key} value={column.key}>
+                                    {column.label}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
-
-                            {decision.action === 'create' && (
-                              <Input 
-                                value={decision.label} 
-                                onChange={e => setDecisions(curr => ({ ...curr, [candidate.key]: { ...decision, label: e.target.value } }))}
-                                className="h-9 rounded-lg border-slate-200 text-xs font-bold placeholder:text-slate-300"
-                                placeholder={candidate.sourceLabels[0] || candidate.key}
-                              />
-                            )}
-
-                            {decision.action === 'map' && (
-                              <Select
-                                value={decision.columnKey}
-                                onValueChange={val => setDecisions(curr => ({ ...curr, [candidate.key]: { ...decision, columnKey: val } }))}
-                              >
-                                <SelectTrigger className="h-9 rounded-lg bg-white border-slate-200 text-xs font-bold">
-                                  <SelectValue placeholder="Target column..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {existingCustomColumns.map(col => (
-                                    <SelectItem key={col.key} value={col.key}>{col.label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            }
-          />
-        </SheetContent>
-      </Sheet>
-
-      <Dialog open={showOverwriteDialog} onOpenChange={setShowOverwriteDialog}>
-        <DialogContent className="max-w-md rounded-[28px] bg-slate-50 p-0 border-none overflow-hidden select-none shadow-2xl">
-          <div className="p-5 border-b bg-white">
-            <h3 className="text-base font-black text-slate-900 flex items-center gap-1.5 leading-tight">
-              <Wand2 className="h-4 w-4 text-emerald-600" />
-              Overwrite Review
-            </h3>
-            <p className="text-[11px] font-medium text-slate-500 leading-tight">
-              {overwritePreview?.overwriteTargets.length || 0} cells will be updated. Review and exempt any if needed.
-            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
+            ) : null}
           </div>
 
-          <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-[10px] font-black uppercase tracking-widest text-slate-400 p-0 h-auto hover:bg-transparent"
-              onClick={() => setOverwriteExpanded(!overwriteExpanded)}
-            >
-              {overwriteExpanded ? 'Hide Details' : 'Review Details'}
-            </Button>
-
-            {overwriteExpanded && overwritePreview?.overwriteTargets.map(target => {
-              const exempted = exemptOverwriteIds.includes(target.id)
-              return (
-                <button
-                  key={target.id}
-                  onClick={() => setExemptOverwriteIds(curr => exempted ? curr.filter(id => id !== target.id) : [...curr, target.id])}
-                  className={`w-full p-4 rounded-2xl border-2 text-left transition-all active:scale-[0.98] ${exempted ? 'bg-red-50 border-red-100' : 'bg-white border-slate-100 shadow-sm'}`}
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="text-[11px] font-extrabold text-slate-900">Row {target.rowNumber} • {target.columnLabel}</span>
-                    {exempted && <span className="text-[9px] font-black uppercase tracking-widest text-red-600 bg-red-100 px-2 py-0.5 rounded-full">Exempt</span>}
-                  </div>
-                  <div className="mt-1.5 text-[10px] font-medium text-slate-500 line-clamp-2">
-                    <span className="text-slate-400">Current:</span> {String(target.currentValue)}
-                    <br />
-                    <span className="text-slate-400">New:</span> {String(target.nextValue)}
-                  </div>
-                </button>
-              )
-            })}
+          <div className="border-t border-slate-200 bg-white px-4 py-4 sm:px-5">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleTextChange('')}
+                className="h-11 rounded-xl border-slate-200 text-sm font-bold text-slate-600"
+              >
+                Clear
+              </Button>
+              <Button
+                type="button"
+                onClick={unresolvedCandidates.length > 0 ? handleFinalizeColumnChoices : handleApply}
+                disabled={!pastedText.trim() || (mode === 'Update' && !updateEnabled)}
+                className="h-11 flex-1 rounded-xl bg-slate-900 text-sm font-black text-white hover:bg-slate-800"
+              >
+                {unresolvedCandidates.length > 0 ? 'Apply with column choices' : activeMode.applyLabel}
+              </Button>
+            </div>
           </div>
-
-          <div className="p-4 bg-white border-t flex gap-2">
-            <Button variant="outline" onClick={() => setShowOverwriteDialog(false)} className="flex-1 h-12 rounded-xl border-slate-200 font-bold text-slate-600">Back</Button>
-            <Button onClick={handleApplyOverwriteDecision} className="flex-[2] h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black shadow-lg transition-all active:scale-[0.98]">Apply Import</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }
