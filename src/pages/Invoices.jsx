@@ -458,7 +458,7 @@ export default function Invoices() {
     invalidFallback: "",
     locale: "en-GB",
     dateOptions: {
-      day: "numeric",
+      day: "2-digit",
       month: "short",
       year: "numeric",
     },
@@ -517,25 +517,9 @@ export default function Invoices() {
     sortBy !== "Newest"
   )
 
-  const renderInvoiceRowMeta = (invoice) => {
-    const issuedDate = formatInvoiceDate(invoice.issue_date)
-    const dueDate = formatInvoiceDate(invoice.due_date)
+  const renderInvoiceRowNumber = (invoice) => invoice.invoice_number || "Draft invoice"
 
-    const parts = [invoice.invoice_number || "Draft invoice"]
-    if (issuedDate) {
-      parts.push(`Issued ${issuedDate}`)
-    }
-
-    if (dueDate) {
-      parts.push(`Due ${dueDate}`)
-    } else if (invoice.status === "partial") {
-      parts.push("Part payment received")
-    } else if (invoice.status === "sent") {
-      parts.push("Sent")
-    }
-
-    return parts.join(" · ")
-  }
+  const renderInvoiceRowDate = (invoice) => formatInvoiceDate(invoice.issue_date) || "No date"
 
   return (
     <Layout title="Invoices" hidePageHeader>
@@ -554,7 +538,8 @@ export default function Invoices() {
         onRowActionClick={setActiveInvoice}
         renderAmount={formatNaira}
         renderStatusLabel={formatInvoiceStatusLabel}
-        renderIssueMeta={renderInvoiceRowMeta}
+        renderDocumentNumber={renderInvoiceRowNumber}
+        renderDocumentDate={renderInvoiceRowDate}
         renderStatusClassName={getInvoiceStatusClassName}
         loadMoreLabel="Load more invoices"
         emptyState={(

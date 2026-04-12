@@ -150,7 +150,7 @@ function formatRecentRecordMeta(doc: RecentDoc) {
   const dateText = formatDisplayDate(doc.date, {
     fallback: 'No date',
     locale: 'en-GB',
-    dateOptions: { month: 'short', day: 'numeric' },
+    dateOptions: { month: 'short', day: 'numeric', year: 'numeric' },
   })
 
   return [doc.client, dateText, doc.meta].filter(Boolean).join(' · ')

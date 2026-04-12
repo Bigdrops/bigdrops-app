@@ -44,7 +44,8 @@ type InvoiceListPageSectionProps<T extends ListRecord> = {
   onRowActionClick: (record: T) => void
   renderAmount: (value?: number | null) => string
   renderStatusLabel: (status?: string | null) => string
-  renderIssueMeta: (record: T) => string
+  renderDocumentNumber: (record: T) => string
+  renderDocumentDate: (record: T) => string
   renderStatusClassName: (status?: string | null) => string
   loadMoreLabel?: string
   beforeListContent?: ReactNode
@@ -69,7 +70,8 @@ export default function InvoiceListPageSection<T extends ListRecord>({
   onRowActionClick,
   renderAmount,
   renderStatusLabel,
-  renderIssueMeta,
+  renderDocumentNumber,
+  renderDocumentDate,
   renderStatusClassName,
   loadMoreLabel = "Load more",
   beforeListContent,
@@ -108,24 +110,14 @@ export default function InvoiceListPageSection<T extends ListRecord>({
         accentClassName="tone-info-accent"
         onMenuClick={mobileChrome.openSidebar}
         hideGlobalSearch
-      />
-
-      <div className="mt-3 rounded-[24px] border border-border bg-background/95 p-3.5 shadow-sm">
-        <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-          {eyebrow}
-        </div>
-        <div className="mt-1 text-[22px] font-extrabold leading-[1.05] tracking-[-0.04em] text-foreground">
-          {title}
-        </div>
-        <div className="mt-1 flex items-start justify-between gap-3">
-          <div className="min-w-0 text-[13px] text-muted-foreground">{summary}</div>
-          <div className="flex shrink-0 items-center gap-2">
+        actions={
+          <div className="flex shrink-0 items-center gap-1.5">
             <Button
               type="button"
               variant={searchOpen ? "outline" : "ghost"}
               size="icon"
               onClick={() => setSearchOpen((open) => !open)}
-              className="h-9 w-9 rounded-[13px] border-border bg-background text-foreground shadow-sm"
+              className="h-9 w-9 rounded-[11px] border-border bg-background text-foreground shadow-sm"
               aria-label={searchOpen ? "Hide search" : "Show search"}
             >
               {searchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
@@ -135,18 +127,19 @@ export default function InvoiceListPageSection<T extends ListRecord>({
               variant={filtersOpen ? "outline" : "ghost"}
               size="icon"
               onClick={() => setFiltersOpen((open) => !open)}
-              className="h-9 w-9 rounded-[13px] border-border bg-background text-foreground shadow-sm"
+              className="h-9 w-9 rounded-[11px] border-border bg-background text-foreground shadow-sm"
               aria-label={filtersOpen ? "Hide filters" : "Show filters"}
             >
               <SlidersHorizontal className="h-4 w-4" />
             </Button>
           </div>
-        </div>
+        }
+      />
 
-        {controlsVisible ? (
-          <div className="mt-3 space-y-3 rounded-[18px] border border-border/80 bg-background/80 p-3 shadow-sm">
+      {controlsVisible ? (
+        <div className="mt-3 rounded-[20px] border border-border bg-background/95 p-3 shadow-sm">
             {searchOpen ? (
-              <div className="flex h-12 items-center gap-3 rounded-[16px] border border-border bg-background px-3.5">
+              <div className="flex h-11 items-center gap-3 rounded-[14px] border border-border bg-background px-3">
                 <Search className="h-4.5 w-4.5 text-muted-foreground" />
                 <Input
                   value={searchValue}
@@ -159,7 +152,7 @@ export default function InvoiceListPageSection<T extends ListRecord>({
 
             {filtersOpen ? (
               <>
-                <div className="grid grid-cols-2 gap-2">
+                <div className={cn("grid grid-cols-2 gap-2", searchOpen && "mt-3")}>
                   {filters.map((filter) => (
                     <div key={filter.label} className="space-y-1">
                       <div className="px-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
@@ -191,9 +184,8 @@ export default function InvoiceListPageSection<T extends ListRecord>({
                 </Button>
               </>
             ) : null}
-          </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       <div className="mt-4">
         {beforeListContent}
@@ -215,7 +207,7 @@ export default function InvoiceListPageSection<T extends ListRecord>({
                 role="button"
                 tabIndex={0}
                 className={cn(
-                  "grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3.5 py-3.5 text-left transition hover:bg-muted/25",
+                  "grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3.5 py-3 text-left transition hover:bg-muted/25",
                   index > 0 && "border-t border-border",
                 )}
                 >
@@ -223,8 +215,11 @@ export default function InvoiceListPageSection<T extends ListRecord>({
                     <div className="truncate text-[14px] font-bold tracking-[-0.02em] text-foreground">
                       {record.client_name || "No client"}
                     </div>
-                    <div className="mt-1 text-[12px] leading-[1.35] text-muted-foreground">
-                      {renderIssueMeta(record)}
+                    <div className="mt-1 truncate text-[12px] font-semibold leading-[1.3] text-muted-foreground">
+                      {renderDocumentNumber(record)}
+                    </div>
+                    <div className="mt-0.5 truncate text-[12px] leading-[1.3] text-muted-foreground">
+                      {renderDocumentDate(record)}
                     </div>
                   </div>
 

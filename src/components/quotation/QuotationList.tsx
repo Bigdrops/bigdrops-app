@@ -33,6 +33,7 @@ import {
   type QuotationCreateQueueItem,
 } from '@/lib/native/quotationSync'
 import { formatNaira } from '@/lib/formatters/money'
+import { formatDisplayDate } from '@/lib/formatters/date'
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
 import InvoiceListPageSection from '@/components/invoice/InvoiceListPageSection'
 
@@ -334,15 +335,20 @@ export default function QuotationList() {
   ]
 
   const renderQuotationRowMeta = (quotation: ReturnType<typeof mapDbQuotation>) => {
-    const parts = [quotation.quotation_number || 'Draft quotation']
-    if (quotation.issue_date) {
-      parts.push(`Issued ${quotation.issue_date}`)
-    }
-    if (String(quotation.po_number || '').trim()) {
-      parts.push(`PO ${String(quotation.po_number || '').trim()}`)
-    }
-    return parts.join(' · ')
+    return quotation.quotation_number || 'Draft quotation'
   }
+
+  const renderQuotationRowDate = (quotation: ReturnType<typeof mapDbQuotation>) =>
+    formatDisplayDate(quotation.issue_date, {
+      fallback: 'No date',
+      invalidFallback: 'No date',
+      locale: 'en-GB',
+      dateOptions: {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      },
+    })
 
   const getQuotationStatusClassName = (status: string | null | undefined) => {
     const tone = quotationStatusTone(status)
@@ -469,7 +475,8 @@ export default function QuotationList() {
         onRowActionClick={(quotation) => setActiveQuotation(quotation)}
         renderAmount={(value) => formatMoney(value || 0)}
         renderStatusLabel={formatQuotationStatus}
-        renderIssueMeta={(quotation) => renderQuotationRowMeta(quotation)}
+        renderDocumentNumber={(quotation) => renderQuotationRowMeta(quotation)}
+        renderDocumentDate={(quotation) => renderQuotationRowDate(quotation)}
         renderStatusClassName={getQuotationStatusClassName}
         beforeListContent={syncRecoveryBanner}
         emptyState={(
