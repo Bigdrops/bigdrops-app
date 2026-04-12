@@ -304,7 +304,7 @@ export function getProjectDocumentNotes(document: ProjectDocumentRecord) {
 
 /**
  * Returns a normalised array of image entries from a document's data field.
- * Handles both the new structured format (data.images[]) and a legacy single
+ * Handles both the new structured format (data.images[]) and an older single
  * image_url string for backward compatibility.
  */
 export function getProjectDocumentImages(document: ProjectDocumentRecord): ProjectDocumentImage[] {
@@ -322,7 +322,7 @@ export function getProjectDocumentImages(document: ProjectDocumentRecord): Proje
       }))
   }
 
-  // Legacy fallback: a single image_url string on the data object
+  // Backward compatibility: a single image_url string on the data object
   const legacyUrl = String(data.image_url || '').trim()
   if (legacyUrl) {
     return [{ url: legacyUrl, label: null, type: 'main' }]

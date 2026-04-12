@@ -1,4 +1,4 @@
--- Phase 2A: Compliance Hub Persistent Storage
+-- Compliance hub: persistent storage
 
 -- Tax Settings: Per-entity tax identification and operational rules
 CREATE TABLE IF NOT EXISTS tax_settings (
@@ -36,11 +36,10 @@ CREATE TABLE IF NOT EXISTS wht_receipts (
     UNIQUE(payment_id) -- One receipt tracking record per payment
 );
 
--- Basic RLS (Assuming existing app uses simple or no RLS, but adding skeletons)
+-- Basic RLS: enable row level security for compliance tables.
 ALTER TABLE tax_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wht_receipts ENABLE ROW LEVEL SECURITY;
 
--- If there are specific policies in the app, they would go here.
--- For now, we assume authenticated access is handled broadly as per current app style.
+-- Policies below allow authenticated access to manage these tables.
 CREATE POLICY "Allow all for authenticated users" ON tax_settings FOR ALL TO authenticated USING (true);
 CREATE POLICY "Allow all for authenticated users" ON wht_receipts FOR ALL TO authenticated USING (true);

@@ -609,7 +609,7 @@ export function normalizeDocumentInput(raw: RawDocumentInput): DocumentInput {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LEGACY FALLBACK HELPERS — isolated, last-resort only
+// Backward-compatibility helpers (older persisted fields only)
 // document.vat / document.discount / document.wht are NEVER used here
 // ─────────────────────────────────────────────────────────────────────────────
 

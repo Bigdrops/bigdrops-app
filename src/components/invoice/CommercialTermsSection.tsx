@@ -101,19 +101,19 @@ export default function CommercialTermsSection({
   const workDuration = String(invoice.work_duration || '')
 
   const discountSummary = useMemo(() => {
-    if (discountValue <= 0) return 'Not configured'
+    if (discountValue <= 0) return 'Not set'
     const valueLabel = discountType === 'percent' ? `${discountValue}%` : formatCurrency(discountValue)
     const timingLabel = discountTiming === 'before' ? 'Before tax' : 'After tax'
     return `${valueLabel} · ${timingLabel}`
   }, [discountTiming, discountType, discountValue])
 
   const whtSummary = useMemo(() => {
-    if (whtValue <= 0) return 'Not configured'
+    if (whtValue <= 0) return 'Not set'
     return `${whtType === 'percent' ? `${whtValue}%` : formatCurrency(whtValue)} deducted from payable`
   }, [whtType, whtValue])
 
   const extraChargeSummary = useMemo(() => {
-    if (extraCharges.length === 0) return 'No additional charges configured'
+    if (extraCharges.length === 0) return 'No additional charges'
     const total = extraCharges.reduce((sum, charge) => sum + Number(charge.value || 0), 0)
     return `${extraCharges.length} ${extraCharges.length === 1 ? 'charge' : 'charges'} · ${formatCurrency(total)}`
   }, [extraCharges])
@@ -124,7 +124,7 @@ export default function CommercialTermsSection({
       parts.push(`${additionalFields.length} ${additionalFields.length === 1 ? 'field' : 'fields'}`)
     }
     if (workDuration) parts.push('Work duration set')
-    return parts.length > 0 ? parts.join(' · ') : 'No additional fields configured'
+    return parts.length > 0 ? parts.join(' · ') : 'No additional fields'
   }, [additionalFields.length, workDuration])
 
   return (

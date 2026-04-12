@@ -26,7 +26,7 @@ public sealed class NpgsqlConnectionFactory : IDbConnectionFactory
 
     if (string.IsNullOrWhiteSpace(connectionString))
     {
-      throw new InvalidOperationException("Database connection string not configured. Set ConnectionStrings:Default or DATABASE_URL.");
+      throw new InvalidOperationException("Database connection string is missing. Set ConnectionStrings:Default or DATABASE_URL.");
     }
 
     return new NpgsqlConnection(connectionString);

@@ -1,4 +1,4 @@
--- Phase 3A: Tax Obligation Reminders
+-- Tax obligation reminders
 create table tax_reminders (
   id uuid primary key default gen_random_uuid(),
   settings_id integer not null references settings(id) on delete cascade,

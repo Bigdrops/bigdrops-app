@@ -616,9 +616,9 @@ export default function Invoices() {
             payment: () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) },
             clone: handleClone,
             advance: handleAdvance,
-            quote: () => { closeSheet(); toast({ title: "Coming soon", description: "Quotations module coming soon." }) },
-            csr: () => { closeSheet(); toast({ title: "Coming soon", description: "Coming soon." }) },
-            waybill: () => { closeSheet(); toast({ title: "Coming soon", description: "Coming soon." }) },
+            quote: () => { closeSheet(); toast({ title: "Unavailable", description: "Quotations are not available in this version." }) },
+            csr: () => { closeSheet(); toast({ title: "Unavailable", description: "Service reports are not available in this version." }) },
+            waybill: () => { closeSheet(); toast({ title: "Unavailable", description: "Waybills are not available in this version." }) },
             "mark-sent": handleMarkSent,
             archive: () => setShowArchiveWarn(true),
           }

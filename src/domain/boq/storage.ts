@@ -66,6 +66,6 @@ export function ensureBoqSeed(): Boq[] {
   if (existing.length > 0) return existing
 
   const seed = createEmptyBoq()
-  saveBoq({ ...seed, boq_number: getNextBoqNumber(), vendor_name: 'Sample Project', notes: 'Local BOQ storage for first implementation pass.' })
+  saveBoq({ ...seed, boq_number: getNextBoqNumber(), vendor_name: '', notes: '' })
   return listBoqs()
 }

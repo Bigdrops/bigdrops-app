@@ -212,7 +212,7 @@ function getActiveTab(pathname) {
 export function BusinessSwitcher() {
   const { settings } = useSettings()
   const [open, setOpen] = React.useState(false)
-  const activeName = settings?.company_name || 'Business profile not configured'
+  const activeName = settings?.company_name || 'Unnamed business'
 
   return (
     <>
@@ -240,7 +240,7 @@ export function BusinessSwitcher() {
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <div>
                 <div className="text-sm font-bold text-foreground">Current Business</div>
-                <div className="text-xs text-muted-foreground">Loaded from settings</div>
+                <div className="text-xs text-muted-foreground">Business profile</div>
               </div>
               <button
                 type="button"
@@ -259,7 +259,7 @@ export function BusinessSwitcher() {
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold text-foreground">{activeName}</div>
                     <div className="text-xs text-muted-foreground">
-                      Multi-business switching is not configured yet.
+                      Multi-business switching is not enabled.
                     </div>
                   </div>
                   <Check className="h-4 w-4 text-foreground" />

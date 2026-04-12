@@ -456,7 +456,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   }
 
   const handleRecordPaymentPlaceholder = () => {
-    toast({ title: 'Coming soon', description: 'Convert this quotation to an invoice first before recording payment.' })
+    toast({ title: 'Unavailable', description: 'Create an invoice from this quotation to record a payment.' })
   }
 
   const handleConvertToInvoice = async () => {

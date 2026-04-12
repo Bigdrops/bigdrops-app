@@ -256,7 +256,7 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
                 <div className="space-y-1">
                   <CardTitle className="text-sm font-semibold">Default Bigdrops Theme</CardTitle>
                   <CardDescription className="text-[11px] leading-relaxed">
-                    Restores the HTML reference base system from `docs/screen.html`.
+                    Restores the default theme colors and surfaces.
                   </CardDescription>
                 </div>
                 {selectedMode === BASE_THEME_MODE ? (

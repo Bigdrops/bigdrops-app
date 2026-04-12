@@ -1,4 +1,4 @@
--- Phase 2C: Tax Filings register
+-- Tax filings register
 create table tax_filings (
   id uuid primary key default gen_random_uuid(),
   settings_id integer not null references settings(id) on delete cascade,

@@ -7,7 +7,7 @@ import { hexToHslTriplet, normalizeHexColor } from "@/lib/colorTheme"
  *   hsl(var(--background))
  *
  * This module lets us apply/remove a runtime "token bundle" by setting CSS
- * variables on `document.documentElement`. Phase 1 focuses on color tokens.
+ * variables on `document.documentElement`.
  */
 
 export const THEME_COLOR_TOKENS = [
@@ -114,4 +114,3 @@ export function clearThemeTokenBundle(tokens: ThemeToken[]): void {
     root.style.removeProperty(`--${token}`)
   }
 }
-

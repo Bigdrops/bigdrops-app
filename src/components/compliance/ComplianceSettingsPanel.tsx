@@ -136,7 +136,7 @@ export default function ComplianceSettingsPanel() {
                     {settings.cit_category || 'small'}
                   </Badge>
                 </div>
-                <p className="text-[10px] text-muted-foreground">Adjustable in Phase 2B</p>
+                <p className="text-[10px] text-muted-foreground">Currently read-only</p>
               </div>
 
               <div className="space-y-2 opacity-50">
@@ -144,7 +144,7 @@ export default function ComplianceSettingsPanel() {
                   Year-end Month
                 </Label>
                 <div className="text-sm font-bold text-slate-800 italic pt-1">
-                  {settings.year_end_month || 'Not configured'}
+                  {settings.year_end_month || 'Not set'}
                 </div>
               </div>
             </div>
@@ -153,7 +153,7 @@ export default function ComplianceSettingsPanel() {
               <div className="rounded-xl bg-amber-50 border border-amber-100 p-3 flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
                 <p className="text-[11px] text-amber-800 leading-tight">
-                  TIN is required for generating valid witholding tax (WHT) recovery documents.
+                  TIN is required for generating valid withholding tax (WHT) recovery documents.
                 </p>
               </div>
             )}
@@ -165,7 +165,7 @@ export default function ComplianceSettingsPanel() {
         <CardContent className="p-4 flex items-start gap-3">
           <HelpCircle className="h-5 w-5 text-blue-400 mt-0.5" />
           <div className="text-[11px] text-blue-800 leading-relaxed">
-            <span className="font-bold text-blue-900">Note:</span> These settings control tax-related features across BigDrops. CIT categories and automatic calculation toggles are arriving in Phase 2B.
+            <span className="font-bold text-blue-900">Note:</span> These settings control tax-related features across BigDrops.
           </div>
         </CardContent>
       </Card>

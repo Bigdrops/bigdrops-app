@@ -299,13 +299,13 @@ export default function Clients() {
             key: "archive",
             label: "Archive",
             icon: <Archive className="h-6 w-6" />,
-            onClick: () => toast({ title: "Coming soon", description: "Archive coming soon." }),
+            onClick: () => toast({ title: "Unavailable", description: "Archiving is not available in this version." }),
           },
           {
             key: "merge",
             label: "Merge",
             icon: <Users className="h-6 w-6" />,
-            onClick: () => toast({ title: "Coming soon", description: "Merge coming soon." }),
+            onClick: () => toast({ title: "Unavailable", description: "Merging clients is not available in this version." }),
           },
         ] : []}
         deleteAction={activeClient ? {
