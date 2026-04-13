@@ -278,9 +278,7 @@ export default function ClientSelector({
                 className={triggerClassName}
                 onClick={() => setOpen(true)}
               >
-                <span className="truncate">
-                  {selectedSummary?.name || `Search ${clients.length} clients`}
-                </span>
+                <span className="block w-full truncate text-left">{selectedSummary?.name || `Search ${clients.length} clients`}</span>
               </Button>
               {selectedSummary ? (
                 <Button type="button" variant="outline" className={clearClassName} onClick={clearSelection}>
@@ -290,7 +288,7 @@ export default function ClientSelector({
             </div>
 
             <Dialog open={open} onOpenChange={closePicker}>
-              <DialogContent className="max-w-[calc(100%-1rem)] rounded-2xl bg-card p-0 sm:max-w-lg">
+              <DialogContent className="max-w-[calc(100%-1rem)] rounded-2xl bg-white p-0 sm:max-w-lg">
                 <div className="max-h-[85vh] overflow-y-auto p-4">
                   <DialogHeader className="mb-3">
                     <DialogTitle>Select Client</DialogTitle>
@@ -302,7 +300,7 @@ export default function ClientSelector({
                     className="h-11 bg-background"
                     autoFocus
                   />
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-3 space-y-1">
                     {filteredClients.length === 0 ? (
                       <div className="rounded-xl border border-border bg-muted/50 px-3 py-6 text-center text-sm text-muted-foreground">
                         No clients match &quot;{searchTerm}&quot;.
@@ -312,11 +310,11 @@ export default function ClientSelector({
                         <button
                           key={client.id}
                           type="button"
-                          className="flex w-full flex-col rounded-xl border border-border bg-card px-3 py-3 text-left active:bg-muted/50"
+                          className="flex w-full flex-col border-b border-zinc-200 px-1 py-2.5 text-left"
                           onClick={() => selectClient(client)}
                         >
-                          <span className="text-sm font-semibold text-foreground">{client.name}</span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="truncate text-sm font-semibold text-foreground">{client.name}</span>
+                          <span className="truncate text-xs text-muted-foreground">
                             {[client.contact_person, client.city, client.phone].filter(Boolean).join(' • ') || 'No extra details'}
                           </span>
                         </button>
@@ -370,8 +368,8 @@ export default function ClientSelector({
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => selectClient(client)}
                       >
-                        <span className="text-sm font-semibold text-foreground">{client.name}</span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="truncate text-sm font-semibold text-foreground">{client.name}</span>
+                        <span className="truncate text-xs text-muted-foreground">
                           {[client.contact_person, client.city, client.phone].filter(Boolean).join(' • ') || 'No extra details'}
                         </span>
                       </button>

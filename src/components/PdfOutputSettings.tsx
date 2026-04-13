@@ -87,10 +87,10 @@ function resolveBanks(bankAccounts?: BankAccount[]) {
 
 function mergeOutputState(value: Partial<PdfOutputSettingsValue> | undefined, defaultBank: BankAccount | null): PdfOutputSettingsValue {
   return {
-    showBankDetails: value?.showBankDetails ?? false,
+    showBankDetails: value?.showBankDetails ?? true,
     bankAccountId: value?.bankAccountId ?? defaultBank?.id ?? null,
-    showFooter: value?.showFooter ?? true,
-    showTagline: value?.showTagline ?? true,
+    showFooter: value?.showFooter ?? false,
+    showTagline: value?.showTagline ?? false,
     showBalanceDue: value?.showBalanceDue ?? true,
     showVatPercentage: value?.showVatPercentage ?? true,
     showWhtPercentage: value?.showWhtPercentage ?? true,
@@ -228,7 +228,7 @@ export function PdfSupportingOptions({
       {showBalanceDueOption ? (
         <div className="rounded-[20px] border border-border bg-card px-4 py-4">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-sm font-semibold text-foreground">Show Balance Due</div>
+            <div className="text-sm font-semibold text-foreground">Show balance due</div>
             <OutputToggle checked={state.showBalanceDue} onToggle={() => update({ showBalanceDue: !state.showBalanceDue })} />
           </div>
         </div>
@@ -260,11 +260,6 @@ export function PdfSupportingOptions({
           <div className="text-sm font-semibold text-foreground">Footer</div>
           <OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />
         </div>
-        {state.showFooter ? (
-          <div className="mt-3 rounded-[16px] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
-            {footerText || 'No footer'}
-          </div>
-        ) : null}
       </div>
     </div>
   )
@@ -320,12 +315,12 @@ export function PdfOutputSettings({
         <button
           type="button"
           onClick={() => setExpanded((open) => !open)}
-          className="flex w-full items-center justify-between gap-3 border-l-4 border-emerald-500 bg-emerald-50 px-4 py-4 text-left"
+          className="flex w-full items-center justify-between gap-3 border-l-4 border-emerald-500 bg-white px-4 py-4 text-left"
         >
           <div>
-            <div className="text-sm font-semibold tracking-tight text-foreground">Document Options</div>
+            <div className="text-sm font-semibold tracking-tight text-foreground">Advanced Options</div>
             <div className="mt-1 text-xs text-muted-foreground">
-              Control what appears in the generated document.
+              Document visibility, branding, and micro settings.
             </div>
           </div>
           {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
@@ -348,7 +343,7 @@ export function PdfOutputSettings({
               />
             </div>
             {state.showBankDetails && selectedBank ? (
-              <div className="space-y-3 border-b border-border bg-emerald-50 px-3 py-3">
+              <div className="space-y-3 border-b border-border bg-white px-3 py-3">
                 <div className="rounded-md border-l-4 border-emerald-500 bg-card p-3">
                   <div className="mb-2 flex items-center gap-2">
                     <div className="rounded-md bg-emerald-100 p-1.5 text-emerald-700">
@@ -390,11 +385,11 @@ export function PdfOutputSettings({
             ) : null}
 
             <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
-              <span className="text-sm font-medium text-slate-700">Show Tagline</span>
+              <span className="text-sm font-medium text-slate-700">Show tagline</span>
               <OutputToggle checked={state.showTagline} onToggle={() => update({ showTagline: !state.showTagline })} />
             </div>
             {state.showTagline ? (
-              <div className="border-b border-border bg-blue-50 px-3 py-3">
+              <div className="border-b border-border bg-white px-3 py-3">
                 <div className="rounded-md border-l-4 border-blue-500 bg-card p-3">
                   <p className="mb-1 text-sm font-medium text-foreground">Tagline Preview</p>
                   <p className="line-clamp-2 text-sm text-muted-foreground">
@@ -405,12 +400,12 @@ export function PdfOutputSettings({
             ) : null}
 
             <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
-              <span className="text-sm font-medium text-slate-700">Show Footer</span>
+              <span className="text-sm font-medium text-slate-700">Show footer</span>
               <OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />
             </div>
             {showBalanceDueOption ? (
               <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
-                <span className="text-sm font-medium text-slate-700">Show Balance Due</span>
+                <span className="text-sm font-medium text-slate-700">Show balance due</span>
                 <OutputToggle checked={state.showBalanceDue} onToggle={() => update({ showBalanceDue: !state.showBalanceDue })} />
               </div>
             ) : null}
@@ -430,7 +425,7 @@ export function PdfOutputSettings({
               />
             </div>
             {state.showFooter ? (
-              <div className="bg-amber-50 px-3 py-3">
+              <div className="bg-white px-3 py-3">
                 <div className="rounded-md border-l-4 border-amber-500 bg-card p-3">
                   <div className="mb-2 flex items-center gap-2">
                     <div className="rounded-md bg-amber-100 p-1.5 text-amber-700">

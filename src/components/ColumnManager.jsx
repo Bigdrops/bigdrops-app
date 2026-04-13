@@ -1,125 +1,70 @@
 import { useState } from 'react'
-import {
-  Settings2,
-  Table2,
-  Percent,
-  Eye,
-  EyeOff,
-  GripVertical,
-  Plus,
-  RotateCcw,
-  X,
-  Trash2,
-} from 'lucide-react'
+import { GripVertical, Eye, EyeOff, Plus, RotateCcw, Settings2, X, Trash2 } from 'lucide-react'
 import { Button } from '../components/ui/button'
-import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
-import { Label } from '../components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import { COLUMN_TYPES } from './useInvoiceColumns.jsx'
 
-function RowShell({ children, muted = false }) {
+function ColumnRow({ col, isCustom, onToggle, onUpdate, onRemoveCustom, onDragStart, onDragOver, onDrop, typeLabel }) {
   return (
-    <div
-      className={`flex items-start gap-3 border-b border-zinc-200 bg-white py-3 ${muted ? 'opacity-60' : ''}`}
-    >
-      {children}
-    </div>
-  )
-}
-
-function VisibilityBtn({ visible, onClick }) {
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      size="icon"
-      onClick={onClick}
-      className="h-9 w-9 rounded-xl border-zinc-300 bg-card text-zinc-700 hover:bg-zinc-100"
-      title={visible ? 'Hide column' : 'Show column'}
-      aria-pressed={visible}
-    >
-      {visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-    </Button>
-  )
-}
-
-function ColumnRow({
-  col,
-  isCustom,
-  onToggle,
-  onUpdate,
-  onRemoveCustom,
-  onDragStart,
-  onDragOver,
-  onDrop,
-  typeLabel,
-}) {
-  return (
-    <RowShell muted={!col.visible}>
-      <div
+    <div className={`flex items-start gap-2 border-b border-zinc-200 py-2.5 ${!col.visible ? 'opacity-60' : ''}`}>
+      <button
+        type="button"
         draggable
         onDragStart={(e) => onDragStart(e, col.key)}
         onDragOver={onDragOver}
         onDrop={(e) => onDrop(e, col.key)}
-        className="flex h-9 w-8 cursor-grab items-center justify-center text-zinc-400"
+        className="mt-1 inline-flex h-7 w-7 items-center justify-center rounded border border-zinc-200 text-zinc-500"
         title="Drag to reorder"
       >
         <GripVertical className="h-4 w-4" />
-      </div>
+      </button>
 
-      <VisibilityBtn visible={col.visible} onClick={() => onToggle(col.key)} />
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        onClick={() => onToggle(col.key)}
+        className="h-8 w-8 rounded-lg border-zinc-300"
+        title={col.visible ? 'Hide column' : 'Show column'}
+      >
+        {col.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+      </Button>
 
       <div className="min-w-0 flex-1 space-y-2">
         <Input
           value={col.label || ''}
           onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
           placeholder="Column name"
-          className="h-9 border-zinc-300 bg-background text-zinc-900 placeholder:text-zinc-400"
+          className="h-8"
         />
 
-        {col.key === 'install_rate' && (
-          <div className="space-y-1">
-            <div className="text-xs text-zinc-500">
-              Multiplier. Example: <strong>0.1</strong> means 10% of Qty x Rate.
-              Show this column only when you need manual row install overrides; use Reset Row Overrides below to clear them.
-            </div>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              value={col.formula || ''}
-              onChange={(e) => onUpdate(col.key, 'formula', e.target.value)}
-              placeholder="e.g. 0.1"
-              className="h-9 border-zinc-300 bg-background text-zinc-900"
-            />
-          </div>
-        )}
+        {col.key === 'install_rate' ? (
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            value={col.formula || ''}
+            onChange={(e) => onUpdate(col.key, 'formula', e.target.value)}
+            placeholder="Install formula"
+            className="h-8"
+          />
+        ) : null}
 
-        {(col.key === 'vat_rate' || col.key === 'discount_rate') && (
-          <div className="text-xs text-zinc-500">
-            Set <strong>0</strong> on a row to exclude it. Leave blank to use the global rate.
-          </div>
-        )}
-
-        {isCustom && (
-          <div className="flex flex-wrap items-center gap-2">
-            <Select value={col.type} onValueChange={(value) => onUpdate(col.key, 'type', value)}>
-              <SelectTrigger className="h-9 rounded-md border border-zinc-300 bg-background px-3 text-sm text-zinc-900">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {COLUMN_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {col.type === 'number' && (
-              <label className="flex items-center gap-2 text-sm text-zinc-600">
+        {isCustom ? (
+          <div className="flex items-center gap-2">
+            <select
+              value={col.type}
+              onChange={(e) => onUpdate(col.key, 'type', e.target.value)}
+              className="h-8 rounded-md border border-zinc-300 bg-white px-2 text-sm"
+            >
+              {COLUMN_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+            {col.type === 'number' ? (
+              <label className="inline-flex items-center gap-2 text-xs text-zinc-600">
                 <input
                   type="checkbox"
                   checked={!!col.includeInTotal}
@@ -127,29 +72,25 @@ function ColumnRow({
                 />
                 Add to total
               </label>
-            )}
+            ) : null}
           </div>
+        ) : (
+          <div className="text-[11px] text-zinc-500">{typeLabel(col.type || 'text')}</div>
         )}
       </div>
 
-      {!isCustom ? (
-        <div className="pt-2">
-          <div className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-[11px] text-zinc-500">
-            {typeLabel(col.type || 'text')}
-          </div>
-        </div>
-      ) : (
+      {isCustom ? (
         <Button
           type="button"
           variant="ghost"
           size="icon"
           onClick={() => onRemoveCustom(col.key)}
-          className="h-9 w-9 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700"
+          className="h-8 w-8 rounded-lg text-red-600"
         >
           <Trash2 className="h-4 w-4" />
         </Button>
-      )}
-    </RowShell>
+      ) : null}
+    </div>
   )
 }
 
@@ -162,24 +103,16 @@ export default function ColumnManager({
   onReset,
   onMove,
   onClose,
-  vat,
-  setVat,
-  wht,
-  setWht,
-  whtType,
-  setWhtType,
   items = [],
   onResetItemOverrides,
 }) {
-  const [activeTab, setActiveTab] = useState('table')
-
   const builtinCols = columns.filter((c) => !c.key.startsWith('custom_'))
   const customCols = columns.filter((c) => c.key.startsWith('custom_'))
 
   const standardItems = items.filter((i) => i.row_type === 'standard')
-  const vatOverrideCount      = standardItems.filter((i) => i.vat_rate      != null).length
-  const discountOverrideCount = standardItems.filter((i) => i.discount_rate  != null).length
-  const installOverrideCount  = standardItems.filter((i) => i.install_rate_override === true).length
+  const vatOverrideCount = standardItems.filter((i) => i.vat_rate != null).length
+  const discountOverrideCount = standardItems.filter((i) => i.discount_rate != null).length
+  const installOverrideCount = standardItems.filter((i) => i.install_rate_override === true).length
 
   const handleDragStart = (e, key) => e.dataTransfer.setData('text/plain', key)
   const handleDragOver = (e) => e.preventDefault()
@@ -187,276 +120,95 @@ export default function ColumnManager({
     e.preventDefault()
     const draggedKey = e.dataTransfer.getData('text/plain')
     if (!draggedKey || draggedKey === targetKey || !onMove) return
-    const fromIdx = columns.findIndex((c) => c.key === draggedKey)
     const toIdx = columns.findIndex((c) => c.key === targetKey)
-    if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return
+    if (toIdx < 0) return
     onMove(draggedKey, toIdx)
   }
 
-  const typeLabel = (t) =>
-    ({ install_rate: 'Rate', vat_rate: 'VAT%', discount_rate: 'Disc%' }[t] || t)
+  const handleResetTable = () => {
+    if (!window.confirm('Reset table to default? This restores columns, labels, and layout. Items are not removed.')) return
+    onReset()
+  }
+
+  const typeLabel = (t) => ({ install_rate: 'Rate', vat_rate: 'VAT%', discount_rate: 'Disc%' }[t] || t)
 
   return (
-    <div
-      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/55 p-4"
-    >
+    <div className="fixed inset-0 z-[999] flex items-end justify-center bg-black/30 p-0 sm:items-center sm:p-4">
       <div className="absolute inset-0" onClick={onClose} />
-
-      <Card
-        className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border-zinc-200 bg-white shadow-2xl"
-      >
-        <div
-          className="flex items-center justify-between border-b border-zinc-200 bg-white px-5 py-4"
-        >
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700">
-              <Settings2 className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-zinc-900">
-                Table & Tax Settings
-              </h3>
-              <div className="text-xs text-zinc-500">
-                Manage columns, labels, row behavior, VAT and WHT
-              </div>
-            </div>
+      <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-zinc-200 bg-white sm:rounded-2xl">
+        <div className="flex items-start justify-between border-b border-zinc-200 px-4 py-3">
+          <div>
+            <h3 className="text-base font-semibold text-zinc-900">Table Settings</h3>
+            <p className="text-xs text-zinc-500">Manage columns and row behavior</p>
           </div>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-          >
-            <X className="h-5 w-5" />
+          <Button type="button" variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-lg">
+            <X className="h-4 w-4" />
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-white px-5 py-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList
-              className="mb-4 grid w-full grid-cols-2 rounded-xl border border-zinc-200 bg-zinc-100 p-1"
-            >
-              <TabsTrigger
-                value="table"
-                className="gap-2 rounded-lg text-zinc-700 data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-sm"
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          <section>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Columns</div>
+            <div>
+              {builtinCols.map((col) => (
+                <ColumnRow key={col.key} col={col} isCustom={false} onToggle={onToggle} onUpdate={onUpdate} onRemoveCustom={onRemoveCustom} onDragStart={handleDragStart} onDragOver={handleDragOver} onDrop={handleDrop} typeLabel={typeLabel} />
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-4">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Custom Columns</div>
+              <Button type="button" variant="outline" size="sm" onClick={onAddCustom} className="h-8 gap-1.5 rounded-lg">
+                <Plus className="h-3.5 w-3.5" />
+                Add column
+              </Button>
+            </div>
+            {customCols.length === 0 ? <div className="text-sm text-zinc-500">No custom columns</div> : null}
+            <div>
+              {customCols.map((col) => (
+                <ColumnRow key={col.key} col={col} isCustom={true} onToggle={onToggle} onUpdate={onUpdate} onRemoveCustom={onRemoveCustom} onDragStart={handleDragStart} onDragOver={handleDragOver} onDrop={handleDrop} typeLabel={typeLabel} />
+              ))}
+            </div>
+          </section>
+
+          {onResetItemOverrides ? (
+            <section className="mt-4">
+              <div className="text-sm font-semibold text-zinc-900">Row Overrides</div>
+              <p className="mb-2 text-xs text-zinc-500">Clear per-row VAT, discount, and install overrides</p>
+              {[
+                { label: 'VAT overrides', count: vatOverrideCount, fields: { vat: true } },
+                { label: 'Discount overrides', count: discountOverrideCount, fields: { discount: true } },
+                { label: 'Install rate', count: installOverrideCount, fields: { install: true } },
+              ].map(({ label, count, fields }) => (
+                <div key={label} className="mb-1.5 flex items-center justify-between gap-2 rounded-md border border-zinc-200 px-2.5 py-2">
+                  <div className="text-sm text-zinc-700">{label} <span className="text-zinc-500">({count})</span></div>
+                  <Button type="button" variant="outline" size="sm" disabled={count === 0} onClick={() => onResetItemOverrides(fields)} className="h-7 rounded-md px-2 text-xs">Reset</Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={vatOverrideCount + discountOverrideCount + installOverrideCount === 0}
+                onClick={() => onResetItemOverrides({ vat: true, discount: true, install: true })}
+                className="mt-1 h-8 w-full rounded-md text-xs"
               >
-                <Table2 className="h-4 w-4" />
-                Table
-              </TabsTrigger>
-              <TabsTrigger
-                value="tax"
-                className="gap-2 rounded-lg text-zinc-700 data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-sm"
-              >
-                <Percent className="h-4 w-4" />
-                Tax
-              </TabsTrigger>
-            </TabsList>
+                Reset all row overrides
+              </Button>
+            </section>
+          ) : null}
 
-            <TabsContent value="table" className="mt-0 space-y-5">
-              <Card className="rounded-2xl border-zinc-200 bg-card shadow-none">
-                <CardContent className="p-4">
-                  <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                    Standard Columns
-                  </div>
-                  <div className="bg-card">
-                    {builtinCols.map((col) => (
-                      <ColumnRow
-                        key={col.key}
-                        col={col}
-                        isCustom={false}
-                        onToggle={onToggle}
-                        onUpdate={onUpdate}
-                        onRemoveCustom={onRemoveCustom}
-                        onDragStart={handleDragStart}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
-                        typeLabel={typeLabel}
-                      />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-2xl border-zinc-200 bg-card shadow-none">
-                <CardContent className="p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                      Custom Columns
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={onAddCustom}
-                      className="gap-2 rounded-xl border-zinc-300 bg-card text-zinc-800 hover:bg-zinc-100"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Custom Column
-                    </Button>
-                  </div>
-
-                  {customCols.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-4 text-sm text-zinc-500">
-                      No custom columns yet.
-                    </div>
-                  ) : (
-                    <div className="bg-card">
-                      {customCols.map((col) => (
-                        <ColumnRow
-                          key={col.key}
-                          col={col}
-                          isCustom={true}
-                          onToggle={onToggle}
-                          onUpdate={onUpdate}
-                          onRemoveCustom={onRemoveCustom}
-                          onDragStart={handleDragStart}
-                          onDragOver={handleDragOver}
-                          onDrop={handleDrop}
-                          typeLabel={typeLabel}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              {onResetItemOverrides && (
-                <Card className="rounded-2xl border-zinc-200 bg-card shadow-none">
-                  <CardContent className="p-4">
-                    <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                      Reset Row Overrides
-                    </div>
-                    <div className="space-y-2">
-                      {[
-                        { label: 'VAT overrides', count: vatOverrideCount,      fields: { vat: true } },
-                        { label: 'Discount overrides', count: discountOverrideCount, fields: { discount: true } },
-                        { label: 'Install rate overrides', count: installOverrideCount, fields: { install: true } },
-                      ].map(({ label, count, fields }) => (
-                        <div key={label} className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
-                          <div className="flex items-center gap-2 text-sm text-zinc-700">
-                            <span>{label}</span>
-                            <span className="rounded-md bg-zinc-200 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-600">{count}</span>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={count === 0}
-                            onClick={() => onResetItemOverrides(fields)}
-                            className="h-7 rounded-lg border-zinc-300 bg-card px-2.5 text-xs text-zinc-700 hover:bg-zinc-100 disabled:opacity-40"
-                          >
-                            Reset
-                          </Button>
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={vatOverrideCount + discountOverrideCount + installOverrideCount === 0}
-                        onClick={() => onResetItemOverrides({ vat: true, discount: true, install: true })}
-                        className="mt-1 w-full rounded-xl border-zinc-300 bg-card text-xs text-zinc-800 hover:bg-zinc-100 disabled:opacity-40"
-                      >
-                        Reset all row overrides
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            <TabsContent value="tax" className="mt-0">
-              <Card className="rounded-2xl border-zinc-200 bg-card shadow-none">
-                <CardContent className="space-y-5 p-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="global-vat" className="text-zinc-800">
-                      VAT %
-                    </Label>
-                    <Input
-                      id="global-vat"
-                      type="number"
-                      min="0"
-                      value={vat ?? 0}
-                      onChange={(e) => setVat(Number(e.target.value))}
-                      className="border-zinc-300 bg-background text-zinc-900"
-                    />
-                    <div className="text-xs text-zinc-500">
-                      Standard Nigerian VAT rate can be set here for the invoice.
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label className="text-zinc-800">WHT (Withholding Tax)</Label>
-
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant={whtType === 'percent' ? 'default' : 'outline'}
-                        onClick={() => setWhtType('percent')}
-                        className={
-                          whtType === 'percent'
-                            ? 'rounded-xl bg-zinc-900 text-white hover:bg-black'
-                            : 'rounded-xl border-zinc-300 bg-card text-zinc-800 hover:bg-zinc-100'
-                        }
-                      >
-                        Percent %
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={whtType === 'fixed' ? 'default' : 'outline'}
-                        onClick={() => setWhtType('fixed')}
-                        className={
-                          whtType === 'fixed'
-                            ? 'rounded-xl bg-zinc-900 text-white hover:bg-black'
-                            : 'rounded-xl border-zinc-300 bg-card text-zinc-800 hover:bg-zinc-100'
-                        }
-                      >
-                        Fixed Naira
-                      </Button>
-                    </div>
-
-                    <Input
-                      type="number"
-                      min="0"
-                      value={wht ?? 0}
-                      onChange={(e) => setWht(Number(e.target.value))}
-                      className="border-zinc-300 bg-background text-zinc-900"
-                    />
-
-                    <div className="text-xs text-zinc-500">
-                      WHT is deducted from the payable amount, not added to the invoice total.
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-600">
-                    Row-level VAT and row-level discount controls still remain in the table when those columns are visible.
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          <section className="mt-5 border-t border-zinc-200 pt-3">
+            <div className="text-sm font-semibold text-zinc-900">Table</div>
+            <p className="mt-0.5 text-xs text-zinc-500">Restores columns, labels, and layout. Does not remove items.</p>
+            <Button type="button" variant="outline" onClick={handleResetTable} className="mt-2 h-8 gap-1.5 rounded-md text-xs">
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reset table to default
+            </Button>
+          </section>
         </div>
-
-        <div className="flex gap-3 border-t border-zinc-200 bg-white px-5 py-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onReset}
-            className="flex-1 gap-2 rounded-xl border-zinc-300 bg-card text-zinc-800 hover:bg-zinc-100"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Reset
-          </Button>
-          <Button
-            type="button"
-            onClick={onClose}
-            className="flex-[1.4] rounded-xl bg-zinc-900 text-white hover:bg-black"
-          >
-            Done
-          </Button>
-        </div>
-      </Card>
+      </div>
     </div>
   )
 }

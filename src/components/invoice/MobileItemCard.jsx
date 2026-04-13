@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronUp,
   ImagePlus,
+  Copy,
   MoveDown,
   MoveUp,
   Plus,
@@ -56,6 +57,7 @@ export default function MobileItemCard({
   onMoveUp,
   onMoveDown,
   onInsertBelow,
+  onDuplicate,
   isVisible,
   getColumn,
 }) {
@@ -108,20 +110,18 @@ export default function MobileItemCard({
   }
 
   return (
-    <div className="relative mt-4 rounded-[18px] border-[1.5px] border-[#e2e8f0] bg-white pt-[10px] shadow-[0_1px_3px_rgba(15,23,42,0.04),0_6px_18px_rgba(15,23,42,0.05)]">
-      <div className="absolute left-1/2 top-[-14px] z-[3] flex h-[30px] min-w-[30px] -translate-x-1/2 items-center justify-center rounded-full bg-[#0f172a] px-[10px] text-[11px] font-extrabold text-white shadow-[0_4px_12px_rgba(15,23,42,0.2)]">
-        {number}
+    <div className="relative mt-3 rounded-[14px] border border-[#e2e8f0] bg-white">
+      <div className="flex items-center justify-between border-b border-[#e2e8f0] px-3 py-2">
+        <div className="text-sm font-semibold text-[#0f172a]">{number}.</div>
+        <div className="flex items-center gap-1">
+          <button type="button" onClick={() => onMoveUp(index)} disabled={isFirst} className="inline-flex h-7 w-7 items-center justify-center rounded border border-[#e2e8f0] text-[#475569] disabled:opacity-40"><MoveUp className="h-3.5 w-3.5" /></button>
+          <button type="button" onClick={() => onMoveDown(index)} disabled={isLast} className="inline-flex h-7 w-7 items-center justify-center rounded border border-[#e2e8f0] text-[#475569] disabled:opacity-40"><MoveDown className="h-3.5 w-3.5" /></button>
+          {onDuplicate ? <button type="button" onClick={() => onDuplicate(index)} className="inline-flex h-7 w-7 items-center justify-center rounded border border-[#e2e8f0] text-[#475569]"><Copy className="h-3.5 w-3.5" /></button> : null}
+          <button type="button" onClick={() => onRemove(index)} className="inline-flex h-7 w-7 items-center justify-center rounded border border-[#fecaca] text-[#ef4444]"><Trash2 className="h-3.5 w-3.5" /></button>
+        </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => onRemove(index)}
-        className="absolute right-[10px] top-[10px] z-[2] flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[#fecaca] bg-[#fff5f5] text-[#ef4444]"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
-
-      <div className="space-y-3 p-4 pr-[38px]">
+      <div className="space-y-3 p-3">
         <Input
           value={item.description || ''}
           onChange={(event) => onUpdate(index, 'description', event.target.value)}
@@ -133,14 +133,6 @@ export default function MobileItemCard({
           <MiniButton active={showDetails} onClick={() => setShowDetails((current) => !current)}>
             {showDetails ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             Sub-description
-          </MiniButton>
-          <MiniButton disabled={isFirst} onClick={() => onMoveUp(index)}>
-            <MoveUp className="h-3.5 w-3.5" />
-            Up
-          </MiniButton>
-          <MiniButton disabled={isLast} onClick={() => onMoveDown(index)}>
-            <MoveDown className="h-3.5 w-3.5" />
-            Down
           </MiniButton>
           <MiniButton
             className={item.image_url ? 'border-[#a7f3d0] bg-[#ecfdf5] text-[#059669]' : ''}
