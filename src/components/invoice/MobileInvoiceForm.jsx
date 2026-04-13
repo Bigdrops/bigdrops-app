@@ -7,8 +7,6 @@ import {
   FileInput,
   FolderPlus,
   Hash,
-  Layers3,
-  Link2,
   MoreHorizontal,
   Plus,
   Settings2,
@@ -267,7 +265,7 @@ export default function MobileInvoiceForm(props) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">Client</div>
-                    <div className="mt-0.5 text-[14px] font-bold text-[#0f172a]">{invoice.client_name || 'Select a client'}</div>
+                    <div className="mt-0.5 truncate text-[14px] font-bold text-[#0f172a]">{invoice.client_name || 'Select a client'}</div>
                     <div className="text-[11px] text-[#94a3b8]">Tap to change</div>
                     <div className="mt-3">
                       <ClientSelector
@@ -366,7 +364,7 @@ export default function MobileInvoiceForm(props) {
                 </div>
               ) : (
                 customFields.map((field) => (
-                  <div key={field.id} className="grid grid-cols-[minmax(0,1fr)_120px_38px] items-center gap-2 max-[520px]:grid-cols-1">
+                  <div key={field.id} className="grid grid-cols-[minmax(0,1fr)_120px_38px] items-center gap-2">
                     <Input
                       value={field.label || ''}
                       onChange={(event) => onUpdateHeaderField(field.id, 'label', event.target.value)}
@@ -395,22 +393,14 @@ export default function MobileInvoiceForm(props) {
           <div>
             <SectionLabel color="#475569">Item Controls</SectionLabel>
             <div className={`${pageCardCls} p-3`}>
-              <div className="grid grid-cols-4 gap-2">
-                <ToolbarButton onClick={() => setShowColumnManager(true)}>
-                  <Settings2 className="h-4 w-4" />
-                  <span>Columns</span>
-                </ToolbarButton>
+              <div className="grid grid-cols-2 gap-2">
                 <ToolbarButton onClick={() => setShowImportSheet(true)}>
                   <FileInput className="h-4 w-4" />
                   <span>Import</span>
                 </ToolbarButton>
-                <ToolbarButton onClick={onAddGroup}>
-                  <Layers3 className="h-4 w-4" />
-                  <span>Group</span>
-                </ToolbarButton>
-                <ToolbarButton active={mergeQtyUnit} onClick={() => setMergeQtyUnit(!mergeQtyUnit)}>
-                  <Link2 className="h-4 w-4" />
-                  <span>Qty+Unit</span>
+                <ToolbarButton onClick={() => setShowColumnManager(true)}>
+                  <Settings2 className="h-4 w-4" />
+                  <span>Table Settings</span>
                 </ToolbarButton>
               </div>
             </div>
@@ -474,11 +464,11 @@ export default function MobileInvoiceForm(props) {
               )}
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-3 grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={onAddItem}
-                className="h-12 rounded-[16px] border-2 border-dashed border-[#6ee7b7] bg-[#f0fdf4] text-[14px] font-bold text-[#059669]"
+                className="h-10 rounded-[12px] border border-[#86efac] bg-[#f0fdf4] text-[13px] font-semibold text-[#047857]"
               >
                 <span className="inline-flex items-center gap-2">
                   <Plus className="h-4 w-4" />
@@ -488,7 +478,7 @@ export default function MobileInvoiceForm(props) {
               <button
                 type="button"
                 onClick={onAddGroup}
-                className="h-12 rounded-[16px] border-2 border-dashed border-[#fcd34d] bg-[#fffbeb] text-[14px] font-bold text-[#d97706]"
+                className="h-10 rounded-[12px] border border-[#fcd34d] bg-[#fffbeb] text-[13px] font-medium text-[#b45309]"
               >
                 <span className="inline-flex items-center gap-2">
                   <FolderPlus className="h-4 w-4" />
@@ -654,12 +644,6 @@ export default function MobileInvoiceForm(props) {
             onReset={resetColumns}
             onMove={moveColumn}
             onClose={() => setShowColumnManager(false)}
-            vat={Number(invoice.vat || 0)}
-            setVat={(value) => updateInvoice('vat', value)}
-            wht={Number(invoice.wht || 0)}
-            setWht={(value) => updateInvoice('wht', value)}
-            whtType={whtType}
-            setWhtType={setWhtType}
             items={items}
             onResetItemOverrides={onResetItemOverrides}
           />
