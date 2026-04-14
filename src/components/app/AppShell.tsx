@@ -14,6 +14,7 @@ import {
   type ThemeTokenBundle,
 } from '@/lib/themeTokens'
 
+const AndroidSystemBars = lazy(() => import('@/components/app/AndroidSystemBars'))
 const Dashboard = lazy(() => import('@/pages/DashboardRedesign'))
 const Invoices = lazy(() => import('@/pages/Invoices'))
 const Quotations = lazy(() => import('@/pages/Quotations'))
