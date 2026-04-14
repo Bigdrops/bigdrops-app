@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { toast } from '@/hooks/use-toast'
 
 const CATEGORIES = ['Residential', 'Commercial', 'Industrial', 'Government', 'NGO', 'Other']
@@ -165,6 +166,7 @@ export default function ClientSelector({
   const clearClassName = compact
     ? `${dense ? 'h-9' : 'h-10'} rounded-2xl border-zinc-200 bg-white px-3 text-sm text-zinc-700`
     : 'h-11 rounded-xl bg-white px-3'
+  const useMobileSheet = isMobile && compact
 
   return (
     <>
@@ -287,43 +289,83 @@ export default function ClientSelector({
               ) : null}
             </div>
 
-            <Dialog open={open} onOpenChange={closePicker}>
-              <DialogContent className="max-w-[calc(100%-1rem)] rounded-2xl bg-white p-0 sm:max-w-lg">
-                <div className="max-h-[85vh] overflow-y-auto p-4">
-                  <DialogHeader className="mb-3">
-                    <DialogTitle>Select Client</DialogTitle>
-                  </DialogHeader>
-                  <Input
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder={`Search ${clients.length} clients`}
-                    className="h-11 bg-background"
-                    autoFocus
-                  />
-                  <div className="mt-3 space-y-1">
-                    {filteredClients.length === 0 ? (
-                      <div className="rounded-xl border border-border bg-muted/50 px-3 py-6 text-center text-sm text-muted-foreground">
-                        No clients match &quot;{searchTerm}&quot;.
-                      </div>
-                    ) : (
-                      filteredClients.map((client) => (
-                        <button
-                          key={client.id}
-                          type="button"
-                          className="flex w-full flex-col border-b border-zinc-200 px-1 py-2.5 text-left"
-                          onClick={() => selectClient(client)}
-                        >
-                          <span className="truncate text-sm font-semibold text-foreground">{client.name}</span>
-                          <span className="truncate text-xs text-muted-foreground">
-                            {[client.contact_person, client.city, client.phone].filter(Boolean).join(' • ') || 'No extra details'}
-                          </span>
-                        </button>
-                      ))
-                    )}
+            {useMobileSheet ? (
+              <Sheet open={open} onOpenChange={closePicker}>
+                <SheetContent side="bottom" className="max-h-[90vh] rounded-t-3xl border-none bg-white p-0 sm:mx-auto sm:max-w-lg">
+                  <SheetHeader className="border-b border-slate-200 px-4 py-4 text-left">
+                    <SheetTitle>Select Client</SheetTitle>
+                  </SheetHeader>
+                  <div className="max-h-[75vh] overflow-y-auto p-4">
+                    <Input
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder={`Search ${clients.length} clients`}
+                      className="h-11 bg-[#f8fafc]"
+                      autoFocus
+                    />
+                    <div className="mt-3 space-y-1">
+                      {filteredClients.length === 0 ? (
+                        <div className="rounded-xl border border-border bg-muted/50 px-3 py-6 text-center text-sm text-muted-foreground">
+                          No clients match &quot;{searchTerm}&quot;.
+                        </div>
+                      ) : (
+                        filteredClients.map((client) => (
+                          <button
+                            key={client.id}
+                            type="button"
+                            className="block w-full rounded-xl px-3 py-3 text-left hover:bg-slate-50"
+                            onClick={() => selectClient(client)}
+                          >
+                            <span className="block truncate text-sm font-semibold text-foreground">{client.name}</span>
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {[client.contact_person, client.city, client.phone].filter(Boolean).join(' • ') || 'No extra details'}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
                   </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </SheetContent>
+              </Sheet>
+            ) : (
+              <Dialog open={open} onOpenChange={closePicker}>
+                <DialogContent className="max-w-[calc(100%-1rem)] rounded-2xl bg-white p-0 sm:max-w-lg">
+                  <div className="max-h-[85vh] overflow-y-auto p-4">
+                    <DialogHeader className="mb-3">
+                      <DialogTitle>Select Client</DialogTitle>
+                    </DialogHeader>
+                    <Input
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder={`Search ${clients.length} clients`}
+                      className="h-11 bg-background"
+                      autoFocus
+                    />
+                    <div className="mt-3 space-y-1">
+                      {filteredClients.length === 0 ? (
+                        <div className="rounded-xl border border-border bg-muted/50 px-3 py-6 text-center text-sm text-muted-foreground">
+                          No clients match &quot;{searchTerm}&quot;.
+                        </div>
+                      ) : (
+                        filteredClients.map((client) => (
+                          <button
+                            key={client.id}
+                            type="button"
+                            className="flex w-full flex-col border-b border-zinc-200 px-1 py-2.5 text-left"
+                            onClick={() => selectClient(client)}
+                          >
+                            <span className="truncate text-sm font-semibold text-foreground">{client.name}</span>
+                            <span className="truncate text-xs text-muted-foreground">
+                              {[client.contact_person, client.city, client.phone].filter(Boolean).join(' • ') || 'No extra details'}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </>
         ) : (
           <div className="relative">

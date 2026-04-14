@@ -4,6 +4,7 @@ import { Copy, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
+import { getImportHelpSteps } from '@/components/invoice/mobileFormHelpers.js'
 import { buildApplyResult } from '@/domain/import/apply'
 import { normalizeImportData } from '@/domain/import/normalize'
 import { parseImportText } from '@/domain/import/parse'
@@ -35,13 +36,13 @@ type JsonItemsImportSheetProps = {
 
 const MODE_COPY: Record<ImportMode, { description: string; placeholder: string; applyLabel: string }> = {
   Add: {
-    description: 'Append new rows from JSON.',
-    placeholder: '{\n  "items": [{ "description": "Cable", "quantity": 3, "unit_price": 5000 }]\n}',
+    description: 'Create and append new line items from extracted JSON.',
+    placeholder: '{\n  "items": [{ "description": "...", "quantity": 1, "unit_price": 0 }]\n}',
     applyLabel: 'Add rows',
   },
   Update: {
-    description: 'Update existing rows using row_number.',
-    placeholder: '{\n  "items": [{ "row_number": 2, "unit_price": 8000 }]\n}',
+    description: 'Patch existing visible rows using row_number.',
+    placeholder: '{\n  "items": [{ "row_number": 3, "unit_price": 50000 }]\n}',
     applyLabel: 'Update rows',
   },
 }
@@ -51,39 +52,44 @@ function makeDefaultDecision(candidateKey: string, label: string): CustomColumnD
 }
 
 function ImportHelpSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const steps = getImportHelpSteps()
+  const [stepIndex, setStepIndex] = useState(0)
+
+  useEffect(() => {
+    if (!open) setStepIndex(0)
+  }, [open])
+
+  const step = steps[stepIndex]
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[90vw] max-w-md overflow-y-auto">
+      <SheetContent side="bottom" className="max-h-[90vh] rounded-t-2xl border-none bg-white p-0 sm:mx-auto sm:max-w-xl">
         <SheetHeader>
-          <SheetTitle>How to use Import</SheetTitle>
+          <SheetTitle className="border-b border-slate-200 px-4 py-4 text-left sm:px-5">How to use Import</SheetTitle>
         </SheetHeader>
-        <div className="mt-4 space-y-4 text-sm text-slate-700">
-          <section className="rounded-lg border border-slate-200 p-3">
-            <div className="font-semibold text-slate-900">1) Add vs Update</div>
-            <p className="mt-1">Use <strong>Add</strong> for new rows. Use <strong>Update</strong> to patch existing rows by row_number.</p>
-          </section>
-          <section className="rounded-lg border border-slate-200 p-3">
-            <div className="font-semibold text-slate-900">2) Copy → extract → paste → apply</div>
-            <p className="mt-1">Copy prompt, run it in your AI tool, paste JSON back here, then apply.</p>
-          </section>
-          <section className="rounded-lg border border-slate-200 p-3">
-            <div className="font-semibold text-slate-900">3) Common mistakes</div>
-            <ul className="mt-1 list-disc space-y-1 pl-5">
-              <li>Missing <code>items</code> array</li>
-              <li>Using Update with no row_number</li>
-              <li>Invalid JSON trailing commas</li>
-            </ul>
-          </section>
-          <section className="rounded-lg border border-slate-200 p-2">
-            <iframe
-              title="Import tutorial"
-              className="aspect-video w-full rounded"
-              src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-              loading="lazy"
-              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </section>
+        <div className="px-4 pb-5 pt-4 sm:px-5">
+          <div className="rounded-2xl border border-slate-200 p-4">
+            <div className="mb-2 text-lg font-extrabold text-slate-900">{step.title}</div>
+            <div className="mb-4 text-sm text-slate-600">{step.description}</div>
+            <div className="mb-4 flex aspect-video items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 text-sm text-slate-400">
+              Tutorial video placeholder
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex gap-1">
+                {steps.map((entry, index) => (
+                  <div key={entry.title} className={`h-2 w-2 rounded-full ${stepIndex === index ? 'bg-blue-600' : 'bg-slate-200'}`} />
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setStepIndex((current) => Math.max(0, current - 1))} className="h-10 rounded-xl px-3 text-sm font-bold">
+                  Back
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setStepIndex((current) => Math.min(steps.length - 1, current + 1))} className="h-10 rounded-xl px-3 text-sm font-bold">
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
@@ -164,49 +170,53 @@ export default function JsonItemsImportSheet({
           side={side}
           className={cn('max-h-[90vh] rounded-t-2xl border-none bg-white p-0 sm:mx-auto sm:max-w-xl', contentClassName)}
         >
-          <div className="flex h-full flex-col overflow-hidden">
-            <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-                <button type="button" onClick={() => setHelpOpen(true)} className="inline-flex items-center gap-1 text-xs text-slate-600 underline">
-                  <HelpCircle className="h-3.5 w-3.5" /> How to use Import
-                </button>
-              </div>
+            <div className="flex h-full flex-col overflow-hidden">
+              <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+                </div>
 
-              <div className="mt-3 inline-flex rounded-md border border-slate-200 p-0.5">
-                {(['Add', 'Update'] as ImportMode[]).map((entry) => {
-                  const selected = mode === entry
-                  const disabled = entry === 'Update' && !updateEnabled
-                  return (
-                    <button
-                      key={entry}
-                      type="button"
-                      aria-pressed={selected}
-                      disabled={disabled}
-                      onClick={() => {
-                        setMode(entry)
-                        setErrorMessage(null)
-                      }}
-                      className={cn('h-8 px-3 text-sm', selected ? 'bg-slate-900 text-white' : 'text-slate-700', disabled && 'cursor-not-allowed opacity-40')}
-                    >
-                      {entry}
-                    </button>
-                  )
-                })}
+                <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+                  {(['Add', 'Update'] as ImportMode[]).map((entry) => {
+                    const selected = mode === entry
+                    const disabled = entry === 'Update' && !updateEnabled
+                    return (
+                      <button
+                        key={entry}
+                        type="button"
+                        aria-pressed={selected}
+                        disabled={disabled}
+                        onClick={() => {
+                          setMode(entry)
+                          setErrorMessage(null)
+                        }}
+                        className={cn(
+                          'h-9 rounded-lg text-sm font-bold',
+                          selected ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500',
+                          disabled && 'cursor-not-allowed opacity-40',
+                        )}
+                      >
+                        {entry}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
 
             <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-3 sm:px-5">
-              <section className="rounded-lg border border-slate-200 px-3 py-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm text-slate-600">{activeMode.description}</p>
-                  <Button type="button" variant="ghost" size="sm" onClick={handleCopyPrompt} className="h-8 shrink-0 px-2 text-xs">
+              <section>
+                <div className="mb-2 flex items-center justify-between gap-2 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-400">
+                  <span>AI Prompt</span>
+                  <Button type="button" variant="ghost" size="sm" onClick={handleCopyPrompt} className="h-auto px-0 text-xs font-bold normal-case tracking-normal text-blue-600 hover:text-blue-700">
                     <Copy className="mr-1 h-3.5 w-3.5" /> {copied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
+                <div className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">{adapter.prompts[mode]}</div>
               </section>
 
-              <section className="flex min-h-0 flex-1 flex-col rounded-lg border border-slate-200 p-2.5">
+              <section className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">{activeMode.description}</section>
+
+              <section className="flex min-h-0 flex-1 flex-col">
                 <div className="text-[11px] uppercase tracking-wide text-slate-500">JSON Input</div>
                 <Textarea
                   value={pastedText}
@@ -218,6 +228,11 @@ export default function JsonItemsImportSheet({
                   className="mt-2 min-h-[220px] flex-1 resize-none rounded-md border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs"
                 />
               </section>
+
+              <button type="button" onClick={() => setHelpOpen(true)} className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600">
+                <HelpCircle className="h-4 w-4" />
+                How to use Import
+              </button>
             </div>
 
             <div className="border-t border-slate-200 px-4 pb-4 pt-3 sm:px-5">

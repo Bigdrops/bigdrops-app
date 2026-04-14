@@ -391,8 +391,18 @@ export default function MobileInvoiceForm(props) {
           </div>
 
           <div>
-            <SectionLabel color="#475569">Item Controls</SectionLabel>
-            <div className={`${pageCardCls} p-3`}>
+            <SectionLabel
+              color="#059669"
+              trailing={
+                <span className="inline-flex h-8 items-center rounded-full border-[1.5px] border-[#a7f3d0] bg-[#ecfdf5] px-[13px] text-[12px] font-bold text-[#059669]">
+                  {lineItemsCount} {lineItemsCount === 1 ? 'item' : 'items'}
+                </span>
+              }
+            >
+              Line Items
+            </SectionLabel>
+
+            <div className={`${pageCardCls} mb-4 p-3`}>
               <div className="grid grid-cols-2 gap-2">
                 <ToolbarButton onClick={() => setShowImportSheet(true)}>
                   <FileInput className="h-4 w-4" />
@@ -404,19 +414,6 @@ export default function MobileInvoiceForm(props) {
                 </ToolbarButton>
               </div>
             </div>
-          </div>
-
-          <div>
-            <SectionLabel
-              color="#059669"
-              trailing={
-                <span className="inline-flex h-8 items-center rounded-full border-[1.5px] border-[#a7f3d0] bg-[#ecfdf5] px-[13px] text-[12px] font-bold text-[#059669]">
-                  {lineItemsCount} {lineItemsCount === 1 ? 'item' : 'items'}
-                </span>
-              }
-            >
-              Line Items
-            </SectionLabel>
 
             <div className="space-y-0">
               {lineItemRows.map((row) =>
@@ -606,6 +603,8 @@ export default function MobileInvoiceForm(props) {
         onCancel={onCancel}
         onOpenColumnManager={() => setShowColumnManager(true)}
         onImport={() => setShowImportSheet(true)}
+        mergeQtyUnit={mergeQtyUnit}
+        onToggleMergeQtyUnit={() => setMergeQtyUnit((current) => !current)}
         onAddGroup={onAddGroup}
         onScrollToAdditionalInfo={() => {
           setShowNotesTerms(true)

@@ -11,6 +11,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/hooks/use-toast'
 import UnitInput from '@/components/UnitInput'
 
@@ -122,17 +123,17 @@ export default function MobileItemCard({
       </div>
 
       <div className="space-y-3 p-3">
-        <Input
+        <Textarea
           value={item.description || ''}
           onChange={(event) => onUpdate(index, 'description', event.target.value)}
           placeholder="Item description"
-          className={`${inputCls} font-bold`}
+          className={`min-h-[44px] rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 text-[14px] font-bold text-[#0f172a] shadow-none transition focus:border-[#94a3b8] focus:bg-white focus:ring-0 focus-visible:ring-0`}
         />
 
         <div className="flex flex-wrap items-center gap-2">
           <MiniButton active={showDetails} onClick={() => setShowDetails((current) => !current)}>
             {showDetails ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-            Sub-description
+            Sub-desc
           </MiniButton>
           <MiniButton
             className={item.image_url ? 'border-[#a7f3d0] bg-[#ecfdf5] text-[#059669]' : ''}
@@ -173,6 +174,17 @@ export default function MobileItemCard({
             </div>
           ) : null}
 
+          <div className="min-w-0">
+            <label className={labelCls}>Unit Price</label>
+            <Input
+              type="number"
+              min="0"
+              value={item.unit_price ?? 0}
+              onChange={(event) => onUpdate(index, 'unit_price', Number(event.target.value))}
+              className={`${inputCls} text-right`}
+            />
+          </div>
+
           <div>
             <label className={labelCls}>Qty</label>
             <Input
@@ -192,17 +204,6 @@ export default function MobileItemCard({
               </div>
             </div>
           ) : null}
-
-          <div className="min-w-0">
-            <label className={labelCls}>Unit Price</label>
-            <Input
-              type="number"
-              min="0"
-              value={item.unit_price ?? 0}
-              onChange={(event) => onUpdate(index, 'unit_price', Number(event.target.value))}
-              className={`${inputCls} text-right`}
-            />
-          </div>
         </div>
 
         {isVisible('install_rate') ? (
