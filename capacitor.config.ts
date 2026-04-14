@@ -12,6 +12,11 @@ const config: CapacitorConfig = {
       // uses a custom AndroidBackHandler in the web layer.
       disableBackButtonHandler: true,
     },
+    SystemBars: {
+      insetsHandling: 'css',
+      style: 'DEFAULT',
+      hidden: false,
+    },
   },
 };
 
