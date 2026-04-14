@@ -94,20 +94,44 @@
 }
 
 @layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    min-height: 100dvh;
+  }
+
+  html {
+    background: hsl(var(--background));
+    padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+    padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+    padding-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+    padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+    overscroll-behavior-y: none;
+  }
+
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     @apply bg-background text-foreground;
     position: relative;
-    min-height: 100vh;
+    margin: 0;
+    min-width: 320px;
+    min-height: 100dvh;
     background-color: hsl(var(--background));
     background-image:
       radial-gradient(circle at top, color-mix(in oklab, hsl(var(--primary)) 5%, transparent), transparent 32%),
       linear-gradient(180deg, color-mix(in oklab, white 16%, hsl(var(--background))), hsl(var(--background)));
     background-attachment: fixed;
     overflow-x: hidden;
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100dvh;
   }
 
   .app-ambient {
