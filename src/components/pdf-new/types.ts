@@ -48,6 +48,9 @@ export type PdfLineItem = {
   quantity?: number | null
   unit?: string | null
   unitPrice?: number | null
+  installRate?: number | null
+  vatRate?: number | null
+  discountRate?: number | null
   amount?: number | null
   imageUrl?: string | null
   customData?: Record<string, string | number | boolean | null | undefined>

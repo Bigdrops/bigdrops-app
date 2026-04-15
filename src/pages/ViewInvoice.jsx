@@ -21,6 +21,7 @@ import { PdfBankControls, PdfSupportingOptions } from '@/components/PdfOutputSet
 import { buildInvoiceCsv, downloadInvoiceCsv } from '../components/invoice/exportInvoiceCsv'
 import {
   DEFAULT_INVOICE_PDF_OUTPUT,
+  getPdfColumns,
   getInvoicePdfOutput,
   getInvoiceSignatoryId,
   parseCustomFields,
@@ -404,6 +405,9 @@ export default function ViewInvoice() {
         quantity: item.quantity ?? null,
         unit: item.unit || '',
         unitPrice: item.unit_price ?? 0,
+        installRate: item.install_rate ?? null,
+        vatRate: item.vat_rate ?? null,
+        discountRate: item.discount_rate ?? null,
         amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
         imageUrl: item.image_url || null,
         customData: item.custom_data || {},
@@ -439,9 +443,12 @@ export default function ViewInvoice() {
             email: String(client?.email || ''),
           },
           headerFields: topHeaderFields.map((field) => ({ label: String(field.label || ''), value: String(field.value || '') })),
-          columns: (customFieldObject?.columnConfig || [])
-            .filter((column) => column?.visible)
-            .map((column) => ({ key: String(column.key || ''), label: String(column.label || column.key || ''), align: ['amount', 'unit_price', 'rate'].includes(String(column.key || '')) ? 'right' : 'left' })),
+          columns: getPdfColumns(customFieldObject?.columnConfig || [])
+            .map((column) => ({
+              key: String(column.key || ''),
+              label: String(column.label || column.key || ''),
+              align: column.align,
+            })),
           mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
           items: sharedItems,
           totals: {
@@ -710,9 +717,12 @@ export default function ViewInvoice() {
             email: String(client?.email || ''),
           },
           headerFields: topHeaderFields.map((field) => ({ label: String(field.label || ''), value: String(field.value || '') })),
-          columns: (customFieldObject?.columnConfig || [])
-            .filter((column) => column?.visible)
-            .map((column) => ({ key: String(column.key || ''), label: String(column.label || column.key || ''), align: ['amount', 'unit_price', 'rate'].includes(String(column.key || '')) ? 'right' : 'left' })),
+          columns: getPdfColumns(customFieldObject?.columnConfig || [])
+            .map((column) => ({
+              key: String(column.key || ''),
+              label: String(column.label || column.key || ''),
+              align: column.align,
+            })),
           mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
           items: items.map((item, index) => ({
             id: String(item.id || item._uiKey || index),
@@ -724,6 +734,9 @@ export default function ViewInvoice() {
             quantity: item.quantity ?? null,
             unit: item.unit || '',
             unitPrice: item.unit_price ?? 0,
+            installRate: item.install_rate ?? null,
+            vatRate: item.vat_rate ?? null,
+            discountRate: item.discount_rate ?? null,
             amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
             imageUrl: item.image_url || null,
             customData: item.custom_data || {},

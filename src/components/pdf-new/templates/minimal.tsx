@@ -1,6 +1,7 @@
 import { Image, StyleSheet, Text, View, Link } from '@react-pdf/renderer'
 import { resolvePdfFontFamily } from '@/lib/pdfDesignPreset'
-import type { PdfDocumentModel, PdfLineItem, PdfTextAlign } from '../types'
+import { buildPdfTableColumns, renderPdfLineCell } from '../table'
+import type { PdfDocumentModel, PdfTextAlign } from '../types'
 
 type MinimalPdfTemplateProps = {
   model: PdfDocumentModel
@@ -121,40 +122,6 @@ function renderPartyBlock(label: string, party?: PdfDocumentModel['issuer']) {
   return { label, name: party?.name, lines }
 }
 
-function getVisibleColumns(model: PdfDocumentModel) {
-  const defaults = [
-    { key: 'description', label: 'Description', align: 'left' as const },
-    { key: 'make', label: 'Make', align: 'left' as const },
-    { key: 'quantity', label: model.mergeQtyUnit ? 'Qty / Unit' : 'Qty', align: 'center' as const },
-    ...(!model.mergeQtyUnit ? [{ key: 'unit', label: 'Unit', align: 'center' as const }] : []),
-    { key: 'rate', label: 'Rate', align: 'right' as const },
-    { key: 'amount', label: 'Amount', align: 'right' as const },
-  ]
-
-  return model.columns && model.columns.length > 0 ? model.columns : defaults
-}
-
-function renderLineCell(item: PdfLineItem, key: string, mergeQtyUnit: boolean, currency?: string | null) {
-  if (key === 'description') {
-    return [item.description, item.subDescription].filter((part) => String(part || '').trim())
-      .join('\n')
-  }
-  if (key === 'make') return item.make || ''
-  if (key === 'quantity') {
-    if (mergeQtyUnit) {
-      const qtyText = item.quantity === null || item.quantity === undefined ? '' : String(item.quantity)
-      const unitText = String(item.unit || '').trim()
-      return [qtyText, unitText].filter(Boolean).join(' ')
-    }
-    return item.quantity === null || item.quantity === undefined ? '' : String(item.quantity)
-  }
-  if (key === 'unit') return item.unit || ''
-  if (key === 'rate') return formatMoney(item.unitPrice || 0, currency)
-  if (key === 'amount') return formatMoney(item.amount || 0, currency)
-
-  return item.customData?.[key] === null || item.customData?.[key] === undefined ? '' : String(item.customData?.[key])
-}
-
 export function MinimalPdfTemplate({ model }: MinimalPdfTemplateProps) {
   const palette = buildPalette(model)
   const headerFont = model.template?.fontConfig?.useCustomFonts
@@ -223,7 +190,7 @@ export function MinimalPdfTemplate({ model }: MinimalPdfTemplateProps) {
 
   const issuerBlock = renderPartyBlock(model.issuer?.label || 'From', model.issuer)
   const recipientBlock = renderPartyBlock(model.recipient?.label || (model.identity.kind === 'invoice' ? 'Bill To' : 'Prepared For'), model.recipient)
-  const visibleColumns = getVisibleColumns(model)
+  const visibleColumns = buildPdfTableColumns(model.columns || [], { mergeQtyUnit: model.mergeQtyUnit === true })
 
   const headerMeta: Array<{ label: string; value?: string | null }> = [
     { label: 'Issue Date', value: model.identity.issueDate },
@@ -317,24 +284,38 @@ export function MinimalPdfTemplate({ model }: MinimalPdfTemplateProps) {
               </Text>
             ))}
           </View>
-          {model.items.map((item, index) => (
-            item.rowType === 'group_header'
-              ? (
-                <View key={item.id || `item-${index}`} style={[styles.row, styles.groupRow]} wrap={false}>
-                  <Text style={styles.groupText}>{item.groupLabel || item.description || `Group ${index + 1}`}</Text>
-                </View>
-              )
-              : (
+          {(() => {
+            let lineNumber = 0
+
+            return model.items.map((item, index) => {
+              if (item.rowType === 'group_header') {
+                return (
+                  <View key={item.id || `item-${index}`} style={[styles.row, styles.groupRow]} wrap={false}>
+                    <Text style={styles.groupText}>{item.groupLabel || item.description || `Group ${index + 1}`}</Text>
+                  </View>
+                )
+              }
+
+              lineNumber += 1
+
+              return (
                 <View key={item.id || `item-${index}`} style={styles.row}>
                   {visibleColumns.map((column) => (
                     <View key={`${item.id}-${column.key}`} style={[styles.cell, { flex: column.key === 'description' ? 2.1 : 1 }]}>
-                      <Text style={styleForAlign(column.align)}>{renderLineCell(item, column.key, model.mergeQtyUnit === true, model.identity.currency)}</Text>
+                      <Text style={styleForAlign(column.align)}>
+                        {renderPdfLineCell(item, column.key, {
+                          mergeQtyUnit: model.mergeQtyUnit === true,
+                          currency: model.identity.currency,
+                          rowNumber: lineNumber,
+                        })}
+                      </Text>
                       {column.key === 'description' && item.imageUrl ? <Image src={item.imageUrl} style={styles.image} /> : null}
                     </View>
                   ))}
                 </View>
               )
-          ))}
+            })
+          })()}
         </View>
       ) : null}
 
