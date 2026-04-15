@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { toast } from '@/hooks/use-toast'
+import { X } from 'lucide-react'
 
 const CATEGORIES = ['Residential', 'Commercial', 'Industrial', 'Government', 'NGO', 'Other']
 
@@ -21,6 +22,16 @@ const emptyClient = {
   state: '',
   contact_person: '',
   category: '',
+}
+
+function getInitials(name = '') {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase()
 }
 
 export default function ClientSelector({
@@ -59,7 +70,7 @@ export default function ClientSelector({
     if (clientId && clients.length > 0) {
       const found = clients.find((client) => String(client.id) === String(clientId))
       setSelectedClient(found || null)
-      if (found && !open) setSearchTerm(found.name)
+      if (!open) setSearchTerm('')
     } else if (!clientId) {
       setSelectedClient(null)
       if (!open) setSearchTerm('')
@@ -72,7 +83,7 @@ export default function ClientSelector({
     const handlePointerDown = (event) => {
       if (!containerRef.current?.contains(event.target)) {
         setOpen(false)
-        if (selectedClient) setSearchTerm(selectedClient.name)
+        setSearchTerm('')
       }
     }
 
@@ -82,7 +93,7 @@ export default function ClientSelector({
       document.removeEventListener('mousedown', handlePointerDown)
       document.removeEventListener('touchstart', handlePointerDown)
     }
-  }, [isMobile, selectedClient])
+  }, [isMobile])
 
   const fetchClients = async () => {
     const { data } = await supabase.from('clients').select('*').order('name')
@@ -110,11 +121,16 @@ export default function ClientSelector({
     })
   }, [clients, searchTerm])
 
+  const openPicker = () => {
+    setSearchTerm('')
+    setOpen(true)
+  }
+
   const selectClient = (client) => {
     setSelectedClient(client)
-    setSearchTerm(client?.name || '')
-    closePicker(false)
     onClientChange(client?.id || '', client?.name || '', client || null)
+    setSearchTerm('')
+    setOpen(false)
   }
 
   const clearSelection = () => {
@@ -126,9 +142,7 @@ export default function ClientSelector({
 
   const closePicker = (nextOpen) => {
     setOpen(nextOpen)
-    if (!nextOpen) {
-      setSearchTerm(selectedClient?.name || '')
-    }
+    if (!nextOpen) setSearchTerm('')
   }
 
   const handleSaveNewClient = async () => {
@@ -136,6 +150,7 @@ export default function ClientSelector({
       toast({ title: 'Client name required', description: 'Client name is required', variant: 'destructive' })
       return
     }
+
     setSaving(true)
     const { data, error } = await supabase
       .from('clients')
@@ -163,19 +178,16 @@ export default function ClientSelector({
     }
 
     await fetchClients()
-    selectClient(data)
+    setSelectedClient(data)
+    onClientChange(data?.id || '', data?.name || '', data || null)
+    setSearchTerm('')
     setNewClient({ ...emptyClient })
     setShowAddModal(false)
+    setOpen(false)
     setSaving(false)
   }
 
   const selectedSummary = selectedClient || (clientId ? { name: clientName } : null)
-  const triggerClassName = compact
-    ? `${dense ? 'h-9' : 'h-10'} flex-1 justify-start rounded-2xl border-zinc-200 bg-white px-3 text-left text-sm text-zinc-900`
-    : 'h-11 flex-1 justify-start rounded-xl border-slate-300 bg-white px-3 text-left text-sm text-slate-900'
-  const clearClassName = compact
-    ? `${dense ? 'h-9' : 'h-10'} rounded-2xl border-zinc-200 bg-white px-3 text-sm text-zinc-700`
-    : 'h-11 rounded-xl bg-white px-3'
   const useMobileSheet = isMobile && compact
 
   return (
@@ -284,58 +296,90 @@ export default function ClientSelector({
         {isMobile ? (
           <>
             {!hideTrigger ? (
-              <div className="flex gap-2">
-                <Button
+              <div className="space-y-0">
+                <button
                   type="button"
-                  variant="outline"
-                  className={triggerClassName}
-                  onClick={() => setOpen(true)}
+                  onClick={openPicker}
+                  className="w-full rounded-[18px] border-[1.5px] border-[#e2e8f0] bg-white px-[18px] py-0 shadow-[0_2px_6px_rgba(0,0,0,0.02)] transition-[border-color,box-shadow] duration-150 hover:border-[#94a3b8] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)]"
                 >
-                  <span className="block w-full truncate text-left">{selectedSummary?.name || `Search ${clients.length} clients`}</span>
-                </Button>
-                {selectedSummary && allowClear ? (
-                  <Button type="button" variant="outline" className={clearClassName} onClick={clearSelection}>
-                    Clear
-                  </Button>
-                ) : null}
+                  <div className="flex h-[52px] items-center">
+                    <span className="block w-full truncate text-left text-[16px] font-medium text-[#0f1a24]">
+                      {selectedSummary?.name || 'Search or select client…'}
+                    </span>
+                  </div>
+                </button>
               </div>
             ) : null}
 
             {useMobileSheet ? (
               <Sheet open={open} onOpenChange={closePicker}>
-                <SheetContent side="bottom" className="max-h-[90vh] rounded-t-3xl border-none bg-white p-0 sm:mx-auto sm:max-w-lg">
-                  <SheetHeader className="border-b border-slate-200 px-4 py-4 text-left">
-                    <SheetTitle>Select Client</SheetTitle>
+                <SheetContent
+                  side="bottom"
+                  className="max-h-[85dvh] rounded-t-[28px] border-none bg-white p-0 sm:mx-auto sm:max-w-[520px]"
+                >
+                  <div className="mx-auto mt-3 h-[5px] w-10 rounded-full bg-[#d0d9e2]" />
+                  <SheetHeader className="border-b border-[#edf2f7] px-5 pb-4 pt-2 text-left">
+                    <SheetTitle className="text-[20px] font-bold tracking-[-0.02em] text-[#0f1a24]">
+                      Select client
+                    </SheetTitle>
                   </SheetHeader>
-                  <div className="max-h-[75vh] overflow-y-auto p-4">
+
+                  <div className="border-b border-[#edf2f7] px-5 py-4">
                     <Input
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder={`Search ${clients.length} clients`}
-                      className="h-11 bg-[#f8fafc]"
+                      placeholder="Search by name, contact, city…"
+                      className="h-12 rounded-[24px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-4 text-[16px] text-[#0f1a24] placeholder:text-[#8a9aac] focus:border-[#94a3b8] focus:bg-white"
                       autoFocus
                     />
-                    <div className="mt-3 space-y-1">
-                      {filteredClients.length === 0 ? (
-                        <div className="rounded-xl border border-border bg-muted/50 px-3 py-6 text-center text-sm text-muted-foreground">
-                          No clients match &quot;{searchTerm}&quot;.
-                        </div>
-                      ) : (
-                        filteredClients.map((client) => (
-                          <button
-                            key={client.id}
-                            type="button"
-                            className="block w-full rounded-xl px-3 py-3 text-left hover:bg-slate-50"
-                            onClick={() => selectClient(client)}
-                          >
-                            <span className="block truncate text-sm font-semibold text-foreground">{client.name}</span>
-                            <span className="block truncate text-xs text-muted-foreground">
-                              {[client.contact_person, client.city, client.phone].filter(Boolean).join(' • ') || 'No extra details'}
-                            </span>
-                          </button>
-                        ))
-                      )}
-                    </div>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto px-2 pb-4 pt-2">
+                    {filteredClients.length === 0 ? (
+                      <div className="px-5 py-10 text-center text-[15px] text-[#68788c]">
+                        No clients match your search
+                      </div>
+                    ) : (
+                      filteredClients.map((client) => (
+                        <button
+                          key={client.id}
+                          type="button"
+                          className="flex w-full items-start gap-[14px] rounded-[18px] px-4 py-[14px] text-left transition-colors duration-150 hover:bg-[#f5f9ff]"
+                          onClick={() => selectClient(client)}
+                        >
+                          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[14px] bg-[#eaf6ef] text-[16px] font-bold uppercase text-[#0e7b4e]">
+                            {getInitials(client.name)}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-1 text-[16px] font-[650] leading-[1.3] text-[#0f1a24]">
+                              {client.name}
+                            </div>
+                            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[13px] text-[#5e7180]">
+                              {client.contact_person ? <span>{client.contact_person}</span> : null}
+                              {client.city ? <span>{client.city}</span> : null}
+                              {client.phone ? <span>{client.phone}</span> : null}
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="border-t border-[#edf2f7] px-5 py-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closePicker(false)
+                        setShowAddModal(true)
+                      }}
+                      className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[18px] border-[1.5px] border-dashed border-[#b9c7d4] bg-white text-[16px] font-semibold text-[#1e3b5c] transition-colors duration-150 hover:bg-[#f5f9ff] hover:border-[#7f9ab3]"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M12 5v14M5 12h14" />
+                      </svg>
+                      New client
+                    </button>
                   </div>
                 </SheetContent>
               </Sheet>
@@ -382,8 +426,8 @@ export default function ClientSelector({
         ) : (
           <div className="relative">
             <Input
-              value={open ? searchTerm : selectedSummary?.name || searchTerm}
-              onFocus={() => setOpen(true)}
+              value={open ? searchTerm : selectedSummary?.name || ''}
+              onFocus={openPicker}
               onChange={(e) => {
                 setSearchTerm(e.target.value)
                 setOpen(true)
