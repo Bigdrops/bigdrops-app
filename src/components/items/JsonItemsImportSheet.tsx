@@ -34,14 +34,16 @@ type JsonItemsImportSheetProps = {
   contentClassName?: string
 }
 
-const MODE_COPY: Record<ImportMode, { description: string; placeholder: string }> = {
+const MODE_COPY: Record<ImportMode, { description: string; placeholder: string; badge: string }> = {
   Add: {
     description: 'Create and append new line items from extracted JSON.',
     placeholder: '{\n  "items": [{ "description": "...", "quantity": 1, "unit_price": 0 }]\n}',
+    badge: 'Append new rows',
   },
   Update: {
     description: 'Patch existing rows using row_number. Only include changed rows and changed fields.',
     placeholder: '{\n  "items": [{ "row_number": 3, "unit_price": 50000 }]\n}',
+    badge: 'Update rows',
   },
 }
 
@@ -61,21 +63,38 @@ function ImportHelpSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[90vh] rounded-t-[24px] border-none bg-white p-0 sm:mx-auto sm:max-w-xl [&>[data-slot=sheet-close]]:hidden">
-        <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[#cbd5e1]" />
-        <SheetHeader className="border-b border-slate-200 px-4 py-4 sm:px-5">
+      <SheetContent
+        side="bottom"
+        className="max-h-[90vh] rounded-t-[28px] border border-slate-200 border-b-0 bg-white p-0 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] sm:mx-auto sm:max-w-[520px] [&>[data-slot=sheet-close]]:hidden"
+      >
+        <div className="mx-auto mt-3 h-[5px] w-12 rounded-full bg-[#d0d9e2]" />
+        <SheetHeader className="px-5 pb-0 pt-4">
           <div className="flex items-center justify-between gap-3">
-            <SheetTitle className="text-left text-[18px] font-extrabold tracking-[-0.02em] text-slate-900">How to use Import</SheetTitle>
-            <Button type="button" variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="h-8 w-8 rounded-[10px] text-slate-500">
+            <SheetTitle className="text-left text-[1.3rem] font-bold tracking-[-0.02em] text-[#0f1a24]">
+              How to use Import
+            </SheetTitle>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              className="h-9 w-9 rounded-full text-[#68788c] hover:bg-[#f1f4f8] hover:text-[#0f1a24]"
+            >
               <X className="h-4 w-4" />
             </Button>
           </div>
         </SheetHeader>
-        <div className="px-4 pb-5 pt-4 sm:px-5">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-            <div className="mb-2 text-lg font-extrabold text-slate-900">{step.title}</div>
-            <div className="mb-4 text-sm leading-6 text-slate-600 whitespace-pre-line">{step.description}</div>
-            <div className="mb-4 flex aspect-video items-center justify-center rounded-[18px] border border-slate-200 bg-slate-100 text-sm text-slate-400">
+
+        <div className="px-5 pb-7 pt-4">
+          <div className="text-[14px] leading-7 text-[#334e66]">
+            <p className="mb-3">
+              <strong>{stepIndex + 1}. {step.title}</strong>
+            </p>
+            <p className="whitespace-pre-line">{step.description}</p>
+          </div>
+
+          <div className="mt-5 rounded-[18px] border border-slate-200 bg-slate-100 p-0">
+            <div className="flex aspect-video items-center justify-center rounded-[18px] bg-slate-100 text-sm text-slate-400">
               <div className="text-center">
                 <div className="text-[13px] text-slate-300">YouTube video placeholder</div>
                 <div className="mx-auto mt-3 flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm">
@@ -83,20 +102,35 @@ function ImportHelpSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex gap-1">
-                {steps.map((entry, index) => (
-                  <div key={entry.title} className={`h-2 w-2 rounded-full ${stepIndex === index ? 'bg-blue-600' : 'bg-slate-200'}`} />
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => setStepIndex((current) => Math.max(0, current - 1))} className="h-10 rounded-[12px] px-3 text-sm font-bold">
-                  ← Back
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setStepIndex((current) => Math.min(steps.length - 1, current + 1))} className="h-10 rounded-[12px] px-3 text-sm font-bold">
-                  Next →
-                </Button>
-              </div>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between">
+            <div className="flex gap-1.5">
+              {steps.map((entry, index) => (
+                <div
+                  key={entry.title}
+                  className={cn('h-2 w-2 rounded-full', stepIndex === index ? 'bg-blue-600' : 'bg-slate-200')}
+                />
+              ))}
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
+                className="h-9 rounded-[10px] border-slate-200 px-3 text-sm font-bold text-slate-700"
+              >
+                ← Back
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStepIndex((current) => Math.min(steps.length - 1, current + 1))}
+                className="h-9 rounded-[10px] border-slate-200 px-3 text-sm font-bold text-slate-700"
+              >
+                Next →
+              </Button>
             </div>
           </div>
         </div>
@@ -141,32 +175,66 @@ export default function JsonItemsImportSheet({
     try {
       await navigator.clipboard.writeText(adapter.prompts[mode])
       setCopied(true)
-      window.setTimeout(() => setCopied(false), 1400)
+      window.setTimeout(() => setCopied(false), 1200)
     } catch {
-      toast({ title: 'Copy failed', description: 'Could not copy the prompt.', variant: 'destructive' })
+      toast({
+        title: 'Copy failed',
+        description: 'Could not copy the prompt.',
+        variant: 'destructive',
+      })
     }
   }
 
   const handleApply = () => {
-    if (!pastedText.trim()) return setErrorMessage('Paste JSON before applying.')
+    if (!pastedText.trim()) {
+      setErrorMessage('Paste JSON before applying.')
+      return
+    }
 
     const parsed = parseImportText(pastedText, mode)
-    if (parsed.ok === false) return setErrorMessage(parsed.error.message)
+    if (parsed.ok === false) {
+      setErrorMessage(parsed.error.message)
+      return
+    }
 
     const normalized = normalizeImportData(parsed.data, mode)
-    if (normalized.ok === false) return setErrorMessage(normalized.message)
+    if (normalized.ok === false) {
+      setErrorMessage(normalized.message)
+      return
+    }
 
     const validated = validateImportData(mode, normalized.data, items)
-    if (validated.ok === false) return setErrorMessage(validated.message)
+    if (validated.ok === false) {
+      setErrorMessage(validated.message)
+      return
+    }
 
     const decisions = Object.fromEntries(
-      validated.data.unknownCandidates.map((candidate) => [candidate.key, makeDefaultDecision(candidate.key, candidate.sourceLabels[0] || candidate.key)]),
+      validated.data.unknownCandidates.map((candidate) => [
+        candidate.key,
+        makeDefaultDecision(candidate.key, candidate.sourceLabels[0] || candidate.key),
+      ]),
     ) as Record<string, CustomColumnDecision>
 
-    const resolved = resolveImportColumns({ validated: validated.data, existingColumns: columns, decisions })
-    if (resolved.ok === false) return setErrorMessage(resolved.message)
+    const resolved = resolveImportColumns({
+      validated: validated.data,
+      existingColumns: columns,
+      decisions,
+    })
+    if (resolved.ok === false) {
+      setErrorMessage(resolved.message)
+      return
+    }
 
-    const result = buildApplyResult({ mode, existingItems: items, existingColumns: columns, resolved: resolved.data, skippedRows: validated.data.skippedRows, createItem: adapter.createItem })
+    const result = buildApplyResult({
+      mode,
+      existingItems: items,
+      existingColumns: columns,
+      resolved: resolved.data,
+      skippedRows: validated.data.skippedRows,
+      createItem: adapter.createItem,
+    })
+
     onApplyImport(result)
     toast({ title: mode === 'Add' ? 'Rows added' : 'Rows updated' })
     onOpenChange(false)
@@ -177,95 +245,128 @@ export default function JsonItemsImportSheet({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side={side}
-          className={cn('max-h-[90vh] rounded-t-[24px] border-none bg-white p-0 sm:mx-auto sm:max-w-xl [&>[data-slot=sheet-close]]:hidden', contentClassName)}
+          className={cn(
+            'max-h-[90vh] rounded-t-[28px] border border-slate-200 border-b-0 bg-white p-0 shadow-[0_-8px_30px_rgba(0,0,0,0.04),0_-2px_8px_rgba(0,0,0,0.02)] sm:mx-auto sm:max-w-[560px] [&>[data-slot=sheet-close]]:hidden',
+            contentClassName,
+          )}
         >
-            <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[#cbd5e1]" />
-            <div className="flex h-full flex-col overflow-hidden">
-              <div className="border-b border-slate-200 px-4 py-4 sm:px-5">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[18px] font-extrabold tracking-[-0.02em] text-slate-900">{title}</h2>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="h-8 w-8 rounded-[10px] text-slate-500">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
+          <div className="mx-auto mt-3 h-[5px] w-12 rounded-full bg-[#d0d9e2]" />
 
-                <div className="mt-3 grid grid-cols-2 gap-2 rounded-[14px] bg-slate-100 p-1">
-                  {(['Add', 'Update'] as ImportMode[]).map((entry) => {
-                    const selected = mode === entry
-                    const disabled = entry === 'Update' && !updateEnabled
-                    return (
-                      <button
-                        key={entry}
-                        type="button"
-                        aria-pressed={selected}
-                        disabled={disabled}
-                        onClick={() => {
-                          setMode(entry)
-                          setErrorMessage(null)
-                        }}
-                        className={cn(
-                          'h-9 rounded-[10px] text-sm font-bold',
-                          selected ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500',
-                          disabled && 'cursor-not-allowed opacity-40',
-                        )}
-                      >
-                        {entry}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-            <div className="flex flex-1 flex-col overflow-y-auto px-4 py-4 sm:px-5">
-              <section className="rounded-[18px] bg-[#f8fafc] px-4 py-3">
-                <div className="mb-2 flex items-center justify-between gap-2 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-400">
-                  <span>AI Prompt</span>
-                  <Button type="button" variant="ghost" size="sm" onClick={handleCopyPrompt} className="h-auto px-0 text-xs font-bold normal-case tracking-normal text-blue-600 hover:text-blue-700">
-                    <Copy className="mr-1 h-3.5 w-3.5" /> {copied ? 'Copied' : 'Copy'}
-                  </Button>
-                </div>
-                <div className="rounded-[14px] bg-white px-3 py-3 text-[13px] leading-6 text-slate-600 shadow-[inset_0_0_0_1px_#e2e8f0]">
-                  {adapter.prompts[mode]}
-                </div>
-              </section>
-
-              <section className="mt-3 rounded-[18px] bg-[#f8fafc] px-4 py-3 text-[13px] leading-6 text-slate-600">
-                {activeMode.description}
-              </section>
-
-              <section className="mt-3 flex min-h-0 flex-1 flex-col">
-                <div className="mb-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-500">
-                  JSON Input
-                  {mode === 'Add' ? <span className="ml-2 normal-case tracking-normal text-slate-400">Append new rows</span> : null}
-                </div>
-                <Textarea
-                  value={pastedText}
-                  onChange={(event) => {
-                    setPastedText(event.target.value)
-                    if (errorMessage) setErrorMessage(null)
-                  }}
-                  placeholder={activeMode.placeholder}
-                  className="min-h-[240px] flex-1 resize-none rounded-[16px] border-slate-200 bg-[#f8fafc] px-3 py-3 font-mono text-xs"
-                />
-              </section>
-
-              <div className="mt-3">
-                <button type="button" onClick={() => setHelpOpen(true)} className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600">
-                <HelpCircle className="h-4 w-4" />
-                How to use Import
-                </button>
-              </div>
-            </div>
-
-            <div className="border-t border-slate-200 px-4 pb-4 pt-3 sm:px-5">
-              <div className="min-h-[20px] text-xs text-red-600">{errorMessage || ''}</div>
-              <Button type="button" onClick={handleApply} disabled={!pastedText.trim()} className="h-11 w-full rounded-[14px] bg-slate-950 text-sm font-semibold text-white">
-                Apply
+          <div className="px-4 pb-[18px] pt-0 sm:px-5">
+            <div className="mb-[14px] flex items-center justify-between">
+              <h2 className="text-[1.3rem] font-[650] tracking-[-0.02em] text-[#0f1a24]">{title}</h2>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => onOpenChange(false)}
+                className="h-9 w-9 rounded-full p-0 text-[#68788c] hover:bg-[#f1f4f8] hover:text-[#0f1a24]"
+              >
+                <X className="h-[18px] w-[18px]" />
               </Button>
             </div>
+
+            <div className="mb-[18px] grid grid-cols-2 gap-2 rounded-[40px] border border-slate-200 bg-[#f1f5f9] p-[5px]">
+              {(['Add', 'Update'] as ImportMode[]).map((entry) => {
+                const selected = mode === entry
+                const unavailable = entry === 'Update' && !updateEnabled
+
+                return (
+                  <button
+                    key={entry}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => {
+                      if (unavailable) {
+                        setErrorMessage('Update stays unavailable until the table has at least one real line item.')
+                        return
+                      }
+                      setMode(entry)
+                      setErrorMessage(null)
+                    }}
+                    className={cn(
+                      'rounded-[36px] px-2 py-[9px] text-[0.95rem] font-semibold transition-all duration-150',
+                      selected
+                        ? 'border border-[#dde7f0] bg-white text-[#0f1825] shadow-[0_2px_8px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.05)]'
+                        : 'bg-transparent text-[#475569]',
+                      unavailable && 'opacity-40',
+                    )}
+                  >
+                    {entry}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="text-[0.72rem] font-extrabold uppercase tracking-[0.08em] text-[#8a9aac]">
+                AI Prompt
+              </div>
+
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleCopyPrompt}
+                className="h-auto rounded-full border-[1.5px] border-[#d7e0ea] bg-white px-4 py-[7px] text-[0.82rem] font-semibold text-[#223444] shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:bg-[#0f1a24] hover:text-white"
+              >
+                <Copy className="mr-[6px] h-[15px] w-[15px]" />
+                {copied ? 'Copied' : 'Copy prompt'}
+              </Button>
+            </div>
+
+            <div className="mb-[18px] rounded-[18px] border border-[#eef3f8] bg-[#fafcff] px-4 py-3 text-[0.9rem] font-[450] leading-[1.4] text-[#2a4055]">
+              {activeMode.description}
+            </div>
+
+            <div className="mb-[6px] flex items-baseline justify-between gap-3">
+              <label
+                htmlFor="jsonEditor"
+                className="text-[0.7rem] font-bold uppercase tracking-[0.04em] text-[#5c738a]"
+              >
+                JSON Input
+              </label>
+              <span className="rounded-full bg-[#f0f5fa] px-[10px] py-[2px] text-[0.75rem] text-[#5f7d9c]">
+                {activeMode.badge}
+              </span>
+            </div>
+
+            <Textarea
+              id="jsonEditor"
+              value={pastedText}
+              onChange={(event) => {
+                setPastedText(event.target.value)
+                if (errorMessage) setErrorMessage(null)
+              }}
+              placeholder={activeMode.placeholder}
+              spellCheck={false}
+              className="mb-[10px] min-h-[164px] resize-y rounded-[22px] border-[1.8px] border-[#e2eaf2] bg-[#fbfdff] px-4 py-[14px] font-mono text-[0.85rem] leading-[1.5] text-[#11212e] focus:border-[#7f8fa3] focus:bg-white"
+            />
+
+            <button
+              type="button"
+              onClick={() => setHelpOpen(true)}
+              className="inline-flex items-center gap-2 bg-transparent pb-[10px] pt-[6px] text-[0.85rem] font-semibold text-[#2e4b6a] underline underline-offset-[3px] decoration-[#b3c6d9] hover:text-[#0f1a24] hover:decoration-[#0f1a24]"
+            >
+              <HelpCircle className="h-[15px] w-[15px]" />
+              How to use Import
+            </button>
+
+            <div className="mb-[10px] min-h-[20px] text-[0.75rem] font-medium text-[#c83a3a]">
+              {errorMessage || ''}
+            </div>
+
+            <Button
+              type="button"
+              onClick={handleApply}
+              disabled={!pastedText.trim()}
+              className="h-[46px] w-full rounded-[48px] border border-[#263b4a] bg-[#0f1a24] text-[0.95rem] font-bold text-white shadow-[0_6px_14px_rgba(15,26,36,0.08)] hover:bg-[#1f3140]"
+            >
+              Apply
+            </Button>
           </div>
         </SheetContent>
       </Sheet>
+
       <ImportHelpSheet open={helpOpen} onOpenChange={setHelpOpen} />
     </>
   )
