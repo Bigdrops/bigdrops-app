@@ -1,4 +1,8 @@
+import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
+
 export type PdfDocumentKind = 'invoice' | 'quotation'
+
+export type PdfTextAlign = 'left' | 'center' | 'right'
 
 export type PdfDocumentIdentity = {
   id: string
@@ -8,13 +12,14 @@ export type PdfDocumentIdentity = {
   issueDate?: string | null
   dueDate?: string | null
   validUntil?: string | null
+  poNumber?: string | null
   status?: string | null
   currency?: string | null
 }
 
 export type PdfParty = {
-  name: string
   label?: string | null
+  name?: string | null
   taxId?: string | null
   attention?: string | null
   email?: string | null
@@ -22,30 +27,58 @@ export type PdfParty = {
   addressLines?: string[]
 }
 
+export type PdfHeaderField = {
+  label: string
+  value: string
+}
+
+export type PdfColumnDefinition = {
+  key: string
+  label: string
+  align?: PdfTextAlign
+}
+
 export type PdfLineItem = {
   id: string
-  description: string
-  detail?: string | null
+  rowType?: 'line' | 'group_header'
+  groupLabel?: string | null
+  description?: string | null
+  subDescription?: string | null
+  make?: string | null
   quantity?: number | null
   unit?: string | null
   unitPrice?: number | null
-  amount: number
-  notes?: string | null
-  metadata?: Record<string, string | number | boolean | null>
+  amount?: number | null
+  imageUrl?: string | null
+  customData?: Record<string, string | number | boolean | null | undefined>
 }
 
 export type PdfTotalRow = {
+  key?: string
   label: string
   amount: number
   emphasis?: boolean
+  tone?: 'default' | 'muted' | 'danger' | 'success' | 'primary'
 }
 
+export type PdfAdvanceSummary = {
+  contractValue: number
+  requestedAmount: number
+  balanceRemaining: number
+  percentage?: number | null
+  balancePercentage?: number | null
+  primaryLabel?: string | null
+  secondaryLabel?: string | null
+}
+
+export type PdfTotalsMode = 'standard' | 'advance'
+
 export type PdfTotals = {
-  subtotal?: number | null
-  adjustments?: PdfTotalRow[]
-  total: number
-  paid?: number | null
-  balance?: number | null
+  mode?: PdfTotalsMode
+  rows: PdfTotalRow[]
+  amountInWords?: string | null
+  balanceDue?: number | null
+  advanceSummary?: PdfAdvanceSummary | null
 }
 
 export type PdfTextSection = {
@@ -55,7 +88,7 @@ export type PdfTextSection = {
 }
 
 export type PdfSignature = {
-  name: string
+  name?: string | null
   role?: string | null
   imageUrl?: string | null
   signedAt?: string | null
@@ -86,36 +119,47 @@ export type PdfAttachmentReference = {
   fileName?: string | null
 }
 
-export type PdfAdvanceSummary = {
-  contractValue: number
-  advanceAmount: number
-  balanceRemaining: number
-  primaryLabel?: string | null
-  secondaryLabel?: string | null
+export type PdfFontConfig = {
+  useCustomFonts?: boolean
+  headerFont?: string
+  bodyFont?: string
+}
+
+export type PdfTemplateConfig = {
+  name?: 'minimal'
+  designPreset?: Partial<PdfDesignPreset> | null
+  fontConfig?: PdfFontConfig | null
 }
 
 export type PdfBaseDocumentModel = {
   identity: PdfDocumentIdentity
   issuer?: PdfParty | null
   recipient?: PdfParty | null
+  headerFields?: PdfHeaderField[]
   items: PdfLineItem[]
+  columns?: PdfColumnDefinition[]
+  mergeQtyUnit?: boolean
   totals: PdfTotals
-  sections?: PdfTextSection[]
-  signature?: PdfSignature | null
-  logo?: PdfLogo | null
   bankDetails?: PdfBankDetails | null
-  notes?: string | null
-  terms?: string | null
+  notes?: PdfTextSection | null
+  terms?: PdfTextSection | null
+  additionalSections?: PdfTextSection[]
   referenceLinks?: PdfReferenceLink[]
   attachments?: PdfAttachmentReference[]
-  metadata?: Record<string, string | number | boolean | null>
+  signature?: PdfSignature | null
+  logo?: PdfLogo | null
+  footerText?: string | null
+  tagline?: string | null
+  metaFooter?: {
+    companyName?: string | null
+  }
+  template?: PdfTemplateConfig | null
 }
 
 export type InvoicePdfModel = PdfBaseDocumentModel & {
   identity: PdfDocumentIdentity & {
     kind: 'invoice'
   }
-  advanceSummary?: PdfAdvanceSummary | null
 }
 
 export type QuotationPdfModel = PdfBaseDocumentModel & {

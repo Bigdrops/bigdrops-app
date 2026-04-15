@@ -57,6 +57,7 @@ import { numberToWords } from '@/hooks/useInvoiceForm'
 import { useInvoiceMutations } from '@/hooks/useInvoiceMutations'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
+import { getAdvanceSummaryValues } from '@/domain/invoice/advanceSummary'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
 
@@ -392,14 +393,109 @@ export default function ViewInvoice() {
     setAdvancePdfGenerating(true)
 
     try {
+      const advanceSummary = getAdvanceSummaryValues(advanceInvoice)
+      const sharedItems = items.map((item, index) => ({
+        id: String(item.id || item._uiKey || index),
+        rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
+        groupLabel: item.group_name || null,
+        description: item.description || '',
+        subDescription: item.sub_description || '',
+        make: item.make || '',
+        quantity: item.quantity ?? null,
+        unit: item.unit || '',
+        unitPrice: item.unit_price ?? 0,
+        amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
+        imageUrl: item.image_url || null,
+        customData: item.custom_data || {},
+      }))
+
       await generateInvoicePdf({
-        documentNumber: advanceInvoice.invoice_number || 'advance-invoice',
-        variant: 'advance',
+        model: {
+          identity: {
+            id: String(advanceInvoice.id || invoice.id || 'advance'),
+            kind: 'invoice',
+            number: String(advanceInvoice.invoice_number || invoice.invoice_number || 'advance-invoice'),
+            title: String(invoice.invoice_title || invoice.document_type || 'Invoice'),
+            issueDate: String(advanceInvoice.issue_date || invoice.issue_date || ''),
+            dueDate: String(advanceInvoice.due_date || invoice.due_date || ''),
+            poNumber: String(invoice.po_number || ''),
+            status: String(invoice.status || ''),
+            currency: 'NGN',
+          },
+          issuer: {
+            label: 'From',
+            name: String(settings.company_name || ''),
+            addressLines: companyPreviewLines,
+            phone: String(settings.company_phone || ''),
+            email: String(settings.company_email || ''),
+            taxId: String(settings.company_vat || ''),
+          },
+          recipient: {
+            label: 'Bill To',
+            name: String(invoice.client_name || ''),
+            addressLines: clientPreviewLines,
+            attention: String(client?.contact_person || ''),
+            phone: String(client?.phone || ''),
+            email: String(client?.email || ''),
+          },
+          headerFields: topHeaderFields.map((field) => ({ label: String(field.label || ''), value: String(field.value || '') })),
+          columns: (customFieldObject?.columnConfig || [])
+            .filter((column) => column?.visible)
+            .map((column) => ({ key: String(column.key || ''), label: String(column.label || column.key || ''), align: ['amount', 'unit_price', 'rate'].includes(String(column.key || '')) ? 'right' : 'left' })),
+          mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
+          items: sharedItems,
+          totals: {
+            mode: advanceSummary ? 'advance' : 'standard',
+            rows: [],
+            advanceSummary: advanceSummary
+              ? {
+                  contractValue: advanceSummary.contractValue,
+                  requestedAmount: advanceSummary.thisAdvance,
+                  balanceRemaining: advanceSummary.balanceRemaining,
+                  percentage: advanceSummary.advancePercent,
+                  balancePercentage: advanceSummary.balancePercent,
+                  primaryLabel: advanceSummary.primaryLabel,
+                  secondaryLabel: advanceSummary.secondaryLabel,
+                }
+              : null,
+            amountInWords: String(advanceInvoice.amount_in_words || ''),
+            balanceDue: pdfOutput.showBalanceDue === false ? null : Number(balanceDue || 0),
+          },
+          bankDetails: pdfOutput.showBankDetails && selectedPreviewBank
+            ? {
+                bankName: selectedPreviewBank.bankName,
+                accountName: selectedPreviewBank.accountName,
+                accountNumber: selectedPreviewBank.accountNumber,
+                sortCode: selectedPreviewBank.sortCode,
+              }
+            : null,
+          notes: invoice.notes ? { title: customFieldObject?.notesTitle || 'Notes', content: invoice.notes, format: 'html' } : null,
+          terms: invoice.terms ? { title: customFieldObject?.termsTitle || 'Terms and Conditions', content: invoice.terms, format: 'html' } : null,
+          additionalSections: (customFieldObject?.additionalFields || [])
+            .filter((field) => field?.label || field?.value)
+            .map((field) => ({ title: String(field.label || 'Additional Field'), content: String(field.value || ''), format: 'text' })),
+          referenceLinks: (customFieldObject?.attachments || [])
+            .filter((entry) => entry?.url)
+            .map((entry, idx) => ({ label: String(entry.label || entry.name || `Reference ${idx + 1}`), url: String(entry.url) })),
+          signature: selectedSignatory
+            ? { name: selectedSignatory.name, role: selectedSignatory.role || '', imageUrl: selectedSignatory.signature_url || '' }
+            : null,
+          logo: { imageUrl: String(settings.company_logo_url || '') || null, altText: String(settings.company_name || '') },
+          footerText: pdfOutput.showFooter ? String(settings.footer_text || '') : '',
+          tagline: pdfOutput.showTagline ? String(settings.company_tagline || '') : '',
+          metaFooter: { companyName: String(settings.company_name || '') },
+          template: {
+            name: 'minimal',
+            designPreset: pdfDesignPreset,
+            fontConfig: {
+              useCustomFonts: pdfDesignPreset.useCustomFonts,
+              headerFont: pdfDesignPreset.headerFont,
+              bodyFont: pdfDesignPreset.bodyFont,
+            },
+          },
+        },
       })
-      toast({
-        title: 'PDF unavailable',
-        description: 'The new invoice PDF system is not implemented yet.',
-      })
+      toast({ title: 'PDF ready', description: 'Advance invoice PDF downloaded.' })
     } catch (error) {
       toast({
         title: 'Advance PDF failed',
@@ -571,14 +667,119 @@ export default function ViewInvoice() {
     setPdfGenerating(true)
 
     try {
+      const advanceSummary = getAdvanceSummaryValues(invoice)
+      const summaryRows = [
+        { key: 'subtotal', label: 'Subtotal', amount: Number(invoice.subtotal || 0) },
+        ...(Number(invoice.install_rate_total || 0) > 0 ? [{ key: 'installation', label: 'Installation Total', amount: Number(invoice.install_rate_total || 0) }] : []),
+        ...(Number(invoice.workmanship || 0) > 0 ? [{ key: 'workmanship', label: 'Workmanship', amount: Number(invoice.workmanship || 0) }] : []),
+        ...(Number(invoice.transportation || 0) > 0 ? [{ key: 'transportation', label: 'Transportation', amount: Number(invoice.transportation || 0) }] : []),
+        ...(Number(invoice.shipping || 0) > 0 ? [{ key: 'shipping', label: 'Shipping', amount: Number(invoice.shipping || 0) }] : []),
+        ...(Number(invoice.discount || 0) > 0 ? [{ key: 'discount', label: 'Discount', amount: Number(invoice.discount || 0), tone: 'danger' }] : []),
+        ...(Number(invoice.vat || 0) > 0 ? [{ key: 'vat', label: 'VAT', amount: Number(invoice.vat || 0) }] : []),
+        ...(Number(invoice.wht || 0) > 0 ? [{ key: 'wht', label: 'WHT', amount: Number(invoice.wht || 0) }] : []),
+        { key: 'total', label: 'Total', amount: Number(invoiceTotal || invoice.total || 0), emphasis: true, tone: 'primary' },
+      ]
+
       await generateInvoicePdf({
-        documentNumber: invoice.invoice_number || 'invoice',
-        variant: isAdvanceInvoice ? 'advance' : 'standard',
+        model: {
+          identity: {
+            id: String(invoice.id || 'invoice'),
+            kind: 'invoice',
+            number: String(invoice.invoice_number || 'invoice'),
+            title: String(invoice.invoice_title || invoice.document_type || 'Invoice'),
+            issueDate: String(invoice.issue_date || ''),
+            dueDate: String(invoice.due_date || ''),
+            poNumber: String(invoice.po_number || ''),
+            status: String(invoice.status || ''),
+            currency: 'NGN',
+          },
+          issuer: {
+            label: 'From',
+            name: String(settings.company_name || ''),
+            addressLines: companyPreviewLines,
+            phone: String(settings.company_phone || ''),
+            email: String(settings.company_email || ''),
+            taxId: String(settings.company_vat || ''),
+          },
+          recipient: {
+            label: 'Bill To',
+            name: String(invoice.client_name || ''),
+            attention: String(client?.contact_person || ''),
+            addressLines: clientPreviewLines,
+            phone: String(client?.phone || ''),
+            email: String(client?.email || ''),
+          },
+          headerFields: topHeaderFields.map((field) => ({ label: String(field.label || ''), value: String(field.value || '') })),
+          columns: (customFieldObject?.columnConfig || [])
+            .filter((column) => column?.visible)
+            .map((column) => ({ key: String(column.key || ''), label: String(column.label || column.key || ''), align: ['amount', 'unit_price', 'rate'].includes(String(column.key || '')) ? 'right' : 'left' })),
+          mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
+          items: items.map((item, index) => ({
+            id: String(item.id || item._uiKey || index),
+            rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
+            groupLabel: item.group_name || null,
+            description: item.description || '',
+            subDescription: item.sub_description || '',
+            make: item.make || '',
+            quantity: item.quantity ?? null,
+            unit: item.unit || '',
+            unitPrice: item.unit_price ?? 0,
+            amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
+            imageUrl: item.image_url || null,
+            customData: item.custom_data || {},
+          })),
+          totals: {
+            mode: advanceSummary ? 'advance' : 'standard',
+            rows: summaryRows,
+            advanceSummary: advanceSummary
+              ? {
+                  contractValue: advanceSummary.contractValue,
+                  requestedAmount: advanceSummary.thisAdvance,
+                  balanceRemaining: advanceSummary.balanceRemaining,
+                  percentage: advanceSummary.advancePercent,
+                  balancePercentage: advanceSummary.balancePercent,
+                  primaryLabel: advanceSummary.primaryLabel,
+                  secondaryLabel: advanceSummary.secondaryLabel,
+                }
+              : null,
+            amountInWords: String(invoice.amount_in_words || numberToWords(Number(invoiceTotal || invoice.total || 0))),
+            balanceDue: pdfOutput.showBalanceDue === false ? null : Number(balanceDue || 0),
+          },
+          bankDetails: pdfOutput.showBankDetails && selectedPreviewBank
+            ? {
+                bankName: selectedPreviewBank.bankName,
+                accountName: selectedPreviewBank.accountName,
+                accountNumber: selectedPreviewBank.accountNumber,
+                sortCode: selectedPreviewBank.sortCode,
+              }
+            : null,
+          notes: invoice.notes ? { title: customFieldObject?.notesTitle || 'Notes', content: invoice.notes, format: 'html' } : null,
+          terms: invoice.terms ? { title: customFieldObject?.termsTitle || 'Terms and Conditions', content: invoice.terms, format: 'html' } : null,
+          additionalSections: (customFieldObject?.additionalFields || [])
+            .filter((field) => field?.label || field?.value)
+            .map((field) => ({ title: String(field.label || 'Additional Field'), content: String(field.value || ''), format: 'text' })),
+          referenceLinks: (customFieldObject?.attachments || [])
+            .filter((entry) => entry?.url)
+            .map((entry, idx) => ({ label: String(entry.label || entry.name || `Reference ${idx + 1}`), url: String(entry.url) })),
+          signature: selectedSignatory
+            ? { name: selectedSignatory.name, role: selectedSignatory.role || '', imageUrl: selectedSignatory.signature_url || '' }
+            : null,
+          logo: { imageUrl: String(settings.company_logo_url || '') || null, altText: String(settings.company_name || '') },
+          footerText: pdfOutput.showFooter ? String(settings.footer_text || '') : '',
+          tagline: pdfOutput.showTagline ? String(settings.company_tagline || '') : '',
+          metaFooter: { companyName: String(settings.company_name || '') },
+          template: {
+            name: 'minimal',
+            designPreset: pdfDesignPreset,
+            fontConfig: {
+              useCustomFonts: pdfDesignPreset.useCustomFonts,
+              headerFont: pdfDesignPreset.headerFont,
+              bodyFont: pdfDesignPreset.bodyFont,
+            },
+          },
+        },
       })
-      toast({
-        title: 'PDF unavailable',
-        description: 'The new invoice PDF system is not implemented yet.',
-      })
+      toast({ title: 'PDF ready', description: 'Invoice PDF downloaded.' })
     } catch (err) {
       toast({
         title: 'PDF generation failed',
