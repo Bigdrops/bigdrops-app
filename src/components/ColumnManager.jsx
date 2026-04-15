@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { GripVertical, Eye, EyeOff, Plus, RotateCcw, X, Trash2 } from 'lucide-react'
 import { Button } from '../components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Input } from '../components/ui/input'
 import { COLUMN_TYPES } from './useInvoiceColumns.jsx'
 
@@ -200,25 +201,13 @@ export default function ColumnManager({
             </section>
           ) : null}
 
-          <section className="mt-5 rounded-[18px] border border-[#fecaca] bg-[#fff5f5] p-3">
-            <div className="text-sm font-semibold text-[#7f1d1d]">Table Reset</div>
-            <p className="mt-0.5 text-xs text-[#b91c1c]">Restores columns, labels, and layout. Does not remove items.</p>
-            {confirmReset ? (
-              <div className="mt-3 rounded-[12px] border border-[#f5c2c7] bg-white px-3 py-3">
-                <div className="text-sm text-[#7f1d1d]">Reset table to default?</div>
-                <div className="mt-3 flex gap-2">
-                  <Button type="button" variant="outline" onClick={() => setConfirmReset(false)} className="h-9 flex-1 rounded-[10px]">Cancel</Button>
-                  <Button type="button" onClick={handleResetTable} className="h-9 flex-1 rounded-[10px] bg-[#dc2626] text-white hover:bg-[#b91c1c]">
-                    Confirm reset
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Button type="button" variant="outline" onClick={() => setConfirmReset(true)} className="mt-3 h-9 gap-1.5 rounded-[10px] border-[#f5c2c7] bg-white text-[#b91c1c]">
-                <RotateCcw className="h-3.5 w-3.5" />
-                Reset table to default
-              </Button>
-            )}
+          <section className="mt-5 rounded-[18px] border border-[#e2e8f0] bg-white p-3">
+            <div className="text-sm font-semibold text-zinc-900">Table Reset</div>
+            <p className="mt-0.5 text-xs text-zinc-500">Restores columns, labels, and layout. Does not remove items.</p>
+            <Button type="button" variant="outline" onClick={() => setConfirmReset(true)} className="mt-3 h-9 gap-1.5 rounded-[10px] border-[#f5c2c7] bg-white text-[#b91c1c]">
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reset table to default
+            </Button>
           </section>
         </div>
 
@@ -228,6 +217,27 @@ export default function ColumnManager({
           </Button>
         </div>
       </div>
+
+      <Dialog open={confirmReset} onOpenChange={setConfirmReset}>
+        <DialogContent className="max-w-sm rounded-[20px] bg-white p-0">
+          <div className="p-5">
+            <DialogHeader className="mb-3">
+              <DialogTitle>Reset table to default?</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-zinc-600">
+              This restores columns, labels, and layout. Items are not removed.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setConfirmReset(false)} className="h-10 flex-1 rounded-[12px]">
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleResetTable} className="h-10 flex-1 rounded-[12px] bg-[#dc2626] text-white hover:bg-[#b91c1c]">
+                Reset
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

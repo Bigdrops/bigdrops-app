@@ -1,13 +1,10 @@
 import { lazy, Suspense } from 'react'
 import type { ReactNode } from 'react'
 
-import { Link2, NotebookText, Plus, Save, Signature, X } from 'lucide-react'
+import { Link2, NotebookText, Plus, Save, Signature, Trash2 } from 'lucide-react'
 
 import SignatoryPicker from '@/components/SignatoryPicker'
-import { Input } from '@/components/ui/input'
 import {
-  fieldCls,
-  labelCls,
   CollapseCard,
   pageCardCls,
   type LinkAttachment,
@@ -40,10 +37,6 @@ interface MobileInvoiceNotesTermsSectionProps {
 }
 
 export function MobileInvoiceNotesTermsSection({
-  notesTitle,
-  setNotesTitle,
-  termsTitle,
-  setTermsTitle,
   invoice,
   updateInvoice,
   open,
@@ -61,31 +54,25 @@ export function MobileInvoiceNotesTermsSection({
     >
       <div className="space-y-4">
         <div>
-          <label className={labelCls}>Notes Title</label>
-          <Input value={notesTitle} onChange={(event) => setNotesTitle(event.target.value)} className={fieldCls} />
-          <div className="mt-3">
-            <Suspense fallback={<EditorLoadingState />}>
-              <RichTextEditor
-                value={invoice.notes || ''}
-                onChange={(value: string) => updateInvoice('notes', value)}
-                placeholder="Notes..."
-              />
-            </Suspense>
-          </div>
+          <div className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">Notes</div>
+          <Suspense fallback={<EditorLoadingState />}>
+            <RichTextEditor
+              value={invoice.notes || ''}
+              onChange={(value: string) => updateInvoice('notes', value)}
+              placeholder="Notes..."
+            />
+          </Suspense>
         </div>
 
         <div>
-          <label className={labelCls}>Terms Title</label>
-          <Input value={termsTitle} onChange={(event) => setTermsTitle(event.target.value)} className={fieldCls} />
-          <div className="mt-3">
-            <Suspense fallback={<EditorLoadingState />}>
-              <RichTextEditor
-                value={invoice.terms || ''}
-                onChange={(value: string) => updateInvoice('terms', value)}
-                placeholder="Terms..."
-              />
-            </Suspense>
-          </div>
+          <div className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">Terms</div>
+          <Suspense fallback={<EditorLoadingState />}>
+            <RichTextEditor
+              value={invoice.terms || ''}
+              onChange={(value: string) => updateInvoice('terms', value)}
+              placeholder="Terms..."
+            />
+          </Suspense>
         </div>
       </div>
     </CollapseCard>
@@ -196,7 +183,7 @@ export function MobileInvoiceReferenceLinksSection({
                 onClick={() => removeReferenceLink(index)}
                 className="flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#e2e8f0] bg-[#f8fafc] text-[#94a3b8]"
               >
-                <X className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
           ))

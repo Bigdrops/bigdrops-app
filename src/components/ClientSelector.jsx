@@ -113,7 +113,7 @@ export default function ClientSelector({
   const selectClient = (client) => {
     setSelectedClient(client)
     setSearchTerm(client?.name || '')
-    setOpen(false)
+    closePicker(false)
     onClientChange(client?.id || '', client?.name || '', client || null)
   }
 

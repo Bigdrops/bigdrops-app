@@ -1,5 +1,5 @@
 import * as React from "react"
-import { ChevronDown, ChevronUp, Landmark, FileText } from "lucide-react"
+import { ChevronDown, Landmark } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -292,8 +292,6 @@ export function PdfOutputSettings({
 
   const [state, setState] = React.useState<PdfOutputSettingsValue>(initialState)
   const [bankSheetOpen, setBankSheetOpen] = React.useState(false)
-  const [expanded, setExpanded] = React.useState(false)
-
   React.useEffect(() => {
     setState(initialState)
   }, [initialState])
@@ -311,134 +309,70 @@ export function PdfOutputSettings({
 
   return (
     <Card className="rounded-xl border-border bg-card shadow-sm">
-      <CardContent className="p-0">
-        <button
-          type="button"
-          onClick={() => setExpanded((open) => !open)}
-          className="flex w-full items-center justify-between gap-3 border-l-4 border-emerald-500 bg-white px-4 py-4 text-left"
-        >
-          <div>
-            <div className="text-sm font-semibold tracking-tight text-foreground">Advanced Options</div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              Document visibility, branding, and micro settings.
-            </div>
+      <CardContent className="px-4 py-4">
+        <div className="text-sm font-semibold tracking-tight text-foreground">Advanced Options</div>
+        <div className="mt-1 text-xs text-muted-foreground">Document visibility and branding.</div>
+
+        <div className="mt-4 space-y-0 rounded-[18px] border border-border bg-white px-4">
+          <div className="py-3 text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-400">Document Visibility</div>
+          <div className="flex items-center justify-between gap-3 border-t border-border py-3">
+            <span className="text-sm font-medium text-slate-700">Show Bank Details</span>
+            <OutputToggle
+              checked={state.showBankDetails}
+              onToggle={() =>
+                update({
+                  showBankDetails: !state.showBankDetails,
+                  bankAccountId: !state.showBankDetails
+                    ? state.bankAccountId || defaultBank?.id || null
+                    : state.bankAccountId,
+                })
+              }
+            />
           </div>
-          {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-        </button>
-
-        {expanded ? (
-          <div className="space-y-0 border-t border-border px-4 py-4">
-            <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
-              <span className="text-sm font-medium text-slate-700">Bank Details</span>
-              <OutputToggle
-                checked={state.showBankDetails}
-                onToggle={() =>
-                  update({
-                    showBankDetails: !state.showBankDetails,
-                    bankAccountId: !state.showBankDetails
-                      ? state.bankAccountId || defaultBank?.id || null
-                      : state.bankAccountId,
-                  })
-                }
-              />
+          {state.showBankDetails && selectedBank ? (
+            <div className="border-t border-border py-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-between rounded-[12px] border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                onClick={() => setBankSheetOpen(true)}
+              >
+                <span>{selectedBank.bankName} • {selectedBank.accountNumber}</span>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
             </div>
-            {state.showBankDetails && selectedBank ? (
-              <div className="space-y-3 border-b border-border bg-white px-3 py-3">
-                <div className="rounded-md border-l-4 border-emerald-500 bg-card p-3">
-                  <div className="mb-2 flex items-center gap-2">
-                    <div className="rounded-md bg-emerald-100 p-1.5 text-emerald-700">
-                      <Landmark className="h-4 w-4" />
-                    </div>
-                    <p className="text-sm font-medium text-foreground">Selected Account</p>
-                  </div>
-
-                  <div className="space-y-1.5 text-sm text-slate-700">
-                    <div>
-                      <span className="text-muted-foreground">Bank:</span>{" "}
-                      <span className="font-medium text-foreground">{selectedBank.bankName}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Account Name:</span>{" "}
-                      <span className="text-foreground">{selectedBank.accountName}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Account Number:</span>{" "}
-                      <span className="font-mono text-foreground">{selectedBank.accountNumber}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Sort Code:</span>{" "}
-                      <span className="font-mono text-foreground">{selectedBank.sortCode}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-between border-emerald-200 bg-card text-emerald-700 hover:bg-emerald-100"
-                  onClick={() => setBankSheetOpen(true)}
-                >
-                  <span>Select another account</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : null}
-
-            <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
-              <span className="text-sm font-medium text-slate-700">Show tagline</span>
-              <OutputToggle checked={state.showTagline} onToggle={() => update({ showTagline: !state.showTagline })} />
+          ) : null}
+          {showBalanceDueOption ? (
+            <div className="flex items-center justify-between gap-3 border-t border-border py-3">
+              <span className="text-sm font-medium text-slate-700">Show Balance Due</span>
+              <OutputToggle checked={state.showBalanceDue} onToggle={() => update({ showBalanceDue: !state.showBalanceDue })} />
             </div>
-            {state.showTagline ? (
-              <div className="border-b border-border bg-white px-3 py-3">
-                <div className="rounded-md border-l-4 border-blue-500 bg-card p-3">
-                  <p className="mb-1 text-sm font-medium text-foreground">Tagline Preview</p>
-                  <p className="line-clamp-2 text-sm text-muted-foreground">
-                    {companyTagline || "No company tagline found."}
-                  </p>
-                </div>
-              </div>
-            ) : null}
-
-            <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
-              <span className="text-sm font-medium text-slate-700">Show footer</span>
-              <OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />
-            </div>
-            {showBalanceDueOption ? (
-              <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
-                <span className="text-sm font-medium text-slate-700">Show balance due</span>
-                <OutputToggle checked={state.showBalanceDue} onToggle={() => update({ showBalanceDue: !state.showBalanceDue })} />
-              </div>
-            ) : null}
-            <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
-              <span className="text-sm font-medium text-slate-700">Show VAT percentage in brackets</span>
-              <OutputToggle checked={state.showVatPercentage} onToggle={() => update({ showVatPercentage: !state.showVatPercentage })} />
-            </div>
-            <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
-              <span className="text-sm font-medium text-slate-700">Show WHT percentage in brackets</span>
-              <OutputToggle checked={state.showWhtPercentage} onToggle={() => update({ showWhtPercentage: !state.showWhtPercentage })} />
-            </div>
-            <div className="flex w-full items-center justify-between py-3 border-b border-border last:border-0">
-              <span className="text-sm font-medium text-slate-700">Show Discount percentage in brackets</span>
-              <OutputToggle
-                checked={state.showDiscountPercentage}
-                onToggle={() => update({ showDiscountPercentage: !state.showDiscountPercentage })}
-              />
-            </div>
-            {state.showFooter ? (
-              <div className="bg-white px-3 py-3">
-                <div className="rounded-md border-l-4 border-amber-500 bg-card p-3">
-                  <div className="mb-2 flex items-center gap-2">
-                    <div className="rounded-md bg-amber-100 p-1.5 text-amber-700">
-                      <FileText className="h-4 w-4" />
-                    </div>
-                    <p className="text-sm font-medium text-foreground">Footer Preview</p>
-                  </div>
-                  <p className="line-clamp-2 text-sm text-muted-foreground">{footerText || "No footer text found."}</p>
-                </div>
-              </div>
-            ) : null}
+          ) : null}
+          <div className="flex items-center justify-between gap-3 border-t border-border py-3">
+            <span className="text-sm font-medium text-slate-700">Show VAT % in brackets</span>
+            <OutputToggle checked={state.showVatPercentage} onToggle={() => update({ showVatPercentage: !state.showVatPercentage })} />
           </div>
-        ) : null}
+          <div className="flex items-center justify-between gap-3 border-t border-border py-3">
+            <span className="text-sm font-medium text-slate-700">Show WHT % in brackets</span>
+            <OutputToggle checked={state.showWhtPercentage} onToggle={() => update({ showWhtPercentage: !state.showWhtPercentage })} />
+          </div>
+          <div className="flex items-center justify-between gap-3 border-t border-border py-3">
+            <span className="text-sm font-medium text-slate-700">Show Discount % in brackets</span>
+            <OutputToggle
+              checked={state.showDiscountPercentage}
+              onToggle={() => update({ showDiscountPercentage: !state.showDiscountPercentage })}
+            />
+          </div>
+          <div className="py-3 text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-400 border-t border-border">Branding</div>
+          <div className="flex items-center justify-between gap-3 border-t border-border py-3">
+            <span className="text-sm font-medium text-slate-700">Show Tagline</span>
+            <OutputToggle checked={state.showTagline} onToggle={() => update({ showTagline: !state.showTagline })} />
+          </div>
+          <div className="flex items-center justify-between gap-3 border-t border-border py-3">
+            <span className="text-sm font-medium text-slate-700">Show Footer</span>
+            <OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />
+          </div>
+        </div>
       </CardContent>
 
       <BankAccountPickerSheet

@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import type { DiscountTiming, DiscountType, ExtraCharge, InvoiceFieldEntry, WhtType } from '@/domain/invoice'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ChevronDown, Percent, Plus, X } from 'lucide-react'
+import { ChevronDown, Percent, Plus, Trash2 } from 'lucide-react'
 import { fieldCls, SectionLabel, pageCardCls, labelCls } from '@/components/invoice/mobile/mobileFormPrimitives'
 
 type CommercialTermsSectionProps = {
@@ -264,24 +264,13 @@ export default function CommercialTermsSection({
                     className={`${fieldCls} ${charge.withTax !== false ? 'pr-8' : ''}`}
                   />
                   {charge.withTax !== false ? (
-                    <button
-                      type="button"
-                      onClick={() => onUpdateExtraCharge(charge.id, 'withTax', false)}
-                      className="absolute right-2 top-1/2 inline-flex -translate-y-1/2 items-center justify-center text-[#94a3b8]"
+                    <span
+                      className="pointer-events-none absolute right-2 top-1/2 inline-flex -translate-y-1/2 items-center justify-center text-[#94a3b8]"
                       title="Tax applies"
                     >
                       <Percent className="h-3.5 w-3.5" />
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => onUpdateExtraCharge(charge.id, 'withTax', true)}
-                      className="absolute right-2 top-1/2 inline-flex -translate-y-1/2 items-center justify-center rounded-full border border-transparent px-1 text-[10px] font-semibold text-[#cbd5e1]"
-                      title="No tax"
-                    >
-                      %
-                    </button>
-                  )}
+                    </span>
+                  ) : null}
                 </div>
                 <Input
                   type="number"
@@ -295,7 +284,7 @@ export default function CommercialTermsSection({
                   onClick={() => onRemoveExtraCharge(charge.id)}
                   className="flex h-11 w-[34px] items-center justify-center rounded-[12px] border border-[#fecaca] bg-[#fff5f5] text-[#ef4444]"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
             ))}
@@ -343,7 +332,7 @@ export default function CommercialTermsSection({
                   onClick={() => onRemoveAdditionalField(field.id)}
                   className="flex h-11 w-[34px] items-center justify-center rounded-[12px] border border-[#e2e8f0] bg-white text-[#94a3b8]"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
             ))}

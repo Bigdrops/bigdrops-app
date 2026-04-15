@@ -10,7 +10,7 @@ import {
   MoreHorizontal,
   Plus,
   Settings2,
-  X,
+  Trash2,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import ClientSelector from '@/components/ClientSelector'
@@ -393,7 +393,7 @@ export default function MobileInvoiceForm(props) {
                       onClick={() => onRemoveHeaderField(field.id)}
                       className="flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#e2e8f0] bg-[#f8fafc] text-[#94a3b8]"
                     >
-                      <X className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 ))
