@@ -116,6 +116,63 @@ function OutputToggle({ checked, onToggle }: { checked: boolean; onToggle: () =>
   )
 }
 
+function SettingsSection({
+  title,
+  subtitle,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string
+  subtitle?: string
+  open: boolean
+  onToggle: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <div className="rounded-[16px] border border-border bg-white">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+      >
+        <div className="min-w-0">
+          <div className="text-sm font-semibold tracking-tight text-foreground">{title}</div>
+          {subtitle ? (
+            <div className="mt-0.5 text-[11px] leading-4 text-muted-foreground">{subtitle}</div>
+          ) : null}
+        </div>
+        {open ? (
+          <ChevronUp className="h-4 w-4 shrink-0 text-slate-400" />
+        ) : (
+          <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+        )}
+      </button>
+      {open ? <div className="border-t border-border px-4 py-2.5">{children}</div> : null}
+    </div>
+  )
+}
+
+function SettingsRow({
+  label,
+  control,
+  children,
+}: {
+  label: string
+  control: React.ReactNode
+  children?: React.ReactNode
+}) {
+  return (
+    <div className="border-b border-border/80 py-2.5 last:border-b-0">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-medium text-slate-700">{label}</span>
+        {control}
+      </div>
+      {children ? <div className="pt-2">{children}</div> : null}
+    </div>
+  )
+}
+
 export function PdfBankControls({
   value,
   onChange,
@@ -292,6 +349,10 @@ export function PdfOutputSettings({
 
   const [state, setState] = React.useState<PdfOutputSettingsValue>(initialState)
   const [bankSheetOpen, setBankSheetOpen] = React.useState(false)
+  const [sectionsOpen, setSectionsOpen] = React.useState({
+    visibility: true,
+    branding: false,
+  })
   React.useEffect(() => {
     setState(initialState)
   }, [initialState])
@@ -307,71 +368,91 @@ export function PdfOutputSettings({
     })
   }
 
+  function toggleSection(section: 'visibility' | 'branding') {
+    setSectionsOpen((prev) => ({ ...prev, [section]: !prev[section] }))
+  }
+
   return (
     <Card className="rounded-xl border-border bg-card shadow-sm">
       <CardContent className="px-4 py-4">
         <div className="text-sm font-semibold tracking-tight text-foreground">Advanced Options</div>
         <div className="mt-1 text-xs text-muted-foreground">Document visibility and branding.</div>
 
-        <div className="mt-4 space-y-0 rounded-[18px] border border-border bg-white px-4">
-          <div className="py-3 text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-400">Document Visibility</div>
-          <div className="flex items-center justify-between gap-3 border-t border-border py-3">
-            <span className="text-sm font-medium text-slate-700">Show Bank Details</span>
-            <OutputToggle
-              checked={state.showBankDetails}
-              onToggle={() =>
-                update({
-                  showBankDetails: !state.showBankDetails,
-                  bankAccountId: !state.showBankDetails
-                    ? state.bankAccountId || defaultBank?.id || null
-                    : state.bankAccountId,
-                })
+        <div className="mt-4 space-y-3">
+          <SettingsSection
+            title="Document Visibility"
+            subtitle="Control supporting details and totals labels."
+            open={sectionsOpen.visibility}
+            onToggle={() => toggleSection('visibility')}
+          >
+            <SettingsRow
+              label="Show Bank Details"
+              control={
+                <OutputToggle
+                  checked={state.showBankDetails}
+                  onToggle={() =>
+                    update({
+                      showBankDetails: !state.showBankDetails,
+                      bankAccountId: !state.showBankDetails
+                        ? state.bankAccountId || defaultBank?.id || null
+                        : state.bankAccountId,
+                    })
+                  }
+                />
+              }
+            >
+              {state.showBankDetails && selectedBank ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 w-full justify-between rounded-[12px] border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                  onClick={() => setBankSheetOpen(true)}
+                >
+                  <span>{selectedBank.bankName} • {selectedBank.accountNumber}</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              ) : null}
+            </SettingsRow>
+            {showBalanceDueOption ? (
+              <SettingsRow
+                label="Show Balance Due"
+                control={<OutputToggle checked={state.showBalanceDue} onToggle={() => update({ showBalanceDue: !state.showBalanceDue })} />}
+              />
+            ) : null}
+            <SettingsRow
+              label="Show VAT % in brackets"
+              control={<OutputToggle checked={state.showVatPercentage} onToggle={() => update({ showVatPercentage: !state.showVatPercentage })} />}
+            />
+            <SettingsRow
+              label="Show WHT % in brackets"
+              control={<OutputToggle checked={state.showWhtPercentage} onToggle={() => update({ showWhtPercentage: !state.showWhtPercentage })} />}
+            />
+            <SettingsRow
+              label="Show Discount % in brackets"
+              control={
+                <OutputToggle
+                  checked={state.showDiscountPercentage}
+                  onToggle={() => update({ showDiscountPercentage: !state.showDiscountPercentage })}
+                />
               }
             />
-          </div>
-          {state.showBankDetails && selectedBank ? (
-            <div className="border-t border-border py-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-between rounded-[12px] border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
-                onClick={() => setBankSheetOpen(true)}
-              >
-                <span>{selectedBank.bankName} • {selectedBank.accountNumber}</span>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : null}
-          {showBalanceDueOption ? (
-            <div className="flex items-center justify-between gap-3 border-t border-border py-3">
-              <span className="text-sm font-medium text-slate-700">Show Balance Due</span>
-              <OutputToggle checked={state.showBalanceDue} onToggle={() => update({ showBalanceDue: !state.showBalanceDue })} />
-            </div>
-          ) : null}
-          <div className="flex items-center justify-between gap-3 border-t border-border py-3">
-            <span className="text-sm font-medium text-slate-700">Show VAT % in brackets</span>
-            <OutputToggle checked={state.showVatPercentage} onToggle={() => update({ showVatPercentage: !state.showVatPercentage })} />
-          </div>
-          <div className="flex items-center justify-between gap-3 border-t border-border py-3">
-            <span className="text-sm font-medium text-slate-700">Show WHT % in brackets</span>
-            <OutputToggle checked={state.showWhtPercentage} onToggle={() => update({ showWhtPercentage: !state.showWhtPercentage })} />
-          </div>
-          <div className="flex items-center justify-between gap-3 border-t border-border py-3">
-            <span className="text-sm font-medium text-slate-700">Show Discount % in brackets</span>
-            <OutputToggle
-              checked={state.showDiscountPercentage}
-              onToggle={() => update({ showDiscountPercentage: !state.showDiscountPercentage })}
+          </SettingsSection>
+
+          <SettingsSection
+            title="Branding"
+            subtitle="Control optional document identity elements."
+            open={sectionsOpen.branding}
+            onToggle={() => toggleSection('branding')}
+          >
+            <SettingsRow
+              label="Show Tagline"
+              control={<OutputToggle checked={state.showTagline} onToggle={() => update({ showTagline: !state.showTagline })} />}
             />
-          </div>
-          <div className="py-3 text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-400 border-t border-border">Branding</div>
-          <div className="flex items-center justify-between gap-3 border-t border-border py-3">
-            <span className="text-sm font-medium text-slate-700">Show Tagline</span>
-            <OutputToggle checked={state.showTagline} onToggle={() => update({ showTagline: !state.showTagline })} />
-          </div>
-          <div className="flex items-center justify-between gap-3 border-t border-border py-3">
-            <span className="text-sm font-medium text-slate-700">Show Footer</span>
-            <OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />
-          </div>
+            <SettingsRow
+              label="Show Footer"
+              control={<OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />}
+            />
+          </SettingsSection>
         </div>
       </CardContent>
 
