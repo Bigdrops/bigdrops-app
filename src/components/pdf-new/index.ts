@@ -1,41 +1,53 @@
+import { pdf } from '@react-pdf/renderer'
+import React from 'react'
+import { registerPdfFonts } from '@/lib/pdfFontRegistry'
+import { PdfRenderer } from './renderers/PdfRenderer'
 import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel } from './types'
 
 export type PdfGenerationResult = {
-  status: 'not-implemented'
+  status: 'generated'
+  filename: string
 }
 
 type PdfGenerationRequest<TModel extends PdfDocumentModel> = {
-  model?: TModel
+  model: TModel
   documentNumber?: string | null
-  variant?: 'standard' | 'advance'
 }
 
-function warnPdfGeneration(kind: 'invoice' | 'quotation', request?: PdfGenerationRequest<PdfDocumentModel>) {
-  const documentNumber = String(request?.documentNumber || request?.model?.identity.number || '').trim()
-  const variant = request?.variant === 'advance' ? ' advance' : ''
-  const identifier = documentNumber ? ` (${documentNumber})` : ''
-
-  console.warn(`New ${kind}${variant} PDF system not implemented yet${identifier}`)
+function downloadBlob(blob: Blob, filename: string) {
+  const anchor = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  anchor.href = url
+  anchor.download = filename
+  document.body.appendChild(anchor)
+  anchor.click()
+  document.body.removeChild(anchor)
+  URL.revokeObjectURL(url)
 }
 
-async function createNotImplementedResult<TModel extends PdfDocumentModel>(
-  kind: 'invoice' | 'quotation',
-  request?: PdfGenerationRequest<TModel>,
-): Promise<PdfGenerationResult> {
-  warnPdfGeneration(kind, request as PdfGenerationRequest<PdfDocumentModel> | undefined)
-  return { status: 'not-implemented' }
+function sanitizeFilename(value: string) {
+  return value.replace(/[^a-zA-Z0-9-_]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')
 }
 
-export async function generateInvoicePdf(
-  request?: PdfGenerationRequest<InvoicePdfModel>,
-): Promise<PdfGenerationResult> {
-  return createNotImplementedResult('invoice', request)
+function resolveFilename(model: PdfDocumentModel, fallbackNumber?: string | null) {
+  const number = String(model.identity.number || fallbackNumber || model.identity.kind).trim() || model.identity.kind
+  return `${sanitizeFilename(number)}.pdf`
 }
 
-export async function generateQuotationPdf(
-  request?: PdfGenerationRequest<QuotationPdfModel>,
-): Promise<PdfGenerationResult> {
-  return createNotImplementedResult('quotation', request)
+async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerationRequest<TModel>): Promise<PdfGenerationResult> {
+  registerPdfFonts()
+  const blob = await pdf(React.createElement(PdfRenderer, { model: request.model }) as any).toBlob()
+  const filename = resolveFilename(request.model, request.documentNumber)
+  downloadBlob(blob, filename)
+  return { status: 'generated', filename }
+}
+
+export async function generateInvoicePdf(request: PdfGenerationRequest<InvoicePdfModel>): Promise<PdfGenerationResult> {
+  return generatePdf(request)
+}
+
+export async function generateQuotationPdf(request: PdfGenerationRequest<QuotationPdfModel>): Promise<PdfGenerationResult> {
+  return generatePdf(request)
 }
 
 export type {
@@ -44,16 +56,20 @@ export type {
   PdfAttachmentReference,
   PdfBankDetails,
   PdfBaseDocumentModel,
+  PdfColumnDefinition,
   PdfDocumentIdentity,
   PdfDocumentKind,
   PdfDocumentModel,
+  PdfHeaderField,
   PdfLineItem,
   PdfLogo,
   PdfParty,
   PdfReferenceLink,
   PdfSignature,
+  PdfTemplateConfig,
   PdfTextSection,
   PdfTotalRow,
   PdfTotals,
+  PdfTotalsMode,
   QuotationPdfModel,
 } from './types'

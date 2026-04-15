@@ -268,13 +268,112 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     if (!quotation || pdfGenerating) return
     setPdfGenerating(true)
     try {
+      const customFields = parseDocumentCustomFields(quotation.custom_fields)
+      const referenceLinks = Array.isArray(customFields.attachments)
+        ? customFields.attachments
+            .filter((entry: any) => entry?.url)
+            .map((entry: any, index: number) => ({
+              label: String(entry.label || entry.name || `Reference ${index + 1}`),
+              url: String(entry.url),
+            }))
+        : []
+
+      const summaryRows = [
+        { key: 'subtotal', label: 'Subtotal', amount: Number(totals?.rawSubtotal || quotation.subtotal || 0) },
+        ...(Number(totals?.installRateTotal || 0) > 0 ? [{ key: 'installation', label: 'Installation Total', amount: Number(totals?.installRateTotal || 0) }] : []),
+        ...(Number(quotation.workmanship || 0) > 0 ? [{ key: 'workmanship', label: 'Workmanship', amount: Number(quotation.workmanship || 0) }] : []),
+        ...(Number(quotation.transportation || 0) > 0 ? [{ key: 'transportation', label: 'Transportation', amount: Number(quotation.transportation || 0) }] : []),
+        ...(Number(quotation.shipping || 0) > 0 ? [{ key: 'shipping', label: 'Shipping', amount: Number(quotation.shipping || 0) }] : []),
+        ...(Number(totals?.discountAmount || quotation.discount || 0) > 0 ? [{ key: 'discount', label: previewSummaryLabels.discount, amount: Number(totals?.discountAmount || quotation.discount || 0), tone: 'danger' as const }] : []),
+        ...(Number(totals?.vatAmount || quotation.vat || 0) > 0 ? [{ key: 'vat', label: previewSummaryLabels.vat, amount: Number(totals?.vatAmount || quotation.vat || 0) }] : []),
+        ...(Number(totals?.whtAmount || quotation.wht || 0) > 0 ? [{ key: 'wht', label: previewSummaryLabels.wht, amount: Number(totals?.whtAmount || quotation.wht || 0) }] : []),
+        { key: 'total', label: 'Total', amount: Number(shellQuotationTotal || quotation.total || 0), emphasis: true, tone: 'primary' as const },
+      ]
+
       await generateQuotationPdf({
-        documentNumber: quotation.quotation_number || 'quotation',
+        model: {
+          identity: {
+            id: String(quotation.id || quotationId),
+            kind: 'quotation',
+            number: String(quotation.quotation_number || 'quotation'),
+            title: String(quotation.quotation_title || 'Quotation'),
+            issueDate: String(quotation.issue_date || ''),
+            validUntil: String(quotation.valid_until || ''),
+            poNumber: poNumber,
+            status: String(quotation.status || ''),
+            currency: 'NGN',
+          },
+          issuer: {
+            label: 'From',
+            name: String(settings?.company_name || ''),
+            addressLines: companyIdentity.lines,
+            phone: String(settings?.company_phone || ''),
+            email: String(settings?.company_email || ''),
+            taxId: String(settings?.company_vat || ''),
+          },
+          recipient: {
+            label: 'Prepared For',
+            name: String(quotation.client_name || ''),
+            attention: String(client?.contact_person || ''),
+            addressLines: clientPreviewLines,
+            phone: String(client?.phone || ''),
+            email: String(client?.email || ''),
+          },
+          headerFields: topHeaderFields.map((field: any) => ({ label: String(field.label || ''), value: String(field.value || '') })),
+          columns: columns
+            .filter((column: any) => column?.visible)
+            .map((column: any) => ({ key: String(column.key || ''), label: String(column.label || column.key || ''), align: ['amount', 'unit_price', 'rate'].includes(String(column.key || '')) ? 'right' : 'left' })),
+          mergeQtyUnit: customFields.mergeQtyUnit === true,
+          items: items.map((item, index) => ({
+            id: String(item.id || item._uiKey || index),
+            rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
+            groupLabel: item.group_name || null,
+            description: item.description || '',
+            subDescription: item.sub_description || '',
+            make: item.make || '',
+            quantity: item.quantity ?? null,
+            unit: item.unit || '',
+            unitPrice: item.unit_price ?? 0,
+            amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
+            imageUrl: item.image_url || null,
+            customData: item.custom_data || {},
+          })),
+          totals: {
+            mode: 'standard',
+            rows: summaryRows,
+            amountInWords: String(quotation.amount_in_words || ''),
+          },
+          bankDetails: pdfOutput.showBankDetails && selectedPreviewBank
+            ? {
+                bankName: selectedPreviewBank.bankName,
+                accountName: selectedPreviewBank.accountName,
+                accountNumber: selectedPreviewBank.accountNumber,
+                sortCode: selectedPreviewBank.sortCode,
+              }
+            : null,
+          notes: quotation.notes ? { title: notesTitle || 'Notes', content: quotation.notes, format: 'html' } : null,
+          terms: quotation.terms ? { title: termsTitle || 'Terms and Conditions', content: quotation.terms, format: 'html' } : null,
+          additionalSections: additionalFields
+            .filter((field) => field?.label || field?.value)
+            .map((field) => ({ title: String(field.label || 'Additional Field'), content: String(field.value || ''), format: 'text' })),
+          referenceLinks,
+          signature: null,
+          logo: { imageUrl: String(settings?.company_logo_url || '') || null, altText: String(settings?.company_name || '') },
+          footerText: pdfOutput.showFooter ? String(settings?.footer_text || '') : '',
+          tagline: pdfOutput.showTagline ? String(settings?.company_tagline || '') : '',
+          metaFooter: { companyName: String(settings?.company_name || '') },
+          template: {
+            name: 'minimal',
+            designPreset: pdfDesignPreset,
+            fontConfig: {
+              useCustomFonts: pdfDesignPreset.useCustomFonts,
+              headerFont: pdfDesignPreset.headerFont,
+              bodyFont: pdfDesignPreset.bodyFont,
+            },
+          },
+        },
       })
-      toast({
-        title: 'PDF unavailable',
-        description: 'The new quotation PDF system is not implemented yet.',
-      })
+      toast({ title: 'PDF ready', description: 'Quotation PDF downloaded.' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       toast({ title: 'PDF generation failed', description: message, variant: 'destructive' })
