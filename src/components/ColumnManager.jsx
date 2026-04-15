@@ -17,6 +17,13 @@ import { Sheet, SheetContent } from '../components/ui/sheet'
 import { cn } from '@/lib/utils'
 import { COLUMN_TYPES } from './useInvoiceColumns.jsx'
 
+const FIXED_PDF_COLUMNS = [
+  { key: 'description', label: 'Description' },
+  { key: 'quantity', label: 'Qty' },
+  { key: 'unit_price', label: 'Unit Price' },
+  { key: 'amount', label: 'Amount (NGN)' },
+]
+
 function SectionTitle({ children, action }) {
   return (
     <div className="mb-3 flex items-center justify-between gap-3">
@@ -229,6 +236,30 @@ function CustomColumnCard({
   )
 }
 
+function FixedColumnRow({ col }) {
+  return (
+    <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-3 py-3">
+      <div className="flex items-start gap-3">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] border border-slate-200 bg-white text-slate-400">
+          <Eye className="h-4 w-4" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <Input
+            value={col.label}
+            readOnly
+            className="h-11 rounded-[14px] border-slate-200 bg-white px-4 text-[15px] font-medium text-slate-900"
+          />
+
+          <div className="mt-2 inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[12px] font-medium text-slate-500">
+            Always shown in PDF
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function OverrideRow({ label, count, onReset }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-[14px] border border-slate-200 bg-white px-3 py-2.5">
@@ -367,6 +398,10 @@ export default function ColumnManager({
             <div className="flex-1 overflow-y-auto px-5 pb-4 pt-5">
               <SectionTitle>Columns</SectionTitle>
               <div className="space-y-3">
+                {FIXED_PDF_COLUMNS.map((col) => (
+                  <FixedColumnRow key={col.key} col={col} />
+                ))}
+
                 {builtinCols.map((col, index) => (
                   <BuiltInColumnRow
                     key={col.key}

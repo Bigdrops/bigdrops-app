@@ -646,31 +646,16 @@ export default function MobileInvoiceForm(props) {
       {showColumnManager ? (
         <Suspense fallback={<SheetLoadingState label="column settings" />}>
           <ColumnManager
-            open={showColumnManager}
-            onOpenChange={setShowColumnManager}
             columns={columns}
-            customColumns={customColumns}
             items={items}
-            onToggleColumnVisibility={toggleVisible}
-            onUpdateColumnLabel={(key, label) => updateColumn(key, 'label', label)}
-            onUpdateInstallFormula={(key, formula) => updateColumn(key, 'formula', formula)}
-            onMoveColumnUp={(key) => moveColumn(key, -1)}
-            onMoveColumnDown={(key) => moveColumn(key, 1)}
-            onAddCustomColumn={addCustomColumn}
-            onUpdateCustomColumnLabel={(key, label) => updateColumn(key, 'label', label)}
-            onUpdateCustomColumnType={(key, type) => updateColumn(key, 'type', type)}
-            onToggleCustomColumnInclude={(key, checked) => updateColumn(key, 'includeInTotal', checked)}
-            onDeleteCustomColumn={removeCustomColumn}
-            onResetOverride={(overrideType) =>
-              onResetItemOverrides({
-                vat: overrideType === 'vat',
-                discount: overrideType === 'discount',
-                install: overrideType === 'install',
-              })
-            }
-            onResetAllOverrides={() => onResetItemOverrides({ vat: true, discount: true, install: true })}
-            onResetTable={resetColumns}
-            onDone={() => setShowColumnManager(false)}
+            onUpdate={updateColumn}
+            onToggle={toggleVisible}
+            onAddCustom={addCustomColumn}
+            onRemoveCustom={removeCustomColumn}
+            onReset={resetColumns}
+            onMove={moveColumn}
+            onClose={() => setShowColumnManager(false)}
+            onResetItemOverrides={onResetItemOverrides}
           />
         </Suspense>
       ) : null}
