@@ -274,28 +274,28 @@ export default function MobileInvoiceForm(props) {
                     <div className="text-[11px] text-[#94a3b8]">
                       {invoice.client_name ? 'Selected client' : 'Tap to choose client'}
                     </div>
-                    <div className="sr-only">
-                      <ClientSelector
-                        clientId={invoice.client_id || null}
-                        clientName={invoice.client_name || ''}
-                        isMobile={isMobile}
-                        compact
-                        dense
-                        hideHeader
-                        hideTrigger
-                        allowClear={false}
-                        open={showClientPicker}
-                        onOpenChange={setShowClientPicker}
-                        onClientChange={(id, name) => {
-                          updateInvoice('client_id', id)
-                          updateInvoice('client_name', name)
-                        }}
-                      />
-                    </div>
                   </div>
                   <ChevronRight className="mt-1 h-4 w-4 text-[#cbd5e1]" />
                 </div>
               </button>
+              <div className="sr-only">
+                <ClientSelector
+                  clientId={invoice.client_id || null}
+                  clientName={invoice.client_name || ''}
+                  isMobile={isMobile}
+                  compact
+                  dense
+                  hideHeader
+                  hideTrigger
+                  allowClear={false}
+                  open={showClientPicker}
+                  onOpenChange={setShowClientPicker}
+                  onClientChange={(id, name) => {
+                    updateInvoice('client_id', id)
+                    updateInvoice('client_name', name)
+                  }}
+                />
+              </div>
 
               <div className="mt-4 space-y-3">
                 <div>
@@ -646,16 +646,31 @@ export default function MobileInvoiceForm(props) {
       {showColumnManager ? (
         <Suspense fallback={<SheetLoadingState label="column settings" />}>
           <ColumnManager
+            open={showColumnManager}
+            onOpenChange={setShowColumnManager}
             columns={columns}
-            onUpdate={updateColumn}
-            onToggle={toggleVisible}
-            onAddCustom={addCustomColumn}
-            onRemoveCustom={removeCustomColumn}
-            onReset={resetColumns}
-            onMove={moveColumn}
-            onClose={() => setShowColumnManager(false)}
+            customColumns={customColumns}
             items={items}
-            onResetItemOverrides={onResetItemOverrides}
+            onToggleColumnVisibility={toggleVisible}
+            onUpdateColumnLabel={(key, label) => updateColumn(key, 'label', label)}
+            onUpdateInstallFormula={(key, formula) => updateColumn(key, 'formula', formula)}
+            onMoveColumnUp={(key) => moveColumn(key, -1)}
+            onMoveColumnDown={(key) => moveColumn(key, 1)}
+            onAddCustomColumn={addCustomColumn}
+            onUpdateCustomColumnLabel={(key, label) => updateColumn(key, 'label', label)}
+            onUpdateCustomColumnType={(key, type) => updateColumn(key, 'type', type)}
+            onToggleCustomColumnInclude={(key, checked) => updateColumn(key, 'includeInTotal', checked)}
+            onDeleteCustomColumn={removeCustomColumn}
+            onResetOverride={(overrideType) =>
+              onResetItemOverrides({
+                vat: overrideType === 'vat',
+                discount: overrideType === 'discount',
+                install: overrideType === 'install',
+              })
+            }
+            onResetAllOverrides={() => onResetItemOverrides({ vat: true, discount: true, install: true })}
+            onResetTable={resetColumns}
+            onDone={() => setShowColumnManager(false)}
           />
         </Suspense>
       ) : null}

@@ -23,8 +23,8 @@ export default function MobileGroupCard({
   const subtotalOn = !!group.showSubtotal
 
   return (
-    <div className="mt-3 rounded-[18px] border border-[#DCE4F5] bg-[#F5F8FF] shadow-[0_1px_3px_rgba(15,23,42,0.03)]">
-      <div className="border-l-4 border-[#3B82F6] px-3 py-3">
+    <div className="mt-3 rounded-[18px] border border-[#CBD8EE] bg-[#EEF3FB] p-2 shadow-[0_1px_3px_rgba(15,23,42,0.03)]">
+      <div className="rounded-[14px] border border-[#D7E3F5] bg-white px-3 py-3">
         <div className="flex items-center gap-2">
           <Input
             value={group.name || ''}
@@ -62,9 +62,9 @@ export default function MobileGroupCard({
         </div>
       </div>
 
-      <div className="px-2 pb-2">
+      <div className="px-1 pb-2 pt-2">
         {items.length === 0 ? (
-          <div className="rounded-[14px] border border-dashed border-[#DCE4F5] bg-white px-3 py-3 text-xs text-[#64748b]">
+          <div className="rounded-[14px] border border-dashed border-[#C9D7EC] bg-white px-3 py-3 text-xs text-[#64748b]">
             No items in this group.
           </div>
         ) : (
@@ -98,7 +98,7 @@ export default function MobileGroupCard({
         )}
 
         {subtotalOn ? (
-          <div className="mt-2 flex items-center justify-between rounded-[14px] border border-[#DCE4F5] bg-white px-3 py-2.5">
+          <div className="mt-2 flex items-center justify-between rounded-[14px] border border-[#C9D7EC] bg-white px-3 py-2.5">
             <span className="text-[13px] font-semibold text-[#475569]">Group subtotal</span>
             <span className="text-[15px] font-bold text-[#0f172a]">
               NGN {Number(groupSubtotal || 0).toLocaleString()}
@@ -110,7 +110,7 @@ export default function MobileGroupCard({
       <button
         type="button"
         onClick={() => onAddItemToGroup(group.id)}
-        className="mx-2 mb-2 flex w-[calc(100%-1rem)] items-center justify-center gap-2 rounded-[14px] border border-dashed border-[#CBD5E1] bg-white py-3 text-sm font-bold text-[#0f172a] transition-colors hover:bg-[#f8fafc]"
+        className="mt-1 flex w-full items-center justify-center gap-2 rounded-[14px] border border-dashed border-[#B9C8DE] bg-white py-3 text-sm font-bold text-[#0f172a] transition-colors hover:bg-[#f8fafc]"
       >
         <Plus className="h-4 w-4" />
         Add item to group
