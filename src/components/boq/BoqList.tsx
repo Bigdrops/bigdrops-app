@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Eye, FileText, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Eye, FileText, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
@@ -7,7 +7,7 @@ import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
 import MobileFab from '@/components/layout/MobileFab'
 import MobileListPageShell from '@/components/layout/MobileListPageShell'
 import type { Boq } from '@/domain/boq/types'
-import { deleteBoq, ensureBoqSeed, listBoqs } from '@/domain/boq/storage'
+import { deleteBoq, ensureBoqSeed } from '@/domain/boq/storage'
 import { toast } from '@/hooks/use-toast'
 
 export function BoqList() {
@@ -60,9 +60,7 @@ export function BoqList() {
         </div>
       </div>
 
-      <MobileFab onClick={() => navigate('/boqs/new')} ariaLabel="Create BOQ">
-        <Plus className="h-7 w-7" />
-      </MobileFab>
+      <MobileFab onClick={() => navigate('/boqs/new')} ariaLabel="Create BOQ" />
 
       <InvoiceListActionSheet
         open={Boolean(activeBoq)}

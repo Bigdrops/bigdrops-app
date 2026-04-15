@@ -10,7 +10,7 @@ import MobileFab from "../components/layout/MobileFab"
 import MobileListPageShell from "../components/layout/MobileListPageShell"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 
-import { Archive, Eye, MoreHorizontal, Pencil, Plus, Trash2, Users } from "lucide-react"
+import { Archive, Eye, MoreHorizontal, Pencil, Trash2, Users } from "lucide-react"
 
 type Client = {
   id: string | number
@@ -254,9 +254,7 @@ export default function Clients() {
           </div>
         )}
 
-        <MobileFab onClick={() => navigate("/clients/new")} ariaLabel="Create client">
-          <Plus className="h-7 w-7" />
-        </MobileFab>
+        <MobileFab onClick={() => navigate("/clients/new")} ariaLabel="Create client" />
       </MobileListPageShell>
       <ConfirmActionDialog
         open={clientToDelete !== null}

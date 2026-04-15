@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, FileText, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Eye, FileText, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { Rfq } from '@/domain/rfq/types'
 import { normalizeDbRfq } from '@/domain/rfq/normalize'
@@ -200,9 +200,7 @@ export const RfqList: React.FC = () => {
         )}
       </div>
 
-      <MobileFab onClick={() => navigate('/rfqs/new')} ariaLabel="Create RFQ">
-        <Plus className="h-7 w-7" />
-      </MobileFab>
+      <MobileFab onClick={() => navigate('/rfqs/new')} ariaLabel="Create RFQ" />
 
       <InvoiceListActionSheet
         open={Boolean(activeRfq)}

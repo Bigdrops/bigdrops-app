@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Receipt, Send, Trash2, Truck, Wrench, Workflow } from "lucide-react"
+import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Send, Trash2, Truck, Wrench, Workflow } from "lucide-react"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
 import { canUseNativeSqlite } from "@/lib/native/capacitor"
@@ -552,9 +552,7 @@ export default function Invoices() {
         onLoadMore={() => fetchInvoices(page + 1, false)}
       />
 
-      <MobileFab onClick={() => navigate("/invoices/new")} ariaLabel="Create invoice">
-        <Receipt className="h-6 w-6" />
-      </MobileFab>
+      <MobileFab onClick={() => navigate("/invoices/new")} ariaLabel="Create invoice" />
       <InvoiceListActionSheet
         open={Boolean(activeInvoice) && !showArchiveWarn && !showDeleteWarn}
         onOpenChange={(open) => {

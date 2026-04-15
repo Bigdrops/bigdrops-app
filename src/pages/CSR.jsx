@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ClipboardList, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, MoreHorizontal, Pencil, Plus, RefreshCw, Trash2, Workflow } from "lucide-react"
+import { ClipboardList, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, MoreHorizontal, Pencil, RefreshCw, Trash2, Workflow } from "lucide-react"
 
 import ConfirmActionDialog from "@/components/ConfirmActionDialog"
 import { supabase } from "../supabase"
@@ -520,9 +520,7 @@ export default function CSR() {
           </div>
         )}
 
-        <MobileFab onClick={() => navigate("/csr/new")} ariaLabel="Create CSR">
-          <Plus size={32} />
-        </MobileFab>
+        <MobileFab onClick={() => navigate("/csr/new")} ariaLabel="Create CSR" />
       </MobileListPageShell>
       <ConfirmActionDialog
         open={Boolean(csrToDelete)}

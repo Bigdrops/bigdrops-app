@@ -429,9 +429,7 @@ export default function Waybills() {
           </div>
         )}
 
-      <MobileFab onClick={() => navigate('/waybills/new')} ariaLabel="Create waybill">
-        <Plus className="h-6 w-6" />
-      </MobileFab>
+      <MobileFab onClick={() => navigate('/waybills/new')} ariaLabel="Create waybill" />
       <InvoiceListActionSheet
         open={Boolean(activeWaybill)}
         onOpenChange={(open) => {

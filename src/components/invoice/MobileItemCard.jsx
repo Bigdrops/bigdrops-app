@@ -76,6 +76,9 @@ export default function MobileItemCard({
       ? parseFloat(col.formula) * Number(item.quantity || 1) * Number(item.unit_price || 0)
       : null
   })()
+  const discountValue = item.discount_rate
+  const hasDiscountOverride = discountValue !== null && discountValue !== undefined
+  const discountExcluded = discountValue === 0
 
   const handleImageUpload = async (event) => {
     const file = event.target.files?.[0]

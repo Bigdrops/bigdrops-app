@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import ConfirmActionDialog from '../components/ConfirmActionDialog'
 import Layout from '../components/Layout'
-import { Archive, Eye, FolderKanban, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Archive, Eye, FolderKanban, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import MobileFab from '../components/layout/MobileFab'
 import MobileListPageShell from '../components/layout/MobileListPageShell'
@@ -331,9 +331,7 @@ export default function Projects() {
         )}
       </MobileListPageShell>
 
-      <MobileFab onClick={() => navigate('/projects/new')} ariaLabel="Create project">
-        <Plus size={32} />
-      </MobileFab>
+      <MobileFab onClick={() => navigate('/projects/new')} ariaLabel="Create project" />
       <ConfirmActionDialog
         open={Boolean(projectToDelete)}
         onOpenChange={(open) => {

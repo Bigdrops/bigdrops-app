@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import MobileFab from '@/components/layout/MobileFab'
 import { operationalEmptyStateClassName, operationalPanelClassName } from '@/components/ui/operational-card-styles'
 import { SkeletonCard, SkeletonRow } from '@/components/loading/AppLoadingStates'
 import Layout, { MobileChromeContext } from '../components/Layout'
@@ -429,14 +430,7 @@ function MobileDashboardView({
 
       {createActions.length > 0 ? (
         <>
-          <button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            aria-label="Create new"
-            className="fixed bottom-[76px] left-1/2 z-[25] grid h-[62px] w-[62px] -translate-x-1/2 place-items-center rounded-[20px] bg-[#111111] text-white shadow-[0_18px_34px_rgba(0,0,0,0.20)]"
-          >
-            <Plus className="h-7 w-7" />
-          </button>
+          <MobileFab onClick={() => setCreateOpen(true)} ariaLabel="Create new" />
 
           <Sheet open={createOpen} onOpenChange={setCreateOpen}>
             <SheetContent side="bottom" className="h-[min(640px,84vh)] max-h-[84vh] overflow-hidden p-0">

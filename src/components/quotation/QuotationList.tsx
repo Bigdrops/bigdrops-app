@@ -9,7 +9,6 @@ import {
   GitBranchPlus,
   Loader2,
   Pencil,
-  Plus,
   RefreshCw,
   Trash2,
   Workflow,
@@ -488,9 +487,7 @@ export default function QuotationList() {
         loadingMore={false}
         onLoadMore={() => {}}
       />
-      <MobileFab onClick={() => navigate('/quotations/new')} ariaLabel="Create quotation">
-        <Plus className="h-7 w-7" />
-      </MobileFab>
+      <MobileFab onClick={() => navigate('/quotations/new')} ariaLabel="Create quotation" />
       <ConfirmActionDialog
         open={archiveId !== null}
         onOpenChange={(open) => {
