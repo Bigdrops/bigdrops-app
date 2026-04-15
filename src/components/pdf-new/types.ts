@@ -4,6 +4,10 @@ export type PdfDocumentKind = 'invoice' | 'quotation'
 
 export type PdfTextAlign = 'left' | 'center' | 'right'
 
+export type PdfColumnKind = 'builtin' | 'custom'
+
+export type PdfColumnDataType = 'text' | 'number' | 'install_rate' | 'vat_rate' | 'discount_rate'
+
 export type PdfDocumentIdentity = {
   id: string
   kind: PdfDocumentKind
@@ -35,7 +39,22 @@ export type PdfHeaderField = {
 export type PdfColumnDefinition = {
   key: string
   label: string
+  kind: PdfColumnKind
   align?: PdfTextAlign
+  dataType?: PdfColumnDataType | string | null
+}
+
+export type PdfResolvedTableSettings = {
+  mergeQtyUnit: boolean
+  configuredColumns: Array<{
+    key: string
+    label?: string
+    type?: string
+    visible?: boolean
+  }>
+  activeColumns: PdfColumnDefinition[]
+  columns: PdfColumnDefinition[]
+  customColumns: PdfColumnDefinition[]
 }
 
 export type PdfLineItem = {
@@ -129,7 +148,7 @@ export type PdfFontConfig = {
 }
 
 export type PdfTemplateConfig = {
-  name?: 'minimal'
+  name?: string | null
   designPreset?: Partial<PdfDesignPreset> | null
   fontConfig?: PdfFontConfig | null
 }

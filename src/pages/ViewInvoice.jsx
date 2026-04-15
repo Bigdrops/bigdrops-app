@@ -21,7 +21,6 @@ import { PdfBankControls, PdfSupportingOptions } from '@/components/PdfOutputSet
 import { buildInvoiceCsv, downloadInvoiceCsv } from '../components/invoice/exportInvoiceCsv'
 import {
   DEFAULT_INVOICE_PDF_OUTPUT,
-  getPdfColumns,
   getInvoicePdfOutput,
   getInvoiceSignatoryId,
   parseCustomFields,
@@ -31,7 +30,7 @@ import {
 } from '@/domain/invoice'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
 import { buildInvoiceViewModel } from '@/domain/invoice/viewModel'
-import { generateInvoicePdf } from '@/components/pdf-new'
+import { generateInvoicePdf, interpretPdfTableSettings } from '@/components/pdf-new'
 import { getPdfDesignPreset, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { toast } from '@/hooks/use-toast'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
@@ -412,6 +411,9 @@ export default function ViewInvoice() {
         imageUrl: item.image_url || null,
         customData: item.custom_data || {},
       }))
+      const resolvedTable = interpretPdfTableSettings(customFieldObject?.columnConfig || [], {
+        mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
+      })
 
       await generateInvoicePdf({
         model: {
@@ -443,13 +445,8 @@ export default function ViewInvoice() {
             email: String(client?.email || ''),
           },
           headerFields: topHeaderFields.map((field) => ({ label: String(field.label || ''), value: String(field.value || '') })),
-          columns: getPdfColumns(customFieldObject?.columnConfig || [])
-            .map((column) => ({
-              key: String(column.key || ''),
-              label: String(column.label || column.key || ''),
-              align: column.align,
-            })),
-          mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
+          columns: resolvedTable.columns,
+          mergeQtyUnit: resolvedTable.mergeQtyUnit,
           items: sharedItems,
           totals: {
             mode: advanceSummary ? 'advance' : 'standard',
@@ -492,7 +489,6 @@ export default function ViewInvoice() {
           tagline: pdfOutput.showTagline ? String(settings.company_tagline || '') : '',
           metaFooter: { companyName: String(settings.company_name || '') },
           template: {
-            name: 'minimal',
             designPreset: pdfDesignPreset,
             fontConfig: {
               useCustomFonts: pdfDesignPreset.useCustomFonts,
@@ -686,6 +682,9 @@ export default function ViewInvoice() {
         ...(Number(invoice.wht || 0) > 0 ? [{ key: 'wht', label: 'WHT', amount: Number(invoice.wht || 0) }] : []),
         { key: 'total', label: 'Total', amount: Number(invoiceTotal || invoice.total || 0), emphasis: true, tone: 'primary' },
       ]
+      const resolvedTable = interpretPdfTableSettings(customFieldObject?.columnConfig || [], {
+        mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
+      })
 
       await generateInvoicePdf({
         model: {
@@ -717,13 +716,8 @@ export default function ViewInvoice() {
             email: String(client?.email || ''),
           },
           headerFields: topHeaderFields.map((field) => ({ label: String(field.label || ''), value: String(field.value || '') })),
-          columns: getPdfColumns(customFieldObject?.columnConfig || [])
-            .map((column) => ({
-              key: String(column.key || ''),
-              label: String(column.label || column.key || ''),
-              align: column.align,
-            })),
-          mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
+          columns: resolvedTable.columns,
+          mergeQtyUnit: resolvedTable.mergeQtyUnit,
           items: items.map((item, index) => ({
             id: String(item.id || item._uiKey || index),
             rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
@@ -782,7 +776,6 @@ export default function ViewInvoice() {
           tagline: pdfOutput.showTagline ? String(settings.company_tagline || '') : '',
           metaFooter: { companyName: String(settings.company_name || '') },
           template: {
-            name: 'minimal',
             designPreset: pdfDesignPreset,
             fontConfig: {
               useCustomFonts: pdfDesignPreset.useCustomFonts,

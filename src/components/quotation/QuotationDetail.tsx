@@ -18,7 +18,7 @@ import {
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { supabase } from '@/supabase'
 import { calcTotals } from '@/components/useInvoiceColumns.jsx'
-import { generateQuotationPdf } from '@/components/pdf-new'
+import { generateQuotationPdf, interpretPdfTableSettings } from '@/components/pdf-new'
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { getPdfDesignPreset, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { toast } from '@/hooks/use-toast'
@@ -32,7 +32,7 @@ import {
   createLinkedProjectSection,
 } from '@/components/document/linkedDocumentSections'
 import { operationalEmptyStateClassName } from '@/components/ui/operational-card-styles'
-import { getPdfColumns, toDbItem, type InvoiceItem } from '@/domain/invoice'
+import { toDbItem, type InvoiceItem } from '@/domain/invoice'
 import {
   appendDerivedTrail,
   buildTrailLink,
@@ -289,6 +289,9 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         ...(Number(totals?.whtAmount || quotation.wht || 0) > 0 ? [{ key: 'wht', label: previewSummaryLabels.wht, amount: Number(totals?.whtAmount || quotation.wht || 0) }] : []),
         { key: 'total', label: 'Total', amount: Number(shellQuotationTotal || quotation.total || 0), emphasis: true, tone: 'primary' as const },
       ]
+      const resolvedTable = interpretPdfTableSettings(columns as any, {
+        mergeQtyUnit: customFields.mergeQtyUnit === true,
+      })
 
       await generateQuotationPdf({
         model: {
@@ -320,12 +323,8 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             email: String(client?.email || ''),
           },
           headerFields: topHeaderFields.map((field: any) => ({ label: String(field.label || ''), value: String(field.value || '') })),
-          columns: getPdfColumns(columns as any).map((column) => ({
-            key: String(column.key || ''),
-            label: String(column.label || column.key || ''),
-            align: column.align,
-          })),
-          mergeQtyUnit: customFields.mergeQtyUnit === true,
+          columns: resolvedTable.columns,
+          mergeQtyUnit: resolvedTable.mergeQtyUnit,
           items: items.map((item, index) => ({
             id: String(item.id || item._uiKey || index),
             rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
@@ -368,7 +367,6 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
           tagline: pdfOutput.showTagline ? String(settings?.company_tagline || '') : '',
           metaFooter: { companyName: String(settings?.company_name || '') },
           template: {
-            name: 'minimal',
             designPreset: pdfDesignPreset,
             fontConfig: {
               useCustomFonts: pdfDesignPreset.useCustomFonts,
