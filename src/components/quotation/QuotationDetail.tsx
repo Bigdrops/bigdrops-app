@@ -13,18 +13,14 @@ import {
   DocumentPdfSheet,
   DocumentSection,
   DocumentStatusStrip,
-  DocumentTemplatePicker,
   DocumentTopBar,
 } from '@/components/document/DocumentViewShell'
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { supabase } from '@/supabase'
 import { calcTotals } from '@/components/useInvoiceColumns.jsx'
-import { computeDocument } from '@/lib/Calculations'
-import { DEFAULT_QUOTATION_TEMPLATE, QUOTATION_PDF_TEMPLATES, type PdfTemplateId } from '@/components/pdf/pdfTemplates'
-import { getPdfSummaryLabels } from '@/components/pdf/templates/summaryLabels'
+import { generateQuotationPdf } from '@/components/pdf-new'
+import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { getPdfDesignPreset, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
-import { resolveTemplateDesignPreset } from '@/lib/pdfTemplateDesign'
-import { getPdfTemplatePreset, setPdfTemplatePreset } from '@/lib/pdfTemplatePreset'
 import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -125,7 +121,6 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const [bankAccounts, setBankAccounts] = useState<BankAccountRow[]>([])
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfOutput, setPdfOutput] = useState<PdfOutputState>(defaultPdfOutput)
-  const [pdfTemplate, setPdfTemplate] = useState<PdfTemplateId>(() => getPdfTemplatePreset('quotation', DEFAULT_QUOTATION_TEMPLATE))
   const [pdfDesignPreset, setPdfDesignPresetState] = useState(() => getPdfDesignPreset('quotation'))
   const [converting, setConverting] = useState(false)
   const [showMobileActions, setShowMobileActions] = useState(false)
@@ -273,38 +268,13 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     if (!quotation || pdfGenerating) return
     setPdfGenerating(true)
     try {
-      const computedResult = computeDocument({
-        items,
-        document: quotation,
-        cf: quotation.custom_fields || {},
+      await generateQuotationPdf({
+        documentNumber: quotation.quotation_number || 'quotation',
       })
-      const [{ pdf }, { default: TemplatePDF }] = await Promise.all([
-        import('@react-pdf/renderer'),
-        import('@/components/pdf/QuotationTemplatePDF'),
-      ])
-      const blob = await pdf(
-        <TemplatePDF
-          template={pdfTemplate}
-          document={quotation}
-          items={items}
-          client={client}
-          settings={settings}
-          computedResult={computedResult}
-          designPreset={resolveTemplateDesignPreset('quotation', pdfTemplate, pdfDesignPreset)}
-          bankAccounts={bankAccounts}
-          pdfOutput={pdfOutput}
-        />
-      ).toBlob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = (quotation.quotation_number || 'quotation') + '.pdf'
-      document.body.appendChild(a)
-      a.click()
-      setTimeout(() => {
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-      }, 100)
+      toast({
+        title: 'PDF unavailable',
+        description: 'The new quotation PDF system is not implemented yet.',
+      })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       toast({ title: 'PDF generation failed', description: message, variant: 'destructive' })
@@ -597,12 +567,6 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   ]
 
   const shellQuotationTotal = totals?.totalPayable ?? Number(quotation.total || 0)
-  const activePdfTemplate = QUOTATION_PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || QUOTATION_PDF_TEMPLATES[0]
-  const resolvedPdfDesignPreset = resolveTemplateDesignPreset('quotation', pdfTemplate, pdfDesignPreset)
-  const handlePdfTemplateChange = (nextTemplate: PdfTemplateId) => {
-    setPdfTemplate(nextTemplate)
-    setPdfTemplatePreset('quotation', nextTemplate)
-  }
   const handlePdfDesignPresetChange = (nextPreset) => {
     setPdfDesignPresetState(nextPreset)
     setPdfDesignPreset('quotation', nextPreset)
@@ -721,7 +685,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       />
 
       <DocumentLivePreviewCard
-        templateLabel={activePdfTemplate.label}
+        templateLabel="New PDF Foundation"
         documentLabel="Quotation"
         documentNumber={quotation.quotation_number || 'Quotation'}
         companyName={companyIdentity.companyName || ''}
@@ -742,10 +706,10 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         bankDetails={pdfOutput.showBankDetails && selectedPreviewBank ? selectedPreviewBank : null}
         notesSections={previewNotesSections}
         signatory={null}
-        accentColor={resolvedPdfDesignPreset.accentColor}
-        headerFontFamily={resolvePdfWebFontFamily(resolvedPdfDesignPreset.headerFont)}
-        bodyFontFamily={resolvePdfWebFontFamily(resolvedPdfDesignPreset.bodyFont)}
-        previewNote="Browser preview may show web typography. Downloaded PDFs currently use safe built-in PDF fonts."
+        accentColor={pdfDesignPreset.accentColor}
+        headerFontFamily={resolvePdfWebFontFamily(pdfDesignPreset.headerFont)}
+        bodyFontFamily={resolvePdfWebFontFamily(pdfDesignPreset.bodyFont)}
+        previewNote="Downloaded quotation PDFs are temporarily disabled while the new PDF system foundation is being rebuilt."
       />
 
       <PdfBankControls
@@ -757,19 +721,12 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       <DocumentSection title="Customize Design">
         <DocumentDesignPanel
           title="Design"
-          subtitle="Template, document styling, and supporting output controls for quotation PDFs."
-          badge={activePdfTemplate.label}
+          subtitle="Preview styling and supporting output controls while the new quotation PDF system is under construction."
+          badge="Foundation Reset"
           sections={[
             {
-              key: 'template',
-              title: 'Template',
-              content: (
-                <DocumentTemplatePicker value={pdfTemplate} onChange={handlePdfTemplateChange} templates={QUOTATION_PDF_TEMPLATES} />
-              ),
-            },
-            {
               key: 'styling',
-              title: 'Template Overrides',
+              title: 'Preview Styling',
               content: (
                 <DocumentTemplateDesignOverrides
                   value={pdfDesignPreset}
@@ -805,7 +762,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         open={showPdfSettings}
         onOpenChange={setShowPdfSettings}
         title="Download & Export"
-        subtitle={`Using ${activePdfTemplate.label} as the saved quotation PDF preset on this device.`}
+        subtitle="Quotation PDF export is detached while the new PDF system foundation is being built."
         settingsNode={null}
         templateValue={null}
         onTemplateChange={undefined}

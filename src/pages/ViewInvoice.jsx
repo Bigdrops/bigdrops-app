@@ -13,7 +13,6 @@ import {
   DocumentPdfSheet,
   DocumentSection,
   DocumentStatusStrip,
-  DocumentTemplatePicker,
   DocumentTopBar,
 } from '@/components/document/DocumentViewShell'
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
@@ -29,14 +28,10 @@ import {
   getAdvanceConfig,
   mapAdvanceConfigToInvoice,
 } from '@/domain/invoice'
-import { parseDocumentCustomFields } from '@/domain/documentConversion'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
 import { buildInvoiceViewModel } from '@/domain/invoice/viewModel'
-import { computeDocument } from '@/lib/Calculations'
-import { DEFAULT_INVOICE_TEMPLATE, INVOICE_PDF_TEMPLATES } from '@/components/pdf/pdfTemplates'
+import { generateInvoicePdf } from '@/components/pdf-new'
 import { getPdfDesignPreset, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
-import { resolveTemplateDesignPreset } from '@/lib/pdfTemplateDesign'
-import { getPdfTemplatePreset, setPdfTemplatePreset } from '@/lib/pdfTemplatePreset'
 import { toast } from '@/hooks/use-toast'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
@@ -73,7 +68,6 @@ export default function ViewInvoice() {
   const [showMore, setShowMore] = useState(false)
   const [showPdfSheet, setShowPdfSheet] = useState(false)
   const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
-  const [pdfTemplate, setPdfTemplate] = useState(() => getPdfTemplatePreset('invoice', DEFAULT_INVOICE_TEMPLATE))
   const [pdfDesignPreset, setPdfDesignPresetState] = useState(() => getPdfDesignPreset('invoice'))
 
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -398,92 +392,14 @@ export default function ViewInvoice() {
     setAdvancePdfGenerating(true)
 
     try {
-      const isVirtual = String(advanceInvoice.id || '').startsWith('virtual-advance')
-      let advanceItems = []
-
-      if (isVirtual) {
-        advanceItems = items.map((item) => ({
-          ...item,
-          custom_data: item.custom_data || {},
-        }))
-      } else {
-        const { data, error: advanceItemsError } = await supabase
-          .from('invoice_items')
-          .select('*')
-          .eq('invoice_id', advanceInvoice.id)
-          .order('sort_order')
-
-        if (advanceItemsError) throw advanceItemsError
-
-        advanceItems = (data || []).map((item) => ({
-          ...item,
-          custom_data:
-            typeof item.custom_data === 'string'
-              ? JSON.parse(item.custom_data || '{}')
-              : item.custom_data || {},
-          install_rate_override: item.install_rate_override === true,
-          install_rate: item.install_rate === undefined ? null : item.install_rate,
-          vat_rate: item.vat_rate === undefined ? null : item.vat_rate,
-          discount_rate: item.discount_rate === undefined ? null : item.discount_rate,
-          image_url: item.image_url || null,
-        }))
-      }
-
-      const advanceTotal = Number(advanceInvoice.total || 0)
-      const baseComputedResult = computeDocument({
-        items: advanceItems,
-        document: advanceInvoice,
-        cf: parseDocumentCustomFields(advanceInvoice.custom_fields || {}),
+      await generateInvoicePdf({
+        documentNumber: advanceInvoice.invoice_number || 'advance-invoice',
+        variant: 'advance',
       })
-
-      const computedResult = {
-        ...baseComputedResult,
-        grandTotal: advanceTotal,
-        totalPayable: advanceTotal,
-        thread_role: advanceInvoice.thread_role,
-        is_advance: advanceInvoice.is_advance,
-        total_contract_value: advanceInvoice.total_contract_value,
-        total: advanceInvoice.total,
-        cashReceived: 0,
-        settledTotal: 0,
-        balanceDue: advanceTotal,
-      }
-
-      const advanceCustomFields = parseCustomFields(advanceInvoice.custom_fields)
-      const advanceSignatory =
-        signatories.find((signatory) => signatory.id === getInvoiceSignatoryId(advanceCustomFields)) || null
-
-      const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
-        import('@react-pdf/renderer'),
-        import('@/components/pdf/InvoicePDF'),
-      ])
-
-      const blob = await pdf(
-        <InvoicePDF
-          document={advanceInvoice}
-          items={advanceItems}
-          client={client}
-          settings={settings}
-          computedResult={computedResult}
-          template={pdfTemplate}
-          bankAccounts={bankAccounts}
-          pdfOutput={getInvoicePdfOutput(advanceInvoice.custom_fields)}
-          signatory={advanceSignatory}
-          designPreset={resolvedPdfDesignPreset}
-        />,
-      ).toBlob()
-
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${advanceInvoice.invoice_number || 'advance-invoice'}.pdf`
-      document.body.appendChild(a)
-      a.click()
-
-      setTimeout(() => {
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-      }, 100)
+      toast({
+        title: 'PDF unavailable',
+        description: 'The new invoice PDF system is not implemented yet.',
+      })
     } catch (error) {
       toast({
         title: 'Advance PDF failed',
@@ -655,62 +571,14 @@ export default function ViewInvoice() {
     setPdfGenerating(true)
 
     try {
-      const cf = parseDocumentCustomFields(invoice.custom_fields || customFieldObject)
-
-      const baseComputedResult = computeDocument({
-        items,
-        document: invoice,
-        cf,
+      await generateInvoicePdf({
+        documentNumber: invoice.invoice_number || 'invoice',
+        variant: isAdvanceInvoice ? 'advance' : 'standard',
       })
-
-      const computedResult = {
-        ...baseComputedResult,
-        ...(isAdvanceInvoice
-          ? {
-              grandTotal: invoiceTotal,
-              totalPayable: invoiceTotal,
-              thread_role: invoice.thread_role,
-              is_advance: invoice.is_advance,
-              total_contract_value: invoice.total_contract_value,
-              total: invoice.total,
-            }
-          : {}),
-        cashReceived,
-        settledTotal,
-        balanceDue: isAdvanceInvoice ? Math.max(0, invoiceTotal - settledTotal) : balanceDue,
-      }
-
-      const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
-        import('@react-pdf/renderer'),
-        import('@/components/pdf/InvoicePDF'),
-      ])
-
-      const blob = await pdf(
-        <InvoicePDF
-          document={invoice}
-          items={items}
-          client={client}
-          settings={settings}
-          computedResult={computedResult}
-          template={pdfTemplate}
-          bankAccounts={bankAccounts}
-          pdfOutput={pdfOutput}
-          signatory={selectedSignatory}
-          designPreset={resolvedPdfDesignPreset}
-        />
-      ).toBlob()
-
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${invoice.invoice_number || 'invoice'}.pdf`
-      document.body.appendChild(a)
-      a.click()
-
-      setTimeout(() => {
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-      }, 100)
+      toast({
+        title: 'PDF unavailable',
+        description: 'The new invoice PDF system is not implemented yet.',
+      })
     } catch (err) {
       toast({
         title: 'PDF generation failed',
@@ -744,14 +612,6 @@ export default function ViewInvoice() {
     computedStatus,
     onStatusChange: handleStatusChange,
   })
-
-  const activePdfTemplate = INVOICE_PDF_TEMPLATES.find((template) => template.id === pdfTemplate) || INVOICE_PDF_TEMPLATES[0]
-  const resolvedPdfDesignPreset = resolveTemplateDesignPreset('invoice', pdfTemplate, pdfDesignPreset)
-
-  const handlePdfTemplateChange = (nextTemplate) => {
-    setPdfTemplate(nextTemplate)
-    setPdfTemplatePreset('invoice', nextTemplate)
-  }
 
   const handlePdfDesignPresetChange = (nextPreset) => {
     setPdfDesignPresetState(nextPreset)
@@ -885,7 +745,7 @@ export default function ViewInvoice() {
         <DocumentStatusStrip items={shellStatusItems} />
 
         <DocumentLivePreviewCard
-          templateLabel={activePdfTemplate.label}
+          templateLabel="New PDF Foundation"
           documentLabel="Invoice"
           documentNumber={invoice.invoice_number || 'Invoice'}
           companyName={settings.company_name || ''}
@@ -914,10 +774,10 @@ export default function ViewInvoice() {
                 }
               : null
             }
-            accentColor={resolvedPdfDesignPreset.accentColor}
-            headerFontFamily={resolvePdfWebFontFamily(resolvedPdfDesignPreset.headerFont)}
-            bodyFontFamily={resolvePdfWebFontFamily(resolvedPdfDesignPreset.bodyFont)}
-            previewNote="Browser preview may show web typography. Downloaded PDFs currently use safe built-in PDF fonts."
+            accentColor={pdfDesignPreset.accentColor}
+            headerFontFamily={resolvePdfWebFontFamily(pdfDesignPreset.headerFont)}
+            bodyFontFamily={resolvePdfWebFontFamily(pdfDesignPreset.bodyFont)}
+            previewNote="Downloaded invoice PDFs are temporarily disabled while the new PDF system foundation is being rebuilt."
           />
 
         <PdfBankControls
@@ -929,22 +789,11 @@ export default function ViewInvoice() {
         <DocumentSection title="Customize Design">
           <DocumentDesignPanel
             title="Design"
-            badge={activePdfTemplate.label}
+            badge="Foundation Reset"
             sections={[
               {
-                key: 'template',
-                title: 'Template',
-                content: (
-                  <DocumentTemplatePicker
-                    value={pdfTemplate}
-                    onChange={handlePdfTemplateChange}
-                    templates={INVOICE_PDF_TEMPLATES}
-                  />
-                ),
-              },
-              {
                 key: 'styling',
-                title: 'Template Overrides',
+                title: 'Preview Styling',
                 content: (
                   <DocumentTemplateDesignOverrides
                     value={pdfDesignPreset}
@@ -990,7 +839,7 @@ export default function ViewInvoice() {
           open={showPdfSheet}
           onOpenChange={setShowPdfSheet}
           title="Download & Export"
-          subtitle={`Using ${activePdfTemplate.label} as the saved invoice PDF preset on this device.`}
+          subtitle="Invoice PDF export is detached while the new PDF system foundation is being built."
           settingsNode={(
             <Card className="rounded-[20px] border-border shadow-sm">
               <CardContent className="flex items-center justify-between gap-3 p-4">
