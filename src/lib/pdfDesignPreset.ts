@@ -1,5 +1,5 @@
 import { getRegisteredFillablePdfFontFamily, getRegisteredFillableWebFontFamily } from '@/lib/pdfFillableFonts'
-import { getRegisteredSharedWebFontFamily, isRegisteredSharedFontChoice } from '@/lib/pdfSharedFonts'
+import { getRegisteredSharedFontConfig, getRegisteredSharedWebFontFamily, isRegisteredSharedFontChoice } from '@/lib/pdfSharedFonts'
 
 export type PdfDesignPresetDocument = 'invoice' | 'quotation' | 'csr' | 'waybill'
 export type PdfFontChoice =
@@ -242,6 +242,10 @@ export function resolvePdfFontFamily(
       : choice
 
   if (isRegisteredSharedFontChoice(normalizedChoice)) {
+    const sharedConfig = getRegisteredSharedFontConfig(normalizedChoice)
+    if (sharedConfig) {
+      return sharedConfig.family
+    }
     return resolveBuiltinPdfFontFamily(normalizedChoice, variant)
   }
 

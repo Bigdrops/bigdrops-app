@@ -21,21 +21,9 @@ const templatePreviewById = {
     shell: 'bg-white border border-slate-300',
     nodes: ['h-1.5 w-full bg-slate-700', 'h-0.5 w-full bg-slate-300', 'h-4 w-full border border-slate-400 bg-white'],
   },
-  bold: {
-    shell: 'bg-slate-50',
-    nodes: ['-mx-1 h-2 rounded-t-sm bg-slate-900', 'h-1 w-full rounded-full bg-slate-300', 'h-1 w-3/4 rounded-full bg-slate-200'],
-  },
-  classic: {
-    shell: 'bg-violet-50',
-    nodes: ['h-1.5 w-16 rounded-full bg-violet-600', 'h-1 w-full rounded-full bg-violet-200', 'h-1 w-3/5 rounded-full bg-slate-200'],
-  },
   minimal: {
     shell: 'bg-white border border-slate-200',
     nodes: ['h-1 w-full rounded-full bg-slate-300', 'h-0.5 w-full rounded-full bg-slate-200', 'h-0.5 w-4/5 rounded-full bg-slate-200'],
-  },
-  modern: {
-    shell: 'bg-violet-600',
-    nodes: ['h-1.5 w-14 rounded-full bg-white/90', 'h-1 w-full rounded-full bg-white/40', 'h-1 w-3/5 rounded-full bg-white/30'],
   },
   elegant: {
     shell: 'bg-amber-50',
@@ -48,7 +36,7 @@ export function DocumentTemplatePicker({ value, onChange, templates }) {
     <div className="flex gap-2 overflow-x-auto pb-1">
       {templates.map((template) => {
         const active = value === template.id
-        const preview = templatePreviewById[template.id] || templatePreviewById.classic
+        const preview = templatePreviewById[template.id] || templatePreviewById.minimal
 
         return (
           <button

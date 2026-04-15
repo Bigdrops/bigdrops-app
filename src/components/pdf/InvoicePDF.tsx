@@ -24,7 +24,7 @@ type InvoicePdfProps = {
 }
 
 export default function InvoicePDF({
-  template = 'classic',
+  template = 'minimal',
   document,
   items,
   client = null,
