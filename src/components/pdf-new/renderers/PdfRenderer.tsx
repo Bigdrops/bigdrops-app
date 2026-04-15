@@ -1,4 +1,5 @@
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { getPdfTableLayoutPlan } from '../table'
 import { MinimalPdfTemplate } from '../templates/minimal'
 import type { PdfDocumentModel } from '../types'
 
@@ -37,10 +38,12 @@ const styles = StyleSheet.create({
 export function PdfRenderer({ model }: PdfRendererProps) {
   const companyName = String(model.metaFooter?.companyName || model.issuer?.name || '').trim() || '-'
   const number = String(model.identity.number || '').trim() || '-'
+  const tablePlan = getPdfTableLayoutPlan(model.columns || [], { mergeQtyUnit: model.mergeQtyUnit === true })
+  const isLandscape = tablePlan.orientation === 'landscape'
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" orientation={isLandscape ? 'landscape' : 'portrait'} style={styles.page}>
         <MinimalPdfTemplate model={model} />
 
         <View fixed style={styles.footer}>

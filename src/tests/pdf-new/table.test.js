@@ -1,7 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { buildPdfTableColumns, renderPdfLineCell } from '../../components/pdf-new/table.ts'
+import {
+  buildPdfTableColumns,
+  chunkPdfTableRows,
+  formatCompactPdfMoney,
+  getPdfTableLayoutPlan,
+  renderPdfLineCell,
+} from '../../components/pdf-new/table.ts'
 
 test('buildPdfTableColumns includes implicit standard pdf columns plus configured visible columns', () => {
   const columns = buildPdfTableColumns([
@@ -44,9 +50,67 @@ test('renderPdfLineCell reads standard invoice fields with live keys', () => {
   assert.equal(renderPdfLineCell(item, 'description'), 'LED Panel\n600 x 600')
   assert.equal(renderPdfLineCell(item, 'num', { rowNumber: 3 }), '3')
   assert.equal(renderPdfLineCell(item, 'quantity', { mergeQtyUnit: true }), '4 pcs')
-  assert.match(String(renderPdfLineCell(item, 'unit_price', { currency: 'NGN' })), /12,500\.00/)
-  assert.match(String(renderPdfLineCell(item, 'install_rate', { currency: 'NGN' })), /2,500\.00/)
+  assert.equal(String(renderPdfLineCell(item, 'unit_price', { currency: 'NGN' })), '₦12,500')
+  assert.equal(String(renderPdfLineCell(item, 'install_rate', { currency: 'NGN' })), '₦2,500')
   assert.equal(renderPdfLineCell(item, 'vat_rate'), '7.5%')
   assert.equal(renderPdfLineCell(item, 'discount_rate'), '5%')
   assert.equal(renderPdfLineCell(item, 'custom_color'), 'White')
+})
+
+test('getPdfTableLayoutPlan protects description width and switches to landscape for wide tables', () => {
+  const plan = getPdfTableLayoutPlan([
+    { key: 'description', label: 'Description', align: 'left' },
+    { key: 'make', label: 'Make', align: 'left' },
+    { key: 'quantity', label: 'Qty', align: 'right' },
+    { key: 'unit', label: 'Unit', align: 'left' },
+    { key: 'unit_price', label: 'Unit Price', align: 'right' },
+    { key: 'amount', label: 'Amount', align: 'right' },
+    { key: 'install_rate', label: 'Install Rate', align: 'right' },
+    { key: 'vat_rate', label: 'VAT', align: 'right' },
+    { key: 'discount_rate', label: 'Discount', align: 'right' },
+    { key: 'custom_finish', label: 'Finish', align: 'left' },
+  ])
+
+  const descriptionColumn = plan.columns.find((column) => column.key === 'description')
+  const amountColumn = plan.columns.find((column) => column.key === 'amount')
+  const vatColumn = plan.columns.find((column) => column.key === 'vat_rate')
+
+  assert.equal(plan.orientation, 'landscape')
+  assert.ok(descriptionColumn)
+  assert.ok(amountColumn)
+  assert.ok(vatColumn)
+  assert.ok(descriptionColumn.widthPercent > amountColumn.widthPercent)
+  assert.ok(vatColumn.widthPercent < amountColumn.widthPercent)
+})
+
+test('chunkPdfTableRows repeats headers conservatively and keeps group headers with following rows', () => {
+  const columns = getPdfTableLayoutPlan([
+    { key: 'description', label: 'Description', align: 'left' },
+    { key: 'amount', label: 'Amount', align: 'right' },
+  ]).columns
+
+  const rows = [
+    { id: 'g1', rowType: 'group_header', groupLabel: 'Lighting' },
+    { id: '1', description: 'LED Panel', amount: 12000 },
+    { id: '2', description: 'Downlight', amount: 8000 },
+    { id: '3', description: 'Track Light', amount: 5000 },
+    { id: '4', description: 'Surface Light', amount: 3000 },
+  ]
+
+  const segments = chunkPdfTableRows(rows, columns, { firstPageLimit: 70, continuationPageLimit: 70 })
+
+  assert.equal(segments.length, 2)
+  assert.deepEqual(
+    segments[0].map((row) => row.id),
+    ['g1', '1', '2'],
+  )
+  assert.deepEqual(
+    segments[1].map((row) => row.id),
+    ['3', '4'],
+  )
+})
+
+test('formatCompactPdfMoney removes currency-code width waste for NGN amounts', () => {
+  assert.equal(formatCompactPdfMoney(11000, 'NGN'), '₦11,000')
+  assert.equal(formatCompactPdfMoney(11000.5, 'NGN'), '₦11,000.5')
 })

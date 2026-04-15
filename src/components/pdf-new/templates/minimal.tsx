@@ -1,7 +1,13 @@
-import { Image, StyleSheet, Text, View, Link } from '@react-pdf/renderer'
+import { Image, Link, StyleSheet, Text, View } from '@react-pdf/renderer'
 import { resolvePdfFontFamily } from '@/lib/pdfDesignPreset'
-import { buildPdfTableColumns, renderPdfLineCell } from '../table'
-import type { PdfDocumentModel, PdfTextAlign } from '../types'
+import {
+  chunkPdfTableRows,
+  formatCompactPdfMoney,
+  getPdfTableLayoutPlan,
+  renderPdfLineCell,
+  type PdfTableLayoutColumn,
+} from '../table'
+import type { PdfDocumentModel, PdfLineItem, PdfTextAlign } from '../types'
 
 type MinimalPdfTemplateProps = {
   model: PdfDocumentModel
@@ -85,27 +91,17 @@ function buildPalette(model: PdfDocumentModel): MinimalPalette {
   }
 }
 
-function styleForAlign(align?: PdfTextAlign) {
-  if (align === 'center') return { textAlign: 'center' as const }
-  if (align === 'right') return { textAlign: 'right' as const }
-  return { textAlign: 'left' as const }
-}
-
-function formatMoney(value?: number | null, currency?: string | null) {
-  const amount = Number(value || 0)
-  const code = String(currency || 'NGN').trim() || 'NGN'
-  try {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: code, maximumFractionDigits: 2 }).format(amount)
-  } catch {
-    return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  }
-}
-
 function textToPlain(value: string) {
   return value
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .trim()
+}
+
+function styleForAlign(align?: PdfTextAlign) {
+  if (align === 'center') return { textAlign: 'center' as const }
+  if (align === 'right') return { textAlign: 'right' as const }
+  return { textAlign: 'left' as const }
 }
 
 function renderPartyBlock(label: string, party?: PdfDocumentModel['issuer']) {
@@ -118,8 +114,102 @@ function renderPartyBlock(label: string, party?: PdfDocumentModel['issuer']) {
   ].filter((entry) => String(entry || '').trim().length > 0)
 
   if (!party?.name && lines.length === 0) return null
-
   return { label, name: party?.name, lines }
+}
+
+function getTableStartBudget(model: PdfDocumentModel, headerMetaCount: number, hasPartyBlocks: boolean) {
+  let adjustment = headerMetaCount * 5
+  adjustment += (model.headerFields?.length || 0) * 7
+  if (hasPartyBlocks) adjustment += 72
+  if (model.logo?.imageUrl) adjustment += 8
+  return adjustment
+}
+
+function renderDescriptionCell(
+  item: PdfLineItem,
+  styles: ReturnType<typeof StyleSheet.create>,
+) {
+  const primary = String(item.description || '').trim()
+  const secondary = String(item.subDescription || '').trim()
+
+  return (
+    <View style={styles.descriptionStack}>
+      {primary ? <Text style={styles.descriptionPrimary}>{primary}</Text> : null}
+      {secondary ? <Text style={styles.descriptionSecondary}>{secondary}</Text> : null}
+      {item.imageUrl ? <Image src={item.imageUrl} style={styles.image} /> : null}
+    </View>
+  )
+}
+
+function renderTableHeader(
+  columns: PdfTableLayoutColumn[],
+  styles: ReturnType<typeof StyleSheet.create>,
+) {
+  return (
+    <View style={[styles.row, styles.headerRow]} wrap={false}>
+      {columns.map((column, index) => (
+        <View
+          key={`head-${column.key}`}
+          style={[
+            styles.headerCellWrap,
+            { width: `${column.widthPercent}%` },
+            index === columns.length - 1 ? styles.cellNoDivider : null,
+          ]}
+        >
+          <Text style={[styles.headerCell, styleForAlign(column.align)]}>{column.label}</Text>
+        </View>
+      ))}
+    </View>
+  )
+}
+
+function renderTableRow(
+  item: PdfLineItem,
+  index: number,
+  columns: PdfTableLayoutColumn[],
+  styles: ReturnType<typeof StyleSheet.create>,
+  currency?: string | null,
+  mergeQtyUnit?: boolean,
+  rowNumber?: number,
+) {
+  if (item.rowType === 'group_header') {
+    return (
+      <View key={item.id || `group-${index}`} style={[styles.row, styles.groupRow]} wrap={false}>
+        <Text style={styles.groupText}>{item.groupLabel || item.description || `Group ${index + 1}`}</Text>
+      </View>
+    )
+  }
+
+  return (
+    <View key={item.id || `item-${index}`} style={styles.row} wrap={false}>
+      {columns.map((column, columnIndex) => {
+        const cellText = renderPdfLineCell(item, column.key, {
+          mergeQtyUnit: mergeQtyUnit === true,
+          currency,
+          rowNumber,
+        })
+
+        return (
+          <View
+            key={`${item.id || index}-${column.key}`}
+            style={[
+              styles.bodyCellWrap,
+              { width: `${column.widthPercent}%` },
+              columnIndex === columns.length - 1 ? styles.cellNoDivider : null,
+            ]}
+          >
+            {column.key === 'description'
+              ? renderDescriptionCell(item, styles)
+              : (
+                <Text style={[styles.bodyCellText, styleForAlign(column.align)]}>
+                  {cellText}
+                </Text>
+              )}
+          </View>
+        )
+      })}
+    </View>
+  )
 }
 
 export function MinimalPdfTemplate({ model }: MinimalPdfTemplateProps) {
@@ -156,15 +246,39 @@ export function MinimalPdfTemplate({ model }: MinimalPdfTemplateProps) {
     headerField: { flexDirection: 'row', gap: 5 },
     headerFieldLabel: { fontSize: 9, color: palette.muted, fontFamily: headerFont },
     headerFieldValue: { fontSize: 9, color: palette.text, flexShrink: 1 },
-    table: { borderWidth: 0.8, borderColor: palette.border, borderRadius: 3, overflow: 'hidden', marginBottom: 10 },
+    tableBlock: { marginBottom: 12 },
+    tableBlockContinuation: { marginTop: 0 },
+    table: { borderWidth: 0.8, borderColor: palette.border, borderRadius: 3, overflow: 'hidden' },
     row: { flexDirection: 'row', borderBottomWidth: 0.6, borderBottomColor: palette.border },
     headerRow: { backgroundColor: palette.tableHeaderBg },
-    cell: { paddingVertical: 6, paddingHorizontal: 5, fontSize: 9, color: palette.text },
-    headerCell: { fontSize: 8.5, fontFamily: headerFont, color: palette.tableHeaderText, textTransform: 'uppercase' },
+    headerCellWrap: { paddingVertical: 7, paddingHorizontal: 6, borderRightWidth: 0.5, borderRightColor: palette.border, justifyContent: 'center' },
+    headerCell: { fontSize: 8.2, fontFamily: headerFont, color: palette.tableHeaderText, textTransform: 'uppercase' },
+    bodyCellWrap: { paddingVertical: 7, paddingHorizontal: 6, borderRightWidth: 0.5, borderRightColor: palette.border, justifyContent: 'center' },
+    bodyCellText: { fontSize: 8.8, color: palette.text, lineHeight: 1.3 },
+    cellNoDivider: { borderRightWidth: 0 },
     groupRow: { backgroundColor: palette.primarySoft },
-    groupText: { fontSize: 9, paddingVertical: 6, paddingHorizontal: 5, fontFamily: headerFont, color: palette.primary },
-    image: { width: 24, height: 24, objectFit: 'cover', borderRadius: 2, marginTop: 3 },
-    totalsWrap: { alignSelf: 'flex-end', width: '55%', minWidth: 220, marginBottom: 10 },
+    groupText: { fontSize: 9, paddingVertical: 7, paddingHorizontal: 6, fontFamily: headerFont, color: palette.primary },
+    descriptionStack: { gap: 2 },
+    descriptionPrimary: { fontSize: 9, color: palette.text, fontFamily: headerFont, lineHeight: 1.25 },
+    descriptionSecondary: { fontSize: 8.1, color: palette.muted, lineHeight: 1.3 },
+    image: { width: 28, height: 28, objectFit: 'cover', borderRadius: 2, marginTop: 4 },
+    section: { marginBottom: 9 },
+    sectionTitle: { fontFamily: headerFont, color: palette.heading, fontSize: 10, marginBottom: 3 },
+    sectionBody: { fontSize: 9, color: palette.text, lineHeight: 1.35 },
+    linksList: { gap: 2, marginTop: 2 },
+    linkText: { fontSize: 9, color: palette.primary, textDecoration: 'none' },
+    closingBlock: { marginTop: 2, gap: 8 },
+    totalsCard: {
+      alignSelf: 'flex-end',
+      width: '58%',
+      minWidth: 240,
+      borderWidth: 0.8,
+      borderColor: palette.border,
+      borderRadius: 3,
+      paddingVertical: 7,
+      paddingHorizontal: 9,
+      backgroundColor: '#ffffff',
+    },
     totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, gap: 8 },
     totalLabel: { fontSize: 9, color: palette.heading },
     totalValue: { fontSize: 9, color: palette.text, textAlign: 'right' },
@@ -173,13 +287,16 @@ export function MinimalPdfTemplate({ model }: MinimalPdfTemplateProps) {
     totalPrimary: { color: palette.primary },
     totalDanger: { color: palette.danger },
     totalSuccess: { color: palette.success },
-    amountWords: { marginTop: 6, fontSize: 9, color: palette.muted },
-    section: { marginBottom: 8 },
-    sectionTitle: { fontFamily: headerFont, color: palette.heading, fontSize: 10, marginBottom: 3 },
-    sectionBody: { fontSize: 9, color: palette.text },
-    linksList: { gap: 2, marginTop: 2 },
-    linkText: { fontSize: 9, color: palette.primary, textDecoration: 'none' },
-    signatureWrap: { marginTop: 12, width: 190 },
+    amountWords: { marginTop: 6, fontSize: 8.8, color: palette.muted, lineHeight: 1.35 },
+    bankCard: {
+      borderWidth: 0.8,
+      borderColor: palette.border,
+      borderRadius: 3,
+      padding: 8,
+      backgroundColor: '#ffffff',
+    },
+    bankLine: { fontSize: 9, color: palette.text, marginBottom: 2 },
+    signatureWrap: { marginTop: 2, width: 200 },
     signatureImage: { width: 120, height: 44, objectFit: 'contain', marginBottom: 3 },
     divider: { marginTop: 4, borderBottomWidth: 0.8, borderBottomColor: palette.border },
     signatureName: { marginTop: 3, fontFamily: headerFont, fontSize: 9 },
@@ -189,14 +306,28 @@ export function MinimalPdfTemplate({ model }: MinimalPdfTemplateProps) {
   })
 
   const issuerBlock = renderPartyBlock(model.issuer?.label || 'From', model.issuer)
-  const recipientBlock = renderPartyBlock(model.recipient?.label || (model.identity.kind === 'invoice' ? 'Bill To' : 'Prepared For'), model.recipient)
-  const visibleColumns = buildPdfTableColumns(model.columns || [], { mergeQtyUnit: model.mergeQtyUnit === true })
+  const recipientBlock = renderPartyBlock(
+    model.recipient?.label || (model.identity.kind === 'invoice' ? 'Bill To' : 'Prepared For'),
+    model.recipient,
+  )
 
   const headerMeta: Array<{ label: string; value?: string | null }> = [
     { label: 'Issue Date', value: model.identity.issueDate },
-    { label: model.identity.kind === 'invoice' ? 'Due Date' : 'Validity', value: model.identity.kind === 'invoice' ? model.identity.dueDate : model.identity.validUntil },
+    {
+      label: model.identity.kind === 'invoice' ? 'Due Date' : 'Validity',
+      value: model.identity.kind === 'invoice' ? model.identity.dueDate : model.identity.validUntil,
+    },
     { label: 'PO Number', value: model.identity.poNumber },
   ].filter((entry) => String(entry.value || '').trim().length > 0)
+
+  const tablePlan = getPdfTableLayoutPlan(model.columns || [], { mergeQtyUnit: model.mergeQtyUnit === true })
+  const tableRows = chunkPdfTableRows(model.items, tablePlan.columns, {
+    firstPageLimit: Math.max(
+      120,
+      tablePlan.firstPageLimit - getTableStartBudget(model, headerMeta.length, Boolean(issuerBlock || recipientBlock)),
+    ),
+    continuationPageLimit: tablePlan.continuationPageLimit,
+  })
 
   const totalRows = model.totals.mode === 'advance' && model.totals.advanceSummary
     ? [
@@ -220,12 +351,12 @@ export function MinimalPdfTemplate({ model }: MinimalPdfTemplateProps) {
       ]
     : model.totals.rows
 
+  let lineNumber = 0
+
   return (
     <View style={styles.root}>
       <View style={styles.topRow}>
-        <View>
-          {model.logo?.imageUrl ? <Image src={model.logo.imageUrl} style={styles.logo} /> : null}
-        </View>
+        <View>{model.logo?.imageUrl ? <Image src={model.logo.imageUrl} style={styles.logo} /> : null}</View>
         <View style={styles.titleWrap}>
           <Text style={styles.title}>{model.identity.title || (model.identity.kind === 'invoice' ? 'Invoice' : 'Quotation')}</Text>
           <Text style={styles.number}>{model.identity.number}</Text>
@@ -275,88 +406,31 @@ export function MinimalPdfTemplate({ model }: MinimalPdfTemplateProps) {
         </View>
       ) : null}
 
-      {model.items.length > 0 ? (
-        <View style={styles.table}>
-          <View style={[styles.row, styles.headerRow]}>
-            {visibleColumns.map((column) => (
-              <Text key={`head-${column.key}`} style={[styles.cell, styles.headerCell, { flex: column.key === 'description' ? 2.1 : 1 }, styleForAlign(column.align)]}>
-                {column.label}
-              </Text>
-            ))}
-          </View>
-          {(() => {
-            let lineNumber = 0
-
-            return model.items.map((item, index) => {
-              if (item.rowType === 'group_header') {
-                return (
-                  <View key={item.id || `item-${index}`} style={[styles.row, styles.groupRow]} wrap={false}>
-                    <Text style={styles.groupText}>{item.groupLabel || item.description || `Group ${index + 1}`}</Text>
-                  </View>
+      {tableRows.length > 0 ? (
+        tableRows.map((segment, segmentIndex) => (
+          <View
+            key={`table-segment-${segmentIndex}`}
+            style={[styles.tableBlock, segmentIndex > 0 ? styles.tableBlockContinuation : null]}
+            wrap={false}
+            break={segmentIndex > 0}
+          >
+            <View style={styles.table}>
+              {renderTableHeader(tablePlan.columns, styles)}
+              {segment.map((item, index) => {
+                if (item.rowType !== 'group_header') lineNumber += 1
+                return renderTableRow(
+                  item,
+                  index,
+                  tablePlan.columns,
+                  styles,
+                  model.identity.currency,
+                  model.mergeQtyUnit === true,
+                  item.rowType === 'group_header' ? undefined : lineNumber,
                 )
-              }
-
-              lineNumber += 1
-
-              return (
-                <View key={item.id || `item-${index}`} style={styles.row}>
-                  {visibleColumns.map((column) => (
-                    <View key={`${item.id}-${column.key}`} style={[styles.cell, { flex: column.key === 'description' ? 2.1 : 1 }]}>
-                      <Text style={styleForAlign(column.align)}>
-                        {renderPdfLineCell(item, column.key, {
-                          mergeQtyUnit: model.mergeQtyUnit === true,
-                          currency: model.identity.currency,
-                          rowNumber: lineNumber,
-                        })}
-                      </Text>
-                      {column.key === 'description' && item.imageUrl ? <Image src={item.imageUrl} style={styles.image} /> : null}
-                    </View>
-                  ))}
-                </View>
-              )
-            })
-          })()}
-        </View>
-      ) : null}
-
-      {totalRows.length > 0 ? (
-        <View style={styles.totalsWrap}>
-          {totalRows.map((row, index) => (
-            <View style={styles.totalRow} key={`total-${row.key || row.label}-${index}`}>
-              <Text style={[styles.totalLabel, row.emphasis ? styles.totalLabelStrong : undefined]}>{row.label}</Text>
-              <Text
-                style={[
-                  styles.totalValue,
-                  row.emphasis ? styles.totalValueStrong : undefined,
-                  row.tone === 'primary' ? styles.totalPrimary : undefined,
-                  row.tone === 'danger' ? styles.totalDanger : undefined,
-                  row.tone === 'success' ? styles.totalSuccess : undefined,
-                ]}
-              >
-                {formatMoney(row.amount, model.identity.currency)}
-              </Text>
+              })}
             </View>
-          ))}
-          {model.totals.mode === 'advance' && model.totals.advanceSummary?.percentage !== null && model.totals.advanceSummary?.percentage !== undefined ? (
-            <Text style={styles.amountWords}>{`Advance: ${model.totals.advanceSummary.percentage}%`}</Text>
-          ) : null}
-          {model.totals.amountInWords ? <Text style={styles.amountWords}>{model.totals.amountInWords}</Text> : null}
-          {model.totals.balanceDue !== null && model.totals.balanceDue !== undefined && model.totals.mode !== 'advance' ? (
-            <Text style={styles.amountWords}>{`Balance Due: ${formatMoney(model.totals.balanceDue, model.identity.currency)}`}</Text>
-          ) : null}
-        </View>
-      ) : null}
-
-      {model.bankDetails && Object.values(model.bankDetails).some((value) => String(value || '').trim()) ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Bank Details</Text>
-          {model.bankDetails.bankName ? <Text style={styles.sectionBody}>{`Bank: ${model.bankDetails.bankName}`}</Text> : null}
-          {model.bankDetails.accountName ? <Text style={styles.sectionBody}>{`Account Name: ${model.bankDetails.accountName}`}</Text> : null}
-          {model.bankDetails.accountNumber ? <Text style={styles.sectionBody}>{`Account Number: ${model.bankDetails.accountNumber}`}</Text> : null}
-          {model.bankDetails.sortCode ? <Text style={styles.sectionBody}>{`Sort Code: ${model.bankDetails.sortCode}`}</Text> : null}
-          {model.bankDetails.iban ? <Text style={styles.sectionBody}>{`IBAN: ${model.bankDetails.iban}`}</Text> : null}
-          {model.bankDetails.swift ? <Text style={styles.sectionBody}>{`SWIFT: ${model.bankDetails.swift}`}</Text> : null}
-        </View>
+          </View>
+        ))
       ) : null}
 
       {model.notes?.content ? (
@@ -396,14 +470,56 @@ export function MinimalPdfTemplate({ model }: MinimalPdfTemplateProps) {
         </View>
       ) : null}
 
-      {model.signature && (model.signature.name || model.signature.imageUrl) ? (
-        <View style={styles.signatureWrap}>
-          {model.signature.imageUrl ? <Image src={model.signature.imageUrl} style={styles.signatureImage} /> : null}
-          <View style={styles.divider} />
-          {model.signature.name ? <Text style={styles.signatureName}>{model.signature.name}</Text> : null}
-          {model.signature.role ? <Text style={styles.signatureRole}>{model.signature.role}</Text> : null}
-        </View>
-      ) : null}
+      <View style={styles.closingBlock} wrap={false}>
+        {totalRows.length > 0 ? (
+          <View style={styles.totalsCard} wrap={false}>
+            {totalRows.map((row, index) => (
+              <View style={styles.totalRow} key={`total-${row.key || row.label}-${index}`}>
+                <Text style={[styles.totalLabel, row.emphasis ? styles.totalLabelStrong : undefined]}>{row.label}</Text>
+                <Text
+                  style={[
+                    styles.totalValue,
+                    row.emphasis ? styles.totalValueStrong : undefined,
+                    row.tone === 'primary' ? styles.totalPrimary : undefined,
+                    row.tone === 'danger' ? styles.totalDanger : undefined,
+                    row.tone === 'success' ? styles.totalSuccess : undefined,
+                  ]}
+                >
+                  {formatCompactPdfMoney(row.amount, model.identity.currency)}
+                </Text>
+              </View>
+            ))}
+            {model.totals.mode === 'advance' && model.totals.advanceSummary?.percentage !== null && model.totals.advanceSummary?.percentage !== undefined ? (
+              <Text style={styles.amountWords}>{`Advance: ${model.totals.advanceSummary.percentage}%`}</Text>
+            ) : null}
+            {model.totals.amountInWords ? <Text style={styles.amountWords}>{model.totals.amountInWords}</Text> : null}
+            {model.totals.balanceDue !== null && model.totals.balanceDue !== undefined && model.totals.mode !== 'advance' ? (
+              <Text style={styles.amountWords}>{`Balance Due: ${formatCompactPdfMoney(model.totals.balanceDue, model.identity.currency)}`}</Text>
+            ) : null}
+          </View>
+        ) : null}
+
+        {model.bankDetails && Object.values(model.bankDetails).some((value) => String(value || '').trim()) ? (
+          <View style={styles.bankCard}>
+            <Text style={styles.sectionTitle}>Bank Details</Text>
+            {model.bankDetails.bankName ? <Text style={styles.bankLine}>{`Bank: ${model.bankDetails.bankName}`}</Text> : null}
+            {model.bankDetails.accountName ? <Text style={styles.bankLine}>{`Account Name: ${model.bankDetails.accountName}`}</Text> : null}
+            {model.bankDetails.accountNumber ? <Text style={styles.bankLine}>{`Account Number: ${model.bankDetails.accountNumber}`}</Text> : null}
+            {model.bankDetails.sortCode ? <Text style={styles.bankLine}>{`Sort Code: ${model.bankDetails.sortCode}`}</Text> : null}
+            {model.bankDetails.iban ? <Text style={styles.bankLine}>{`IBAN: ${model.bankDetails.iban}`}</Text> : null}
+            {model.bankDetails.swift ? <Text style={styles.bankLine}>{`SWIFT: ${model.bankDetails.swift}`}</Text> : null}
+          </View>
+        ) : null}
+
+        {model.signature && (model.signature.name || model.signature.imageUrl) ? (
+          <View style={styles.signatureWrap}>
+            {model.signature.imageUrl ? <Image src={model.signature.imageUrl} style={styles.signatureImage} /> : null}
+            <View style={styles.divider} />
+            {model.signature.name ? <Text style={styles.signatureName}>{model.signature.name}</Text> : null}
+            {model.signature.role ? <Text style={styles.signatureRole}>{model.signature.role}</Text> : null}
+          </View>
+        ) : null}
+      </View>
 
       {model.footerText ? <Text style={styles.footerText}>{model.footerText}</Text> : null}
       {model.tagline ? <Text style={styles.tagline}>{model.tagline}</Text> : null}
