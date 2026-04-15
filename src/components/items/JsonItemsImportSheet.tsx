@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Copy, HelpCircle } from 'lucide-react'
+import { Copy, HelpCircle, Play, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -61,14 +61,28 @@ function ImportHelpSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[90vh] rounded-t-[24px] border-none bg-white p-0 sm:mx-auto sm:max-w-xl">
-        <SheetHeader>
-          <SheetTitle className="border-b border-slate-200 px-4 py-4 text-left sm:px-5">How to use Import</SheetTitle>
+      <SheetContent side="bottom" className="max-h-[90vh] rounded-t-[24px] border-none bg-white p-0 sm:mx-auto sm:max-w-xl [&>[data-slot=sheet-close]]:hidden">
+        <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[#cbd5e1]" />
+        <SheetHeader className="border-b border-slate-200 px-4 py-4 sm:px-5">
+          <div className="flex items-center justify-between gap-3">
+            <SheetTitle className="text-left text-[18px] font-extrabold tracking-[-0.02em] text-slate-900">How to use Import</SheetTitle>
+            <Button type="button" variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="h-8 w-8 rounded-[10px] text-slate-500">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </SheetHeader>
         <div className="px-4 pb-5 pt-4 sm:px-5">
-          <div className="rounded-[18px] border border-slate-200 p-4">
+          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
             <div className="mb-2 text-lg font-extrabold text-slate-900">{step.title}</div>
-            <div className="mb-4 text-sm text-slate-600">{step.description}</div>
+            <div className="mb-4 text-sm leading-6 text-slate-600 whitespace-pre-line">{step.description}</div>
+            <div className="mb-4 flex aspect-video items-center justify-center rounded-[18px] border border-slate-200 bg-slate-100 text-sm text-slate-400">
+              <div className="text-center">
+                <div className="text-[13px] text-slate-300">YouTube video placeholder</div>
+                <div className="mx-auto mt-3 flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm">
+                  <Play className="ml-0.5 h-4 w-4 fill-current" />
+                </div>
+              </div>
+            </div>
             <div className="flex items-center justify-between">
               <div className="flex gap-1">
                 {steps.map((entry, index) => (
@@ -77,10 +91,10 @@ function ImportHelpSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
               </div>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={() => setStepIndex((current) => Math.max(0, current - 1))} className="h-10 rounded-[12px] px-3 text-sm font-bold">
-                  Back
+                  ← Back
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setStepIndex((current) => Math.min(steps.length - 1, current + 1))} className="h-10 rounded-[12px] px-3 text-sm font-bold">
-                  Next
+                  Next →
                 </Button>
               </div>
             </div>

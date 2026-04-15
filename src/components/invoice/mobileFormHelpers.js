@@ -33,15 +33,18 @@ export function getImportHelpSteps() {
   return [
     {
       title: 'Add vs Update',
-      description: 'Use Add for new rows. Use Update to patch existing rows with row_number.',
+      description:
+        'Add appends new rows to the bottom of your item list. Use this when importing from a quote or spreadsheet.\n\nUpdate patches existing rows using row_number. Use this to batch-edit prices or quantities.',
     },
     {
       title: 'Using Import',
-      description: 'Copy the prompt, run it in your AI tool, paste JSON back here, then apply.',
+      description:
+        'Copy a BigDrops AI prompt, paste it into your AI tool, copy the JSON output, then paste it into the JSON input field and tap Apply.',
     },
     {
       title: 'Common Mistakes',
-      description: 'Avoid missing items arrays, invalid JSON, or updates without row_number.',
+      description:
+        '• Missing items key in JSON\n• Using Update when you meant Add\n• Wrong row_number values in Update mode\n• Extra text outside the JSON object',
     },
   ]
 }
