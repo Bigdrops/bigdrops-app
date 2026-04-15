@@ -137,6 +137,7 @@ export default function MobileInvoiceForm(props) {
   const [showNotesTerms, setShowNotesTerms] = useState(false)
   const [showSignatory, setShowSignatory] = useState(false)
   const [showLinks, setShowLinks] = useState(false)
+  const [showClientPicker, setShowClientPicker] = useState(false)
 
   const notesTermsRef = useRef(null)
   const linksRef = useRef(null)
@@ -258,7 +259,11 @@ export default function MobileInvoiceForm(props) {
                 </button>
               </div>
 
-              <div className="mt-4 rounded-[16px] border-2 border-dashed border-[#d8e1ec] bg-[#f8fafc] p-3">
+              <button
+                type="button"
+                onClick={() => setShowClientPicker(true)}
+                className="mt-4 block w-full rounded-[16px] border-2 border-dashed border-[#d8e1ec] bg-[#f8fafc] p-3 text-left"
+              >
                 <div className="flex items-start gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[#ecfdf5] text-[#059669]">
                     <BriefcaseBusiness className="h-4.5 w-4.5" />
@@ -266,8 +271,10 @@ export default function MobileInvoiceForm(props) {
                   <div className="min-w-0 flex-1">
                     <div className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">Client</div>
                     <div className="mt-0.5 truncate text-[14px] font-bold text-[#0f172a]">{invoice.client_name || 'Select a client'}</div>
-                    <div className="text-[11px] text-[#94a3b8]">Tap to change</div>
-                    <div className="mt-3">
+                    <div className="text-[11px] text-[#94a3b8]">
+                      {invoice.client_name ? 'Selected client' : 'Tap to choose client'}
+                    </div>
+                    <div className="sr-only">
                       <ClientSelector
                         clientId={invoice.client_id || null}
                         clientName={invoice.client_name || ''}
@@ -275,6 +282,10 @@ export default function MobileInvoiceForm(props) {
                         compact
                         dense
                         hideHeader
+                        hideTrigger
+                        allowClear={false}
+                        open={showClientPicker}
+                        onOpenChange={setShowClientPicker}
                         onClientChange={(id, name) => {
                           updateInvoice('client_id', id)
                           updateInvoice('client_name', name)
@@ -284,7 +295,7 @@ export default function MobileInvoiceForm(props) {
                   </div>
                   <ChevronRight className="mt-1 h-4 w-4 text-[#cbd5e1]" />
                 </div>
-              </div>
+              </button>
 
               <div className="mt-4 space-y-3">
                 <div>

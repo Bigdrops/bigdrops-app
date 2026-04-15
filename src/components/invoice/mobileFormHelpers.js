@@ -36,11 +36,11 @@ export function getImportHelpSteps() {
       description: 'Use Add for new rows. Use Update to patch existing rows with row_number.',
     },
     {
-      title: 'Copy → extract → paste → apply',
+      title: 'Using Import',
       description: 'Copy the prompt, run it in your AI tool, paste JSON back here, then apply.',
     },
     {
-      title: 'Common mistakes',
+      title: 'Common Mistakes',
       description: 'Avoid missing items arrays, invalid JSON, or updates without row_number.',
     },
   ]

@@ -31,10 +31,14 @@ export default function ClientSelector({
   compact = false,
   hideHeader = false,
   dense = false,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
+  allowClear = true,
 }) {
   const [clients, setClients] = useState([])
   const [selectedClient, setSelectedClient] = useState(null)
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [newClient, setNewClient] = useState({ ...emptyClient })
   const [saving, setSaving] = useState(false)
@@ -44,6 +48,12 @@ export default function ClientSelector({
   useEffect(() => {
     fetchClients()
   }, [])
+
+  const open = controlledOpen ?? internalOpen
+  const setOpen = (nextOpen) => {
+    if (controlledOpen === undefined) setInternalOpen(nextOpen)
+    onOpenChange?.(nextOpen)
+  }
 
   useEffect(() => {
     if (clientId && clients.length > 0) {
@@ -273,21 +283,23 @@ export default function ClientSelector({
 
         {isMobile ? (
           <>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className={triggerClassName}
-                onClick={() => setOpen(true)}
-              >
-                <span className="block w-full truncate text-left">{selectedSummary?.name || `Search ${clients.length} clients`}</span>
-              </Button>
-              {selectedSummary ? (
-                <Button type="button" variant="outline" className={clearClassName} onClick={clearSelection}>
-                  Clear
+            {!hideTrigger ? (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={triggerClassName}
+                  onClick={() => setOpen(true)}
+                >
+                  <span className="block w-full truncate text-left">{selectedSummary?.name || `Search ${clients.length} clients`}</span>
                 </Button>
-              ) : null}
-            </div>
+                {selectedSummary && allowClear ? (
+                  <Button type="button" variant="outline" className={clearClassName} onClick={clearSelection}>
+                    Clear
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
 
             {useMobileSheet ? (
               <Sheet open={open} onOpenChange={closePicker}>
@@ -382,7 +394,7 @@ export default function ClientSelector({
             <div className="pointer-events-none absolute inset-y-0 right-14 flex items-center text-xs text-muted-foreground">
               Search
             </div>
-            {selectedSummary ? (
+            {selectedSummary && allowClear ? (
               <Button
                 type="button"
                 variant="ghost"

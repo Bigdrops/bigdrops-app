@@ -3,7 +3,6 @@ import {
   Camera,
   ChevronDown,
   ChevronUp,
-  ImagePlus,
   Copy,
   MoveDown,
   MoveUp,
@@ -78,10 +77,6 @@ export default function MobileItemCard({
       : null
   })()
 
-  const discountValue = item.discount_rate
-  const hasDiscountOverride = discountValue !== null && discountValue !== undefined
-  const discountExcluded = discountValue === 0
-
   const handleImageUpload = async (event) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -111,9 +106,9 @@ export default function MobileItemCard({
   }
 
   return (
-    <div className="relative mt-3 rounded-[14px] border border-[#e2e8f0] bg-white">
-      <div className="flex items-center justify-between border-b border-[#e2e8f0] px-3 py-2">
-        <div className="text-sm font-semibold text-[#0f172a]">{number}.</div>
+    <div className="relative mt-3 rounded-[16px] border border-[#e2e8f0] bg-white shadow-[0_1px_0_rgba(15,23,42,0.02)]">
+      <div className="flex items-center justify-between border-b border-[#e2e8f0] px-3 py-2.5">
+        <div className="text-sm font-semibold text-[#0f172a]">{number}</div>
         <div className="flex items-center gap-1">
           <button type="button" onClick={() => onMoveUp(index)} disabled={isFirst} className="inline-flex h-7 w-7 items-center justify-center rounded border border-[#e2e8f0] text-[#475569] disabled:opacity-40"><MoveUp className="h-3.5 w-3.5" /></button>
           <button type="button" onClick={() => onMoveDown(index)} disabled={isLast} className="inline-flex h-7 w-7 items-center justify-center rounded border border-[#e2e8f0] text-[#475569] disabled:opacity-40"><MoveDown className="h-3.5 w-3.5" /></button>
@@ -123,12 +118,22 @@ export default function MobileItemCard({
       </div>
 
       <div className="space-y-3 p-3">
-        <Textarea
-          value={item.description || ''}
-          onChange={(event) => onUpdate(index, 'description', event.target.value)}
-          placeholder="Item description"
-          className={`min-h-[44px] rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 text-[14px] font-bold text-[#0f172a] shadow-none transition focus:border-[#94a3b8] focus:bg-white focus:ring-0 focus-visible:ring-0`}
-        />
+        <div className="rounded-[14px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 py-2.5">
+          <Textarea
+            value={item.description || ''}
+            onChange={(event) => onUpdate(index, 'description', event.target.value)}
+            placeholder="Item description"
+            className="min-h-[30px] border-0 bg-transparent px-0 py-0 text-[14px] font-bold text-[#0f172a] shadow-none focus-visible:ring-0"
+          />
+          {showDetails ? (
+            <Input
+              value={item.sub_description || ''}
+              onChange={(event) => onUpdate(index, 'sub_description', event.target.value)}
+              placeholder="Sub-description"
+              className="mt-2 h-9 rounded-[10px] border-[#dbe3ee] bg-white text-[13px]"
+            />
+          ) : null}
+        </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <MiniButton active={showDetails} onClick={() => setShowDetails((current) => !current)}>
@@ -152,15 +157,6 @@ export default function MobileItemCard({
           onChange={handleImageUpload}
         />
 
-        {showDetails ? (
-          <Input
-            value={item.sub_description || ''}
-            onChange={(event) => onUpdate(index, 'sub_description', event.target.value)}
-            placeholder="Sub-description"
-            className={inputCls}
-          />
-        ) : null}
-
         <div className={`grid gap-2 ${isVisible('make') && isVisible('unit') ? 'grid-cols-4' : isVisible('make') || isVisible('unit') ? 'grid-cols-3' : 'grid-cols-2'}`}>
           {isVisible('make') ? (
             <div className="min-w-0">
@@ -173,17 +169,6 @@ export default function MobileItemCard({
               />
             </div>
           ) : null}
-
-          <div className="min-w-0">
-            <label className={labelCls}>Unit Price</label>
-            <Input
-              type="number"
-              min="0"
-              value={item.unit_price ?? 0}
-              onChange={(event) => onUpdate(index, 'unit_price', Number(event.target.value))}
-              className={`${inputCls} text-right`}
-            />
-          </div>
 
           <div>
             <label className={labelCls}>Qty</label>
@@ -204,6 +189,17 @@ export default function MobileItemCard({
               </div>
             </div>
           ) : null}
+
+          <div className="min-w-0">
+            <label className={labelCls}>Unit Price</label>
+            <Input
+              type="number"
+              min="0"
+              value={item.unit_price ?? 0}
+              onChange={(event) => onUpdate(index, 'unit_price', Number(event.target.value))}
+              className={`${inputCls} text-right`}
+            />
+          </div>
         </div>
 
         {isVisible('install_rate') ? (
@@ -306,12 +302,8 @@ export default function MobileItemCard({
           <div className="rounded-[16px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] p-3">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
-                <div className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">
-                  Item Image
-                </div>
-                <div className="mt-0.5 text-[11px] text-[#64748b]">
-                  Upload a photo or visual reference
-                </div>
+                <div className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]">Photo</div>
+                <div className="mt-0.5 text-[11px] text-[#64748b]">Attach a product reference</div>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -334,50 +326,10 @@ export default function MobileItemCard({
             </div>
 
             {item.image_url ? (
-              <img
-                src={item.image_url}
-                alt="Item preview"
-                className="h-24 w-24 rounded-[14px] border border-[#e2e8f0] object-cover"
-              />
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex h-24 w-24 items-center justify-center rounded-[14px] border-[1.5px] border-dashed border-[#cbd5e1] bg-white text-[#94a3b8]"
-              >
-                {uploading ? '...' : <ImagePlus className="h-5 w-5" />}
-              </button>
-            )}
+              <img src={item.image_url} alt="Item preview" className="h-20 w-20 rounded-[12px] border border-[#e2e8f0] object-cover" />
+            ) : null}
           </div>
         ) : null}
-
-        <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold">
-          {groupName ? (
-            <span className="rounded-full border border-[#cbd5e1] bg-[#f8fafc] px-2.5 py-1 text-[#475569]">
-              {groupName}
-            </span>
-          ) : null}
-          {item.vat_rate === 0 ? (
-            <span className="rounded-full border border-[#fecaca] bg-[#fff1f2] px-2.5 py-1 text-[#dc2626]">
-              VAT excluded
-            </span>
-          ) : null}
-          {discountExcluded ? (
-            <span className="rounded-full border border-[#fecaca] bg-[#fff1f2] px-2.5 py-1 text-[#dc2626]">
-              No discount
-            </span>
-          ) : null}
-          {hasDiscountOverride && !discountExcluded && Number(discountValue) > 0 ? (
-            <span className="rounded-full border border-[#fcd34d] bg-[#fffbeb] px-2.5 py-1 text-[#b45309]">
-              {discountValue}% row discount
-            </span>
-          ) : null}
-          {item.image_url ? (
-            <span className="rounded-full border border-[#a7f3d0] bg-[#ecfdf5] px-2.5 py-1 text-[#059669]">
-              Image attached
-            </span>
-          ) : null}
-        </div>
       </div>
 
       <button

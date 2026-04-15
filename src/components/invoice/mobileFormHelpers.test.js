@@ -25,7 +25,7 @@ test('import help exposes the three reference steps', () => {
 
   assert.deepEqual(
     steps.map((step) => step.title),
-    ['Add vs Update', 'Copy → extract → paste → apply', 'Common mistakes'],
+    ['Add vs Update', 'Using Import', 'Common Mistakes'],
   )
   assert.match(steps[0].description, /row_number/i)
 })

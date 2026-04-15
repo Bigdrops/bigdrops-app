@@ -34,16 +34,14 @@ type JsonItemsImportSheetProps = {
   contentClassName?: string
 }
 
-const MODE_COPY: Record<ImportMode, { description: string; placeholder: string; applyLabel: string }> = {
+const MODE_COPY: Record<ImportMode, { description: string; placeholder: string }> = {
   Add: {
     description: 'Create and append new line items from extracted JSON.',
     placeholder: '{\n  "items": [{ "description": "...", "quantity": 1, "unit_price": 0 }]\n}',
-    applyLabel: 'Add rows',
   },
   Update: {
-    description: 'Patch existing visible rows using row_number.',
+    description: 'Patch existing rows using row_number. Only include changed rows and changed fields.',
     placeholder: '{\n  "items": [{ "row_number": 3, "unit_price": 50000 }]\n}',
-    applyLabel: 'Update rows',
   },
 }
 
@@ -63,17 +61,14 @@ function ImportHelpSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[90vh] rounded-t-2xl border-none bg-white p-0 sm:mx-auto sm:max-w-xl">
+      <SheetContent side="bottom" className="max-h-[90vh] rounded-t-[24px] border-none bg-white p-0 sm:mx-auto sm:max-w-xl">
         <SheetHeader>
           <SheetTitle className="border-b border-slate-200 px-4 py-4 text-left sm:px-5">How to use Import</SheetTitle>
         </SheetHeader>
         <div className="px-4 pb-5 pt-4 sm:px-5">
-          <div className="rounded-2xl border border-slate-200 p-4">
+          <div className="rounded-[18px] border border-slate-200 p-4">
             <div className="mb-2 text-lg font-extrabold text-slate-900">{step.title}</div>
             <div className="mb-4 text-sm text-slate-600">{step.description}</div>
-            <div className="mb-4 flex aspect-video items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 text-sm text-slate-400">
-              Tutorial video placeholder
-            </div>
             <div className="flex items-center justify-between">
               <div className="flex gap-1">
                 {steps.map((entry, index) => (
@@ -81,10 +76,10 @@ function ImportHelpSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
                 ))}
               </div>
               <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => setStepIndex((current) => Math.max(0, current - 1))} className="h-10 rounded-xl px-3 text-sm font-bold">
+                <Button type="button" variant="outline" onClick={() => setStepIndex((current) => Math.max(0, current - 1))} className="h-10 rounded-[12px] px-3 text-sm font-bold">
                   Back
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setStepIndex((current) => Math.min(steps.length - 1, current + 1))} className="h-10 rounded-xl px-3 text-sm font-bold">
+                <Button type="button" variant="outline" onClick={() => setStepIndex((current) => Math.min(steps.length - 1, current + 1))} className="h-10 rounded-[12px] px-3 text-sm font-bold">
                   Next
                 </Button>
               </div>
@@ -168,7 +163,7 @@ export default function JsonItemsImportSheet({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side={side}
-          className={cn('max-h-[90vh] rounded-t-2xl border-none bg-white p-0 sm:mx-auto sm:max-w-xl', contentClassName)}
+          className={cn('max-h-[90vh] rounded-t-[24px] border-none bg-white p-0 sm:mx-auto sm:max-w-xl', contentClassName)}
         >
             <div className="flex h-full flex-col overflow-hidden">
               <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
@@ -176,7 +171,7 @@ export default function JsonItemsImportSheet({
                   <h2 className="text-base font-semibold text-slate-900">{title}</h2>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+                <div className="mt-3 grid grid-cols-2 gap-2 rounded-[14px] bg-slate-100 p-1">
                   {(['Add', 'Update'] as ImportMode[]).map((entry) => {
                     const selected = mode === entry
                     const disabled = entry === 'Update' && !updateEnabled
@@ -191,7 +186,7 @@ export default function JsonItemsImportSheet({
                           setErrorMessage(null)
                         }}
                         className={cn(
-                          'h-9 rounded-lg text-sm font-bold',
+                          'h-9 rounded-[10px] text-sm font-bold',
                           selected ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500',
                           disabled && 'cursor-not-allowed opacity-40',
                         )}
@@ -211,13 +206,16 @@ export default function JsonItemsImportSheet({
                     <Copy className="mr-1 h-3.5 w-3.5" /> {copied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
-                <div className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">{adapter.prompts[mode]}</div>
+                <div className="rounded-[16px] bg-slate-50 p-3 text-sm text-slate-600">{adapter.prompts[mode]}</div>
               </section>
 
-              <section className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">{activeMode.description}</section>
+              <section className="rounded-[16px] bg-slate-50 p-3 text-sm text-slate-600">{activeMode.description}</section>
 
               <section className="flex min-h-0 flex-1 flex-col">
-                <div className="text-[11px] uppercase tracking-wide text-slate-500">JSON Input</div>
+                <div className="text-[11px] uppercase tracking-wide text-slate-500">
+                  JSON Input
+                  {mode === 'Add' ? <span className="ml-2 normal-case tracking-normal text-slate-400">Append new rows</span> : null}
+                </div>
                 <Textarea
                   value={pastedText}
                   onChange={(event) => {
@@ -225,7 +223,7 @@ export default function JsonItemsImportSheet({
                     if (errorMessage) setErrorMessage(null)
                   }}
                   placeholder={activeMode.placeholder}
-                  className="mt-2 min-h-[220px] flex-1 resize-none rounded-md border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs"
+                  className="mt-2 min-h-[220px] flex-1 resize-none rounded-[14px] border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs"
                 />
               </section>
 
@@ -237,8 +235,8 @@ export default function JsonItemsImportSheet({
 
             <div className="border-t border-slate-200 px-4 pb-4 pt-3 sm:px-5">
               <div className="min-h-[20px] text-xs text-red-600">{errorMessage || ''}</div>
-              <Button type="button" onClick={handleApply} disabled={!pastedText.trim()} className="h-10 w-full rounded-md bg-slate-950 text-sm font-semibold text-white">
-                {activeMode.applyLabel}
+              <Button type="button" onClick={handleApply} disabled={!pastedText.trim()} className="h-10 w-full rounded-[12px] bg-slate-950 text-sm font-semibold text-white">
+                Apply
               </Button>
             </div>
           </div>
