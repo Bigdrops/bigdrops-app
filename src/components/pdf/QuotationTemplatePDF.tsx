@@ -19,7 +19,7 @@ type QuotationTemplatePdfProps = {
 }
 
 export default function QuotationTemplatePDF({
-  template = 'classic',
+  template = 'minimal',
   document,
   items,
   client = null,

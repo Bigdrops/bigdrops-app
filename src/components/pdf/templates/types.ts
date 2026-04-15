@@ -2,7 +2,7 @@ import type { DocumentResult } from '@/lib/Calculations'
 import type { ColumnConfig, InvoiceItem } from '@/domain/invoice'
 import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 
-export type RefrensTemplateId = 'classic' | 'minimal' | 'modern' | 'elegant' | 'bold'
+export type RefrensTemplateId = 'minimal' | 'elegant'
 
 export type PdfBankAccount = {
   id?: string | null

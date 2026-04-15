@@ -71,18 +71,22 @@ export default function DocumentTemplateDesignOverrides({
           <div className="min-w-0">
             <div className="text-sm font-semibold text-foreground">Custom fonts</div>
             <div className="mt-1 text-sm leading-6 text-muted-foreground">
-              Downloaded invoice and quotation PDFs currently use safe built-in PDF fonts while custom export font rendering is temporarily unavailable.
+              Turn this on to override the template header and body fonts for exported PDFs.
             </div>
           </div>
-          <div className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-700">
-            Export fonts unavailable
-          </div>
+          <OverrideToggle checked={value.useCustomFonts} onToggle={() => update({ useCustomFonts: !value.useCustomFonts })} />
         </div>
-        <div className="border-t border-slate-100 px-4 py-4">
-          <div className="rounded-[18px] border border-dashed border-amber-200 bg-amber-50/70 px-4 py-4 text-sm leading-6 text-amber-900">
-            Header and body font pickers are hidden for now so the PDF settings panel does not promise custom typography in downloaded files. Accent color overrides still apply to the shared PDF templates.
+        {value.useCustomFonts ? (
+          <div className="border-t border-slate-100 px-4 py-4">
+            <DocumentDesignStyleEditor
+              value={value}
+              onChange={onChange}
+              showAccentControls={false}
+              showFontControls
+              showFillableControls={false}
+            />
           </div>
-        </div>
+        ) : null}
       </div>
     </div>
   )

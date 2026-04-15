@@ -3,6 +3,7 @@ import {
   REGISTERED_FILLABLE_FONTS,
   type RegisteredFillableFontFamily,
 } from '@/lib/pdfFillableFonts'
+import { REGISTERED_SHARED_FONTS } from '@/lib/pdfSharedFonts'
 
 let pdfFontsRegistered = false
 
@@ -10,7 +11,7 @@ function registerPdfAlias(family: RegisteredFillableFontFamily | string, src: st
   Font.register({ family, src })
 }
 
-function registerFontConfig(
+function registerFillableFontConfig(
   config: {
     regular: RegisteredFillableFontFamily | string
     bold: RegisteredFillableFontFamily | string
@@ -31,16 +32,38 @@ function registerFontConfig(
   registerPdfAlias(config.boldItalic, boldSrc)
 }
 
+function registerSharedFontConfig(
+  config: {
+    family: string
+    regularSrc: string
+    boldSrc?: string
+    italicSrc?: string
+    boldItalicSrc?: string
+  },
+) {
+  Font.register({
+    family: config.family,
+    fonts: [
+      { src: config.regularSrc, fontWeight: 400 },
+      { src: config.boldSrc || config.regularSrc, fontWeight: 700 },
+      { src: config.italicSrc || config.regularSrc, fontStyle: 'italic' },
+      { src: config.boldItalicSrc || config.boldSrc || config.regularSrc, fontWeight: 700, fontStyle: 'italic' },
+    ],
+  })
+}
+
 export function registerPdfFonts() {
   if (pdfFontsRegistered) return
 
-  Object.values(REGISTERED_FILLABLE_FONTS).forEach(registerFontConfig)
+  Object.values(REGISTERED_FILLABLE_FONTS).forEach(registerFillableFontConfig)
+  Object.values(REGISTERED_SHARED_FONTS).forEach(registerSharedFontConfig)
 
   pdfFontsRegistered = true
 }
 
-export function ensureSharedPdfFontRegistered(_choice: string) {
-  return false
+export function ensureSharedPdfFontRegistered(choice: string) {
+  registerPdfFonts()
+  return choice in REGISTERED_SHARED_FONTS
 }
 
 export function registerPdfFillableFonts() {

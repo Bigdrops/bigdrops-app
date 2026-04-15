@@ -41,7 +41,6 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
   const headerFontFamily = resolvePdfFontFamily(headerFontChoice, 'regular')
   const bodyFontFamily = resolvePdfFontFamily(bodyFontChoice, 'regular')
 
-  const isDarkHeader = templateId === 'modern' || templateId === 'bold'
   const isElegant = templateId === 'elegant'
   const isMinimal = templateId === 'minimal'
   const headerBorderBottomColor = isMinimal ? tokens.tableBorder : accentColor
@@ -111,7 +110,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
       fontSize: 15,
       fontFamily: headerFontFamily,
       fontWeight: 700,
-      color: isDarkHeader ? '#ffffff' : accentColor,
+      color: accentColor,
       textTransform: 'uppercase',
       letterSpacing: 1,
       marginBottom: 4,
@@ -166,7 +165,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
       fontFamily: headerFontFamily,
       fontWeight: 700,
       textTransform: 'uppercase',
-      color: tokens.mutedText,
+      color: accentColor,
       marginBottom: 6,
       letterSpacing: 0.5,
     },
@@ -200,7 +199,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
       fontWeight: 700,
       paddingVertical: safeNumber(tokens.tableCellPaddingVertical, 8),
       paddingHorizontal: safeNumber(tokens.tableCellPaddingHorizontal, 6),
-      color: tokens.tableHeaderText,
+      color: accentDark,
       textTransform: 'uppercase',
     },
     tableRow: {
@@ -327,7 +326,7 @@ export function createTemplateStyles(templateId: RefrensTemplateId, designPreset
       fontFamily: headerFontFamily,
       fontWeight: 700,
       textTransform: 'uppercase',
-      color: tokens.mutedText,
+      color: accentColor,
       marginBottom: safeNumber(tokens.supportTitleMarginBottom, 6),
       borderBottomWidth: safeNumber(tokens.supportTitleBorderBottomWidth, 1),
       borderBottomColor: tokens.subtleBorder,
