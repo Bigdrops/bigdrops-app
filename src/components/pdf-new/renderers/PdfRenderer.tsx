@@ -1,24 +1,22 @@
 import { Document } from '@react-pdf/renderer'
 import type { ComponentType } from 'react'
-import type { PdfDocumentModel, PdfPageLayout } from '../types'
+import type { PdfDocumentModel } from '../types'
 
 export type PdfTemplateRendererProps = {
   data: PdfDocumentModel
-  layout: PdfPageLayout
 }
 
 export type PdfTemplateRenderer = ComponentType<PdfTemplateRendererProps>
 
 type PdfRendererProps = {
   data: PdfDocumentModel
-  layout: PdfPageLayout
   Template: PdfTemplateRenderer
 }
 
-export function PdfRenderer({ data, layout, Template }: PdfRendererProps) {
+export function PdfRenderer({ data, Template }: PdfRendererProps) {
   return (
     <Document>
-      <Template data={data} layout={layout} />
+      <Template data={data} />
     </Document>
   )
 }
