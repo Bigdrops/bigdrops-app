@@ -984,7 +984,7 @@ export default function ViewInvoice() {
             accentColor={pdfDesignPreset.accentColor}
             headerFontFamily={resolvePdfWebFontFamily(pdfDesignPreset.headerFont)}
             bodyFontFamily={resolvePdfWebFontFamily(pdfDesignPreset.bodyFont)}
-            previewNote="Downloaded invoice PDFs are temporarily disabled while the new PDF system foundation is being rebuilt."
+            previewNote="Preview reflects the live PDF foundation and current export settings."
           />
 
         <PdfBankControls
@@ -1046,7 +1046,7 @@ export default function ViewInvoice() {
           open={showPdfSheet}
           onOpenChange={setShowPdfSheet}
           title="Download & Export"
-          subtitle="Invoice PDF export is detached while the new PDF system foundation is being built."
+          subtitle="Invoice PDF export uses the live PDF renderer and current output settings."
           settingsNode={(
             <Card className="rounded-[20px] border-border shadow-sm">
               <CardContent className="flex items-center justify-between gap-3 p-4">

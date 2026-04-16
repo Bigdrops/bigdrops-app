@@ -1,3 +1,4 @@
+import { Document } from '@react-pdf/renderer'
 import type { ComponentType } from 'react'
 import type { PdfDocumentModel } from '../types'
 
@@ -13,5 +14,9 @@ type PdfRendererProps = {
 }
 
 export function PdfRenderer({ data, Template }: PdfRendererProps) {
-  return <Template data={data} />
+  return (
+    <Document>
+      <Template data={data} />
+    </Document>
+  )
 }

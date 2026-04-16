@@ -811,7 +811,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         accentColor={pdfDesignPreset.accentColor}
         headerFontFamily={resolvePdfWebFontFamily(pdfDesignPreset.headerFont)}
         bodyFontFamily={resolvePdfWebFontFamily(pdfDesignPreset.bodyFont)}
-        previewNote="Downloaded quotation PDFs are temporarily disabled while the new PDF system foundation is being rebuilt."
+        previewNote="Preview reflects the live PDF foundation and current export settings."
       />
 
       <PdfBankControls
@@ -864,7 +864,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         open={showPdfSettings}
         onOpenChange={setShowPdfSettings}
         title="Download & Export"
-        subtitle="Quotation PDF export is detached while the new PDF system foundation is being built."
+        subtitle="Quotation PDF export uses the live PDF renderer and current output settings."
         settingsNode={null}
         templateValue={null}
         onTemplateChange={undefined}
