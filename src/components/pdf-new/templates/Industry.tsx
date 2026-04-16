@@ -9,7 +9,7 @@ type TemplateProps = {
 const styles = StyleSheet.create({
   page: {
     paddingTop: 40,
-    paddingBottom: 34,
+    paddingBottom: 110,
     paddingHorizontal: 34,
     backgroundColor: "#ffffff",
     fontFamily: "Helvetica",
@@ -466,12 +466,24 @@ const styles = StyleSheet.create({
   },
 
   documentFooter: {
-    marginTop: 26,
-    paddingTop: 14,
+    marginTop: 18,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: "#dddddd",
     flexDirection: "row",
     justifyContent: "space-between",
+  },
+  continuationFooter: {
+    position: "absolute",
+    left: 34,
+    right: 34,
+    bottom: 48,
+    borderTopWidth: 1,
+    borderTopColor: "#dddddd",
+    paddingTop: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    minHeight: 26,
   },
 
   footerText: {
@@ -504,6 +516,30 @@ function getDescriptionSub(cell: any): string {
   return "";
 }
 
+function resolveColumnWidthStyle(column: any) {
+  const width = Number(column?.width || 0);
+  const flex = Number(column?.flex || 0);
+  const key = String(column?.key || "");
+
+  if (width > 0) {
+    return { width, flexGrow: 0, flexShrink: 0 };
+  }
+
+  if (key === "description") {
+    return { flexBasis: 0, flexGrow: Math.max(flex, 2.7), flexShrink: 1, minWidth: 170 };
+  }
+
+  if (["unit_price", "amount", "install_rate"].includes(key)) {
+    return { flexBasis: 0, flexGrow: Math.max(flex, 1.15), flexShrink: 0, minWidth: 64 };
+  }
+
+  if (["num", "quantity", "unit", "vat_rate", "discount_rate"].includes(key)) {
+    return { flexBasis: 0, flexGrow: Math.max(flex, 0.75), flexShrink: 0, minWidth: 34 };
+  }
+
+  return { flexBasis: 0, flexGrow: Math.max(flex, 1), flexShrink: 1, minWidth: 52 };
+}
+
 export default function IndustryTemplate({ data }: TemplateProps) {
   const metaRows = [
     data?.documentNumber
@@ -523,7 +559,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
   ].filter(Boolean);
 
   return (
-    <Page size="A4" style={styles.page}>
+    <Page size="A4" orientation={data?.pageLayout?.orientation || "portrait"} style={styles.page}>
       {(data?.title || metaRows.length > 0 || data?.company?.logoUrl) && (
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -636,7 +672,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                   col?.key === "quantity" && styles.textCenter,
                   col?.key === "unit" && styles.textCenter,
                   (col?.key === "unit_price" || col?.key === "amount") && styles.textRight,
-                  col?.width ? { width: col.width, flexGrow: 0, flexShrink: 0 } : { flex: 1 },
+                  resolveColumnWidthStyle(col),
                 ]}
               >
                 {col?.label}
@@ -682,7 +718,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                       key={`cell-${rowIdx}-${colIdx}`}
                       style={[
                         styles.tableCell,
-                        col?.width ? { width: col.width, flexGrow: 0, flexShrink: 0 } : { flex: 1 },
+                        resolveColumnWidthStyle(col),
                         alignStyle,
                       ]}
                     >
@@ -719,7 +755,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
         data?.advanceSummary ||
         data?.amountInWords ||
         data?.balanceDue) && (
-        <View style={styles.closingRow} wrap={false}>
+        <View style={styles.closingRow}>
           {data?.showBankDetails && data?.paymentDetails && (
             <View style={styles.bankBox}>
               <Text style={styles.sectionTitle}>Bank Details</Text>
@@ -928,9 +964,10 @@ export default function IndustryTemplate({ data }: TemplateProps) {
         <Text style={styles.taglineFooter}>{data.company.tagline}</Text>
       )}
 
-      {(data?.footer?.pageNumber ||
-        data?.footer?.documentNumber ||
+      {(data?.footer?.documentNumber ||
         data?.footer?.companyName ||
+        data?.documentNumber ||
+        data?.company?.name ||
         data?.footer?.extraText ||
         footerParts.length > 0) && (
         <View style={styles.documentFooter}>
@@ -945,6 +982,27 @@ export default function IndustryTemplate({ data }: TemplateProps) {
           </Text>
         </View>
       )}
+
+      <View style={styles.continuationFooter} fixed>
+        <Text
+          style={styles.footerText}
+          render={({ pageNumber }) => (pageNumber > 1 ? `Page ${pageNumber}` : "")}
+        />
+        <Text
+          style={styles.footerText}
+          render={({ pageNumber }) =>
+            pageNumber > 1 ? (data?.footer?.documentNumber || data?.documentNumber || "") : ""
+          }
+        />
+        <Text
+          style={styles.footerText}
+          render={({ pageNumber }) =>
+            pageNumber > 1
+              ? (data?.footer?.companyName || data?.company?.name || data?.footer?.extraText || "")
+              : ""
+          }
+        />
+      </View>
     </Page>
   );
 }

@@ -292,6 +292,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       const resolvedTable = interpretPdfTableSettings(columns as any, {
         mergeQtyUnit: customFields.mergeQtyUnit === true,
       })
+      let rowNumber = 0
 
       await generateQuotationPdf({
         model: {
@@ -345,6 +346,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
               : buildPdfRowCells(item, resolvedTable.columns, {
                   mergeQtyUnit: resolvedTable.mergeQtyUnit,
                   configuredColumns: resolvedTable.configuredColumns,
+                  rowNumber: ++rowNumber,
                 }),
             customData: item.custom_data || {},
           })),

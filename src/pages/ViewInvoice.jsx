@@ -397,6 +397,7 @@ export default function ViewInvoice() {
       const resolvedTable = interpretPdfTableSettings(customFieldObject?.columnConfig || [], {
         mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
       })
+      let advanceRowNumber = 0
       const sharedItems = items.map((item, index) => ({
         id: String(item.id || item._uiKey || index),
         rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
@@ -417,6 +418,7 @@ export default function ViewInvoice() {
           : buildPdfRowCells(item, resolvedTable.columns, {
               mergeQtyUnit: resolvedTable.mergeQtyUnit,
               configuredColumns: resolvedTable.configuredColumns,
+              rowNumber: ++advanceRowNumber,
             }),
         customData: item.custom_data || {},
       }))
@@ -691,6 +693,7 @@ export default function ViewInvoice() {
       const resolvedTable = interpretPdfTableSettings(customFieldObject?.columnConfig || [], {
         mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
       })
+      let mainRowNumber = 0
 
       await generateInvoicePdf({
         model: {
@@ -744,6 +747,7 @@ export default function ViewInvoice() {
               : buildPdfRowCells(item, resolvedTable.columns, {
                   mergeQtyUnit: resolvedTable.mergeQtyUnit,
                   configuredColumns: resolvedTable.configuredColumns,
+                  rowNumber: ++mainRowNumber,
                 }),
             customData: item.custom_data || {},
           })),

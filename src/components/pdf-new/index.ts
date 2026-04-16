@@ -2,7 +2,7 @@ import { pdf } from '@react-pdf/renderer'
 import React from 'react'
 import { registerPdfFonts } from '@/lib/pdfFontRegistry'
 import { PdfRenderer } from './renderers/PdfRenderer'
-import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings } from './table'
+import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings, resolvePdfPageLayout } from './table'
 import Industry from './templates/Industry'
 import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel } from './types'
 
@@ -68,6 +68,10 @@ function adaptIndustryData(model: PdfDocumentModel) {
       value: stringifyValue(line.amount),
     }))
 
+  const hasSerialNumberColumn = (model.columns || []).some((column) => column.key === 'num')
+  let runningRowNumber = 0
+  const pageLayout = resolvePdfPageLayout(model.columns || [])
+
   return {
     title: model.identity.title || (model.identity.kind === 'invoice' ? 'Invoice' : 'Quotation'),
     documentNumber: model.identity.number,
@@ -108,8 +112,10 @@ function adaptIndustryData(model: PdfDocumentModel) {
         label: column.label,
         align: column.align,
         width: column.pdfWidth || undefined,
+        flex: column.pdfFlex || undefined,
       })),
       rows: model.items.map((item) => ({
+        ...(item.rowType === 'group_header' ? {} : { rowNumber: ++runningRowNumber }),
         type: item.rowType,
         rowType: item.rowType,
         isGroupHeader: item.rowType === 'group_header',
@@ -118,6 +124,7 @@ function adaptIndustryData(model: PdfDocumentModel) {
         imageUrl: item.imageUrl,
         cells: {
           ...(item.cells || {}),
+          ...(hasSerialNumberColumn && item.rowType !== 'group_header' ? { num: (item.cells as any)?.num || runningRowNumber } : {}),
           description: {
             main: item.cells?.description ?? item.description ?? '',
             sub: item.subDescription ?? '',
@@ -125,6 +132,7 @@ function adaptIndustryData(model: PdfDocumentModel) {
         },
       })),
     },
+    pageLayout,
     paymentDetails: model.bankDetails
       ? {
           bankName: model.bankDetails.bankName || '',
@@ -179,7 +187,7 @@ function adaptIndustryData(model: PdfDocumentModel) {
 
 async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerationRequest<TModel>): Promise<PdfGenerationResult> {
   registerPdfFonts()
-  const templateData = adaptIndustryData(request.model)
+  const templateData = adaptIndustryData(request.model) as any
   const blob = await pdf(React.createElement(PdfRenderer, { data: templateData, Template: Industry }) as any).toBlob()
   const filename = resolveFilename(request.model, request.documentNumber)
   downloadBlob(blob, filename)
