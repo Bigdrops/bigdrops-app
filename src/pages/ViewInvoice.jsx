@@ -30,7 +30,7 @@ import {
 } from '@/domain/invoice'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
 import { buildInvoiceViewModel } from '@/domain/invoice/viewModel'
-import { generateInvoicePdf, interpretPdfTableSettings } from '@/components/pdf-new'
+import { buildPdfRowCells, generateInvoicePdf, interpretPdfTableSettings } from '@/components/pdf-new'
 import { getPdfDesignPreset, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { toast } from '@/hooks/use-toast'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
@@ -394,6 +394,9 @@ export default function ViewInvoice() {
 
     try {
       const advanceSummary = getAdvanceSummaryValues(advanceInvoice)
+      const resolvedTable = interpretPdfTableSettings(customFieldObject?.columnConfig || [], {
+        mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
+      })
       const sharedItems = items.map((item, index) => ({
         id: String(item.id || item._uiKey || index),
         rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
@@ -409,11 +412,14 @@ export default function ViewInvoice() {
         discountRate: item.discount_rate ?? null,
         amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
         imageUrl: item.image_url || null,
+        cells: item.row_type === 'group_header'
+          ? undefined
+          : buildPdfRowCells(item, resolvedTable.columns, {
+              mergeQtyUnit: resolvedTable.mergeQtyUnit,
+              configuredColumns: resolvedTable.configuredColumns,
+            }),
         customData: item.custom_data || {},
       }))
-      const resolvedTable = interpretPdfTableSettings(customFieldObject?.columnConfig || [], {
-        mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
-      })
 
       await generateInvoicePdf({
         model: {
@@ -733,6 +739,12 @@ export default function ViewInvoice() {
             discountRate: item.discount_rate ?? null,
             amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
             imageUrl: item.image_url || null,
+            cells: item.row_type === 'group_header'
+              ? undefined
+              : buildPdfRowCells(item, resolvedTable.columns, {
+                  mergeQtyUnit: resolvedTable.mergeQtyUnit,
+                  configuredColumns: resolvedTable.configuredColumns,
+                }),
             customData: item.custom_data || {},
           })),
           totals: {

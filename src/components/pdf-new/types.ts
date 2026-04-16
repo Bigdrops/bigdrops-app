@@ -42,6 +42,15 @@ export type PdfColumnDefinition = {
   kind: PdfColumnKind
   align?: PdfTextAlign
   dataType?: PdfColumnDataType | string | null
+  pdfWidth?: number
+  pdfFlex?: number
+}
+
+export type PdfCellValue = string | number | boolean | null | undefined
+
+export type PdfPageLayout = {
+  size: 'A4'
+  orientation: 'portrait' | 'landscape'
 }
 
 export type PdfResolvedTableSettings = {
@@ -51,6 +60,7 @@ export type PdfResolvedTableSettings = {
     label?: string
     type?: string
     visible?: boolean
+    formula?: string
   }>
   activeColumns: PdfColumnDefinition[]
   columns: PdfColumnDefinition[]
@@ -72,6 +82,7 @@ export type PdfLineItem = {
   discountRate?: number | null
   amount?: number | null
   imageUrl?: string | null
+  cells?: Record<string, PdfCellValue>
   customData?: Record<string, string | number | boolean | null | undefined>
 }
 
@@ -151,6 +162,7 @@ export type PdfTemplateConfig = {
   name?: string | null
   designPreset?: Partial<PdfDesignPreset> | null
   fontConfig?: PdfFontConfig | null
+  pageLayout?: PdfPageLayout | null
 }
 
 export type PdfBaseDocumentModel = {

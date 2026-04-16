@@ -18,7 +18,7 @@ import {
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { supabase } from '@/supabase'
 import { calcTotals } from '@/components/useInvoiceColumns.jsx'
-import { generateQuotationPdf, interpretPdfTableSettings } from '@/components/pdf-new'
+import { buildPdfRowCells, generateQuotationPdf, interpretPdfTableSettings } from '@/components/pdf-new'
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { getPdfDesignPreset, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { toast } from '@/hooks/use-toast'
@@ -340,6 +340,12 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             discountRate: item.discount_rate ?? null,
             amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
             imageUrl: item.image_url || null,
+            cells: item.row_type === 'group_header'
+              ? undefined
+              : buildPdfRowCells(item, resolvedTable.columns, {
+                  mergeQtyUnit: resolvedTable.mergeQtyUnit,
+                  configuredColumns: resolvedTable.configuredColumns,
+                }),
             customData: item.custom_data || {},
           })),
           totals: {

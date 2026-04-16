@@ -2,7 +2,7 @@ import { pdf } from '@react-pdf/renderer'
 import React from 'react'
 import { registerPdfFonts } from '@/lib/pdfFontRegistry'
 import { PdfRenderer } from './renderers/PdfRenderer'
-import { buildPdfTableColumns, interpretPdfTableSettings } from './table'
+import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings, resolvePdfPageLayout } from './table'
 import Nexus from './templates/Nexus'
 import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel } from './types'
 
@@ -38,7 +38,8 @@ function resolveFilename(model: PdfDocumentModel, fallbackNumber?: string | null
 
 async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerationRequest<TModel>): Promise<PdfGenerationResult> {
   registerPdfFonts()
-  const blob = await pdf(React.createElement(PdfRenderer, { data: request.model, Template: Nexus }) as any).toBlob()
+  const layout = resolvePdfPageLayout(request.model.columns || [])
+  const blob = await pdf(React.createElement(PdfRenderer, { data: request.model, layout, Template: Nexus }) as any).toBlob()
   const filename = resolveFilename(request.model, request.documentNumber)
   downloadBlob(blob, filename)
   return { status: 'generated', filename }
@@ -53,8 +54,10 @@ export async function generateQuotationPdf(request: PdfGenerationRequest<Quotati
 }
 
 export {
+  buildPdfRowCells,
   buildPdfTableColumns,
   interpretPdfTableSettings,
+  resolvePdfPageLayout,
 }
 
 export type {

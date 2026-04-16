@@ -3,11 +3,13 @@ import type {
   PdfColumnDefinition,
   PdfDocumentModel,
   PdfLineItem,
+  PdfPageLayout,
   PdfTotalRow,
 } from '../types'
 
 type TemplateProps = {
   data: PdfDocumentModel
+  layout: PdfPageLayout
 }
 
 const styles = StyleSheet.create({
@@ -101,6 +103,12 @@ const styles = StyleSheet.create({
   },
   tableCellText: {
     fontSize: 12,
+  },
+  tableCellTextRight: {
+    textAlign: 'right',
+  },
+  tableCellTextCenter: {
+    textAlign: 'center',
   },
   groupRow: {
     backgroundColor: '#e4ecf7',
@@ -198,20 +206,29 @@ function formatAmount(value: number | null | undefined) {
   }).format(value)
 }
 
-function resolveColumnFlex(column: PdfColumnDefinition) {
-  switch (column.key) {
-    case 'description':
-      return { flex: 2.4 }
-    case 'quantity':
-    case 'unit':
-    case 'vat_rate':
-    case 'discount_rate':
-      return { flex: 0.8 }
-    case 'num':
-      return { flex: 0.6 }
-    default:
-      return { flex: 1 }
+function resolveColumnStyle(column: PdfColumnDefinition) {
+  const pdfWidth = Number(column.pdfWidth || 0)
+  const pdfFlex = Number(column.pdfFlex || 0)
+
+  if (pdfWidth > 0) {
+    return {
+      width: pdfWidth,
+      flexGrow: 0,
+      flexShrink: 0,
+    }
   }
+
+  return {
+    flexBasis: 0,
+    flexGrow: pdfFlex || 1,
+    flexShrink: 1,
+  }
+}
+
+function resolveTextAlignmentStyle(column: PdfColumnDefinition) {
+  if (column.align === 'right') return styles.tableCellTextRight
+  if (column.align === 'center') return styles.tableCellTextCenter
+  return null
 }
 
 function renderCellValue(row: PdfLineItem, column: PdfColumnDefinition, mergeQtyUnit: boolean) {
@@ -257,7 +274,7 @@ function Section({ title, content }: { title: string; content?: string | null })
   )
 }
 
-const Template = ({ data }: TemplateProps) => {
+const Template = ({ data, layout }: TemplateProps) => {
   const documentTitle = data.identity.title || (data.identity.kind === 'invoice' ? 'Invoice' : 'Quotation')
   const documentNumberLabel = data.identity.kind === 'invoice' ? 'Invoice Number' : 'Quotation Number'
   const secondaryDateLabel = data.identity.kind === 'invoice' ? 'Due Date' : 'Valid Until'
@@ -275,7 +292,7 @@ const Template = ({ data }: TemplateProps) => {
   const termsText = data.terms?.content || null
 
   return (
-    <Page size="A4" style={styles.page}>
+    <Page size={layout.size} orientation={layout.orientation} style={styles.page}>
       {(documentTitle || headerFields.length > 0 || data.logo?.imageUrl) && (
         <View style={styles.header}>
           <View>
@@ -333,7 +350,7 @@ const Template = ({ data }: TemplateProps) => {
         <View style={styles.tableWrapper}>
           <View style={[styles.tableRow, styles.tableHeader]}>
             {columns.map((column) => (
-              <Text key={column.key} style={[styles.tableHeaderText, resolveColumnFlex(column)]}>
+              <Text key={column.key} style={[styles.tableHeaderText, resolveColumnStyle(column), resolveTextAlignmentStyle(column)]}>
                 {column.label}
               </Text>
             ))}
@@ -353,11 +370,13 @@ const Template = ({ data }: TemplateProps) => {
                 {columns.map((column) => {
                   if (column.key === 'description') {
                     return (
-                      <View key={column.key} style={[styles.tableCell, resolveColumnFlex(column)]}>
+                      <View key={column.key} style={[styles.tableCell, resolveColumnStyle(column)]}>
                         <View style={styles.descWrap}>
                           {row.imageUrl ? <Image src={row.imageUrl} style={styles.image} /> : null}
                           <View>
-                            <Text style={styles.tableCellText}>{renderCellValue(row, column, data.mergeQtyUnit === true)}</Text>
+                            <Text style={[styles.tableCellText, resolveTextAlignmentStyle(column)]}>
+                              {String(row.cells?.[column.key] ?? renderCellValue(row, column, data.mergeQtyUnit === true))}
+                            </Text>
                             {row.subDescription ? <Text style={styles.subDesc}>{row.subDescription}</Text> : null}
                           </View>
                         </View>
@@ -366,8 +385,10 @@ const Template = ({ data }: TemplateProps) => {
                   }
 
                   return (
-                    <View key={column.key} style={[styles.tableCell, resolveColumnFlex(column)]}>
-                      <Text style={styles.tableCellText}>{String(renderCellValue(row, column, data.mergeQtyUnit === true))}</Text>
+                    <View key={column.key} style={[styles.tableCell, resolveColumnStyle(column)]}>
+                      <Text style={[styles.tableCellText, resolveTextAlignmentStyle(column)]}>
+                        {String(row.cells?.[column.key] ?? renderCellValue(row, column, data.mergeQtyUnit === true))}
+                      </Text>
                     </View>
                   )
                 })}

@@ -1,7 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { buildPdfTableColumns, interpretPdfTableSettings } from '../../components/pdf-new/table.ts'
+import {
+  buildPdfRowCells,
+  buildPdfTableColumns,
+  interpretPdfTableSettings,
+  resolvePdfPageLayout,
+} from '../../components/pdf-new/table.ts'
 
 test('interpretPdfTableSettings keeps fixed pdf columns and visible configurable columns', () => {
   const resolved = interpretPdfTableSettings([
@@ -52,4 +57,35 @@ test('buildPdfTableColumns returns truthful pdf column definitions for optional 
       ['discount_rate', 'builtin', 'center', 'discount_rate'],
     ],
   )
+})
+
+test('buildPdfRowCells uses the active install-rate column logic instead of dropping calculated row values', () => {
+  const resolved = interpretPdfTableSettings([
+    { key: 'install_rate', label: 'Install Rate', type: 'install_rate', visible: true, formula: '0.1' },
+  ])
+
+  const cells = buildPdfRowCells({
+    description: 'Panel',
+    quantity: 2,
+    unit_price: 100,
+    install_rate: null,
+    custom_data: {},
+  }, resolved.columns, { configuredColumns: resolved.configuredColumns })
+
+  assert.equal(cells.install_rate, '20')
+})
+
+test('resolvePdfPageLayout keeps narrow tables portrait and promotes wide tables to landscape', () => {
+  const portraitLayout = resolvePdfPageLayout(interpretPdfTableSettings([]).columns)
+  const landscapeLayout = resolvePdfPageLayout(interpretPdfTableSettings([
+    { key: 'make', label: 'Make', visible: true },
+    { key: 'unit', label: 'Unit', visible: true },
+    { key: 'install_rate', label: 'Install Rate', type: 'install_rate', visible: true },
+    { key: 'vat_rate', label: 'VAT Rate', type: 'vat_rate', visible: true },
+    { key: 'discount_rate', label: 'Discount Rate', type: 'discount_rate', visible: true },
+    { key: 'custom_finish', label: 'Finish', type: 'text', visible: true },
+  ]).columns)
+
+  assert.deepEqual(portraitLayout, { size: 'A4', orientation: 'portrait' })
+  assert.deepEqual(landscapeLayout, { size: 'A4', orientation: 'landscape' })
 })

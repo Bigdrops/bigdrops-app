@@ -4,6 +4,7 @@ import React from 'react'
 import { pdf } from '@react-pdf/renderer'
 
 import { PdfRenderer } from '../../components/pdf-new/renderers/PdfRenderer.tsx'
+import { resolvePdfPageLayout } from '../../components/pdf-new/table.ts'
 import Nexus from '../../components/pdf-new/templates/Nexus.tsx'
 
 function createPdfModel(kind) {
@@ -85,9 +86,11 @@ function createPdfModel(kind) {
 }
 
 async function renderModel(model) {
+  const layout = resolvePdfPageLayout(model.columns)
   const blob = await pdf(
     React.createElement(PdfRenderer, {
       data: model,
+      layout,
       Template: Nexus,
     }),
   ).toBlob()
