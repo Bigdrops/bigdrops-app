@@ -477,6 +477,19 @@
   }
 }
 
+/* Layout helpers for foldable/tablet/desktop */
+html[data-layout-mode="tablet"] {
+  --app-shell-max-width: 1200px;
+}
+
+html[data-layout-mode="desktop"] {
+  --app-shell-max-width: 1440px;
+}
+
+html[data-separating-fold="true"] {
+  --app-has-separating-fold: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
