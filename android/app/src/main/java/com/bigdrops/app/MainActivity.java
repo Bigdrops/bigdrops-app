@@ -28,6 +28,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(FoldAwarenessPlugin.class);
         super.onCreate(savedInstanceState);
 
         enableEdgeToEdge();
