@@ -64,6 +64,7 @@ export default function MobileItemCard({
   const [showDetails, setShowDetails] = useState(Boolean(item.sub_description))
   const [showImageSlot, setShowImageSlot] = useState(Boolean(item.image_url))
   const [uploading, setUploading] = useState(false)
+  const [validationError, setValidationError] = useState(null)
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -83,16 +84,17 @@ export default function MobileItemCard({
   const handleImageUpload = async (event) => {
     const file = event.target.files?.[0]
     if (!file) return
+    setValidationError(null)
 
     if (!file.type.startsWith('image/')) {
-      toast({ title: 'Invalid file type', description: 'Please upload an image file (JPG, PNG, etc.)', variant: 'destructive' })
+      setValidationError('Please choose an image file.')
       if (event.target) event.target.value = ''
       return
     }
 
     const MAX_SIZE = 5 * 1024 * 1024
     if (file.size > MAX_SIZE) {
-      toast({ title: 'File too large', description: 'Maximum image size is 5MB', variant: 'destructive' })
+      setValidationError('Image is too large. Use one under 5MB.')
       if (event.target) event.target.value = ''
       return
     }
@@ -324,7 +326,10 @@ export default function MobileItemCard({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => {
+                    setValidationError(null)
+                    fileInputRef.current?.click()
+                  }}
                   className="inline-flex h-8 items-center rounded-full border-[1.5px] border-[#e2e8f0] bg-white px-[13px] text-[12px] font-bold text-[#334155]"
                 >
                   {item.image_url ? 'Change' : uploading ? 'Uploading...' : 'Upload'}
@@ -340,6 +345,12 @@ export default function MobileItemCard({
                 ) : null}
               </div>
             </div>
+
+            {validationError && (
+              <div className="mb-3 text-[11px] font-medium text-red-600">
+                {validationError}
+              </div>
+            )}
 
             {item.image_url ? (
               <img src={item.image_url} alt="Item preview" className="h-20 w-20 rounded-[12px] border border-[#e2e8f0] object-cover" />

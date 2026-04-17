@@ -32,6 +32,7 @@ export function SignatoriesSettingsSection({ onToast }: { onToast: SettingsToast
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [actionId, setActionId] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement | null>(null)
 
   const loadSignatories = useCallback(async () => {
@@ -60,6 +61,7 @@ export function SignatoriesSettingsSection({ onToast }: { onToast: SettingsToast
   const openAdd = () => {
     setEditingId(null)
     setForm(emptyForm)
+    setUploadError(null)
     setFormOpen(true)
   }
 
@@ -70,26 +72,29 @@ export function SignatoriesSettingsSection({ onToast }: { onToast: SettingsToast
       role: item.role || '',
       signature_url: item.signature_url || '',
     })
+    setUploadError(null)
     setFormOpen(true)
   }
 
   const closeForm = () => {
     setEditingId(null)
     setForm(emptyForm)
+    setUploadError(null)
     setFormOpen(false)
   }
 
   const handleUpload = async (file: File | null) => {
     if (!file) return
+    setUploadError(null)
 
     if (!file.type.startsWith('image/')) {
-      onToast('Invalid file type: Please upload an image')
+      setUploadError('Please choose an image file.')
       return
     }
 
     const MAX_SIZE = 5 * 1024 * 1024
     if (file.size > MAX_SIZE) {
-      onToast('File too large: Maximum signature size is 5MB')
+      setUploadError('Image is too large. Use one under 5MB.')
       return
     }
 
@@ -248,17 +253,32 @@ export function SignatoriesSettingsSection({ onToast }: { onToast: SettingsToast
                     className="max-h-20 max-w-[180px] rounded-lg border border-border object-contain"
                   />
                   <div className="flex gap-3">
-                    <button onClick={() => fileRef.current?.click()} className="text-xs font-semibold text-blue-600 hover:underline">
+                    <button
+                      onClick={() => {
+                        setUploadError(null)
+                        fileRef.current?.click()
+                      }}
+                      className="text-xs font-semibold text-blue-600 hover:underline"
+                    >
                       Change
                     </button>
-                    <button onClick={() => updateForm('signature_url', '')} className="text-xs font-semibold text-red-500 hover:underline">
+                    <button
+                      onClick={() => {
+                        setUploadError(null)
+                        updateForm('signature_url', '')
+                      }}
+                      className="text-xs font-semibold text-red-500 hover:underline"
+                    >
                       Remove
                     </button>
                   </div>
                 </div>
               ) : (
                 <div
-                  onClick={() => fileRef.current?.click()}
+                  onClick={() => {
+                    setUploadError(null)
+                    fileRef.current?.click()
+                  }}
                   className="cursor-pointer rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors hover:border-slate-400 hover:bg-muted/50"
                 >
                   {uploading ? (
@@ -271,6 +291,7 @@ export function SignatoriesSettingsSection({ onToast }: { onToast: SettingsToast
                   )}
                 </div>
               )}
+              {uploadError && <div className="mt-2 text-[10px] font-medium text-red-600 font-sans tracking-tight">{uploadError}</div>}
             </SettingsField>
           </div>
           <SettingsSaveButton saving={saving} saved={false} onClick={saveSignatory} />

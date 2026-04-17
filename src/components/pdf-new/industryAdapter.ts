@@ -185,9 +185,13 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
     }))
   const columns = model.columns || []
 
+  const primaryTitle = model.identity.kind === 'invoice' ? 'INVOICE' : 'QUOTATION'
+  const rawTitle = (model.identity.title || '').trim()
+  const isDuplicate = rawTitle.toUpperCase() === primaryTitle
+
   return {
-    title: model.identity.kind === 'invoice' ? 'INVOICE' : 'QUOTATION',
-    customTitle: model.identity.title || null,
+    title: primaryTitle,
+    customTitle: (rawTitle && !isDuplicate) ? rawTitle : null,
     documentNumber: model.identity.number,
     documentNumberLabel: getDocumentNumberLabel(model.identity.kind),
     issueDate: model.identity.issueDate,

@@ -21,7 +21,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   const [uploading, setUploading] = useState<BrandingUploadState>({ logo: false })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [editing, setEditing] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const logoRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
@@ -43,19 +43,21 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
       logo_url: settings?.logo_url || '',
       footer_text: settings?.footer_text || '',
     })
+    setUploadError(null)
   }
 
   const handleUpload = async (type: keyof BrandingUploadState, file: File | null) => {
     if (!file) return
+    setUploadError(null)
 
     if (!file.type.startsWith('image/')) {
-      onToast('Invalid file type: Please upload an image')
+      setUploadError('Please choose an image file.')
       return
     }
 
     const MAX_SIZE = 5 * 1024 * 1024
     if (file.size > MAX_SIZE) {
-      onToast('File too large: Maximum logo size is 5MB')
+      setUploadError('Image is too large. Use one under 5MB.')
       return
     }
 
@@ -113,11 +115,20 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
             className="max-h-20 max-w-[180px] rounded-lg border border-border object-contain"
           />
           <div className="flex gap-3">
-            <button onClick={() => inputRef.current?.click()} className="text-xs font-semibold text-blue-600 hover:underline">
+            <button
+              onClick={() => {
+                setUploadError(null)
+                inputRef.current?.click()
+              }}
+              className="text-xs font-semibold text-blue-600 hover:underline"
+            >
               Change
             </button>
             <button
-              onClick={() => updateForm(`${type}_url` as keyof BrandingForm, '')}
+              onClick={() => {
+                setUploadError(null)
+                updateForm(`${type}_url` as keyof BrandingForm, '')
+              }}
               className="text-xs font-semibold text-red-500 hover:underline"
             >
               Remove
@@ -126,7 +137,10 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
         </div>
       ) : (
         <div
-          onClick={() => inputRef.current?.click()}
+          onClick={() => {
+            setUploadError(null)
+            inputRef.current?.click()
+          }}
           className="cursor-pointer rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors hover:border-slate-400 hover:bg-muted/50"
         >
           {uploading[type] ? (
@@ -142,6 +156,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
           )}
         </div>
       )}
+      {uploadError && <div className="mt-2 text-[10px] font-medium text-red-600 font-sans tracking-tight">{uploadError}</div>}
     </SettingsField>
   )
 

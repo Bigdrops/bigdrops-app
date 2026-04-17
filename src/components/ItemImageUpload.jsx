@@ -10,18 +10,20 @@ export default function ItemImageUpload({ value, onChange }) {
   const ref = useRef()
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [validationError, setValidationError] = useState(null)
 
   const handleFile = async (file) => {
     if (!file) return
+    setValidationError(null)
 
     if (!file.type.startsWith('image/')) {
-      toast({ title: 'Invalid file type', description: 'Please upload an image file (JPG, PNG, etc.)', variant: 'destructive' })
+      setValidationError('Please choose an image file.')
       return
     }
 
     const MAX_SIZE = 5 * 1024 * 1024
     if (file.size > MAX_SIZE) {
-      toast({ title: 'File too large', description: 'Maximum image size is 5MB', variant: 'destructive' })
+      setValidationError('Image is too large. Use one under 5MB.')
       return
     }
 
@@ -50,7 +52,7 @@ export default function ItemImageUpload({ value, onChange }) {
   const handleDrop = (e) => {
     e.preventDefault()
     const file = e.dataTransfer.files[0]
-    if (file && file.type.startsWith('image/')) handleFile(file)
+    if (file) handleFile(file)
   }
 
   if (value) {
@@ -71,30 +73,34 @@ export default function ItemImageUpload({ value, onChange }) {
             Remove
           </Button>
         </div>
+        {validationError && <div className="mt-1.5 text-[10px] font-medium text-red-600">{validationError}</div>}
         <input ref={ref} type="file" accept="image/*" className="hidden" onChange={e => handleFile(e.target.files[0])} />
       </div>
     )
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => ref.current.click()}
-      onDrop={handleDrop}
-      onDragOver={e => e.preventDefault()}
-      className={`mt-1.5 flex h-14 w-14 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md border-2 border-dashed text-center transition ${
-        uploading ? 'border-zinc-300 bg-zinc-50 text-[10px] text-zinc-400' : 'border-zinc-300 bg-white text-zinc-400 hover:bg-zinc-50'
-      }`}
-      title="Add image"
-      aria-label="Add image"
-    >
-      {uploading ? (
-        <>
-          <LoaderCircle className="h-4 w-4 animate-spin" />
-          <div className="text-[9px] text-zinc-400">Uploading</div>
-        </>
-      ) : <ImagePlus className="h-5 w-5" />}
-      <input ref={ref} type="file" accept="image/*" className="hidden" onChange={e => handleFile(e.target.files[0])} />
-    </button>
+    <div className="flex flex-col items-start">
+      <button
+        type="button"
+        onClick={() => ref.current.click()}
+        onDrop={handleDrop}
+        onDragOver={e => e.preventDefault()}
+        className={`mt-1.5 flex h-14 w-14 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md border-2 border-dashed text-center transition ${
+          uploading ? 'border-zinc-300 bg-zinc-50 text-[10px] text-zinc-400' : 'border-zinc-300 bg-white text-zinc-400 hover:bg-zinc-50'
+        }`}
+        title="Add image"
+        aria-label="Add image"
+      >
+        {uploading ? (
+          <>
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+            <div className="text-[9px] text-zinc-400">Uploading</div>
+          </>
+        ) : <ImagePlus className="h-5 w-5" />}
+        <input ref={ref} type="file" accept="image/*" className="hidden" onChange={e => handleFile(e.target.files[0])} />
+      </button>
+      {validationError && <div className="mt-1.5 text-[10px] font-medium text-red-600">{validationError}</div>}
+    </div>
   )
 }
