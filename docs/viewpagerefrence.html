@@ -1,0 +1,2264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>View Invoice — SASINV-B047</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg: #faf9f7;
+  --bg2: #f4f2ee;
+  --bg3: #edeae4;
+  --surface: #ffffff;
+  --surface2: #f9f8f6;
+  --border: #e4e0d8;
+  --border-soft: #ede9e1;
+  --text: #1a1814;
+  --text2: #57534a;
+  --text3: #9c9589;
+  --text4: #c4bfb5;
+
+  --amber: #d97706;
+  --amber-bg: #fef3c7;
+  --amber-border: #fcd34d;
+  --amber-dark: #b45309;
+
+  /* Replacing indigo with a refined deep blue */
+  --primary: #1e293b;
+  --primary-bg: #f1f5f9;
+  --primary-border: #cbd5e1;
+  --primary-light: #334155;
+
+  --emerald: #059669;
+  --emerald-bg: #d1fae5;
+  --emerald-border: #6ee7b7;
+
+  --rose: #be185d;
+  --rose-bg: #fce7f3;
+  --rose-border: #fbcfe8;
+
+  --slate: #334155;
+
+  --font-ui: 'Plus Jakarta Sans', sans-serif;
+  --font-display: 'DM Serif Display', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+}
+
+html { background: var(--bg); scroll-behavior: smooth; }
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ─── TOP NAV ─── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgba(250,249,247,0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 54px;
+  padding: 0 4px 0 0;
+}
+.nav-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text2);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+.nav-back:hover { background: var(--bg3); color: var(--text); }
+.nav-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  pointer-events: none;
+}
+.nav-title {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+.nav-sub { font-size: 11px; color: var(--text3); font-weight: 500; }
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--text2);
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+.icon-btn:hover { background: var(--bg3); color: var(--text); }
+.icon-btn.amber { color: var(--amber); }
+.icon-btn.amber:hover { background: var(--amber-bg); }
+
+/* ─── PAGE ─── */
+.page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 16px 100px;
+}
+
+/* ─── STATUS HERO ─── */
+.hero {
+  padding: 24px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.hero-left {}
+.doc-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+.invoice-num {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.invoice-sub {
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 5px;
+  font-weight: 500;
+  max-width: 240px;
+  line-height: 1.4;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.status-pill.partial { background: var(--amber-bg); color: var(--amber-dark); border: 1px solid var(--amber-border); }
+.status-pill.paid { background: var(--emerald-bg); color: var(--emerald); border: 1px solid var(--emerald-border); }
+.status-pill.unpaid { background: var(--rose-bg); color: var(--rose); border: 1px solid var(--rose-border); }
+.status-pill.draft { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+.status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+/* Thread tag */
+.thread-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: var(--primary-bg);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+  margin-top: 6px;
+  width: fit-content;
+}
+
+/* ─── MONEY STRIP ─── */
+.money-strip {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.money-cell {
+  padding: 13px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-right: 1px solid var(--border-soft);
+}
+.money-cell:last-child { border-right: none; }
+.money-lbl {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.money-val {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.money-val.amber { color: var(--amber); }
+.money-val.green { color: var(--emerald); }
+.money-hint { font-size: 10px; color: var(--text4); margin-top: 1px; }
+
+/* ─── PRIMARY ACTION ROW ─── */
+.action-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-amber {
+  background: var(--amber);
+  color: #fff;
+  padding: 9px 16px;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(217,119,6,0.3);
+}
+.btn-amber:hover { background: var(--amber-dark); box-shadow: 0 4px 12px rgba(217,119,6,0.35); }
+.btn-outline {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 9px 14px;
+  font-size: 13px;
+  box-shadow: var(--shadow-sm);
+}
+.btn-outline:hover { background: var(--bg2); }
+.btn-ghost {
+  background: transparent;
+  color: var(--text2);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.btn-ghost:hover { background: var(--bg3); color: var(--text); }
+.btn-danger { background: var(--rose-bg); color: var(--rose); border: 1px solid var(--rose-border); padding: 9px 16px; font-size: 13px; }
+.btn-danger:hover { background: #fba9d4; }
+.icon-only {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.secondary-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 100px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.chip-btn:hover { background: var(--bg3); color: var(--text); border-color: var(--bg3); }
+.chip-btn.active { background: var(--primary-bg); color: var(--primary); border-color: var(--primary-border); }
+
+/* ─── SECTIONS ─── */
+.section { margin-top: 28px; }
+.section-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.section-link {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 5px;
+  transition: background 0.15s;
+}
+.section-link:hover { background: var(--primary-bg); }
+
+/* ─── INVOICE DOCUMENT PREVIEW ─── */
+.invoice-doc {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.doc-top-accent {
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary) 0%, #475569 50%, var(--amber) 100%);
+}
+.doc-head {
+  padding: 20px 20px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface2);
+}
+.doc-company {}
+.doc-co-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.doc-co-addr {
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.6;
+  margin-top: 3px;
+}
+.doc-id-block { text-align: right; flex-shrink: 0; }
+.doc-type-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.doc-number {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-top: 2px;
+}
+
+/* Client/dates grid */
+.doc-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.doc-meta-cell {
+  padding: 13px 20px;
+  border-right: 1px solid var(--border-soft);
+}
+.doc-meta-cell:last-child { border-right: none; }
+.doc-meta-lbl {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+.doc-meta-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+}
+.doc-meta-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+/* Items table */
+.doc-items {}
+.doc-items-head {
+  display: grid;
+  grid-template-columns: 1fr 52px 76px;
+  gap: 0;
+  padding: 8px 20px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-soft);
+}
+.doc-col-lbl {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.doc-col-lbl.r { text-align: right; }
+.doc-item-row {
+  display: grid;
+  grid-template-columns: 1fr 52px 76px;
+  gap: 0;
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  align-items: start;
+  transition: background 0.1s;
+}
+.doc-item-row:hover { background: var(--bg); }
+.doc-item-row:last-child { border-bottom: none; }
+.doc-item-row.group-hd {
+  padding: 6px 20px;
+  background: var(--bg2);
+  grid-template-columns: 1fr;
+}
+.group-name {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.item-name { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.4; }
+.item-desc { font-size: 11px; color: var(--text3); line-height: 1.4; margin-top: 2px; }
+.item-qty {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text2);
+  text-align: right;
+  padding-top: 1px;
+}
+.item-amount {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+  padding-top: 1px;
+}
+
+/* Totals */
+.doc-totals {
+  padding: 14px 20px;
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.totals-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.totals-lbl { font-size: 12px; color: var(--text2); font-weight: 500; }
+.totals-val { font-family: var(--font-mono); font-size: 12px; color: var(--text); font-weight: 500; }
+.totals-rule { height: 1px; background: var(--border); margin: 3px 0; }
+.totals-row.grand .totals-lbl { font-size: 14px; font-weight: 700; color: var(--text); }
+.totals-row.grand .totals-val { font-size: 16px; font-weight: 700; color: var(--text); font-family: var(--font-display); }
+.totals-row.balance .totals-lbl { font-size: 12px; color: var(--amber-dark); font-weight: 600; }
+.totals-row.balance .totals-val { font-size: 13px; color: var(--amber); font-weight: 700; font-family: var(--font-mono); }
+
+/* Doc footer: notes/bank */
+.doc-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.doc-footer-section {}
+.doc-footer-lbl {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 5px;
+}
+.doc-footer-text { font-size: 11px; color: var(--text2); line-height: 1.7; }
+.bank-box {
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.bank-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+.bank-row span:first-child { color: var(--text3); }
+.bank-row span:last-child { font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: var(--text); }
+.amount-words {
+  font-size: 11px;
+  color: var(--text3);
+  font-style: italic;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 12px;
+  line-height: 1.6;
+}
+
+/* ─── PAYMENT CARD ─── */
+.payment-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.payment-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.pay-sum-cell {
+  padding: 12px 14px;
+  border-right: 1px solid var(--border-soft);
+}
+.pay-sum-cell:last-child { border-right: none; }
+.pay-sum-lbl { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin-bottom: 3px; }
+.pay-sum-val { font-family: var(--font-mono); font-size: 15px; font-weight: 600; color: var(--text); }
+.pay-sum-val.green { color: var(--emerald); }
+.pay-sum-val.amber { color: var(--amber); }
+
+/* Progress bar */
+.progress-wrap {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.progress-bar {
+  height: 5px;
+  background: var(--bg3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--emerald), #34d399);
+  border-radius: 3px;
+}
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 5px;
+}
+
+/* Payment history */
+.payment-hist {}
+.pay-hist-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  transition: background 0.1s;
+  cursor: pointer;
+}
+.pay-hist-item:last-child { border-bottom: none; }
+.pay-hist-item:hover { background: var(--bg); }
+.pay-hist-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--emerald-bg);
+  color: var(--emerald);
+}
+.pay-hist-icon.wht {
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+.pay-hist-icon.voided {
+  background: var(--rose-bg);
+  color: var(--rose);
+  opacity: 0.7;
+}
+.pay-hist-body { flex: 1; min-width: 0; }
+.pay-hist-method { font-size: 12px; font-weight: 600; color: var(--text); }
+.pay-hist-ref { font-size: 11px; color: var(--text3); font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+.pay-hist-right { text-align: right; flex-shrink: 0; }
+.pay-hist-amount { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--emerald); }
+.pay-hist-amount.voided { color: var(--rose); text-decoration: line-through; opacity: 0.6; }
+.pay-hist-date { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.wht-tag { display: inline-block; font-size: 9px; background: var(--primary-bg); color: var(--primary); padding: 1px 5px; border-radius: 3px; margin-top: 2px; font-weight: 600; }
+
+/* ─── ADVANCE INVOICE CARD ─── */
+.advance-card {
+  background: var(--surface);
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.advance-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 14px;
+  background: var(--primary-bg);
+  border-bottom: 1px solid var(--primary-border);
+}
+.advance-card-title { font-size: 13px; font-weight: 700; color: var(--primary); }
+.advance-card-sub { font-size: 11px; color: var(--text2); margin-top: 1px; }
+.advance-card-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.advance-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+}
+.advance-item-left { flex: 1 }
+.advance-item-label { font-size: 12px; font-weight: 600; color: var(--text); }
+.advance-item-sub { font-size: 11px; color: var(--text2); margin-top: 1px; }
+.advance-item-amount { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--primary); flex-shrink: 0; }
+.advance-item-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.mini-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mini-btn:hover { background: var(--bg3); color: var(--text); }
+.mini-btn.danger:hover { background: var(--rose-bg); color: var(--rose); border-color: var(--rose-border); }
+
+/* ─── LINKED DOCS ─── */
+.linked-list { display: flex; flex-direction: column; gap: 7px; }
+.linked-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+}
+.linked-item:hover { background: var(--bg2); }
+.linked-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.linked-icon.quote { background: var(--primary-bg); color: var(--primary); }
+.linked-icon.csr { background: #f0fdf4; color: #16a34a; }
+.linked-icon.project { background: var(--amber-bg); color: var(--amber-dark); }
+.linked-icon.waybill { background: #fdf4ff; color: #a21caf; }
+.linked-body { flex: 1; }
+.linked-title { font-size: 12px; font-weight: 600; color: var(--text); }
+.linked-sub { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-top: 1px; }
+.linked-chev { color: var(--text4); }
+
+/* ─── ATTACHMENTS ─── */
+.attachments-scroller {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.attach-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  box-shadow: var(--shadow-sm);
+}
+.attach-chip:hover { background: var(--bg3); color: var(--text); }
+
+/* ─── FLOATING DOWNLOAD BTN ─── */
+.fab-download {
+  position: fixed;
+  bottom: 80px; /* above global bottom nav */
+  right: 20px;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 20px;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  border-radius: 100px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(26,24,20,0.3), 0 2px 8px rgba(26,24,20,0.15);
+  transition: all 0.2s;
+  letter-spacing: -0.01em;
+}
+.fab-download:hover {
+  background: var(--slate);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(26,24,20,0.35);
+}
+.fab-download:active { transform: translateY(0); }
+.fab-download.expanded { padding: 12px 20px; }
+
+/* ─── OVERLAY & SHEETS ─── */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,24,20,0.45);
+  z-index: 50;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.overlay.open { display: block; opacity: 1; }
+
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: 100%;
+  max-width: 680px;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  z-index: 55;
+  padding: 0 0 32px;
+  transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 -8px 40px rgba(26,24,20,0.15);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.sheet.open { transform: translateX(-50%) translateY(0); }
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--bg3);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+.sheet-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  padding: 16px 20px 0;
+  letter-spacing: -0.01em;
+}
+.sheet-sub {
+  font-size: 12px;
+  color: var(--text2);
+  padding: 4px 20px 0;
+}
+.sheet-body { padding: 16px 20px 0; }
+.sheet-section-lbl {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 10px 20px 4px;
+}
+.sheet-divider { height: 1px; background: var(--border-soft); margin: 6px 0; }
+
+/* Sheet action rows */
+.sheet-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 20px;
+  border: none;
+  background: none;
+  width: 100%;
+  cursor: pointer;
+  transition: background 0.12s;
+  text-align: left;
+  font-family: var(--font-ui);
+}
+.sheet-action:hover { background: var(--bg); }
+.sheet-action.danger { color: var(--rose); }
+.sheet-action.danger:hover { background: var(--rose-bg); }
+.sa-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--bg2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text2);
+}
+.sheet-action.danger .sa-icon { background: var(--rose-bg); color: var(--rose); }
+.sa-body {}
+.sa-lbl { font-size: 14px; font-weight: 600; color: inherit; }
+.sa-desc { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.sheet-action.danger .sa-desc { color: rgba(190,24,93,0.5); }
+
+/* ─── MODAL DIALOG ─── */
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,24,20,0.5);
+  z-index: 70;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: modalIn 0.25s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header { padding: 20px 20px 0; }
+.modal-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.modal-icon-wrap.danger { background: var(--rose-bg); color: var(--rose); }
+.modal-icon-wrap.amber { background: var(--amber-bg); color: var(--amber); }
+.modal-icon-wrap.primary { background: var(--primary-bg); color: var(--primary); }
+.modal-title { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; }
+.modal-body { padding: 8px 20px 20px; font-size: 13px; color: var(--text2); line-height: 1.6; }
+.modal-footer {
+  padding: 0 16px 16px;
+  display: flex;
+  gap: 8px;
+}
+.modal-footer .btn { flex: 1; justify-content: center; height: 42px; font-size: 14px; }
+.modal-danger-btn {
+  background: var(--rose);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 9px 16px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  flex: 1;
+  height: 42px;
+  transition: background 0.15s;
+}
+.modal-danger-btn:hover { background: #9d174d; }
+.modal-cancel-btn {
+  background: var(--bg2);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 9px 16px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+  height: 42px;
+  transition: background 0.15s;
+}
+.modal-cancel-btn:hover { background: var(--bg3); }
+
+/* Form elements */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 6px;
+}
+.form-input {
+  width: 100%;
+  padding: 10px 13px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.form-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30,41,59,0.1);
+}
+.form-input::placeholder { color: var(--text4); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-select {
+  width: 100%;
+  padding: 10px 13px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30,41,59,0.1); }
+.segmented {
+  display: flex;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px;
+  gap: 2px;
+}
+.seg-btn {
+  flex: 1;
+  padding: 7px;
+  border: none;
+  border-radius: 7px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.seg-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ─── TEMPLATE CARDS (horizontal scroll) ─── */
+.template-scroll-wrap {
+  overflow: visible;
+  margin: 0 -4px;
+}
+.template-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 4px 8px;
+}
+.template-scroll::-webkit-scrollbar { height: 3px; }
+.tmpl-card {
+  flex-shrink: 0;
+  width: 100px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.15s;
+}
+.tmpl-card:hover { transform: translateY(-2px); }
+.tmpl-preview {
+  width: 100%;
+  aspect-ratio: 0.707;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+.tmpl-card.active .tmpl-preview {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30,41,59,0.15);
+}
+/* Mini template preview styles */
+.tmpl-preview .t-bar { height: 12px; width: 100%; margin-bottom: 6px; }
+.tmpl-preview .t-body { padding: 5px; }
+.tmpl-preview .t-line { height: 3px; border-radius: 1px; background: var(--border); margin-bottom: 3px; }
+.tmpl-preview .t-line.w60 { width: 60%; }
+.tmpl-preview .t-line.w40 { width: 40%; }
+.tmpl-preview .t-line.w80 { width: 80%; }
+
+/* Proforma style */
+.tmpl-card:nth-child(1) .t-bar { background: linear-gradient(90deg, var(--primary), #475569); }
+/* Bold style */
+.tmpl-card:nth-child(2) .t-bar { background: var(--text); height: 18px; }
+/* Compact style */
+.tmpl-card:nth-child(3) .t-bar { background: var(--amber); height: 8px; }
+/* Classic style */
+.tmpl-card:nth-child(4) .t-bar { background: var(--emerald); height: 10px; }
+
+.tmpl-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text2);
+  text-align: center;
+}
+.tmpl-card.active .tmpl-name { color: var(--primary); }
+
+/* Toggle rows */
+.toggle-rows { display: flex; flex-direction: column; gap: 0; }
+.toggle-row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.toggle-row-item:last-child { border-bottom: none; }
+.toggle-info {}
+.toggle-item-label { font-size: 13px; font-weight: 600; color: var(--text); }
+.toggle-item-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.toggle {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--bg3);
+  border-radius: 24px;
+  border: 1.5px solid var(--border);
+  transition: background 0.2s, border-color 0.2s;
+  cursor: pointer;
+}
+.toggle input:checked ~ .toggle-track { background: var(--primary); border-color: var(--primary); }
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text3);
+  transition: transform 0.2s, background 0.2s;
+  pointer-events: none;
+}
+.toggle input:checked ~ .toggle-track .toggle-thumb { transform: translateX(18px); background: #fff; }
+
+/* ─── TOAST ─── */
+.toast-area {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  width: 100%;
+  max-width: 380px;
+  padding: 0 16px;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--text);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  animation: toastIn 0.3s cubic-bezier(0.4,0,0.2,1) forwards, toastOut 0.3s 3s cubic-bezier(0.4,0,0.2,1) forwards;
+  pointer-events: auto;
+}
+.toast.success { background: var(--emerald); }
+.toast.amber { background: var(--amber-dark); }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes toastOut {
+  from { opacity: 1; }
+  to { opacity: 0; pointer-events: none; }
+}
+
+/* ─── ADVANCE CREATION POPUP ─── */
+.advance-form-card {
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-top: 12px;
+}
+.advance-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.advance-type-opt {
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.advance-type-opt.active { border-color: var(--primary); background: var(--primary-bg); }
+.advance-type-opt-label { font-size: 12px; font-weight: 700; color: var(--text2); }
+.advance-type-opt-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.advance-type-opt.active .advance-type-opt-label { color: var(--primary); }
+
+/* ─── PAGE LOAD ANIMATION ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { opacity: 0; animation: fadeUp 0.4s cubic-bezier(0.4,0,0.2,1) forwards; }
+.fade-up:nth-child(1) { animation-delay: 0.05s; }
+.fade-up:nth-child(2) { animation-delay: 0.1s; }
+.fade-up:nth-child(3) { animation-delay: 0.15s; }
+.fade-up:nth-child(4) { animation-delay: 0.2s; }
+.fade-up:nth-child(5) { animation-delay: 0.25s; }
+.fade-up:nth-child(6) { animation-delay: 0.3s; }
+.fade-up:nth-child(7) { animation-delay: 0.35s; }
+
+/* ─── DESKTOP ENHANCEMENTS ─── */
+@media (min-width: 640px) {
+  .page { padding: 0 24px 80px; }
+  .hero { padding: 28px 0 0; }
+  .fab-download { right: calc(50% - 320px + 24px); }
+  .invoice-num { font-size: 32px; }
+}
+
+/* ─── UTILITY ─── */
+.divider-line { height: 1px; background: var(--border-soft); margin: 6px 0; }
+.mt8 { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.text-right { text-align: right; }
+.flex-center { display: flex; align-items: center; gap: 8px; }
+
+/* Colour picker */
+.colour-swatch {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.colour-option {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.colour-option.active { border-color: var(--primary); }
+.colour-option.blue { background: #1e293b; }
+.colour-option.black { background: #0f172a; }
+.colour-option.green { background: #166534; }
+.colour-option.amber { background: #d97706; }
+</style>
+</head>
+<body>
+
+<!-- ─── TOAST AREA ─── -->
+<div class="toast-area" id="toast-area"></div>
+
+<!-- ─── NAV ─── -->
+<nav class="nav">
+  <a href="#" class="nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+    Invoices
+  </a>
+  <div class="nav-center">
+    <div class="nav-title">SASINV-B047</div>
+    <div class="nav-sub">Sun & Shield Power Solutions</div>
+  </div>
+  <div class="nav-right">
+    <button class="icon-btn" title="Share" onclick="fireToast('Share link copied','')">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+    </button>
+    <button class="icon-btn amber" title="Customise" onclick="openSheet('cust-sheet')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+    </button>
+    <button class="icon-btn" title="More actions" onclick="openSheet('more-sheet')">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ─── MAIN PAGE ─── -->
+<main class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+
+    <div class="fade-up">
+      <div class="hero-top">
+        <div>
+          <div class="doc-label">Tax Invoice</div>
+          <div class="invoice-num">SASINV-B047</div>
+          <div class="invoice-sub">Supply & Installation — 40KVA Generator, Pinnacle Towers</div>
+          <div class="thread-tag">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            Progress Invoice · 2 of 3
+          </div>
+        </div>
+        <div class="status-pill partial">
+          <div class="status-dot"></div>
+          Partial
+        </div>
+      </div>
+    </div>
+
+    <!-- Money strip -->
+    <div class="money-strip fade-up">
+      <div class="money-cell">
+        <div class="money-lbl">Total</div>
+        <div class="money-val">₦4,720,000</div>
+        <div class="money-hint">incl. 7.5% VAT</div>
+      </div>
+      <div class="money-cell">
+        <div class="money-lbl">Received</div>
+        <div class="money-val green">₦2,000,000</div>
+        <div class="money-hint">cash + WHT</div>
+      </div>
+      <div class="money-cell">
+        <div class="money-lbl">Balance Due</div>
+        <div class="money-val amber">₦2,720,000</div>
+        <div class="money-hint">due 30 May 25</div>
+      </div>
+    </div>
+
+    <!-- Primary actions -->
+    <div class="action-row fade-up">
+      <button class="btn btn-amber" onclick="openSheet('pay-sheet')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Record Payment
+      </button>
+      <button class="btn btn-outline" onclick="alert('Edit invoice')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit
+      </button>
+    </div>
+
+    <!-- Secondary chip actions (Advance Invoice removed from here) -->
+    <div class="secondary-actions fade-up">
+      <div class="chip-btn" onclick="alert('Duplicate')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Duplicate
+      </div>
+      <div class="chip-btn" onclick="fireToast('SASINV-B047 copied','')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy No.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- INVOICE DOCUMENT -->
+  <div class="section fade-up">
+    <div class="section-hd">
+      <div class="section-label">Invoice Document</div>
+    </div>
+    <div class="invoice-doc">
+      <div class="doc-top-accent"></div>
+
+      <!-- Company header -->
+      <div class="doc-head">
+        <div class="doc-company">
+          <div class="doc-co-name">Sun & Shield Power Solutions</div>
+          <div class="doc-co-addr">
+            15B Adeyemo Alakija St, Victoria Island, Lagos<br>
+            +234 802 000 1234 · info@sunshieldpower.com<br>
+            RC No. 1234567 · TIN: 00123456-0001
+          </div>
+        </div>
+        <div class="doc-id-block">
+          <div class="doc-type-label">Invoice</div>
+          <div class="doc-number">SASINV-B047</div>
+          <div style="margin-top:8px;">
+            <div class="doc-type-label">PO Reference</div>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--text2);margin-top:2px;">PTO/2024/0183</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Client/dates -->
+      <div class="doc-meta-grid">
+        <div class="doc-meta-cell">
+          <div class="doc-meta-lbl">Bill To</div>
+          <div class="doc-meta-val">Pinnacle Towers Ltd</div>
+          <div class="doc-meta-sub">Attn: Adekunle Afolabi</div>
+          <div class="doc-meta-sub">Pinnacle Building, Ozumba Mbadiwe</div>
+        </div>
+        <div class="doc-meta-cell">
+          <div class="doc-meta-lbl">Issue Date</div>
+          <div class="doc-meta-val">12 April 2025</div>
+          <div class="doc-meta-lbl" style="margin-top:9px;">Due Date</div>
+          <div class="doc-meta-val">30 May 2025</div>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="doc-items">
+        <div class="doc-items-head">
+          <div class="doc-col-lbl">Description</div>
+          <div class="doc-col-lbl r">Qty</div>
+          <div class="doc-col-lbl r">Amount</div>
+        </div>
+
+        <div class="doc-item-row group-hd">
+          <div class="group-name">Supply of Equipment</div>
+        </div>
+        <div class="doc-item-row">
+          <div>
+            <div class="item-name">40KVA Soundproof Generator (FG Wilson)</div>
+            <div class="item-desc">3-phase, 415V output, with ATS panel and warranty</div>
+          </div>
+          <div class="item-qty">1 unit</div>
+          <div class="item-amount">₦3,200,000</div>
+        </div>
+        <div class="doc-item-row">
+          <div>
+            <div class="item-name">ATS / Changeover Panel (100A)</div>
+          </div>
+          <div class="item-qty">1 set</div>
+          <div class="item-amount">₦180,000</div>
+        </div>
+
+        <div class="doc-item-row group-hd">
+          <div class="group-name">Installation & Labour</div>
+        </div>
+        <div class="doc-item-row">
+          <div>
+            <div class="item-name">Civil & Electrical Installation</div>
+            <div class="item-desc">Concrete plinth, cabling, conduits, earthing, load testing</div>
+          </div>
+          <div class="item-qty">1 lot</div>
+          <div class="item-amount">₦650,000</div>
+        </div>
+        <div class="doc-item-row">
+          <div>
+            <div class="item-name">Commissioning & Handover</div>
+          </div>
+          <div class="item-qty">1</div>
+          <div class="item-amount">₦120,000</div>
+        </div>
+      </div>
+
+      <!-- Totals -->
+      <div class="doc-totals">
+        <div class="totals-row">
+          <div class="totals-lbl">Subtotal</div>
+          <div class="totals-val">₦4,150,000</div>
+        </div>
+        <div class="totals-row">
+          <div class="totals-lbl">Workmanship</div>
+          <div class="totals-val">₦120,000</div>
+        </div>
+        <div class="totals-row">
+          <div class="totals-lbl">Transportation</div>
+          <div class="totals-val">₦85,000</div>
+        </div>
+        <div class="totals-row">
+          <div class="totals-lbl">VAT (7.5%)</div>
+          <div class="totals-val">₦365,000</div>
+        </div>
+        <div class="totals-rule"></div>
+        <div class="totals-row grand">
+          <div class="totals-lbl">Total Due</div>
+          <div class="totals-val">₦4,720,000</div>
+        </div>
+        <div class="totals-row balance">
+          <div class="totals-lbl">Balance Remaining</div>
+          <div class="totals-val">₦2,720,000</div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="doc-footer">
+        <div class="doc-footer-section">
+          <div class="doc-footer-lbl">Payment Details</div>
+          <div class="bank-box">
+            <div class="bank-row"><span>Bank</span><span>Zenith Bank PLC</span></div>
+            <div class="bank-row"><span>Account Name</span><span>Sun & Shield Power Solutions</span></div>
+            <div class="bank-row"><span>Account No.</span><span>2109384756</span></div>
+          </div>
+        </div>
+        <div class="doc-footer-section">
+          <div class="doc-footer-lbl">Notes</div>
+          <div class="doc-footer-text">All equipment carries a 12-month warranty from commissioning. WHT deductions must be accompanied by a valid WHT certificate. Payment within stipulated period.</div>
+        </div>
+        <div class="amount-words">
+          Four million, seven hundred and twenty thousand naira only (₦4,720,000.00)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAYMENTS -->
+  <div class="section fade-up">
+    <div class="section-hd">
+      <div class="section-label">Payments</div>
+      <button class="section-link" onclick="openSheet('pay-sheet')">+ Record</button>
+    </div>
+    <div class="payment-card">
+      <div class="payment-summary-grid">
+        <div class="pay-sum-cell">
+          <div class="pay-sum-lbl">Cash Received</div>
+          <div class="pay-sum-val green">₦1,650,000</div>
+        </div>
+        <div class="pay-sum-cell">
+          <div class="pay-sum-lbl">WHT Applied</div>
+          <div class="pay-sum-val">₦350,000</div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:42%"></div>
+        </div>
+        <div class="progress-meta">
+          <span>42% settled</span>
+          <span>₦2,720,000 remaining</span>
+        </div>
+      </div>
+      <div class="payment-hist">
+        <div class="pay-hist-item" onclick="openModal('void-modal')">
+          <div class="pay-hist-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="pay-hist-body">
+            <div class="pay-hist-method">Bank Transfer</div>
+            <div class="pay-hist-ref">ZEN/2025/0041938</div>
+          </div>
+          <div class="pay-hist-right">
+            <div class="pay-hist-amount">₦1,650,000</div>
+            <div class="pay-hist-date">14 Apr 2025</div>
+          </div>
+        </div>
+        <div class="pay-hist-item" onclick="openModal('void-modal')">
+          <div class="pay-hist-icon wht">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="pay-hist-body">
+            <div class="pay-hist-method">WHT Credit</div>
+            <div class="pay-hist-ref">WHT/LAS/2025/1177</div>
+            <span class="wht-tag">5% WHT rate</span>
+          </div>
+          <div class="pay-hist-right">
+            <div class="pay-hist-amount">₦350,000</div>
+            <div class="pay-hist-date">12 Apr 2025</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADVANCE INVOICES (saved state) -->
+  <div class="section fade-up">
+    <div class="section-hd">
+      <div class="section-label">Advance Invoices</div>
+      <button class="section-link" onclick="openAdvanceSheet('new')">+ Add</button>
+    </div>
+    <div class="advance-card">
+      <div class="advance-card-head">
+        <div>
+          <div class="advance-card-title">Advance Invoices — SASINV-B047</div>
+          <div class="advance-card-sub">₦4,720,000 contract · 2 advance invoices generated</div>
+        </div>
+      </div>
+      <div class="advance-card-body">
+        <div class="advance-item">
+          <div class="advance-item-left">
+            <div class="advance-item-label">Mobilisation Advance</div>
+            <div class="advance-item-sub">30% · Generated 01 Mar 2025</div>
+          </div>
+          <div class="advance-item-amount">₦1,416,000</div>
+          <div class="advance-item-actions">
+            <button class="mini-btn" title="Download" onclick="fireToast('Advance invoice downloaded','success')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+            <button class="mini-btn" title="Edit" onclick="openAdvanceSheet('edit', {label:'Mobilisation Advance', type:'percentage', value:30})">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="mini-btn danger" title="Remove" onclick="openModal('void-modal')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="advance-item">
+          <div class="advance-item-left">
+            <div class="advance-item-label">Interim Progress Billing</div>
+            <div class="advance-item-sub">Fixed · Generated 28 Mar 2025</div>
+          </div>
+          <div class="advance-item-amount">₦800,000</div>
+          <div class="advance-item-actions">
+            <button class="mini-btn" title="Download" onclick="fireToast('Advance invoice downloaded','success')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+            <button class="mini-btn" title="Edit" onclick="openAdvanceSheet('edit', {label:'Interim Progress Billing', type:'fixed', value:800000})">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="mini-btn danger" title="Remove" onclick="openModal('void-modal')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LINKED DOCS -->
+  <div class="section fade-up">
+    <div class="section-hd">
+      <div class="section-label">Related Documents</div>
+      <button class="section-link" onclick="fireToast('Link project/document','')">+ Link</button>
+    </div>
+    <div class="linked-list">
+      <a href="#" class="linked-item">
+        <div class="linked-icon quote">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="linked-body">
+          <div class="linked-title">Quotation · SASQUO-B031</div>
+          <div class="linked-sub">Supply & Installation — 40KVA · Approved</div>
+        </div>
+        <div class="linked-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </a>
+      <a href="#" class="linked-item">
+        <div class="linked-icon csr">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div class="linked-body">
+          <div class="linked-title">CSR · Site Readiness Inspection</div>
+          <div class="linked-sub">Completed 08 Apr 2025</div>
+        </div>
+        <div class="linked-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </a>
+      <a href="#" class="linked-item">
+        <div class="linked-icon project">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        </div>
+        <div class="linked-body">
+          <div class="linked-title">Project · Pinnacle Towers Gen Install</div>
+          <div class="linked-sub">₦12.6M contract · 3 invoices</div>
+        </div>
+        <div class="linked-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </a>
+      <a href="#" class="linked-item">
+        <div class="linked-icon waybill">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        </div>
+        <div class="linked-body">
+          <div class="linked-title">Waybill · WBL-2025-0041</div>
+          <div class="linked-sub">Delivered 10 Apr 2025 · Victoria Island</div>
+        </div>
+        <div class="linked-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ATTACHMENTS -->
+  <div class="section fade-up">
+    <div class="section-hd">
+      <div class="section-label">Attachments</div>
+      <button class="section-link" onclick="fireToast('Attach file','')">+ Add</button>
+    </div>
+    <div class="attachments-scroller">
+      <div class="attach-chip">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        PO_Pinnacle_0183.pdf
+      </div>
+      <div class="attach-chip">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        site_photo_commissioning.jpg
+      </div>
+      <div class="attach-chip">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        WHT_cert_LAS2025.pdf
+      </div>
+    </div>
+  </div>
+
+  <div style="height:32px;"></div>
+
+</main>
+
+<!-- ─── FLOATING DOWNLOAD BUTTON ─── -->
+<button class="fab-download" onclick="fireToast('Invoice PDF downloaded successfully','success')">
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+  Download PDF
+</button>
+
+<!-- ══════════════════════════════════════════
+     SHEETS & MODALS
+══════════════════════════════════════════ -->
+
+<!-- ─── OVERLAY ─── -->
+<div class="overlay" id="overlay" onclick="closeAll()"></div>
+
+<!-- ─── MORE / OVERFLOW SHEET ─── -->
+<div class="sheet" id="more-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">More Actions</div>
+
+  <div class="sheet-section-lbl">Lifecycle</div>
+  <button class="sheet-action" onclick="closeAll(); fireToast('Marked as sent','')">
+    <div class="sa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
+    <div class="sa-body">
+      <div class="sa-lbl">Mark as Sent</div>
+      <div class="sa-desc">Log that this invoice was delivered to client</div>
+    </div>
+  </button>
+  <button class="sheet-action" onclick="closeAll(); openModal('revert-modal')">
+    <div class="sa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg></div>
+    <div class="sa-body">
+      <div class="sa-lbl">Revert to Quotation</div>
+      <div class="sa-desc">Convert this invoice back to a draft quotation</div>
+    </div>
+  </button>
+  <button class="sheet-action" onclick="closeAll(); alert('Generate Waybill')">
+    <div class="sa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+    <div class="sa-body">
+      <div class="sa-lbl">Generate Waybill</div>
+      <div class="sa-desc">Create a delivery waybill linked to this invoice</div>
+    </div>
+  </button>
+
+  <div class="sheet-divider"></div>
+  <div class="sheet-section-lbl">Payments & Advances</div>
+
+  <button class="sheet-action" onclick="closeAll(); openSheet('pay-sheet')">
+    <div class="sa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+    <div class="sa-body">
+      <div class="sa-lbl">Record Payment</div>
+      <div class="sa-desc">Add a new payment against this invoice</div>
+    </div>
+  </button>
+  <button class="sheet-action" onclick="closeAll(); openAdvanceSheet('new')">
+    <div class="sa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+    <div class="sa-body">
+      <div class="sa-lbl">Advance Invoice</div>
+      <div class="sa-desc">Create a partial/advance invoice</div>
+    </div>
+  </button>
+
+  <div class="sheet-divider"></div>
+  <div class="sheet-section-lbl">Links & Attachments</div>
+
+  <button class="sheet-action" onclick="closeAll(); fireToast('Link to Project','')">
+    <div class="sa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div>
+    <div class="sa-body">
+      <div class="sa-lbl">Link to Project</div>
+      <div class="sa-desc">Associate this invoice with a project</div>
+    </div>
+  </button>
+  <button class="sheet-action" onclick="closeAll(); fireToast('Attach / Link Document','')">
+    <div class="sa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>
+    <div class="sa-body">
+      <div class="sa-lbl">Attach / Link Document</div>
+      <div class="sa-desc">Upload or link a document to this invoice</div>
+    </div>
+  </button>
+
+  <div class="sheet-divider"></div>
+  <div class="sheet-section-lbl">Document</div>
+
+  <button class="sheet-action" onclick="closeAll(); fireToast('SASINV-B047 copied','')">
+    <div class="sa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
+    <div class="sa-body">
+      <div class="sa-lbl">Copy Invoice Number</div>
+      <div class="sa-desc">SASINV-B047</div>
+    </div>
+  </button>
+  <button class="sheet-action" onclick="closeAll()">
+    <div class="sa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+    <div class="sa-body">
+      <div class="sa-lbl">Export as CSV</div>
+      <div class="sa-desc">Download line items as spreadsheet</div>
+    </div>
+  </button>
+
+  <div class="sheet-divider"></div>
+  <div class="sheet-section-lbl">Danger</div>
+
+  <button class="sheet-action" onclick="closeAll(); openModal('archive-modal')">
+    <div class="sa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></div>
+    <div class="sa-body">
+      <div class="sa-lbl">Archive Invoice</div>
+      <div class="sa-desc">Remove from active lists, keep on record</div>
+    </div>
+  </button>
+  <button class="sheet-action danger" onclick="closeAll(); openModal('delete-modal')">
+    <div class="sa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></div>
+    <div class="sa-body">
+      <div class="sa-lbl">Delete Invoice</div>
+      <div class="sa-desc">Permanently remove this document</div>
+    </div>
+  </button>
+</div>
+
+<!-- ─── RECORD PAYMENT SHEET ─── -->
+<div class="sheet" id="pay-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Record Payment</div>
+  <div class="sheet-sub">Balance due: ₦2,720,000</div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <label class="form-label">Amount</label>
+      <input class="form-input" type="text" placeholder="₦0.00" value="₦2,720,000">
+    </div>
+    <div class="form-group">
+      <label class="form-label">WHT Amount (if applicable)</label>
+      <input class="form-input" type="text" placeholder="₦0.00">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" type="date" value="2025-04-17">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Method</label>
+        <select class="form-select">
+          <option>Bank Transfer</option>
+          <option>Cheque</option>
+          <option>Cash</option>
+          <option>WHT Credit</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reference / Transaction ID</label>
+      <input class="form-input" type="text" placeholder="e.g. ZEN/2025/...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">WHT Certificate Ref (optional)</label>
+      <input class="form-input" type="text" placeholder="e.g. WHT/LAS/2025/...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Bank Account</label>
+      <select class="form-select">
+        <option>Zenith Bank — 2109384756 (Default)</option>
+        <option>First Bank — 3047291836</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;padding-bottom:12px;">
+      <button class="btn btn-outline" style="flex:1;height:42px;justify-content:center;font-size:14px;" onclick="closeAll()">Cancel</button>
+      <button class="btn btn-amber" style="flex:2;height:42px;justify-content:center;font-size:14px;" onclick="closeAll();fireToast('Payment of ₦2,720,000 recorded','success')">Save Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── ADVANCE INVOICE SHEET (creation/edit) ─── -->
+<div class="sheet" id="advance-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="advanceSheetTitle">Create Advance Invoice</div>
+  <div class="sheet-sub" id="advanceSheetSub">Based on SASINV-B047 · Total: ₦4,720,000</div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <label class="form-label">Invoice Label</label>
+      <input class="form-input" id="advanceLabel" type="text" placeholder="e.g. Mobilisation Advance" value="">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Amount Type</label>
+      <div class="advance-type-grid" id="advanceTypeGrid">
+        <div class="advance-type-opt active" data-type="percentage" onclick="selectAdvanceType(this)">
+          <div class="advance-type-opt-label">Percentage</div>
+          <div class="advance-type-opt-sub">% of total</div>
+        </div>
+        <div class="advance-type-opt" data-type="fixed" onclick="selectAdvanceType(this)">
+          <div class="advance-type-opt-label">Fixed Amount</div>
+          <div class="advance-type-opt-sub">Exact ₦ value</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group" id="percentageField">
+      <label class="form-label">Percentage (%)</label>
+      <input class="form-input" id="advancePercent" type="number" placeholder="e.g. 30" value="30" oninput="updateComputedAmount()">
+    </div>
+    <div class="form-group" id="fixedField" style="display:none;">
+      <label class="form-label">Fixed Amount (₦)</label>
+      <input class="form-input" id="advanceFixed" type="number" placeholder="e.g. 800000" value="800000" oninput="updateComputedAmount()">
+    </div>
+    <div class="form-group" style="background:var(--primary-bg);border:1px solid var(--primary-border);border-radius:var(--radius);padding:12px 14px;">
+      <div style="font-size:11px;color:var(--primary);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;">Computed Amount</div>
+      <div style="font-family:var(--font-mono);font-size:22px;font-weight:700;color:var(--primary);" id="computedAmount">₦1,416,000</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:3px;" id="computedDescription">30% of ₦4,720,000</div>
+    </div>
+    <div style="display:flex;gap:8px;padding-bottom:12px;margin-top:4px;">
+      <button class="btn btn-outline" style="flex:1;height:42px;justify-content:center;font-size:14px;" onclick="closeAll()">Cancel</button>
+      <button class="btn btn-amber" style="flex:2;height:42px;justify-content:center;font-size:14px;" onclick="closeAll(); fireToast('Advance invoice saved','success')" id="advanceSubmitBtn">Generate Invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── CUSTOMISATION SHEET ─── -->
+<div class="sheet" id="cust-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Customise Output</div>
+  <div class="sheet-sub">Controls how the PDF is generated and displayed</div>
+  <div class="sheet-body">
+
+    <div class="form-group">
+      <label class="form-label">Template</label>
+      <div class="template-scroll-wrap">
+        <div class="template-scroll">
+          <div class="tmpl-card active" onclick="selectTemplate(this)">
+            <div class="tmpl-preview">
+              <div class="t-bar"></div>
+              <div class="t-body">
+                <div class="t-line w80"></div>
+                <div class="t-line w60"></div>
+                <div class="t-line w40"></div>
+                <div class="t-line w80"></div>
+                <div class="t-line w60"></div>
+              </div>
+            </div>
+            <div class="tmpl-name">Proforma</div>
+          </div>
+          <div class="tmpl-card" onclick="selectTemplate(this)">
+            <div class="tmpl-preview">
+              <div class="t-bar"></div>
+              <div class="t-body">
+                <div class="t-line w80"></div>
+                <div class="t-line w60"></div>
+                <div class="t-line w40"></div>
+                <div class="t-line w80"></div>
+                <div class="t-line w60"></div>
+              </div>
+            </div>
+            <div class="tmpl-name">Bold</div>
+          </div>
+          <div class="tmpl-card" onclick="selectTemplate(this)">
+            <div class="tmpl-preview">
+              <div class="t-bar"></div>
+              <div class="t-body">
+                <div class="t-line w80"></div>
+                <div class="t-line w60"></div>
+                <div class="t-line w40"></div>
+                <div class="t-line w80"></div>
+                <div class="t-line w60"></div>
+              </div>
+            </div>
+            <div class="tmpl-name">Compact</div>
+          </div>
+          <div class="tmpl-card" onclick="selectTemplate(this)">
+            <div class="tmpl-preview">
+              <div class="t-bar"></div>
+              <div class="t-body">
+                <div class="t-line w80"></div>
+                <div class="t-line w60"></div>
+                <div class="t-line w40"></div>
+                <div class="t-line w80"></div>
+                <div class="t-line w60"></div>
+              </div>
+            </div>
+            <div class="tmpl-name">Classic</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group mt8">
+      <label class="form-label">Signatory</label>
+      <select class="form-select">
+        <option>Engr. Babajide Olusanya — Managing Director</option>
+        <option>Mrs. Folake Adeyemi — Finance Director</option>
+        <option>None</option>
+      </select>
+    </div>
+
+    <div class="form-group mt8">
+      <label class="form-label">Accent Colour</label>
+      <div class="colour-swatch">
+        <div class="colour-option blue active" onclick="selectColour(this, 'blue')"></div>
+        <div class="colour-option black" onclick="selectColour(this, 'black')"></div>
+        <div class="colour-option green" onclick="selectColour(this, 'green')"></div>
+        <div class="colour-option amber" onclick="selectColour(this, 'amber')"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">Changes the primary accent throughout the document.</div>
+    </div>
+
+    <div class="form-group mt8">
+      <label class="form-label">Font Family</label>
+      <select class="form-select">
+        <option>Plus Jakarta Sans (Default)</option>
+        <option>Inter</option>
+        <option>DM Sans</option>
+        <option>Space Grotesk</option>
+      </select>
+    </div>
+
+    <div class="form-group mt8">
+      <label class="form-label">PDF Options</label>
+      <div class="toggle-rows">
+        <div class="toggle-row-item">
+          <div class="toggle-info">
+            <div class="toggle-item-label">Show Bank Details</div>
+            <div class="toggle-item-sub">Display payment account on PDF</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox">
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          </label>
+        </div>
+        <div class="toggle-row-item">
+          <div class="toggle-info">
+            <div class="toggle-item-label">Show Balance Due</div>
+            <div class="toggle-item-sub">Display remaining balance on document</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked>
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          </label>
+        </div>
+        <div class="toggle-row-item">
+          <div class="toggle-info">
+            <div class="toggle-item-label">Show Footer</div>
+            <div class="toggle-item-sub">Company footer on each page</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked>
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          </label>
+        </div>
+        <div class="toggle-row-item">
+          <div class="toggle-info">
+            <div class="toggle-item-label">Show Tagline</div>
+            <div class="toggle-item-sub">Company tagline below name</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked>
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding-bottom:12px;">
+      <button class="btn btn-amber" style="width:100%;height:42px;justify-content:center;font-size:14px;" onclick="closeAll();fireToast('Settings saved','success')">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MODALS ══════════════════ -->
+
+<!-- DELETE MODAL -->
+<div class="modal-backdrop" id="delete-modal" onclick="closeModal('delete-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon-wrap danger">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </div>
+      <div class="modal-title">Delete Invoice?</div>
+    </div>
+    <div class="modal-body">
+      <strong>SASINV-B047</strong> will be permanently deleted. This cannot be undone. All payment records and linked data for this invoice will be removed.
+    </div>
+    <div class="modal-footer">
+      <button class="modal-cancel-btn" onclick="closeModal('delete-modal')">Cancel</button>
+      <button class="modal-danger-btn" onclick="closeModal('delete-modal'); fireToast('Invoice deleted','')">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ARCHIVE MODAL -->
+<div class="modal-backdrop" id="archive-modal" onclick="closeModal('archive-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon-wrap amber">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+      </div>
+      <div class="modal-title">Archive Invoice?</div>
+    </div>
+    <div class="modal-body">
+      <strong>SASINV-B047</strong> will be moved to your archive. It won't appear in your active invoice list but remains accessible and recoverable.
+    </div>
+    <div class="modal-footer">
+      <button class="modal-cancel-btn" onclick="closeModal('archive-modal')">Cancel</button>
+      <button class="btn btn-amber" style="flex:1;height:42px;justify-content:center;font-size:14px;" onclick="closeModal('archive-modal'); fireToast('Invoice archived','')">Archive</button>
+    </div>
+  </div>
+</div>
+
+<!-- REVERT MODAL -->
+<div class="modal-backdrop" id="revert-modal" onclick="closeModal('revert-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon-wrap primary">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+      </div>
+      <div class="modal-title">Revert to Quotation?</div>
+    </div>
+    <div class="modal-body">
+      <strong>SASINV-B047</strong> will be converted back to a draft quotation. Existing payment records will be preserved but the invoice status will be removed.
+    </div>
+    <div class="modal-footer">
+      <button class="modal-cancel-btn" onclick="closeModal('revert-modal')">Cancel</button>
+      <button class="btn btn-outline" style="flex:1;height:42px;justify-content:center;font-size:14px;color:var(--primary);border-color:var(--primary-border);background:var(--primary-bg);" onclick="closeModal('revert-modal'); fireToast('Reverted to quotation','')">Revert</button>
+    </div>
+  </div>
+</div>
+
+<!-- VOID PAYMENT MODAL -->
+<div class="modal-backdrop" id="void-modal" onclick="closeModal('void-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon-wrap danger">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+      </div>
+      <div class="modal-title">Void Payment?</div>
+    </div>
+    <div class="modal-body">
+      <strong>Bank Transfer · ₦1,650,000</strong> recorded on 14 Apr 2025 will be marked as voided. The invoice balance will be updated accordingly.
+      <div style="margin-top:12px;">
+        <label class="form-label" style="margin-bottom:6px;display:block;">Void Reason</label>
+        <input class="form-input" type="text" placeholder="Reason for voiding this payment">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-cancel-btn" onclick="closeModal('void-modal')">Cancel</button>
+      <button class="modal-danger-btn" onclick="closeModal('void-modal'); fireToast('Payment voided','')">Void Payment</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Sheet control
+function openSheet(id) {
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById(id).classList.add('open');
+}
+function closeAll() {
+  document.getElementById('overlay').classList.remove('open');
+  document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
+}
+
+// Modal control
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Toast
+function fireToast(msg, type) {
+  const area = document.getElementById('toast-area');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + (type || '');
+  toast.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    ${msg}
+  `;
+  area.appendChild(toast);
+  setTimeout(() => toast.remove(), 3600);
+}
+
+// Template selection
+function selectTemplate(el) {
+  document.querySelectorAll('.tmpl-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Colour selection in customisation
+function selectColour(el, colour) {
+  document.querySelectorAll('.colour-option').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Advance type selection
+function selectAdvanceType(el) {
+  const grid = document.getElementById('advanceTypeGrid');
+  grid.querySelectorAll('.advance-type-opt').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  const type = el.dataset.type;
+  document.getElementById('percentageField').style.display = type === 'percentage' ? 'block' : 'none';
+  document.getElementById('fixedField').style.display = type === 'fixed' ? 'block' : 'none';
+  updateComputedAmount();
+}
+
+function updateComputedAmount() {
+  const isPercentage = document.querySelector('.advance-type-opt.active').dataset.type === 'percentage';
+  const total = 4720000;
+  let amount = 0;
+  if (isPercentage) {
+    const pct = parseFloat(document.getElementById('advancePercent').value) || 0;
+    amount = (total * pct / 100);
+    document.getElementById('computedDescription').innerText = `${pct}% of ₦4,720,000`;
+  } else {
+    amount = parseFloat(document.getElementById('advanceFixed').value) || 0;
+    document.getElementById('computedDescription').innerText = `Fixed amount`;
+  }
+  document.getElementById('computedAmount').innerText = '₦' + amount.toLocaleString('en-NG');
+}
+
+// Open advance sheet (new or edit)
+function openAdvanceSheet(mode, data = null) {
+  const sheet = document.getElementById('advance-sheet');
+  const title = document.getElementById('advanceSheetTitle');
+  const sub = document.getElementById('advanceSheetSub');
+  const labelInput = document.getElementById('advanceLabel');
+  const percentInput = document.getElementById('advancePercent');
+  const fixedInput = document.getElementById('advanceFixed');
+  const submitBtn = document.getElementById('advanceSubmitBtn');
+  const typeGrid = document.getElementById('advanceTypeGrid');
+  const typeOpts = typeGrid.querySelectorAll('.advance-type-opt');
+  
+  if (mode === 'edit' && data) {
+    title.innerText = 'Edit Advance Invoice';
+    sub.innerText = `Editing "${data.label}" · Total: ₦4,720,000`;
+    labelInput.value = data.label;
+    if (data.type === 'percentage') {
+      typeOpts[0].classList.add('active');
+      typeOpts[1].classList.remove('active');
+      percentInput.value = data.value;
+      document.getElementById('percentageField').style.display = 'block';
+      document.getElementById('fixedField').style.display = 'none';
+    } else {
+      typeOpts[0].classList.remove('active');
+      typeOpts[1].classList.add('active');
+      fixedInput.value = data.value;
+      document.getElementById('percentageField').style.display = 'none';
+      document.getElementById('fixedField').style.display = 'block';
+    }
+    submitBtn.innerText = 'Save Changes';
+  } else {
+    title.innerText = 'Create Advance Invoice';
+    sub.innerText = 'Based on SASINV-B047 · Total: ₦4,720,000';
+    labelInput.value = '';
+    typeOpts[0].classList.add('active');
+    typeOpts[1].classList.remove('active');
+    percentInput.value = 30;
+    fixedInput.value = 800000;
+    document.getElementById('percentageField').style.display = 'block';
+    document.getElementById('fixedField').style.display = 'none';
+    submitBtn.innerText = 'Generate Invoice';
+  }
+  updateComputedAmount();
+  openSheet('advance-sheet');
+}
+
+// Segmented control (if any)
+document.querySelectorAll('.seg-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    this.closest('.segmented').querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
