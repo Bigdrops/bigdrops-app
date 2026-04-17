@@ -4,8 +4,10 @@ import type { ReactNode } from 'react'
 import { Link2, NotebookText, Plus, Save, Signature, Trash2 } from 'lucide-react'
 
 import SignatoryPicker from '@/components/SignatoryPicker'
+import { Input } from '@/components/ui/input'
 import {
   CollapseCard,
+  fieldCls,
   pageCardCls,
   type LinkAttachment,
 } from './mobileFormPrimitives'

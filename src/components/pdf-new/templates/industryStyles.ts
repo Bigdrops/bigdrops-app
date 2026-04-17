@@ -24,7 +24,7 @@ const INDUSTRY_COLUMN_OVERRIDES: Record<string, { width?: number; flex?: number 
 export const styles = StyleSheet.create({
   page: {
     paddingTop: 34,
-    paddingBottom: 92,
+    paddingBottom: 64,
     paddingHorizontal: 24,
     backgroundColor: '#ffffff',
     fontFamily: 'Helvetica',
@@ -183,10 +183,16 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   imageThumb: {
-    width: 34,
-    height: 34,
+    width: 58,
+    height: 58,
     objectFit: 'cover',
-    marginBottom: 5,
+    marginBottom: 4,
+  },
+  imageLink: {
+    marginTop: 2,
+    fontSize: 8.5,
+    color: '#2563eb',
+    textDecoration: 'underline',
   },
   closingRow: {
     flexDirection: 'row',
@@ -403,7 +409,7 @@ export const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
   },
   signatureWrap: {
-    marginTop: 28,
+    marginTop: 18,
     flexDirection: 'row',
     justifyContent: 'flex-end',
   },
@@ -415,13 +421,13 @@ export const styles = StyleSheet.create({
     width: 138,
     height: 40,
     objectFit: 'contain',
-    marginBottom: 10,
+    marginBottom: 2,
   },
   signatureLine: {
     width: '100%',
     borderTopWidth: 1,
     borderTopColor: '#333333',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   signerName: {
     fontSize: 11,
@@ -439,7 +445,7 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     left: 24,
     right: 24,
-    bottom: 22,
+    bottom: 14,
   },
   footerExtraText: {
     marginBottom: 6,
@@ -455,7 +461,7 @@ export const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   documentFooter: {
-    paddingTop: 10,
+    paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: '#dddddd',
     flexDirection: 'row',

@@ -198,7 +198,14 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                     >
                       {isDescription ? (
                         <>
-                          {row.imageUrl ? <Image src={row.imageUrl} style={styles.imageThumb} /> : null}
+                          {row.imageUrl ? (
+                            <>
+                              <Image src={row.imageUrl} style={styles.imageThumb} />
+                              <Link src={row.imageUrl} style={styles.imageLink}>
+                                Open image
+                              </Link>
+                            </>
+                          ) : null}
                           <Text style={styles.descriptionMain}>{getDescriptionMain(cell)}</Text>
                           {getDescriptionSub(cell) ? (
                             <Text style={styles.descriptionSub}>{getDescriptionSub(cell)}</Text>
