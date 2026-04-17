@@ -4,15 +4,15 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
-import com.bigdrops.app.plugins.FoldAwarenessPlugin;
+
 import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.bigdrops.app.plugins.FoldAwarenessPlugin;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -38,14 +38,6 @@ public class MainActivity extends BridgeActivity {
 
     private void enableEdgeToEdge() {
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-
-        WindowInsetsControllerCompat controller =
-            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-
-        if (controller != null) {
-            controller.setAppearanceLightStatusBars(true);
-            controller.setAppearanceLightNavigationBars(true);
-        }
     }
 
     private void applyWindowInsets() {
@@ -57,8 +49,6 @@ public class MainActivity extends BridgeActivity {
         ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
 
-            // Keep content clear of the status bar. Bottom inset is applied to the swipe container
-            // so the WebView and pull-to-refresh region stay above gesture / nav bars.
             view.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
 
             if (swipe != null) {
