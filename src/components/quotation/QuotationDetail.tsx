@@ -116,7 +116,16 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   const [linkedProject, setLinkedProject] = useState<{ id: string; name?: string | null } | null>(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
+  const [templateId, setTemplateId] = useState('industry')
   const hasText = (value: unknown) => String(value || '').trim().length > 0
+
+  const pdfTemplates = [
+    {
+      id: 'industry',
+      label: 'Industry',
+      description: 'Structured professional layout',
+    },
+  ]
 
   useEffect(() => {
     const load = async () => {
@@ -367,6 +376,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             },
           },
         },
+        templateId,
       })
       toast({ title: 'PDF ready', description: 'Quotation PDF downloaded.' })
     } catch (error) {
@@ -858,9 +868,9 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         title="Download & Export"
         subtitle="Quotation PDF export uses the live PDF renderer and current output settings."
         settingsNode={null}
-        templateValue={null}
-        onTemplateChange={undefined}
-        templates={[]}
+        templateValue={templateId}
+        onTemplateChange={setTemplateId}
+        templates={pdfTemplates}
         actions={[
           { label: 'Export CSV', onClick: handleDownloadCsv, variant: 'outline' },
           { label: pdfGenerating ? 'Generating...' : 'Download PDF', onClick: () => void handleDownloadPdf(), className: 'bg-slate-950 text-white hover:bg-slate-800', disabled: pdfGenerating },
