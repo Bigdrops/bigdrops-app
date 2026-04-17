@@ -60,6 +60,16 @@ function renderOptionalList(items: IndustryTemplateData['attachments']) {
 }
 
 export default function IndustryTemplate({ data }: TemplateProps) {
+  // ─── DESIGN TOKENS ─────────────────────────────────────────────
+  const design = data?.design || {}
+  const accentColor = design.useCustomColors && design.accentColor ? design.accentColor : null
+  const textColor = design.useCustomColors && design.textColor ? design.textColor : null
+  const mutedColor = design.useCustomColors && design.mutedColor ? design.mutedColor : null
+  const borderColor = design.useCustomColors && design.borderColor ? design.borderColor : null
+  const surfaceColor = design.useCustomColors && design.surfaceColor ? design.surfaceColor : null
+  const headerFontFamily = design.useCustomFonts && design.headerFont ? design.headerFont : undefined
+  const bodyFontFamily = design.useCustomFonts && design.bodyFont ? design.bodyFont : undefined
+
   const metaRows = [
     data.documentNumber
       ? { label: data.documentNumberLabel, value: data.documentNumber }
@@ -83,15 +93,49 @@ export default function IndustryTemplate({ data }: TemplateProps) {
       {(data.title || metaRows.length > 0 || data.company?.logoUrl) && (
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.title}>{data.title}</Text>
-            {data.customTitle ? <Text style={styles.customTitle}>{data.customTitle}</Text> : null}
+            <Text
+              style={[
+                styles.title,
+                textColor ? { color: textColor } : null,
+                headerFontFamily ? { fontFamily: headerFontFamily } : null,
+              ]}
+            >
+              {data.title}
+            </Text>
+            {data.customTitle ? (
+              <Text
+                style={[
+                  styles.customTitle,
+                  mutedColor ? { color: mutedColor } : null,
+                  bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                ]}
+              >
+                {data.customTitle}
+              </Text>
+            ) : null}
 
             {metaRows.length > 0 ? (
               <View style={styles.metaList}>
                 {metaRows.map((row, idx) => (
                   <View key={`meta-${idx}`} style={styles.metaRow}>
-                    <Text style={styles.metaLabel}>{row.label}</Text>
-                    <Text style={styles.metaValue}>{row.value}</Text>
+                    <Text
+                      style={[
+                        styles.metaLabel,
+                        mutedColor ? { color: mutedColor } : null,
+                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                      ]}
+                    >
+                      {row.label}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.metaValue,
+                        textColor ? { color: textColor } : null,
+                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                      ]}
+                    >
+                      {row.value}
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -99,8 +143,24 @@ export default function IndustryTemplate({ data }: TemplateProps) {
 
             {data.customHeaderFields.map((field, idx) => (
               <View key={`custom-meta-${idx}`} style={styles.metaRow}>
-                <Text style={styles.metaLabel}>{field.label}</Text>
-                <Text style={styles.metaValue}>{field.value}</Text>
+                <Text
+                  style={[
+                    styles.metaLabel,
+                    mutedColor ? { color: mutedColor } : null,
+                    bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                  ]}
+                >
+                  {field.label}
+                </Text>
+                <Text
+                  style={[
+                    styles.metaValue,
+                    textColor ? { color: textColor } : null,
+                    bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                  ]}
+                >
+                  {field.value}
+                </Text>
               </View>
             ))}
           </View>
@@ -116,8 +176,22 @@ export default function IndustryTemplate({ data }: TemplateProps) {
       {(data.company || data.client) ? (
         <View style={styles.partyRow}>
           {data.company ? (
-            <View style={styles.partyBox}>
-              <Text style={styles.partyTitle}>From</Text>
+            <View
+              style={[
+                styles.partyBox,
+                surfaceColor ? { backgroundColor: surfaceColor } : null,
+                borderColor ? { borderColor } : null,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.partyTitle,
+                  textColor ? { color: textColor } : null,
+                  headerFontFamily ? { fontFamily: headerFontFamily } : null,
+                ]}
+              >
+                From
+              </Text>
               {data.company.name ? <Text style={styles.partyName}>{data.company.name}</Text> : null}
               {data.company.address ? <Text style={styles.partyLine}>{data.company.address}</Text> : null}
               {data.company.cityState ? <Text style={styles.partyLine}>{data.company.cityState}</Text> : null}
@@ -138,8 +212,23 @@ export default function IndustryTemplate({ data }: TemplateProps) {
           ) : null}
 
           {data.client ? (
-            <View style={[styles.partyBox, styles.partyBoxLast]}>
-              <Text style={styles.partyTitle}>To</Text>
+            <View
+              style={[
+                styles.partyBox,
+                styles.partyBoxLast,
+                surfaceColor ? { backgroundColor: surfaceColor } : null,
+                borderColor ? { borderColor } : null,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.partyTitle,
+                  textColor ? { color: textColor } : null,
+                  headerFontFamily ? { fontFamily: headerFontFamily } : null,
+                ]}
+              >
+                To
+              </Text>
               {data.client.name ? <Text style={styles.partyName}>{data.client.name}</Text> : null}
               {data.client.address ? <Text style={styles.partyLine}>{data.client.address}</Text> : null}
               {data.client.cityState ? <Text style={styles.partyLine}>{data.client.cityState}</Text> : null}
@@ -160,7 +249,13 @@ export default function IndustryTemplate({ data }: TemplateProps) {
               return (
                 <Text
                   key={`head-${idx}`}
-                  style={[styles.tableHeaderCell, columnStyle, alignStyle]}
+                  style={[
+                    styles.tableHeaderCell,
+                    columnStyle,
+                    alignStyle,
+                    surfaceColor ? { backgroundColor: surfaceColor } : null,
+                    headerFontFamily ? { fontFamily: headerFontFamily } : null,
+                  ]}
                 >
                   {column.label}
                 </Text>
@@ -229,8 +324,22 @@ export default function IndustryTemplate({ data }: TemplateProps) {
       {(hasBankDetails || data.totals.lines.length > 0 || data.advanceSummary || data.totals.mainLine || data.totals.amountInWords || data.totals.balanceDue) ? (
         <View style={[styles.closingRow, !hasBankDetails ? styles.closingRowNoBank : null]} wrap={false}>
           {hasBankDetails && data.paymentDetails ? (
-            <View style={styles.bankBox}>
-              <Text style={styles.sectionTitle}>Bank Details</Text>
+            <View
+              style={[
+                styles.bankBox,
+                surfaceColor ? { backgroundColor: surfaceColor } : null,
+                borderColor ? { borderColor } : null,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  textColor ? { color: textColor } : null,
+                  headerFontFamily ? { fontFamily: headerFontFamily } : null,
+                ]}
+              >
+                Bank Details
+              </Text>
               {data.paymentDetails.bankName ? (
                 <View style={styles.bankRow}>
                   <Text style={styles.bankLabel}>Bank</Text>
@@ -258,34 +367,82 @@ export default function IndustryTemplate({ data }: TemplateProps) {
             </View>
           ) : null}
 
-          <View style={[styles.totalsBox, !hasBankDetails ? styles.totalsBoxSolo : null]}>
+          <View
+            style={[
+              styles.totalsBox,
+              !hasBankDetails ? styles.totalsBoxSolo : null,
+              surfaceColor ? { backgroundColor: surfaceColor } : null,
+              borderColor ? { borderColor } : null,
+            ]}
+          >
             {data.totals.lines.map((line, idx) => (
               <View key={`total-${idx}`} style={styles.totalRow}>
-                <Text style={styles.totalLabel}>{line.label}</Text>
-                <Text style={styles.totalValue}>{line.value}</Text>
+                <Text
+                  style={[
+                    styles.totalLabel,
+                    mutedColor ? { color: mutedColor } : null,
+                    bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                  ]}
+                >
+                  {line.label}
+                </Text>
+                <Text
+                  style={[
+                    styles.totalValue,
+                    textColor ? { color: textColor } : null,
+                    bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                  ]}
+                >
+                  {line.value}
+                </Text>
               </View>
             ))}
 
             {data.advanceSummary ? (
               <View style={styles.advanceBox}>
-                {data.advanceSummary.contractValue ? (
-                  <View style={styles.advanceRow}>
-                    <Text style={styles.advanceLabel}>{data.advanceSummary.contractValueLabel}</Text>
-                    <Text style={styles.advanceValue}>{data.advanceSummary.contractValue}</Text>
-                  </View>
-                ) : null}
-
                 {data.advanceSummary.advanceAmount ? (
                   <View style={styles.advanceRow}>
-                    <Text style={styles.advanceProminentLabel}>{data.advanceSummary.primaryLabel}</Text>
-                    <Text style={styles.advanceProminentValue}>{data.advanceSummary.advanceAmount}</Text>
+                    <Text
+                      style={[
+                        styles.advanceProminentLabel,
+                        textColor ? { color: textColor } : null,
+                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                      ]}
+                    >
+                      {data.advanceSummary.primaryLabel}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.advanceProminentValue,
+                        accentColor ? { color: accentColor } : null,
+                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                      ]}
+                    >
+                      {data.advanceSummary.advanceAmount}
+                    </Text>
                   </View>
                 ) : null}
 
                 {data.advanceSummary.balanceRemaining ? (
                   <View style={styles.advanceRow}>
-                    <Text style={styles.advanceLabel}>{data.advanceSummary.secondaryLabel}</Text>
-                    <Text style={styles.advanceValue}>{data.advanceSummary.balanceRemaining}</Text>
+                    <Text
+                      style={[
+                        styles.advanceLabel,
+                        mutedColor ? { color: mutedColor } : null,
+                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                      ]}
+                    >
+                      {data.advanceSummary.secondaryLabel}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.advanceValue,
+                        textColor ? { color: textColor } : null,
+                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                      ]}
+                    >
+                      {data.advanceSummary.balanceRemaining}
+                    </Text>
                   </View>
                 ) : null}
               </View>
@@ -293,19 +450,62 @@ export default function IndustryTemplate({ data }: TemplateProps) {
 
             {data.totals.mainLine ? (
               <View style={styles.totalFinal}>
-                <Text style={styles.totalFinalLabel}>{data.totals.mainLine.label}</Text>
-                <Text style={styles.totalFinalValue}>{data.totals.mainLine.value}</Text>
+                <Text
+                  style={[
+                    styles.totalFinalLabel,
+                    textColor ? { color: textColor } : null,
+                    headerFontFamily ? { fontFamily: headerFontFamily } : null,
+                  ]}
+                >
+                  {data.totals.mainLine.label}
+                </Text>
+                <Text
+                  style={[
+                    styles.totalFinalValue,
+                    textColor ? { color: textColor } : null,
+                    headerFontFamily ? { fontFamily: headerFontFamily } : null,
+                  ]}
+                >
+                  {data.totals.mainLine.value}
+                </Text>
               </View>
             ) : null}
 
             {data.totals.amountInWords ? (
-              <Text style={styles.amountWords}>{data.totals.amountInWords}</Text>
+              <Text
+                style={[
+                  styles.amountWords,
+                  mutedColor ? { color: mutedColor } : null,
+                  bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                ]}
+              >
+                {data.totals.amountInWords}
+              </Text>
             ) : null}
 
             {data.totals.balanceDue ? (
-              <View style={styles.balanceDue}>
-                <Text style={styles.balanceDueText}>{data.totals.balanceDue.label}</Text>
-                <Text style={styles.balanceDueValue}>{data.totals.balanceDue.value}</Text>
+              <View
+                style={[
+                  styles.balanceDue,
+                  accentColor ? { backgroundColor: accentColor } : null,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.balanceDueText,
+                    bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                  ]}
+                >
+                  {data.totals.balanceDue.label}
+                </Text>
+                <Text
+                  style={[
+                    styles.balanceDueValue,
+                    bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                  ]}
+                >
+                  {data.totals.balanceDue.value}
+                </Text>
               </View>
             ) : null}
           </View>
@@ -314,21 +514,49 @@ export default function IndustryTemplate({ data }: TemplateProps) {
 
       {data.notes?.content ? (
         <View style={styles.optionalSection}>
-          {data.notes.title ? <Text style={styles.optionalTitle}>{data.notes.title}</Text> : null}
+          {data.notes.title ? (
+            <Text
+              style={[
+                styles.optionalTitle,
+                textColor ? { color: textColor } : null,
+                headerFontFamily ? { fontFamily: headerFontFamily } : null,
+              ]}
+            >
+              {data.notes.title}
+            </Text>
+          ) : null}
           <Text style={styles.optionalText}>{data.notes.content}</Text>
         </View>
       ) : null}
 
       {data.terms?.content ? (
         <View style={styles.optionalSection}>
-          {data.terms.title ? <Text style={styles.optionalTitle}>{data.terms.title}</Text> : null}
+          {data.terms.title ? (
+            <Text
+              style={[
+                styles.optionalTitle,
+                textColor ? { color: textColor } : null,
+                headerFontFamily ? { fontFamily: headerFontFamily } : null,
+              ]}
+            >
+              {data.terms.title}
+            </Text>
+          ) : null}
           <Text style={styles.optionalText}>{data.terms.content}</Text>
         </View>
       ) : null}
 
       {data.attachments.length > 0 ? (
         <View style={styles.optionalSection}>
-          <Text style={styles.optionalTitle}>Attachments</Text>
+          <Text
+            style={[
+              styles.optionalTitle,
+              textColor ? { color: textColor } : null,
+              headerFontFamily ? { fontFamily: headerFontFamily } : null,
+            ]}
+          >
+            Attachments
+          </Text>
           <View style={styles.attachmentsWrap}>{renderOptionalList(data.attachments)}</View>
         </View>
       ) : null}
