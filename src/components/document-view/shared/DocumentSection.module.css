@@ -1,0 +1,35 @@
+.section {
+  margin-top: 28px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dv-text-3);
+}
+
+.description {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dv-primary);
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+.body {
+  min-width: 0;
+}

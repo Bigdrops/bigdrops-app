@@ -1,0 +1,25 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  border-radius: 999px;
+  font-family: var(--dv-font-ui);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  background: var(--dv-primary);
+  color: #ffffff;
+  padding: 10px 18px;
+  font-size: 13px;
+  box-shadow: 0 10px 24px rgba(30, 41, 59, 0.24);
+}
+
+.button:hover {
+  background: var(--dv-primary-light);
+}
+
+.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -1,0 +1,100 @@
+.card {
+  background: var(--dv-surface);
+  border: 1px solid var(--dv-primary-border);
+  border-radius: var(--dv-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--dv-shadow-sm);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 14px;
+  background: var(--dv-primary-bg);
+  border-bottom: 1px solid var(--dv-primary-border);
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dv-primary);
+}
+
+.subtitle {
+  font-size: 11px;
+  color: var(--dv-text-2);
+  margin-top: 1px;
+}
+
+.body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--dv-bg);
+  border: 1px solid var(--dv-border-soft);
+  border-radius: var(--dv-radius);
+}
+
+.itemLeft {
+  flex: 1;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dv-text);
+}
+
+.sub {
+  font-size: 11px;
+  color: var(--dv-text-2);
+  margin-top: 1px;
+}
+
+.amount {
+  font-family: var(--dv-font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dv-primary);
+  flex-shrink: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.miniButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid var(--dv-border);
+  background: var(--dv-surface);
+  color: var(--dv-text-2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.miniButton:hover {
+  background: var(--dv-bg-3);
+  color: var(--dv-text);
+}
+
+.danger:hover {
+  background: var(--dv-rose-bg);
+  color: var(--dv-rose);
+  border-color: var(--dv-rose-border);
+}

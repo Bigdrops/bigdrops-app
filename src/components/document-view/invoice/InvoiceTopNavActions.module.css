@@ -1,0 +1,26 @@
+.button {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: var(--dv-radius);
+  cursor: pointer;
+  color: var(--dv-text-2);
+  transition: background 0.15s, color 0.15s;
+}
+
+.button:hover {
+  background: var(--dv-bg-3);
+  color: var(--dv-text);
+}
+
+.amber {
+  color: var(--dv-amber);
+}
+
+.amber:hover {
+  background: var(--dv-amber-bg);
+}

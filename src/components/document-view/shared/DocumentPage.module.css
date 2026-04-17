@@ -1,0 +1,33 @@
+.page {
+  min-height: 100vh;
+  background: var(--dv-bg);
+  color: var(--dv-text);
+}
+
+.content {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 16px 100px;
+}
+
+.hero {
+  margin-bottom: 0;
+}
+
+.floatingDock {
+  position: fixed;
+  right: 0;
+  left: 0;
+  bottom: 24px;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.floatingInner {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: auto;
+}

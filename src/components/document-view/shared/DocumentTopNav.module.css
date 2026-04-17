@@ -1,0 +1,68 @@
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgba(250, 249, 247, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--dv-border-soft);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 54px;
+  padding: 0 4px 0 0;
+}
+
+.backButton {
+  margin-left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dv-text-2);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: var(--dv-radius);
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--dv-font-ui);
+}
+
+.backButton:hover {
+  background: var(--dv-bg-3);
+  color: var(--dv-text);
+}
+
+.center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  pointer-events: none;
+}
+
+.title {
+  font-family: var(--dv-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dv-text);
+  letter-spacing: 0.02em;
+}
+
+.subtitle {
+  font-size: 11px;
+  color: var(--dv-text-3);
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
