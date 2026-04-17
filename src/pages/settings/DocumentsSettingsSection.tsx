@@ -6,8 +6,8 @@ import {
   normalizeDocumentFillableSettings,
   serializeDocumentFillableSettings,
 } from '@/lib/documentFillableSettings'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { SettingsLoadingState } from './SettingsLoadingState'
-import { getErrorMessage } from './settings-helpers'
 import type { SettingsToastFn } from './settings-types'
 
 type FillableSettings = Record<string, { enabled: boolean }>
@@ -62,7 +62,7 @@ export function DocumentsSettingsSection({ onToast }: { onToast: SettingsToastFn
     } catch (error) {
       setFillableSettings(previousSettings)
       fillableSettingsRef.current = previousSettings
-      onToast('Save failed: ' + getErrorMessage(error))
+      onToast(getUserFacingMutationMessage(error, { action: 'save' }))
     }
   }
 

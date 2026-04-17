@@ -13,6 +13,7 @@ import {
   AlertCircle 
 } from 'lucide-react'
 import { supabase } from '@/supabase'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { toast } from 'sonner'
 import { TaxSettings } from '@/domain/compliance/types'
 
@@ -62,7 +63,7 @@ export default function ComplianceSettingsPanel() {
       if (error) throw error
       toast.success('Tax settings updated successfully')
     } catch (error: any) {
-      toast.error(error.message || 'Failed to save settings')
+      toast.error(getUserFacingMutationMessage(error, { action: 'save' }))
     } finally {
       setSaving(false)
     }

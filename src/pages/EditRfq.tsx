@@ -6,6 +6,7 @@ import { Rfq, RfqItem } from '@/domain/rfq/types'
 import { denormalizeToDbRfq, denormalizeToDbRfqItem, normalizeDbRfq } from '@/domain/rfq/normalize'
 import { supabase } from '@/supabase'
 import { toast } from '@/hooks/use-toast'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 
 export default function EditRfq() {
   const { id } = useParams();
@@ -44,7 +45,11 @@ export default function EditRfq() {
       .eq('id', id);
 
     if (rfqError) {
-      toast({ title: 'Save failed', description: rfqError.message, variant: 'destructive' });
+      toast({
+        title: 'Save failed',
+        description: getUserFacingMutationMessage(rfqError, { action: 'save' }),
+        variant: 'destructive',
+      });
       setSaving(false);
       return;
     }
@@ -52,7 +57,11 @@ export default function EditRfq() {
     // Upsert items (delete and re-insert for simplicity)
     const { error: deleteError } = await supabase.from('rfq_items').delete().eq('rfq_id', id);
     if (deleteError) {
-       toast({ title: 'Item save failed', description: deleteError.message, variant: 'destructive' });
+       toast({
+         title: 'Item save failed',
+         description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
+         variant: 'destructive',
+       });
        setSaving(false);
        return;
     }

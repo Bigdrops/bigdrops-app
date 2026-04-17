@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Pencil, Plus, Trash2, Upload, UserCheck } from 'lucide-react'
 import { uploadFile } from '@/hooks/useSettings'
 import { supabase } from '@/supabase'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { SettingsField, SettingsInput, SettingsSaveButton } from './SettingsFormPrimitives'
 import { SettingsLoadingState } from './SettingsLoadingState'
 import { getErrorMessage } from './settings-helpers'
@@ -110,7 +111,7 @@ export function SignatoriesSettingsSection({ onToast }: { onToast: SettingsToast
       : await supabase.from('signatories').insert(payload)
 
     if (result.error) {
-      onToast(`Save failed: ${result.error.message}`)
+      onToast(getUserFacingMutationMessage(result.error, { action: 'save' }))
       setSaving(false)
       return
     }

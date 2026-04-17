@@ -66,6 +66,12 @@ export interface ExtraCharge {
   vatApplicable: boolean
 }
 
+export interface VisibleRowEffects {
+  install: boolean
+  vat: boolean
+  discount: boolean
+}
+
 export interface DocumentInput {
   items:            InputItem[]
   globalVatPercent: number        // rate e.g. 7.5 — NOT a stored computed total
@@ -75,6 +81,7 @@ export interface DocumentInput {
   whtType:          WhtType
   whtValue:         number        // raw user input — NOT stored computed total
   extraCharges:     ExtraCharge[]
+  visibleRowEffects: VisibleRowEffects
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -100,6 +107,7 @@ export interface ComputedItem {
   line_discount:            number    // discount amount applied to this row
   line_vat:                 number    // VAT amount for this row
   line_total:               number
+  visible_line_total:       number
 }
 
 export interface ComputedGroup {
@@ -137,6 +145,7 @@ export function calculateDocument(input: DocumentInput): DocumentResult {
     whtType,
     whtValue,
     extraCharges,
+    visibleRowEffects,
   } = input
 
   const D = (v: number | string | null | undefined): Decimal =>
@@ -273,6 +282,7 @@ export function calculateDocument(input: DocumentInput): DocumentResult {
         line_discount:            0,
         line_vat:                 0,
         line_total:               0,
+        visible_line_total:       0,
       })
       continue
     }
@@ -350,6 +360,11 @@ export function calculateDocument(input: DocumentInput): DocumentResult {
       }
     })()
 
+    const visibleLineTotal = lineSubtotal
+      .plus(visibleRowEffects.install ? lineInstall : 0)
+      .minus(visibleRowEffects.discount ? lineDiscount : 0)
+      .plus(visibleRowEffects.vat ? lineVat : 0)
+
     computedItems.push({
       id:                       item.id,
       row_type:                 'standard',
@@ -369,6 +384,7 @@ export function calculateDocument(input: DocumentInput): DocumentResult {
       line_discount:            lineDiscount.toNumber(),
       line_vat:                 lineVat.toNumber(),
       line_total:               cleanLineTotal.toNumber(),
+      visible_line_total:       visibleLineTotal.toNumber(),
     })
 
     totalDiscount      = totalDiscount.plus(lineDiscount)
@@ -494,10 +510,31 @@ export interface RawDocumentInput {
   items?:    any[]
   document?: Record<string, any>
   cf?:       Record<string, any>
+  columns?:  Array<{ key?: string; visible?: boolean }>
+}
+
+function getVisibleRowEffects(
+  columns: RawDocumentInput['columns'] = [],
+  cf: Record<string, any> = {},
+): VisibleRowEffects {
+  const sourceColumns = Array.isArray(columns) && columns.length
+    ? columns
+    : Array.isArray(cf.columnConfig)
+      ? cf.columnConfig
+      : []
+
+  const isVisible = (key: string) =>
+    sourceColumns.some((column) => column?.key === key && column.visible !== false)
+
+  return {
+    install: isVisible('install_rate'),
+    vat: isVisible('vat_rate'),
+    discount: isVisible('discount_rate'),
+  }
 }
 
 export function normalizeDocumentInput(raw: RawDocumentInput): DocumentInput {
-  const { items = [], document = {}, cf = {} } = raw
+  const { items = [], document = {}, cf = {}, columns = [] } = raw
   const ci: Record<string, any> = cf.calculationInputs ?? {}
 
   // ── VAT rate ──────────────────────────────────────────────────────────────
@@ -605,6 +642,7 @@ export function normalizeDocumentInput(raw: RawDocumentInput): DocumentInput {
     whtType,
     whtValue,
     extraCharges,
+    visibleRowEffects: getVisibleRowEffects(columns, cf),
   }
 }
 

@@ -28,6 +28,7 @@ import {
   useInvoiceColumns,
 } from '../components/useInvoiceColumns.jsx'
 import { computeDocument } from '../lib/Calculations'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { numberToWords } from '../hooks/useInvoiceForm'
 import { toast } from '@/hooks/use-toast'
 
@@ -339,6 +340,7 @@ export default function EditInvoice() {
   const calculationInputs = buildCalculationInputs({ invoice, discountType, discountTiming, whtType })
   const documentTotals = computeDocument({
     items,
+    columns,
     document: {
       ...invoice,
       workmanship: Number(invoice.workmanship || 0),
@@ -413,7 +415,11 @@ export default function EditInvoice() {
       .eq('id', id)
 
     if (error) {
-      toast({ title: 'Save failed', description: 'Error saving: ' + error.message, variant: 'destructive' })
+      toast({
+        title: 'Save failed',
+        description: getUserFacingMutationMessage(error, { action: 'save' }),
+        variant: 'destructive',
+      })
       setSaving(false)
       return
     }
@@ -424,7 +430,11 @@ export default function EditInvoice() {
 
     const { error: deleteError } = await supabase.from('invoice_items').delete().eq('invoice_id', id)
     if (deleteError) {
-      toast({ title: 'Save failed', description: 'Error clearing previous items: ' + deleteError.message, variant: 'destructive' })
+      toast({
+        title: 'Save failed',
+        description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
+        variant: 'destructive',
+      })
       setSaving(false)
       return
     }
@@ -432,7 +442,11 @@ export default function EditInvoice() {
     if (itemsToSave.length > 0) {
       const { error: insertError } = await supabase.from('invoice_items').insert(itemsToSave)
       if (insertError) {
-        toast({ title: 'Save failed', description: 'Error saving items: ' + insertError.message, variant: 'destructive' })
+        toast({
+          title: 'Save failed',
+          description: getUserFacingMutationMessage(insertError, { action: 'save' }),
+          variant: 'destructive',
+        })
         setSaving(false)
         return
       }

@@ -6,6 +6,7 @@ import { Rfq, RfqItem } from '@/domain/rfq/types'
 import { denormalizeToDbRfq, denormalizeToDbRfqItem, getNextRfqNumber } from '@/domain/rfq/normalize'
 import { supabase } from '@/supabase'
 import { toast } from '@/hooks/use-toast'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 
 export default function NewRfq() {
   const navigate = useNavigate();
@@ -26,7 +27,11 @@ export default function NewRfq() {
       .single();
 
     if (rfqError || !createdRfq) {
-      toast({ title: 'Save failed', description: rfqError?.message, variant: 'destructive' });
+      toast({
+        title: 'Save failed',
+        description: getUserFacingMutationMessage(rfqError, { action: 'save' }),
+        variant: 'destructive',
+      });
       setSaving(false);
       return;
     }

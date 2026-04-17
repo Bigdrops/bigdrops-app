@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/hooks/use-toast'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import {
   createOfflineWaybillDraft,
@@ -265,7 +266,11 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
       toast({ title: 'Waybill saved', description: 'Database updated successfully.' })
       navigate('/waybills')
     } catch (error) {
-      toast({ title: 'Save failed', description: error instanceof Error ? error.message : 'Unknown error', variant: 'destructive' })
+      toast({
+        title: 'Save failed',
+        description: getUserFacingMutationMessage(error, { action: 'save' }),
+        variant: 'destructive',
+      })
     } finally {
       setSaving(false)
     }

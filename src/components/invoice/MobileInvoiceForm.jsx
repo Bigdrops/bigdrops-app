@@ -154,7 +154,7 @@ export default function MobileInvoiceForm(props) {
     const map = new Map()
     computedItems.forEach((item, index) => {
       const key = items[index]?._uiKey || items[index]?.id
-      if (key) map.set(key, item.line_subtotal)
+      if (key) map.set(key, item.visible_line_total ?? item.line_subtotal)
     })
     return map
   }, [computedItems, items])

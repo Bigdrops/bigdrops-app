@@ -12,6 +12,7 @@ import {
   parseCsrMaterials,
   serializeCsrMaterials,
 } from '../components/csr/csrUtils'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 
 export default function EditCSR() {
   const navigate = useNavigate()
@@ -115,7 +116,11 @@ export default function EditCSR() {
     const { error } = await supabase.from('csrs').update(csrData).eq('id', id)
 
     if (error) {
-      toast({ title: 'Save failed', description: error.message, variant: 'destructive' })
+      toast({
+        title: 'Save failed',
+        description: getUserFacingMutationMessage(error, { action: 'save' }),
+        variant: 'destructive',
+      })
       setSaving(false)
       return
     }

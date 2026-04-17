@@ -8,6 +8,7 @@ import { Info, PlusCircle, Wallet, Edit, Trash2 } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { toast } from 'sonner'
 import { TaxInputEntry } from '@/domain/compliance/types'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -61,7 +62,7 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
       setEditingEntry(null)
       onInputsChanged()
     } catch (e: any) {
-      toast.error(e.message || 'Failed to save VAT input')
+      toast.error(getUserFacingMutationMessage(e, { action: 'save' }))
     } finally {
       setSaving(false)
     }

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatDisplayDate } from '@/lib/formatters/date'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { 
   FileText, 
   ReceiptIcon, 
@@ -75,7 +76,7 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
         toast.success('WHT tracking initialized')
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to initialize tracking')
+      toast.error(getUserFacingMutationMessage(error, { action: 'create' }))
     } finally {
       setProcessingId(null)
     }
@@ -97,7 +98,7 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
         toast.success('Receipt updated')
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update receipt')
+      toast.error(getUserFacingMutationMessage(error, { action: 'update' }))
     } finally {
       setProcessingId(null)
     }

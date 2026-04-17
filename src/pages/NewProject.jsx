@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { pageFormCardClassName, pageFormFieldClassName, pageFormLabelClassName, pageFormPrimaryActionClassName } from '@/components/ui/form-page-styles'
 import { createProjectWithGeneratedCode } from '@/domain/projects'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import ClientSelector from '../components/ClientSelector'
@@ -53,7 +54,11 @@ export default function NewProject() {
 
     setSaving(false)
     if (error) {
-      toast({ title: 'Create failed', description: error.message, variant: 'destructive' })
+      toast({
+        title: 'Create failed',
+        description: getUserFacingMutationMessage(error, { action: 'create' }),
+        variant: 'destructive',
+      })
       return
     }
     navigate(`/projects/${data.id}`)

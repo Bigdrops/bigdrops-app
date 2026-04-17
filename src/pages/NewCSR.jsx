@@ -17,6 +17,7 @@ import {
 import { getCsrPdfDocument } from '../components/csr/CSRPreviewTemplates'
 import { canUseAndroidNativeSqlite } from '../lib/native/capacitor'
 import { createOfflineCsrDraft, peekNextOfflineCsrNumber } from '../lib/native/csrOffline'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { validateProjectAssignment } from '@/domain/projects'
 
 const EMPTY_BRANDING = {
@@ -254,7 +255,11 @@ export default function NewCSR() {
     const { data: savedCsr, error } = await supabase.from('csrs').insert([csrData]).select('id, csr_number').single()
 
     if (error) {
-      toast({ title: 'Save failed', description: error.message, variant: 'destructive' })
+      toast({
+        title: 'Save failed',
+        description: getUserFacingMutationMessage(error, { action: 'save' }),
+        variant: 'destructive',
+      })
       setSaving(false)
       return
     }

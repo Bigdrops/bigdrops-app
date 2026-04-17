@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
 import { Textarea } from "@/components/ui/textarea"
 
 type InvoiceSummary = {
@@ -186,7 +187,7 @@ export default function RecordPaymentModal({
 
     const { error: insertError } = await supabase.from("payments").insert(payload)
     if (insertError) {
-      setError(insertError.message)
+      setError(getUserFacingMutationMessage(insertError, { action: 'record' }))
       setSaving(false)
       return
     }
@@ -198,7 +199,7 @@ export default function RecordPaymentModal({
       .single<FinancialRow>()
 
     if (financialError) {
-      setError(financialError.message)
+      setError(getUserFacingMutationMessage(financialError, { action: 'record' }))
       setSaving(false)
       return
     }
@@ -209,7 +210,7 @@ export default function RecordPaymentModal({
       .eq("id", invoice.id)
 
     if (statusError) {
-      setError(statusError.message)
+      setError(getUserFacingMutationMessage(statusError, { action: 'record' }))
       setSaving(false)
       return
     }

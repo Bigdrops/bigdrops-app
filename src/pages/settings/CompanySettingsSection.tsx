@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { saveSettings, useSettings } from '@/hooks/useSettings'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { SettingsField, SettingsInput, SettingsSaveButton, SettingsSummaryField } from './SettingsFormPrimitives'
 import { SettingsLoadingState } from './SettingsLoadingState'
-import { getErrorMessage } from './settings-helpers'
 import type { SettingsToastFn } from './settings-types'
 
 type CompanyForm = {
@@ -95,7 +95,7 @@ export function CompanySettingsSection({ onToast }: { onToast: SettingsToastFn }
       onToast('Company info saved')
       setTimeout(() => setSaved(false), 2500)
     } catch (error) {
-      onToast('Save failed: ' + getErrorMessage(error))
+      onToast(getUserFacingMutationMessage(error, { action: 'save' }))
     }
     setSaving(false)
   }

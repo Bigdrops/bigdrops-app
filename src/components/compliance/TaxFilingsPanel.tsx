@@ -18,6 +18,7 @@ import { supabase } from '@/supabase'
 import { toast } from 'sonner'
 import { TaxFiling, TaxFilingStatus, TaxFilingTaxType } from '@/domain/compliance/types'
 import { formatNaira } from '@/lib/formatters/money'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { formatDisplayDate } from '@/lib/formatters/date'
 
 interface TaxFilingsPanelProps {
@@ -98,7 +99,7 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
       setEditingFiling(null)
       onFilingsChanged()
     } catch (e: any) {
-      toast.error(e.message || 'Failed to save filing')
+      toast.error(getUserFacingMutationMessage(e, { action: 'save' }))
     } finally {
       setSaving(false)
     }

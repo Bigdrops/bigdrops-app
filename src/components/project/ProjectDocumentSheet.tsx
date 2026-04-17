@@ -6,6 +6,7 @@ import { getProjectDocumentMainLabel } from '@/domain/projectDocuments'
 import { getProjectDocumentPrompt } from '@/domain/projectDocumentPrompts'
 import { JsonImportUI } from '@/components/import/JsonImportLayout'
 import { useToast } from '@/hooks/use-toast'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { supabase } from '@/supabase'
 import { 
   ProjectDocumentType, 
@@ -203,7 +204,11 @@ export default function ProjectDocumentSheet({ open, onOpenChange, projectId, on
 
     setSaving(false)
     if (error) {
-      toast({ title: 'Save failed', description: error.message, variant: 'destructive' })
+      toast({
+        title: 'Save failed',
+        description: getUserFacingMutationMessage(error, { action: 'save' }),
+        variant: 'destructive',
+      })
       return
     }
 

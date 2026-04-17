@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { toast } from '@/hooks/use-toast'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { X } from 'lucide-react'
 
 const CATEGORIES = ['Residential', 'Commercial', 'Industrial', 'Government', 'NGO', 'Other']
@@ -172,7 +173,11 @@ export default function ClientSelector({
       .single()
 
     if (error) {
-      toast({ title: 'Save failed', description: error.message, variant: 'destructive' })
+      toast({
+        title: 'Save failed',
+        description: getUserFacingMutationMessage(error, { action: 'create' }),
+        variant: 'destructive',
+      })
       setSaving(false)
       return
     }

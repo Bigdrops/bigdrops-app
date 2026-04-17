@@ -15,6 +15,7 @@ import {
 import { Bell, PlusCircle, Edit, Trash2, Loader2, CheckCircle2, Calendar, Link as LinkIcon } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { toast } from 'sonner'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { TaxReminder, TaxReminderStatus, TaxFilingTaxType, TaxFiling } from '@/domain/compliance/types'
 import { formatDisplayDate } from '@/lib/formatters/date'
 
@@ -92,7 +93,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
       setEditingReminder(null)
       onRemindersChanged()
     } catch (e: any) {
-      toast.error(e.message || 'Failed to save reminder')
+      toast.error(getUserFacingMutationMessage(e, { action: 'save' }))
     } finally {
       setSaving(false)
     }

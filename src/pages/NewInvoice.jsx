@@ -24,6 +24,7 @@ import {
   ensureUiKey,
 } from '../components/useInvoiceColumns.jsx'
 import { computeDocument } from '../lib/Calculations'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { numberToWords } from '../hooks/useInvoiceForm'
 import { toast } from '@/hooks/use-toast'
 import { validateProjectAssignment } from '@/domain/projects'
@@ -314,6 +315,7 @@ export default function NewInvoice() {
   const calculationInputs = buildCalculationInputs({ invoice, discountType, discountTiming, whtType })
   const documentTotals = computeDocument({
     items,
+    columns,
     document: {
       ...invoice,
       workmanship: Number(invoice.workmanship || 0),
@@ -405,7 +407,11 @@ export default function NewInvoice() {
       .single()
 
     if (error) {
-      toast({ title: 'Save failed', description: 'Error saving: ' + error.message, variant: 'destructive' })
+      toast({
+        title: 'Save failed',
+        description: getUserFacingMutationMessage(error, { action: 'save' }),
+        variant: 'destructive',
+      })
       setSaving(false)
       return
     }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { supabase } from '@/supabase'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { SettingsField, SettingsInput, SettingsSaveButton } from './SettingsFormPrimitives'
 import { SettingsLoadingState } from './SettingsLoadingState'
 import type { SettingsToastFn } from './settings-types'
@@ -122,7 +123,7 @@ export function BankingSettingsSection({ onToast }: { onToast: SettingsToastFn }
       closeForm()
       onToast(editingId ? 'Bank account updated' : 'Bank account added')
     } catch (error) {
-      onToast(error instanceof Error ? error.message : 'Save failed')
+      onToast(getUserFacingMutationMessage(error, { action: editingId ? 'update' : 'create' }))
     }
     setSaving(false)
   }
