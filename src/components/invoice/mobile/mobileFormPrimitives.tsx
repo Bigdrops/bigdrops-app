@@ -202,6 +202,7 @@ export function CollapseCard({ icon: Icon, iconTone, title, subtitle, open, onTo
 export interface LinkAttachment {
   label: string
   url: string
+  _uiKey?: string
 }
 
 export function asLinkAttachment(entry: unknown): LinkAttachment {
@@ -210,6 +211,7 @@ export function asLinkAttachment(entry: unknown): LinkAttachment {
   return {
     label: typeof candidate.label === 'string' ? candidate.label : '',
     url: typeof candidate.url === 'string' ? candidate.url : '',
+    _uiKey: typeof candidate._uiKey === 'string' ? candidate._uiKey : undefined,
   }
 }
 

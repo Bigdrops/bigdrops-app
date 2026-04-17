@@ -223,7 +223,7 @@ export default function MobileInvoiceForm(props) {
 
   const updateReferenceLink = (linkIndex, field, value) =>
     setAttachments(referenceLinks.map((link, index) => (index === linkIndex ? { ...link, [field]: value } : link)))
-  const addReferenceLink = () => setAttachments([...referenceLinks, { label: '', url: '' }])
+  const addReferenceLink = () => setAttachments([...referenceLinks, { label: '', url: '', _uiKey: crypto.randomUUID() }])
   const removeReferenceLink = (linkIndex) => setAttachments(referenceLinks.filter((_, index) => index !== linkIndex))
 
   const summaryRows = [

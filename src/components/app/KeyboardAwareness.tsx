@@ -3,11 +3,10 @@ import { getKeyboardViewportState } from '@/lib/appKeyboard'
 
 function syncKeyboardState() {
   const root = document.documentElement
-  const { isOpen, keyboardInset, viewportHeight } = getKeyboardViewportState()
+  const { isOpen, keyboardInset } = getKeyboardViewportState()
 
   root.dataset.keyboardOpen = String(isOpen)
   root.style.setProperty('--app-keyboard-inset', `${keyboardInset}px`)
-  root.style.setProperty('--app-viewport-height', `${viewportHeight}px`)
 }
 
 export default function KeyboardAwareness() {
@@ -26,7 +25,6 @@ export default function KeyboardAwareness() {
     document.addEventListener('focusin', scheduleSync)
     document.addEventListener('focusout', scheduleSync)
     visualViewport?.addEventListener('resize', scheduleSync)
-    visualViewport?.addEventListener('scroll', scheduleSync)
 
     return () => {
       window.cancelAnimationFrame(rafId)
@@ -34,7 +32,6 @@ export default function KeyboardAwareness() {
       document.removeEventListener('focusin', scheduleSync)
       document.removeEventListener('focusout', scheduleSync)
       visualViewport?.removeEventListener('resize', scheduleSync)
-      visualViewport?.removeEventListener('scroll', scheduleSync)
     }
   }, [])
 

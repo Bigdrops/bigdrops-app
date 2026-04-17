@@ -167,7 +167,7 @@ export function MobileInvoiceReferenceLinksSection({
           </div>
         ) : (
           referenceLinks.map((link, index) => (
-            <div key={`${link.label}-${index}`} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_42px] items-center gap-2 max-[520px]:grid-cols-1">
+            <div key={link._uiKey || index} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_42px] items-center gap-2 max-[520px]:grid-cols-1">
               <Input
                 value={link.label}
                 onChange={(event) => updateReferenceLink(index, 'label', event.target.value)}
