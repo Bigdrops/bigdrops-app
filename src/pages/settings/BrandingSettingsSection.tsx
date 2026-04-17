@@ -47,6 +47,18 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
   const handleUpload = async (type: keyof BrandingUploadState, file: File | null) => {
     if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      onToast('Invalid file type: Please upload an image')
+      return
+    }
+
+    const MAX_SIZE = 5 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      onToast('File too large: Maximum logo size is 5MB')
+      return
+    }
+
     setUploading((current) => ({ ...current, [type]: true }))
     try {
       const ext = file.name.split('.').pop()

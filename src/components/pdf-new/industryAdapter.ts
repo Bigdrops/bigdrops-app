@@ -2,7 +2,7 @@ import { formatCurrency } from '../../lib/formatters/money.js'
 import type { PdfColumnDefinition, PdfDocumentModel, PdfPageLayout } from './types'
 
 export type IndustryTemplateData = {
-  title: string
+  customTitle: string | null
   documentNumber: string
   documentNumberLabel: string
   issueDate: string | null | undefined
@@ -110,11 +110,11 @@ function hasDisplayValue(value: unknown) {
   return value !== null && value !== undefined && String(value).trim() !== ''
 }
 
-export function formatPdfMoney(value: unknown) {
+export function formatPdfMoney(value: unknown, options: { withSymbol?: boolean } = { withSymbol: true }) {
   if (!hasDisplayValue(value)) return ''
 
   return formatCurrency(value, {
-    currencySymbol: 'NGN ',
+    currencySymbol: options.withSymbol ? 'NGN ' : '',
     locale: 'en-NG',
     preserveFraction: true,
   })
@@ -123,7 +123,7 @@ export function formatPdfMoney(value: unknown) {
 function formatPreparedCell(column: PdfColumnDefinition | undefined, cell: unknown) {
   if (!column || !hasDisplayValue(cell)) return cell
   if (!PDF_MONEY_KEYS.has(column.key)) return cell
-  return formatPdfMoney(cell)
+  return formatPdfMoney(cell, { withSymbol: false })
 }
 
 function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinition[]) {
@@ -186,7 +186,8 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
   const columns = model.columns || []
 
   return {
-    title: model.identity.title || (model.identity.kind === 'invoice' ? 'Invoice' : 'Quotation'),
+    title: model.identity.kind === 'invoice' ? 'INVOICE' : 'QUOTATION',
+    customTitle: model.identity.title || null,
     documentNumber: model.identity.number,
     documentNumberLabel: getDocumentNumberLabel(model.identity.kind),
     issueDate: model.identity.issueDate,
@@ -220,14 +221,20 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
         }
       : null,
     table: {
-      columns: columns.map((column) => ({
-        key: column.key,
-        label: column.label,
-        align: column.align,
-        width: column.pdfWidth || undefined,
-        flex: column.pdfFlex || undefined,
-        dataType: column.dataType || null,
-      })),
+      columns: columns.map((column) => {
+        let label = column.label
+        if (PDF_MONEY_KEYS.has(column.key)) {
+          label = `${label} (NGN)`
+        }
+        return {
+          key: column.key,
+          label,
+          align: column.align,
+          width: column.pdfWidth || undefined,
+          flex: column.pdfFlex || undefined,
+          dataType: column.dataType || null,
+        }
+      }),
       rows: createIndustryRows(model, columns),
     },
     paymentDetails: model.bankDetails

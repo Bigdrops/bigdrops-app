@@ -47,14 +47,20 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   title: {
-    fontSize: 30,
-    color: '#7d8a88',
-    marginBottom: 14,
-    letterSpacing: 1.1,
+    fontSize: 27,
+    color: '#1f2937',
+    marginBottom: 2,
+    letterSpacing: 1.2,
     fontFamily: 'Helvetica-Bold',
   },
+  customTitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 16,
+    fontFamily: 'Helvetica',
+  },
   metaList: {
-    marginTop: 2,
+    marginTop: 0,
   },
   metaRow: {
     flexDirection: 'row',

@@ -84,6 +84,19 @@ export default function MobileItemCard({
     const file = event.target.files?.[0]
     if (!file) return
 
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Invalid file type', description: 'Please upload an image file (JPG, PNG, etc.)', variant: 'destructive' })
+      if (event.target) event.target.value = ''
+      return
+    }
+
+    const MAX_SIZE = 5 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      toast({ title: 'File too large', description: 'Maximum image size is 5MB', variant: 'destructive' })
+      if (event.target) event.target.value = ''
+      return
+    }
+
     setUploading(true)
     try {
       const formData = new FormData()

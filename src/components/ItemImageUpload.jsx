@@ -13,6 +13,18 @@ export default function ItemImageUpload({ value, onChange }) {
 
   const handleFile = async (file) => {
     if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Invalid file type', description: 'Please upload an image file (JPG, PNG, etc.)', variant: 'destructive' })
+      return
+    }
+
+    const MAX_SIZE = 5 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      toast({ title: 'File too large', description: 'Maximum image size is 5MB', variant: 'destructive' })
+      return
+    }
+
     setUploading(true)
     setProgress(0)
     try {

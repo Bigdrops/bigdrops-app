@@ -81,6 +81,18 @@ export function SignatoriesSettingsSection({ onToast }: { onToast: SettingsToast
 
   const handleUpload = async (file: File | null) => {
     if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      onToast('Invalid file type: Please upload an image')
+      return
+    }
+
+    const MAX_SIZE = 5 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      onToast('File too large: Maximum signature size is 5MB')
+      return
+    }
+
     setUploading(true)
     try {
       const ext = file.name.split('.').pop()

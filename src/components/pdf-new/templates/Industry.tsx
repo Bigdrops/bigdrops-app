@@ -83,7 +83,8 @@ export default function IndustryTemplate({ data }: TemplateProps) {
       {(data.title || metaRows.length > 0 || data.company?.logoUrl) && (
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            {data.title ? <Text style={styles.title}>{data.title}</Text> : null}
+            <Text style={styles.title}>{data.title}</Text>
+            {data.customTitle ? <Text style={styles.customTitle}>{data.customTitle}</Text> : null}
 
             {metaRows.length > 0 ? (
               <View style={styles.metaList}>
