@@ -1,5 +1,6 @@
-import { Image, Page, Text, View } from '@react-pdf/renderer'
+import { Image, Link, Page, Text, View } from '@react-pdf/renderer'
 import type { IndustryTemplateData } from '../industryAdapter'
+import { lightenHex } from '@/lib/pdfDesignPreset'
 import {
   getCellText,
   getDescriptionMain,
@@ -26,10 +27,13 @@ export default function IndustryTemplate({ data }: TemplateProps) {
   const surfaceColor = design.useCustomColors && design.surfaceColor ? design.surfaceColor : null
   const headerFontFamily = design.useCustomFonts && design.headerFont ? design.headerFont : undefined
   const bodyFontFamily = design.useCustomFonts && design.bodyFont ? design.bodyFont : undefined
-  const accentTint = getAccentTint(accentColor, '#eef2f1')
+  const panelSurfaceColor = surfaceColor || (accentColor ? lightenHex(accentColor, 45) : null)
+  const subtleSurfaceColor = accentColor ? getAccentTint(accentColor, panelSurfaceColor || '#f5f7f6') : panelSurfaceColor
+  const panelBorderColor = borderColor || (accentColor ? lightenHex(accentColor, 28) : null)
+  const groupRuleColor = accentColor || panelBorderColor
   const sectionTitleStyle = [
     styles.optionalTitle,
-    textColor ? { color: textColor } : null,
+    accentColor ? { color: accentColor } : textColor ? { color: textColor } : null,
     headerFontFamily ? { fontFamily: headerFontFamily } : null,
   ]
 
@@ -142,10 +146,13 @@ export default function IndustryTemplate({ data }: TemplateProps) {
             <IndustryPartyCard
               title="From"
               party={data.company}
-              surfaceColor={surfaceColor}
-              borderColor={borderColor}
+              surfaceColor={panelSurfaceColor}
+              borderColor={panelBorderColor}
+              accentColor={accentColor}
               textColor={textColor}
+              mutedColor={mutedColor}
               headerFontFamily={headerFontFamily}
+              bodyFontFamily={bodyFontFamily}
             />
           ) : null}
 
@@ -154,10 +161,13 @@ export default function IndustryTemplate({ data }: TemplateProps) {
               title="To"
               party={data.client}
               isLast
-              surfaceColor={surfaceColor}
-              borderColor={borderColor}
+              surfaceColor={panelSurfaceColor}
+              borderColor={panelBorderColor}
+              accentColor={accentColor}
               textColor={textColor}
+              mutedColor={mutedColor}
               headerFontFamily={headerFontFamily}
+              bodyFontFamily={bodyFontFamily}
             />
           ) : null}
         </View>
@@ -183,7 +193,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                     styles.tableHeaderCell,
                     columnStyle,
                     alignStyle,
-                    !accentColor && surfaceColor ? { backgroundColor: surfaceColor } : null,
+                    !accentColor && panelSurfaceColor ? { backgroundColor: panelSurfaceColor } : null,
                     headerFontFamily ? { fontFamily: headerFontFamily } : null,
                   ]}
                 >
@@ -198,8 +208,10 @@ export default function IndustryTemplate({ data }: TemplateProps) {
               return <IndustryGroupRow
                 row={row}
                 rowIdx={rowIdx}
-                accentColor={accentColor}
-                accentTint={accentTint}
+                ruleColor={groupRuleColor}
+                surfaceColor={subtleSurfaceColor}
+                textColor={textColor}
+                mutedColor={mutedColor}
                 headerFontFamily={headerFontFamily}
                 bodyFontFamily={bodyFontFamily}
               />
@@ -258,14 +270,14 @@ export default function IndustryTemplate({ data }: TemplateProps) {
             <View
               style={[
                 styles.bankBox,
-                surfaceColor ? { backgroundColor: surfaceColor } : null,
-                borderColor ? { borderColor } : null,
+                panelSurfaceColor ? { backgroundColor: panelSurfaceColor } : null,
+                panelBorderColor ? { borderColor: panelBorderColor } : null,
               ]}
             >
               <Text
                 style={[
                   styles.sectionTitle,
-                  textColor ? { color: textColor } : null,
+                  accentColor ? { color: accentColor } : textColor ? { color: textColor } : null,
                   headerFontFamily ? { fontFamily: headerFontFamily } : null,
                 ]}
               >
@@ -302,8 +314,8 @@ export default function IndustryTemplate({ data }: TemplateProps) {
             style={[
               styles.totalsBox,
               !hasBankDetails ? styles.totalsBoxSolo : null,
-              surfaceColor ? { backgroundColor: surfaceColor } : null,
-              borderColor ? { borderColor } : null,
+              panelSurfaceColor ? { backgroundColor: panelSurfaceColor } : null,
+              panelBorderColor ? { borderColor: panelBorderColor } : null,
             ]}
           >
             {data.totals.lines.map((line, idx) => (
@@ -333,7 +345,8 @@ export default function IndustryTemplate({ data }: TemplateProps) {
               <View
                 style={[
                   styles.advanceBox,
-                  accentColor ? { borderLeftColor: accentColor } : null,
+                  groupRuleColor ? { borderLeftColor: groupRuleColor } : null,
+                  subtleSurfaceColor ? { backgroundColor: subtleSurfaceColor } : null,
                 ]}
               >
                 {data.advanceSummary.advanceAmount ? (
@@ -417,6 +430,8 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                 style={[
                   styles.amountWords,
                   mutedColor ? { color: mutedColor } : null,
+                  subtleSurfaceColor ? { backgroundColor: subtleSurfaceColor } : null,
+                  panelBorderColor ? { borderColor: panelBorderColor, borderWidth: 1 } : null,
                   bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
                 ]}
               >
@@ -476,11 +491,17 @@ export default function IndustryTemplate({ data }: TemplateProps) {
 
       {data.additionalFields.length > 0 ? (
         <View style={styles.optionalSection}>
-          <View style={styles.additionalWrap}>
+          <View
+            style={[
+              styles.additionalWrap,
+              subtleSurfaceColor ? { backgroundColor: subtleSurfaceColor } : null,
+              panelBorderColor ? { borderColor: panelBorderColor } : null,
+            ]}
+          >
             {data.additionalFields.map((field, idx) => (
               <View key={`add-${idx}`} style={styles.additionalRow}>
-                <Text style={styles.additionalLabel}>{field.label}</Text>
-                <Text style={styles.additionalValue}>{field.value}</Text>
+                <Text style={[styles.additionalLabel, mutedColor ? { color: mutedColor } : null]}>{field.label}</Text>
+                <Text style={[styles.additionalValue, textColor ? { color: textColor } : null]}>{field.value}</Text>
               </View>
             ))}
           </View>

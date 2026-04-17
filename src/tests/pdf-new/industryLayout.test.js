@@ -35,5 +35,18 @@ test('Industry template applies the custom accent color to template identity sur
 
   assert.match(source, /styles\.tableHeaderRow,[\s\S]*accentColor \? \{ backgroundColor: accentColor \} : null/)
   assert.match(source, /styles\.totalFinal,[\s\S]*accentColor \? \{ borderTopColor: accentColor \} : null/)
-  assert.match(blocksSource, /styles\.tableGroupRow,[\s\S]*accentColor \? \{ borderLeftColor: accentColor, backgroundColor: accentTint \} : null/)
+  assert.match(source, /const panelSurfaceColor = /)
+  assert.match(source, /const subtleSurfaceColor = /)
+  assert.match(source, /surfaceColor=\{panelSurfaceColor\}/)
+  assert.match(source, /panelSurfaceColor \? \{ backgroundColor: panelSurfaceColor \} : null/)
+  assert.match(source, /subtleSurfaceColor \? \{ backgroundColor: subtleSurfaceColor \} : null/)
+})
+
+test('Industry group rows stay spreadsheet-clean instead of using the old banner treatment', () => {
+  const blocksSource = fs.readFileSync(industryBlocksPath, 'utf8')
+
+  assert.equal(styles.tableGroupRow.borderLeftWidth, undefined)
+  assert.equal(styles.groupCell.textAlign, 'left')
+  assert.match(blocksSource, /styles\.groupHeaderLine/)
+  assert.match(blocksSource, /styles\.groupSubtotalInline/)
 })

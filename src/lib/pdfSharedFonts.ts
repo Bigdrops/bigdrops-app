@@ -1,5 +1,7 @@
-import interRegular from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2'
-import interItalic from '@fontsource-variable/inter/files/inter-latin-wght-italic.woff2'
+import interRegular from '@fontsource/inter/files/inter-latin-400-normal.woff'
+import interBold from '@fontsource/inter/files/inter-latin-700-normal.woff'
+import interItalic from '@fontsource/inter/files/inter-latin-400-italic.woff'
+import interBoldItalic from '@fontsource/inter/files/inter-latin-700-italic.woff'
 import robotoRegular from '@fontsource/roboto/files/roboto-latin-400-normal.woff'
 import robotoBold from '@fontsource/roboto/files/roboto-latin-700-normal.woff'
 import robotoItalic from '@fontsource/roboto/files/roboto-latin-400-italic.woff'
@@ -40,11 +42,11 @@ export type RegisteredSharedFontConfig = {
 export const REGISTERED_SHARED_FONTS: Record<PdfFontChoice, RegisteredSharedFontConfig> = {
   Inter: {
     family: 'Inter',
-    webFamily: 'Inter Variable',
+    webFamily: 'Inter',
     regularSrc: interRegular,
-    boldSrc: interRegular,
+    boldSrc: interBold,
     italicSrc: interItalic,
-    boldItalicSrc: interItalic,
+    boldItalicSrc: interBoldItalic,
   },
   Roboto: {
     family: 'Roboto',

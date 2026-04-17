@@ -8,15 +8,20 @@ type PartyCardProps = {
   isLast?: boolean
   surfaceColor?: string | null
   borderColor?: string | null
+  accentColor?: string | null
   textColor?: string | null
+  mutedColor?: string | null
   headerFontFamily?: string
+  bodyFontFamily?: string
 }
 
 type GroupRowProps = {
   row: IndustryTemplateData['table']['rows'][number]
   rowIdx: number
-  accentColor?: string | null
-  accentTint: string
+  ruleColor?: string | null
+  surfaceColor?: string | null
+  textColor?: string | null
+  mutedColor?: string | null
   headerFontFamily?: string
   bodyFontFamily?: string
 }
@@ -43,8 +48,11 @@ export function IndustryPartyCard({
   isLast = false,
   surfaceColor,
   borderColor,
+  accentColor,
   textColor,
+  mutedColor,
   headerFontFamily,
+  bodyFontFamily,
 }: PartyCardProps) {
   const customInfo = 'customInfo' in party ? party.customInfo : []
 
@@ -60,23 +68,23 @@ export function IndustryPartyCard({
       <Text
         style={[
           styles.partyTitle,
-          textColor ? { color: textColor } : null,
+          accentColor ? { color: accentColor } : textColor ? { color: textColor } : null,
           headerFontFamily ? { fontFamily: headerFontFamily } : null,
         ]}
       >
         {title}
       </Text>
-      {party.name ? <Text style={styles.partyName}>{party.name}</Text> : null}
-      {party.address ? <Text style={styles.partyLine}>{party.address}</Text> : null}
-      {party.cityState ? <Text style={styles.partyLine}>{party.cityState}</Text> : null}
-      {party.phone ? <Text style={styles.partyLine}>{party.phone}</Text> : null}
-      {party.email ? <Text style={styles.partyLine}>{party.email}</Text> : null}
+      {party.name ? <Text style={[styles.partyName, textColor ? { color: textColor } : null]}>{party.name}</Text> : null}
+      {party.address ? <Text style={[styles.partyLine, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.address}</Text> : null}
+      {party.cityState ? <Text style={[styles.partyLine, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.cityState}</Text> : null}
+      {party.phone ? <Text style={[styles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.phone}</Text> : null}
+      {party.email ? <Text style={[styles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.email}</Text> : null}
       {customInfo.length > 0 ? (
         <View style={styles.customInfoWrap}>
           {customInfo.map((entry, idx) => (
             <View key={`company-extra-${idx}`} style={styles.metaRow}>
-              <Text style={styles.metaLabel}>{entry.label}</Text>
-              <Text style={styles.metaValue}>{entry.value}</Text>
+              <Text style={[styles.metaLabel, mutedColor ? { color: mutedColor } : null]}>{entry.label}</Text>
+              <Text style={[styles.metaValue, textColor ? { color: textColor } : null]}>{entry.value}</Text>
             </View>
           ))}
         </View>
@@ -88,8 +96,10 @@ export function IndustryPartyCard({
 export function IndustryGroupRow({
   row,
   rowIdx,
-  accentColor,
-  accentTint,
+  ruleColor,
+  surfaceColor,
+  textColor,
+  mutedColor,
   headerFontFamily,
   bodyFontFamily,
 }: GroupRowProps) {
@@ -98,34 +108,43 @@ export function IndustryGroupRow({
       key={`group-${rowIdx}`}
       style={[
         styles.tableGroupRow,
-        accentColor ? { borderLeftColor: accentColor, backgroundColor: accentTint } : null,
+        ruleColor ? { borderTopColor: ruleColor, borderBottomColor: ruleColor } : null,
+        surfaceColor ? { backgroundColor: surfaceColor } : null,
       ]}
     >
-      <Text
-        style={[
-          styles.groupCell,
-          accentColor ? { color: accentColor } : null,
-          headerFontFamily ? { fontFamily: headerFontFamily } : null,
-        ]}
-      >
-        {row.groupName || row.groupLabel || ''}
-      </Text>
-      {row.showSubtotal && row.groupSubtotalValue ? (
-        <View style={[styles.groupSubtotalRow, accentColor ? { borderTopColor: accentColor } : null]}>
-          <Text style={[styles.groupSubtotalLabel, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>
-            {row.groupSubtotalLabel || 'Group Subtotal'}
-          </Text>
-          <Text
-            style={[
-              styles.groupSubtotalValue,
-              accentColor ? { color: accentColor } : null,
-              bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
-            ]}
-          >
-            {row.groupSubtotalValue}
-          </Text>
-        </View>
-      ) : null}
+      <View style={styles.groupHeaderLine}>
+        <Text
+          style={[
+            styles.groupCell,
+            textColor ? { color: textColor } : null,
+            headerFontFamily ? { fontFamily: headerFontFamily } : null,
+          ]}
+        >
+          {row.groupName || row.groupLabel || ''}
+        </Text>
+        {row.showSubtotal && row.groupSubtotalValue ? (
+          <View style={styles.groupSubtotalInline}>
+            <Text
+              style={[
+                styles.groupSubtotalLabel,
+                mutedColor ? { color: mutedColor } : null,
+                bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+              ]}
+            >
+              {row.groupSubtotalLabel || 'Group Subtotal'}
+            </Text>
+            <Text
+              style={[
+                styles.groupSubtotalValue,
+                textColor ? { color: textColor } : ruleColor ? { color: ruleColor } : null,
+                bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+              ]}
+            >
+              {row.groupSubtotalValue}
+            </Text>
+          </View>
+        ) : null}
+      </View>
     </View>
   )
 }
