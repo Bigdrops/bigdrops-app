@@ -63,12 +63,10 @@ export type IndustryTemplateData = {
     balanceDue: { label: string; value: string } | null
   }
   advanceSummary: {
-    contractValueLabel: string
-    contractValue: string
-    primaryLabel: string
-    advanceAmount: string
-    secondaryLabel: string
-    balanceRemaining: string
+    primaryLabel: string | null
+    advanceAmount: string | null
+    secondaryLabel: string | null
+    balanceRemaining: string | null
   } | null
   notes: { title: string; content: string; format?: string } | null
   terms: { title: string; content: string; format?: string } | null
@@ -81,6 +79,17 @@ export type IndustryTemplateData = {
     extraText: string
   }
   layout: PdfPageLayout
+  design: {
+    accentColor: string | null
+    textColor: string | null
+    mutedColor: string | null
+    borderColor: string | null
+    surfaceColor: string | null
+    headerFont: string | null
+    bodyFont: string | null
+    useCustomFonts: boolean
+    useCustomColors: boolean
+  }
 }
 
 const PDF_MONEY_KEYS = new Set(['unit_price', 'amount', 'install_rate'])
@@ -177,12 +186,23 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
   const issuerAddress = splitAddressLines(model.issuer?.addressLines || [])
   const recipientAddress = splitAddressLines(model.recipient?.addressLines || [])
   const mainLine = model.totals.rows.find((line) => line.emphasis)
-  const totalLines = model.totals.rows
+
+  const totalLinesRaw = model.totals.rows
     .filter((line) => !line.emphasis)
     .map((line) => ({
       label: line.label,
       value: formatPdfMoney(line.amount),
     }))
+
+  // Remove "Balance Due" only when this is an advance child document
+  const isAdvanceDocument = Boolean(model.totals.advanceSummary)
+  const totalLines = isAdvanceDocument
+    ? totalLinesRaw.filter((line) => {
+        const rawLabel = String(line?.label || '').trim().toLowerCase()
+        return rawLabel !== 'balance due'
+      })
+    : totalLinesRaw
+
   const columns = model.columns || []
 
   const primaryTitle = model.identity.kind === 'invoice' ? 'INVOICE' : 'QUOTATION'
@@ -267,12 +287,10 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
     },
     advanceSummary: model.totals.advanceSummary
       ? {
-          contractValueLabel: 'Contract Value',
-          contractValue: formatPdfMoney(model.totals.advanceSummary.contractValue),
-          primaryLabel: model.totals.advanceSummary.primaryLabel || '',
-          advanceAmount: formatPdfMoney(model.totals.advanceSummary.requestedAmount),
-          secondaryLabel: model.totals.advanceSummary.secondaryLabel || '',
-          balanceRemaining: formatPdfMoney(model.totals.advanceSummary.balanceRemaining),
+          primaryLabel: model.totals.advanceSummary.primaryLabel || null,
+          advanceAmount: formatPdfMoney(model.totals.advanceSummary.requestedAmount) || null,
+          secondaryLabel: model.totals.advanceSummary.secondaryLabel || null,
+          balanceRemaining: formatPdfMoney(model.totals.advanceSummary.balanceRemaining) || null,
         }
       : null,
     notes: model.notes || null,
@@ -292,5 +310,16 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
       extraText: model.footerText || '',
     },
     layout: { size: 'A4', orientation: 'portrait' },
+    design: {
+      accentColor: model.template?.designPreset?.accentColor || null,
+      textColor: model.template?.designPreset?.textColor || null,
+      mutedColor: model.template?.designPreset?.mutedColor || null,
+      borderColor: model.template?.designPreset?.borderColor || null,
+      surfaceColor: model.template?.designPreset?.surfaceColor || null,
+      headerFont: model.template?.designPreset?.headerFont || null,
+      bodyFont: model.template?.designPreset?.bodyFont || null,
+      useCustomFonts: Boolean(model.template?.designPreset?.useCustomFonts),
+      useCustomColors: Boolean(model.template?.designPreset?.useCustomColors),
+    },
   }
 }
