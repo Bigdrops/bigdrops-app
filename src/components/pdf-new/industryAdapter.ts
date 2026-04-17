@@ -46,6 +46,9 @@ export type IndustryTemplateData = {
       isGroupHeader?: boolean
       groupName?: string | null
       groupLabel?: string | null
+      showSubtotal?: boolean
+      groupSubtotalLabel?: string | null
+      groupSubtotalValue?: string | null
       imageUrl?: string | null
       cells?: Record<string, unknown>
     }>
@@ -135,19 +138,47 @@ function formatPreparedCell(column: PdfColumnDefinition | undefined, cell: unkno
   return formatPdfMoney(cell, { withSymbol: false })
 }
 
+function resolveLineAmount(item: PdfDocumentModel['items'][number]) {
+  if (typeof item.amount === 'number' && Number.isFinite(item.amount)) return item.amount
+
+  const unitPrice = Number(item.unitPrice || 0)
+  const quantity = Number(item.quantity || 0)
+  const derivedAmount = unitPrice * quantity
+
+  return Number.isFinite(derivedAmount) ? derivedAmount : 0
+}
+
+function resolveGroupSubtotal(model: PdfDocumentModel, startIndex: number) {
+  let subtotal = 0
+
+  for (let index = startIndex + 1; index < model.items.length; index += 1) {
+    const item = model.items[index]
+    if (item.rowType === 'group_header') break
+    subtotal += resolveLineAmount(item)
+  }
+
+  return subtotal
+}
+
 function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinition[]) {
   let lineNumber = 0
 
-  return model.items.map((item) => {
+  return model.items.map((item, index) => {
     const isGroupHeader = item.rowType === 'group_header'
 
     if (isGroupHeader) {
+      const showSubtotal = item.customData?.showSubtotal === true
+      const groupSubtotal = showSubtotal ? resolveGroupSubtotal(model, index) : null
+
       return {
         type: item.rowType,
         rowType: item.rowType,
         isGroupHeader: true,
         groupName: item.groupLabel,
         groupLabel: item.groupLabel,
+        showSubtotal,
+        groupSubtotalLabel: showSubtotal ? 'Group Subtotal' : null,
+        groupSubtotalValue: showSubtotal && groupSubtotal !== null ? formatPdfMoney(groupSubtotal) : null,
         imageUrl: item.imageUrl,
         cells: undefined,
       }

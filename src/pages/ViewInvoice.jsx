@@ -425,7 +425,10 @@ export default function ViewInvoice() {
               mergeQtyUnit: resolvedTable.mergeQtyUnit,
               configuredColumns: resolvedTable.configuredColumns,
             }),
-        customData: item.custom_data || {},
+        customData: {
+          ...(item.custom_data || {}),
+          ...(item.row_type === 'group_header' ? { showSubtotal: customFieldObject?.groupMeta?.[item.group_id]?.showSubtotal === true } : {}),
+        },
       }))
 
       await generateInvoicePdf({
@@ -753,7 +756,10 @@ export default function ViewInvoice() {
                   mergeQtyUnit: resolvedTable.mergeQtyUnit,
                   configuredColumns: resolvedTable.configuredColumns,
                 }),
-            customData: item.custom_data || {},
+            customData: {
+              ...(item.custom_data || {}),
+              ...(item.row_type === 'group_header' ? { showSubtotal: customFieldObject?.groupMeta?.[item.group_id]?.showSubtotal === true } : {})
+            },
           })),
           totals: {
             mode: advanceSummary ? 'advance' : 'standard',

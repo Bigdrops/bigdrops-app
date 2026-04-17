@@ -1,4 +1,4 @@
-import { Image, Link, Page, Text, View } from '@react-pdf/renderer'
+import { Image, Page, Text, View } from '@react-pdf/renderer'
 import type { IndustryTemplateData } from '../industryAdapter'
 import {
   getCellText,
@@ -8,59 +8,16 @@ import {
   resolveTextAlignmentStyle,
   styles,
 } from './industryStyles'
+import {
+  getAccentTint,
+  IndustryGroupRow,
+  IndustryPartyCard,
+  renderOptionalList,
+} from './industryTemplateBlocks'
 
-type TemplateProps = {
-  data: IndustryTemplateData
-}
-
-function renderOptionalList(items: IndustryTemplateData['attachments']) {
-  return items.map((item, idx) => {
-    if (typeof item === 'string') {
-      return (
-        <Text key={`attach-${idx}`} style={styles.attachmentItem}>
-          - {item}
-        </Text>
-      )
-    }
-
-    if (item?.url && item?.label) {
-      return (
-        <Link
-          key={`attach-${idx}`}
-          src={item.url}
-          style={styles.attachmentLink}
-        >
-          {item.label}
-        </Link>
-      )
-    }
-
-    if (item?.label) {
-      return (
-        <Text key={`attach-${idx}`} style={styles.attachmentItem}>
-          - {item.label}
-        </Text>
-      )
-    }
-
-    if (item?.url) {
-      return (
-        <Link
-          key={`attach-${idx}`}
-          src={item.url}
-          style={styles.attachmentLink}
-        >
-          {item.url}
-        </Link>
-      )
-    }
-
-    return null
-  })
-}
+type TemplateProps = { data: IndustryTemplateData }
 
 export default function IndustryTemplate({ data }: TemplateProps) {
-  // ─── DESIGN TOKENS ─────────────────────────────────────────────
   const design = data?.design || {}
   const accentColor = design.useCustomColors && design.accentColor ? design.accentColor : null
   const textColor = design.useCustomColors && design.textColor ? design.textColor : null
@@ -69,6 +26,12 @@ export default function IndustryTemplate({ data }: TemplateProps) {
   const surfaceColor = design.useCustomColors && design.surfaceColor ? design.surfaceColor : null
   const headerFontFamily = design.useCustomFonts && design.headerFont ? design.headerFont : undefined
   const bodyFontFamily = design.useCustomFonts && design.bodyFont ? design.bodyFont : undefined
+  const accentTint = getAccentTint(accentColor, '#eef2f1')
+  const sectionTitleStyle = [
+    styles.optionalTitle,
+    textColor ? { color: textColor } : null,
+    headerFontFamily ? { fontFamily: headerFontFamily } : null,
+  ]
 
   const metaRows = [
     data.documentNumber
@@ -176,72 +139,39 @@ export default function IndustryTemplate({ data }: TemplateProps) {
       {(data.company || data.client) ? (
         <View style={styles.partyRow}>
           {data.company ? (
-            <View
-              style={[
-                styles.partyBox,
-                surfaceColor ? { backgroundColor: surfaceColor } : null,
-                borderColor ? { borderColor } : null,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.partyTitle,
-                  textColor ? { color: textColor } : null,
-                  headerFontFamily ? { fontFamily: headerFontFamily } : null,
-                ]}
-              >
-                From
-              </Text>
-              {data.company.name ? <Text style={styles.partyName}>{data.company.name}</Text> : null}
-              {data.company.address ? <Text style={styles.partyLine}>{data.company.address}</Text> : null}
-              {data.company.cityState ? <Text style={styles.partyLine}>{data.company.cityState}</Text> : null}
-              {data.company.phone ? <Text style={styles.partyLine}>{data.company.phone}</Text> : null}
-              {data.company.email ? <Text style={styles.partyLine}>{data.company.email}</Text> : null}
-
-              {data.company.customInfo.length > 0 ? (
-                <View style={styles.customInfoWrap}>
-                  {data.company.customInfo.map((entry, idx) => (
-                    <View key={`company-extra-${idx}`} style={styles.metaRow}>
-                      <Text style={styles.metaLabel}>{entry.label}</Text>
-                      <Text style={styles.metaValue}>{entry.value}</Text>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
-            </View>
+            <IndustryPartyCard
+              title="From"
+              party={data.company}
+              surfaceColor={surfaceColor}
+              borderColor={borderColor}
+              textColor={textColor}
+              headerFontFamily={headerFontFamily}
+            />
           ) : null}
 
           {data.client ? (
-            <View
-              style={[
-                styles.partyBox,
-                styles.partyBoxLast,
-                surfaceColor ? { backgroundColor: surfaceColor } : null,
-                borderColor ? { borderColor } : null,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.partyTitle,
-                  textColor ? { color: textColor } : null,
-                  headerFontFamily ? { fontFamily: headerFontFamily } : null,
-                ]}
-              >
-                To
-              </Text>
-              {data.client.name ? <Text style={styles.partyName}>{data.client.name}</Text> : null}
-              {data.client.address ? <Text style={styles.partyLine}>{data.client.address}</Text> : null}
-              {data.client.cityState ? <Text style={styles.partyLine}>{data.client.cityState}</Text> : null}
-              {data.client.phone ? <Text style={styles.partyLine}>{data.client.phone}</Text> : null}
-              {data.client.email ? <Text style={styles.partyLine}>{data.client.email}</Text> : null}
-            </View>
+            <IndustryPartyCard
+              title="To"
+              party={data.client}
+              isLast
+              surfaceColor={surfaceColor}
+              borderColor={borderColor}
+              textColor={textColor}
+              headerFontFamily={headerFontFamily}
+            />
           ) : null}
         </View>
       ) : null}
 
       {data.table.columns.length > 0 && data.table.rows.length > 0 ? (
         <View style={styles.tableWrap}>
-          <View style={styles.tableHeaderRow} fixed>
+          <View
+            style={[
+              styles.tableHeaderRow,
+              accentColor ? { backgroundColor: accentColor, borderBottomColor: accentColor } : null,
+            ]}
+            fixed
+          >
             {data.table.columns.map((column, idx) => {
               const columnStyle = resolveIndustryColumnStyle(column)
               const alignStyle = resolveTextAlignmentStyle(column)
@@ -253,7 +183,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                     styles.tableHeaderCell,
                     columnStyle,
                     alignStyle,
-                    surfaceColor ? { backgroundColor: surfaceColor } : null,
+                    !accentColor && surfaceColor ? { backgroundColor: surfaceColor } : null,
                     headerFontFamily ? { fontFamily: headerFontFamily } : null,
                   ]}
                 >
@@ -265,13 +195,14 @@ export default function IndustryTemplate({ data }: TemplateProps) {
 
           {data.table.rows.map((row, rowIdx) => {
             if (row.isGroupHeader) {
-              return (
-                <View key={`group-${rowIdx}`} style={[styles.tableRow, styles.tableGroupRow]}>
-                  <Text style={[styles.tableCell, styles.groupCell, { flex: 1 }]}>
-                    {row.groupName || row.groupLabel || ''}
-                  </Text>
-                </View>
-              )
+              return <IndustryGroupRow
+                row={row}
+                rowIdx={rowIdx}
+                accentColor={accentColor}
+                accentTint={accentTint}
+                headerFontFamily={headerFontFamily}
+                bodyFontFamily={bodyFontFamily}
+              />
             }
 
             return (
@@ -399,7 +330,12 @@ export default function IndustryTemplate({ data }: TemplateProps) {
             ))}
 
             {data.advanceSummary ? (
-              <View style={styles.advanceBox}>
+              <View
+                style={[
+                  styles.advanceBox,
+                  accentColor ? { borderLeftColor: accentColor } : null,
+                ]}
+              >
                 {data.advanceSummary.advanceAmount ? (
                   <View style={styles.advanceRow}>
                     <Text
@@ -449,7 +385,12 @@ export default function IndustryTemplate({ data }: TemplateProps) {
             ) : null}
 
             {data.totals.mainLine ? (
-              <View style={styles.totalFinal}>
+              <View
+                style={[
+                  styles.totalFinal,
+                  accentColor ? { borderTopColor: accentColor } : null,
+                ]}
+              >
                 <Text
                   style={[
                     styles.totalFinalLabel,
@@ -514,49 +455,21 @@ export default function IndustryTemplate({ data }: TemplateProps) {
 
       {data.notes?.content ? (
         <View style={styles.optionalSection}>
-          {data.notes.title ? (
-            <Text
-              style={[
-                styles.optionalTitle,
-                textColor ? { color: textColor } : null,
-                headerFontFamily ? { fontFamily: headerFontFamily } : null,
-              ]}
-            >
-              {data.notes.title}
-            </Text>
-          ) : null}
+          {data.notes.title ? <Text style={sectionTitleStyle}>{data.notes.title}</Text> : null}
           <Text style={styles.optionalText}>{data.notes.content}</Text>
         </View>
       ) : null}
 
       {data.terms?.content ? (
         <View style={styles.optionalSection}>
-          {data.terms.title ? (
-            <Text
-              style={[
-                styles.optionalTitle,
-                textColor ? { color: textColor } : null,
-                headerFontFamily ? { fontFamily: headerFontFamily } : null,
-              ]}
-            >
-              {data.terms.title}
-            </Text>
-          ) : null}
+          {data.terms.title ? <Text style={sectionTitleStyle}>{data.terms.title}</Text> : null}
           <Text style={styles.optionalText}>{data.terms.content}</Text>
         </View>
       ) : null}
 
       {data.attachments.length > 0 ? (
         <View style={styles.optionalSection}>
-          <Text
-            style={[
-              styles.optionalTitle,
-              textColor ? { color: textColor } : null,
-              headerFontFamily ? { fontFamily: headerFontFamily } : null,
-            ]}
-          >
-            Attachments
-          </Text>
+          <Text style={sectionTitleStyle}>Attachments</Text>
           <View style={styles.attachmentsWrap}>{renderOptionalList(data.attachments)}</View>
         </View>
       ) : null}

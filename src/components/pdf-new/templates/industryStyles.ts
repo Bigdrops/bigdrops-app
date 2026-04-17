@@ -134,6 +134,8 @@ export const styles = StyleSheet.create({
   tableHeaderRow: {
     flexDirection: 'row',
     backgroundColor: '#7d8a88',
+    borderBottomWidth: 1,
+    borderBottomColor: '#6c7a78',
   },
   tableHeaderCell: {
     paddingVertical: 9,
@@ -149,11 +151,18 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
-  tableRowEven: {
-    backgroundColor: '#f8fafc',
-  },
+  tableRowEven: { backgroundColor: '#f8fafc' },
   tableGroupRow: {
-    backgroundColor: '#d7dbda',
+    marginTop: 8,
+    marginBottom: 4,
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingHorizontal: 12,
+    backgroundColor: '#eef2f1',
+    borderLeftWidth: 4,
+    borderLeftColor: '#7d8a88',
+    borderBottomWidth: 1,
+    borderBottomColor: '#dde5e3',
   },
   tableCell: {
     paddingVertical: 8,
@@ -164,6 +173,29 @@ export const styles = StyleSheet.create({
     borderRightColor: '#ececec',
   },
   groupCell: {
+    textAlign: 'center',
+    fontSize: 10.6,
+    fontFamily: 'Helvetica-Bold',
+    color: '#42514e',
+    letterSpacing: 0.2,
+  },
+  groupSubtotalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 7,
+    paddingTop: 7,
+    borderTopWidth: 1,
+    borderTopColor: '#cad5d2',
+  },
+  groupSubtotalLabel: {
+    flex: 1,
+    fontSize: 9,
+    color: '#5f6f6c',
+    fontStyle: 'italic',
+  },
+  groupSubtotalValue: {
+    fontSize: 9.6,
+    color: '#42514e',
     fontFamily: 'Helvetica-Bold',
   },
   descriptionMain: {
@@ -178,16 +210,9 @@ export const styles = StyleSheet.create({
     color: '#6b7280',
     lineHeight: 1.35,
   },
-  makeText: {
-    fontSize: 9.6,
-    color: '#6b7280',
-  },
-  textRight: {
-    textAlign: 'right',
-  },
-  textCenter: {
-    textAlign: 'center',
-  },
+  makeText: { fontSize: 9.6, color: '#6b7280' },
+  textRight: { textAlign: 'right' },
+  textCenter: { textAlign: 'center' },
   imageThumb: {
     width: 58,
     height: 58,
@@ -206,9 +231,7 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 20,
   },
-  closingRowNoBank: {
-    justifyContent: 'flex-end',
-  },
+  closingRowNoBank: { justifyContent: 'flex-end' },
   bankBox: {
     flex: 1,
     backgroundColor: '#e8e8e8',
@@ -218,23 +241,15 @@ export const styles = StyleSheet.create({
     marginRight: 18,
     borderRadius: 3,
   },
-  totalsBox: {
-    width: 232,
-    flexShrink: 0,
-  },
-  totalsBoxSolo: {
-    alignSelf: 'flex-end',
-  },
+  totalsBox: { width: 232, flexShrink: 0 },
+  totalsBoxSolo: { alignSelf: 'flex-end' },
   sectionTitle: {
     fontSize: 13,
     color: '#7d8a88',
     marginBottom: 10,
     fontFamily: 'Helvetica-Bold',
   },
-  bankRow: {
-    flexDirection: 'row',
-    marginBottom: 7,
-  },
+  bankRow: { flexDirection: 'row', marginBottom: 7 },
   bankLabel: {
     width: 98,
     fontSize: 10,
@@ -270,7 +285,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
     paddingTop: 10,
-    borderTopWidth: 1.5,
+    borderTopWidth: 2,
     borderTopColor: '#1f2937',
   },
   totalFinalLabel: {
@@ -295,11 +310,7 @@ export const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#7d8a88',
   },
-  advanceRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 6,
-  },
+  advanceRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6 },
   advanceLabel: {
     flex: 1,
     fontSize: 10,
@@ -360,9 +371,7 @@ export const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     textAlign: 'right',
   },
-  optionalSection: {
-    marginBottom: 18,
-  },
+  optionalSection: { marginBottom: 18 },
   optionalTitle: {
     fontSize: 13,
     color: '#7d8a88',
@@ -374,9 +383,7 @@ export const styles = StyleSheet.create({
     color: '#666666',
     lineHeight: 1.5,
   },
-  attachmentsWrap: {
-    marginTop: 6,
-  },
+  attachmentsWrap: { marginTop: 6 },
   attachmentItem: {
     fontSize: 10,
     color: '#555555',
@@ -399,10 +406,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#dddddd',
   },
-  additionalRow: {
-    flexDirection: 'row',
-    marginBottom: 6,
-  },
+  additionalRow: { flexDirection: 'row', marginBottom: 6 },
   additionalLabel: {
     width: 118,
     fontSize: 10,

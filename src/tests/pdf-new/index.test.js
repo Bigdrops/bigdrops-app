@@ -118,8 +118,56 @@ test('adaptIndustryData formats pdf money values through the shared safe formatt
   })
 
   assert.equal(data.table.rows[0].cells.num, '1')
-  assert.equal(data.table.rows[0].cells.unit_price, 'NGN 150,000')
-  assert.equal(data.table.rows[0].cells.amount, 'NGN 300,000')
+  assert.equal(data.table.rows[0].cells.unit_price, '150,000')
+  assert.equal(data.table.rows[0].cells.amount, '300,000')
   assert.equal(data.totals.lines[0].value, 'NGN 300,000')
   assert.equal(data.totals.mainLine.value, 'NGN 300,000')
+})
+
+test('adaptIndustryData preserves grouped subtotal presentation when a group header enables it', () => {
+  const data = adaptIndustryData({
+    ...createPdfModel('invoice'),
+    columns: [
+      { key: 'num', label: '#', kind: 'builtin', align: 'center', pdfWidth: 20 },
+      { key: 'description', label: 'Description', kind: 'builtin', align: 'left', pdfFlex: 3 },
+      { key: 'amount', label: 'Amount', kind: 'builtin', align: 'right', pdfWidth: 62 },
+    ],
+    items: [
+      {
+        id: 'group-1',
+        rowType: 'group_header',
+        groupLabel: 'Solar Works',
+        customData: {
+          showSubtotal: true,
+        },
+      },
+      {
+        id: 'line-1',
+        rowType: 'line',
+        description: 'Panel supply',
+        amount: 125000,
+        cells: {
+          num: '1',
+          description: 'Panel supply',
+          amount: '125000',
+        },
+      },
+      {
+        id: 'line-2',
+        rowType: 'line',
+        description: 'Mounting kit',
+        amount: 75000,
+        cells: {
+          num: '2',
+          description: 'Mounting kit',
+          amount: '75000',
+        },
+      },
+    ],
+  })
+
+  assert.equal(data.table.rows[0].isGroupHeader, true)
+  assert.equal(data.table.rows[0].showSubtotal, true)
+  assert.equal(data.table.rows[0].groupSubtotalLabel, 'Group Subtotal')
+  assert.equal(data.table.rows[0].groupSubtotalValue, 'NGN 200,000')
 })

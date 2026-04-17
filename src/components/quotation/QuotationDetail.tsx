@@ -341,7 +341,10 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
                   mergeQtyUnit: resolvedTable.mergeQtyUnit,
                   configuredColumns: resolvedTable.configuredColumns,
                 }),
-            customData: item.custom_data || {},
+            customData: {
+              ...(item.custom_data || {}),
+              ...(item.row_type === 'group_header' ? { showSubtotal: customFields?.groupMeta?.[item.group_id]?.showSubtotal === true } : {}),
+            },
           })),
           totals: {
             mode: 'standard',

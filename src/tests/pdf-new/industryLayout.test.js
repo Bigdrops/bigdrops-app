@@ -6,6 +6,7 @@ import path from 'node:path'
 import { styles } from '../../components/pdf-new/templates/industryStyles.ts'
 
 const industryTemplatePath = path.resolve('src/components/pdf-new/templates/Industry.tsx')
+const industryBlocksPath = path.resolve('src/components/pdf-new/templates/industryTemplateBlocks.tsx')
 
 test('Industry pdf layout keeps the footer reserve compact instead of leaving a large dead zone', () => {
   assert.equal(styles.page.paddingBottom, 64)
@@ -26,4 +27,13 @@ test('Industry item images render larger and expose a clickable image link label
   assert.equal(styles.imageThumb.height, 58)
   assert.match(source, /Link\s+src=\{row\.imageUrl\}/)
   assert.match(source, /Open image/)
+})
+
+test('Industry template applies the custom accent color to template identity surfaces beyond balance due', () => {
+  const source = fs.readFileSync(industryTemplatePath, 'utf8')
+  const blocksSource = fs.readFileSync(industryBlocksPath, 'utf8')
+
+  assert.match(source, /styles\.tableHeaderRow,[\s\S]*accentColor \? \{ backgroundColor: accentColor \} : null/)
+  assert.match(source, /styles\.totalFinal,[\s\S]*accentColor \? \{ borderTopColor: accentColor \} : null/)
+  assert.match(blocksSource, /styles\.tableGroupRow,[\s\S]*accentColor \? \{ borderLeftColor: accentColor, backgroundColor: accentTint \} : null/)
 })
