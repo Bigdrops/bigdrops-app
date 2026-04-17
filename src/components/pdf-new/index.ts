@@ -15,6 +15,7 @@ export type PdfGenerationResult = {
 type PdfGenerationRequest<TModel extends PdfDocumentModel> = {
   model: TModel
   documentNumber?: string | null
+  templateId?: string | null
 }
 
 function downloadBlob(blob: Blob, filename: string) {
