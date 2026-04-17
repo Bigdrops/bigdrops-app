@@ -40,8 +40,24 @@ function resolveFilename(model: PdfDocumentModel, fallbackNumber?: string | null
 
 async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerationRequest<TModel>): Promise<PdfGenerationResult> {
   registerPdfFonts()
-  const templateData = adaptIndustryData(request.model)
-  const blob = await pdf(React.createElement(PdfRenderer, { data: templateData, Template: Industry }) as any).toBlob()
+
+  const activeTemplateId = request.templateId || 'industry'
+
+  let Template = Industry
+  let templateData = adaptIndustryData(request.model)
+
+  switch (activeTemplateId) {
+    case 'industry':
+    default:
+      Template = Industry
+      templateData = adaptIndustryData(request.model)
+      break
+  }
+
+  const blob = await pdf(
+    React.createElement(PdfRenderer, { data: templateData, Template }) as any
+  ).toBlob()
+
   const filename = resolveFilename(request.model, request.documentNumber)
   downloadBlob(blob, filename)
   return { status: 'generated', filename }
