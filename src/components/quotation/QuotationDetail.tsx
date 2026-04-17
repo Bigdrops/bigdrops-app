@@ -21,6 +21,7 @@ import { calcTotals } from '@/components/useInvoiceColumns.jsx'
 import { buildPdfRowCells, generateQuotationPdf, interpretPdfTableSettings } from '@/components/pdf-new'
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { getPdfDesignPreset, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -84,27 +85,12 @@ function renderRichText(value?: string) {
   return <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: clean }} />
 }
 
-function useIsNarrow() {
-  const [isNarrow, setIsNarrow] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return window.innerWidth < 768
-  })
-
-  useEffect(() => {
-    const handleResize = () => setIsNarrow(window.innerWidth < 768)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  return isNarrow
-}
-
 const formatMoney = (value: number | string | null | undefined) =>
   formatNaira(value, { preserveFraction: true })
 
 export default function QuotationDetail({ quotationId }: { quotationId: string }) {
   const navigate = useNavigate()
-  const isNarrow = useIsNarrow()
+  const { isMobile: isNarrow } = useLayoutMode()
   const [loading, setLoading] = useState(true)
   const [quotation, setQuotation] = useState<Quotation | null>(null)
   const [items, setItems] = useState<InvoiceItem[]>([])

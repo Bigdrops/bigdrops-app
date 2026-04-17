@@ -1,4 +1,4 @@
-import { useFoldAwareness } from '@/hooks/useFoldAwareness'
+import { useFoldAwareness } from '@/hooks/FoldAwareness'
 
 export function useLayoutMode() {
   const info = useFoldAwareness()

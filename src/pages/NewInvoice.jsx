@@ -26,6 +26,7 @@ import {
 import { computeDocument } from '../lib/Calculations'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { numberToWords } from '../hooks/useInvoiceForm'
+import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { toast } from '@/hooks/use-toast'
 import { validateProjectAssignment } from '@/domain/projects'
 
@@ -35,13 +36,12 @@ export default function NewInvoice() {
   const routeState = location.state || {}
   const prefill = routeState.prefill
   const prefillItems = routeState.prefillItems
+  const { isMobile } = useLayoutMode()
   const projectPrefill = {
     projectId: String(routeState.projectId || prefill?.project_id || ''),
     clientId: String(routeState.clientId || prefill?.client_id || ''),
     clientName: String(routeState.clientName || prefill?.client_name || ''),
   }
-
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
   const [saving, setSaving] = useState(false)
   const [showColumnManager, setShowColumnManager] = useState(false)
   const [discountType, setDiscountType] = useState('fixed')
@@ -125,12 +125,6 @@ export default function NewInvoice() {
   useEffect(() => {
     setAdditionalFields(normalizeAdditionalFieldEntries(initialCustomFields.additionalFields, initialCustomFields.bottom))
   }, [initialCustomFields])
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
 
   useEffect(() => {
     if (!projectPrefill.projectId && !projectPrefill.clientId && !projectPrefill.clientName) return

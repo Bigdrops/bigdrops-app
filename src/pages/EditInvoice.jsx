@@ -30,13 +30,14 @@ import {
 import { computeDocument } from '../lib/Calculations'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { numberToWords } from '../hooks/useInvoiceForm'
+import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { toast } from '@/hooks/use-toast'
 
 export default function EditInvoice() {
   const navigate = useNavigate()
   const { id } = useParams()
+  const { isMobile } = useLayoutMode()
 
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showColumnManager, setShowColumnManager] = useState(false)
@@ -78,12 +79,6 @@ export default function EditInvoice() {
     moveColumn,
     customColumns,
   } = useInvoiceColumns()
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
 
   useEffect(() => {
     const load = async () => {

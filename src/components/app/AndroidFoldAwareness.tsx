@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { isAndroidNative } from '@/lib/native/capacitor'
-import { useFoldAwareness } from '@/hooks/useFoldAwareness'
+import { useFoldAwareness } from '@/hooks/FoldAwareness'
 
 export default function AndroidFoldAwareness() {
   const info = useFoldAwareness()

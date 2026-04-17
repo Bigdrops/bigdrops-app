@@ -34,17 +34,8 @@ import {
   peekNextOfflineQuotationNumber,
 } from '@/lib/native/quotationOffline'
 import { toast } from '@/hooks/use-toast'
+import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { formatQuotationStatus } from './quotationStatus'
-
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 640)
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 640)
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
-  }, [])
-  return isMobile
-}
 
 function canUseOfflineQuotationDrafts() {
   return canUseAndroidNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine === false
@@ -286,7 +277,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const navigate = useNavigate()
   const location = useLocation()
   const prefill = (location.state || {}) as RfqConversionPrefillState
-  const isMobile = useIsMobile()
+  const { isMobile } = useLayoutMode()
   const isEdit = mode === 'edit'
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)

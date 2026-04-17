@@ -16,6 +16,7 @@ import {
 
 const AndroidSystemBars = lazy(() => import('@/components/app/AndroidSystemBars'))
 const AndroidFoldAwareness = lazy(() => import('@/components/app/AndroidFoldAwareness'))
+const KeyboardAwareness = lazy(() => import('@/components/app/KeyboardAwareness'))
 const Dashboard = lazy(() => import('@/pages/DashboardRedesign'))
 const Invoices = lazy(() => import('@/pages/Invoices'))
 const Quotations = lazy(() => import('@/pages/Quotations'))
@@ -122,6 +123,9 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
 
   return (
     <>
+      <Suspense fallback={null}>
+        <KeyboardAwareness />
+      </Suspense>
       {showAndroidBackHandler && (
         <Suspense fallback={null}>
           <>

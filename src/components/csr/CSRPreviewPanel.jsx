@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { getEffectiveFillableFont, resolvePdfWebFontFamily } from '@/lib/pdfDesignPreset'
 import {
   CSR_READING_FIELDS,
@@ -190,13 +190,7 @@ function renderPreviewHeader({ csr, branding, theme, compact }) {
 }
 
 export default function CSRPreviewPanel({ csr, template, onTemplateChange, branding = {}, designPreset }) {
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640)
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 640)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  const { isMobile } = useLayoutMode()
 
   const selectedTemplate = CSR_TEMPLATE_OPTIONS.find((option) => option.key === template) || CSR_TEMPLATE_OPTIONS[3]
   const theme = CSR_TEMPLATE_VARIANTS[getCsrTemplateVariant(template)]

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { App as CapacitorApp } from '@capacitor/app'
 import type { PluginListenerHandle } from '@capacitor/core'
 import { toast } from '@/hooks/use-toast'
+import { dismissActiveKeyboard, getKeyboardViewportState } from '@/lib/appKeyboard'
 import { isAndroidNative } from '@/lib/native/capacitor'
 
 const ROOT_PATHS = new Set([
@@ -169,6 +170,11 @@ export default function AndroidBackHandler() {
     const setup = async () => {
       listener = await CapacitorApp.addListener('backButton', async ({ canGoBack }) => {
         if (cancelled) return
+        const keyboardState = getKeyboardViewportState()
+
+        if (keyboardState.isOpen && dismissActiveKeyboard()) {
+          return
+        }
 
         if (await tryCloseOverlay()) {
           return
