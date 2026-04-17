@@ -15,6 +15,7 @@ import {
 } from '@/lib/themeTokens'
 
 const AndroidSystemBars = lazy(() => import('@/components/app/AndroidSystemBars'))
+const AndroidFoldAwareness = lazy(() => import('@/components/app/AndroidFoldAwareness'))
 const Dashboard = lazy(() => import('@/pages/DashboardRedesign'))
 const Invoices = lazy(() => import('@/pages/Invoices'))
 const Quotations = lazy(() => import('@/pages/Quotations'))
@@ -123,7 +124,11 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
     <>
       {showAndroidBackHandler && (
         <Suspense fallback={null}>
-          <AndroidBackHandler />
+          <>
+            <AndroidBackHandler />
+            <AndroidSystemBars />
+            <AndroidFoldAwareness />
+          </>
         </Suspense>
       )}
       {showSetPassword && (
