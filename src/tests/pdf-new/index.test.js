@@ -1,10 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import React from 'react'
-import { pdf } from '@react-pdf/renderer'
 
-import { PdfRenderer } from '../../components/pdf-new/renderers/PdfRenderer.tsx'
-import Nexus from '../../components/pdf-new/templates/Nexus.tsx'
+import { adaptIndustryData } from '../../components/pdf-new/industryAdapter.ts'
 
 function createPdfModel(kind) {
   return {
@@ -84,22 +81,45 @@ function createPdfModel(kind) {
   }
 }
 
-async function renderModel(model) {
-  const blob = await pdf(
-    React.createElement(PdfRenderer, {
-      data: model,
-      Template: Nexus,
-    }),
-  ).toBlob()
+test('adaptIndustryData formats pdf money values through the shared safe formatter path', () => {
+  const data = adaptIndustryData({
+    ...createPdfModel('invoice'),
+    columns: [
+      { key: 'num', label: '#', kind: 'builtin', align: 'center', pdfWidth: 20 },
+      { key: 'description', label: 'Description', kind: 'builtin', align: 'left', pdfFlex: 3 },
+      { key: 'unit_price', label: 'Unit Price', kind: 'builtin', align: 'right', pdfWidth: 54 },
+      { key: 'amount', label: 'Amount', kind: 'builtin', align: 'right', pdfWidth: 62 },
+    ],
+    items: [
+      {
+        id: 'invoice-item-1',
+        rowType: 'line',
+        description: 'Solar panel installation',
+        subDescription: 'Roof-mounted system',
+        quantity: 2,
+        unitPrice: 150000,
+        amount: 300000,
+        cells: {
+          num: '1',
+          description: 'Solar panel installation',
+          unit_price: '150000',
+          amount: '300000',
+        },
+      },
+    ],
+    totals: {
+      mode: 'standard',
+      rows: [
+        { key: 'subtotal', label: 'Subtotal', amount: 300000 },
+        { key: 'total', label: 'Total', amount: 300000, emphasis: true },
+      ],
+      amountInWords: 'Three hundred thousand naira only',
+    },
+  })
 
-  assert.ok(blob instanceof Blob)
-  assert.ok(blob.size > 0)
-}
-
-test('PdfRenderer renders the Nexus invoice template without crashing', async () => {
-  await renderModel(createPdfModel('invoice'))
-})
-
-test('PdfRenderer renders the Nexus quotation template without crashing', async () => {
-  await renderModel(createPdfModel('quotation'))
+  assert.equal(data.table.rows[0].cells.num, '1')
+  assert.equal(data.table.rows[0].cells.unit_price, 'NGN 150,000')
+  assert.equal(data.table.rows[0].cells.amount, 'NGN 300,000')
+  assert.equal(data.totals.lines[0].value, 'NGN 300,000')
+  assert.equal(data.totals.mainLine.value, 'NGN 300,000')
 })

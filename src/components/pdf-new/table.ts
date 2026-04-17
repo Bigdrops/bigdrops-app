@@ -22,6 +22,7 @@ type InterpretPdfTableSettingsOptions = {
 type BuildPdfRowCellsOptions = {
   mergeQtyUnit?: boolean
   configuredColumns?: SavedColumnConfig[]
+  rowNumber?: number
 }
 
 const CONFIGURABLE_DEFAULT_COLUMNS: SavedColumnConfig[] = [
@@ -203,6 +204,10 @@ export function buildPdfRowCells(
       const quantity = item.quantity ?? ''
       const unit = item.unit || ''
       return [column.key, `${quantity}${unit ? ` ${unit}` : ''}`.trim()]
+    }
+
+    if (column.key === 'num') {
+      return [column.key, options.rowNumber ? String(options.rowNumber) : '']
     }
 
     return [

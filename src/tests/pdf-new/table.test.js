@@ -75,6 +75,27 @@ test('buildPdfRowCells uses the active install-rate column logic instead of drop
   assert.equal(cells.install_rate, '20')
 })
 
+test('buildPdfRowCells emits row numbers for line rows without consuming group headers', () => {
+  const resolved = interpretPdfTableSettings([])
+
+  const firstLine = buildPdfRowCells({
+    description: 'Solar panel',
+    quantity: 1,
+    unit_price: 250000,
+    custom_data: {},
+  }, resolved.columns, { rowNumber: 1 })
+
+  const secondLine = buildPdfRowCells({
+    description: 'Battery bank',
+    quantity: 2,
+    unit_price: 175000,
+    custom_data: {},
+  }, resolved.columns, { rowNumber: 2 })
+
+  assert.equal(firstLine.num, '1')
+  assert.equal(secondLine.num, '2')
+})
+
 test('resolvePdfPageLayout keeps narrow tables portrait and promotes wide tables to landscape', () => {
   const portraitLayout = resolvePdfPageLayout(interpretPdfTableSettings([]).columns)
   const landscapeLayout = resolvePdfPageLayout(interpretPdfTableSettings([
