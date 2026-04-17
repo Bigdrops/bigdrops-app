@@ -718,6 +718,24 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   }
 
   const handleSave = async (status: Quotation['status']) => {
+    if (!quotation.client_id) {
+      toast({ title: 'Validation Error', description: 'Pick a client before saving', variant: 'destructive' })
+      return
+    }
+
+    const standardItems = items.filter((item) => item.row_type === 'standard')
+    const hasMeaningfulItem = standardItems.some((item) => item.description?.trim())
+
+    if (!hasMeaningfulItem) {
+      toast({ title: 'Validation Error', description: 'Add at least one item before saving', variant: 'destructive' })
+      return
+    }
+
+    if (standardItems.some((item) => !item.description?.trim())) {
+      toast({ title: 'Validation Error', description: 'Each item needs a description', variant: 'destructive' })
+      return
+    }
+
     const { project: validatedProject, error: projectError } = await validateProjectAssignment(
       supabase as unknown as ProjectLookupClient,
       {

@@ -349,13 +349,30 @@ export default function EditInvoice() {
   })
 
   const handleSave = async (status) => {
+    if (!invoice.client_id) {
+      toast({ title: 'Validation Error', description: 'Pick a client before saving', variant: 'destructive' })
+      return
+    }
+
+    const standardItems = items.filter((item) => item.row_type === 'standard')
+    const hasMeaningfulItem = standardItems.some((item) => item.description?.trim())
+
+    if (!hasMeaningfulItem) {
+      toast({ title: 'Validation Error', description: 'Add at least one item before saving', variant: 'destructive' })
+      return
+    }
+
+    if (standardItems.some((item) => !item.description?.trim())) {
+      toast({ title: 'Validation Error', description: 'Each item needs a description', variant: 'destructive' })
+      return
+    }
+
     setSaving(true)
 
     const groupMeta = {}
     groups.forEach((group) => {
       groupMeta[group.id] = { name: group.name, showSubtotal: group.showSubtotal }
     })
-
     const paymentTermsValue = invoice.payment_terms === 'Custom' ? invoice.custom_payment_terms : invoice.payment_terms
     const sanitizedBaseCustomFields = { ...baseCustomFields }
     delete sanitizedBaseCustomFields.bottom
