@@ -65,11 +65,18 @@ export default function ViewInvoice() {
   const { id } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
-
+  const pdfTemplates = [
+    {
+      id: 'industry',
+      label: 'Industry',
+      description: 'Structured professional layout',
+    },
+  ]
   const [showMore, setShowMore] = useState(false)
   const [showPdfSheet, setShowPdfSheet] = useState(false)
   const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
   const [pdfDesignPreset, setPdfDesignPresetState] = useState(() => getPdfDesignPreset('invoice'))
+  const [templateId, setTemplateId] = useState('industry')
 
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [voidingPaymentId, setVoidingPaymentId] = useState(null)
@@ -503,6 +510,7 @@ export default function ViewInvoice() {
             },
           },
         },
+        templateId, // Pass the selected template ID
       })
       toast({ title: 'PDF ready', description: 'Advance invoice PDF downloaded.' })
     } catch (error) {
@@ -796,6 +804,7 @@ export default function ViewInvoice() {
             },
           },
         },
+        templateId, // Pass the selected template ID
       })
       toast({ title: 'PDF ready', description: 'Invoice PDF downloaded.' })
     } catch (err) {
@@ -1079,6 +1088,9 @@ export default function ViewInvoice() {
               </CardContent>
             </Card>
           )}
+          templateValue={templateId}
+          onTemplateChange={setTemplateId}
+          templates={pdfTemplates}
           actions={[
             { label: 'Export CSV', onClick: handleDownloadCsv, variant: 'outline' },
             {
