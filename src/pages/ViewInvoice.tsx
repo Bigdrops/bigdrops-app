@@ -5,7 +5,6 @@ import { PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
 import InvoiceHtmlView from '@/components/document-view/invoice/InvoiceHtmlView'
 import InvoiceConfirmDialog from '@/components/document-view/invoice/InvoiceConfirmDialog'
 import {
-  InvoiceFloatingDownloadButton,
   InvoiceHero,
   InvoicePageShell,
   InvoiceTopNav,
@@ -46,6 +45,11 @@ const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
 const MODAL_REVERT = 'revert'
 const MODAL_VOID_PAYMENT = 'void-payment'
+
+const toTitleCase = (value: string) =>
+  String(value || '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (character) => character.toUpperCase())
 
 export default function ViewInvoice() {
   const navigate = useNavigate()
@@ -359,16 +363,27 @@ export default function ViewInvoice() {
     id: invoice.id,
     number: invoice.invoice_number || '',
     title: invoice.invoice_title || 'Invoice',
-    status: (viewModel.computedStatus || invoice.status || 'draft') as any,
+    status: toTitleCase(viewModel.statusLabel || invoice.status || 'draft'),
   }
 
   const metrics = [
-    { label: 'Total Due', value: formatNaira(viewModel.invoiceTotal || 0), status: 'info' as const },
-    { label: 'Received', value: formatNaira(viewModel.cashReceived || 0), status: 'positive' as const },
     {
-      label: 'Balance',
+      label: 'Total Due',
+      value: formatNaira(viewModel.invoiceTotal || 0),
+      hint: invoice.issue_date ? `Issued ${formatDisplayDate(invoice.issue_date)}` : 'Issue date not set',
+      tone: 'default' as const,
+    },
+    {
+      label: 'Received',
+      value: formatNaira(viewModel.cashReceived || 0),
+      hint: `${viewModel.activePaymentCount || 0} payment${viewModel.activePaymentCount === 1 ? '' : 's'} recorded`,
+      tone: 'positive' as const,
+    },
+    {
+      label: 'Balance Due',
       value: formatNaira(viewModel.balanceDue || 0),
-      status: (viewModel.balanceDue || 0) > 0 ? ('warning' as const) : ('positive' as const),
+      hint: invoice.due_date ? `Due ${formatDisplayDate(invoice.due_date)}` : 'Open due date',
+      tone: (viewModel.balanceDue || 0) > 0 ? ('warning' as const) : ('positive' as const),
     },
   ]
 
@@ -422,6 +437,20 @@ export default function ViewInvoice() {
       }))
     : []
 
+  const heroMeta = [
+    { label: 'Client', value: invoice.client_name || 'Unassigned' },
+    { label: 'Issue date', value: invoice.issue_date ? formatDisplayDate(invoice.issue_date) : 'Not set' },
+    { label: 'Due date', value: invoice.due_date ? formatDisplayDate(invoice.due_date) : 'Open' },
+    {
+      label: linkedProject ? 'Project' : sourceDocument ? 'Source' : 'PO number',
+      value:
+        (linkedProject?.name && String(linkedProject.name)) ||
+        (sourceDocument?.number && String(sourceDocument.number)) ||
+        invoice.po_number ||
+        'Not linked',
+    },
+  ]
+
   return (
     <>
       <InvoicePageShell
@@ -435,7 +464,7 @@ export default function ViewInvoice() {
             onMore={() => ui.openSheet(SHEET_MORE)}
           />
         }
-        floating={<InvoiceFloatingDownloadButton onClick={() => void handleDownload()} disabled={downloading} />}
+        floating={null}
         overlay={
           <>
             <PdfOutputCustomizeSheet
@@ -545,15 +574,16 @@ export default function ViewInvoice() {
         }
       >
         <InvoiceHero
-          label={invoice.invoice_title || 'Tax Invoice'}
+          eyebrow="Invoice"
           number={docProps.number}
-          description={invoice.client_name || 'No client specified'}
+          title={docProps.title}
+          clientName={invoice.client_name || 'No client specified'}
           status={docProps.status}
-          totals={metrics}
+          metrics={metrics}
+          meta={heroMeta}
         />
 
         <InvoiceViewPage
-          metrics={metrics}
           documentPreview={
             <InvoiceHtmlView
               invoice={invoice}
@@ -565,7 +595,15 @@ export default function ViewInvoice() {
           }
           paymentSummary={[
             { label: 'Cash Received', value: formatNaira(viewModel.cashReceived || 0), tone: 'green' },
-            { label: 'Balance Due', value: formatNaira(viewModel.balanceDue || 0) },
+            {
+              label: 'Payments',
+              value: `${viewModel.activePaymentCount || 0} recorded`,
+            },
+            {
+              label: 'Balance Due',
+              value: formatNaira(viewModel.balanceDue || 0),
+              tone: (viewModel.balanceDue || 0) > 0 ? 'amber' : 'green',
+            },
           ]}
           paymentProgressLabel={`${progressPercent}% settled · ${formatNaira(viewModel.balanceDue || 0)} remaining`}
           paymentProgressWidth={`${progressPercent}%`}
@@ -593,10 +631,8 @@ export default function ViewInvoice() {
           attachments={attachments}
           onRecordPayment={() => ui.openSheet(SHEET_RECORD_PAYMENT)}
           onEdit={() => navigate(`/invoices/edit/${id}`)}
-          onAdvanceDownload={() => void handleDownload()}
-          onAdvanceEdit={() => ui.openSheet(SHEET_ADVANCE)}
-          onAdvanceRemove={() => ui.openModal(MODAL_DELETE)}
-          onVoidPayment={() => ui.openModal(MODAL_VOID_PAYMENT)}
+          onDownload={() => void handleDownload()}
+          canRecordPayment={viewModel.canRecordPayment}
         />
       </InvoicePageShell>
 
