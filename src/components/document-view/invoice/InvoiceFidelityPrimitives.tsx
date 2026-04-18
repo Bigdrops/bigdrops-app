@@ -81,10 +81,12 @@ export function InvoiceHero({
             <div className={styles['doc-label']}>{label}</div>
             <div className={styles['invoice-num']}>{number}</div>
             <div className={styles['invoice-sub']}>{description}</div>
-            <div className={styles['thread-tag']}>
-              <Banknote size={12} strokeWidth={2.5} style={{ marginRight: 4 }} />
-              {threadTag}
-            </div>
+            {threadTag ? (
+              <div className={styles['thread-tag']}>
+                <Banknote size={12} strokeWidth={2.5} style={{ marginRight: 4 }} />
+                {threadTag}
+              </div>
+            ) : null}
           </div>
           <div className={`${styles['status-pill']} ${styles[status?.toLowerCase()] || styles.draft}`}>
             <div className={styles['status-dot']}></div>
