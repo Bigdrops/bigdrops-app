@@ -74,6 +74,9 @@ export const denormalizeToDbRfq = (rfq: Rfq): DbRfq => {
     created_at,
     updated_at,
     items,
+    template_id,
+    table_rows,
+    table_columns,
     show_vendor_identity,
     background_color,
     text_color,
@@ -86,10 +89,10 @@ export const denormalizeToDbRfq = (rfq: Rfq): DbRfq => {
   const custom_fields = {
     ...(rfq.custom_fields || {}),
     show_vendor_identity,
-    template_id: rfq.template_id || DEFAULT_TABLE_TEMPLATE,
-    table_rows: rfq.table_rows || [],
-    table_columns: rfq.table_columns || getDefaultColumnsForDocument('rfq'),
-  };
+    template_id: template_id || DEFAULT_TABLE_TEMPLATE,
+    table_rows: table_rows || [],
+    table_columns: table_columns || getDefaultColumnsForDocument('rfq'),
+  }
 
   return {
     ...rest,

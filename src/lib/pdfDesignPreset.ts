@@ -1,7 +1,7 @@
 import { getRegisteredFillablePdfFontFamily, getRegisteredFillableWebFontFamily } from '@/lib/pdfFillableFonts'
 import { getRegisteredSharedFontConfig, getRegisteredSharedWebFontFamily, isRegisteredSharedFontChoice } from '@/lib/pdfSharedFonts'
 
-export type PdfDesignPresetDocument = 'invoice' | 'quotation' | 'csr' | 'waybill'
+export type PdfDesignPresetDocument = 'invoice' | 'quotation' | 'csr' | 'waybill' | 'boq'
 export type PdfFontChoice =
   | 'Inter'
   | 'Roboto'
@@ -28,6 +28,10 @@ export type PdfDesignPreset = {
   useCustomColors: boolean
   useCustomFonts: boolean
   accentColor: string
+  textColor: string
+  mutedColor: string
+  borderColor: string
+  surfaceColor: string
   headerFont: PdfFontChoice
   bodyFont: PdfFontChoice
   fillableFont: PdfFillableFontChoice
@@ -40,6 +44,7 @@ const DESIGN_PRESET_KEYS: Record<PdfDesignPresetDocument, string> = {
   quotation: 'quotation_pdf_design_preset',
   csr: 'csr_pdf_design_preset',
   waybill: 'waybill_pdf_design_preset',
+  boq: 'boq_pdf_design_preset',
 }
 
 const PDF_FONT_VALUES: PdfFontChoice[] = [
@@ -95,6 +100,10 @@ const DEFAULT_PRESETS: Record<PdfDesignPresetDocument, PdfDesignPreset> = {
     useCustomColors: false,
     useCustomFonts: false,
     accentColor: '#14b8a6',
+    textColor: '#0f172a',
+    mutedColor: '#475569',
+    borderColor: '#cbd5e1',
+    surfaceColor: '#f8fafc',
     headerFont: 'Inter',
     bodyFont: 'Inter',
     fillableFont: 'Inter',
@@ -105,6 +114,10 @@ const DEFAULT_PRESETS: Record<PdfDesignPresetDocument, PdfDesignPreset> = {
     useCustomColors: false,
     useCustomFonts: false,
     accentColor: '#0f172a',
+    textColor: '#0f172a',
+    mutedColor: '#475569',
+    borderColor: '#cbd5e1',
+    surfaceColor: '#f8fafc',
     headerFont: 'Inter',
     bodyFont: 'Inter',
     fillableFont: 'Inter',
@@ -115,6 +128,10 @@ const DEFAULT_PRESETS: Record<PdfDesignPresetDocument, PdfDesignPreset> = {
     useCustomColors: false,
     useCustomFonts: false,
     accentColor: '#0f172a',
+    textColor: '#0f172a',
+    mutedColor: '#475569',
+    borderColor: '#cbd5e1',
+    surfaceColor: '#f8fafc',
     headerFont: 'Inter',
     bodyFont: 'Inter',
     fillableFont: 'Patrick Hand',
@@ -125,10 +142,28 @@ const DEFAULT_PRESETS: Record<PdfDesignPresetDocument, PdfDesignPreset> = {
     useCustomColors: false,
     useCustomFonts: false,
     accentColor: '#0f172a',
+    textColor: '#0f172a',
+    mutedColor: '#475569',
+    borderColor: '#cbd5e1',
+    surfaceColor: '#f8fafc',
     headerFont: 'Inter',
     bodyFont: 'Inter',
     fillableFont: 'Patrick Hand',
     fillableFontMode: 'custom',
+    fillableColor: '#0f172a',
+  },
+  boq: {
+    useCustomColors: false,
+    useCustomFonts: false,
+    accentColor: '#0f172a',
+    textColor: '#0f172a',
+    mutedColor: '#475569',
+    borderColor: '#cbd5e1',
+    surfaceColor: '#f8fafc',
+    headerFont: 'Inter',
+    bodyFont: 'Inter',
+    fillableFont: 'Inter',
+    fillableFontMode: 'auto',
     fillableColor: '#0f172a',
   },
 }
@@ -179,6 +214,10 @@ export function sanitizePdfDesignPreset(
     useCustomColors: value?.useCustomColors === true,
     useCustomFonts: value?.useCustomFonts === true,
     accentColor: normalizeHexColor(value?.accentColor, fallback.accentColor),
+    textColor: normalizeHexColor(value?.textColor, fallback.textColor),
+    mutedColor: normalizeHexColor(value?.mutedColor, fallback.mutedColor),
+    borderColor: normalizeHexColor(value?.borderColor, fallback.borderColor),
+    surfaceColor: normalizeHexColor(value?.surfaceColor, fallback.surfaceColor),
     headerFont: normalizeFontChoice(value?.headerFont, fallback.headerFont),
     bodyFont: normalizeFontChoice(value?.bodyFont, fallback.bodyFont),
     fillableFont: normalizeFillableFontChoice(value?.fillableFont, fallback.fillableFont),

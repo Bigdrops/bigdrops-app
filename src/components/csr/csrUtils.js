@@ -1,5 +1,7 @@
 export const CSR_META_PREFIX = '__CSR_META_V1__'
 
+export { getCsrPdfDocument } from './CSRPreviewTemplates'
+
 export const DEFAULT_MATERIAL_ROW = {
   item: '',
   quantity: '',

@@ -1,5 +1,5 @@
-import { getPdfCellValue, resolveInstallRate } from '../../domain/invoice/columns.ts'
-import type { ColumnConfig, InvoiceItem } from '../../domain/invoice/types.ts'
+import { getPdfCellValue, resolveInstallRate } from '../../domain/invoice/columns'
+import type { ColumnConfig, InvoiceItem } from '../../domain/invoice/types'
 import type {
   PdfCellValue,
   PdfColumnDefinition,

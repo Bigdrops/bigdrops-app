@@ -1,7 +1,30 @@
 import { formatCurrency } from '../../lib/formatters/money.js'
+import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import type { PdfColumnDefinition, PdfDocumentModel, PdfPageLayout } from './types'
 
+type IndustryTemplateDesign = Pick<
+  PdfDesignPreset,
+  | 'accentColor'
+  | 'textColor'
+  | 'mutedColor'
+  | 'borderColor'
+  | 'surfaceColor'
+  | 'headerFont'
+  | 'bodyFont'
+  | 'useCustomFonts'
+  | 'useCustomColors'
+> & {
+  accentColor: string | null
+  textColor: string | null
+  mutedColor: string | null
+  borderColor: string | null
+  surfaceColor: string | null
+  headerFont: string | null
+  bodyFont: string | null
+}
+
 export type IndustryTemplateData = {
+  title: string
   customTitle: string | null
   documentNumber: string
   documentNumberLabel: string
@@ -84,17 +107,7 @@ export type IndustryTemplateData = {
     extraText: string
   }
   layout: PdfPageLayout
-  design: {
-    accentColor: string | null
-    textColor: string | null
-    mutedColor: string | null
-    borderColor: string | null
-    surfaceColor: string | null
-    headerFont: string | null
-    bodyFont: string | null
-    useCustomFonts: boolean
-    useCustomColors: boolean
-  }
+  design: IndustryTemplateDesign
 }
 
 const PDF_MONEY_KEYS = new Set(['unit_price', 'amount', 'install_rate'])

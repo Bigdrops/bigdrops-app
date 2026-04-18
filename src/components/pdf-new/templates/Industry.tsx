@@ -20,7 +20,17 @@ import {
 type TemplateProps = { data: IndustryTemplateData }
 
 export default function IndustryTemplate({ data }: TemplateProps) {
-  const design = data?.design || {}
+  const design: IndustryTemplateData['design'] = data?.design || {
+    accentColor: null,
+    textColor: null,
+    mutedColor: null,
+    borderColor: null,
+    surfaceColor: null,
+    headerFont: null,
+    bodyFont: null,
+    useCustomFonts: false,
+    useCustomColors: false,
+  }
   const accentColor = design.useCustomColors && design.accentColor ? design.accentColor : null
   const textColor = design.useCustomColors && design.textColor ? design.textColor : null
   const mutedColor = design.useCustomColors && design.mutedColor ? design.mutedColor : null

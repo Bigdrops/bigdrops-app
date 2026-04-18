@@ -24,6 +24,7 @@ import { downloadPdfFromElement } from '@/components/document-view/shared/downlo
 import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
+import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { archiveCSRRecord, deleteCSRRecord, duplicateCSRRecord, updateCSRStatus } from './viewCSRActions'
 
 const SHEET_MORE = 'more-actions'

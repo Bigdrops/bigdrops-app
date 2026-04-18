@@ -201,6 +201,11 @@ export async function deleteQuotationRecord(id: string) {
   if (error) throw error
 }
 
+export async function archiveQuotationRecord(id: string) {
+  const { error } = await supabase.from('quotations').update({ archived_at: new Date().toISOString() }).eq('id', id)
+  if (error) throw error
+}
+
 export async function updateQuotationStatus(id: string, status: string) {
   const { error } = await supabase.from('quotations').update({ status }).eq('id', id)
   if (error) throw error

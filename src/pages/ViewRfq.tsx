@@ -10,7 +10,7 @@ import DocumentHero from '@/components/document-view/shared/DocumentHero'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
-import { useToastStack } from '@/hooks/useToastStack'
+import { useToastStack } from '@/components/document-view/hooks/useToastStack'
 import RfqHeroMeta from '@/components/document-view/rfq/RfqHeroMeta'
 import RfqMoreSheet from '@/components/document-view/rfq/RfqMoreSheet'
 import RfqViewPage from '@/components/document-view/rfq/RfqViewPage'
@@ -115,6 +115,34 @@ export default function ViewRfq() {
     } finally {
       setDownloading(false)
     }
+  }
+
+  const handleExportCsv = () => {
+    if (!rfq) return
+
+    const rows = (Array.isArray(rfq.table_rows) ? rfq.table_rows : []).filter((row: any) => row?.row_type !== 'section')
+    const escapeCsv = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`
+    const csv = [
+      ['Description', 'Specification', 'Quantity', 'Unit', 'Make / Brand', 'CP', 'SP'].map(escapeCsv).join(','),
+      ...rows.map((row: any) => [
+        row.description,
+        row.specification,
+        row.quantity,
+        row.unit,
+        row.make_brand,
+        row.cp,
+        row.sp,
+      ].map(escapeCsv).join(',')),
+    ].join('\n')
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = window.URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `${rfq.rfq_number || 'rfq'}.csv`
+    anchor.click()
+    window.URL.revokeObjectURL(url)
+    showToast('CSV ready', 'RFQ items exported as CSV.', 'success')
   }
 
   const handleUpdateStatus = async (status: string, successLabel: string) => {
@@ -296,7 +324,7 @@ export default function ViewRfq() {
               onLinkProject={() => setProjectLinkOpen(true)}
               onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}
-              onExport={() => void handleDownload()}
+              onExportCsv={handleExportCsv}
               onArchive={() => ui.openModal(MODAL_ARCHIVE)}
               onDelete={() => ui.openModal(MODAL_DELETE)}
             />
@@ -338,7 +366,7 @@ export default function ViewRfq() {
               tableName="rfqs"
               recordId={String(id || '')}
               documentLabel={docProps.number || 'RFQ'}
-              onLinked={() => {}}
+              onLinked={() => { }}
             />
           </>
         }

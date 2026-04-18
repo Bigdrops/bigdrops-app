@@ -179,6 +179,7 @@ export default function CsrFormScreen({
   const [signatories, setSignatories] = React.useState<SignatoryRow[]>([])
   const [signatorySheetOpen, setSignatorySheetOpen] = React.useState(false)
   const [importSheetOpen, setImportSheetOpen] = React.useState(false)
+  const [clientPickerOpen, setClientPickerOpen] = React.useState(false)
   const [materialsTitle, setMaterialsTitle] = React.useState('Materials Used')
   const [recipientSignatureName, setRecipientSignatureName] = React.useState('')
   const recipientSignatureInputRef = React.useRef<HTMLInputElement | null>(null)
@@ -229,6 +230,8 @@ export default function CsrFormScreen({
               clientId={String(csr.client_id || '')}
               clientName={String(csr.client_name || '')}
               isMobile
+              open={clientPickerOpen}
+              onOpenChange={setClientPickerOpen}
               onClientChange={(clientId: string, clientName: string, client: { address?: string | null } | null) => {
                 onUpdate('client_id', clientId || '')
                 onUpdate('client_name', clientName || '')

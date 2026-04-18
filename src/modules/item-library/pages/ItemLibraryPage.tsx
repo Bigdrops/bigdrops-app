@@ -39,7 +39,7 @@ export default function ItemLibraryPage() {
   } = useItemHistoryDetail(selectedItem?.item_id, 50)
 
   return (
-    <Layout title="Item Library" hidePageHeader={false}>
+    <Layout title="Item Library" session={null} hidePageHeader={false}>
       <div className="space-y-6">
         <section className="rounded-3xl border border-border bg-card px-6 py-6 shadow-sm">
           <div className="max-w-3xl">

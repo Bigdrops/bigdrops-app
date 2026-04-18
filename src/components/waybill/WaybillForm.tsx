@@ -108,6 +108,7 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
   const [loading, setLoading] = useState(mode === 'edit')
   const [saving, setSaving] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
+  const [clientPickerOpen, setClientPickerOpen] = useState(false)
   const [invoiceSearch, setInvoiceSearch] = useState('')
   const [invoiceSuggestions, setInvoiceSuggestions] = useState<{ id: string; invoice_number: string }[]>([])
   const [projectName, setProjectName] = useState(prefill?.projectName || '')
@@ -350,6 +351,8 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
               <ClientSelector
                 clientId={waybill.client_id}
                 clientName={waybill.client_name}
+                open={clientPickerOpen}
+                onOpenChange={setClientPickerOpen}
                 onClientChange={(clientId, clientName) => {
                   updateWaybill('client_id', clientId || '')
                   updateWaybill('client_name', clientName || '')

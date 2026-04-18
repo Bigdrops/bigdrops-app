@@ -1,28 +1,30 @@
 import { supabase } from '@/supabase'
 
 export async function archiveRFQRecord(id: string) {
-  const { error } = await supabase.from('rfq').update({ archived_at: new Date().toISOString() }).eq('id', id)
+  const { error } = await supabase.from('rfqs').update({ archived_at: new Date().toISOString() }).eq('id', id)
   if (error) throw error
 }
 
 export async function deleteRFQRecord(id: string) {
-  const { error } = await supabase.from('rfq').delete().eq('id', id)
+  const { error: itemError } = await supabase.from('rfq_items').delete().eq('rfq_id', id)
+  if (itemError) throw itemError
+  const { error } = await supabase.from('rfqs').delete().eq('id', id)
   if (error) throw error
 }
 
 export async function updateRFQStatus(id: string, status: string) {
-  const { error } = await supabase.from('rfq').update({ status }).eq('id', id)
+  const { error } = await supabase.from('rfqs').update({ status }).eq('id', id)
   if (error) throw error
 }
 
 export async function duplicateRFQRecord(id: string) {
-  const { data: original, error: fetchError } = await supabase.from('rfq').select('*').eq('id', id).single()
+  const { data: original, error: fetchError } = await supabase.from('rfqs').select('*').eq('id', id).single()
   if (fetchError || !original) throw new Error(fetchError?.message || 'RFQ not found')
 
   const { id: _id, created_at: _ca, updated_at: _ua, rfq_number: _wn, ...rest } = original
   
   // Find next number
-  const { data: all } = await supabase.from('rfq').select('rfq_number').like('rfq_number', 'RFQ-%').order('created_at', { ascending: false })
+  const { data: all } = await supabase.from('rfqs').select('rfq_number').like('rfq_number', 'RFQ-%').order('created_at', { ascending: false })
   let nextNum = 1
   if (all && all.length > 0) {
     const nums = all
@@ -31,11 +33,11 @@ export async function duplicateRFQRecord(id: string) {
     nextNum = nums.length > 0 ? Math.max(...nums) + 1 : 1
   }
 
-  const { data: created, error: insertError } = await supabase.from('rfq').insert([{
+  const { data: created, error: insertError } = await supabase.from('rfqs').insert([{
     ...rest,
     rfq_number: `RFQ-${String(nextNum).padStart(4, '0')}`,
     status: 'draft',
-    date: new Date().toISOString().split('T')[0],
+    issue_date: new Date().toISOString().split('T')[0],
   }]).select().single()
 
   if (insertError) throw insertError

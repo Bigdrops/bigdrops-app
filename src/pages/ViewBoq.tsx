@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { BoqPdfDocument } from '@/components/boq/BoqPdfDocument'
-import { BoqDocumentPreview } from '@/components/boq/BoqDocumentPreview'
+import { BoqPreview } from '@/components/boq/BoqPreview'
 import BoqHeroMeta from '@/components/document-view/boq/BoqHeroMeta'
 import BoqMoreSheet from '@/components/document-view/boq/BoqMoreSheet'
 import BoqViewPage from '@/components/document-view/boq/BoqViewPage'
@@ -23,8 +23,8 @@ import { supabase } from '@/supabase'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { archiveBOQRecord, convertBOQToQuotation, deleteBOQRecord, duplicateBOQRecord, updateBOQStatus } from './viewBOQActions'
-import { DocumentTemplateDesignOverrides } from '@/components/document-view/shared/DocumentTemplateDesignOverrides'
-import { getPdfDesignPreset, setPdfDesignPreset } from '@/domain/settings/pdfDesign'
+import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
+import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -105,7 +105,7 @@ export default function ViewBoq() {
       await downloadPdfFromElement({
         fileName: boq.boq_number || 'boq',
         subdirectory: 'boq',
-        element: <BoqPdfDocument boq={boq} rows={boq.table_rows} />,
+        element: <BoqPdfDocument boq={boq} />,
       })
       showToast('Download ready', `${boq.boq_number || 'BOQ'} exported as PDF.`, 'success')
     } catch (error) {
@@ -260,8 +260,9 @@ export default function ViewBoq() {
             <BoqMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)}
               onClose={ui.closeSheet}
-              onMarkAsApproved={() => void handleUpdateStatus('approved', 'Marked as Approved')}
-              onConvertToQuotation={() => ui.openModal(MODAL_GENERATE_QUOTE)}
+              onMarkAsIssued={() => void handleUpdateStatus('approved', 'Marked as Approved')}
+              onGenerateQuotation={() => ui.openModal(MODAL_GENERATE_QUOTE)}
+              onCreateRevision={() => void handleDuplicate()}
               onLinkProject={() => setProjectLinkOpen(true)}
               onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}
@@ -315,7 +316,7 @@ export default function ViewBoq() {
         <BoqViewPage
           document={docProps}
           metrics={metrics}
-          preview={<BoqDocumentPreview boq={boq} />}
+          preview={<BoqPreview boq={boq} />}
           onGenerateQuotation={() => ui.openModal(MODAL_GENERATE_QUOTE)}
           onEdit={() => navigate(`/boqs/edit/${id}`)}
           onDuplicate={() => void handleDuplicate()}
