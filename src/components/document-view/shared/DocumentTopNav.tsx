@@ -26,7 +26,7 @@ export default function DocumentTopNav({
   return (
     <nav className={styles.nav}>
       <button type="button" onClick={onBack} className={styles.backButton}>
-        <ChevronLeft size={18} strokeWidth={2.5} />
+        <ChevronLeft size={18} strokeWidth={2.4} />
         <span>{backLabel}</span>
       </button>
 
@@ -38,7 +38,7 @@ export default function DocumentTopNav({
       <div className={styles.actions}>
         {onShare && (
           <button type="button" className={styles.iconBtn} title="Share" onClick={onShare}>
-            <Share2 size={16} strokeWidth={2} />
+            <Share2 size={17} strokeWidth={2.4} />
           </button>
         )}
         {onCustomize && (
@@ -48,12 +48,12 @@ export default function DocumentTopNav({
             title="Customize"
             onClick={onCustomize}
           >
-            {customizeIcon || <SlidersHorizontal size={17} strokeWidth={2} />}
+            {customizeIcon || <SlidersHorizontal size={17} strokeWidth={2.4} />}
           </button>
         )}
         {onMore && (
           <button type="button" className={styles.iconBtn} title="More actions" onClick={onMore}>
-            <MoreHorizontal size={17} strokeWidth={2} />
+            <MoreHorizontal size={17} strokeWidth={2.4} />
           </button>
         )}
       </div>
