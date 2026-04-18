@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
-import { DocumentLivePreviewCard } from '@/components/document/DocumentViewShell'
+import InvoiceHtmlView from '@/components/document-view/invoice/InvoiceHtmlView'
 import InvoiceConfirmDialog from '@/components/document-view/invoice/InvoiceConfirmDialog'
 import {
   InvoiceFloatingDownloadButton,
@@ -70,7 +70,7 @@ export default function ViewInvoice() {
   } = useInvoiceDetailData(id)
 
   const [downloading, setDownloading] = useState(false)
-  const [pdfOutput, setPdfOutput] = useState<PdfOutputSettingsValue>(DEFAULT_INVOICE_PDF_OUTPUT)
+  const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
   const [reverting, setReverting] = useState(false)
   const settingsData: any = settings || {}
@@ -136,7 +136,11 @@ export default function ViewInvoice() {
         title: invoice?.invoice_number || 'Invoice',
         text: invoice?.invoice_title || 'Invoice',
       })
-      showToast(result === 'shared' ? 'Share sheet opened' : 'Link copied', result === 'shared' ? 'Invoice share is ready.' : 'Invoice link copied.', 'success')
+      showToast(
+        result === 'shared' ? 'Share sheet opened' : 'Link copied',
+        result === 'shared' ? 'Invoice share is ready.' : 'Invoice link copied.',
+        'success',
+      )
     } catch (error) {
       showToast('Share failed', error instanceof Error ? error.message : 'Could not share this invoice.')
     }
@@ -216,7 +220,13 @@ export default function ViewInvoice() {
             discountRate: item.discount_rate ?? null,
             amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
             imageUrl: item.image_url || null,
-            cells: item.row_type === 'group_header' ? undefined : buildPdfRowCells(item, resolvedTable.columns, { mergeQtyUnit: resolvedTable.mergeQtyUnit, configuredColumns: resolvedTable.configuredColumns }),
+            cells:
+              item.row_type === 'group_header'
+                ? undefined
+                : buildPdfRowCells(item, resolvedTable.columns, {
+                    mergeQtyUnit: resolvedTable.mergeQtyUnit,
+                    configuredColumns: resolvedTable.configuredColumns,
+                  }),
             customData: item.custom_data || {},
           })),
           totals: {
@@ -231,8 +241,12 @@ export default function ViewInvoice() {
             balanceDue: viewModel.balanceDue || 0,
           },
           bankDetails: pdfOutput.showBankDetails ? previewModel.selectedPreviewBank : null,
-          notes: invoice.notes ? { title: String(customFields.notesTitle || 'Notes'), content: invoice.notes, format: 'html' } : null,
-          terms: invoice.terms ? { title: String(customFields.termsTitle || 'Terms and Conditions'), content: invoice.terms, format: 'html' } : null,
+          notes: invoice.notes
+            ? { title: String(customFields.notesTitle || 'Notes'), content: invoice.notes, format: 'html' }
+            : null,
+          terms: invoice.terms
+            ? { title: String(customFields.termsTitle || 'Terms and Conditions'), content: invoice.terms, format: 'html' }
+            : null,
           additionalSections: [],
           referenceLinks,
           signature: null,
@@ -337,19 +351,28 @@ export default function ViewInvoice() {
   const metrics = [
     { label: 'Total Due', value: formatNaira(viewModel.invoiceTotal || 0), status: 'info' as const },
     { label: 'Received', value: formatNaira(viewModel.cashReceived || 0), status: 'positive' as const },
-    { label: 'Balance', value: formatNaira(viewModel.balanceDue || 0), status: (viewModel.balanceDue || 0) > 0 ? 'warning' as const : 'positive' as const },
+    {
+      label: 'Balance',
+      value: formatNaira(viewModel.balanceDue || 0),
+      status: (viewModel.balanceDue || 0) > 0 ? ('warning' as const) : ('positive' as const),
+    },
   ]
 
-  const progressPercent = viewModel.invoiceTotal > 0 ? Math.min(100, Math.round((viewModel.cashReceived / viewModel.invoiceTotal) * 100)) : 0
+  const progressPercent =
+    viewModel.invoiceTotal > 0 ? Math.min(100, Math.round((viewModel.cashReceived / viewModel.invoiceTotal) * 100)) : 0
   const relatedDocuments = [
     ...(sourceDocument
-      ? [{
-          id: String(sourceDocument.id || sourceDocument.number || 'source'),
-          title: `${sourceDocument.type === 'quotation' ? 'Quotation' : 'Document'} · ${sourceDocument.number || sourceDocument.id || 'Linked source'}`,
-          subtitle: sourceDocument.po_number ? `PO ${sourceDocument.po_number}` : 'Open source document',
-          kind: 'quotation' as const,
-          onClick: sourceDocument.id ? () => navigate(`/${sourceDocument.type === 'quotation' ? 'quotations' : 'invoices'}/${sourceDocument.id}`) : undefined,
-        }]
+      ? [
+          {
+            id: String(sourceDocument.id || sourceDocument.number || 'source'),
+            title: `${sourceDocument.type === 'quotation' ? 'Quotation' : 'Document'} · ${sourceDocument.number || sourceDocument.id || 'Linked source'}`,
+            subtitle: sourceDocument.po_number ? `PO ${sourceDocument.po_number}` : 'Open source document',
+            kind: 'quotation' as const,
+            onClick: sourceDocument.id
+              ? () => navigate(`/${sourceDocument.type === 'quotation' ? 'quotations' : 'invoices'}/${sourceDocument.id}`)
+              : undefined,
+          },
+        ]
       : []),
     ...relatedCsrs.map((csr: any) => ({
       id: `csr-${csr.id}`,
@@ -366,22 +389,23 @@ export default function ViewInvoice() {
       onClick: () => navigate(`/waybills/${waybill.id}`),
     })),
     ...(linkedProject
-      ? [{
-          id: `project-${linkedProject.id}`,
-          title: `Project · ${linkedProject.name || linkedProject.id}`,
-          subtitle: 'Open linked project',
-          kind: 'project' as const,
-          onClick: () => navigate(`/projects/${linkedProject.id}`),
-        }]
+      ? [
+          {
+            id: `project-${linkedProject.id}`,
+            title: `Project · ${linkedProject.name || linkedProject.id}`,
+            subtitle: 'Open linked project',
+            kind: 'project' as const,
+            onClick: () => navigate(`/projects/${linkedProject.id}`),
+          },
+        ]
       : []),
   ]
 
   const attachments = Array.isArray(customFields.attachments)
-    ? customFields.attachments
-        .map((entry: any, index: number) => ({
-          id: `attachment-${index}`,
-          label: String(entry.label || entry.name || entry.url || `Reference ${index + 1}`),
-        }))
+    ? customFields.attachments.map((entry: any, index: number) => ({
+        id: `attachment-${index}`,
+        label: String(entry.label || entry.name || entry.url || `Reference ${index + 1}`),
+      }))
     : []
 
   return (
@@ -513,37 +537,10 @@ export default function ViewInvoice() {
           status={docProps.status}
           totals={metrics}
         />
+
         <InvoiceViewPage
           metrics={metrics}
-          documentPreview={
-            <DocumentLivePreviewCard
-              templateLabel="Live PDF"
-              documentLabel="Invoice"
-              documentNumber={invoice.invoice_number || 'Invoice'}
-              companyName={String(settingsData.company_name || '')}
-              companyTagline={pdfOutput.showTagline ? String(settingsData.company_tagline || '') : ''}
-              companyLines={previewModel.companyPreviewLines}
-              recipientLabel="Bill To"
-              recipientName={invoice.client_name || 'Unassigned'}
-              recipientLines={previewModel.clientPreviewLines}
-              meta={[
-                { label: 'Issue Date', value: invoice.issue_date || 'Not set' },
-                { label: 'Due Date', value: invoice.due_date || 'Open' },
-                { label: 'Status', value: String(viewModel.statusLabel || 'draft') },
-              ]}
-              detailRows={previewModel.previewDetailRows}
-              items={previewModel.previewItems}
-              totals={previewModel.previewTotals}
-              amountInWords={invoice.amount_in_words || ''}
-              bankDetails={pdfOutput.showBankDetails ? previewModel.selectedPreviewBank : null}
-              notesSections={mapInvoicePreviewNotesContent(previewModel.previewNotesSections)}
-              signatory={null}
-              accentColor={getPdfDesignPreset('invoice').accentColor}
-              headerFontFamily={resolvePdfWebFontFamily(getPdfDesignPreset('invoice').headerFont)}
-              bodyFontFamily={resolvePdfWebFontFamily(getPdfDesignPreset('invoice').bodyFont)}
-              previewNote="Preview reflects the current invoice record, client data, and saved PDF output settings."
-            />
-          }
+          documentPreview={<InvoiceHtmlView />}
           paymentSummary={[
             { label: 'Cash Received', value: formatNaira(viewModel.cashReceived || 0), tone: 'green' },
             { label: 'Balance Due', value: formatNaira(viewModel.balanceDue || 0) },
@@ -560,12 +557,14 @@ export default function ViewInvoice() {
           }))}
           advanceInvoices={
             invoice.is_advance
-              ? [{
-                  id: String(invoice.id),
-                  title: invoice.invoice_title || invoice.invoice_number || 'Advance Invoice',
-                  subtitle: 'This invoice is marked as an advance invoice.',
-                  amountLabel: formatNaira(viewModel.invoiceTotal || 0),
-                }]
+              ? [
+                  {
+                    id: String(invoice.id),
+                    title: invoice.invoice_title || invoice.invoice_number || 'Advance Invoice',
+                    subtitle: 'This invoice is marked as an advance invoice.',
+                    amountLabel: formatNaira(viewModel.invoiceTotal || 0),
+                  },
+                ]
               : []
           }
           relatedDocuments={relatedDocuments}
