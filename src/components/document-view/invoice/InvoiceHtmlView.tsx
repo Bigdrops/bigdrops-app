@@ -1,3 +1,6 @@
+import type { ReactNode } from 'react'
+import './InvoiceHtmlView.css'
+
 type InvoiceHtmlViewProps = {
   invoice: any
   viewModel: any
@@ -11,7 +14,7 @@ function Section({
   children,
 }: {
   title?: string
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <section className="invoice-html-section">
@@ -20,13 +23,13 @@ function Section({
     </section>
   )
 }
-import './InvoiceHtmlView.css'
+
 function KeyValue({
   label,
   value,
 }: {
   label: string
-  value: React.ReactNode
+  value: ReactNode
 }) {
   return (
     <div className="invoice-html-kv">
@@ -139,7 +142,10 @@ export default function InvoiceHtmlView({
               <article className="invoice-html-item" key={item?.id || index}>
                 <div className="invoice-html-item-top">
                   <h4 className="invoice-html-item-title">
-                    {item?.title || item?.name || item?.description || `Item ${index + 1}`}
+                    {item?.title ||
+                      item?.name ||
+                      item?.description ||
+                      `Item ${index + 1}`}
                   </h4>
                   <div className="invoice-html-item-amount">
                     {item?.amountLabel || item?.amount || '—'}
@@ -194,9 +200,15 @@ export default function InvoiceHtmlView({
       {bank ? (
         <Section title="Bank Details">
           <div className="invoice-html-grid">
-            {bank.bank_name ? <KeyValue label="Bank" value={bank.bank_name} /> : null}
-            {bank.account_name ? <KeyValue label="Account Name" value={bank.account_name} /> : null}
-            {bank.account_number ? <KeyValue label="Account Number" value={bank.account_number} /> : null}
+            {bank.bank_name ? (
+              <KeyValue label="Bank" value={bank.bank_name} />
+            ) : null}
+            {bank.account_name ? (
+              <KeyValue label="Account Name" value={bank.account_name} />
+            ) : null}
+            {bank.account_number ? (
+              <KeyValue label="Account Number" value={bank.account_number} />
+            ) : null}
           </div>
         </Section>
       ) : null}
@@ -205,7 +217,10 @@ export default function InvoiceHtmlView({
         <Section title="Notes">
           <div className="invoice-html-notes">
             {noteSections.map((section: any, index: number) => (
-              <div key={section?.title || index} className="invoice-html-note-block">
+              <div
+                key={section?.title || index}
+                className="invoice-html-note-block"
+              >
                 {section?.title ? <h4>{section.title}</h4> : null}
                 <div>{section?.content || section?.body || '—'}</div>
               </div>
