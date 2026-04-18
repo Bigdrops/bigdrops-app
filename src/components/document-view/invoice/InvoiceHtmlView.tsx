@@ -1,7 +1,3 @@
-import type { ReactNode } from 'react'
-
-import { mapInvoicePreviewNotesContent } from '@/components/invoice/view/invoiceDetailHelpers'
-
 import './InvoiceHtmlView.css'
 
 type InvoiceHtmlViewProps = {
@@ -10,36 +6,6 @@ type InvoiceHtmlViewProps = {
   previewModel: any
   pdfOutput: any
   settingsData: any
-}
-
-function Section({
-  title,
-  children,
-}: {
-  title?: string
-  children: ReactNode
-}) {
-  return (
-    <section className="invoice-html-section">
-      {title ? <h3 className="invoice-html-section-title">{title}</h3> : null}
-      <div className="invoice-html-section-body">{children}</div>
-    </section>
-  )
-}
-
-function KeyValue({
-  label,
-  value,
-}: {
-  label: string
-  value: ReactNode
-}) {
-  return (
-    <div className="invoice-html-kv">
-      <span className="invoice-html-kv-label">{label}</span>
-      <span className="invoice-html-kv-value">{value || '—'}</span>
-    </div>
-  )
 }
 
 export default function InvoiceHtmlView({
@@ -53,147 +19,134 @@ export default function InvoiceHtmlView({
   const totals = Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : []
   const companyLines = Array.isArray(previewModel?.companyPreviewLines) ? previewModel.companyPreviewLines : []
   const clientLines = Array.isArray(previewModel?.clientPreviewLines) ? previewModel.clientPreviewLines : []
-  const detailRows = Array.isArray(previewModel?.previewDetailRows) ? previewModel.previewDetailRows : []
-  const noteSections = Array.isArray(previewModel?.previewNotesSections) ? previewModel.previewNotesSections : []
-  const mappedNotes = mapInvoicePreviewNotesContent(noteSections)
   const bank = pdfOutput?.showBankDetails ? previewModel?.selectedPreviewBank : null
 
   return (
-    <div className="invoice-html-view">
-      <Section>
-        <div className="invoice-html-header">
-          <div>
-            <p className="invoice-html-eyebrow">{invoice?.invoice_title || 'Invoice'}</p>
-            <h2 className="invoice-html-number">{invoice?.invoice_number || 'Invoice'}</h2>
-            <p className="invoice-html-client">{invoice?.client_name || 'No client specified'}</p>
-          </div>
+    <div className="invoiceHtmlView">
+      <div className="doc-top-accent" />
 
-          <div className="invoice-html-meta">
-            <KeyValue label="Issue Date" value={invoice?.issue_date} />
-            <KeyValue label="Due Date" value={invoice?.due_date || 'Open'} />
-            <KeyValue label="Status" value={viewModel?.statusLabel || invoice?.status || 'draft'} />
-          </div>
-        </div>
-      </Section>
-
-      <Section title="Details">
-        <div className="invoice-html-grid">
-          {detailRows.length ? (
-            detailRows.map((row: any, index: number) => (
-              <KeyValue
-                key={`${row?.label || 'detail'}-${index}`}
-                label={String(row?.label || 'Field')}
-                value={String(row?.value || '—')}
-              />
-            ))
-          ) : (
-            <p className="invoice-html-empty">No invoice details yet.</p>
-          )}
-        </div>
-      </Section>
-
-      <Section title="Billed By">
-        <div className="invoice-html-lines">
-          <p className="invoice-html-line-strong">{settingsData?.company_name || 'Company'}</p>
-          {companyLines.map((line: string, index: number) => (
-            <p key={`company-line-${index}`}>{line}</p>
-          ))}
-        </div>
-      </Section>
-
-      <Section title="Bill To">
-        <div className="invoice-html-lines">
-          <p className="invoice-html-line-strong">{invoice?.client_name || 'Unassigned'}</p>
-          {clientLines.map((line: string, index: number) => (
-            <p key={`client-line-${index}`}>{line}</p>
-          ))}
-        </div>
-      </Section>
-
-      <Section title="Items">
-        <div className="invoice-html-items">
-          {items.length ? (
-            items.map((item: any, index: number) => {
-              if (item?.type === 'group') {
-                return (
-                  <div className="invoice-html-group" key={item?.label || `group-${index}`}>
-                    {item?.label || `Group ${index + 1}`}
-                  </div>
-                )
-              }
-
-              const facts = Array.isArray(item?.facts) ? item.facts.filter(Boolean) : []
-
-              return (
-                <article className="invoice-html-item" key={item?.id || item?.label || index}>
-                  <div className="invoice-html-item-top">
-                    <h4 className="invoice-html-item-title">{item?.label || `Item ${index + 1}`}</h4>
-                    <div className="invoice-html-item-amount">{item?.value || '—'}</div>
-                  </div>
-
-                  {item?.detail ? <p className="invoice-html-item-subtitle">{item.detail}</p> : null}
-
-                  {facts.length ? (
-                    <div className="invoice-html-facts">
-                      {facts.map((fact: string, factIndex: number) => (
-                        <div className="invoice-html-fact" key={`${item?.label || index}-fact-${factIndex}`}>
-                          {fact}
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                </article>
-              )
-            })
-          ) : (
-            <p className="invoice-html-empty">No items added.</p>
-          )}
-        </div>
-      </Section>
-
-      <Section title="Totals">
-        <div className="invoice-html-totals">
-          {totals.length ? (
-            totals.map((row: any, index: number) => (
-              <div
-                key={`${row?.label || 'total'}-${index}`}
-                className={`invoice-html-total-row ${row?.emphasis ? 'is-emphasis' : ''}`}
-              >
-                <span>{row?.label || 'Total'}</span>
-                <strong>{row?.value || '—'}</strong>
-              </div>
-            ))
-          ) : (
-            <p className="invoice-html-empty">No totals available.</p>
-          )}
-        </div>
-
-        {invoice?.amount_in_words ? <p className="invoice-html-amount-words">{invoice.amount_in_words}</p> : null}
-      </Section>
-
-      {bank ? (
-        <Section title="Bank Details">
-          <div className="invoice-html-grid">
-            {bank.bankName ? <KeyValue label="Bank" value={bank.bankName} /> : null}
-            {bank.accountName ? <KeyValue label="Account Name" value={bank.accountName} /> : null}
-            {bank.accountNumber ? <KeyValue label="Account Number" value={bank.accountNumber} /> : null}
-            {bank.sortCode ? <KeyValue label="Sort Code" value={bank.sortCode} /> : null}
-          </div>
-        </Section>
-      ) : null}
-
-      {mappedNotes.length ? (
-        <Section title="Notes">
-          <div className="invoice-html-notes">
-            {mappedNotes.map((section, index) => (
-              <div key={section.title || index} className="invoice-html-note-block">
-                {section.title ? <h4>{section.title}</h4> : null}
-                <div className="invoice-html-note-content">{section.content}</div>
-              </div>
+      <div className="doc-head">
+        <div className="doc-company">
+          <div className="doc-co-name">{settingsData?.company_name || 'BigDrops'}</div>
+          <div className="doc-co-addr">
+            {companyLines.map((line: string, i: number) => (
+              <div key={i}>{line}</div>
             ))}
           </div>
-        </Section>
-      ) : null}
+        </div>
+        <div className="doc-id-block">
+          <div className="doc-type-label">{invoice?.invoice_title || 'Tax Invoice'}</div>
+          <div className="doc-number">{invoice?.invoice_number || 'Draft'}</div>
+        </div>
+      </div>
+
+      <div className="doc-meta-grid">
+        <div className="doc-meta-cell">
+          <div className="doc-meta-lbl">Bill To</div>
+          <div className="doc-meta-val">{invoice?.client_name || 'Unassigned Client'}</div>
+          <div className="doc-meta-sub">
+            {clientLines.map((line: string, i: number) => (
+              <div key={i}>{line}</div>
+            ))}
+          </div>
+        </div>
+        <div className="doc-meta-cell">
+          <div className="doc-meta-lbl">Details</div>
+          <div className="doc-meta-val">Date: {invoice?.issue_date || '—'}</div>
+          <div className="doc-meta-sub">Due: {invoice?.due_date || 'Open'}</div>
+          <div className="doc-meta-sub">Status: {viewModel?.statusLabel || invoice?.status || 'Draft'}</div>
+        </div>
+      </div>
+
+      <div className="doc-items">
+        <div className="doc-items-head">
+          <div className="doc-col-lbl">Description</div>
+          <div className="doc-col-lbl r">Qty</div>
+          <div className="doc-col-lbl r">Amount</div>
+        </div>
+
+        {items.length > 0 ? (
+          items.map((item: any, index: number) => {
+            if (item?.type === 'group') {
+              return (
+                <div className="doc-item-row group-hd" key={index}>
+                  <div className="group-name">{item?.label}</div>
+                </div>
+              )
+            }
+
+            const qtyFact = (item?.facts || []).find((f: string) => f.startsWith('Qty:'))
+            const cleanQty = qtyFact ? qtyFact.replace('Qty:', '').trim() : '—'
+
+            return (
+              <div className="doc-item-row" key={index}>
+                <div className="item-body">
+                  <div className="item-name">{item?.label || 'Item'}</div>
+                  {item?.detail ? <div className="item-desc">{item.detail}</div> : null}
+                </div>
+                <div className="item-qty">{cleanQty}</div>
+                <div className="item-amount">{item?.value || '—'}</div>
+              </div>
+            )
+          })
+        ) : (
+          <div className="doc-item-row">
+            <div className="item-body">
+               <div className="item-desc">No items added to this invoice.</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="doc-totals">
+        {totals.map((row: any, index: number) => {
+          const isGrand = row?.emphasis && row?.label?.toLowerCase() === 'total'
+          const isBalance = row?.emphasis && row?.label?.toLowerCase().includes('balance')
+
+          return (
+            <div
+              key={index}
+              className={`totals-row ${isGrand ? 'grand' : ''} ${isBalance ? 'balance' : ''}`}
+            >
+              <div className="totals-lbl">{row?.label || 'Subtotal'}</div>
+              <div className="totals-val">{row?.value || '—'}</div>
+            </div>
+          )
+        })}
+        {invoice?.amount_in_words ? (
+          <div className="amount-words">{invoice.amount_in_words}</div>
+        ) : null}
+      </div>
+
+      <div className="doc-footer">
+        {bank ? (
+          <div className="doc-footer-section">
+            <div className="doc-footer-lbl">Payment Details</div>
+            <div className="bank-box">
+              <div className="bank-row">
+                <span>Bank</span>
+                <span>{bank.bankName || '—'}</span>
+              </div>
+              <div className="bank-row">
+                <span>Account</span>
+                <span>{bank.accountName || '—'}</span>
+              </div>
+              <div className="bank-row">
+                <span>Number</span>
+                <span>{bank.accountNumber || '—'}</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {invoice?.notes ? (
+           <div className="doc-footer-section">
+             <div className="doc-footer-lbl">Notes</div>
+             <div className="doc-footer-text">{invoice.notes}</div>
+           </div>
+        ) : null}
+      </div>
     </div>
   )
 }
+

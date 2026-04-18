@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ArrowLeft, Download, MoreHorizontal, Share2, SlidersHorizontal } from 'lucide-react'
+import { ArrowLeft, Download, MoreHorizontal, Share2, SlidersHorizontal, ChevronLeft } from 'lucide-react'
 
 import styles from './InvoicePresentation.module.css'
 
@@ -44,9 +44,12 @@ type InvoiceHeroProps = {
 export function InvoicePageShell({ children, overlay, topNav, floating }: InvoicePageShellProps) {
   return (
     <div className={styles.invoiceScope}>
-      <div className={styles.pageAtmosphere} aria-hidden="true" />
       {topNav}
-      <main className={styles.page}>{children}</main>
+      <main className={styles.page}>
+        <div className={styles.contentWrap}>
+          {children}
+        </div>
+      </main>
       {floating}
       {overlay}
     </div>
@@ -57,13 +60,13 @@ export function InvoiceTopNav({ title, subtitle, onBack, onShare, onCustomize, o
   return (
     <nav className={styles.nav}>
       <button type="button" onClick={onBack} className={styles['nav-back']}>
-        <ArrowLeft size={16} strokeWidth={2.4} />
+        <ChevronLeft size={18} strokeWidth={2.5} />
         <span>Invoices</span>
       </button>
 
       <div className={styles['nav-center']}>
-        <div className={styles['nav-title']}>{title}</div>
-        <div className={styles['nav-sub']}>{subtitle || 'Invoice'}</div>
+        <div className={styles['nav-title']}>{title || 'Invoice'}</div>
+        <div className={styles['nav-sub']}>{subtitle || 'Tax Invoice'}</div>
       </div>
 
       <div className={styles['nav-right']}>
@@ -98,38 +101,29 @@ export function InvoiceFloatingDownloadButton({
 
 export function InvoiceHero({ eyebrow, number, title, clientName, status, metrics, meta }: InvoiceHeroProps) {
   const statusKey = String(status || 'draft').toLowerCase()
+  const guardedMetrics = Array.isArray(metrics) ? metrics : []
+  const guardedMeta = Array.isArray(meta) ? meta : []
 
   return (
     <section className={styles.hero}>
-      <div className={`${styles['hero-card']} ${styles['fade-up']}`}>
-        <div className={styles['hero-top']}>
-          <div className={styles['hero-copy']}>
-            <div className={styles['doc-label']}>{eyebrow}</div>
-            <div className={styles['invoice-num']}>{number}</div>
-            <h1 className={styles['hero-title']}>{title}</h1>
-            <div className={styles['invoice-sub']}>{clientName}</div>
-          </div>
-
-          <div className={`${styles['status-pill']} ${styles[statusKey] || styles.draft}`}>
-            <div className={styles['status-dot']} />
-            {status}
-          </div>
+      <div className={styles['hero-top']}>
+        <div className={styles['hero-left']}>
+          <div className={styles['doc-label']}>{eyebrow || 'Invoice'}</div>
+          <div className={styles['invoice-num']}>{number || '—'}</div>
+          <div className={styles['invoice-sub']}>{clientName || 'Unassigned Client'}</div>
+          {title && title.toUpperCase() !== 'INVOICE' && (
+             <div className={styles['thread-tag']}>{title}</div>
+          )}
         </div>
 
-        {meta.length > 0 ? (
-          <div className={styles['hero-meta-grid']}>
-            {meta.map((item) => (
-              <div key={item.label} className={styles['hero-meta-item']}>
-                <div className={styles['hero-meta-label']}>{item.label}</div>
-                <div className={styles['hero-meta-value']}>{item.value}</div>
-              </div>
-            ))}
-          </div>
-        ) : null}
+        <div className={`${styles['status-pill']} ${styles[statusKey] || styles.draft}`}>
+          <div className={styles['status-dot']} />
+          {status || 'Draft'}
+        </div>
       </div>
 
-      <div className={`${styles['money-strip']} ${styles['fade-up']}`}>
-        {metrics.map((metric) => (
+      <div className={styles['money-strip']}>
+        {guardedMetrics.map((metric) => (
           <div key={metric.label} className={styles['money-cell']}>
             <div className={styles['money-lbl']}>{metric.label}</div>
             <div
@@ -139,7 +133,7 @@ export function InvoiceHero({ eyebrow, number, title, clientName, status, metric
                 metric.tone === 'warning' ? styles.amber : '',
               ].join(' ')}
             >
-              {metric.value}
+              {metric.value || '—'}
             </div>
             {metric.hint ? <div className={styles['money-hint']}>{metric.hint}</div> : null}
           </div>
@@ -148,3 +142,4 @@ export function InvoiceHero({ eyebrow, number, title, clientName, status, metric
     </section>
   )
 }
+
