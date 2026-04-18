@@ -9,6 +9,7 @@ import {
   getCachedInvoicePayments,
 } from '@/lib/native/invoiceCache'
 import { fetchInvoiceChildDocuments, fetchProjectSummary } from '@/domain/documentRelationships'
+import { mapDbInvoiceItem } from '@/domain/invoice'
 
 function canUseInvoiceCacheFallback() {
   return (
@@ -150,13 +151,7 @@ export function useInvoiceDetailData(id) {
     }
 
     const loaded = (data || []).map((item) => ({
-      ...item,
-      custom_data: typeof item.custom_data === 'string' ? JSON.parse(item.custom_data || '{}') : item.custom_data || {},
-      install_rate_override: item.install_rate_override === true,
-      install_rate: item.install_rate === undefined ? null : item.install_rate,
-      vat_rate: item.vat_rate === undefined ? null : item.vat_rate,
-      discount_rate: item.discount_rate === undefined ? null : item.discount_rate,
-      image_url: item.image_url || null,
+      ...mapDbInvoiceItem(item),
     }))
     setItems(loaded)
   }, [id])

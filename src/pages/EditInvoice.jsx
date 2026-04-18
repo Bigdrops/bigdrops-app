@@ -10,6 +10,7 @@ import {
   getInvoiceSignatoryId,
   invoiceImportAdapter,
   filterPopulatedAdditionalFields,
+  mapDbInvoiceItem,
   normalizeAdditionalFieldEntries,
   parseCustomFields,
 } from '@/domain/invoice'
@@ -141,23 +142,7 @@ export default function EditInvoice() {
         customFields: parsedCustomFields && !Array.isArray(parsedCustomFields) ? parsedCustomFields : {},
       })
 
-      const loadedItems = (itemRows && itemRows.length > 0 ? itemRows : [makeEmptyItem()]).map((item) => ({
-        ...ensureUiKey(item),
-        row_type: item.row_type || 'standard',
-        group_id: item.group_id || null,
-        group_name: item.group_name || '',
-        custom_data:
-          typeof item.custom_data === 'string'
-            ? JSON.parse(item.custom_data || '{}')
-            : item.custom_data && typeof item.custom_data === 'object'
-              ? item.custom_data
-              : {},
-        vat_rate: item.vat_rate === undefined ? null : item.vat_rate,
-        discount_rate: item.discount_rate === undefined ? null : item.discount_rate,
-        install_rate: item.install_rate === undefined ? null : item.install_rate,
-        install_rate_override: item.install_rate_override === true,
-        image_url: item.image_url || null,
-      }))
+      const loadedItems = (itemRows && itemRows.length > 0 ? itemRows : [makeEmptyItem()]).map((item) => mapDbInvoiceItem(item))
 
       setItems(loadedItems)
       setInvoice({

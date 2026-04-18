@@ -57,6 +57,7 @@ type LocalQuotationRow = {
 
 type LocalQuotationItem = {
   id?: string | null;
+  item_id?: string | null;
   description?: string | null;
   sub_description?: string | null;
   make?: string | null;

@@ -42,6 +42,7 @@ export interface DbQuotation {
 export interface DbQuotationItem {
   id?: string | null
   quotation_id?: string | null
+  item_id?: string | null
   description?: string | null
   sub_description?: string | null
   make?: string | null

@@ -132,12 +132,12 @@ public sealed class RevertInvoiceToQuotationHandler
         insert into quotation_items (
           quotation_id, description, sub_description, make, quantity, unit,
           unit_price, amount, custom_data, install_rate, install_rate_override,
-          vat_rate, discount_rate, row_type, group_name, sort_order, image_url
+          vat_rate, discount_rate, row_type, group_name, sort_order, image_url, item_id
         )
         select
           @quotationId, description, sub_description, make, quantity, unit,
           unit_price, amount, custom_data, install_rate, install_rate_override,
-          vat_rate, discount_rate, row_type, group_name, sort_order, image_url
+          vat_rate, discount_rate, row_type, group_name, sort_order, image_url, item_id
         from invoice_items
         where invoice_id = @invoiceId
         """,

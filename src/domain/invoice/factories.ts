@@ -8,6 +8,7 @@ import type {
 export function makeEmptyItem(): InvoiceItem {
   return {
     _uiKey: 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    item_id: null,
     description: '',
     sub_description: '',
     make: '',
@@ -95,6 +96,7 @@ export function toDbItem(
   return {
     ...rest,
     invoice_id: invoiceId,
+    item_id: item.item_id ?? null,
     sort_order: sortOrder,
     amount: Number(item.quantity || 1) * Number(item.unit_price || 0),
     custom_data: JSON.stringify(item.custom_data || {}),

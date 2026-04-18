@@ -93,6 +93,7 @@ export function mapDbQuotationItem(row: DbQuotationItem): InvoiceItem {
 
   return ensureUiKey({
     id: row.id ?? null,
+    item_id: row.item_id ?? null,
     description: row.description || '',
     sub_description: row.sub_description || '',
     make: row.make || '',

@@ -115,6 +115,7 @@ export interface DbInvoice {
 export interface DbInvoiceItem {
   id?: string | null
   invoice_id?: string | null
+  item_id?: string | null
   description?: string | null
   sub_description?: string | null
   make?: string | null
@@ -140,6 +141,7 @@ export interface InvoiceItem {
   id?: string | null
   _uiKey?: string
   invoice_id?: string | null
+  item_id?: string | null
   description?: string
   sub_description?: string
   make?: string

@@ -38,6 +38,7 @@ export type InvoiceCacheRow = {
 export type InvoiceItemCacheRow = {
   id: string;
   invoice_id: string;
+  item_id: string | null;
   row_type: string | null;
   group_id: string | null;
   group_name: string | null;
@@ -158,6 +159,7 @@ function hydrateInvoiceRow(row: InvoiceCacheRowDb): InvoiceCacheRow {
 function normalizeItemRow(row: InvoiceItemCacheRow): InvoiceItemCacheRow {
   return {
     ...row,
+    item_id: row.item_id ?? null,
     row_type: row.row_type ?? null,
     group_id: row.group_id ?? null,
     group_name: row.group_name ?? null,
@@ -358,6 +360,7 @@ export async function bootstrapInvoiceCache(): Promise<void> {
             CREATE TABLE IF NOT EXISTS invoice_items_cache (
               id TEXT PRIMARY KEY NOT NULL,
               invoice_id TEXT NOT NULL,
+              item_id TEXT,
               row_type TEXT,
               group_id TEXT,
               group_name TEXT,
@@ -380,6 +383,10 @@ export async function bootstrapInvoiceCache(): Promise<void> {
               cached_at TEXT NOT NULL
             );
           `,
+        },
+        {
+          statement:
+            "ALTER TABLE invoice_items_cache ADD COLUMN IF NOT EXISTS item_id TEXT;",
         },
         {
           statement: `
@@ -452,6 +459,7 @@ export async function cacheInvoiceDetail(
           INSERT INTO invoice_items_cache (
             id,
             invoice_id,
+            item_id,
             row_type,
             group_id,
             group_name,
@@ -478,6 +486,7 @@ export async function cacheInvoiceDetail(
         values: [
           row.id,
           row.invoice_id,
+          row.item_id,
           row.row_type,
           row.group_id,
           row.group_name,

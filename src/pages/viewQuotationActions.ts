@@ -1,8 +1,8 @@
 import { supabase } from '@/supabase'
 import { buildQuotationCsv, downloadQuotationCsv } from '@/components/quotation/exportQuotationCsv'
 import { appendDerivedTrail, buildTrailLink, getNextInvoiceNumber, parseDocumentCustomFields, toQuotationItemRow, withSourceTrail } from '@/domain/documentConversion'
-import { getNextQuotationNumber } from '@/domain/quotation'
-import { parseCustomFields, normalizeExtraCharges, ensureUiKey, inferLegacyCalculationState, buildCalculationInputs, BUILTIN_COLUMNS } from '@/domain/invoice'
+import { buildQuotationFormState, getNextQuotationNumber, type DbQuotation, type DbQuotationItem } from '@/domain/quotation'
+import { normalizeExtraCharges, buildCalculationInputs, BUILTIN_COLUMNS } from '@/domain/invoice'
 import { computeDocument } from '@/lib/Calculations'
 import { toDbItem } from '@/domain/invoice/factories'
 
@@ -20,31 +20,24 @@ export async function loadQuotationViewData(id: string) {
 
   const data = quoRes.data
   const itemRows = itemsRes.data || []
-  const parsedCustomFields = parseCustomFields(data.custom_fields) as Record<string, any>
-  const legacyState = inferLegacyCalculationState({
-    invoice: data,
-    items: itemRows,
-    customFields: parsedCustomFields && !Array.isArray(parsedCustomFields) ? parsedCustomFields : {},
-  })
-  const mappedItems = itemRows.map((item) => ({
-    ...ensureUiKey(item),
-    row_type: item.row_type || 'standard',
-  }))
+  const state = buildQuotationFormState(data as DbQuotation, itemRows as DbQuotationItem[])
+  const parsedCustomFields = (state.quotation.custom_fields || {}) as Record<string, any>
+  const mappedItems = state.items
   const calcInputs = buildCalculationInputs({
     invoice: {
-      ...data,
-      vat: legacyState.editableInputs.vatRate,
-      discount: legacyState.editableInputs.discountValue,
-      wht: legacyState.calculationInputs.whtValue,
+      ...state.quotation,
+      vat: state.quotation.vat,
+      discount: state.quotation.discount,
+      wht: state.quotation.wht,
     },
-    discountType: legacyState.calculationInputs.discountType,
-    discountTiming: legacyState.calculationInputs.discountTiming,
-    whtType: legacyState.calculationInputs.whtType,
+    discountType: state.discountType,
+    discountTiming: state.discountTiming,
+    whtType: state.whtType,
   })
   const totals = computeDocument({
     items: mappedItems,
     columns: BUILTIN_COLUMNS,
-    document: data,
+    document: state.quotation,
     cf: {
       calculationInputs: calcInputs,
       extraCharges: normalizeExtraCharges(parsedCustomFields?.extraCharges || []),
@@ -55,7 +48,7 @@ export async function loadQuotationViewData(id: string) {
     : { data: null }
 
   return {
-    quotation: data,
+    quotation: state.quotation,
     items: mappedItems,
     totals,
     client: clientRes.data || null,

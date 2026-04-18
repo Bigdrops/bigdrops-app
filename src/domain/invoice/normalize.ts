@@ -179,6 +179,7 @@ export function mapDbInvoiceItem(row: DbInvoiceItem): InvoiceItem {
     ...row,
     id: row.id ?? null,
     invoice_id: row.invoice_id ?? null,
+    item_id: row.item_id ?? null,
     description: row.description || '',
     sub_description: row.sub_description || '',
     make: row.make || '',
