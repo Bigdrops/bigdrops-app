@@ -1,25 +1,35 @@
 .button {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   border: none;
   border-radius: 999px;
   font-family: var(--dv-font-ui);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  background: var(--dv-primary);
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   color: #ffffff;
-  padding: 10px 18px;
-  font-size: 13px;
-  box-shadow: 0 10px 24px rgba(30, 41, 59, 0.24);
+  padding: 12px 24px;
+  font-size: 14px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.4), 0 8px 10px -6px rgba(15, 23, 42, 0.4);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: -0.01em;
 }
 
 .button:hover {
-  background: var(--dv-primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.3), 0 10px 10px -5px rgba(15, 23, 42, 0.3);
+  filter: brightness(1.1);
+}
+
+.button:active {
+  transform: translateY(0);
 }
 
 .disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
 }

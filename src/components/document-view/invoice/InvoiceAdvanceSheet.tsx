@@ -1,145 +1,131 @@
-import { useState } from 'react'
-import styles from './InvoicePresentation.module.css'
+import React, { useState } from 'react'
+import { Zap, Loader2, Save, Percent } from 'lucide-react'
+import { supabase } from '@/supabase'
+import DocumentSheet from '../shared/DocumentSheet'
+import styles from './InvoiceRecordPaymentSheet.module.css' // Reusing styles for consistency
+import { formatNaira } from '@/lib/formatters/money'
 
 interface InvoiceAdvanceSheetProps {
   open: boolean
-  mode: 'create' | 'edit'
-  totalAmount: number
   onClose: () => void
-  onSave: () => void
+  onSaved: () => void
+  invoice: any
 }
 
 export default function InvoiceAdvanceSheet({
   open,
-  mode,
-  totalAmount,
   onClose,
-  onSave, // Keep using onSave instead of directly mutating state to respect the previous logic mock
+  onSaved,
+  invoice,
 }: InvoiceAdvanceSheetProps) {
-  const [type, setType] = useState<'percentage' | 'fixed'>('percentage')
-  const [percentage, setPercentage] = useState(30)
-  const [fixedAmount, setFixedAmount] = useState(800000)
+  const [isAdvance, setIsAdvance] = useState(Boolean(invoice?.is_advance))
+  const [percentage, setPercentage] = useState(String(invoice?.advance_percentage || '0'))
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSave = async () => {
+    setError('')
+    setSaving(true)
+    try {
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({
+          is_advance: isAdvance,
+          advance_percentage: Number(percentage) || 0,
+        })
+        .eq('id', invoice.id)
+
+      if (updateError) throw updateError
+
+      onSaved()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update advance settings')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (!open) return null
 
-  const computedAmount = type === 'percentage' ? (totalAmount * percentage) / 100 : fixedAmount
-  const desc = type === 'percentage' ? `${percentage}% of ₦4,720,000` : 'Fixed amount'
-
   return (
-    <>
-      <div className={`${styles.overlay} ${styles.open}`} onClick={onClose} />
-      <div className={`${styles.sheet} ${styles.open}`}>
-        <div className={styles['sheet-handle']} />
-        <div className={styles['sheet-title']}>
-          {mode === 'edit' ? 'Edit Advance Invoice' : 'Create Advance Invoice'}
-        </div>
-        <div className={styles['sheet-sub']}>
-          Based on SASINV-B047 · Total: ₦4,720,000
-        </div>
-        <div className={styles['sheet-body']}>
-          <div className={styles['form-group']}>
-            <label className={styles['form-label']}>Invoice Label</label>
-            <input className={styles['form-input']} type="text" placeholder="e.g. Mobilisation Advance" />
-          </div>
-          <div className={styles['form-group']}>
-            <label className={styles['form-label']}>Amount Type</label>
-            <div className={styles['advance-type-grid']}>
-              <div
-                className={`${styles['advance-type-opt']} ${type === 'percentage' ? styles.active : ''}`}
-                onClick={() => setType('percentage')}
+    <DocumentSheet
+      open={open}
+      onClose={onClose}
+      title="Advance Invoice Settings"
+      subtitle={`Configure advance payment for ${invoice.invoice_number}`}
+    >
+      <div className={styles.container}>
+        <div className={styles.formContent}>
+          <div className={styles.fieldGroup}>
+            <label className={styles.formLabel}>Status</label>
+            <div className={styles.typeToggle}>
+              <button
+                type="button"
+                className={`${styles.toggleBtn} ${!isAdvance ? styles.active : ''}`}
+                onClick={() => setIsAdvance(false)}
               >
-                <div className={styles['advance-type-opt-label']}>Percentage</div>
-                <div className={styles['advance-type-opt-sub']}>% of total</div>
-              </div>
-              <div
-                className={`${styles['advance-type-opt']} ${type === 'fixed' ? styles.active : ''}`}
-                onClick={() => setType('fixed')}
+                Standard Invoice
+              </button>
+              <button
+                type="button"
+                className={`${styles.toggleBtn} ${isAdvance ? styles.active : ''}`}
+                onClick={() => setIsAdvance(true)}
               >
-                <div className={styles['advance-type-opt-label']}>Fixed Amount</div>
-                <div className={styles['advance-type-opt-sub']}>Exact ₦ value</div>
-              </div>
+                Advance Invoice
+              </button>
             </div>
           </div>
-          {type === 'percentage' && (
-            <div className={styles['form-group']}>
-              <label className={styles['form-label']}>Percentage (%)</label>
-              <input
-                className={styles['form-input']}
-                type="number"
-                value={percentage}
-                onChange={(e) => setPercentage(Number(e.target.value))}
-              />
+
+          {isAdvance && (
+            <div className={styles.fieldGroup}>
+              <label className={styles.formLabel}>Advance Percentage (%)</label>
+              <div className={styles.inputIconWrap}>
+                <Percent size={14} className={styles.innerIcon} />
+                <input
+                  type="number"
+                  className={`${styles.formInput} ${styles.hasIcon}`}
+                  value={percentage}
+                  onChange={(e) => setPercentage(e.target.value)}
+                  placeholder="e.g. 50"
+                  min="0"
+                  max="100"
+                />
+              </div>
+              <p style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>
+                This specifies how much of the total is requested as an advance.
+              </p>
             </div>
           )}
-          {type === 'fixed' && (
-            <div className={styles['form-group']}>
-              <label className={styles['form-label']}>Fixed Amount (₦)</label>
-              <input
-                className={styles['form-input']}
-                type="number"
-                value={fixedAmount}
-                onChange={(e) => setFixedAmount(Number(e.target.value))}
-              />
-            </div>
-          )}
-          <div
-            className={styles['form-group']}
-            style={{
-              background: 'var(--primary-bg)',
-              border: '1px solid var(--primary-border)',
-              borderRadius: 'var(--radius)',
-              padding: '12px 14px',
-            }}
-          >
-            <div
-              style={{
-                fontSize: 11,
-                color: 'var(--primary)',
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                marginBottom: 4,
-              }}
-            >
-              Computed Amount
-            </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 22,
-                fontWeight: 700,
-                color: 'var(--primary)',
-              }}
-            >
-              ₦{computedAmount.toLocaleString('en-NG')}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 3 }}>
-              {desc}
+
+          <div className={styles.summaryCard} style={{ background: '#f0f9ff' }}>
+            <div className={styles.summaryRow}>
+              <span className={styles.summaryLabel} style={{ color: '#0369a1' }}>Calculated Advance</span>
+              <span className={styles.summaryValue} style={{ color: '#0c4a6e' }}>
+                {formatNaira((Number(invoice.total || 0) * (Number(percentage) || 0)) / 100)}
+              </span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, paddingBottom: 12, marginTop: 4 }}>
-            <button
-              type="button"
-              className={`${styles.btn} ${styles['btn-outline']}`}
-              style={{ flex: 1, height: 42, justifyContent: 'center', fontSize: 14 }}
-              onClick={onClose}
-            >
+
+          {error && <div className={styles.errorBanner}>{error}</div>}
+
+          <div className={styles.footerActions}>
+            <button type="button" className={styles.btnCancel} onClick={onClose} disabled={saving}>
               Cancel
             </button>
             <button
               type="button"
-              className={`${styles.btn} ${styles['btn-amber']}`}
-              style={{ flex: 2, height: 42, justifyContent: 'center', fontSize: 14 }}
-              onClick={() => {
-                onSave()
-                onClose()
-              }}
+              className={styles.btnSave}
+              style={{ background: '#0369a1' }}
+              onClick={() => void handleSave()}
+              disabled={saving}
             >
-              {mode === 'edit' ? 'Save Changes' : 'Generate Invoice'}
+              {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+              {saving ? 'Saving...' : 'Save Settings'}
             </button>
           </div>
         </div>
       </div>
-    </>
+    </DocumentSheet>
   )
 }

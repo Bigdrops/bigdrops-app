@@ -18,12 +18,11 @@ import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { supabase } from '@/supabase'
 import CSRPreviewPanel from '@/components/csr/CSRPreviewPanel'
-import { buildCsrPreviewData, getCsrBranding } from '@/components/csr/csrUtils'
-import { getCsrPdfDocument } from '@/components/csr/CSRPreviewTemplates'
-import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
+import { shareDocument } from '@/components/document-view/shared/shareDocument'
+import { archiveCSRRecord, deleteCSRRecord, duplicateCSRRecord, updateCSRStatus } from './viewCSRActions'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -108,6 +107,49 @@ export default function ViewCSR() {
     }
   }
 
+  const handleUpdateStatus = async (status: string, successLabel: string) => {
+    if (!id) return
+    try {
+      await updateCSRStatus(id, status)
+      setCsr((curr: any) => ({ ...curr, status }))
+      showToast(successLabel, `Record marked as ${status}.`, 'success')
+      ui.closeModal()
+    } catch (error) {
+      showToast('Update failed', error instanceof Error ? error.message : 'Could not update status.')
+    }
+  }
+
+  const handleDuplicate = async () => {
+    if (!id) return
+    try {
+      const created = await duplicateCSRRecord(id)
+      navigate(`/csr/${created.id}`)
+      showToast('Record Cloned', 'A new draft service report has been created.', 'success')
+    } catch (error) {
+      showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
+    }
+  }
+
+  const handleArchive = async () => {
+    if (!id) return
+    try {
+      await archiveCSRRecord(id)
+      navigate('/csr')
+    } catch (error) {
+      showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!id) return
+    try {
+      await deleteCSRRecord(id)
+      navigate('/csr')
+    } catch (error) {
+      showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')
+    }
+  }
+
   if (loading) {
     return (
       <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="Service Reports" onBack={() => navigate('/csr')} />}>
@@ -144,7 +186,7 @@ export default function ViewCSR() {
             subtitle={docProps.title}
             backLabel="Service Reports"
             onBack={() => navigate('/csr')}
-            onShare={() => showToast('Share pending', 'Share flow is not wired on CSR view yet.')}
+            onShare={() => void shareDocument({ title: docProps.number, text: docProps.title })}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
           />
@@ -212,11 +254,11 @@ export default function ViewCSR() {
             <CsrMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)}
               onClose={ui.closeSheet}
-              onMarkInProgress={() => showToast('Marked In Progress', '', 'success')}
+              onMarkInProgress={() => void handleUpdateStatus('in_progress', 'Marked In Progress')}
               onMarkAsCompleted={() => ui.openModal(MODAL_COMPLETE)}
-              onReopenRecord={() => showToast('Record Reopened', '', 'info')}
+              onReopenRecord={() => void handleUpdateStatus('draft', 'Record Reopened')}
               onLinkProject={() => showToast('Project link pending', 'Project-link wiring is not finished for CSR view.')}
-              onDuplicate={handleDuplicate}
+              onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}
               onExport={() => void handleDownload()}
               onArchive={() => ui.openModal(MODAL_ARCHIVE)}
@@ -229,7 +271,7 @@ export default function ViewCSR() {
               description="This will mark the service record as completed."
               cancelLabel="Cancel"
               confirmLabel="Mark as Completed"
-              onConfirm={() => showToast('Completion pending', 'CSR status update is not wired from CSR view yet.')}
+              onConfirm={() => void handleUpdateStatus('completed', 'Record Completed')}
               onCancel={ui.closeModal}
             />
 
@@ -239,7 +281,7 @@ export default function ViewCSR() {
               description={`${docProps.number} will be moved to your archive. It won't appear in your active lists.`}
               cancelLabel="Cancel"
               confirmLabel="Archive"
-              onConfirm={() => showToast('Archive pending', 'Archive handling is not wired for CSR view yet.')}
+              onConfirm={() => void handleArchive()}
               onCancel={ui.closeModal}
             />
 
@@ -250,7 +292,7 @@ export default function ViewCSR() {
               cancelLabel="Cancel"
               confirmLabel="Delete"
               destructive
-              onConfirm={() => showToast('Delete pending', 'Delete handling is not wired for CSR view yet.')}
+              onConfirm={() => void handleDelete()}
               onCancel={ui.closeModal}
             />
           </>

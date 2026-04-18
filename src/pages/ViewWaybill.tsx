@@ -18,12 +18,11 @@ import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { supabase } from '@/supabase'
 import { mapDbWaybill, parseWaybillCustomFields } from '@/components/waybill/waybillUtils'
-import WaybillDocumentPreview from '@/components/document-view/waybill/WaybillDocumentPreview'
-import WaybillPDF from '@/components/waybill/WaybillPDF'
-import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
+import { shareDocument } from '@/components/document-view/shared/shareDocument'
+import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, updateWaybillStatus } from './viewWaybillActions'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -98,6 +97,49 @@ export default function ViewWaybill() {
     }
   }
 
+  const handleUpdateStatus = async (status: string, successLabel: string) => {
+    if (!id) return
+    try {
+      await updateWaybillStatus(id, status)
+      setWaybill((curr: any) => ({ ...curr, status }))
+      showToast(successLabel, `Waybill marked as ${status}.`, 'success')
+      ui.closeModal()
+    } catch (error) {
+      showToast('Update failed', error instanceof Error ? error.message : 'Could not update status.')
+    }
+  }
+
+  const handleDuplicate = async () => {
+    if (!id) return
+    try {
+      const created = await duplicateWaybillRecord(id)
+      navigate(`/waybills/${created.id}`)
+      showToast('Waybill Cloned', 'A new draft waybill has been created.', 'success')
+    } catch (error) {
+      showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
+    }
+  }
+
+  const handleArchive = async () => {
+    if (!id) return
+    try {
+      await archiveWaybillRecord(id)
+      navigate('/waybills')
+    } catch (error) {
+      showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!id) return
+    try {
+      await deleteWaybillRecord(id)
+      navigate('/waybills')
+    } catch (error) {
+      showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')
+    }
+  }
+
   if (loading) {
     return (
       <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="Waybills" onBack={() => navigate('/waybills')} />}>
@@ -157,7 +199,7 @@ export default function ViewWaybill() {
             subtitle={docProps.title}
             backLabel="Waybills"
             onBack={() => navigate('/waybills')}
-            onShare={() => showToast('Share pending', 'Share flow is not wired on waybill view yet.')}
+            onShare={() => void shareDocument({ title: docProps.number, text: docProps.title })}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
           />
@@ -202,11 +244,11 @@ export default function ViewWaybill() {
             <WaybillMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)}
               onClose={ui.closeSheet}
-              onMarkAsDispatched={() => showToast('Marked as dispatched', '', 'success')}
+              onMarkAsDispatched={() => void handleUpdateStatus('dispatched', 'Marked as Dispatched')}
               onMarkAsDelivered={() => ui.openModal(MODAL_DELIVERED)}
-              onMarkAsReturned={() => showToast('Marked as returned', '', 'info')}
+              onMarkAsReturned={() => void handleUpdateStatus('returned', 'Marked as Returned')}
               onLinkProject={() => showToast('Project link pending', 'Project-link wiring is not finished for waybill view.')}
-              onDuplicate={handleDuplicate}
+              onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}
               onExport={() => void handleDownload()}
               onArchive={() => ui.openModal(MODAL_ARCHIVE)}
@@ -219,7 +261,7 @@ export default function ViewWaybill() {
               description="This will lock the Waybill route status as successfully delivered."
               cancelLabel="Cancel"
               confirmLabel="Confirm"
-              onConfirm={() => showToast('Delivery pending', 'Delivery status update is not wired from waybill view yet.')}
+              onConfirm={() => void handleUpdateStatus('delivered', 'Waybill Delivered')}
               onCancel={ui.closeModal}
             />
 
@@ -229,7 +271,7 @@ export default function ViewWaybill() {
               description={`${docProps.number} will be moved to your archive. It won't appear in your active lists.`}
               cancelLabel="Cancel"
               confirmLabel="Archive"
-              onConfirm={() => showToast('Archive pending', 'Archive handling is not wired for waybill view yet.')}
+              onConfirm={() => void handleArchive()}
               onCancel={ui.closeModal}
             />
 
@@ -240,7 +282,7 @@ export default function ViewWaybill() {
               cancelLabel="Cancel"
               confirmLabel="Delete"
               destructive
-              onConfirm={() => showToast('Delete pending', 'Delete handling is not wired for waybill view yet.')}
+              onConfirm={() => void handleDelete()}
               onCancel={ui.closeModal}
             />
           </>

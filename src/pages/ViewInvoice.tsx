@@ -3,24 +3,24 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
 import InvoiceHtmlView from '@/components/document-view/invoice/InvoiceHtmlView'
-import InvoiceConfirmDialog from '@/components/document-view/invoice/InvoiceConfirmDialog'
 import {
   InvoiceHero,
-  InvoicePageShell,
 } from '@/components/document-view/invoice/InvoiceFidelityPrimitives'
-import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
-
 import InvoiceMoreSheet from '@/components/document-view/invoice/InvoiceMoreSheet'
-import InvoiceToastViewport from '@/components/document-view/invoice/InvoiceToastViewport'
+import InvoiceRecordPaymentSheet from '@/components/document-view/invoice/InvoiceRecordPaymentSheet'
+import InvoiceAdvanceSheet from '@/components/document-view/invoice/InvoiceAdvanceSheet'
 import InvoiceViewPage from '@/components/document-view/invoice/InvoiceViewPage'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
 import { useToastStack } from '@/components/document-view/hooks/useToastStack'
-import PdfOutputCustomizeSheet from '@/components/document-view/shared/PdfOutputCustomizeSheet'
+import DocumentPage from '@/components/document-view/shared/DocumentPage'
+import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
+import DocumentToastViewport from '@/components/document-view/shared/DocumentToastViewport'
+import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
+import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { buildPdfRowCells, generateInvoicePdf, interpretPdfTableSettings } from '@/components/pdf-new'
-import RecordPaymentModal from '@/components/RecordPaymentModal'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
 import {
@@ -38,14 +38,12 @@ import { getPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { supabase } from '@/supabase'
 import { archiveInvoiceRecord, buildWaybillPrefill, deleteInvoiceRecord, downloadInvoiceCsvFile, duplicateInvoiceDraft, revertInvoiceToQuotation } from './viewInvoiceActions'
 
-const SHEET_CUSTOMIZE = 'customize-output'
 const SHEET_MORE = 'more-actions'
 const SHEET_RECORD_PAYMENT = 'record-payment'
 const SHEET_ADVANCE = 'advance'
 const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
 const MODAL_REVERT = 'revert'
-const MODAL_VOID_PAYMENT = 'void-payment'
 
 const toTitleCase = (value: string) =>
   String(value || '')
@@ -104,7 +102,6 @@ export default function ViewInvoice() {
 
   const openRevertFlow = useCallback(() => {
     ui.closeSheet()
-
     requestAnimationFrame(() => {
       ui.openModal(MODAL_REVERT)
     })
@@ -155,34 +152,6 @@ export default function ViewInvoice() {
     } catch {
       showToast('Copy unavailable', 'Clipboard access is not available.')
     }
-  }
-
-  const handleShare = async () => {
-    try {
-      const result = await shareDocument({
-        title: invoice?.invoice_number || 'Invoice',
-        text: invoice?.invoice_title || 'Invoice',
-      })
-      showToast(
-        result === 'shared' ? 'Share sheet opened' : 'Link copied',
-        result === 'shared' ? 'Invoice share is ready.' : 'Invoice link copied.',
-        'success',
-      )
-    } catch (error) {
-      showToast('Share failed', error instanceof Error ? error.message : 'Could not share this invoice.')
-    }
-  }
-
-  const handleSaveCustomization = async (nextPdfOutput: PdfOutputSettingsValue) => {
-    if (!invoice?.id) return
-    const nextCustomFields = {
-      ...customFields,
-      pdfOutput: nextPdfOutput,
-    }
-    const { error } = await supabase.from('invoices').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', invoice.id)
-    if (error) throw error
-    setPdfOutput(nextPdfOutput)
-    showToast('Settings saved', 'Invoice PDF output settings updated.', 'success')
   }
 
   const handleDownload = async () => {
@@ -320,10 +289,6 @@ export default function ViewInvoice() {
     }
   }
 
-  const handleGenerateWaybill = () => {
-    navigate('/waybills/new', { state: buildWaybillPrefill(invoice) })
-  }
-
   const handleArchive = async () => {
     if (!invoice?.id) return
     try {
@@ -360,9 +325,9 @@ export default function ViewInvoice() {
 
   if (loading) {
     return (
-      <InvoicePageShell topNav={<DocumentTopNav title="Loading..." backLabel="Invoices" onBack={() => navigate('/invoices')} />} floating={null}>
+      <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="Invoices" onBack={() => navigate('/invoices')} />}>
         <CenteredSpinner />
-      </InvoicePageShell>
+      </DocumentPage>
     )
   }
 
@@ -375,29 +340,6 @@ export default function ViewInvoice() {
     status: toTitleCase(viewModel.statusLabel || invoice.status || 'draft'),
   }
 
-  const metrics = [
-    {
-      label: 'Total Due',
-      value: formatNaira(viewModel.invoiceTotal || 0),
-      hint: invoice.issue_date ? `Issued ${formatDisplayDate(invoice.issue_date)}` : 'Issue date not set',
-      tone: 'default' as const,
-    },
-    {
-      label: 'Received',
-      value: formatNaira(viewModel.cashReceived || 0),
-      hint: `${viewModel.activePaymentCount || 0} payment${viewModel.activePaymentCount === 1 ? '' : 's'} recorded`,
-      tone: 'positive' as const,
-    },
-    {
-      label: 'Balance Due',
-      value: formatNaira(viewModel.balanceDue || 0),
-      hint: invoice.due_date ? `Due ${formatDisplayDate(invoice.due_date)}` : 'Open due date',
-      tone: (viewModel.balanceDue || 0) > 0 ? ('warning' as const) : ('positive' as const),
-    },
-  ]
-
-  const progressPercent =
-    viewModel.invoiceTotal > 0 ? Math.min(100, Math.round((viewModel.cashReceived / viewModel.invoiceTotal) * 100)) : 0
   const relatedDocuments = [
     ...(sourceDocument
       ? [
@@ -446,49 +388,59 @@ export default function ViewInvoice() {
       }))
     : []
 
-  const heroMeta = [
-    { label: 'Client', value: invoice.client_name || 'Unassigned' },
-    { label: 'Issue date', value: invoice.issue_date ? formatDisplayDate(invoice.issue_date) : 'Not set' },
-    { label: 'Due date', value: invoice.due_date ? formatDisplayDate(invoice.due_date) : 'Open' },
-    {
-      label: linkedProject ? 'Project' : sourceDocument ? 'Source' : 'PO number',
-      value:
-        (linkedProject?.name && String(linkedProject.name)) ||
-        (sourceDocument?.number && String(sourceDocument.number)) ||
-        invoice.po_number ||
-        'Not linked',
-    },
-  ]
-
   return (
     <>
-      <InvoicePageShell
+      <DocumentPage
         topNav={
           <DocumentTopNav
             title={docProps.number}
-            subtitle={invoice.invoice_title || 'Tax Invoice'}
+            subtitle={docProps.title}
             backLabel="Invoices"
             onBack={() => navigate('/invoices')}
-            onShare={() => void handleShare()}
-            onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
+            onShare={() => void shareDocument({ title: docProps.number, text: docProps.title })}
             onMore={() => ui.openSheet(SHEET_MORE)}
           />
         }
-        floating={null}
-        overlay={
+        hero={
+          <InvoiceHero
+            eyebrow="Invoice"
+            number={docProps.number}
+            title={docProps.title}
+            clientName={invoice.client_name || 'No client specified'}
+            status={docProps.status}
+            metrics={[
+              { label: 'Total Due', value: formatNaira(viewModel.invoiceTotal || 0), hint: invoice.issue_date ? `Issued ${formatDisplayDate(invoice.issue_date)}` : 'Issue date not set', tone: 'default' },
+              { label: 'Received', value: formatNaira(viewModel.cashReceived || 0), hint: `${viewModel.activePaymentCount || 0} payment${viewModel.activePaymentCount === 1 ? '' : 's'} recorded`, tone: 'positive' },
+              { label: 'Balance Due', value: formatNaira(viewModel.balanceDue || 0), hint: invoice.due_date ? `Due ${formatDisplayDate(invoice.due_date)}` : 'Open due date', tone: (viewModel.balanceDue || 0) > 0 ? 'warning' : 'positive' },
+            ]}
+            meta={[
+              { label: 'Client', value: invoice.client_name || 'Unassigned' },
+              { label: 'Issue date', value: invoice.issue_date ? formatDisplayDate(invoice.issue_date) : 'Not set' },
+              { label: 'Due date', value: invoice.due_date ? formatDisplayDate(invoice.due_date) : 'Open' },
+              { label: linkedProject ? 'Project' : sourceDocument ? 'Source' : 'PO number', value: (linkedProject?.name && String(linkedProject.name)) || (sourceDocument?.number && String(sourceDocument.number)) || invoice.po_number || 'Not linked' },
+            ]}
+          />
+        }
+        floating={<FloatingDownloadButton onClick={() => void handleDownload()} disabled={downloading} />}
+        overlays={
           <>
-            <PdfOutputCustomizeSheet
-              open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
+            <InvoiceRecordPaymentSheet
+              open={ui.isSheetOpen(SHEET_RECORD_PAYMENT)}
               onClose={ui.closeSheet}
-              title="Customize Invoice PDF"
-              subtitle="These controls update the same invoice PDF output settings used by download."
-              documentType="invoice"
-              value={pdfOutput}
-              bankAccounts={previewModel.previewBankAccounts}
-              companyTagline={String(settingsData.company_tagline || '')}
-              footerText={String(settingsData.footer_text || '')}
-              showBalanceDueOption
-              onSave={(nextValue) => handleSaveCustomization(nextValue)}
+              onSaved={refresh}
+              invoice={{
+                id: String(invoice.id),
+                invoice_number: invoice.invoice_number || 'Invoice',
+                client_name: invoice.client_name || '',
+                total: Number(viewModel.invoiceTotal || 0),
+              }}
+            />
+
+            <InvoiceAdvanceSheet
+              open={ui.isSheetOpen(SHEET_ADVANCE)}
+              onClose={ui.closeSheet}
+              onSaved={refresh}
+              invoice={invoice}
             />
 
             <InvoiceMoreSheet
@@ -496,9 +448,9 @@ export default function ViewInvoice() {
               onClose={ui.closeSheet}
               onMarkAsSent={() => void handleMarkSent()}
               onRevert={openRevertFlow}
-              onGenerateWaybill={handleGenerateWaybill}
-              onRecordPayment={() => ui.openSheet(SHEET_RECORD_PAYMENT)}
-              onAdvanceInvoice={() => ui.openSheet(SHEET_ADVANCE)}
+              onGenerateWaybill={() => navigate('/waybills/new', { state: buildWaybillPrefill(invoice) })}
+              onRecordPayment={() => { ui.closeSheet(); ui.openSheet(SHEET_RECORD_PAYMENT) }}
+              onAdvanceInvoice={() => { ui.closeSheet(); ui.openSheet(SHEET_ADVANCE) }}
               onLinkProject={() => setProjectLinkOpen(true)}
               onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}
@@ -507,41 +459,7 @@ export default function ViewInvoice() {
               onDelete={() => ui.openModal(MODAL_DELETE)}
             />
 
-            <RecordPaymentModal
-              open={ui.isSheetOpen(SHEET_RECORD_PAYMENT)}
-              invoice={{
-                id: String(invoice.id),
-                invoice_number: invoice.invoice_number || 'Invoice',
-                client_name: invoice.client_name || '',
-                total: Number(viewModel.invoiceTotal || 0),
-              }}
-              onOpenChange={(open) => {
-                if (!open) ui.closeSheet()
-              }}
-              onSaved={() => refresh()}
-            />
-
-            <InvoiceConfirmDialog
-              open={ui.isSheetOpen(SHEET_ADVANCE)}
-              title="Advance Invoice"
-              description="Advance invoice creation is not wired into this view yet. Use the invoice edit/detail flow for now."
-              cancelLabel="Close"
-              confirmLabel="Close"
-              onConfirm={ui.closeSheet}
-              onCancel={ui.closeSheet}
-            />
-
-            <InvoiceConfirmDialog
-              open={ui.isModalOpen(MODAL_ARCHIVE)}
-              title="Archive Invoice?"
-              description={`${docProps.number} will be moved to your archive. It won't appear in your active list but remains accessible.`}
-              cancelLabel="Cancel"
-              confirmLabel="Archive"
-              onConfirm={() => void handleArchive()}
-              onCancel={ui.closeModal}
-            />
-
-            <InvoiceConfirmDialog
+            <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_REVERT)}
               title="Revert to Quotation?"
               description={`${docProps.number} will be converted back to a draft quotation. Existing payment records will be preserved.`}
@@ -551,7 +469,17 @@ export default function ViewInvoice() {
               onCancel={ui.closeModal}
             />
 
-            <InvoiceConfirmDialog
+            <DocumentConfirmDialog
+              open={ui.isModalOpen(MODAL_ARCHIVE)}
+              title="Archive Invoice?"
+              description={`${docProps.number} will be moved to your archive. It won't appear in your active list but remains accessible.`}
+              cancelLabel="Cancel"
+              confirmLabel="Archive"
+              onConfirm={() => void handleArchive()}
+              onCancel={ui.closeModal}
+            />
+
+            <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_DELETE)}
               title="Delete Invoice?"
               description={`${docProps.number} will be permanently deleted. This cannot be undone.`}
@@ -559,16 +487,6 @@ export default function ViewInvoice() {
               confirmLabel="Delete"
               destructive
               onConfirm={() => void handleDelete()}
-              onCancel={ui.closeModal}
-            />
-
-            <InvoiceConfirmDialog
-              open={ui.isModalOpen(MODAL_VOID_PAYMENT)}
-              title="Void Payment?"
-              description="Payment voiding is not wired from this view yet."
-              cancelLabel="Close"
-              confirmLabel="Close"
-              onConfirm={ui.closeModal}
               onCancel={ui.closeModal}
             />
 
@@ -583,16 +501,6 @@ export default function ViewInvoice() {
           </>
         }
       >
-        <InvoiceHero
-          eyebrow="Invoice"
-          number={docProps.number}
-          title={docProps.title}
-          clientName={invoice.client_name || 'No client specified'}
-          status={docProps.status}
-          metrics={metrics}
-          meta={heroMeta}
-        />
-
         <InvoiceViewPage
           documentPreview={
             <InvoiceHtmlView
@@ -615,8 +523,8 @@ export default function ViewInvoice() {
               tone: (viewModel.balanceDue || 0) > 0 ? 'amber' : 'green',
             },
           ]}
-          paymentProgressLabel={`${progressPercent}% settled · ${formatNaira(viewModel.balanceDue || 0)} remaining`}
-          paymentProgressWidth={`${progressPercent}%`}
+          paymentProgressLabel={`${viewModel.invoiceTotal > 0 ? Math.min(100, Math.round((viewModel.cashReceived / viewModel.invoiceTotal) * 100)) : 0}% settled · ${formatNaira(viewModel.balanceDue || 0)} remaining`}
+          paymentProgressWidth={`${viewModel.invoiceTotal > 0 ? Math.min(100, Math.round((viewModel.cashReceived / viewModel.invoiceTotal) * 100)) : 0}%`}
           paymentHistory={(viewModel.paymentHistory || []).map((payment: any) => ({
             id: String(payment.id),
             amountLabel: formatNaira(payment.total || 0),
@@ -644,9 +552,9 @@ export default function ViewInvoice() {
           onDownload={() => void handleDownload()}
           canRecordPayment={viewModel.canRecordPayment}
         />
-      </InvoicePageShell>
+      </DocumentPage>
 
-      <InvoiceToastViewport toasts={toastStack.toasts} onDismiss={toastStack.dismissToast} />
+      <DocumentToastViewport toasts={toastStack.toasts} onDismiss={toastStack.dismissToast} />
     </>
   )
 }

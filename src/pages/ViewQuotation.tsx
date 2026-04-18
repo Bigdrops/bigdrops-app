@@ -29,7 +29,7 @@ import { formatNaira } from '@/lib/formatters/money'
 import { getPdfDesignPreset, resolvePdfWebFontFamily } from '@/lib/pdfDesignPreset'
 import { supabase } from '@/supabase'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
-import { archiveQuotationRecord, convertQuotationToInvoice, deleteQuotationRecord, downloadQuotationCsvFile, duplicateQuotationRecord, loadQuotationViewData } from './viewQuotationActions'
+import { archiveQuotationRecord, convertQuotationToInvoice, deleteQuotationRecord, downloadQuotationCsvFile, duplicateQuotationRecord, loadQuotationViewData, updateQuotationStatus } from './viewQuotationActions'
 
 const SHEET_CUSTOMIZE = 'customize-output'
 const SHEET_MORE = 'more-actions'
@@ -348,6 +348,17 @@ export default function ViewQuotation() {
     downloadQuotationCsvFile({ quotation, items, totals })
     showToast('CSV downloaded', 'Quotation CSV exported.', 'success')
   }
+  
+  const handleUpdateStatus = async (status: string, successLabel: string) => {
+    if (!id) return
+    try {
+      await updateQuotationStatus(id, status)
+      await refreshQuotation()
+      showToast(successLabel, `Quotation marked as ${status}.`, 'success')
+    } catch (error) {
+      showToast('Update failed', error instanceof Error ? error.message : 'Could not update status.')
+    }
+  }
 
   const handleDuplicate = async () => {
     if (!quotation) return
@@ -463,9 +474,9 @@ export default function ViewQuotation() {
             <QuotationMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)}
               onClose={ui.closeSheet}
-              onMarkAsSent={() => showToast('Marked as sent', '')}
-              onMarkAsAccepted={() => showToast('Marked as accepted', '', 'success')}
-              onMarkAsRejected={() => showToast('Marked as rejected', '')}
+              onMarkAsSent={() => void handleUpdateStatus('sent', 'Marked as sent')}
+              onMarkAsAccepted={() => void handleUpdateStatus('accepted', 'Marked as accepted')}
+              onMarkAsRejected={() => void handleUpdateStatus('rejected', 'Marked as rejected')}
               onConvertToInvoice={() => ui.openModal(MODAL_CONVERT)}
               onLinkProject={() => setProjectLinkOpen(true)}
               onDuplicate={() => void handleDuplicate()}

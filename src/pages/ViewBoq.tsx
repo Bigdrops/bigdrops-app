@@ -20,7 +20,11 @@ import { useToastStack } from '@/components/document-view/hooks/useToastStack'
 import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { getBoqById, saveBoq } from '@/domain/boq/storage'
+import { denormalizeToDbBoq, normalizeDbBoq } from '@/domain/boq/normalize'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
+import { supabase } from '@/supabase'
+import { shareDocument } from '@/components/document-view/shared/shareDocument'
+import { archiveBOQRecord, convertBOQToQuotation, deleteBOQRecord, duplicateBOQRecord, updateBOQStatus } from './viewBOQActions'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -86,6 +90,62 @@ export default function ViewBoq() {
     }
   }
 
+  const handleUpdateStatus = async (status: string, successLabel: string) => {
+    if (!id) return
+    try {
+      await updateBOQStatus(id, status)
+      setBoq((curr: any) => ({ ...curr, status }))
+      showToast(successLabel, `BOQ marked as ${status}.`, 'success')
+      ui.closeModal()
+    } catch (error) {
+      showToast('Update failed', error instanceof Error ? error.message : 'Could not update status.')
+    }
+  }
+
+  const handleDuplicate = async () => {
+    if (!id) return
+    try {
+      const created = await duplicateBOQRecord(id)
+      navigate(`/boq/${created.id}`)
+      showToast('BOQ Cloned', 'A new draft BOQ has been created.', 'success')
+    } catch (error) {
+      showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
+    }
+  }
+
+  const handleArchive = async () => {
+    if (!id) return
+    try {
+      await archiveBOQRecord(id)
+      navigate('/boq')
+    } catch (error) {
+      showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!id) return
+    try {
+      await deleteBOQRecord(id)
+      navigate('/boq')
+    } catch (error) {
+      showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')
+    }
+  }
+
+  const handleConvertToQuotation = async () => {
+    if (!boq) return
+    try {
+      const created = await convertBOQToQuotation({ boq, items: boq.table_rows })
+      navigate(`/quotations/${created.id}`)
+      showToast('Quotation Created', 'Linked quotation draft is ready from BOQ data.', 'success')
+    } catch (error) {
+      showToast('Conversion failed', error instanceof Error ? error.message : 'Could not generate quotation.')
+    } finally {
+      ui.closeModal()
+    }
+  }
+
   const estimatedTotalLabel = useMemo(() => {
     if (!boq?.table_rows?.length) return 'None'
     const total = boq.table_rows.reduce((sum: number, row: any) => {
@@ -125,7 +185,7 @@ export default function ViewBoq() {
     id: boq.id,
     number: boq.boq_number,
     title: boq.title || 'Bill of Quantities',
-    status: 'open',
+    status: boq.status || 'open',
   }
 
   const metrics = [
@@ -133,10 +193,6 @@ export default function ViewBoq() {
     { label: 'Issue Date', value: boq.issue_date || 'N/A' },
     { label: 'Estimated Total', value: estimatedTotalLabel, tone: 'default' as const },
   ]
-
-  const handleDuplicate = () => {
-    showToast('Duplicate pending', 'This BOQ can be viewed and exported, but duplicate logic is not wired yet.')
-  }
 
   return (
     <>
@@ -146,8 +202,8 @@ export default function ViewBoq() {
             title={docProps.number}
             subtitle={docProps.title}
             backLabel="BOQs"
-            onBack={() => navigate('/boqs')}
-            onShare={() => showToast('Share pending', 'Share flow is not wired on BOQ view yet.')}
+            onBack={() => navigate('/boq')}
+            onShare={() => void shareDocument({ title: docProps.number, text: docProps.title })}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
           />
@@ -188,11 +244,10 @@ export default function ViewBoq() {
             <BoqMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)}
               onClose={ui.closeSheet}
-              onMarkAsIssued={() => showToast('Marked as issued', 'BOQ status updated', 'success')}
-              onGenerateQuotation={() => ui.openModal(MODAL_GENERATE_QUOTE)}
-              onCreateRevision={() => ui.openModal(MODAL_REVISION)}
+              onMarkAsApproved={() => void handleUpdateStatus('approved', 'Marked as Approved')}
+              onConvertToQuotation={() => showToast('Quotation generation pending', 'Quotation creation is not wired from BOQ view yet.')}
               onLinkProject={() => showToast('Project link pending', 'Project-link wiring is not finished for BOQ view.')}
-              onDuplicate={handleDuplicate}
+              onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}
               onExport={() => void handleDownload()}
               onArchive={() => ui.openModal(MODAL_ARCHIVE)}
@@ -205,7 +260,7 @@ export default function ViewBoq() {
               description="This will map all billed items into a new quotation draft."
               cancelLabel="Cancel"
               confirmLabel="Generate Quotation"
-              onConfirm={() => showToast('Quotation generation pending', 'Quotation creation is not wired from BOQ view yet.')}
+              onConfirm={() => void handleConvertToQuotation()}
               onCancel={ui.closeModal}
             />
 
@@ -225,7 +280,7 @@ export default function ViewBoq() {
               description={`${docProps.number} will be moved to your archive. It won't appear in your active lists.`}
               cancelLabel="Cancel"
               confirmLabel="Archive"
-              onConfirm={() => showToast('Archive pending', 'Archive handling is not wired for BOQ view yet.')}
+              onConfirm={() => void handleArchive()}
               onCancel={ui.closeModal}
             />
 
@@ -236,7 +291,7 @@ export default function ViewBoq() {
               cancelLabel="Cancel"
               confirmLabel="Delete"
               destructive
-              onConfirm={() => showToast('Delete pending', 'Delete handling is not wired for BOQ view yet.')}
+              onConfirm={() => void handleDelete()}
               onCancel={ui.closeModal}
             />
           </>

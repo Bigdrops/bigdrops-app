@@ -22,6 +22,8 @@ import { RfqPreview } from '@/components/rfq/RfqPreview'
 import { denormalizeToDbRfq, normalizeDbRfq } from '@/domain/rfq/normalize'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { supabase } from '@/supabase'
+import { shareDocument } from '@/components/document-view/shared/shareDocument'
+import { archiveRFQRecord, convertRFQToQuotation, deleteRFQRecord, duplicateRFQRecord, updateRFQStatus } from './viewRFQActions'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -101,6 +103,62 @@ export default function ViewRfq() {
     }
   }
 
+  const handleUpdateStatus = async (status: string, successLabel: string) => {
+    if (!id) return
+    try {
+      await updateRFQStatus(id, status)
+      setRfq((curr: any) => ({ ...curr, status }))
+      showToast(successLabel, `RFQ marked as ${status}.`, 'success')
+      ui.closeModal()
+    } catch (error) {
+      showToast('Update failed', error instanceof Error ? error.message : 'Could not update status.')
+    }
+  }
+
+  const handleDuplicate = async () => {
+    if (!id) return
+    try {
+      const created = await duplicateRFQRecord(id)
+      navigate(`/rfq/${created.id}`)
+      showToast('RFQ Cloned', 'A new draft RFQ has been created.', 'success')
+    } catch (error) {
+      showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
+    }
+  }
+
+  const handleArchive = async () => {
+    if (!id) return
+    try {
+      await archiveRFQRecord(id)
+      navigate('/rfq')
+    } catch (error) {
+      showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!id) return
+    try {
+      await deleteRFQRecord(id)
+      navigate('/rfq')
+    } catch (error) {
+      showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')
+    }
+  }
+
+  const handleConvertToQuotation = async () => {
+    if (!rfq) return
+    try {
+      const created = await convertRFQToQuotation({ rfq, items: rfq.table_rows })
+      navigate(`/quotations/${created.id}`)
+      showToast('Quotation Created', 'Linked quotation draft is ready.', 'success')
+    } catch (error) {
+      showToast('Conversion failed', error instanceof Error ? error.message : 'Could not generate quotation.')
+    } finally {
+      ui.closeModal()
+    }
+  }
+
   const handleSaveCustomization = async () => {
     if (!draftRfq || !id) return
     setSavingCustomization(true)
@@ -157,10 +215,6 @@ export default function ViewRfq() {
     { label: 'Submission Deadline', value: rfq.expiry_date || 'No deadline', tone: 'amber' as const },
   ]
 
-  const handleDuplicate = () => {
-    showToast('Duplicate pending', 'This RFQ can be viewed and exported, but duplicate logic is not wired yet.')
-  }
-
   return (
     <>
       <DocumentPage
@@ -169,8 +223,8 @@ export default function ViewRfq() {
             title={docProps.number}
             subtitle={docProps.title}
             backLabel="RFQs"
-            onBack={() => navigate('/rfqs')}
-            onShare={() => showToast('Share pending', 'Share flow is not wired on RFQ view yet.')}
+            onBack={() => navigate('/rfq')}
+            onShare={() => void shareDocument({ title: docProps.number, text: docProps.title })}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
           />
@@ -211,13 +265,13 @@ export default function ViewRfq() {
             <RfqMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)}
               onClose={ui.closeSheet}
-              onMarkAsSent={() => showToast('Marked as dispatched', '', 'success')}
-              onMarkAsClosed={() => showToast('Marked as closed', '')}
+              onMarkAsSent={() => void handleUpdateStatus('sent', 'Marked as Sent')}
+              onMarkAsClosed={() => void handleUpdateStatus('closed', 'Marked as Closed')}
               onConvertToQuotation={() => ui.openModal(MODAL_CONVERT)}
               onLinkProject={() => showToast('Project link pending', 'Project-link wiring is not finished for RFQ view.')}
-              onDuplicate={handleDuplicate}
+              onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}
-              onExportCsv={() => void handleDownload()}
+              onExport={() => void handleDownload()}
               onArchive={() => ui.openModal(MODAL_ARCHIVE)}
               onDelete={() => ui.openModal(MODAL_DELETE)}
             />
@@ -228,7 +282,7 @@ export default function ViewRfq() {
               description="This will generate a new quotation draft supplying these requested items."
               cancelLabel="Cancel"
               confirmLabel="Generate Quotation"
-              onConfirm={() => showToast('Quotation generation pending', 'Quotation creation is not wired from RFQ view yet.')}
+              onConfirm={() => void handleConvertToQuotation()}
               onCancel={ui.closeModal}
             />
 
@@ -238,7 +292,7 @@ export default function ViewRfq() {
               description={`${docProps.number} will be moved to your archive. It won't appear in your active lists.`}
               cancelLabel="Cancel"
               confirmLabel="Archive"
-              onConfirm={() => showToast('Archive pending', 'Archive handling is not wired for RFQ view yet.')}
+              onConfirm={() => void handleArchive()}
               onCancel={ui.closeModal}
             />
 
@@ -249,7 +303,7 @@ export default function ViewRfq() {
               cancelLabel="Cancel"
               confirmLabel="Delete"
               destructive
-              onConfirm={() => showToast('Delete pending', 'Delete handling is not wired for RFQ view yet.')}
+              onConfirm={() => void handleDelete()}
               onCancel={ui.closeModal}
             />
           </>
