@@ -5,7 +5,7 @@ export interface ToastMessage {
   id: string
   title: string
   description?: string
-  tone?: 'info' | 'success' | 'destructive'
+  tone?: 'info' | 'success' | 'danger' | 'warning'
 }
 
 interface InvoiceToastViewportProps {
