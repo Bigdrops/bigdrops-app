@@ -1,4 +1,7 @@
 import type { ReactNode } from 'react'
+
+import { mapInvoicePreviewNotesContent } from '@/components/invoice/view/invoiceDetailHelpers'
+
 import './InvoiceHtmlView.css'
 
 type InvoiceHtmlViewProps = {
@@ -46,57 +49,29 @@ export default function InvoiceHtmlView({
   pdfOutput,
   settingsData,
 }: InvoiceHtmlViewProps) {
-  const items = Array.isArray(previewModel?.previewItems)
-    ? previewModel.previewItems
-    : []
-
-  const totals = Array.isArray(previewModel?.previewTotals)
-    ? previewModel.previewTotals
-    : []
-
-  const companyLines = Array.isArray(previewModel?.companyPreviewLines)
-    ? previewModel.companyPreviewLines
-    : []
-
-  const clientLines = Array.isArray(previewModel?.clientPreviewLines)
-    ? previewModel.clientPreviewLines
-    : []
-
-  const detailRows = Array.isArray(previewModel?.previewDetailRows)
-    ? previewModel.previewDetailRows
-    : []
-
-  const noteSections = Array.isArray(previewModel?.previewNotesSections)
-    ? previewModel.previewNotesSections
-    : []
-
-  const bank = pdfOutput?.showBankDetails
-    ? previewModel?.selectedPreviewBank
-    : null
+  const items = Array.isArray(previewModel?.previewItems) ? previewModel.previewItems : []
+  const totals = Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : []
+  const companyLines = Array.isArray(previewModel?.companyPreviewLines) ? previewModel.companyPreviewLines : []
+  const clientLines = Array.isArray(previewModel?.clientPreviewLines) ? previewModel.clientPreviewLines : []
+  const detailRows = Array.isArray(previewModel?.previewDetailRows) ? previewModel.previewDetailRows : []
+  const noteSections = Array.isArray(previewModel?.previewNotesSections) ? previewModel.previewNotesSections : []
+  const mappedNotes = mapInvoicePreviewNotesContent(noteSections)
+  const bank = pdfOutput?.showBankDetails ? previewModel?.selectedPreviewBank : null
 
   return (
     <div className="invoice-html-view">
       <Section>
         <div className="invoice-html-header">
           <div>
-            <p className="invoice-html-eyebrow">
-              {invoice?.invoice_title || 'Invoice'}
-            </p>
-            <h2 className="invoice-html-number">
-              {invoice?.invoice_number || 'Invoice'}
-            </h2>
-            <p className="invoice-html-client">
-              {invoice?.client_name || 'No client specified'}
-            </p>
+            <p className="invoice-html-eyebrow">{invoice?.invoice_title || 'Invoice'}</p>
+            <h2 className="invoice-html-number">{invoice?.invoice_number || 'Invoice'}</h2>
+            <p className="invoice-html-client">{invoice?.client_name || 'No client specified'}</p>
           </div>
 
           <div className="invoice-html-meta">
             <KeyValue label="Issue Date" value={invoice?.issue_date} />
             <KeyValue label="Due Date" value={invoice?.due_date || 'Open'} />
-            <KeyValue
-              label="Status"
-              value={viewModel?.statusLabel || invoice?.status || 'draft'}
-            />
+            <KeyValue label="Status" value={viewModel?.statusLabel || invoice?.status || 'draft'} />
           </div>
         </div>
       </Section>
@@ -119,7 +94,7 @@ export default function InvoiceHtmlView({
 
       <Section title="Billed By">
         <div className="invoice-html-lines">
-          <p>{settingsData?.company_name || 'Company'}</p>
+          <p className="invoice-html-line-strong">{settingsData?.company_name || 'Company'}</p>
           {companyLines.map((line: string, index: number) => (
             <p key={`company-line-${index}`}>{line}</p>
           ))}
@@ -128,7 +103,7 @@ export default function InvoiceHtmlView({
 
       <Section title="Bill To">
         <div className="invoice-html-lines">
-          <p>{invoice?.client_name || 'Unassigned'}</p>
+          <p className="invoice-html-line-strong">{invoice?.client_name || 'Unassigned'}</p>
           {clientLines.map((line: string, index: number) => (
             <p key={`client-line-${index}`}>{line}</p>
           ))}
@@ -138,37 +113,38 @@ export default function InvoiceHtmlView({
       <Section title="Items">
         <div className="invoice-html-items">
           {items.length ? (
-            items.map((item: any, index: number) => (
-              <article className="invoice-html-item" key={item?.id || index}>
-                <div className="invoice-html-item-top">
-                  <h4 className="invoice-html-item-title">
-                    {item?.title ||
-                      item?.name ||
-                      item?.description ||
-                      `Item ${index + 1}`}
-                  </h4>
-                  <div className="invoice-html-item-amount">
-                    {item?.amountLabel || item?.amount || '—'}
+            items.map((item: any, index: number) => {
+              if (item?.type === 'group') {
+                return (
+                  <div className="invoice-html-group" key={item?.label || `group-${index}`}>
+                    {item?.label || `Group ${index + 1}`}
                   </div>
-                </div>
+                )
+              }
 
-                {item?.subtitle ? (
-                  <p className="invoice-html-item-subtitle">{item.subtitle}</p>
-                ) : null}
+              const facts = Array.isArray(item?.facts) ? item.facts.filter(Boolean) : []
 
-                <div className="invoice-html-item-meta">
-                  {item?.quantityLabel ? (
-                    <KeyValue label="Qty" value={item.quantityLabel} />
+              return (
+                <article className="invoice-html-item" key={item?.id || item?.label || index}>
+                  <div className="invoice-html-item-top">
+                    <h4 className="invoice-html-item-title">{item?.label || `Item ${index + 1}`}</h4>
+                    <div className="invoice-html-item-amount">{item?.value || '—'}</div>
+                  </div>
+
+                  {item?.detail ? <p className="invoice-html-item-subtitle">{item.detail}</p> : null}
+
+                  {facts.length ? (
+                    <div className="invoice-html-facts">
+                      {facts.map((fact: string, factIndex: number) => (
+                        <div className="invoice-html-fact" key={`${item?.label || index}-fact-${factIndex}`}>
+                          {fact}
+                        </div>
+                      ))}
+                    </div>
                   ) : null}
-                  {item?.rateLabel ? (
-                    <KeyValue label="Rate" value={item.rateLabel} />
-                  ) : null}
-                  {item?.unitLabel ? (
-                    <KeyValue label="Unit" value={item.unitLabel} />
-                  ) : null}
-                </div>
-              </article>
-            ))
+                </article>
+              )
+            })
           ) : (
             <p className="invoice-html-empty">No items added.</p>
           )}
@@ -192,37 +168,27 @@ export default function InvoiceHtmlView({
           )}
         </div>
 
-        {invoice?.amount_in_words ? (
-          <p className="invoice-html-amount-words">{invoice.amount_in_words}</p>
-        ) : null}
+        {invoice?.amount_in_words ? <p className="invoice-html-amount-words">{invoice.amount_in_words}</p> : null}
       </Section>
 
       {bank ? (
         <Section title="Bank Details">
           <div className="invoice-html-grid">
-            {bank.bank_name ? (
-              <KeyValue label="Bank" value={bank.bank_name} />
-            ) : null}
-            {bank.account_name ? (
-              <KeyValue label="Account Name" value={bank.account_name} />
-            ) : null}
-            {bank.account_number ? (
-              <KeyValue label="Account Number" value={bank.account_number} />
-            ) : null}
+            {bank.bankName ? <KeyValue label="Bank" value={bank.bankName} /> : null}
+            {bank.accountName ? <KeyValue label="Account Name" value={bank.accountName} /> : null}
+            {bank.accountNumber ? <KeyValue label="Account Number" value={bank.accountNumber} /> : null}
+            {bank.sortCode ? <KeyValue label="Sort Code" value={bank.sortCode} /> : null}
           </div>
         </Section>
       ) : null}
 
-      {noteSections.length ? (
+      {mappedNotes.length ? (
         <Section title="Notes">
           <div className="invoice-html-notes">
-            {noteSections.map((section: any, index: number) => (
-              <div
-                key={section?.title || index}
-                className="invoice-html-note-block"
-              >
-                {section?.title ? <h4>{section.title}</h4> : null}
-                <div>{section?.content || section?.body || '—'}</div>
+            {mappedNotes.map((section, index) => (
+              <div key={section.title || index} className="invoice-html-note-block">
+                {section.title ? <h4>{section.title}</h4> : null}
+                <div className="invoice-html-note-content">{section.content}</div>
               </div>
             ))}
           </div>
