@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/hooks/use-toast'
 import UnitInput from '@/components/UnitInput'
+import { useItemSuggestions } from '@/modules/item-library/hooks'
+import { getInvoiceSuggestionSelection } from '@/modules/item-library/domain/invoiceSuggestionSelection'
 
 const CLOUD_NAME = 'ddhqvv77g'
 const UPLOAD_PRESET = 'ml_default'
@@ -47,6 +49,7 @@ export default function MobileItemCard({
   index,
   number,
   invoice,
+  enableItemSuggestions = false,
   customColumns,
   computedAmount,
   groupName = '',
@@ -66,11 +69,21 @@ export default function MobileItemCard({
   const [showImageSlot, setShowImageSlot] = useState(Boolean(item.image_url))
   const [uploading, setUploading] = useState(false)
   const [validationError, setValidationError] = useState(null)
+  const [descriptionFocused, setDescriptionFocused] = useState(false)
+  const [debouncedDescription, setDebouncedDescription] = useState(item.description || '')
   const fileInputRef = useRef(null)
 
   useEffect(() => {
     if (item.image_url) setShowImageSlot(true)
   }, [item.image_url])
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedDescription(item.description || '')
+    }, 180)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [item.description])
 
   const autoInstall = (() => {
     const col = getColumn('install_rate')
@@ -81,6 +94,13 @@ export default function MobileItemCard({
   const discountValue = item.discount_rate
   const hasDiscountOverride = discountValue !== null && discountValue !== undefined
   const discountExcluded = discountValue === 0
+  const suggestionQuery =
+    enableItemSuggestions && descriptionFocused && String(debouncedDescription || '').trim().length >= 2
+      ? debouncedDescription
+      : ''
+  const { data: suggestions, loading: suggestionsLoading } = useItemSuggestions(suggestionQuery, 5)
+  const showSuggestions =
+    enableItemSuggestions && descriptionFocused && String(item.description || '').trim().length >= 2
 
   const handleImageUpload = async (event) => {
     const file = event.target.files?.[0]
@@ -124,6 +144,19 @@ export default function MobileItemCard({
     }
   }
 
+  const handleDescriptionChange = (value) => {
+    onUpdate(index, 'description', value)
+    if (item.item_id) onUpdate(index, 'item_id', null)
+  }
+
+  const handleSuggestionSelect = (suggestion) => {
+    const selection = getInvoiceSuggestionSelection(suggestion)
+    onUpdate(index, 'description', selection.description)
+    onUpdate(index, 'item_id', selection.item_id)
+    onUpdate(index, 'unit_price', selection.unit_price)
+    setDescriptionFocused(false)
+  }
+
   return (
     <div className={`relative ${compact ? '' : 'mt-3 rounded-[16px] border border-[#e2e8f0] bg-white shadow-[0_1px_0_rgba(15,23,42,0.02)]'}`}>
       <div className={`flex items-center justify-between px-3 py-2.5 ${compact ? '' : 'border-b border-[#e2e8f0]'}`}>
@@ -140,10 +173,59 @@ export default function MobileItemCard({
         <div className={`rounded-[14px] border-[1.5px] border-[#e2e8f0] px-3 py-2.5 ${compact ? 'bg-white' : 'bg-[#f8fafc]'}`}>
           <Textarea
             value={item.description || ''}
-            onChange={(event) => onUpdate(index, 'description', event.target.value)}
+            onChange={(event) => handleDescriptionChange(event.target.value)}
+            onFocus={() => setDescriptionFocused(true)}
+            onBlur={() => {
+              window.setTimeout(() => {
+                setDescriptionFocused(false)
+              }, 120)
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setDescriptionFocused(false)
+            }}
             placeholder="Item description"
             className="min-h-[30px] border-0 bg-transparent px-0 py-0 text-[14px] font-bold text-[#0f172a] shadow-none focus-visible:ring-0"
           />
+          {showSuggestions && (suggestionsLoading || suggestions.length > 0) ? (
+            <div className="mt-2 overflow-hidden rounded-[12px] border border-[#dbe4f0] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
+              {suggestionsLoading ? (
+                <div className="px-3 py-2 text-[12px] text-[#64748b]">Loading suggestions...</div>
+              ) : (
+                suggestions.map((suggestion) => (
+                  <button
+                    key={`${suggestion.item_id}-${suggestion.match_source}-${suggestion.matched_text}`}
+                    type="button"
+                    className="flex w-full items-start justify-between gap-3 border-b border-[#eef2f7] px-3 py-2 text-left last:border-b-0 hover:bg-[#f8fafc]"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => handleSuggestionSelect(suggestion)}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[13px] font-semibold text-[#0f172a]">
+                        {suggestion.match_source === 'alias' ? suggestion.matched_text : suggestion.name}
+                      </div>
+                      <div className="truncate text-[11px] text-[#64748b]">
+                        {suggestion.match_source === 'alias' ? `Alias for ${suggestion.name}` : 'Master item'}
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#94a3b8]">Std</div>
+                      <div className="text-[12px] font-semibold text-[#0f172a]">
+                        {suggestion.standard_price !== null && suggestion.standard_price !== undefined
+                          ? `N${Number(suggestion.standard_price).toLocaleString()}`
+                          : 'N0'}
+                      </div>
+                      <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#94a3b8]">Last</div>
+                      <div className="text-[12px] text-[#475569]">
+                        {suggestion.last_sold_price !== null && suggestion.last_sold_price !== undefined
+                          ? `N${Number(suggestion.last_sold_price).toLocaleString()}`
+                          : '—'}
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          ) : null}
           {showDetails ? (
             <Input
               value={item.sub_description || ''}
