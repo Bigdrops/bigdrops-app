@@ -20,7 +20,7 @@ function Section({
     </section>
   )
 }
-
+import './InvoiceHtmlView.css'
 function KeyValue({
   label,
   value,
