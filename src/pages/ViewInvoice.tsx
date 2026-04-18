@@ -540,7 +540,15 @@ export default function ViewInvoice() {
 
         <InvoiceViewPage
           metrics={metrics}
-          documentPreview={<InvoiceHtmlView />}
+          documentPreview={
+            <InvoiceHtmlView
+              invoice={invoice}
+              viewModel={viewModel}
+              previewModel={previewModel}
+              pdfOutput={pdfOutput}
+              settingsData={settingsData}
+            />
+          }
           paymentSummary={[
             { label: 'Cash Received', value: formatNaira(viewModel.cashReceived || 0), tone: 'green' },
             { label: 'Balance Due', value: formatNaira(viewModel.balanceDue || 0) },
