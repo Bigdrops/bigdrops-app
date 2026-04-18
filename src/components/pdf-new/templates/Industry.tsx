@@ -11,7 +11,8 @@ import {
 } from './industryStyles'
 import {
   getAccentTint,
-  IndustryGroupRow,
+  IndustryGroupFooterRow,
+  IndustryGroupHeaderRow,
   IndustryPartyCard,
   renderOptionalList,
 } from './industryTemplateBlocks'
@@ -205,22 +206,46 @@ export default function IndustryTemplate({ data }: TemplateProps) {
 
           {data.table.rows.map((row, rowIdx) => {
             if (row.isGroupHeader) {
-              return <IndustryGroupRow
-                row={row}
-                rowIdx={rowIdx}
-                ruleColor={groupRuleColor}
-                surfaceColor={subtleSurfaceColor}
-                textColor={textColor}
-                mutedColor={mutedColor}
-                headerFontFamily={headerFontFamily}
-                bodyFontFamily={bodyFontFamily}
-              />
+              return (
+                <IndustryGroupHeaderRow
+                  key={`group-h-${rowIdx}`}
+                  row={row}
+                  rowIdx={rowIdx}
+                  ruleColor={groupRuleColor}
+                  surfaceColor={subtleSurfaceColor}
+                  textColor={textColor}
+                  mutedColor={mutedColor}
+                  headerFontFamily={headerFontFamily}
+                  bodyFontFamily={bodyFontFamily}
+                />
+              )
+            }
+
+            if (row.isGroupFooter) {
+              return (
+                <IndustryGroupFooterRow
+                  key={`group-f-${rowIdx}`}
+                  row={row}
+                  rowIdx={rowIdx}
+                  ruleColor={groupRuleColor}
+                  surfaceColor={subtleSurfaceColor}
+                  textColor={textColor}
+                  mutedColor={mutedColor}
+                  headerFontFamily={headerFontFamily}
+                  bodyFontFamily={bodyFontFamily}
+                />
+              )
             }
 
             return (
               <View
                 key={`row-${rowIdx}`}
-                style={[styles.tableRow, rowIdx % 2 === 1 ? styles.tableRowEven : null]}
+                style={[
+                  styles.tableRow,
+                  rowIdx % 2 === 1 ? styles.tableRowEven : null,
+                  row.isInGroup ? styles.tableRowInGroup : null,
+                  row.isInGroup && accentColor ? { borderLeftColor: accentColor } : null,
+                ]}
                 wrap={false}
               >
                 {data.table.columns.map((column, colIdx) => {

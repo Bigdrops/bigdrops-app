@@ -60,6 +60,7 @@ export default function MobileItemCard({
   onDuplicate,
   isVisible,
   getColumn,
+  compact = false,
 }) {
   const [showDetails, setShowDetails] = useState(Boolean(item.sub_description))
   const [showImageSlot, setShowImageSlot] = useState(Boolean(item.image_url))
@@ -124,8 +125,8 @@ export default function MobileItemCard({
   }
 
   return (
-    <div className="relative mt-3 rounded-[16px] border border-[#e2e8f0] bg-white shadow-[0_1px_0_rgba(15,23,42,0.02)]">
-      <div className="flex items-center justify-between border-b border-[#e2e8f0] px-3 py-2.5">
+    <div className={`relative ${compact ? '' : 'mt-3 rounded-[16px] border border-[#e2e8f0] bg-white shadow-[0_1px_0_rgba(15,23,42,0.02)]'}`}>
+      <div className={`flex items-center justify-between px-3 py-2.5 ${compact ? '' : 'border-b border-[#e2e8f0]'}`}>
         <div className="text-sm font-semibold text-[#0f172a]">{number}</div>
         <div className="flex items-center gap-1">
           <button type="button" onClick={() => onMoveUp(index)} disabled={isFirst} className="inline-flex h-7 w-7 items-center justify-center rounded border border-[#e2e8f0] text-[#475569] disabled:opacity-40"><MoveUp className="h-3.5 w-3.5" /></button>
@@ -135,8 +136,8 @@ export default function MobileItemCard({
         </div>
       </div>
 
-      <div className="space-y-3 p-3">
-        <div className="rounded-[14px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 py-2.5">
+      <div className="space-y-3 p-3 pt-0">
+        <div className={`rounded-[14px] border-[1.5px] border-[#e2e8f0] px-3 py-2.5 ${compact ? 'bg-white' : 'bg-[#f8fafc]'}`}>
           <Textarea
             value={item.description || ''}
             onChange={(event) => onUpdate(index, 'description', event.target.value)}
@@ -359,14 +360,16 @@ export default function MobileItemCard({
         ) : null}
       </div>
 
-      <button
-        type="button"
-        onClick={() => onInsertBelow(index)}
-        className="flex w-full items-center justify-center gap-2 border-t border-[#e2e8f0] bg-[#f8fafc] py-3 text-[12px] font-bold text-[#475569]"
-      >
-        <Plus className="h-4 w-4" />
-        Add item below
-      </button>
+      {!compact && (
+        <button
+          type="button"
+          onClick={() => onInsertBelow(index)}
+          className="flex w-full items-center justify-center gap-2 border-t border-[#e2e8f0] bg-[#f8fafc] py-3 text-[12px] font-bold text-[#475569]"
+        >
+          <Plus className="h-4 w-4" />
+          Add item below
+        </button>
+      )}
     </div>
   )
 }

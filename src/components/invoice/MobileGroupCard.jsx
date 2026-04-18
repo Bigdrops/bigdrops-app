@@ -24,56 +24,74 @@ export default function MobileGroupCard({
   const subtotalOn = !!group.showSubtotal
 
   return (
-    <div className="mt-3 rounded-[18px] border border-[#CBD8EE] bg-[#EEF3FB] p-2 shadow-[0_1px_3px_rgba(15,23,42,0.03)]">
-      <div className="rounded-[14px] border border-[#D7E3F5] bg-white px-3 py-3">
-        <div className="flex items-center gap-2">
-          <Input
-            value={group.name || ''}
-            onChange={(event) => onUpdateGroupName(group.id, event.target.value)}
-            placeholder="Group name"
-            className="h-10 min-w-0 flex-1 rounded-[12px] border border-[#DCE4F5] bg-white px-3 text-[14px] font-bold text-[#0f172a]"
-          />
-
-          <button
-            type="button"
-            onClick={() => onToggleGroupSubtotal(group.id)}
-            aria-pressed={subtotalOn}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-semibold transition-colors ${
-              subtotalOn
-                ? 'border-[#2563EB] bg-[#2563EB] text-white'
-                : 'border-[#CBD5E1] bg-white text-[#334155]'
-            }`}
-          >
-            <span
-              className={`h-2.5 w-2.5 rounded-full ${
-                subtotalOn ? 'bg-white' : 'bg-[#94A3B8]'
-              }`}
+    <div className="mt-4 overflow-hidden rounded-[20px] border border-[#dce4f5] bg-[#f1f5fb] p-1.5 shadow-sm">
+      {/* Group Header */}
+      <div className="flex flex-col gap-2 rounded-[16px] bg-white p-3 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <Input
+              value={group.name || ''}
+              onChange={(event) => onUpdateGroupName(group.id, event.target.value)}
+              placeholder="Group name (e.g. Electrical Materials)"
+              className="h-10 border-none bg-transparent p-0 text-[16px] font-black tracking-tight text-[#0f172a] focus-visible:ring-0"
             />
-            <span>{subtotalOn ? 'Subtotal on' : 'Subtotal off'}</span>
-          </button>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => onDeleteGroup(group.id)}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] border border-[#fecaca] bg-[#fff5f5] text-[#ef4444] transition-colors hover:bg-[#fee2e2]"
-            aria-label="Delete group"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {subtotalOn && (
+              <div className="hidden items-center gap-1.5 px-2 text-[12px] font-bold text-[#2563eb] sm:flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#2563eb]" />
+                <span>NGN {Number(groupSubtotal || 0).toLocaleString()}</span>
+              </div>
+            )}
+            
+            <button
+              type="button"
+              onClick={() => onToggleGroupSubtotal(group.id)}
+              className={`flex h-9 items-center gap-1.5 rounded-full border px-3 text-[11px] font-bold transition-all ${
+                subtotalOn
+                  ? 'border-[#2563eb] bg-[#2563eb] text-white'
+                  : 'border-[#cbd5e1] bg-white text-[#64748b]'
+              }`}
+            >
+              <span>Subtotal</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onDeleteGroup(group.id)}
+              className="flex h-9 w-9 items-center justify-center rounded-[12px] border border-[#fecaca] bg-[#fff5f5] text-[#ef4444] transition-colors hover:bg-[#fee2e2]"
+              aria-label="Delete group"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
+
+        {/* Small subtotal summary for mobile/compact */}
+        {subtotalOn && (
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#2563eb] sm:hidden">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#2563eb]" />
+            <span>Subtotal: NGN {Number(groupSubtotal || 0).toLocaleString()}</span>
+          </div>
+        )}
       </div>
 
-      <div className="px-1 pb-2 pt-2">
+      {/* Group Body */}
+      <div className="mt-1.5 space-y-1.5 px-1 py-1">
         {items.length === 0 ? (
-          <div className="rounded-[14px] border border-dashed border-[#C9D7EC] bg-white px-3 py-3 text-xs text-[#64748b]">
+          <div className="flex h-16 items-center justify-center rounded-[14px] border border-dashed border-[#cbd8ee] bg-white/50 text-[11px] font-medium text-[#94a3b8]">
             No items in this group.
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="relative space-y-2 pl-3">
+            {/* Left rule for family connection */}
+            <div className="absolute left-1 top-2 bottom-2 w-[2px] rounded-full bg-[#cbd8ee]" />
+            
             {items.map(({ item, index, number, isFirst, isLast }) => (
               <div
                 key={item._uiKey || item.id || index}
-                className="rounded-[14px] border border-[#E7EEF7] bg-white"
+                className="overflow-hidden rounded-[14px] border border-[#e2e8f0] bg-white shadow-sm"
               >
                 <MobileItemCard
                   item={item}
@@ -98,25 +116,19 @@ export default function MobileGroupCard({
             ))}
           </div>
         )}
-
-        {subtotalOn ? (
-          <div className="mt-2 flex items-center justify-between rounded-[14px] border border-[#C9D7EC] bg-white px-3 py-2.5">
-            <span className="text-[13px] font-semibold text-[#475569]">Group subtotal</span>
-            <span className="text-[15px] font-bold text-[#0f172a]">
-              NGN {Number(groupSubtotal || 0).toLocaleString()}
-            </span>
-          </div>
-        ) : null}
       </div>
 
-      <button
-        type="button"
-        onClick={() => onAddItemToGroup(group.id)}
-        className="mt-1 flex w-full items-center justify-center gap-2 rounded-[14px] border border-dashed border-[#B9C8DE] bg-white py-3 text-sm font-bold text-[#0f172a] transition-colors hover:bg-[#f8fafc]"
-      >
-        <Plus className="h-4 w-4" />
-        Add item to group
-      </button>
+      {/* Group Footer Actions */}
+      <div className="p-1 px-1">
+        <button
+          type="button"
+          onClick={() => onAddItemToGroup(group.id)}
+          className="flex w-full items-center justify-center gap-2 rounded-[14px] border-2 border-dashed border-[#cbd8ee] bg-white/60 py-2.5 text-[13px] font-bold text-[#475569] transition-colors hover:bg-white hover:text-[#0f172a]"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Add item to group</span>
+        </button>
+      </div>
     </div>
   )
 }

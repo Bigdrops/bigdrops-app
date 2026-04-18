@@ -93,57 +93,73 @@ export function IndustryPartyCard({
   )
 }
 
-export function IndustryGroupRow({
+export function IndustryGroupHeaderRow({
+  row,
+  rowIdx,
+  ruleColor,
+  surfaceColor,
+  textColor,
+  headerFontFamily,
+}: GroupRowProps) {
+  return (
+    <View
+      key={`group-h-${rowIdx}`}
+      style={[
+        styles.tableGroupHeader,
+        ruleColor ? { borderTopColor: ruleColor } : null,
+        surfaceColor ? { backgroundColor: surfaceColor } : null,
+      ]}
+    >
+      <Text
+        style={[
+          styles.groupTitleCell,
+          textColor ? { color: textColor } : null,
+          headerFontFamily ? { fontFamily: headerFontFamily } : null,
+        ]}
+      >
+        {row.groupName || row.groupLabel || ''}
+      </Text>
+    </View>
+  )
+}
+
+export function IndustryGroupFooterRow({
   row,
   rowIdx,
   ruleColor,
   surfaceColor,
   textColor,
   mutedColor,
-  headerFontFamily,
   bodyFontFamily,
 }: GroupRowProps) {
   return (
     <View
-      key={`group-${rowIdx}`}
+      key={`group-f-${rowIdx}`}
       style={[
-        styles.tableGroupRow,
-        ruleColor ? { borderTopColor: ruleColor, borderBottomColor: ruleColor } : null,
+        styles.tableGroupFooter,
+        ruleColor ? { borderBottomColor: ruleColor } : null,
         surfaceColor ? { backgroundColor: surfaceColor } : null,
       ]}
     >
-      <View style={styles.groupBlockStack}>
+      <View style={styles.groupSubtotalRow}>
         <Text
           style={[
-            styles.groupTitleCell,
-            textColor ? { color: textColor } : null,
-            headerFontFamily ? { fontFamily: headerFontFamily } : null,
+            styles.groupSubtotalLabel,
+            mutedColor ? { color: mutedColor } : null,
+            bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
           ]}
         >
-          {row.groupName || row.groupLabel || ''}
+          {row.groupSubtotalLabel ? `${row.groupSubtotalLabel}:` : 'Group Subtotal:'}
         </Text>
-        {row.showSubtotal && row.groupSubtotalValue ? (
-          <View style={styles.groupSubtotalRow}>
-            <Text
-              style={[
-                styles.groupSubtotalLabel,
-                mutedColor ? { color: mutedColor } : null,
-                bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
-              ]}
-            >
-              {row.groupSubtotalLabel ? `${row.groupSubtotalLabel}:` : 'Group Subtotal:'}
-            </Text>
-            <Text
-              style={[
-                styles.groupSubtotalValue,
-                textColor ? { color: textColor } : null,
-                bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
-              ]}
-            >
-              {row.groupSubtotalValue}
-            </Text>
-          </View>
-        ) : null}
+        <Text
+          style={[
+            styles.groupSubtotalValue,
+            textColor ? { color: textColor } : null,
+            bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+          ]}
+        >
+          {row.groupSubtotalValue}
+        </Text>
       </View>
     </View>
   )

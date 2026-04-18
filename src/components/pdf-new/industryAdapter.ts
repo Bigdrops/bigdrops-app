@@ -44,6 +44,7 @@ export type IndustryTemplateData = {
       type?: string
       rowType?: string
       isGroupHeader?: boolean
+      isGroupFooter?: boolean
       groupName?: string | null
       groupLabel?: string | null
       showSubtotal?: boolean
@@ -51,6 +52,7 @@ export type IndustryTemplateData = {
       groupSubtotalValue?: string | null
       imageUrl?: string | null
       cells?: Record<string, unknown>
+      isInGroup?: boolean
     }>
   }
   paymentDetails: {
@@ -162,15 +164,17 @@ function resolveGroupSubtotal(model: PdfDocumentModel, startIndex: number) {
 
 function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinition[]) {
   let lineNumber = 0
+  const rows: IndustryTemplateData['table']['rows'] = []
+  let currentGroupHeader: any = null
 
-  return model.items.map((item, index) => {
+  model.items.forEach((item, index) => {
     const isGroupHeader = item.rowType === 'group_header'
 
     if (isGroupHeader) {
       const showSubtotal = item.customData?.showSubtotal === true
       const groupSubtotal = showSubtotal ? resolveGroupSubtotal(model, index) : null
 
-      return {
+      currentGroupHeader = {
         type: item.rowType,
         rowType: item.rowType,
         isGroupHeader: true,
@@ -182,6 +186,8 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
         imageUrl: item.imageUrl,
         cells: undefined,
       }
+      rows.push(currentGroupHeader)
+      return
     }
 
     lineNumber += 1
@@ -201,7 +207,7 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
       sub: item.subDescription ?? '',
     }
 
-    return {
+    rows.push({
       type: item.rowType,
       rowType: item.rowType,
       isGroupHeader: false,
@@ -209,8 +215,27 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
       groupLabel: item.groupLabel,
       imageUrl: item.imageUrl,
       cells,
+      isInGroup: !!currentGroupHeader,
+    })
+
+    const nextItem = model.items[index + 1]
+    const isEndingGroup = !nextItem || nextItem.rowType === 'group_header'
+
+    if (currentGroupHeader && isEndingGroup) {
+      rows.push({
+        type: 'group_footer',
+        rowType: 'group_footer',
+        isGroupFooter: true,
+        groupSubtotalLabel: currentGroupHeader.groupSubtotalLabel,
+        groupSubtotalValue: currentGroupHeader.groupSubtotalValue,
+        showSubtotal: currentGroupHeader.showSubtotal,
+        isInGroup: true,
+      })
+      currentGroupHeader = null
     }
   })
+
+  return rows
 }
 
 export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData {
