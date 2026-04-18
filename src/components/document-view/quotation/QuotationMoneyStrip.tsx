@@ -1,11 +1,11 @@
-import styles from './quotationMoneyStrip.module.css'
-import type { quotationMetric } from './quotationViewMockData'
+import styles from './QuotationMoneyStrip.module.css'
+import type { QuotationMetric } from './quotationViewMockData'
 
-interface quotationMoneyStripProps {
-  items: quotationMetric[]
+interface QuotationMoneyStripProps {
+  items: QuotationMetric[]
 }
 
-export default function quotationMoneyStrip({ items }: quotationMoneyStripProps) {
+export default function QuotationMoneyStrip({ items }: QuotationMoneyStripProps) {
   return (
     <div className={styles.strip}>
       {items.map((item) => (
