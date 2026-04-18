@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react'
-import styles from './InvoicePresentation.module.css'
 import {
   Send,
   RotateCcw,
@@ -7,12 +5,12 @@ import {
   Banknote,
   Zap,
   Link,
-  Paperclip,
   Copy,
   DownloadCloud,
   Archive,
   Trash2,
 } from 'lucide-react'
+import DocumentMoreSheet from '../shared/DocumentMoreSheet'
 
 interface InvoiceMoreSheetProps {
   open: boolean
@@ -45,128 +43,114 @@ export default function InvoiceMoreSheet({
   onArchive,
   onDelete,
 }: InvoiceMoreSheetProps) {
-  if (!open) return null
-
-  const SectionLabel = ({ children }: { children: ReactNode }) => (
-    <div className={styles['sheet-section-lbl']}>{children}</div>
-  )
-
-  const Divider = () => <div className={styles['sheet-divider']} />
-
-  const Action = ({
-    icon,
-    label,
-    desc,
-    danger,
-    onClick,
-  }: {
-    icon: ReactNode
-    label: string
-    desc: string
-    danger?: boolean
-    onClick: () => void
-  }) => (
-    <button
-      type="button"
-      className={`${styles['sheet-action']} ${danger ? styles.danger : ''}`}
-      onClick={() => {
-        onClick()
-        onClose()
-      }}
-    >
-      <div className={styles['sa-icon']}>{icon}</div>
-      <div className={styles['sa-body']}>
-        <div className={styles['sa-lbl']}>{label}</div>
-        <div className={styles['sa-desc']}>{desc}</div>
-      </div>
-    </button>
-  )
+  const sections = [
+    {
+      title: 'Lifecycle',
+      items: [
+        {
+          id: 'mark-sent',
+          label: 'Mark as Sent',
+          description: 'Log that this invoice was delivered to client',
+          icon: <Send size={18} />,
+          onClick: onMarkAsSent,
+        },
+        {
+          id: 'revert',
+          label: 'Revert to Quotation',
+          description: 'Convert this invoice back to a draft quotation',
+          icon: <RotateCcw size={18} />,
+          onClick: onRevert,
+        },
+        {
+          id: 'waybill',
+          label: 'Generate Waybill',
+          description: 'Create a delivery waybill linked to this invoice',
+          icon: <Truck size={18} />,
+          onClick: onGenerateWaybill,
+        },
+      ],
+    },
+    {
+      title: 'Payments & Advances',
+      items: [
+        {
+          id: 'record-payment',
+          label: 'Record Payment',
+          description: 'Add a new payment against this invoice',
+          icon: <Banknote size={18} />,
+          onClick: onRecordPayment,
+        },
+        {
+          id: 'advance',
+          label: 'Advance Invoice',
+          description: 'Create a partial/advance invoice',
+          icon: <Zap size={18} />,
+          onClick: onAdvanceInvoice,
+        },
+      ],
+    },
+    {
+      title: 'Common Actions',
+      items: [
+        {
+          id: 'link-project',
+          label: 'Link to Project',
+          description: 'Associate this invoice with a project',
+          icon: <Link size={18} />,
+          onClick: onLinkProject,
+        },
+        {
+          id: 'duplicate',
+          label: 'Duplicate',
+          description: 'Create a copy of this invoice',
+          icon: <Copy size={18} />,
+          onClick: onDuplicate,
+        },
+        {
+          id: 'copy-number',
+          label: 'Copy Invoice Number',
+          description: 'Copy the document reference number',
+          icon: <Copy size={18} />,
+          onClick: onCopyNumber,
+        },
+        {
+          id: 'export-csv',
+          label: 'Export as CSV',
+          description: 'Download line items as spreadsheet',
+          icon: <DownloadCloud size={18} />,
+          onClick: onExportCsv,
+        },
+      ],
+    },
+    {
+      title: 'Danger Zone',
+      items: [
+        {
+          id: 'archive',
+          label: 'Archive Invoice',
+          description: 'Remove from active lists, keep on record',
+          icon: <Archive size={18} />,
+          onClick: onArchive,
+        },
+        {
+          id: 'delete',
+          label: 'Delete Invoice',
+          description: 'Permanently remove this document',
+          icon: <Trash2 size={18} />,
+          destructive: true,
+          onClick: onDelete,
+        },
+      ],
+    },
+  ]
 
   return (
-    <>
-      <div className={`${styles.overlay} ${styles.open}`} onClick={onClose} />
-      <div className={`${styles.sheet} ${styles.open}`}>
-        <div className={styles['sheet-handle']} />
-        <div className={styles['sheet-title']}>More Actions</div>
-
-        <SectionLabel>Lifecycle</SectionLabel>
-        <Action
-          label="Mark as Sent"
-          desc="Log that this invoice was delivered to client"
-          icon={<Send size={16} strokeWidth={2} />}
-          onClick={onMarkAsSent}
-        />
-        <Action
-          label="Revert to Quotation"
-          desc="Convert this invoice back to a draft quotation"
-          icon={<RotateCcw size={16} strokeWidth={2} />}
-          onClick={onRevert}
-        />
-        <Action
-          label="Generate Waybill"
-          desc="Create a delivery waybill linked to this invoice"
-          icon={<Truck size={16} strokeWidth={2} />}
-          onClick={onGenerateWaybill}
-        />
-
-        <Divider />
-        <SectionLabel>Payments & Advances</SectionLabel>
-        <Action
-          label="Record Payment"
-          desc="Add a new payment against this invoice"
-          icon={<Banknote size={16} strokeWidth={2} />}
-          onClick={onRecordPayment}
-        />
-        <Action
-          label="Advance Invoice"
-          desc="Create a partial/advance invoice"
-          icon={<Zap size={16} strokeWidth={2} />}
-          onClick={onAdvanceInvoice}
-        />
-
-        <Divider />
-        <SectionLabel>Links & Attachments</SectionLabel>
-        <Action
-          label="Link to Project"
-          desc="Associate this invoice with a project"
-          icon={<Link size={16} strokeWidth={2} />}
-          onClick={onLinkProject}
-        />
-        <Action
-          label="Duplicate"
-          desc="Create a copy of this invoice"
-          icon={<Copy size={16} strokeWidth={2} />}
-          onClick={onDuplicate}
-        />
-        <Action
-          label="Copy Invoice Number"
-          desc="Copy the document reference number"
-          icon={<Copy size={16} strokeWidth={2} />}
-          onClick={onCopyNumber}
-        />
-        <Action
-          label="Export as CSV"
-          desc="Download line items as spreadsheet"
-          icon={<DownloadCloud size={16} strokeWidth={2} />}
-          onClick={onExportCsv}
-        />
-
-        <Divider />
-        <SectionLabel>Danger</SectionLabel>
-        <Action
-          label="Archive Invoice"
-          desc="Remove from active lists, keep on record"
-          icon={<Archive size={16} strokeWidth={2} />}
-          onClick={onArchive}
-        />
-        <Action
-          danger
-          label="Delete Invoice"
-          desc="Permanently remove this document"
-          icon={<Trash2 size={16} strokeWidth={2} />}
-          onClick={onDelete}
-        />
-      </div>
-    </>
+    <DocumentMoreSheet
+      open={open}
+      onClose={onClose}
+      title="Invoice Actions"
+      sections={sections}
+    />
   )
 }
+
