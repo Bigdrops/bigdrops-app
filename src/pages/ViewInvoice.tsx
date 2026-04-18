@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
@@ -101,11 +101,19 @@ export default function ViewInvoice() {
     setPdfOutput(getInvoicePdfOutput(invoice?.custom_fields))
   }, [invoice?.custom_fields])
 
+  const openRevertFlow = useCallback(() => {
+    ui.closeSheet()
+
+    requestAnimationFrame(() => {
+      ui.openModal(MODAL_REVERT)
+    })
+  }, [ui])
+
   useEffect(() => {
     if (!invoice?.id) return
     if (location.state?.openRevertModal !== true) return
 
-    ui.openModal(MODAL_REVERT)
+    openRevertFlow()
     navigate(location.pathname, {
       replace: true,
       state: {
@@ -113,7 +121,7 @@ export default function ViewInvoice() {
         openRevertModal: false,
       },
     })
-  }, [invoice?.id, location.pathname, location.state, navigate, ui])
+  }, [invoice?.id, location.pathname, location.state, navigate, openRevertFlow])
 
   const previewModel = useMemo(
     () =>
@@ -485,7 +493,7 @@ export default function ViewInvoice() {
               open={ui.isSheetOpen(SHEET_MORE)}
               onClose={ui.closeSheet}
               onMarkAsSent={() => void handleMarkSent()}
-              onRevert={() => ui.openModal(MODAL_REVERT)}
+              onRevert={openRevertFlow}
               onGenerateWaybill={handleGenerateWaybill}
               onRecordPayment={() => ui.openSheet(SHEET_RECORD_PAYMENT)}
               onAdvanceInvoice={() => ui.openSheet(SHEET_ADVANCE)}
