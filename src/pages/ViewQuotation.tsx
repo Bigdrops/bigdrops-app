@@ -163,7 +163,7 @@ export default function ViewQuotation() {
     showToast('Settings saved', 'Quotation PDF output settings updated.', 'success')
   }
 
-  const previewBankAccounts = bankAccounts.map((account) => ({
+  const previewBankAccounts = (Array.isArray(bankAccounts) ? bankAccounts : []).map((account) => ({
     id: account.id,
     bankName: account.bank_name || '',
     accountName: account.account_name || '',
@@ -203,7 +203,7 @@ export default function ViewQuotation() {
     }))),
   ].filter((row) => String(row.value || '').trim().length > 0)
 
-  const previewItems = items.map((item, index) => {
+  const previewItems = (Array.isArray(items) ? items : []).map((item, index) => {
     if (item.row_type === 'group_header') {
       return { type: 'group', label: item.group_name || `Group ${index + 1}` }
     }
@@ -297,7 +297,7 @@ export default function ViewQuotation() {
           headerFields: previewDetailRows.map((row) => ({ label: row.label, value: row.value })),
           columns: resolvedTable.columns,
           mergeQtyUnit: resolvedTable.mergeQtyUnit,
-          items: items.map((item, index) => ({
+          items: (Array.isArray(items) ? items : []).map((item, index) => ({
             id: String(item.id || item._uiKey || index),
             rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
             groupLabel: item.group_name || null,

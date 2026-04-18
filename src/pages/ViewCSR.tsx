@@ -18,10 +18,12 @@ import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { supabase } from '@/supabase'
 import CSRPreviewPanel from '@/components/csr/CSRPreviewPanel'
+import { buildCsrPreviewData, getCsrBranding, getCsrPdfDocument } from '@/components/csr/csrUtils'
 import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
+import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { archiveCSRRecord, deleteCSRRecord, duplicateCSRRecord, updateCSRStatus } from './viewCSRActions'
 
 const SHEET_MORE = 'more-actions'
@@ -48,6 +50,7 @@ export default function ViewCSR() {
   const [downloading, setDownloading] = useState(false)
   const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('csr'))
   const [template, setTemplate] = useState(getStoredTemplate)
+  const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
   useEffect(() => {
     const loadCsr = async () => {
@@ -83,6 +86,18 @@ export default function ViewCSR() {
       showToast('CSR number copied', csr.csr_number, 'success')
     } catch {
       showToast('Copy failed', 'Clipboard access denied.')
+    }
+  }
+
+  const handleShare = async () => {
+    try {
+      await shareDocument({
+        title: csr?.csr_number || 'Service Report',
+        text: 'Customer Service Report',
+      })
+      showToast('Share successful', 'Record link handled.', 'success')
+    } catch (err) {
+      showToast('Share failed', 'Could not share this record.')
     }
   }
 
@@ -173,10 +188,6 @@ export default function ViewCSR() {
     { label: 'Status', value: csr.status || 'draft', tone: csr.status === 'completed' ? 'green' as const : 'amber' as const },
   ]
 
-  const handleDuplicate = () => {
-    showToast('Duplicate pending', 'This CSR can be viewed and exported, but duplicate logic is not wired yet.')
-  }
-
   return (
     <>
       <DocumentPage
@@ -186,9 +197,18 @@ export default function ViewCSR() {
             subtitle={docProps.title}
             backLabel="Service Reports"
             onBack={() => navigate('/csr')}
-            onShare={() => void shareDocument({ title: docProps.number, text: docProps.title })}
+            onShare={() => void handleShare()}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
+            customizeIcon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+              </svg>
+            }
           />
         }
         hero={
@@ -257,7 +277,7 @@ export default function ViewCSR() {
               onMarkInProgress={() => void handleUpdateStatus('in_progress', 'Marked In Progress')}
               onMarkAsCompleted={() => ui.openModal(MODAL_COMPLETE)}
               onReopenRecord={() => void handleUpdateStatus('draft', 'Record Reopened')}
-              onLinkProject={() => showToast('Project link pending', 'Project-link wiring is not finished for CSR view.')}
+              onLinkProject={() => setProjectLinkOpen(true)}
               onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}
               onExport={() => void handleDownload()}
@@ -295,6 +315,15 @@ export default function ViewCSR() {
               onConfirm={() => void handleDelete()}
               onCancel={ui.closeModal}
             />
+
+            <ProjectLinkDialog
+              open={projectLinkOpen}
+              onOpenChange={setProjectLinkOpen}
+              tableName="csrs"
+              recordId={String(id || '')}
+              documentLabel={docProps.number || 'Service Report'}
+              onLinked={() => {}}
+            />
           </>
         }
       >
@@ -304,7 +333,7 @@ export default function ViewCSR() {
           preview={<CSRPreviewPanel csr={previewData} template={template} onTemplateChange={setTemplate} branding={branding} designPreset={designPreset} />}
           onComplete={() => ui.openModal(MODAL_COMPLETE)}
           onEdit={() => navigate(`/csr/edit/${id}`)}
-          onDuplicate={handleDuplicate}
+          onDuplicate={() => void handleDuplicate()}
           onCopyNumber={handleCopyNumber}
         />
       </DocumentPage>

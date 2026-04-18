@@ -22,6 +22,7 @@ import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset } from '@/
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
+import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, updateWaybillStatus } from './viewWaybillActions'
 
 const SHEET_MORE = 'more-actions'
@@ -41,6 +42,7 @@ export default function ViewWaybill() {
   const [waybill, setWaybill] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
   const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('waybill'))
+  const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
   useEffect(() => {
     const loadWaybill = async () => {
@@ -76,6 +78,18 @@ export default function ViewWaybill() {
       showToast('Waybill number copied', waybill.waybill_number, 'success')
     } catch {
       showToast('Copy failed', 'Clipboard access denied.')
+    }
+  }
+
+  const handleShare = async () => {
+    try {
+      await shareDocument({
+        title: waybill?.waybill_number || 'Waybill',
+        text: waybill?.type === 'internal' ? 'Internal Waybill' : 'Waybill',
+      })
+      showToast('Share successful', 'Waybill link handled.', 'success')
+    } catch (err) {
+      showToast('Share failed', 'Could not share this waybill.')
     }
   }
 
@@ -186,10 +200,6 @@ export default function ViewWaybill() {
     { label: 'Status', value: waybill.status || 'draft', tone: waybill.status === 'delivered' ? 'green' as const : 'amber' as const },
   ]
 
-  const handleDuplicate = () => {
-    showToast('Duplicate pending', 'This waybill can be viewed and exported, but duplicate logic is not wired yet.')
-  }
-
   return (
     <>
       <DocumentPage
@@ -199,9 +209,18 @@ export default function ViewWaybill() {
             subtitle={docProps.title}
             backLabel="Waybills"
             onBack={() => navigate('/waybills')}
-            onShare={() => void shareDocument({ title: docProps.number, text: docProps.title })}
+            onShare={() => void handleShare()}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
+            customizeIcon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+              </svg>
+            }
           />
         }
         hero={
@@ -247,7 +266,7 @@ export default function ViewWaybill() {
               onMarkAsDispatched={() => void handleUpdateStatus('dispatched', 'Marked as Dispatched')}
               onMarkAsDelivered={() => ui.openModal(MODAL_DELIVERED)}
               onMarkAsReturned={() => void handleUpdateStatus('returned', 'Marked as Returned')}
-              onLinkProject={() => showToast('Project link pending', 'Project-link wiring is not finished for waybill view.')}
+              onLinkProject={() => setProjectLinkOpen(true)}
               onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}
               onExport={() => void handleDownload()}
@@ -285,6 +304,15 @@ export default function ViewWaybill() {
               onConfirm={() => void handleDelete()}
               onCancel={ui.closeModal}
             />
+
+            <ProjectLinkDialog
+              open={projectLinkOpen}
+              onOpenChange={setProjectLinkOpen}
+              tableName="waybills"
+              recordId={String(id || '')}
+              documentLabel={docProps.number || 'Waybill'}
+              onLinked={() => {}}
+            />
           </>
         }
       >
@@ -293,8 +321,8 @@ export default function ViewWaybill() {
           metrics={metrics}
           preview={<WaybillDocumentPreview preview={preview} />}
           onMarkAsDelivered={() => ui.openModal(MODAL_DELIVERED)}
-          onEdit={() => navigate(`/waybills/edit/${id}`)}
-          onDuplicate={handleDuplicate}
+          onEdit={() => navigate(`/waybills/${id}/edit`)}
+          onDuplicate={() => void handleDuplicate()}
           onCopyNumber={handleCopyNumber}
         />
       </DocumentPage>

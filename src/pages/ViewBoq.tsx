@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { BoqCustomizationPanel } from '@/components/boq/BoqCustomizationPanel'
 import { BoqPdfDocument } from '@/components/boq/BoqPdfDocument'
-import { BoqPreview } from '@/components/boq/BoqPreview'
+import { BoqDocumentPreview } from '@/components/boq/BoqDocumentPreview'
 import BoqHeroMeta from '@/components/document-view/boq/BoqHeroMeta'
 import BoqMoreSheet from '@/components/document-view/boq/BoqMoreSheet'
 import BoqViewPage from '@/components/document-view/boq/BoqViewPage'
@@ -19,19 +18,19 @@ import { downloadPdfFromElement } from '@/components/document-view/shared/downlo
 import { useToastStack } from '@/components/document-view/hooks/useToastStack'
 import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
-import { getBoqById, saveBoq } from '@/domain/boq/storage'
-import { denormalizeToDbBoq, normalizeDbBoq } from '@/domain/boq/normalize'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { supabase } from '@/supabase'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
+import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { archiveBOQRecord, convertBOQToQuotation, deleteBOQRecord, duplicateBOQRecord, updateBOQStatus } from './viewBOQActions'
+import { DocumentTemplateDesignOverrides } from '@/components/document-view/shared/DocumentTemplateDesignOverrides'
+import { getPdfDesignPreset, setPdfDesignPreset } from '@/domain/settings/pdfDesign'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
 const MODAL_GENERATE_QUOTE = 'generate-quote'
 const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
-const MODAL_REVISION = 'revision'
 
 export default function ViewBoq() {
   const navigate = useNavigate()
@@ -41,21 +40,36 @@ export default function ViewBoq() {
 
   const [loading, setLoading] = useState(true)
   const [boq, setBoq] = useState<any>(null)
-  const [draftBoq, setDraftBoq] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
-  const [savingCustomization, setSavingCustomization] = useState(false)
+  const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
   useEffect(() => {
-    if (!id) return
-    setLoading(true)
-    const loaded = getBoqById(id)
-    if (!loaded) {
-      navigate('/boqs')
-      return
+    const loadBoq = async () => {
+      if (!id) return
+      setLoading(true)
+      try {
+        const [boqRes, itemsRes] = await Promise.all([
+          supabase.from('boqs').select('*').eq('id', id).single(),
+          supabase.from('boq_items').select('*').eq('boq_id', id).order('sort_order'),
+        ])
+
+        if (boqRes.error || !boqRes.data) {
+          navigate('/boqs')
+          return
+        }
+
+        setBoq({
+          ...boqRes.data,
+          table_rows: itemsRes.data || [],
+        })
+      } catch (err) {
+        console.error('Failed to load BOQ', err)
+      } finally {
+        setLoading(false)
+      }
     }
-    setBoq(loaded)
-    setDraftBoq(loaded)
-    setLoading(false)
+
+    void loadBoq()
   }, [id, navigate])
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
@@ -72,6 +86,18 @@ export default function ViewBoq() {
     }
   }
 
+  const handleShare = async () => {
+    try {
+      await shareDocument({
+        title: boq?.boq_number || 'BOQ',
+        text: 'Bill of Quantities',
+      })
+      showToast('Share successful', 'BOQ link handled.', 'success')
+    } catch (err) {
+      showToast('Share failed', 'Could not share this BOQ.')
+    }
+  }
+
   const handleDownload = async () => {
     if (!boq || downloading) return
     setDownloading(true)
@@ -79,7 +105,7 @@ export default function ViewBoq() {
       await downloadPdfFromElement({
         fileName: boq.boq_number || 'boq',
         subdirectory: 'boq',
-        element: <BoqPdfDocument boq={boq} />,
+        element: <BoqPdfDocument boq={boq} rows={boq.table_rows} />,
       })
       showToast('Download ready', `${boq.boq_number || 'BOQ'} exported as PDF.`, 'success')
     } catch (error) {
@@ -106,7 +132,7 @@ export default function ViewBoq() {
     if (!id) return
     try {
       const created = await duplicateBOQRecord(id)
-      navigate(`/boq/${created.id}`)
+      navigate(`/boqs/${created.id}`)
       showToast('BOQ Cloned', 'A new draft BOQ has been created.', 'success')
     } catch (error) {
       showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
@@ -117,7 +143,7 @@ export default function ViewBoq() {
     if (!id) return
     try {
       await archiveBOQRecord(id)
-      navigate('/boq')
+      navigate('/boqs')
     } catch (error) {
       showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
     }
@@ -127,7 +153,7 @@ export default function ViewBoq() {
     if (!id) return
     try {
       await deleteBOQRecord(id)
-      navigate('/boq')
+      navigate('/boqs')
     } catch (error) {
       showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')
     }
@@ -138,36 +164,11 @@ export default function ViewBoq() {
     try {
       const created = await convertBOQToQuotation({ boq, items: boq.table_rows })
       navigate(`/quotations/${created.id}`)
-      showToast('Quotation Created', 'Linked quotation draft is ready from BOQ data.', 'success')
+      showToast('Quotation Created', 'Linked quotation draft is ready.', 'success')
     } catch (error) {
       showToast('Conversion failed', error instanceof Error ? error.message : 'Could not generate quotation.')
     } finally {
       ui.closeModal()
-    }
-  }
-
-  const estimatedTotalLabel = useMemo(() => {
-    if (!boq?.table_rows?.length) return 'None'
-    const total = boq.table_rows.reduce((sum: number, row: any) => {
-      if (row.row_type === 'section') return sum
-      const quantity = Number(row.quantity || 0)
-      const rate = Number(row.sp || row.cp || 0)
-      return sum + (quantity * rate)
-    }, 0)
-    return total > 0 ? new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(total) : 'None'
-  }, [boq])
-
-  const handleSaveCustomization = async () => {
-    if (!draftBoq) return
-    setSavingCustomization(true)
-    try {
-      const saved = saveBoq(draftBoq)
-      setBoq(saved)
-      setDraftBoq(saved)
-      ui.closeSheet()
-      showToast('Customization saved', 'BOQ template settings updated.', 'success')
-    } finally {
-      setSavingCustomization(false)
     }
   }
 
@@ -184,14 +185,17 @@ export default function ViewBoq() {
   const docProps: BaseDocument = {
     id: boq.id,
     number: boq.boq_number,
-    title: boq.title || 'Bill of Quantities',
-    status: boq.status || 'open',
+    title: 'Bill of Quantities',
+    status: (boq.status || 'draft') as any,
   }
 
+  const rowCount = Array.isArray(boq.table_rows) ? boq.table_rows.length : 0
+  const subtotal = (Array.isArray(boq.table_rows) ? boq.table_rows : []).reduce((sum: number, r: any) => sum + (Number(r.amount) || 0), 0)
+
   const metrics = [
-    { label: 'Billed Items', value: `${boq.table_rows?.filter((row: any) => row.row_type !== 'section').length || 0} lines` },
-    { label: 'Issue Date', value: boq.issue_date || 'N/A' },
-    { label: 'Estimated Total', value: estimatedTotalLabel, tone: 'default' as const },
+    { label: 'Lines', value: `${rowCount} items` },
+    { label: 'Subtotal', value: new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(subtotal), tone: 'blue' as const },
+    { label: 'Status', value: boq.status || 'draft', tone: boq.status === 'approved' ? 'green' as const : 'amber' as const },
   ]
 
   return (
@@ -202,19 +206,28 @@ export default function ViewBoq() {
             title={docProps.number}
             subtitle={docProps.title}
             backLabel="BOQs"
-            onBack={() => navigate('/boq')}
-            onShare={() => void shareDocument({ title: docProps.number, text: docProps.title })}
+            onBack={() => navigate('/boqs')}
+            onShare={() => void handleShare()}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
+            customizeIcon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+              </svg>
+            }
           />
         }
         hero={
           <DocumentHero
             eyebrow={docProps.title}
             title={docProps.number}
-            subtitle={boq.vendor_name || 'Vendor not specified'}
+            subtitle={boq.client_name || 'No client specified'}
             status={docProps.status}
-            meta={<BoqHeroMeta threadTag={boq.vendor_contact || 'No contact specified'} />}
+            meta={<BoqHeroMeta threadTag={boq.project_title || 'Material Schedule'} />}
           />
         }
         floating={<FloatingDownloadButton onClick={() => void handleDownload()} disabled={downloading} />}
@@ -223,30 +236,33 @@ export default function ViewBoq() {
             <DocumentSheet
               open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
               onClose={ui.closeSheet}
-              title="Customize BOQ"
-              subtitle="These controls update the same template and column settings used by the BOQ editor and PDF export."
+              title="Customize BOQ PDF"
+              subtitle="The PDF design preset is reused by download to allow consistent branding across document types."
             >
-              {draftBoq ? (
-                <div className="space-y-4">
-                  <BoqCustomizationPanel boq={draftBoq} onChange={(patch) => setDraftBoq((current: any) => ({ ...current, ...patch }))} />
-                  <button
-                    type="button"
-                    className="h-11 w-full rounded-[18px] bg-slate-950 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
-                    onClick={() => void handleSaveCustomization()}
-                    disabled={savingCustomization}
-                  >
-                    {savingCustomization ? 'Saving...' : 'Save Settings'}
-                  </button>
+              <div className="space-y-4">
+                <div className="rounded-[24px] border border-border bg-card p-4">
+                  <div className="mb-3 text-sm font-semibold text-foreground">PDF Design</div>
+                  <DocumentTemplateDesignOverrides value={getPdfDesignPreset('boq')} onChange={(p) => setPdfDesignPreset('boq', p)} />
                 </div>
-              ) : null}
+                <button
+                  type="button"
+                  className="h-11 w-full rounded-[18px] bg-slate-950 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  onClick={() => {
+                    ui.closeSheet()
+                    showToast('Customization saved', 'BOQ PDF design updated.', 'success')
+                  }}
+                >
+                  Save Settings
+                </button>
+              </div>
             </DocumentSheet>
 
             <BoqMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)}
               onClose={ui.closeSheet}
               onMarkAsApproved={() => void handleUpdateStatus('approved', 'Marked as Approved')}
-              onConvertToQuotation={() => showToast('Quotation generation pending', 'Quotation creation is not wired from BOQ view yet.')}
-              onLinkProject={() => showToast('Project link pending', 'Project-link wiring is not finished for BOQ view.')}
+              onConvertToQuotation={() => ui.openModal(MODAL_GENERATE_QUOTE)}
+              onLinkProject={() => setProjectLinkOpen(true)}
               onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}
               onExport={() => void handleDownload()}
@@ -257,20 +273,10 @@ export default function ViewBoq() {
             <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_GENERATE_QUOTE)}
               title="Generate Quotation?"
-              description="This will map all billed items into a new quotation draft."
+              description="This will lock the current quantities and generate a new quotation draft."
               cancelLabel="Cancel"
-              confirmLabel="Generate Quotation"
+              confirmLabel="Generate Quote"
               onConfirm={() => void handleConvertToQuotation()}
-              onCancel={ui.closeModal}
-            />
-
-            <DocumentConfirmDialog
-              open={ui.isModalOpen(MODAL_REVISION)}
-              title="Create New Revision?"
-              description="This will lock the current BOQ and create a new editable draft."
-              cancelLabel="Cancel"
-              confirmLabel="Create Revision"
-              onConfirm={() => showToast('Revision pending', 'Revision creation is not wired from BOQ view yet.')}
               onCancel={ui.closeModal}
             />
 
@@ -294,16 +300,25 @@ export default function ViewBoq() {
               onConfirm={() => void handleDelete()}
               onCancel={ui.closeModal}
             />
+
+            <ProjectLinkDialog
+              open={projectLinkOpen}
+              onOpenChange={setProjectLinkOpen}
+              tableName="boqs"
+              recordId={String(id || '')}
+              documentLabel={docProps.number || 'BOQ'}
+              onLinked={() => {}}
+            />
           </>
         }
       >
         <BoqViewPage
           document={docProps}
           metrics={metrics}
-          preview={<BoqPreview boq={boq} />}
+          preview={<BoqDocumentPreview boq={boq} />}
           onGenerateQuotation={() => ui.openModal(MODAL_GENERATE_QUOTE)}
           onEdit={() => navigate(`/boqs/edit/${id}`)}
-          onDuplicate={handleDuplicate}
+          onDuplicate={() => void handleDuplicate()}
           onCopyNumber={handleCopyNumber}
         />
       </DocumentPage>

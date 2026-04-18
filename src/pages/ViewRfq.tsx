@@ -10,7 +10,7 @@ import DocumentHero from '@/components/document-view/shared/DocumentHero'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
-import { useToastStack } from '@/components/document-view/hooks/useToastStack'
+import { useToastStack } from '@/hooks/useToastStack'
 import RfqHeroMeta from '@/components/document-view/rfq/RfqHeroMeta'
 import RfqMoreSheet from '@/components/document-view/rfq/RfqMoreSheet'
 import RfqViewPage from '@/components/document-view/rfq/RfqViewPage'
@@ -23,6 +23,7 @@ import { denormalizeToDbRfq, normalizeDbRfq } from '@/domain/rfq/normalize'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { supabase } from '@/supabase'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
+import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { archiveRFQRecord, convertRFQToQuotation, deleteRFQRecord, duplicateRFQRecord, updateRFQStatus } from './viewRFQActions'
 
 const SHEET_MORE = 'more-actions'
@@ -42,6 +43,7 @@ export default function ViewRfq() {
   const [draftRfq, setDraftRfq] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
   const [savingCustomization, setSavingCustomization] = useState(false)
+  const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
   useEffect(() => {
     const loadRfq = async () => {
@@ -85,6 +87,18 @@ export default function ViewRfq() {
     }
   }
 
+  const handleShare = async () => {
+    try {
+      await shareDocument({
+        title: rfq?.rfq_number || 'RFQ',
+        text: rfq?.title || 'Request for Quotation',
+      })
+      showToast('Share successful', 'RFQ link handled.', 'success')
+    } catch (err) {
+      showToast('Share failed', 'Could not share this RFQ.')
+    }
+  }
+
   const handleDownload = async () => {
     if (!rfq || downloading) return
     setDownloading(true)
@@ -119,7 +133,7 @@ export default function ViewRfq() {
     if (!id) return
     try {
       const created = await duplicateRFQRecord(id)
-      navigate(`/rfq/${created.id}`)
+      navigate(`/rfqs/${created.id}`)
       showToast('RFQ Cloned', 'A new draft RFQ has been created.', 'success')
     } catch (error) {
       showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
@@ -130,7 +144,7 @@ export default function ViewRfq() {
     if (!id) return
     try {
       await archiveRFQRecord(id)
-      navigate('/rfq')
+      navigate('/rfqs')
     } catch (error) {
       showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
     }
@@ -140,7 +154,7 @@ export default function ViewRfq() {
     if (!id) return
     try {
       await deleteRFQRecord(id)
-      navigate('/rfq')
+      navigate('/rfqs')
     } catch (error) {
       showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')
     }
@@ -179,9 +193,10 @@ export default function ViewRfq() {
 
   const handleReshuffle = () => {
     setDraftRfq((current: any) => {
-      if (!current?.table_rows?.length) return current
-      const itemRows = current.table_rows.filter((row: any) => row.row_type !== 'section')
-      const sectionRows = current.table_rows.filter((row: any) => row.row_type === 'section')
+      const rows = Array.isArray(current?.table_rows) ? current.table_rows : []
+      if (!rows.length) return current
+      const itemRows = rows.filter((row: any) => row.row_type !== 'section')
+      const sectionRows = rows.filter((row: any) => row.row_type === 'section')
       const shuffled = [...itemRows].sort(() => Math.random() - 0.5)
       return {
         ...current,
@@ -210,8 +225,9 @@ export default function ViewRfq() {
     status: (rfq.status || 'open') as any,
   }
 
+  const rfqRows = Array.isArray(rfq.table_rows) ? rfq.table_rows : []
   const metrics = [
-    { label: 'Requested Items', value: `${rfq.table_rows?.filter((row: any) => row.row_type !== 'section').length || 0} lines` },
+    { label: 'Requested Items', value: `${rfqRows.filter((row: any) => row.row_type !== 'section').length || 0} lines` },
     { label: 'Submission Deadline', value: rfq.expiry_date || 'No deadline', tone: 'amber' as const },
   ]
 
@@ -223,10 +239,19 @@ export default function ViewRfq() {
             title={docProps.number}
             subtitle={docProps.title}
             backLabel="RFQs"
-            onBack={() => navigate('/rfq')}
-            onShare={() => void shareDocument({ title: docProps.number, text: docProps.title })}
+            onBack={() => navigate('/rfqs')}
+            onShare={() => void handleShare()}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
+            customizeIcon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+              </svg>
+            }
           />
         }
         hero={
@@ -268,7 +293,7 @@ export default function ViewRfq() {
               onMarkAsSent={() => void handleUpdateStatus('sent', 'Marked as Sent')}
               onMarkAsClosed={() => void handleUpdateStatus('closed', 'Marked as Closed')}
               onConvertToQuotation={() => ui.openModal(MODAL_CONVERT)}
-              onLinkProject={() => showToast('Project link pending', 'Project-link wiring is not finished for RFQ view.')}
+              onLinkProject={() => setProjectLinkOpen(true)}
               onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}
               onExport={() => void handleDownload()}
@@ -306,16 +331,25 @@ export default function ViewRfq() {
               onConfirm={() => void handleDelete()}
               onCancel={ui.closeModal}
             />
+
+            <ProjectLinkDialog
+              open={projectLinkOpen}
+              onOpenChange={setProjectLinkOpen}
+              tableName="rfqs"
+              recordId={String(id || '')}
+              documentLabel={docProps.number || 'RFQ'}
+              onLinked={() => {}}
+            />
           </>
         }
       >
         <RfqViewPage
           document={docProps}
           metrics={metrics}
-          preview={<RfqPreview rfq={rfq} rows={rfq.table_rows} columns={rfq.table_columns} />}
+          preview={<RfqPreview rfq={rfq} rows={rfqRows} columns={rfq.table_columns} />}
           onConvert={() => ui.openModal(MODAL_CONVERT)}
           onEdit={() => navigate(`/rfqs/edit/${id}`)}
-          onDuplicate={handleDuplicate}
+          onDuplicate={() => void handleDuplicate()}
           onCopyNumber={handleCopyNumber}
         />
       </DocumentPage>
