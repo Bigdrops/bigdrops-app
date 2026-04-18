@@ -20,6 +20,7 @@ import {
   Building2,
   Truck,
   ClipboardList,
+  Package,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -116,6 +117,13 @@ const moreGroups = [
         icon: ClipboardCheck,
         iconBg: 'bg-muted text-foreground',
       },
+      {
+        key: 'item-library',
+        label: 'Item Library',
+        subtitle: 'Review price history and master item usage.',
+        icon: Package,
+        iconBg: 'bg-muted text-foreground',
+      },
     ],
   },
   {
@@ -155,6 +163,7 @@ const mobileDrawerPrimaryNav = [
 const mobileDrawerUtilityNav = [
   { key: 'reports', label: 'Reports', icon: BarChart3, path: '/reports' },
   { key: 'compliance', label: 'Compliance Hub', icon: ClipboardCheck, path: '/compliance' },
+  { key: 'item-library', label: 'Item Library', icon: Package, path: '/item-library' },
   { key: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
 ]
 
@@ -204,6 +213,7 @@ function getActiveTab(pathname) {
     pathname.startsWith('/boqs') ||
     pathname.startsWith('/reports') ||
     pathname.startsWith('/compliance') ||
+    pathname.startsWith('/item-library') ||
     pathname.startsWith('/settings')
   ) return 'more'
   return 'home'
@@ -314,6 +324,7 @@ export default function Layout({
       boqs: '/boqs',
       reports: '/reports',
       compliance: '/compliance',
+      'item-library': '/item-library',
       settings: '/settings',
     }
 
