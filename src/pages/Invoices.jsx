@@ -307,6 +307,15 @@ export default function Invoices() {
     })
   }
 
+  const handleRevertToQuote = () => {
+    const invoiceId = activeInvoice?.id
+    closeSheet()
+    if (!invoiceId) return
+    navigate(`/invoices/${invoiceId}`, {
+      state: { openRevertModal: true },
+    })
+  }
+
   const handleClone = async () => {
     const inv = activeInvoice
     closeSheet()
@@ -599,7 +608,7 @@ export default function Invoices() {
             payment: () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) },
             clone: handleClone,
             advance: handleAdvance,
-            quote: () => { closeSheet(); toast({ title: "Unavailable", description: "Quotations are not available in this version." }) },
+            quote: handleRevertToQuote,
             csr: () => { closeSheet(); toast({ title: "Unavailable", description: "Service reports are not available in this version." }) },
             waybill: () => { closeSheet(); toast({ title: "Unavailable", description: "Waybills are not available in this version." }) },
             "mark-sent": handleMarkSent,

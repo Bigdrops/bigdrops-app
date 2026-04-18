@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
 import InvoiceHtmlView from '@/components/document-view/invoice/InvoiceHtmlView'
@@ -49,6 +49,7 @@ const MODAL_VOID_PAYMENT = 'void-payment'
 
 export default function ViewInvoice() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams<{ id: string }>()
   const ui = useDocumentUIState()
   const toastStack = useToastStack()
@@ -95,6 +96,20 @@ export default function ViewInvoice() {
   useEffect(() => {
     setPdfOutput(getInvoicePdfOutput(invoice?.custom_fields))
   }, [invoice?.custom_fields])
+
+  useEffect(() => {
+    if (!invoice?.id) return
+    if (location.state?.openRevertModal !== true) return
+
+    ui.openModal(MODAL_REVERT)
+    navigate(location.pathname, {
+      replace: true,
+      state: {
+        ...(location.state || {}),
+        openRevertModal: false,
+      },
+    })
+  }, [invoice?.id, location.pathname, location.state, navigate, ui])
 
   const previewModel = useMemo(
     () =>
