@@ -19,6 +19,7 @@ interface InvoiceViewPageProps {
   onAdvanceDownload: () => void
   onAdvanceEdit: () => void
   onAdvanceRemove: () => void
+  onVoidPayment: () => void
 }
 
 export default function InvoiceViewPage({
@@ -31,6 +32,7 @@ export default function InvoiceViewPage({
   onAdvanceDownload,
   onAdvanceEdit,
   onAdvanceRemove,
+  onVoidPayment,
 }: InvoiceViewPageProps) {
   return (
     <div className={styles.stack}>
@@ -59,6 +61,7 @@ export default function InvoiceViewPage({
         <InvoicePaymentsSection
           paidValue={metrics[1]?.value ?? ''}
           balanceValue={metrics[2]?.value ?? ''}
+          onVoidPayment={onVoidPayment}
         />
       </DocumentSection>
 

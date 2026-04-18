@@ -1,0 +1,66 @@
+.typeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.typeOpt {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid #e4e0d8;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  display: block;
+}
+
+.typeOpt.active {
+  border-color: #1e293b;
+  background: #f1f5f9;
+}
+
+.typeOptLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #57534a;
+}
+
+.typeOpt.active .typeOptLabel {
+  color: #1e293b;
+}
+
+.typeOptSub {
+  font-size: 10px;
+  color: #9c9589;
+  margin-top: 2px;
+}
+
+.computedBox {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.computedLabel {
+  font-size: 11px;
+  color: #1e293b;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.computedValue {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.computedDesc {
+  font-size: 11px;
+  color: #57534a;
+  margin-top: 3px;
+}

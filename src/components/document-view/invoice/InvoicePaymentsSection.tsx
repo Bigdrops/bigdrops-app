@@ -7,11 +7,13 @@ import {
 interface InvoicePaymentsSectionProps {
   paidValue: string
   balanceValue: string
+  onVoidPayment: () => void
 }
 
 export default function InvoicePaymentsSection({
   paidValue,
   balanceValue,
+  onVoidPayment,
 }: InvoicePaymentsSectionProps) {
   return (
     <div className={styles.card}>
@@ -38,14 +40,14 @@ export default function InvoicePaymentsSection({
 
       <div>
         {invoicePaymentHistory.map((entry) => (
-          <PaymentHistoryItem key={entry.reference} entry={entry} />
+          <PaymentHistoryItem key={entry.reference} entry={entry} onClick={onVoidPayment} />
         ))}
       </div>
     </div>
   )
 }
 
-function PaymentHistoryItem({ entry }: { entry: InvoicePaymentEntry }) {
+function PaymentHistoryItem({ entry, onClick }: { entry: InvoicePaymentEntry, onClick: () => void }) {
   const iconClassName =
     entry.kind === 'wht'
       ? `${styles.icon} ${styles.iconWht}`
@@ -59,7 +61,7 @@ function PaymentHistoryItem({ entry }: { entry: InvoicePaymentEntry }) {
       : styles.amount
 
   return (
-    <div className={styles.historyItem}>
+    <div className={styles.historyItem} onClick={onClick}>
       <div className={iconClassName}>
         {entry.kind === 'wht' ? (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
