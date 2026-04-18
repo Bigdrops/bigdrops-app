@@ -8,14 +8,14 @@ function toNumber(value: unknown): number | null {
 }
 
 function normalizeSuggestionRow(row: Record<string, unknown>): ItemSuggestion {
+  const isAlias = row.is_alias === true || row.match_source === 'alias'
   return {
     item_id: String(row.item_id || row.id || ''),
-    name: String(row.name || row.item_name || row.master_name || row.alias_text || ''),
+    name: String(
+      row.display_name || row.name || row.item_name || row.master_name || row.alias_text || ''
+    ),
     matched_text: String(row.matched_text || row.alias_text || row.name || row.item_name || ''),
-    match_source:
-      row.match_source === 'catalog' || row.match_source === 'alias' || row.match_source === 'history'
-        ? row.match_source
-        : 'unknown',
+    match_source: isAlias ? 'alias' : (row.match_source as any) || 'catalog',
     standard_price: toNumber(row.standard_price),
     last_sold_price: toNumber(row.last_sold_price),
     usage_count: toNumber(row.usage_count),

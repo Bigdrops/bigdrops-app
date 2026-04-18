@@ -152,6 +152,7 @@ const desktopNav = [
   { key: 'home', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'projects', label: 'Projects', icon: FolderKanban },
   { key: 'clients', label: 'Clients', icon: Users },
+  { key: 'item-library', label: 'Item Library', icon: Package },
 ]
 
 const mobileDrawerPrimaryNav = [
@@ -327,7 +328,6 @@ export default function Layout({
       'item-library': '/item-library',
       settings: '/settings',
     }
-
     setMoreOpen(false)
     setSidebarOpen(false)
     navigate(pathByKey[key] || '/')
@@ -336,7 +336,12 @@ export default function Layout({
   const onTabClick = (key) => {
     if (key === 'sales') return setSalesOpen(true)
     if (key === 'more') return setMoreOpen(true)
-    const pathByKey = { home: '/', projects: '/projects', clients: '/clients' }
+    const pathByKey = {
+      home: '/',
+      projects: '/projects',
+      clients: '/clients',
+      'item-library': '/item-library',
+    }
     navigate(pathByKey[key] || '/')
   }
 
