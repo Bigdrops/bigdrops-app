@@ -10,6 +10,7 @@ import InvoiceMoreSheet from '@/components/document-view/invoice/InvoiceMoreShee
 import InvoiceRecordPaymentSheet from '@/components/document-view/invoice/InvoiceRecordPaymentSheet'
 import InvoiceAdvanceSheet from '@/components/document-view/invoice/InvoiceAdvanceSheet'
 import InvoiceViewPage from '@/components/document-view/invoice/InvoiceViewPage'
+import PdfOutputCustomizeSheet from '@/components/document-view/shared/PdfOutputCustomizeSheet'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
 import { useToastStack } from '@/components/document-view/hooks/useToastStack'
 import DocumentPage from '@/components/document-view/shared/DocumentPage'
@@ -38,6 +39,7 @@ import { getPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { supabase } from '@/supabase'
 import { archiveInvoiceRecord, buildWaybillPrefill, deleteInvoiceRecord, downloadInvoiceCsvFile, duplicateInvoiceDraft, revertInvoiceToQuotation } from './viewInvoiceActions'
 
+const SHEET_CUSTOMIZE = 'customize-output'
 const SHEET_MORE = 'more-actions'
 const SHEET_RECORD_PAYMENT = 'record-payment'
 const SHEET_ADVANCE = 'advance'
@@ -85,19 +87,21 @@ export default function ViewInvoice() {
     () =>
       buildInvoiceViewModel({
         invoice,
-        items,
-        payments,
-        relatedCsrs,
-        relatedWaybills,
-        financials: invoiceFinancials,
-        project: linkedProject,
-        sourceDocument,
+        items: Array.isArray(items) ? items : [],
+        payments: Array.isArray(payments) ? payments : [],
+        relatedCsrs: Array.isArray(relatedCsrs) ? relatedCsrs : [],
+        relatedWaybills: Array.isArray(relatedWaybills) ? relatedWaybills : [],
+        financials: invoiceFinancials || null,
+        project: linkedProject || null,
+        sourceDocument: sourceDocument || null,
       }),
     [invoice, items, payments, relatedCsrs, relatedWaybills, invoiceFinancials, linkedProject, sourceDocument],
   )
 
   useEffect(() => {
-    setPdfOutput(getInvoicePdfOutput(invoice?.custom_fields))
+    if (invoice?.custom_fields) {
+      setPdfOutput(getInvoicePdfOutput(invoice.custom_fields))
+    }
   }, [invoice?.custom_fields])
 
   const openRevertFlow = useCallback(() => {
@@ -125,10 +129,10 @@ export default function ViewInvoice() {
     () =>
       buildInvoicePreviewModel({
         invoice: invoice || {},
-        items: items || [],
+        items: Array.isArray(items) ? items : [],
         client: client || undefined,
         settings: settings || undefined,
-        bankAccounts: bankAccounts || [],
+        bankAccounts: Array.isArray(bankAccounts) ? bankAccounts : [],
         customFieldObject: customFields as any,
         pdfOutput,
         poNumber: String(invoice?.po_number || ''),
@@ -154,13 +158,31 @@ export default function ViewInvoice() {
     }
   }
 
+  const handleSaveCustomization = async (nextPdfOutput: PdfOutputSettingsValue) => {
+    if (!invoice?.id) return
+    try {
+      const nextCustomFields = {
+        ...(customFields || {}),
+        pdfOutput: nextPdfOutput,
+      }
+      const { error } = await supabase.from('invoices').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', invoice.id)
+      if (error) throw error
+      
+      setPdfOutput(nextPdfOutput)
+      await refresh()
+      showToast('Settings saved', 'Invoice PDF output settings updated.', 'success')
+    } catch (err) {
+      showToast('Save failed', err instanceof Error ? err.message : 'Could not save customize settings')
+    }
+  }
+
   const handleDownload = async () => {
     if (!invoice || downloading) return
     setDownloading(true)
     try {
       const pdfDesignPreset = getPdfDesignPreset('invoice')
       const resolvedTable = interpretPdfTableSettings(BUILTIN_COLUMNS as any, { mergeQtyUnit: false })
-      const referenceLinks = Array.isArray(customFields.attachments)
+      const referenceLinks = Array.isArray(customFields?.attachments)
         ? customFields.attachments
             .filter((entry: any) => entry?.url)
             .map((entry: any, index: number) => ({
@@ -184,24 +206,24 @@ export default function ViewInvoice() {
           },
           issuer: {
             label: 'From',
-            name: String(settingsData.company_name || ''),
-            addressLines: previewModel.companyPreviewLines || [],
-            phone: String(settingsData.company_phone || ''),
-            email: String(settingsData.company_email || ''),
-            taxId: String(settingsData.company_vat || ''),
+            name: String(settingsData?.company_name || ''),
+            addressLines: Array.isArray(previewModel?.companyPreviewLines) ? previewModel.companyPreviewLines : [],
+            phone: String(settingsData?.company_phone || ''),
+            email: String(settingsData?.company_email || ''),
+            taxId: String(settingsData?.company_vat || ''),
           },
           recipient: {
             label: 'Bill To',
             name: String(invoice.client_name || ''),
             attention: String(client?.contact_person || ''),
-            addressLines: previewModel.clientPreviewLines || [],
+            addressLines: Array.isArray(previewModel?.clientPreviewLines) ? previewModel.clientPreviewLines : [],
             phone: String(client?.phone || ''),
             email: String(client?.email || ''),
           },
-          headerFields: previewModel.previewDetailRows || [],
+          headerFields: Array.isArray(previewModel?.previewDetailRows) ? previewModel.previewDetailRows : [],
           columns: resolvedTable.columns,
           mergeQtyUnit: resolvedTable.mergeQtyUnit,
-          items: items.map((item, index) => ({
+          items: (Array.isArray(items) ? items : []).map((item, index) => ({
             id: String(item.id || item._uiKey || index),
             rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
             groupLabel: item.group_name || null,
@@ -227,29 +249,29 @@ export default function ViewInvoice() {
           })),
           totals: {
             mode: 'standard',
-            rows: (previewModel.previewTotals || []).map((row) => ({
-              key: row.label.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-              label: row.label,
-              amount: Number(String(row.value).replace(/[^\d.-]/g, '')) || 0,
+            rows: (Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : []).map((row) => ({
+              key: String(row.label || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+              label: String(row.label || ''),
+              amount: Number(String(row.value || '0').replace(/[^\d.-]/g, '')) || 0,
               emphasis: row.emphasis === true,
             })),
             amountInWords: String(invoice.amount_in_words || ''),
             balanceDue: viewModel.balanceDue || 0,
           },
-          bankDetails: pdfOutput.showBankDetails ? previewModel.selectedPreviewBank : null,
+          bankDetails: pdfOutput.showBankDetails ? previewModel?.selectedPreviewBank : null,
           notes: invoice.notes
-            ? { title: String(customFields.notesTitle || 'Notes'), content: invoice.notes, format: 'html' }
+            ? { title: String(customFields?.notesTitle || 'Notes'), content: invoice.notes, format: 'html' }
             : null,
           terms: invoice.terms
-            ? { title: String(customFields.termsTitle || 'Terms and Conditions'), content: invoice.terms, format: 'html' }
+            ? { title: String(customFields?.termsTitle || 'Terms and Conditions'), content: invoice.terms, format: 'html' }
             : null,
           additionalSections: [],
           referenceLinks,
           signature: null,
-          logo: { imageUrl: String(settingsData.company_logo_url || '') || null, altText: String(settingsData.company_name || '') },
-          footerText: pdfOutput.showFooter ? String(settingsData.footer_text || '') : '',
-          tagline: pdfOutput.showTagline ? String(settingsData.company_tagline || '') : '',
-          metaFooter: { companyName: String(settingsData.company_name || '') },
+          logo: { imageUrl: String(settingsData?.company_logo_url || '') || null, altText: String(settingsData?.company_name || '') },
+          footerText: pdfOutput.showFooter ? String(settingsData?.footer_text || '') : '',
+          tagline: pdfOutput.showTagline ? String(settingsData?.company_tagline || '') : '',
+          metaFooter: { companyName: String(settingsData?.company_name || '') },
           template: { designPreset: pdfDesignPreset },
         },
         templateId: 'industry',
@@ -265,7 +287,7 @@ export default function ViewInvoice() {
 
   const handleDownloadCsv = () => {
     if (!invoice) return
-    downloadInvoiceCsvFile({ invoice, items, invoiceTotal: viewModel.invoiceTotal })
+    downloadInvoiceCsvFile({ invoice, items: Array.isArray(items) ? items : [], invoiceTotal: viewModel.invoiceTotal })
     showToast('CSV downloaded', 'Invoice CSV exported.', 'success')
   }
 
@@ -283,7 +305,7 @@ export default function ViewInvoice() {
   const handleDuplicate = async () => {
     if (!invoice) return
     try {
-      navigate('/invoices/new', { state: await duplicateInvoiceDraft({ invoice, items }) })
+      navigate('/invoices/new', { state: await duplicateInvoiceDraft({ invoice, items: Array.isArray(items) ? items : [] }) })
     } catch (error) {
       showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate this invoice.')
     }
@@ -313,7 +335,7 @@ export default function ViewInvoice() {
     if (!invoice?.id || reverting) return
     setReverting(true)
     try {
-      const createdQuotation = await revertInvoiceToQuotation({ invoice, items, customFields })
+      const createdQuotation = await revertInvoiceToQuotation({ invoice, items: Array.isArray(items) ? items : [], customFields })
       navigate(`/quotations/${createdQuotation.id}`)
     } catch (error) {
       showToast('Revert failed', error instanceof Error ? error.message : 'Could not revert this invoice.')
@@ -340,6 +362,15 @@ export default function ViewInvoice() {
     status: toTitleCase(viewModel.statusLabel || invoice.status || 'draft'),
   }
 
+  const previewBankAccounts = (Array.isArray(bankAccounts) ? bankAccounts : []).map((account) => ({
+    id: String(account.id),
+    bankName: account.bank_name || '',
+    accountName: account.account_name || '',
+    accountNumber: account.account_number || '',
+    sortCode: account.sort_code || '',
+    isDefault: account.is_default === true,
+  }))
+
   const relatedDocuments = [
     ...(sourceDocument
       ? [
@@ -354,14 +385,14 @@ export default function ViewInvoice() {
           },
         ]
       : []),
-    ...relatedCsrs.map((csr: any) => ({
+    ...(Array.isArray(relatedCsrs) ? relatedCsrs : []).map((csr: any) => ({
       id: `csr-${csr.id}`,
       title: `CSR · ${csr.csr_number || csr.id}`,
       subtitle: 'Open linked CSR',
       kind: 'csr' as const,
       onClick: () => navigate(`/csr/${csr.id}`),
     })),
-    ...relatedWaybills.map((waybill: any) => ({
+    ...(Array.isArray(relatedWaybills) ? relatedWaybills : []).map((waybill: any) => ({
       id: `waybill-${waybill.id}`,
       title: `Waybill · ${waybill.waybill_number || waybill.id}`,
       subtitle: 'Open linked waybill',
@@ -381,12 +412,21 @@ export default function ViewInvoice() {
       : []),
   ]
 
-  const attachments = Array.isArray(customFields.attachments)
+  const attachments = Array.isArray(customFields?.attachments)
     ? customFields.attachments.map((entry: any, index: number) => ({
         id: `attachment-${index}`,
         label: String(entry.label || entry.name || entry.url || `Reference ${index + 1}`),
       }))
     : []
+
+  const handleShare = async () => {
+    try {
+      await shareDocument({ title: docProps.number, text: docProps.title })
+      showToast('Share successful', 'Document link handled.', 'success')
+    } catch (err) {
+      showToast('Share failed', 'Could not share the document.')
+    }
+  }
 
   return (
     <>
@@ -397,8 +437,18 @@ export default function ViewInvoice() {
             subtitle={docProps.title}
             backLabel="Invoices"
             onBack={() => navigate('/invoices')}
-            onShare={() => void shareDocument({ title: docProps.number, text: docProps.title })}
+            onShare={handleShare}
+            onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
+            customizeIcon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+              </svg>
+            }
           />
         }
         hero={
@@ -424,6 +474,20 @@ export default function ViewInvoice() {
         floating={<FloatingDownloadButton onClick={() => void handleDownload()} disabled={downloading} />}
         overlays={
           <>
+            <PdfOutputCustomizeSheet
+              open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
+              onClose={ui.closeSheet}
+              title="Customize Invoice PDF"
+              subtitle="Configure how the PDF version of this invoice is generated."
+              documentType="invoice"
+              value={pdfOutput}
+              bankAccounts={previewBankAccounts}
+              companyTagline={String(settingsData?.company_tagline || '')}
+              footerText={String(settingsData?.footer_text || '')}
+              showBalanceDueOption={true}
+              onSave={(nextValue) => handleSaveCustomization(nextValue)}
+            />
+
             <InvoiceRecordPaymentSheet
               open={ui.isSheetOpen(SHEET_RECORD_PAYMENT)}
               onClose={ui.closeSheet}
@@ -525,7 +589,7 @@ export default function ViewInvoice() {
           ]}
           paymentProgressLabel={`${viewModel.invoiceTotal > 0 ? Math.min(100, Math.round((viewModel.cashReceived / viewModel.invoiceTotal) * 100)) : 0}% settled · ${formatNaira(viewModel.balanceDue || 0)} remaining`}
           paymentProgressWidth={`${viewModel.invoiceTotal > 0 ? Math.min(100, Math.round((viewModel.cashReceived / viewModel.invoiceTotal) * 100)) : 0}%`}
-          paymentHistory={(viewModel.paymentHistory || []).map((payment: any) => ({
+          paymentHistory={(Array.isArray(viewModel.paymentHistory) ? viewModel.paymentHistory : []).map((payment: any) => ({
             id: String(payment.id),
             amountLabel: formatNaira(payment.total || 0),
             dateLabel: formatDisplayDate(payment.date),
