@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import InvoiceHeroMeta from '@/components/document-view/invoice/InvoiceHeroMeta'
-import DocumentTopNavActions from '@/components/document-view/shared/DocumentTopNavActions'
 import InvoiceViewPage from '@/components/document-view/invoice/InvoiceViewPage'
 import InvoiceMoreSheet from '@/components/document-view/invoice/InvoiceMoreSheet'
 import InvoiceRecordPaymentSheet from '@/components/document-view/invoice/InvoiceRecordPaymentSheet'
@@ -16,13 +14,16 @@ import {
 } from '@/components/document-view/invoice/invoiceViewMockData'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
 import { useToastStack } from '@/components/document-view/hooks/useToastStack'
-import DocumentPage from '@/components/document-view/shared/DocumentPage'
-import '@/components/document-view/shared/documentViewTheme.css'
-import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
-import DocumentHero from '@/components/document-view/shared/DocumentHero'
-import DocumentToastViewport from '@/components/document-view/shared/DocumentToastViewport'
-import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
-import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
+import '@/components/document-view/shared/documentViewTheme.css' // Keep for shared modals
+import InvoiceConfirmDialog from '@/components/document-view/invoice/InvoiceConfirmDialog'
+import InvoiceToastViewport from '@/components/document-view/invoice/InvoiceToastViewport'
+
+import { 
+  InvoicePageShell, 
+  InvoiceTopNav, 
+  InvoiceFloatingDownloadButton, 
+  InvoiceHero 
+} from '@/components/document-view/invoice/InvoiceFidelityPrimitives'
 
 const SHEET_CUSTOMIZE = 'customize-output'
 const SHEET_MORE = 'more-actions'
@@ -55,32 +56,19 @@ export default function ViewInvoice() {
 
   return (
     <>
-      <DocumentPage
+      <InvoicePageShell
         topNav={
-          <DocumentTopNav
+          <InvoiceTopNav
             title={invoiceDocument.number}
-            subtitle="Invoice"
+            subtitle={invoiceDocument.title}
             onBack={() => navigate('/invoices')}
-            actions={
-              <DocumentTopNavActions
-                onShare={() => showToast('Share clicked', 'Share flow remains static in Phase 1.')}
-                onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
-                onMore={() => ui.openSheet(SHEET_MORE)}
-              />
-            }
-          />
-        }
-        hero={
-          <DocumentHero
-            eyebrow={invoiceDocument.title}
-            title={invoiceDocument.number}
-            subtitle={invoiceSubtitle}
-            status={invoiceDocument.status}
-            meta={<InvoiceHeroMeta threadTag={invoiceThreadTag} />}
+            onShare={() => showToast('Share clicked', 'Share flow remains static in Phase 1.')}
+            onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
+            onMore={() => ui.openSheet(SHEET_MORE)}
           />
         }
         floating={
-          <FloatingDownloadButton
+          <InvoiceFloatingDownloadButton
             onClick={() =>
               showToast(
                 'Download clicked',
@@ -90,7 +78,7 @@ export default function ViewInvoice() {
             }
           />
         }
-        overlays={
+        overlay={
           <>
             <InvoiceCustomizeSheet
               open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
@@ -131,50 +119,70 @@ export default function ViewInvoice() {
               onSave={() => showToast('Advance invoice generated', '', 'success')}
             />
 
-            <DocumentConfirmDialog
+            <InvoiceConfirmDialog
               open={ui.isModalOpen(MODAL_ARCHIVE)}
               title="Archive Invoice?"
-              description="SASINV-B047 will be moved to your archive. It won't appear in your active invoice list but remains accessible and recoverable."
+              description={`${invoiceDocument.number} will be moved to your archive. It won't appear in your active invoice list but remains accessible and recoverable.`}
               cancelLabel="Cancel"
               confirmLabel="Archive"
-              onConfirm={() => showToast('Invoice archived', '', 'success')}
+              onConfirm={() => {
+                showToast('Invoice archived', '', 'success')
+                ui.closeModal()
+              }}
               onCancel={ui.closeModal}
             />
 
-            <DocumentConfirmDialog
+            <InvoiceConfirmDialog
               open={ui.isModalOpen(MODAL_REVERT)}
               title="Revert to Quotation?"
-              description="SASINV-B047 will be converted back to a draft quotation. Existing payment records will be preserved but the invoice status will be removed."
+              description={`${invoiceDocument.number} will be converted back to a draft quotation. Existing payment records will be preserved but the invoice status will be removed.`}
               cancelLabel="Cancel"
               confirmLabel="Revert"
-              onConfirm={() => showToast('Reverted to quotation', '', 'success')}
+              onConfirm={() => {
+                showToast('Reverted to quotation', '', 'success')
+                ui.closeModal()
+              }}
               onCancel={ui.closeModal}
             />
 
-            <DocumentConfirmDialog
+            <InvoiceConfirmDialog
               open={ui.isModalOpen(MODAL_DELETE)}
               title="Delete Invoice?"
-              description="SASINV-B047 will be permanently deleted. This cannot be undone. All payment records and linked data for this invoice will be removed."
+              description={`${invoiceDocument.number} will be permanently deleted. This cannot be undone. All payment records and linked data for this invoice will be removed.`}
               cancelLabel="Cancel"
               confirmLabel="Delete"
               destructive
-              onConfirm={() => showToast('Invoice deleted', '', 'success')}
+              onConfirm={() => {
+                showToast('Invoice deleted', '', 'success')
+                ui.closeModal()
+              }}
               onCancel={ui.closeModal}
             />
 
-            <DocumentConfirmDialog
+            <InvoiceConfirmDialog
               open={ui.isModalOpen(MODAL_VOID_PAYMENT)}
               title="Void Payment?"
               description="Bank Transfer · ₦1,650,000 recorded on 14 Apr 2025 will be marked as voided. The invoice balance will be updated accordingly."
               cancelLabel="Cancel"
               confirmLabel="Void Payment"
               destructive
-              onConfirm={() => showToast('Payment voided', '', 'success')}
+              onConfirm={() => {
+                showToast('Payment voided', '', 'success')
+                ui.closeModal()
+              }}
               onCancel={ui.closeModal}
             />
           </>
         }
       >
+        <InvoiceHero
+          label="Tax Invoice"
+          number={invoiceDocument.number}
+          description="Supply & Installation — 40KVA Generator, Pinnacle Towers"
+          threadTag={invoiceThreadTag}
+          status="Partial"
+          totals={invoiceMetrics}
+        />
         <InvoiceViewPage
           document={invoiceDocument}
           metrics={invoiceMetrics}
@@ -186,25 +194,18 @@ export default function ViewInvoice() {
             showToast('Advance Download', 'Advance invoice download remains static for now.')
           }
           onAdvanceEdit={() => {
-            setAdvanceMode('create') // Since we only mock it, assume all clicks enter create for now, unless specific
+            setAdvanceMode('create')
             ui.openSheet(SHEET_ADVANCE)
           }}
           onAdvanceRemove={() => ui.openModal(MODAL_DELETE)}
           onVoidPayment={() => ui.openModal(MODAL_VOID_PAYMENT)}
         />
-      </DocumentPage>
+      </InvoicePageShell>
 
-      <DocumentToastViewport
+      <InvoiceToastViewport
         toasts={toastStack.toasts}
         onDismiss={toastStack.dismissToast}
       />
     </>
   )
 }
-
-const overlayCopyStyle = {
-  margin: 0,
-  fontSize: 14,
-  lineHeight: 1.6,
-  color: '#57534a',
-} as const

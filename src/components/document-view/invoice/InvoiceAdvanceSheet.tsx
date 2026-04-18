@@ -1,161 +1,145 @@
-import { useState, useEffect } from 'react'
-
-import DocumentSheet from '../shared/DocumentSheet'
-import styles from './InvoiceRecordPaymentSheet.module.css'
-import advanceStyles from './InvoiceAdvanceSheet.module.css'
-
-export interface AdvanceInvoiceDraft {
-  label: string
-  type: 'percentage' | 'fixed'
-  value: number
-}
+import { useState } from 'react'
+import styles from './InvoicePresentation.module.css'
 
 interface InvoiceAdvanceSheetProps {
   open: boolean
   mode: 'create' | 'edit'
-  initialData?: AdvanceInvoiceDraft
   totalAmount: number
   onClose: () => void
-  onSave: (data: AdvanceInvoiceDraft) => void
+  onSave: () => void
 }
 
 export default function InvoiceAdvanceSheet({
   open,
   mode,
-  initialData,
   totalAmount,
   onClose,
-  onSave,
+  onSave, // Keep using onSave instead of directly mutating state to respect the previous logic mock
 }: InvoiceAdvanceSheetProps) {
-  const [label, setLabel] = useState('')
   const [type, setType] = useState<'percentage' | 'fixed'>('percentage')
   const [percentage, setPercentage] = useState(30)
-  const [fixedAmount, setFixedAmount] = useState(0)
+  const [fixedAmount, setFixedAmount] = useState(800000)
 
-  useEffect(() => {
-    if (open) {
-      if (mode === 'edit' && initialData) {
-        setLabel(initialData.label)
-        setType(initialData.type)
-        if (initialData.type === 'percentage') {
-          setPercentage(initialData.value)
-        } else {
-          setFixedAmount(initialData.value)
-        }
-      } else {
-        setLabel('')
-        setType('percentage')
-        setPercentage(30)
-        setFixedAmount(Math.round(totalAmount * 0.3))
-      }
-    }
-  }, [open, mode, initialData, totalAmount])
+  if (!open) return null
 
   const computedAmount = type === 'percentage' ? (totalAmount * percentage) / 100 : fixedAmount
-  const formattedAmount = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(computedAmount)
-  const formattedTotal = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(totalAmount)
-
-  const handleSave = () => {
-    onSave({
-      label,
-      type,
-      value: type === 'percentage' ? percentage : fixedAmount,
-    })
-    onClose()
-  }
+  const desc = type === 'percentage' ? `${percentage}% of ₦4,720,000` : 'Fixed amount'
 
   return (
-    <DocumentSheet
-      open={open}
-      onClose={onClose}
-      title={mode === 'create' ? 'Create Advance Invoice' : 'Edit Advance Invoice'}
-      subtitle={`Based on SASINV-B047 · Total: ${formattedTotal}`}
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div>
-          <label className={styles.formLabel}>Invoice Label</label>
-          <input
-            className={styles.formInput}
-            type="text"
-            placeholder="e.g. Mobilisation Advance"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-          />
+    <>
+      <div className={`${styles.overlay} ${styles.open}`} onClick={onClose} />
+      <div className={`${styles.sheet} ${styles.open}`}>
+        <div className={styles['sheet-handle']} />
+        <div className={styles['sheet-title']}>
+          {mode === 'edit' ? 'Edit Advance Invoice' : 'Create Advance Invoice'}
         </div>
-
-        <div>
-          <label className={styles.formLabel}>Amount Type</label>
-          <div className={advanceStyles.typeGrid}>
+        <div className={styles['sheet-sub']}>
+          Based on SASINV-B047 · Total: ₦4,720,000
+        </div>
+        <div className={styles['sheet-body']}>
+          <div className={styles['form-group']}>
+            <label className={styles['form-label']}>Invoice Label</label>
+            <input className={styles['form-input']} type="text" placeholder="e.g. Mobilisation Advance" />
+          </div>
+          <div className={styles['form-group']}>
+            <label className={styles['form-label']}>Amount Type</label>
+            <div className={styles['advance-type-grid']}>
+              <div
+                className={`${styles['advance-type-opt']} ${type === 'percentage' ? styles.active : ''}`}
+                onClick={() => setType('percentage')}
+              >
+                <div className={styles['advance-type-opt-label']}>Percentage</div>
+                <div className={styles['advance-type-opt-sub']}>% of total</div>
+              </div>
+              <div
+                className={`${styles['advance-type-opt']} ${type === 'fixed' ? styles.active : ''}`}
+                onClick={() => setType('fixed')}
+              >
+                <div className={styles['advance-type-opt-label']}>Fixed Amount</div>
+                <div className={styles['advance-type-opt-sub']}>Exact ₦ value</div>
+              </div>
+            </div>
+          </div>
+          {type === 'percentage' && (
+            <div className={styles['form-group']}>
+              <label className={styles['form-label']}>Percentage (%)</label>
+              <input
+                className={styles['form-input']}
+                type="number"
+                value={percentage}
+                onChange={(e) => setPercentage(Number(e.target.value))}
+              />
+            </div>
+          )}
+          {type === 'fixed' && (
+            <div className={styles['form-group']}>
+              <label className={styles['form-label']}>Fixed Amount (₦)</label>
+              <input
+                className={styles['form-input']}
+                type="number"
+                value={fixedAmount}
+                onChange={(e) => setFixedAmount(Number(e.target.value))}
+              />
+            </div>
+          )}
+          <div
+            className={styles['form-group']}
+            style={{
+              background: 'var(--primary-bg)',
+              border: '1px solid var(--primary-border)',
+              borderRadius: 'var(--radius)',
+              padding: '12px 14px',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                color: 'var(--primary)',
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                marginBottom: 4,
+              }}
+            >
+              Computed Amount
+            </div>
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 22,
+                fontWeight: 700,
+                color: 'var(--primary)',
+              }}
+            >
+              ₦{computedAmount.toLocaleString('en-NG')}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 3 }}>
+              {desc}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, paddingBottom: 12, marginTop: 4 }}>
             <button
               type="button"
-              className={`${advanceStyles.typeOpt} ${type === 'percentage' ? advanceStyles.active : ''}`}
-              onClick={() => setType('percentage')}
+              className={`${styles.btn} ${styles['btn-outline']}`}
+              style={{ flex: 1, height: 42, justifyContent: 'center', fontSize: 14 }}
+              onClick={onClose}
             >
-              <div className={advanceStyles.typeOptLabel}>Percentage</div>
-              <div className={advanceStyles.typeOptSub}>% of total</div>
+              Cancel
             </button>
             <button
               type="button"
-              className={`${advanceStyles.typeOpt} ${type === 'fixed' ? advanceStyles.active : ''}`}
-              onClick={() => setType('fixed')}
+              className={`${styles.btn} ${styles['btn-amber']}`}
+              style={{ flex: 2, height: 42, justifyContent: 'center', fontSize: 14 }}
+              onClick={() => {
+                onSave()
+                onClose()
+              }}
             >
-              <div className={advanceStyles.typeOptLabel}>Fixed Amount</div>
-              <div className={advanceStyles.typeOptSub}>Exact ₦ value</div>
+              {mode === 'edit' ? 'Save Changes' : 'Generate Invoice'}
             </button>
           </div>
-        </div>
-
-        {type === 'percentage' ? (
-          <div>
-            <label className={styles.formLabel}>Percentage (%)</label>
-            <input
-              className={styles.formInput}
-              type="number"
-              placeholder="e.g. 30"
-              value={percentage}
-              onChange={(e) => setPercentage(parseFloat(e.target.value) || 0)}
-            />
-          </div>
-        ) : (
-          <div>
-            <label className={styles.formLabel}>Fixed Amount (₦)</label>
-            <input
-              className={styles.formInput}
-              type="number"
-              placeholder="e.g. 800000"
-              value={fixedAmount}
-              onChange={(e) => setFixedAmount(parseFloat(e.target.value) || 0)}
-            />
-          </div>
-        )}
-
-        <div className={advanceStyles.computedBox}>
-          <div className={advanceStyles.computedLabel}>Computed Amount</div>
-          <div className={advanceStyles.computedValue}>{formattedAmount}</div>
-          <div className={advanceStyles.computedDesc}>
-            {type === 'percentage' ? `${percentage}% of ${formattedTotal}` : `Fixed override out of ${formattedTotal}`}
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
-          <button
-            type="button"
-            className={styles.btnOutline}
-            style={{ flex: 1 }}
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={styles.btnAmber}
-            style={{ flex: 2 }}
-            onClick={handleSave}
-          >
-            {mode === 'create' ? 'Generate Invoice' : 'Save Changes'}
-          </button>
         </div>
       </div>
-    </DocumentSheet>
+    </>
   )
 }

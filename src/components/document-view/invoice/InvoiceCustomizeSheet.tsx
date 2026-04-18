@@ -1,8 +1,5 @@
 import { useState } from 'react'
-
-import DocumentSheet from '../shared/DocumentSheet'
-import styles from './InvoiceRecordPaymentSheet.module.css'
-import custStyles from './InvoiceCustomizeSheet.module.css'
+import styles from './InvoicePresentation.module.css'
 
 interface InvoiceCustomizeSheetProps {
   open: boolean
@@ -18,157 +15,150 @@ export default function InvoiceCustomizeSheet({
   const [template, setTemplate] = useState('proforma')
   const [color, setColor] = useState('blue')
 
-  const templates = [
-    { id: 'proforma', name: 'Proforma' },
-    { id: 'bold', name: 'Bold' },
-    { id: 'compact', name: 'Compact' },
-    { id: 'classic', name: 'Classic' },
-  ]
+  if (!open) return null
 
-  const colors = [
-    { id: 'blue', className: custStyles.blue },
-    { id: 'black', className: custStyles.black },
-    { id: 'green', className: custStyles.green },
-    { id: 'amber', className: custStyles.amber },
-  ]
+  const templates = ['Proforma', 'Bold', 'Compact', 'Classic']
+  const colors = ['blue', 'black', 'green', 'amber']
 
   return (
-    <DocumentSheet
-      open={open}
-      onClose={onClose}
-      title="Customise Output"
-      subtitle="Controls how the PDF is generated and displayed"
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div>
-          <label className={styles.formLabel}>Template</label>
-          <div className={custStyles.templateScrollWrap}>
-            <div className={custStyles.templateScroll}>
-              {templates.map((tmpl) => (
-                <button
-                  type="button"
-                  key={tmpl.id}
-                  className={`${custStyles.tmplCard} ${template === tmpl.id ? custStyles.active : ''}`}
-                  onClick={() => setTemplate(tmpl.id)}
-                >
-                  <div className={custStyles.tmplPreview}>
-                    <div className={`${custStyles.tBar} ${custStyles[tmpl.id]} `} />
-                    <div className={custStyles.tBody}>
-                      <div className={`${custStyles.tLine} ${custStyles.w80}`} />
-                      <div className={`${custStyles.tLine} ${custStyles.w60}`} />
-                      <div className={`${custStyles.tLine} ${custStyles.w40}`} />
-                      <div className={`${custStyles.tLine} ${custStyles.w80}`} />
-                      <div className={`${custStyles.tLine} ${custStyles.w60}`} />
+    <>
+      <div className={`${styles.overlay} ${styles.open}`} onClick={onClose} />
+      <div className={`${styles.sheet} ${styles.open}`}>
+        <div className={styles['sheet-handle']} />
+        <div className={styles['sheet-title']}>Customise Output</div>
+        <div className={styles['sheet-sub']}>Controls how the PDF is generated and displayed</div>
+        <div className={styles['sheet-body']}>
+          <div className={styles['form-group']}>
+            <label className={styles['form-label']}>Template</label>
+            <div className={styles['template-scroll-wrap']}>
+              <div className={styles['template-scroll']}>
+                {templates.map((t) => (
+                  <div
+                    key={t}
+                    className={`${styles['tmpl-card']} ${template === t.toLowerCase() ? styles.active : ''}`}
+                    onClick={() => setTemplate(t.toLowerCase())}
+                  >
+                    <div className={styles['tmpl-preview']}>
+                      <div className={styles['t-bar']} />
+                      <div className={styles['t-body']}>
+                        <div className={`${styles['t-line']} ${styles.w80}`} />
+                        <div className={`${styles['t-line']} ${styles.w60}`} />
+                        <div className={`${styles['t-line']} ${styles.w40}`} />
+                        <div className={`${styles['t-line']} ${styles.w80}`} />
+                        <div className={`${styles['t-line']} ${styles.w60}`} />
+                      </div>
                     </div>
+                    <div className={styles['tmpl-name']}>{t}</div>
                   </div>
-                  <div className={custStyles.tmplName}>{tmpl.name}</div>
-                </button>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div>
-          <label className={styles.formLabel}>Signatory</label>
-          <select className={styles.formSelect}>
-            <option>Engr. Babajide Olusanya — Managing Director</option>
-            <option>Mrs. Folake Adeyemi — Finance Director</option>
-            <option>None</option>
-          </select>
-        </div>
-
-        <div>
-          <label className={styles.formLabel}>Accent Colour</label>
-          <div className={custStyles.colourSwatch}>
-            {colors.map((c) => (
-              <button
-                type="button"
-                key={c.id}
-                className={`${custStyles.colourOption} ${c.className} ${color === c.id ? custStyles.active : ''}`}
-                onClick={() => setColor(c.id)}
-                aria-label={c.id}
-              />
-            ))}
+          <div className={`${styles['form-group']} ${styles.mt8}`}>
+            <label className={styles['form-label']}>Signatory</label>
+            <select className={styles['form-select']}>
+              <option>Engr. Babajide Olusanya — Managing Director</option>
+              <option>Mrs. Folake Adeyemi — Finance Director</option>
+              <option>None</option>
+            </select>
           </div>
-          <div style={{ fontSize: 11, color: '#9c9589', marginTop: 6 }}>
-            Changes the primary accent throughout the document.
+
+          <div className={`${styles['form-group']} ${styles.mt8}`}>
+            <label className={styles['form-label']}>Accent Colour</label>
+            <div className={styles['colour-swatch']}>
+              {colors.map((c) => (
+                <div
+                  key={c}
+                  className={`${styles['colour-option']} ${styles[c]} ${color === c ? styles.active : ''}`}
+                  onClick={() => setColor(c)}
+                />
+              ))}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 8 }}>
+              Changes the primary accent throughout the document.
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label className={styles.formLabel}>Font Family</label>
-          <select className={styles.formSelect}>
-            <option>Plus Jakarta Sans (Default)</option>
-            <option>Inter</option>
-            <option>DM Sans</option>
-            <option>Space Grotesk</option>
-          </select>
-        </div>
-
-        <div>
-          <label className={styles.formLabel}>PDF Options</label>
-          <div className={custStyles.toggleRows}>
-            <ToggleOption
-              label="Show Bank Details"
-              sub="Display payment account on PDF"
-              defaultChecked={false}
-            />
-            <ToggleOption
-              label="Show Balance Due"
-              sub="Display remaining balance on document"
-              defaultChecked={true}
-            />
-            <ToggleOption
-              label="Show Footer"
-              sub="Company footer on each page"
-              defaultChecked={true}
-            />
-            <ToggleOption
-              label="Show Tagline"
-              sub="Company tagline below name"
-              defaultChecked={true}
-            />
+          <div className={`${styles['form-group']} ${styles.mt8}`}>
+            <label className={styles['form-label']}>Font Family</label>
+            <select className={styles['form-select']}>
+              <option>Plus Jakarta Sans (Default)</option>
+              <option>Inter</option>
+              <option>DM Sans</option>
+              <option>Space Grotesk</option>
+            </select>
           </div>
-        </div>
 
-        <div style={{ paddingBottom: 12 }}>
-          <button
-            type="button"
-            className={styles.btnAmber}
-            style={{ width: '100%' }}
-            onClick={() => {
-              onSave()
-              onClose()
-            }}
-          >
-            Save Settings
-          </button>
+          <div className={`${styles['form-group']} ${styles.mt8}`}>
+            <label className={styles['form-label']}>PDF Options</label>
+            <div className={styles['toggle-rows']}>
+              <div className={styles['toggle-row-item']}>
+                <div className={styles['toggle-info']}>
+                  <div className={styles['toggle-item-label']}>Show Bank Details</div>
+                  <div className={styles['toggle-item-sub']}>Display payment account on PDF</div>
+                </div>
+                <label className={styles.toggle}>
+                  <input type="checkbox" />
+                  <div className={styles['toggle-track']}>
+                    <div className={styles['toggle-thumb']} />
+                  </div>
+                </label>
+              </div>
+              <div className={styles['toggle-row-item']}>
+                <div className={styles['toggle-info']}>
+                  <div className={styles['toggle-item-label']}>Show Balance Due</div>
+                  <div className={styles['toggle-item-sub']}>Display remaining balance on document</div>
+                </div>
+                <label className={styles.toggle}>
+                  <input type="checkbox" defaultChecked />
+                  <div className={styles['toggle-track']}>
+                    <div className={styles['toggle-thumb']} />
+                  </div>
+                </label>
+              </div>
+              <div className={styles['toggle-row-item']}>
+                <div className={styles['toggle-info']}>
+                  <div className={styles['toggle-item-label']}>Show Footer</div>
+                  <div className={styles['toggle-item-sub']}>Company footer on each page</div>
+                </div>
+                <label className={styles.toggle}>
+                  <input type="checkbox" defaultChecked />
+                  <div className={styles['toggle-track']}>
+                    <div className={styles['toggle-thumb']} />
+                  </div>
+                </label>
+              </div>
+              <div className={styles['toggle-row-item']}>
+                <div className={styles['toggle-info']}>
+                  <div className={styles['toggle-item-label']}>Show Tagline</div>
+                  <div className={styles['toggle-item-sub']}>Company tagline below name</div>
+                </div>
+                <label className={styles.toggle}>
+                  <input type="checkbox" defaultChecked />
+                  <div className={styles['toggle-track']}>
+                    <div className={styles['toggle-thumb']} />
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ paddingTop: 16, paddingBottom: 16 }}>
+            <button
+              type="button"
+              className={`${styles.btn} ${styles['btn-amber']}`}
+              style={{ width: '100%', height: 42, justifyContent: 'center', fontSize: 14 }}
+              onClick={() => {
+                onSave()
+                onClose()
+              }}
+            >
+              Save Settings
+            </button>
+          </div>
         </div>
       </div>
-    </DocumentSheet>
-  )
-}
-
-function ToggleOption({ label, sub, defaultChecked }: { label: string; sub: string; defaultChecked: boolean }) {
-  const [checked, setChecked] = useState(defaultChecked)
-
-  return (
-    <div className={custStyles.toggleRowItem}>
-      <div>
-        <div className={custStyles.toggleItemLabel}>{label}</div>
-        <div className={custStyles.toggleItemSub}>{sub}</div>
-      </div>
-      <label className={custStyles.toggle}>
-        <input
-          type="checkbox"
-          style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
-          checked={checked}
-          onChange={(e) => setChecked(e.target.checked)}
-        />
-        <div className={custStyles.toggleTrack}>
-          <div className={`${custStyles.toggleThumb} ${checked ? custStyles.toggleThumbActive : ''}`} />
-        </div>
-      </label>
-    </div>
+    </>
   )
 }
