@@ -1,0 +1,162 @@
+.head {
+  padding: 20px 20px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  border-bottom: 1px solid var(--dv-border-soft);
+  background: var(--dv-surface-2);
+}
+
+.companyName {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--dv-text);
+  letter-spacing: -0.01em;
+}
+
+.companyContact {
+  font-size: 11px;
+  color: var(--dv-text-3);
+  line-height: 1.6;
+  margin-top: 3px;
+}
+
+.idBlock {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.typeLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dv-text-3);
+}
+
+.number {
+  font-family: var(--dv-font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dv-primary);
+  margin-top: 2px;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--dv-border-soft);
+}
+
+.metaCell {
+  padding: 13px 20px;
+  border-right: 1px solid var(--dv-border-soft);
+}
+
+.metaCell:last-child {
+  border-right: none;
+}
+
+.metaLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dv-text-3);
+  margin-bottom: 4px;
+}
+
+.metaValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dv-text);
+  line-height: 1.4;
+}
+
+.metaSub {
+  font-size: 11px;
+  color: var(--dv-text-2);
+  margin-top: 2px;
+}
+
+.section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--dv-border-soft);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--dv-primary);
+  margin-bottom: 8px;
+}
+
+.narrativeText {
+  font-size: 13px;
+  color: var(--dv-text);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.materialList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.materialItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--dv-bg-2);
+  border-radius: var(--dv-radius-sm);
+  border: 1px solid var(--dv-border-soft);
+}
+
+.materialName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dv-text);
+}
+
+.materialQuantity {
+  font-family: var(--dv-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dv-text-2);
+}
+
+.signatureGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+.signatureBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.signatureLine {
+  height: 40px;
+  border-bottom: 1px dashed var(--dv-border);
+  margin-bottom: 4px;
+}
+
+.signatureTitle {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--dv-text-2);
+  text-transform: uppercase;
+}

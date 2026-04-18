@@ -34,7 +34,7 @@ const MODAL_REVERT = 'revert'
 const MODAL_VOID_PAYMENT = 'void-payment'
 const MODAL_VOID = 'void'
 
-export default function ViewInvoiceNew() {
+export default function ViewInvoice() {
   const navigate = useNavigate()
   const ui = useDocumentUIState()
   const toastStack = useToastStack()

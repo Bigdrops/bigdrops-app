@@ -1,0 +1,203 @@
+.head {
+  padding: 20px 20px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  border-bottom: 1px solid var(--dv-border-soft);
+  background: var(--dv-surface-2);
+}
+
+.shipperName {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--dv-text);
+  letter-spacing: -0.01em;
+}
+
+.shipperAddress {
+  font-size: 11px;
+  color: var(--dv-text-3);
+  line-height: 1.6;
+  margin-top: 3px;
+}
+
+.idBlock {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.typeLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dv-text-3);
+}
+
+.number {
+  font-family: var(--dv-font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dv-primary);
+  margin-top: 2px;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--dv-border-soft);
+}
+
+.metaCell {
+  padding: 13px 20px;
+  border-right: 1px solid var(--dv-border-soft);
+}
+
+.metaCell:last-child {
+  border-right: none;
+}
+
+.metaLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dv-text-3);
+  margin-bottom: 4px;
+}
+
+.metaValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dv-text);
+  line-height: 1.4;
+}
+
+.metaSub {
+  font-size: 11px;
+  color: var(--dv-text-2);
+  margin-top: 2px;
+}
+
+.itemsHead {
+  display: grid;
+  grid-template-columns: 1fr 60px 80px 80px;
+  padding: 8px 20px;
+  background: var(--dv-bg);
+  border-bottom: 1px solid var(--dv-border-soft);
+}
+
+.columnLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dv-text-3);
+}
+
+.right {
+  text-align: right;
+}
+
+.groupRow {
+  padding: 6px 20px;
+  background: var(--dv-bg-2);
+  border-bottom: 1px solid var(--dv-border-soft);
+}
+
+.groupName {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dv-primary);
+}
+
+.itemRow {
+  display: grid;
+  grid-template-columns: 1fr 60px 80px 80px;
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--dv-border-soft);
+  align-items: start;
+}
+
+.itemName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dv-text);
+  line-height: 1.4;
+}
+
+.itemDescription {
+  font-size: 11px;
+  color: var(--dv-text-3);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.quantity {
+  font-family: var(--dv-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dv-text);
+  text-align: right;
+  padding-top: 1px;
+}
+
+.metric {
+  font-size: 11px;
+  color: var(--dv-text-2);
+  text-align: right;
+  padding-top: 2px;
+}
+
+.footer {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.footerLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dv-text-3);
+  margin-bottom: 5px;
+}
+
+.footerText {
+  font-size: 11px;
+  color: var(--dv-text-2);
+  line-height: 1.7;
+}
+
+.signatureGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--dv-border-soft);
+}
+
+.signatureBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.signatureLine {
+  height: 40px;
+  border-bottom: 1px dashed var(--dv-border);
+  margin-bottom: 4px;
+}
+
+.signatureTitle {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--dv-text-2);
+  text-transform: uppercase;
+}
