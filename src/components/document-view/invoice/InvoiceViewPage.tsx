@@ -8,6 +8,7 @@ import {
   FileText,
   Briefcase,
   CheckCircle2,
+  CheckCircle,
   XCircle,
   FileBadge2,
 } from 'lucide-react'
@@ -53,16 +54,7 @@ export default function InvoiceViewPage({
         </button>
       </div>
 
-      <div className={`${styles['secondary-actions']} ${styles['fade-up']}`}>
-        <div className={styles['chip-btn']} onClick={onDuplicate}>
-          <Copy size={12} strokeWidth={2.5} />
-          Duplicate
-        </div>
-        <div className={styles['chip-btn']} onClick={onCopyNumber}>
-          <Files size={12} strokeWidth={2.5} />
-          Copy No.
-        </div>
-      </div>
+
 
       <div className={`${styles.section} ${styles['fade-up']}`}>
         <div className={styles['section-hd']}>

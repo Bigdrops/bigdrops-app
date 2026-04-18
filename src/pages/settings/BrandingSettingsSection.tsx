@@ -21,6 +21,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   const [uploading, setUploading] = useState<BrandingUploadState>({ logo: false })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const logoRef = useRef<HTMLInputElement | null>(null)
 

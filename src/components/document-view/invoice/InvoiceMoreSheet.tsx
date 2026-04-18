@@ -23,7 +23,7 @@ interface InvoiceMoreSheetProps {
   onRecordPayment: () => void
   onAdvanceInvoice: () => void
   onLinkProject: () => void
-  onAttachDocument: () => void
+  onDuplicate: () => void
   onCopyNumber: () => void
   onExportCsv: () => void
   onArchive: () => void
@@ -39,7 +39,7 @@ export default function InvoiceMoreSheet({
   onRecordPayment,
   onAdvanceInvoice,
   onLinkProject,
-  onAttachDocument,
+  onDuplicate,
   onCopyNumber,
   onExportCsv,
   onArchive,
@@ -133,14 +133,11 @@ export default function InvoiceMoreSheet({
           onClick={onLinkProject}
         />
         <Action
-          label="Attach / Link Document"
-          desc="Upload or link a document to this invoice"
-          icon={<Paperclip size={16} strokeWidth={2} />}
-          onClick={onAttachDocument}
+          label="Duplicate"
+          desc="Create a copy of this invoice"
+          icon={<Copy size={16} strokeWidth={2} />}
+          onClick={onDuplicate}
         />
-
-        <Divider />
-        <SectionLabel>Document</SectionLabel>
         <Action
           label="Copy Invoice Number"
           desc="Copy the document reference number"

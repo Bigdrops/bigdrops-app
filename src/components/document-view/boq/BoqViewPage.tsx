@@ -29,11 +29,7 @@ export default function BoqViewPage({
       <BoqSummaryStrip items={metrics} />
 
       <div className={styles.actionStack}>
-        <BoqPrimaryActions onGenerateQuotation={onGenerateQuotation} onEdit={onEdit} />
-        <BoqSecondaryActions
-          onDuplicate={onDuplicate}
-          onCopyNumber={onCopyNumber}
-        />
+        <BoqPrimaryActions onConvert={onGenerateQuotation} onEdit={onEdit} />
       </div>
 
       <DocumentSection title="Bill of Quantities">

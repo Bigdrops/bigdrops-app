@@ -30,10 +30,6 @@ export default function WaybillViewPage({
 
       <div className={styles.actionStack}>
         <WaybillPrimaryActions onMarkAsDelivered={onMarkAsDelivered} onEdit={onEdit} />
-        <WaybillSecondaryActions
-          onDuplicate={onDuplicate}
-          onCopyNumber={onCopyNumber}
-        />
       </div>
 
       <DocumentSection title="Dispatch manifest">

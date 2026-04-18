@@ -1,15 +1,13 @@
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { getBoqById } from '@/domain/boq/storage'
+import type { BaseDocument } from '@/components/document-view/types/documentView'
+import type { BoqMetric } from '@/components/document-view/boq/boqViewMockData'
 
 import BoqHeroMeta from '@/components/document-view/boq/BoqHeroMeta'
 import DocumentTopNavActions from '@/components/document-view/shared/DocumentTopNavActions'
 import BoqViewPage from '@/components/document-view/boq/BoqViewPage'
 import BoqMoreSheet from '@/components/document-view/boq/BoqMoreSheet'
-import {
-  boqDocument,
-  boqMetrics,
-  boqSubtitle,
-  boqThreadTag,
-} from '@/components/document-view/boq/boqViewMockData'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
 import { useToastStack } from '@/components/document-view/hooks/useToastStack'
 import DocumentPage from '@/components/document-view/shared/DocumentPage'
@@ -19,6 +17,7 @@ import DocumentHero from '@/components/document-view/shared/DocumentHero'
 import DocumentToastViewport from '@/components/document-view/shared/DocumentToastViewport'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
+import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 
 const SHEET_MORE = 'more-actions'
 const MODAL_GENERATE_QUOTE = 'generate-quote'
@@ -28,20 +27,60 @@ const MODAL_REVISION = 'revision'
 
 export default function ViewBoq() {
   const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
   const ui = useDocumentUIState()
   const toastStack = useToastStack()
+
+  const [loading, setLoading] = useState(true)
+  const [boq, setBoq] = useState<any>(null)
+
+  useEffect(() => {
+    if (!id) return
+    setLoading(true)
+    const loaded = getBoqById(id)
+    if (!loaded) {
+      navigate('/boqs')
+      return
+    }
+    setBoq(loaded)
+    setLoading(false)
+  }, [id, navigate])
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
     toastStack.showToast({ title, description, tone })
   }
 
   const handleCopyNumber = async () => {
+    if (!boq?.boq_number) return
     try {
-      await navigator.clipboard.writeText(boqDocument.number)
-      showToast('BOQ number copied', boqDocument.number, 'success')
+      await navigator.clipboard.writeText(boq.boq_number)
+      showToast('BOQ number copied', boq.boq_number, 'success')
     } catch {
-      showToast('Copy unavailable', 'Clipboard access is not available in this static scaffold.')
+      showToast('Copy failed', 'Clipboard access denied.')
     }
+  }
+
+  if (loading) {
+    return <DocumentPage topNav={<DocumentTopNav title="Loading..." onBack={() => navigate('/boqs')} />}><CenteredSpinner /></DocumentPage>
+  }
+
+  if (!boq) return null
+
+  const docProps: BaseDocument = {
+    id: boq.id,
+    number: boq.boq_number,
+    title: boq.title || 'Bill of Quantities',
+    status: 'open'
+  }
+
+  const metrics: BoqMetric[] = [
+    { label: 'Billed Items', value: `${boq.table_rows?.length || 0} lines` },
+    { label: 'Issue Date', value: boq.issue_date || 'N/A' },
+    { label: 'Estimated Total', value: 'None', tone: 'default' }
+  ]
+
+  const handleDuplicate = () => {
+    showToast('Duplicate', 'Logic will be added in Phase 2.')
   }
 
   return (
@@ -49,12 +88,12 @@ export default function ViewBoq() {
       <DocumentPage
         topNav={
           <DocumentTopNav
-            title={boqDocument.number}
-            subtitle="BOQ"
+            title={docProps.number}
+            subtitle={docProps.title}
             onBack={() => navigate('/boqs')}
             actions={
               <DocumentTopNavActions
-                onShare={() => showToast('Share clicked', 'Share feature not available for BOQ.')}
+                onShare={() => showToast('Share', 'Share flow remains outside Phase 1 scope.')}
                 onCustomize={() => showToast('Customise disabled', 'BOQs are tabular exports and do not support standard template themes.')}
                 onMore={() => ui.openSheet(SHEET_MORE)}
               />
@@ -63,19 +102,19 @@ export default function ViewBoq() {
         }
         hero={
           <DocumentHero
-            eyebrow={boqDocument.title}
-            title={boqDocument.number}
-            subtitle={boqSubtitle}
-            status={boqDocument.status}
-            meta={<BoqHeroMeta threadTag={boqThreadTag} />}
+            eyebrow={docProps.title}
+            title={docProps.number}
+            subtitle={boq.vendor_name || 'Generic Vendor'}
+            status={docProps.status}
+            meta={<BoqHeroMeta threadTag={boq.vendor_contact || 'No contact specified'} />}
           />
         }
         floating={
           <FloatingDownloadButton
             onClick={() =>
               showToast(
-                'Download clicked',
-                'PDF export is intentionally static in Phase 7.',
+                'Download',
+                'PDF generation requires backend service.',
                 'success',
               )
             }
@@ -89,8 +128,8 @@ export default function ViewBoq() {
               onMarkAsIssued={() => showToast('Marked as issued', 'BOQ status updated', 'success')}
               onGenerateQuotation={() => ui.openModal(MODAL_GENERATE_QUOTE)}
               onCreateRevision={() => ui.openModal(MODAL_REVISION)}
-              onLinkProject={() => showToast('Link to Project clicked', '')}
-              onAttachDocument={() => showToast('Attach Document clicked', '')}
+              onLinkProject={() => showToast('Link to Project', '')}
+              onDuplicate={handleDuplicate}
               onCopyNumber={handleCopyNumber}
               onExport={() => showToast('Export as Spreadsheet', 'File downloading...', 'success')}
               onArchive={() => ui.openModal(MODAL_ARCHIVE)}
@@ -110,17 +149,17 @@ export default function ViewBoq() {
             <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_REVISION)}
               title="Create New Revision?"
-              description="This will lock the current BOQ and create a new editable draft as Revision 3."
+              description="This will lock the current BOQ and create a new editable draft."
               cancelLabel="Cancel"
               confirmLabel="Create Revision"
-              onConfirm={() => showToast('Revision 3 created', '', 'success')}
+              onConfirm={() => showToast('Revision created', '', 'success')}
               onCancel={ui.closeModal}
             />
 
             <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_ARCHIVE)}
               title="Archive BOQ?"
-              description="SASBOQ-A101 will be moved to your archive. It won't appear in your active lists."
+              description={`${docProps.number} will be moved to your archive. It won't appear in your active lists.`}
               cancelLabel="Cancel"
               confirmLabel="Archive"
               onConfirm={() => showToast('BOQ archived', '', 'success')}
@@ -130,7 +169,7 @@ export default function ViewBoq() {
             <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_DELETE)}
               title="Delete BOQ?"
-              description="SASBOQ-A101 will be permanently deleted. This cannot be undone."
+              description={`${docProps.number} will be permanently deleted. This cannot be undone.`}
               cancelLabel="Cancel"
               confirmLabel="Delete"
               destructive
@@ -141,11 +180,11 @@ export default function ViewBoq() {
         }
       >
         <BoqViewPage
-          document={boqDocument}
-          metrics={boqMetrics}
+          document={docProps}
+          metrics={metrics}
           onGenerateQuotation={() => ui.openModal(MODAL_GENERATE_QUOTE)}
-          onEdit={() => showToast('Edit BOQ', 'Edit flow stays outside scope.')}
-          onDuplicate={() => showToast('Duplicate', 'Duplicate action is visual only.')}
+          onEdit={() => navigate(`/boqs/edit/${id}`)}
+          onDuplicate={handleDuplicate}
           onCopyNumber={handleCopyNumber}
         />
       </DocumentPage>

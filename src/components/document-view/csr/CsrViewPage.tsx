@@ -30,10 +30,6 @@ export default function CsrViewPage({
 
       <div className={styles.actionStack}>
         <CsrPrimaryActions onComplete={onComplete} onEdit={onEdit} />
-        <CsrSecondaryActions
-          onDuplicate={onDuplicate}
-          onCopyNumber={onCopyNumber}
-        />
       </div>
 
       <DocumentSection title="Service report content">

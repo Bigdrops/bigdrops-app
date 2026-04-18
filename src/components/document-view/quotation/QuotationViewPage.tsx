@@ -30,10 +30,6 @@ export default function QuotationViewPage({
 
       <div className={styles.actionStack}>
         <QuotationPrimaryActions onConvert={onConvert} onEdit={onEdit} />
-        <QuotationSecondaryActions
-          onDuplicate={onDuplicate}
-          onCopyNumber={onCopyNumber}
-        />
       </div>
 
       <DocumentSection title="Quotation Document">

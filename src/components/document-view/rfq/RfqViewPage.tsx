@@ -30,10 +30,6 @@ export default function RfqViewPage({
 
       <div className={styles.actionStack}>
         <RfqPrimaryActions onConvert={onConvert} onEdit={onEdit} />
-        <RfqSecondaryActions
-          onDuplicate={onDuplicate}
-          onCopyNumber={onCopyNumber}
-        />
       </div>
 
       <DocumentSection title="Request specification">

@@ -1,15 +1,13 @@
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { supabase } from '@/supabase'
+import type { BaseDocument } from '@/components/document-view/types/documentView'
+import type { RfqMetric } from '@/components/document-view/rfq/rfqViewMockData'
 
 import RfqHeroMeta from '@/components/document-view/rfq/RfqHeroMeta'
 import DocumentTopNavActions from '@/components/document-view/shared/DocumentTopNavActions'
 import RfqViewPage from '@/components/document-view/rfq/RfqViewPage'
 import RfqMoreSheet from '@/components/document-view/rfq/RfqMoreSheet'
-import {
-  rfqDocument,
-  rfqMetrics,
-  rfqSubtitle,
-  rfqThreadTag,
-} from '@/components/document-view/rfq/rfqViewMockData'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
 import { useToastStack } from '@/components/document-view/hooks/useToastStack'
 import DocumentPage from '@/components/document-view/shared/DocumentPage'
@@ -19,6 +17,7 @@ import DocumentHero from '@/components/document-view/shared/DocumentHero'
 import DocumentToastViewport from '@/components/document-view/shared/DocumentToastViewport'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
+import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 
 const SHEET_MORE = 'more-actions'
 const MODAL_CONVERT = 'convert'
@@ -27,20 +26,75 @@ const MODAL_ARCHIVE = 'archive'
 
 export default function ViewRfq() {
   const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
   const ui = useDocumentUIState()
   const toastStack = useToastStack()
+
+  const [loading, setLoading] = useState(true)
+  const [rfq, setRfq] = useState<any>(null)
+  const [items, setItems] = useState<any[]>([])
+
+  useEffect(() => {
+    const loadRfq = async () => {
+      if (!id) return
+      setLoading(true)
+      try {
+        const [rfqRes, itemsRes] = await Promise.all([
+          supabase.from('rfqs').select('*').eq('id', id).single(),
+          supabase.from('rfq_items').select('*').eq('rfq_id', id).order('sort_order')
+        ])
+
+        if (rfqRes.error || !rfqRes.data) {
+          navigate('/rfqs')
+          return
+        }
+
+        setRfq(rfqRes.data)
+        setItems(itemsRes.data || [])
+      } catch (err) {
+        console.error('Failed to load RFQ', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadRfq()
+  }, [id, navigate])
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
     toastStack.showToast({ title, description, tone })
   }
 
   const handleCopyNumber = async () => {
+    if (!rfq?.rfq_number) return
     try {
-      await navigator.clipboard.writeText(rfqDocument.number)
-      showToast('RFQ number copied', rfqDocument.number, 'success')
+      await navigator.clipboard.writeText(rfq.rfq_number)
+      showToast('RFQ number copied', rfq.rfq_number, 'success')
     } catch {
-      showToast('Copy unavailable', 'Clipboard access is not available in this static scaffold.')
+      showToast('Copy failed', 'Clipboard access denied.')
     }
+  }
+
+  if (loading) {
+    return <DocumentPage topNav={<DocumentTopNav title="Loading..." onBack={() => navigate('/rfqs')} />}><CenteredSpinner /></DocumentPage>
+  }
+
+  if (!rfq) return null
+
+  const docProps: BaseDocument = {
+    id: rfq.id,
+    number: rfq.rfq_number,
+    title: rfq.title || 'Request for Quotation',
+    status: (rfq.status || 'open') as any
+  }
+
+  const metrics: RfqMetric[] = [
+    { label: 'Requested Items', value: `${items.length} lines` },
+    { label: 'Submission Deadline', value: rfq.expiry_date || 'No deadline', tone: 'amber' }
+  ]
+
+  const handleDuplicate = () => {
+    showToast('Duplicate', 'Logic will be added in Phase 2.')
   }
 
   return (
@@ -48,12 +102,12 @@ export default function ViewRfq() {
       <DocumentPage
         topNav={
           <DocumentTopNav
-            title={rfqDocument.number}
-            subtitle="RFQ"
+            title={docProps.number}
+            subtitle={docProps.title}
             onBack={() => navigate('/rfqs')}
             actions={
               <DocumentTopNavActions
-                onShare={() => showToast('Share clicked', 'Share feature not available for RFQ.')}
+                onShare={() => showToast('Share', 'Share flow remains outside Phase 1 scope.')}
                 onCustomize={() => showToast('Customise disabled', 'RFQs do not support standard template customization.')}
                 onMore={() => ui.openSheet(SHEET_MORE)}
               />
@@ -62,19 +116,19 @@ export default function ViewRfq() {
         }
         hero={
           <DocumentHero
-            eyebrow={rfqDocument.title}
-            title={rfqDocument.number}
-            subtitle={rfqSubtitle}
-            status={rfqDocument.status}
-            meta={<RfqHeroMeta threadTag={rfqThreadTag} />}
+            eyebrow={docProps.title}
+            title={docProps.number}
+            subtitle={rfq.vendor_name || 'Multiple Eligible Vendors'}
+            status={docProps.status}
+            meta={<RfqHeroMeta threadTag={rfq.vendor_contact || 'Tender Invitation'} />}
           />
         }
         floating={
           <FloatingDownloadButton
             onClick={() =>
               showToast(
-                'Download clicked',
-                'PDF export is intentionally static in Phase 6.',
+                'Download',
+                'PDF generation requires backend service.',
                 'success',
               )
             }
@@ -88,10 +142,10 @@ export default function ViewRfq() {
               onMarkAsSent={() => showToast('Marked as dispatched', '', 'success')}
               onMarkAsClosed={() => showToast('Marked as closed', '')}
               onConvertToQuotation={() => ui.openModal(MODAL_CONVERT)}
-              onLinkProject={() => showToast('Link to Project clicked', '')}
-              onAttachDocument={() => showToast('Attach Document clicked', '')}
+              onLinkProject={() => showToast('Link to Project', '')}
+              onDuplicate={handleDuplicate}
               onCopyNumber={handleCopyNumber}
-              onExportCsv={() => showToast('Export as CSV clicked', '')}
+              onExportCsv={() => showToast('Export as CSV', '')}
               onArchive={() => ui.openModal(MODAL_ARCHIVE)}
               onDelete={() => ui.openModal(MODAL_DELETE)}
             />
@@ -109,7 +163,7 @@ export default function ViewRfq() {
             <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_ARCHIVE)}
               title="Archive RFQ?"
-              description="SASRFQ-0021 will be moved to your archive. It won't appear in your active lists."
+              description={`${docProps.number} will be moved to your archive. It won't appear in your active lists.`}
               cancelLabel="Cancel"
               confirmLabel="Archive"
               onConfirm={() => showToast('RFQ archived', '', 'success')}
@@ -119,7 +173,7 @@ export default function ViewRfq() {
             <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_DELETE)}
               title="Delete RFQ?"
-              description="SASRFQ-0021 will be permanently deleted. This cannot be undone."
+              description={`${docProps.number} will be permanently deleted. This cannot be undone.`}
               cancelLabel="Cancel"
               confirmLabel="Delete"
               destructive
@@ -130,11 +184,11 @@ export default function ViewRfq() {
         }
       >
         <RfqViewPage
-          document={rfqDocument}
-          metrics={rfqMetrics}
+          document={docProps}
+          metrics={metrics}
           onConvert={() => ui.openModal(MODAL_CONVERT)}
-          onEdit={() => showToast('Edit RFQ', 'Edit flow stays outside scope.')}
-          onDuplicate={() => showToast('Duplicate', 'Duplicate action is visual only.')}
+          onEdit={() => navigate(`/rfqs/edit/${id}`)}
+          onDuplicate={handleDuplicate}
           onCopyNumber={handleCopyNumber}
         />
       </DocumentPage>

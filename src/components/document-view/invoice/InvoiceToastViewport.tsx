@@ -24,7 +24,7 @@ export default function InvoiceToastViewport({ toasts, onDismiss }: InvoiceToast
         if (toast.tone === 'success') {
           Icon = CheckCircle2
           toneClass = styles.success || ''
-        } else if (toast.tone === 'destructive') {
+        } else if (toast.tone === 'danger') {
           Icon = AlertCircle
           toneClass = styles.danger || ''
         }

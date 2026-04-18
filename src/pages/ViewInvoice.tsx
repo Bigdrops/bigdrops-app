@@ -1,22 +1,30 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { supabase } from '@/supabase'
+import { computeDocument } from '@/lib/Calculations'
+import { formatNaira } from '@/lib/formatters/money'
+import { 
+  parseCustomFields, 
+  normalizeExtraCharges,
+  ensureUiKey,
+  inferLegacyCalculationState,
+  buildCalculationInputs,
+  BUILTIN_COLUMNS,
+  type InvoiceMetric,
+  type BaseDocument
+} from '@/domain/invoice'
 
 import InvoiceViewPage from '@/components/document-view/invoice/InvoiceViewPage'
 import InvoiceMoreSheet from '@/components/document-view/invoice/InvoiceMoreSheet'
 import InvoiceRecordPaymentSheet from '@/components/document-view/invoice/InvoiceRecordPaymentSheet'
 import InvoiceAdvanceSheet from '@/components/document-view/invoice/InvoiceAdvanceSheet'
 import InvoiceCustomizeSheet from '@/components/document-view/invoice/InvoiceCustomizeSheet'
-import {
-  invoiceDocument,
-  invoiceMetrics,
-  invoiceSubtitle,
-  invoiceThreadTag,
-} from '@/components/document-view/invoice/invoiceViewMockData'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
 import { useToastStack } from '@/components/document-view/hooks/useToastStack'
-import '@/components/document-view/shared/documentViewTheme.css' // Keep for shared modals
+import '@/components/document-view/shared/documentViewTheme.css'
 import InvoiceConfirmDialog from '@/components/document-view/invoice/InvoiceConfirmDialog'
 import InvoiceToastViewport from '@/components/document-view/invoice/InvoiceToastViewport'
+import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 
 import { 
   InvoicePageShell, 
@@ -33,19 +41,95 @@ const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
 const MODAL_REVERT = 'revert'
 const MODAL_VOID_PAYMENT = 'void-payment'
-const MODAL_VOID = 'void'
 
 export default function ViewInvoice() {
   const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
   const ui = useDocumentUIState()
   const toastStack = useToastStack()
+  
+  const [loading, setLoading] = useState(true)
+  const [invoice, setInvoice] = useState<any>(null)
+  const [items, setItems] = useState<any[]>([])
+  const [totals, setTotals] = useState<any>(null)
   const [advanceMode, setAdvanceMode] = useState<'create' | 'edit'>('create')
+
+  useEffect(() => {
+    const loadInvoice = async () => {
+      if (!id) return
+      setLoading(true)
+      try {
+        const [invoiceRes, itemsRes] = await Promise.all([
+          supabase.from('invoices').select('*').eq('id', id).single(),
+          supabase.from('invoice_items').select('*').eq('invoice_id', id).order('sort_order')
+        ])
+
+        if (invoiceRes.error || !invoiceRes.data) {
+          navigate('/invoices')
+          return
+        }
+
+        const data = invoiceRes.data
+        const itemRows = itemsRes.data || []
+        
+        let parsedCustomFields: any = {}
+        try {
+          parsedCustomFields = parseCustomFields(data.custom_fields)
+        } catch {}
+
+        const legacyState = inferLegacyCalculationState({
+          invoice: data,
+          items: itemRows,
+          customFields: parsedCustomFields && !Array.isArray(parsedCustomFields) ? parsedCustomFields : {},
+        })
+
+        const mappedItems = itemRows.map(item => ({
+          ...ensureUiKey(item),
+          row_type: item.row_type || 'standard'
+        }))
+
+        const calcInputs = buildCalculationInputs({
+          invoice: {
+            ...data,
+            vat: legacyState.editableInputs.vatRate,
+            discount: legacyState.editableInputs.discountValue,
+            wht: legacyState.calculationInputs.whtValue,
+          },
+          items: mappedItems,
+          discountType: legacyState.calculationInputs.discountType,
+          discountTiming: legacyState.calculationInputs.discountTiming,
+          whtType: legacyState.calculationInputs.whtType
+        })
+
+        const computed = computeDocument({
+          items: mappedItems,
+          columns: BUILTIN_COLUMNS,
+          document: data,
+          cf: {
+            calculationInputs: calcInputs,
+            extraCharges: normalizeExtraCharges(parsedCustomFields?.extraCharges || [])
+          }
+        })
+
+        setInvoice(data)
+        setItems(mappedItems)
+        setTotals(computed)
+      } catch (err) {
+        console.error('Failed to load invoice', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadInvoice()
+  }, [id, navigate])
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
     toastStack.showToast({ title, description, tone })
   }
 
   const handleCopyNumber = async () => {
+    if (!invoice?.invoice_number) return
     try {
       await navigator.clipboard.writeText(invoiceDocument.number)
       showToast('Invoice number copied', invoiceDocument.number, 'success')
@@ -54,15 +138,19 @@ export default function ViewInvoice() {
     }
   }
 
+  const handleDuplicate = () => {
+    showToast('Duplicate', 'Cloning invoice logic will be added in Phase 2.')
+  }
+
   return (
     <>
       <InvoicePageShell
         topNav={
           <InvoiceTopNav
-            title={invoiceDocument.number}
-            subtitle={invoiceDocument.title}
+            title={docProps.number}
+            subtitle={invoice.invoice_title || 'Tax Invoice'}
             onBack={() => navigate('/invoices')}
-            onShare={() => showToast('Share clicked', 'Share flow remains static in Phase 1.')}
+            onShare={() => showToast('Share', 'Share flow remains outside Phase 1 scope.')}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
           />
@@ -71,8 +159,8 @@ export default function ViewInvoice() {
           <InvoiceFloatingDownloadButton
             onClick={() =>
               showToast(
-                'Download clicked',
-                'PDF export is intentionally static in Phase 1.',
+                'Download',
+                'PDF generation requires backend service.',
                 'success',
               )
             }
@@ -91,16 +179,16 @@ export default function ViewInvoice() {
               onClose={ui.closeSheet}
               onMarkAsSent={() => showToast('Marked as sent', '')}
               onRevert={() => ui.openModal(MODAL_REVERT)}
-              onGenerateWaybill={() => showToast('Generate Waybill clicked', '')}
+              onGenerateWaybill={() => showToast('Generate Waybill', '')}
               onRecordPayment={() => ui.openSheet(SHEET_RECORD_PAYMENT)}
               onAdvanceInvoice={() => {
                 setAdvanceMode('create')
                 ui.openSheet(SHEET_ADVANCE)
               }}
-              onLinkProject={() => showToast('Link to Project clicked', '')}
-              onAttachDocument={() => showToast('Attach / Link Document clicked', '')}
+              onLinkProject={() => showToast('Link to Project', '')}
+              onDuplicate={handleDuplicate}
               onCopyNumber={handleCopyNumber}
-              onExportCsv={() => showToast('Export as CSV clicked', '')}
+              onExportCsv={() => showToast('Export as CSV', '')}
               onArchive={() => ui.openModal(MODAL_ARCHIVE)}
               onDelete={() => ui.openModal(MODAL_DELETE)}
             />
@@ -108,21 +196,21 @@ export default function ViewInvoice() {
             <InvoiceRecordPaymentSheet
               open={ui.isSheetOpen(SHEET_RECORD_PAYMENT)}
               onClose={ui.closeSheet}
-              onSave={() => showToast('Payment of ₦2,720,000 recorded', '', 'success')}
+              onSave={() => showToast('Payment recorded', '', 'success')}
             />
 
             <InvoiceAdvanceSheet
               open={ui.isSheetOpen(SHEET_ADVANCE)}
               mode={advanceMode}
-              totalAmount={4720000}
+              totalAmount={totals?.totalPayable || 0}
               onClose={ui.closeSheet}
-              onSave={() => showToast('Advance invoice generated', '', 'success')}
+              onSave={() => showToast('Advance generated', '', 'success')}
             />
 
             <InvoiceConfirmDialog
               open={ui.isModalOpen(MODAL_ARCHIVE)}
               title="Archive Invoice?"
-              description={`${invoiceDocument.number} will be moved to your archive. It won't appear in your active invoice list but remains accessible and recoverable.`}
+              description={`${docProps.number} will be moved to your archive. It won't appear in your active list but remains accessible.`}
               cancelLabel="Cancel"
               confirmLabel="Archive"
               onConfirm={() => {
@@ -135,7 +223,7 @@ export default function ViewInvoice() {
             <InvoiceConfirmDialog
               open={ui.isModalOpen(MODAL_REVERT)}
               title="Revert to Quotation?"
-              description={`${invoiceDocument.number} will be converted back to a draft quotation. Existing payment records will be preserved but the invoice status will be removed.`}
+              description={`${docProps.number} will be converted back to a draft quotation. Existing payment records will be preserved.`}
               cancelLabel="Cancel"
               confirmLabel="Revert"
               onConfirm={() => {
@@ -148,7 +236,7 @@ export default function ViewInvoice() {
             <InvoiceConfirmDialog
               open={ui.isModalOpen(MODAL_DELETE)}
               title="Delete Invoice?"
-              description={`${invoiceDocument.number} will be permanently deleted. This cannot be undone. All payment records and linked data for this invoice will be removed.`}
+              description={`${docProps.number} will be permanently deleted. This cannot be undone.`}
               cancelLabel="Cancel"
               confirmLabel="Delete"
               destructive
@@ -162,7 +250,7 @@ export default function ViewInvoice() {
             <InvoiceConfirmDialog
               open={ui.isModalOpen(MODAL_VOID_PAYMENT)}
               title="Void Payment?"
-              description="Bank Transfer · ₦1,650,000 recorded on 14 Apr 2025 will be marked as voided. The invoice balance will be updated accordingly."
+              description="This payment record will be marked as voided. The invoice balance will be updated accordingly."
               cancelLabel="Cancel"
               confirmLabel="Void Payment"
               destructive
@@ -176,22 +264,21 @@ export default function ViewInvoice() {
         }
       >
         <InvoiceHero
-          label="Tax Invoice"
-          number={invoiceDocument.number}
-          description="Supply & Installation — 40KVA Generator, Pinnacle Towers"
-          threadTag={invoiceThreadTag}
-          status="Partial"
-          totals={invoiceMetrics}
+          label={invoice.invoice_title || 'Tax Invoice'}
+          number={docProps.number}
+          description={invoice.client_name || 'No client specified'}
+          status={docProps.status}
+          totals={metrics}
         />
         <InvoiceViewPage
-          document={invoiceDocument}
-          metrics={invoiceMetrics}
+          document={docProps}
+          metrics={metrics}
           onRecordPayment={() => ui.openSheet(SHEET_RECORD_PAYMENT)}
-          onEdit={() => showToast('Edit Invoice', 'Edit flow stays outside Phase 1 scope.')}
-          onDuplicate={() => showToast('Duplicate', 'Duplicate action is represented visually only.')}
+          onEdit={() => navigate(`/invoices/edit/${id}`)}
+          onDuplicate={handleDuplicate}
           onCopyNumber={handleCopyNumber}
           onAdvanceDownload={() =>
-            showToast('Advance Download', 'Advance invoice download remains static for now.')
+            showToast('Download', 'Advance invoice PDF generation.')
           }
           onAdvanceEdit={() => {
             setAdvanceMode('create')

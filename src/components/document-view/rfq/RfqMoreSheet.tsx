@@ -9,7 +9,7 @@ interface RfqMoreSheetProps {
   onMarkAsClosed: () => void
   onConvertToQuotation: () => void
   onLinkProject: () => void
-  onAttachDocument: () => void
+  onDuplicate: () => void
   onCopyNumber: () => void
   onExportCsv: () => void
   onArchive: () => void
@@ -23,7 +23,7 @@ export default function RfqMoreSheet({
   onMarkAsClosed,
   onConvertToQuotation,
   onLinkProject,
-  onAttachDocument,
+  onDuplicate,
   onCopyNumber,
   onExportCsv,
   onArchive,
@@ -156,14 +156,15 @@ export default function RfqMoreSheet({
         onClick={onLinkProject}
       />
       <Action
-        label="Attach / Link Document"
-        desc="Upload or link a specification document"
+        label="Duplicate"
+        desc="Create a copy of this request"
         icon={
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            <rect x="9" y="9" width="13" height="13" rx="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
           </svg>
         }
-        onClick={onAttachDocument}
+        onClick={onDuplicate}
       />
 
       <Divider />
