@@ -112,10 +112,10 @@ export function IndustryGroupRow({
         surfaceColor ? { backgroundColor: surfaceColor } : null,
       ]}
     >
-      <View style={styles.groupHeaderLine}>
+      <View style={styles.groupBlockStack}>
         <Text
           style={[
-            styles.groupCell,
+            styles.groupTitleCell,
             textColor ? { color: textColor } : null,
             headerFontFamily ? { fontFamily: headerFontFamily } : null,
           ]}
@@ -123,7 +123,7 @@ export function IndustryGroupRow({
           {row.groupName || row.groupLabel || ''}
         </Text>
         {row.showSubtotal && row.groupSubtotalValue ? (
-          <View style={styles.groupSubtotalInline}>
+          <View style={styles.groupSubtotalRow}>
             <Text
               style={[
                 styles.groupSubtotalLabel,
@@ -131,12 +131,12 @@ export function IndustryGroupRow({
                 bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
               ]}
             >
-              {row.groupSubtotalLabel || 'Group Subtotal'}
+              {row.groupSubtotalLabel ? `${row.groupSubtotalLabel}:` : 'Group Subtotal:'}
             </Text>
             <Text
               style={[
                 styles.groupSubtotalValue,
-                textColor ? { color: textColor } : ruleColor ? { color: ruleColor } : null,
+                textColor ? { color: textColor } : null,
                 bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
               ]}
             >
