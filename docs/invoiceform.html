@@ -1,0 +1,2630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Invoice — BIGDROPS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg: #faf9f7;
+  --bg2: #f4f2ee;
+  --bg3: #edeae4;
+  --surface: #ffffff;
+  --border: #e4e0d8;
+  --border-soft: #ede9e1;
+  --text: #1a1814;
+  --text2: #57534a;
+  --text3: #9c9589;
+  --text4: #c4bfb5;
+
+  --amber: #d97706;
+  --amber-bg: #fef3c7;
+  --amber-border: #fcd34d;
+  --amber-dark: #b45309;
+
+  --indigo: #4338ca;
+  --indigo-bg: #eef2ff;
+  --indigo-border: #c7d2fe;
+  --indigo-light: #6366f1;
+
+  --emerald: #059669;
+  --emerald-bg: #d1fae5;
+  --emerald-border: #6ee7b7;
+
+  --rose: #be185d;
+  --rose-bg: #fce7f3;
+  --rose-border: #fbcfe8;
+
+  --violet: #7c3aed;
+  --violet-bg: #f5f3ff;
+  --violet-border: #ddd6fe;
+
+  --font-ui: 'Plus Jakarta Sans', sans-serif;
+  --font-display: 'DM Serif Display', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-xl: 0 24px 48px rgba(0,0,0,0.14), 0 8px 20px rgba(0,0,0,0.08);
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+}
+
+html { background: var(--bg); }
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ─── NAV ─── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgba(250,249,247,0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  height: 54px;
+  padding: 0 4px;
+  gap: 0;
+}
+.nav-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text2);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+}
+.nav-back:hover { background: var(--bg3); color: var(--text); }
+.nav-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.nav-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+.nav-sub { font-size: 10px; color: var(--text3); }
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--text2);
+  transition: background .15s, color .15s;
+}
+.icon-btn:hover { background: var(--bg3); color: var(--text); }
+.icon-btn.amber { color: var(--amber); }
+.icon-btn.amber:hover { background: var(--amber-bg); }
+
+/* ─── PAGE ─── */
+.page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 0 24px;
+}
+
+/* ─── SECTION BLOCKS ─── */
+.form-section {
+  margin: 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.form-section:last-of-type { border-bottom: none; }
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+}
+.section-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.section-action-btn {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--indigo);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px 7px;
+  border-radius: 5px;
+  transition: background .15s;
+}
+.section-action-btn:hover { background: var(--indigo-bg); }
+
+.section-body { padding: 0 16px 16px; }
+
+/* ─── FORM INPUTS ─── */
+.field-group { margin-bottom: 12px; }
+.field-group:last-child { margin-bottom: 0; }
+
+.field-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 5px;
+}
+.field-input {
+  width: 100%;
+  padding: 10px 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+}
+.field-input:focus {
+  border-color: var(--indigo);
+  box-shadow: 0 0 0 3px rgba(67,56,202,.1);
+}
+.field-input::placeholder { color: var(--text4); }
+.field-input.mono { font-family: var(--font-mono); font-size: 13px; }
+.field-input.large {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 11px 14px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.field-input.large::placeholder { font-weight: 400; font-size: 16px; }
+.field-select {
+  width: 100%;
+  padding: 10px 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239c9589' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+.field-select:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(67,56,202,.1); outline: none; }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+/* textarea */
+.field-textarea {
+  width: 100%;
+  padding: 10px 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field-textarea:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(67,56,202,.1); }
+.field-textarea::placeholder { color: var(--text4); }
+
+/* ─── HEADER SECTION ─── */
+.header-doc-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 0;
+  gap: 12px;
+}
+.doc-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  background: var(--indigo-bg);
+  border: 1px solid var(--indigo-border);
+  color: var(--indigo);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.header-actions { display: flex; align-items: center; gap: 4px; }
+
+.status-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.status-pill-select {
+  padding: 5px 28px 5px 10px;
+  border-radius: 100px;
+  border: 1px solid var(--amber-border);
+  background: var(--amber-bg);
+  color: var(--amber-dark);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23b45309' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+}
+
+/* ─── CLIENT PICKER AREA ─── */
+.client-area {
+  margin: 12px 16px 0;
+  padding: 13px 14px;
+  background: var(--surface);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.client-area:hover { border-color: var(--indigo-border); background: var(--indigo-bg); }
+.client-area.filled {
+  border-style: solid;
+  border-color: var(--border);
+  background: var(--surface);
+}
+.client-area.filled:hover { border-color: var(--indigo-border); background: var(--indigo-bg); }
+.client-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--bg2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text3);
+}
+.client-area.filled .client-icon { background: var(--indigo-bg); color: var(--indigo); }
+.client-info { flex: 1; }
+.client-name-display { font-size: 14px; font-weight: 700; color: var(--text); }
+.client-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.client-placeholder { font-size: 13px; font-weight: 600; color: var(--text3); }
+.client-chev { color: var(--text4); flex-shrink: 0; }
+.project-tag {
+  margin: 8px 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 11px;
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-border);
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--amber-dark);
+  cursor: pointer;
+  width: fit-content;
+  transition: background .15s;
+}
+.project-tag:hover { background: #fde68a; }
+
+/* ─── INVOICE # AND DATES ─── */
+.details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mono-field { font-family: var(--font-mono); }
+
+/* ─── CUSTOM FIELDS ─── */
+.custom-field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.custom-field-row:last-child { margin-bottom: 0; }
+.custom-field-label-input {
+  flex: 1;
+  padding: 8px 11px;
+  background: var(--bg2);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  outline: none;
+  transition: border-color .15s;
+}
+.custom-field-label-input:focus { border-color: var(--indigo); background: var(--surface); }
+.custom-field-label-input::placeholder { color: var(--text4); font-weight: 400; }
+.custom-field-val-input {
+  flex: 1.5;
+  padding: 8px 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s;
+}
+.custom-field-val-input:focus { border-color: var(--indigo); }
+.custom-field-val-input::placeholder { color: var(--text4); }
+.del-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--text4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+}
+.del-btn:hover { background: var(--rose-bg); color: var(--rose); }
+.empty-hint { font-size: 12px; color: var(--text4); padding: 8px 0; }
+
+/* ─── ITEMS TOOLBAR ─── */
+.items-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--bg);
+}
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+  box-shadow: var(--shadow-sm);
+}
+.toolbar-btn:hover { background: var(--bg3); color: var(--text); }
+.toolbar-spacer { flex: 1; }
+.item-count-badge {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--font-mono);
+}
+
+/* ─── ITEM CARD ─── */
+.items-area { padding: 0; }
+.item-card {
+  border-bottom: 1px solid var(--border-soft);
+  padding: 12px 16px;
+  background: var(--surface);
+  transition: background .1s;
+  position: relative;
+}
+.item-card:hover { background: #fdfcfb; }
+.item-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.item-drag-handle {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text4);
+  cursor: grab;
+  margin-top: 10px;
+  flex-shrink: 0;
+}
+.item-drag-handle:active { cursor: grabbing; }
+.item-desc-wrap { flex: 1; }
+.item-desc-input {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  resize: none;
+  outline: none;
+  min-height: 38px;
+  line-height: 1.5;
+  transition: border-color .15s, background .15s;
+}
+.item-desc-input:focus { border-color: var(--indigo); background: var(--surface); box-shadow: 0 0 0 3px rgba(67,56,202,.08); }
+.item-desc-input::placeholder { color: var(--text4); font-weight: 400; }
+
+/* Suggestions dropdown */
+.suggestions-drop {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 10;
+  overflow: hidden;
+  display: none;
+}
+.suggestions-drop.open { display: block; }
+.suggestion-item {
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: background .1s;
+  border-bottom: 1px solid var(--border-soft);
+}
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover { background: var(--indigo-bg); }
+.sug-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.sug-price { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-top: 1px; }
+
+.item-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.item-mini-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+}
+.item-mini-btn:hover { background: var(--bg3); color: var(--text2); }
+.item-mini-btn.danger:hover { background: var(--rose-bg); color: var(--rose); border-color: var(--rose-border); }
+
+/* Qty / Unit / Price row */
+.item-numbers-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 90px 80px;
+  gap: 8px;
+  align-items: center;
+}
+.item-num-input {
+  width: 100%;
+  padding: 7px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  text-align: right;
+  transition: border-color .15s;
+}
+.item-num-input:focus { border-color: var(--indigo); background: var(--surface); }
+.item-unit-input {
+  width: 100%;
+  padding: 7px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text2);
+  outline: none;
+  transition: border-color .15s;
+}
+.item-unit-input:focus { border-color: var(--indigo); background: var(--surface); }
+.item-num-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text4);
+  margin-bottom: 3px;
+  display: block;
+}
+.item-row-total {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+  padding: 7px 0 7px 4px;
+}
+.item-row-total-lbl { font-size: 9px; color: var(--text4); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 3px; }
+
+/* Sub-desc input */
+.sub-desc-area {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+}
+.sub-desc-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text2);
+  outline: none;
+  resize: none;
+  min-height: 32px;
+}
+.sub-desc-input::placeholder { color: var(--text4); }
+
+/* Image thumbnail */
+.item-image-preview {
+  margin-top: 8px;
+  position: relative;
+  width: fit-content;
+}
+.item-image-preview img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: block;
+}
+.img-remove-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--rose);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Item chips row */
+.item-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.item-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.item-chip:hover { background: var(--bg3); color: var(--text); }
+.item-chip.active { background: var(--indigo-bg); color: var(--indigo); border-color: var(--indigo-border); }
+.item-chip.uploading { opacity: 0.6; pointer-events: none; }
+
+/* Per-row overrides */
+.item-overrides {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px;
+  background: var(--bg2);
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+}
+.override-field {}
+.override-label { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; display: block; }
+.override-input {
+  width: 100%;
+  padding: 5px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+}
+.override-input:focus { border-color: var(--indigo); }
+
+/* Add item below */
+.add-below-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 0 0;
+  transition: color .15s;
+}
+.add-below-btn:hover { color: var(--indigo); }
+
+/* ─── GROUP CARD ─── */
+.group-card {
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--bg);
+}
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, var(--indigo-bg) 0%, #f0f4ff 100%);
+  border-bottom: 1px solid var(--indigo-border);
+}
+.group-color-bar {
+  width: 3px;
+  height: 28px;
+  border-radius: 2px;
+  background: var(--indigo);
+  flex-shrink: 0;
+}
+.group-name-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--indigo);
+  outline: none;
+  letter-spacing: -0.01em;
+}
+.group-name-input::placeholder { color: #a5b4fc; font-weight: 500; }
+.group-actions { display: flex; align-items: center; gap: 4px; }
+.group-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid var(--indigo-border);
+  background: var(--surface);
+  color: var(--indigo);
+  cursor: pointer;
+  transition: all .15s;
+}
+.group-badge.active { background: var(--indigo); color: #fff; border-color: var(--indigo); }
+.group-items { padding: 4px 0; }
+.group-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 12px 28px;
+}
+.group-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--indigo);
+  background: transparent;
+  border: 1px dashed var(--indigo-border);
+  border-radius: 7px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.group-add-btn:hover { background: var(--indigo-bg); border-style: solid; }
+.group-empty { padding: 12px 16px; font-size: 12px; color: var(--text4); text-align: center; }
+.group-subtotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 16px 6px 28px;
+  background: var(--indigo-bg);
+  border-top: 1px solid var(--indigo-border);
+}
+.group-subtotal-lbl { font-size: 11px; font-weight: 700; color: var(--indigo); letter-spacing: 0.04em; }
+.group-subtotal-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--indigo); }
+
+/* Item within group - left rule */
+.group-items .item-card { padding-left: 28px; border-left: 3px solid var(--indigo-border); }
+.group-items .item-card:hover { background: #f9f9ff; }
+
+/* ─── ADD ITEM / ADD GROUP BUTTONS ─── */
+.add-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--bg);
+  border-top: 1px solid var(--border-soft);
+}
+.add-main-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  border: 1.5px dashed var(--border);
+  background: var(--surface);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+  flex: 1;
+}
+.add-main-btn:hover { border-color: var(--amber-border); color: var(--amber-dark); background: var(--amber-bg); border-style: solid; }
+.add-main-btn.group-btn:hover { border-color: var(--indigo-border); color: var(--indigo); background: var(--indigo-bg); }
+
+/* ─── COMMERCIAL TERMS ─── */
+.terms-accordion {}
+.terms-block {
+  border-bottom: 1px solid var(--border-soft);
+}
+.terms-block:last-child { border-bottom: none; }
+.terms-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  transition: background .15s;
+}
+.terms-trigger:hover { background: var(--bg2); }
+.terms-trigger-left { display: flex; align-items: center; gap: 10px; }
+.terms-trigger-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.terms-trigger-icon.amber { background: var(--amber-bg); color: var(--amber); }
+.terms-trigger-icon.emerald { background: var(--emerald-bg); color: var(--emerald); }
+.terms-trigger-icon.violet { background: var(--violet-bg); color: var(--violet); }
+.terms-trigger-icon.indigo { background: var(--indigo-bg); color: var(--indigo); }
+.terms-trigger-text { text-align: left; }
+.terms-trigger-label { font-size: 13px; font-weight: 700; color: var(--text); }
+.terms-trigger-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.terms-chevron {
+  color: var(--text4);
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+.terms-chevron.open { transform: rotate(180deg); }
+.terms-body {
+  padding: 0 16px 14px;
+  display: none;
+}
+.terms-body.open { display: block; }
+
+/* Segmented control */
+.segmented {
+  display: flex;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px;
+  gap: 2px;
+}
+.seg-btn {
+  flex: 1;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 7px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  background: transparent;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: center;
+}
+.seg-btn.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+
+/* ─── TOTALS PANEL ─── */
+.totals-panel {
+  padding: 14px 16px;
+  background: var(--surface);
+}
+.totals-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.totals-label { font-size: 9px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); }
+.vat-adjust-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 7px;
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-border);
+  color: var(--amber-dark);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.vat-adjust-btn:hover { background: #fde68a; }
+
+.vat-inline {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-border);
+  border-radius: var(--radius);
+}
+.vat-inline.open { display: flex; }
+.vat-inline-label { font-size: 12px; font-weight: 700; color: var(--amber-dark); white-space: nowrap; }
+.vat-inline input {
+  flex: 1;
+  padding: 6px 10px;
+  background: var(--surface);
+  border: 1px solid var(--amber-border);
+  border-radius: 7px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+  text-align: center;
+}
+.vat-inline input:focus { border-color: var(--amber); }
+.vat-inline-pct { font-size: 13px; color: var(--amber-dark); font-weight: 700; }
+
+.totals-rows { display: flex; flex-direction: column; gap: 6px; }
+.total-row { display: flex; justify-content: space-between; align-items: center; }
+.total-row-lbl { font-size: 13px; color: var(--text2); font-weight: 500; }
+.total-row-val { font-family: var(--font-mono); font-size: 13px; color: var(--text); font-weight: 500; }
+.total-rule { height: 1px; background: var(--border); margin: 4px 0; }
+.total-row.grand .total-row-lbl { font-size: 15px; font-weight: 800; color: var(--text); }
+.total-row.grand .total-row-val { font-size: 18px; font-weight: 700; color: var(--text); font-family: var(--font-display); }
+.amount-words { font-size: 11px; color: var(--text3); font-style: italic; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-soft); line-height: 1.6; }
+
+/* ─── COLLAPSIBLE SECTIONS ─── */
+.collapsible-block { border-bottom: 1px solid var(--border-soft); }
+.collapsible-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  transition: background .15s;
+}
+.collapsible-trigger:hover { background: var(--bg2); }
+.coll-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.coll-icon.slate { background: var(--bg3); color: var(--text2); }
+.coll-icon.emerald { background: var(--emerald-bg); color: var(--emerald); }
+.coll-icon.violet { background: var(--violet-bg); color: var(--violet); }
+.coll-label { flex: 1; text-align: left; }
+.coll-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.coll-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.coll-chevron { color: var(--text4); transition: transform .2s; }
+.coll-chevron.open { transform: rotate(180deg); }
+.coll-body { padding: 0 16px 16px; display: none; }
+.coll-body.open { display: block; }
+
+/* Rich text placeholder */
+.richtext-mock {
+  min-height: 80px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 13px;
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+  position: relative;
+}
+.richtext-toolbar {
+  display: flex;
+  gap: 2px;
+  padding: 6px 8px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border-soft);
+  border-radius: var(--radius) var(--radius) 0 0;
+  margin: -10px -13px 10px;
+}
+.rt-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  transition: background .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rt-btn:hover { background: var(--bg3); }
+
+/* Signatory picker */
+.signatory-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.signatory-opt {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all .15s;
+}
+.signatory-opt:hover { border-color: var(--indigo-border); background: var(--indigo-bg); }
+.signatory-opt.active { border-color: var(--indigo); background: var(--indigo-bg); }
+.sig-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text2);
+  flex-shrink: 0;
+}
+.sig-info { flex: 1; }
+.sig-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.sig-role { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.sig-check { color: var(--indigo); }
+
+/* Reference links */
+.link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.link-input-label {
+  flex: 1;
+  padding: 8px 11px;
+  background: var(--bg2);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text2);
+  outline: none;
+  transition: border-color .15s;
+}
+.link-input-label:focus { border-color: var(--indigo); background: var(--surface); }
+.link-input-label::placeholder { color: var(--text4); }
+.link-input-url {
+  flex: 2;
+  padding: 8px 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text2);
+  outline: none;
+  transition: border-color .15s;
+}
+.link-input-url:focus { border-color: var(--indigo); }
+.link-input-url::placeholder { color: var(--text4); }
+
+/* ─── ADVANCED / PDF OPTIONS ─── */
+.pdf-options-panel {
+  padding: 14px 16px;
+}
+.pdf-options-grid { display: flex; flex-direction: column; gap: 0; }
+.pdf-opt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.pdf-opt-row:last-child { border-bottom: none; }
+.pdf-opt-info {}
+.pdf-opt-label { font-size: 13px; font-weight: 600; color: var(--text); }
+.pdf-opt-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+/* Toggle */
+.toggle {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--bg3);
+  border-radius: 24px;
+  border: 1.5px solid var(--border);
+  transition: background .2s, border-color .2s;
+  cursor: pointer;
+}
+.toggle input:checked ~ .toggle-track { background: var(--indigo); border-color: var(--indigo); }
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text3);
+  transition: transform .2s, background .2s;
+  pointer-events: none;
+}
+.toggle input:checked ~ .toggle-track .toggle-thumb { transform: translateX(18px); background: #fff; }
+
+/* Template chips in form */
+.template-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.tmpl-chip {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.tmpl-chip.active { border-color: var(--indigo); color: var(--indigo); background: var(--indigo-bg); }
+.tmpl-chip:hover:not(.active) { background: var(--bg3); }
+
+/* ─── FOOTER ACTION BAR ─── (removed) ─── */
+
+/* Floating save FAB */
+.fab-save {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 19;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition: all .2s;
+}
+.fab-save:hover { background: #2d2a26; transform: scale(1.05); }
+
+/* ─── OVERLAY & SHEETS ─── */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,24,20,.45);
+  z-index: 50;
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity .25s;
+}
+.overlay.open { display: block; opacity: 1; }
+
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: 100%;
+  max-width: 680px;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  z-index: 55;
+  padding: 0 0 32px;
+  transition: transform .32s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 -8px 40px rgba(26,24,20,.15);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.sheet.open { transform: translateX(-50%) translateY(0); }
+.sheet-handle { width: 36px; height: 4px; background: var(--bg3); border-radius: 2px; margin: 12px auto 0; }
+.sheet-title { font-size: 16px; font-weight: 800; color: var(--text); padding: 16px 20px 0; }
+.sheet-sub { font-size: 12px; color: var(--text2); padding: 4px 20px 0; }
+.sheet-body { padding: 16px 20px 0; }
+.sheet-section-lbl {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 10px 20px 4px;
+}
+.sheet-divider { height: 1px; background: var(--border-soft); margin: 6px 0; }
+.sheet-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 20px;
+  border: none;
+  background: none;
+  width: 100%;
+  cursor: pointer;
+  transition: background .12s;
+  text-align: left;
+  font-family: var(--font-ui);
+}
+.sheet-action:hover { background: var(--bg); }
+.sa-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--bg2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text2);
+}
+.sa-icon.amber { background: var(--amber-bg); color: var(--amber); }
+.sa-icon.indigo { background: var(--indigo-bg); color: var(--indigo); }
+.sa-icon.emerald { background: var(--emerald-bg); color: var(--emerald); }
+.sa-icon.rose { background: var(--rose-bg); color: var(--rose); }
+.sa-body {}
+.sa-lbl { font-size: 14px; font-weight: 600; color: var(--text); }
+.sa-desc { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+/* ─── CLIENT PICKER SHEET ─── */
+.client-search-wrap {
+  padding: 12px 20px 0;
+}
+.client-search {
+  width: 100%;
+  padding: 10px 13px 10px 38px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s;
+  position: relative;
+}
+.client-search:focus { border-color: var(--indigo); background: var(--surface); box-shadow: 0 0 0 3px rgba(67,56,202,.08); }
+.client-search-wrap .search-icon { position: absolute; left: 32px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+.client-search-container { position: relative; }
+.client-list { padding: 8px 0; }
+.client-list-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 20px;
+  cursor: pointer;
+  transition: background .1s;
+  border-bottom: 1px solid var(--border-soft);
+}
+.client-list-item:last-child { border-bottom: none; }
+.client-list-item:hover { background: var(--indigo-bg); }
+.client-list-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--bg2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text2);
+  flex-shrink: 0;
+}
+.client-list-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.client-list-sub { font-size: 11px; color: var(--text3); }
+
+/* ─── IMPORT JSON SHEET ─── */
+.json-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 10px 13px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+  transition: border-color .15s;
+}
+.json-textarea:focus { border-color: var(--indigo); background: var(--surface); box-shadow: 0 0 0 3px rgba(67,56,202,.08); }
+.json-textarea::placeholder { color: var(--text4); font-family: var(--font-ui); font-size: 12px; }
+
+/* ─── COLUMN MANAGER SHEET ─── */
+.col-list { display: flex; flex-direction: column; gap: 0; }
+.col-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  transition: background .1s;
+}
+.col-item:last-child { border-bottom: none; }
+.col-drag { color: var(--text4); cursor: grab; }
+.col-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--text); }
+.col-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+/* ─── MODAL ─── */
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,24,20,.5);
+  z-index: 70;
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 380px;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  animation: modalIn .25s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-head { padding: 20px 20px 0; }
+.modal-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.modal-icon.amber { background: var(--amber-bg); color: var(--amber); }
+.modal-icon.rose { background: var(--rose-bg); color: var(--rose); }
+.modal-title { font-size: 16px; font-weight: 800; color: var(--text); }
+.modal-body { padding: 8px 20px 16px; font-size: 13px; color: var(--text2); line-height: 1.6; }
+.modal-footer { padding: 0 16px 16px; display: flex; gap: 8px; }
+.modal-cancel { flex: 1; padding: 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); font-family: var(--font-ui); font-size: 13px; font-weight: 700; color: var(--text2); cursor: pointer; transition: background .15s; }
+.modal-cancel:hover { background: var(--bg3); }
+.modal-confirm { flex: 1; padding: 10px; background: var(--rose); border: none; border-radius: var(--radius); font-family: var(--font-ui); font-size: 13px; font-weight: 700; color: #fff; cursor: pointer; transition: background .15s; }
+.modal-confirm:hover { background: #9d174d; }
+.modal-confirm.amber-btn { background: var(--amber); }
+.modal-confirm.amber-btn:hover { background: var(--amber-dark); }
+
+/* ─── TOAST ─── */
+.toast-area {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  width: 100%;
+  max-width: 380px;
+  padding: 0 16px;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--text);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  animation: toastIn .3s cubic-bezier(.4,0,.2,1) forwards, toastOut .3s 3.2s forwards;
+}
+.toast.success { background: var(--emerald); }
+.toast.error { background: var(--rose); }
+@keyframes toastIn { from { opacity:0; transform: translateY(-10px); } to { opacity:1; transform: translateY(0); } }
+@keyframes toastOut { from { opacity:1; } to { opacity:0; } }
+
+/* ─── ERROR STATES ─── */
+.field-error { font-size: 11px; color: var(--rose); font-weight: 600; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+
+/* ─── LOADING STATE ─── */
+.loading-bar { height: 3px; background: linear-gradient(90deg, var(--indigo) 0%, var(--amber) 100%); border-radius: 2px; animation: loadBar 1.5s infinite; margin: 0 16px 16px; }
+@keyframes loadBar { 0%{width:0;opacity:1} 80%{width:100%;opacity:1} 100%{width:100%;opacity:0} }
+
+/* Upload progress */
+.upload-progress {
+  font-size: 11px;
+  color: var(--indigo);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+.spinner { animation: spin 1s linear infinite; }
+
+/* Page load */
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(12px); }
+  to { opacity:1; transform:translateY(0); }
+}
+.fade-up { opacity:0; animation: fadeUp .35s ease forwards; }
+.fade-up:nth-child(1){animation-delay:.04s}
+.fade-up:nth-child(2){animation-delay:.08s}
+.fade-up:nth-child(3){animation-delay:.12s}
+.fade-up:nth-child(4){animation-delay:.16s}
+.fade-up:nth-child(5){animation-delay:.20s}
+.fade-up:nth-child(6){animation-delay:.24s}
+.fade-up:nth-child(7){animation-delay:.28s}
+.fade-up:nth-child(8){animation-delay:.32s}
+
+/* Desktop */
+@media(min-width:640px){
+  .page{padding:0 24px 24px}
+  .section-body{padding:0 24px 16px}
+  .section-head{padding:14px 24px 10px}
+  .items-toolbar{padding:10px 24px}
+  .add-actions{padding:12px 24px}
+  .item-card{padding:14px 24px}
+  .group-header{padding:10px 24px}
+  .group-footer{padding:8px 24px 12px 36px}
+  .group-items .item-card{padding-left:36px}
+  .totals-panel{padding:14px 24px}
+  .pdf-options-panel{padding:14px 24px}
+  .header-doc-bar{padding:16px 24px 0}
+  .client-area{margin:12px 24px 0}
+  .project-tag{margin:8px 24px 0}
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST AREA -->
+<div class="toast-area" id="toast-area"></div>
+
+<!-- ─── NAV ─── -->
+<nav class="nav">
+  <a href="#" class="nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+    Invoices
+  </a>
+  <div class="nav-center">
+    <div class="nav-title">New Invoice</div>
+    <div class="nav-sub">SASINV-B051</div>
+  </div>
+  <div class="nav-right">
+    <button class="icon-btn" title="More actions" onclick="openSheet('actions-sheet')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ─── PAGE ─── -->
+<main class="page">
+
+  <!-- ① HEADER SECTION -->
+  <div class="form-section fade-up">
+    <div class="header-doc-bar">
+      <div class="doc-type-badge">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Invoice
+      </div>
+      <div class="header-actions">
+        <select class="status-pill-select">
+          <option>● Draft</option>
+          <option>● Sent</option>
+          <option>● Partial</option>
+        </select>
+      </div>
+    </div>
+    <div class="section-body" style="padding-top:12px;">
+      <div class="field-group">
+        <input class="field-input large" type="text" placeholder="Invoice title…" value="Supply & Installation — 40KVA Generator">
+      </div>
+    </div>
+  </div>
+
+  <!-- CLIENT AREA (outside section body for full-width feel) -->
+  <div class="fade-up">
+    <div class="client-area filled" onclick="openSheet('client-sheet')">
+      <div class="client-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="client-info">
+        <div class="client-name-display">Pinnacle Towers Ltd</div>
+        <div class="client-meta">Adekunle Afolabi · pinnacle@example.com</div>
+      </div>
+      <div class="client-chev">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+    <div class="project-tag" onclick="fireToast('Select a project','')">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+      Pinnacle Towers Gen Install
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  </div>
+
+  <!-- ② DETAILS SECTION -->
+  <div class="form-section fade-up" style="margin-top:16px;">
+    <div class="section-head">
+      <div class="section-label">Document Details</div>
+    </div>
+    <div class="section-body">
+      <div class="field-row" style="margin-bottom:10px;">
+        <div class="field-group" style="margin-bottom:0">
+          <label class="field-label">Invoice No.</label>
+          <input class="field-input mono" type="text" value="SASINV-B051">
+        </div>
+        <div class="field-group" style="margin-bottom:0">
+          <label class="field-label">PO No.</label>
+          <input class="field-input" type="text" placeholder="Optional" value="PTO/2024/0183">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group" style="margin-bottom:0">
+          <label class="field-label">Issue Date</label>
+          <input class="field-input" type="date" value="2025-04-12">
+        </div>
+        <div class="field-group" style="margin-bottom:0">
+          <label class="field-label">Due Date</label>
+          <input class="field-input" type="date" value="2025-05-30">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ CUSTOM FIELDS -->
+  <div class="form-section fade-up">
+    <div class="section-head">
+      <div class="section-label">Custom Header Fields</div>
+      <button class="section-action-btn" onclick="addCustomField()">+ Add Field</button>
+    </div>
+    <div class="section-body">
+      <div id="custom-fields-list">
+        <div class="custom-field-row">
+          <input class="custom-field-label-input" type="text" placeholder="Label" value="Work Duration">
+          <input class="custom-field-val-input" type="text" placeholder="Value" value="6 weeks">
+          <button class="del-btn" onclick="removeCustomField(this)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+        <div class="custom-field-row">
+          <input class="custom-field-label-input" type="text" placeholder="Label" value="Contract Ref.">
+          <input class="custom-field-val-input" type="text" placeholder="Value" value="CR/2025/0047">
+          <button class="del-btn" onclick="removeCustomField(this)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ LINE ITEMS -->
+  <div class="form-section fade-up">
+    <div class="items-toolbar">
+      <button class="toolbar-btn" onclick="openSheet('import-sheet')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Import
+      </button>
+      <button class="toolbar-btn" onclick="openSheet('columns-sheet')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Table Settings
+      </button>
+      <div class="toolbar-spacer"></div>
+      <div class="item-count-badge">4 items</div>
+    </div>
+
+    <div class="items-area">
+
+      <!-- GROUP CARD -->
+      <div class="group-card">
+        <div class="group-header">
+          <div class="group-color-bar"></div>
+          <input class="group-name-input" type="text" value="Supply of Equipment" placeholder="Group name…">
+          <div class="group-actions">
+            <div class="group-badge active" onclick="this.classList.toggle('active')" title="Toggle subtotal">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Subtotal
+            </div>
+            <button class="item-mini-btn danger" title="Delete group" onclick="openModal('delete-group-modal')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="group-items">
+          <!-- Item in group -->
+          <div class="item-card">
+            <div class="item-card-top">
+              <div class="item-drag-handle">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+              </div>
+              <div class="item-desc-wrap" style="position:relative;">
+                <textarea class="item-desc-input" rows="1" oninput="autoResize(this);showSuggestions(this)" placeholder="Item description…">40KVA Soundproof Generator (FG Wilson)</textarea>
+                <div class="suggestions-drop" id="sugg-1">
+                  <div class="suggestion-item" onclick="fillItem(this,'50KVA Generator Perkins','₦4,200,000')">
+                    <div class="sug-name">50KVA Generator Perkins</div>
+                    <div class="sug-price">₦4,200,000 / unit</div>
+                  </div>
+                  <div class="suggestion-item" onclick="fillItem(this,'40KVA FG Wilson Soundproof','₦3,200,000')">
+                    <div class="sug-name">40KVA FG Wilson Soundproof</div>
+                    <div class="sug-price">₦3,200,000 / unit</div>
+                  </div>
+                </div>
+              </div>
+              <div class="item-row-actions">
+                <button class="item-mini-btn" title="Move up">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                </button>
+                <button class="item-mini-btn" title="Move down">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <button class="item-mini-btn danger" title="Delete item">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button>
+              </div>
+            </div>
+            <!-- Sub-desc (shown) -->
+            <div class="sub-desc-area">
+              <textarea class="sub-desc-input" rows="1" placeholder="Additional details…">3-phase, 415V, with ATS panel, 12-month warranty from commissioning</textarea>
+            </div>
+            <!-- Image preview (shown state) -->
+            <div class="item-image-preview">
+              <div style="width:72px;height:72px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+              <button class="img-remove-btn">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="item-numbers-row" style="margin-top:10px;">
+              <div>
+                <span class="item-num-label">Qty</span>
+                <input class="item-num-input" type="number" value="1">
+              </div>
+              <div>
+                <span class="item-num-label">Unit</span>
+                <input class="item-unit-input" type="text" placeholder="unit" value="unit">
+              </div>
+              <div>
+                <span class="item-num-label">Unit Price</span>
+                <input class="item-num-input" type="text" value="3,200,000">
+              </div>
+              <div>
+                <span class="item-row-total-lbl">Amount</span>
+                <div class="item-row-total">₦3,200,000</div>
+              </div>
+            </div>
+            <!-- Per-row overrides -->
+            <div class="item-overrides" style="display:none;" id="overrides-1">
+              <div class="override-field">
+                <span class="override-label">VAT %</span>
+                <input class="override-input" type="number" placeholder="global">
+              </div>
+              <div class="override-field">
+                <span class="override-label">Disc %</span>
+                <input class="override-input" type="number" placeholder="global">
+              </div>
+              <div class="override-field">
+                <span class="override-label">Install Rate</span>
+                <input class="override-input" type="number" placeholder="auto">
+              </div>
+            </div>
+            <div class="item-chips">
+              <div class="item-chip active" onclick="toggleSubdesc(this)">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+                Sub-desc
+              </div>
+              <div class="item-chip active">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                Photo
+              </div>
+              <div class="item-chip" onclick="document.getElementById('overrides-1').style.display=document.getElementById('overrides-1').style.display==='none'?'grid':'none'; this.classList.toggle('active')">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                Overrides
+              </div>
+            </div>
+            <button class="add-below-btn" onclick="fireToast('New item added','')">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add item below
+            </button>
+          </div>
+
+          <!-- Second item in group (compact state - no sub-desc, no image) -->
+          <div class="item-card">
+            <div class="item-card-top">
+              <div class="item-drag-handle">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+              </div>
+              <div class="item-desc-wrap">
+                <textarea class="item-desc-input" rows="1" oninput="autoResize(this)" placeholder="Item description…">ATS / Changeover Panel (100A)</textarea>
+              </div>
+              <div class="item-row-actions">
+                <button class="item-mini-btn" title="Move up"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+                <button class="item-mini-btn" title="Move down"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+                <button class="item-mini-btn danger"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+              </div>
+            </div>
+            <!-- Upload progress state (demo) -->
+            <div class="upload-progress" style="display:none;" id="upload-prog">
+              <svg class="spinner" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              Uploading image...
+            </div>
+            <div class="item-numbers-row" style="margin-top:8px;">
+              <div>
+                <span class="item-num-label">Qty</span>
+                <input class="item-num-input" type="number" value="1">
+              </div>
+              <div>
+                <span class="item-num-label">Unit</span>
+                <input class="item-unit-input" type="text" value="set">
+              </div>
+              <div>
+                <span class="item-num-label">Unit Price</span>
+                <input class="item-num-input" type="text" value="180,000">
+              </div>
+              <div>
+                <span class="item-row-total-lbl">Amount</span>
+                <div class="item-row-total">₦180,000</div>
+              </div>
+            </div>
+            <div class="item-chips">
+              <div class="item-chip" onclick="toggleSubdesc(this)">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+                Sub-desc
+              </div>
+              <div class="item-chip" onclick="showUploadProgress()">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                Photo
+              </div>
+            </div>
+            <button class="add-below-btn" onclick="fireToast('New item added','')">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add item below
+            </button>
+          </div>
+        </div>
+
+        <div class="group-subtotal">
+          <div class="group-subtotal-lbl">Group Subtotal</div>
+          <div class="group-subtotal-val">₦3,380,000</div>
+        </div>
+        <div class="group-footer">
+          <button class="group-add-btn" onclick="fireToast('New item added to group','')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add item to group
+          </button>
+        </div>
+      </div>
+
+      <!-- UNGROUPED ITEMS -->
+      <div class="item-card" style="background:var(--surface);">
+        <div class="item-card-top">
+          <div class="item-drag-handle">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+          </div>
+          <div class="item-desc-wrap">
+            <textarea class="item-desc-input" rows="1" oninput="autoResize(this)" placeholder="Item description…">Civil & Electrical Installation</textarea>
+          </div>
+          <div class="item-row-actions">
+            <button class="item-mini-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+            <button class="item-mini-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+            <button class="item-mini-btn danger"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+          </div>
+        </div>
+        <div class="sub-desc-area">
+          <textarea class="sub-desc-input" rows="1" placeholder="Additional details…">Concrete plinth, cabling, conduits, earthing, load testing</textarea>
+        </div>
+        <!-- Validation error demo -->
+        <div class="field-error" style="display:none;" id="desc-error">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Item description is required
+        </div>
+        <div class="item-numbers-row" style="margin-top:8px;">
+          <div>
+            <span class="item-num-label">Qty</span>
+            <input class="item-num-input" type="number" value="1">
+          </div>
+          <div>
+            <span class="item-num-label">Unit</span>
+            <input class="item-unit-input" type="text" value="lot">
+          </div>
+          <div>
+            <span class="item-num-label">Unit Price</span>
+            <input class="item-num-input" type="text" value="650,000">
+          </div>
+          <div>
+            <span class="item-row-total-lbl">Amount</span>
+            <div class="item-row-total">₦650,000</div>
+          </div>
+        </div>
+        <div class="item-chips">
+          <div class="item-chip active"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>Sub-desc</div>
+          <div class="item-chip"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Photo</div>
+        </div>
+        <button class="add-below-btn" onclick="fireToast('New item added','')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add item below
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ADD ITEM / GROUP ACTIONS -->
+    <div class="add-actions">
+      <button class="add-main-btn" onclick="fireToast('New item added','')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Item
+      </button>
+      <button class="add-main-btn group-btn" onclick="fireToast('New group created','')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Add Group
+      </button>
+    </div>
+  </div>
+
+  <!-- ⑤ COMMERCIAL TERMS -->
+  <div class="form-section fade-up">
+    <div class="section-head">
+      <div class="section-label">Commercial Terms</div>
+    </div>
+    <div class="terms-accordion">
+
+      <!-- Payment Terms -->
+      <div class="terms-block">
+        <button class="terms-trigger" onclick="toggleTerms(this)">
+          <div class="terms-trigger-left">
+            <div class="terms-trigger-icon amber">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div class="terms-trigger-text">
+              <div class="terms-trigger-label">Payment Terms</div>
+              <div class="terms-trigger-sub">Net 30</div>
+            </div>
+          </div>
+          <svg class="terms-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="terms-body">
+          <div class="field-row">
+            <div class="field-group" style="margin-bottom:0">
+              <label class="field-label">Terms</label>
+              <select class="field-select">
+                <option>Net 30</option>
+                <option>Net 7</option>
+                <option>Net 14</option>
+                <option>Due on Receipt</option>
+                <option>Custom</option>
+              </select>
+            </div>
+            <div class="field-group" style="margin-bottom:0">
+              <label class="field-label">Due / Validity</label>
+              <input class="field-input" type="text" placeholder="e.g. 30 days">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Discount -->
+      <div class="terms-block">
+        <button class="terms-trigger" onclick="toggleTerms(this)">
+          <div class="terms-trigger-left">
+            <div class="terms-trigger-icon emerald">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+            </div>
+            <div class="terms-trigger-text">
+              <div class="terms-trigger-label">Discount</div>
+              <div class="terms-trigger-sub">Not applied</div>
+            </div>
+          </div>
+          <svg class="terms-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="terms-body">
+          <div class="field-row" style="margin-bottom:10px;">
+            <div>
+              <label class="field-label">Type</label>
+              <div class="segmented">
+                <button class="seg-btn active" onclick="setActive(this)">₦ Fixed</button>
+                <button class="seg-btn" onclick="setActive(this)">% Percent</button>
+              </div>
+            </div>
+            <div>
+              <label class="field-label">Timing</label>
+              <div class="segmented">
+                <button class="seg-btn active" onclick="setActive(this)">Before VAT</button>
+                <button class="seg-btn" onclick="setActive(this)">After VAT</button>
+              </div>
+            </div>
+          </div>
+          <div class="field-group" style="margin-bottom:0">
+            <label class="field-label">Discount Value</label>
+            <input class="field-input mono" type="number" placeholder="0.00">
+          </div>
+        </div>
+      </div>
+
+      <!-- VAT -->
+      <div class="terms-block">
+        <button class="terms-trigger" onclick="toggleTerms(this)">
+          <div class="terms-trigger-left">
+            <div class="terms-trigger-icon violet">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
+            <div class="terms-trigger-text">
+              <div class="terms-trigger-label">VAT</div>
+              <div class="terms-trigger-sub">7.5% · ₦365,000</div>
+            </div>
+          </div>
+          <svg class="terms-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="terms-body">
+          <div class="field-group" style="margin-bottom:0">
+            <label class="field-label">VAT Rate (%)</label>
+            <input class="field-input mono" type="number" value="7.5">
+          </div>
+        </div>
+      </div>
+
+      <!-- WHT -->
+      <div class="terms-block">
+        <button class="terms-trigger" onclick="toggleTerms(this)">
+          <div class="terms-trigger-left">
+            <div class="terms-trigger-icon indigo">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div class="terms-trigger-text">
+              <div class="terms-trigger-label">WHT</div>
+              <div class="terms-trigger-sub">Not applied</div>
+            </div>
+          </div>
+          <svg class="terms-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="terms-body">
+          <div class="field-row" style="margin-bottom:10px;">
+            <div>
+              <label class="field-label">Type</label>
+              <div class="segmented">
+                <button class="seg-btn active" onclick="setActive(this)">₦ Fixed</button>
+                <button class="seg-btn" onclick="setActive(this)">% Percent</button>
+              </div>
+            </div>
+            <div class="field-group" style="margin-bottom:0">
+              <label class="field-label">WHT Rate</label>
+              <input class="field-input mono" type="number" placeholder="0.00">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Surcharges -->
+      <div class="terms-block">
+        <button class="terms-trigger" onclick="toggleTerms(this)">
+          <div class="terms-trigger-left">
+            <div class="terms-trigger-icon amber">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="terms-trigger-text">
+              <div class="terms-trigger-label">Surcharges</div>
+              <div class="terms-trigger-sub">Workmanship, Transport, Shipping</div>
+            </div>
+          </div>
+          <svg class="terms-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="terms-body">
+          <div class="field-row" style="margin-bottom:10px;">
+            <div class="field-group" style="margin-bottom:0">
+              <label class="field-label">Workmanship (₦)</label>
+              <input class="field-input mono" type="number" placeholder="0" value="120000">
+            </div>
+            <div class="field-group" style="margin-bottom:0">
+              <label class="field-label">Transportation (₦)</label>
+              <input class="field-input mono" type="number" placeholder="0" value="85000">
+            </div>
+          </div>
+          <div class="field-group" style="margin-bottom:0">
+            <label class="field-label">Shipping (₦)</label>
+            <input class="field-input mono" type="number" placeholder="0">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ⑥ TOTALS PANEL -->
+  <div class="form-section fade-up">
+    <div class="totals-panel">
+      <div class="totals-header">
+        <div class="totals-label">Summary</div>
+        <button class="vat-adjust-btn" onclick="toggleVatInline()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Adjust VAT
+        </button>
+      </div>
+      <div class="vat-inline" id="vat-inline">
+        <div class="vat-inline-label">VAT Rate</div>
+        <input type="number" value="7.5">
+        <div class="vat-inline-pct">%</div>
+      </div>
+      <div class="totals-rows">
+        <div class="total-row">
+          <div class="total-row-lbl">Subtotal</div>
+          <div class="total-row-val">₦4,150,000</div>
+        </div>
+        <div class="total-row">
+          <div class="total-row-lbl">Workmanship</div>
+          <div class="total-row-val">₦120,000</div>
+        </div>
+        <div class="total-row">
+          <div class="total-row-lbl">Transportation</div>
+          <div class="total-row-val">₦85,000</div>
+        </div>
+        <div class="total-row">
+          <div class="total-row-lbl">VAT (7.5%)</div>
+          <div class="total-row-val">₦365,000</div>
+        </div>
+        <div class="total-rule"></div>
+        <div class="total-row grand">
+          <div class="total-row-lbl">Total</div>
+          <div class="total-row-val">₦4,720,000</div>
+        </div>
+      </div>
+      <div class="amount-words">
+        Four million, seven hundred and twenty thousand naira only (₦4,720,000.00)
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑦ COLLAPSIBLE SECTIONS -->
+  <div class="form-section fade-up">
+
+    <!-- Notes -->
+    <div class="collapsible-block">
+      <button class="collapsible-trigger" onclick="toggleColl(this)">
+        <div class="coll-icon slate">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div class="coll-label">
+          <div class="coll-title">Notes</div>
+          <div class="coll-sub">Payment notes, warranty terms…</div>
+        </div>
+        <svg class="coll-chevron open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="coll-body open">
+        <div class="richtext-mock">
+          <div class="richtext-toolbar">
+            <button class="rt-btn" style="font-weight:700;">B</button>
+            <button class="rt-btn" style="font-style:italic;">I</button>
+            <button class="rt-btn" style="text-decoration:underline;">U</button>
+            <button class="rt-btn">≡</button>
+            <button class="rt-btn">•</button>
+            <button class="rt-btn">1.</button>
+          </div>
+          All equipment carries a 12-month warranty from date of commissioning. WHT deductions must be accompanied by a valid WHT certificate. Payment within the stipulated period.
+        </div>
+      </div>
+    </div>
+
+    <!-- Terms -->
+    <div class="collapsible-block">
+      <button class="collapsible-trigger" onclick="toggleColl(this)">
+        <div class="coll-icon slate">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div class="coll-label">
+          <div class="coll-title">Terms & Conditions</div>
+          <div class="coll-sub">Not set</div>
+        </div>
+        <svg class="coll-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="coll-body">
+        <div class="richtext-mock">
+          <div class="richtext-toolbar">
+            <button class="rt-btn" style="font-weight:700;">B</button>
+            <button class="rt-btn" style="font-style:italic;">I</button>
+            <button class="rt-btn" style="text-decoration:underline;">U</button>
+            <button class="rt-btn">≡</button>
+            <button class="rt-btn">•</button>
+            <button class="rt-btn">1.</button>
+          </div>
+          <span style="color:var(--text4);font-style:italic;">Add terms and conditions…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signatory -->
+    <div class="collapsible-block">
+      <button class="collapsible-trigger" onclick="toggleColl(this)">
+        <div class="coll-icon emerald">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="coll-label">
+          <div class="coll-title">Signatory</div>
+          <div class="coll-sub">Engr. Babajide Olusanya</div>
+        </div>
+        <svg class="coll-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="coll-body">
+        <div class="signatory-pick">
+          <div class="signatory-opt active">
+            <div class="sig-avatar" style="background:var(--indigo-bg);color:var(--indigo);">BO</div>
+            <div class="sig-info">
+              <div class="sig-name">Engr. Babajide Olusanya</div>
+              <div class="sig-role">Managing Director</div>
+            </div>
+            <svg class="sig-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="signatory-opt">
+            <div class="sig-avatar">FA</div>
+            <div class="sig-info">
+              <div class="sig-name">Mrs. Folake Adeyemi</div>
+              <div class="sig-role">Finance Director</div>
+            </div>
+          </div>
+          <div class="signatory-opt" style="justify-content:center;border-style:dashed;color:var(--text3);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span style="font-size:13px;font-weight:700;">No Signatory</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reference Links -->
+    <div class="collapsible-block">
+      <button class="collapsible-trigger" onclick="toggleColl(this)">
+        <div class="coll-icon violet">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </div>
+        <div class="coll-label">
+          <div class="coll-title">Reference Links</div>
+          <div class="coll-sub">1 link attached</div>
+        </div>
+        <svg class="coll-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="coll-body">
+        <div class="link-row">
+          <input class="link-input-label" type="text" placeholder="Label" value="PO Document">
+          <input class="link-input-url" type="url" placeholder="https://..." value="https://docs.example.com/po/0183">
+          <button class="del-btn" onclick="this.parentElement.remove()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+        <button class="section-action-btn" style="padding:6px 0;" onclick="addLinkRow()">+ Add Link</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ⑧ ADVANCED / PDF OPTIONS -->
+  <div class="form-section fade-up">
+    <div class="section-head">
+      <div class="section-label">PDF & Output</div>
+    </div>
+    <div class="pdf-options-panel">
+      <div class="field-group">
+        <label class="field-label">Template</label>
+        <div class="template-scroll">
+          <div class="tmpl-chip active">Proforma</div>
+          <div class="tmpl-chip" onclick="selectTmpl(this)">Bold</div>
+          <div class="tmpl-chip" onclick="selectTmpl(this)">Compact</div>
+          <div class="tmpl-chip" onclick="selectTmpl(this)">Classic</div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Bank Account</label>
+        <select class="field-select">
+          <option>Zenith Bank — 2109384756 (Default)</option>
+          <option>First Bank — 3047291836</option>
+          <option>None (hide bank details)</option>
+        </select>
+      </div>
+      <div class="pdf-options-grid">
+        <div class="pdf-opt-row">
+          <div class="pdf-opt-info">
+            <div class="pdf-opt-label">Show Bank Details</div>
+            <div class="pdf-opt-sub">Display payment account on PDF</div>
+          </div>
+          <label class="toggle"><input type="checkbox"><div class="toggle-track"><div class="toggle-thumb"></div></div></label>
+        </div>
+        <div class="pdf-opt-row">
+          <div class="pdf-opt-info">
+            <div class="pdf-opt-label">Show Footer</div>
+            <div class="pdf-opt-sub">Company footer bar on each page</div>
+          </div>
+          <label class="toggle"><input type="checkbox" checked><div class="toggle-track"><div class="toggle-thumb"></div></div></label>
+        </div>
+        <div class="pdf-opt-row">
+          <div class="pdf-opt-info">
+            <div class="pdf-opt-label">Show Tagline</div>
+            <div class="pdf-opt-sub">Company tagline below name</div>
+          </div>
+          <label class="toggle"><input type="checkbox" checked><div class="toggle-track"><div class="toggle-thumb"></div></div></label>
+        </div>
+        <div class="pdf-opt-row">
+          <div class="pdf-opt-info">
+            <div class="pdf-opt-label">Merge Qty / Unit</div>
+            <div class="pdf-opt-sub">Combine columns in PDF table</div>
+          </div>
+          <label class="toggle"><input type="checkbox"><div class="toggle-track"><div class="toggle-thumb"></div></div></label>
+        </div>
+        <div class="pdf-opt-row">
+          <div class="pdf-opt-info">
+            <div class="pdf-opt-label">Show Item Images</div>
+            <div class="pdf-opt-sub">Include uploaded photos in PDF</div>
+          </div>
+          <label class="toggle"><input type="checkbox" checked><div class="toggle-track"><div class="toggle-thumb"></div></div></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="height:24px;"></div>
+</main>
+
+<!-- ─── FLOATING SAVE FAB ─── -->
+<button class="fab-save" title="Quick save draft" onclick="fireToast('Draft saved','success')">
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+</button>
+
+<!-- ══════════ SHEETS ══════════ -->
+<div class="overlay" id="overlay" onclick="closeAll()"></div>
+
+<!-- QUICK ACTIONS SHEET -->
+<div class="sheet" id="actions-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Quick Actions</div>
+  <div class="sheet-body" style="padding-bottom:8px;">
+  </div>
+  <div class="sheet-section-lbl">Save</div>
+  <button class="sheet-action" onclick="closeAll();fireToast('Draft saved','success')">
+    <div class="sa-icon amber"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg></div>
+    <div class="sa-body"><div class="sa-lbl">Save Draft</div><div class="sa-desc">Save without sending</div></div>
+  </button>
+  <button class="sheet-action" onclick="closeAll();fireToast('Changes discarded','')">
+    <div class="sa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+    <div class="sa-body"><div class="sa-lbl">Cancel & Discard</div><div class="sa-desc">Lose all unsaved changes</div></div>
+  </button>
+  <div class="sheet-divider"></div>
+  <div class="sheet-section-lbl">Tools</div>
+  <button class="sheet-action" onclick="closeAll();openSheet('import-sheet')">
+    <div class="sa-icon indigo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+    <div class="sa-body"><div class="sa-lbl">Import Items (JSON)</div><div class="sa-desc">Paste AI-extracted item data</div></div>
+  </button>
+  <button class="sheet-action" onclick="closeAll();openSheet('columns-sheet')">
+    <div class="sa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
+    <div class="sa-body"><div class="sa-lbl">Table Settings</div><div class="sa-desc">Show/hide columns, add custom columns</div></div>
+  </button>
+  <button class="sheet-action" onclick="closeAll();fireToast('Qty/Unit merged','')">
+    <div class="sa-icon emerald"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
+    <div class="sa-body"><div class="sa-lbl">Toggle Qty/Unit Merge</div><div class="sa-desc">Combine Qty and Unit columns</div></div>
+  </button>
+</div>
+
+<!-- CLIENT PICKER SHEET -->
+<div class="sheet" id="client-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Select Client</div>
+  <div class="client-search-wrap">
+    <div class="client-search-container" style="position:relative;">
+      <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="client-search" type="text" placeholder="Search clients…">
+    </div>
+  </div>
+  <div class="client-list">
+    <div class="client-list-item" onclick="closeAll();fireToast('Client selected','success')">
+      <div class="client-list-avatar" style="background:var(--indigo-bg);color:var(--indigo);">PT</div>
+      <div>
+        <div class="client-list-name">Pinnacle Towers Ltd</div>
+        <div class="client-list-sub">Adekunle Afolabi · pinnacle@example.com</div>
+      </div>
+    </div>
+    <div class="client-list-item" onclick="closeAll();fireToast('Client selected','success')">
+      <div class="client-list-avatar" style="background:var(--emerald-bg);color:var(--emerald);">AC</div>
+      <div>
+        <div class="client-list-name">Abisco Allied Ventures</div>
+        <div class="client-list-sub">info@abisco.com</div>
+      </div>
+    </div>
+    <div class="client-list-item" onclick="closeAll();fireToast('Client selected','success')">
+      <div class="client-list-avatar">LH</div>
+      <div>
+        <div class="client-list-name">Lagos Heritage Hotels</div>
+        <div class="client-list-sub">procurement@lagosheritage.ng</div>
+      </div>
+    </div>
+    <div class="client-list-item" onclick="closeAll();fireToast('Create new client','')">
+      <div class="client-list-avatar" style="background:var(--amber-bg);color:var(--amber);font-size:16px;">+</div>
+      <div>
+        <div class="client-list-name" style="color:var(--amber-dark);">Create New Client</div>
+        <div class="client-list-sub">Add a new client record</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT JSON SHEET -->
+<div class="sheet" id="import-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Import Items</div>
+  <div class="sheet-sub">Paste AI-extracted JSON from a PO or quote document</div>
+  <div class="sheet-body">
+    <div class="field-group">
+      <label class="field-label">JSON Data</label>
+      <textarea class="json-textarea" placeholder='[{"description":"Item name","quantity":1,"unit_price":0,"unit":"unit"}]'></textarea>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <button class="btn btn-draft" style="flex:1;height:40px;font-size:13px;" onclick="fireToast('AI prompt copied','')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy AI Prompt
+      </button>
+      <button class="btn btn-send" style="flex:2;height:40px;font-size:13px;background:var(--indigo);" onclick="closeAll();fireToast('Items imported successfully','success')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Apply Import
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- COLUMN MANAGER SHEET -->
+<div class="sheet" id="columns-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Table Settings</div>
+  <div class="sheet-sub">Toggle columns and reorder fields</div>
+  <div class="sheet-section-lbl">Visible Columns</div>
+  <div class="col-list">
+    <div class="col-item">
+      <div class="col-drag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg></div>
+      <div style="flex:1"><div class="col-name">Description</div><div class="col-sub">Primary item text</div></div>
+      <label class="toggle"><input type="checkbox" checked disabled><div class="toggle-track"><div class="toggle-thumb"></div></div></label>
+    </div>
+    <div class="col-item">
+      <div class="col-drag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg></div>
+      <div style="flex:1"><div class="col-name">Quantity</div></div>
+      <label class="toggle"><input type="checkbox" checked><div class="toggle-track"><div class="toggle-thumb"></div></div></label>
+    </div>
+    <div class="col-item">
+      <div class="col-drag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg></div>
+      <div style="flex:1"><div class="col-name">Unit</div></div>
+      <label class="toggle"><input type="checkbox" checked><div class="toggle-track"><div class="toggle-thumb"></div></div></label>
+    </div>
+    <div class="col-item">
+      <div class="col-drag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg></div>
+      <div style="flex:1"><div class="col-name">Unit Price</div></div>
+      <label class="toggle"><input type="checkbox" checked><div class="toggle-track"><div class="toggle-thumb"></div></div></label>
+    </div>
+    <div class="col-item">
+      <div class="col-drag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg></div>
+      <div style="flex:1"><div class="col-name">VAT %</div><div class="col-sub">Per-row override</div></div>
+      <label class="toggle"><input type="checkbox" checked><div class="toggle-track"><div class="toggle-thumb"></div></div></label>
+    </div>
+    <div class="col-item">
+      <div class="col-drag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg></div>
+      <div style="flex:1"><div class="col-name">Discount %</div><div class="col-sub">Per-row override</div></div>
+      <label class="toggle"><input type="checkbox"><div class="toggle-track"><div class="toggle-thumb"></div></div></label>
+    </div>
+    <div class="col-item">
+      <div class="col-drag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg></div>
+      <div style="flex:1"><div class="col-name">Install Rate</div><div class="col-sub">Manual override</div></div>
+      <label class="toggle"><input type="checkbox"><div class="toggle-track"><div class="toggle-thumb"></div></div></label>
+    </div>
+  </div>
+  <div class="sheet-divider"></div>
+  <div class="sheet-body" style="padding-bottom:16px;">
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-draft" style="flex:1;height:38px;font-size:12px;" onclick="openModal('reset-cols-modal');closeAll();">Reset to Default</button>
+      <button class="btn btn-send" style="flex:1;height:38px;font-size:12px;background:var(--indigo);" onclick="closeAll();fireToast('Settings saved','success')">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- DELETE GROUP MODAL -->
+<div class="modal-backdrop" id="delete-group-modal" onclick="closeModal('delete-group-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-icon rose"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></div>
+      <div class="modal-title">Delete Group?</div>
+    </div>
+    <div class="modal-body">Items inside <strong>Supply of Equipment</strong> will NOT be deleted — they'll become ungrouped. The group header will be removed.</div>
+    <div class="modal-footer">
+      <button class="modal-cancel" onclick="closeModal('delete-group-modal')">Cancel</button>
+      <button class="modal-confirm" onclick="closeModal('delete-group-modal');fireToast('Group deleted, items ungrouped','')">Delete Group</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESET COLUMNS MODAL -->
+<div class="modal-backdrop" id="reset-cols-modal" onclick="closeModal('reset-cols-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-icon amber"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 2v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg></div>
+      <div class="modal-title">Reset Table Layout?</div>
+    </div>
+    <div class="modal-body">All column visibility and ordering will be restored to default. Custom columns will be removed. Per-row overrides will be cleared.</div>
+    <div class="modal-footer">
+      <button class="modal-cancel" onclick="closeModal('reset-cols-modal')">Cancel</button>
+      <button class="modal-confirm amber-btn" onclick="closeModal('reset-cols-modal');fireToast('Table reset to defaults','')">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Sheet
+function openSheet(id) {
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById(id).classList.add('open');
+}
+function closeAll() {
+  document.getElementById('overlay').classList.remove('open');
+  document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
+}
+
+// Modal
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Toast
+function fireToast(msg, type) {
+  const area = document.getElementById('toast-area');
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type || '');
+  const icon = type === 'success'
+    ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'
+    : type === 'error'
+    ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+    : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+  t.innerHTML = icon + ' ' + msg;
+  area.appendChild(t);
+  setTimeout(() => t.remove(), 3700);
+}
+
+// Accordion - commercial terms
+function toggleTerms(btn) {
+  const body = btn.nextElementSibling;
+  const chev = btn.querySelector('.terms-chevron');
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+// Collapsible sections
+function toggleColl(btn) {
+  const body = btn.nextElementSibling;
+  const chev = btn.querySelector('.coll-chevron');
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+// Segmented control
+function setActive(btn) {
+  btn.closest('.segmented').querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// VAT inline toggle
+function toggleVatInline() {
+  document.getElementById('vat-inline').classList.toggle('open');
+}
+
+// Custom fields
+function addCustomField() {
+  const list = document.getElementById('custom-fields-list');
+  const row = document.createElement('div');
+  row.className = 'custom-field-row';
+  row.innerHTML = `
+    <input class="custom-field-label-input" type="text" placeholder="Label">
+    <input class="custom-field-val-input" type="text" placeholder="Value">
+    <button class="del-btn" onclick="removeCustomField(this)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    </button>`;
+  list.appendChild(row);
+  row.querySelector('input').focus();
+}
+function removeCustomField(btn) { btn.closest('.custom-field-row').remove(); }
+
+// Link rows
+function addLinkRow() {
+  const body = document.querySelector('.coll-body.open');
+  const row = document.createElement('div');
+  row.className = 'link-row';
+  row.innerHTML = `
+    <input class="link-input-label" type="text" placeholder="Label">
+    <input class="link-input-url" type="url" placeholder="https://...">
+    <button class="del-btn" onclick="this.parentElement.remove()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    </button>`;
+  body.insertBefore(row, body.lastElementChild);
+  row.querySelector('input').focus();
+}
+
+// Textarea auto-resize
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// Suggestions demo
+function showSuggestions(el) {
+  const drop = document.getElementById('sugg-1');
+  if (drop && el.value.length >= 2) drop.classList.add('open');
+  else if (drop) drop.classList.remove('open');
+}
+function fillItem(el, name, price) {
+  const card = el.closest('.item-card');
+  const textarea = card.querySelector('.item-desc-input');
+  if (textarea) textarea.value = name;
+  const drop = el.closest('.suggestions-drop');
+  if (drop) drop.classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.item-desc-wrap')) {
+    document.querySelectorAll('.suggestions-drop').forEach(d => d.classList.remove('open'));
+  }
+});
+
+// Template select
+function selectTmpl(el) {
+  document.querySelectorAll('.tmpl-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Upload progress demo
+function showUploadProgress() {
+  const p = document.getElementById('upload-prog');
+  p.style.display = 'flex';
+  setTimeout(() => { p.style.display = 'none'; fireToast('Image uploaded','success'); }, 2000);
+}
+
+// Sub-desc toggle
+function toggleSubdesc(chip) {
+  chip.classList.toggle('active');
+  const card = chip.closest('.item-card');
+  let area = card.querySelector('.sub-desc-area');
+  if (!area) {
+    area = document.createElement('div');
+    area.className = 'sub-desc-area';
+    area.innerHTML = '<textarea class="sub-desc-input" rows="1" placeholder="Additional details…"></textarea>';
+    card.querySelector('.item-numbers-row') ? card.querySelector('.item-card-top').insertAdjacentElement('afterend', area) : null;
+  }
+  area.style.display = area.style.display === 'none' ? 'block' : 'none';
+}
+
+// Signatory selection
+document.querySelectorAll('.signatory-opt').forEach(opt => {
+  opt.addEventListener('click', function() {
+    document.querySelectorAll('.signatory-opt').forEach(o => {
+      o.classList.remove('active');
+      const chk = o.querySelector('.sig-check');
+      if (chk) chk.remove();
+    });
+    if (!this.querySelector('.sig-check')) {
+      this.classList.add('active');
+      const chk = document.createElement('div');
+      chk.className = 'sig-check';
+      chk.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+      this.appendChild(chk);
+    }
+  });
+});
+</script>
+</body>
+</html>
