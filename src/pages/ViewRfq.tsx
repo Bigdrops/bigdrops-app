@@ -8,7 +8,6 @@ import DocumentToastViewport from '@/components/document-view/shared/DocumentToa
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import DocumentHero from '@/components/document-view/shared/DocumentHero'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
-import DocumentTopNavActions from '@/components/document-view/shared/DocumentTopNavActions'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
 import { useToastStack } from '@/components/document-view/hooks/useToastStack'
@@ -138,7 +137,7 @@ export default function ViewRfq() {
 
   if (loading) {
     return (
-      <DocumentPage topNav={<DocumentTopNav title="Loading..." onBack={() => navigate('/rfqs')} />}>
+      <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="RFQs" onBack={() => navigate('/rfqs')} />}>
         <CenteredSpinner />
       </DocumentPage>
     )
@@ -169,14 +168,11 @@ export default function ViewRfq() {
           <DocumentTopNav
             title={docProps.number}
             subtitle={docProps.title}
+            backLabel="RFQs"
             onBack={() => navigate('/rfqs')}
-            actions={
-              <DocumentTopNavActions
-                onShare={() => showToast('Share pending', 'Share flow is not wired on RFQ view yet.')}
-                onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
-                onMore={() => ui.openSheet(SHEET_MORE)}
-              />
-            }
+            onShare={() => showToast('Share pending', 'Share flow is not wired on RFQ view yet.')}
+            onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
+            onMore={() => ui.openSheet(SHEET_MORE)}
           />
         }
         hero={

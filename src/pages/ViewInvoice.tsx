@@ -7,8 +7,9 @@ import InvoiceConfirmDialog from '@/components/document-view/invoice/InvoiceConf
 import {
   InvoiceHero,
   InvoicePageShell,
-  InvoiceTopNav,
 } from '@/components/document-view/invoice/InvoiceFidelityPrimitives'
+import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
+
 import InvoiceMoreSheet from '@/components/document-view/invoice/InvoiceMoreSheet'
 import InvoiceToastViewport from '@/components/document-view/invoice/InvoiceToastViewport'
 import InvoiceViewPage from '@/components/document-view/invoice/InvoiceViewPage'
@@ -359,7 +360,7 @@ export default function ViewInvoice() {
 
   if (loading) {
     return (
-      <InvoicePageShell topNav={<InvoiceTopNav title="Loading..." onBack={() => navigate('/invoices')} />} floating={null}>
+      <InvoicePageShell topNav={<DocumentTopNav title="Loading..." backLabel="Invoices" onBack={() => navigate('/invoices')} />} floating={null}>
         <CenteredSpinner />
       </InvoicePageShell>
     )
@@ -463,9 +464,10 @@ export default function ViewInvoice() {
     <>
       <InvoicePageShell
         topNav={
-          <InvoiceTopNav
+          <DocumentTopNav
             title={docProps.number}
             subtitle={invoice.invoice_title || 'Tax Invoice'}
+            backLabel="Invoices"
             onBack={() => navigate('/invoices')}
             onShare={() => void handleShare()}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}

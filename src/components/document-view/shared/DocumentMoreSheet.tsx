@@ -27,7 +27,7 @@ export default function DocumentMoreSheet({
   open,
   onClose,
   title = 'More Actions',
-  sections,
+  sections = [],
 }: DocumentMoreSheetProps) {
   const [isVisible, setIsVisible] = useState(false)
 
@@ -53,11 +53,11 @@ export default function DocumentMoreSheet({
         <div className={styles.handle} />
         <div className={styles.title}>{title}</div>
 
-        {sections.map((section, sIdx) => (
+        {(sections || []).map((section, sIdx) => (
           <div key={sIdx} className={styles.section}>
             <div className={styles.sectionHeader}>{section.title}</div>
             <div className={styles.grid}>
-              {section.items.map((item) => (
+              {(section.items || []).map((item) => (
                 <button
                   key={item.id}
                   type="button"

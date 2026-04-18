@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import WaybillHeroMeta from '@/components/document-view/waybill/WaybillHeroMeta'
-import DocumentTopNavActions from '@/components/document-view/shared/DocumentTopNavActions'
 import WaybillViewPage from '@/components/document-view/waybill/WaybillViewPage'
 import WaybillMoreSheet from '@/components/document-view/waybill/WaybillMoreSheet'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
@@ -101,7 +100,7 @@ export default function ViewWaybill() {
 
   if (loading) {
     return (
-      <DocumentPage topNav={<DocumentTopNav title="Loading..." onBack={() => navigate('/waybills')} />}>
+      <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="Waybills" onBack={() => navigate('/waybills')} />}>
         <CenteredSpinner />
       </DocumentPage>
     )
@@ -156,14 +155,11 @@ export default function ViewWaybill() {
           <DocumentTopNav
             title={docProps.number}
             subtitle={docProps.title}
+            backLabel="Waybills"
             onBack={() => navigate('/waybills')}
-            actions={
-              <DocumentTopNavActions
-                onShare={() => showToast('Share pending', 'Share flow is not wired on waybill view yet.')}
-                onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
-                onMore={() => ui.openSheet(SHEET_MORE)}
-              />
-            }
+            onShare={() => showToast('Share pending', 'Share flow is not wired on waybill view yet.')}
+            onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
+            onMore={() => ui.openSheet(SHEET_MORE)}
           />
         }
         hero={

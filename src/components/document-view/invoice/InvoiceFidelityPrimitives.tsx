@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ArrowLeft, Download, MoreHorizontal, Share2, SlidersHorizontal, ChevronLeft } from 'lucide-react'
+import { Download } from 'lucide-react'
 
 import styles from './InvoicePresentation.module.css'
 
@@ -8,15 +8,6 @@ type InvoicePageShellProps = {
   overlay?: ReactNode
   topNav?: ReactNode
   floating?: ReactNode
-}
-
-type InvoiceTopNavProps = {
-  title: string
-  subtitle?: string
-  onBack: () => void
-  onShare?: () => void
-  onCustomize?: () => void
-  onMore?: () => void
 }
 
 export type InvoiceHeroMetric = {
@@ -53,34 +44,6 @@ export function InvoicePageShell({ children, overlay, topNav, floating }: Invoic
       {floating}
       {overlay}
     </div>
-  )
-}
-
-export function InvoiceTopNav({ title, subtitle, onBack, onShare, onCustomize, onMore }: InvoiceTopNavProps) {
-  return (
-    <nav className={styles.nav}>
-      <button type="button" onClick={onBack} className={styles['nav-back']}>
-        <ChevronLeft size={18} strokeWidth={2.5} />
-        <span>Invoices</span>
-      </button>
-
-      <div className={styles['nav-center']}>
-        <div className={styles['nav-title']}>{title || 'Invoice'}</div>
-        <div className={styles['nav-sub']}>{subtitle || 'Tax Invoice'}</div>
-      </div>
-
-      <div className={styles['nav-right']}>
-        <button type="button" className={styles['icon-btn']} title="Share" onClick={onShare}>
-          <Share2 size={16} strokeWidth={2} />
-        </button>
-        <button type="button" className={`${styles['icon-btn']} ${styles.amber}`} title="Customise" onClick={onCustomize}>
-          <SlidersHorizontal size={17} strokeWidth={2} />
-        </button>
-        <button type="button" className={styles['icon-btn']} title="More actions" onClick={onMore}>
-          <MoreHorizontal size={17} strokeWidth={2} />
-        </button>
-      </div>
-    </nav>
   )
 }
 

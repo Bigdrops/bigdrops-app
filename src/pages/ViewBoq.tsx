@@ -15,7 +15,6 @@ import DocumentToastViewport from '@/components/document-view/shared/DocumentToa
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import DocumentHero from '@/components/document-view/shared/DocumentHero'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
-import DocumentTopNavActions from '@/components/document-view/shared/DocumentTopNavActions'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useToastStack } from '@/components/document-view/hooks/useToastStack'
 import '@/components/document-view/shared/documentViewTheme.css'
@@ -114,7 +113,7 @@ export default function ViewBoq() {
 
   if (loading) {
     return (
-      <DocumentPage topNav={<DocumentTopNav title="Loading..." onBack={() => navigate('/boqs')} />}>
+      <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="BOQs" onBack={() => navigate('/boqs')} />}>
         <CenteredSpinner />
       </DocumentPage>
     )
@@ -146,14 +145,11 @@ export default function ViewBoq() {
           <DocumentTopNav
             title={docProps.number}
             subtitle={docProps.title}
+            backLabel="BOQs"
             onBack={() => navigate('/boqs')}
-            actions={
-              <DocumentTopNavActions
-                onShare={() => showToast('Share pending', 'Share flow is not wired on BOQ view yet.')}
-                onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
-                onMore={() => ui.openSheet(SHEET_MORE)}
-              />
-            }
+            onShare={() => showToast('Share pending', 'Share flow is not wired on BOQ view yet.')}
+            onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
+            onMore={() => ui.openSheet(SHEET_MORE)}
           />
         }
         hero={

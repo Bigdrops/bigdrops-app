@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import CsrHeroMeta from '@/components/document-view/csr/CsrHeroMeta'
-import DocumentTopNavActions from '@/components/document-view/shared/DocumentTopNavActions'
 import CsrViewPage from '@/components/document-view/csr/CsrViewPage'
 import CsrMoreSheet from '@/components/document-view/csr/CsrMoreSheet'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
@@ -111,7 +110,7 @@ export default function ViewCSR() {
 
   if (loading) {
     return (
-      <DocumentPage topNav={<DocumentTopNav title="Loading..." onBack={() => navigate('/csr')} />}>
+      <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="Service Reports" onBack={() => navigate('/csr')} />}>
         <CenteredSpinner />
       </DocumentPage>
     )
@@ -143,14 +142,11 @@ export default function ViewCSR() {
           <DocumentTopNav
             title={docProps.number}
             subtitle={docProps.title}
+            backLabel="Service Reports"
             onBack={() => navigate('/csr')}
-            actions={
-              <DocumentTopNavActions
-                onShare={() => showToast('Share pending', 'Share flow is not wired on CSR view yet.')}
-                onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
-                onMore={() => ui.openSheet(SHEET_MORE)}
-              />
-            }
+            onShare={() => showToast('Share pending', 'Share flow is not wired on CSR view yet.')}
+            onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
+            onMore={() => ui.openSheet(SHEET_MORE)}
           />
         }
         hero={
