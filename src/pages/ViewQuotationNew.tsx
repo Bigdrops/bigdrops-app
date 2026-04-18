@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 
 import QuotationHeroMeta from '@/components/document-view/quotation/QuotationHeroMeta'
-import InvoiceTopNavActions from '@/components/document-view/invoice/InvoiceTopNavActions' // using same top nav
+import DocumentTopNavActions from '@/components/document-view/shared/DocumentTopNavActions'
 import QuotationViewPage from '@/components/document-view/quotation/QuotationViewPage'
 import QuotationMoreSheet from '@/components/document-view/quotation/QuotationMoreSheet'
 import QuotationCustomizeSheet from '@/components/document-view/quotation/QuotationCustomizeSheet'
@@ -54,7 +54,7 @@ export default function ViewQuotationNew() {
             subtitle="Quotation"
             onBack={() => navigate('/quotations')}
             actions={
-              <InvoiceTopNavActions
+              <DocumentTopNavActions
                 onShare={() => showToast('Share clicked', 'Share flow remains static in Phase 1.')}
                 onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
                 onMore={() => ui.openSheet(SHEET_MORE)}

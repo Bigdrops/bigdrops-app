@@ -1,15 +1,14 @@
-import styles from './quotationDocumentPreview.module.css'
+import DocumentPreviewShell from '../shared/DocumentPreviewShell'
+import styles from './QuotationDocumentPreview.module.css'
 import {
   quotationPreviewData,
-  type quotationPreviewGroup,
-  type quotationPreviewItem,
+  QuotationPreviewGroup,
+  QuotationPreviewItem,
 } from './quotationViewMockData'
 
-export default function quotationDocumentPreview() {
+export default function QuotationDocumentPreview() {
   return (
-    <article className={styles.document}>
-      <div className={styles.accent} />
-
+    <DocumentPreviewShell>
       <div className={styles.head}>
         <div>
           <div className={styles.companyName}>{quotationPreviewData.companyName}</div>
@@ -97,11 +96,11 @@ export default function quotationDocumentPreview() {
 
         <div className={styles.amountWords}>{quotationPreviewData.amountWords}</div>
       </div>
-    </article>
+    </DocumentPreviewShell>
   )
 }
 
-function GroupRow({ row }: { row: quotationPreviewGroup }) {
+function GroupRow({ row }: { row: QuotationPreviewGroup }) {
   return (
     <div className={styles.groupRow}>
       <div className={styles.groupName}>{row.label}</div>
@@ -109,7 +108,7 @@ function GroupRow({ row }: { row: quotationPreviewGroup }) {
   )
 }
 
-function ItemRow({ row }: { row: quotationPreviewItem }) {
+function ItemRow({ row }: { row: QuotationPreviewItem }) {
   return (
     <div className={styles.itemRow}>
       <div>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import InvoiceHeroMeta from '@/components/document-view/invoice/InvoiceHeroMeta'
-import InvoiceTopNavActions from '@/components/document-view/invoice/InvoiceTopNavActions'
+import DocumentTopNavActions from '@/components/document-view/shared/DocumentTopNavActions'
 import InvoiceViewPage from '@/components/document-view/invoice/InvoiceViewPage'
 import InvoiceMoreSheet from '@/components/document-view/invoice/InvoiceMoreSheet'
 import InvoiceRecordPaymentSheet from '@/components/document-view/invoice/InvoiceRecordPaymentSheet'
@@ -62,7 +62,7 @@ export default function ViewInvoiceNew() {
             subtitle="Invoice"
             onBack={() => navigate('/invoices')}
             actions={
-              <InvoiceTopNavActions
+              <DocumentTopNavActions
                 onShare={() => showToast('Share clicked', 'Share flow remains static in Phase 1.')}
                 onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
                 onMore={() => ui.openSheet(SHEET_MORE)}

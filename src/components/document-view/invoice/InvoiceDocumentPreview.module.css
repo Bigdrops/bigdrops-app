@@ -1,16 +1,3 @@
-.document {
-  background: var(--dv-surface);
-  border: 1px solid var(--dv-border);
-  border-radius: var(--dv-radius-xl);
-  overflow: hidden;
-  box-shadow: var(--dv-shadow);
-}
-
-.accent {
-  height: 4px;
-  background: linear-gradient(90deg, var(--dv-primary) 0%, #475569 50%, var(--dv-amber) 100%);
-}
-
 .head {
   padding: 20px 20px 16px;
   display: flex;

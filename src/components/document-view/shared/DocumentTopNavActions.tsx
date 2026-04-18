@@ -1,16 +1,16 @@
-import styles from './InvoiceTopNavActions.module.css'
+import styles from './DocumentTopNavActions.module.css'
 
-interface InvoiceTopNavActionsProps {
+interface DocumentTopNavActionsProps {
   onShare: () => void
   onCustomize: () => void
   onMore: () => void
 }
 
-export default function InvoiceTopNavActions({
+export default function DocumentTopNavActions({
   onShare,
   onCustomize,
   onMore,
-}: InvoiceTopNavActionsProps) {
+}: DocumentTopNavActionsProps) {
   return (
     <>
       <button type="button" className={styles.button} onClick={onShare} aria-label="Share invoice">

@@ -1,3 +1,4 @@
+import DocumentPreviewShell from '../shared/DocumentPreviewShell'
 import styles from './InvoiceDocumentPreview.module.css'
 import {
   invoicePreviewData,
@@ -7,9 +8,7 @@ import {
 
 export default function InvoiceDocumentPreview() {
   return (
-    <article className={styles.document}>
-      <div className={styles.accent} />
-
+    <DocumentPreviewShell>
       <div className={styles.head}>
         <div>
           <div className={styles.companyName}>{invoicePreviewData.companyName}</div>
@@ -97,7 +96,7 @@ export default function InvoiceDocumentPreview() {
 
         <div className={styles.amountWords}>{invoicePreviewData.amountWords}</div>
       </div>
-    </article>
+    </DocumentPreviewShell>
   )
 }
 
