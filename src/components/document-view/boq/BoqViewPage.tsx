@@ -1,15 +1,16 @@
+import type { ReactNode } from 'react'
+
 import DocumentSection from '../shared/DocumentSection'
 import type { BaseDocument } from '../types/documentView'
-import BoqDocumentPreview from './BoqDocumentPreview'
 import BoqSummaryStrip from './BoqSummaryStrip'
 import BoqPrimaryActions from './BoqPrimaryActions'
-import BoqSecondaryActions from './BoqSecondaryActions'
 import styles from './BoqViewPage.module.css'
 import type { BoqMetric } from './boqViewMockData'
 
 interface BoqViewPageProps {
   document: BaseDocument
   metrics: BoqMetric[]
+  preview: ReactNode
   onGenerateQuotation: () => void
   onEdit: () => void
   onDuplicate: () => void
@@ -19,6 +20,7 @@ interface BoqViewPageProps {
 export default function BoqViewPage({
   document: _document,
   metrics,
+  preview,
   onGenerateQuotation,
   onEdit,
   onDuplicate,
@@ -33,7 +35,7 @@ export default function BoqViewPage({
       </div>
 
       <DocumentSection title="Bill of Quantities">
-        <BoqDocumentPreview />
+        {preview}
       </DocumentSection>
     </div>
   )

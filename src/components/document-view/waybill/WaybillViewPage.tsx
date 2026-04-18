@@ -1,15 +1,16 @@
+import type { ReactNode } from 'react'
+
 import DocumentSection from '../shared/DocumentSection'
 import type { BaseDocument } from '../types/documentView'
-import WaybillDocumentPreview from './WaybillDocumentPreview'
 import WaybillSummaryStrip from './WaybillSummaryStrip'
 import WaybillPrimaryActions from './WaybillPrimaryActions'
-import WaybillSecondaryActions from './WaybillSecondaryActions'
 import styles from './WaybillViewPage.module.css'
 import type { WaybillMetric } from './waybillViewMockData'
 
 interface WaybillViewPageProps {
   document: BaseDocument
   metrics: WaybillMetric[]
+  preview: ReactNode
   onMarkAsDelivered: () => void
   onEdit: () => void
   onDuplicate: () => void
@@ -19,6 +20,7 @@ interface WaybillViewPageProps {
 export default function WaybillViewPage({
   document: _document,
   metrics,
+  preview,
   onMarkAsDelivered,
   onEdit,
   onDuplicate,
@@ -33,7 +35,7 @@ export default function WaybillViewPage({
       </div>
 
       <DocumentSection title="Dispatch manifest">
-        <WaybillDocumentPreview />
+        {preview}
       </DocumentSection>
     </div>
   )

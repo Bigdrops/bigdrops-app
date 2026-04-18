@@ -1,15 +1,16 @@
+import type { ReactNode } from 'react'
+
 import DocumentSection from '../shared/DocumentSection'
 import type { BaseDocument } from '../types/documentView'
-import CsrDocumentPreview from './CsrDocumentPreview'
 import CsrSummaryStrip from './CsrSummaryStrip'
 import CsrPrimaryActions from './CsrPrimaryActions'
-import CsrSecondaryActions from './CsrSecondaryActions'
 import styles from './CsrViewPage.module.css'
 import type { CsrMetric } from './csrViewMockData'
 
 interface CsrViewPageProps {
   document: BaseDocument
   metrics: CsrMetric[]
+  preview: ReactNode
   onComplete: () => void
   onEdit: () => void
   onDuplicate: () => void
@@ -19,6 +20,7 @@ interface CsrViewPageProps {
 export default function CsrViewPage({
   document: _document,
   metrics,
+  preview,
   onComplete,
   onEdit,
   onDuplicate,
@@ -33,7 +35,7 @@ export default function CsrViewPage({
       </div>
 
       <DocumentSection title="Service report content">
-        <CsrDocumentPreview />
+        {preview}
       </DocumentSection>
     </div>
   )

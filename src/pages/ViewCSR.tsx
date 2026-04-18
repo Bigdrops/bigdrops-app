@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { supabase } from '@/supabase'
-import type { BaseDocument } from '@/components/document-view/types/documentView'
-import type { CsrMetric } from '@/components/document-view/csr/csrViewMockData'
 
+import type { BaseDocument } from '@/components/document-view/types/documentView'
 import CsrHeroMeta from '@/components/document-view/csr/CsrHeroMeta'
 import DocumentTopNavActions from '@/components/document-view/shared/DocumentTopNavActions'
 import CsrViewPage from '@/components/document-view/csr/CsrViewPage'
@@ -17,21 +15,41 @@ import DocumentHero from '@/components/document-view/shared/DocumentHero'
 import DocumentToastViewport from '@/components/document-view/shared/DocumentToastViewport'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
+import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
+import { supabase } from '@/supabase'
+import CSRPreviewPanel from '@/components/csr/CSRPreviewPanel'
+import { buildCsrPreviewData, getCsrBranding } from '@/components/csr/csrUtils'
+import { getCsrPdfDocument } from '@/components/csr/CSRPreviewTemplates'
+import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
+import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
+import { useSettings } from '@/hooks/useSettings'
 
 const SHEET_MORE = 'more-actions'
+const SHEET_CUSTOMIZE = 'customize-output'
 const MODAL_COMPLETE = 'complete'
 const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
+const CSR_TEMPLATE_KEY = 'csr_view_template'
+
+function getStoredTemplate() {
+  if (typeof window === 'undefined') return '3'
+  return window.localStorage.getItem(CSR_TEMPLATE_KEY) || '3'
+}
 
 export default function ViewCSR() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const ui = useDocumentUIState()
   const toastStack = useToastStack()
+  const { settings } = useSettings()
 
   const [loading, setLoading] = useState(true)
   const [csr, setCsr] = useState<any>(null)
+  const [downloading, setDownloading] = useState(false)
+  const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('csr'))
+  const [template, setTemplate] = useState(getStoredTemplate)
 
   useEffect(() => {
     const loadCsr = async () => {
@@ -53,7 +71,7 @@ export default function ViewCSR() {
       }
     }
 
-    loadCsr()
+    void loadCsr()
   }, [id, navigate])
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
@@ -70,27 +88,52 @@ export default function ViewCSR() {
     }
   }
 
-  if (loading) {
-    return <DocumentPage topNav={<DocumentTopNav title="Loading..." onBack={() => navigate('/csr')} />}><CenteredSpinner /></DocumentPage>
+  const previewData = csr ? buildCsrPreviewData(csr) : null
+  const branding = getCsrBranding(settings || {})
+
+  const handleDownload = async () => {
+    if (!previewData || downloading) return
+    setDownloading(true)
+    try {
+      await downloadPdfFromElement({
+        fileName: previewData.csr_number || 'csr',
+        subdirectory: 'csr',
+        element: getCsrPdfDocument({ csr: previewData, branding, template, designPreset }) as any,
+      })
+      showToast('Download ready', `${previewData.csr_number || 'CSR'} exported as PDF.`, 'success')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not generate the CSR PDF.'
+      showToast('Download failed', message)
+    } finally {
+      setDownloading(false)
+    }
   }
 
-  if (!csr) return null
+  if (loading) {
+    return (
+      <DocumentPage topNav={<DocumentTopNav title="Loading..." onBack={() => navigate('/csr')} />}>
+        <CenteredSpinner />
+      </DocumentPage>
+    )
+  }
+
+  if (!csr || !previewData) return null
 
   const docProps: BaseDocument = {
     id: csr.id,
     number: csr.csr_number,
     title: 'Customer Service Report',
-    status: (csr.status || 'draft') as any
+    status: (csr.status || 'draft') as any,
   }
 
-  const metrics: CsrMetric[] = [
+  const metrics = [
     { label: 'Equipment', value: csr.equipment_type || 'N/A' },
-    { label: 'Date', value: csr.date || 'N/A', tone: 'amber' },
-    { label: 'Status', value: csr.status || 'draft', tone: csr.status === 'completed' ? 'green' : 'amber' }
+    { label: 'Date', value: csr.date || 'N/A', tone: 'amber' as const },
+    { label: 'Status', value: csr.status || 'draft', tone: csr.status === 'completed' ? 'green' as const : 'amber' as const },
   ]
 
   const handleDuplicate = () => {
-    showToast('Duplicate', 'Logic will be added in Phase 2.')
+    showToast('Duplicate pending', 'This CSR can be viewed and exported, but duplicate logic is not wired yet.')
   }
 
   return (
@@ -103,8 +146,8 @@ export default function ViewCSR() {
             onBack={() => navigate('/csr')}
             actions={
               <DocumentTopNavActions
-                onShare={() => showToast('Share', 'Share flow remains outside Phase 1 scope.')}
-                onCustomize={() => showToast('Customise disabled', 'Service records do not use custom templates.')}
+                onShare={() => showToast('Share pending', 'Share flow is not wired on CSR view yet.')}
+                onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
                 onMore={() => ui.openSheet(SHEET_MORE)}
               />
             }
@@ -119,29 +162,67 @@ export default function ViewCSR() {
             meta={<CsrHeroMeta threadTag={csr.make || 'General Service'} />}
           />
         }
-        floating={
-          <FloatingDownloadButton
-            onClick={() =>
-              showToast(
-                'Download',
-                'PDF generation requires backend service.',
-                'success',
-              )
-            }
-          />
-        }
+        floating={<FloatingDownloadButton onClick={() => void handleDownload()} disabled={downloading} />}
         overlays={
           <>
+            <DocumentSheet
+              open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
+              onClose={ui.closeSheet}
+              title="Customize CSR PDF"
+              subtitle="Template choice is stored locally for the CSR view, and the PDF design preset is reused by download."
+            >
+              <div className="space-y-4">
+                <div className="rounded-[24px] border border-border bg-card p-4">
+                  <div className="mb-3 text-sm font-semibold text-foreground">Template</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: '1', label: 'Pulse Frame' },
+                      { id: '2', label: 'Signal Bands' },
+                      { id: '3', label: 'Zinc' },
+                      { id: '4', label: 'Crimson' },
+                    ].map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        className={`rounded-[16px] border px-3 py-3 text-sm font-medium ${template === option.id ? 'border-slate-950 bg-slate-950 text-white' : 'border-border bg-white text-foreground'}`}
+                        onClick={() => setTemplate(option.id)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-[24px] border border-border bg-card p-4">
+                  <div className="mb-3 text-sm font-semibold text-foreground">PDF Design</div>
+                  <DocumentTemplateDesignOverrides value={designPreset} onChange={setDesignPreset} />
+                </div>
+                <button
+                  type="button"
+                  className="h-11 w-full rounded-[18px] bg-slate-950 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      window.localStorage.setItem(CSR_TEMPLATE_KEY, template)
+                    }
+                    setPdfDesignPreset('csr', designPreset)
+                    ui.closeSheet()
+                    showToast('Customization saved', 'CSR preview and PDF settings updated.', 'success')
+                  }}
+                >
+                  Save Settings
+                </button>
+              </div>
+            </DocumentSheet>
+
             <CsrMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)}
               onClose={ui.closeSheet}
               onMarkInProgress={() => showToast('Marked In Progress', '', 'success')}
               onMarkAsCompleted={() => ui.openModal(MODAL_COMPLETE)}
               onReopenRecord={() => showToast('Record Reopened', '', 'info')}
-              onLinkProject={() => showToast('Link to Project', '')}
+              onLinkProject={() => showToast('Project link pending', 'Project-link wiring is not finished for CSR view.')}
               onDuplicate={handleDuplicate}
               onCopyNumber={handleCopyNumber}
-              onExport={() => showToast('Exported record', 'Downloading PDF...', 'success')}
+              onExport={() => void handleDownload()}
               onArchive={() => ui.openModal(MODAL_ARCHIVE)}
               onDelete={() => ui.openModal(MODAL_DELETE)}
             />
@@ -152,7 +233,7 @@ export default function ViewCSR() {
               description="This will mark the service record as completed."
               cancelLabel="Cancel"
               confirmLabel="Mark as Completed"
-              onConfirm={() => showToast('Record Completed', '', 'success')}
+              onConfirm={() => showToast('Completion pending', 'CSR status update is not wired from CSR view yet.')}
               onCancel={ui.closeModal}
             />
 
@@ -162,7 +243,7 @@ export default function ViewCSR() {
               description={`${docProps.number} will be moved to your archive. It won't appear in your active lists.`}
               cancelLabel="Cancel"
               confirmLabel="Archive"
-              onConfirm={() => showToast('CSR archived', '', 'success')}
+              onConfirm={() => showToast('Archive pending', 'Archive handling is not wired for CSR view yet.')}
               onCancel={ui.closeModal}
             />
 
@@ -173,7 +254,7 @@ export default function ViewCSR() {
               cancelLabel="Cancel"
               confirmLabel="Delete"
               destructive
-              onConfirm={() => showToast('CSR deleted', '', 'success')}
+              onConfirm={() => showToast('Delete pending', 'Delete handling is not wired for CSR view yet.')}
               onCancel={ui.closeModal}
             />
           </>
@@ -182,6 +263,7 @@ export default function ViewCSR() {
         <CsrViewPage
           document={docProps}
           metrics={metrics}
+          preview={<CSRPreviewPanel csr={previewData} template={template} onTemplateChange={setTemplate} branding={branding} designPreset={designPreset} />}
           onComplete={() => ui.openModal(MODAL_COMPLETE)}
           onEdit={() => navigate(`/csr/edit/${id}`)}
           onDuplicate={handleDuplicate}
@@ -189,10 +271,7 @@ export default function ViewCSR() {
         />
       </DocumentPage>
 
-      <DocumentToastViewport
-        toasts={toastStack.toasts}
-        onDismiss={toastStack.dismissToast}
-      />
+      <DocumentToastViewport toasts={toastStack.toasts} onDismiss={toastStack.dismissToast} />
     </>
   )
 }

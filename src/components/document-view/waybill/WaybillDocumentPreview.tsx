@@ -1,32 +1,47 @@
 import DocumentPreviewShell from '../shared/DocumentPreviewShell'
 import styles from './WaybillDocumentPreview.module.css'
-import {
-  waybillPreviewData,
-  type WaybillPreviewGroup,
-  type WaybillPreviewItem,
-} from './waybillViewMockData'
 
-export default function WaybillDocumentPreview() {
+type WaybillPreviewItem = {
+  description?: string
+  quantity?: number
+  unit?: string
+  condition?: string
+}
+
+type WaybillPreviewData = {
+  companyName: string
+  companyLines: string[]
+  documentNumber: string
+  dispatchDate: string
+  consigneeName: string
+  consigneeLines: string[]
+  vehicleReg: string
+  deliveryReference: string
+  driverName: string
+  driverPhone: string
+  notes: string
+  items: WaybillPreviewItem[]
+}
+
+export default function WaybillDocumentPreview({ preview }: { preview: WaybillPreviewData }) {
   return (
     <DocumentPreviewShell>
       <div className={styles.head}>
         <div>
           <div className={styles.typeLabel}>Shipper</div>
-          <div className={styles.shipperName}>{waybillPreviewData.shipperName}</div>
+          <div className={styles.shipperName}>{preview.companyName || 'Company not set'}</div>
           <div className={styles.shipperAddress}>
-            {waybillPreviewData.shipperLines.map((line) => (
-              <div key={line}>{line}</div>
-            ))}
+            {preview.companyLines.length > 0 ? preview.companyLines.map((line) => <div key={line}>{line}</div>) : <div>No company identity saved.</div>}
           </div>
         </div>
 
         <div className={styles.idBlock}>
           <div className={styles.typeLabel}>Waybill No.</div>
-          <div className={styles.number}>{waybillPreviewData.documentNumber}</div>
+          <div className={styles.number}>{preview.documentNumber || '—'}</div>
           <div style={{ marginTop: 12 }}>
             <div className={styles.typeLabel}>Dispatch Date</div>
             <div className={styles.number} style={{ fontSize: 13, color: 'var(--dv-text)' }}>
-              {waybillPreviewData.dateIssued}
+              {preview.dispatchDate || '—'}
             </div>
           </div>
         </div>
@@ -35,9 +50,11 @@ export default function WaybillDocumentPreview() {
       <div className={styles.metaGrid}>
         <div className={styles.metaCell}>
           <div className={styles.metaLabel}>Consignee / Deliver To</div>
-          <div className={styles.metaValue}>{waybillPreviewData.consigneeName}</div>
-          {waybillPreviewData.consigneeLines.map((line) => (
-            <div key={line} className={styles.metaSub}>{line}</div>
+          <div className={styles.metaValue}>{preview.consigneeName || '—'}</div>
+          {preview.consigneeLines.map((line) => (
+            <div key={line} className={styles.metaSub}>
+              {line}
+            </div>
           ))}
         </div>
         <div className={styles.metaCell}>
@@ -45,15 +62,17 @@ export default function WaybillDocumentPreview() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '6px' }}>
             <div>
               <div className={styles.metaSub}>Vehicle Reg:</div>
-              <div className={styles.metaValue}>{waybillPreviewData.vehicleReg}</div>
+              <div className={styles.metaValue}>{preview.vehicleReg || '—'}</div>
             </div>
             <div>
               <div className={styles.metaSub}>Ref No:</div>
-              <div className={styles.metaValue}>{waybillPreviewData.deliveryReference}</div>
+              <div className={styles.metaValue}>{preview.deliveryReference || '—'}</div>
             </div>
             <div style={{ gridColumn: 'span 2', marginTop: '4px' }}>
               <div className={styles.metaSub}>Driver:</div>
-              <div className={styles.metaValue}>{waybillPreviewData.driverName} ({waybillPreviewData.driverPhone})</div>
+              <div className={styles.metaValue}>
+                {[preview.driverName, preview.driverPhone].filter(Boolean).join(' · ') || '—'}
+              </div>
             </div>
           </div>
         </div>
@@ -62,22 +81,29 @@ export default function WaybillDocumentPreview() {
       <div className={styles.itemsHead}>
         <div className={styles.columnLabel}>Item Description</div>
         <div className={`${styles.columnLabel} ${styles.right}`}>Qty</div>
-        <div className={`${styles.columnLabel} ${styles.right}`}>Pkg</div>
-        <div className={`${styles.columnLabel} ${styles.right}`}>Weight</div>
+        <div className={`${styles.columnLabel} ${styles.right}`}>Unit</div>
+        <div className={`${styles.columnLabel} ${styles.right}`}>Condition</div>
       </div>
 
-      {waybillPreviewData.rows.map((row, index) =>
-        row.type === 'group' ? (
-          <GroupRow key={`${row.label}-${index}`} row={row} />
-        ) : (
-          <ItemRow key={`${row.name}-${index}`} row={row} />
-        ),
+      {preview.items.length > 0 ? (
+        preview.items.map((item, index) => (
+          <div key={`${item.description || 'item'}-${index}`} className={styles.itemRow}>
+            <div>
+              <div className={styles.itemName}>{item.description || 'Untitled item'}</div>
+            </div>
+            <div className={styles.quantity}>{String(item.quantity ?? '—')}</div>
+            <div className={styles.metric}>{item.unit || '—'}</div>
+            <div className={styles.metric}>{item.condition || '—'}</div>
+          </div>
+        ))
+      ) : (
+        <div className={styles.footerText}>No items added yet.</div>
       )}
 
       <div className={styles.footer}>
         <div>
           <div className={styles.footerLabel}>Delivery Remarks</div>
-          <div className={styles.footerText}>{waybillPreviewData.notes}</div>
+          <div className={styles.footerText}>{preview.notes || 'No delivery notes recorded.'}</div>
         </div>
 
         <div className={styles.signatureGrid}>
@@ -92,29 +118,5 @@ export default function WaybillDocumentPreview() {
         </div>
       </div>
     </DocumentPreviewShell>
-  )
-}
-
-function GroupRow({ row }: { row: WaybillPreviewGroup }) {
-  return (
-    <div className={styles.groupRow}>
-      <div className={styles.groupName}>{row.label}</div>
-    </div>
-  )
-}
-
-function ItemRow({ row }: { row: WaybillPreviewItem }) {
-  return (
-    <div className={styles.itemRow}>
-      <div>
-        <div className={styles.itemName}>{row.name}</div>
-        {row.description ? (
-          <div className={styles.itemDescription}>{row.description}</div>
-        ) : null}
-      </div>
-      <div className={styles.quantity}>{row.quantity}</div>
-      <div className={styles.metric}>{row.unit}</div>
-      <div className={styles.metric}>{row.weight || '-'}</div>
-    </div>
   )
 }

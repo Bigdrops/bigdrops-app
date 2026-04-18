@@ -1,15 +1,16 @@
+import type { ReactNode } from 'react'
+
 import DocumentSection from '../shared/DocumentSection'
 import type { BaseDocument } from '../types/documentView'
-import RfqDocumentPreview from './RfqDocumentPreview'
 import RfqMoneyStrip from './RfqMoneyStrip'
 import RfqPrimaryActions from './RfqPrimaryActions'
-import RfqSecondaryActions from './RfqSecondaryActions'
 import styles from './RfqViewPage.module.css'
 import type { RfqMetric } from './rfqViewMockData'
 
 interface RfqViewPageProps {
   document: BaseDocument
   metrics: RfqMetric[]
+  preview: ReactNode
   onConvert: () => void
   onEdit: () => void
   onDuplicate: () => void
@@ -19,6 +20,7 @@ interface RfqViewPageProps {
 export default function RfqViewPage({
   document: _document,
   metrics,
+  preview,
   onConvert,
   onEdit,
   onDuplicate,
@@ -33,7 +35,7 @@ export default function RfqViewPage({
       </div>
 
       <DocumentSection title="Request specification">
-        <RfqDocumentPreview />
+        {preview}
       </DocumentSection>
     </div>
   )
