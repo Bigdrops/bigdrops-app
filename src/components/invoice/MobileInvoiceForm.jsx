@@ -434,6 +434,7 @@ export default function MobileInvoiceForm(props) {
                     group={row.group}
                     items={row.items}
                     invoice={invoice}
+                    enableItemSuggestions={!isQuotation}
                     customColumns={customColumns}
                     groupSubtotal={computedGroupMap.get(row.group.id)?.subtotal || 0}
                     onUpdateGroupName={onUpdateGroupName}
@@ -455,6 +456,7 @@ export default function MobileInvoiceForm(props) {
                     index={row.index}
                     number={row.number}
                     invoice={invoice}
+                    enableItemSuggestions={!isQuotation}
                     customColumns={customColumns}
                     computedAmount={getComputedAmount(row.item)}
                     groupName={row.groupName}

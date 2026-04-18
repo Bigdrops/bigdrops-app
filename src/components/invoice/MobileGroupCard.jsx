@@ -6,6 +6,7 @@ export default function MobileGroupCard({
   group,
   items,
   invoice,
+  enableItemSuggestions = false,
   customColumns,
   groupSubtotal,
   onUpdateGroupName,
@@ -79,6 +80,7 @@ export default function MobileGroupCard({
                   index={index}
                   number={number}
                   invoice={invoice}
+                  enableItemSuggestions={enableItemSuggestions}
                   customColumns={customColumns}
                   computedAmount={getComputedAmount(item)}
                   groupName={group.name || ''}

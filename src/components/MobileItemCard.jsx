@@ -1,9 +1,12 @@
+import { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { ChevronDown, ChevronUp, X } from 'lucide-react'
 import UnitInput from './UnitInput'
 import ItemImageUpload from './ItemImageUpload'
+import { useItemSuggestions } from '@/modules/item-library/hooks'
+import { getInvoiceSuggestionSelection } from '@/modules/item-library/domain/invoiceSuggestionSelection'
 import {
   mobileDetailCardClassName,
   mobileDetailGroupHeaderClassName,
@@ -16,6 +19,7 @@ import {
 export default function MobileItemCard({
   item, index, number,
   isVisible, getColumn, customColumns, showItemImages,
+  enableItemSuggestions = false,
   invoice,
   onUpdate, onRemove, onMoveUp, onMoveDown, onInsertBelow,
   isFirst, isLast,
@@ -30,6 +34,96 @@ export default function MobileItemCard({
       ? parseFloat(col.formula) * Number(item.quantity || 1) * Number(item.unit_price || 0)
       : null
   })()
+  const [descriptionFocused, setDescriptionFocused] = useState(false)
+  const [debouncedDescription, setDebouncedDescription] = useState(item.description || '')
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedDescription(item.description || '')
+    }, 180)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [item.description])
+
+  const suggestionQuery =
+    enableItemSuggestions && descriptionFocused && String(debouncedDescription || '').trim().length >= 2
+      ? debouncedDescription
+      : ''
+  const { data: suggestions, loading: suggestionsLoading } = useItemSuggestions(suggestionQuery, 5)
+  const showSuggestions = enableItemSuggestions && descriptionFocused && String(item.description || '').trim().length >= 2
+
+  const handleDescriptionChange = (value) => {
+    onUpdate(index, 'description', value)
+    if (item.item_id) onUpdate(index, 'item_id', null)
+  }
+
+  const handleSuggestionSelect = (suggestion) => {
+    const nextSelection = getInvoiceSuggestionSelection(suggestion)
+    onUpdate(index, 'description', nextSelection.description)
+    onUpdate(index, 'item_id', nextSelection.item_id)
+    onUpdate(index, 'unit_price', nextSelection.unit_price)
+    setDescriptionFocused(false)
+  }
+
+  const renderSuggestionDropdown = (inputClassName = '') => (
+    <div className="relative">
+      <Input
+        value={item.description || ''}
+        onChange={e => handleDescriptionChange(e.target.value)}
+        onFocus={() => setDescriptionFocused(true)}
+        onBlur={() => {
+          window.setTimeout(() => {
+            setDescriptionFocused(false)
+          }, 120)
+        }}
+        onKeyDown={e => {
+          if (e.key === 'Escape') setDescriptionFocused(false)
+        }}
+        placeholder="Item description"
+        className={inputClassName || undefined}
+      />
+      {showSuggestions && (suggestionsLoading || suggestions.length > 0) ? (
+        <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 overflow-hidden rounded-[14px] border border-[#dbe4f0] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.14)]">
+          {suggestionsLoading ? (
+            <div className="px-3 py-2 text-[12px] text-[#64748b]">Loading suggestions...</div>
+          ) : (
+            suggestions.map((suggestion) => (
+              <button
+                key={`${suggestion.item_id}-${suggestion.match_source}-${suggestion.matched_text}`}
+                type="button"
+                className="flex w-full items-start justify-between gap-3 border-b border-[#eef2f7] px-3 py-2 text-left last:border-b-0 hover:bg-[#f8fafc]"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => handleSuggestionSelect(suggestion)}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-semibold text-[#0f172a]">
+                    {suggestion.match_source === 'alias' ? suggestion.matched_text : suggestion.name}
+                  </div>
+                  <div className="truncate text-[11px] text-[#64748b]">
+                    {suggestion.match_source === 'alias' ? `Alias for ${suggestion.name}` : 'Master item'}
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#94a3b8]">Std</div>
+                  <div className="text-[12px] font-semibold text-[#0f172a]">
+                    {suggestion.standard_price !== null && suggestion.standard_price !== undefined
+                      ? `N${Number(suggestion.standard_price).toLocaleString()}`
+                      : 'N0'}
+                  </div>
+                  <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#94a3b8]">Last</div>
+                  <div className="text-[12px] text-[#475569]">
+                    {suggestion.last_sold_price !== null && suggestion.last_sold_price !== undefined
+                      ? `N${Number(suggestion.last_sold_price).toLocaleString()}`
+                      : '—'}
+                  </div>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      ) : null}
+    </div>
+  )
 
   if (item.row_type === 'group_header') {
     if (variant === 'quotation') {
@@ -143,12 +237,16 @@ export default function MobileItemCard({
               <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                 Item {number}
               </div>
-              <Input
-                value={item.description || ''}
-                onChange={e => onUpdate(index, 'description', e.target.value)}
-                placeholder="Item description"
-                className="h-10 rounded-none border-0 bg-transparent px-0 text-sm font-semibold text-foreground shadow-none focus-visible:ring-0"
-              />
+              {enableItemSuggestions ? (
+                renderSuggestionDropdown('h-10 rounded-none border-0 bg-transparent px-0 text-sm font-semibold text-foreground shadow-none focus-visible:ring-0')
+              ) : (
+                <Input
+                  value={item.description || ''}
+                  onChange={e => onUpdate(index, 'description', e.target.value)}
+                  placeholder="Item description"
+                  className="h-10 rounded-none border-0 bg-transparent px-0 text-sm font-semibold text-foreground shadow-none focus-visible:ring-0"
+                />
+              )}
               <Input
                 value={item.sub_description || ''}
                 onChange={e => onUpdate(index, 'sub_description', e.target.value)}
@@ -391,7 +489,11 @@ export default function MobileItemCard({
 
       <div className={mobileDetailRowClassName}>
         <Label className={mobileDetailLabelClassName}>Description</Label>
-        <Input value={item.description || ''} onChange={e => onUpdate(index, 'description', e.target.value)} placeholder="Item description" />
+        {enableItemSuggestions ? (
+          renderSuggestionDropdown()
+        ) : (
+          <Input value={item.description || ''} onChange={e => onUpdate(index, 'description', e.target.value)} placeholder="Item description" />
+        )}
         <Input className="mt-1.5 text-[13px] text-gray-500" value={item.sub_description || ''} onChange={e => onUpdate(index, 'sub_description', e.target.value)} placeholder="Sub-description (optional)" />
       </div>
 
