@@ -20,7 +20,6 @@ import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { buildPdfRowCells, generateInvoicePdf, interpretPdfTableSettings } from '@/components/pdf-new'
-import { mapInvoicePreviewNotesContent } from '@/components/invoice/view/invoiceDetailHelpers'
 import RecordPaymentModal from '@/components/RecordPaymentModal'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
@@ -35,7 +34,7 @@ import { buildInvoiceViewModel } from '@/domain/invoice/viewModel'
 import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
-import { getPdfDesignPreset, resolvePdfWebFontFamily } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { supabase } from '@/supabase'
 import { archiveInvoiceRecord, buildWaybillPrefill, deleteInvoiceRecord, downloadInvoiceCsvFile, duplicateInvoiceDraft, revertInvoiceToQuotation } from './viewInvoiceActions'
 
@@ -70,7 +69,7 @@ export default function ViewInvoice() {
   } = useInvoiceDetailData(id)
 
   const [downloading, setDownloading] = useState(false)
-  const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
+  const [pdfOutput, setPdfOutput] = useState<PdfOutputSettingsValue>(DEFAULT_INVOICE_PDF_OUTPUT)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
   const [reverting, setReverting] = useState(false)
   const settingsData: any = settings || {}
