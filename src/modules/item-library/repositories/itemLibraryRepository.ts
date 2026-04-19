@@ -12,9 +12,24 @@ function normalizeSuggestionRow(row: Record<string, unknown>): ItemSuggestion {
   return {
     item_id: String(row.item_id || row.id || ''),
     name: String(
-      row.display_name || row.name || row.item_name || row.master_name || row.alias_text || ''
+      row.display_name ||
+        row.name ||
+        row.item_name ||
+        row.master_name ||
+        row.description ||
+        row.item_description ||
+        row.alias_text ||
+        ''
     ),
-    matched_text: String(row.matched_text || row.alias_text || row.name || row.item_name || ''),
+    matched_text: String(
+      row.matched_text ||
+        row.alias_text ||
+        row.name ||
+        row.item_name ||
+        row.description ||
+        row.item_description ||
+        ''
+    ),
     match_source: isAlias ? 'alias' : (row.match_source as any) || 'catalog',
     standard_price: toNumber(row.standard_price),
     last_sold_price: toNumber(row.last_sold_price),
@@ -43,8 +58,8 @@ function normalizeSummaryRow(row: Record<string, unknown>): ItemCatalogItem {
 
 export async function getItemSuggestions(searchText: string, resultLimit = 10): Promise<ItemSuggestion[]> {
   const { data, error } = await supabase.rpc('get_item_suggestions', {
-    search_text: searchText,
-    result_limit: resultLimit,
+    p_search_text: searchText,
+    p_result_limit: resultLimit,
   })
 
   if (error) throw error
