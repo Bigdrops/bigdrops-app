@@ -34,7 +34,7 @@ export function ItemLibraryDetailPanel({
           <div className="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-muted">
             <Package className="h-6 w-6 text-muted-foreground" />
           </div>
-          <div className="text-base font-semibold text-foreground">Choose an item</div>
+          <div className="text-base font-semibold text-foreground">Select an item to view history</div>
           <div className="mt-2 max-w-sm text-sm text-muted-foreground">
             Select an item from the summary list to inspect its current price reference and usage history.
           </div>

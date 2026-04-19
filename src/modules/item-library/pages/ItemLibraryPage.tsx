@@ -56,7 +56,7 @@ export default function ItemLibraryPage() {
           </div>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)]">
+        <section className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)]">
           <ItemLibrarySummaryList
             items={filteredItems}
             loading={summaryLoading}

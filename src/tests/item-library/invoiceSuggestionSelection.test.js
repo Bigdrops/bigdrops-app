@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { getInvoiceSuggestionSelection } from '../../modules/item-library/domain/invoiceSuggestionSelection.js'
+import { getInvoiceSuggestionSelection } from '../../modules/item-library/domain/invoiceSuggestionSelection.ts'
 
 test('master item suggestions use the catalog display name and standard price', () => {
   assert.deepEqual(

@@ -81,6 +81,7 @@ export function ItemLibrarySummaryList({
                   key={item.item_id}
                   type="button"
                   onClick={() => onSelectItem(item)}
+                  aria-pressed={isSelected}
                   className={cn(
                     'w-full rounded-2xl border px-4 py-4 text-left transition hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
                     isSelected
