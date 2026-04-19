@@ -70,6 +70,7 @@ export type PdfResolvedTableSettings = {
 export type PdfLineItem = {
   id: string
   rowType?: 'line' | 'group_header'
+  groupId?: string | null
   groupLabel?: string | null
   description?: string | null
   subDescription?: string | null
