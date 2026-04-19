@@ -10,6 +10,9 @@ import SplashOverlay from '@/components/app/SplashOverlay'
 import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
 import { isInvalidSessionError } from '@/auth/sessionErrors'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
+import AndroidBackHandler from '@/components/app/AndroidBackHandler'
+import NativeAuthRedirect from '@/components/app/NativeAuthRedirect'
+import { isAndroidNative } from '@/lib/native/capacitor'
 
 const Login = lazy(() => import('./pages/Login'))
 const PendingApproval = lazy(() => import('./pages/PendingApproval'))
@@ -702,6 +705,12 @@ function App() {
     <>
       <BrowserRouter>
         <Toaster />
+        {isAndroidNative() && (
+          <>
+            <AndroidBackHandler />
+            <NativeAuthRedirect />
+          </>
+        )}
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/reset-password" element={withBoundary(<ResetPassword />)} />
