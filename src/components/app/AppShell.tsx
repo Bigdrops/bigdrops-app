@@ -54,7 +54,6 @@ const Boqs = lazy(() => import('@/pages/Boqs'))
 const NewBoq = lazy(() => import('@/pages/NewBoq'))
 const EditBoq = lazy(() => import('@/pages/EditBoq'))
 const ViewBoq = lazy(() => import('@/pages/ViewBoq'))
-const AndroidBackHandler = lazy(() => import('@/components/app/AndroidBackHandler'))
 const SetPasswordModal = lazy(() => import('@/components/app/SetPasswordModal'))
 
 type Profile = {
@@ -130,7 +129,6 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
       {showAndroidBackHandler && (
         <Suspense fallback={null}>
           <>
-            <AndroidBackHandler />
             <AndroidSystemBars />
             <AndroidFoldAwareness />
           </>
