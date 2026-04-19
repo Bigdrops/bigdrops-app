@@ -138,7 +138,7 @@ export default function SharedDocumentForm(props: any) {
 
   return (
     <div className="bd-form-shell bd-custom-scrollbar overflow-x-hidden px-0 pt-1 sm:pt-3">
-      <div className="mx-auto w-full max-w-[760px] px-4 sm:px-5">
+      <div className="mx-auto w-full max-w-[780px] px-3 sm:px-4">
         <div className="space-y-6 pb-12">
           <FormHeader
             modeLabel={modeLabel}
@@ -208,31 +208,34 @@ export default function SharedDocumentForm(props: any) {
             amountInWords={amountInWords}
           />
 
-          <FormNotesTerms
-            notesTitle={notesTitle}
-            setNotesTitle={setNotesTitle}
-            termsTitle={termsTitle}
-            setTermsTitle={setTermsTitle}
-            invoice={invoice}
-            updateInvoice={updateInvoice}
-            showNotesTerms={showNotesTerms}
-            setShowNotesTerms={setShowNotesTerms}
-            signatoryId={signatoryId}
-            onSignatoryChange={onSignatoryChange}
-            signatories={signatories}
-            afterSignatorySlot={afterSignatorySlot}
-            showSignatory={showSignatory}
-            setShowSignatory={setShowSignatory}
-            referenceLinks={attachments}
-            updateReferenceLink={(idx, field, val) => {
-              const next = attachments.map((l: any, i: number) => i === idx ? { ...l, [field]: val } : l)
-              setAttachments(next)
-            }}
-            removeReferenceLink={(idx) => setAttachments(attachments.filter((_: any, i: number) => i !== idx))}
-            addReferenceLink={() => setAttachments([...attachments, { label: '', url: '', _uiKey: crypto.randomUUID() }])}
-            showLinks={showLinks}
-            setShowLinks={setShowLinks}
-          />
+          <div ref={notesTermsRef}>
+            <FormNotesTerms
+              notesTitle={notesTitle}
+              setNotesTitle={setNotesTitle}
+              termsTitle={termsTitle}
+              setTermsTitle={setTermsTitle}
+              invoice={invoice}
+              updateInvoice={updateInvoice}
+              showNotesTerms={showNotesTerms}
+              setShowNotesTerms={setShowNotesTerms}
+              signatoryId={signatoryId}
+              onSignatoryChange={onSignatoryChange}
+              signatories={signatories}
+              afterSignatorySlot={afterSignatorySlot}
+              showSignatory={showSignatory}
+              setShowSignatory={setShowSignatory}
+              referenceLinks={attachments}
+              updateReferenceLink={(idx, field, val) => {
+                const next = attachments.map((l: any, i: number) => i === idx ? { ...l, [field]: val } : l)
+                setAttachments(next)
+              }}
+              removeReferenceLink={(idx) => setAttachments(attachments.filter((_: any, i: number) => i !== idx))}
+              addReferenceLink={() => setAttachments([...attachments, { label: '', url: '', _uiKey: crypto.randomUUID() }])}
+              showLinks={showLinks}
+              setShowLinks={setShowLinks}
+              linksSectionRef={linksRef}
+            />
+          </div>
         </div>
       </div>
 

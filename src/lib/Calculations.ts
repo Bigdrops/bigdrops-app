@@ -299,18 +299,23 @@ export function calculateDocument(input: DocumentInput): DocumentResult {
 
     // ── Discount for this row ──────────────────────────────────────────────
 
+    let lineDiscountBeforeVat = new Decimal(0)
     let lineDiscount          = new Decimal(0)
     let effectiveDiscountRate = new Decimal(0)
 
     if (!inheritsGlobal) {
       // Explicit row override (including explicit 0)
       effectiveDiscountRate = D(item.discount_rate)
-      lineDiscount = lineSubtotal.times(effectiveDiscountRate).dividedBy(100)
+      if (discountTiming === 'before_tax') {
+        lineDiscountBeforeVat = lineSubtotal.times(effectiveDiscountRate).dividedBy(100)
+      }
 
     } else if (discountType === 'percent') {
       // Inherit global percent — apply row-by-row
       effectiveDiscountRate = D(discountValue)
-      lineDiscount = lineSubtotal.times(effectiveDiscountRate).dividedBy(100)
+      if (discountTiming === 'before_tax') {
+        lineDiscountBeforeVat = lineSubtotal.times(effectiveDiscountRate).dividedBy(100)
+      }
 
     } else if (fixedDiscountEligible && eligibleVatBase.greaterThan(0)) {
       // Fixed discount before_tax: allocate proportionally to this row's VAT base.
@@ -321,17 +326,17 @@ export function calculateDocument(input: DocumentInput): DocumentResult {
         .dividedBy(eligibleVatBase)
       // Per-row clamp: allocated discount cannot exceed the row's own discountable amount.
       // lineSubtotal is the merchandise base — install is not directly discountable here.
-      lineDiscount = Decimal.min(allocated, lineSubtotal)
+      lineDiscountBeforeVat = Decimal.min(allocated, lineSubtotal)
       // Effective discount rate for this row (informational)
       effectiveDiscountRate = lineSubtotal.greaterThan(0)
-        ? lineDiscount.dividedBy(lineSubtotal).times(100)
+        ? lineDiscountBeforeVat.dividedBy(lineSubtotal).times(100)
         : new Decimal(0)
     }
     // else: fixed discount after_tax, or row has zero VAT base — no discount here
 
     // ── VAT base for this row (precise) ───────────────────────────────────
 
-    const lineAfterDiscount = lineSubtotal.minus(lineDiscount)
+    const lineAfterDiscount = lineSubtotal.minus(lineDiscountBeforeVat)
     let lineVatBase: Decimal
 
     if (discountTiming === 'before_tax') {
@@ -349,6 +354,15 @@ export function calculateDocument(input: DocumentInput): DocumentResult {
     const lineVat = effectiveVatRate.greaterThan(0)
       ? lineVatBase.times(effectiveVatRate).dividedBy(100)
       : new Decimal(0)
+
+    if (discountTiming === 'before_tax') {
+      lineDiscount = lineDiscountBeforeVat
+    } else if (effectiveDiscountRate.greaterThan(0)) {
+      // After-tax percent discounts apply on the fully taxed line amount so the
+      // discount value itself changes when the timing model changes.
+      const postVatLineBase = lineSubtotal.plus(lineInstall).plus(lineVat)
+      lineDiscount = postVatLineBase.times(effectiveDiscountRate).dividedBy(100)
+    }
 
     // line_total — single clean derivation, no intermediate dead variable:
     const cleanLineTotal = (() => {

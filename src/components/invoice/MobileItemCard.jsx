@@ -238,18 +238,9 @@ export default function MobileItemCard({
               <label className={labelCls}>Rate</label>
               <Input type="number" value={item.unit_price ?? 0} onChange={(e) => onUpdate(index, 'unit_price', Number(e.target.value))} className="h-9 px-2.5 text-right font-mono text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
             </div>
-            
-            <div className="min-w-0 self-end pb-1.5 text-right">
-              <div className="text-[9px] font-extrabold uppercase tracking-widest text-[var(--bd-text3)] opacity-70 mb-1">Subtotal</div>
-              <div className="font-mono text-[14px] font-bold text-[var(--bd-text)]">
-                {formatCurrency(computedAmount).replace('NGN', '').trim()}
-              </div>
-            </div>
-          </div>
 
-          {/* Conditional Row: Install Rate */}
-          {isVisible('install_rate') && (
-            <div className="pt-1">
+            {isVisible('install_rate') && (
+              <div className="min-w-0">
               <label className={labelCls}>Install Rate</label>
               <Input
                 type="number"
@@ -259,10 +250,23 @@ export default function MobileItemCard({
                   const val = e.target.value
                   onUpdate(index, '__install_rate_override', val === '' ? { install_rate_override: false, install_rate: null } : { install_rate_override: true, install_rate: Number(val) })
                 }}
-                className="h-8 px-2 text-[12px] border-[var(--bd-border-soft)]"
+                className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
               />
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-end justify-between gap-3 rounded-[12px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-3 py-2.5">
+            <div className="min-w-0">
+              <div className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-[var(--bd-text3)]">Row Subtotal</div>
+              <div className="mt-1 text-[11px] font-medium text-[var(--bd-text3)]">Quantity × unit rate summary</div>
             </div>
-          )}
+            <div className="min-w-0 text-right">
+              <div className="font-mono text-[18px] font-extrabold tracking-[-0.03em] text-[var(--bd-text)]">
+                {formatCurrency(computedAmount).replace('NGN', '').trim()}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Vertical Actions */}

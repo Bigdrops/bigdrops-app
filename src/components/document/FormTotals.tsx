@@ -59,7 +59,7 @@ export function FormTotals({
             className="inline-flex h-8 items-center gap-2 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 text-[11px] font-extrabold text-[var(--bd-text2)] transition hover:bg-[var(--bd-bg2)]"
           >
             {showVatAdjust ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-            Adjust Global VAT
+            VAT
           </button>
           {showVatAdjust && (
             <div className="mt-3 animate-in fade-in slide-in-from-top-1">
