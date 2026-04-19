@@ -122,9 +122,9 @@ export default function MobileItemCard({
 
   return (
     <div className="relative border-b border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-0 py-3 transition-colors hover:bg-[#fdfcfb]">
-      <div className="flex items-start gap-2.5">
+      <div className="grid grid-cols-[20px_minmax(0,1fr)_32px] items-start gap-2.5">
         {/* Row Number & Enumeration */}
-        <div className="flex w-6 shrink-0 flex-col items-center gap-1 pt-2">
+        <div className="flex w-[20px] flex-col items-center gap-1 pt-2">
           <div className="text-[11px] font-bold leading-none text-[var(--bd-text3)]">{number}</div>
           <div className="cursor-grab text-[var(--bd-text4)] transition-colors hover:text-[var(--bd-text2)] active:cursor-grabbing">
             <GripVertical className="h-4 w-4" />
@@ -266,14 +266,14 @@ export default function MobileItemCard({
         </div>
 
         {/* Vertical Actions */}
-        <div className="flex shrink-0 flex-col gap-1 py-1">
-          <button onClick={() => onMoveUp(index)} disabled={isFirst} className={`flex h-7 w-7 items-center justify-center rounded-[8px] border border-[var(--bd-border)] transition ${isFirst ? 'cursor-not-allowed opacity-20' : 'hover:bg-[var(--bd-bg2)]'}`}>
-            <ChevronUp className="h-3.5 w-3.5 text-[var(--bd-text3)]" />
+        <div className="flex w-8 flex-col gap-1 py-1">
+          <button onClick={() => onMoveUp(index)} disabled={isFirst} className={`flex h-7 w-7 items-center justify-center rounded-[8px] border transition ${isFirst ? 'cursor-not-allowed border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text4)] opacity-50' : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text2)] hover:bg-[var(--bd-bg2)]'}`}>
+            <ChevronUp className="h-3.5 w-3.5" />
           </button>
-          <button onClick={() => onMoveDown(index)} disabled={isLast} className={`flex h-7 w-7 items-center justify-center rounded-[8px] border border-[var(--bd-border)] transition ${isLast ? 'cursor-not-allowed opacity-20' : 'hover:bg-[var(--bd-bg2)]'}`}>
-            <ChevronDown className="h-3.5 w-3.5 text-[var(--bd-text3)]" />
+          <button onClick={() => onMoveDown(index)} disabled={isLast} className={`flex h-7 w-7 items-center justify-center rounded-[8px] border transition ${isLast ? 'cursor-not-allowed border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text4)] opacity-50' : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text2)] hover:bg-[var(--bd-bg2)]'}`}>
+            <ChevronDown className="h-3.5 w-3.5" />
           </button>
-          <button onClick={() => onRemove(index)} className="flex h-7 w-7 items-center justify-center rounded-[8px] border border-transparent bg-transparent text-[var(--bd-text4)] transition hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]">
+          <button onClick={() => onRemove(index)} className="flex h-7 w-7 items-center justify-center rounded-[8px] border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)] transition hover:brightness-95">
             <X className="h-3.5 w-3.5" />
           </button>
           {onDuplicate && (

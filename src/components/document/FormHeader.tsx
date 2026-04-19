@@ -16,6 +16,10 @@ interface FormHeaderProps {
   updateInvoice: (field: string, value: any) => void
   isQuotation: boolean
   onOpenClientPicker: () => void
+  customFields: Array<{ id?: string; label?: string; value?: string }>
+  onAddHeaderField: () => void
+  onUpdateHeaderField: (id: string | undefined, field: 'label' | 'value', value: string) => void
+  onRemoveHeaderField: (id: string | undefined) => void
 }
 
 export function FormHeader({
@@ -28,6 +32,10 @@ export function FormHeader({
   updateInvoice,
   isQuotation,
   onOpenClientPicker,
+  customFields,
+  onAddHeaderField,
+  onUpdateHeaderField,
+  onRemoveHeaderField,
 }: FormHeaderProps) {
   return (
     <div className="border-b border-[var(--bd-border-soft)] pb-4">
@@ -125,6 +133,57 @@ export function FormHeader({
                   onChange={(event) => updateInvoice('due_date', event.target.value)}
                   className={fieldCls}
                 />
+              </div>
+            </div>
+
+            <div className="border-t border-[var(--bd-border-soft)] pt-4">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--bd-text3)]">
+                  Header Fields
+                </div>
+                <button
+                  type="button"
+                  onClick={onAddHeaderField}
+                  className="rounded-[6px] px-2 py-1 text-[11px] font-bold text-[var(--bd-indigo)] transition hover:bg-[var(--bd-indigo-bg)]"
+                >
+                  Add field
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {customFields.length === 0 ? (
+                  <button
+                    type="button"
+                    onClick={onAddHeaderField}
+                    className="w-full rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-2 text-left text-[12px] font-medium text-[var(--bd-text3)] transition hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)] hover:text-[var(--bd-indigo)]"
+                  >
+                    Add header field
+                  </button>
+                ) : (
+                  customFields.map((field) => (
+                    <div key={field.id} className="flex items-center gap-2">
+                      <Input
+                        value={field.label || ''}
+                        onChange={(event) => onUpdateHeaderField(field.id, 'label', event.target.value)}
+                        placeholder="Label"
+                        className={`${fieldCls} h-10 flex-1 bg-[var(--bd-bg2)] text-[13px] font-semibold text-[var(--bd-text2)]`}
+                      />
+                      <Input
+                        value={field.value || ''}
+                        onChange={(event) => onUpdateHeaderField(field.id, 'value', event.target.value)}
+                        placeholder="Value"
+                        className={`${fieldCls} h-10 flex-[1.5] text-[13px]`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => onRemoveHeaderField(field.id)}
+                        className="flex h-9 w-9 items-center justify-center rounded-[8px] border border-transparent bg-transparent text-[var(--bd-text4)] transition hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>

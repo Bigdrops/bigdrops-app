@@ -150,6 +150,10 @@ export default function SharedDocumentForm(props: any) {
             updateInvoice={updateInvoice}
             isQuotation={isQuotation}
             onOpenClientPicker={() => setShowClientPicker(true)}
+            customFields={customFields}
+            onAddHeaderField={onAddHeaderField}
+            onUpdateHeaderField={onUpdateHeaderField}
+            onRemoveHeaderField={onRemoveHeaderField}
           />
 
           <FormLineItems
