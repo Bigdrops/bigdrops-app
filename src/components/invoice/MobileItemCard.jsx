@@ -122,11 +122,11 @@ export default function MobileItemCard({
 
   return (
     <div className={`relative border-b border-[var(--bd-border-soft)] bg-[var(--bd-surface)] p-4 transition-colors hover:bg-[#faf9f8]`}>
-      <div className="mb-4 flex items-start gap-3">
+      <div className="flex items-start gap-2.5">
         {/* Row Number & Enumeration */}
-        <div className="flex flex-col items-center gap-1 pt-2">
-          <div className="text-[12px] font-black text-[var(--bd-text4)]">{number}</div>
-          <div className="flex h-5 items-center justify-center text-[var(--bd-text4)] cursor-grab">
+        <div className="flex flex-col items-center gap-0.5 py-1.5 w-6 shrink-0">
+          <div className="text-[10px] font-extrabold text-[var(--bd-text3)] opacity-60 leading-none">{number}</div>
+          <div className="cursor-grab active:cursor-grabbing text-[var(--bd-text4)] hover:text-[var(--bd-text2)] transition-colors">
             <GripVertical className="h-4 w-4" />
           </div>
         </div>
@@ -140,7 +140,7 @@ export default function MobileItemCard({
               onFocus={() => setDescriptionFocused(true)}
               onBlur={() => setTimeout(() => setDescriptionFocused(false), 150)}
               placeholder="Item description..."
-              className="min-h-[44px] w-full resize-none rounded-[var(--bd-radius)] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] p-3 text-[14px] font-bold text-[var(--bd-text)] shadow-none focus:border-[var(--bd-indigo-border)] focus:bg-[var(--bd-surface)] focus-visible:ring-0"
+              className="min-h-[38px] w-full resize-none rounded-[var(--bd-radius)] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] p-2.5 text-[14px] font-medium text-[var(--bd-text)] shadow-none focus:border-[var(--bd-indigo-border)] focus:bg-[var(--bd-surface)] focus-visible:ring-0"
             />
             {showSuggestions && (suggestionsLoading || (suggestions && suggestions.length > 0)) && (
               <div className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] shadow-lg">
@@ -195,78 +195,61 @@ export default function MobileItemCard({
             </div>
           )}
 
-          {/* Form Actions (Sub-desc, Photo, Duplicate) */}
-          <div className="flex items-center gap-2">
+          {/* Form Actions (Sub-desc, Photo) */}
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => setShowDetails(!showDetails)}
-              className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition ${showDetails ? 'border-[var(--bd-indigo)] bg-[var(--bd-indigo-bg)] text-[var(--bd-indigo)]' : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text3)]'}`}
+              className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold transition ${showDetails ? 'border-[var(--bd-indigo)] bg-[var(--bd-indigo-bg)] text-[var(--bd-indigo)]' : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text3)] hover:bg-[var(--bd-bg2)]'}`}
             >
-              {showDetails ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              {showDetails ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
               Sub-desc
             </button>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition ${item.image_url ? 'border-[var(--bd-emerald)] bg-[var(--bd-emerald-bg)] text-[var(--bd-emerald)]' : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text3)]'}`}
+              className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold transition ${item.image_url ? 'border-[var(--bd-emerald)] bg-[var(--bd-emerald-bg)] text-[var(--bd-emerald)]' : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text3)] hover:bg-[var(--bd-bg2)]'}`}
             >
-              <Camera className="h-3.5 w-3.5" />
+              <Camera className="h-3 w-3" />
               Photo
             </button>
-            {onDuplicate ? (
-              <button
-                type="button"
-                onClick={() => onDuplicate(index)}
-                className="flex items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text3)] transition hover:bg-[var(--bd-bg2)]"
-              >
-                <Copy className="h-3.5 w-3.5" />
-                Duplicate
-              </button>
-            ) : null}
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           </div>
 
-          {/* Grid Area */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {/* Compact Inputs Row */}
+          <div className="flex flex-wrap items-end gap-2.5 pt-1">
             {isVisible('make') && (
-              <div className="col-span-1">
+              <div className="min-w-[80px] flex-1">
                 <label className={labelCls}>Make</label>
-                <Input
-                  value={item.make || ''}
-                  onChange={(e) => onUpdate(index, 'make', e.target.value)}
-                  className={fieldCls}
-                />
+                <Input value={item.make || ''} onChange={(e) => onUpdate(index, 'make', e.target.value)} className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]" />
               </div>
             )}
-            <div className="col-span-1">
-              <label className={labelCls}>Quantity</label>
-              <Input
-                type="number"
-                value={item.quantity ?? 1}
-                onChange={(e) => onUpdate(index, 'quantity', Number(e.target.value))}
-                className={`${fieldCls} text-center font-bold`}
-              />
+            <div className="w-16">
+              <label className={labelCls}>Qty</label>
+              <Input type="number" value={item.quantity ?? 1} onChange={(e) => onUpdate(index, 'quantity', Number(e.target.value))} className="h-9 px-2 text-center text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
             </div>
             {isVisible('unit') && (
-              <div className="col-span-1">
+              <div className="w-20">
                 <label className={labelCls}>Unit</label>
-                <UnitInput value={item.unit || ''} onChange={(val) => onUpdate(index, 'unit', val)} className={fieldCls} />
+                <UnitInput value={item.unit || ''} onChange={(val) => onUpdate(index, 'unit', val)} className="h-9 px-2 text-[13px] rounded-lg border-[var(--bd-border-soft)]" />
               </div>
             )}
-            <div className="col-span-1">
-              <label className={labelCls}>Unit Price</label>
-              <Input
-                type="number"
-                value={item.unit_price ?? 0}
-                onChange={(e) => onUpdate(index, 'unit_price', Number(e.target.value))}
-                className={`${fieldCls} text-right font-mono font-bold text-[var(--bd-text)]`}
-              />
+            <div className="min-w-[100px] flex-1">
+              <label className={labelCls}>Rate</label>
+              <Input type="number" value={item.unit_price ?? 0} onChange={(e) => onUpdate(index, 'unit_price', Number(e.target.value))} className="h-9 px-2.5 text-right font-mono text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
+            </div>
+            
+            <div className="shrink-0 pb-1.5 text-right">
+              <div className="text-[9px] font-extrabold uppercase tracking-widest text-[var(--bd-text3)] opacity-70 mb-1">Subtotal</div>
+              <div className="font-mono text-[14px] font-bold text-[var(--bd-text)]">
+                {formatCurrency(computedAmount).replace('NGN', '').trim()}
+              </div>
             </div>
           </div>
 
           {/* Conditional Row: Install Rate */}
           {isVisible('install_rate') && (
-            <div>
+            <div className="pt-1">
               <label className={labelCls}>Install Rate</label>
               <Input
                 type="number"
@@ -276,45 +259,42 @@ export default function MobileItemCard({
                   const val = e.target.value
                   onUpdate(index, '__install_rate_override', val === '' ? { install_rate_override: false, install_rate: null } : { install_rate_override: true, install_rate: Number(val) })
                 }}
-                className={fieldCls}
+                className="h-8 px-2 text-[12px] border-[var(--bd-border-soft)]"
               />
             </div>
           )}
-
-          {/* Amount Box */}
-          <div className="rounded-[var(--bd-radius-lg)] bg-[var(--bd-text)] p-3 text-white">
-            <div className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Line Subtotal</div>
-            <div className="mt-1 text-[20px] font-black tracking-tight text-[var(--bd-emerald-border)]">
-              {formatCurrency(computedAmount)}
-            </div>
-          </div>
         </div>
 
-        {/* Vertical Actions (Reorder & Remove) */}
-        <div className="flex shrink-0 flex-col gap-1.5">
-          <ItemMiniBtn onClick={() => onMoveUp(index)} disabled={isFirst} className={isFirst ? 'opacity-30' : ''}>
-            <ChevronUp className="h-4 w-4" />
-          </ItemMiniBtn>
-          <ItemMiniBtn onClick={() => onMoveDown(index)} disabled={isLast} className={isLast ? 'opacity-30' : ''}>
-            <ChevronDown className="h-4 w-4" />
-          </ItemMiniBtn>
-          <div className="mt-4 flex flex-col gap-1.5">
-            <ItemMiniBtn onClick={() => onRemove(index)} className="border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)] hover:bg-[var(--bd-rose-bg)]">
-              <X className="h-4 w-4" />
-            </ItemMiniBtn>
-          </div>
+        {/* Vertical Actions */}
+        <div className="flex shrink-0 flex-col gap-1 py-1">
+          <button onClick={() => onMoveUp(index)} disabled={isFirst} className={`flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--bd-border)] transition ${isFirst ? 'opacity-20 cursor-not-allowed' : 'hover:bg-[var(--bd-bg2)]'}`}>
+            <ChevronUp className="h-3.5 w-3.5 text-[var(--bd-text3)]" />
+          </button>
+          <button onClick={() => onMoveDown(index)} disabled={isLast} className={`flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--bd-border)] transition ${isLast ? 'opacity-20 cursor-not-allowed' : 'hover:bg-[var(--bd-bg2)]'}`}>
+            <ChevronDown className="h-3.5 w-3.5 text-[var(--bd-text3)]" />
+          </button>
+          <button onClick={() => onRemove(index)} className="flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)] transition hover:bg-[var(--bd-rose-border)]">
+            <X className="h-3.5 w-3.5" />
+          </button>
+          {onDuplicate && (
+            <button onClick={() => onDuplicate(index)} title="Duplicate Row" className="flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text3)] transition hover:bg-[var(--bd-bg2)]">
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Add Item Below Trigger */}
-      <button
-        type="button"
-        onClick={() => onInsertBelow(index)}
-        className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-[var(--bd-text3)] transition hover:text-[var(--bd-indigo)]"
-      >
-        <Plus className="h-3.5 w-3.5" />
-        Add Item Below
-      </button>
+      <div className="ml-8 mt-1.5">
+        <button
+          type="button"
+          onClick={() => onInsertBelow(index)}
+          className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[var(--bd-text4)] transition hover:text-[var(--bd-indigo)]"
+        >
+          <Plus className="h-3 w-3" />
+          Add Below
+        </button>
+      </div>
     </div>
   )
 }

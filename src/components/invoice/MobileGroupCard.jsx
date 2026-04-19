@@ -24,7 +24,7 @@ export default function MobileGroupCard({
   const subtotalOn = !!group.showSubtotal
 
   return (
-    <div className="mt-6 overflow-hidden rounded-[var(--bd-radius-xl)] border border-[var(--bd-indigo-border)] bg-[var(--bd-bg)] shadow-sm">
+    <div className="mt-6 overflow-hidden rounded-[var(--bd-radius-lg)] border border-[var(--bd-indigo-border)] bg-[var(--bd-surface)]">
       {/* Group Header */}
       <div className="flex items-center gap-3 border-b border-[var(--bd-indigo-border)] bg-gradient-to-br from-[var(--bd-indigo-bg)] to-[var(--bd-surface)] p-4">
         <div className="h-7 w-1 rounded-full bg-[var(--bd-indigo)]" />
@@ -33,7 +33,7 @@ export default function MobileGroupCard({
             value={group.name || ''}
             onChange={(event) => onUpdateGroupName(group.id, event.target.value)}
             placeholder="e.g. Electrical Materials"
-            className="h-8 border-none bg-transparent p-0 text-[16px] font-black tracking-tight text-[var(--bd-indigo)] focus-visible:ring-0"
+            className="h-7 border-none bg-transparent p-0 text-[15px] font-black tracking-tight text-[var(--bd-indigo)] focus-visible:ring-0"
           />
         </div>
 
@@ -97,10 +97,10 @@ export default function MobileGroupCard({
             </div>
             
             {subtotalOn && (
-              <div className="flex items-center justify-between border-t border-[var(--bd-indigo-border)] bg-[var(--bd-indigo-bg)] px-4 py-2.5">
-                <span className="text-[11px] font-black uppercase tracking-widest text-[var(--bd-indigo)]">Group Subtotal</span>
-                <span className="text-[14px] font-black text-[var(--bd-indigo)]">
-                  NGN {Number(groupSubtotal || 0).toLocaleString()}
+              <div className="flex items-center justify-between border-t border-[var(--bd-indigo-border)] bg-[var(--bd-indigo-bg)] px-4 py-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-[var(--bd-indigo)]">Subtotal</span>
+                <span className="text-[13px] font-bold text-[var(--bd-indigo)]">
+                  {Number(groupSubtotal || 0).toLocaleString()}
                 </span>
               </div>
             )}

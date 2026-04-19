@@ -138,15 +138,15 @@ export function FormLineItems({
         Line Items
       </SectionLabel>
 
-      <div className={`${pageCardCls} mb-6 p-4`}>
+      <div className="mb-4 border-b border-[var(--bd-border-soft)] py-3">
         <div className="grid grid-cols-2 gap-3">
-          <ToolbarButton onClick={onOpenImport} className="h-11 border-dashed bg-[var(--bd-bg)] hover:bg-[var(--bd-surface)]">
-            <FileInput className="h-4 w-4" />
-            <span>Import Items</span>
+          <ToolbarButton onClick={onOpenImport} className="h-10 border-dashed bg-[var(--bd-surface)] hover:bg-[var(--bd-bg)] rounded-[var(--bd-radius)]">
+            <FileInput className="h-3.5 w-3.5" />
+            <span className="text-[12px]">Import Items</span>
           </ToolbarButton>
-          <ToolbarButton onClick={onOpenTableSettings} className="h-11 border-dashed bg-[var(--bd-bg)] hover:bg-[var(--bd-surface)]">
-            <Settings2 className="h-4 w-4" />
-            <span>Table Settings</span>
+          <ToolbarButton onClick={onOpenTableSettings} className="h-10 border-dashed bg-[var(--bd-surface)] hover:bg-[var(--bd-bg)] rounded-[var(--bd-radius)]">
+            <Settings2 className="h-3.5 w-3.5" />
+            <span className="text-[12px]">Table Settings</span>
           </ToolbarButton>
         </div>
       </div>

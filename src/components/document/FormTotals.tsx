@@ -82,14 +82,16 @@ export function FormTotals({
           </div>
         )}
 
-        <div className="mt-6 rounded-[var(--bd-radius-xl)] bg-[var(--bd-text)] p-6 text-white shadow-lg">
-          <div className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--bd-text3)]">Total Payable</div>
-          <div className="mt-2 text-[36px] font-black leading-none tracking-tight text-[var(--bd-emerald-border)]">
-            {formatCurrency(totalPayable)}
+        <div className="mt-8 border-t border-[var(--bd-text)] pt-5">
+          <div className="flex items-center justify-between">
+            <span className="text-[15px] font-extrabold text-[var(--bd-text)] uppercase tracking-wider">Total Payable</span>
+            <span className="font-serif text-[28px] font-bold text-[var(--bd-text)]">
+              {formatCurrency(totalPayable)}
+            </span>
           </div>
-          <div className="mt-3 flex items-center gap-1.5 opacity-60">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--bd-emerald-border)]" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Final Amount</span>
+          <div className="mt-1 flex items-center justify-end gap-1.5 opacity-40">
+            <span className="h-1 w-1 rounded-full bg-[var(--bd-text)]" />
+            <span className="text-[9px] font-bold uppercase tracking-[0.2em]">Final Amount Due</span>
           </div>
         </div>
       </div>
