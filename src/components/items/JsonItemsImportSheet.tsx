@@ -38,12 +38,12 @@ const MODE_COPY: Record<ImportMode, { description: string; placeholder: string; 
   Add: {
     description: 'Create and append new line items from extracted JSON.',
     placeholder: '{\n  "items": [{ "description": "...", "quantity": 1, "unit_price": 0 }]\n}',
-    badge: 'Append new rows',
+    badge: 'Append mode',
   },
   Update: {
-    description: 'Patch existing rows using row_number. Only include changed rows and changed fields.',
+    description: 'Patch existing rows using row_number. Only include changed rows and fields.',
     placeholder: '{\n  "items": [{ "row_number": 3, "unit_price": 50000 }]\n}',
-    badge: 'Update rows',
+    badge: 'Update mode',
   },
 }
 
@@ -65,71 +65,62 @@ function ImportHelpSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="max-h-[90vh] rounded-t-[28px] border border-slate-200 border-b-0 bg-white p-0 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] sm:mx-auto sm:max-w-[520px] [&>[data-slot=sheet-close]]:hidden"
+        className="max-h-[85vh] rounded-t-[32px] border border-[var(--bd-border)] border-b-0 bg-[var(--bd-bg)] p-0 shadow-2xl sm:mx-auto sm:max-w-[520px] [&>[data-slot=sheet-close]]:hidden"
       >
-        <div className="mx-auto mt-3 h-[5px] w-12 rounded-full bg-[#d0d9e2]" />
-        <SheetHeader className="px-5 pb-0 pt-4">
+        <div className="mx-auto mt-4 h-1.5 w-12 rounded-full bg-[var(--bd-border)]" />
+        <SheetHeader className="px-6 pb-2 pt-5">
           <div className="flex items-center justify-between gap-3">
-            <SheetTitle className="text-left text-[1.3rem] font-bold tracking-[-0.02em] text-[#0f1a24]">
-              How to use Import
+            <SheetTitle className="text-left text-[22px] font-black tracking-tight text-[var(--bd-text)]">
+              Import Guide
             </SheetTitle>
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="icon"
               onClick={() => onOpenChange(false)}
-              className="h-9 w-9 rounded-full text-[#68788c] hover:bg-[#f1f4f8] hover:text-[#0f1a24]"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--bd-bg2)] text-[var(--bd-text3)] hover:text-[var(--bd-text)]"
             >
-              <X className="h-4 w-4" />
-            </Button>
+              <X className="h-5 w-5" />
+            </button>
           </div>
         </SheetHeader>
 
-        <div className="px-5 pb-7 pt-4">
-          <div className="text-[14px] leading-7 text-[#334e66]">
-            <p className="mb-3">
-              <strong>{stepIndex + 1}. {step.title}</strong>
-            </p>
-            <p className="whitespace-pre-line">{step.description}</p>
+        <div className="px-6 pb-10 pt-4">
+          <div className="mb-6">
+            <div className="text-[11px] font-black uppercase tracking-widest text-[var(--bd-indigo)]">Step {stepIndex + 1} of {steps.length}</div>
+            <h3 className="mt-1 text-[18px] font-bold text-[var(--bd-text)]">{step.title}</h3>
+            <p className="mt-2 text-[14px] leading-relaxed text-[var(--bd-text2)]">{step.description}</p>
           </div>
 
-          <div className="mt-5 rounded-[18px] border border-slate-200 bg-slate-100 p-0">
-            <div className="flex aspect-video items-center justify-center rounded-[18px] bg-slate-100 text-sm text-slate-400">
-              <div className="text-center">
-                <div className="text-[13px] text-slate-300">YouTube video placeholder</div>
-                <div className="mx-auto mt-3 flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm">
-                  <Play className="ml-0.5 h-4 w-4 fill-current" />
-                </div>
-              </div>
+          <div className="overflow-hidden rounded-[20px] border border-[var(--bd-border)] bg-[var(--bd-surface)] shadow-inner">
+            <div className="flex aspect-video items-center justify-center bg-[var(--bd-bg2)]">
+               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--bd-surface)] text-[var(--bd-text4)] shadow-sm">
+                  <Play className="ml-1 h-6 w-6 fill-current" />
+               </div>
             </div>
           </div>
 
-          <div className="mt-5 flex items-center justify-between">
-            <div className="flex gap-1.5">
-              {steps.map((entry, index) => (
+          <div className="mt-8 flex items-center justify-between">
+            <div className="flex gap-2">
+              {steps.map((_, index) => (
                 <div
-                  key={entry.title}
-                  className={cn('h-2 w-2 rounded-full', stepIndex === index ? 'bg-blue-600' : 'bg-slate-200')}
+                  key={index}
+                  className={cn('h-1.5 transition-all duration-300 rounded-full', stepIndex === index ? 'w-6 bg-[var(--bd-indigo)]' : 'w-1.5 bg-[var(--bd-border)]')}
                 />
               ))}
             </div>
 
             <div className="flex gap-2">
               <Button
-                type="button"
                 variant="outline"
                 onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
-                className="h-9 rounded-[10px] border-slate-200 px-3 text-sm font-bold text-slate-700"
+                className="h-10 rounded-full border-[var(--bd-border)] bg-[var(--bd-surface)] px-5 text-sm font-bold text-[var(--bd-text2)]"
               >
-                ← Back
+                Prev
               </Button>
               <Button
-                type="button"
-                variant="outline"
                 onClick={() => setStepIndex((current) => Math.min(steps.length - 1, current + 1))}
-                className="h-9 rounded-[10px] border-slate-200 px-3 text-sm font-bold text-slate-700"
+                className="h-10 rounded-full bg-[var(--bd-text)] px-8 text-sm font-bold text-white shadow-md"
               >
-                Next →
+                {stepIndex === steps.length - 1 ? 'Got it' : 'Next'}
               </Button>
             </div>
           </div>
@@ -177,11 +168,7 @@ export default function JsonItemsImportSheet({
       setCopied(true)
       window.setTimeout(() => setCopied(false), 1200)
     } catch {
-      toast({
-        title: 'Copy failed',
-        description: 'Could not copy the prompt.',
-        variant: 'destructive',
-      })
+      toast({ title: 'Copy failed', variant: 'destructive' })
     }
   }
 
@@ -246,27 +233,25 @@ export default function JsonItemsImportSheet({
         <SheetContent
           side={side}
           className={cn(
-            'max-h-[90vh] rounded-t-[28px] border border-slate-200 border-b-0 bg-white p-0 shadow-[0_-8px_30px_rgba(0,0,0,0.04),0_-2px_8px_rgba(0,0,0,0.02)] sm:mx-auto sm:max-w-[560px] [&>[data-slot=sheet-close]]:hidden',
+            'max-h-[92vh] rounded-t-[32px] border border-[var(--bd-border)] border-b-0 bg-[var(--bd-bg)] p-0 shadow-2xl sm:mx-auto sm:max-w-[560px] [&>[data-slot=sheet-close]]:hidden',
             contentClassName,
           )}
         >
-          <div className="mx-auto mt-3 h-[5px] w-12 rounded-full bg-[#d0d9e2]" />
+          <div className="mx-auto mt-4 h-1.5 w-12 rounded-full bg-[var(--bd-border)]" />
 
-          <div className="px-4 pb-[18px] pt-0 sm:px-5">
-            <div className="mb-[14px] flex items-center justify-between">
-              <h2 className="text-[1.3rem] font-[650] tracking-[-0.02em] text-[#0f1a24]">{title}</h2>
-              <Button
+          <div className="px-6 pb-10 pt-2">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-[24px] font-black tracking-tight text-[var(--bd-text)]">{title}</h2>
+              <button
                 type="button"
-                variant="ghost"
-                size="icon"
                 onClick={() => onOpenChange(false)}
-                className="h-9 w-9 rounded-full p-0 text-[#68788c] hover:bg-[#f1f4f8] hover:text-[#0f1a24]"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--bd-bg2)] text-[var(--bd-text3)]"
               >
-                <X className="h-[18px] w-[18px]" />
-              </Button>
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
-            <div className="mb-[18px] grid grid-cols-2 gap-2 rounded-[40px] border border-slate-200 bg-[#f1f5f9] p-[5px]">
+            <div className="mb-6 flex gap-1 rounded-[16px] bg-[var(--bd-bg2)] p-1.5">
               {(['Add', 'Update'] as ImportMode[]).map((entry) => {
                 const selected = mode === entry
                 const unavailable = entry === 'Update' && !updateEnabled
@@ -275,94 +260,81 @@ export default function JsonItemsImportSheet({
                   <button
                     key={entry}
                     type="button"
-                    aria-pressed={selected}
                     onClick={() => {
-                      if (unavailable) {
-                        setErrorMessage('Update stays unavailable until the table has at least one real line item.')
-                        return
-                      }
+                      if (unavailable) return
                       setMode(entry)
                       setErrorMessage(null)
                     }}
                     className={cn(
-                      'rounded-[36px] px-2 py-[9px] text-[0.95rem] font-semibold transition-all duration-150',
+                      'flex-1 rounded-[10px] py-2.5 text-[14px] font-bold transition-all',
                       selected
-                        ? 'border border-[#dde7f0] bg-white text-[#0f1825] shadow-[0_2px_8px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.05)]'
-                        : 'bg-transparent text-[#475569]',
-                      unavailable && 'opacity-40',
+                        ? 'bg-[var(--bd-surface)] text-[var(--bd-text)] shadow-sm border border-[var(--bd-border-soft)]'
+                        : 'text-[var(--bd-text3)] hover:text-[var(--bd-text2)]',
+                      unavailable && 'opacity-30 cursor-not-allowed',
                     )}
                   >
-                    {entry}
+                    {entry === 'Add' ? 'New Items' : 'Update Existing'}
                   </button>
                 )
               })}
             </div>
 
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="text-[0.72rem] font-extrabold uppercase tracking-[0.08em] text-[#8a9aac]">
-                AI Prompt
-              </div>
-
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleCopyPrompt}
-                className="h-auto rounded-full border-[1.5px] border-[#d7e0ea] bg-white px-4 py-[7px] text-[0.82rem] font-semibold text-[#223444] shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:bg-[#0f1a24] hover:text-white"
-              >
-                <Copy className="mr-[6px] h-[15px] w-[15px]" />
-                {copied ? 'Copied' : 'Copy prompt'}
-              </Button>
+            <div className="mb-6 rounded-[20px] border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] p-5 shadow-sm">
+               <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--bd-indigo)]">1. Strategy</div>
+                    <p className="mt-1 text-[13px] font-medium leading-relaxed text-[var(--bd-text2)]">{activeMode.description}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopyPrompt}
+                    className="flex shrink-0 items-center gap-2 rounded-full bg-[var(--bd-indigo)] px-4 py-2.5 text-[12px] font-bold text-white shadow-md transition active:scale-95"
+                  >
+                    <Copy className="h-4 w-4" />
+                    {copied ? 'Copied' : 'Copy AI Prompt'}
+                  </button>
+               </div>
             </div>
 
-            <div className="mb-[18px] rounded-[18px] border border-[#eef3f8] bg-[#fafcff] px-4 py-3 text-[0.9rem] font-[450] leading-[1.4] text-[#2a4055]">
-              {activeMode.description}
-            </div>
-
-            <div className="mb-[6px] flex items-baseline justify-between gap-3">
-              <label
-                htmlFor="jsonEditor"
-                className="text-[0.7rem] font-bold uppercase tracking-[0.04em] text-[#5c738a]"
-              >
-                JSON Input
-              </label>
-              <span className="rounded-full bg-[#f0f5fa] px-[10px] py-[2px] text-[0.75rem] text-[#5f7d9c]">
-                {activeMode.badge}
-              </span>
+            <div className="mb-2 flex items-center justify-between">
+              <label htmlFor="jsonEditor" className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--bd-text3)]">2. Paste Result (JSON)</label>
+              <span className="text-[10px] font-bold text-[var(--bd-text4)]">{activeMode.badge}</span>
             </div>
 
             <Textarea
               id="jsonEditor"
               value={pastedText}
-              onChange={(event) => {
-                setPastedText(event.target.value)
+              onChange={(e) => {
+                setPastedText(e.target.value)
                 if (errorMessage) setErrorMessage(null)
               }}
               placeholder={activeMode.placeholder}
-              spellCheck={false}
-              className="mb-[10px] min-h-[164px] resize-y rounded-[22px] border-[1.8px] border-[#e2eaf2] bg-[#fbfdff] px-4 py-[14px] font-mono text-[0.85rem] leading-[1.5] text-[#11212e] focus:border-[#7f8fa3] focus:bg-white"
+              className="min-h-[160px] rounded-[20px] border-[var(--bd-border)] bg-[var(--bd-bg2)] p-4 font-mono text-[13px] leading-relaxed text-[var(--bd-text)] focus:bg-[var(--bd-surface)] focus-visible:ring-1 focus-visible:ring-[var(--bd-indigo-border)]"
             />
+
+            <div className="flex items-center justify-between py-4">
+              <button
+                type="button"
+                onClick={() => setHelpOpen(true)}
+                className="flex items-center gap-2 text-[13px] font-bold text-[var(--bd-indigo)]"
+              >
+                <HelpCircle className="h-4 w-4" />
+                How to use
+              </button>
+              
+              <div className="text-[11px] font-medium text-[var(--bd-rose)]">
+                {errorMessage || ''}
+              </div>
+            </div>
 
             <button
               type="button"
-              onClick={() => setHelpOpen(true)}
-              className="inline-flex items-center gap-2 bg-transparent pb-[10px] pt-[6px] text-[0.85rem] font-semibold text-[#2e4b6a] underline underline-offset-[3px] decoration-[#b3c6d9] hover:text-[#0f1a24] hover:decoration-[#0f1a24]"
-            >
-              <HelpCircle className="h-[15px] w-[15px]" />
-              How to use Import
-            </button>
-
-            <div className="mb-[10px] min-h-[20px] text-[0.75rem] font-medium text-[#c83a3a]">
-              {errorMessage || ''}
-            </div>
-
-            <Button
-              type="button"
               onClick={handleApply}
               disabled={!pastedText.trim()}
-              className="h-[46px] w-full rounded-[48px] border border-[#263b4a] bg-[#0f1a24] text-[0.95rem] font-bold text-white shadow-[0_6px_14px_rgba(15,26,36,0.08)] hover:bg-[#1f3140]"
+              className="mt-2 flex h-14 w-full items-center justify-center rounded-[var(--bd-radius-lg)] bg-[var(--bd-text)] text-[16px] font-black text-white shadow-xl transition active:scale-98 disabled:opacity-40"
             >
-              Apply
-            </Button>
+              Apply to Document
+            </button>
           </div>
         </SheetContent>
       </Sheet>

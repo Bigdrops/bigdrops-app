@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import MobileInvoiceForm from '@/components/invoice/MobileInvoiceForm'
+import SharedDocumentForm from '@/components/document/SharedDocumentForm'
 import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import { supabase } from '@/supabase'
 import {
@@ -980,7 +980,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
   return (
     <div className="space-y-6">
-      <MobileInvoiceForm
+      <SharedDocumentForm
         title={isEdit ? 'Edit Quotation' : 'Create Quotation'}
         modeLabel={formatQuotationStatus(quotation.status || 'draft')}
         invoice={invoiceLikeQuotation}

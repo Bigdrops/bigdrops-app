@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
-import MobileInvoiceForm from '@/components/invoice/MobileInvoiceForm'
+import SharedDocumentForm from '@/components/document/SharedDocumentForm'
 import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import {
   DEFAULT_INVOICE_PDF_OUTPUT,
@@ -456,7 +456,7 @@ export default function EditInvoice() {
   return (
     <Layout title="Edit Invoice" hidePageHeader>
       <div className="space-y-6">
-        <MobileInvoiceForm
+        <SharedDocumentForm
           title="Edit Invoice"
           modeLabel="Edit Invoice"
           invoice={invoice}

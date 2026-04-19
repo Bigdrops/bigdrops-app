@@ -12,20 +12,20 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export const pageCardCls =
-  'rounded-[20px] border border-[#e2e8f0] bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]'
+  'rounded-[var(--bd-radius-xl)] border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] shadow-sm'
 export const fieldCls =
-  'h-11 rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3 text-[14px] text-[#0f172a] shadow-none transition focus:border-[#94a3b8] focus:bg-white focus:ring-0 focus-visible:ring-0'
-export const labelCls = 'mb-1 block text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#94a3b8]'
+  'h-11 rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-bg)] px-3 text-[14px] text-[var(--bd-text)] shadow-none transition focus:border-[var(--bd-indigo)] focus:bg-[var(--bd-surface)] focus:ring-0 focus-visible:ring-0'
+export const labelCls = 'mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text2)]'
 
 export function getSectionDotClass(color?: string) {
   return {
-    '#0f172a': 'bg-slate-900',
-    '#7c3aed': 'bg-violet-600',
-    '#475569': 'bg-slate-600',
-    '#059669': 'bg-emerald-600',
-    '#d97706': 'bg-amber-600',
-    '#2563eb': 'bg-blue-600',
-  }[color || ''] || 'bg-slate-400'
+    '#0f172a': 'bg-[var(--bd-text)]',
+    '#7c3aed': 'bg-[var(--bd-violet)]',
+    '#475569': 'bg-[var(--bd-text2)]',
+    '#059669': 'bg-[var(--bd-emerald)]',
+    '#d97706': 'bg-[var(--bd-amber)]',
+    '#2563eb': 'bg-[var(--bd-indigo)]',
+  }[color || ''] || 'bg-[var(--bd-text3)]'
 }
 
 interface IconTone {
@@ -36,10 +36,10 @@ interface IconTone {
 function getIconToneClass(iconTone?: IconTone) {
   const key = `${iconTone?.bg || ''}|${iconTone?.fg || ''}`
   return {
-    '#f5f3ff|#7c3aed': 'bg-violet-50 text-violet-600',
-    '#eff6ff|#2563eb': 'bg-blue-50 text-blue-600',
-    '#f0fdf4|#059669': 'bg-emerald-50 text-emerald-600',
-  }[key] || 'bg-slate-100 text-slate-600'
+    '#f5f3ff|#7c3aed': 'bg-[var(--bd-violet-bg)] text-[var(--bd-violet)]',
+    '#eff6ff|#2563eb': 'bg-[var(--bd-indigo-bg)] text-[var(--bd-indigo)]',
+    '#f0fdf4|#059669': 'bg-[var(--bd-emerald-bg)] text-[var(--bd-emerald)]',
+  }[key] || 'bg-[var(--bd-bg2)] text-[var(--bd-text2)]'
 }
 
 export function formatCurrency(value: number | string | null | undefined) {

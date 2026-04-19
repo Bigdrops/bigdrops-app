@@ -104,10 +104,10 @@ function BuiltInColumnRow({
                 min="0"
                 value={col.formula || ''}
                 onChange={(e) => onUpdate(col.key, 'formula', e.target.value)}
-                placeholder="Multiplier"
+                placeholder="e.g. 0.1"
                 className="h-10 rounded-[12px] border-slate-200 bg-slate-50 text-sm"
               />
-              <span className="shrink-0 text-xs text-slate-500">× (Qty × Rate)</span>
+              <span className="shrink-0 text-xs text-slate-500">× (Qty × Price)</span>
             </div>
           ) : null}
 
@@ -363,7 +363,13 @@ export default function ColumnManager({
   }
 
   const typeLabel = (t) =>
-    ({ install_rate: 'Rate', vat_rate: 'VAT%', discount_rate: 'Disc%' }[t] || t)
+    ({ 
+      install_rate: 'Install Rate', 
+      vat_rate: 'VAT %', 
+      discount_rate: 'Discount %',
+      make: 'Make',
+      unit: 'Unit'
+    }[t] || t)
 
   return (
     <>

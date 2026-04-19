@@ -1,0 +1,56 @@
+:root {
+  --bd-bg: #faf9f7;
+  --bd-bg2: #f4f2ee;
+  --bd-bg3: #edeae4;
+  --bd-surface: #ffffff;
+  --bd-border: #e4e0d8;
+  --bd-border-soft: #ede9e1;
+  --bd-text: #1a1814;
+  --bd-text2: #57534a;
+  --bd-text3: #9c9589;
+  --bd-text4: #c4bfb5;
+
+  --bd-amber: #d97706;
+  --bd-amber-bg: #fef3c7;
+  --bd-amber-border: #fcd34d;
+  --bd-amber-dark: #b45309;
+
+  --bd-indigo: #4338ca;
+  --bd-indigo-bg: #eef2ff;
+  --bd-indigo-border: #c7d2fe;
+  --bd-indigo-light: #6366f1;
+
+  --bd-emerald: #059669;
+  --bd-emerald-bg: #d1fae5;
+  --bd-emerald-border: #6ee7b7;
+
+  --bd-rose: #be185d;
+  --bd-rose-bg: #fce7f3;
+  --bd-rose-border: #fbcfe8;
+
+  --bd-violet: #7c3aed;
+  --bd-violet-bg: #f5f3ff;
+  --bd-violet-border: #ddd6fe;
+
+  --bd-radius: 10px;
+  --bd-radius-lg: 14px;
+  --bd-radius-xl: 18px;
+}
+
+.bd-form-shell {
+  background-color: var(--bd-bg);
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar for form elements */
+.bd-custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.bd-custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.bd-custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--bd-border);
+  border-radius: 2px;
+}
