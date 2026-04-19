@@ -16,7 +16,10 @@ const ROOT_PATHS = new Set([
   '/reports',
   '/settings',
   '/waybills',
+  '/login',
 ])
+
+const EXIT_WINDOW_MS = 1800
 
 function isVisible(element: Element | null): element is HTMLElement {
   if (!(element instanceof HTMLElement)) return false
@@ -154,6 +157,7 @@ export default function AndroidBackHandler() {
   const pathnameRef = useRef(location.pathname)
   const stateRef = useRef(location.state)
   const isRootRouteRef = useRef(ROOT_PATHS.has(location.pathname))
+  const lastBackPressAtRef = useRef(0)
 
   useEffect(() => {
     pathnameRef.current = location.pathname
@@ -170,8 +174,8 @@ export default function AndroidBackHandler() {
     const setup = async () => {
       listener = await CapacitorApp.addListener('backButton', async ({ canGoBack }) => {
         if (cancelled) return
-        const keyboardState = getKeyboardViewportState()
 
+        const keyboardState = getKeyboardViewportState()
         if (keyboardState.isOpen && dismissActiveKeyboard()) {
           return
         }
@@ -185,8 +189,8 @@ export default function AndroidBackHandler() {
         const isRootRoute = isRootRouteRef.current
         const historyIndex = Number(window.history.state?.idx ?? 0)
 
-        if (canGoBack || historyIndex > 0) {
-          navigate(-1)
+        if (canGoBack || historyIndex > 0 || window.history.length > 1) {
+          window.history.back()
           return
         }
 
@@ -196,15 +200,22 @@ export default function AndroidBackHandler() {
           return
         }
 
-        if (isRootRoute) {
-          toast({
-            title: 'Top level screen',
-            description: 'Use the navigation bar to switch areas or your home button to minimize.',
-          })
+        if (!isRootRoute) {
+          navigate('/', { replace: true })
           return
         }
 
-        navigate('/', { replace: true })
+        const now = Date.now()
+        if (now - lastBackPressAtRef.current < EXIT_WINDOW_MS) {
+          await CapacitorApp.exitApp()
+          return
+        }
+
+        lastBackPressAtRef.current = now
+        toast({
+          title: 'Press back again to exit',
+          description: 'You are already at the top level of the app.',
+        })
       })
     }
 
