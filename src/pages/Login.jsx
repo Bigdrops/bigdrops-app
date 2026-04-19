@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Loader2, Mail, Lock } from 'lucide-react'
 import { supabase } from '../supabase'
+import { isAndroidNative } from '@/lib/native/capacitor'
+import { NATIVE_AUTH_REDIRECT_URL } from '@/components/app/NativeAuthRedirect'
 
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
@@ -130,9 +132,15 @@ export default function Login() {
     resetFeedback()
     setLoading(true)
 
+    const redirectTo = isAndroidNative()
+      ? NATIVE_AUTH_REDIRECT_URL
+      : window.location.origin
+
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: {
+        redirectTo,
+      },
     })
 
     setLoading(false)
