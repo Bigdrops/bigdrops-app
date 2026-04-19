@@ -123,18 +123,41 @@ export default function SharedDocumentForm(props: any) {
   const workmanship = Number(invoice.workmanship || 0)
   const transportation = Number(invoice.transportation || 0)
   const shipping = Number(invoice.shipping || 0)
+  const timingMode = discountTiming === 'before' ? 'before' : 'after'
 
-  const summaryRows = [
-    { label: 'Subtotal', value: rawSubtotal },
-    installRateTotal > 0 ? { label: 'Install Rate', value: installRateTotal } : null,
+  const taxableChargeRows = extraCharges
+    .filter((charge: any) => String(charge?.label || '').trim() && Number(charge?.value || 0) > 0 && charge?.withTax === true)
+    .map((charge: any) => ({
+      label: String(charge.label).trim(),
+      value: Number(charge.value || 0),
+    }))
+
+  const nonTaxChargeRows = [
     workmanship > 0 ? { label: chargeLabels.workmanship || 'Workmanship', value: workmanship } : null,
     transportation > 0 ? { label: chargeLabels.transportation || 'Transportation', value: transportation } : null,
     shipping > 0 ? { label: chargeLabels.shipping || 'Shipping', value: shipping } : null,
-    discountAmount > 0 ? { label: 'Discount', value: -discountAmount, negative: true } : null,
-    { label: 'VAT', value: vatAmount },
-    whtAmount > 0 ? { label: 'WHT', value: -whtAmount, negative: true } : null,
-    { label: 'Grand Total', value: grandTotal, strong: true },
+    ...extraCharges
+      .filter((charge: any) => String(charge?.label || '').trim() && Number(charge?.value || 0) > 0 && charge?.withTax === false)
+      .map((charge: any) => ({
+        label: String(charge.label).trim(),
+        value: Number(charge.value || 0),
+      })),
   ].filter(Boolean)
+
+  const summaryRows = [
+    { label: 'Subtotal', value: rawSubtotal },
+    ...(timingMode === 'before' && discountAmount > 0
+      ? [{ label: 'Discount', value: -discountAmount, negative: true }]
+      : []),
+    ...taxableChargeRows,
+    ...(vatAmount > 0 || Number(invoice.vat || 0) > 0 ? [{ label: 'VAT', value: vatAmount }] : []),
+    ...(timingMode === 'after' && discountAmount > 0
+      ? [{ label: 'Discount', value: -discountAmount, negative: true }]
+      : []),
+    ...nonTaxChargeRows,
+    ...(installRateTotal > 0 ? [{ label: 'Install Rate', value: installRateTotal }] : []),
+    ...(whtAmount > 0 ? [{ label: 'WHT', value: -whtAmount, negative: true }] : []),
+  ]
 
   return (
     <div className="bd-form-shell bd-custom-scrollbar overflow-x-hidden px-0 pt-1 sm:pt-3">
@@ -206,6 +229,7 @@ export default function SharedDocumentForm(props: any) {
             summaryRows={summaryRows}
             totalPayable={totalPayable}
             amountInWords={amountInWords}
+            finalLabel="Grand Total"
           />
 
           <div ref={notesTermsRef}>

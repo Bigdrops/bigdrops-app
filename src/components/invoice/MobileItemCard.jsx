@@ -122,12 +122,12 @@ export default function MobileItemCard({
 
   return (
     <div className="relative border-b border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-0 py-3 transition-colors hover:bg-[#fdfcfb]">
-      <div className="grid grid-cols-[20px_minmax(0,1fr)_32px] items-start gap-2.5">
+      <div className="grid grid-cols-[16px_minmax(0,1fr)_30px] items-start gap-2">
         {/* Row Number & Enumeration */}
-        <div className="flex w-[20px] flex-col items-center gap-1 pt-2">
-          <div className="text-[11px] font-bold leading-none text-[var(--bd-text3)]">{number}</div>
+        <div className="flex w-4 flex-col items-center gap-0.5 pt-2">
+          <div className="text-[10px] font-bold leading-none text-[var(--bd-text3)]">{number}</div>
           <div className="cursor-grab text-[var(--bd-text4)] transition-colors hover:text-[var(--bd-text2)] active:cursor-grabbing">
-            <GripVertical className="h-4 w-4" />
+            <GripVertical className="h-3.5 w-3.5" />
           </div>
         </div>
 
@@ -258,8 +258,7 @@ export default function MobileItemCard({
 
           <div className="flex items-end justify-between gap-3 rounded-[12px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-3 py-2.5">
             <div className="min-w-0">
-              <div className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-[var(--bd-text3)]">Row Subtotal</div>
-              <div className="mt-1 text-[11px] font-medium text-[var(--bd-text3)]">Quantity × unit rate summary</div>
+              <div className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-[var(--bd-text3)]">Subtotal</div>
             </div>
             <div className="min-w-0 text-right">
               <div className="font-mono text-[18px] font-extrabold tracking-[-0.03em] text-[var(--bd-text)]">
@@ -270,7 +269,7 @@ export default function MobileItemCard({
         </div>
 
         {/* Vertical Actions */}
-        <div className="flex w-8 flex-col gap-1 py-1">
+        <div className="flex w-[30px] flex-col gap-1 py-1">
           <button onClick={() => onMoveUp(index)} disabled={isFirst} className={`flex h-7 w-7 items-center justify-center rounded-[8px] border transition ${isFirst ? 'cursor-not-allowed border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text4)] opacity-50' : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text2)] hover:bg-[var(--bd-bg2)]'}`}>
             <ChevronUp className="h-3.5 w-3.5" />
           </button>
@@ -289,7 +288,7 @@ export default function MobileItemCard({
       </div>
 
       {/* Add Item Below Trigger */}
-      <div className="ml-8 mt-1">
+      <div className="ml-6 mt-1">
         <button
           type="button"
           onClick={() => onInsertBelow(index)}

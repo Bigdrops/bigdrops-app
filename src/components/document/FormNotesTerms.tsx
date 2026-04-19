@@ -62,6 +62,13 @@ export function FormNotesTerms({
   setShowLinks,
   linksSectionRef,
 }: FormNotesTermsProps) {
+  const selectedSignatory = signatories.find((entry) => String(entry.id) === String(signatoryId))
+  const signatorySubtitle = selectedSignatory?.name || 'No Signatory'
+  const linksSubtitle =
+    referenceLinks.length === 0
+      ? 'No links attached'
+      : `${referenceLinks.length} ${referenceLinks.length === 1 ? 'link attached' : 'links attached'}`
+
   return (
     <div className="space-y-0 border-t border-[var(--bd-border-soft)] pt-1">
       {/* Notes & Terms */}
@@ -69,7 +76,7 @@ export function FormNotesTerms({
         icon={NotebookText}
         iconTone={{ bg: '#f3f4f6', fg: '#475569' }}
         title="Notes & Terms"
-        subtitle="Payment instructions, warranty..."
+        subtitle=""
         open={showNotesTerms}
         onToggle={() => setShowNotesTerms(!showNotesTerms)}
         sectionColor="#475569"
@@ -104,7 +111,7 @@ export function FormNotesTerms({
         icon={Signature}
         iconTone={{ bg: '#d1fae5', fg: '#059669' }}
         title="Signatory"
-        subtitle="Authorized person for this document"
+        subtitle={signatorySubtitle}
         open={showSignatory}
         onToggle={() => setShowSignatory(!showSignatory)}
         sectionColor="#059669"
@@ -130,7 +137,7 @@ export function FormNotesTerms({
           icon={Link2}
           iconTone={{ bg: '#f5f3ff', fg: '#7c3aed' }}
           title="Reference Links"
-          subtitle={referenceLinks.length === 0 ? 'No links attached' : `${referenceLinks.length} ${referenceLinks.length === 1 ? 'link attached' : 'links attached'}`}
+          subtitle={linksSubtitle}
           open={showLinks}
           onToggle={() => setShowLinks(!showLinks)}
           sectionColor="#7c3aed"

@@ -14,6 +14,7 @@ interface FormTotalsProps {
   summaryRows: any[]
   totalPayable: number
   amountInWords?: string
+  finalLabel?: string
 }
 
 export function FormTotals({
@@ -22,6 +23,7 @@ export function FormTotals({
   summaryRows,
   totalPayable,
   amountInWords,
+  finalLabel = 'Grand Total',
 }: FormTotalsProps) {
   const [showVatAdjust, setShowVatAdjust] = useState(false)
 
@@ -83,13 +85,10 @@ export function FormTotals({
 
         <div className="mt-5 border-t border-[var(--bd-border)] pt-4">
           <div className="flex items-end justify-between gap-4">
-            <span className="text-[15px] font-extrabold text-[var(--bd-text)]">Total Payable</span>
+            <span className="text-[15px] font-extrabold text-[var(--bd-text)]">{finalLabel}</span>
             <span className="font-serif text-[30px] font-semibold tracking-tight text-[var(--bd-text)]">
               {formatCurrency(totalPayable)}
             </span>
-          </div>
-          <div className="mt-1 flex items-center justify-end gap-1.5 text-[var(--bd-text3)]">
-            <span className="text-[9px] font-bold uppercase tracking-[0.18em]">Final Amount Due</span>
           </div>
         </div>
       </div>

@@ -163,7 +163,7 @@ interface CollapseCardProps {
   icon: ComponentType<{ className?: string }>
   iconTone?: IconTone
   title: string
-  subtitle: string
+  subtitle?: string
   open: boolean
   onToggle: () => void
   children: ReactNode
@@ -186,7 +186,7 @@ export function CollapseCard({ icon: Icon, iconTone, title, subtitle, open, onTo
           </div>
           <div>
             <div className="text-[13px] font-bold text-[var(--bd-text)]">{title}</div>
-            <div className="text-[11px] text-[var(--bd-text3)]">{subtitle}</div>
+            {subtitle ? <div className="text-[11px] text-[var(--bd-text3)]">{subtitle}</div> : null}
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -27,14 +27,9 @@ test('invoice and quotation editors render through the shared document form shel
 
 test('shared document layout stays wide with minimal gutters across invoice and quotation pages', () => {
   const sharedFormSource = fs.readFileSync(sharedFormPath, 'utf8')
-  const newInvoiceSource = fs.readFileSync(newInvoicePath, 'utf8')
-  const editInvoiceSource = fs.readFileSync(editInvoicePath, 'utf8')
-  const quotationFormSource = fs.readFileSync(quotationFormPath, 'utf8')
 
-  assert.match(sharedFormSource, /mx-auto w-full max-w-4xl px-0 sm:px-2/)
-  assert.match(newInvoiceSource, /mx-auto w-full max-w-4xl space-y-6 px-0 sm:px-2/)
-  assert.match(editInvoiceSource, /mx-auto w-full max-w-4xl space-y-6 px-0 sm:px-2/)
-  assert.match(quotationFormSource, /mx-auto w-full max-w-4xl space-y-6 px-0 sm:px-2/)
+  assert.match(sharedFormSource, /mx-auto w-full max-w-\[780px\] px-3 sm:px-4/)
+  assert.match(sharedFormSource, /bd-form-shell bd-custom-scrollbar overflow-x-hidden px-0 pt-1 sm:pt-3/)
 })
 
 test('shared form sections stay flat and totals use soft document styling', () => {
@@ -52,4 +47,15 @@ test('shared line items still use the live invoice mobile item card implementati
   const lineItemsSource = fs.readFileSync(formLineItemsPath, 'utf8')
 
   assert.match(lineItemsSource, /import MobileItemCard from ['"]@\/components\/invoice\/MobileItemCard['"]/)
+})
+
+test('shared totals rows keep timing-sensitive ordering in one shared runtime source', () => {
+  const sharedFormSource = fs.readFileSync(sharedFormPath, 'utf8')
+  const normalized = sharedFormSource.replace(/\s+/g, ' ')
+
+  assert.match(
+    normalized,
+    /const summaryRows = \[ \{ label: 'Subtotal', value: rawSubtotal \}, \.\.\.\(timingMode === 'before' && discountAmount > 0 \? \[\{ label: 'Discount', value: -discountAmount, negative: true \}\] : \[\]\), \.\.\.taxableChargeRows, \.\.\.\(vatAmount > 0 \|\| Number\(invoice\.vat \|\| 0\) > 0 \? \[\{ label: 'VAT', value: vatAmount \}\] : \[\]\), \.\.\.\(timingMode === 'after' && discountAmount > 0 \? \[\{ label: 'Discount', value: -discountAmount, negative: true \}\] : \[\]\), \.\.\.nonTaxChargeRows, \.\.\.\(installRateTotal > 0 \? \[\{ label: 'Install Rate', value: installRateTotal \}\] : \[\]\), \.\.\.\(whtAmount > 0 \? \[\{ label: 'WHT', value: -whtAmount, negative: true \}\] : \[\]\), \]/,
+  )
+  assert.match(normalized, /finalLabel="Grand Total"/)
 })

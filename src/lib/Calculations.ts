@@ -598,9 +598,10 @@ export function normalizeDocumentInput(raw: RawDocumentInput): DocumentInput {
   if (Array.isArray(cf.extraCharges)) {
     for (const c of cf.extraCharges) {
       const v = Number(c.value || 0)
-      if (v !== 0) {
+      const label = String(c.label || '').trim()
+      if (v !== 0 && label) {
         extraCharges.push({
-          label:         c.label      ?? 'Charge',
+          label,
           value:         v,
           vatApplicable: c.withTax === true,
         })
