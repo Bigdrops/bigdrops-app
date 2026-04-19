@@ -103,87 +103,66 @@ export function interpretPdfTableSettings(
   options: InterpretPdfTableSettingsOptions = {},
 ): PdfResolvedTableSettings {
   const mergeQtyUnit = options.mergeQtyUnit === true
+  const CONFIGURABLE_KEYS = new Set(['make', 'unit', 'install_rate', 'vat_rate', 'discount_rate'])
+  
   const configuredColumns = normalizeSavedColumns(savedColumns)
-  const activeColumns = configuredColumns.filter((column) => column.visible !== false)
-  const getConfiguredColumn = (key: string) => activeColumns.find((column) => column.key === key)
-  const customColumns = activeColumns
-    .filter((column) => String(column.key || '').startsWith('custom_'))
-    .map((column) => createPdfColumnDefinition(column))
+  const mandatoryKeys = ['num', 'description', 'quantity', 'unit_price', 'amount']
+  const resultColumns: PdfColumnDefinition[] = []
+  
+  configuredColumns.forEach(col => {
+    const key = col.key
+    const isMandatory = mandatoryKeys.includes(key)
+    const isConfigurable = CONFIGURABLE_KEYS.has(key)
+    const isCustom = key.startsWith('custom_')
 
-  const optionalColumns: Array<PdfColumnDefinition | null> = [
-    getConfiguredColumn('make')
-      ? createPdfColumnDefinition(getConfiguredColumn('make')!, {
-          key: 'make',
-          kind: 'builtin',
-          align: 'left',
-          pdfWidth: 48,
-          pdfFlex: 1.25,
-        })
-      : null,
-    !mergeQtyUnit && getConfiguredColumn('unit')
-      ? createPdfColumnDefinition(getConfiguredColumn('unit')!, {
-          key: 'unit',
-          kind: 'builtin',
-          align: 'center',
-          pdfWidth: 34,
-          pdfFlex: 0.85,
-        })
-      : null,
-    getConfiguredColumn('install_rate')
-      ? createPdfColumnDefinition(getConfiguredColumn('install_rate')!, {
-          key: 'install_rate',
-          kind: 'builtin',
-          align: 'right',
-          dataType: 'install_rate',
-          pdfWidth: 54,
-          pdfFlex: 1.15,
-        })
-      : null,
-    getConfiguredColumn('vat_rate')
-      ? createPdfColumnDefinition(getConfiguredColumn('vat_rate')!, {
-          key: 'vat_rate',
-          kind: 'builtin',
-          align: 'center',
-          dataType: 'vat_rate',
-          pdfWidth: 32,
-          pdfFlex: 0.8,
-        })
-      : null,
-    getConfiguredColumn('discount_rate')
-      ? createPdfColumnDefinition(getConfiguredColumn('discount_rate')!, {
-          key: 'discount_rate',
-          kind: 'builtin',
-          align: 'center',
-          dataType: 'discount_rate',
-          pdfWidth: 40,
-          pdfFlex: 0.95,
-        })
-      : null,
-  ]
+    if (col.visible === false && !isMandatory) return
 
-  const columns = [
-    FIXED_PDF_COLUMNS[0],
-    FIXED_PDF_COLUMNS[1],
-    ...optionalColumns.slice(0, 1).filter(Boolean),
-    {
-      ...FIXED_PDF_COLUMNS[2],
-      label: mergeQtyUnit ? 'Qty / Unit' : FIXED_PDF_COLUMNS[2].label,
-      pdfWidth: mergeQtyUnit ? 42 : FIXED_PDF_COLUMNS[2].pdfWidth,
-      pdfFlex: mergeQtyUnit ? 0.95 : FIXED_PDF_COLUMNS[2].pdfFlex,
-    },
-    ...optionalColumns.slice(1, 2).filter(Boolean),
-    FIXED_PDF_COLUMNS[3],
-    FIXED_PDF_COLUMNS[4],
-    ...optionalColumns.slice(2).filter(Boolean),
-    ...customColumns,
-  ] as PdfColumnDefinition[]
+    const fixedBase = FIXED_PDF_COLUMNS.find(f => f.key === key)
+    if (fixedBase) {
+      resultColumns.push({
+        ...fixedBase,
+        label: col.label || fixedBase.label,
+        ...(key === 'quantity' && mergeQtyUnit ? {
+          label: 'Qty / Unit',
+          pdfWidth: 42,
+          pdfFlex: 0.95
+        } : {})
+      })
+    } else if (isConfigurable) {
+      let overrides: Partial<PdfColumnDefinition> = {}
+      if (key === 'make') overrides = { pdfWidth: 48, pdfFlex: 1.25 }
+      if (key === 'unit' && !mergeQtyUnit) overrides = { pdfWidth: 34, pdfFlex: 0.85 }
+      if (key === 'install_rate') overrides = { dataType: 'install_rate', pdfWidth: 54, pdfFlex: 1.15 }
+      if (key === 'vat_rate') overrides = { dataType: 'vat_rate', pdfWidth: 32, pdfFlex: 0.8 }
+      if (key === 'discount_rate') overrides = { dataType: 'discount_rate', pdfWidth: 40, pdfFlex: 0.95 }
+      
+      if (Object.keys(overrides).length > 0 || (key === 'unit' && !mergeQtyUnit)) {
+        resultColumns.push(createPdfColumnDefinition(col, overrides))
+      }
+    } else if (isCustom) {
+      resultColumns.push(createPdfColumnDefinition(col))
+    }
+  })
+
+  mandatoryKeys.forEach((key, idx) => {
+    if (!resultColumns.some(c => c.key === key)) {
+      const fixedBase = FIXED_PDF_COLUMNS.find(f => f.key === key)
+      if (fixedBase) {
+        if (key === 'num' || key === 'description') {
+           resultColumns.splice(idx === 0 ? 0 : 1, 0, fixedBase)
+        } else {
+           resultColumns.push(fixedBase)
+        }
+      }
+    }
+  })
 
   return {
     mergeQtyUnit,
     configuredColumns,
-    activeColumns: activeColumns.map((column) => createPdfColumnDefinition(column)),
-    columns,
-    customColumns,
+    activeColumns: configuredColumns.filter(c => c.visible !== false).map(c => createPdfColumnDefinition(c)),
+    columns: resultColumns,
+    customColumns: configuredColumns.filter(c => c.key.startsWith('custom_')).map(c => createPdfColumnDefinition(c)),
   }
 }
 

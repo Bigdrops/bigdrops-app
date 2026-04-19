@@ -207,6 +207,7 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
     const belongsToCurrentGroup = !!currentGroupHeader && !!item.groupId && item.groupId === currentGroupHeader.groupId
 
     // If we have an open group but this line does NOT belong to it, close the group first
+    // This is critical for group integrity
     if (currentGroupHeader && !belongsToCurrentGroup) {
       rows.push({
         type: 'group_footer',
@@ -237,6 +238,8 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
       sub: item.subDescription ?? '',
     }
 
+    const isInGroup = !!currentGroupHeader && !!item.groupId && item.groupId === currentGroupHeader.groupId
+
     rows.push({
       type: item.rowType,
       rowType: item.rowType,
@@ -245,7 +248,7 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
       groupLabel: item.groupLabel,
       imageUrl: item.imageUrl,
       cells,
-      isInGroup: !!currentGroupHeader && !!item.groupId && item.groupId === currentGroupHeader.groupId,
+      isInGroup,
     })
 
     const nextItem = model.items[index + 1]

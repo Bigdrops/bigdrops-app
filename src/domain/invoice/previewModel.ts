@@ -241,6 +241,21 @@ export function buildInvoicePreviewModel({
     }
   })
 
+  const extraCharges = Array.isArray(customFieldObject?.extraCharges) ? customFieldObject.extraCharges : []
+  const taxableChargeRows = extraCharges
+    .filter((charge: any) => String(charge?.label || '').trim() && Number(charge?.value || 0) > 0 && charge?.withTax === true)
+    .map((charge: any) => ({
+      label: String(charge.label).trim(),
+      value: formatMoney(Number(charge.value || 0)),
+    }))
+  const nonTaxExtraRows = extraCharges
+    .filter((charge: any) => String(charge?.label || '').trim() && Number(charge?.value || 0) > 0 && charge?.withTax === false)
+    .map((charge: any) => ({
+      label: String(charge.label).trim(),
+      value: formatMoney(Number(charge.value || 0)),
+    }))
+
+  const timingMode = (customFieldObject as any)?.discountTiming === 'before' ? 'before' : 'after'
   const advanceSummary = getAdvanceSummaryValues(invoice)
   const summaryLabels = getPdfSummaryLabels(invoice, pdfOutput)
 
@@ -254,26 +269,33 @@ export function buildInvoicePreviewModel({
               label: 'Balance Remaining',
               value: formatMoney(advanceSummary.balanceRemaining),
               emphasis: true,
-              valueClassName: advanceSummary.balanceRemaining > 0 ? 'text-red-200' : 'text-emerald-200',
+              valueClassName: advanceSummary.balanceRemaining > 0 ? 'text-red-600' : 'text-emerald-600',
             }]),
       ]
     : [
         { label: 'Subtotal', value: formatMoney(Number(invoice.subtotal || 0)) },
+        ...(timingMode === 'before' && Number(invoice.discount || 0) > 0
+          ? [{ label: summaryLabels.discount, value: formatMoney(Number(invoice.discount || 0)), valueClassName: 'text-red-600' }]
+          : []),
+        ...taxableChargeRows,
         ...(Number(invoice.vat || 0) > 0 ? [{ label: summaryLabels.vat, value: formatMoney(Number(invoice.vat || 0)) }] : []),
+        ...(timingMode === 'after' && Number(invoice.discount || 0) > 0
+          ? [{ label: summaryLabels.discount, value: formatMoney(Number(invoice.discount || 0)), valueClassName: 'text-red-600' }]
+          : []),
         ...(Number(invoice.workmanship || 0) > 0 ? [{ label: 'Workmanship', value: formatMoney(Number(invoice.workmanship || 0)) }] : []),
         ...(Number(invoice.transportation || 0) > 0 ? [{ label: 'Transportation', value: formatMoney(Number(invoice.transportation || 0)) }] : []),
         ...(Number(invoice.shipping || 0) > 0 ? [{ label: 'Shipping', value: formatMoney(Number(invoice.shipping || 0)) }] : []),
-        ...(Number(invoice.discount || 0) > 0 ? [{ label: summaryLabels.discount, value: formatMoney(Number(invoice.discount || 0)), valueClassName: 'text-red-600' }] : []),
-        ...(Number(invoice.wht || 0) > 0 ? [{ label: summaryLabels.wht, value: formatMoney(Number(invoice.wht || 0)) }] : []),
+        ...nonTaxExtraRows,
+        ...(Number(invoice.wht || 0) > 0 ? [{ label: summaryLabels.wht, value: formatMoney(Number(invoice.wht || 0)), valueClassName: 'text-red-600' }] : []),
         { label: 'Total', value: formatMoney(invoiceTotal), emphasis: true, valueClassName: 'text-slate-950' },
-        { label: 'Cash Received', value: formatMoney(cashReceived) },
+        ...(cashReceived > 0 ? [{ label: 'Cash Received', value: formatMoney(cashReceived) }] : []),
         ...(pdfOutput?.showBalanceDue === false
           ? []
           : [{
               label: 'Balance Due',
               value: formatMoney(balanceDue),
               emphasis: true,
-              valueClassName: balanceDue > 0 ? 'text-red-200' : 'text-emerald-200',
+              valueClassName: balanceDue > 0 ? 'text-red-600' : 'text-emerald-600',
             }]),
       ]
 

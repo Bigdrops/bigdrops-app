@@ -141,26 +141,28 @@ export function IndustryGroupFooterRow({
         surfaceColor ? { backgroundColor: surfaceColor } : null,
       ]}
     >
-      <View style={styles.groupSubtotalRow}>
-        <Text
-          style={[
-            styles.groupSubtotalLabel,
-            mutedColor ? { color: mutedColor } : null,
-            bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
-          ]}
-        >
-          {row.groupSubtotalLabel ? `${row.groupSubtotalLabel}:` : 'Group Subtotal:'}
-        </Text>
-        <Text
-          style={[
-            styles.groupSubtotalValue,
-            textColor ? { color: textColor } : null,
-            bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
-          ]}
-        >
-          {row.groupSubtotalValue}
-        </Text>
-      </View>
+      {row.showSubtotal ? (
+        <View style={styles.groupSubtotalRow}>
+          <Text
+            style={[
+              styles.groupSubtotalLabel,
+              mutedColor ? { color: mutedColor } : null,
+              bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+            ]}
+          >
+            {row.groupSubtotalLabel ? `${row.groupSubtotalLabel}:` : 'Group Subtotal:'}
+          </Text>
+          <Text
+            style={[
+              styles.groupSubtotalValue,
+              textColor ? { color: textColor } : null,
+              bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+            ]}
+          >
+            {row.groupSubtotalValue}
+          </Text>
+        </View>
+      ) : null}
     </View>
   )
 }

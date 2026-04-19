@@ -24,9 +24,9 @@ import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { buildPdfRowCells, generateInvoicePdf, interpretPdfTableSettings } from '@/components/pdf-new'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
-import {
   BUILTIN_COLUMNS,
   DEFAULT_INVOICE_PDF_OUTPUT,
+  buildSummaryRows,
   getInvoicePdfOutput,
   parseCustomFields,
 } from '@/domain/invoice'
@@ -181,7 +181,10 @@ export default function ViewInvoice() {
     setDownloading(true)
     try {
       const pdfDesignPreset = getPdfDesignPreset('invoice')
-      const resolvedTable = interpretPdfTableSettings(BUILTIN_COLUMNS as any, { mergeQtyUnit: false })
+      const savedColumns = Array.isArray(customFields?.columnConfig) ? customFields.columnConfig : (BUILTIN_COLUMNS as any)
+      const resolvedTable = interpretPdfTableSettings(savedColumns, { 
+        mergeQtyUnit: customFields?.mergeQtyUnit === true 
+      })
       const referenceLinks = Array.isArray(customFields?.attachments)
         ? customFields.attachments
             .filter((entry: any) => entry?.url)
@@ -227,6 +230,7 @@ export default function ViewInvoice() {
             id: String(item.id || item._uiKey || index),
             rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
             groupLabel: item.group_name || null,
+            groupId: item.group_id || null,
             description: item.description || '',
             subDescription: item.sub_description || '',
             make: item.make || '',
@@ -245,7 +249,10 @@ export default function ViewInvoice() {
                     mergeQtyUnit: resolvedTable.mergeQtyUnit,
                     configuredColumns: resolvedTable.configuredColumns,
                   }),
-            customData: item.custom_data || {},
+            customData: {
+              ...(item.custom_data || {}),
+              ...(item.row_type === 'group_header' ? { showSubtotal: customFields?.groupMeta?.[item.group_id]?.showSubtotal === true } : {}),
+            },
           })),
           totals: {
             mode: 'standard',

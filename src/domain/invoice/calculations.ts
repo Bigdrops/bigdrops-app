@@ -296,3 +296,66 @@ export function calcTotals({
     fixedChargesTotal,
   }
 }
+
+export function buildSummaryRows({
+  invoice,
+  totals,
+  customFields,
+  chargeLabels = { workmanship: 'Workmanship', transportation: 'Transportation', shipping: 'Shipping' },
+}: {
+  invoice: any
+  totals: any
+  customFields: any
+  chargeLabels?: any
+}) {
+  const {
+    rawSubtotal = 0,
+    vatAmount = 0,
+    discountAmount = 0,
+    whtAmount = 0,
+    installRateTotal = 0,
+  } = totals || {}
+
+  const extraCharges = Array.isArray(customFields?.extraCharges) ? customFields.extraCharges : []
+  const timingMode = customFields?.discountTiming === 'before' ? 'before' : 'after'
+
+  const taxableChargeRows = extraCharges
+    .filter((charge: any) => String(charge?.label || '').trim() && Number(charge?.value || 0) > 0 && charge?.withTax === true)
+    .map((charge: any) => ({
+      key: `extra-${charge.id}`,
+      label: String(charge.label).trim(),
+      amount: Number(charge.value || 0),
+    }))
+
+  const workmanship = Number(invoice.workmanship || 0)
+  const transportation = Number(invoice.transportation || 0)
+  const shipping = Number(invoice.shipping || 0)
+
+  const nonTaxChargeRows = [
+    workmanship > 0 ? { key: 'workmanship', label: chargeLabels.workmanship || 'Workmanship', amount: workmanship } : null,
+    transportation > 0 ? { key: 'transportation', label: chargeLabels.transportation || 'Transportation', amount: transportation } : null,
+    shipping > 0 ? { key: 'shipping', label: chargeLabels.shipping || 'Shipping', amount: shipping } : null,
+    ...extraCharges
+      .filter((charge: any) => String(charge?.label || '').trim() && Number(charge?.value || 0) > 0 && charge?.withTax === false)
+      .map((charge: any) => ({
+        key: `extra-${charge.id}`,
+        label: String(charge.label).trim(),
+        amount: Number(charge.value || 0),
+      })),
+  ].filter(Boolean) as any[]
+
+  return [
+    { key: 'subtotal', label: 'Subtotal', amount: rawSubtotal },
+    ...(timingMode === 'before' && discountAmount > 0
+      ? [{ key: 'discount', label: 'Discount', amount: discountAmount, tone: 'danger' as const }]
+      : []),
+    ...taxableChargeRows,
+    ...(vatAmount > 0 || Number(invoice.vat || 0) > 0 ? [{ key: 'vat', label: 'VAT', amount: vatAmount }] : []),
+    ...(timingMode === 'after' && discountAmount > 0
+      ? [{ key: 'discount', label: 'Discount', amount: discountAmount, tone: 'danger' as const }]
+      : []),
+    ...nonTaxChargeRows,
+    ...(installRateTotal > 0 ? [{ key: 'install_rate', label: 'Install Rate', amount: installRateTotal }] : []),
+    ...(whtAmount > 0 ? [{ key: 'wht', label: 'WHT', amount: whtAmount, tone: 'danger' as const }] : []),
+  ]
+}

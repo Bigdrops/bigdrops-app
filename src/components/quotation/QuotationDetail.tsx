@@ -17,7 +17,7 @@ import {
 } from '@/components/document/DocumentViewShell'
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { supabase } from '@/supabase'
-import { calcTotals } from '@/components/useInvoiceColumns.jsx'
+import { calcTotals, buildSummaryRows } from '@/domain/invoice'
 import { buildPdfRowCells, generateQuotationPdf, interpretPdfTableSettings } from '@/components/pdf-new'
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { getPdfDesignPreset, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
@@ -273,17 +273,17 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             }))
         : []
 
+      const shellQuotationTotal = totals?.totalPayable ?? Number(quotation.total || 0)
       const summaryRows = [
-        { key: 'subtotal', label: 'Subtotal', amount: Number(totals?.rawSubtotal || quotation.subtotal || 0) },
-        ...(Number(totals?.installRateTotal || 0) > 0 ? [{ key: 'installation', label: 'Installation Total', amount: Number(totals?.installRateTotal || 0) }] : []),
-        ...(Number(quotation.workmanship || 0) > 0 ? [{ key: 'workmanship', label: 'Workmanship', amount: Number(quotation.workmanship || 0) }] : []),
-        ...(Number(quotation.transportation || 0) > 0 ? [{ key: 'transportation', label: 'Transportation', amount: Number(quotation.transportation || 0) }] : []),
-        ...(Number(quotation.shipping || 0) > 0 ? [{ key: 'shipping', label: 'Shipping', amount: Number(quotation.shipping || 0) }] : []),
-        ...(Number(totals?.discountAmount || quotation.discount || 0) > 0 ? [{ key: 'discount', label: previewSummaryLabels.discount, amount: Number(totals?.discountAmount || quotation.discount || 0), tone: 'danger' as const }] : []),
-        ...(Number(totals?.vatAmount || quotation.vat || 0) > 0 ? [{ key: 'vat', label: previewSummaryLabels.vat, amount: Number(totals?.vatAmount || quotation.vat || 0) }] : []),
-        ...(Number(totals?.whtAmount || quotation.wht || 0) > 0 ? [{ key: 'wht', label: previewSummaryLabels.wht, amount: Number(totals?.whtAmount || quotation.wht || 0) }] : []),
-        { key: 'total', label: 'Total', amount: Number(shellQuotationTotal || quotation.total || 0), emphasis: true, tone: 'primary' as const },
+        ...buildSummaryRows({
+          invoice: quotation,
+          totals,
+          customFields,
+          chargeLabels: customFields?.chargeLabels,
+        }),
+        { key: 'total', label: 'Total', amount: Number(shellQuotationTotal), emphasis: true, tone: 'primary' as const },
       ]
+
       const resolvedTable = interpretPdfTableSettings(columns as any, {
         mergeQtyUnit: customFields.mergeQtyUnit === true,
       })
@@ -324,6 +324,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             id: String(item.id || item._uiKey || index),
             rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
             groupLabel: item.group_name || null,
+            groupId: item.group_id || null,
             description: item.description || '',
             subDescription: item.sub_description || '',
             make: item.make || '',
@@ -704,6 +705,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     { label: 'Title', value: quotation.quotation_title || '' },
     ...topHeaderFields.map((field: any) => ({ label: field.label, value: field.value })),
   ].filter((row) => String(row.value || '').trim().length > 0)
+
   const previewItems = items.map((item, index) => {
     if (item.row_type === 'group_header') {
       return { type: 'group', label: item.group_name || `Group ${index + 1}` }
@@ -728,15 +730,23 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       facts: itemFacts,
     }
   })
+
+  const customFields = parseDocumentCustomFields(quotation.custom_fields)
   const previewSummaryLabels = getPdfSummaryLabels(quotation, pdfOutput)
   const previewTotals = [
-    { label: 'Subtotal', value: formatMoney(totals?.rawSubtotal || 0) },
-    ...(Number(totals?.installRateTotal || 0) > 0 ? [{ label: 'Install Rate', value: formatMoney(totals?.installRateTotal || 0) }] : []),
-    ...(Number(totals?.vatAmount || 0) > 0 ? [{ label: previewSummaryLabels.vat, value: formatMoney(totals?.vatAmount || 0) }] : []),
-    ...(Number(totals?.discountAmount || 0) > 0 ? [{ label: previewSummaryLabels.discount, value: formatMoney(totals?.discountAmount || 0), valueClassName: 'text-red-600' }] : []),
-    ...(Number(totals?.whtAmount || 0) > 0 ? [{ label: previewSummaryLabels.wht, value: formatMoney(totals?.whtAmount || 0) }] : []),
+    ...buildSummaryRows({
+      invoice: quotation,
+      totals,
+      customFields,
+      chargeLabels: customFields?.chargeLabels,
+    }).map(row => ({
+      label: row.label,
+      value: formatMoney(row.amount),
+      valueClassName: row.tone === 'danger' ? 'text-red-600' : undefined
+    })),
     { label: 'Total', value: formatMoney(shellQuotationTotal), emphasis: true, valueClassName: 'text-slate-950' },
   ]
+  
   const previewNotesSections = [
     quotation.notes ? { title: notesTitle, content: renderRichText(quotation.notes) } : null,
     quotation.terms ? { title: termsTitle, content: renderRichText(quotation.terms) } : null,
