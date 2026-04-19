@@ -3,7 +3,6 @@ import { Input } from '@/components/ui/input'
 import {
   fieldCls,
   labelCls,
-  pageCardCls,
   SectionLabel,
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 
@@ -31,7 +30,7 @@ export function FormHeader({
   onOpenClientPicker,
 }: FormHeaderProps) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 border-b border-[var(--bd-border-soft)] pb-6">
       <div>
         <SectionLabel color="#0f172a">{isQuotation ? 'Quotation Details' : 'Document Details'}</SectionLabel>
         
@@ -55,8 +54,8 @@ export function FormHeader({
           </button>
         </div>
 
-        <div className={`${pageCardCls} p-5`}>
-          <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="space-y-4 px-1">
+          <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">{modeLabel}</div>
               <h1 className="mt-1 text-[26px] font-black leading-tight tracking-tight text-[var(--bd-text)]">{title}</h1>
@@ -64,7 +63,7 @@ export function FormHeader({
             <button
               type="button"
               onClick={onOpenActionsSheet}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text2)] shadow-sm transition hover:bg-[var(--bd-bg2)]"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text2)] transition hover:bg-[var(--bd-bg2)]"
             >
               <MoreHorizontal className="h-5 w-5" />
             </button>

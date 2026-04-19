@@ -4,7 +4,6 @@ import {
   fieldCls,
   formatCurrency,
   labelCls,
-  pageCardCls,
   SectionLabel,
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { Input } from '@/components/ui/input'
@@ -29,7 +28,7 @@ export function FormTotals({
   return (
     <div>
       <SectionLabel color="#059669">Totals Summary</SectionLabel>
-      <div className={`${pageCardCls} p-5`}>
+      <div className="rounded-[var(--bd-radius-xl)] border border-[var(--bd-border-soft)] bg-[color:color-mix(in_srgb,var(--bd-surface)_72%,white)] p-5 shadow-none">
         <div className="space-y-2.5">
           {summaryRows.map((row) => (
             <div
@@ -77,20 +76,20 @@ export function FormTotals({
         </div>
 
         {amountInWords && (
-          <div className="mt-6 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-bg)] p-3 text-[12px] font-medium italic text-[var(--bd-text2)] leading-relaxed">
+          <div className="mt-6 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border-soft)] bg-[var(--bd-bg)] p-3 text-[12px] font-medium italic leading-relaxed text-[var(--bd-text2)]">
             {amountInWords}
           </div>
         )}
 
-        <div className="mt-8 border-t border-[var(--bd-text)] pt-5">
+        <div className="mt-8 border-t border-[var(--bd-border-soft)] pt-5">
           <div className="flex items-center justify-between">
-            <span className="text-[15px] font-extrabold text-[var(--bd-text)] uppercase tracking-wider">Total Payable</span>
-            <span className="font-serif text-[28px] font-bold text-[var(--bd-text)]">
+            <span className="text-[14px] font-bold uppercase tracking-[0.16em] text-[var(--bd-text2)]">Total Payable</span>
+            <span className="font-serif text-[28px] font-semibold tracking-tight text-[var(--bd-text)]">
               {formatCurrency(totalPayable)}
             </span>
           </div>
-          <div className="mt-1 flex items-center justify-end gap-1.5 opacity-40">
-            <span className="h-1 w-1 rounded-full bg-[var(--bd-text)]" />
+          <div className="mt-1 flex items-center justify-end gap-1.5 text-[var(--bd-text3)]">
+            <span className="h-1 w-1 rounded-full bg-[var(--bd-border)]" />
             <span className="text-[9px] font-bold uppercase tracking-[0.2em]">Final Amount Due</span>
           </div>
         </div>

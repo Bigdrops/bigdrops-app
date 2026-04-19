@@ -1,0 +1,307 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/components/app/SplashOverlay.tsx");import __vite__cjsImport0_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=6addbc7a"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+import { cn } from "/src/lib/utils.ts";
+export default function SplashOverlay({
+  visible = true,
+  tip = "Preparing your workspace...",
+  showProgress = true,
+  variant = "ordered-intake",
+  className
+}) {
+  return /* @__PURE__ */ jsxDEV(
+    "div",
+    {
+      role: "status",
+      "aria-live": "polite",
+      "aria-hidden": !visible,
+      "aria-label": tip,
+      className: cn(
+        "fixed inset-0 z-[9999] bg-background px-6 transition-[opacity,visibility] duration-300 ease-out",
+        "flex items-center justify-center",
+        visible ? "pointer-events-auto visible opacity-100" : "pointer-events-none invisible opacity-0",
+        className
+      ),
+      children: /* @__PURE__ */ jsxDEV("div", { className: "relative flex w-full max-w-sm flex-col items-center", children: [
+        /* @__PURE__ */ jsxDEV(
+          "div",
+          {
+            "aria-hidden": "true",
+            className: cn(
+              "pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[200px] w-[200px] -translate-x-1/2 -translate-y-[56%] rounded-full",
+              "bg-[radial-gradient(circle,hsl(var(--primary)_/_0.12)_0%,hsl(var(--primary)_/_0.06)_32%,transparent_72%)]",
+              "animate-[bd-halo_3.2s_ease-in-out_infinite]"
+            )
+          },
+          void 0,
+          false,
+          {
+            fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+            lineNumber: 33,
+            columnNumber: 9
+          },
+          this
+        ),
+        /* @__PURE__ */ jsxDEV("div", { className: "flex flex-col items-center", children: [
+          variant === "ordered-intake" ? /* @__PURE__ */ jsxDEV(OrderedIntakeMark, {}, void 0, false, {
+            fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+            lineNumber: 43,
+            columnNumber: 43
+          }, this) : /* @__PURE__ */ jsxDEV(FolderTabMark, {}, void 0, false, {
+            fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+            lineNumber: 43,
+            columnNumber: 67
+          }, this),
+          /* @__PURE__ */ jsxDEV("h1", { className: "brand-wordmark mt-4 text-[20px] font-semibold tracking-[-0.02em] text-foreground", children: "BigDrops" }, void 0, false, {
+            fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+            lineNumber: 45,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV("p", { className: "mt-1.5 text-center text-[13px] leading-5 text-muted-foreground", children: tip }, void 0, false, {
+            fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+            lineNumber: 49,
+            columnNumber: 11
+          }, this),
+          showProgress ? /* @__PURE__ */ jsxDEV(
+            "div",
+            {
+              "aria-hidden": "true",
+              className: "relative mt-3.5 h-0.5 w-[112px] overflow-hidden rounded-full bg-border/70",
+              children: /* @__PURE__ */ jsxDEV("div", { className: "absolute inset-y-0 left-[-30%] w-[38%] rounded-full bg-primary/70 animate-[bd-progress_1.8s_ease-in-out_infinite]" }, void 0, false, {
+                fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+                lineNumber: 58,
+                columnNumber: 15
+              }, this)
+            },
+            void 0,
+            false,
+            {
+              fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+              lineNumber: 54,
+              columnNumber: 11
+            },
+            this
+          ) : null
+        ] }, void 0, true, {
+          fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+          lineNumber: 42,
+          columnNumber: 9
+        }, this)
+      ] }, void 0, true, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+        lineNumber: 32,
+        columnNumber: 7
+      }, this)
+    },
+    void 0,
+    false,
+    {
+      fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+      lineNumber: 20,
+      columnNumber: 5
+    },
+    this
+  );
+}
+_c = SplashOverlay;
+function OrderedIntakeMark() {
+  return /* @__PURE__ */ jsxDEV(
+    "div",
+    {
+      "aria-hidden": "true",
+      className: cn(
+        "relative h-20 w-20 rounded-[22px] border border-border/70 bg-card",
+        "shadow-[0_1px_0_hsl(var(--foreground)_/_0.03),0_12px_28px_hsl(var(--foreground)_/_0.05)]",
+        "animate-[bd-mark_3.2s_ease-in-out_infinite]"
+      ),
+      children: [
+        /* @__PURE__ */ jsxDEV(
+          "div",
+          {
+            className: cn(
+              "absolute left-[15px] top-[12px] h-[48px] w-[38px] rounded-[12px] border border-border/70 bg-background/90",
+              "animate-[bd-sheet-rear_3.2s_cubic-bezier(.22,.61,.36,1)_infinite]"
+            ),
+            children: [
+              /* @__PURE__ */ jsxDEV("div", { className: "absolute left-2.5 top-3 h-1 w-4 rounded-full bg-muted" }, void 0, false, {
+                fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+                lineNumber: 83,
+                columnNumber: 9
+              }, this),
+              /* @__PURE__ */ jsxDEV("div", { className: "absolute left-2.5 top-6 h-1 w-5 rounded-full bg-muted/80" }, void 0, false, {
+                fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+                lineNumber: 84,
+                columnNumber: 9
+              }, this)
+            ]
+          },
+          void 0,
+          true,
+          {
+            fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+            lineNumber: 77,
+            columnNumber: 7
+          },
+          this
+        ),
+        /* @__PURE__ */ jsxDEV(
+          "div",
+          {
+            className: cn(
+              "absolute left-[24px] top-[18px] h-[48px] w-[38px] rounded-[12px] border border-border bg-card",
+              "shadow-[0_6px_16px_hsl(var(--foreground)_/_0.06)]",
+              "animate-[bd-sheet-front_3.2s_cubic-bezier(.22,.61,.36,1)_infinite]"
+            ),
+            children: [
+              /* @__PURE__ */ jsxDEV("div", { className: "absolute inset-x-0 top-0 h-[10px] rounded-t-[11px] bg-primary/14" }, void 0, false, {
+                fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+                lineNumber: 94,
+                columnNumber: 9
+              }, this),
+              /* @__PURE__ */ jsxDEV("div", { className: "absolute left-2.5 top-[16px] h-[2px] w-6 rounded-full bg-foreground/12" }, void 0, false, {
+                fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+                lineNumber: 95,
+                columnNumber: 9
+              }, this),
+              /* @__PURE__ */ jsxDEV("div", { className: "absolute left-2.5 top-[22px] h-[2px] w-4 rounded-full bg-foreground/10" }, void 0, false, {
+                fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+                lineNumber: 96,
+                columnNumber: 9
+              }, this),
+              /* @__PURE__ */ jsxDEV("div", { className: "absolute left-2.5 top-[28px] h-[2px] w-5 rounded-full bg-foreground/10" }, void 0, false, {
+                fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+                lineNumber: 97,
+                columnNumber: 9
+              }, this)
+            ]
+          },
+          void 0,
+          true,
+          {
+            fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+            lineNumber: 87,
+            columnNumber: 7
+          },
+          this
+        )
+      ]
+    },
+    void 0,
+    true,
+    {
+      fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+      lineNumber: 69,
+      columnNumber: 5
+    },
+    this
+  );
+}
+_c2 = OrderedIntakeMark;
+function FolderTabMark() {
+  return /* @__PURE__ */ jsxDEV(
+    "div",
+    {
+      "aria-hidden": "true",
+      className: cn(
+        "relative h-20 w-20 rounded-[22px] border border-border/70 bg-card",
+        "shadow-[0_1px_0_hsl(var(--foreground)_/_0.03),0_12px_28px_hsl(var(--foreground)_/_0.05)]",
+        "animate-[bd-mark_3.2s_ease-in-out_infinite]"
+      ),
+      children: [
+        /* @__PURE__ */ jsxDEV(
+          "div",
+          {
+            className: cn(
+              "absolute left-[18px] top-[21px] h-[36px] w-[30px] rounded-[10px] border border-border/60 bg-background/90",
+              "animate-[bd-sheet-rear_3.2s_cubic-bezier(.22,.61,.36,1)_infinite]"
+            )
+          },
+          void 0,
+          false,
+          {
+            fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+            lineNumber: 113,
+            columnNumber: 7
+          },
+          this
+        ),
+        /* @__PURE__ */ jsxDEV(
+          "div",
+          {
+            className: cn(
+              "absolute left-[25px] top-[18px] h-[40px] w-[34px] rounded-[12px] border border-border bg-card",
+              "shadow-[0_6px_16px_hsl(var(--foreground)_/_0.05)]",
+              "animate-[bd-sheet-front_3.2s_cubic-bezier(.22,.61,.36,1)_infinite]"
+            ),
+            children: [
+              /* @__PURE__ */ jsxDEV("div", { className: "absolute left-[8px] top-0 h-[8px] w-[12px] rounded-b-[6px] bg-primary/16" }, void 0, false, {
+                fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+                lineNumber: 126,
+                columnNumber: 9
+              }, this),
+              /* @__PURE__ */ jsxDEV("div", { className: "absolute inset-x-0 top-[8px] h-[8px] bg-primary/10" }, void 0, false, {
+                fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+                lineNumber: 127,
+                columnNumber: 9
+              }, this),
+              /* @__PURE__ */ jsxDEV("div", { className: "absolute left-2.5 top-[22px] h-[2px] w-5 rounded-full bg-foreground/10" }, void 0, false, {
+                fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+                lineNumber: 128,
+                columnNumber: 9
+              }, this),
+              /* @__PURE__ */ jsxDEV("div", { className: "absolute left-2.5 top-[28px] h-[2px] w-4 rounded-full bg-foreground/10" }, void 0, false, {
+                fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+                lineNumber: 129,
+                columnNumber: 9
+              }, this)
+            ]
+          },
+          void 0,
+          true,
+          {
+            fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+            lineNumber: 119,
+            columnNumber: 7
+          },
+          this
+        )
+      ]
+    },
+    void 0,
+    true,
+    {
+      fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx",
+      lineNumber: 105,
+      columnNumber: 5
+    },
+    this
+  );
+}
+_c3 = FolderTabMark;
+var _c, _c2, _c3;
+$RefreshReg$(_c, "SplashOverlay");
+$RefreshReg$(_c2, "OrderedIntakeMark");
+$RefreshReg$(_c3, "FolderTabMark");
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+  RefreshRuntime.__hmr_import(import.meta.url).then((currentExports) => {
+    RefreshRuntime.registerExportsForReactRefresh("C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+function $RefreshReg$(type, id) {
+  return RefreshRuntime.register(type, "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/SplashOverlay.tsx " + id);
+}
+function $RefreshSig$() {
+  return RefreshRuntime.createSignatureFunctionForTransform();
+}
+
+//# sourceMappingURL=data:application/json;base64,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RUo7QUFBQ1csTUE5QlFEO0FBQWEsSUFBQUgsSUFBQUUsS0FBQUU7QUFBQSxhQUFBSixJQUFBO0FBQUEsYUFBQUUsS0FBQTtBQUFBLGFBQUFFLEtBQUEiLCJuYW1lcyI6WyJjbiIsIlNwbGFzaE92ZXJsYXkiLCJ2aXNpYmxlIiwidGlwIiwic2hvd1Byb2dyZXNzIiwidmFyaWFudCIsImNsYXNzTmFtZSIsIl9jIiwiT3JkZXJlZEludGFrZU1hcmsiLCJfYzIiLCJGb2xkZXJUYWJNYXJrIiwiX2MzIl0sImlnbm9yZUxpc3QiOltdLCJzb3VyY2VzIjpbIlNwbGFzaE92ZXJsYXkudHN4Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCAqIGFzIFJlYWN0IGZyb20gJ3JlYWN0J1xyXG5pbXBvcnQgeyBjbiB9IGZyb20gJ0AvbGliL3V0aWxzJ1xyXG5cclxudHlwZSBTcGxhc2hPdmVybGF5UHJvcHMgPSB7XHJcbiAgdmlzaWJsZT86IGJvb2xlYW5cclxuICB0aXA/OiBzdHJpbmdcclxuICBzaG93UHJvZ3Jlc3M/OiBib29sZWFuXHJcbiAgdmFyaWFudD86ICdvcmRlcmVkLWludGFrZScgfCAnZm9sZGVyLXRhYidcclxuICBjbGFzc05hbWU/OiBzdHJpbmdcclxufVxyXG5cclxuZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24gU3BsYXNoT3ZlcmxheSh7XHJcbiAgdmlzaWJsZSA9IHRydWUsXHJcbiAgdGlwID0gJ1ByZXBhcmluZyB5b3VyIHdvcmtzcGFjZS4uLicsXHJcbiAgc2hvd1Byb2dyZXNzID0gdHJ1ZSxcclxuICB2YXJpYW50ID0gJ29yZGVyZWQtaW50YWtlJyxcclxuICBjbGFzc05hbWUsXHJcbn06IFNwbGFzaE92ZXJsYXlQcm9wcykge1xyXG4gIHJldHVybiAoXHJcbiAgICA8ZGl2XHJcbiAgICAgIHJvbGU9XCJzdGF0dXNcIlxyXG4gICAgICBhcmlhLWxpdmU9XCJwb2xpdGVcIlxyXG4gICAgICBhcmlhLWhpZGRlbj17IXZpc2libGV9XHJcbiAgICAgIGFyaWEtbGFiZWw9e3RpcH1cclxuICAgICAgY2xhc3NOYW1lPXtjbihcclxuICAgICAgICAnZml4ZWQgaW5zZXQtMCB6LVs5OTk5XSBiZy1iYWNrZ3JvdW5kIHB4LTYgdHJhbnNpdGlvbi1bb3BhY2l0eSx2aXNpYmlsaXR5XSBkdXJhdGlvbi0zMDAgZWFzZS1vdXQnLFxyXG4gICAgICAgICdmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWNlbnRlcicsXHJcbiAgICAgICAgdmlzaWJsZSA/ICdwb2ludGVyLWV2ZW50cy1hdXRvIHZpc2libGUgb3BhY2l0eS0xMDAnIDogJ3BvaW50ZXItZXZlbnRzLW5vbmUgaW52aXNpYmxlIG9wYWNpdHktMCcsXHJcbiAgICAgICAgY2xhc3NOYW1lLFxyXG4gICAgICApfVxyXG4gICAgPlxyXG4gICAgICA8ZGl2IGNsYXNzTmFtZT1cInJlbGF0aXZlIGZsZXggdy1mdWxsIG1heC13LXNtIGZsZXgtY29sIGl0ZW1zLWNlbnRlclwiPlxyXG4gICAgICAgIDxkaXZcclxuICAgICAgICAgIGFyaWEtaGlkZGVuPVwidHJ1ZVwiXHJcbiAgICAgICAgICBjbGFzc05hbWU9e2NuKFxyXG4gICAgICAgICAgICAncG9pbnRlci1ldmVudHMtbm9uZSBhYnNvbHV0ZSBsZWZ0LTEvMiB0b3AtMS8yIC16LTEwIGgtWzIwMHB4XSB3LVsyMDBweF0gLXRyYW5zbGF0ZS14LTEvMiAtdHJhbnNsYXRlLXktWzU2JV0gcm91bmRlZC1mdWxsJyxcclxuICAgICAgICAgICAgJ2JnLVtyYWRpYWwtZ3JhZGllbnQoY2lyY2xlLGhzbCh2YXIoLS1wcmltYXJ5KV8vXzAuMTIpXzAlLGhzbCh2YXIoLS1wcmltYXJ5KV8vXzAuMDYpXzMyJSx0cmFuc3BhcmVudF83MiUpXScsXHJcbiAgICAgICAgICAgICdhbmltYXRlLVtiZC1oYWxvXzMuMnNfZWFzZS1pbi1vdXRfaW5maW5pdGVdJyxcclxuICAgICAgICAgICl9XHJcbiAgICAgICAgLz5cclxuXHJcbiAgICAgICAgPGRpdiBjbGFzc05hbWU9XCJmbGV4IGZsZXgtY29sIGl0ZW1zLWNlbnRlclwiPlxyXG4gICAgICAgICAge3ZhcmlhbnQgPT09ICdvcmRlcmVkLWludGFrZScgPyA8T3JkZXJlZEludGFrZU1hcmsgLz4gOiA8Rm9sZGVyVGFiTWFyayAvPn1cclxuXHJcbiAgICAgICAgICA8aDEgY2xhc3NOYW1lPVwiYnJhbmQtd29yZG1hcmsgbXQtNCB0ZXh0LVsyMHB4XSBmb250LXNlbWlib2xkIHRyYWNraW5nLVstMC4wMmVtXSB0ZXh0LWZvcmVncm91bmRcIj5cbiAgICAgICAgICAgIEJpZ0Ryb3BzXG4gICAgICAgICAgPC9oMT5cblxyXG4gICAgICAgICAgPHAgY2xhc3NOYW1lPVwibXQtMS41IHRleHQtY2VudGVyIHRleHQtWzEzcHhdIGxlYWRpbmctNSB0ZXh0LW11dGVkLWZvcmVncm91bmRcIj5cclxuICAgICAgICAgICAge3RpcH1cclxuICAgICAgICAgIDwvcD5cclxuXHJcbiAgICAgICAgICB7c2hvd1Byb2dyZXNzID8gKFxyXG4gICAgICAgICAgICA8ZGl2XHJcbiAgICAgICAgICAgICAgYXJpYS1oaWRkZW49XCJ0cnVlXCJcclxuICAgICAgICAgICAgICBjbGFzc05hbWU9XCJyZWxhdGl2ZSBtdC0zLjUgaC0wLjUgdy1bMTEycHhdIG92ZXJmbG93LWhpZGRlbiByb3VuZGVkLWZ1bGwgYmctYm9yZGVyLzcwXCJcclxuICAgICAgICAgICAgPlxyXG4gICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiYWJzb2x1dGUgaW5zZXQteS0wIGxlZnQtWy0zMCVdIHctWzM4JV0gcm91bmRlZC1mdWxsIGJnLXByaW1hcnkvNzAgYW5pbWF0ZS1bYmQtcHJvZ3Jlc3NfMS44c19lYXNlLWluLW91dF9pbmZpbml0ZV1cIiAvPlxyXG4gICAgICAgICAgICA8L2Rpdj5cclxuICAgICAgICAgICkgOiBudWxsfVxyXG4gICAgICAgIDwvZGl2PlxyXG4gICAgICA8L2Rpdj5cclxuICAgIDwvZGl2PlxyXG4gIClcclxufVxyXG5cclxuZnVuY3Rpb24gT3JkZXJlZEludGFrZU1hcmsoKSB7XHJcbiAgcmV0dXJuIChcclxuICAgIDxkaXZcclxuICAgICAgYXJpYS1oaWRkZW49XCJ0cnVlXCJcclxuICAgICAgY2xhc3NOYW1lPXtjbihcclxuICAgICAgICAncmVsYXRpdmUgaC0yMCB3LTIwIHJvdW5kZWQtWzIycHhdIGJvcmRlciBib3JkZXItYm9yZGVyLzcwIGJnLWNhcmQnLFxyXG4gICAgICAgICdzaGFkb3ctWzBfMXB4XzBfaHNsKHZhcigtLWZvcmVncm91bmQpXy9fMC4wMyksMF8xMnB4XzI4cHhfaHNsKHZhcigtLWZvcmVncm91bmQpXy9fMC4wNSldJyxcclxuICAgICAgICAnYW5pbWF0ZS1bYmQtbWFya18zLjJzX2Vhc2UtaW4tb3V0X2luZmluaXRlXScsXHJcbiAgICAgICl9XHJcbiAgICA+XHJcbiAgICAgIDxkaXZcclxuICAgICAgICBjbGFzc05hbWU9e2NuKFxyXG4gICAgICAgICAgJ2Fic29sdXRlIGxlZnQtWzE1cHhdIHRvcC1bMTJweF0gaC1bNDhweF0gdy1bMzhweF0gcm91bmRlZC1bMTJweF0gYm9yZGVyIGJvcmRlci1ib3JkZXIvNzAgYmctYmFja2dyb3VuZC85MCcsXHJcbiAgICAgICAgICAnYW5pbWF0ZS1bYmQtc2hlZXQtcmVhcl8zLjJzX2N1YmljLWJlemllciguMjIsLjYxLC4zNiwxKV9pbmZpbml0ZV0nLFxyXG4gICAgICAgICl9XHJcbiAgICAgID5cclxuICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cImFic29sdXRlIGxlZnQtMi41IHRvcC0zIGgtMSB3LTQgcm91bmRlZC1mdWxsIGJnLW11dGVkXCIgLz5cclxuICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cImFic29sdXRlIGxlZnQtMi41IHRvcC02IGgtMSB3LTUgcm91bmRlZC1mdWxsIGJnLW11dGVkLzgwXCIgLz5cclxuICAgICAgPC9kaXY+XHJcblxyXG4gICAgICA8ZGl2XHJcbiAgICAgICAgY2xhc3NOYW1lPXtjbihcclxuICAgICAgICAgICdhYnNvbHV0ZSBsZWZ0LVsyNHB4XSB0b3AtWzE4cHhdIGgtWzQ4cHhdIHctWzM4cHhdIHJvdW5kZWQtWzEycHhdIGJvcmRlciBib3JkZXItYm9yZGVyIGJnLWNhcmQnLFxyXG4gICAgICAgICAgJ3NoYWRvdy1bMF82cHhfMTZweF9oc2wodmFyKC0tZm9yZWdyb3VuZClfL18wLjA2KV0nLFxyXG4gICAgICAgICAgJ2FuaW1hdGUtW2JkLXNoZWV0LWZyb250XzMuMnNfY3ViaWMtYmV6aWVyKC4yMiwuNjEsLjM2LDEpX2luZmluaXRlXScsXHJcbiAgICAgICAgKX1cclxuICAgICAgPlxyXG4gICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiYWJzb2x1dGUgaW5zZXQteC0wIHRvcC0wIGgtWzEwcHhdIHJvdW5kZWQtdC1bMTFweF0gYmctcHJpbWFyeS8xNFwiIC8+XHJcbiAgICAgICAgPGRpdiBjbGFzc05hbWU9XCJhYnNvbHV0ZSBsZWZ0LTIuNSB0b3AtWzE2cHhdIGgtWzJweF0gdy02IHJvdW5kZWQtZnVsbCBiZy1mb3JlZ3JvdW5kLzEyXCIgLz5cclxuICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cImFic29sdXRlIGxlZnQtMi41IHRvcC1bMjJweF0gaC1bMnB4XSB3LTQgcm91bmRlZC1mdWxsIGJnLWZvcmVncm91bmQvMTBcIiAvPlxyXG4gICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiYWJzb2x1dGUgbGVmdC0yLjUgdG9wLVsyOHB4XSBoLVsycHhdIHctNSByb3VuZGVkLWZ1bGwgYmctZm9yZWdyb3VuZC8xMFwiIC8+XHJcbiAgICAgIDwvZGl2PlxyXG4gICAgPC9kaXY+XHJcbiAgKVxyXG59XHJcblxyXG5mdW5jdGlvbiBGb2xkZXJUYWJNYXJrKCkge1xyXG4gIHJldHVybiAoXHJcbiAgICA8ZGl2XHJcbiAgICAgIGFyaWEtaGlkZGVuPVwidHJ1ZVwiXHJcbiAgICAgIGNsYXNzTmFtZT17Y24oXHJcbiAgICAgICAgJ3JlbGF0aXZlIGgtMjAgdy0yMCByb3VuZGVkLVsyMnB4XSBib3JkZXIgYm9yZGVyLWJvcmRlci83MCBiZy1jYXJkJyxcclxuICAgICAgICAnc2hhZG93LVswXzFweF8wX2hzbCh2YXIoLS1mb3JlZ3JvdW5kKV8vXzAuMDMpLDBfMTJweF8yOHB4X2hzbCh2YXIoLS1mb3JlZ3JvdW5kKV8vXzAuMDUpXScsXHJcbiAgICAgICAgJ2FuaW1hdGUtW2JkLW1hcmtfMy4yc19lYXNlLWluLW91dF9pbmZpbml0ZV0nLFxyXG4gICAgICApfVxyXG4gICAgPlxyXG4gICAgICA8ZGl2XHJcbiAgICAgICAgY2xhc3NOYW1lPXtjbihcclxuICAgICAgICAgICdhYnNvbHV0ZSBsZWZ0LVsxOHB4XSB0b3AtWzIxcHhdIGgtWzM2cHhdIHctWzMwcHhdIHJvdW5kZWQtWzEwcHhdIGJvcmRlciBib3JkZXItYm9yZGVyLzYwIGJnLWJhY2tncm91bmQvOTAnLFxyXG4gICAgICAgICAgJ2FuaW1hdGUtW2JkLXNoZWV0LXJlYXJfMy4yc19jdWJpYy1iZXppZXIoLjIyLC42MSwuMzYsMSlfaW5maW5pdGVdJyxcclxuICAgICAgICApfVxyXG4gICAgICAvPlxyXG4gICAgICA8ZGl2XHJcbiAgICAgICAgY2xhc3NOYW1lPXtjbihcclxuICAgICAgICAgICdhYnNvbHV0ZSBsZWZ0LVsyNXB4XSB0b3AtWzE4cHhdIGgtWzQwcHhdIHctWzM0cHhdIHJvdW5kZWQtWzEycHhdIGJvcmRlciBib3JkZXItYm9yZGVyIGJnLWNhcmQnLFxyXG4gICAgICAgICAgJ3NoYWRvdy1bMF82cHhfMTZweF9oc2wodmFyKC0tZm9yZWdyb3VuZClfL18wLjA1KV0nLFxyXG4gICAgICAgICAgJ2FuaW1hdGUtW2JkLXNoZWV0LWZyb250XzMuMnNfY3ViaWMtYmV6aWVyKC4yMiwuNjEsLjM2LDEpX2luZmluaXRlXScsXHJcbiAgICAgICAgKX1cclxuICAgICAgPlxyXG4gICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiYWJzb2x1dGUgbGVmdC1bOHB4XSB0b3AtMCBoLVs4cHhdIHctWzEycHhdIHJvdW5kZWQtYi1bNnB4XSBiZy1wcmltYXJ5LzE2XCIgLz5cclxuICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cImFic29sdXRlIGluc2V0LXgtMCB0b3AtWzhweF0gaC1bOHB4XSBiZy1wcmltYXJ5LzEwXCIgLz5cclxuICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cImFic29sdXRlIGxlZnQtMi41IHRvcC1bMjJweF0gaC1bMnB4XSB3LTUgcm91bmRlZC1mdWxsIGJnLWZvcmVncm91bmQvMTBcIiAvPlxyXG4gICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiYWJzb2x1dGUgbGVmdC0yLjUgdG9wLVsyOHB4XSBoLVsycHhdIHctNCByb3VuZGVkLWZ1bGwgYmctZm9yZWdyb3VuZC8xMFwiIC8+XHJcbiAgICAgIDwvZGl2PlxyXG4gICAgPC9kaXY+XHJcbiAgKVxyXG59XG4iXSwiZmlsZSI6IkM6L1VzZXJzL0RFTEwvRGVza3RvcC9iaWdkcm9wcy1hcHAvc3JjL2NvbXBvbmVudHMvYXBwL1NwbGFzaE92ZXJsYXkudHN4In0=

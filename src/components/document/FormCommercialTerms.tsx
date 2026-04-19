@@ -6,7 +6,6 @@ import { ChevronDown, Percent, Plus, X } from 'lucide-react'
 import {
   fieldCls,
   SectionLabel,
-  pageCardCls,
   labelCls,
   CollapseCard,
   SegmentedControl,
@@ -84,8 +83,7 @@ export function FormCommercialTerms({
     <div className="space-y-6">
       <div>
         <SectionLabel color="#d97706">Commercial Terms</SectionLabel>
-        <div className={`${pageCardCls} p-5`}>
-          <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 border-b border-[var(--bd-border-soft)] px-1 pb-6">
             <div>
               <label className={labelCls}>Payment Terms</label>
               <Select 
@@ -113,7 +111,6 @@ export function FormCommercialTerms({
                 className={fieldCls}
               />
             </div>
-          </div>
         </div>
       </div>
 

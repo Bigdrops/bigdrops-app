@@ -1,0 +1,662 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/components/app/AppShell.tsx");import __vite__cjsImport0_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=6addbc7a"; const Fragment = __vite__cjsImport0_react_jsxDevRuntime["Fragment"]; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+var _s = $RefreshSig$();
+import __vite__cjsImport1_react from "/node_modules/.vite/deps/react.js?v=6addbc7a"; const lazy = __vite__cjsImport1_react["lazy"]; const Suspense = __vite__cjsImport1_react["Suspense"]; const useEffect = __vite__cjsImport1_react["useEffect"];
+import { Route, Routes } from "/node_modules/.vite/deps/react-router-dom.js?v=1ea6174d";
+import ErrorBoundary from "/src/components/ErrorBoundary.tsx";
+import PageLoader from "/src/components/app/PageLoader.tsx";
+import { isAndroidNative } from "/src/lib/native/capacitor.ts";
+import { useSettings } from "/src/hooks/useSettings.js";
+import { normalizeHexColor, hexToHslTriplet } from "/src/lib/colorTheme.ts";
+import { BASE_THEME_MODE, getThemePreset, resolveThemeMode } from "/src/lib/themePresets.ts";
+import {
+  applyThemeTokenBundle,
+  clearThemeTokenBundle,
+  normalizeThemeTokenBundle
+} from "/src/lib/themeTokens.ts";
+const AndroidSystemBars = lazy(_c = () => import("/src/components/app/AndroidSystemBars.tsx"));
+_c2 = AndroidSystemBars;
+const AndroidFoldAwareness = lazy(_c3 = () => import("/src/components/app/AndroidFoldAwareness.tsx"));
+_c4 = AndroidFoldAwareness;
+const KeyboardAwareness = lazy(_c5 = () => import("/src/components/app/KeyboardAwareness.tsx"));
+_c6 = KeyboardAwareness;
+const Dashboard = lazy(_c7 = () => import("/src/pages/DashboardRedesign.tsx"));
+_c8 = Dashboard;
+const Invoices = lazy(_c9 = () => import("/src/pages/Invoices.jsx"));
+_c0 = Invoices;
+const Quotations = lazy(_c1 = () => import("/src/pages/Quotations.tsx"));
+_c10 = Quotations;
+const NewQuotation = lazy(_c11 = () => import("/src/pages/NewQuotation.tsx"));
+_c12 = NewQuotation;
+const ViewQuotation = lazy(_c13 = () => import("/src/pages/ViewQuotation.tsx"));
+_c14 = ViewQuotation;
+const EditQuotation = lazy(_c15 = () => import("/src/pages/EditQuotation.tsx"));
+_c16 = EditQuotation;
+const CSR = lazy(_c17 = () => import("/src/pages/CSR.jsx"));
+_c18 = CSR;
+const Clients = lazy(_c19 = () => import("/src/pages/Clients.tsx"));
+_c20 = Clients;
+const AddClient = lazy(_c21 = () => import("/src/pages/AddClient.jsx"));
+_c22 = AddClient;
+const EditClient = lazy(_c23 = () => import("/src/pages/EditClient.jsx"));
+_c24 = EditClient;
+const ClientDetail = lazy(_c25 = () => import("/src/pages/ClientDetail.tsx"));
+_c26 = ClientDetail;
+const NewInvoice = lazy(_c27 = () => import("/src/pages/NewInvoice.jsx"));
+_c28 = NewInvoice;
+const ViewInvoice = lazy(_c29 = () => import("/src/pages/ViewInvoice.tsx"));
+_c30 = ViewInvoice;
+const EditInvoice = lazy(_c31 = () => import("/src/pages/EditInvoice.jsx"));
+_c32 = EditInvoice;
+const NewCSR = lazy(_c33 = () => import("/src/pages/NewCSR.jsx"));
+_c34 = NewCSR;
+const ViewCSR = lazy(_c35 = () => import("/src/pages/ViewCSR.tsx"));
+_c36 = ViewCSR;
+const EditCSR = lazy(_c37 = () => import("/src/pages/EditCSR.jsx"));
+_c38 = EditCSR;
+const Settings = lazy(_c39 = () => import("/src/pages/Settings.jsx"));
+_c40 = Settings;
+const Projects = lazy(_c41 = () => import("/src/pages/Projects.jsx"));
+_c42 = Projects;
+const NewProject = lazy(_c43 = () => import("/src/pages/NewProject.jsx"));
+_c44 = NewProject;
+const ProjectDetail = lazy(_c45 = () => import("/src/pages/ProjectDetail.jsx"));
+_c46 = ProjectDetail;
+const ProjectDocumentView = lazy(_c47 = () => import("/src/pages/ProjectDocumentView.tsx"));
+_c48 = ProjectDocumentView;
+const Reports = lazy(_c49 = () => import("/src/pages/Reports.tsx"));
+_c50 = Reports;
+const ComplianceHub = lazy(_c51 = () => import("/src/pages/ComplianceHub.tsx"));
+_c52 = ComplianceHub;
+const ItemLibraryPage = lazy(_c53 = () => import("/src/modules/item-library/pages/ItemLibraryPage.tsx"));
+_c54 = ItemLibraryPage;
+const Waybills = lazy(_c55 = () => import("/src/pages/Waybills.tsx"));
+_c56 = Waybills;
+const NewWaybill = lazy(_c57 = () => import("/src/pages/NewWaybill.tsx"));
+_c58 = NewWaybill;
+const EditWaybill = lazy(_c59 = () => import("/src/pages/EditWaybill.tsx"));
+_c60 = EditWaybill;
+const ViewWaybill = lazy(_c61 = () => import("/src/pages/ViewWaybill.tsx"));
+_c62 = ViewWaybill;
+const Rfqs = lazy(_c63 = () => import("/src/pages/Rfqs.tsx"));
+_c64 = Rfqs;
+const NewRfq = lazy(_c65 = () => import("/src/pages/NewRfq.tsx"));
+_c66 = NewRfq;
+const EditRfq = lazy(_c67 = () => import("/src/pages/EditRfq.tsx"));
+_c68 = EditRfq;
+const ViewRfq = lazy(_c69 = () => import("/src/pages/ViewRfq.tsx"));
+_c70 = ViewRfq;
+const Boqs = lazy(_c71 = () => import("/src/pages/Boqs.tsx"));
+_c72 = Boqs;
+const NewBoq = lazy(_c73 = () => import("/src/pages/NewBoq.tsx"));
+_c74 = NewBoq;
+const EditBoq = lazy(_c75 = () => import("/src/pages/EditBoq.tsx"));
+_c76 = EditBoq;
+const ViewBoq = lazy(_c77 = () => import("/src/pages/ViewBoq.tsx"));
+_c78 = ViewBoq;
+const SetPasswordModal = lazy(_c79 = () => import("/src/components/app/SetPasswordModal.tsx"));
+_c80 = SetPasswordModal;
+const withBoundary = (element) => /* @__PURE__ */ jsxDEV(ErrorBoundary, { children: element }, void 0, false, {
+  fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+  lineNumber: 72,
+  columnNumber: 46
+}, this);
+export default function AppShell({ session, profile, onProfileUpdate }) {
+  _s();
+  const { settings } = useSettings();
+  const provider = session?.user?.app_metadata?.provider;
+  const showSetPassword = Boolean(profile && !profile.has_password && provider !== "email");
+  const showAndroidBackHandler = isAndroidNative();
+  useEffect(
+    () => {
+      const bgSetting = settings?.app_background_color;
+      const cardSetting = settings?.app_card_color;
+      const rawBundle = settings?.app_theme_tokens;
+      const normalizedBundle = normalizeThemeTokenBundle(rawBundle, { allowRadius: true });
+      const mode = resolveThemeMode(settings);
+      let bundleToApply = {};
+      if (mode && mode !== "custom" && mode !== BASE_THEME_MODE) {
+        bundleToApply = getThemePreset(mode)?.bundle ?? {};
+      } else if (mode === "custom") {
+        const legacyOverrides = {};
+        const normBg = bgSetting ? normalizeHexColor(bgSetting) : null;
+        const normCard = cardSetting ? normalizeHexColor(cardSetting) : null;
+        if (normBg) {
+          legacyOverrides.background = hexToHslTriplet(normBg);
+        }
+        if (normCard) {
+          const cardHsl = hexToHslTriplet(normCard);
+          legacyOverrides.card = cardHsl;
+          legacyOverrides.popover = cardHsl;
+        }
+        bundleToApply = {
+          ...normalizedBundle,
+          ...legacyOverrides
+        };
+      }
+      const applied = applyThemeTokenBundle(bundleToApply);
+      return () => {
+        clearThemeTokenBundle(applied);
+      };
+    },
+    [
+      settings?.app_background_color,
+      settings?.app_card_color,
+      settings?.app_theme_preset_id,
+      settings?.app_theme_tokens
+    ]
+  );
+  return /* @__PURE__ */ jsxDEV(Fragment, { children: [
+    /* @__PURE__ */ jsxDEV(Suspense, { fallback: null, children: /* @__PURE__ */ jsxDEV(KeyboardAwareness, {}, void 0, false, {
+      fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+      lineNumber: 127,
+      columnNumber: 9
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+      lineNumber: 126,
+      columnNumber: 7
+    }, this),
+    showAndroidBackHandler && /* @__PURE__ */ jsxDEV(Suspense, { fallback: null, children: /* @__PURE__ */ jsxDEV(Fragment, { children: [
+      /* @__PURE__ */ jsxDEV(AndroidSystemBars, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 132,
+        columnNumber: 13
+      }, this),
+      /* @__PURE__ */ jsxDEV(AndroidFoldAwareness, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 133,
+        columnNumber: 13
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+      lineNumber: 131,
+      columnNumber: 11
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+      lineNumber: 130,
+      columnNumber: 7
+    }, this),
+    showSetPassword && /* @__PURE__ */ jsxDEV(Suspense, { fallback: null, children: /* @__PURE__ */ jsxDEV(SetPasswordModal, { onComplete: onProfileUpdate }, void 0, false, {
+      fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+      lineNumber: 139,
+      columnNumber: 11
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+      lineNumber: 138,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV(Suspense, { fallback: /* @__PURE__ */ jsxDEV(PageLoader, {}, void 0, false, {
+      fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+      lineNumber: 142,
+      columnNumber: 27
+    }, this), children: /* @__PURE__ */ jsxDEV(Routes, { children: [
+      /* @__PURE__ */ jsxDEV(Route, { path: "/", element: withBoundary(/* @__PURE__ */ jsxDEV(Dashboard, { session }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 144,
+        columnNumber: 49
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 144,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/invoices", element: withBoundary(/* @__PURE__ */ jsxDEV(Invoices, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 145,
+        columnNumber: 57
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 145,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/invoices/new", element: withBoundary(/* @__PURE__ */ jsxDEV(NewInvoice, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 146,
+        columnNumber: 61
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 146,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/invoices/edit/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(EditInvoice, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 147,
+        columnNumber: 66
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 147,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/invoices/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(ViewInvoice, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 148,
+        columnNumber: 61
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 148,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/quotations", element: withBoundary(/* @__PURE__ */ jsxDEV(Quotations, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 149,
+        columnNumber: 59
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 149,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/quotations/new", element: withBoundary(/* @__PURE__ */ jsxDEV(NewQuotation, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 150,
+        columnNumber: 63
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 150,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/quotations/edit/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(EditQuotation, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 151,
+        columnNumber: 68
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 151,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/quotations/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(ViewQuotation, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 152,
+        columnNumber: 63
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 152,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/csr", element: withBoundary(/* @__PURE__ */ jsxDEV(CSR, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 153,
+        columnNumber: 52
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 153,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/csr/new", element: withBoundary(/* @__PURE__ */ jsxDEV(NewCSR, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 154,
+        columnNumber: 56
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 154,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/csr/edit/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(EditCSR, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 155,
+        columnNumber: 61
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 155,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/csr/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(ViewCSR, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 156,
+        columnNumber: 56
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 156,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/clients", element: withBoundary(/* @__PURE__ */ jsxDEV(Clients, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 157,
+        columnNumber: 56
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 157,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/clients/new", element: withBoundary(/* @__PURE__ */ jsxDEV(AddClient, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 158,
+        columnNumber: 60
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 158,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/clients/edit/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(EditClient, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 159,
+        columnNumber: 65
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 159,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/clients/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(ClientDetail, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 160,
+        columnNumber: 60
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 160,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/settings", element: withBoundary(/* @__PURE__ */ jsxDEV(Settings, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 161,
+        columnNumber: 57
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 161,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/projects", element: withBoundary(/* @__PURE__ */ jsxDEV(Projects, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 162,
+        columnNumber: 57
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 162,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/projects/new", element: withBoundary(/* @__PURE__ */ jsxDEV(NewProject, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 163,
+        columnNumber: 61
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 163,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(
+        Route,
+        {
+          path: "/projects/:projectId/documents/:documentId",
+          element: withBoundary(/* @__PURE__ */ jsxDEV(ProjectDocumentView, {}, void 0, false, {
+            fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+            lineNumber: 166,
+            columnNumber: 35
+          }, this))
+        },
+        void 0,
+        false,
+        {
+          fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+          lineNumber: 164,
+          columnNumber: 11
+        },
+        this
+      ),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/projects/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(ProjectDetail, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 168,
+        columnNumber: 61
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 168,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/reports", element: withBoundary(/* @__PURE__ */ jsxDEV(Reports, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 169,
+        columnNumber: 56
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 169,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/compliance", element: withBoundary(/* @__PURE__ */ jsxDEV(ComplianceHub, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 170,
+        columnNumber: 59
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 170,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/item-library", element: withBoundary(/* @__PURE__ */ jsxDEV(ItemLibraryPage, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 171,
+        columnNumber: 61
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 171,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/waybills", element: withBoundary(/* @__PURE__ */ jsxDEV(Waybills, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 172,
+        columnNumber: 57
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 172,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/waybills/new", element: withBoundary(/* @__PURE__ */ jsxDEV(NewWaybill, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 173,
+        columnNumber: 61
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 173,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/waybills/:id/edit", element: withBoundary(/* @__PURE__ */ jsxDEV(EditWaybill, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 174,
+        columnNumber: 66
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 174,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/waybills/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(ViewWaybill, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 175,
+        columnNumber: 61
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 175,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/rfqs", element: withBoundary(/* @__PURE__ */ jsxDEV(Rfqs, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 176,
+        columnNumber: 53
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 176,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/rfqs/new", element: withBoundary(/* @__PURE__ */ jsxDEV(NewRfq, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 177,
+        columnNumber: 57
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 177,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/rfqs/edit/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(EditRfq, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 178,
+        columnNumber: 62
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 178,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/rfqs/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(ViewRfq, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 179,
+        columnNumber: 57
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 179,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/boqs", element: withBoundary(/* @__PURE__ */ jsxDEV(Boqs, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 180,
+        columnNumber: 53
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 180,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/boqs/new", element: withBoundary(/* @__PURE__ */ jsxDEV(NewBoq, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 181,
+        columnNumber: 57
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 181,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/boqs/edit/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(EditBoq, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 182,
+        columnNumber: 62
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 182,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ jsxDEV(Route, { path: "/boqs/:id", element: withBoundary(/* @__PURE__ */ jsxDEV(ViewBoq, {}, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 183,
+        columnNumber: 57
+      }, this)) }, void 0, false, {
+        fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+        lineNumber: 183,
+        columnNumber: 11
+      }, this)
+    ] }, void 0, true, {
+      fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+      lineNumber: 143,
+      columnNumber: 9
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+      lineNumber: 142,
+      columnNumber: 7
+    }, this)
+  ] }, void 0, true, {
+    fileName: "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx",
+    lineNumber: 125,
+    columnNumber: 5
+  }, this);
+}
+_s(AppShell, "fVYezonQTXA8rNz4LCGuPfefvVY=", false, function() {
+  return [useSettings];
+});
+_c81 = AppShell;
+var _c, _c2, _c3, _c4, _c5, _c6, _c7, _c8, _c9, _c0, _c1, _c10, _c11, _c12, _c13, _c14, _c15, _c16, _c17, _c18, _c19, _c20, _c21, _c22, _c23, _c24, _c25, _c26, _c27, _c28, _c29, _c30, _c31, _c32, _c33, _c34, _c35, _c36, _c37, _c38, _c39, _c40, _c41, _c42, _c43, _c44, _c45, _c46, _c47, _c48, _c49, _c50, _c51, _c52, _c53, _c54, _c55, _c56, _c57, _c58, _c59, _c60, _c61, _c62, _c63, _c64, _c65, _c66, _c67, _c68, _c69, _c70, _c71, _c72, _c73, _c74, _c75, _c76, _c77, _c78, _c79, _c80, _c81;
+$RefreshReg$(_c, "AndroidSystemBars$lazy");
+$RefreshReg$(_c2, "AndroidSystemBars");
+$RefreshReg$(_c3, "AndroidFoldAwareness$lazy");
+$RefreshReg$(_c4, "AndroidFoldAwareness");
+$RefreshReg$(_c5, "KeyboardAwareness$lazy");
+$RefreshReg$(_c6, "KeyboardAwareness");
+$RefreshReg$(_c7, "Dashboard$lazy");
+$RefreshReg$(_c8, "Dashboard");
+$RefreshReg$(_c9, "Invoices$lazy");
+$RefreshReg$(_c0, "Invoices");
+$RefreshReg$(_c1, "Quotations$lazy");
+$RefreshReg$(_c10, "Quotations");
+$RefreshReg$(_c11, "NewQuotation$lazy");
+$RefreshReg$(_c12, "NewQuotation");
+$RefreshReg$(_c13, "ViewQuotation$lazy");
+$RefreshReg$(_c14, "ViewQuotation");
+$RefreshReg$(_c15, "EditQuotation$lazy");
+$RefreshReg$(_c16, "EditQuotation");
+$RefreshReg$(_c17, "CSR$lazy");
+$RefreshReg$(_c18, "CSR");
+$RefreshReg$(_c19, "Clients$lazy");
+$RefreshReg$(_c20, "Clients");
+$RefreshReg$(_c21, "AddClient$lazy");
+$RefreshReg$(_c22, "AddClient");
+$RefreshReg$(_c23, "EditClient$lazy");
+$RefreshReg$(_c24, "EditClient");
+$RefreshReg$(_c25, "ClientDetail$lazy");
+$RefreshReg$(_c26, "ClientDetail");
+$RefreshReg$(_c27, "NewInvoice$lazy");
+$RefreshReg$(_c28, "NewInvoice");
+$RefreshReg$(_c29, "ViewInvoice$lazy");
+$RefreshReg$(_c30, "ViewInvoice");
+$RefreshReg$(_c31, "EditInvoice$lazy");
+$RefreshReg$(_c32, "EditInvoice");
+$RefreshReg$(_c33, "NewCSR$lazy");
+$RefreshReg$(_c34, "NewCSR");
+$RefreshReg$(_c35, "ViewCSR$lazy");
+$RefreshReg$(_c36, "ViewCSR");
+$RefreshReg$(_c37, "EditCSR$lazy");
+$RefreshReg$(_c38, "EditCSR");
+$RefreshReg$(_c39, "Settings$lazy");
+$RefreshReg$(_c40, "Settings");
+$RefreshReg$(_c41, "Projects$lazy");
+$RefreshReg$(_c42, "Projects");
+$RefreshReg$(_c43, "NewProject$lazy");
+$RefreshReg$(_c44, "NewProject");
+$RefreshReg$(_c45, "ProjectDetail$lazy");
+$RefreshReg$(_c46, "ProjectDetail");
+$RefreshReg$(_c47, "ProjectDocumentView$lazy");
+$RefreshReg$(_c48, "ProjectDocumentView");
+$RefreshReg$(_c49, "Reports$lazy");
+$RefreshReg$(_c50, "Reports");
+$RefreshReg$(_c51, "ComplianceHub$lazy");
+$RefreshReg$(_c52, "ComplianceHub");
+$RefreshReg$(_c53, "ItemLibraryPage$lazy");
+$RefreshReg$(_c54, "ItemLibraryPage");
+$RefreshReg$(_c55, "Waybills$lazy");
+$RefreshReg$(_c56, "Waybills");
+$RefreshReg$(_c57, "NewWaybill$lazy");
+$RefreshReg$(_c58, "NewWaybill");
+$RefreshReg$(_c59, "EditWaybill$lazy");
+$RefreshReg$(_c60, "EditWaybill");
+$RefreshReg$(_c61, "ViewWaybill$lazy");
+$RefreshReg$(_c62, "ViewWaybill");
+$RefreshReg$(_c63, "Rfqs$lazy");
+$RefreshReg$(_c64, "Rfqs");
+$RefreshReg$(_c65, "NewRfq$lazy");
+$RefreshReg$(_c66, "NewRfq");
+$RefreshReg$(_c67, "EditRfq$lazy");
+$RefreshReg$(_c68, "EditRfq");
+$RefreshReg$(_c69, "ViewRfq$lazy");
+$RefreshReg$(_c70, "ViewRfq");
+$RefreshReg$(_c71, "Boqs$lazy");
+$RefreshReg$(_c72, "Boqs");
+$RefreshReg$(_c73, "NewBoq$lazy");
+$RefreshReg$(_c74, "NewBoq");
+$RefreshReg$(_c75, "EditBoq$lazy");
+$RefreshReg$(_c76, "EditBoq");
+$RefreshReg$(_c77, "ViewBoq$lazy");
+$RefreshReg$(_c78, "ViewBoq");
+$RefreshReg$(_c79, "SetPasswordModal$lazy");
+$RefreshReg$(_c80, "SetPasswordModal");
+$RefreshReg$(_c81, "AppShell");
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+  RefreshRuntime.__hmr_import(import.meta.url).then((currentExports) => {
+    RefreshRuntime.registerExportsForReactRefresh("C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+function $RefreshReg$(type, id) {
+  return RefreshRuntime.register(type, "C:/Users/DELL/Desktop/bigdrops-app/src/components/app/AppShell.tsx " + id);
+}
+function $RefreshSig$() {
+  return RefreshRuntime.createSignatureFunctionForTransform();
+}
+
+//# sourceMappingURL=data:application/json;base64,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QTtBQUFBLGFBQUFDLEtBQUE7QUFBQSxhQUFBRSxLQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBRSxNQUFBO0FBQUEsYUFBQUMsTUFBQTtBQUFBLGFBQUFFLE1BQUE7QUFBQSxhQUFBQyxNQUFBO0FBQUEsYUFBQUUsTUFBQTtBQUFBLGFBQUFDLE1BQUE7QUFBQSxhQUFBb0MsTUFBQSIsIm5hbWVzIjpbImxhenkiLCJTdXNwZW5zZSIsInVzZUVmZmVjdCIsIlJvdXRlIiwiUm91dGVzIiwiRXJyb3JCb3VuZGFyeSIsIlBhZ2VMb2FkZXIiLCJpc0FuZHJvaWROYXRpdmUiLCJ1c2VTZXR0aW5ncyIsIm5vcm1hbGl6ZUhleENvbG9yIiwiaGV4VG9Ic2xUcmlwbGV0IiwiQkFTRV9USEVNRV9NT0RFIiwiZ2V0VGhlbWVQcmVzZXQiLCJyZXNvbHZlVGhlbWVNb2RlIiwiYXBwbHlUaGVtZVRva2VuQnVuZGxlIiwiY2xlYXJUaGVtZVRva2VuQnVuZGxlIiwibm9ybWFsaXplVGhlbWVUb2tlbkJ1bmRsZSIsIkFuZHJvaWRTeXN0ZW1CYXJzIiwiX2MiLCJfYzIiLCJBbmRyb2lkRm9sZEF3YXJlbmVzcyIsIl9jMyIsIl9jNCIsIktleWJvYXJkQXdhcmVuZXNzIiwiX2M1IiwiX2M2IiwiRGFzaGJvYXJkIiwiX2M3IiwiX2M4IiwiSW52b2ljZXMiLCJfYzkiLCJfYzAiLCJRdW90YXRpb25zIiwiX2MxIiwiX2MxMCIsIk5ld1F1b3RhdGlvbiIsIl9jMTEiLCJfYzEyIiwiVmlld1F1b3RhdGlvbiIsIl9jMTMiLCJfYzE0IiwiRWRpdFF1b3RhdGlvbiIsIl9jMTUiLCJfYzE2IiwiQ1NSIiwiX2MxNyIsIl9jMTgiLCJDbGllbnRzIiwiX2MxOSIsIl9jMjAiLCJBZGRDbGllbnQiLCJfYzIxIiwiX2MyMiIsIkVkaXRDbGllbnQiLCJfYzIzIiwiX2MyNCIsIkNsaWVudERldGFpbCIsIl9jMjUiLCJfYzI2IiwiTmV3SW52b2ljZSIsIl9jMjciLCJfYzI4IiwiVmlld0ludm9pY2UiLCJfYzI5IiwiX2MzMCIsIkVkaXRJbnZvaWNlIiwiX2MzMSIsIl9jMzIiLCJOZXdDU1IiLCJfYzMzIiwiX2MzNCIsIlZpZXdDU1IiLCJfYzM1IiwiX2MzNiIsIkVkaXRDU1IiLCJfYzM3IiwiX2MzOCIsIlNldHRpbmdzIiwiX2MzOSIsIl9jNDAiLCJQcm9qZWN0cyIsIl9jNDEiLCJfYzQyIiwiTmV3UHJvamVjdCIsIl9jNDMiLCJfYzQ0IiwiUHJvamVjdERldGFpbCIsIl9jNDUiLCJfYzQ2IiwiUHJvamVjdERvY3VtZW50VmlldyIsIl9jNDciLCJfYzQ4IiwiUmVwb3J0cyIsIl9jNDkiLCJfYzUwIiwiQ29tcGxpYW5jZUh1YiIsIl9jNTEiLCJfYzUyIiwiSXRlbUxpYnJhcnlQYWdlIiwiX2M1MyIsIl9jNTQiLCJXYXliaWxscyIsIl9jNTUiLCJfYzU2IiwiTmV3V2F5YmlsbCIsIl9jNTciLCJfYzU4IiwiRWRpdFdheWJpbGwiLCJfYzU5IiwiX2M2MCIsIlZpZXdXYXliaWxsIiwiX2M2MSIsIl9jNjIiLCJSZnFzIiwiX2M2MyIsIl9jNjQiLCJOZXdSZnEiLCJfYzY1IiwiX2M2NiIsIkVkaXRSZnEiLCJfYzY3IiwiX2M2OCIsIlZpZXdSZnEiLCJfYzY5IiwiX2M3MCIsIkJvcXMiLCJfYzcxIiwiX2M3MiIsIk5ld0JvcSIsIl9jNzMiLCJfYzc0IiwiRWRpdEJvcSIsIl9jNzUiLCJfYzc2IiwiVmlld0JvcSIsIl9jNzciLCJfYzc4IiwiU2V0UGFzc3dvcmRNb2RhbCIsIl9jNzkiLCJfYzgwIiwid2l0aEJvdW5kYXJ5IiwiZWxlbWVudCIsIkFwcFNoZWxsIiwic2Vzc2lvbiIsInByb2ZpbGUiLCJvblByb2ZpbGVVcGRhdGUiLCJfcyIsInNldHRpbmdzIiwicHJvdmlkZXIiLCJ1c2VyIiwiYXBwX21ldGFkYXRhIiwic2hvd1NldFBhc3N3b3JkIiwiQm9vbGVhbiIsImhhc19wYXNzd29yZCIsInNob3dBbmRyb2lkQmFja0hhbmRsZXIiLCJiZ1NldHRpbmciLCJhcHBfYmFja2dyb3VuZF9jb2xvciIsImNhcmRTZXR0aW5nIiwiYXBwX2NhcmRfY29sb3IiLCJyYXdCdW5kbGUiLCJhcHBfdGhlbWVfdG9rZW5zIiwibm9ybWFsaXplZEJ1bmRsZSIsImFsbG93UmFkaXVzIiwibW9kZSIsImJ1bmRsZVRvQXBwbHkiLCJidW5kbGUiLCJsZWdhY3lPdmVycmlkZXMiLCJub3JtQmciLCJub3JtQ2FyZCIsImJhY2tncm91bmQiLCJjYXJkSHNsIiwiY2FyZCIsInBvcG92ZXIiLCJhcHBsaWVkIiwiYXBwX3RoZW1lX3ByZXNldF9pZCIsIl9jODEiXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZXMiOlsiQXBwU2hlbGwudHN4Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IGxhenksIFN1c3BlbnNlLCB1c2VFZmZlY3QsIHR5cGUgUmVhY3ROb2RlIH0gZnJvbSAncmVhY3QnXHJcbmltcG9ydCB7IFJvdXRlLCBSb3V0ZXMgfSBmcm9tICdyZWFjdC1yb3V0ZXItZG9tJ1xyXG5pbXBvcnQgdHlwZSB7IFNlc3Npb24gfSBmcm9tICdAc3VwYWJhc2Uvc3VwYWJhc2UtanMnXHJcbmltcG9ydCBFcnJvckJvdW5kYXJ5IGZyb20gJ0AvY29tcG9uZW50cy9FcnJvckJvdW5kYXJ5J1xyXG5pbXBvcnQgUGFnZUxvYWRlciBmcm9tICdAL2NvbXBvbmVudHMvYXBwL1BhZ2VMb2FkZXInXHJcbmltcG9ydCB7IGlzQW5kcm9pZE5hdGl2ZSB9IGZyb20gJ0AvbGliL25hdGl2ZS9jYXBhY2l0b3InXHJcbmltcG9ydCB7IHVzZVNldHRpbmdzIH0gZnJvbSAnQC9ob29rcy91c2VTZXR0aW5ncydcclxuaW1wb3J0IHsgbm9ybWFsaXplSGV4Q29sb3IsIGhleFRvSHNsVHJpcGxldCB9IGZyb20gJ0AvbGliL2NvbG9yVGhlbWUnXHJcbmltcG9ydCB7IEJBU0VfVEhFTUVfTU9ERSwgZ2V0VGhlbWVQcmVzZXQsIHJlc29sdmVUaGVtZU1vZGUgfSBmcm9tICdAL2xpYi90aGVtZVByZXNldHMnXHJcbmltcG9ydCB7XHJcbiAgYXBwbHlUaGVtZVRva2VuQnVuZGxlLFxyXG4gIGNsZWFyVGhlbWVUb2tlbkJ1bmRsZSxcclxuICBub3JtYWxpemVUaGVtZVRva2VuQnVuZGxlLFxyXG4gIHR5cGUgVGhlbWVUb2tlbkJ1bmRsZSxcclxufSBmcm9tICdAL2xpYi90aGVtZVRva2VucydcclxuXHJcbmNvbnN0IEFuZHJvaWRTeXN0ZW1CYXJzID0gbGF6eSgoKSA9PiBpbXBvcnQoJ0AvY29tcG9uZW50cy9hcHAvQW5kcm9pZFN5c3RlbUJhcnMnKSlcclxuY29uc3QgQW5kcm9pZEZvbGRBd2FyZW5lc3MgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9jb21wb25lbnRzL2FwcC9BbmRyb2lkRm9sZEF3YXJlbmVzcycpKVxyXG5jb25zdCBLZXlib2FyZEF3YXJlbmVzcyA9IGxhenkoKCkgPT4gaW1wb3J0KCdAL2NvbXBvbmVudHMvYXBwL0tleWJvYXJkQXdhcmVuZXNzJykpXHJcbmNvbnN0IERhc2hib2FyZCA9IGxhenkoKCkgPT4gaW1wb3J0KCdAL3BhZ2VzL0Rhc2hib2FyZFJlZGVzaWduJykpXHJcbmNvbnN0IEludm9pY2VzID0gbGF6eSgoKSA9PiBpbXBvcnQoJ0AvcGFnZXMvSW52b2ljZXMnKSlcclxuY29uc3QgUXVvdGF0aW9ucyA9IGxhenkoKCkgPT4gaW1wb3J0KCdAL3BhZ2VzL1F1b3RhdGlvbnMnKSlcclxuY29uc3QgTmV3UXVvdGF0aW9uID0gbGF6eSgoKSA9PiBpbXBvcnQoJ0AvcGFnZXMvTmV3UXVvdGF0aW9uJykpXHJcbmNvbnN0IFZpZXdRdW90YXRpb24gPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9WaWV3UXVvdGF0aW9uJykpXHJcbmNvbnN0IEVkaXRRdW90YXRpb24gPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9FZGl0UXVvdGF0aW9uJykpXHJcbmNvbnN0IENTUiA9IGxhenkoKCkgPT4gaW1wb3J0KCdAL3BhZ2VzL0NTUicpKVxyXG5jb25zdCBDbGllbnRzID0gbGF6eSgoKSA9PiBpbXBvcnQoJ0AvcGFnZXMvQ2xpZW50cycpKVxyXG5jb25zdCBBZGRDbGllbnQgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9BZGRDbGllbnQnKSlcclxuY29uc3QgRWRpdENsaWVudCA9IGxhenkoKCkgPT4gaW1wb3J0KCdAL3BhZ2VzL0VkaXRDbGllbnQnKSlcclxuY29uc3QgQ2xpZW50RGV0YWlsID0gbGF6eSgoKSA9PiBpbXBvcnQoJ0AvcGFnZXMvQ2xpZW50RGV0YWlsJykpXHJcbmNvbnN0IE5ld0ludm9pY2UgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9OZXdJbnZvaWNlJykpXHJcbmNvbnN0IFZpZXdJbnZvaWNlID0gbGF6eSgoKSA9PiBpbXBvcnQoJ0AvcGFnZXMvVmlld0ludm9pY2UnKSlcclxuY29uc3QgRWRpdEludm9pY2UgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9FZGl0SW52b2ljZScpKVxyXG5jb25zdCBOZXdDU1IgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9OZXdDU1InKSlcclxuY29uc3QgVmlld0NTUiA9IGxhenkoKCkgPT4gaW1wb3J0KCdAL3BhZ2VzL1ZpZXdDU1InKSlcclxuY29uc3QgRWRpdENTUiA9IGxhenkoKCkgPT4gaW1wb3J0KCdAL3BhZ2VzL0VkaXRDU1InKSlcclxuY29uc3QgU2V0dGluZ3MgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9TZXR0aW5ncycpKVxyXG5jb25zdCBQcm9qZWN0cyA9IGxhenkoKCkgPT4gaW1wb3J0KCdAL3BhZ2VzL1Byb2plY3RzJykpXHJcbmNvbnN0IE5ld1Byb2plY3QgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9OZXdQcm9qZWN0JykpXHJcbmNvbnN0IFByb2plY3REZXRhaWwgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9Qcm9qZWN0RGV0YWlsJykpXHJcbmNvbnN0IFByb2plY3REb2N1bWVudFZpZXcgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9Qcm9qZWN0RG9jdW1lbnRWaWV3JykpXHJcbmNvbnN0IFJlcG9ydHMgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9SZXBvcnRzJykpXHJcbmNvbnN0IENvbXBsaWFuY2VIdWIgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9Db21wbGlhbmNlSHViJykpXHJcbmNvbnN0IEl0ZW1MaWJyYXJ5UGFnZSA9IGxhenkoKCkgPT4gaW1wb3J0KCdAL21vZHVsZXMvaXRlbS1saWJyYXJ5L3BhZ2VzL0l0ZW1MaWJyYXJ5UGFnZScpKVxyXG5jb25zdCBXYXliaWxscyA9IGxhenkoKCkgPT4gaW1wb3J0KCdAL3BhZ2VzL1dheWJpbGxzJykpXHJcbmNvbnN0IE5ld1dheWJpbGwgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9OZXdXYXliaWxsJykpXHJcbmNvbnN0IEVkaXRXYXliaWxsID0gbGF6eSgoKSA9PiBpbXBvcnQoJ0AvcGFnZXMvRWRpdFdheWJpbGwnKSlcclxuY29uc3QgVmlld1dheWJpbGwgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9WaWV3V2F5YmlsbCcpKVxyXG5jb25zdCBSZnFzID0gbGF6eSgoKSA9PiBpbXBvcnQoJ0AvcGFnZXMvUmZxcycpKVxyXG5jb25zdCBOZXdSZnEgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9OZXdSZnEnKSlcclxuY29uc3QgRWRpdFJmcSA9IGxhenkoKCkgPT4gaW1wb3J0KCdAL3BhZ2VzL0VkaXRSZnEnKSlcclxuY29uc3QgVmlld1JmcSA9IGxhenkoKCkgPT4gaW1wb3J0KCdAL3BhZ2VzL1ZpZXdSZnEnKSlcclxuY29uc3QgQm9xcyA9IGxhenkoKCkgPT4gaW1wb3J0KCdAL3BhZ2VzL0JvcXMnKSlcclxuY29uc3QgTmV3Qm9xID0gbGF6eSgoKSA9PiBpbXBvcnQoJ0AvcGFnZXMvTmV3Qm9xJykpXHJcbmNvbnN0IEVkaXRCb3EgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9FZGl0Qm9xJykpXHJcbmNvbnN0IFZpZXdCb3EgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9wYWdlcy9WaWV3Qm9xJykpXHJcbmNvbnN0IFNldFBhc3N3b3JkTW9kYWwgPSBsYXp5KCgpID0+IGltcG9ydCgnQC9jb21wb25lbnRzL2FwcC9TZXRQYXNzd29yZE1vZGFsJykpXHJcblxyXG50eXBlIFByb2ZpbGUgPSB7XHJcbiAgaWQ6IHN0cmluZ1xyXG4gIGhhc19wYXNzd29yZD86IGJvb2xlYW4gfCBudWxsXHJcbiAgaXNfYXBwcm92ZWQ/OiBib29sZWFuIHwgbnVsbFxyXG4gIGVtYWlsPzogc3RyaW5nIHwgbnVsbFxyXG59XHJcblxyXG50eXBlIEFwcFNoZWxsUHJvcHMgPSB7XHJcbiAgc2Vzc2lvbjogU2Vzc2lvblxyXG4gIHByb2ZpbGU6IFByb2ZpbGUgfCBudWxsXHJcbiAgb25Qcm9maWxlVXBkYXRlOiAoKSA9PiB2b2lkIHwgUHJvbWlzZTx2b2lkPlxyXG59XHJcblxyXG5jb25zdCB3aXRoQm91bmRhcnkgPSAoZWxlbWVudDogUmVhY3ROb2RlKSA9PiA8RXJyb3JCb3VuZGFyeT57ZWxlbWVudH08L0Vycm9yQm91bmRhcnk+XHJcblxyXG5leHBvcnQgZGVmYXVsdCBmdW5jdGlvbiBBcHBTaGVsbCh7IHNlc3Npb24sIHByb2ZpbGUsIG9uUHJvZmlsZVVwZGF0ZSB9OiBBcHBTaGVsbFByb3BzKSB7XHJcbiAgY29uc3QgeyBzZXR0aW5ncyB9ID0gdXNlU2V0dGluZ3MoKVxyXG4gIGNvbnN0IHByb3ZpZGVyID0gc2Vzc2lvbj8udXNlcj8uYXBwX21ldGFkYXRhPy5wcm92aWRlclxyXG4gIGNvbnN0IHNob3dTZXRQYXNzd29yZCA9IEJvb2xlYW4ocHJvZmlsZSAmJiAhcHJvZmlsZS5oYXNfcGFzc3dvcmQgJiYgcHJvdmlkZXIgIT09ICdlbWFpbCcpXHJcbiAgY29uc3Qgc2hvd0FuZHJvaWRCYWNrSGFuZGxlciA9IGlzQW5kcm9pZE5hdGl2ZSgpXHJcblxyXG4gIHVzZUVmZmVjdCgoKSA9PiB7XHJcbiAgICBjb25zdCBiZ1NldHRpbmcgPSBzZXR0aW5ncz8uYXBwX2JhY2tncm91bmRfY29sb3JcclxuICAgIGNvbnN0IGNhcmRTZXR0aW5nID0gc2V0dGluZ3M/LmFwcF9jYXJkX2NvbG9yXHJcbiAgICBjb25zdCByYXdCdW5kbGUgPSAoc2V0dGluZ3MgYXMgdW5rbm93biBhcyB7IGFwcF90aGVtZV90b2tlbnM/OiB1bmtub3duIH0pPy5hcHBfdGhlbWVfdG9rZW5zXHJcbiAgICBjb25zdCBub3JtYWxpemVkQnVuZGxlID0gbm9ybWFsaXplVGhlbWVUb2tlbkJ1bmRsZShyYXdCdW5kbGUsIHsgYWxsb3dSYWRpdXM6IHRydWUgfSlcclxuICAgIGNvbnN0IG1vZGUgPSByZXNvbHZlVGhlbWVNb2RlKHNldHRpbmdzKVxyXG5cclxuICAgIGxldCBidW5kbGVUb0FwcGx5OiBUaGVtZVRva2VuQnVuZGxlID0ge31cclxuXHJcbiAgICBpZiAobW9kZSAmJiBtb2RlICE9PSAnY3VzdG9tJyAmJiBtb2RlICE9PSBCQVNFX1RIRU1FX01PREUpIHtcclxuICAgICAgYnVuZGxlVG9BcHBseSA9IGdldFRoZW1lUHJlc2V0KG1vZGUpPy5idW5kbGUgPz8ge31cclxuICAgIH0gZWxzZSBpZiAobW9kZSA9PT0gJ2N1c3RvbScpIHtcclxuICAgICAgY29uc3QgbGVnYWN5T3ZlcnJpZGVzOiBUaGVtZVRva2VuQnVuZGxlID0ge31cclxuICAgICAgY29uc3Qgbm9ybUJnID0gYmdTZXR0aW5nID8gbm9ybWFsaXplSGV4Q29sb3IoYmdTZXR0aW5nKSA6IG51bGxcclxuICAgICAgY29uc3Qgbm9ybUNhcmQgPSBjYXJkU2V0dGluZyA/IG5vcm1hbGl6ZUhleENvbG9yKGNhcmRTZXR0aW5nKSA6IG51bGxcclxuXHJcbiAgICAgIGlmIChub3JtQmcpIHtcclxuICAgICAgICBsZWdhY3lPdmVycmlkZXMuYmFja2dyb3VuZCA9IGhleFRvSHNsVHJpcGxldChub3JtQmcpXHJcbiAgICAgIH1cclxuXHJcbiAgICAgIGlmIChub3JtQ2FyZCkge1xyXG4gICAgICAgIGNvbnN0IGNhcmRIc2wgPSBoZXhUb0hzbFRyaXBsZXQobm9ybUNhcmQpXHJcbiAgICAgICAgbGVnYWN5T3ZlcnJpZGVzLmNhcmQgPSBjYXJkSHNsXHJcbiAgICAgICAgbGVnYWN5T3ZlcnJpZGVzLnBvcG92ZXIgPSBjYXJkSHNsXHJcbiAgICAgIH1cclxuXHJcbiAgICAgIGJ1bmRsZVRvQXBwbHkgPSB7XHJcbiAgICAgICAgLi4ubm9ybWFsaXplZEJ1bmRsZSxcclxuICAgICAgICAuLi5sZWdhY3lPdmVycmlkZXMsXHJcbiAgICAgIH1cclxuICAgIH1cclxuXHJcbiAgICBjb25zdCBhcHBsaWVkID0gYXBwbHlUaGVtZVRva2VuQnVuZGxlKGJ1bmRsZVRvQXBwbHkpXHJcblxyXG4gICAgcmV0dXJuICgpID0+IHtcclxuICAgICAgY2xlYXJUaGVtZVRva2VuQnVuZGxlKGFwcGxpZWQpXHJcbiAgICB9XHJcbiAgfSwgW1xyXG4gICAgc2V0dGluZ3M/LmFwcF9iYWNrZ3JvdW5kX2NvbG9yLFxyXG4gICAgc2V0dGluZ3M/LmFwcF9jYXJkX2NvbG9yLFxyXG4gICAgc2V0dGluZ3M/LmFwcF90aGVtZV9wcmVzZXRfaWQsXHJcbiAgICAoc2V0dGluZ3MgYXMgYW55KT8uYXBwX3RoZW1lX3Rva2VucyxcclxuICBdKVxyXG5cclxuICByZXR1cm4gKFxyXG4gICAgPD5cclxuICAgICAgPFN1c3BlbnNlIGZhbGxiYWNrPXtudWxsfT5cclxuICAgICAgICA8S2V5Ym9hcmRBd2FyZW5lc3MgLz5cclxuICAgICAgPC9TdXNwZW5zZT5cclxuICAgICAge3Nob3dBbmRyb2lkQmFja0hhbmRsZXIgJiYgKFxyXG4gICAgICAgIDxTdXNwZW5zZSBmYWxsYmFjaz17bnVsbH0+XHJcbiAgICAgICAgICA8PlxyXG4gICAgICAgICAgICA8QW5kcm9pZFN5c3RlbUJhcnMgLz5cclxuICAgICAgICAgICAgPEFuZHJvaWRGb2xkQXdhcmVuZXNzIC8+XHJcbiAgICAgICAgICA8Lz5cclxuICAgICAgICA8L1N1c3BlbnNlPlxyXG4gICAgICApfVxyXG4gICAgICB7c2hvd1NldFBhc3N3b3JkICYmIChcclxuICAgICAgICA8U3VzcGVuc2UgZmFsbGJhY2s9e251bGx9PlxyXG4gICAgICAgICAgPFNldFBhc3N3b3JkTW9kYWwgb25Db21wbGV0ZT17b25Qcm9maWxlVXBkYXRlfSAvPlxyXG4gICAgICAgIDwvU3VzcGVuc2U+XHJcbiAgICAgICl9XHJcbiAgICAgIDxTdXNwZW5zZSBmYWxsYmFjaz17PFBhZ2VMb2FkZXIgLz59PlxyXG4gICAgICAgIDxSb3V0ZXM+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9cIiBlbGVtZW50PXt3aXRoQm91bmRhcnkoPERhc2hib2FyZCBzZXNzaW9uPXtzZXNzaW9ufSAvPil9IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9pbnZvaWNlc1wiIGVsZW1lbnQ9e3dpdGhCb3VuZGFyeSg8SW52b2ljZXMgLz4pfSAvPlxyXG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCIvaW52b2ljZXMvbmV3XCIgZWxlbWVudD17d2l0aEJvdW5kYXJ5KDxOZXdJbnZvaWNlIC8+KX0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL2ludm9pY2VzL2VkaXQvOmlkXCIgZWxlbWVudD17d2l0aEJvdW5kYXJ5KDxFZGl0SW52b2ljZSAvPil9IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9pbnZvaWNlcy86aWRcIiBlbGVtZW50PXt3aXRoQm91bmRhcnkoPFZpZXdJbnZvaWNlIC8+KX0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL3F1b3RhdGlvbnNcIiBlbGVtZW50PXt3aXRoQm91bmRhcnkoPFF1b3RhdGlvbnMgLz4pfSAvPlxyXG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCIvcXVvdGF0aW9ucy9uZXdcIiBlbGVtZW50PXt3aXRoQm91bmRhcnkoPE5ld1F1b3RhdGlvbiAvPil9IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9xdW90YXRpb25zL2VkaXQvOmlkXCIgZWxlbWVudD17d2l0aEJvdW5kYXJ5KDxFZGl0UXVvdGF0aW9uIC8+KX0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL3F1b3RhdGlvbnMvOmlkXCIgZWxlbWVudD17d2l0aEJvdW5kYXJ5KDxWaWV3UXVvdGF0aW9uIC8+KX0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL2NzclwiIGVsZW1lbnQ9e3dpdGhCb3VuZGFyeSg8Q1NSIC8+KX0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL2Nzci9uZXdcIiBlbGVtZW50PXt3aXRoQm91bmRhcnkoPE5ld0NTUiAvPil9IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9jc3IvZWRpdC86aWRcIiBlbGVtZW50PXt3aXRoQm91bmRhcnkoPEVkaXRDU1IgLz4pfSAvPlxyXG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCIvY3NyLzppZFwiIGVsZW1lbnQ9e3dpdGhCb3VuZGFyeSg8Vmlld0NTUiAvPil9IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9jbGllbnRzXCIgZWxlbWVudD17d2l0aEJvdW5kYXJ5KDxDbGllbnRzIC8+KX0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL2NsaWVudHMvbmV3XCIgZWxlbWVudD17d2l0aEJvdW5kYXJ5KDxBZGRDbGllbnQgLz4pfSAvPlxyXG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCIvY2xpZW50cy9lZGl0LzppZFwiIGVsZW1lbnQ9e3dpdGhCb3VuZGFyeSg8RWRpdENsaWVudCAvPil9IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9jbGllbnRzLzppZFwiIGVsZW1lbnQ9e3dpdGhCb3VuZGFyeSg8Q2xpZW50RGV0YWlsIC8+KX0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL3NldHRpbmdzXCIgZWxlbWVudD17d2l0aEJvdW5kYXJ5KDxTZXR0aW5ncyAvPil9IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9wcm9qZWN0c1wiIGVsZW1lbnQ9e3dpdGhCb3VuZGFyeSg8UHJvamVjdHMgLz4pfSAvPlxyXG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCIvcHJvamVjdHMvbmV3XCIgZWxlbWVudD17d2l0aEJvdW5kYXJ5KDxOZXdQcm9qZWN0IC8+KX0gLz5cclxuICAgICAgICAgIDxSb3V0ZVxyXG4gICAgICAgICAgICBwYXRoPVwiL3Byb2plY3RzLzpwcm9qZWN0SWQvZG9jdW1lbnRzLzpkb2N1bWVudElkXCJcclxuICAgICAgICAgICAgZWxlbWVudD17d2l0aEJvdW5kYXJ5KDxQcm9qZWN0RG9jdW1lbnRWaWV3IC8+KX1cclxuICAgICAgICAgIC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9wcm9qZWN0cy86aWRcIiBlbGVtZW50PXt3aXRoQm91bmRhcnkoPFByb2plY3REZXRhaWwgLz4pfSAvPlxyXG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCIvcmVwb3J0c1wiIGVsZW1lbnQ9e3dpdGhCb3VuZGFyeSg8UmVwb3J0cyAvPil9IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9jb21wbGlhbmNlXCIgZWxlbWVudD17d2l0aEJvdW5kYXJ5KDxDb21wbGlhbmNlSHViIC8+KX0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL2l0ZW0tbGlicmFyeVwiIGVsZW1lbnQ9e3dpdGhCb3VuZGFyeSg8SXRlbUxpYnJhcnlQYWdlIC8+KX0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL3dheWJpbGxzXCIgZWxlbWVudD17d2l0aEJvdW5kYXJ5KDxXYXliaWxscyAvPil9IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi93YXliaWxscy9uZXdcIiBlbGVtZW50PXt3aXRoQm91bmRhcnkoPE5ld1dheWJpbGwgLz4pfSAvPlxyXG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCIvd2F5YmlsbHMvOmlkL2VkaXRcIiBlbGVtZW50PXt3aXRoQm91bmRhcnkoPEVkaXRXYXliaWxsIC8+KX0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL3dheWJpbGxzLzppZFwiIGVsZW1lbnQ9e3dpdGhCb3VuZGFyeSg8Vmlld1dheWJpbGwgLz4pfSAvPlxyXG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCIvcmZxc1wiIGVsZW1lbnQ9e3dpdGhCb3VuZGFyeSg8UmZxcyAvPil9IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9yZnFzL25ld1wiIGVsZW1lbnQ9e3dpdGhCb3VuZGFyeSg8TmV3UmZxIC8+KX0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL3JmcXMvZWRpdC86aWRcIiBlbGVtZW50PXt3aXRoQm91bmRhcnkoPEVkaXRSZnEgLz4pfSAvPlxyXG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCIvcmZxcy86aWRcIiBlbGVtZW50PXt3aXRoQm91bmRhcnkoPFZpZXdSZnEgLz4pfSAvPlxyXG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCIvYm9xc1wiIGVsZW1lbnQ9e3dpdGhCb3VuZGFyeSg8Qm9xcyAvPil9IC8+XHJcbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9ib3FzL25ld1wiIGVsZW1lbnQ9e3dpdGhCb3VuZGFyeSg8TmV3Qm9xIC8+KX0gLz5cclxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL2JvcXMvZWRpdC86aWRcIiBlbGVtZW50PXt3aXRoQm91bmRhcnkoPEVkaXRCb3EgLz4pfSAvPlxyXG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCIvYm9xcy86aWRcIiBlbGVtZW50PXt3aXRoQm91bmRhcnkoPFZpZXdCb3EgLz4pfSAvPlxyXG4gICAgICAgIDwvUm91dGVzPlxyXG4gICAgICA8L1N1c3BlbnNlPlxyXG4gICAgPC8+XHJcbiAgKVxyXG59Il0sImZpbGUiOiJDOi9Vc2Vycy9ERUxML0Rlc2t0b3AvYmlnZHJvcHMtYXBwL3NyYy9jb21wb25lbnRzL2FwcC9BcHBTaGVsbC50c3gifQ==

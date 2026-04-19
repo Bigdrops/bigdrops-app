@@ -442,7 +442,7 @@ export default function NewInvoice() {
 
   return (
     <Layout title="Create Invoice" hidePageHeader>
-      <div className="space-y-6">
+      <div className="mx-auto w-full max-w-4xl space-y-6 px-0 sm:px-2">
         <SharedDocumentForm
           title="Create Invoice"
           modeLabel="New Invoice"
@@ -535,7 +535,7 @@ export default function NewInvoice() {
           isMobile={isMobile}
         />
 
-        <div className="mx-auto w-full max-w-2xl px-4 pb-6 sm:px-6">
+        <div className="mx-auto w-full max-w-4xl px-0 pb-6 sm:px-2">
           <PdfOutputSettings
             value={pdfOutput}
             onChange={setPdfOutput}

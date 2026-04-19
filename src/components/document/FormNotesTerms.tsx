@@ -13,7 +13,7 @@ const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
 
 function EditorLoadingState() {
   return (
-    <div className="rounded-2xl border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-4 py-10 text-center text-sm text-[var(--bd-text3)] shadow-sm">
+    <div className="rounded-2xl border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-4 py-10 text-center text-sm text-[var(--bd-text3)]">
       Loading editor...
     </div>
   )
@@ -134,7 +134,7 @@ export function FormNotesTerms({
       >
         <div className="space-y-2.5">
           {referenceLinks.length === 0 ? (
-            <div className="rounded-[var(--bd-radius-lg)] border border-dashed border-[var(--bd-emerald-border)] bg-[var(--bd-emerald-bg)] px-4 py-5 text-[13px] font-medium text-[var(--bd-emerald)]">
+            <div className="rounded-[var(--bd-radius-lg)] border border-dashed border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-4 py-5 text-[13px] font-medium text-[var(--bd-text2)]">
               No reference links added yet.
             </div>
           ) : (
@@ -166,7 +166,7 @@ export function FormNotesTerms({
           <button
             type="button"
             onClick={addReferenceLink}
-            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] text-[13px] font-bold text-[var(--bd-text3)] hover:bg-[var(--bd-bg2)]"
+            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[13px] font-bold text-[var(--bd-text3)] hover:bg-[var(--bd-surface)]"
           >
             <Plus className="h-4 w-4" />
             Add Reference Link

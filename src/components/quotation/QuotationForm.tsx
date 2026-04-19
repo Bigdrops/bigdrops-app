@@ -979,7 +979,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6 px-0 sm:px-2">
       <SharedDocumentForm
         title={isEdit ? 'Edit Quotation' : 'Create Quotation'}
         modeLabel={formatQuotationStatus(quotation.status || 'draft')}
@@ -1078,7 +1078,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         isMobile={isMobile}
       />
 
-      <div className="mx-auto w-full max-w-2xl px-4 pb-6 sm:px-6">
+      <div className="mx-auto w-full max-w-4xl px-0 pb-6 sm:px-2">
         <PdfOutputSettings
           value={pdfOutput}
           onChange={handlePdfOutputChange}
