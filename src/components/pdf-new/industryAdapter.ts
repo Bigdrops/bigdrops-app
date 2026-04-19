@@ -163,15 +163,14 @@ function resolveLineAmount(item: PdfDocumentModel['items'][number]) {
   return Number.isFinite(derivedAmount) ? derivedAmount : 0
 }
 
-function resolveGroupSubtotal(model: PdfDocumentModel, startIndex: number) {
+function resolveGroupSubtotal(model: PdfDocumentModel, groupId: string | null) {
+  if (!groupId) return 0
   let subtotal = 0
-
-  for (let index = startIndex + 1; index < model.items.length; index += 1) {
-    const item = model.items[index]
-    if (item.rowType === 'group_header') break
+  for (const item of model.items) {
+    if (item.rowType !== 'line') continue
+    if (item.groupId !== groupId) continue
     subtotal += resolveLineAmount(item)
   }
-
   return subtotal
 }
 
@@ -185,12 +184,13 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
 
     if (isGroupHeader) {
       const showSubtotal = item.customData?.showSubtotal === true
-      const groupSubtotal = showSubtotal ? resolveGroupSubtotal(model, index) : null
+      const groupSubtotal = showSubtotal ? resolveGroupSubtotal(model, item.groupId || null) : null
 
       currentGroupHeader = {
         type: item.rowType,
         rowType: item.rowType,
         isGroupHeader: true,
+        groupId: item.groupId || null,
         groupName: item.groupLabel,
         groupLabel: item.groupLabel,
         showSubtotal,
@@ -201,6 +201,23 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
       }
       rows.push(currentGroupHeader)
       return
+    }
+
+    // Determine if this line belongs to the currently open group
+    const belongsToCurrentGroup = !!currentGroupHeader && !!item.groupId && item.groupId === currentGroupHeader.groupId
+
+    // If we have an open group but this line does NOT belong to it, close the group first
+    if (currentGroupHeader && !belongsToCurrentGroup) {
+      rows.push({
+        type: 'group_footer',
+        rowType: 'group_footer',
+        isGroupFooter: true,
+        groupSubtotalLabel: currentGroupHeader.groupSubtotalLabel,
+        groupSubtotalValue: currentGroupHeader.groupSubtotalValue,
+        showSubtotal: currentGroupHeader.showSubtotal,
+        isInGroup: false,
+      })
+      currentGroupHeader = null
     }
 
     lineNumber += 1
@@ -228,11 +245,15 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
       groupLabel: item.groupLabel,
       imageUrl: item.imageUrl,
       cells,
-      isInGroup: !!currentGroupHeader,
+      isInGroup: !!currentGroupHeader && !!item.groupId && item.groupId === currentGroupHeader.groupId,
     })
 
     const nextItem = model.items[index + 1]
-    const isEndingGroup = !nextItem || nextItem.rowType === 'group_header'
+    const isEndingGroup = !!currentGroupHeader && (
+      !nextItem ||
+      nextItem.rowType === 'group_header' ||
+      nextItem.groupId !== currentGroupHeader.groupId
+    )
 
     if (currentGroupHeader && isEndingGroup) {
       rows.push({
