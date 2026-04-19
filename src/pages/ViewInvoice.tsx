@@ -24,6 +24,7 @@ import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { buildPdfRowCells, generateInvoicePdf, interpretPdfTableSettings } from '@/components/pdf-new'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
+import {
   BUILTIN_COLUMNS,
   DEFAULT_INVOICE_PDF_OUTPUT,
   buildSummaryRows,
@@ -533,7 +534,7 @@ export default function ViewInvoice() {
             <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_REVERT)}
               title="Revert to Quotation?"
-              description={`${docProps.number} will be converted back to a draft quotation. Existing payment records will be preserved.`}
+              description={`${docProps.number} will be converted back to a draft quotation. Existing payment records will be deleted and cannot be recovered.`}
               cancelLabel="Cancel"
               confirmLabel={reverting ? 'Reverting...' : 'Revert'}
               onConfirm={() => void handleRevertToQuotation()}
