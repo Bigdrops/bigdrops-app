@@ -287,7 +287,7 @@ export default function MobileItemCard({
         </div>
       </div>
 
-      {/* Add Item Below Trigger */}
+      {/* Insert Below Trigger */}
       <div className="ml-6 mt-1">
         <button
           type="button"
@@ -295,7 +295,7 @@ export default function MobileItemCard({
           className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[var(--bd-text4)] transition hover:text-[var(--bd-indigo)]"
         >
           <Plus className="h-3 w-3" />
-          Add Below
+          Insert below
         </button>
       </div>
     </div>

@@ -559,9 +559,9 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       }),
     )
 
-  const addUngroupedItem = (insertAt: number | null = null) => {
+  const addUngroupedItem = (insertAt: number | null = null, groupId: string | null = null, groupName = '') => {
     commitGrouping((current) => {
-      const newItem: InvoiceItem = { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }
+      const newItem: InvoiceItem = { ...makeEmptyItem(), row_type: 'standard', group_id: groupId, group_name: groupName }
       if (insertAt === null || insertAt >= current.length) return [...current, { ...newItem, sort_order: current.length }]
       const next = [...current]
       next.splice(insertAt, 0, { ...newItem, sort_order: insertAt })
@@ -570,7 +570,10 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   }
 
   const addQuotationItem = () => addUngroupedItem()
-  const insertItemAfter = (index: number) => addUngroupedItem(index + 1)
+  const insertItemAfter = (index: number) => {
+    const item = items[index]
+    addUngroupedItem(index + 1, item?.group_id || null, item?.group_name || '')
+  }
 
   const addQuotationGroup = () => {
     const base = makeEmptyGroup()

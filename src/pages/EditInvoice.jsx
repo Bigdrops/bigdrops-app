@@ -203,9 +203,9 @@ export default function EditInvoice() {
       }),
     )
 
-  const addUngroupedItem = (insertAt = null) => {
+  const addUngroupedItem = (insertAt = null, groupId = null, groupName = '') => {
     setItems((current) => {
-      const newItem = { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }
+      const newItem = { ...makeEmptyItem(), row_type: 'standard', group_id: groupId, group_name: groupName }
       if (insertAt === null || insertAt >= current.length) {
         return [...current, { ...newItem, sort_order: current.length }]
       }
@@ -218,7 +218,10 @@ export default function EditInvoice() {
   const addItem = () => addUngroupedItem()
   const removeItem = (index) =>
     setItems((current) => current.filter((_, itemIndex) => itemIndex !== index).map((item, itemIndex) => ({ ...item, sort_order: itemIndex })))
-  const insertItemAfter = (index) => addUngroupedItem(index + 1)
+  const insertItemAfter = (index) => {
+    const item = items[index]
+    addUngroupedItem(index + 1, item?.group_id || null, item?.group_name || '')
+  }
   const moveItem = (index, direction) => {
     const nextIndex = index + direction
     if (nextIndex < 0 || nextIndex >= items.length) return

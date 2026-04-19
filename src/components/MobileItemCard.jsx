@@ -159,7 +159,7 @@ export default function MobileItemCard({
                   onClick={() => onInsertBelow(index)}
                   className="h-8 rounded-none px-2 text-[11px] font-semibold text-blue-600 hover:bg-blue-50"
                 >
-                  + Add line item
+                  + Insert line item below
                 </Button>
               ) : null}
 
@@ -443,7 +443,7 @@ export default function MobileItemCard({
               onClick={() => onInsertBelow(index)}
               className="mt-3 h-8 w-full rounded-none border border-dashed border-border bg-card text-[11px] font-semibold text-blue-600 hover:bg-blue-50"
             >
-              + Add line item below
+              + Insert line item below
             </Button>
           ) : null}
         </div>
