@@ -24,16 +24,16 @@ export default function MobileGroupCard({
   const subtotalOn = !!group.showSubtotal
 
   return (
-    <div className="mt-6 overflow-hidden rounded-[var(--bd-radius-lg)] border border-[var(--bd-indigo-border)] bg-[var(--bd-surface)]">
+    <div className="border-b border-[var(--bd-border-soft)] bg-[var(--bd-bg)]">
       {/* Group Header */}
-      <div className="flex items-center gap-3 border-b border-[var(--bd-indigo-border)] bg-gradient-to-br from-[var(--bd-indigo-bg)] to-[var(--bd-surface)] p-4">
+      <div className="flex items-center gap-3 border-b border-[var(--bd-indigo-border)] bg-gradient-to-br from-[var(--bd-indigo-bg)] to-[#f0f4ff] px-4 py-3">
         <div className="h-7 w-1 rounded-full bg-[var(--bd-indigo)]" />
         <div className="min-w-0 flex-1">
           <Input
             value={group.name || ''}
             onChange={(event) => onUpdateGroupName(group.id, event.target.value)}
             placeholder="e.g. Electrical Materials"
-            className="h-7 border-none bg-transparent p-0 text-[15px] font-black tracking-tight text-[var(--bd-indigo)] focus-visible:ring-0"
+            className="h-7 border-none bg-transparent p-0 text-[14px] font-black tracking-tight text-[var(--bd-indigo)] focus-visible:ring-0"
           />
         </div>
 
@@ -53,7 +53,7 @@ export default function MobileGroupCard({
           <button
             type="button"
             onClick={() => onDeleteGroup(group.id)}
-            className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)] transition-colors hover:bg-[var(--bd-rose-border)]"
+            className="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent bg-transparent text-[var(--bd-text4)] transition-colors hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]"
             aria-label="Delete group"
           >
             <X className="h-4 w-4" />
@@ -109,7 +109,7 @@ export default function MobileGroupCard({
       </div>
 
       {/* Group Footer Actions */}
-      <div className="border-t border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] p-3">
+      <div className="border-t border-[var(--bd-border-soft)] bg-[var(--bd-bg)] p-3">
         <button
           type="button"
           onClick={() => onAddItemToGroup(group.id)}

@@ -30,43 +30,47 @@ export function FormHeader({
   onOpenClientPicker,
 }: FormHeaderProps) {
   return (
-    <div className="space-y-5 border-b border-[var(--bd-border-soft)] pb-6">
-      <div>
-        <SectionLabel color="#0f172a">{isQuotation ? 'Quotation Details' : 'Document Details'}</SectionLabel>
-        
-        {/* Client Picker - NOW FIRST */}
-        <div className="mb-4 px-1">
+    <div className="border-b border-[var(--bd-border-soft)] pb-4">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--bd-indigo-border)] bg-[var(--bd-indigo-bg)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--bd-indigo)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--bd-indigo)]" />
+            {isQuotation ? 'Quotation' : 'Invoice'}
+          </div>
           <button
             type="button"
-            onClick={onOpenClientPicker}
-            className="flex w-full items-center gap-4 rounded-[var(--bd-radius-xl)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-4 text-left shadow-sm transition hover:border-[var(--bd-indigo-border)]"
+            onClick={onOpenActionsSheet}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-transparent text-[var(--bd-text2)] transition hover:bg-[var(--bd-bg2)]"
           >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--bd-radius)] bg-[var(--bd-indigo-bg)] text-[var(--bd-indigo)]">
-              <BriefcaseBusiness className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Client</div>
-              <div className="mt-0.5 truncate text-[16px] font-bold text-[var(--bd-text)]">
-                {invoice.client_name || 'Select a client'}
-              </div>
-            </div>
-            <ChevronRight className="h-5 w-5 text-[var(--bd-text4)]" />
+            <MoreHorizontal className="h-4.5 w-4.5" />
           </button>
         </div>
 
-        <div className="space-y-4 px-1">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">{modeLabel}</div>
-              <h1 className="mt-1 text-[26px] font-black leading-tight tracking-tight text-[var(--bd-text)]">{title}</h1>
+        <SectionLabel color="#0f172a">{isQuotation ? 'Quotation Details' : 'Document Details'}</SectionLabel>
+
+        <div>
+          <button
+            type="button"
+            onClick={onOpenClientPicker}
+            className="flex w-full items-center gap-3 rounded-[var(--bd-radius-lg)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-3 text-left transition hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)]"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--bd-bg2)] text-[var(--bd-text3)]">
+              <BriefcaseBusiness className="h-4.5 w-4.5" />
             </div>
-            <button
-              type="button"
-              onClick={onOpenActionsSheet}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text2)] transition hover:bg-[var(--bd-bg2)]"
-            >
-              <MoreHorizontal className="h-5 w-5" />
-            </button>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Client</div>
+              <div className="mt-0.5 truncate text-[14px] font-bold text-[var(--bd-text)]">
+                {invoice.client_name || 'Select a client'}
+              </div>
+            </div>
+            <ChevronRight className="h-4.5 w-4.5 text-[var(--bd-text4)]" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="min-w-0">
+            <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">{modeLabel}</div>
+            <h1 className="mt-1 text-[25px] font-black leading-tight tracking-tight text-[var(--bd-text)]">{title}</h1>
           </div>
 
           <div className="space-y-4">
@@ -76,7 +80,7 @@ export function FormHeader({
                 value={invoiceTitle || ''}
                 onChange={(event) => setInvoiceTitle(event.target.value)}
                 placeholder={isQuotation ? 'e.g. Website Overhaul' : 'e.g. Monthly Maintenance'}
-                className={`${fieldCls} h-12 text-[15px] font-medium`}
+                className={`${fieldCls} h-12 text-[16px] font-bold`}
               />
             </div>
 
@@ -88,7 +92,7 @@ export function FormHeader({
                   <Input
                     value={invoice.invoice_number || ''}
                     onChange={(event) => updateInvoice('invoice_number', event.target.value)}
-                    className={`${fieldCls} pl-9 font-mono font-bold tracking-tight text-[var(--bd-indigo)]`}
+                    className={`${fieldCls} pl-9 font-mono text-[13px] font-bold tracking-tight text-[var(--bd-text)]`}
                   />
                 </div>
               </div>

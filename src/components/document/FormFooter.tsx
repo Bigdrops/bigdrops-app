@@ -20,15 +20,15 @@ export function FormFooter({
 }: FormFooterProps) {
   return (
     <>
-      <div className="sticky bottom-0 z-10 border-t border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-3 pb-6 pt-3 sm:px-4">
-        <div className="mx-auto max-w-2xl">
-          <div className={`${pageCardCls} p-2 shadow-lg`}>
+      <div className="sticky bottom-0 z-10 border-t border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-4 pb-5 pt-3">
+        <div className="mx-auto max-w-[760px]">
+          <div className={`${pageCardCls} p-2`}>
             <div className="grid grid-cols-[1fr_1fr_1.35fr] gap-2">
               <button
                 type="button"
                 onClick={onCancel}
                 disabled={saving}
-                className="h-12 rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[14px] font-bold text-[var(--bd-text2)] disabled:opacity-60"
+                className="h-11 rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[13px] font-bold text-[var(--bd-text2)] disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -36,7 +36,7 @@ export function FormFooter({
                 type="button"
                 onClick={onSaveDraft}
                 disabled={saving}
-                className="h-12 rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-bg2)] text-[14px] font-bold text-[var(--bd-text2)] disabled:opacity-60"
+                className="h-11 rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-bg2)] text-[13px] font-bold text-[var(--bd-text2)] disabled:opacity-60"
               >
                 Draft
               </button>
@@ -44,7 +44,7 @@ export function FormFooter({
                 type="button"
                 onClick={onSaveSent}
                 disabled={saving}
-                className="h-12 rounded-[var(--bd-radius)] border-0 bg-[var(--bd-text)] text-[15px] font-black text-white shadow-md disabled:opacity-60"
+                className="h-11 rounded-[var(--bd-radius)] border-0 bg-[var(--bd-text)] text-[14px] font-black text-white disabled:opacity-60"
               >
                 {saving ? 'Saving…' : primaryLabel}
               </button>
@@ -57,7 +57,7 @@ export function FormFooter({
         type="button"
         onClick={onFloatingSave}
         disabled={saving}
-        className="fixed bottom-[104px] right-4 z-[60] flex h-[52px] w-[52px] items-center justify-center rounded-[var(--bd-radius-lg)] bg-[var(--bd-text)] text-white shadow-xl animate-in fade-in slide-in-from-bottom-4 sm:right-8"
+        className="fixed bottom-[98px] right-4 z-[60] flex h-[48px] w-[48px] items-center justify-center rounded-[var(--bd-radius)] bg-[var(--bd-text)] text-white shadow-lg animate-in fade-in slide-in-from-bottom-4 sm:right-8"
       >
         <Save className="h-5 w-5" />
       </button>

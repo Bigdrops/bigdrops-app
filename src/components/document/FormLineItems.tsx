@@ -1,6 +1,5 @@
 import { FileInput, FolderPlus, Plus, Settings2 } from 'lucide-react'
 import {
-  pageCardCls,
   SectionLabel,
   ToolbarButton,
 } from '@/components/invoice/mobile/mobileFormPrimitives'
@@ -126,11 +125,11 @@ export function FormLineItems({
   }, [groupMap, items])
 
   return (
-    <div>
+    <div className="border-b border-[var(--bd-border-soft)] pb-4">
       <SectionLabel
         color="#059669"
         trailing={
-          <span className="inline-flex h-7 items-center rounded-full border border-[var(--bd-emerald-border)] bg-[var(--bd-emerald-bg)] px-3 text-[11px] font-extrabold text-[var(--bd-emerald)]">
+          <span className="inline-flex h-6 items-center font-mono text-[11px] font-bold text-[var(--bd-text3)]">
             {lineItemsCount} {lineItemsCount === 1 ? 'item' : 'items'}
           </span>
         }
@@ -138,17 +137,16 @@ export function FormLineItems({
         Line Items
       </SectionLabel>
 
-      <div className="mb-4 border-b border-[var(--bd-border-soft)] py-3">
-        <div className="grid grid-cols-2 gap-3">
-          <ToolbarButton onClick={onOpenImport} className="h-10 border-dashed bg-[var(--bd-surface)] hover:bg-[var(--bd-bg)] rounded-[var(--bd-radius)]">
+      <div className="mb-3 flex items-center gap-2 border-b border-[var(--bd-border-soft)] py-2">
+          <ToolbarButton onClick={onOpenImport} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
             <FileInput className="h-3.5 w-3.5" />
             <span className="text-[12px]">Import Items</span>
           </ToolbarButton>
-          <ToolbarButton onClick={onOpenTableSettings} className="h-10 border-dashed bg-[var(--bd-surface)] hover:bg-[var(--bd-bg)] rounded-[var(--bd-radius)]">
+          <ToolbarButton onClick={onOpenTableSettings} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
             <Settings2 className="h-3.5 w-3.5" />
             <span className="text-[12px]">Table Settings</span>
           </ToolbarButton>
-        </div>
+          <div className="ml-auto text-[11px] font-mono text-[var(--bd-text3)]">Rows</div>
       </div>
 
       <div className="space-y-0">
@@ -198,21 +196,21 @@ export function FormLineItems({
         )}
       </div>
 
-      <div className="mt-6 flex gap-3">
+      <div className="mt-3 flex gap-2">
         <button
           type="button"
           onClick={onAddItem}
-          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border border-dashed border-[var(--bd-emerald-border)] bg-[var(--bd-emerald-bg)] text-[14px] font-black text-[var(--bd-emerald)] transition hover:bg-[var(--bd-emerald-border)] hover:text-white"
+          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] text-[13px] font-bold text-[var(--bd-text2)] transition hover:border-[var(--bd-amber-border)] hover:bg-[var(--bd-amber-bg)] hover:text-[var(--bd-amber-dark)]"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-4.5 w-4.5" />
           Add item
         </button>
         <button
           type="button"
           onClick={onAddGroup}
-          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border border-dashed border-[var(--bd-indigo-border)] bg-[var(--bd-indigo-bg)] text-[14px] font-black text-[var(--bd-indigo)] transition hover:bg-[var(--bd-indigo-border)] hover:text-white"
+          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] text-[13px] font-bold text-[var(--bd-text2)] transition hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)] hover:text-[var(--bd-indigo)]"
         >
-          <FolderPlus className="h-5 w-5" />
+          <FolderPlus className="h-4.5 w-4.5" />
           Add group
         </button>
       </div>

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { DiscountTiming, DiscountType, ExtraCharge, InvoiceFieldEntry, WhtType } from '@/domain/invoice'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ChevronDown, Percent, Plus, X } from 'lucide-react'
+import { Percent, Plus, X } from 'lucide-react'
 import {
   fieldCls,
   SectionLabel,
@@ -80,10 +80,10 @@ export function FormCommercialTerms({
     setOpenSections((current) => ({ ...current, [key]: !current[key] }))
 
   return (
-    <div className="space-y-6">
+    <div className="border-b border-[var(--bd-border-soft)] pb-4">
       <div>
         <SectionLabel color="#d97706">Commercial Terms</SectionLabel>
-        <div className="grid grid-cols-2 gap-4 border-b border-[var(--bd-border-soft)] px-1 pb-6">
+        <div className="grid grid-cols-2 gap-4 border-b border-[var(--bd-border-soft)] pb-4">
             <div>
               <label className={labelCls}>Payment Terms</label>
               <Select 
@@ -114,7 +114,7 @@ export function FormCommercialTerms({
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-0 pt-1">
         {/* Discount Section */}
         <CollapseCard
           title="Discount"
@@ -154,8 +154,8 @@ export function FormCommercialTerms({
                 value={discountTiming}
                 onChange={(val) => setDiscountTiming(val as DiscountTiming)}
                 options={[
-                  { label: 'Apply After VAT', value: 'after' },
-                  { label: 'Apply Before VAT', value: 'before' },
+                  { label: 'After VAT', value: 'after' },
+                  { label: 'Before VAT', value: 'before' },
                 ]}
               />
             </div>
@@ -185,7 +185,7 @@ export function FormCommercialTerms({
             <div>
               <label className={labelCls}>Basis</label>
               <div className={`${fieldCls} flex items-center bg-[var(--bd-bg2)] text-[var(--bd-text3)]`}>
-                On Subtotal
+                Real app basis
               </div>
             </div>
           </div>
@@ -257,7 +257,7 @@ export function FormCommercialTerms({
                 <button
                   type="button"
                   onClick={() => onRemoveExtraCharge(charge.id)}
-                  className="flex h-11 w-11 items-center justify-center rounded-[var(--bd-radius)] border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)]"
+                  className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-transparent bg-transparent text-[var(--bd-text4)] transition hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -267,14 +267,14 @@ export function FormCommercialTerms({
                <button
                  type="button"
                  onClick={() => onAddExtraCharge(true)}
-                 className="flex-1 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-amber-border)] bg-[var(--bd-amber-bg)] py-2 text-[12px] font-bold text-[var(--bd-amber-dark)]"
+                 className="flex-1 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] py-2 text-[12px] font-bold text-[var(--bd-text2)] hover:border-[var(--bd-amber-border)] hover:bg-[var(--bd-amber-bg)] hover:text-[var(--bd-amber-dark)]"
                >
                  + Charge (with Tax)
                </button>
                <button
                  type="button"
                  onClick={() => onAddExtraCharge(false)}
-                 className="flex-1 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-bg)] py-2 text-[12px] font-bold text-[var(--bd-text2)]"
+                 className="flex-1 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] py-2 text-[12px] font-bold text-[var(--bd-text2)] hover:border-[var(--bd-border)] hover:bg-[var(--bd-bg)]"
                >
                  + Charge (No Tax)
                </button>
@@ -309,7 +309,7 @@ export function FormCommercialTerms({
                 <button
                   type="button"
                   onClick={() => onRemoveAdditionalField(field.id)}
-                  className="flex h-11 w-11 items-center justify-center rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text4)] hover:text-[var(--bd-rose)]"
+                  className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-transparent bg-transparent text-[var(--bd-text4)] transition hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -318,7 +318,7 @@ export function FormCommercialTerms({
             <button
               type="button"
               onClick={onAddAdditionalField}
-              className="mt-2 w-full rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-indigo-border)] bg-[var(--bd-indigo-bg)] py-2 text-[12px] font-bold text-[var(--bd-indigo)]"
+              className="mt-2 w-full rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] py-2 text-[12px] font-bold text-[var(--bd-text2)] hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)] hover:text-[var(--bd-indigo)]"
             >
               Add Additional Field
             </button>

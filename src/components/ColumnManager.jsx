@@ -19,9 +19,9 @@ import { COLUMN_TYPES } from './useInvoiceColumns.jsx'
 
 const FIXED_PDF_COLUMNS = [
   { key: 'description', label: 'Description' },
-  { key: 'quantity', label: 'Qty' },
+  { key: 'quantity', label: 'Quantity' },
   { key: 'unit_price', label: 'Unit Price' },
-  { key: 'amount', label: 'Amount (NGN)' },
+  { key: 'amount', label: 'Amount' },
 ]
 
 function SectionTitle({ children, action }) {
@@ -104,10 +104,10 @@ function BuiltInColumnRow({
                 min="0"
                 value={col.formula || ''}
                 onChange={(e) => onUpdate(col.key, 'formula', e.target.value)}
-                placeholder="e.g. 0.1"
+                placeholder="e.g. 0.15"
                 className="h-10 rounded-[12px] border-slate-200 bg-slate-50 text-sm"
               />
-              <span className="shrink-0 text-xs text-slate-500">× (Qty × Price)</span>
+              <span className="shrink-0 text-xs font-semibold text-slate-500">Multiplier</span>
             </div>
           ) : null}
 
@@ -115,11 +115,6 @@ function BuiltInColumnRow({
             {typeLabel(col.type || 'text')}
           </div>
 
-          {col.key === 'vat_rate' || col.key === 'discount_rate' ? (
-            <div className="mt-2 text-[12px] leading-5 text-slate-500">
-              Leave blank to use the global value. Set 0 on a row to exclude it.
-            </div>
-          ) : null}
         </div>
 
         <div className="flex shrink-0 flex-col gap-1 pt-1">
@@ -387,7 +382,7 @@ export default function ColumnManager({
                   Table Settings
                 </h2>
                 <p className="mt-0.5 text-[14px] text-slate-500">
-                  Manage columns and row overrides
+                  Configure row data and column visibility
                 </p>
               </div>
 
@@ -402,12 +397,16 @@ export default function ColumnManager({
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 pb-4 pt-5">
-              <SectionTitle>Columns</SectionTitle>
+              <SectionTitle>A. Standard PDF (Fixed)</SectionTitle>
               <div className="space-y-3">
                 {FIXED_PDF_COLUMNS.map((col) => (
                   <FixedColumnRow key={col.key} col={col} />
                 ))}
+              </div>
 
+              <div className="mt-7">
+                <SectionTitle>B. Form Fields (Built-ins)</SectionTitle>
+                <div className="space-y-3">
                 {builtinCols.map((col, index) => (
                   <BuiltInColumnRow
                     key={col.key}
@@ -430,6 +429,7 @@ export default function ColumnManager({
                     typeLabel={typeLabel}
                   />
                 ))}
+                </div>
               </div>
 
               <div className="mt-7">
@@ -446,7 +446,7 @@ export default function ColumnManager({
                     </Button>
                   }
                 >
-                  Custom Columns
+                  C. Custom Columns
                 </SectionTitle>
 
                 {customCols.length === 0 ? (
@@ -470,10 +470,8 @@ export default function ColumnManager({
 
               {onResetItemOverrides ? (
                 <div className="mt-7 rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4">
-                  <div className="text-[16px] font-bold text-slate-900">Row Overrides</div>
-                  <div className="mt-1 text-[13px] text-slate-500">
-                    Clear per-row VAT, discount, and install overrides
-                  </div>
+                  <div className="text-[16px] font-bold text-slate-900">D. Row Overrides Status</div>
+                  <div className="mt-1 text-[13px] text-slate-500">Reset row-level VAT, discount, and install overrides.</div>
 
                   <div className="mt-4 space-y-2.5">
                     <OverrideRow
@@ -513,7 +511,7 @@ export default function ColumnManager({
               <div className="mt-7 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <div className="text-[15px] font-semibold text-slate-900">Table Reset</div>
+                    <div className="text-[15px] font-semibold text-slate-900">Reset Table Settings</div>
                     <div className="text-[13px] text-slate-500">
                       Restores columns, labels, and layout. Does not remove items.
                     </div>

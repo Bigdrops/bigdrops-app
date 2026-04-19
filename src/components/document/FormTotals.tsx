@@ -26,15 +26,15 @@ export function FormTotals({
   const [showVatAdjust, setShowVatAdjust] = useState(false)
 
   return (
-    <div>
-      <SectionLabel color="#059669">Totals Summary</SectionLabel>
-      <div className="rounded-[var(--bd-radius-xl)] border border-[var(--bd-border-soft)] bg-[color:color-mix(in_srgb,var(--bd-surface)_72%,white)] p-5 shadow-none">
-        <div className="space-y-2.5">
+    <div className="border-b border-[var(--bd-border-soft)] pb-4">
+      <SectionLabel color="#059669">Totals</SectionLabel>
+      <div className="bg-[var(--bd-surface)] px-0 py-1">
+        <div className="space-y-1.5">
           {summaryRows.map((row) => (
             <div
               key={row.label}
               className={`flex items-center justify-between gap-3 text-[14px] ${
-                row.strong ? 'border-t border-[var(--bd-border-soft)] pt-3 mt-1' : ''
+                row.strong ? 'mt-2 border-t border-[var(--bd-border)] pt-3' : ''
               }`}
             >
               <span className={row.strong ? 'font-bold text-[var(--bd-text)]' : 'font-medium text-[var(--bd-text2)]'}>
@@ -52,7 +52,7 @@ export function FormTotals({
           ))}
         </div>
 
-        <div className="mt-6">
+        <div className="mt-4">
           <button
             type="button"
             onClick={() => setShowVatAdjust(!showVatAdjust)}
@@ -76,21 +76,20 @@ export function FormTotals({
         </div>
 
         {amountInWords && (
-          <div className="mt-6 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border-soft)] bg-[var(--bd-bg)] p-3 text-[12px] font-medium italic leading-relaxed text-[var(--bd-text2)]">
+          <div className="mt-4 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border-soft)] bg-[var(--bd-bg)] p-3 text-[12px] font-medium italic leading-relaxed text-[var(--bd-text2)]">
             {amountInWords}
           </div>
         )}
 
-        <div className="mt-8 border-t border-[var(--bd-border-soft)] pt-5">
-          <div className="flex items-center justify-between">
-            <span className="text-[14px] font-bold uppercase tracking-[0.16em] text-[var(--bd-text2)]">Total Payable</span>
-            <span className="font-serif text-[28px] font-semibold tracking-tight text-[var(--bd-text)]">
+        <div className="mt-5 border-t border-[var(--bd-border)] pt-4">
+          <div className="flex items-end justify-between gap-4">
+            <span className="text-[15px] font-extrabold text-[var(--bd-text)]">Total Payable</span>
+            <span className="font-serif text-[30px] font-semibold tracking-tight text-[var(--bd-text)]">
               {formatCurrency(totalPayable)}
             </span>
           </div>
           <div className="mt-1 flex items-center justify-end gap-1.5 text-[var(--bd-text3)]">
-            <span className="h-1 w-1 rounded-full bg-[var(--bd-border)]" />
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em]">Final Amount Due</span>
+            <span className="text-[9px] font-bold uppercase tracking-[0.18em]">Final Amount Due</span>
           </div>
         </div>
       </div>

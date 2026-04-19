@@ -121,12 +121,12 @@ export default function MobileItemCard({
   }
 
   return (
-    <div className={`relative border-b border-[var(--bd-border-soft)] bg-[var(--bd-surface)] p-4 transition-colors hover:bg-[#faf9f8]`}>
+    <div className="relative border-b border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-0 py-3 transition-colors hover:bg-[#fdfcfb]">
       <div className="flex items-start gap-2.5">
         {/* Row Number & Enumeration */}
-        <div className="flex flex-col items-center gap-0.5 py-1.5 w-6 shrink-0">
-          <div className="text-[10px] font-extrabold text-[var(--bd-text3)] opacity-60 leading-none">{number}</div>
-          <div className="cursor-grab active:cursor-grabbing text-[var(--bd-text4)] hover:text-[var(--bd-text2)] transition-colors">
+        <div className="flex w-6 shrink-0 flex-col items-center gap-1 pt-2">
+          <div className="text-[11px] font-bold leading-none text-[var(--bd-text3)]">{number}</div>
+          <div className="cursor-grab text-[var(--bd-text4)] transition-colors hover:text-[var(--bd-text2)] active:cursor-grabbing">
             <GripVertical className="h-4 w-4" />
           </div>
         </div>
@@ -140,7 +140,7 @@ export default function MobileItemCard({
               onFocus={() => setDescriptionFocused(true)}
               onBlur={() => setTimeout(() => setDescriptionFocused(false), 150)}
               placeholder="Item description..."
-              className="min-h-[38px] w-full resize-none rounded-[var(--bd-radius)] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] p-2.5 text-[14px] font-medium text-[var(--bd-text)] shadow-none focus:border-[var(--bd-indigo-border)] focus:bg-[var(--bd-surface)] focus-visible:ring-0"
+              className="min-h-[38px] w-full resize-none rounded-[8px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] p-2.5 text-[13px] font-medium text-[var(--bd-text)] shadow-none focus:border-[var(--bd-indigo-border)] focus:bg-[var(--bd-surface)] focus-visible:ring-0"
             />
             {showSuggestions && (suggestionsLoading || (suggestions && suggestions.length > 0)) && (
               <div className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] shadow-lg">
@@ -217,29 +217,29 @@ export default function MobileItemCard({
           </div>
 
           {/* Compact Inputs Row */}
-          <div className="flex flex-wrap items-end gap-2.5 pt-1">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2 pt-1 sm:grid-cols-5">
             {isVisible('make') && (
-              <div className="min-w-[80px] flex-1">
+              <div className="min-w-0">
                 <label className={labelCls}>Make</label>
                 <Input value={item.make || ''} onChange={(e) => onUpdate(index, 'make', e.target.value)} className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]" />
               </div>
             )}
-            <div className="w-16">
+            <div className="min-w-0">
               <label className={labelCls}>Qty</label>
               <Input type="number" value={item.quantity ?? 1} onChange={(e) => onUpdate(index, 'quantity', Number(e.target.value))} className="h-9 px-2 text-center text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
             </div>
             {isVisible('unit') && (
-              <div className="w-20">
+              <div className="min-w-0">
                 <label className={labelCls}>Unit</label>
                 <UnitInput value={item.unit || ''} onChange={(val) => onUpdate(index, 'unit', val)} className="h-9 px-2 text-[13px] rounded-lg border-[var(--bd-border-soft)]" />
               </div>
             )}
-            <div className="min-w-[100px] flex-1">
+            <div className="min-w-0">
               <label className={labelCls}>Rate</label>
               <Input type="number" value={item.unit_price ?? 0} onChange={(e) => onUpdate(index, 'unit_price', Number(e.target.value))} className="h-9 px-2.5 text-right font-mono text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
             </div>
             
-            <div className="shrink-0 pb-1.5 text-right">
+            <div className="min-w-0 self-end pb-1.5 text-right">
               <div className="text-[9px] font-extrabold uppercase tracking-widest text-[var(--bd-text3)] opacity-70 mb-1">Subtotal</div>
               <div className="font-mono text-[14px] font-bold text-[var(--bd-text)]">
                 {formatCurrency(computedAmount).replace('NGN', '').trim()}
@@ -267,13 +267,13 @@ export default function MobileItemCard({
 
         {/* Vertical Actions */}
         <div className="flex shrink-0 flex-col gap-1 py-1">
-          <button onClick={() => onMoveUp(index)} disabled={isFirst} className={`flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--bd-border)] transition ${isFirst ? 'opacity-20 cursor-not-allowed' : 'hover:bg-[var(--bd-bg2)]'}`}>
+          <button onClick={() => onMoveUp(index)} disabled={isFirst} className={`flex h-7 w-7 items-center justify-center rounded-[8px] border border-[var(--bd-border)] transition ${isFirst ? 'cursor-not-allowed opacity-20' : 'hover:bg-[var(--bd-bg2)]'}`}>
             <ChevronUp className="h-3.5 w-3.5 text-[var(--bd-text3)]" />
           </button>
-          <button onClick={() => onMoveDown(index)} disabled={isLast} className={`flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--bd-border)] transition ${isLast ? 'opacity-20 cursor-not-allowed' : 'hover:bg-[var(--bd-bg2)]'}`}>
+          <button onClick={() => onMoveDown(index)} disabled={isLast} className={`flex h-7 w-7 items-center justify-center rounded-[8px] border border-[var(--bd-border)] transition ${isLast ? 'cursor-not-allowed opacity-20' : 'hover:bg-[var(--bd-bg2)]'}`}>
             <ChevronDown className="h-3.5 w-3.5 text-[var(--bd-text3)]" />
           </button>
-          <button onClick={() => onRemove(index)} className="flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)] transition hover:bg-[var(--bd-rose-border)]">
+          <button onClick={() => onRemove(index)} className="flex h-7 w-7 items-center justify-center rounded-[8px] border border-transparent bg-transparent text-[var(--bd-text4)] transition hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]">
             <X className="h-3.5 w-3.5" />
           </button>
           {onDuplicate && (
@@ -285,7 +285,7 @@ export default function MobileItemCard({
       </div>
 
       {/* Add Item Below Trigger */}
-      <div className="ml-8 mt-1.5">
+      <div className="ml-8 mt-1">
         <button
           type="button"
           onClick={() => onInsertBelow(index)}

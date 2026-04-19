@@ -13,7 +13,7 @@ const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
 
 function EditorLoadingState() {
   return (
-    <div className="rounded-2xl border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-4 py-10 text-center text-sm text-[var(--bd-text3)]">
+    <div className="rounded-[var(--bd-radius)] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-4 py-10 text-center text-sm text-[var(--bd-text3)]">
       Loading editor...
     </div>
   )
@@ -61,7 +61,7 @@ export function FormNotesTerms({
   setShowLinks,
 }: FormNotesTermsProps) {
   return (
-    <div className="space-y-4">
+    <div className="border-b border-[var(--bd-border-soft)]">
       {/* Notes & Terms */}
       <CollapseCard
         icon={NotebookText}
@@ -155,7 +155,7 @@ export function FormNotesTerms({
                 <button
                   type="button"
                   onClick={() => removeReferenceLink(index)}
-                  className="flex h-11 w-11 items-center justify-center rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-bg)] text-[var(--bd-text4)] hover:text-[var(--bd-rose)]"
+                  className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-transparent bg-transparent text-[var(--bd-text4)] transition hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -166,7 +166,7 @@ export function FormNotesTerms({
           <button
             type="button"
             onClick={addReferenceLink}
-            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[13px] font-bold text-[var(--bd-text3)] hover:bg-[var(--bd-surface)]"
+            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] text-[13px] font-bold text-[var(--bd-text2)] hover:bg-[var(--bd-bg)]"
           >
             <Plus className="h-4 w-4" />
             Add Reference Link

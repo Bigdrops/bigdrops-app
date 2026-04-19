@@ -12,9 +12,9 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export const pageCardCls =
-  'rounded-[var(--bd-radius-xl)] border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] shadow-sm'
+  'border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] shadow-none'
 export const fieldCls =
-  'h-11 rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-bg)] px-3 text-[14px] text-[var(--bd-text)] shadow-none transition focus:border-[var(--bd-indigo)] focus:bg-[var(--bd-surface)] focus:ring-0 focus-visible:ring-0'
+  'h-11 rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 text-[14px] text-[var(--bd-text)] shadow-none transition focus:border-[var(--bd-indigo)] focus:bg-[var(--bd-surface)] focus:ring-0 focus-visible:ring-0'
 export const labelCls = 'mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text2)]'
 
 export function getSectionDotClass(color?: string) {
@@ -54,9 +54,9 @@ interface SectionLabelProps {
 
 export function SectionLabel({ color, children, trailing }: SectionLabelProps) {
   return (
-    <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
-      <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#64748b]">
-        <span className={`h-2 w-2 rounded-full ${getSectionDotClass(color)}`} />
+    <div className="mb-2.5 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--bd-text3)]">
+        <span className={`h-1.5 w-1.5 rounded-full ${getSectionDotClass(color)}`} />
         <span>{children}</span>
       </div>
       {trailing}
@@ -90,10 +90,10 @@ export function ToolbarButton({ active = false, className = '', children, ...pro
   return (
     <button
       type="button"
-      className={`inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] px-3 text-[13px] font-bold transition ${
+      className={`inline-flex h-9 items-center justify-center gap-2 rounded-[8px] border px-3 text-[12px] font-semibold transition ${
         active
-          ? 'border-[#0f172a] bg-[#0f172a] text-white'
-          : 'border-[#e2e8f0] bg-white text-[#334155]'
+          ? 'border-[var(--bd-text)] bg-[var(--bd-text)] text-white'
+          : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text2)]'
       } ${className}`}
       {...props}
     >
@@ -115,7 +115,7 @@ interface SegmentedControlProps {
 
 export function SegmentedControl({ value, onChange, options }: SegmentedControlProps) {
   return (
-    <div className="flex gap-[3px] rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] p-[3px]">
+    <div className="flex gap-[3px] rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-bg2)] p-[3px]">
       {options.map((option) => {
         const active = value === option.value
         return (
@@ -123,8 +123,8 @@ export function SegmentedControl({ value, onChange, options }: SegmentedControlP
             key={option.value}
             type="button"
             onClick={() => onChange(option.value)}
-            className={`h-9 flex-1 rounded-[9px] text-[12px] font-extrabold transition ${
-              active ? 'bg-[#0f172a] text-white' : 'text-[#64748b]'
+            className={`h-8 flex-1 rounded-[7px] text-[12px] font-bold transition ${
+              active ? 'bg-[var(--bd-surface)] text-[var(--bd-text)] shadow-[0_1px_3px_rgba(0,0,0,0.06)]' : 'text-[var(--bd-text2)]'
             }`}
           >
             {option.label}
@@ -172,29 +172,29 @@ interface CollapseCardProps {
 
 export function CollapseCard({ icon: Icon, iconTone, title, subtitle, open, onToggle, children, sectionColor }: CollapseCardProps) {
   return (
-    <div className={pageCardCls}>
+    <div className="border-b border-[var(--bd-border-soft)] bg-transparent">
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left"
+        className="flex w-full items-center justify-between gap-3 py-3 text-left"
       >
         <div className="flex items-center gap-3">
           <div
-            className={`flex h-[38px] w-[38px] items-center justify-center rounded-[11px] ${getIconToneClass(iconTone)}`}
+            className={`flex h-[30px] w-[30px] items-center justify-center rounded-[8px] ${getIconToneClass(iconTone)}`}
           >
             <Icon className="h-4.5 w-4.5" />
           </div>
           <div>
-            <div className="text-[14px] font-bold text-[#0f172a]">{title}</div>
-            <div className="text-[11px] text-[#94a3b8]">{subtitle}</div>
+            <div className="text-[13px] font-bold text-[var(--bd-text)]">{title}</div>
+            <div className="text-[11px] text-[var(--bd-text3)]">{subtitle}</div>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {sectionColor ? <span className={`h-2 w-2 rounded-full ${getSectionDotClass(sectionColor)}`} /> : null}
-          {open ? <ChevronUp className="h-4 w-4 text-[#94a3b8]" /> : <ChevronRight className="h-4 w-4 text-[#94a3b8]" />}
+          {open ? <ChevronUp className="h-4 w-4 text-[var(--bd-text4)]" /> : <ChevronRight className="h-4 w-4 text-[var(--bd-text4)]" />}
         </div>
       </button>
-      {open ? <div className="border-t border-[#e2e8f0] px-4 pb-4 pt-4">{children}</div> : null}
+      {open ? <div className="pb-4 pt-1">{children}</div> : null}
     </div>
   )
 }

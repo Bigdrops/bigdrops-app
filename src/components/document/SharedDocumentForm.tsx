@@ -137,9 +137,9 @@ export default function SharedDocumentForm(props: any) {
   ].filter(Boolean)
 
   return (
-    <div className="bd-form-shell bd-custom-scrollbar overflow-x-hidden px-0 pt-4 sm:pt-6">
-      <div className="mx-auto w-full max-w-4xl px-0 sm:px-2">
-        <div className="space-y-8 pb-12">
+    <div className="bd-form-shell bd-custom-scrollbar overflow-x-hidden px-0 pt-1 sm:pt-3">
+      <div className="mx-auto w-full max-w-[760px] px-4 sm:px-5">
+        <div className="space-y-6 pb-12">
           <FormHeader
             modeLabel={modeLabel}
             title={title}
