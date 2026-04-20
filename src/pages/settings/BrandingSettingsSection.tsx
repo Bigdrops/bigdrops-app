@@ -202,7 +202,10 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   if (loading) return <SettingsLoadingState />
 
   const footerPreview = (form.footer_text || '').split('\n').find(Boolean) || ''
-  const previewSrc = localLogoPreview || form.company_logo_url
+  const previewSrc =
+    localLogoPreview ||
+    form.company_logo_url ||
+    'https://xqlpekpkbszpdgtuwybh.supabase.co/storage/v1/object/public/logos/logo/1776653418366.png'
 
   const UploadBox = ({
     label,
