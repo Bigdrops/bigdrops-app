@@ -1,4 +1,5 @@
 import { resolveInstallRate } from './columns'
+import { normalizeExtraCharges } from './factories'
 import type {
   CalculationInputs,
   CalculationResult,
@@ -9,6 +10,27 @@ import type {
   InvoiceTotalsSource,
   LegacyCalculationState,
 } from './types'
+
+type SummaryLabelOverrides = {
+  vat?: string
+  discount?: string
+  wht?: string
+}
+
+export function resolveExtraCharges(
+  customFields?: InvoiceCustomFields | null,
+  invoice?: InvoiceTotalsSource | null,
+) {
+  if (Array.isArray(customFields?.extraCharges)) {
+    return normalizeExtraCharges(customFields.extraCharges)
+  }
+
+  if (Array.isArray(invoice?._extraCharges)) {
+    return normalizeExtraCharges(invoice._extraCharges)
+  }
+
+  return []
+}
 
 export function buildCalculationInputs({
   invoice,
@@ -88,7 +110,7 @@ export function inferLegacyCalculationInputs({
     (sum, item) => sum + Number(item.quantity || 1) * Number(item.unit_price || 0),
     0,
   )
-  const extraWithTax = (customFields?.extraCharges || [])
+  const extraWithTax = resolveExtraCharges(customFields, invoice)
     .filter((charge) => charge.withTax)
     .reduce((sum, charge) => sum + Number(charge.value || 0), 0)
   const vatAmount = Number(invoice?.vat || 0)
@@ -169,6 +191,7 @@ export function calcTotals({
   items,
   columns,
   invoice,
+  customFields,
   discountType,
   discountTiming,
   whtType,
@@ -176,6 +199,7 @@ export function calcTotals({
   items: InvoiceItem[]
   columns: ColumnConfig[]
   invoice: InvoiceTotalsSource
+  customFields?: InvoiceCustomFields
   discountType: CalculationInputs['discountType']
   discountTiming: CalculationInputs['discountTiming']
   whtType: CalculationInputs['whtType']
@@ -232,10 +256,11 @@ export function calcTotals({
       0,
     )
 
-  const extraWithTax = (invoice._extraCharges || [])
+  const extraCharges = resolveExtraCharges(customFields, invoice)
+  const extraWithTax = extraCharges
     .filter((charge) => charge.withTax)
     .reduce((sum, charge) => sum + Number(charge.value || 0), 0)
-  const extraWithoutTax = (invoice._extraCharges || [])
+  const extraWithoutTax = extraCharges
     .filter((charge) => !charge.withTax)
     .reduce((sum, charge) => sum + Number(charge.value || 0), 0)
   const fixedChargesTotal =
@@ -302,11 +327,13 @@ export function buildSummaryRows({
   totals,
   customFields,
   chargeLabels = { workmanship: 'Workmanship', transportation: 'Transportation', shipping: 'Shipping' },
+  summaryLabels = { vat: 'VAT', discount: 'Discount', wht: 'WHT' },
 }: {
   invoice: any
   totals: any
   customFields: any
   chargeLabels?: any
+  summaryLabels?: SummaryLabelOverrides
 }) {
   const {
     rawSubtotal = 0,
@@ -316,7 +343,7 @@ export function buildSummaryRows({
     installRateTotal = 0,
   } = totals || {}
 
-  const extraCharges = Array.isArray(customFields?.extraCharges) ? customFields.extraCharges : []
+  const extraCharges = resolveExtraCharges(customFields, invoice)
   const timingMode = customFields?.discountTiming === 'before' ? 'before' : 'after'
 
   const taxableChargeRows = extraCharges
@@ -347,15 +374,15 @@ export function buildSummaryRows({
   return [
     { key: 'subtotal', label: 'Subtotal', amount: rawSubtotal },
     ...(timingMode === 'before' && discountAmount > 0
-      ? [{ key: 'discount', label: 'Discount', amount: discountAmount, tone: 'danger' as const }]
+      ? [{ key: 'discount', label: summaryLabels.discount || 'Discount', amount: discountAmount, tone: 'danger' as const }]
       : []),
     ...taxableChargeRows,
-    ...(vatAmount > 0 || Number(invoice.vat || 0) > 0 ? [{ key: 'vat', label: 'VAT', amount: vatAmount }] : []),
+    ...(vatAmount > 0 || Number(invoice.vat || 0) > 0 ? [{ key: 'vat', label: summaryLabels.vat || 'VAT', amount: vatAmount }] : []),
     ...(timingMode === 'after' && discountAmount > 0
-      ? [{ key: 'discount', label: 'Discount', amount: discountAmount, tone: 'danger' as const }]
+      ? [{ key: 'discount', label: summaryLabels.discount || 'Discount', amount: discountAmount, tone: 'danger' as const }]
       : []),
     ...nonTaxChargeRows,
     ...(installRateTotal > 0 ? [{ key: 'install_rate', label: 'Install Rate', amount: installRateTotal }] : []),
-    ...(whtAmount > 0 ? [{ key: 'wht', label: 'WHT', amount: whtAmount, tone: 'danger' as const }] : []),
+    ...(whtAmount > 0 ? [{ key: 'wht', label: summaryLabels.wht || 'WHT', amount: whtAmount, tone: 'danger' as const }] : []),
   ]
 }

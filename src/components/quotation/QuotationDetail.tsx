@@ -178,7 +178,15 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
 
   const totals = useMemo(() => {
     if (!quotation) return null
-    return calcTotals({ items, columns, invoice: quotation, discountType, discountTiming, whtType })
+    return calcTotals({
+      items,
+      columns,
+      invoice: quotation,
+      customFields: parseDocumentCustomFields(quotation.custom_fields),
+      discountType,
+      discountTiming,
+      whtType,
+    })
   }, [columns, discountTiming, discountType, items, quotation, whtType])
 
   const visibleCustomColumns = columns.filter((column: any) => column.key.startsWith('custom_') && column.visible)
@@ -280,6 +288,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
           totals,
           customFields,
           chargeLabels: customFields?.chargeLabels,
+          summaryLabels: getPdfSummaryLabels(quotation, pdfOutput),
         }),
         { key: 'total', label: 'Total', amount: Number(shellQuotationTotal), emphasis: true, tone: 'primary' as const },
       ]
@@ -732,13 +741,13 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
   })
 
   const customFields = parseDocumentCustomFields(quotation.custom_fields)
-  const previewSummaryLabels = getPdfSummaryLabels(quotation, pdfOutput)
   const previewTotals = [
     ...buildSummaryRows({
       invoice: quotation,
       totals,
       customFields,
       chargeLabels: customFields?.chargeLabels,
+      summaryLabels: getPdfSummaryLabels(quotation, pdfOutput),
     }).map(row => ({
       label: row.label,
       value: formatMoney(row.amount),

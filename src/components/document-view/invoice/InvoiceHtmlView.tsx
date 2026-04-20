@@ -17,6 +17,7 @@ export default function InvoiceHtmlView({
 }: InvoiceHtmlViewProps) {
   const items = Array.isArray(previewModel?.previewItems) ? previewModel.previewItems : []
   const totals = Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : []
+  const balanceDue = previewModel?.previewBalanceDue || null
   const companyLines = Array.isArray(previewModel?.companyPreviewLines) ? previewModel.companyPreviewLines : []
   const clientLines = Array.isArray(previewModel?.clientPreviewLines) ? previewModel.clientPreviewLines : []
   const bank = pdfOutput?.showBankDetails ? previewModel?.selectedPreviewBank : null
@@ -113,8 +114,14 @@ export default function InvoiceHtmlView({
             </div>
           )
         })}
-        {invoice?.amount_in_words ? (
-          <div className="amount-words">{invoice.amount_in_words}</div>
+        {previewModel?.previewAmountInWords ? (
+          <div className="amount-words">{previewModel.previewAmountInWords}</div>
+        ) : null}
+        {balanceDue ? (
+          <div className="totals-row balance">
+            <div className="totals-lbl">{balanceDue.label}</div>
+            <div className="totals-val">{balanceDue.value}</div>
+          </div>
         ) : null}
       </div>
 

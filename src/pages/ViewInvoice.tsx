@@ -27,7 +27,6 @@ import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
 import {
   BUILTIN_COLUMNS,
   DEFAULT_INVOICE_PDF_OUTPUT,
-  buildSummaryRows,
   getInvoicePdfOutput,
   parseCustomFields,
 } from '@/domain/invoice'
@@ -37,6 +36,7 @@ import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
 import { getPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { computeDocument } from '@/lib/Calculations'
 import { supabase } from '@/supabase'
 import { archiveInvoiceRecord, buildWaybillPrefill, deleteInvoiceRecord, downloadInvoiceCsvFile, duplicateInvoiceDraft, revertInvoiceToQuotation } from './viewInvoiceActions'
 
@@ -105,6 +105,24 @@ export default function ViewInvoice() {
     }
   }, [invoice?.custom_fields])
 
+  const previewTotalsSource = useMemo(() => {
+    if (!invoice) return null
+
+    const savedColumns = Array.isArray(customFields?.columnConfig) ? customFields.columnConfig : BUILTIN_COLUMNS
+    const totals = computeDocument({
+      items: Array.isArray(items) ? items : [],
+      document: invoice,
+      cf: customFields || {},
+      columns: savedColumns as any,
+    })
+
+    return {
+      totals,
+      invoiceTotal: totals.totalPayable || 0,
+      balanceDue: Math.max(0, (totals.totalPayable || 0) - Number(viewModel.settledTotal || 0)),
+    }
+  }, [customFields, invoice, items, viewModel.settledTotal])
+
   const openRevertFlow = useCallback(() => {
     ui.closeSheet()
     requestAnimationFrame(() => {
@@ -137,12 +155,21 @@ export default function ViewInvoice() {
         customFieldObject: customFields as any,
         pdfOutput,
         poNumber: String(invoice?.po_number || ''),
-        invoiceTotal: viewModel.invoiceTotal || 0,
+        invoiceTotal: previewTotalsSource?.invoiceTotal || 0,
         cashReceived: viewModel.cashReceived || 0,
-        balanceDue: viewModel.balanceDue || 0,
+        balanceDue: previewTotalsSource?.balanceDue || 0,
+        totals: previewTotalsSource?.totals
+          ? {
+              rawSubtotal: previewTotalsSource.totals.subtotal,
+              vatAmount: previewTotalsSource.totals.vat,
+              discountAmount: previewTotalsSource.totals.discount,
+              whtAmount: previewTotalsSource.totals.wht,
+              installRateTotal: previewTotalsSource.totals.installRateTotal,
+            }
+          : undefined,
         formatMoney: (value) => formatNaira(value, { preserveFraction: true }),
       }),
-    [invoice, items, client, settings, bankAccounts, customFields, pdfOutput, viewModel.balanceDue, viewModel.cashReceived, viewModel.invoiceTotal],
+    [invoice, items, client, settings, bankAccounts, customFields, pdfOutput, previewTotalsSource, viewModel.cashReceived],
   )
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
@@ -263,8 +290,8 @@ export default function ViewInvoice() {
               amount: Number(String(row.value || '0').replace(/[^\d.-]/g, '')) || 0,
               emphasis: row.emphasis === true,
             })),
-            amountInWords: String(invoice.amount_in_words || ''),
-            balanceDue: viewModel.balanceDue || 0,
+            amountInWords: String(previewModel?.previewAmountInWords || ''),
+            balanceDue: previewModel?.previewBalanceDueAmount ?? null,
           },
           bankDetails: pdfOutput.showBankDetails ? previewModel?.selectedPreviewBank : null,
           notes: invoice.notes

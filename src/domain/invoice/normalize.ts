@@ -8,6 +8,7 @@ import type {
   InvoiceItem,
   InvoicePdfOutput,
 } from './types'
+import { normalizeExtraCharges } from './factories'
 
 export const DEFAULT_INVOICE_PDF_OUTPUT: InvoicePdfOutput = {
   showBankDetails: false,
@@ -55,6 +56,7 @@ export function parseCustomFields(value: unknown): InvoiceCustomFields {
     return {
       ...parsed,
       attachments: normalizeAttachments(parsed.attachments),
+      extraCharges: normalizeExtraCharges(parsed.extraCharges),
     }
   }
 
@@ -68,6 +70,7 @@ export function parseCustomFields(value: unknown): InvoiceCustomFields {
       return {
         ...customFields,
         attachments: normalizeAttachments(customFields.attachments),
+        extraCharges: normalizeExtraCharges(customFields.extraCharges),
       }
     }
     return {}

@@ -23,7 +23,7 @@ import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { buildPdfRowCells, generateQuotationPdf, interpretPdfTableSettings } from '@/components/pdf-new'
-import { BUILTIN_COLUMNS } from '@/domain/invoice'
+import { BUILTIN_COLUMNS, buildSummaryRows } from '@/domain/invoice'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { formatNaira } from '@/lib/formatters/money'
 import { getPdfDesignPreset, resolvePdfWebFontFamily } from '@/lib/pdfDesignPreset'
@@ -222,11 +222,24 @@ export default function ViewQuotation() {
 
   const previewSummaryLabels = getPdfSummaryLabels(quotation, pdfOutput)
   const previewTotals = [
-    { label: 'Subtotal', value: formatNaira(totals?.rawSubtotal || 0) },
-    ...(Number(totals?.installRateTotal || 0) > 0 ? [{ label: 'Install Rate', value: formatNaira(totals?.installRateTotal || 0) }] : []),
-    ...(Number(totals?.vatAmount || 0) > 0 ? [{ label: previewSummaryLabels.vat, value: formatNaira(totals?.vatAmount || 0) }] : []),
-    ...(Number(totals?.discountAmount || 0) > 0 ? [{ label: previewSummaryLabels.discount, value: formatNaira(totals?.discountAmount || 0), valueClassName: 'text-red-600' }] : []),
-    ...(Number(totals?.whtAmount || 0) > 0 ? [{ label: previewSummaryLabels.wht, value: formatNaira(totals?.whtAmount || 0) }] : []),
+    ...buildSummaryRows({
+      invoice: quotation || {},
+      totals: {
+        rawSubtotal: totals?.subtotal || 0,
+        vatAmount: totals?.vat || 0,
+        discountAmount: totals?.discount || 0,
+        whtAmount: totals?.wht || 0,
+        installRateTotal: totals?.installRateTotal || 0,
+      },
+      customFields,
+      chargeLabels: customFields?.chargeLabels,
+      summaryLabels: previewSummaryLabels,
+    }).map((row) => ({
+      label: row.label,
+      value: formatNaira(row.amount || 0),
+      emphasis: false,
+      valueClassName: row.tone === 'danger' ? 'text-red-600' : undefined,
+    })),
     { label: 'Total', value: formatNaira(totals?.totalPayable || 0), emphasis: true, valueClassName: 'text-slate-950' },
   ]
 

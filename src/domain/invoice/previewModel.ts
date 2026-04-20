@@ -1,5 +1,7 @@
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { getAdditionalFields } from './additionalFields'
+import { buildSummaryRows } from './calculations'
+import type { InvoiceCustomFields } from './types'
 
 import { getAdvanceSummaryValues } from './advanceSummary'
 
@@ -53,6 +55,7 @@ type InvoiceLike = {
   discount?: number | string | null
   wht?: number | string | null
   total?: number | string | null
+  amount_in_words?: string | null
   notes?: string | null
   terms?: string | null
 }
@@ -108,7 +111,7 @@ type CustomFieldObjectLike = {
   columnConfig?: Array<{ visible?: boolean | null; key?: string | null; label?: string | null }>
   notesTitle?: string | null
   termsTitle?: string | null
-}
+} & InvoiceCustomFields
 
 type PdfOutputLike = {
   bankAccountId?: string | null
@@ -130,6 +133,13 @@ export type BuildInvoicePreviewModelInput = {
   invoiceTotal: number
   cashReceived: number
   balanceDue: number
+  totals?: {
+    rawSubtotal?: number
+    vatAmount?: number
+    discountAmount?: number
+    whtAmount?: number
+    installRateTotal?: number
+  }
   formatMoney: (value: number) => string
 }
 
@@ -145,6 +155,7 @@ export function buildInvoicePreviewModel({
   invoiceTotal,
   cashReceived,
   balanceDue,
+  totals,
   formatMoney,
 }: BuildInvoicePreviewModelInput) {
   const previewBankAccounts: PreviewBankAccount[] = bankAccounts.map((account) => ({
@@ -241,22 +252,6 @@ export function buildInvoicePreviewModel({
     }
   })
 
-  const rawExtraCharges = (customFieldObject as { extraCharges?: unknown } | null)?.extraCharges
-  const extraCharges = Array.isArray(rawExtraCharges) ? rawExtraCharges : []
-  const taxableChargeRows = extraCharges
-    .filter((charge: any) => String(charge?.label || '').trim() && Number(charge?.value || 0) > 0 && charge?.withTax === true)
-    .map((charge: any) => ({
-      label: String(charge.label).trim(),
-      value: formatMoney(Number(charge.value || 0)),
-    }))
-  const nonTaxExtraRows = extraCharges
-    .filter((charge: any) => String(charge?.label || '').trim() && Number(charge?.value || 0) > 0 && charge?.withTax === false)
-    .map((charge: any) => ({
-      label: String(charge.label).trim(),
-      value: formatMoney(Number(charge.value || 0)),
-    }))
-
-  const timingMode = (customFieldObject as any)?.discountTiming === 'before' ? 'before' : 'after'
   const advanceSummary = getAdvanceSummaryValues(invoice)
   const summaryLabels = getPdfSummaryLabels(invoice, pdfOutput)
 
@@ -274,30 +269,18 @@ export function buildInvoicePreviewModel({
             }]),
       ]
     : [
-        { label: 'Subtotal', value: formatMoney(Number(invoice.subtotal || 0)) },
-        ...(timingMode === 'before' && Number(invoice.discount || 0) > 0
-          ? [{ label: summaryLabels.discount, value: formatMoney(Number(invoice.discount || 0)), valueClassName: 'text-red-600' }]
-          : []),
-        ...taxableChargeRows,
-        ...(Number(invoice.vat || 0) > 0 ? [{ label: summaryLabels.vat, value: formatMoney(Number(invoice.vat || 0)) }] : []),
-        ...(timingMode === 'after' && Number(invoice.discount || 0) > 0
-          ? [{ label: summaryLabels.discount, value: formatMoney(Number(invoice.discount || 0)), valueClassName: 'text-red-600' }]
-          : []),
-        ...(Number(invoice.workmanship || 0) > 0 ? [{ label: 'Workmanship', value: formatMoney(Number(invoice.workmanship || 0)) }] : []),
-        ...(Number(invoice.transportation || 0) > 0 ? [{ label: 'Transportation', value: formatMoney(Number(invoice.transportation || 0)) }] : []),
-        ...(Number(invoice.shipping || 0) > 0 ? [{ label: 'Shipping', value: formatMoney(Number(invoice.shipping || 0)) }] : []),
-        ...nonTaxExtraRows,
-        ...(Number(invoice.wht || 0) > 0 ? [{ label: summaryLabels.wht, value: formatMoney(Number(invoice.wht || 0)), valueClassName: 'text-red-600' }] : []),
+        ...buildSummaryRows({
+          invoice,
+          totals,
+          customFields: customFieldObject,
+          chargeLabels: customFieldObject?.chargeLabels,
+          summaryLabels,
+        }).map((row) => ({
+          label: row.label,
+          value: formatMoney(Number(row.amount || 0)),
+          valueClassName: row.tone === 'danger' ? 'text-red-600' : undefined,
+        })),
         { label: 'Total', value: formatMoney(invoiceTotal), emphasis: true, valueClassName: 'text-slate-950' },
-        ...(cashReceived > 0 ? [{ label: 'Cash Received', value: formatMoney(cashReceived) }] : []),
-        ...(pdfOutput?.showBalanceDue === false
-          ? []
-          : [{
-              label: 'Balance Due',
-              value: formatMoney(balanceDue),
-              emphasis: true,
-              valueClassName: balanceDue > 0 ? 'text-red-600' : 'text-emerald-600',
-            }]),
       ]
 
   const previewNotesSections: PreviewNoteSection[] = [
@@ -340,6 +323,16 @@ export function buildInvoicePreviewModel({
     previewDetailRows,
     previewItems,
     previewTotals,
+    previewAmountInWords: String(invoice.amount_in_words || ''),
+    previewBalanceDue: advanceSummary || pdfOutput?.showBalanceDue === false
+      ? null
+      : {
+          label: 'Balance Due',
+          value: formatMoney(balanceDue),
+          emphasis: true,
+          valueClassName: balanceDue > 0 ? 'text-red-600' : 'text-emerald-600',
+        },
+    previewBalanceDueAmount: advanceSummary || pdfOutput?.showBalanceDue === false ? null : balanceDue,
     previewNotesSections,
   }
 }
