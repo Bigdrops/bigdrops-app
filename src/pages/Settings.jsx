@@ -30,20 +30,147 @@ import {
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
 
-// ─── Main Settings Page ────────────────────────────────────────────────────────
-const SECTIONS = [
-  { id: 'company',  label: 'Company Info',    icon: Building2,  desc: 'Name, address, contact' },
-  { id: 'banking',  label: 'Banking',          icon: CreditCard, desc: 'Account & bank details' },
-  { id: 'branding', label: 'Logo & Branding',  icon: ImageIcon,  desc: 'Logo and footer text' },
-  { id: 'theme',    label: 'App Theme',       icon: Palette,    desc: 'Change background and card colors' },
-  { id: 'documents', label: 'Documents',       icon: FolderKanban, desc: 'Customize document control availability' },
-  { id: 'signatories', label: 'Signatories', icon: UserCheck, desc: 'Manage document signatories' },
-  { id: 'dashboard', label: 'Dashboard',       icon: LayoutDashboard, desc: 'Quick tiles on dashboard header' },
-  { id: 'archives', label: 'Archives',         icon: ArchiveRestore, desc: 'Restore archived invoices, quotations, and projects' },
-  { id: 'user',     label: 'User Settings',    icon: FileText,   desc: 'Change your password' },
+const SETTINGS_GROUPS = [
+  {
+    id: 'account',
+    label: 'Account',
+    desc: 'Your personal preferences and appearance',
+    items: [
+      {
+        id: 'user',
+        label: 'User Settings',
+        icon: FileText,
+        desc: 'Name, email, password and notification preferences',
+      },
+      {
+        id: 'theme',
+        label: 'Theme & Appearance',
+        icon: Palette,
+        desc: 'Background, cards, and display preferences',
+      },
+    ],
+  },
+  {
+    id: 'workspace',
+    label: 'Workspace',
+    desc: 'Business identity and brand representation',
+    items: [
+      {
+        id: 'company',
+        label: 'Company Info',
+        icon: Building2,
+        desc: 'Name, address, contact details, tax numbers',
+      },
+      {
+        id: 'branding',
+        label: 'Logo & Branding',
+        icon: ImageIcon,
+        desc: 'Logo and footer text shown on documents',
+      },
+    ],
+  },
+  {
+    id: 'operations',
+    label: 'Operations',
+    desc: 'Core system controls for documents and finance',
+    items: [
+      {
+        id: 'banking',
+        label: 'Banking',
+        icon: CreditCard,
+        desc: 'Accounts available for documents and payments',
+      },
+      {
+        id: 'documents',
+        label: 'Document Controls',
+        icon: FolderKanban,
+        desc: 'Defaults for invoices, quotations, and output settings',
+      },
+      {
+        id: 'signatories',
+        label: 'Signatories',
+        icon: UserCheck,
+        desc: 'People available to sign documents',
+      },
+    ],
+  },
+  {
+    id: 'interface',
+    label: 'Interface',
+    desc: 'Customize how the app is laid out',
+    items: [
+      {
+        id: 'dashboard',
+        label: 'Dashboard Layout',
+        icon: LayoutDashboard,
+        desc: 'Quick tiles shown on the dashboard',
+      },
+    ],
+  },
 ]
 
-const ADMIN_SECTION = { id: 'admin', label: 'Admin Panel', icon: Shield, desc: 'Users & device codes' }
+const SYSTEM_GROUP = {
+  id: 'system',
+  label: 'System',
+  desc: 'Restricted actions — proceed with care',
+  variant: 'system',
+  items: [
+    {
+      id: 'archives',
+      label: 'Archives',
+      icon: ArchiveRestore,
+      desc: 'Restore or permanently delete archived records',
+    },
+    {
+      id: 'admin',
+      label: 'Admin Panel',
+      icon: Shield,
+      desc: 'Users, device codes, and admin controls',
+      adminOnly: true,
+    },
+  ],
+}
+
+function buildGroups(isAdmin) {
+  const systemItems = SYSTEM_GROUP.items.filter((item) =>
+    item.adminOnly ? isAdmin : true
+  )
+
+  return [
+    ...SETTINGS_GROUPS,
+    {
+      ...SYSTEM_GROUP,
+      items: systemItems,
+    },
+  ].filter((group) => group.items.length > 0)
+}
+
+function getSectionSummary(id, session, isAdmin) {
+  switch (id) {
+    case 'user':
+      return session?.user?.email || null
+    case 'theme':
+      return 'Appearance'
+    case 'company':
+      return 'Business profile'
+    case 'branding':
+      return 'Logo & footer'
+    case 'banking':
+      return 'Accounts'
+    case 'documents':
+      return 'Defaults'
+    case 'signatories':
+      return 'Authorized'
+    case 'dashboard':
+      return 'Quick tiles'
+    case 'archives':
+      return 'Maintenance'
+    case 'admin':
+      return isAdmin ? 'Restricted' : null
+    default:
+      return null
+  }
+}
 
 export default function Settings() {
   const [active, setActive] = useState(null)
@@ -55,27 +182,39 @@ export default function Settings() {
   }, [])
 
   const isAdmin = ADMIN_EMAILS.includes(session?.user?.email)
-  const sections = isAdmin ? [...SECTIONS, ADMIN_SECTION] : SECTIONS
+  const groups = buildGroups(isAdmin)
+  const allSections = groups.flatMap((group) => group.items)
 
   const showToast = useCallback((msg) => setToast(msg), [])
 
   const renderSection = () => {
     switch (active) {
-      case 'company':  return <CompanySettingsSection onToast={showToast} />
-      case 'banking':  return <BankingSettingsSection onToast={showToast} />
-      case 'branding': return <BrandingSettingsSection onToast={showToast} />
-      case 'theme': return <AppThemeSettingsSection onToast={showToast} />
-      case 'documents': return <DocumentsSettingsSection onToast={showToast} />
-      case 'signatories': return <SignatoriesSettingsSection onToast={showToast} />
-      case 'dashboard': return <DashboardSettingsSection />
-      case 'archives': return <ArchivesSettingsSection onToast={showToast} />
-      case 'user':     return <UserSettingsSection session={session} onToast={showToast} />
-      case 'admin':    return <AdminSettingsSection onToast={showToast} session={session} />
-      default:         return null
+      case 'company':
+        return <CompanySettingsSection onToast={showToast} />
+      case 'banking':
+        return <BankingSettingsSection onToast={showToast} />
+      case 'branding':
+        return <BrandingSettingsSection onToast={showToast} />
+      case 'theme':
+        return <AppThemeSettingsSection onToast={showToast} />
+      case 'documents':
+        return <DocumentsSettingsSection onToast={showToast} />
+      case 'signatories':
+        return <SignatoriesSettingsSection onToast={showToast} />
+      case 'dashboard':
+        return <DashboardSettingsSection />
+      case 'archives':
+        return <ArchivesSettingsSection onToast={showToast} />
+      case 'user':
+        return <UserSettingsSection session={session} onToast={showToast} />
+      case 'admin':
+        return <AdminSettingsSection onToast={showToast} session={session} />
+      default:
+        return null
     }
   }
 
-  const activeSection = sections.find(s => s.id === active)
+  const activeSection = allSections.find((section) => section.id === active)
 
   return (
     <Layout title="Settings" session={session}>
@@ -83,29 +222,101 @@ export default function Settings() {
 
       <div className="max-w-2xl mx-auto">
         {!active ? (
-          // Home — section list
-          <div className="space-y-2">
-            {sections.map(({ id, label, icon: Icon, desc }) => (
-              <button
-                key={id}
-                onClick={() => setActive(id)}
-                className={`w-full flex items-center gap-4 px-4 py-4 bg-card rounded-xl border border-border hover:border-border hover:shadow-sm transition-all group text-left
-                  ${id === 'admin' ? 'border-red-100 hover:border-red-300' : ''}`}
-              >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0
-                  ${id === 'admin' ? 'bg-red-50' : 'bg-slate-100'}`}>
-                  <Icon size={17} className={id === 'admin' ? 'text-red-600' : 'text-muted-foreground'} />
+          <div className="space-y-8">
+            {groups.map((group) => (
+              <section key={group.id}>
+                <div className="mb-3 px-1">
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+                    {group.label}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {group.desc}
+                  </p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-bold ${id === 'admin' ? 'text-red-600' : 'text-slate-800'}`}>{label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+
+                <div
+                  className={`rounded-2xl border overflow-hidden bg-card shadow-sm ${
+                    group.variant === 'system'
+                      ? 'border-red-100'
+                      : 'border-border'
+                  }`}
+                >
+                  {group.items.map(({ id, label, icon: Icon, desc }) => {
+                    const summary = getSectionSummary(id, session, isAdmin)
+                    const isSystemItem = group.variant === 'system'
+                    const isAdminItem = id === 'admin'
+
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => setActive(id)}
+                        className={`w-full flex items-center gap-4 px-4 py-4 text-left transition-colors border-b last:border-b-0 ${
+                          isSystemItem
+                            ? 'border-red-50 hover:bg-red-50/50'
+                            : 'border-border hover:bg-muted/30'
+                        }`}
+                      >
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                            isAdminItem
+                              ? 'bg-red-50'
+                              : isSystemItem
+                              ? 'bg-amber-50'
+                              : 'bg-slate-100'
+                          }`}
+                        >
+                          <Icon
+                            size={17}
+                            className={
+                              isAdminItem
+                                ? 'text-red-600'
+                                : isSystemItem
+                                ? 'text-amber-700'
+                                : 'text-muted-foreground'
+                            }
+                          />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className={`text-sm font-bold ${
+                              isAdminItem ? 'text-red-700' : 'text-slate-800'
+                            }`}
+                          >
+                            {label}
+                          </p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {desc}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {summary ? (
+                            <span
+                              className={`hidden sm:inline text-[11px] font-semibold rounded-full px-2.5 py-1 ${
+                                isAdminItem
+                                  ? 'bg-red-50 text-red-700'
+                                  : isSystemItem
+                                  ? 'bg-amber-50 text-amber-700'
+                                  : 'bg-slate-100 text-slate-600'
+                              }`}
+                            >
+                              {summary}
+                            </span>
+                          ) : null}
+                          <ChevronRight
+                            size={15}
+                            className="text-slate-300"
+                          />
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
-                <ChevronRight size={15} className="text-slate-300 group-hover:text-muted-foreground transition-colors shrink-0" />
-              </button>
+              </section>
             ))}
           </div>
         ) : (
-          // Active section
           <div>
             <div className="flex items-center gap-3 mb-6">
               <button
@@ -115,10 +326,14 @@ export default function Settings() {
               >
                 ←
               </button>
-              <h2 className="text-sm font-black text-foreground uppercase tracking-wider">
-                {activeSection?.label}
-              </h2>
+
+              <div>
+                <h2 className="text-sm font-black text-foreground uppercase tracking-wider">
+                  {activeSection?.label}
+                </h2>
+              </div>
             </div>
+
             <div className="bg-card rounded-2xl border border-border shadow-sm p-5">
               {renderSection()}
             </div>
