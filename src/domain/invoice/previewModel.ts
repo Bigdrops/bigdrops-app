@@ -241,7 +241,8 @@ export function buildInvoicePreviewModel({
     }
   })
 
-  const extraCharges = Array.isArray(customFieldObject?.extraCharges) ? customFieldObject.extraCharges : []
+  const rawExtraCharges = (customFieldObject as { extraCharges?: unknown } | null)?.extraCharges
+  const extraCharges = Array.isArray(rawExtraCharges) ? rawExtraCharges : []
   const taxableChargeRows = extraCharges
     .filter((charge: any) => String(charge?.label || '').trim() && Number(charge?.value || 0) > 0 && charge?.withTax === true)
     .map((charge: any) => ({
