@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ArrowDown, ArrowUp, Check, ChevronsUpDown, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Check, ChevronRight, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -29,10 +29,6 @@ type DashboardQuickTilesSettingsProps = {
   optionIds: string[]
 }
 
-function getTileCategory(tileId: string, label: string) {
-  return tileId.startsWith('new_') ? 'Create' : label
-}
-
 export default function DashboardQuickTilesSettings({
   activeTiles,
   flashTile,
@@ -43,7 +39,6 @@ export default function DashboardQuickTilesSettings({
 }: DashboardQuickTilesSettingsProps) {
   const [pickerIndex, setPickerIndex] = React.useState<number | null>(null)
   const selectedTileId = pickerIndex == null ? null : activeTiles[pickerIndex]
-  const selectedTile = selectedTileId ? registry[selectedTileId] : null
 
   const closePicker = () => setPickerIndex(null)
 
@@ -54,128 +49,133 @@ export default function DashboardQuickTilesSettings({
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-sm">
-      <div className="border-b border-border px-5 py-5">
-        <h3 className="text-[22px] font-black tracking-[-0.04em] text-foreground">
-          Quick Tiles
-        </h3>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Local mobile preference only. Keep exactly four dashboard tiles on this
-          device and swap each slot to the feature or create-action you want.
+    <div className="space-y-4">
+      <div className="px-1">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-violet-700/80">
+          Dashboard Layout
         </p>
       </div>
 
-      <div className="divide-y divide-border/70 px-3 py-2">
-        {activeTiles.slice(0, 4).map((tileId, index) => {
-          const tile = registry[tileId]
-          if (!tile) return null
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
+        <div className="border-b border-slate-200/80 bg-violet-50/40 px-4 py-3.5">
+          <div className="text-sm font-bold text-slate-900">Quick Tiles</div>
+          <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
+            Choose the four shortcuts shown on your dashboard and reorder them.
+          </div>
+        </div>
 
-          const Icon = tile.icon
+        {activeTiles.slice(0, 4).length === 0 ? (
+          <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+            No quick tiles configured.
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-200/80">
+            {activeTiles.slice(0, 4).map((tileId, index) => {
+              const tile = registry[tileId]
+              if (!tile) return null
 
-          return (
-            <article
-              key={`${tileId}-${index}`}
-              className={cn(
-                'rounded-3xl px-3 py-4 transition-colors',
-                flashTile === tileId && 'bg-emerald-50/70'
-              )}
-            >
-              <div className="flex min-w-0 items-start gap-3">
+              const Icon = tile.icon
+
+              return (
                 <div
+                  key={`${tileId}-${index}`}
                   className={cn(
-                    'grid h-14 w-14 shrink-0 place-items-center rounded-[18px] shadow-sm',
-                    tile.iconBg
+                    'px-4 py-4 transition-colors',
+                    flashTile === tileId && 'bg-emerald-50/60'
                   )}
                 >
-                  <Icon className="h-6 w-6 text-white" />
-                </div>
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={cn(
+                        'grid h-11 w-11 shrink-0 place-items-center rounded-xl',
+                        tile.iconBg
+                      )}
+                    >
+                      <Icon className="h-5 w-5 text-white" />
+                    </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <h4 className="text-[18px] font-black tracking-[-0.04em] text-foreground">
-                      Tile {index + 1}
-                    </h4>
-                    <span className="inline-flex h-7 items-center rounded-full border border-border bg-muted/50 px-3 text-[10px] font-black uppercase tracking-[0.12em] text-slate-700">
-                      {getTileCategory(tileId, tile.label)}
-                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <h4 className="truncate text-sm font-bold text-slate-900">
+                          {tile.label}
+                        </h4>
+                        <span className="shrink-0 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-700">
+                          Tile {index + 1}
+                        </span>
+                      </div>
+
+                      <p className="mt-0 text-[12px] leading-5 text-muted-foreground">
+                        {tile.description}
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPickerIndex(index)}
+                          className="group inline-flex min-w-0 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-violet-50/50"
+                        >
+                          <span className="truncate">Change Tile</span>
+                          <ChevronRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-400" />
+                        </button>
+
+                        <div className="ml-auto flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => onMoveTile(index, 'up')}
+                            disabled={index === 0}
+                            aria-label={`Move tile ${index + 1} up`}
+                            className="h-9 w-9 rounded-xl border-slate-200/80 bg-white p-0 text-slate-600 shadow-none hover:bg-slate-50"
+                          >
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => onMoveTile(index, 'down')}
+                            disabled={index === activeTiles.length - 1}
+                            aria-label={`Move tile ${index + 1} down`}
+                            className="h-9 w-9 rounded-xl border-slate-200/80 bg-white p-0 text-slate-600 shadow-none hover:bg-slate-50"
+                          >
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-
-                  <p className="mt-1 text-sm leading-5 text-muted-foreground">
-                    {tile.description}
-                  </p>
                 </div>
-              </div>
-
-              <div className="mt-4 grid grid-cols-1 gap-3 min-[380px]:grid-cols-[minmax(0,1fr),auto]">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setPickerIndex(index)}
-                  className="h-14 w-full min-w-0 justify-between rounded-[18px] border-border bg-muted/30 px-4 text-left text-sm font-semibold text-foreground shadow-none hover:bg-muted/50"
-                >
-                  <span className="min-w-0 truncate">{tile.label}</span>
-                  <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                </Button>
-
-                <div className="flex items-center justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => onMoveTile(index, 'up')}
-                    disabled={index === 0}
-                    aria-label={`Move tile ${index + 1} up`}
-                    className="h-14 w-14 rounded-[18px] border-border bg-card text-slate-700 shadow-sm hover:bg-muted/50"
-                  >
-                    <ArrowUp className="h-5 w-5" />
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => onMoveTile(index, 'down')}
-                    disabled={index === activeTiles.length - 1}
-                    aria-label={`Move tile ${index + 1} down`}
-                    className="h-14 w-14 rounded-[18px] border-border bg-card text-slate-700 shadow-sm hover:bg-muted/50"
-                  >
-                    <ArrowDown className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-            </article>
-          )
-        })}
+              )
+            })}
+          </div>
+        )}
       </div>
-
-      <p className="px-6 pb-5 pt-2 text-xs leading-5 text-muted-foreground">
-        Tap a tile field to change the assigned action. Reorder with the arrow
-        buttons.
-      </p>
 
       <Sheet open={pickerIndex != null} onOpenChange={(open) => !open && closePicker()}>
         <SheetContent
           side="bottom"
           showCloseButton={false}
-          className="rounded-t-[28px] border-border bg-card px-0 pb-6 pt-0"
+          className="rounded-t-[24px] border-border bg-card px-0 pb-6 pt-0"
         >
-          <div className="mx-auto mt-3 h-1.5 w-14 rounded-full bg-slate-200" />
+          <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-slate-200" />
 
-          <SheetHeader className="flex-row items-start justify-between gap-4 px-5 pb-4 pt-5 text-left">
+          <SheetHeader className="flex-row items-start justify-between gap-4 px-4 pb-4 pt-5 text-left">
             <div className="min-w-0 flex-1">
-              <SheetTitle className="text-[22px] font-black tracking-[-0.04em] text-foreground">
-                Choose tile
+              <SheetTitle className="text-lg font-extrabold tracking-[-0.03em] text-foreground">
+                Choose Tile
               </SheetTitle>
-              <SheetDescription className="mt-1 text-sm leading-6 text-muted-foreground">
-                Select the dashboard action for
-                {pickerIndex == null ? ' this slot.' : ` Tile ${pickerIndex + 1}.`}
+              <SheetDescription className="mt-1 text-sm leading-5 text-muted-foreground">
+                {pickerIndex == null
+                  ? 'Select a dashboard shortcut.'
+                  : `Select the shortcut for Tile ${pickerIndex + 1}.`}
               </SheetDescription>
             </div>
 
             <Button
               type="button"
               variant="outline"
-              size="icon-lg"
               onClick={closePicker}
-              className="h-10 w-10 rounded-2xl border-border bg-muted/30"
+              className="h-9 w-9 rounded-xl border-slate-200/80 bg-white p-0 shadow-none"
               aria-label="Close tile picker"
             >
               <X className="h-4 w-4" />
@@ -183,7 +183,7 @@ export default function DashboardQuickTilesSettings({
           </SheetHeader>
 
           <div className="max-h-[60vh] overflow-y-auto px-4 pb-2">
-            <div className="grid gap-2.5">
+            <div className="space-y-2">
               {optionIds.map((optionId) => {
                 const option = registry[optionId]
                 if (!option) return null
@@ -197,34 +197,38 @@ export default function DashboardQuickTilesSettings({
                     type="button"
                     onClick={() => chooseTile(optionId)}
                     className={cn(
-                      'grid w-full grid-cols-[48px,minmax(0,1fr),auto] items-center gap-3 rounded-[20px] border border-border bg-card px-3.5 py-3.5 text-left transition-colors hover:bg-muted/40',
-                      isSelected && 'border-blue-200 bg-blue-50/60'
+                      'grid w-full grid-cols-[44px,minmax(0,1fr),auto] items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-3 text-left transition-colors hover:bg-violet-50/40',
+                      isSelected && 'border-violet-200 bg-violet-50/50'
                     )}
                   >
                     <span
                       className={cn(
-                        'grid h-12 w-12 place-items-center rounded-2xl',
+                        'grid h-11 w-11 place-items-center rounded-xl',
                         option.iconBg
                       )}
                     >
-                      <OptionIcon className="h-6 w-6 text-white" />
+                      <OptionIcon className="h-5 w-5 text-white" />
                     </span>
 
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-bold text-foreground">
+                      <span className="block truncate text-sm font-bold text-slate-900">
                         {option.label}
                       </span>
-                      <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">
+                      <span className="mt-0 block text-[12px] leading-5 text-muted-foreground">
                         {option.description}
                       </span>
                     </span>
 
-                    {isSelected ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-black text-blue-600">
-                        <Check className="h-4 w-4" />
-                        Selected
-                      </span>
-                    ) : null}
+                    <span
+                      className={cn(
+                        'flex h-5 w-5 items-center justify-center rounded-md border transition-colors',
+                        isSelected
+                          ? 'border-violet-600 bg-violet-600 text-white'
+                          : 'border-slate-300 bg-white text-transparent'
+                      )}
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                    </span>
                   </button>
                 )
               })}
