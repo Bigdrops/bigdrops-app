@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { useSettings, saveSettings } from '@/hooks/useSettings'
 import {
@@ -12,15 +12,31 @@ import type { SettingsToastFn } from './settings-types'
 
 type FillableSettings = Record<string, { enabled: boolean }>
 
-const rowClassName =
-  'flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-border bg-card px-4 py-4 shadow-sm transition hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40'
-
 const rows = [
-  { key: 'csr', label: 'CSR', description: 'Show fillable-writing controls under Customize on CSR pages.' },
-  { key: 'waybill', label: 'Waybill', description: 'Show fillable-writing controls under Customize on Waybill pages.' },
-  { key: 'invoice', label: 'Invoice', description: 'Show fillable-writing controls inside invoice Customize.' },
-  { key: 'quotation', label: 'Quotation', description: 'Show fillable-writing controls inside quotation Customize.' },
-]
+  {
+    key: 'csr',
+    label: 'CSR',
+    description: 'Show fillable-writing controls inside Customize on CSR pages.',
+  },
+  {
+    key: 'waybill',
+    label: 'Waybill',
+    description: 'Show fillable-writing controls inside Customize on Waybill pages.',
+  },
+  {
+    key: 'invoice',
+    label: 'Invoice',
+    description: 'Show fillable-writing controls inside Customize on invoice pages.',
+  },
+  {
+    key: 'quotation',
+    label: 'Quotation',
+    description: 'Show fillable-writing controls inside Customize on quotation pages.',
+  },
+] as const
+
+const rowClassName =
+  'group flex cursor-pointer items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-amber-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/30'
 
 export function DocumentsSettingsSection({ onToast }: { onToast: SettingsToastFn }) {
   const { settings, loading } = useSettings()
@@ -32,7 +48,9 @@ export function DocumentsSettingsSection({ onToast }: { onToast: SettingsToastFn
 
   useEffect(() => {
     if (!loading) {
-      const normalized = normalizeDocumentFillableSettings(settings?.document_fillable_settings) as FillableSettings
+      const normalized = normalizeDocumentFillableSettings(
+        settings?.document_fillable_settings,
+      ) as FillableSettings
       setFillableSettings(normalized)
       fillableSettingsRef.current = normalized
     }
@@ -83,50 +101,62 @@ export function DocumentsSettingsSection({ onToast }: { onToast: SettingsToastFn
   if (activePanel !== 'fillable-writing') {
     return (
       <div className="space-y-4">
-        <div className="rounded-2xl border border-border bg-muted/50 px-4 py-4">
-          <div className="text-sm font-bold text-foreground">Documents</div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            Control which document view pages expose fillable-writing controls inside Customize.
-          </div>
+        <div className="px-1">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-700/80">
+            Document Controls
+          </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setActivePanel('fillable-writing')}
-          className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-4 text-left shadow-sm transition hover:bg-muted/30"
-        >
-          <div>
-            <div className="text-sm font-bold text-foreground">Fillable Writing</div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              Show or hide fillable font and color controls on supported document view pages.
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
+          <button
+            type="button"
+            onClick={() => setActivePanel('fillable-writing')}
+            className="group flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-amber-50/60"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-bold text-slate-900">Fillable Writing</div>
+              <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
+                Show or hide fillable font and color controls on supported document pages.
+              </div>
             </div>
-          </div>
-          <ChevronRight size={16} className="text-slate-300" />
-        </button>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="hidden sm:inline rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+                Per document
+              </span>
+              <ChevronRight
+                size={14}
+                className="text-slate-200 transition-colors group-hover:text-slate-300"
+              />
+            </div>
+          </button>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-4">
-        <div>
-          <div className="text-sm font-bold text-foreground">Fillable Writing</div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            This only controls whether the font and color controls appear under Customize. It does not pick the fonts here.
-          </div>
-        </div>
+      <div className="flex items-start gap-3 rounded-2xl border border-amber-100 bg-amber-50/40 px-4 py-3.5">
         <button
           type="button"
           onClick={() => setActivePanel(null)}
-          className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-muted/50"
+          className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-100 bg-white text-amber-700 transition-colors hover:bg-amber-50"
+          aria-label="Back to document controls"
         >
-          Back
+          <ChevronLeft size={16} />
         </button>
+
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-bold text-slate-900">Fillable Writing</div>
+          <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
+            This controls whether font and color options appear under Customize. It does not set the actual fonts here.
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-3">
-        {rows.map((row) => (
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
+        {rows.map((row, index) => (
           <div
             key={row.key}
             role="button"
@@ -135,17 +165,20 @@ export function DocumentsSettingsSection({ onToast }: { onToast: SettingsToastFn
             aria-pressed={fillableSettings[row.key].enabled}
             onClick={() => toggleEntry(row.key)}
             onKeyDown={(event) => rowKeyDown(event, row.key)}
-            className={rowClassName}
+            className={`${rowClassName} ${index !== rows.length - 1 ? 'border-b border-slate-200/80' : ''}`}
           >
-            <div className="min-w-0">
-              <div className="text-sm font-bold text-foreground">{row.label}</div>
-              <div className="mt-1 text-xs text-muted-foreground">{row.description}</div>
+            <div className="min-w-0 flex-1 pr-3">
+              <div className="text-sm font-bold text-slate-900">{row.label}</div>
+              <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
+                {row.description}
+              </div>
             </div>
+
             <Switch
               checked={fillableSettings[row.key].enabled}
               onCheckedChange={(next) => updateEntry(row.key, next)}
               onClick={(event) => event.stopPropagation()}
-              className="border border-slate-300 bg-slate-200 shadow-sm data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 [&>span]:bg-white"
+              className="border border-slate-300 bg-slate-200 shadow-sm data-[state=checked]:border-amber-600 data-[state=checked]:bg-amber-600 [&>span]:bg-white"
             />
           </div>
         ))}
