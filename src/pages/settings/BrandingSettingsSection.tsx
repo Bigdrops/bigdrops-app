@@ -95,7 +95,11 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   const handleUpload = async (file: File | null) => {
     if (!file) return
 
-    console.log('[BrandingSettings] handleUpload start, file:', file.name, file.size, file.type)
+    console.log('[BrandingSettings] handleUpload start', {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    })
     setUploadError(null)
 
     if (!file.type.startsWith('image/')) {
@@ -126,15 +130,20 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     try {
       const ext = file.name.split('.').pop()
       const path = `logo/${Date.now()}.${String(ext || 'png')}`
-      console.log('[BrandingSettings] Uploading to path:', path)
+      console.log('[BrandingSettings] Uploading to Supabase storage path:', path)
       const url = await uploadFile('logos', path, file)
-      console.log('[BrandingSettings] Upload success, public URL:', url)
+      console.log('[BrandingSettings] Upload success, public URL returned:', url)
 
+      if (!url) {
+        throw new Error('Upload succeeded but returned no URL')
+      }
+
+      console.log('[BrandingSettings] Updating form with new logo URL')
       updateForm('company_logo_url', url)
       setLogoState('uploaded-unsaved')
       onToast('Logo uploaded')
     } catch (error) {
-      console.error('[BrandingSettings] Upload failed error:', error)
+      console.error('[BrandingSettings] Upload pipeline failed:', error)
       const message = 'Upload failed: ' + getErrorMessage(error)
       setUploadError(message)
       setLogoState('error')
@@ -149,27 +158,30 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   }
 
   const save = async () => {
-    console.log('[BrandingSettings] save sequence started, form:', form)
+    console.log('[BrandingSettings] save clicked, current form state:', form)
     setSaving(true)
     setUploadError(null)
 
     try {
-      await saveSettings({
+      const payload = {
         company_logo_url: form.company_logo_url,
         footer_text: form.footer_text,
-      })
-      console.log('[BrandingSettings] saveSettings call finished')
+      }
+      console.log('[BrandingSettings] Calling saveSettings with payload:', payload)
+      await saveSettings(payload)
+      console.log('[BrandingSettings] saveSettings resolved successfully')
 
       // Force fetch fresh settings from database to bypass cache
       console.log('[BrandingSettings] Forcing fresh fetch from database...')
-      await fetchSettings({ force: true })
-      console.log('[BrandingSettings] Fresh fetch complete')
+      const freshSettings = await fetchSettings({ force: true })
+      console.log('[BrandingSettings] Fresh fetch complete, received from DB:', freshSettings)
 
       setSaved(true)
       setEditing(false)
       setLogoState(form.company_logo_url ? 'saved' : 'idle')
 
       if (localLogoPreview) {
+        console.log('[BrandingSettings] Revoking local preview URL')
         URL.revokeObjectURL(localLogoPreview)
       }
       setLocalLogoPreview('')
@@ -177,7 +189,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
       onToast('Branding saved')
       setTimeout(() => setSaved(false), 2500)
     } catch (error) {
-      console.error('[BrandingSettings] save failed error:', error)
+      console.error('[BrandingSettings] Save pipeline failed:', error)
       const message = getErrorMessage(error)
       setUploadError(message)
       setLogoState('error')

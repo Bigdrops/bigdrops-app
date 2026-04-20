@@ -602,6 +602,7 @@ export default function ViewQuotation() {
               bankDetails={pdfOutput.showBankDetails ? selectedPreviewBank : null}
               notesSections={previewNotesSections}
               signatory={null}
+              companyLogoUrl={settings?.company_logo_url}
               accentColor={getPdfDesignPreset('quotation').accentColor}
               headerFontFamily={resolvePdfWebFontFamily(getPdfDesignPreset('quotation').headerFont)}
               bodyFontFamily={resolvePdfWebFontFamily(getPdfDesignPreset('quotation').bodyFont)}

@@ -30,6 +30,11 @@ export default function InvoiceHtmlView({
 
       <div className="doc-head">
         <div className="doc-company">
+          {settingsData?.company_logo_url ? (
+            <div className="doc-logo-container" style={{ marginBottom: '1rem' }}>
+              <img src={settingsData.company_logo_url} alt="Logo" className="doc-logo" style={{ maxHeight: '80px', maxWidth: '200px', objectFit: 'contain' }} />
+            </div>
+          ) : null}
           <div className="doc-co-name">{settingsData?.company_name || 'BigDrops'}</div>
           <div className="doc-co-addr">
             {companyLines.map((line: string, i: number) => (
@@ -190,4 +195,3 @@ export default function InvoiceHtmlView({
     </div>
   )
 }
-

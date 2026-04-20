@@ -87,6 +87,13 @@ function getPersistableUpdates(updates) {
 
 async function persistSettings(updates) {
   const persistableUpdates = getPersistableUpdates(updates)
+  
+  // If we are saving company_logo_url, we also try to CLEAR the legacy logo_url column
+  // to avoid ghost migrations on next refresh.
+  if ('company_logo_url' in persistableUpdates && !('logo_url' in persistableUpdates)) {
+    persistableUpdates.logo_url = null
+  }
+
   console.log('[useSettings] Persisting updates to DB:', persistableUpdates)
 
   const { error } = await supabase
@@ -100,16 +107,22 @@ async function persistSettings(updates) {
 
   console.error('[useSettings] Persistence error:', error)
 
-  if ('app_theme_tokens' in persistableUpdates && shouldRetryWithoutColumn(error, 'app_theme_tokens')) {
-    console.warn('[useSettings] Retrying persistence without app_theme_tokens')
-    unsupportedSettingsColumns.add('app_theme_tokens')
-    const fallbackUpdates = { ...persistableUpdates }
-    delete fallbackUpdates.app_theme_tokens
-    const retry = await supabase
-      .from('settings')
-      .upsert({ id: 1, ...fallbackUpdates }, { onConflict: 'id' })
-    if (!retry.error) return
-    throw retry.error
+  // Retry logic for missing columns
+  const retryColumns = ['app_theme_tokens', 'logo_url']
+  for (const column of retryColumns) {
+    if (column in persistableUpdates && shouldRetryWithoutColumn(error, column)) {
+      console.warn(`[useSettings] Retrying persistence without ${column}`)
+      unsupportedSettingsColumns.add(column)
+      const fallbackUpdates = { ...persistableUpdates }
+      delete fallbackUpdates[column]
+      
+      try {
+        await persistSettings(fallbackUpdates)
+        return
+      } catch (retryError) {
+        throw retryError
+      }
+    }
   }
 
   throw error
@@ -117,37 +130,48 @@ async function persistSettings(updates) {
 
 export function normalizeSettings(data) {
   if (!data || typeof data !== 'object') return {}
+  console.log('[useSettings] Normalizing raw settings data:', data)
   const nextData = normalizeThemeSettings(data)
 
   /**
    * LEGACY COMPATIBILITY SHIM (logo_url -> company_logo_url)
    * This is the ONLY place in the app where 'logo_url' should be referenced.
-   * We migrate it to the canonical 'company_logo_url' field and discard the old one.
+   * We migrate it to the canonical 'company_logo_url' field.
+   * We only migrate if company_logo_url is null or missing, ensuring an empty string (intended removal) is respected.
    */
-  if (nextData.logo_url && !nextData.company_logo_url) {
-    console.log('[useSettings] Migrating legacy logo_url to company_logo_url')
+  const hasLegacyLogo = nextData.logo_url && String(nextData.logo_url).trim().length > 0
+  const hasCompanyLogo = nextData.company_logo_url !== null && nextData.company_logo_url !== undefined
+  
+  if (hasLegacyLogo && !hasCompanyLogo) {
+    console.log('[useSettings] Migrating legacy logo_url to company_logo_url:', nextData.logo_url)
     nextData.company_logo_url = nextData.logo_url
   }
-  delete nextData.logo_url
   
+  // ALWAYS discard logo_url to prevent it from leaking into the app state or back into DB during save
+  if ('logo_url' in nextData) {
+    console.log('[useSettings] Discarding legacy logo_url field from app state')
+    delete nextData.logo_url
+  }
+  
+  console.log('[useSettings] Final normalized settings:', nextData)
   return nextData
 }
 
 export async function fetchSettings(options = {}) {
   const { force = false } = options
   const requestStartedAt = Date.now()
-  console.log('[useSettings] Fetching settings from DB (force:', force, ')')
+  console.log('[useSettings] fetchSettings start (force:', force, ')')
   
   const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single()
   
   if (error) {
-    console.error('[useSettings] Fetch error:', error)
+    console.error('[useSettings] Fetch error from Supabase:', error)
   } else {
-    console.log('[useSettings] Fetch success')
+    console.log('[useSettings] Fetch success from Supabase, raw data:', data)
   }
 
   if (!force && lastLocalUpdateAt > requestStartedAt) {
-    console.log('[useSettings] Returning cached settings due to recent local update')
+    console.log('[useSettings] Returning cached settings due to recent local update (Cache wins over Stale Fetch)')
     return cachedSettings || {}
   }
   
@@ -158,6 +182,7 @@ export async function fetchSettings(options = {}) {
   const merged = { ...nextData }
 
   if (!force && cachedSettings && (hasLocalTheme || withinThemeGrace)) {
+    console.log('[useSettings] Merging local theme/grace settings into fetched data')
     THEME_KEYS.forEach((key) => {
       const cachedValue = cachedSettings?.[key]
       const incomingValue = nextData?.[key]
@@ -168,6 +193,7 @@ export async function fetchSettings(options = {}) {
   }
 
   cachedSettings = normalizeThemeSettings(merged)
+  console.log('[useSettings] Update listeners with:', cachedSettings)
   listeners.forEach(fn => fn(cachedSettings))
   return cachedSettings
 }

@@ -268,6 +268,7 @@ export function DocumentLivePreviewCard({
   bankDetails,
   notesSections = [],
   signatory,
+  companyLogoUrl,
   accentColor = '#0f172a',
   headerFontFamily,
   bodyFontFamily,
@@ -293,14 +294,22 @@ export function DocumentLivePreviewCard({
           <div className="h-1.5 w-full" style={{ backgroundColor: accentColor }} />
           <div className="space-y-5 px-3 py-4 sm:px-5 sm:py-6" style={{ fontFamily: bodyFontFamily }}>
             <div className="space-y-4 border-b border-slate-200 pb-5">
-              <div className="space-y-2">
-                <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">{documentLabel}</div>
-                <div
-                  className="break-words text-[2rem] font-black leading-none tracking-[-0.05em] text-foreground"
-                  style={{ fontFamily: headerFontFamily }}
-                >
-                  {documentNumber || documentLabel}
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-2">
+                  <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">{documentLabel}</div>
+                  <div
+                    className="break-words text-[2rem] font-black leading-none tracking-[-0.05em] text-foreground"
+                    style={{ fontFamily: headerFontFamily }}
+                  >
+                    {documentNumber || documentLabel}
+                  </div>
                 </div>
+
+                {companyLogoUrl ? (
+                  <div className="shrink-0">
+                    <img src={companyLogoUrl} alt="Logo" className="h-12 w-auto max-w-[120px] object-contain" />
+                  </div>
+                ) : null}
               </div>
 
               <div className="space-y-4 sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,0.88fr)] sm:gap-4 sm:space-y-0">
