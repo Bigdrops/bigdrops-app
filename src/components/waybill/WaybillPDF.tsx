@@ -21,7 +21,7 @@ interface Settings {
   company_address?: string
   company_phone?: string
   company_email?: string
-  logo_url?: string
+  company_logo_url?: string
 }
 
 interface WaybillPDFProps {
@@ -95,7 +95,7 @@ export default function WaybillPDF({ waybill, settings, designPreset }: WaybillP
       <Page size="A4" style={S.page}>
         <View style={S.header}>
           <View style={S.companyBlock}>
-            {settings.logo_url ? <Image src={settings.logo_url} style={S.logo} /> : null}
+            {settings.company_logo_url ? <Image src={settings.company_logo_url} style={S.logo} /> : null}
             <Text style={S.companyName}>{settings.company_name || 'Company Name'}</Text>
             {settings.company_address ? <Text style={S.companyLine}>{settings.company_address}</Text> : null}
             {settings.company_phone ? <Text style={S.companyLine}>{settings.company_phone}</Text> : null}
