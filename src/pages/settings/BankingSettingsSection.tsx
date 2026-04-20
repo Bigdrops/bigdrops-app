@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { ChevronLeft, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { supabase } from '@/supabase'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
@@ -43,6 +43,7 @@ export function BankingSettingsSection({ onToast }: { onToast: SettingsToastFn }
 
   const loadAccounts = useCallback(async () => {
     setLoading(true)
+
     const { data, error } = await supabase
       .from('bank_accounts')
       .select('id, bank_name, account_name, account_number, sort_code, is_default')
@@ -55,6 +56,7 @@ export function BankingSettingsSection({ onToast }: { onToast: SettingsToastFn }
     } else {
       setAccounts((data as BankAccount[]) || [])
     }
+
     setLoading(false)
   }, [onToast])
 
@@ -62,8 +64,9 @@ export function BankingSettingsSection({ onToast }: { onToast: SettingsToastFn }
     loadAccounts()
   }, [loadAccounts])
 
-  const updateForm = (key: keyof BankForm, value: string | boolean) =>
+  const updateForm = (key: keyof BankForm, value: string | boolean) => {
     setForm((current) => ({ ...current, [key]: value }))
+  }
 
   const openAdd = () => {
     setEditingId(null)
@@ -96,12 +99,14 @@ export function BankingSettingsSection({ onToast }: { onToast: SettingsToastFn }
     }
 
     setSaving(true)
+
     try {
       if (form.is_default) {
         const resetQuery = supabase.from('bank_accounts').update({ is_default: false })
         const resetResult = editingId
           ? await resetQuery.neq('id', editingId)
           : await resetQuery.not('id', 'is', null)
+
         if (resetResult.error) throw resetResult.error
       }
 
@@ -123,19 +128,27 @@ export function BankingSettingsSection({ onToast }: { onToast: SettingsToastFn }
       closeForm()
       onToast(editingId ? 'Bank account updated' : 'Bank account added')
     } catch (error) {
-      onToast(getUserFacingMutationMessage(error, { action: editingId ? 'update' : 'create' }))
+      onToast(
+        getUserFacingMutationMessage(error, {
+          action: editingId ? 'update' : 'create',
+        }),
+      )
     }
+
     setSaving(false)
   }
 
   const removeAccount = async (id: string) => {
     setActionId(`delete:${id}`)
+
     const { error } = await supabase.from('bank_accounts').delete().eq('id', id)
+
     if (error) {
       onToast(`Delete failed: ${error.message}`)
       setActionId(null)
       return
     }
+
     await loadAccounts()
     setActionId(null)
     onToast('Bank account deleted')
@@ -143,17 +156,23 @@ export function BankingSettingsSection({ onToast }: { onToast: SettingsToastFn }
 
   const setDefault = async (id: string) => {
     setActionId(`default:${id}`)
+
     const { error: resetError } = await supabase
       .from('bank_accounts')
       .update({ is_default: false })
       .neq('id', id)
+
     if (resetError) {
       onToast(`Default update failed: ${resetError.message}`)
       setActionId(null)
       return
     }
 
-    const { error } = await supabase.from('bank_accounts').update({ is_default: true }).eq('id', id)
+    const { error } = await supabase
+      .from('bank_accounts')
+      .update({ is_default: true })
+      .eq('id', id)
+
     if (error) {
       onToast(`Default update failed: ${error.message}`)
       setActionId(null)
@@ -167,100 +186,39 @@ export function BankingSettingsSection({ onToast }: { onToast: SettingsToastFn }
 
   if (loading) return <SettingsLoadingState />
 
-  return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-border bg-muted/50 px-4 py-4">
-        <div className="text-sm font-bold text-foreground">Bank accounts</div>
-        <div className="mt-1 text-xs text-muted-foreground">
-          Manage the payment accounts available across invoices and other payment instructions.
-        </div>
-      </div>
+  if (formOpen) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-100 bg-amber-50/40 px-4 py-3.5">
+          <button
+            type="button"
+            onClick={closeForm}
+            className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-100 bg-white text-amber-700 transition-colors hover:bg-amber-50"
+            aria-label="Back to bank accounts"
+          >
+            <ChevronLeft size={16} />
+          </button>
 
-      {accounts.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">
-          No bank accounts added yet.
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {accounts.map((account) => {
-            const busy = actionId?.includes(account.id)
-            return (
-              <div key={account.id} className="rounded-2xl border border-border bg-card px-4 py-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="text-sm font-bold text-foreground">{account.bank_name || 'Unnamed bank'}</div>
-                      {account.is_default ? (
-                        <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-600">
-                          Default
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="mt-1 text-sm text-slate-700">{account.account_name || 'No account name'}</div>
-                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                      <span>Account No: {account.account_number || 'Not set'}</span>
-                      <span>Sort Code: {account.sort_code || 'Not set'}</span>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <button
-                      onClick={() => openEdit(account)}
-                      className="rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold text-slate-700 hover:bg-muted/50"
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Pencil size={12} />
-                        Edit
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => removeAccount(account.id)}
-                      disabled={!!busy}
-                      className="rounded-xl border border-red-200 bg-card px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Trash2 size={12} />
-                        Delete
-                      </span>
-                    </button>
-                  </div>
-                </div>
-                {!account.is_default ? (
-                  <button
-                    onClick={() => setDefault(account.id)}
-                    disabled={!!busy}
-                    className="mt-4 rounded-xl border border-border bg-muted/50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-muted/50 disabled:opacity-50"
-                  >
-                    {actionId === `default:${account.id}` ? 'Updating...' : 'Set as Default'}
-                  </button>
-                ) : null}
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {formOpen ? (
-        <div className="rounded-2xl border border-border bg-muted/50 px-4 py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-sm font-bold text-foreground">
-                {editingId ? 'Edit bank account' : 'Add bank account'}
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                Save the exact account details you want available inside the app.
-              </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-bold text-slate-900">
+              {editingId ? 'Edit Bank Account' : 'Add Bank Account'}
             </div>
-            <button
-              onClick={closeForm}
-              className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-muted/50"
-            >
-              Cancel
-            </button>
+            <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
+              Save the exact payment account details you want available across the app.
+            </div>
           </div>
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
+          <div className="grid grid-cols-1 gap-4 px-4 py-4 sm:grid-cols-2">
             <SettingsField label="Bank Name">
-              <SettingsInput value={form.bank_name} onChange={(value) => updateForm('bank_name', value)} placeholder="First Bank" />
+              <SettingsInput
+                value={form.bank_name}
+                onChange={(value) => updateForm('bank_name', value)}
+                placeholder="First Bank"
+              />
             </SettingsField>
+
             <SettingsField label="Account Name">
               <SettingsInput
                 value={form.account_name}
@@ -268,6 +226,7 @@ export function BankingSettingsSection({ onToast }: { onToast: SettingsToastFn }
                 placeholder="Sun & Shield Power Solutions"
               />
             </SettingsField>
+
             <SettingsField label="Account Number">
               <SettingsInput
                 value={form.account_number}
@@ -275,28 +234,138 @@ export function BankingSettingsSection({ onToast }: { onToast: SettingsToastFn }
                 placeholder="0123456789"
               />
             </SettingsField>
+
             <SettingsField label="Sort Code">
-              <SettingsInput value={form.sort_code} onChange={(value) => updateForm('sort_code', value)} placeholder="011" />
+              <SettingsInput
+                value={form.sort_code}
+                onChange={(value) => updateForm('sort_code', value)}
+                placeholder="011"
+              />
             </SettingsField>
           </div>
-          <div className="mt-4 rounded-xl border border-border bg-card px-3 py-3">
-            <div className="flex items-center justify-between gap-3">
+
+          <div className="border-t border-slate-200/80 px-4 py-4">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-amber-50/30 px-3 py-3">
               <div>
-                <div className="text-xs font-bold text-foreground">Set as default</div>
+                <div className="text-xs font-bold text-slate-900">Set as default</div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Use this bank account as the primary payment destination.
+                  Use this account as the primary payment destination for new documents.
                 </div>
               </div>
-              <Switch checked={!!form.is_default} onCheckedChange={(value) => updateForm('is_default', value)} />
+
+              <Switch
+                checked={!!form.is_default}
+                onCheckedChange={(value) => updateForm('is_default', value)}
+                className="border border-slate-300 bg-slate-200 shadow-sm data-[state=checked]:border-amber-600 data-[state=checked]:bg-amber-600 [&>span]:bg-white"
+              />
             </div>
           </div>
-          <SettingsSaveButton saving={saving} saved={false} onClick={saveAccount} />
+
+          <div className="border-t border-slate-200/80 px-4 py-4">
+            <SettingsSaveButton saving={saving} saved={false} onClick={saveAccount} />
+          </div>
         </div>
-      ) : null}
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="px-1">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-700/80">
+          Banking
+        </p>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
+        <div className="border-b border-slate-200/80 bg-amber-50/40 px-4 py-3.5">
+          <div className="text-sm font-bold text-slate-900">Bank Accounts</div>
+          <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
+            Manage the payment accounts available across invoices and other payment instructions.
+          </div>
+        </div>
+
+        {accounts.length === 0 ? (
+          <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+            No bank accounts added yet.
+          </div>
+        ) : (
+          accounts.map((account, index) => {
+            const busy = actionId?.includes(account.id)
+
+            return (
+              <div
+                key={account.id}
+                className={index !== accounts.length - 1 ? 'border-b border-slate-200/80' : ''}
+              >
+                <div className="px-4 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="text-sm font-bold text-slate-900">
+                          {account.bank_name || 'Unnamed bank'}
+                        </div>
+
+                        {account.is_default ? (
+                          <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-600">
+                            Default
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-1 text-sm text-slate-700">
+                        {account.account_name || 'No account name'}
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                        <span>Account No: {account.account_number || 'Not set'}</span>
+                        <span>Sort Code: {account.sort_code || 'Not set'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        onClick={() => openEdit(account)}
+                        className="rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        <span className="inline-flex items-center gap-1.5">
+                          <Pencil size={12} />
+                          Edit
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => removeAccount(account.id)}
+                        disabled={!!busy}
+                        className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                      >
+                        <span className="inline-flex items-center gap-1.5">
+                          <Trash2 size={12} />
+                          Delete
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {!account.is_default ? (
+                    <button
+                      onClick={() => setDefault(account.id)}
+                      disabled={!!busy}
+                      className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50"
+                    >
+                      {actionId === `default:${account.id}` ? 'Updating...' : 'Set as Default'}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
 
       <button
         onClick={openAdd}
-        className="w-full rounded-2xl border border-dashed border-border bg-card px-4 py-3 text-sm font-bold text-slate-700 hover:border-slate-400 hover:bg-muted/50"
+        className="w-full rounded-2xl border border-dashed border-amber-200 bg-amber-50/30 px-4 py-3 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-50"
       >
         <span className="inline-flex items-center gap-2">
           <Plus size={14} />
