@@ -58,8 +58,8 @@ function normalizeSummaryRow(row: Record<string, unknown>): ItemCatalogItem {
 
 export async function getItemSuggestions(searchText: string, resultLimit = 10): Promise<ItemSuggestion[]> {
   const { data, error } = await supabase.rpc('get_item_suggestions', {
-    p_search_text: searchText,
-    p_result_limit: resultLimit,
+    search_text: searchText,
+    result_limit: resultLimit,
   })
 
   if (error) throw error
