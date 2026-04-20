@@ -11,7 +11,7 @@ import { getErrorMessage } from './settings-helpers'
 import type { SettingsToastFn } from './settings-types'
 
 type BrandingForm = {
-  logo_url: string
+  company_logo_url: string
   footer_text: string
 }
 
@@ -19,11 +19,14 @@ type BrandingUploadState = {
   logo: boolean
 }
 
-type LogoState = 'idle' | 'uploaded-unsaved' | 'saved' | 'error'
+type LogoState = 'idle' | 'uploading' | 'uploaded-unsaved' | 'saved' | 'error'
 
 export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn }) {
   const { settings, loading } = useSettings()
-  const [form, setForm] = useState<BrandingForm>({ logo_url: '', footer_text: '' })
+  const [form, setForm] = useState<BrandingForm>({
+    company_logo_url: '',
+    footer_text: '',
+  })
   const [uploading, setUploading] = useState<BrandingUploadState>({ logo: false })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -34,39 +37,56 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
   useEffect(() => {
     if (!loading && settings) {
+      const resolvedLogoUrl =
+        settings.company_logo_url ||
+        settings.logo_url ||
+        ''
+
       setForm({
-        logo_url: settings.logo_url || '',
+        company_logo_url: resolvedLogoUrl,
         footer_text: settings.footer_text || '',
       })
+
       setLogoState('idle')
+      setUploadError(null)
     }
   }, [loading, settings])
 
   useEffect(() => {
     if (!loading) {
-      const hasSavedData = [settings?.logo_url, settings?.footer_text].some(Boolean)
+      const hasSavedData = [
+        settings?.company_logo_url,
+        settings?.logo_url,
+        settings?.footer_text,
+      ].some(Boolean)
+
       setEditing(!hasSavedData)
     }
   }, [loading, settings])
 
   const updateForm = (key: keyof BrandingForm, value: string) => {
     setForm((current) => ({ ...current, [key]: value }))
-    if (key === 'logo_url') {
+
+    if (key === 'company_logo_url') {
       setLogoState(value ? 'uploaded-unsaved' : 'idle')
     }
   }
 
   const restoreSavedBrandingState = () => {
     setForm({
-      logo_url: settings?.logo_url || '',
+      company_logo_url:
+        settings?.company_logo_url ||
+        settings?.logo_url ||
+        '',
       footer_text: settings?.footer_text || '',
     })
     setUploadError(null)
     setLogoState('idle')
   }
 
-  const handleUpload = async (type: keyof BrandingUploadState, file: File | null) => {
+  const handleUpload = async (_type: keyof BrandingUploadState, file: File | null) => {
     if (!file) return
+
     setUploadError(null)
 
     if (!file.type.startsWith('image/')) {
@@ -82,13 +102,15 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
       return
     }
 
-    setUploading((current) => ({ ...current, [type]: true }))
+    setUploading({ logo: true })
+    setLogoState('uploading')
 
     try {
       const ext = file.name.split('.').pop()
-      const path = `${type}/${Date.now()}.${String(ext)}`
+      const path = `logo/${Date.now()}.${String(ext || 'png')}`
       const url = await uploadFile('logos', path, file)
-      updateForm(`${type}_url` as keyof BrandingForm, url)
+
+      updateForm('company_logo_url', url)
       setLogoState('uploaded-unsaved')
       onToast('Logo uploaded')
     } catch (error) {
@@ -96,9 +118,13 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
       setUploadError(message)
       setLogoState('error')
       onToast(message)
-    }
+    } finally {
+      setUploading({ logo: false })
 
-    setUploading((current) => ({ ...current, [type]: false }))
+      if (logoRef.current) {
+        logoRef.current.value = ''
+      }
+    }
   }
 
   const save = async () => {
@@ -106,10 +132,15 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     setUploadError(null)
 
     try {
-      await saveSettings(form)
+      await saveSettings({
+        company_logo_url: form.company_logo_url,
+        logo_url: form.company_logo_url,
+        footer_text: form.footer_text,
+      })
+
       setSaved(true)
       setEditing(false)
-      setLogoState('saved')
+      setLogoState(form.company_logo_url ? 'saved' : 'idle')
       onToast('Branding saved')
       setTimeout(() => setSaved(false), 2500)
     } catch (error) {
@@ -117,9 +148,9 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
       setUploadError(message)
       setLogoState('error')
       onToast(message)
+    } finally {
+      setSaving(false)
     }
-
-    setSaving(false)
   }
 
   if (loading) return <SettingsLoadingState />
@@ -127,11 +158,9 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   const footerPreview = (form.footer_text || '').split('\n').find(Boolean) || ''
 
   const UploadBox = ({
-    type,
     label,
     inputRef,
   }: {
-    type: keyof BrandingUploadState
     label: string
     inputRef: React.RefObject<HTMLInputElement | null>
   }) => (
@@ -141,16 +170,16 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={(event) => handleUpload(type, event.target.files?.[0] || null)}
+        onChange={(event) => handleUpload('logo', event.target.files?.[0] || null)}
       />
 
-      {form[`${type}_url` as keyof BrandingForm] ? (
+      {form.company_logo_url ? (
         <div className="space-y-3">
           <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
             <div className="flex flex-col items-center text-center">
-              <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50">
+              <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50">
                 <img
-                  src={form[`${type}_url` as keyof BrandingForm]}
+                  src={form.company_logo_url}
                   alt={label}
                   className="h-full w-full object-contain"
                 />
@@ -177,7 +206,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
                   type="button"
                   onClick={() => {
                     setUploadError(null)
-                    updateForm(`${type}_url` as keyof BrandingForm, '')
+                    updateForm('company_logo_url', '')
                   }}
                   className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-500 transition-colors hover:bg-red-50"
                 >
@@ -186,6 +215,12 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
               </div>
             </div>
           </div>
+
+          {logoState === 'uploading' ? (
+            <div className="rounded-xl bg-indigo-50 px-3 py-2 text-[12px] font-medium text-indigo-700">
+              Uploading logo...
+            </div>
+          ) : null}
 
           {logoState === 'uploaded-unsaved' ? (
             <div className="rounded-xl bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700">
@@ -211,7 +246,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
             className="flex w-full items-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 bg-indigo-50/20 px-4 py-5 text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50/40"
           >
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white">
-              {uploading[type] ? (
+              {uploading.logo ? (
                 <Loader2 size={20} className="animate-spin text-muted-foreground" />
               ) : (
                 <Upload size={20} className="text-indigo-400" />
@@ -220,7 +255,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
             <div className="min-w-0 flex-1">
               <div className="text-sm font-bold text-slate-900">
-                {uploading[type] ? 'Uploading...' : 'Upload Logo'}
+                {uploading.logo ? 'Uploading...' : 'Upload Logo'}
               </div>
               <div className="mt-1 text-[12px] leading-5 text-muted-foreground">
                 PNG, JPG, or SVG. Use a clean high-resolution logo.
@@ -228,7 +263,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
             </div>
           </button>
 
-          {logoState === 'saved' && form.logo_url ? (
+          {logoState === 'saved' && form.company_logo_url ? (
             <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-[12px] font-medium text-emerald-700">
               <CheckCircle2 size={14} />
               Logo saved successfully.
@@ -279,10 +314,10 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
               </div>
 
               <div className="mt-3">
-                {form.logo_url ? (
-                  <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
+                {form.company_logo_url ? (
+                  <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
                     <img
-                      src={form.logo_url}
+                      src={form.company_logo_url}
                       alt="Company logo"
                       className="h-full w-full object-contain"
                     />
@@ -292,7 +327,13 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
                 )}
               </div>
 
-              {logoState === 'saved' && form.logo_url ? (
+              {form.company_logo_url && !saved ? (
+                <div className="mt-3 text-[12px] font-medium text-slate-500">
+                  Logo available
+                </div>
+              ) : null}
+
+              {logoState === 'saved' && form.company_logo_url ? (
                 <div className="mt-3 flex items-center gap-2 text-[12px] font-medium text-emerald-700">
                   <CheckCircle2 size={14} />
                   Saved
@@ -332,7 +373,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
         <div className="px-4 py-4">
-          <UploadBox type="logo" label="Company Logo" inputRef={logoRef} />
+          <UploadBox label="Company Logo" inputRef={logoRef} />
         </div>
 
         <div className="border-t border-slate-200/80 px-4 py-4">
