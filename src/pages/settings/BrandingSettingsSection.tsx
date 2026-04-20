@@ -74,17 +74,14 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
   const restoreSavedBrandingState = () => {
     setForm({
-      company_logo_url:
-        settings?.company_logo_url ||
-        settings?.logo_url ||
-        '',
+      company_logo_url: settings?.company_logo_url || settings?.logo_url || '',
       footer_text: settings?.footer_text || '',
     })
     setUploadError(null)
     setLogoState('idle')
   }
 
-  const handleUpload = async (_type: keyof BrandingUploadState, file: File | null) => {
+  const handleUpload = async (file: File | null) => {
     if (!file) return
 
     setUploadError(null)
@@ -134,7 +131,6 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     try {
       await saveSettings({
         company_logo_url: form.company_logo_url,
-        logo_url: form.company_logo_url,
         footer_text: form.footer_text,
       })
 
@@ -170,7 +166,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={(event) => handleUpload('logo', event.target.files?.[0] || null)}
+        onChange={(event) => handleUpload(event.target.files?.[0] || null)}
       />
 
       {form.company_logo_url ? (
