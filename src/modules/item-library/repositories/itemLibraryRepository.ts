@@ -57,13 +57,56 @@ function normalizeSummaryRow(row: Record<string, unknown>): ItemCatalogItem {
 }
 
 export async function getItemSuggestions(searchText: string, resultLimit = 10): Promise<ItemSuggestion[]> {
-  const { data, error } = await supabase.rpc('get_item_suggestions', {
-    search_text: searchText,
-    result_limit: resultLimit,
-  })
+  const trimmed = String(searchText || '').trim()
+  if (!trimmed) return []
+
+  const normalizeRows = (rows: unknown) =>
+    (Array.isArray(rows) ? rows : []).map((row) => normalizeSuggestionRow(row as Record<string, unknown>))
+
+  // Try the current RPC signature first
+  {
+    const { data, error } = await supabase.rpc('get_item_suggestions', {
+      search_text: trimmed,
+      result_limit: resultLimit,
+    })
+
+    if (!error) {
+      const normalized = normalizeRows(data)
+      if (normalized.length > 0) return normalized
+    }
+  }
+
+  // Retry with prefixed parameter names in case the deployed function uses that convention
+  {
+    const { data, error } = await supabase.rpc('get_item_suggestions', {
+      p_search_text: trimmed,
+      p_result_limit: resultLimit,
+    })
+
+    if (!error) {
+      const normalized = normalizeRows(data)
+      if (normalized.length > 0) return normalized
+    }
+  }
+
+  // Final fallback: direct summary view lookup so the UI still works
+  const { data, error } = await supabase
+    .from('item_price_summary_v')
+    .select('item_id, name, standard_price, last_sold_price, usage_count, last_used_at, is_active')
+    .ilike('name', `%${trimmed}%`)
+    .order('usage_count', { ascending: false })
+    .order('last_used_at', { ascending: false, nullsFirst: false })
+    .limit(resultLimit)
 
   if (error) throw error
-  return (Array.isArray(data) ? data : []).map((row) => normalizeSuggestionRow(row as Record<string, unknown>))
+
+  return (Array.isArray(data) ? data : []).map((row) =>
+    normalizeSuggestionRow({
+      ...row,
+      matched_text: row.name,
+      match_source: 'catalog',
+    } as Record<string, unknown>),
+  )
 }
 
 export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]> {
