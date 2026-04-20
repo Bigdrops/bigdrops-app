@@ -222,15 +222,12 @@ export default function Settings() {
 
       <div className="max-w-2xl mx-auto">
         {!active ? (
-          <div className="space-y-8">
+          <div className="space-y-5">
             {groups.map((group) => (
-              <section key={group.id}>
-                <div className="mb-3 px-1">
+              <section key={group.id} className="space-y-2">
+                <div className="px-1">
                   <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
                     {group.label}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {group.desc}
                   </p>
                 </div>
 
