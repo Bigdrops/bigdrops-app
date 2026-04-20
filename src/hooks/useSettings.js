@@ -115,6 +115,24 @@ async function persistSettings(updates) {
   throw error
 }
 
+export function normalizeSettings(data) {
+  if (!data || typeof data !== 'object') return {}
+  const nextData = normalizeThemeSettings(data)
+
+  /**
+   * LEGACY COMPATIBILITY SHIM (logo_url -> company_logo_url)
+   * This is the ONLY place in the app where 'logo_url' should be referenced.
+   * We migrate it to the canonical 'company_logo_url' field and discard the old one.
+   */
+  if (nextData.logo_url && !nextData.company_logo_url) {
+    console.log('[useSettings] Migrating legacy logo_url to company_logo_url')
+    nextData.company_logo_url = nextData.logo_url
+  }
+  delete nextData.logo_url
+  
+  return nextData
+}
+
 export async function fetchSettings(options = {}) {
   const { force = false } = options
   const requestStartedAt = Date.now()
@@ -125,7 +143,7 @@ export async function fetchSettings(options = {}) {
   if (error) {
     console.error('[useSettings] Fetch error:', error)
   } else {
-    console.log('[useSettings] Fetch success, data:', data)
+    console.log('[useSettings] Fetch success')
   }
 
   if (!force && lastLocalUpdateAt > requestStartedAt) {
@@ -133,14 +151,7 @@ export async function fetchSettings(options = {}) {
     return cachedSettings || {}
   }
   
-  const nextData = normalizeThemeSettings(data || {})
-  
-  // Standardize on company_logo_url, migrating logo_url if it exists in the data
-  if (nextData.logo_url && !nextData.company_logo_url) {
-    console.log('[useSettings] Migrating logo_url to company_logo_url')
-    nextData.company_logo_url = nextData.logo_url
-  }
-  delete nextData.logo_url
+  const nextData = normalizeSettings(data || {})
 
   const hasLocalTheme = THEME_KEYS.some((key) => cachedSettings?.[key] != null)
   const withinThemeGrace = Date.now() - lastLocalUpdateAt < LOCAL_THEME_GRACE_MS
@@ -210,7 +221,7 @@ export async function uploadFile(bucket, path, file) {
 export async function saveSettings(updates) {
   console.log('[useSettings] saveSettings called with:', updates)
   const previousSettings = cachedSettings || {}
-  const nextSettings = normalizeThemeSettings({ ...previousSettings, ...updates })
+  const nextSettings = normalizeSettings({ ...previousSettings, ...updates })
   
   lastLocalUpdateAt = Date.now()
   cachedSettings = nextSettings

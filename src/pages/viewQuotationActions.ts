@@ -1,5 +1,6 @@
 import { supabase } from '@/supabase'
 import { buildQuotationCsv, downloadQuotationCsv } from '@/components/quotation/exportQuotationCsv'
+import { normalizeSettings } from '@/hooks/useSettings'
 import { appendDerivedTrail, buildTrailLink, getNextInvoiceNumber, parseDocumentCustomFields, toQuotationItemRow, withSourceTrail } from '@/domain/documentConversion'
 import { buildQuotationFormState, getNextQuotationNumber, type DbQuotation, type DbQuotationItem } from '@/domain/quotation'
 import { normalizeExtraCharges, buildCalculationInputs, BUILTIN_COLUMNS } from '@/domain/invoice'
@@ -52,7 +53,7 @@ export async function loadQuotationViewData(id: string) {
     items: mappedItems,
     totals,
     client: clientRes.data || null,
-    settings: settingsRes.data || null,
+    settings: normalizeSettings(settingsRes.data),
     bankAccounts: bankAccountsRes.data || [],
     customFields: parsedCustomFields,
   }

@@ -40,9 +40,6 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     if (!loading && settings) {
       console.log('[BrandingSettings] Settings loaded, resolving logo URL')
       const resolvedLogoUrl = settings.company_logo_url || ''
-      if (settings.logo_url && !settings.company_logo_url) {
-        console.warn('[BrandingSettings] Legacy logo_url found, should be migrated:', settings.logo_url)
-      }
 
       setForm({
         company_logo_url: resolvedLogoUrl,
@@ -58,7 +55,6 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     if (!loading) {
       const hasSavedData = [
         settings?.company_logo_url,
-        settings?.logo_url,
         settings?.footer_text,
       ].some(Boolean)
 
@@ -88,7 +84,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     }
 
     setForm({
-      company_logo_url: settings?.company_logo_url || settings?.logo_url || '',
+      company_logo_url: settings?.company_logo_url || '',
       footer_text: settings?.footer_text || '',
     })
     setLocalLogoPreview('')

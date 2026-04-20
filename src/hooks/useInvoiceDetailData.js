@@ -9,6 +9,7 @@ import {
   getCachedInvoicePayments,
 } from '@/lib/native/invoiceCache'
 import { fetchInvoiceChildDocuments, fetchProjectSummary } from '@/domain/documentRelationships'
+import { fetchSettings, normalizeSettings } from '@/hooks/useSettings'
 import { mapDbInvoiceItem } from '@/domain/invoice'
 
 function canUseInvoiceCacheFallback() {
@@ -193,7 +194,7 @@ export function useInvoiceDetailData(id) {
           .single()
           .then(({ data, error: settingsError }) => {
             if (settingsError) throw settingsError
-            if (data) setSettings(data)
+            if (data) setSettings(normalizeSettings(data))
           }),
       ])
     } catch (refreshError) {

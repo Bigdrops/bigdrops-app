@@ -22,6 +22,7 @@ import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { getPdfDesignPreset, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { toast } from '@/hooks/use-toast'
+import { normalizeSettings } from '@/hooks/useSettings'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
@@ -182,7 +183,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       ])
 
       setClient((clientResponse.data as Record<string, unknown> | null) || null)
-      setSettings((settingsResponse.data as Record<string, unknown> | null) || null)
+      setSettings(normalizeSettings(settingsResponse.data))
       setLinkedProject(state.quotation.project_id ? await fetchProjectSummary(state.quotation.project_id) : null)
       setLoading(false)
     }
