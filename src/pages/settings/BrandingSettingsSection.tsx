@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Loader2, Upload } from 'lucide-react'
+import { ChevronLeft, Loader2, Pencil, Upload } from 'lucide-react'
 import { saveSettings, uploadFile, useSettings } from '@/hooks/useSettings'
-import { SettingsField, SettingsSaveButton, SettingsSummaryField } from './SettingsFormPrimitives'
+import {
+  SettingsField,
+  SettingsSaveButton,
+  SettingsSummaryField,
+} from './SettingsFormPrimitives'
 import { SettingsLoadingState } from './SettingsLoadingState'
 import { getErrorMessage } from './settings-helpers'
 import type { SettingsToastFn } from './settings-types'
@@ -26,7 +30,9 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   const logoRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
-    if (!loading && settings) setForm((current) => ({ ...current, ...settings }))
+    if (!loading && settings) {
+      setForm((current) => ({ ...current, ...settings }))
+    }
   }, [loading, settings])
 
   useEffect(() => {
@@ -36,8 +42,9 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     }
   }, [loading, settings])
 
-  const updateForm = (key: keyof BrandingForm, value: string) =>
+  const updateForm = (key: keyof BrandingForm, value: string) => {
     setForm((current) => ({ ...current, [key]: value }))
+  }
 
   const restoreSavedBrandingState = () => {
     setForm({
@@ -63,6 +70,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     }
 
     setUploading((current) => ({ ...current, [type]: true }))
+
     try {
       const ext = file.name.split('.').pop()
       const path = `${type}/${Date.now()}.${String(ext)}`
@@ -72,11 +80,13 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     } catch (error) {
       onToast('Upload failed: ' + getErrorMessage(error))
     }
+
     setUploading((current) => ({ ...current, [type]: false }))
   }
 
   const save = async () => {
     setSaving(true)
+
     try {
       await saveSettings(form)
       setSaved(true)
@@ -86,10 +96,13 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     } catch (error) {
       onToast(getErrorMessage(error))
     }
+
     setSaving(false)
   }
 
   if (loading) return <SettingsLoadingState />
+
+  const footerPreview = (form.footer_text || '').split('\n').find(Boolean) || ''
 
   const UploadBox = ({
     type,
@@ -108,24 +121,31 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
         className="hidden"
         onChange={(event) => handleUpload(type, event.target.files?.[0] || null)}
       />
+
       {form[`${type}_url` as keyof BrandingForm] ? (
-        <div className="relative inline-flex flex-col gap-2">
-          <img
-            src={form[`${type}_url` as keyof BrandingForm]}
-            alt={label}
-            className="max-h-20 max-w-[180px] rounded-lg border border-border object-contain"
-          />
+        <div className="flex flex-col gap-3">
+          <div className="inline-flex w-fit overflow-hidden rounded-xl border border-slate-200/80 bg-white p-2">
+            <img
+              src={form[`${type}_url` as keyof BrandingForm]}
+              alt={label}
+              className="max-h-20 max-w-[180px] object-contain"
+            />
+          </div>
+
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={() => {
                 setUploadError(null)
                 inputRef.current?.click()
               }}
-              className="text-xs font-semibold text-blue-600 hover:underline"
+              className="text-xs font-semibold text-indigo-700 hover:underline"
             >
               Change
             </button>
+
             <button
+              type="button"
               onClick={() => {
                 setUploadError(null)
                 updateForm(`${type}_url` as keyof BrandingForm, '')
@@ -142,7 +162,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
             setUploadError(null)
             inputRef.current?.click()
           }}
-          className="cursor-pointer rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors hover:border-slate-400 hover:bg-muted/50"
+          className="cursor-pointer rounded-xl border-2 border-dashed border-slate-200 bg-indigo-50/20 p-6 text-center transition-colors hover:border-indigo-200 hover:bg-indigo-50/40"
         >
           {uploading[type] ? (
             <>
@@ -151,51 +171,70 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
             </>
           ) : (
             <>
-              <Upload size={20} className="mx-auto mb-1 text-slate-300" />
+              <Upload size={20} className="mx-auto mb-1 text-indigo-400" />
               <p className="text-xs font-medium text-muted-foreground">Click to upload</p>
             </>
           )}
         </div>
       )}
-      {uploadError && <div className="mt-2 text-[10px] font-medium text-red-600 font-sans tracking-tight">{uploadError}</div>}
+
+      {uploadError ? (
+        <div className="mt-2 text-[11px] font-medium tracking-tight text-red-600">
+          {uploadError}
+        </div>
+      ) : null}
     </SettingsField>
   )
-
-  const footerPreview = (form.footer_text || '').split('\n').find(Boolean) || ''
 
   if (!editing) {
     return (
       <div className="space-y-4">
-        <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-4">
-          <div>
-            <div className="text-sm font-bold text-foreground">Saved branding</div>
-            <div className="mt-1 text-xs text-muted-foreground">
+        <div className="px-1">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-indigo-600/80">
+            Logo & Branding
+          </p>
+        </div>
+
+        <div className="flex items-start justify-between gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/40 px-4 py-3.5">
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-bold text-slate-900">Saved Branding</div>
+            <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
               Review your logo and footer text before editing branding assets.
             </div>
           </div>
+
           <button
             onClick={() => setEditing(true)}
-            className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-muted/50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-100 bg-white px-3 py-1.5 text-xs font-bold text-indigo-700 transition-colors hover:bg-indigo-50"
           >
+            <Pencil size={12} />
             Edit
           </button>
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-border bg-muted/50 px-4 py-3">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Logo</div>
-            <div className="mt-2">
-              {form.logo_url ? (
-                <img
-                  src={form.logo_url}
-                  alt="Company logo"
-                  className="h-14 w-14 rounded-lg border border-border bg-card object-contain"
-                />
-              ) : (
-                <div className="text-sm font-medium text-foreground">No logo</div>
-              )}
+
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
+          <div className="grid grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200/80 bg-indigo-50/20 px-4 py-3">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Logo
+              </div>
+              <div className="mt-2">
+                {form.logo_url ? (
+                  <div className="inline-flex overflow-hidden rounded-lg border border-slate-200/80 bg-white p-2">
+                    <img
+                      src={form.logo_url}
+                      alt="Company logo"
+                      className="h-14 w-14 object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="text-sm font-medium text-slate-900">No logo</div>
+                )}
+              </div>
             </div>
+
+            <SettingsSummaryField label="Footer Text" value={footerPreview || 'Not set'} />
           </div>
-          <SettingsSummaryField label="Footer Text" value={footerPreview || 'Not set'} />
         </div>
       </div>
     )
@@ -203,38 +242,50 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-4">
-        <div>
-          <div className="text-sm font-bold text-foreground">Edit branding</div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            Update the company logo and footer text used in generated documents.
-          </div>
-        </div>
+      <div className="flex items-start gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/40 px-4 py-3.5">
         <button
+          type="button"
           onClick={() => {
             restoreSavedBrandingState()
             setEditing(false)
           }}
-          className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-muted/50"
+          className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-100 bg-white text-indigo-700 transition-colors hover:bg-indigo-50"
+          aria-label="Back to saved branding"
         >
-          Cancel
+          <ChevronLeft size={16} />
         </button>
+
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-bold text-slate-900">Edit Branding</div>
+          <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
+            Update the company logo and footer text used in generated documents.
+          </div>
+        </div>
       </div>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <UploadBox type="logo" label="Company Logo" inputRef={logoRef} />
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
+        <div className="px-4 py-4">
+          <UploadBox type="logo" label="Company Logo" inputRef={logoRef} />
+        </div>
+
+        <div className="border-t border-slate-200/80 px-4 py-4">
+          <SettingsField label="PDF Footer Text">
+            <textarea
+              value={form.footer_text || ''}
+              onChange={(event) => updateForm('footer_text', event.target.value)}
+              placeholder={
+                'Bank: First Bank | Account: Sun & Shield Power Solutions | No: 0123456789\nAll prices in NGN. Payment within 30 days.'
+              }
+              rows={4}
+              className="w-full resize-none rounded-xl border border-slate-200/80 bg-background px-3 py-2.5 text-sm text-foreground transition-colors placeholder:text-slate-300 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/15"
+            />
+          </SettingsField>
+        </div>
+
+        <div className="border-t border-slate-200/80 px-4 py-4">
+          <SettingsSaveButton saving={saving} saved={saved} onClick={save} />
+        </div>
       </div>
-      <SettingsField label="PDF Footer Text">
-        <textarea
-          value={form.footer_text || ''}
-          onChange={(event) => updateForm('footer_text', event.target.value)}
-          placeholder={
-            'Bank: First Bank | Account: Sun & Shield Power Solutions | No: 0123456789\nAll prices in NGN. Payment within 30 days.'
-          }
-          rows={4}
-          className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-colors placeholder:text-slate-300 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-ring/10"
-        />
-      </SettingsField>
-      <SettingsSaveButton saving={saving} saved={saved} onClick={save} />
     </div>
   )
 }
