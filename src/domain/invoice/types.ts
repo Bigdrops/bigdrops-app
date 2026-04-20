@@ -32,6 +32,7 @@ export interface InvoicePdfOutput {
   showFooter: boolean
   showTagline: boolean
   showBalanceDue: boolean
+  showAmountInWords: boolean
   showVatPercentage: boolean
   showWhtPercentage: boolean
   showDiscountPercentage: boolean
@@ -297,6 +298,7 @@ export interface InvoiceCustomFields {
   pdfOutput?: Partial<InvoicePdfOutput>
   signatoryId?: string | null
   extraCharges?: ExtraCharge[]
+  groupMeta?: Record<string, { name?: string; showSubtotal?: boolean }>
   attachments?: InvoiceAttachment[]
   header?: Array<Record<string, unknown>>
   additionalFields?: InvoiceFieldEntry[]

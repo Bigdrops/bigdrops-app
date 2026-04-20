@@ -129,7 +129,6 @@ export function IndustryGroupFooterRow({
   ruleColor,
   surfaceColor,
   textColor,
-  mutedColor,
   bodyFontFamily,
 }: GroupRowProps) {
   return (
@@ -143,15 +142,6 @@ export function IndustryGroupFooterRow({
     >
       {row.showSubtotal ? (
         <View style={styles.groupSubtotalRow}>
-          <Text
-            style={[
-              styles.groupSubtotalLabel,
-              mutedColor ? { color: mutedColor } : null,
-              bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
-            ]}
-          >
-            {row.groupSubtotalLabel ? `${row.groupSubtotalLabel}:` : 'Group Subtotal:'}
-          </Text>
           <Text
             style={[
               styles.groupSubtotalValue,

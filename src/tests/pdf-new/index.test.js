@@ -136,6 +136,7 @@ test('adaptIndustryData preserves grouped subtotal presentation when a group hea
       {
         id: 'group-1',
         rowType: 'group_header',
+        groupId: 'group-1',
         groupLabel: 'Solar Works',
         customData: {
           showSubtotal: true,
@@ -144,6 +145,7 @@ test('adaptIndustryData preserves grouped subtotal presentation when a group hea
       {
         id: 'line-1',
         rowType: 'line',
+        groupId: 'group-1',
         description: 'Panel supply',
         amount: 125000,
         cells: {
@@ -155,6 +157,7 @@ test('adaptIndustryData preserves grouped subtotal presentation when a group hea
       {
         id: 'line-2',
         rowType: 'line',
+        groupId: 'group-1',
         description: 'Mounting kit',
         amount: 75000,
         cells: {
@@ -168,6 +171,27 @@ test('adaptIndustryData preserves grouped subtotal presentation when a group hea
 
   assert.equal(data.table.rows[0].isGroupHeader, true)
   assert.equal(data.table.rows[0].showSubtotal, true)
-  assert.equal(data.table.rows[0].groupSubtotalLabel, 'Group Subtotal')
+  assert.equal(data.table.rows[0].groupSubtotalLabel, null)
   assert.equal(data.table.rows[0].groupSubtotalValue, 'NGN 200,000')
+})
+
+test('adaptIndustryData strips html markup from notes and terms before the PDF template renders them', () => {
+  const data = adaptIndustryData({
+    ...createPdfModel('quotation'),
+    notes: {
+      title: 'Notes',
+      content: '<p>Hello <strong>team</strong><br />Thanks</p>',
+      format: 'html',
+    },
+    terms: {
+      title: 'Terms',
+      content: '<div>Pay within <em>7 days</em></div>',
+      format: 'html',
+    },
+  })
+
+  assert.equal(data.notes?.format, 'text')
+  assert.equal(data.notes?.content, 'Hello team\nThanks')
+  assert.equal(data.terms?.format, 'text')
+  assert.equal(data.terms?.content, 'Pay within 7 days')
 })

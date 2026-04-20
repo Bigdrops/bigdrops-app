@@ -1,12 +1,11 @@
 import type { ReactNode } from 'react'
 
-import DOMPurify from 'dompurify'
-
 import {
   createLinkedDocumentItem,
   createLinkedDocumentsSection,
   createLinkedProjectSection,
 } from '@/components/document/linkedDocumentSections'
+import { renderRichTextContent } from '@/lib/richText'
 
 interface RelatedCsr {
   id: string
@@ -198,12 +197,7 @@ export function mapInvoicePreviewNotesContent(previewNotesSections: PreviewNotes
     if (section.kind === 'html') {
       return {
         title: section.title,
-        content: (
-          <div
-            className="prose prose-sm max-w-none break-words text-foreground"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.html) }}
-          />
-        ),
+        content: renderRichTextContent(section.html),
       }
     }
 

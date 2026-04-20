@@ -138,6 +138,13 @@
   grid-template-columns: 1fr;
 }
 
+.doc-item-row.group-ft {
+  padding: 7px 20px 9px;
+  background: var(--surface2);
+  grid-template-columns: 1fr;
+  border-bottom: 1px solid var(--border);
+}
+
 .group-name {
   font-size: 10px;
   font-weight: 700;
@@ -146,8 +153,24 @@
   color: var(--primary);
 }
 
+.group-footer-value {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .item-name { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.4; }
 .item-desc { font-size: 11px; color: var(--text3); line-height: 1.4; margin-top: 2px; }
+.item-image {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  margin-top: 8px;
+}
 
 .item-qty {
   font-family: var(--font-mono);
@@ -211,6 +234,24 @@
 }
 
 .doc-footer-text { font-size: 11px; color: var(--text2); line-height: 1.7; }
+.doc-footer-rich-text :where(p, ul, ol) { margin: 0 0 8px; }
+.doc-footer-rich-text :where(p:last-child, ul:last-child, ol:last-child) { margin-bottom: 0; }
+.doc-footer-fields { display: flex; flex-direction: column; gap: 10px; }
+.doc-footer-field-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 2px;
+}
+.doc-footer-links { display: flex; flex-direction: column; gap: 6px; }
+.doc-footer-links a {
+  font-size: 11px;
+  color: var(--primary);
+  text-decoration: underline;
+  word-break: break-all;
+}
 
 .bank-box {
   background: var(--bg);

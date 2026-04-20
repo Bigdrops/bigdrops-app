@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DOMPurify from 'dompurify'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { PdfBankControls, PdfSupportingOptions } from '@/components/PdfOutputSettings'
 import {
@@ -49,6 +48,7 @@ import { buildQuotationFormState, getNextQuotationNumber } from '@/domain/quotat
 import { buildQuotationCsv, downloadQuotationCsv } from './exportQuotationCsv'
 import { QUOTATION_STATUSES, formatQuotationStatus, quotationStatusTone } from './quotationStatus'
 import { formatNaira } from '@/lib/formatters/money'
+import { renderRichTextContent } from '@/lib/richText'
 
 type BankAccountRow = {
   id: string
@@ -64,6 +64,7 @@ type PdfOutputState = {
   bankAccountId: string | null
   showFooter: boolean
   showTagline: boolean
+  showAmountInWords: boolean
   showVatPercentage: boolean
   showWhtPercentage: boolean
   showDiscountPercentage: boolean
@@ -74,6 +75,7 @@ const defaultPdfOutput: PdfOutputState = {
   bankAccountId: null,
   showFooter: true,
   showTagline: true,
+  showAmountInWords: true,
   showVatPercentage: true,
   showWhtPercentage: true,
   showDiscountPercentage: true,
@@ -81,12 +83,24 @@ const defaultPdfOutput: PdfOutputState = {
 
 function renderRichText(value?: string) {
   if (!value) return <span className="text-muted-foreground">Not provided</span>
-  const clean = DOMPurify.sanitize(value)
-  return <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: clean }} />
+  return renderRichTextContent(value, 'prose prose-sm max-w-none')
 }
 
 const formatMoney = (value: number | string | null | undefined) =>
   formatNaira(value, { preserveFraction: true })
+
+function resolvePreviewLineAmount(item: InvoiceItem) {
+  return Number(item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0))
+}
+
+function resolveGroupSubtotal(items: InvoiceItem[], groupId: string | null | undefined) {
+  if (!groupId) return 0
+  return items.reduce((subtotal, item) => {
+    if (item?.row_type === 'group_header') return subtotal
+    if (item?.group_id !== groupId) return subtotal
+    return subtotal + resolvePreviewLineAmount(item)
+  }, 0)
+}
 
 export default function QuotationDetail({ quotationId }: { quotationId: string }) {
   const navigate = useNavigate()
@@ -359,7 +373,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
           totals: {
             mode: 'standard',
             rows: summaryRows,
-            amountInWords: String(quotation.amount_in_words || ''),
+            amountInWords: pdfOutput.showAmountInWords === false ? '' : String(quotation.amount_in_words || ''),
           },
           bankDetails: pdfOutput.showBankDetails && selectedPreviewBank
             ? {
@@ -714,10 +728,23 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     { label: 'Title', value: quotation.quotation_title || '' },
     ...topHeaderFields.map((field: any) => ({ label: field.label, value: field.value })),
   ].filter((row) => String(row.value || '').trim().length > 0)
+  const customFields = parseDocumentCustomFields(quotation.custom_fields)
 
-  const previewItems = items.map((item, index) => {
+  const previewItems = items.map((item, index, sourceItems) => {
     if (item.row_type === 'group_header') {
-      return { type: 'group', label: item.group_name || `Group ${index + 1}` }
+      const groupId = item.group_id || null
+      const showSubtotal = customFields?.groupMeta?.[groupId || '']?.showSubtotal === true
+      const nextItems: any[] = [{ type: 'group', label: item.group_name || `Group ${index + 1}` }]
+      const nextItem = sourceItems[index + 1]
+      const shouldCloseImmediately = !nextItem || nextItem.row_type === 'group_header' || nextItem.group_id !== groupId
+      if (shouldCloseImmediately) {
+        nextItems.push({
+          type: 'group_footer',
+          showSubtotal,
+          value: showSubtotal ? formatMoney(resolveGroupSubtotal(sourceItems, groupId)) : '',
+        })
+      }
+      return nextItems
     }
     const itemFacts = [
       item.quantity ? `Qty: ${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : null,
@@ -731,16 +758,28 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         return value === null || value === undefined || value === '' ? null : `${column.label}: ${value}`
       }),
     ].filter(Boolean)
-    return {
+    const nextItems: any[] = [{
       type: 'line',
       label: item.description || 'Untitled item',
       detail: item.sub_description || '',
+      imageUrl: item.image_url || null,
       value: formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0)),
       facts: itemFacts,
+    }]
+    const groupId = item.group_id || null
+    const nextItem = sourceItems[index + 1]
+    const groupEndsHere = groupId && (!nextItem || nextItem.row_type === 'group_header' || nextItem.group_id !== groupId)
+    if (groupEndsHere) {
+      const showSubtotal = customFields?.groupMeta?.[groupId]?.showSubtotal === true
+      nextItems.push({
+        type: 'group_footer',
+        showSubtotal,
+        value: showSubtotal ? formatMoney(resolveGroupSubtotal(sourceItems, groupId)) : '',
+      })
     }
-  })
+    return nextItems
+  }).flat()
 
-  const customFields = parseDocumentCustomFields(quotation.custom_fields)
   const previewTotals = [
     ...buildSummaryRows({
       invoice: quotation,
@@ -828,7 +867,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         detailRows={previewDetailRows}
         items={previewItems}
         totals={previewTotals}
-        amountInWords={quotation.amount_in_words || ''}
+        amountInWords={pdfOutput.showAmountInWords === false ? '' : quotation.amount_in_words || ''}
         bankDetails={pdfOutput.showBankDetails && selectedPreviewBank ? selectedPreviewBank : null}
         notesSections={previewNotesSections}
         signatory={null}

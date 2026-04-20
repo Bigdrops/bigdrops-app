@@ -1,4 +1,5 @@
 import './InvoiceHtmlView.css'
+import { renderRichTextContent } from '@/lib/richText'
 
 type InvoiceHtmlViewProps = {
   invoice: any
@@ -21,6 +22,7 @@ export default function InvoiceHtmlView({
   const companyLines = Array.isArray(previewModel?.companyPreviewLines) ? previewModel.companyPreviewLines : []
   const clientLines = Array.isArray(previewModel?.clientPreviewLines) ? previewModel.clientPreviewLines : []
   const bank = pdfOutput?.showBankDetails ? previewModel?.selectedPreviewBank : null
+  const notesSections = Array.isArray(previewModel?.previewNotesSections) ? previewModel.previewNotesSections : []
 
   return (
     <div className="invoiceHtmlView">
@@ -76,6 +78,14 @@ export default function InvoiceHtmlView({
               )
             }
 
+            if (item?.type === 'group_footer') {
+              return (
+                <div className="doc-item-row group-ft" key={index}>
+                  <div className="group-footer-value">{item?.showSubtotal ? item?.value || '' : ''}</div>
+                </div>
+              )
+            }
+
             const qtyFact = (item?.facts || []).find((f: string) => f.startsWith('Qty:'))
             const cleanQty = qtyFact ? qtyFact.replace('Qty:', '').trim() : '—'
 
@@ -84,6 +94,9 @@ export default function InvoiceHtmlView({
                 <div className="item-body">
                   <div className="item-name">{item?.label || 'Item'}</div>
                   {item?.detail ? <div className="item-desc">{item.detail}</div> : null}
+                  {item?.imageUrl ? (
+                    <img className="item-image" src={item.imageUrl} alt={item?.label || 'Item image'} />
+                  ) : null}
                 </div>
                 <div className="item-qty">{cleanQty}</div>
                 <div className="item-amount">{item?.value || '—'}</div>
@@ -146,12 +159,33 @@ export default function InvoiceHtmlView({
           </div>
         ) : null}
 
-        {invoice?.notes ? (
-           <div className="doc-footer-section">
-             <div className="doc-footer-lbl">Notes</div>
-             <div className="doc-footer-text">{invoice.notes}</div>
-           </div>
-        ) : null}
+        {notesSections.map((section: any, index: number) => (
+          <div className="doc-footer-section" key={`${section?.title || 'section'}-${index}`}>
+            <div className="doc-footer-lbl">{section?.title || 'Notes'}</div>
+            {section?.kind === 'html' ? (
+              <div className="doc-footer-rich-text">{renderRichTextContent(section?.html, 'prose prose-sm max-w-none break-words text-stone-700')}</div>
+            ) : section?.kind === 'fields' ? (
+              <div className="doc-footer-fields">
+                {(Array.isArray(section?.fields) ? section.fields : []).map((field: any, fieldIndex: number) => (
+                  <div className="doc-footer-field" key={`${field?.label || 'field'}-${fieldIndex}`}>
+                    {field?.label ? <div className="doc-footer-field-label">{field.label}</div> : null}
+                    <div className="doc-footer-text">{field?.value || '—'}</div>
+                  </div>
+                ))}
+              </div>
+            ) : section?.kind === 'links' ? (
+              <div className="doc-footer-links">
+                {(Array.isArray(section?.links) ? section.links : []).map((link: any, linkIndex: number) => (
+                  <a key={`${link?.label || 'link'}-${linkIndex}`} href={link?.url || '#'} target="_blank" rel="noreferrer">
+                    {link?.label || link?.url || 'Reference'}
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="doc-footer-text">{section?.text || ''}</div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   )

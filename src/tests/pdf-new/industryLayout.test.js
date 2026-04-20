@@ -25,6 +25,7 @@ test('Industry item images render larger and expose a clickable image link label
 
   assert.equal(styles.imageThumb.width, 58)
   assert.equal(styles.imageThumb.height, 58)
+  assert.match(source, /<Text style=\{styles\.descriptionMain\}>\{getDescriptionMain\(cell\)\}<\/Text>[\s\S]*<Text style=\{styles\.descriptionSub\}>\{getDescriptionSub\(cell\)\}<\/Text>[\s\S]*<Image src=\{row\.imageUrl\} style=\{styles\.imageThumb\} \/>/)
   assert.match(source, /Link\s+src=\{row\.imageUrl\}/)
   assert.match(source, /Open image/)
 })
@@ -45,8 +46,15 @@ test('Industry template applies the custom accent color to template identity sur
 test('Industry group rows stay spreadsheet-clean instead of using the old banner treatment', () => {
   const blocksSource = fs.readFileSync(industryBlocksPath, 'utf8')
 
-  assert.equal(styles.tableGroupRow.borderLeftWidth, undefined)
-  assert.equal(styles.groupCell.textAlign, 'left')
-  assert.match(blocksSource, /styles\.groupHeaderLine/)
-  assert.match(blocksSource, /styles\.groupSubtotalInline/)
+  assert.equal(styles.tableGroupHeader.borderTopWidth, 1.8)
+  assert.equal(styles.tableGroupFooter.justifyContent, 'flex-end')
+  assert.match(blocksSource, /styles\.tableGroupHeader/)
+  assert.match(blocksSource, /styles\.tableGroupFooter/)
+})
+
+test('Industry group footer stays quiet and does not render subtotal label text', () => {
+  const blocksSource = fs.readFileSync(industryBlocksPath, 'utf8')
+
+  assert.doesNotMatch(blocksSource, /Group Subtotal/)
+  assert.doesNotMatch(blocksSource, /groupSubtotalLabel \?/)
 })

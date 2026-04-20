@@ -13,8 +13,9 @@ test('invoice preview model builds totals from the shared summary row builder an
 
   assert.match(source, /buildSummaryRows\(\{/)
   assert.doesNotMatch(source, /Cash Received/)
-  assert.match(source, /previewAmountInWords: String\(invoice\.amount_in_words \|\| ''\)/)
+  assert.match(source, /previewAmountInWords: pdfOutput\?\.showAmountInWords === false \? '' : String\(invoice\.amount_in_words \|\| ''\)/)
   assert.match(source, /previewBalanceDue: advanceSummary \|\| pdfOutput\?\.showBalanceDue === false \? null : \{/)
+  assert.match(source, /type: 'group_footer'/)
 })
 
 test('invoice totals source is recomputed from current document fields before preview and pdf generation', () => {
@@ -40,4 +41,7 @@ test('quotation view page builds preview totals from the shared summary row buil
 
   assert.match(source, /buildSummaryRows\(\{/)
   assert.doesNotMatch(source, /const previewTotals = \[ \{ label: 'Subtotal'/)
+  assert.match(source, /showAmountInWords: true/)
+  assert.match(source, /amountInWords: pdfOutput\.showAmountInWords === false \? '' : String\(quotation\.amount_in_words \|\| ''\)/)
+  assert.match(source, /amountInWords=\{pdfOutput\.showAmountInWords === false \? '' : quotation\.amount_in_words \|\| ''\}/)
 })

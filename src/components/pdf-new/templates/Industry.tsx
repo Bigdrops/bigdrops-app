@@ -272,6 +272,10 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                     >
                       {isDescription ? (
                         <>
+                          <Text style={styles.descriptionMain}>{getDescriptionMain(cell)}</Text>
+                          {getDescriptionSub(cell) ? (
+                            <Text style={styles.descriptionSub}>{getDescriptionSub(cell)}</Text>
+                          ) : null}
                           {row.imageUrl ? (
                             <>
                               <Image src={row.imageUrl} style={styles.imageThumb} />
@@ -279,10 +283,6 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                                 Open image
                               </Link>
                             </>
-                          ) : null}
-                          <Text style={styles.descriptionMain}>{getDescriptionMain(cell)}</Text>
-                          {getDescriptionSub(cell) ? (
-                            <Text style={styles.descriptionSub}>{getDescriptionSub(cell)}</Text>
                           ) : null}
                         </>
                       ) : isMake ? (

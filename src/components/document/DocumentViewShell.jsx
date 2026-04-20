@@ -361,12 +361,25 @@ export function DocumentLivePreviewCard({
                       <div key={`${item.label}-${index}`} className="rounded-[18px] bg-slate-950 px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-300">
                         {item.label}
                       </div>
+                    ) : item.type === 'group_footer' ? (
+                      <div key={`group-footer-${index}`} className="rounded-[18px] border-t border-b border-slate-200 bg-slate-50/40 px-4 py-2.5">
+                        {item.showSubtotal && item.value ? (
+                          <div className="text-right text-sm font-bold text-foreground">{item.value}</div>
+                        ) : null}
+                      </div>
                     ) : (
                       <div key={`${item.label}-${index}`} className="rounded-[20px] border border-slate-200 bg-slate-50/70 px-4 py-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             <div className="break-words text-sm font-bold text-foreground">{item.label}</div>
                             {item.detail ? <div className="mt-1 break-words text-sm leading-6 text-slate-500">{item.detail}</div> : null}
+                            {item.imageUrl ? (
+                              <img
+                                src={item.imageUrl}
+                                alt={item.label || 'Item image'}
+                                className="mt-3 h-20 w-20 rounded-xl border border-slate-200 object-cover"
+                              />
+                            ) : null}
                           </div>
                           <div className="shrink-0 text-right">
                             <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Amount</div>

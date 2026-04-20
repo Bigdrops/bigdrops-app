@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import DOMPurify from 'dompurify'
-
 import { PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
 import { DocumentLivePreviewCard } from '@/components/document/DocumentViewShell'
 import PdfOutputCustomizeSheet from '@/components/document-view/shared/PdfOutputCustomizeSheet'
@@ -27,6 +25,7 @@ import { BUILTIN_COLUMNS, buildSummaryRows } from '@/domain/invoice'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { formatNaira } from '@/lib/formatters/money'
 import { getPdfDesignPreset, resolvePdfWebFontFamily } from '@/lib/pdfDesignPreset'
+import { renderRichTextContent } from '@/lib/richText'
 import { supabase } from '@/supabase'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { archiveQuotationRecord, convertQuotationToInvoice, deleteQuotationRecord, downloadQuotationCsvFile, duplicateQuotationRecord, loadQuotationViewData, updateQuotationStatus } from './viewQuotationActions'
@@ -43,19 +42,27 @@ const defaultPdfOutput: PdfOutputSettingsValue = {
   showFooter: true,
   showTagline: true,
   showBalanceDue: false,
+  showAmountInWords: true,
   showVatPercentage: true,
   showWhtPercentage: true,
   showDiscountPercentage: true,
 }
 
 function renderRichText(value?: string) {
-  if (!value) return null
-  return (
-    <div
-      className="prose prose-sm max-w-none break-words text-foreground"
-      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(value) }}
-    />
-  )
+  return renderRichTextContent(value)
+}
+
+function resolvePreviewLineAmount(item: any) {
+  return Number(item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0))
+}
+
+function resolveGroupSubtotal(items: any[], groupId: string | null | undefined) {
+  if (!groupId) return 0
+  return items.reduce((subtotal, item) => {
+    if (item?.row_type === 'group_header') return subtotal
+    if (item?.group_id !== groupId) return subtotal
+    return subtotal + resolvePreviewLineAmount(item)
+  }, 0)
 }
 
 export default function ViewQuotation() {
@@ -203,22 +210,50 @@ export default function ViewQuotation() {
     }))),
   ].filter((row) => String(row.value || '').trim().length > 0)
 
-  const previewItems = (Array.isArray(items) ? items : []).map((item, index) => {
+  const previewItems = (Array.isArray(items) ? items : []).map((item, index, sourceItems) => {
     if (item.row_type === 'group_header') {
-      return { type: 'group', label: item.group_name || `Group ${index + 1}` }
+      const groupId = item.group_id || null
+      const showSubtotal = customFields?.groupMeta?.[groupId || '']?.showSubtotal === true
+      const nextItems: any[] = [{ type: 'group', label: item.group_name || `Group ${index + 1}` }]
+      const nextItem = sourceItems[index + 1]
+      const shouldCloseImmediately = !nextItem || nextItem.row_type === 'group_header' || nextItem.group_id !== groupId
+      if (shouldCloseImmediately) {
+        nextItems.push({
+          type: 'group_footer',
+          showSubtotal,
+          value: showSubtotal ? formatNaira(resolveGroupSubtotal(sourceItems, groupId)) : '',
+        })
+      }
+      return nextItems
     }
-    return {
+
+    const nextItems: any[] = [{
       type: 'line',
       label: item.description || 'Untitled item',
       detail: item.sub_description || '',
+      imageUrl: item.image_url || null,
       value: formatNaira(item.amount || Number(item.quantity || 0) * Number(item.unit_price || 0)),
       facts: [
         item.quantity ? `Qty: ${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : null,
         `Rate: ${formatNaira(item.unit_price || 0)}`,
         item.make ? `Make: ${item.make}` : null,
       ].filter(Boolean),
+    }]
+
+    const groupId = item.group_id || null
+    const nextItem = sourceItems[index + 1]
+    const groupEndsHere = groupId && (!nextItem || nextItem.row_type === 'group_header' || nextItem.group_id !== groupId)
+    if (groupEndsHere) {
+      const showSubtotal = customFields?.groupMeta?.[groupId]?.showSubtotal === true
+      nextItems.push({
+        type: 'group_footer',
+        showSubtotal,
+        value: showSubtotal ? formatNaira(resolveGroupSubtotal(sourceItems, groupId)) : '',
+      })
     }
-  })
+
+    return nextItems
+  }).flat()
 
   const previewSummaryLabels = getPdfSummaryLabels(quotation, pdfOutput)
   const previewTotals = [
@@ -331,7 +366,7 @@ export default function ViewQuotation() {
           totals: {
             mode: 'standard',
             rows: previewTotals.map((row) => ({ key: row.label.toLowerCase().replace(/[^a-z0-9]+/g, '-'), label: row.label, amount: Number(String(row.value).replace(/[^\d.-]/g, '')) || 0, emphasis: row.emphasis === true })),
-            amountInWords: String(quotation.amount_in_words || ''),
+            amountInWords: pdfOutput.showAmountInWords === false ? '' : String(quotation.amount_in_words || ''),
           },
           bankDetails: pdfOutput.showBankDetails && selectedPreviewBank ? selectedPreviewBank : null,
           notes: quotation.notes ? { title: customFields.notesTitle || 'Notes', content: quotation.notes, format: 'html' } : null,
@@ -563,7 +598,7 @@ export default function ViewQuotation() {
               detailRows={previewDetailRows}
               items={previewItems}
               totals={previewTotals}
-              amountInWords={quotation.amount_in_words || ''}
+              amountInWords={pdfOutput.showAmountInWords === false ? '' : quotation.amount_in_words || ''}
               bankDetails={pdfOutput.showBankDetails ? selectedPreviewBank : null}
               notesSections={previewNotesSections}
               signatory={null}

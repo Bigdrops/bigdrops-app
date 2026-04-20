@@ -21,7 +21,8 @@ export type PreviewDetailRow = {
 
 export type PreviewItem =
   | { type: 'group'; label: string }
-  | { type: 'line'; label: string; detail: string; value: string; facts: string[] }
+  | { type: 'group_footer'; value: string; showSubtotal: boolean }
+  | { type: 'line'; label: string; detail: string; value: string; facts: string[]; imageUrl?: string | null }
 
 export type PreviewTotalRow = {
   label: string
@@ -74,6 +75,8 @@ type InvoiceItemLike = {
   vat_rate?: number | string | null
   discount_rate?: number | string | null
   custom_data?: Record<string, unknown> | null
+  group_id?: string | null
+  image_url?: string | null
 }
 
 type ClientLike = {
@@ -116,9 +119,25 @@ type CustomFieldObjectLike = {
 type PdfOutputLike = {
   bankAccountId?: string | null
   showBalanceDue?: boolean
+  showAmountInWords?: boolean
   showVatPercentage?: boolean
   showWhtPercentage?: boolean
   showDiscountPercentage?: boolean
+}
+
+function resolveLineAmount(item: InvoiceItemLike) {
+  const explicitAmount = Number(item.amount)
+  if (Number.isFinite(explicitAmount) && explicitAmount !== 0) return explicitAmount
+  return Number(item.quantity || 0) * Number(item.unit_price || 0)
+}
+
+function resolvePreviewGroupSubtotal(items: InvoiceItemLike[], groupId: string | null | undefined) {
+  if (!groupId) return 0
+  return items.reduce((subtotal, item) => {
+    if (item.row_type === 'group_header') return subtotal
+    if (item.group_id !== groupId) return subtotal
+    return subtotal + resolveLineAmount(item)
+  }, 0)
 }
 
 export type BuildInvoicePreviewModelInput = {
@@ -225,8 +244,22 @@ export function buildInvoicePreviewModel({
 
   const previewItems: PreviewItem[] = items.map((item, index) => {
     if (item.row_type === 'group_header') {
-      return { type: 'group', label: item.group_name || `Group ${index + 1}` }
+      const groupId = item.group_id || null
+      const showSubtotal = customFieldObject?.groupMeta?.[groupId || '']?.showSubtotal === true
+      const nextItems: PreviewItem[] = [{ type: 'group', label: item.group_name || `Group ${index + 1}` }]
+
+      const nextItem = items[index + 1]
+      const shouldCloseImmediately = !nextItem || nextItem.row_type === 'group_header' || nextItem.group_id !== groupId
+      if (shouldCloseImmediately) {
+        nextItems.push({
+          type: 'group_footer',
+          showSubtotal,
+          value: showSubtotal ? formatMoney(resolvePreviewGroupSubtotal(items, groupId)) : '',
+        })
+      }
+      return nextItems
     }
+
     const customFacts = previewCustomColumns
       .map((column) => {
         const key = column?.key || ''
@@ -235,10 +268,11 @@ export function buildInvoicePreviewModel({
       })
       .filter(Boolean) as string[]
 
-    return {
+    const nextItems: PreviewItem[] = [{
       type: 'line',
       label: item.description || 'Untitled item',
       detail: item.sub_description || '',
+      imageUrl: item.image_url || null,
       value: formatMoney(Number(item.amount || (Number(item.quantity || 0) * Number(item.unit_price || 0)) || 0)),
       facts: [
         item.quantity ? `Qty: ${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : null,
@@ -249,8 +283,22 @@ export function buildInvoicePreviewModel({
         item.discount_rate !== null && item.discount_rate !== undefined ? `Discount: ${item.discount_rate}%` : null,
         ...customFacts,
       ].filter(Boolean) as string[],
+    }]
+
+    const groupId = item.group_id || null
+    const nextItem = items[index + 1]
+    const groupEndsHere = groupId && (!nextItem || nextItem.row_type === 'group_header' || nextItem.group_id !== groupId)
+    if (groupEndsHere) {
+      const showSubtotal = customFieldObject?.groupMeta?.[groupId]?.showSubtotal === true
+      nextItems.push({
+        type: 'group_footer',
+        showSubtotal,
+        value: showSubtotal ? formatMoney(resolvePreviewGroupSubtotal(items, groupId)) : '',
+      })
     }
-  })
+
+    return nextItems
+  }).flat()
 
   const advanceSummary = getAdvanceSummaryValues(invoice)
   const summaryLabels = getPdfSummaryLabels(invoice, pdfOutput)
@@ -323,7 +371,7 @@ export function buildInvoicePreviewModel({
     previewDetailRows,
     previewItems,
     previewTotals,
-    previewAmountInWords: String(invoice.amount_in_words || ''),
+    previewAmountInWords: pdfOutput?.showAmountInWords === false ? '' : String(invoice.amount_in_words || ''),
     previewBalanceDue: advanceSummary || pdfOutput?.showBalanceDue === false
       ? null
       : {

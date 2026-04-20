@@ -1,5 +1,6 @@
 import { formatCurrency } from '../../lib/formatters/money.js'
 import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { richTextToPlainText } from '../../lib/richTextPlain.js'
 import type { PdfColumnDefinition, PdfDocumentModel, PdfPageLayout } from './types'
 
 type IndustryTemplateDesign = Pick<
@@ -137,6 +138,15 @@ function hasDisplayValue(value: unknown) {
   return value !== null && value !== undefined && String(value).trim() !== ''
 }
 
+function normalizePdfTextSection(section: PdfDocumentModel['notes']) {
+  if (!section?.content) return null
+  return {
+    ...section,
+    content: richTextToPlainText(section.content),
+    format: 'text',
+  }
+}
+
 export function formatPdfMoney(value: unknown, options: { withSymbol?: boolean } = { withSymbol: true }) {
   if (!hasDisplayValue(value)) return ''
 
@@ -194,7 +204,7 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
         groupName: item.groupLabel,
         groupLabel: item.groupLabel,
         showSubtotal,
-        groupSubtotalLabel: showSubtotal ? 'Group Subtotal' : null,
+        groupSubtotalLabel: null,
         groupSubtotalValue: showSubtotal && groupSubtotal !== null ? formatPdfMoney(groupSubtotal) : null,
         imageUrl: item.imageUrl,
         cells: undefined,
@@ -386,8 +396,8 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
           balanceRemaining: formatPdfMoney(model.totals.advanceSummary.balanceRemaining) || null,
         }
       : null,
-    notes: model.notes || null,
-    terms: model.terms || null,
+    notes: normalizePdfTextSection(model.notes),
+    terms: normalizePdfTextSection(model.terms),
     attachments: [
       ...(model.referenceLinks || []).map((entry) => ({ label: entry.label, url: entry.url })),
       ...(model.attachments || []).map((entry) => ({ label: entry.label || entry.fileName || '', url: entry.url || undefined })),
