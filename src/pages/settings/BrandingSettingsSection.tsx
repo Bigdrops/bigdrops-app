@@ -33,20 +33,18 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   const [editing, setEditing] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [logoState, setLogoState] = useState<LogoState>('idle')
+  const [localLogoPreview, setLocalLogoPreview] = useState<string>('')
   const logoRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     if (!loading && settings) {
-      const resolvedLogoUrl =
-        settings.company_logo_url ||
-        settings.logo_url ||
-        ''
+      const resolvedLogoUrl = settings.company_logo_url || settings.logo_url || ''
 
       setForm({
         company_logo_url: resolvedLogoUrl,
         footer_text: settings.footer_text || '',
       })
-
+      setLocalLogoPreview('')
       setLogoState('idle')
       setUploadError(null)
     }
@@ -64,6 +62,14 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     }
   }, [loading, settings])
 
+  useEffect(() => {
+    return () => {
+      if (localLogoPreview) {
+        URL.revokeObjectURL(localLogoPreview)
+      }
+    }
+  }, [localLogoPreview])
+
   const updateForm = (key: keyof BrandingForm, value: string) => {
     setForm((current) => ({ ...current, [key]: value }))
 
@@ -73,10 +79,15 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   }
 
   const restoreSavedBrandingState = () => {
+    if (localLogoPreview) {
+      URL.revokeObjectURL(localLogoPreview)
+    }
+
     setForm({
       company_logo_url: settings?.company_logo_url || settings?.logo_url || '',
       footer_text: settings?.footer_text || '',
     })
+    setLocalLogoPreview('')
     setUploadError(null)
     setLogoState('idle')
   }
@@ -99,6 +110,12 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
       return
     }
 
+    if (localLogoPreview) {
+      URL.revokeObjectURL(localLogoPreview)
+    }
+
+    const previewUrl = URL.createObjectURL(file)
+    setLocalLogoPreview(previewUrl)
     setUploading({ logo: true })
     setLogoState('uploading')
 
@@ -137,6 +154,12 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
       setSaved(true)
       setEditing(false)
       setLogoState(form.company_logo_url ? 'saved' : 'idle')
+
+      if (localLogoPreview) {
+        URL.revokeObjectURL(localLogoPreview)
+      }
+      setLocalLogoPreview('')
+
       onToast('Branding saved')
       setTimeout(() => setSaved(false), 2500)
     } catch (error) {
@@ -152,6 +175,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   if (loading) return <SettingsLoadingState />
 
   const footerPreview = (form.footer_text || '').split('\n').find(Boolean) || ''
+  const previewSrc = localLogoPreview || form.company_logo_url
 
   const UploadBox = ({
     label,
@@ -169,15 +193,19 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
         onChange={(event) => handleUpload(event.target.files?.[0] || null)}
       />
 
-      {form.company_logo_url ? (
+      {previewSrc ? (
         <div className="space-y-3">
           <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
             <div className="flex flex-col items-center text-center">
               <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50">
                 <img
-                  src={form.company_logo_url}
+                  src={previewSrc}
                   alt={label}
                   className="h-full w-full object-contain"
+                  onError={() => {
+                    setUploadError('Logo preview failed to load.')
+                    setLogoState('error')
+                  }}
                 />
               </div>
 
@@ -202,6 +230,10 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
                   type="button"
                   onClick={() => {
                     setUploadError(null)
+                    if (localLogoPreview) {
+                      URL.revokeObjectURL(localLogoPreview)
+                    }
+                    setLocalLogoPreview('')
                     updateForm('company_logo_url', '')
                   }}
                   className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-500 transition-colors hover:bg-red-50"
@@ -310,12 +342,16 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
               </div>
 
               <div className="mt-3">
-                {form.company_logo_url ? (
+                {previewSrc ? (
                   <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
                     <img
-                      src={form.company_logo_url}
+                      src={previewSrc}
                       alt="Company logo"
                       className="h-full w-full object-contain"
+                      onError={() => {
+                        setUploadError('Logo preview failed to load.')
+                        setLogoState('error')
+                      }}
                     />
                   </div>
                 ) : (
@@ -323,13 +359,13 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
                 )}
               </div>
 
-              {form.company_logo_url && !saved ? (
+              {previewSrc && !saved ? (
                 <div className="mt-3 text-[12px] font-medium text-slate-500">
                   Logo available
                 </div>
               ) : null}
 
-              {logoState === 'saved' && form.company_logo_url ? (
+              {logoState === 'saved' && previewSrc ? (
                 <div className="mt-3 flex items-center gap-2 text-[12px] font-medium text-emerald-700">
                   <CheckCircle2 size={14} />
                   Saved
