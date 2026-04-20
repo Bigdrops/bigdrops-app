@@ -87,13 +87,21 @@ function getPersistableUpdates(updates) {
 
 async function persistSettings(updates) {
   const persistableUpdates = getPersistableUpdates(updates)
+  console.log('[useSettings] Persisting updates to DB:', persistableUpdates)
+
   const { error } = await supabase
     .from('settings')
     .upsert({ id: 1, ...persistableUpdates }, { onConflict: 'id' })
 
-  if (!error) return
+  if (!error) {
+    console.log('[useSettings] Persistence successful')
+    return
+  }
+
+  console.error('[useSettings] Persistence error:', error)
 
   if ('app_theme_tokens' in persistableUpdates && shouldRetryWithoutColumn(error, 'app_theme_tokens')) {
+    console.warn('[useSettings] Retrying persistence without app_theme_tokens')
     unsupportedSettingsColumns.add('app_theme_tokens')
     const fallbackUpdates = { ...persistableUpdates }
     delete fallbackUpdates.app_theme_tokens
@@ -107,18 +115,38 @@ async function persistSettings(updates) {
   throw error
 }
 
-export async function fetchSettings() {
+export async function fetchSettings(options = {}) {
+  const { force = false } = options
   const requestStartedAt = Date.now()
-  const { data } = await supabase.from('settings').select('*').eq('id', 1).single()
-  if (lastLocalUpdateAt > requestStartedAt) {
+  console.log('[useSettings] Fetching settings from DB (force:', force, ')')
+  
+  const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single()
+  
+  if (error) {
+    console.error('[useSettings] Fetch error:', error)
+  } else {
+    console.log('[useSettings] Fetch success, data:', data)
+  }
+
+  if (!force && lastLocalUpdateAt > requestStartedAt) {
+    console.log('[useSettings] Returning cached settings due to recent local update')
     return cachedSettings || {}
   }
+  
   const nextData = normalizeThemeSettings(data || {})
+  
+  // Standardize on company_logo_url, migrating logo_url if it exists in the data
+  if (nextData.logo_url && !nextData.company_logo_url) {
+    console.log('[useSettings] Migrating logo_url to company_logo_url')
+    nextData.company_logo_url = nextData.logo_url
+  }
+  delete nextData.logo_url
+
   const hasLocalTheme = THEME_KEYS.some((key) => cachedSettings?.[key] != null)
   const withinThemeGrace = Date.now() - lastLocalUpdateAt < LOCAL_THEME_GRACE_MS
   const merged = { ...nextData }
 
-  if (cachedSettings && (hasLocalTheme || withinThemeGrace)) {
+  if (!force && cachedSettings && (hasLocalTheme || withinThemeGrace)) {
     THEME_KEYS.forEach((key) => {
       const cachedValue = cachedSettings?.[key]
       const incomingValue = nextData?.[key]
@@ -144,7 +172,7 @@ export function useSettings() {
       setSettings(cachedSettings)
       setLoading(false)
     } else {
-      void runLatest(fetchSettings, {
+      void runLatest(() => fetchSettings(), {
         onSuccess: (nextSettings) => setSettings(nextSettings),
         onError: () => setSettings(cachedSettings || {}),
         onSettled: () => setLoading(false),
@@ -161,23 +189,38 @@ export function useSettings() {
 }
 
 export async function uploadFile(bucket, path, file) {
+  console.log(`[useSettings] Starting upload...`)
   const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true })
-  if (error) throw error
+  if (error) {
+    console.error('[useSettings] Upload error:', error)
+    throw error
+  }
+  console.log('[useSettings] Upload success, fetching public URL')
   const { data } = supabase.storage.from(bucket).getPublicUrl(path)
+  
+  if (!data?.publicUrl) {
+    console.error('[useSettings] Failed to get public URL for path:', path)
+    throw new Error('Failed to get public URL')
+  }
+  
+  console.log('[useSettings] Public URL:', data.publicUrl)
   return data.publicUrl
 }
 
 export async function saveSettings(updates) {
-  // Always upsert with id=1. If RLS blocks this, you need to run the SQL below in Supabase.
+  console.log('[useSettings] saveSettings called with:', updates)
   const previousSettings = cachedSettings || {}
   const nextSettings = normalizeThemeSettings({ ...previousSettings, ...updates })
+  
   lastLocalUpdateAt = Date.now()
   cachedSettings = nextSettings
   listeners.forEach(fn => fn(cachedSettings))
 
   try {
     await persistSettings(updates)
+    console.log('[useSettings] saveSettings: Persistence successful')
   } catch (error) {
+    console.error('[useSettings] saveSettings: Persistence failed, reverting cache:', error)
     cachedSettings = previousSettings
     listeners.forEach(fn => fn(cachedSettings))
     throw error

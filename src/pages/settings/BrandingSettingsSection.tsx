@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { CheckCircle2, ChevronLeft, Loader2, Pencil, Upload } from 'lucide-react'
-import { saveSettings, uploadFile, useSettings } from '@/hooks/useSettings'
+import { fetchSettings, saveSettings, uploadFile, useSettings } from '@/hooks/useSettings'
 import {
   SettingsField,
   SettingsSaveButton,
@@ -38,7 +38,11 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
   useEffect(() => {
     if (!loading && settings) {
-      const resolvedLogoUrl = settings.company_logo_url || settings.logo_url || ''
+      console.log('[BrandingSettings] Settings loaded, resolving logo URL')
+      const resolvedLogoUrl = settings.company_logo_url || ''
+      if (settings.logo_url && !settings.company_logo_url) {
+        console.warn('[BrandingSettings] Legacy logo_url found, should be migrated:', settings.logo_url)
+      }
 
       setForm({
         company_logo_url: resolvedLogoUrl,
@@ -95,9 +99,11 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   const handleUpload = async (file: File | null) => {
     if (!file) return
 
+    console.log('[BrandingSettings] handleUpload start, file:', file.name, file.size, file.type)
     setUploadError(null)
 
     if (!file.type.startsWith('image/')) {
+      console.error('[BrandingSettings] Invalid file type:', file.type)
       setUploadError('Please choose an image file.')
       setLogoState('error')
       return
@@ -105,6 +111,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
     const MAX_SIZE = 5 * 1024 * 1024
     if (file.size > MAX_SIZE) {
+      console.error('[BrandingSettings] File too large:', file.size)
       setUploadError('Image is too large. Use one under 5MB.')
       setLogoState('error')
       return
@@ -115,6 +122,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     }
 
     const previewUrl = URL.createObjectURL(file)
+    console.log('[BrandingSettings] Created local preview URL:', previewUrl)
     setLocalLogoPreview(previewUrl)
     setUploading({ logo: true })
     setLogoState('uploading')
@@ -122,12 +130,15 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     try {
       const ext = file.name.split('.').pop()
       const path = `logo/${Date.now()}.${String(ext || 'png')}`
+      console.log('[BrandingSettings] Uploading to path:', path)
       const url = await uploadFile('logos', path, file)
+      console.log('[BrandingSettings] Upload success, public URL:', url)
 
       updateForm('company_logo_url', url)
       setLogoState('uploaded-unsaved')
       onToast('Logo uploaded')
     } catch (error) {
+      console.error('[BrandingSettings] Upload failed error:', error)
       const message = 'Upload failed: ' + getErrorMessage(error)
       setUploadError(message)
       setLogoState('error')
@@ -142,6 +153,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   }
 
   const save = async () => {
+    console.log('[BrandingSettings] save sequence started, form:', form)
     setSaving(true)
     setUploadError(null)
 
@@ -150,6 +162,12 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
         company_logo_url: form.company_logo_url,
         footer_text: form.footer_text,
       })
+      console.log('[BrandingSettings] saveSettings call finished')
+
+      // Force fetch fresh settings from database to bypass cache
+      console.log('[BrandingSettings] Forcing fresh fetch from database...')
+      await fetchSettings({ force: true })
+      console.log('[BrandingSettings] Fresh fetch complete')
 
       setSaved(true)
       setEditing(false)
@@ -163,6 +181,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
       onToast('Branding saved')
       setTimeout(() => setSaved(false), 2500)
     } catch (error) {
+      console.error('[BrandingSettings] save failed error:', error)
       const message = getErrorMessage(error)
       setUploadError(message)
       setLogoState('error')
@@ -203,7 +222,8 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
                   alt={label}
                   className="h-full w-full object-contain"
                   onError={() => {
-                    setUploadError('Logo preview failed to load.')
+                    console.error('[BrandingSettings] Logo preview failed to load for URL:', previewSrc)
+                    setUploadError(`Logo preview failed to load. Check if URL is public: ${previewSrc}`)
                     setLogoState('error')
                   }}
                 />
@@ -349,7 +369,8 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
                       alt="Company logo"
                       className="h-full w-full object-contain"
                       onError={() => {
-                        setUploadError('Logo preview failed to load.')
+                        console.error('[BrandingSettings] Saved logo failed to load for URL:', previewSrc)
+                        setUploadError(`Saved logo failed to load: ${previewSrc}`)
                         setLogoState('error')
                       }}
                     />
