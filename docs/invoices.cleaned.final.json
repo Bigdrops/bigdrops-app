@@ -1,0 +1,7748 @@
+[
+  {
+    "invoice_number": "Sasi-6347ty6v",
+    "client_name": "Breeze industries ltd",
+    "issue_date": "2025-04-01",
+    "due_date": "2025-04-15",
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "25W LED Tubelight (2ft)",
+        "quantity": 3.0,
+        "rate": 7500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "18W LED Light",
+        "quantity": 16.0,
+        "rate": 6000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 3.0,
+        "rate": 700.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 55000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-A",
+    "client_name": "Breeze industries ltd",
+    "issue_date": "2025-04-01",
+    "due_date": null,
+    "notes": "Breeze toilet lightning maintenance",
+    "terms": null,
+    "items": [
+      {
+        "description": "25W LED Tubelight (2ft)",
+        "quantity": 1.0,
+        "rate": 7500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "18W LED Light",
+        "quantity": 8.0,
+        "rate": 6000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 2.0,
+        "rate": 700.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 30000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B04",
+    "client_name": "Breeze industries ltd",
+    "issue_date": "2025-04-10",
+    "due_date": null,
+    "notes": "Breeze toilet lightning maintenance",
+    "terms": null,
+    "items": [
+      {
+        "description": "2ft 25W LED Tube Light",
+        "quantity": 2.0,
+        "rate": 7500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "18W LED Light",
+        "quantity": 8.0,
+        "rate": 6000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 700.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B05",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-05-08",
+    "due_date": null,
+    "notes": "The survey included Vertical Electrical Sounding (VES) at eight designated locations, with two prolific sites selected for borehole drilling.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Geophysical Survey for Borehole Siting",
+        "quantity": 2.0,
+        "rate": 180000.0,
+        "unit": "PTS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B06",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2025-05-09",
+    "due_date": null,
+    "notes": "This invoice is for the repositioning of the inverter and localized electrical correction in Mr. Riaz's residence, No. 20 Adekunle Fajuyi, Adeniyi Jones.",
+    "terms": null,
+    "items": [
+      {
+        "description": "2.5mm\u00b2 x 1c cable",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": "BDL"
+      },
+      {
+        "description": "16\u00d725 PVC Trunking",
+        "quantity": 8.0,
+        "rate": 2500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Electrical Installation Consumables - **Contact Adhesive, pegs, screws**",
+        "quantity": 1.0,
+        "rate": 9000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 700.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship and Logistics",
+        "quantity": 1.0,
+        "rate": 42000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B07",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-05-12",
+    "due_date": null,
+    "notes": "This invoice includes lighting fixture replacement services at Mr. Jay's apartment, located at 5B Michael Oguns Street, Ikeja, Lagos.",
+    "terms": null,
+    "items": [
+      {
+        "description": "18W Surface mounted LED Light",
+        "quantity": 1.0,
+        "rate": 6500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 700.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship and Logistics",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B08",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-05-12",
+    "due_date": null,
+    "notes": "**This invoice covers transportation and labor for the diagnosis and repair of the pumping machine fault, along with the resolution of the generator power issue.**\n**@ No 20 Wilmer Street, Ilupeju, Lagos.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Night Call-Out Service for Pumping Machine Fault & Generator Power Issue Resolution - *This includes transportation and labor for diagnosing and fixing the fault with the pumping machine and resolving the power issue between the generator and the machine.*",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B09",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-05-12",
+    "due_date": null,
+    "notes": "This invoice includes lighting fixture replacement services at Mr. Jay's apartment, located at 5B Michael Oguns Street, Ikeja, Lagos.",
+    "terms": null,
+    "items": [
+      {
+        "description": "18W Surface mounted LED Light",
+        "quantity": 1.0,
+        "rate": 6500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 700.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship and Logistics",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B10",
+    "client_name": "11 PLC (formerly Mobil Oil Nigeria Plc)",
+    "issue_date": "2025-05-13",
+    "due_date": null,
+    "notes": "Fuel Injector Pump Head Cover Replacement for a 30KVA Perkins generator @ Dakar Street, Apapa.",
+    "terms": null,
+    "items": [
+      {
+        "description": "30KVA Perkins Fuel Injector Pump Head Cover",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship and Logistics",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B100",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-11-17",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "LF3959 / LF3349\tOil Filter",
+        "quantity": 8.0,
+        "rate": 27000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Fuel Filter = FF5461 /FF5018",
+        "quantity": 4.0,
+        "rate": 7500.0,
+        "unit": null
+      },
+      {
+        "description": "Fuel Filter = FS1280",
+        "quantity": 8.0,
+        "rate": 14500.0,
+        "unit": null
+      },
+      {
+        "description": "Fuel Filter = PC42 -16",
+        "quantity": 16.0,
+        "rate": 8000.0,
+        "unit": null
+      },
+      {
+        "description": "Fuel Filter = FS19652",
+        "quantity": 4.0,
+        "rate": 11500.0,
+        "unit": null
+      },
+      {
+        "description": "Fuel Filter =R7102 -2",
+        "quantity": 2.0,
+        "rate": 10000.0,
+        "unit": null
+      },
+      {
+        "description": "R7002\tFuel Filter",
+        "quantity": 3.0,
+        "rate": 11000.0,
+        "unit": "PCS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B101",
+    "client_name": "Inspire Sports Academy",
+    "issue_date": "2025-11-28",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "kick starter for 20kva replacement",
+        "quantity": 1.0,
+        "rate": 175000.0,
+        "unit": null
+      },
+      {
+        "description": "75Amps Battery",
+        "quantity": 135000.0,
+        "rate": 1.0,
+        "unit": null
+      },
+      {
+        "description": "exhaust welding",
+        "quantity": 1.0,
+        "rate": 17000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B102",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-11-30",
+    "due_date": null,
+    "notes": "* Supplied and installed two (2) 15W bulbs\n* Supplied and installed two (2) 2ft 25W tube lights\n* Work carried out at Michael Oguns, Ikeja GRA, Lagos",
+    "terms": null,
+    "items": [
+      {
+        "description": "15w bulb",
+        "quantity": 2.0,
+        "rate": 3500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "25W LED Tubelight (2ft)",
+        "quantity": 2.0,
+        "rate": 7500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 700.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "0.5mm\u00b2 2c flexible cable",
+        "quantity": 2.0,
+        "rate": 600.0,
+        "unit": "MTR"
+      },
+      {
+        "description": "Workmanship & transportation",
+        "quantity": 1.0,
+        "rate": 10500.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B103",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-12-02",
+    "due_date": null,
+    "notes": "**Invoice covers plumbing and carpentry maintenance works carried out at Mr Manoharan, including WC pan connector replacement, securing of toilet seat, and general carpentry works. Remi Fani-Kayode Avenue, Ikeja GRA, Lagos State.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Door cylinder key",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Gum",
+        "quantity": 1.0,
+        "rate": 1000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "L Angle brackets",
+        "quantity": 12.0,
+        "rate": 2000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Tape",
+        "quantity": 2.0,
+        "rate": 300.0,
+        "unit": "MTR"
+      },
+      {
+        "description": "Cabinet door hinges",
+        "quantity": 3.0,
+        "rate": 5000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Wood - Used in the maid's room",
+        "quantity": 1.0,
+        "rate": 1500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Self tapping Screws",
+        "quantity": 1.0,
+        "rate": 1500.0,
+        "unit": "PAC"
+      },
+      {
+        "description": "Cement",
+        "quantity": 2.0,
+        "rate": 1000.0,
+        "unit": "KGS"
+      },
+      {
+        "description": "4\" pan connector",
+        "quantity": 1.0,
+        "rate": 7000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "4-inch PVC Pipe",
+        "quantity": 1.0,
+        "rate": 1500.0,
+        "unit": "FTS"
+      },
+      {
+        "description": "flexible hose",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Nipple",
+        "quantity": 1.0,
+        "rate": 500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Transportation",
+        "quantity": 1.0,
+        "rate": 10000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B104",
+    "client_name": "11 PLC (formerly Mobil Oil Nigeria Plc)",
+    "issue_date": "2025-12-03",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Servicing of 1100KVA CAT generator Main Alternator",
+        "quantity": 1.0,
+        "rate": 1000000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation by Hiab to & fro",
+        "quantity": 1.0,
+        "rate": 500000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B105",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2025-12-03",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Piston rings",
+        "quantity": 4.0,
+        "rate": 38000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Top & Bottom Gasket Kit",
+        "quantity": 1.0,
+        "rate": 175000.0,
+        "unit": "PRS"
+      },
+      {
+        "description": "Main and Conrod Bearings",
+        "quantity": 1.0,
+        "rate": 160000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Back Oil Seal and O-Ring",
+        "quantity": 1.0,
+        "rate": 52000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Front oil seal",
+        "quantity": 1.0,
+        "rate": 45000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Oil Cooler O-Ring",
+        "quantity": 2.0,
+        "rate": 18000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Oil filter",
+        "quantity": 1.0,
+        "rate": 13500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Fuel Filter",
+        "quantity": 1.0,
+        "rate": 8500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Fan belt",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Water Pump Re-kitting",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "Relay",
+        "quantity": 1.0,
+        "rate": 18000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "flexible hose",
+        "quantity": 1.0,
+        "rate": 60000.0,
+        "unit": "MTR"
+      },
+      {
+        "description": "Oil Pressure Sensor",
+        "quantity": 1.0,
+        "rate": 45000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Coolant Temperature Switch",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "radiator poking",
+        "quantity": 1.0,
+        "rate": 75000.0,
+        "unit": null
+      },
+      {
+        "description": "Main alternator service",
+        "quantity": 1.0,
+        "rate": 185000.0,
+        "unit": null
+      },
+      {
+        "description": "starter motor and charging alternator repair.",
+        "quantity": 2.0,
+        "rate": 55000.0,
+        "unit": null
+      },
+      {
+        "description": "painting",
+        "quantity": 1.0,
+        "rate": 125000.0,
+        "unit": null
+      },
+      {
+        "description": "Nozzle TIPS",
+        "quantity": 4.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "injector pump service",
+        "quantity": 1.0,
+        "rate": 180000.0,
+        "unit": null
+      },
+      {
+        "description": "turbo charger rekit",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": null
+      },
+      {
+        "description": "engine block service and sleeving",
+        "quantity": 1.0,
+        "rate": 240000.0,
+        "unit": null
+      },
+      {
+        "description": "Cylinder head service",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "workmanship and transportation",
+        "quantity": 1.0,
+        "rate": 295000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B106",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-12-03",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Piston rings",
+        "quantity": 4.0,
+        "rate": 38000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Top & Bottom Gasket Kit",
+        "quantity": 1.0,
+        "rate": 175000.0,
+        "unit": "PRS"
+      },
+      {
+        "description": "Main and Conrod Bearings",
+        "quantity": 1.0,
+        "rate": 160000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Back Oil Seal and O-Ring",
+        "quantity": 1.0,
+        "rate": 52000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Front oil seal",
+        "quantity": 1.0,
+        "rate": 45000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Oil Cooler O-Ring",
+        "quantity": 2.0,
+        "rate": 18000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Oil filter",
+        "quantity": 1.0,
+        "rate": 13500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Fuel Filter",
+        "quantity": 1.0,
+        "rate": 8500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Fan belt",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Water Pump Re-kitting",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "Relay",
+        "quantity": 1.0,
+        "rate": 18000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "flexible hose",
+        "quantity": 1.0,
+        "rate": 60000.0,
+        "unit": "MTR"
+      },
+      {
+        "description": "Oil Pressure Sensor",
+        "quantity": 1.0,
+        "rate": 45000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Coolant Temperature Switch",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "radiator poking",
+        "quantity": 1.0,
+        "rate": 75000.0,
+        "unit": null
+      },
+      {
+        "description": "Main alternator service",
+        "quantity": 1.0,
+        "rate": 185000.0,
+        "unit": null
+      },
+      {
+        "description": "starter motor and charging alternator repair.",
+        "quantity": 2.0,
+        "rate": 55000.0,
+        "unit": null
+      },
+      {
+        "description": "painting",
+        "quantity": 1.0,
+        "rate": 125000.0,
+        "unit": null
+      },
+      {
+        "description": "Nozzle TIPS",
+        "quantity": 4.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "injector pump service",
+        "quantity": 1.0,
+        "rate": 180000.0,
+        "unit": null
+      },
+      {
+        "description": "turbo charger rekit",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": null
+      },
+      {
+        "description": "engine block service and sleeving",
+        "quantity": 1.0,
+        "rate": 240000.0,
+        "unit": null
+      },
+      {
+        "description": "Cylinder head service",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "workmanship and transportation",
+        "quantity": 1.0,
+        "rate": 295000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B107",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-12-05",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "control module 7201 for  1500kva cummins genset card",
+        "quantity": 1.0,
+        "rate": 725000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B108",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-12-05",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Automatic voltage regulator AVR MX341",
+        "quantity": 1.0,
+        "rate": 420000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship program and transport",
+        "quantity": 1.0,
+        "rate": 225000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B109",
+    "client_name": "Breeze industries ltd",
+    "issue_date": "2025-12-08",
+    "due_date": null,
+    "notes": "**Maintenance work on the 63kVA Kirloskar genset is complete. Engine oil and filters were replaced, and fan guide vibration was addressed. The genset has been fully checked and is in proper working order. Location: 4 Marconi, Commonwealth Estate, Onipanu, Mushin, Lagos.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Kirloskar oil filter",
+        "quantity": 1.0,
+        "rate": 27000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Fuel filter",
+        "quantity": 2.0,
+        "rate": 18500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Air filter",
+        "quantity": 1.0,
+        "rate": 45000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Engine Oil litres",
+        "quantity": 12.0,
+        "rate": 7000.0,
+        "unit": "LTR"
+      },
+      {
+        "description": "workmanship and transportation",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B11",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-05-15",
+    "due_date": null,
+    "notes": "This invoice covers a Night Call-Out Service for emergency electrical intervention to restore power to the filtering machine by bypassing the burnt electric panel.\n@ 7b Obadeyi Street, Ikoyi, Lagos.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Night Call-Out Service for Filtering Machine Emergency: - **Disconnected burnt electric panel and temporarily rerouted the filtering machine to a direct power source.**",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B110",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2025-12-09",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Hisense panel card",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B111",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2025-12-09",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "LOADCELL 500KG 3.0 MV/V,  SHEAR BEAM TYPE",
+        "quantity": 4.0,
+        "rate": 356000.0,
+        "unit": "NOS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B112",
+    "client_name": "Inspire Sports Academy",
+    "issue_date": "2025-12-09",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "starlink internet installation electrician",
+        "quantity": 1.0,
+        "rate": 12000.0,
+        "unit": null
+      },
+      {
+        "description": "industrial ladder rentage",
+        "quantity": 1.0,
+        "rate": 10000.0,
+        "unit": null
+      },
+      {
+        "description": "hostel gen set call out repair labour and transportation",
+        "quantity": 1.0,
+        "rate": 22000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B113",
+    "client_name": "kola Oracle",
+    "issue_date": "2025-12-17",
+    "due_date": null,
+    "notes": null,
+    "terms": "Full payment before deployment",
+    "items": [
+      {
+        "description": "200kva genset daily rental one day",
+        "quantity": 1.0,
+        "rate": 200000.0,
+        "unit": null
+      },
+      {
+        "description": "Hiab Transportation (to and fro)",
+        "quantity": 1.0,
+        "rate": 160000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B114",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2025-12-22",
+    "due_date": null,
+    "notes": null,
+    "terms": "Full payment before deployment",
+    "items": [
+      {
+        "description": "RED FLEET LOCKABLE ISOLATOR SWITCH FR BATTERY",
+        "quantity": 15.0,
+        "rate": 66787.5,
+        "unit": "NOS"
+      },
+      {
+        "description": "FIRE BUZZER AND ELECTRIC ALARM",
+        "quantity": 2.0,
+        "rate": 33950.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "RED FLEET LOCKABLE ISOLATOR SWITCH FOR STARTER 24 V",
+        "quantity": 15.0,
+        "rate": 66787.5,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B115",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-12-23",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "18W LED Light",
+        "quantity": 2.0,
+        "rate": 7000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 600.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Brass cross tee tap",
+        "quantity": 1.0,
+        "rate": 3000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Bathroom mixer tap",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship and transportation",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": "JOB"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B116",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-12-30",
+    "due_date": null,
+    "notes": null,
+    "terms": "Full payment before deployment",
+    "items": [
+      {
+        "description": "rewinding of 5HP electric motor with bearing replacement",
+        "quantity": 1.0,
+        "rate": 195000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B117",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-12-31",
+    "due_date": null,
+    "notes": "**Hiab service for offloading and positioning a 3000 Series Perkins genset from Ajaokuta to Tecno Power workshop, Mowe, Ogun State.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Hiab service \u2013 Offloading and positioning of 3000 Series Perkins genset",
+        "quantity": 1.0,
+        "rate": 220000.0,
+        "unit": "JOB"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B118",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-12-31",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Replacement of broken kitchen cabinet marbles stone - 11c fani kayode mr manoharan residence",
+        "quantity": 1.0,
+        "rate": 195000.0,
+        "unit": null
+      },
+      {
+        "description": "Wood  planks",
+        "quantity": 6.0,
+        "rate": 2500.0,
+        "unit": null
+      },
+      {
+        "description": "Marble and silicone gum",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship  - **Marble work, carpentry and plumbing**",
+        "quantity": 1.0,
+        "rate": 95000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation",
+        "quantity": 1.0,
+        "rate": 10000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B119",
+    "client_name": "Inspire Sports Academy",
+    "issue_date": "2026-01-06",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Fuel filters for kirloskar genset 29kva - Canteen genset maintenance service",
+        "quantity": 1.0,
+        "rate": 22000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Oil Filter kirloskar",
+        "quantity": 1.0,
+        "rate": 28000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Air filter",
+        "quantity": 1.0,
+        "rate": 45000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Engine Oil",
+        "quantity": 10.0,
+        "rate": 6500.0,
+        "unit": "LTR"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B12",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-05-15",
+    "due_date": null,
+    "notes": "This invoice covers the supply and installation of Venetian blinds, door curtain blinds, related accessories, and associated transportation and workmanship at Tecno Workshop, Mowe, Ogun State.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Venetian blinds",
+        "quantity": 4.0,
+        "rate": 55000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Door curtain blinds",
+        "quantity": 2.0,
+        "rate": 45000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Accessories & rail hangers",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Workmanship and Logistics",
+        "quantity": 1.0,
+        "rate": 48000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B120",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2026-01-07",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "PCI serial expansion card",
+        "quantity": 2.0,
+        "rate": 30000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B121",
+    "client_name": "Inspire Sports Academy",
+    "issue_date": "2026-01-08",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "hostel genset overheating repair work,cylinder head gasket - Top kit",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": null
+      },
+      {
+        "description": "oil filter",
+        "quantity": 1.0,
+        "rate": 22500.0,
+        "unit": null
+      },
+      {
+        "description": "40kva yorc fuel filter",
+        "quantity": 1.0,
+        "rate": 18500.0,
+        "unit": null
+      },
+      {
+        "description": "Air filter",
+        "quantity": 1.0,
+        "rate": 45000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Engine Oil",
+        "quantity": 15.0,
+        "rate": 6500.0,
+        "unit": "LTR"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B122",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-01-12",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "1500 kva Cummins genset injector Spider coupler",
+        "quantity": 1.0,
+        "rate": 22000.0,
+        "unit": "UNT"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B123",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2026-01-12",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "1500 kva Cummins genset injector Spider coupler",
+        "quantity": 2.0,
+        "rate": 22000.0,
+        "unit": "UNT"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B124",
+    "client_name": "Bluesky Agro Allied Ltd",
+    "issue_date": "2026-01-12",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "nspection fees site visit Transport to and fro lagos to shaki sute",
+        "quantity": 1.0,
+        "rate": 100000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B125",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-01-14",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "perkins 60kva starter Motor - 13A Aina George resident\n\n<br>",
+        "quantity": 1.0,
+        "rate": 265000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B126",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-01-16",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "4 pole Breaker 100Ah Schneider",
+        "quantity": 3.0,
+        "rate": 140500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "4 pole Breaker 63AH (Schneider",
+        "quantity": 5.0,
+        "rate": 120000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "4 pole Breaker 32A",
+        "quantity": 5.0,
+        "rate": 95000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "3 pole Breaker Schneider",
+        "quantity": 2.0,
+        "rate": 26500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "CIRCUIT BREAKER 100 AMP 2POLE",
+        "quantity": 5.0,
+        "rate": 19000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "2 pole Breaker 63AH (Schneider): 10",
+        "quantity": 5.0,
+        "rate": 17500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "CIRCUIT BREAKER 16 AMP 2POLE",
+        "quantity": 5.0,
+        "rate": 15500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Water heater switch",
+        "quantity": 5.0,
+        "rate": 4000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Travel universal Adaptor 10AH",
+        "quantity": 5.0,
+        "rate": 4000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Plug Adapter",
+        "quantity": 5.0,
+        "rate": 4000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Extension Socket (Original):",
+        "quantity": 4.0,
+        "rate": 25000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Insulation Tape:",
+        "quantity": 2.0,
+        "rate": 4200.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Thread tape",
+        "quantity": 1.0,
+        "rate": 1500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "S6 screw pack",
+        "quantity": 5.0,
+        "rate": 4000.0,
+        "unit": "PAC"
+      },
+      {
+        "description": "S8 screw pack",
+        "quantity": 3.0,
+        "rate": 5000.0,
+        "unit": "PAC"
+      },
+      {
+        "description": "13A plugs",
+        "quantity": 10.0,
+        "rate": 3000.0,
+        "unit": "NOS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B127",
+    "client_name": "Sonata agri international Ltd",
+    "issue_date": "2026-01-21",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "changeover switch gsr 32A - 9b rev ogunbiyi gra ikeja\n\n<br>",
+        "quantity": 1.0,
+        "rate": 58500.0,
+        "unit": null
+      },
+      {
+        "description": "rain shield abd accessories",
+        "quantity": 1.0,
+        "rate": 18000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B128",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-01-25",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "26 Ademola ikoyi repair work on 50kva genset .",
+        "quantity": 1.0,
+        "rate": 30000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B129",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-01-27",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Oil Pressure Sensor",
+        "quantity": 3.0,
+        "rate": 30000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "A41 & A51 fan belts",
+        "quantity": 4.0,
+        "rate": 10000.0,
+        "unit": "NOS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B13",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-05-20",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Front oil seal",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "Gasket gum",
+        "quantity": 1.0,
+        "rate": 2500.0,
+        "unit": null
+      },
+      {
+        "description": "Banjo bolt",
+        "quantity": 1.0,
+        "rate": 3500.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship and Logistics",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B130",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-01-31",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "head office 114kva valve cover replacement",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": null
+      },
+      {
+        "description": "cover gasket",
+        "quantity": 1.0,
+        "rate": 18000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B131",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-02-03",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "63A change-over switch - Upper drive commonwealth estate ilupeju residence",
+        "quantity": 1.0,
+        "rate": 115000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "4c x 35mm\u00b2 cable - Live and neutral extension for load and power cable to changeover switch h",
+        "quantity": 3.0,
+        "rate": 7000.0,
+        "unit": "MTR"
+      },
+      {
+        "description": "10mm\u00b2 cu cable for genset",
+        "quantity": 3.2,
+        "rate": 8500.0,
+        "unit": "MTR"
+      },
+      {
+        "description": "Insulation tapes",
+        "quantity": 2.0,
+        "rate": 700.0,
+        "unit": "NOS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B132",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2026-02-03",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "GAS BURNER CONTROLLER  HONNYWELL DBC200",
+        "quantity": 1.0,
+        "rate": 1426880.0,
+        "unit": "NOS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B133",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2026-02-03",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Ohm meter",
+        "quantity": 1.0,
+        "rate": 1350000.0,
+        "unit": "NOS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B134",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-02-04",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "13 A Aina George gen set repair work starter relays",
+        "quantity": 2.0,
+        "rate": 15000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B135",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2026-02-11",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "repair work on boiler room diesel engine workmanship and outstation transportation",
+        "quantity": 1.0,
+        "rate": 85000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B136",
+    "client_name": "Mr Ganesan Mani",
+    "issue_date": "2026-02-11",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "job call out at Residence labour and transportation",
+        "quantity": 1.0,
+        "rate": 12000.0,
+        "unit": null
+      },
+      {
+        "description": "charging of battery",
+        "quantity": 1.0,
+        "rate": 5000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B137",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-02-13",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "offloading of 1500kva and 259kva genset - Positioning into workshop with roller skate and pipes",
+        "quantity": 1.0,
+        "rate": 850000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B138",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2026-02-16",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Bathtub glass door repair at Michael oguns st gra ikeja - Matetial, \nLabour and transportation",
+        "quantity": 1.0,
+        "rate": 16000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B139",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-02-16",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "28 ademola genset troubleshooting work, - Dismantling of p114kva genset injector pump,cleaning and installation, work on cummins 100kva fuel line and pump.with transportation Saturday 14/2/26 and 16/2/26.",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B14",
+    "client_name": "SOL WOOD LIMITED",
+    "issue_date": "2025-05-31",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "iYORC GENSET njection pump overhauling",
+        "quantity": 1.0,
+        "rate": 180000.0,
+        "unit": null
+      },
+      {
+        "description": "Nozzle servicing - Cleaning and servicing of 12 fuel nozzles to address exhaust smoke issues.",
+        "quantity": 4.0,
+        "rate": 15000.0,
+        "unit": null
+      },
+      {
+        "description": "Labour and transportation",
+        "quantity": 1.0,
+        "rate": 130000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B140",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-02-17",
+    "due_date": null,
+    "notes": "**Complete disassembly, inspection, and cleaning of the 2000 Series Perkins genset. Replacement of worn or damaged components including piston rings, bearings, gaskets, filters,pistons, water pump ,valves, and other necessary engine parts. Precision reassembly, testing, and commissioning to ensure optimal performance.**",
+    "terms": "\ud835\ude1b\ud835\ude30\ud835\ude35\ud835\ude22\ud835\ude2d \ud835\ude0a\ud835\ude30\ud835\ude2f\ud835\ude35\ud835\ude33\ud835\ude22\ud835\ude24\ud835\ude35 \ud835\ude1d\ud835\ude22\ud835\ude2d\ud835\ude36\ud835\ude26: \u20a6\ud835\udfea,\ud835\udfe8\ud835\udfe6\ud835\udfe2,\ud835\udfe9\ud835\udfe4\ud835\udfe7.\ud835\udfe2\ud835\udfe2,\ud835\ude08\ud835\ude25\ud835\ude37\ud835\ude22\ud835\ude2f\ud835\ude24\ud835\ude26 \ud835\ude17\ud835\ude22\ud835\ude3a\ud835\ude2e\ud835\ude26\ud835\ude2f\ud835\ude35 \ud835\ude0b\ud835\ude36\ud835\ude26 (\ud835\udfe8\ud835\udfe2%): \u20a6\ud835\udfe7,\ud835\udfe3\ud835\udfea\ud835\udfe6,\ud835\udfe6\ud835\udfe5\ud835\udfe7.\ud835\udfe2\ud835\udfe2,\ud835\ude09\ud835\ude22\ud835\ude2d\ud835\ude22\ud835\ude2f\ud835\ude24\ud835\ude26 \ud835\ude17\ud835\ude22\ud835\ude3a\ud835\ude22\ud835\ude23\ud835\ude2d\ud835\ude26 \ud835\ude1c\ud835\ude31\ud835\ude30\ud835\ude2f \ud835\ude0a\ud835\ude30\ud835\ude2e\ud835\ude31\ud835\ude2d\ud835\ude26\ud835\ude35\ud835\ude2a\ud835\ude30\ud835\ude2f (\ud835\udfe6\ud835\udfe2%): \u20a6\ud835\udfe5,\ud835\udfe6\ud835\udfe7\ud835\udfe8,\ud835\udfe4\ud835\udfeb\ud835\udfe2.\ud835\udfe2\ud835\udfe2",
+    "items": [
+      {
+        "description": "Piston rings",
+        "quantity": 6.0,
+        "rate": 55000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Con Rod Bearings",
+        "quantity": 6.0,
+        "rate": 28500.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Main bearings",
+        "quantity": 6.0,
+        "rate": 35000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Overhauling gasket",
+        "quantity": 1.0,
+        "rate": 250000.0,
+        "unit": null
+      },
+      {
+        "description": "Front & back oil seals",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil cooler kit",
+        "quantity": 1.0,
+        "rate": 180000.0,
+        "unit": null
+      },
+      {
+        "description": "Sleeve",
+        "quantity": 6.0,
+        "rate": 75000.0,
+        "unit": null
+      },
+      {
+        "description": "Sleeve band",
+        "quantity": 6.0,
+        "rate": 12000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil, fuel & air filters",
+        "quantity": 1.0,
+        "rate": 160000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Turbocharger kit",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": null
+      },
+      {
+        "description": "Thrust washer",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "Grinding of the cylinder head & lapping of the valves",
+        "quantity": 1.0,
+        "rate": 250000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil pump",
+        "quantity": 1.0,
+        "rate": 250000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil pressure switch",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": null
+      },
+      {
+        "description": "temperature switch",
+        "quantity": 1.0,
+        "rate": 45000.0,
+        "unit": null
+      },
+      {
+        "description": "Service of the alternator & varnishing/replacement of the bearings",
+        "quantity": 1.0,
+        "rate": 330000.0,
+        "unit": null
+      },
+      {
+        "description": "Supply of Deep Sea display complete with fabrication of housing",
+        "quantity": 1.0,
+        "rate": 250000.0,
+        "unit": null
+      },
+      {
+        "description": "Supply of 630A 3-Pole Moulded Case Circuit Breaker (MCCB)",
+        "quantity": 1.0,
+        "rate": 420000.0,
+        "unit": null
+      },
+      {
+        "description": "Rewinding of the exciter stator winding",
+        "quantity": 1.0,
+        "rate": 220000.0,
+        "unit": null
+      },
+      {
+        "description": "Supply of solenoid coil 24VDC",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": null
+      },
+      {
+        "description": "Supply of current transformer",
+        "quantity": 3.0,
+        "rate": 55000.0,
+        "unit": null
+      },
+      {
+        "description": "Fabrication of radiator guard",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": null
+      },
+      {
+        "description": "Supply of AVR module",
+        "quantity": 1.0,
+        "rate": 180000.0,
+        "unit": null
+      },
+      {
+        "description": "Supply of fuel hoses (supply & return)",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Deep Sea module programming & all electrical works",
+        "quantity": 1.0,
+        "rate": 30000.0,
+        "unit": null
+      },
+      {
+        "description": "Poking & steam washing of the radiator",
+        "quantity": 1.0,
+        "rate": 110000.0,
+        "unit": null
+      },
+      {
+        "description": "Replacement of the water hose",
+        "quantity": 1.0,
+        "rate": 60000.0,
+        "unit": null
+      },
+      {
+        "description": "Fan belts",
+        "quantity": 1.0,
+        "rate": 20000.0,
+        "unit": null
+      },
+      {
+        "description": "Service of the kick starter & charging alternator",
+        "quantity": 1.0,
+        "rate": 85000.0,
+        "unit": null
+      },
+      {
+        "description": "Sandblasting & painting",
+        "quantity": 1.0,
+        "rate": 550000.0,
+        "unit": null
+      },
+      {
+        "description": "Replacement of nozzles",
+        "quantity": 6.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "Service & calibration of the injector",
+        "quantity": 1.0,
+        "rate": 280000.0,
+        "unit": null
+      },
+      {
+        "description": "workmanship labour",
+        "quantity": 1.0,
+        "rate": 850000.0,
+        "unit": null
+      },
+      {
+        "description": "engine block maxhining wirk",
+        "quantity": 1.0,
+        "rate": 850000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B141",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2026-02-26",
+    "due_date": null,
+    "notes": null,
+    "terms": "\ud835\ude1b\ud835\ude30\ud835\ude35\ud835\ude22\ud835\ude2d \ud835\ude0a\ud835\ude30\ud835\ude2f\ud835\ude35\ud835\ude33\ud835\ude22\ud835\ude24\ud835\ude35 \ud835\ude1d\ud835\ude22\ud835\ude2d\ud835\ude36\ud835\ude26: \u20a6\ud835\udfea,\ud835\udfe8\ud835\udfe6\ud835\udfe2,\ud835\udfe9\ud835\udfe4\ud835\udfe7.\ud835\udfe2\ud835\udfe2,\ud835\ude08\ud835\ude25\ud835\ude37\ud835\ude22\ud835\ude2f\ud835\ude24\ud835\ude26 \ud835\ude17\ud835\ude22\ud835\ude3a\ud835\ude2e\ud835\ude26\ud835\ude2f\ud835\ude35 \ud835\ude0b\ud835\ude36\ud835\ude26 (\ud835\udfe8\ud835\udfe2%): \u20a6\ud835\udfe7,\ud835\udfe3\ud835\udfea\ud835\udfe6,\ud835\udfe6\ud835\udfe5\ud835\udfe7.\ud835\udfe2\ud835\udfe2,\ud835\ude09\ud835\ude22\ud835\ude2d\ud835\ude22\ud835\ude2f\ud835\ude24\ud835\ude26 \ud835\ude17\ud835\ude22\ud835\ude3a\ud835\ude22\ud835\ude23\ud835\ude2d\ud835\ude26 \ud835\ude1c\ud835\ude31\ud835\ude30\ud835\ude2f \ud835\ude0a\ud835\ude30\ud835\ude2e\ud835\ude31\ud835\ude2d\ud835\ude26\ud835\ude35\ud835\ude2a\ud835\ude30\ud835\ude2f (\ud835\udfe6\ud835\udfe2%): \u20a6\ud835\udfe5,\ud835\udfe6\ud835\udfe7\ud835\udfe8,\ud835\udfe4\ud835\udfeb\ud835\udfe2.\ud835\udfe2\ud835\udfe2",
+    "items": [
+      {
+        "description": "triac st hit air hand tool",
+        "quantity": 1.0,
+        "rate": 1385000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B142",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-02-27",
+    "due_date": null,
+    "notes": null,
+    "terms": "\ud835\ude1b\ud835\ude30\ud835\ude35\ud835\ude22\ud835\ude2d \ud835\ude0a\ud835\ude30\ud835\ude2f\ud835\ude35\ud835\ude33\ud835\ude22\ud835\ude24\ud835\ude35 \ud835\ude1d\ud835\ude22\ud835\ude2d\ud835\ude36\ud835\ude26: \u20a6\ud835\udfea,\ud835\udfe8\ud835\udfe6\ud835\udfe2,\ud835\udfe9\ud835\udfe4\ud835\udfe7.\ud835\udfe2\ud835\udfe2,\ud835\ude08\ud835\ude25\ud835\ude37\ud835\ude22\ud835\ude2f\ud835\ude24\ud835\ude26 \ud835\ude17\ud835\ude22\ud835\ude3a\ud835\ude2e\ud835\ude26\ud835\ude2f\ud835\ude35 \ud835\ude0b\ud835\ude36\ud835\ude26 (\ud835\udfe8\ud835\udfe2%): \u20a6\ud835\udfe7,\ud835\udfe3\ud835\udfea\ud835\udfe6,\ud835\udfe6\ud835\udfe5\ud835\udfe7.\ud835\udfe2\ud835\udfe2,\ud835\ude09\ud835\ude22\ud835\ude2d\ud835\ude22\ud835\ude2f\ud835\ude24\ud835\ude26 \ud835\ude17\ud835\ude22\ud835\ude3a\ud835\ude22\ud835\ude23\ud835\ude2d\ud835\ude26 \ud835\ude1c\ud835\ude31\ud835\ude30\ud835\ude2f \ud835\ude0a\ud835\ude30\ud835\ude2e\ud835\ude31\ud835\ude2d\ud835\ude26\ud835\ude35\ud835\ude2a\ud835\ude30\ud835\ude2f (\ud835\udfe6\ud835\udfe2%): \u20a6\ud835\udfe5,\ud835\udfe6\ud835\udfe7\ud835\udfe8,\ud835\udfe4\ud835\udfeb\ud835\udfe2.\ud835\udfe2\ud835\udfe2",
+    "items": [
+      {
+        "description": "Air filter 135326206",
+        "quantity": 1.0,
+        "rate": 23500.0,
+        "unit": null
+      },
+      {
+        "description": "fuel hose replacement - Lot\n\n<br>",
+        "quantity": 1.0,
+        "rate": 12000.0,
+        "unit": null
+      },
+      {
+        "description": "fuel hand priming pump",
+        "quantity": 1.0,
+        "rate": 18000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B143",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-02-27",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Air filter 135326206",
+        "quantity": 1.0,
+        "rate": 23500.0,
+        "unit": null
+      },
+      {
+        "description": "fuel hand priming pump",
+        "quantity": 1.0,
+        "rate": 18000.0,
+        "unit": null
+      },
+      {
+        "description": "fuel hose replacement - Lot\n\n<br>",
+        "quantity": 1.0,
+        "rate": 12000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B144",
+    "client_name": "Inspire Sports Academy",
+    "issue_date": "2026-02-28",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "control module 4510 for kirloskar canteen genset",
+        "quantity": 1.0,
+        "rate": 230000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B145",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2026-03-05",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "engine oil gallons",
+        "quantity": 2.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "Fuel Filter",
+        "quantity": 1.0,
+        "rate": 8500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Oil filters",
+        "quantity": 1.0,
+        "rate": 12000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Air filter",
+        "quantity": 1.0,
+        "rate": 22500.0,
+        "unit": "PCS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B146",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2026-03-05",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "charging alternator service for 13kva gen set - Adekunle fajuyi st ikeja \nmr Raiz residence",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B147",
+    "client_name": "Lorem Ipsum",
+    "issue_date": "2026-03-06",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Star/torx Allen key",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Hex Allen key",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": "SET"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B148",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2026-03-07",
+    "due_date": null,
+    "notes": "This invoice covers generator maintenance service carried out at Adekunle Fajuyi, Mr. Roopkumar\u2019s residence, including the \nsupply of listed parts, labour, and transportation.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Air filter",
+        "quantity": 1.0,
+        "rate": 22000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Oil Filter",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Fuel filter",
+        "quantity": 2.0,
+        "rate": 15000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Engine Oil",
+        "quantity": 1.0,
+        "rate": 70000.0,
+        "unit": null
+      },
+      {
+        "description": "Welding works and sundries",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation and labour",
+        "quantity": 1.0,
+        "rate": 40000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B149",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-03-09",
+    "due_date": null,
+    "notes": "This invoice covers works done at 28 Ademola Street, Ikoyi, Lagos for the 114 kVA Perkins Generator . Service includes oil cooler re-threading and replacement of seals, gaskets, and O-rings to resolve oil and injector pump leakages.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Valve cover seal",
+        "quantity": 2.0,
+        "rate": 27500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Oil cooler kit - **Includes seal, gasket and O-rings**",
+        "quantity": 1.0,
+        "rate": 26000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Injector rotor O-ring",
+        "quantity": 1.0,
+        "rate": 6500.0,
+        "unit": "NOS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B15",
+    "client_name": "NIPCO PLC",
+    "issue_date": "2025-06-04",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Troubleshooting on CAT 1 725kva - Mecganical and electrical work for 3 site vist\nWith transportation cost",
+        "quantity": 3.0,
+        "rate": 180000.0,
+        "unit": null
+      },
+      {
+        "description": "CAT DIAGNOSTIC COMPUTER TESTS",
+        "quantity": 1.0,
+        "rate": 180000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B150",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-03-09",
+    "due_date": null,
+    "notes": "This invoice covers works done at 28 Ademola Street, Ikoyi, Lagos for the 50 kVA Perkins Generator .Service includes the replacement of the valve cover seal, injector pump cover seal, and fuel pump hose to resolve oil and diesel leakages.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Valve cover seal - Set",
+        "quantity": 1.0,
+        "rate": 22500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Injector cover seal",
+        "quantity": 1.0,
+        "rate": 18000.0,
+        "unit": "NOS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B151",
+    "client_name": "DART TRANSPORT LTD",
+    "issue_date": "2026-03-10",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "rewinding of electric motor - GPHQ MS-132S2-2 Electric Motor.\nType: 3-Phase Induction Motor\nPower Output: 7.5 kW (50 Hz) or 8.3 kW (60 Hz)\nSpeed: 2900 RPM (50 Hz) or 3490 RPM (60\nWeight 45kg",
+        "quantity": 1.0,
+        "rate": 275000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B152",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-03-10",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "rewinding of electric motor - GPHQ MS-132S2-2 Electric Motor. \nType: 3-Phase Induction Motor\nPower Output: 7.5 kW (50 Hz) or 8.3 kW (60 Hz)\nSpeed: 2900 RPM (50 Hz) or 3490 RPM (60 \nWeight 45kg",
+        "quantity": 1.0,
+        "rate": 275000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B153",
+    "client_name": "PYGAR INTERNATIONAL LTD",
+    "issue_date": "2026-03-19",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "service maintenance on 13.5kva perkins genset . - Oil filter",
+        "quantity": 1.0,
+        "rate": 8000.0,
+        "unit": null
+      },
+      {
+        "description": "Fuel Filter",
+        "quantity": 1.0,
+        "rate": 7500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "priming pump 18000",
+        "quantity": 1.0,
+        "rate": 18000.0,
+        "unit": null
+      },
+      {
+        "description": "exhaust compensator and clips",
+        "quantity": 1.0,
+        "rate": 22000.0,
+        "unit": null
+      },
+      {
+        "description": "Engine Oil",
+        "quantity": 2.0,
+        "rate": 35000.0,
+        "unit": "GAL"
+      },
+      {
+        "description": "haulage loading ,shifting and offloading of perkins genset form oregun to gra ikeja",
+        "quantity": 1.0,
+        "rate": 125000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B154",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2026-03-20",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "voltage regulator AVR MX341",
+        "quantity": 1.0,
+        "rate": 45000.0,
+        "unit": null
+      },
+      {
+        "description": "leaking fuel hose replacement",
+        "quantity": 1.0,
+        "rate": 4000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B155",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2026-03-25",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "truck camera front and rear - Dvr monitor recorder \nResolution 1080P\nView angle bird view \nStorage memory upto 256g\nScreen 7.0\"\nWater proof\nNight view \nVoltage 12v-36v\nFunction nightview ,reverse view and ,waterproof. \nVoice interaction",
+        "quantity": 15.0,
+        "rate": 185000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B156",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2026-03-25",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Automotive relay socket connector",
+        "quantity": 30.0,
+        "rate": 2500.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B157",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2026-03-25",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "RED FLEET LOCKABLE ISOLATOR SWITCH FR BATTERY",
+        "quantity": 6.0,
+        "rate": 68787.5,
+        "unit": "NOS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B158",
+    "client_name": "11 PLC (formerly Mobil Oil Nigeria Plc)",
+    "issue_date": "2026-03-25",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "for Dismantling and Strip-Down of C32 CAT Generator Set labour",
+        "quantity": 1.0,
+        "rate": 1200000.0,
+        "unit": null
+      },
+      {
+        "description": "equipment and tools",
+        "quantity": 1.0,
+        "rate": 100000.0,
+        "unit": null
+      },
+      {
+        "description": "Logistics and Transportation",
+        "quantity": 1.0,
+        "rate": 200000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B159",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2026-03-26",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "VIBRO MOTOR 0.75KW 415V  50HZ",
+        "quantity": 3.0,
+        "rate": 210000.0,
+        "unit": "NOS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B16",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-06-09",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "water tank on roof top cleaning and plumbing work",
+        "quantity": 3.0,
+        "rate": 30000.0,
+        "unit": null
+      },
+      {
+        "description": "transportation",
+        "quantity": 1.0,
+        "rate": 22000.0,
+        "unit": null
+      },
+      {
+        "description": "plumbing and water tank on rooftop cleaning",
+        "quantity": 3.0,
+        "rate": 30000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation",
+        "quantity": 1.0,
+        "rate": 20000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B160",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2026-03-26",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "KLUBERQUIET BQ 72-72",
+        "quantity": 4.0,
+        "rate": 225000.0,
+        "unit": "GMS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B161",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2026-03-26",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "flexible hose",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "4ft 50w tube light",
+        "quantity": 1.0,
+        "rate": 10000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "12w micro screw bulb",
+        "quantity": 3.0,
+        "rate": 1200.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 700.0,
+        "unit": "NOS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B162",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2026-03-29",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "servicing of starter motor and replacement if solenoid",
+        "quantity": 1.0,
+        "rate": 55000.0,
+        "unit": null
+      },
+      {
+        "description": "fyel relay",
+        "quantity": 1.0,
+        "rate": 8000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B163",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2026-03-29",
+    "due_date": null,
+    "notes": "20kva Yorc genset at Adekunle fajuyi Crescent Mr Roopkumar residence.",
+    "terms": null,
+    "items": [
+      {
+        "description": "servicing of injector pump and nozxkes",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B164",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2026-03-30",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "AIR FILTER HOUSING RAIN CAP  8.5\" 1112290.0",
+        "quantity": 10.0,
+        "rate": 120000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B165",
+    "client_name": "Lekki paradise 3",
+    "issue_date": "2026-03-30",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Rental of 1000 KVA Generator",
+        "quantity": 33.0,
+        "rate": 380000.0,
+        "unit": "DAY"
+      },
+      {
+        "description": "Transportation",
+        "quantity": 1.0,
+        "rate": 1000000.0,
+        "unit": "LOT"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B166",
+    "client_name": "Lekki paradise 3",
+    "issue_date": "2026-04-04",
+    "due_date": null,
+    "notes": "I'm very happy with the invoice number of advance invoice number of advance invoice number of advance invoice number of advance invoice number of",
+    "terms": null,
+    "items": [
+      {
+        "description": "for Dismantling and Strip-Down of C32 CAT Generator Set labour",
+        "quantity": 1.0,
+        "rate": 1200000.0,
+        "unit": null
+      },
+      {
+        "description": "equipment and tools",
+        "quantity": 1.0,
+        "rate": 100000.0,
+        "unit": null
+      },
+      {
+        "description": "Logistics and Transportation",
+        "quantity": 1.0,
+        "rate": 200000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B167",
+    "client_name": "Breeze industries ltd",
+    "issue_date": "2026-04-15",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "63kva kirloskar lub service .4 marconi palmgroove. - Oil filter",
+        "quantity": 1.0,
+        "rate": 27000.0,
+        "unit": null
+      },
+      {
+        "description": "Fuel filters",
+        "quantity": 2.0,
+        "rate": 18500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Air filter",
+        "quantity": 1.0,
+        "rate": 45000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Engine Oil",
+        "quantity": 12.0,
+        "rate": 7000.0,
+        "unit": "LTR"
+      },
+      {
+        "description": "workmanship and transportation",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B168",
+    "client_name": "Breeze industries ltd",
+    "issue_date": "2026-04-15",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Charging alternator",
+        "quantity": 1.0,
+        "rate": 235000.0,
+        "unit": "NOS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B169",
+    "client_name": "PYGAR INTERNATIONAL LTD",
+    "issue_date": "2026-04-17",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "installation of perkins genset ..16mm x 4core cable",
+        "quantity": 12.0,
+        "rate": 18000.0,
+        "unit": null
+      },
+      {
+        "description": "10mm single cable",
+        "quantity": 12.0,
+        "rate": 3500.0,
+        "unit": null
+      },
+      {
+        "description": "Automatic power transfwe switch 120A",
+        "quantity": 1.0,
+        "rate": 85000.0,
+        "unit": null
+      },
+      {
+        "description": "75Ah battery",
+        "quantity": 1.0,
+        "rate": 110000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B17",
+    "client_name": "11 PLC (formerly Mobil Oil Nigeria Plc)",
+    "issue_date": "2025-06-09",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Complete gasket (Original CAT)",
+        "quantity": 2.0,
+        "rate": 1200000.0,
+        "unit": null
+      },
+      {
+        "description": "nozzle seal kit",
+        "quantity": 12.0,
+        "rate": 55000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil Filter",
+        "quantity": 2.0,
+        "rate": 200000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "fuel Filter",
+        "quantity": 1.0,
+        "rate": 145000.0,
+        "unit": null
+      },
+      {
+        "description": "water Separator",
+        "quantity": 1.0,
+        "rate": 115000.0,
+        "unit": null
+      },
+      {
+        "description": "Inlet valve",
+        "quantity": 24.0,
+        "rate": 120000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Exhaust Valve",
+        "quantity": 24.0,
+        "rate": 95000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "inert valve guide",
+        "quantity": 24.0,
+        "rate": 45000.0,
+        "unit": null
+      },
+      {
+        "description": "Exhaust valve guide",
+        "quantity": 24.0,
+        "rate": 45000.0,
+        "unit": null
+      },
+      {
+        "description": "New transfer pump",
+        "quantity": 1.0,
+        "rate": 850000.0,
+        "unit": null
+      },
+      {
+        "description": "Exhaust Insert",
+        "quantity": 24.0,
+        "rate": 47000.0,
+        "unit": null
+      },
+      {
+        "description": "Inlet insert",
+        "quantity": 24.0,
+        "rate": 45000.0,
+        "unit": null
+      },
+      {
+        "description": "Exhaust Elbow with Clip",
+        "quantity": 1.0,
+        "rate": 270000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship and Logistics - .Electrical and welding services and transportation",
+        "quantity": 1.0,
+        "rate": 4500000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B18",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-06-09",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "electrical display module 100kva cummins",
+        "quantity": 1.0,
+        "rate": 225000.0,
+        "unit": null
+      },
+      {
+        "description": "workmanship and transportation",
+        "quantity": 95000.0,
+        "rate": 1.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B19",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-06-10",
+    "due_date": null,
+    "notes": "This invoice covers items and services specifically related to the 100kVA 6BT Cummins Genset.",
+    "terms": null,
+    "items": [
+      {
+        "description": "cylinder head top gasket",
+        "quantity": 1.0,
+        "rate": 75000.0,
+        "unit": null
+      },
+      {
+        "description": "front timing cover",
+        "quantity": 1.0,
+        "rate": 175000.0,
+        "unit": null
+      },
+      {
+        "description": "Front oil seal",
+        "quantity": 4.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "front cover",
+        "quantity": 1.0,
+        "rate": 32000.0,
+        "unit": null
+      },
+      {
+        "description": "valve cover seals",
+        "quantity": 6.0,
+        "rate": 6000.0,
+        "unit": null
+      },
+      {
+        "description": "cover gasket",
+        "quantity": 3.0,
+        "rate": 5000.0,
+        "unit": null
+      },
+      {
+        "description": "workmanship transportation 4 team site visit",
+        "quantity": 1.0,
+        "rate": 280000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B20",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-06-12",
+    "due_date": null,
+    "notes": "Work carried out at 13A Aina George, Ilupeju, Lagos.\nAll plumbing issues resolved and full system functionality restored.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Labour and transportation - **for clearing blocked floor drain and resolving airlock in water heater line**",
+        "quantity": 1.0,
+        "rate": 20000.0,
+        "unit": null
+      },
+      {
+        "description": "Labour and transportation - **for troubleshooting and fixing float switch (auto pump control issue)**",
+        "quantity": 1.0,
+        "rate": 22000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B21",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-06-15",
+    "due_date": null,
+    "notes": "Work carried out at 7B Aina George, Ilupeju, Lagos.\nAll repairs completed and gate restored to proper working condition.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Materials and Consumables - 12mm rebar rod ,Grinding discs, Welding electrodes ,Hinges",
+        "quantity": 1.0,
+        "rate": 8000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation",
+        "quantity": 1.0,
+        "rate": 18000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B22",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-06-16",
+    "due_date": null,
+    "notes": "**Materials successfully supplied to Tecno Power Workshop, Mowe.**\n**Delivery has been completed and confirmed.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "4mm\u00b2 SINGLE CORE CABLE  (RED) 1 Coil - Coleman Item",
+        "quantity": 1.0,
+        "rate": 80000.0,
+        "unit": null
+      },
+      {
+        "description": "4mm\u00b2 single core copper cable black - Coleman Item",
+        "quantity": 1.0,
+        "rate": 80000.0,
+        "unit": null
+      },
+      {
+        "description": "1.5mm\u00b2 SINGLE CORE CABLE  (RED) - Coleman",
+        "quantity": 2.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "1.5mm\u00b2 SINGLE CORE CABLE  (BLACK) - Coleman",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "1.5mm\u00b2 SINGLE CORE CABLE  (GREEN/YELLOW) - Coleman",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "2.5mm\u00b2  3CORE CABLE  (Flat) - Coleman",
+        "quantity": 1.0,
+        "rate": 155000.0,
+        "unit": null
+      },
+      {
+        "description": "3x3 13A SINGLE SOCKET - A&M",
+        "quantity": 10.0,
+        "rate": 3500.0,
+        "unit": null
+      },
+      {
+        "description": "3x6 13A DOUBLE SOCKET  - A&M",
+        "quantity": 10.0,
+        "rate": 4500.0,
+        "unit": null
+      },
+      {
+        "description": "3x3  PATTRESS",
+        "quantity": 10.0,
+        "rate": 500.0,
+        "unit": null
+      },
+      {
+        "description": "3x6  PATTRESS",
+        "quantity": 10.0,
+        "rate": 600.0,
+        "unit": null
+      },
+      {
+        "description": "Water heater switch",
+        "quantity": 5.0,
+        "rate": 4000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "2 gang switch",
+        "quantity": 2.0,
+        "rate": 4500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "PACKET OF 100pcs of 1\" BLACK SCREW",
+        "quantity": 2.0,
+        "rate": 3000.0,
+        "unit": null
+      },
+      {
+        "description": "25W FLOURESCENT FITTINGS - Havells/ AKT",
+        "quantity": 8.0,
+        "rate": 7500.0,
+        "unit": null
+      },
+      {
+        "description": "ceiling fan hook",
+        "quantity": 1.0,
+        "rate": 1500.0,
+        "unit": null
+      },
+      {
+        "description": "BAJAJ CEILING FAN  - Long blade bajaj",
+        "quantity": 1.0,
+        "rate": 68000.0,
+        "unit": null
+      },
+      {
+        "description": "Original OX Wall Fan \u2013 Industrial (Domestic Grade)",
+        "quantity": 4.0,
+        "rate": 41600.0,
+        "unit": null
+      },
+      {
+        "description": "4ft 50w tube light",
+        "quantity": 4.0,
+        "rate": 8000.0,
+        "unit": "NOS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B23",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-06-16",
+    "due_date": null,
+    "notes": "**Wall fan supplied to Mr. Ravinder at No. 20 Wilmer Street, Ilupeju, Lagos.**\n**Delivery has been completed and acknowledged.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "wall fan ox",
+        "quantity": 1.0,
+        "rate": 41600.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B24",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-06-17",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "cummins 100kva Fan belts",
+        "quantity": 2.0,
+        "rate": 27500.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B25",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-06-17",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Cummins 100kva 6bt engine fan belt",
+        "quantity": 2.0,
+        "rate": 27500.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B26",
+    "client_name": "SOL WOOD LIMITED",
+    "issue_date": "2025-06-17",
+    "due_date": null,
+    "notes": "**This invoice covers items and services specifically related to the 100kVA 6BT Cummins Genset.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "cummins 6bt engine fuel pump",
+        "quantity": 1.0,
+        "rate": 115000.0,
+        "unit": null
+      },
+      {
+        "description": "transportation and labour",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B27",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-06-20",
+    "due_date": null,
+    "notes": "Manual labour and vehicle transport service rendered for repositioning 1,628 bags of cement.\nMovement executed from Warehouse 6, with partial offloading into a shipping container and the remainder to Royal Carton Store.\nAll movement completed and confirmed.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Manual Labour - Loading and Offloading of 1,628 Bags of Cement",
+        "quantity": 1628.0,
+        "rate": 150.0,
+        "unit": null
+      },
+      {
+        "description": "Vehicle Transport for bag's of cement  - Movement from Warehouse 6 to Shipping Container & Royal Carton Store",
+        "quantity": 1328.0,
+        "rate": 150.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B28",
+    "client_name": "Rosemary transport",
+    "issue_date": "2025-06-20",
+    "due_date": null,
+    "notes": "**General plumbing work carried out for the entire building:**\n\u2013 Resolved tank back nut leakage and replaced the socket using thread tape and Top Git gum.\n\n**Additional work completed in specific apartments:**\n\u2013 Mr Sai\u2019s apartment: Stopped water seepage by removing a tile, sealing the affected area, and reinstalling the tile.\n\u2013 Mr Jagadeesh's apartment: Replaced a faulty 18W pot light and secured wiring using insulation tape.",
+    "terms": null,
+    "items": [
+      {
+        "description": "18 watts pot lights",
+        "quantity": 1.0,
+        "rate": 6500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Thread tape",
+        "quantity": 1.0,
+        "rate": 1500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "1\u00bd\" Socket",
+        "quantity": 1.0,
+        "rate": 1500.0,
+        "unit": null
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 700.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship - * Fixed tank back nut leakage and replaced socket\n* Repaired bathroom floor leak at Sai\u2019s apartment (tile removal, ground sealing, tile refix)\n* Replaced pot light at Jagedesh\u2019s apartment\n\n\n<br>\n<br>",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation and logistics",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B29",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2025-06-20",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "electrical troubleshooting andvrepair work at mr Raiz residence date 18/6/25 - transportation inclusive",
+        "quantity": 1.0,
+        "rate": 20000.0,
+        "unit": null
+      },
+      {
+        "description": "electrical repair labour at Mr Prems flat date 20/6/25",
+        "quantity": 1.0,
+        "rate": 20000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B30",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2025-06-23",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "workmanship &transportation for repair at prems residence ikeja sunday 22/6/25",
+        "quantity": 1.0,
+        "rate": 20000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B31",
+    "client_name": "Inspire Sports Academy",
+    "issue_date": "2025-06-27",
+    "due_date": null,
+    "notes": "This invoice covers the cost of parts, labour, and battery rental associated with the repair of the YORC generator at the hostel located on No. 1 Old NITEL Road, Cappa, Oshodi.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Top gasket kit",
+        "quantity": 1.0,
+        "rate": 95000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 75000.0,
+        "unit": null
+      },
+      {
+        "description": "100a battery rental",
+        "quantity": 1.0,
+        "rate": 10000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B32",
+    "client_name": "Boden industries limited",
+    "issue_date": "2025-06-28",
+    "due_date": null,
+    "notes": "This invoice reflects the execution of previously quoted work. A 70% advance payment of **\u20a61,551,309.99** is requested at this stage to finalize outstanding tasks. The remaining **\u20a6664,847.14** (30%) is due upon completion.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Rings",
+        "quantity": 3.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Metal & main bearings",
+        "quantity": 1.0,
+        "rate": 80000.0,
+        "unit": null
+      },
+      {
+        "description": "Front & back oil Seal",
+        "quantity": 1.0,
+        "rate": 38000.0,
+        "unit": null
+      },
+      {
+        "description": "Bottom kit gasket",
+        "quantity": 1.0,
+        "rate": 98000.0,
+        "unit": null
+      },
+      {
+        "description": "Pistons",
+        "quantity": 3.0,
+        "rate": 44500.0,
+        "unit": null
+      },
+      {
+        "description": "cover gasket",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": null
+      },
+      {
+        "description": "Valve seal",
+        "quantity": 6.0,
+        "rate": 7500.0,
+        "unit": null
+      },
+      {
+        "description": "Top kit & one top gasket",
+        "quantity": 1.0,
+        "rate": 85000.0,
+        "unit": null
+      },
+      {
+        "description": "Rekitting of water pump",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil filter",
+        "quantity": 1.0,
+        "rate": 8000.0,
+        "unit": null
+      },
+      {
+        "description": "Fuel Filter",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      },
+      {
+        "description": "Crankshaft",
+        "quantity": 1.0,
+        "rate": 235000.0,
+        "unit": null
+      },
+      {
+        "description": "Nozzle TIPS",
+        "quantity": 3.0,
+        "rate": 12000.0,
+        "unit": null
+      },
+      {
+        "description": "Injector pump rekit",
+        "quantity": 1.0,
+        "rate": 112000.0,
+        "unit": null
+      },
+      {
+        "description": "Thrust washer",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      },
+      {
+        "description": "Resleeving of Engine block",
+        "quantity": 1.0,
+        "rate": 250000.0,
+        "unit": null
+      },
+      {
+        "description": "Main alternator service",
+        "quantity": 1.0,
+        "rate": 85000.0,
+        "unit": null
+      },
+      {
+        "description": "Ecoplus fuel pump",
+        "quantity": 1.0,
+        "rate": 75000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil switch",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Water temperature sensor",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "Hoses and clip",
+        "quantity": 1.0,
+        "rate": 95000.0,
+        "unit": null
+      },
+      {
+        "description": "Painting",
+        "quantity": 1.0,
+        "rate": 150000.0,
+        "unit": null
+      },
+      {
+        "description": "Electrical wiring",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": null
+      },
+      {
+        "description": "door lock",
+        "quantity": 4.0,
+        "rate": 22000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B33",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-06-28",
+    "due_date": null,
+    "notes": "Work carried out at the Head Office \u2013 28 Ademola Street, Ikoyi, Lagos. This invoice covers the supply of one Cummins belt tensioner and the associated workmanship and labour for installation.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Cummins belt tensioner",
+        "quantity": 1.0,
+        "rate": 96000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B34",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-07-07",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "fan hub for cummins 100kva 28 ademola",
+        "quantity": 1.0,
+        "rate": 85000.0,
+        "unit": null
+      },
+      {
+        "description": "Cummins 100kva 6bt engine fan belt",
+        "quantity": 1.0,
+        "rate": 27500.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B35",
+    "client_name": "Boden industries limited",
+    "issue_date": "2025-07-10",
+    "due_date": null,
+    "notes": "This invoice covers the completed overhaul of a 30\u202fKVA Mikano generator carried out at Tecno Power Workshop, Cashew. Scope included full mechanical disassembly and reassembly, replacement of worn components, electrical servicing, load testing, and complete repainting. All work was executed to restore the unit to reliable operating condition.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Rings",
+        "quantity": 3.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Metal & main bearings",
+        "quantity": 1.0,
+        "rate": 80000.0,
+        "unit": null
+      },
+      {
+        "description": "Front & back oil Seal",
+        "quantity": 1.0,
+        "rate": 38000.0,
+        "unit": null
+      },
+      {
+        "description": "Bottom kit gasket",
+        "quantity": 1.0,
+        "rate": 98000.0,
+        "unit": null
+      },
+      {
+        "description": "Pistons",
+        "quantity": 3.0,
+        "rate": 44500.0,
+        "unit": null
+      },
+      {
+        "description": "cover gasket",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": null
+      },
+      {
+        "description": "Valve seal",
+        "quantity": 6.0,
+        "rate": 7500.0,
+        "unit": null
+      },
+      {
+        "description": "Top kit & one top gasket",
+        "quantity": 1.0,
+        "rate": 85000.0,
+        "unit": null
+      },
+      {
+        "description": "Rekitting of water pump",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil filter",
+        "quantity": 1.0,
+        "rate": 8000.0,
+        "unit": null
+      },
+      {
+        "description": "Fuel Filter",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      },
+      {
+        "description": "Crankshaft",
+        "quantity": 1.0,
+        "rate": 235000.0,
+        "unit": null
+      },
+      {
+        "description": "Nozzle TIPS",
+        "quantity": 3.0,
+        "rate": 12000.0,
+        "unit": null
+      },
+      {
+        "description": "Injector pump rekit",
+        "quantity": 1.0,
+        "rate": 112000.0,
+        "unit": null
+      },
+      {
+        "description": "Thrust washer",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      },
+      {
+        "description": "Resleeving of Engine block",
+        "quantity": 1.0,
+        "rate": 250000.0,
+        "unit": null
+      },
+      {
+        "description": "Main alternator service",
+        "quantity": 1.0,
+        "rate": 85000.0,
+        "unit": null
+      },
+      {
+        "description": "Ecoplus fuel pump",
+        "quantity": 1.0,
+        "rate": 75000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil switch",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Water temperature sensor",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "Hoses and clip",
+        "quantity": 1.0,
+        "rate": 95000.0,
+        "unit": null
+      },
+      {
+        "description": "Painting",
+        "quantity": 1.0,
+        "rate": 150000.0,
+        "unit": null
+      },
+      {
+        "description": "Electrical wiring",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": null
+      },
+      {
+        "description": "door lock",
+        "quantity": 4.0,
+        "rate": 22000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B36",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-07-11",
+    "due_date": null,
+    "notes": "This invoice covers the supply and installation of one wooden double bunk bed and one single bed, each with accompanying mattress and pillow, for the Mowe Mopol accommodation.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Wooden Double Bunk Bed with a Mattress, a  bedsheet and a Pillow (3by6)",
+        "quantity": 1.0,
+        "rate": 345000.0,
+        "unit": null
+      },
+      {
+        "description": "Single wooden Bed with a Mattress, a bedsheet,  and a Pillow (3by6)",
+        "quantity": 1.0,
+        "rate": 175000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B37",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-07-11",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "cummins 60kva cylinder head Tokunbo standard",
+        "quantity": 1.0,
+        "rate": 365000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B38",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-07-15",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "window screen curtaln with pole and accessories - **Driver and mopol room windows**\n\n<br>",
+        "quantity": 4.0,
+        "rate": 22500.0,
+        "unit": null
+      },
+      {
+        "description": "installation and transportation",
+        "quantity": 1.0,
+        "rate": 20000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B39",
+    "client_name": "DART TRANSPORT LTD",
+    "issue_date": "2025-07-15",
+    "due_date": null,
+    "notes": "Welding on the fire hydrant was completed and tested OK on Sunday, July 13, at Dart Transport main gate.",
+    "terms": null,
+    "items": [
+      {
+        "description": "water hydrant pipe  flange replacement",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "electrode and sundries",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      },
+      {
+        "description": "workmanship and transportation",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B40",
+    "client_name": "SOL WOOD LIMITED",
+    "issue_date": "2025-07-16",
+    "due_date": null,
+    "notes": "**This invoice reflects the 30% balance for the completed delivery of the generator, radiator, and other packages. All items were transported safely and the generator was positioned correctly, with everything delivered intact and without damage at Solwood, Onipetesi, Ondo State.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Loading and offloading  - Includes utilization of Hiab crane and 1 trucks for safe and efficient loading at Mowe Warehouse and offloading at Solwood site in Onipetesi, Ondo State",
+        "quantity": 1.0,
+        "rate": 1200000.0,
+        "unit": null
+      },
+      {
+        "description": "Skidding Operations & Mobilization - Precision roll-in/roll-out of the Jenbacher gas generator, including radiator and auxiliaries, with full mobilization of crew and required equipment.",
+        "quantity": 1.0,
+        "rate": 2500000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation of genset and auxiliary components  - one extra truck and Hiab",
+        "quantity": 1.0,
+        "rate": 1800000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B41",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-07-16",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Haulage & Transportation - loading offloading and transportation of the cummins 1500kva genset and accessories from cmc kano to solwood",
+        "quantity": 1.0,
+        "rate": 2000000.0,
+        "unit": null
+      },
+      {
+        "description": "Skidding Operations (Roll-in/Roll-out Precision handling and positioning of the generator set, including radiator and auxiliary components, both at mowe and solwood site - Workmanship Safely dismantle the radiator,\nexhaust pipes, and exhaust manifold of the 1500kVA\nCummins KTA 50 genset at CMC, Kano. Roll-out:\nCarefully roll out the genset from its current\nlocation. Repositioning and Assembly: Reposition\nthe genset at the new location. Assemble the\ngenset, including the radiator, exhaust pipes, and\nmanifold\n6 personal",
+        "quantity": 1.0,
+        "rate": 3600000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation of 6 personnel and equipment to & fro cmc kano chain block .skid rollers ,jackhammer ropes etc - Accommodation for the manpower and equipment transportation",
+        "quantity": 1.0,
+        "rate": 1500000.0,
+        "unit": null
+      },
+      {
+        "description": "Construction and fitting of radiator side shield cover",
+        "quantity": 1.0,
+        "rate": 465000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B42",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-07-16",
+    "due_date": null,
+    "notes": "This invoice covers transportation and workmanship carried out from July 15 to 16, for fuel pump troubleshooting and repair on a 100kVA Cummins generator at Solwood Industry, Onipetesi, Ondo State.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Transportation  - Lagos to onipetesi , to and fro",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 30000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation  - Lagos to onipetesi, to and fro",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B43",
+    "client_name": "Boden industries limited",
+    "issue_date": "2025-07-18",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Rings",
+        "quantity": 3.0,
+        "rate": 26666.67,
+        "unit": null
+      },
+      {
+        "description": "Metal & main bearings",
+        "quantity": 1.0,
+        "rate": 80000.0,
+        "unit": null
+      },
+      {
+        "description": "Front & back oil Seal",
+        "quantity": 1.0,
+        "rate": 38000.0,
+        "unit": null
+      },
+      {
+        "description": "Bottom kit gasket",
+        "quantity": 1.0,
+        "rate": 98000.0,
+        "unit": null
+      },
+      {
+        "description": "Pistons",
+        "quantity": 3.0,
+        "rate": 44500.0,
+        "unit": null
+      },
+      {
+        "description": "cover gasket",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": null
+      },
+      {
+        "description": "Valve seal",
+        "quantity": 6.0,
+        "rate": 7500.0,
+        "unit": null
+      },
+      {
+        "description": "Top kit & one top gasket",
+        "quantity": 1.0,
+        "rate": 85000.0,
+        "unit": null
+      },
+      {
+        "description": "Rekitting of water pump",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil filter",
+        "quantity": 1.0,
+        "rate": 8000.0,
+        "unit": null
+      },
+      {
+        "description": "Fuel Filter",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      },
+      {
+        "description": "Nozzle TIPS",
+        "quantity": 3.0,
+        "rate": 12000.0,
+        "unit": null
+      },
+      {
+        "description": "Injector pump rekit",
+        "quantity": 1.0,
+        "rate": 112000.0,
+        "unit": null
+      },
+      {
+        "description": "Thrust washer",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      },
+      {
+        "description": "Resleeving of Engine block",
+        "quantity": 1.0,
+        "rate": 250000.0,
+        "unit": null
+      },
+      {
+        "description": "Main alternator service",
+        "quantity": 1.0,
+        "rate": 85000.0,
+        "unit": null
+      },
+      {
+        "description": "Ecoplus fuel pump",
+        "quantity": 1.0,
+        "rate": 75000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil switch",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Water temperature sensor",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "Hoses and clip",
+        "quantity": 1.0,
+        "rate": 95000.0,
+        "unit": null
+      },
+      {
+        "description": "Painting",
+        "quantity": 1.0,
+        "rate": 163000.0,
+        "unit": null
+      },
+      {
+        "description": "Electrical wiring",
+        "quantity": 1.0,
+        "rate": 80000.0,
+        "unit": null
+      },
+      {
+        "description": "door lock",
+        "quantity": 4.0,
+        "rate": 30000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B44",
+    "client_name": "Boden industries limited",
+    "issue_date": "2025-07-18",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Crankshaft",
+        "quantity": 1.0,
+        "rate": 200000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B45",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-07-21",
+    "due_date": null,
+    "notes": "**This invoice covers workmanship and transportation for an electrical call-out carried out at 28 Ademola Street, Ikoyi, on July 20, 2025.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Call-out for electrical work - Workmanship and transportation",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B46",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-07-22",
+    "due_date": null,
+    "notes": "**This invoice covers the repair and installation of a punctured radiator hose for a generator. The hose has been tested, and the job was completed on July 22, 2025, at No. 7B Obadeyi Street, Ikoyi.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Radiator hose repair & installation",
+        "quantity": 1.0,
+        "rate": 10000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation",
+        "quantity": 2.0,
+        "rate": 7500.0,
+        "unit": "DAY"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B47",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-07-28",
+    "due_date": null,
+    "notes": "**This invoice covers the repair and installation of a punctured radiator hose for a generator. The hose has been tested, and the job was completed on July 22, 2025, at No. 7B Obadeyi Street, Ikoyi.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Radiator hose repair & installation",
+        "quantity": 1.0,
+        "rate": 10000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation",
+        "quantity": 2.0,
+        "rate": 7500.0,
+        "unit": "DAY"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B48",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-07-29",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "18W LED Light",
+        "quantity": 1.0,
+        "rate": 7000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship & transportation",
+        "quantity": 1.0,
+        "rate": 7000.0,
+        "unit": null
+      },
+      {
+        "description": "Water filter",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship & transportation",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B49",
+    "client_name": "CORONATION POWER & GAS LIMITED",
+    "issue_date": "2025-07-31",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Element bypass filter",
+        "quantity": 8.0,
+        "rate": 12000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B50",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-08-05",
+    "due_date": null,
+    "notes": "**This invoice covers items and services specifically related to the 1500kVA Cummins KTA50-G8 generator set.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "1500kVA Genset Startup Commissioning Charges",
+        "quantity": 1.0,
+        "rate": 1200000.0,
+        "unit": null
+      },
+      {
+        "description": "Exhaust Stand Modification \u2013 Construction & Painting Work",
+        "quantity": 1.0,
+        "rate": 475000.0,
+        "unit": null
+      },
+      {
+        "description": "Magnetic Pickup Unit",
+        "quantity": 1.0,
+        "rate": 250000.0,
+        "unit": null
+      },
+      {
+        "description": "Relay",
+        "quantity": 1.0,
+        "rate": 75000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil switch",
+        "quantity": 1.0,
+        "rate": 165000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil Seal",
+        "quantity": 1.0,
+        "rate": 18000.0,
+        "unit": null
+      },
+      {
+        "description": "Battery Cable",
+        "quantity": 1.0,
+        "rate": 26000.0,
+        "unit": null
+      },
+      {
+        "description": "Radiator Flushing",
+        "quantity": 1.0,
+        "rate": 150000.0,
+        "unit": null
+      },
+      {
+        "description": "Hydraulic Hose",
+        "quantity": 1.0,
+        "rate": 115000.0,
+        "unit": null
+      },
+      {
+        "description": "Logistics and Transportation",
+        "quantity": 1.0,
+        "rate": 750000.0,
+        "unit": null
+      },
+      {
+        "description": "Bosch 12v 155ah battery",
+        "quantity": 2.0,
+        "rate": 400000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B51",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-08-05",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "2.5mm\u00b2 \u00d7 3-Core Flat Cable",
+        "quantity": 1.0,
+        "rate": 250000.0,
+        "unit": "ROL"
+      },
+      {
+        "description": "20mm White Flexible Trunking",
+        "quantity": 10.0,
+        "rate": 2000.0,
+        "unit": "MTR"
+      },
+      {
+        "description": "Breaker Box",
+        "quantity": 5.0,
+        "rate": 3000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "6\" Extractor Fan",
+        "quantity": 2.0,
+        "rate": 25000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Ceiling Fan Hook with Rubber",
+        "quantity": 1.0,
+        "rate": 1500.0,
+        "unit": "SET"
+      },
+      {
+        "description": "3x3 patress box",
+        "quantity": 20.0,
+        "rate": 500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "3x6 Pattress Box",
+        "quantity": 20.0,
+        "rate": 600.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "1.5mm\u00b2 Single-Core Cable \u2013 Red",
+        "quantity": 1.0,
+        "rate": 40000.0,
+        "unit": "ROL"
+      },
+      {
+        "description": "1.5mm\u00b2 Single-Core Cable \u2013 Black",
+        "quantity": 1.0,
+        "rate": 40000.0,
+        "unit": "ROL"
+      },
+      {
+        "description": "Double Socket Outlet",
+        "quantity": 15.0,
+        "rate": 4000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "4.5\u03bcF Ceiling Fan Capacitor",
+        "quantity": 10.0,
+        "rate": 2000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Fan Regulator (for 60\u201362 inch fans)",
+        "quantity": 5.0,
+        "rate": 8000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "63A Knife-Type Changeover Switch",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "100W  Floodlight",
+        "quantity": 5.0,
+        "rate": 40000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Water Heater Switch",
+        "quantity": 5.0,
+        "rate": 4000.0,
+        "unit": "PCS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B52",
+    "client_name": "Rex forestry ltd",
+    "issue_date": "2025-08-05",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "HIAB Load Shifting and Delivery of 62kVA Generator from Mowe to Gmelina camp, Ondo State",
+        "quantity": 1.0,
+        "rate": 380000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B53",
+    "client_name": "11 PLC (formerly Mobil Oil Nigeria Plc)",
+    "issue_date": "2025-08-07",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Cummins engine controller - <br>\n<br>",
+        "quantity": 1.0,
+        "rate": 490000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B54",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-08-07",
+    "due_date": null,
+    "notes": "This invoice covers items and services specifically related to the 100kVA 6BT Cummins Genset.",
+    "terms": null,
+    "items": [
+      {
+        "description": "electrical display module 100kva cummins",
+        "quantity": 1.0,
+        "rate": 225000.0,
+        "unit": null
+      },
+      {
+        "description": "workmanship and transportation",
+        "quantity": 95000.0,
+        "rate": 1.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B55",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-08-08",
+    "due_date": null,
+    "notes": "**This invoice covers the supply and installation of a brass nipple and air valve on the diesel tank of the Cummins KTA50 generator at the Solwood generator house, including transportation to and from Lagos and Onipetesi, Ondo State. The work has been completed, tested, and found satisfactory.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Brass air valve",
+        "quantity": 1.0,
+        "rate": 22000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Brass nipple",
+        "quantity": 1.0,
+        "rate": 7000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Transportation - Lagos to Ondo round trip.",
+        "quantity": 1.0,
+        "rate": 30000.0,
+        "unit": "DAY"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B56",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-08-10",
+    "due_date": null,
+    "notes": "**This invoice covers electrical maintenance and water filter replacement at Mr. Aswini\u2019s residence, 5B Michael Oguns Street, Ikeja.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "18 watts pot lights",
+        "quantity": 1.0,
+        "rate": 7500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "15w bulb",
+        "quantity": 1.0,
+        "rate": 3500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "2 gang 13 amps socket",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "13 amps plug",
+        "quantity": 1.0,
+        "rate": 3500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 1000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Water filter",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation",
+        "quantity": 2.0,
+        "rate": 5000.0,
+        "unit": "DAY"
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 16000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B57",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2025-08-10",
+    "due_date": null,
+    "notes": "**This invoice covers generator repair service carried out at Adekunle Fajuyi, Mr. Roopkumar\u2019s residence, including the supply of listed parts, labour, and transportation.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "AVR  for roopkumar grnset",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      },
+      {
+        "description": "Earthing system",
+        "quantity": 1.0,
+        "rate": 32500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "workmanship and transportation",
+        "quantity": 1.0,
+        "rate": 42000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B58",
+    "client_name": "11 PLC (formerly Mobil Oil Nigeria Plc)",
+    "issue_date": "2025-08-12",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Fuel Filter",
+        "quantity": 20.0,
+        "rate": 90000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Oil filter",
+        "quantity": 60.0,
+        "rate": 120000.0,
+        "unit": "PCS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B59",
+    "client_name": "Tecno power solutions limited",
+    "issue_date": "2025-08-12",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "100w flood light choke",
+        "quantity": 10.0,
+        "rate": 8500.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B60",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2025-08-13",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "SOLAR STREET LIGHT, LED,  100W",
+        "quantity": 15.0,
+        "rate": 330000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "ELECTRIC POLE 9M",
+        "quantity": 15.0,
+        "rate": 360000.0,
+        "unit": "PCS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B61",
+    "client_name": "WEST AFRICAN CERAMICS LIMITED",
+    "issue_date": "2025-08-18",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Top overhauling of v28 cummins genset",
+        "quantity": 1.0,
+        "rate": 365000.0,
+        "unit": null
+      },
+      {
+        "description": "Front oil seal",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Rear oil seal",
+        "quantity": 1.0,
+        "rate": 125000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Cylinder head service",
+        "quantity": 12.0,
+        "rate": 45000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Charging alternator",
+        "quantity": 1.0,
+        "rate": 325000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Automatic voltage regulator",
+        "quantity": 1.0,
+        "rate": 450000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Fan belt",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": null
+      },
+      {
+        "description": "Anti vibration mounts",
+        "quantity": 1.0,
+        "rate": 185000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Main Alternator service, windings cleaning and varnishes",
+        "quantity": 1.0,
+        "rate": 400000.0,
+        "unit": "JOB"
+      },
+      {
+        "description": "Piston rings",
+        "quantity": 12.0,
+        "rate": 38000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Con bearing",
+        "quantity": 1.0,
+        "rate": 450000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Main bearings",
+        "quantity": 1.0,
+        "rate": 550000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Oil & fuel filters",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Electrical accessories",
+        "quantity": 1.0,
+        "rate": 450000.0,
+        "unit": "LOT"
+      },
+      {
+        "description": "Logistics & Transportation",
+        "quantity": 1.0,
+        "rate": 1100000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 1500000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B62",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-08-25",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Oil filters",
+        "quantity": 4.0,
+        "rate": 97000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Fuel filters",
+        "quantity": 2.0,
+        "rate": 92000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Pre-filters",
+        "quantity": 2.0,
+        "rate": 71000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Water filters",
+        "quantity": 2.0,
+        "rate": 35000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Workmanship & transportation",
+        "quantity": 1.0,
+        "rate": 275000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B63",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-08-25",
+    "due_date": null,
+    "notes": "**This invoice covers the relocation and positioning of the 1000kVA Cummins generator, including dismantling, barricade modification, movement, and crane operations. The work has been successfully executed and completed safely.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Generator Relocation & Positioning Works - * **Exhaust dismantling to enable movement**\n* **Cutting and re-welding of generator barricade**\n* **Pushing and final positioning of generator**\n* **Crane lifting and transfer from Sonata to Tecno workshop**",
+        "quantity": 1.0,
+        "rate": 550000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B64",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-09-08",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Inspection and repair work on auxiliary water pump for Cummins 1500kVA generator",
+        "quantity": 1.0,
+        "rate": 40000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation",
+        "quantity": 1.0,
+        "rate": 30000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B65",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-09-11",
+    "due_date": null,
+    "notes": "**This invoice covers the pickup and safe delivery of oil samples from Solwood Industries in Ondo State to 11 PLC Mobil, Apapa, Lagos.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Transportation and delivery of 3 oil samples from Ondo State (Onipetesi \u2013 Solwood Industries) to Apapa, Lagos State (11 PLC Mobil).",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B66",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-09-15",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Oil filters - Maintenance service carries out on 1500kva cummins gg date 14/9/25",
+        "quantity": 4.0,
+        "rate": 97000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Fuel filters",
+        "quantity": 2.0,
+        "rate": 92000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Pre-filters",
+        "quantity": 2.0,
+        "rate": 71000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Water filters",
+        "quantity": 2.0,
+        "rate": 35000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Workmanship & transportation",
+        "quantity": 1.0,
+        "rate": 275000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B67",
+    "client_name": "Century Mining Company Ltd",
+    "issue_date": "2025-09-17",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "DIGITAL INSULATION TESTER 500/1000 VDC",
+        "quantity": 2.0,
+        "rate": 650000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "DIGITAL MULTIMETER",
+        "quantity": 2.0,
+        "rate": 360000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "PHOTO SWITCH 220V",
+        "quantity": 20.0,
+        "rate": 15500.0,
+        "unit": "PCS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B68",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-09-18",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "troubleshooting and repair work on 150kva cummins genset  date 16th to 19th sept 2025 workmanship - 4 days Team outstation job",
+        "quantity": 1.0,
+        "rate": 420000.0,
+        "unit": null
+      },
+      {
+        "description": "cummins charging alternator repair",
+        "quantity": 1.0,
+        "rate": 85000.0,
+        "unit": null
+      },
+      {
+        "description": "transportation",
+        "quantity": 1.0,
+        "rate": 220000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B69",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-09-18",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "20mm pvc pipe",
+        "quantity": 3.0,
+        "rate": 14000.0,
+        "unit": "BDL"
+      },
+      {
+        "description": "100 watts flood light",
+        "quantity": 10.0,
+        "rate": 37500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "20mm PVC CLIP - **Nail type**",
+        "quantity": 1.0,
+        "rate": 4500.0,
+        "unit": "PAC"
+      },
+      {
+        "description": "S6 self drilling screws",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": "PAC"
+      },
+      {
+        "description": "S8 self tapping screws",
+        "quantity": 1.0,
+        "rate": 7500.0,
+        "unit": "PAC"
+      },
+      {
+        "description": "S6 Fischer pegs",
+        "quantity": 1.0,
+        "rate": 4000.0,
+        "unit": "PAC"
+      },
+      {
+        "description": "S8 Fischer pegs",
+        "quantity": 1.0,
+        "rate": 4500.0,
+        "unit": "PAC"
+      },
+      {
+        "description": "13 amps plug",
+        "quantity": 10.0,
+        "rate": 2000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "15 amps plug",
+        "quantity": 10.0,
+        "rate": 2500.0,
+        "unit": "PCS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B70",
+    "client_name": "Boden industries limited",
+    "issue_date": "2025-09-19",
+    "due_date": null,
+    "notes": "**This invoice covers 50% balance for job completed**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Rings",
+        "quantity": 4.0,
+        "rate": 40000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Top  kit",
+        "quantity": 1.0,
+        "rate": 34000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Bottom gasket kit",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Front oil seal",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Rear oil seal",
+        "quantity": 1.0,
+        "rate": 42500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Main bearing",
+        "quantity": 4.0,
+        "rate": 58000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "fuel Filter",
+        "quantity": 2.0,
+        "rate": 20000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Oil filter",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Nozzles tips",
+        "quantity": 4.0,
+        "rate": 27500.0,
+        "unit": null
+      },
+      {
+        "description": "Hoses and clip",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": "LOT"
+      },
+      {
+        "description": "Injector pump servicing",
+        "quantity": 1.0,
+        "rate": 180000.0,
+        "unit": null
+      },
+      {
+        "description": "Cylinder head servicing",
+        "quantity": 1.0,
+        "rate": 130000.0,
+        "unit": null
+      },
+      {
+        "description": "Resleeving of Engine block",
+        "quantity": 1.0,
+        "rate": 250000.0,
+        "unit": null
+      },
+      {
+        "description": "Radiator Flushing",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Main alternator service",
+        "quantity": 1.0,
+        "rate": 260000.0,
+        "unit": null
+      },
+      {
+        "description": "Painting",
+        "quantity": 1.0,
+        "rate": 265000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation",
+        "quantity": 1.0,
+        "rate": 150000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 350000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B71",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2025-09-19",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "inspection and transportation charges of 62kva cummins genset at ijako ogun state snl warehouse.",
+        "quantity": 28000.0,
+        "rate": 1.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B72",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-09-22",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "fuel injector pump servicing - Cummins 1500kva kta50",
+        "quantity": 1.0,
+        "rate": 250000.0,
+        "unit": null
+      },
+      {
+        "description": "fuel actuator",
+        "quantity": 1.0,
+        "rate": 550000.0,
+        "unit": null
+      },
+      {
+        "description": "shut down valve",
+        "quantity": 1.0,
+        "rate": 365000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B73",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-09-25",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "control module 7201 for  1500kva cummins genset card",
+        "quantity": 1.0,
+        "rate": 725000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B74",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-09-25",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Automatic voltage regulator AVR MX341",
+        "quantity": 1.0,
+        "rate": 420000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship program and transport",
+        "quantity": 1.0,
+        "rate": 225000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B75",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-09-26",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Main bearings",
+        "quantity": 1.0,
+        "rate": 45000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Conrod Bearings",
+        "quantity": 6.0,
+        "rate": 35000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Nozzle TIPS",
+        "quantity": 6.0,
+        "rate": 22000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Piston",
+        "quantity": 1.0,
+        "rate": 90000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Overhauling kit",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Bottom Gasket",
+        "quantity": 1.0,
+        "rate": 115000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Oil Seal",
+        "quantity": 1.0,
+        "rate": 80000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Valves",
+        "quantity": 1.0,
+        "rate": 50000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Oil filter",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "fuel Filter",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Prefilter",
+        "quantity": 1.0,
+        "rate": 18000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Turbocharger",
+        "quantity": 1.0,
+        "rate": 360000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Engine Oil",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": "KEG"
+      },
+      {
+        "description": "Crack Engine Block repair",
+        "quantity": 1.0,
+        "rate": 365000.0,
+        "unit": null
+      },
+      {
+        "description": "Cylinder Head repair",
+        "quantity": 1.0,
+        "rate": 150000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation/Logistics",
+        "quantity": 1.0,
+        "rate": 180000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 350000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B76",
+    "client_name": "Bluesky Agro Allied Ltd",
+    "issue_date": "2025-09-30",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "TRANSPORTATION OF LARGE SOLAR PANELS 110pcs FROM APAPA TO BLUESKY ONDO UNIT",
+        "quantity": 1.0,
+        "rate": 650000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B77",
+    "client_name": "Royal cartons ltd",
+    "issue_date": "2025-09-30",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Top gasket kit",
+        "quantity": 1.0,
+        "rate": 365000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Front oil seal",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Rear oil seal",
+        "quantity": 1.0,
+        "rate": 125000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Cylinder head servicing",
+        "quantity": 12.0,
+        "rate": 45000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Charging alternator",
+        "quantity": 1.0,
+        "rate": 325000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Avr",
+        "quantity": 1.0,
+        "rate": 450000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Fan belt",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Anti vibration mounts",
+        "quantity": 1.0,
+        "rate": 185000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Main Alternator service,windings cleaning and varnishes",
+        "quantity": 1.0,
+        "rate": 400000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Piston rings",
+        "quantity": 12.0,
+        "rate": 38000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Con bearings",
+        "quantity": 1.0,
+        "rate": 450000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Main bearings",
+        "quantity": 1.0,
+        "rate": 550000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Oil & fuel filters",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Electrical accessories",
+        "quantity": 1.0,
+        "rate": 450000.0,
+        "unit": "LOT"
+      },
+      {
+        "description": "Transportation and logistics",
+        "quantity": 1.0,
+        "rate": 1100000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 1500000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B78",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-10-01",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "LUB FILTER LF3949",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "FF5052",
+        "quantity": 1.0,
+        "rate": 23000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B79",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-10-01",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "injector sleeves - Cummins 100kva repairs head office ikoyi\n\n<br>",
+        "quantity": 2.0,
+        "rate": 18000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 28000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation - Inspection and repair",
+        "quantity": 1.0,
+        "rate": 18000.0,
+        "unit": "DAY"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B80",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-10-01",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "injector nozzles assembly - <br>\n<br>",
+        "quantity": 2.0,
+        "rate": 18000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 28000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation - Inspection and repair",
+        "quantity": 1.0,
+        "rate": 18000.0,
+        "unit": "DAY"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B81",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-10-02",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Transportation of large solar panels 110pcs from Apapa to bluesky ondo",
+        "quantity": 1.0,
+        "rate": 650000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B82",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2025-10-02",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "SER0005 - Rewinding and repairing of 1400KVA Diesel Generator's alternator of SNL",
+        "quantity": 1.0,
+        "rate": 11100000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation",
+        "quantity": 1.0,
+        "rate": 465000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B83",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-10-02",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "LUB FILTER LF3949",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "fuel filter FF5052",
+        "quantity": 1.0,
+        "rate": 23000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B84",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-10-02",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "control switch p114kva at 28 ademola",
+        "quantity": 1.0,
+        "rate": 75000.0,
+        "unit": null
+      },
+      {
+        "description": "Oil switch",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "workmanship and transportation",
+        "quantity": 1.0,
+        "rate": 39500.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B85",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-10-08",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "replacements of electronic fuel pump 50kva at 26 Ademola",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": null
+      },
+      {
+        "description": "workmanship and transportation",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B86",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2025-10-11",
+    "due_date": null,
+    "notes": "**Service completed on October 12, 2025; generator delivered in secure condition.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Transport of 15kVA generator from No. 20 Adekunle Fajuyi Street, Adeniyi Jones (Mr. Prem's Residence), Ikeja, Lagos to SNL Ota, Ogun State, including crane-assisted loading and unloading",
+        "quantity": 1.0,
+        "rate": 160000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B87",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-10-11",
+    "due_date": null,
+    "notes": "**Work has been completed. The LED RGB rope light was installed at 5B Michael Oguns Street, Ikeja GRA, Lagos, tested, and confirmed to be in good working condition.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Led RGB Rope light",
+        "quantity": 1.0,
+        "rate": 45000.0,
+        "unit": "ROL"
+      },
+      {
+        "description": "25W LED Tubelight (2ft)",
+        "quantity": 1.0,
+        "rate": 7500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Led RGB choke",
+        "quantity": 2.0,
+        "rate": 2500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 800.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "2C 1.5mm\u00b2 cable",
+        "quantity": 3.0,
+        "rate": 1000.0,
+        "unit": "MTR"
+      },
+      {
+        "description": "13 amps socket",
+        "quantity": 2.0,
+        "rate": 3500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "3x3 patress box",
+        "quantity": 2.0,
+        "rate": 500.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Consumables - Minor materials used, including gum, screws, nails, pegs, trunking, and clips.",
+        "quantity": 1.0,
+        "rate": 12000.0,
+        "unit": "LOT"
+      },
+      {
+        "description": "Transportation",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B88",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-10-15",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Oil filters - Maintenance service carries out on 1500kva cummins gg date 14/9/25",
+        "quantity": 4.0,
+        "rate": 97000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Fuel filters",
+        "quantity": 2.0,
+        "rate": 92000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Pre-filters",
+        "quantity": 2.0,
+        "rate": 71000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Water filters",
+        "quantity": 2.0,
+        "rate": 35000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Workmanship & transportation",
+        "quantity": 1.0,
+        "rate": 275000.0,
+        "unit": null
+      },
+      {
+        "description": "AC CLAMP MULTI METER, HIOKI 3280-10F",
+        "quantity": 2.0,
+        "rate": 360000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "INSULATION TESTER, HIOKI IR4056-20",
+        "quantity": 2.0,
+        "rate": 650000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "Photo Cell, Light Switch, 20A, 220V, 50Hz",
+        "quantity": 20.0,
+        "rate": 15500.0,
+        "unit": "PCS"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B89",
+    "client_name": "11 PLC (formerly Mobil Oil Nigeria Plc)",
+    "issue_date": "2025-10-15",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Inspection Charges 1000kva CAT generator, cutting metal covering and inpection of Coil",
+        "quantity": 1.0,
+        "rate": 100000.0,
+        "unit": null
+      },
+      {
+        "description": "Swapping of main alternator from Gen 1 to Gen 3",
+        "quantity": 1.0,
+        "rate": 1300000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship Electrical connections, wiring works, Electrical Calibration and settings",
+        "quantity": 1.0,
+        "rate": 1000000.0,
+        "unit": null
+      },
+      {
+        "description": "Welding works and sundries",
+        "quantity": 1.0,
+        "rate": 100000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B90",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-10-16",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "troubleshooting repair and lubrication service on 100kva cummins genset",
+        "quantity": 1.0,
+        "rate": 80000.0,
+        "unit": null
+      },
+      {
+        "description": "transportation to and fro lagos to ondo state",
+        "quantity": 1.0,
+        "rate": 40000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B91",
+    "client_name": "Bluesky Agro Allied Ltd",
+    "issue_date": "2025-10-19",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Main alternator rewinding of mikano genset",
+        "quantity": 1.0,
+        "rate": 520000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation & installation",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B92",
+    "client_name": "Bluesky Agro Allied Ltd",
+    "issue_date": "2025-10-19",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "kick starter for 20kva replacement",
+        "quantity": 1.0,
+        "rate": 160000.0,
+        "unit": null
+      },
+      {
+        "description": "20kva injector pump cam ring",
+        "quantity": 1.0,
+        "rate": 85000.0,
+        "unit": null
+      },
+      {
+        "description": "20kva pump rotor head replacement",
+        "quantity": 1.0,
+        "rate": 165000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 180000.0,
+        "unit": null
+      },
+      {
+        "description": "Transportation - personnel transportation to and fro inspection and repair two times",
+        "quantity": 1.0,
+        "rate": 120000.0,
+        "unit": "DAY"
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B93",
+    "client_name": "11 PLC (formerly Mobil Oil Nigeria Plc)",
+    "issue_date": "2025-10-19",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Servicing of 1100 kVA CAT Gen Set Main Alternator",
+        "quantity": 1.0,
+        "rate": 1800000.0,
+        "unit": null
+      },
+      {
+        "description": "Hiab Transportation (to and fro)",
+        "quantity": 1.0,
+        "rate": 1000000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B94",
+    "client_name": "Bluesky Agro Allied Ltd",
+    "issue_date": "2025-10-22",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "control swicth",
+        "quantity": 1.0,
+        "rate": 75000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B95",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-11-05",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "4ft 50w tube light",
+        "quantity": 1.0,
+        "rate": 10000.0,
+        "unit": "PCS"
+      },
+      {
+        "description": "insulation tape & thread tape",
+        "quantity": 1.0,
+        "rate": 1000.0,
+        "unit": null
+      },
+      {
+        "description": "Brass tee tap",
+        "quantity": 1.0,
+        "rate": 3000.0,
+        "unit": null
+      },
+      {
+        "description": "workmanship and transportation",
+        "quantity": 1.0,
+        "rate": 8000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B96",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-11-08",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "wc valve flush mechanism - **Plumbing work at gra ikeja**",
+        "quantity": 1.0,
+        "rate": 22500.0,
+        "unit": null
+      },
+      {
+        "description": "transport",
+        "quantity": 1.0,
+        "rate": 8500.0,
+        "unit": null
+      },
+      {
+        "description": "plumbers workmanship",
+        "quantity": 1.0,
+        "rate": 12000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B97",
+    "client_name": "Solwood industry Ltd",
+    "issue_date": "2025-11-08",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "filling valve side inlet",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "transportation",
+        "quantity": 1.0,
+        "rate": 10000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B98",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-11-14",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "genset water pump",
+        "quantity": 1.0,
+        "rate": 115000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6v-B99",
+    "client_name": "WEST AFRICAN CERAMICS LIMITED",
+    "issue_date": "2025-11-15",
+    "due_date": null,
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "for 620 KVA CUMMINSGEN SETOverhauling/Maintenance.Including : Workmanship ,Transportation & Logistics",
+        "quantity": 1.0,
+        "rate": 7201000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6w",
+    "client_name": "Breeze industries ltd",
+    "issue_date": "2025-04-02",
+    "due_date": "2025-04-16",
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "4l gloss paint - Yellow, red and black paints",
+        "quantity": 29.0,
+        "rate": 27000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "4L primer paint",
+        "quantity": 2.0,
+        "rate": 27000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "1\u00bd\" Iron Pipe (5.5m long)",
+        "quantity": 82.0,
+        "rate": 20000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Iron base plate - **\"5''\u00d75'' iron base plate used as footing for handrails.**",
+        "quantity": 156.0,
+        "rate": 3000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Anchor bolt",
+        "quantity": 404.0,
+        "rate": 750.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Welding electrodes",
+        "quantity": 4.0,
+        "rate": 25000.0,
+        "unit": "PAC"
+      },
+      {
+        "description": "Cutting discs",
+        "quantity": 40.0,
+        "rate": 3000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Masking Tape (\u226520m) - Painting &\nFinishing Use",
+        "quantity": 60.0,
+        "rate": 2000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Labour Fabrication & Installation of Guard Rail for Fire Hydrant System",
+        "quantity": 1.0,
+        "rate": 1650000.0,
+        "unit": null
+      },
+      {
+        "description": "Floor Signage Painting \u2013 Water Hydrant Markings - ***Markings, including 86 painted floor boxes with 'Do Not Block' inscriptions and 84 accompanying safety lines demarcating each area***",
+        "quantity": 1.0,
+        "rate": 650000.0,
+        "unit": null
+      },
+      {
+        "description": "Hex bolts and heavy duty pegs",
+        "quantity": 15.0,
+        "rate": 1000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Custom Wooden Fire Extinguisher Storage Boxes",
+        "quantity": 88.0,
+        "rate": 6000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Petrol based thinner",
+        "quantity": 40.0,
+        "rate": 1000.0,
+        "unit": "LTR"
+      },
+      {
+        "description": "Painting accessories - 15 Brushes, 10 rollers & 2m sandpaper\n\n***\n\n<br>",
+        "quantity": 1.0,
+        "rate": 60000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Installation of emergency contact signboards",
+        "quantity": 15.0,
+        "rate": 3000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Pegs & screw",
+        "quantity": 1.0,
+        "rate": 3000.0,
+        "unit": "PAC"
+      },
+      {
+        "description": "Transportation & logistics",
+        "quantity": 320000.0,
+        "rate": 1.0,
+        "unit": null
+      },
+      {
+        "description": "safety cabinet shelves",
+        "quantity": 4.0,
+        "rate": 67500.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6x",
+    "client_name": "ROSEMARY TRANSPORT LTD",
+    "issue_date": "2025-04-11",
+    "due_date": "2025-04-25",
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "GI. Cable tray, 100 mm X 50 mm X 3000",
+        "quantity": 1.0,
+        "rate": 24000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Cable tray cover",
+        "quantity": 18.0,
+        "rate": 18000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "workmanship",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty6y",
+    "client_name": "Breeze industries ltd",
+    "issue_date": "2025-04-11",
+    "due_date": "2025-04-25",
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "18 watts pot lights",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "6 Watts pot lights",
+        "quantity": 18.0,
+        "rate": 4000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "2ft 25W LED Tube Light",
+        "quantity": 1.0,
+        "rate": 7500.0,
+        "unit": null
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 700.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "White cement",
+        "quantity": 3.0,
+        "rate": 2000.0,
+        "unit": "KGS"
+      },
+      {
+        "description": "Transportation",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 40000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty7a",
+    "client_name": "Boden industries limited",
+    "issue_date": "2025-04-22",
+    "due_date": "2025-05-06",
+    "notes": "This invoice covers electrical and plumbing works carried out at Sattish\u2019s apartment.",
+    "terms": null,
+    "items": [
+      {
+        "description": "6 Watts pot lights",
+        "quantity": 10.0,
+        "rate": 4500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "4ft 50w tube light",
+        "quantity": 1.0,
+        "rate": 8000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "18 watts pot lights",
+        "quantity": 3.0,
+        "rate": 6500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "10w bulb",
+        "quantity": 3.0,
+        "rate": 2500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 800.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Door handle",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": "PRS"
+      },
+      {
+        "description": "Flexible connector",
+        "quantity": 2.0,
+        "rate": 2500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Chrome tee tap",
+        "quantity": 2.0,
+        "rate": 2500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Telephone shower",
+        "quantity": 1.0,
+        "rate": 9000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Basin mixer tap",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Thread tape",
+        "quantity": 1.0,
+        "rate": 1000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Shower rose",
+        "quantity": 1.0,
+        "rate": 4000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 55000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty7b",
+    "client_name": "ROSEMARY TRANSPORT LTD",
+    "issue_date": "2025-04-23",
+    "due_date": "2025-05-07",
+    "notes": "*This invoice covers plumbing, furniture, electrical, and masonry works carried out at Sai's apartment.*",
+    "terms": null,
+    "items": [
+      {
+        "description": "Kitchen cabinet door replacement",
+        "quantity": 28000.0,
+        "rate": 1.0,
+        "unit": null
+      },
+      {
+        "description": "18W LED pot Light",
+        "quantity": 4.0,
+        "rate": 6500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "6 Watts pot lights",
+        "quantity": 7.0,
+        "rate": 4500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 800.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "2 gang switch",
+        "quantity": 1.0,
+        "rate": 4500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "1c 1.5mm\u00b2 cable",
+        "quantity": 7.0,
+        "rate": 500.0,
+        "unit": "MTR"
+      },
+      {
+        "description": "4ft 50w tube light",
+        "quantity": 1.0,
+        "rate": 8000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Lamp holder",
+        "quantity": 1.0,
+        "rate": 700.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "10w bulb",
+        "quantity": 4.0,
+        "rate": 2500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Cabinet handle",
+        "quantity": 2.0,
+        "rate": 1500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Padlock, Latch & sliding Bolt Lock",
+        "quantity": 1.0,
+        "rate": 5500.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Fastening Accessories (Tornado Nails, Self-Drilling Screws, Wall Pegs)",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": "PAC"
+      },
+      {
+        "description": "Curtain rods",
+        "quantity": 3.0,
+        "rate": 4000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Curtain rod finials",
+        "quantity": 1.0,
+        "rate": 4000.0,
+        "unit": "PRS"
+      },
+      {
+        "description": "Curtain rod bracket",
+        "quantity": 1.0,
+        "rate": 6000.0,
+        "unit": "PRS"
+      },
+      {
+        "description": "L Angle brackets",
+        "quantity": 4.0,
+        "rate": 1200.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Wireless doorbell",
+        "quantity": 1.0,
+        "rate": 12000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "AA batteries",
+        "quantity": 2.0,
+        "rate": 750.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Cement",
+        "quantity": 2.0,
+        "rate": 1500.0,
+        "unit": "KGS"
+      },
+      {
+        "description": "Silicon gum",
+        "quantity": 1.0,
+        "rate": 3500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Washing machine drain hose",
+        "quantity": 1.0,
+        "rate": 5000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Top git gum",
+        "quantity": 1.0,
+        "rate": 3000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "4\" pan connector",
+        "quantity": 1.0,
+        "rate": 7000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Chrome tee tap",
+        "quantity": 4.0,
+        "rate": 2500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Pvc tee tap",
+        "quantity": 1.0,
+        "rate": 1500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Telephone shower",
+        "quantity": 1.0,
+        "rate": 11000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "\u00bd\" M/F Socket",
+        "quantity": 2.0,
+        "rate": 500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "\u00be x \u00bd\" socket",
+        "quantity": 1.0,
+        "rate": 600.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Bidet handheld spray",
+        "quantity": 2.0,
+        "rate": 5000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Thread tape",
+        "quantity": 1.0,
+        "rate": 1000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Shower rose",
+        "quantity": 1.0,
+        "rate": 4000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "\u00bd\" threaded plug",
+        "quantity": 4.0,
+        "rate": 500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Braided flexible connector",
+        "quantity": 1.0,
+        "rate": 3500.0,
+        "unit": "PRS"
+      },
+      {
+        "description": "Kitchen mixer tap",
+        "quantity": 1.0,
+        "rate": 10000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "General Carpentry & Masonry Fixings",
+        "quantity": 1.0,
+        "rate": 20000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Electrical fixtures installation",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Plumbing Repairs & Fittings",
+        "quantity": 1.0,
+        "rate": 40000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty7c",
+    "client_name": "Sonata agri international Ltd",
+    "issue_date": "2025-04-23",
+    "due_date": "2025-05-07",
+    "notes": "**This invoice covers electrical works carried out in both top-floor flats at 13A Aina George, Ilupeju, Lagos, including the unit occupied by Pavan.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "6 Watts pot lights",
+        "quantity": 4.0,
+        "rate": 4500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "18 watts pot lights",
+        "quantity": 1.0,
+        "rate": 6500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "18 watts surface led",
+        "quantity": 1.0,
+        "rate": 6500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "10w bulb",
+        "quantity": 1.0,
+        "rate": 2500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "4ft 50w tube light",
+        "quantity": 1.0,
+        "rate": 8000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty7c-A",
+    "client_name": "Boden industries limited",
+    "issue_date": "2025-04-23",
+    "due_date": "2025-05-07",
+    "notes": "**This invoice covers electrical works carried out at Satish\u2019s apartment, 13a Aina George, Ilupeju, Lagos. Scope includes diagnosis and replacement of faulty light fittings to restore proper lighting.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "6 Watts pot lights",
+        "quantity": 10.0,
+        "rate": 4500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "4ft 50w tube light",
+        "quantity": 1.0,
+        "rate": 8000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "18 watts pot lights",
+        "quantity": 3.0,
+        "rate": 6500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "10w bulb",
+        "quantity": 3.0,
+        "rate": 2500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 800.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 30000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty7c-B",
+    "client_name": "Boden industries limited",
+    "issue_date": "2025-04-25",
+    "due_date": "2025-05-09",
+    "notes": "**This invoice covers plumbing maintenance and the replacement of a broken door handle at Satish\u2019s apartment, located at 13a Aina George, Ilupeju, Lagos. The scope of work includes the replacement of faulty plumbing fixtures, related fittings, and the installation of a new door handle.**",
+    "terms": null,
+    "items": [
+      {
+        "description": "Flexible connector",
+        "quantity": 2.0,
+        "rate": 2500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Chrome tee tap",
+        "quantity": 2.0,
+        "rate": 2500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Telephone shower",
+        "quantity": 1.0,
+        "rate": 9000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Basin mixer tap",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Shower rose",
+        "quantity": 1.0,
+        "rate": 4000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Thread tape",
+        "quantity": 1.0,
+        "rate": 1000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Door handle",
+        "quantity": 1.0,
+        "rate": 15000.0,
+        "unit": "PRS"
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 25000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty7c-C",
+    "client_name": "Rosemary transport",
+    "issue_date": "2025-04-27",
+    "due_date": "2025-05-11",
+    "notes": "This invoice covers replacement and servicing of lighting fixtures at Ashok\u2019s apartment, 13a Aina George, Ilupeju, Lagos.",
+    "terms": null,
+    "items": [
+      {
+        "description": "6 Watts pot lights",
+        "quantity": 2.0,
+        "rate": 4500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "2ft 25W LED Tube Light",
+        "quantity": 1.0,
+        "rate": 7500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 10000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty7c-D",
+    "client_name": "Rosemary industries ltd",
+    "issue_date": "2025-04-29",
+    "due_date": "2025-05-13",
+    "notes": "This invoice covers the replacement of a faulty 18W pot light in the bathroom at **Abhay Mishra\u2019s** apartment, 13a Aina George, Ilupeju, Lagos.",
+    "terms": null,
+    "items": [
+      {
+        "description": "18 watts pot lights",
+        "quantity": 1.0,
+        "rate": 6500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship and transportation",
+        "quantity": 1.0,
+        "rate": 8000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty7c-E",
+    "client_name": "Bora cartons Ltd",
+    "issue_date": "2025-04-29",
+    "due_date": "2025-05-13",
+    "notes": "This invoice covers the supply of a new borehole clamp holder to replace the previously damaged unit, along with associated labour and transportation costs for installation.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Borehole clamp holder",
+        "quantity": 1.0,
+        "rate": 42000.0,
+        "unit": null
+      },
+      {
+        "description": "Labour and transportation",
+        "quantity": 1.0,
+        "rate": 35000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty7c-F",
+    "client_name": "Kishore",
+    "issue_date": "2025-04-30",
+    "due_date": "2025-05-14",
+    "notes": "This invoice covers electrical, electronic, and welding maintenance carried out at Kishore\u2019s apartment, No. 20 Wilmer Street, Ilupeju. The scope includes switch replacements, fan motor servicing, and handrail welding.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Water heater switch",
+        "quantity": 1.0,
+        "rate": 4000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "1 gang switch",
+        "quantity": 1.0,
+        "rate": 3500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Replacement of two wall fan oscillation motors",
+        "quantity": 2.0,
+        "rate": 12000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship - Electrical & welding services",
+        "quantity": 1.0,
+        "rate": 30000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty7c-G",
+    "client_name": "Camel Logistics and Shipping Services Ltd",
+    "issue_date": "2025-04-30",
+    "due_date": "2025-05-14",
+    "notes": "This invoice covers electrical, electronic, and welding maintenance carried out at Kishore\u2019s apartment, No. 20 Wilmer Street, Ilupeju. The scope includes switch replacements, fan motor servicing, and handrail welding.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Water heater switch",
+        "quantity": 1.0,
+        "rate": 5000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "1 gang switch",
+        "quantity": 1.0,
+        "rate": 3000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Replacement of two wall fan oscillation motors",
+        "quantity": 2.0,
+        "rate": 12000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Repair coil and replace bushing on the fan - 07/05/2025",
+        "quantity": 1.0,
+        "rate": 14000.0,
+        "unit": null
+      },
+      {
+        "description": "Workmanship and Logistics - .Electrical and welding services and transportation",
+        "quantity": 1.0,
+        "rate": 42000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty7c-H",
+    "client_name": "Sweet nutrition nig ltd",
+    "issue_date": "2025-05-01",
+    "due_date": "2025-05-15",
+    "notes": "This invoice covers the electrical integration of an existing inverter and battery system into **Mr. Riaz\u2019s** residential power supply at No. 20 Adekunle Fajuyi Street, Adeniyi Jones, Lagos.",
+    "terms": null,
+    "items": [
+      {
+        "description": "13 amps socket",
+        "quantity": 1.0,
+        "rate": 4500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "3x3 patress box",
+        "quantity": 1.0,
+        "rate": 500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "2.5mm\u00b2 Single-Core Cable",
+        "quantity": 12.0,
+        "rate": 2000.0,
+        "unit": "MTR"
+      },
+      {
+        "description": "32A 1-Pole MCCB",
+        "quantity": 2.0,
+        "rate": 9000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "16\u00d725 PVC Trunking",
+        "quantity": 1.0,
+        "rate": 2500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Efostick gum",
+        "quantity": 1.0,
+        "rate": 3000.0,
+        "unit": null
+      },
+      {
+        "description": "Tornado nail",
+        "quantity": 1.0,
+        "rate": 500.0,
+        "unit": "DOZ"
+      },
+      {
+        "description": "insulation tape",
+        "quantity": 1.0,
+        "rate": 800.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Workmanship and Logistics",
+        "quantity": 1.0,
+        "rate": 42000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty7c-I",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-04-23",
+    "due_date": "2025-05-07",
+    "notes": "This invoice covers the extension and modification of the garden barricade at the main gate, including fabrication, painting, and installation of polycarbonate sheets.",
+    "terms": null,
+    "items": [
+      {
+        "description": "Polycarbonate sheet (danpalon)",
+        "quantity": 5.5,
+        "rate": 145000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "1\" square pipe",
+        "quantity": 49.0,
+        "rate": 16500.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "4l gloss paint",
+        "quantity": 4.0,
+        "rate": 27000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "4L primer paint",
+        "quantity": 3.0,
+        "rate": 27000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Fasteners",
+        "quantity": 200.0,
+        "rate": 300.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "petrol based thinner",
+        "quantity": 3.0,
+        "rate": 1000.0,
+        "unit": "LTR"
+      },
+      {
+        "description": "Consumables (Electrodes, Cutting Discs, Sandpaper)",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Workmanship - Fabrication, welding, painting and sheet installation",
+        "quantity": 1.0,
+        "rate": 200000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  },
+  {
+    "invoice_number": "Sasi-6347ty7d",
+    "client_name": "Tecno power solutions",
+    "issue_date": "2025-04-24",
+    "due_date": "2025-05-08",
+    "notes": null,
+    "terms": null,
+    "items": [
+      {
+        "description": "Polycarbonate sheet (danpalon)",
+        "quantity": 5.5,
+        "rate": 145000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "1\" square pipe",
+        "quantity": 49.0,
+        "rate": 16500.0,
+        "unit": null
+      },
+      {
+        "description": "4l gloss paint",
+        "quantity": 4.0,
+        "rate": 27000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "4L primer paint",
+        "quantity": 3.0,
+        "rate": 27000.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "Fasteners",
+        "quantity": 200.0,
+        "rate": 300.0,
+        "unit": "NOS"
+      },
+      {
+        "description": "petrol based thinner",
+        "quantity": 3.0,
+        "rate": 1000.0,
+        "unit": "LTR"
+      },
+      {
+        "description": "Consumables (Electrodes, Cutting Discs, Sandpaper)",
+        "quantity": 1.0,
+        "rate": 65000.0,
+        "unit": "SET"
+      },
+      {
+        "description": "Workmanship",
+        "quantity": 1.0,
+        "rate": 200000.0,
+        "unit": null
+      }
+    ],
+    "subtotal": null,
+    "total": null,
+    "custom_fields": {
+      "source": "refrens_import"
+    }
+  }
+]
