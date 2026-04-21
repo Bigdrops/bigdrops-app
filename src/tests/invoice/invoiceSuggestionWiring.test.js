@@ -10,9 +10,9 @@ test('live invoice form wires suggestions into the real invoice mobile row compo
   const formSource = fs.readFileSync(lineItemsComponentPath, 'utf8')
   const rowSource = fs.readFileSync(liveMobileItemCardPath, 'utf8')
 
-  assert.match(formSource, /import MobileItemCard from '\.\.\/invoice\/MobileItemCard'/)
+  assert.match(formSource, /import MobileItemCard from ['"](@\/components\/invoice\/MobileItemCard|\.\.\/invoice\/MobileItemCard)['"]/)
   assert.match(formSource, /enableItemSuggestions=\{!isQuotation\}/)
   assert.match(rowSource, /useItemSuggestions/)
   assert.match(rowSource, /getInvoiceSuggestionSelection/)
-  assert.match(rowSource, /showSuggestions && \(suggestionsLoading \|\| suggestions\.length > 0\)/)
+  assert.match(rowSource, /showSuggestions && \(suggestionsLoading \|\| \(suggestions && suggestions\.length > 0\)\)/)
 })

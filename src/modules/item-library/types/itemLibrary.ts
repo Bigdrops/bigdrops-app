@@ -34,6 +34,7 @@ export interface ItemSuggestion {
   last_sold_price?: number | null
   usage_count?: number | null
   last_used_at?: string | null
+  last_source_type?: 'invoice' | 'quotation' | string | null
   is_active?: boolean
 }
 

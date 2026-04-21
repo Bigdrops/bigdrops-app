@@ -20,3 +20,11 @@ test('mobile item card keeps a tight utility rail and a clean subtotal endpoint'
   assert.match(source, />Subtotal</)
   assert.doesNotMatch(source, /Quantity × unit rate summary/)
 })
+
+test('mobile item card clears linked item context on manual description edits and renders a compact price strip', () => {
+  const source = fs.readFileSync(mobileItemCardPath, 'utf8')
+
+  assert.match(source, /if \(item\.item_id\) \{\s*onUpdate\(index, 'item_id', null\)/)
+  assert.match(source, /item\.item_id && selectedSuggestionContextText \? \(/)
+  assert.match(source, />\s*\{selectedSuggestionContextText\}\s*<\/div>/)
+})

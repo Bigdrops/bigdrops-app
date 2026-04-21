@@ -35,6 +35,7 @@ function normalizeSuggestionRow(row: Record<string, unknown>): ItemSuggestion {
     last_sold_price: toNumber(row.last_sold_price),
     usage_count: toNumber(row.usage_count),
     last_used_at: row.last_used_at ? String(row.last_used_at) : null,
+    last_source_type: row.last_source_type ? String(row.last_source_type) : null,
     is_active: typeof row.is_active === 'boolean' ? row.is_active : true,
   }
 }
@@ -92,7 +93,7 @@ export async function getItemSuggestions(searchText: string, resultLimit = 10): 
   // Final fallback: direct summary view lookup so the UI still works
   const { data, error } = await supabase
     .from('item_price_summary_v')
-    .select('item_id, name, standard_price, last_sold_price, usage_count, last_used_at, is_active')
+    .select('item_id, name, standard_price, last_sold_price, usage_count, last_used_at, last_source_type, is_active')
     .ilike('name', `%${trimmed}%`)
     .order('usage_count', { ascending: false })
     .order('last_used_at', { ascending: false, nullsFirst: false })

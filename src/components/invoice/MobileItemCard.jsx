@@ -15,6 +15,7 @@ import { toast } from '@/hooks/use-toast'
 import UnitInput from '@/components/UnitInput'
 import { useItemSuggestions } from '@/modules/item-library/hooks'
 import { getInvoiceSuggestionSelection } from '@/modules/item-library/domain/invoiceSuggestionSelection'
+import { getInvoiceSuggestionPriceContextText } from '@/modules/item-library/domain/invoiceSuggestionPriceContext'
 import { fieldCls, labelCls } from '@/components/invoice/mobile/mobileFormPrimitives'
 
 const CLOUD_NAME = 'ddhqvv77g'
@@ -60,6 +61,7 @@ export default function MobileItemCard({
   const [uploading, setUploading] = useState(false)
   const [descriptionFocused, setDescriptionFocused] = useState(false)
   const [debouncedDescription, setDebouncedDescription] = useState(item.description || '')
+  const [selectedSuggestionContextText, setSelectedSuggestionContextText] = useState(null)
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -69,6 +71,12 @@ export default function MobileItemCard({
 
     return () => window.clearTimeout(timeoutId)
   }, [item.description])
+
+  useEffect(() => {
+    if (!item.item_id) {
+      setSelectedSuggestionContextText(null)
+    }
+  }, [item.item_id])
 
   const autoInstall = (() => {
     const col = getColumn('install_rate')
@@ -117,7 +125,19 @@ export default function MobileItemCard({
     onUpdate(index, 'description', selection.description)
     onUpdate(index, 'item_id', selection.item_id)
     onUpdate(index, 'unit_price', selection.unit_price)
+    setSelectedSuggestionContextText(
+      selection.item_id ? getInvoiceSuggestionPriceContextText(suggestion) : null,
+    )
     setDescriptionFocused(false)
+  }
+
+  const handleDescriptionChange = (event) => {
+    const nextDescription = event.target.value
+    onUpdate(index, 'description', nextDescription)
+    if (item.item_id) {
+      onUpdate(index, 'item_id', null)
+      setSelectedSuggestionContextText(null)
+    }
   }
 
   return (
@@ -136,7 +156,7 @@ export default function MobileItemCard({
           <div className="relative">
             <Textarea
               value={item.description || ''}
-              onChange={(e) => onUpdate(index, 'description', e.target.value)}
+              onChange={handleDescriptionChange}
               onFocus={() => setDescriptionFocused(true)}
               onBlur={() => setTimeout(() => setDescriptionFocused(false), 150)}
               placeholder="Item description..."
@@ -167,6 +187,11 @@ export default function MobileItemCard({
                 )}
               </div>
             )}
+            {item.item_id && selectedSuggestionContextText ? (
+              <div className="mt-2 text-[11px] font-medium leading-relaxed text-[var(--bd-text3)]">
+                {selectedSuggestionContextText}
+              </div>
+            ) : null}
           </div>
 
           {/* Sub-description Collapse */}
