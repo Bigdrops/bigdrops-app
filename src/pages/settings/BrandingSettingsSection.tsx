@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ChangeEvent } from 'react'
 import { CheckCircle2, ChevronLeft, Loader2, Pencil, Upload } from 'lucide-react'
 import { fetchSettings, saveSettings, uploadFile, useSettings } from '@/hooks/useSettings'
 import {
@@ -159,18 +158,6 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
     }
   }
 
-  const openLogoPicker = () => {
-    console.log('[BrandingSettings] upload trigger clicked')
-    setUploadError(null)
-    logoInputRef.current?.click()
-  }
-
-  const handleLogoInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] || null
-    console.log('[BrandingSettings] file input onChange fired:', file)
-    void handleUpload(file)
-  }
-
   const save = async () => {
     console.log('[BrandingSettings] save clicked, current form state:', form)
     setSaving(true)
@@ -217,105 +204,6 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
   const footerPreview = (form.footer_text || '').split('\n').find(Boolean) || ''
   const previewSrc = localLogoPreview || form.company_logo_url
-
-  const UploadBox = () => (
-    <SettingsField label="Company Logo">
-      <input
-        ref={logoInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleLogoInputChange}
-      />
-      {previewSrc ? (
-        <div className="space-y-3">
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
-            <div className="flex flex-col items-center text-center">
-              <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50">
-                <img
-                  src={previewSrc}
-                  alt="Company logo"
-                  className="h-full w-full object-contain"
-                  onError={() => {
-                    setUploadError('Logo preview failed to load.')
-                    setLogoState('error')
-                  }}
-                />
-              </div>
-              <div className="mt-3 text-sm font-bold text-slate-900">Current Logo</div>
-              <div className="mt-1 text-[12px] leading-5 text-muted-foreground">
-                This is the logo currently selected for branding.
-              </div>
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={openLogoPicker}
-                  className="cursor-pointer rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs font-bold text-indigo-700 transition-colors hover:bg-indigo-50"
-                >
-                  Replace Logo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUploadError(null)
-                    if (localLogoPreview) URL.revokeObjectURL(localLogoPreview)
-                    setLocalLogoPreview('')
-                    updateForm('company_logo_url', '')
-                  }}
-                  className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-500 transition-colors hover:bg-red-50"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          </div>
-          {logoState === 'uploading' ? (
-            <div className="rounded-xl bg-indigo-50 px-3 py-2 text-[12px] font-medium text-indigo-700">
-              Uploading logo...
-            </div>
-          ) : null}
-          {logoState === 'uploaded-unsaved' ? (
-            <div className="rounded-xl bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700">
-              Logo uploaded. Save branding to keep this change.
-            </div>
-          ) : null}
-          {logoState === 'saved' ? (
-            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-[12px] font-medium text-emerald-700">
-              <CheckCircle2 size={14} />
-              Logo saved successfully.
-            </div>
-          ) : null}
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={openLogoPicker}
-          className="flex w-full cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 bg-indigo-50/20 px-4 py-5 text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50/40"
-        >
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white">
-            {uploading.logo ? (
-              <Loader2 size={20} className="animate-spin text-muted-foreground" />
-            ) : (
-              <Upload size={20} className="text-indigo-400" />
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-bold text-slate-900">
-              {uploading.logo ? 'Uploading...' : 'Upload Logo'}
-            </div>
-            <div className="mt-1 text-[12px] leading-5 text-muted-foreground">
-              PNG, JPG, or SVG. Use a clean high-resolution logo.
-            </div>
-          </div>
-        </button>
-      )}
-      {uploadError ? (
-        <div className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-[12px] font-medium text-red-600">
-          {uploadError}
-        </div>
-      ) : null}
-    </SettingsField>
-  )
 
   if (!editing) {
     return (
@@ -415,7 +303,117 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
         <div className="px-4 py-4">
-          <UploadBox />
+          <SettingsField label="Company Logo">
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0] || null
+                console.log('[BrandingSettings] file input onChange fired:', file)
+                void handleUpload(file)
+              }}
+            />
+
+            {previewSrc ? (
+              <div className="space-y-3">
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50">
+                      <img
+                        src={previewSrc}
+                        alt="Company logo"
+                        className="h-full w-full object-contain"
+                        onError={() => {
+                          setUploadError('Logo preview failed to load.')
+                          setLogoState('error')
+                        }}
+                      />
+                    </div>
+                    <div className="mt-3 text-sm font-bold text-slate-900">Current Logo</div>
+                    <div className="mt-1 text-[12px] leading-5 text-muted-foreground">
+                      This is the logo currently selected for branding.
+                    </div>
+                    <div className="mt-4 flex flex-wrap justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          console.log('[BrandingSettings] upload trigger clicked')
+                          setUploadError(null)
+                          logoInputRef.current?.click()
+                        }}
+                        className="rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs font-bold text-indigo-700 transition-colors hover:bg-indigo-50"
+                      >
+                        Replace Logo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUploadError(null)
+                          if (localLogoPreview) URL.revokeObjectURL(localLogoPreview)
+                          setLocalLogoPreview('')
+                          updateForm('company_logo_url', '')
+                        }}
+                        className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-500 transition-colors hover:bg-red-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                {logoState === 'uploading' ? (
+                  <div className="rounded-xl bg-indigo-50 px-3 py-2 text-[12px] font-medium text-indigo-700">
+                    Uploading logo...
+                  </div>
+                ) : null}
+                {logoState === 'uploaded-unsaved' ? (
+                  <div className="rounded-xl bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700">
+                    Logo uploaded. Save branding to keep this change.
+                  </div>
+                ) : null}
+                {logoState === 'saved' ? (
+                  <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-[12px] font-medium text-emerald-700">
+                    <CheckCircle2 size={14} />
+                    Logo saved successfully.
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div
+                onClick={() => {
+                  console.log('[BrandingSettings] upload trigger clicked')
+                  setUploadError(null)
+                  logoInputRef.current?.click()
+                }}
+                className="cursor-pointer rounded-2xl border-2 border-dashed border-slate-200 bg-indigo-50/20 px-4 py-5 text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50/40"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white">
+                    {uploading.logo ? (
+                      <Loader2 size={20} className="animate-spin text-muted-foreground" />
+                    ) : (
+                      <Upload size={20} className="text-indigo-400" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-bold text-slate-900">
+                      {uploading.logo ? 'Uploading...' : 'Upload Logo'}
+                    </div>
+                    <div className="mt-1 text-[12px] leading-5 text-muted-foreground">
+                      PNG, JPG, or SVG. Use a clean high-resolution logo.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {uploadError ? (
+              <div className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-[12px] font-medium text-red-600">
+                {uploadError}
+              </div>
+            ) : null}
+          </SettingsField>
         </div>
 
         <div className="border-t border-slate-200/80 px-4 py-4">
