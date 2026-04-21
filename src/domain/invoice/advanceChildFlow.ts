@@ -132,8 +132,6 @@ export function buildAdvanceChildInvoicePayload({
     total: advanceAmount,
     amount_in_words: '',
     custom_fields: parentInvoice?.custom_fields || null,
-    is_advance: true,
-    advance_percentage: mode === 'percent' ? numericInput : 0,
     advance_mode: mode,
     advance_value: numericInput,
     total_contract_value: contractValue,

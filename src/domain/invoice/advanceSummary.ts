@@ -5,7 +5,6 @@ import {
 
 type AdvanceInvoiceLike = {
   thread_role?: string | null
-  is_advance?: boolean | null
   total?: number | string | null
   total_contract_value?: number | string | null
   advance_primary_label?: string | null
@@ -28,7 +27,7 @@ function toNumber(value: number | string | null | undefined) {
 }
 
 export function isAdvanceInvoiceOutput(invoice: AdvanceInvoiceLike | null | undefined) {
-  return invoice?.thread_role === 'advance' || invoice?.is_advance === true
+  return invoice?.thread_role === 'advance'
 }
 
 export function getAdvanceSummaryValues(

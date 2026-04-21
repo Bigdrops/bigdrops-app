@@ -51,7 +51,6 @@ test('advance child flow builds a child payload without converting the parent in
   assert.equal(payload.invoice_number, 'INV-001-A')
   assert.equal(payload.thread_id, 'parent-1')
   assert.equal(payload.thread_role, 'advance')
-  assert.equal(payload.is_advance, true)
   assert.equal(payload.advance_mode, 'percent')
   assert.equal(payload.advance_value, 30)
   assert.equal(payload.total_contract_value, 500000)
