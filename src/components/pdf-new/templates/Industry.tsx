@@ -68,7 +68,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
 
   return (
     <Page size="A4" style={styles.page}>
-      {(data.title || metaRows.length > 0 || data.company?.logoUrl) && (
+      {(data.title || metaRows.length > 0 || data.company?.companyLogoUrl) && (
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text
@@ -143,9 +143,9 @@ export default function IndustryTemplate({ data }: TemplateProps) {
             ))}
           </View>
 
-          {data.company?.logoUrl ? (
+          {data.company?.companyLogoUrl ? (
             <View style={styles.headerRight}>
-              <Image src={data.company.logoUrl} style={styles.logo} />
+              <Image src={data.company.companyLogoUrl} style={styles.logo} />
             </View>
           ) : null}
         </View>

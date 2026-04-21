@@ -41,20 +41,27 @@ test('resolveCanonicalItemImageUrl never treats temporary local preview urls as 
   )
 })
 
-test('resolveCanonicalLogoUrl uses the normalized company logo path and legacy fallback, but rejects temporary urls', () => {
+test('resolveCanonicalLogoUrl uses the canonical company logo path only, while rejecting temporary urls', () => {
   assert.equal(
     resolveCanonicalLogoUrl({
       company_logo_url: 'https://cdn.example.com/logo.png',
-      logo_url: 'https://cdn.example.com/legacy-logo.png',
+      companyLogoUrl: 'https://cdn.example.com/company-logo-prop.png',
     }),
     'https://cdn.example.com/logo.png',
   )
 
   assert.equal(
     resolveCanonicalLogoUrl({
+      companyLogoUrl: 'https://cdn.example.com/company-logo-prop.png',
+    }),
+    'https://cdn.example.com/company-logo-prop.png',
+  )
+
+  assert.equal(
+    resolveCanonicalLogoUrl({
       logo_url: 'https://cdn.example.com/legacy-logo.png',
     }),
-    'https://cdn.example.com/legacy-logo.png',
+    null,
   )
 
   assert.equal(

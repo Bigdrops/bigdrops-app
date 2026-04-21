@@ -32,9 +32,8 @@ export function resolveCanonicalLogoUrl(value) {
   if (value && typeof value === 'object') {
     return resolvePersistedMediaUrl(
       value.company_logo_url,
-      value.logo_url,
+      value.companyLogoUrl,
       value.imageUrl,
-      value.logoUrl,
     )
   }
 

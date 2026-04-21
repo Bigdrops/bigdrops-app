@@ -40,7 +40,7 @@ export type IndustryTemplateData = {
   showTagline: boolean
   showBankDetails: boolean
   company: {
-    logoUrl: string
+    companyLogoUrl: string
     name: string
     tagline: string
     address: string
@@ -328,8 +328,8 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
     showTagline: Boolean(model.tagline),
     showBankDetails: Boolean(model.bankDetails),
     company: model.issuer
-      ? {
-          logoUrl: resolveCanonicalLogoUrl(model.logo) || '',
+        ? {
+          companyLogoUrl: resolveCanonicalLogoUrl(model.logo) || '',
           name: model.issuer.name || '',
           tagline: model.tagline || '',
           address: issuerAddress.address,
