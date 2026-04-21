@@ -202,10 +202,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   if (loading) return <SettingsLoadingState />
 
   const footerPreview = (form.footer_text || '').split('\n').find(Boolean) || ''
-  const previewSrc =
-    localLogoPreview ||
-    form.company_logo_url ||
-    'https://xqlpekpkbszpdgtuwybh.supabase.co/storage/v1/object/public/logos/logo/1776653418366.png'
+  const previewSrc = localLogoPreview || form.company_logo_url
 
   const UploadBox = ({
     label,
@@ -408,6 +405,14 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
             <SettingsSummaryField label="Footer Text" value={footerPreview || 'Not set'} />
           </div>
         </div>
+
+        {/* DEBUG LINES */}
+        <div className="mt-2 text-xs text-red-600 break-all">
+          previewSrc: {previewSrc || 'EMPTY'}
+        </div>
+        <div className="text-xs text-blue-600 break-all">
+          form.company_logo_url: {form.company_logo_url || 'EMPTY'}
+        </div>
       </div>
     )
   }
@@ -457,6 +462,14 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
         <div className="border-t border-slate-200/80 px-4 py-4">
           <SettingsSaveButton saving={saving} saved={saved} onClick={save} />
         </div>
+      </div>
+
+      {/* DEBUG LINES */}
+      <div className="mt-2 text-xs text-red-600 break-all">
+        previewSrc: {previewSrc || 'EMPTY'}
+      </div>
+      <div className="text-xs text-blue-600 break-all">
+        form.company_logo_url: {form.company_logo_url || 'EMPTY'}
       </div>
     </div>
   )
