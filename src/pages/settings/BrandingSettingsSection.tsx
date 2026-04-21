@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CheckCircle2, ChevronLeft, Loader2, Pencil, Upload } from 'lucide-react'
 import { fetchSettings, saveSettings, uploadFile, useSettings } from '@/hooks/useSettings'
 import {
@@ -34,7 +34,6 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [logoState, setLogoState] = useState<LogoState>('idle')
   const [localLogoPreview, setLocalLogoPreview] = useState<string>('')
-  const logoRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     if (!loading && settings) {
@@ -93,6 +92,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   }
 
   const handleUpload = async (file: File | null) => {
+    console.log('branding file received:', file)
     if (!file) return
 
     console.log('[BrandingSettings] handleUpload start', {
@@ -150,10 +150,6 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
       onToast(message)
     } finally {
       setUploading({ logo: false })
-
-      if (logoRef.current) {
-        logoRef.current.value = ''
-      }
     }
   }
 
@@ -204,22 +200,18 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   const footerPreview = (form.footer_text || '').split('\n').find(Boolean) || ''
   const previewSrc = localLogoPreview || form.company_logo_url
 
-  const UploadBox = ({
-    label,
-    inputRef,
-  }: {
-    label: string
-    inputRef: React.RefObject<HTMLInputElement | null>
-  }) => (
-    <SettingsField label={label}>
+  const UploadBox = () => (
+    <SettingsField label="Company Logo">
       <input
-        ref={inputRef}
+        id="company-logo-input"
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={(event) => handleUpload(event.target.files?.[0] || null)}
+        onChange={(event) => {
+          const file = event.target.files?.[0] || null
+          void handleUpload(file)
+        }}
       />
-
       {previewSrc ? (
         <div className="space-y-3">
           <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
@@ -227,40 +219,30 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
               <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50">
                 <img
                   src={previewSrc}
-                  alt={label}
+                  alt="Company logo"
                   className="h-full w-full object-contain"
                   onError={() => {
-                    console.error('[BrandingSettings] Logo preview failed to load for URL:', previewSrc)
-                    setUploadError(`Logo preview failed to load. Check if URL is public: ${previewSrc}`)
+                    setUploadError('Logo preview failed to load.')
                     setLogoState('error')
                   }}
                 />
               </div>
-
               <div className="mt-3 text-sm font-bold text-slate-900">Current Logo</div>
               <div className="mt-1 text-[12px] leading-5 text-muted-foreground">
                 This is the logo currently selected for branding.
               </div>
-
               <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUploadError(null)
-                    inputRef.current?.click()
-                  }}
-                  className="rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs font-bold text-indigo-700 transition-colors hover:bg-indigo-50"
+                <label
+                  htmlFor="company-logo-input"
+                  className="cursor-pointer rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs font-bold text-indigo-700 transition-colors hover:bg-indigo-50"
                 >
                   Replace Logo
-                </button>
-
+                </label>
                 <button
                   type="button"
                   onClick={() => {
                     setUploadError(null)
-                    if (localLogoPreview) {
-                      URL.revokeObjectURL(localLogoPreview)
-                    }
+                    if (localLogoPreview) URL.revokeObjectURL(localLogoPreview)
                     setLocalLogoPreview('')
                     updateForm('company_logo_url', '')
                   }}
@@ -271,19 +253,16 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
               </div>
             </div>
           </div>
-
           {logoState === 'uploading' ? (
             <div className="rounded-xl bg-indigo-50 px-3 py-2 text-[12px] font-medium text-indigo-700">
               Uploading logo...
             </div>
           ) : null}
-
           {logoState === 'uploaded-unsaved' ? (
             <div className="rounded-xl bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700">
               Logo uploaded. Save branding to keep this change.
             </div>
           ) : null}
-
           {logoState === 'saved' ? (
             <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-[12px] font-medium text-emerald-700">
               <CheckCircle2 size={14} />
@@ -292,42 +271,27 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
           ) : null}
         </div>
       ) : (
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={() => {
-              setUploadError(null)
-              inputRef.current?.click()
-            }}
-            className="flex w-full items-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 bg-indigo-50/20 px-4 py-5 text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50/40"
-          >
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white">
-              {uploading.logo ? (
-                <Loader2 size={20} className="animate-spin text-muted-foreground" />
-              ) : (
-                <Upload size={20} className="text-indigo-400" />
-              )}
+        <label
+          htmlFor="company-logo-input"
+          className="flex w-full cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 bg-indigo-50/20 px-4 py-5 text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50/40"
+        >
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white">
+            {uploading.logo ? (
+              <Loader2 size={20} className="animate-spin text-muted-foreground" />
+            ) : (
+              <Upload size={20} className="text-indigo-400" />
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-bold text-slate-900">
+              {uploading.logo ? 'Uploading...' : 'Upload Logo'}
             </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-slate-900">
-                {uploading.logo ? 'Uploading...' : 'Upload Logo'}
-              </div>
-              <div className="mt-1 text-[12px] leading-5 text-muted-foreground">
-                PNG, JPG, or SVG. Use a clean high-resolution logo.
-              </div>
+            <div className="mt-1 text-[12px] leading-5 text-muted-foreground">
+              PNG, JPG, or SVG. Use a clean high-resolution logo.
             </div>
-          </button>
-
-          {logoState === 'saved' && form.company_logo_url ? (
-            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-[12px] font-medium text-emerald-700">
-              <CheckCircle2 size={14} />
-              Logo saved successfully.
-            </div>
-          ) : null}
-        </div>
+          </div>
+        </label>
       )}
-
       {uploadError ? (
         <div className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-[12px] font-medium text-red-600">
           {uploadError}
@@ -405,14 +369,6 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
             <SettingsSummaryField label="Footer Text" value={footerPreview || 'Not set'} />
           </div>
         </div>
-
-        {/* DEBUG LINES */}
-        <div className="mt-2 text-xs text-red-600 break-all">
-          previewSrc: {previewSrc || 'EMPTY'}
-        </div>
-        <div className="text-xs text-blue-600 break-all">
-          form.company_logo_url: {form.company_logo_url || 'EMPTY'}
-        </div>
       </div>
     )
   }
@@ -442,7 +398,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
         <div className="px-4 py-4">
-          <UploadBox label="Company Logo" inputRef={logoRef} />
+          <UploadBox />
         </div>
 
         <div className="border-t border-slate-200/80 px-4 py-4">
@@ -462,14 +418,6 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
         <div className="border-t border-slate-200/80 px-4 py-4">
           <SettingsSaveButton saving={saving} saved={saved} onClick={save} />
         </div>
-      </div>
-
-      {/* DEBUG LINES */}
-      <div className="mt-2 text-xs text-red-600 break-all">
-        previewSrc: {previewSrc || 'EMPTY'}
-      </div>
-      <div className="text-xs text-blue-600 break-all">
-        form.company_logo_url: {form.company_logo_url || 'EMPTY'}
       </div>
     </div>
   )
