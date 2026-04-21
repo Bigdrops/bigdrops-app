@@ -159,7 +159,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   }
 
   const save = async () => {
-    console.log('[BrandingSettings] save clicked, current form state:', form)
+    console.log('>>> [BrandingSettings:save] CLICKED, current form state:', form)
     setSaving(true)
     setUploadError(null)
 
@@ -168,21 +168,22 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
         company_logo_url: form.company_logo_url,
         footer_text: form.footer_text,
       }
-      console.log('[BrandingSettings] Calling saveSettings with payload:', payload)
+      
+      console.log('>>> [BrandingSettings:save] CALLING saveSettings WITH PAYLOAD:', JSON.stringify(payload, null, 2))
       await saveSettings(payload)
-      console.log('[BrandingSettings] saveSettings resolved successfully')
+      console.log('>>> [BrandingSettings:save] saveSettings RETURNED SUCCESS')
 
       // Force fetch fresh settings from database to bypass cache
-      console.log('[BrandingSettings] Forcing fresh fetch from database...')
+      console.log('>>> [BrandingSettings:save] FORCING FRESH FETCH FROM DB...')
       const freshSettings = await fetchSettings({ force: true })
-      console.log('[BrandingSettings] Fresh fetch complete, received from DB:', freshSettings)
+      console.log('>>> [BrandingSettings:save] FRESH SETTINGS FROM DB:', JSON.stringify(freshSettings, null, 2))
 
       setSaved(true)
       setEditing(false)
       setLogoState(form.company_logo_url ? 'saved' : 'idle')
 
       if (localLogoPreview) {
-        console.log('[BrandingSettings] Revoking local preview URL')
+        console.log('>>> [BrandingSettings:save] Revoking local preview URL')
         URL.revokeObjectURL(localLogoPreview)
       }
       setLocalLogoPreview('')
@@ -190,7 +191,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
       onToast('Branding saved')
       setTimeout(() => setSaved(false), 2500)
     } catch (error) {
-      console.error('[BrandingSettings] Save pipeline failed:', error)
+      console.error('>>> [BrandingSettings:save] PIPELINE FAILURE:', error)
       const message = getErrorMessage(error)
       setUploadError(message)
       setLogoState('error')

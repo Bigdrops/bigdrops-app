@@ -511,8 +511,8 @@ export const styles = StyleSheet.create({
 
 export function resolveIndustryColumnStyle(column: IndustryColumn) {
   const override = INDUSTRY_COLUMN_OVERRIDES[column.key] || {}
-  const width = Number(override.width ?? column.width ?? 0)
-  const flex = Number(override.flex ?? column.flex ?? 1)
+  const width = Number(column.width ?? override.width ?? 0)
+  const flex = Number(column.flex ?? override.flex ?? 1)
 
   if (width > 0) {
     return {

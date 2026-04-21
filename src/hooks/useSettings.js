@@ -79,7 +79,10 @@ function getPersistableUpdates(updates) {
   }
 
   for (const column of unsupportedSettingsColumns) {
-    delete nextUpdates[column]
+    if (column in nextUpdates) {
+      console.warn(`>>> [useSettings:persistSettings] STRIPPING unsupported column: ${column}`)
+      delete nextUpdates[column]
+    }
   }
 
   return nextUpdates
@@ -90,18 +93,46 @@ async function persistSettings(updates) {
   
   // If we are saving company_logo_url, we also try to CLEAR the legacy logo_url column
   // to avoid ghost migrations on next refresh.
-  if ('company_logo_url' in persistableUpdates && !('logo_url' in persistableUpdates)) {
+  // CRITICAL: We only do this if logo_url is NOT already marked as unsupported to avoid infinite retry loops.
+  const shouldClearLegacyLogo = 
+    'company_logo_url' in persistableUpdates && 
+    !('logo_url' in persistableUpdates) && 
+    !unsupportedSettingsColumns.has('logo_url')
+
+  if (shouldClearLegacyLogo) {
     persistableUpdates.logo_url = null
   }
 
-  console.log('[useSettings] Persisting updates to DB:', persistableUpdates)
+  const finalPayload = { id: 1, ...persistableUpdates }
+  console.log('>>> [useSettings:persistSettings] FINAL PAYLOAD:', JSON.stringify(finalPayload, null, 2))
 
-  const { error } = await supabase
+  const { data: upsertData, error, status, statusText } = await supabase
     .from('settings')
-    .upsert({ id: 1, ...persistableUpdates }, { onConflict: 'id' })
+    .upsert(finalPayload, { onConflict: 'id' })
+    .select()
+
+  console.log('>>> [useSettings:persistSettings] SUPABASE RESPONSE:', {
+    status,
+    statusText,
+    data: upsertData,
+    error: error ? {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint
+    } : null
+  })
 
   if (!error) {
-    console.log('[useSettings] Persistence successful')
+    if (!upsertData || upsertData.length === 0) {
+      console.error('>>> [useSettings:persistSettings] CRITICAL FAILURE: Upsert returned SUCCESS status but ZERO rows.', {
+        status,
+        statusText,
+        payload: finalPayload
+      })
+      throw new Error('Database persistence failed: Success reported but no rows were updated. Check RLS policies.')
+    }
+    console.log('>>> [useSettings:persistSettings] VERIFIED SUCCESS:', upsertData[0])
     return
   }
 
@@ -245,21 +276,26 @@ export async function uploadFile(bucket, path, file) {
 }
 
 export async function saveSettings(updates) {
-  console.log('[useSettings] saveSettings called with:', updates)
+  console.log('>>> [useSettings:saveSettings] START:', JSON.stringify(updates, null, 2))
   const previousSettings = cachedSettings || {}
-  const nextSettings = normalizeSettings({ ...previousSettings, ...updates })
   
-  lastLocalUpdateAt = Date.now()
-  cachedSettings = nextSettings
-  listeners.forEach(fn => fn(cachedSettings))
+  // We NO LONGER update the cache before persistence (Optimistic UI disabled for better debugging)
+  // We will update it only after persistSettings succeeds.
 
   try {
+    console.log('>>> [useSettings:saveSettings] Attempting persistence...')
     await persistSettings(updates)
-    console.log('[useSettings] saveSettings: Persistence successful')
-  } catch (error) {
-    console.error('[useSettings] saveSettings: Persistence failed, reverting cache:', error)
-    cachedSettings = previousSettings
+    console.log('>>> [useSettings:saveSettings] Persistence confirmed. Updating local state.')
+    
+    const nextSettings = normalizeSettings({ ...previousSettings, ...updates })
+    lastLocalUpdateAt = Date.now()
+    cachedSettings = nextSettings
     listeners.forEach(fn => fn(cachedSettings))
+    
+    return cachedSettings
+  } catch (error) {
+    console.error('>>> [useSettings:saveSettings] FAILURE:', error)
+    // No need to revert cachedSettings as we didn't update it yet
     throw error
   }
 }

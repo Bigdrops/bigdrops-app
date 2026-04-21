@@ -7,6 +7,7 @@ type InvoiceHtmlViewProps = {
   previewModel: any
   pdfOutput: any
   settingsData: any
+  mergeQtyUnit?: boolean
 }
 
 export default function InvoiceHtmlView({
@@ -15,6 +16,7 @@ export default function InvoiceHtmlView({
   previewModel,
   pdfOutput,
   settingsData,
+  mergeQtyUnit,
 }: InvoiceHtmlViewProps) {
   const items = Array.isArray(previewModel?.previewItems) ? previewModel.previewItems : []
   const totals = Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : []
@@ -25,7 +27,7 @@ export default function InvoiceHtmlView({
   const notesSections = Array.isArray(previewModel?.previewNotesSections) ? previewModel.previewNotesSections : []
 
   return (
-    <div className="invoiceHtmlView">
+    <div className={`invoiceHtmlView ${mergeQtyUnit ? 'merged-qty' : ''}`}>
       <div className="doc-top-accent" />
 
       <div className="doc-head">
@@ -69,7 +71,7 @@ export default function InvoiceHtmlView({
       <div className="doc-items">
         <div className="doc-items-head">
           <div className="doc-col-lbl">Description</div>
-          <div className="doc-col-lbl r">Qty</div>
+          <div className="doc-col-lbl">{mergeQtyUnit ? 'Qty / Unit' : 'Qty'}</div>
           <div className="doc-col-lbl r">Amount</div>
         </div>
 

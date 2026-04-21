@@ -612,6 +612,7 @@ export default function ViewInvoice() {
               previewModel={previewModel}
               pdfOutput={pdfOutput}
               settingsData={settingsData}
+              mergeQtyUnit={customFields?.mergeQtyUnit === true}
             />
           }
           paymentSummary={[

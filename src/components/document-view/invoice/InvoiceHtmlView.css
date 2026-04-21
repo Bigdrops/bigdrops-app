@@ -132,6 +132,17 @@
   align-items: start;
 }
 
+.merged-qty .doc-items-head,
+.merged-qty .doc-item-row {
+  grid-template-columns: 1fr 88px 76px;
+}
+
+.merged-qty .item-qty {
+  text-align: left;
+  font-family: var(--font-ui);
+  font-weight: 600;
+}
+
 .doc-item-row.group-hd {
   padding: 6px 20px;
   background: var(--bg2);

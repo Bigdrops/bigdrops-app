@@ -125,8 +125,8 @@ export function interpretPdfTableSettings(
         label: col.label || fixedBase.label,
         ...(key === 'quantity' && mergeQtyUnit ? {
           label: 'Qty / Unit',
-          pdfWidth: 42,
-          pdfFlex: 0.95
+          pdfWidth: 64,
+          pdfFlex: 1.25
         } : {})
       })
     } else if (isConfigurable) {
