@@ -47,6 +47,7 @@ test('shared line items still use the live invoice mobile item card implementati
   const lineItemsSource = fs.readFileSync(formLineItemsPath, 'utf8')
 
   assert.match(lineItemsSource, /import MobileItemCard from ['"]@\/components\/invoice\/MobileItemCard['"]/)
+  assert.match(lineItemsSource, /enableItemSuggestions=\{true\}/)
 })
 
 test('shared totals rows keep timing-sensitive ordering in one shared runtime source', () => {
