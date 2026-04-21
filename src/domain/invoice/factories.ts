@@ -4,6 +4,7 @@ import type {
   InvoiceGroup,
   InvoiceItem,
 } from './types'
+import { resolveCanonicalItemImageUrl } from '../documentMedia.js'
 
 export function makeEmptyItem(): InvoiceItem {
   return {
@@ -104,6 +105,6 @@ export function toDbItem(
     install_rate_override: item.install_rate_override === true,
     vat_rate: item.vat_rate ?? null,
     discount_rate: item.discount_rate ?? null,
-    image_url: item.image_url || null,
+    image_url: resolveCanonicalItemImageUrl(item),
   }
 }

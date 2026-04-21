@@ -19,6 +19,7 @@ import { supabase } from '@/supabase'
 import { calcTotals, buildSummaryRows } from '@/domain/invoice'
 import { buildPdfRowCells, generateQuotationPdf, interpretPdfTableSettings } from '@/components/pdf-new'
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
+import { formatMergedQtyUnit, resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '@/domain/documentMedia.js'
 import { getPdfDesignPreset, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { toast } from '@/hooks/use-toast'
@@ -359,7 +360,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             vatRate: item.vat_rate ?? null,
             discountRate: item.discount_rate ?? null,
             amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
-            imageUrl: item.image_url || null,
+            imageUrl: resolveCanonicalItemImageUrl(item),
             cells: item.row_type === 'group_header'
               ? undefined
               : buildPdfRowCells(item, resolvedTable.columns, {
@@ -391,7 +392,10 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             .map((field) => ({ title: String(field.label || 'Additional Field'), content: String(field.value || ''), format: 'text' })),
           referenceLinks,
           signature: null,
-          logo: { imageUrl: String(settings?.company_logo_url || '') || null, altText: String(settings?.company_name || '') },
+          logo: {
+            imageUrl: resolveCanonicalLogoUrl(settings),
+            altText: String(settings?.company_name || ''),
+          },
           footerText: pdfOutput.showFooter ? String(settings?.footer_text || '') : '',
           tagline: pdfOutput.showTagline ? String(settings?.company_tagline || '') : '',
           metaFooter: { companyName: String(settings?.company_name || '') },
@@ -748,7 +752,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       return nextItems
     }
     const itemFacts = [
-      item.quantity ? `Qty: ${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : null,
+      item.quantity ? `Qty: ${formatMergedQtyUnit(item.quantity, item.unit)}` : null,
       `Rate: ${formatMoney(item.unit_price || 0)}`,
       columns.find((column: any) => column.key === 'make')?.visible && item.make ? `Make: ${item.make}` : null,
       columns.find((column: any) => column.key === 'install_rate')?.visible && item.install_rate !== null && item.install_rate !== undefined ? `Install: ${item.install_rate}` : null,
@@ -763,7 +767,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       type: 'line',
       label: item.description || 'Untitled item',
       detail: item.sub_description || '',
-      imageUrl: item.image_url || null,
+      imageUrl: resolveCanonicalItemImageUrl(item),
       value: formatMoney(Number(item.quantity || 0) * Number(item.unit_price || 0)),
       facts: itemFacts,
     }]
@@ -856,6 +860,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         documentNumber={quotation.quotation_number || 'Quotation'}
         companyName={companyIdentity.companyName || ''}
         companyTagline={pdfOutput.showTagline ? companyIdentity.companyTagline || '' : ''}
+        companyLogoUrl={resolveCanonicalLogoUrl(settings)}
         companyLines={companyIdentity.lines}
         recipientLabel="Prepared For"
         recipientName={quotation.client_name || 'Unassigned'}

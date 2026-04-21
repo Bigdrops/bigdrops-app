@@ -1,6 +1,7 @@
 import { formatCurrency } from '../../lib/formatters/money.js'
 import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { richTextToPlainText } from '../../lib/richTextPlain.js'
+import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '../../domain/documentMedia.js'
 import type { PdfColumnDefinition, PdfDocumentModel, PdfPageLayout } from './types'
 
 type IndustryTemplateDesign = Pick<
@@ -206,7 +207,7 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
         showSubtotal,
         groupSubtotalLabel: null,
         groupSubtotalValue: showSubtotal && groupSubtotal !== null ? formatPdfMoney(groupSubtotal) : null,
-        imageUrl: item.imageUrl,
+        imageUrl: resolveCanonicalItemImageUrl(item),
         cells: undefined,
       }
       rows.push(currentGroupHeader)
@@ -256,7 +257,7 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
       isGroupHeader: false,
       groupName: item.groupLabel,
       groupLabel: item.groupLabel,
-      imageUrl: item.imageUrl,
+      imageUrl: resolveCanonicalItemImageUrl(item),
       cells,
       isInGroup,
     })
@@ -328,7 +329,7 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
     showBankDetails: Boolean(model.bankDetails),
     company: model.issuer
       ? {
-          logoUrl: model.logo?.imageUrl || '',
+          logoUrl: resolveCanonicalLogoUrl(model.logo) || '',
           name: model.issuer.name || '',
           tagline: model.tagline || '',
           address: issuerAddress.address,

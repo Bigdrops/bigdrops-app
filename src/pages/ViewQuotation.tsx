@@ -21,6 +21,7 @@ import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { buildPdfRowCells, generateQuotationPdf, interpretPdfTableSettings } from '@/components/pdf-new'
+import { formatMergedQtyUnit, resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '@/domain/documentMedia.js'
 import { BUILTIN_COLUMNS, buildSummaryRows } from '@/domain/invoice'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { formatNaira } from '@/lib/formatters/money'
@@ -231,10 +232,10 @@ export default function ViewQuotation() {
       type: 'line',
       label: item.description || 'Untitled item',
       detail: item.sub_description || '',
-      imageUrl: item.image_url || null,
+      imageUrl: resolveCanonicalItemImageUrl(item),
       value: formatNaira(item.amount || Number(item.quantity || 0) * Number(item.unit_price || 0)),
       facts: [
-        item.quantity ? `Qty: ${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : null,
+        item.quantity ? `Qty: ${formatMergedQtyUnit(item.quantity, item.unit)}` : null,
         `Rate: ${formatNaira(item.unit_price || 0)}`,
         item.make ? `Make: ${item.make}` : null,
       ].filter(Boolean),
@@ -305,7 +306,9 @@ export default function ViewQuotation() {
     setDownloading(true)
     try {
       const pdfDesignPreset = getPdfDesignPreset('quotation')
-      const resolvedTable = interpretPdfTableSettings(BUILTIN_COLUMNS as any, { mergeQtyUnit: false })
+      const resolvedTable = interpretPdfTableSettings(BUILTIN_COLUMNS as any, {
+        mergeQtyUnit: customFields?.mergeQtyUnit === true,
+      })
       const referenceLinks = Array.isArray(customFields.attachments)
         ? customFields.attachments.filter((entry: any) => entry?.url).map((entry: any, index: number) => ({
             label: String(entry.label || entry.name || `Reference ${index + 1}`),
@@ -359,7 +362,7 @@ export default function ViewQuotation() {
             vatRate: item.vat_rate ?? null,
             discountRate: item.discount_rate ?? null,
             amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
-            imageUrl: item.image_url || null,
+            imageUrl: resolveCanonicalItemImageUrl(item),
             cells: item.row_type === 'group_header' ? undefined : buildPdfRowCells(item, resolvedTable.columns, { mergeQtyUnit: resolvedTable.mergeQtyUnit, configuredColumns: resolvedTable.configuredColumns }),
             customData: item.custom_data || {},
           })),
@@ -374,7 +377,10 @@ export default function ViewQuotation() {
           additionalSections: [],
           referenceLinks,
           signature: null,
-          logo: { imageUrl: String(settings?.company_logo_url || '') || null, altText: String(settings?.company_name || '') },
+          logo: {
+            imageUrl: resolveCanonicalLogoUrl(settings),
+            altText: String(settings?.company_name || ''),
+          },
           footerText: pdfOutput.showFooter ? String(settings?.footer_text || '') : '',
           tagline: pdfOutput.showTagline ? String(settings?.company_tagline || '') : '',
           metaFooter: { companyName: String(settings?.company_name || '') },
@@ -602,7 +608,7 @@ export default function ViewQuotation() {
               bankDetails={pdfOutput.showBankDetails ? selectedPreviewBank : null}
               notesSections={previewNotesSections}
               signatory={null}
-              companyLogoUrl={settings?.company_logo_url}
+              companyLogoUrl={resolveCanonicalLogoUrl(settings)}
               accentColor={getPdfDesignPreset('quotation').accentColor}
               headerFontFamily={resolvePdfWebFontFamily(getPdfDesignPreset('quotation').headerFont)}
               bodyFontFamily={resolvePdfWebFontFamily(getPdfDesignPreset('quotation').bodyFont)}

@@ -1,5 +1,6 @@
 import { getPdfCellValue, resolveInstallRate } from '../../domain/invoice/columns'
 import type { ColumnConfig, InvoiceItem } from '../../domain/invoice/types'
+import { formatMergedQtyUnit } from '../../domain/documentMedia.js'
 import type {
   PdfCellValue,
   PdfColumnDefinition,
@@ -180,9 +181,7 @@ export function buildPdfRowCells(
 
   return Object.fromEntries(columns.map((column) => {
     if (mergeQtyUnit && column.key === 'quantity') {
-      const quantity = item.quantity ?? ''
-      const unit = item.unit || ''
-      return [column.key, `${quantity}${unit ? ` ${unit}` : ''}`.trim()]
+      return [column.key, formatMergedQtyUnit(item.quantity ?? '', item.unit || '')]
     }
 
     if (column.key === 'num') {

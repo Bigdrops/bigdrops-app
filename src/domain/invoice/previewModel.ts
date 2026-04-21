@@ -1,4 +1,5 @@
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
+import { formatMergedQtyUnit, resolveCanonicalItemImageUrl } from '@/domain/documentMedia.js'
 import { getAdditionalFields } from './additionalFields'
 import { buildSummaryRows } from './calculations'
 import type { InvoiceCustomFields } from './types'
@@ -272,10 +273,10 @@ export function buildInvoicePreviewModel({
       type: 'line',
       label: item.description || 'Untitled item',
       detail: item.sub_description || '',
-      imageUrl: item.image_url || null,
+      imageUrl: resolveCanonicalItemImageUrl(item),
       value: formatMoney(Number(item.amount || (Number(item.quantity || 0) * Number(item.unit_price || 0)) || 0)),
       facts: [
-        item.quantity ? `Qty: ${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : null,
+        item.quantity ? `Qty: ${formatMergedQtyUnit(item.quantity, item.unit)}` : null,
         `Rate: ${formatMoney(Number(item.unit_price || 0))}`,
         item.make ? `Make: ${item.make}` : null,
         item.install_rate !== null && item.install_rate !== undefined ? `Install: ${item.install_rate}` : null,

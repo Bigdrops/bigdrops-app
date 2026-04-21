@@ -8,6 +8,7 @@ import type {
   InvoiceItem,
   InvoicePdfOutput,
 } from './types'
+import { resolveCanonicalItemImageUrl } from '../documentMedia.js'
 import { normalizeExtraCharges } from './factories'
 
 export const DEFAULT_INVOICE_PDF_OUTPUT: InvoicePdfOutput = {
@@ -203,7 +204,7 @@ export function mapDbInvoiceItem(row: DbInvoiceItem): InvoiceItem {
     group_id: row.group_id ?? null,
     group_name: row.group_name || '',
     sort_order: toNumber(row.sort_order),
-    image_url: row.image_url ?? null,
+    image_url: resolveCanonicalItemImageUrl(row),
     custom_data: customData,
     created_at: row.created_at ?? null,
     updated_at: row.updated_at ?? null,

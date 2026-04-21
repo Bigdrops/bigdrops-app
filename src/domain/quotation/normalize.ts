@@ -8,6 +8,7 @@ import {
   toNumber,
   toNullableDate,
 } from '@/domain/invoice'
+import { resolveCanonicalItemImageUrl } from '@/domain/documentMedia.js'
 import type { InvoiceItem } from '@/domain/invoice'
 import type {
   DbQuotation,
@@ -115,7 +116,7 @@ export function mapDbQuotationItem(row: DbQuotationItem): InvoiceItem {
     group_id: row.group_id ?? null,
     group_name: row.group_name || '',
     sort_order: toNumber(row.sort_order),
-    image_url: row.image_url ?? null,
+    image_url: resolveCanonicalItemImageUrl(row),
     custom_data: customData,
     created_at: row.created_at ?? null,
     updated_at: row.updated_at ?? null,

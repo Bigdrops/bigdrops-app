@@ -96,6 +96,23 @@ test('buildPdfRowCells emits row numbers for line rows without consuming group h
   assert.equal(secondLine.num, '2')
 })
 
+test('buildPdfRowCells keeps merged qty-unit on one inline token', () => {
+  const resolved = interpretPdfTableSettings([], { mergeQtyUnit: true })
+
+  const cells = buildPdfRowCells({
+    description: 'Solar panel',
+    quantity: 12,
+    unit: 'pcs',
+    unit_price: 250000,
+    custom_data: {},
+  }, resolved.columns, {
+    mergeQtyUnit: true,
+    configuredColumns: resolved.configuredColumns,
+  })
+
+  assert.equal(cells.quantity, '12\u00A0pcs')
+})
+
 test('resolvePdfPageLayout keeps narrow tables portrait and promotes wide tables to landscape', () => {
   const portraitLayout = resolvePdfPageLayout(interpretPdfTableSettings([]).columns)
   const landscapeLayout = resolvePdfPageLayout(interpretPdfTableSettings([

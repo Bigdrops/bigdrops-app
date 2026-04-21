@@ -24,6 +24,7 @@ import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { buildPdfRowCells, generateInvoicePdf, interpretPdfTableSettings } from '@/components/pdf-new'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
+import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '@/domain/documentMedia.js'
 import {
   BUILTIN_COLUMNS,
   DEFAULT_INVOICE_PDF_OUTPUT,
@@ -269,7 +270,7 @@ export default function ViewInvoice() {
             vatRate: item.vat_rate ?? null,
             discountRate: item.discount_rate ?? null,
             amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
-            imageUrl: item.image_url || null,
+            imageUrl: resolveCanonicalItemImageUrl(item),
             cells:
               item.row_type === 'group_header'
                 ? undefined
@@ -303,7 +304,10 @@ export default function ViewInvoice() {
           additionalSections: [],
           referenceLinks,
           signature: null,
-          logo: { imageUrl: String(settingsData?.company_logo_url || '') || null, altText: String(settingsData?.company_name || '') },
+          logo: {
+            imageUrl: resolveCanonicalLogoUrl(settingsData),
+            altText: String(settingsData?.company_name || ''),
+          },
           footerText: pdfOutput.showFooter ? String(settingsData?.footer_text || '') : '',
           tagline: pdfOutput.showTagline ? String(settingsData?.company_tagline || '') : '',
           metaFooter: { companyName: String(settingsData?.company_name || '') },
