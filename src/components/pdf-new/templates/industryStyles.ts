@@ -43,7 +43,7 @@ export const styles = StyleSheet.create({
     paddingRight: 14,
   },
   headerRight: {
-    width: 86,
+    width: 74,
     alignItems: 'flex-end',
   },
   title: {
@@ -67,19 +67,19 @@ export const styles = StyleSheet.create({
     marginBottom: 7,
   },
   metaLabel: {
-    width: 118,
+    width: 88,
     color: '#666666',
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: 'Helvetica-Bold',
   },
   metaValue: {
     flex: 1,
     color: '#333333',
-    fontSize: 11,
+    fontSize: 10,
   },
   logo: {
-    width: 78,
-    height: 78,
+    width: 64,
+    height: 64,
     objectFit: 'contain',
   },
   partyRow: {

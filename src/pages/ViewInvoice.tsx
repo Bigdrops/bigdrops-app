@@ -553,7 +553,7 @@ export default function ViewInvoice() {
               onRevert={openRevertFlow}
               onGenerateWaybill={() => navigate('/waybills/new', { state: buildWaybillPrefill(invoice) })}
               onRecordPayment={() => { ui.closeSheet(); ui.openSheet(SHEET_RECORD_PAYMENT) }}
-              onAdvanceInvoice={() => { ui.closeSheet(); ui.openSheet(SHEET_ADVANCE) }}
+              onAdvanceInvoice={() => ui.openSheet(SHEET_ADVANCE)}
               onLinkProject={() => setProjectLinkOpen(true)}
               onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}

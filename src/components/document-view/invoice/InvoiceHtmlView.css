@@ -134,7 +134,7 @@
 
 .merged-qty .doc-items-head,
 .merged-qty .doc-item-row {
-  grid-template-columns: 1fr 88px 76px;
+  grid-template-columns: 1fr 102px 76px;
 }
 
 .merged-qty .item-qty {
