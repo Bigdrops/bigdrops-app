@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ChangeEvent } from 'react'
 import { CheckCircle2, ChevronLeft, Loader2, Pencil, Upload } from 'lucide-react'
 import { fetchSettings, saveSettings, uploadFile, useSettings } from '@/hooks/useSettings'
 import {
@@ -34,6 +35,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [logoState, setLogoState] = useState<LogoState>('idle')
   const [localLogoPreview, setLocalLogoPreview] = useState<string>('')
+  const logoInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     if (!loading && settings) {
@@ -92,7 +94,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   }
 
   const handleUpload = async (file: File | null) => {
-    console.log('branding file received:', file)
+    console.log('[BrandingSettings] handleUpload received file:', file)
     if (!file) return
 
     console.log('[BrandingSettings] handleUpload start', {
@@ -150,7 +152,23 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
       onToast(message)
     } finally {
       setUploading({ logo: false })
+
+      if (logoInputRef.current) {
+        logoInputRef.current.value = ''
+      }
     }
+  }
+
+  const openLogoPicker = () => {
+    console.log('[BrandingSettings] upload trigger clicked')
+    setUploadError(null)
+    logoInputRef.current?.click()
+  }
+
+  const handleLogoInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null
+    console.log('[BrandingSettings] file input onChange fired:', file)
+    void handleUpload(file)
   }
 
   const save = async () => {
@@ -203,14 +221,11 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
   const UploadBox = () => (
     <SettingsField label="Company Logo">
       <input
-        id="company-logo-input"
+        ref={logoInputRef}
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={(event) => {
-          const file = event.target.files?.[0] || null
-          void handleUpload(file)
-        }}
+        onChange={handleLogoInputChange}
       />
       {previewSrc ? (
         <div className="space-y-3">
@@ -232,12 +247,13 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
                 This is the logo currently selected for branding.
               </div>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <label
-                  htmlFor="company-logo-input"
+                <button
+                  type="button"
+                  onClick={openLogoPicker}
                   className="cursor-pointer rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs font-bold text-indigo-700 transition-colors hover:bg-indigo-50"
                 >
                   Replace Logo
-                </label>
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -271,8 +287,9 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
           ) : null}
         </div>
       ) : (
-        <label
-          htmlFor="company-logo-input"
+        <button
+          type="button"
+          onClick={openLogoPicker}
           className="flex w-full cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 bg-indigo-50/20 px-4 py-5 text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50/40"
         >
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white">
@@ -290,7 +307,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
               PNG, JPG, or SVG. Use a clean high-resolution logo.
             </div>
           </div>
-        </label>
+        </button>
       )}
       {uploadError ? (
         <div className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-[12px] font-medium text-red-600">
