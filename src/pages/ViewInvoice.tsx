@@ -8,7 +8,7 @@ import {
 } from '@/components/document-view/invoice/InvoiceFidelityPrimitives'
 import InvoiceMoreSheet from '@/components/document-view/invoice/InvoiceMoreSheet'
 import InvoiceRecordPaymentSheet from '@/components/document-view/invoice/InvoiceRecordPaymentSheet'
-import InvoiceAdvanceSheet from '@/components/document-view/invoice/InvoiceAdvanceSheet'
+import InvoiceAdvanceSheet from '@/components/invoice/view/InvoiceAdvanceSheet'
 import InvoiceViewPage from '@/components/document-view/invoice/InvoiceViewPage'
 import PdfOutputCustomizeSheet from '@/components/document-view/shared/PdfOutputCustomizeSheet'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
@@ -26,6 +26,14 @@ import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
 import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '@/domain/documentMedia.js'
 import {
+  ADVANCE_PRIMARY_LABEL_DEFAULT,
+  ADVANCE_SECONDARY_LABEL_DEFAULT,
+  ADVANCE_SUFFIX_DEFAULT,
+  calculateAdvanceAmount,
+  getAdvanceDraftFromInvoice,
+  type AdvanceMode,
+} from '@/domain/invoice/advanceChildFlow'
+import {
   BUILTIN_COLUMNS,
   DEFAULT_INVOICE_PDF_OUTPUT,
   getInvoicePdfOutput,
@@ -39,7 +47,17 @@ import { formatNaira } from '@/lib/formatters/money'
 import { getPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { computeDocument } from '@/lib/Calculations'
 import { supabase } from '@/supabase'
-import { archiveInvoiceRecord, buildWaybillPrefill, deleteInvoiceRecord, downloadInvoiceCsvFile, duplicateInvoiceDraft, revertInvoiceToQuotation } from './viewInvoiceActions'
+import {
+  archiveInvoiceRecord,
+  buildWaybillPrefill,
+  createAdvanceInvoiceRecord,
+  deleteAdvanceInvoiceRecord,
+  deleteInvoiceRecord,
+  downloadInvoiceCsvFile,
+  duplicateInvoiceDraft,
+  revertInvoiceToQuotation,
+  updateAdvanceInvoiceRecord,
+} from './viewInvoiceActions'
 
 const SHEET_CUSTOMIZE = 'customize-output'
 const SHEET_MORE = 'more-actions'
@@ -48,6 +66,8 @@ const SHEET_ADVANCE = 'advance'
 const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
 const MODAL_REVERT = 'revert'
+
+type AdvanceSheetMode = 'create' | 'edit' | 'view'
 
 const toTitleCase = (value: string) =>
   String(value || '')
@@ -67,6 +87,7 @@ export default function ViewInvoice() {
     payments,
     relatedCsrs,
     relatedWaybills,
+    relatedAdvanceInvoices,
     invoiceFinancials,
     client,
     settings,
@@ -80,10 +101,42 @@ export default function ViewInvoice() {
   const [pdfOutput, setPdfOutput] = useState<PdfOutputSettingsValue>(DEFAULT_INVOICE_PDF_OUTPUT)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
   const [reverting, setReverting] = useState(false)
+  const [advanceSheetMode, setAdvanceSheetMode] = useState<AdvanceSheetMode>('create')
+  const [selectedAdvanceInvoice, setSelectedAdvanceInvoice] = useState<any | null>(null)
+  const [advanceSaving, setAdvanceSaving] = useState(false)
+  const [advanceDeleteConfirmOpen, setAdvanceDeleteConfirmOpen] = useState(false)
+  const [advanceMode, setAdvanceMode] = useState<AdvanceMode>('percent')
+  const [advanceInputValue, setAdvanceInputValue] = useState('30')
+  const [advanceSuffixValue, setAdvanceSuffixValue] = useState(ADVANCE_SUFFIX_DEFAULT)
+  const [advancePrimaryLabel, setAdvancePrimaryLabel] = useState(ADVANCE_PRIMARY_LABEL_DEFAULT)
+  const [advanceSecondaryLabel, setAdvanceSecondaryLabel] = useState(ADVANCE_SECONDARY_LABEL_DEFAULT)
   const settingsData: any = settings || {}
 
   const customFields = useMemo(() => parseCustomFields(invoice?.custom_fields), [invoice?.custom_fields])
   const sourceDocument = useMemo(() => getInvoiceSourceDocument(invoice), [invoice])
+  const contractValue = Math.max(0, Number(invoice?.total || 0))
+  const advanceAmount = useMemo(
+    () => calculateAdvanceAmount({ contractValue, mode: advanceMode, inputValue: advanceInputValue }),
+    [advanceInputValue, advanceMode, contractValue],
+  )
+  const advanceBalanceRemaining = Math.max(0, contractValue - advanceAmount)
+
+  const resetAdvanceDraft = useCallback(() => {
+    setAdvanceMode('percent')
+    setAdvanceInputValue('30')
+    setAdvanceSuffixValue(ADVANCE_SUFFIX_DEFAULT)
+    setAdvancePrimaryLabel(ADVANCE_PRIMARY_LABEL_DEFAULT)
+    setAdvanceSecondaryLabel(ADVANCE_SECONDARY_LABEL_DEFAULT)
+  }, [])
+
+  const applyAdvanceDraft = useCallback((advanceInvoice: any) => {
+    const draft = getAdvanceDraftFromInvoice(advanceInvoice)
+    setAdvanceMode(draft.mode)
+    setAdvanceInputValue(draft.inputValue)
+    setAdvanceSuffixValue(draft.suffix)
+    setAdvancePrimaryLabel(draft.primaryLabel)
+    setAdvanceSecondaryLabel(draft.secondaryLabel)
+  }, [])
 
   const viewModel = useMemo(
     () =>
@@ -131,6 +184,34 @@ export default function ViewInvoice() {
     })
   }, [ui])
 
+  const openCreateAdvanceSheet = useCallback(() => {
+    setSelectedAdvanceInvoice(null)
+    setAdvanceDeleteConfirmOpen(false)
+    setAdvanceSheetMode('create')
+    resetAdvanceDraft()
+    ui.closeSheet()
+    requestAnimationFrame(() => {
+      ui.openSheet(SHEET_ADVANCE)
+    })
+  }, [resetAdvanceDraft, ui])
+
+  const openAdvanceDetails = useCallback((advanceInvoice: any, mode: AdvanceSheetMode = 'view') => {
+    setSelectedAdvanceInvoice(advanceInvoice)
+    setAdvanceDeleteConfirmOpen(false)
+    setAdvanceSheetMode(mode)
+    applyAdvanceDraft(advanceInvoice)
+    ui.openSheet(SHEET_ADVANCE)
+  }, [applyAdvanceDraft, ui])
+
+  const closeAdvanceSheet = useCallback((nextOpen: boolean) => {
+    if (nextOpen) {
+      ui.openSheet(SHEET_ADVANCE)
+      return
+    }
+    setAdvanceDeleteConfirmOpen(false)
+    ui.closeSheet()
+  }, [ui])
+
   useEffect(() => {
     if (!invoice?.id) return
     if (location.state?.openRevertModal !== true) return
@@ -144,6 +225,20 @@ export default function ViewInvoice() {
       },
     })
   }, [invoice?.id, location.pathname, location.state, navigate, openRevertFlow])
+
+  useEffect(() => {
+    if (!invoice?.id) return
+    if (location.state?.openAdvanceSheet !== true) return
+
+    openCreateAdvanceSheet()
+    navigate(location.pathname, {
+      replace: true,
+      state: {
+        ...(location.state || {}),
+        openAdvanceSheet: false,
+      },
+    })
+  }, [invoice?.id, location.pathname, location.state, navigate, openCreateAdvanceSheet])
 
   const previewModel = useMemo(
     () =>
@@ -321,6 +416,81 @@ export default function ViewInvoice() {
       showToast('Download failed', message)
     } finally {
       setDownloading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!invoice?.id) return
+    if (location.state?.autoDownload !== true) return
+
+    void handleDownload()
+    navigate(location.pathname, {
+      replace: true,
+      state: {
+        ...(location.state || {}),
+        autoDownload: false,
+      },
+    })
+  }, [invoice?.id, location.pathname, location.state, navigate])
+
+  const handleAdvanceSave = async () => {
+    if (!invoice?.id || advanceSaving) return
+    setAdvanceSaving(true)
+    try {
+      if (advanceSheetMode === 'edit' && selectedAdvanceInvoice?.id) {
+        await updateAdvanceInvoiceRecord({
+          advanceInvoiceId: String(selectedAdvanceInvoice.id),
+          parentInvoice: invoice,
+          mode: advanceMode,
+          inputValue: advanceInputValue,
+          suffix: advanceSuffixValue,
+          primaryLabel: advancePrimaryLabel,
+          secondaryLabel: advanceSecondaryLabel,
+          threadPosition: Number(selectedAdvanceInvoice.thread_position || 1),
+        })
+        showToast('Advance invoice updated', 'Advance child record saved successfully.', 'success')
+      } else {
+        await createAdvanceInvoiceRecord({
+          parentInvoice: invoice,
+          mode: advanceMode,
+          inputValue: advanceInputValue,
+          suffix: advanceSuffixValue,
+          primaryLabel: advancePrimaryLabel,
+          secondaryLabel: advanceSecondaryLabel,
+        })
+        showToast('Advance invoice created', 'Advance child record created successfully.', 'success')
+      }
+
+      await refresh()
+      closeAdvanceSheet(false)
+    } catch (error) {
+      showToast('Advance invoice failed', error instanceof Error ? error.message : 'Could not save advance invoice')
+    } finally {
+      setAdvanceSaving(false)
+    }
+  }
+
+  const handleAdvanceDownload = useCallback(() => {
+    if (!selectedAdvanceInvoice?.id) return
+    ui.closeSheet()
+    navigate(`/invoices/${selectedAdvanceInvoice.id}`, {
+      state: { autoDownload: true },
+    })
+  }, [navigate, selectedAdvanceInvoice?.id, ui])
+
+  const handleAdvanceDelete = async () => {
+    if (!selectedAdvanceInvoice?.id || advanceSaving) return
+    setAdvanceSaving(true)
+    try {
+      await deleteAdvanceInvoiceRecord(String(selectedAdvanceInvoice.id))
+      await refresh()
+      setAdvanceDeleteConfirmOpen(false)
+      closeAdvanceSheet(false)
+      showToast('Advance invoice deleted', 'Advance child record removed.', 'success')
+    } catch (error) {
+      showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete advance invoice')
+    } finally {
+      setAdvanceSaving(false)
     }
   }
 
@@ -541,9 +711,37 @@ export default function ViewInvoice() {
 
             <InvoiceAdvanceSheet
               open={ui.isSheetOpen(SHEET_ADVANCE)}
-              onClose={ui.closeSheet}
-              onSaved={refresh}
-              invoice={invoice}
+              onOpenChange={closeAdvanceSheet}
+              invoiceNumber={invoice.invoice_number || 'Invoice'}
+              contractValue={contractValue}
+              formatMoney={(value) => formatNaira(Number(value || 0), { preserveFraction: true })}
+              advanceSheetMode={advanceSheetMode}
+              advanceInvoice={selectedAdvanceInvoice}
+              advanceSaving={advanceSaving}
+              advancePdfGenerating={false}
+              advanceMode={advanceMode}
+              setAdvanceMode={setAdvanceMode}
+              advanceInputValue={advanceInputValue}
+              setAdvanceInputValue={setAdvanceInputValue}
+              advanceSuffixValue={advanceSuffixValue}
+              setAdvanceSuffixValue={setAdvanceSuffixValue}
+              advancePrimaryLabel={advancePrimaryLabel}
+              setAdvancePrimaryLabel={setAdvancePrimaryLabel}
+              advanceSecondaryLabel={advanceSecondaryLabel}
+              setAdvanceSecondaryLabel={setAdvanceSecondaryLabel}
+              advanceAmount={advanceAmount}
+              balanceRemaining={advanceBalanceRemaining}
+              onSave={() => void handleAdvanceSave()}
+              onDownloadPdf={handleAdvanceDownload}
+              onEdit={() => {
+                if (selectedAdvanceInvoice) {
+                  openAdvanceDetails(selectedAdvanceInvoice, 'edit')
+                }
+              }}
+              onRequestDelete={() => setAdvanceDeleteConfirmOpen(true)}
+              deleteConfirmOpen={advanceDeleteConfirmOpen}
+              onDeleteConfirmOpenChange={setAdvanceDeleteConfirmOpen}
+              onDeleteConfirm={() => void handleAdvanceDelete()}
             />
 
             <InvoiceMoreSheet
@@ -553,7 +751,7 @@ export default function ViewInvoice() {
               onRevert={openRevertFlow}
               onGenerateWaybill={() => navigate('/waybills/new', { state: buildWaybillPrefill(invoice) })}
               onRecordPayment={() => { ui.closeSheet(); ui.openSheet(SHEET_RECORD_PAYMENT) }}
-              onAdvanceInvoice={() => ui.openSheet(SHEET_ADVANCE)}
+              onAdvanceInvoice={openCreateAdvanceSheet}
               onLinkProject={() => setProjectLinkOpen(true)}
               onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}
@@ -637,18 +835,24 @@ export default function ViewInvoice() {
             referenceLabel: payment.reference || '',
             kind: Number(payment.wht_amount || 0) > 0 && Number(payment.cash_amount || 0) === 0 ? 'wht' : 'cash',
           }))}
-          advanceInvoices={
-            invoice.is_advance
-              ? [
-                  {
-                    id: String(invoice.id),
-                    title: invoice.invoice_title || invoice.invoice_number || 'Advance Invoice',
-                    subtitle: 'This invoice is marked as an advance invoice.',
-                    amountLabel: formatNaira(viewModel.invoiceTotal || 0),
-                  },
-                ]
-              : []
-          }
+          advanceInvoices={(Array.isArray(relatedAdvanceInvoices) ? relatedAdvanceInvoices : []).map((advance: any) => ({
+            id: String(advance.id),
+            title: advance.invoice_number || advance.invoice_title || 'Advance Invoice',
+            subtitle: advance.advance_primary_label || ADVANCE_PRIMARY_LABEL_DEFAULT,
+            amountLabel: formatNaira(Number(advance.total || 0)),
+            onOpen: () => openAdvanceDetails(advance, 'view'),
+            onDownload: () => {
+              navigate(`/invoices/${advance.id}`, {
+                state: { autoDownload: true },
+              })
+            },
+            onEdit: () => openAdvanceDetails(advance, 'edit'),
+            onDelete: () => {
+              setSelectedAdvanceInvoice(advance)
+              applyAdvanceDraft(advance)
+              setAdvanceDeleteConfirmOpen(true)
+            },
+          }))}
           relatedDocuments={relatedDocuments}
           attachments={attachments}
           onRecordPayment={() => ui.openSheet(SHEET_RECORD_PAYMENT)}

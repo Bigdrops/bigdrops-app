@@ -63,6 +63,7 @@ export function useInvoiceDetailData(id) {
   const [linkedProject, setLinkedProject] = useState(null)
   const [relatedCsrs, setRelatedCsrs] = useState([])
   const [relatedWaybills, setRelatedWaybills] = useState([])
+  const [relatedAdvanceInvoices, setRelatedAdvanceInvoices] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -94,6 +95,22 @@ export function useInvoiceDetailData(id) {
     const related = await fetchInvoiceChildDocuments(id)
     setRelatedCsrs(related.csrs || [])
     setRelatedWaybills(related.waybills || [])
+  }, [id])
+
+  const fetchAdvanceInvoices = useCallback(async () => {
+    const { data, error: advanceError } = await supabase
+      .from('invoices')
+      .select('id, invoice_number, invoice_title, total, status, created_at, issue_date, due_date, thread_role, advance_mode, advance_value, total_contract_value, advance_primary_label, advance_secondary_label')
+      .eq('thread_id', id)
+      .eq('thread_role', 'advance')
+      .is('archived_at', null)
+      .order('created_at', { ascending: true })
+
+    if (advanceError && canUseInvoiceCacheFallback()) {
+      throw advanceError
+    }
+
+    setRelatedAdvanceInvoices(data || [])
   }, [id])
 
   const fetchPayments = useCallback(async () => {
@@ -170,6 +187,7 @@ export function useInvoiceDetailData(id) {
         fetchItems(),
         fetchPayments(),
         fetchInvoiceRelationships(),
+        fetchAdvanceInvoices(),
         fetchInvoiceFinancials(),
         supabase
           .from('signatories')
@@ -208,6 +226,7 @@ export function useInvoiceDetailData(id) {
         setLinkedProject(null)
         setRelatedCsrs([])
         setRelatedWaybills([])
+        setRelatedAdvanceInvoices([])
         setCreatorProfile(null)
         console.warn('Invoice detail fetch failed:', refreshError)
         setLoading(false)
@@ -233,6 +252,7 @@ export function useInvoiceDetailData(id) {
         setLinkedProject(null)
         setRelatedCsrs([])
         setRelatedWaybills([])
+        setRelatedAdvanceInvoices([])
         setCreatorProfile(null)
         setSession(null)
         setError(null)
@@ -273,6 +293,7 @@ export function useInvoiceDetailData(id) {
     payments,
     relatedCsrs,
     relatedWaybills,
+    relatedAdvanceInvoices,
     invoiceFinancials,
     client,
     settings,

@@ -1,6 +1,12 @@
-import { FileText, Plus, Receipt, ExternalLink, Link as LinkIcon, Paperclip, Edit3, Download } from 'lucide-react'
+import { FileText, Plus, Receipt, ExternalLink, Link as LinkIcon, Paperclip, Edit3, Download, MoreHorizontal, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import styles from './InvoicePresentation.module.css'
 
 interface SupportingSectionProps {
@@ -46,6 +52,10 @@ interface InvoiceViewPageProps {
     title: string
     subtitle: string
     amountLabel: string
+    onOpen?: () => void
+    onDownload?: () => void
+    onEdit?: () => void
+    onDelete?: () => void
   }>
   relatedDocuments: Array<{
     id: string
@@ -156,12 +166,43 @@ export default function InvoiceViewPage({
                </div>
                <div className={styles['advance-card-body']}>
                  {gAdvanceInvoices.map((adv) => (
-                   <div key={adv.id} className={styles['advance-item']}>
-                     <div className={styles['advance-item-left']}>
-                       <div className={styles['advance-item-label']}>{adv.title}</div>
-                       <div className={styles['advance-item-sub']}>{adv.subtitle}</div>
-                     </div>
-                     <div className={styles['advance-item-amount']}>{adv.amountLabel}</div>
+                 <div key={adv.id} className={styles['advance-item']}>
+                     <button type="button" className={styles['advance-item-main']} onClick={adv.onOpen}>
+                       <div className={styles['advance-item-left']}>
+                         <div className={styles['advance-item-label']}>{adv.title}</div>
+                         <div className={styles['advance-item-sub']}>{adv.subtitle}</div>
+                       </div>
+                       <div className={styles['advance-item-amount']}>{adv.amountLabel}</div>
+                     </button>
+                     {(adv.onDownload || adv.onEdit || adv.onDelete) && (
+                       <DropdownMenu>
+                         <DropdownMenuTrigger asChild>
+                           <button type="button" className={styles['advance-item-trigger']} aria-label={`More actions for ${adv.title}`}>
+                             <MoreHorizontal size={16} />
+                           </button>
+                         </DropdownMenuTrigger>
+                         <DropdownMenuContent align="end">
+                           {adv.onDownload && (
+                             <DropdownMenuItem onClick={adv.onDownload}>
+                               <Download size={14} />
+                               Download
+                             </DropdownMenuItem>
+                           )}
+                           {adv.onEdit && (
+                             <DropdownMenuItem onClick={adv.onEdit}>
+                               <Edit3 size={14} />
+                               Edit
+                             </DropdownMenuItem>
+                           )}
+                           {adv.onDelete && (
+                             <DropdownMenuItem onClick={adv.onDelete}>
+                               <Trash2 size={14} />
+                               Delete
+                             </DropdownMenuItem>
+                           )}
+                         </DropdownMenuContent>
+                       </DropdownMenu>
+                     )}
                    </div>
                  ))}
                </div>
@@ -204,4 +245,3 @@ export default function InvoiceViewPage({
     </div>
   )
 }
-

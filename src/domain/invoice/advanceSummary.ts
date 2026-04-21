@@ -1,3 +1,8 @@
+import {
+  ADVANCE_PRIMARY_LABEL_DEFAULT,
+  ADVANCE_SECONDARY_LABEL_DEFAULT,
+} from './advanceChildFlow'
+
 type AdvanceInvoiceLike = {
   thread_role?: string | null
   is_advance?: boolean | null
@@ -44,7 +49,7 @@ export function getAdvanceSummaryValues(
     balanceRemaining,
     advancePercent: Math.round(advancePercent),
     balancePercent: Math.round(balancePercent),
-    primaryLabel: invoice?.advance_primary_label || 'Advance Payable Now',
-    secondaryLabel: invoice?.advance_secondary_label || 'Balance upon Completion',
+    primaryLabel: invoice?.advance_primary_label || ADVANCE_PRIMARY_LABEL_DEFAULT,
+    secondaryLabel: invoice?.advance_secondary_label || ADVANCE_SECONDARY_LABEL_DEFAULT,
   }
 }

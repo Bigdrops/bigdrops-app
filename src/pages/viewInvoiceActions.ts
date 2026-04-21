@@ -1,5 +1,6 @@
 import { supabase } from '@/supabase'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '@/components/invoice/exportInvoiceCsv'
+import { buildAdvanceChildInvoicePayload } from '@/domain/invoice/advanceChildFlow'
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { parseDocumentCustomFields, toQuotationItemRow, withSourceTrail, buildTrailLink } from '@/domain/documentConversion'
 
@@ -78,6 +79,85 @@ export async function archiveInvoiceRecord(id: string) {
 }
 
 export async function deleteInvoiceRecord(id: string) {
+  await supabase.from('invoice_items').delete().eq('invoice_id', id)
+  const { error } = await supabase.from('invoices').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function createAdvanceInvoiceRecord({
+  parentInvoice,
+  mode,
+  inputValue,
+  suffix,
+  primaryLabel,
+  secondaryLabel,
+}: {
+  parentInvoice: any
+  mode: 'percent' | 'fixed'
+  inputValue: string
+  suffix: string
+  primaryLabel: string
+  secondaryLabel: string
+}) {
+  const { count, error: countError } = await supabase
+    .from('invoices')
+    .select('id', { count: 'exact', head: true })
+    .eq('thread_id', parentInvoice?.id)
+    .eq('thread_role', 'advance')
+    .is('archived_at', null)
+
+  if (countError) throw countError
+
+  const payload = buildAdvanceChildInvoicePayload({
+    parentInvoice,
+    mode,
+    inputValue,
+    suffix,
+    primaryLabel,
+    secondaryLabel,
+    threadPosition: Number(count || 0) + 1,
+  })
+
+  const { data, error } = await supabase.from('invoices').insert([payload]).select().single()
+  if (error || !data) throw new Error(error?.message || 'Failed to create advance invoice')
+  return data
+}
+
+export async function updateAdvanceInvoiceRecord({
+  advanceInvoiceId,
+  parentInvoice,
+  mode,
+  inputValue,
+  suffix,
+  primaryLabel,
+  secondaryLabel,
+  threadPosition,
+}: {
+  advanceInvoiceId: string
+  parentInvoice: any
+  mode: 'percent' | 'fixed'
+  inputValue: string
+  suffix: string
+  primaryLabel: string
+  secondaryLabel: string
+  threadPosition?: number
+}) {
+  const payload = buildAdvanceChildInvoicePayload({
+    parentInvoice,
+    mode,
+    inputValue,
+    suffix,
+    primaryLabel,
+    secondaryLabel,
+    threadPosition,
+  })
+
+  const { data, error } = await supabase.from('invoices').update(payload).eq('id', advanceInvoiceId).select().single()
+  if (error || !data) throw new Error(error?.message || 'Failed to update advance invoice')
+  return data
+}
+
+export async function deleteAdvanceInvoiceRecord(id: string) {
   await supabase.from('invoice_items').delete().eq('invoice_id', id)
   const { error } = await supabase.from('invoices').delete().eq('id', id)
   if (error) throw error

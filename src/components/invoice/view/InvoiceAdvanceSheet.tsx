@@ -1,6 +1,11 @@
 import { type Dispatch, type SetStateAction } from 'react'
 
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
+import {
+  ADVANCE_PRIMARY_LABEL_DEFAULT,
+  ADVANCE_SECONDARY_LABEL_DEFAULT,
+  ADVANCE_SUFFIX_DEFAULT,
+} from '@/domain/invoice/advanceChildFlow'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -131,14 +136,14 @@ export default function InvoiceAdvanceSheet({
                       
                       <div className="flex flex-col">
                         <div className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-500">
-                          {(advanceInvoice.advance_primary_label || 'Advance Payable Now') + ` · ${Math.round((Number(advanceInvoice.total || 0) / contractValue) * 100)}%`}
+                          {(advanceInvoice.advance_primary_label || ADVANCE_PRIMARY_LABEL_DEFAULT) + ` · ${Math.round((Number(advanceInvoice.total || 0) / contractValue) * 100)}%`}
                         </div>
                         <div className="mt-2 text-[2.4rem] font-black leading-none tracking-[-0.04em]">{formatMoney(Number(advanceInvoice.total || 0))}</div>
                       </div>
                       
                       <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/5 p-4">
                         <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                          {advanceInvoice.advance_secondary_label || 'Balance upon Completion'}
+                          {advanceInvoice.advance_secondary_label || ADVANCE_SECONDARY_LABEL_DEFAULT}
                         </div>
                         <div className="text-base font-extrabold text-white">{formatMoney(Math.max(0, contractValue - Number(advanceInvoice.total || 0)))}</div>
                       </div>
@@ -202,7 +207,7 @@ export default function InvoiceAdvanceSheet({
                             <Input
                               id="advance-suffix"
                               type="text"
-                              placeholder="A"
+                              placeholder={ADVANCE_SUFFIX_DEFAULT}
                               value={advanceSuffixValue}
                               onChange={(event) => setAdvanceSuffixValue(event.target.value)}
                               disabled={advanceSaving}
@@ -217,7 +222,7 @@ export default function InvoiceAdvanceSheet({
                           <Label htmlFor="primary-label" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Primary Label</Label>
                           <Input
                             id="primary-label"
-                            placeholder="Advance Payable Now"
+                            placeholder={ADVANCE_PRIMARY_LABEL_DEFAULT}
                             value={advancePrimaryLabel}
                             onChange={(e) => setAdvancePrimaryLabel(e.target.value)}
                             disabled={advanceSaving}
@@ -228,7 +233,7 @@ export default function InvoiceAdvanceSheet({
                           <Label htmlFor="secondary-label" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Secondary Label</Label>
                           <Input
                             id="secondary-label"
-                            placeholder="Balance upon Completion"
+                            placeholder={ADVANCE_SECONDARY_LABEL_DEFAULT}
                             value={advanceSecondaryLabel}
                             onChange={(e) => setAdvanceSecondaryLabel(e.target.value)}
                             disabled={advanceSaving}
@@ -250,14 +255,14 @@ export default function InvoiceAdvanceSheet({
                       
                       <div className="flex flex-col">
                         <div className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-500">
-                          {(advancePrimaryLabel || 'Advance Payable Now') + ` · ${Math.round((advanceAmount / contractValue) * 100)}%`}
+                          {(advancePrimaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT) + ` · ${Math.round((advanceAmount / contractValue) * 100)}%`}
                         </div>
                         <div className="mt-2 text-[2.4rem] font-black leading-none tracking-[-0.04em]">{formatMoney(advanceAmount)}</div>
                       </div>
                       
                       <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/5 p-4">
                         <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                          {advanceSecondaryLabel || 'Balance upon Completion'}
+                          {advanceSecondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT}
                         </div>
                         <div className="text-base font-extrabold text-white">{formatMoney(balanceRemaining)}</div>
                       </div>
