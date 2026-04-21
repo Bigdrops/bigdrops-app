@@ -29,9 +29,7 @@ type AdvanceParentInvoice = {
 type AdvanceInvoiceLike = {
   invoice_number?: string | null
   total?: number | string | null
-  total_contract_value?: number | string | null
-  advance_mode?: string | null
-  advance_value?: number | string | null
+  custom_fields?: any
   advance_primary_label?: string | null
   advance_secondary_label?: string | null
 }
@@ -69,8 +67,19 @@ export function calculateAdvanceAmount({
 }
 
 export function getAdvanceDraftFromInvoice(invoice: AdvanceInvoiceLike | null | undefined) {
-  const mode: AdvanceMode = invoice?.advance_mode === 'fixed' ? 'fixed' : 'percent'
-  const inputValue = String(invoice?.advance_value ?? '')
+  let advanceConfig = invoice?.custom_fields?.advance_invoice
+
+  if (typeof invoice?.custom_fields === 'string') {
+    try {
+      const parsed = JSON.parse(invoice.custom_fields)
+      advanceConfig = parsed?.advance_invoice
+    } catch {
+      // ignore
+    }
+  }
+
+  const mode: AdvanceMode = advanceConfig?.mode === 'fixed' ? 'fixed' : 'percent'
+  const inputValue = String(advanceConfig?.value ?? '')
   const invoiceNumber = String(invoice?.invoice_number || '')
   const suffix = invoiceNumber.includes('-') ? invoiceNumber.split('-').pop() || ADVANCE_SUFFIX_DEFAULT : ADVANCE_SUFFIX_DEFAULT
 
@@ -78,8 +87,8 @@ export function getAdvanceDraftFromInvoice(invoice: AdvanceInvoiceLike | null | 
     mode,
     inputValue,
     suffix: suffix || ADVANCE_SUFFIX_DEFAULT,
-    primaryLabel: String(invoice?.advance_primary_label || ADVANCE_PRIMARY_LABEL_DEFAULT),
-    secondaryLabel: String(invoice?.advance_secondary_label || ADVANCE_SECONDARY_LABEL_DEFAULT),
+    primaryLabel: String(advanceConfig?.primaryLabel || invoice?.advance_primary_label || ADVANCE_PRIMARY_LABEL_DEFAULT),
+    secondaryLabel: String(advanceConfig?.secondaryLabel || invoice?.advance_secondary_label || ADVANCE_SECONDARY_LABEL_DEFAULT),
   }
 }
 
@@ -108,6 +117,22 @@ export function buildAdvanceChildInvoicePayload({
     mode === 'fixed' ? contractValue : 100,
   )
 
+  const currentCustomFields = typeof parentInvoice?.custom_fields === 'string'
+    ? JSON.parse(parentInvoice.custom_fields || '{}')
+    : (parentInvoice?.custom_fields || {})
+
+  const advanceConfig = {
+    mode,
+    value: numericInput,
+    primaryLabel: primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
+    secondaryLabel: secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT,
+    contractValue,
+    parentId: parentInvoice?.id || null,
+    role: 'advance',
+    position: threadPosition,
+    suffix: suffix || ADVANCE_SUFFIX_DEFAULT,
+  }
+
   return {
     invoice_number: getAdvanceNumber(String(parentInvoice?.invoice_number || ''), suffix || ADVANCE_SUFFIX_DEFAULT),
     invoice_title: parentInvoice?.invoice_title || null,
@@ -131,14 +156,9 @@ export function buildAdvanceChildInvoicePayload({
     install_rate_total: 0,
     total: advanceAmount,
     amount_in_words: '',
-    custom_fields: parentInvoice?.custom_fields || null,
-    advance_mode: mode,
-    advance_value: numericInput,
-    total_contract_value: contractValue,
-    thread_id: parentInvoice?.id || null,
-    thread_role: 'advance',
-    thread_position: threadPosition,
-    advance_primary_label: primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
-    advance_secondary_label: secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT,
+    custom_fields: {
+      ...currentCustomFields,
+      advance_invoice: advanceConfig,
+    },
   }
 }

@@ -57,11 +57,10 @@ export default function ClientDetail() {
         supabase.from('clients').select('*').eq('id', id).single(),
         supabase
           .from('invoices')
-          .select('id, invoice_number, invoice_title, status, total, issue_date, document_type')
+          .select('id, invoice_number, invoice_title, status, total, issue_date, document_type, custom_fields')
           .eq('client_id', id)
           .is('archived_at', null)
-          .or('thread_role.is.null,thread_role.neq.advance')
-          .or('is_advance.is.null,is_advance.eq.false')
+          .or('custom_fields->advance_invoice->>role.is.null,custom_fields->advance_invoice->>role.neq.advance')
           .order('issue_date', { ascending: false }),
         supabase
           .from('quotations')

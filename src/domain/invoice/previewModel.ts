@@ -41,9 +41,6 @@ export type PreviewNoteSection =
 
 type InvoiceLike = {
   custom_fields?: unknown
-  thread_role?: string | null
-  is_advance?: boolean | null
-  total_contract_value?: number | string | null
   client_name?: string | null
   payment_terms?: string | null
   invoice_title?: string | null

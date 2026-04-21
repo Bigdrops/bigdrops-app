@@ -102,8 +102,6 @@ export default function NewInvoice() {
           discount: 0,
           vat: 7.5,
           wht: 0,
-          is_advance: false,
-          advance_percentage: 0,
           work_duration: '',
           amount_in_words: '',
         },

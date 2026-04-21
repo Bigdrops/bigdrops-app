@@ -18,8 +18,7 @@ interface AdvanceInvoiceSummary {
   id?: string | null
   invoice_number?: string | null
   total?: number | string | null
-  advance_primary_label?: string | null
-  advance_secondary_label?: string | null
+  custom_fields?: any | null
 }
 
 interface InvoiceAdvanceSheetProps {
@@ -133,17 +132,17 @@ export default function InvoiceAdvanceSheet({
                       </div>
                       
                       <div className="h-px bg-white/5" />
-                      
+
                       <div className="flex flex-col">
                         <div className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-500">
-                          {(advanceInvoice.advance_primary_label || ADVANCE_PRIMARY_LABEL_DEFAULT) + ` · ${Math.round((Number(advanceInvoice.total || 0) / contractValue) * 100)}%`}
+                          {(advanceInvoice.custom_fields?.advance_invoice?.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT) + ` · ${Math.round((Number(advanceInvoice.total || 0) / contractValue) * 100)}%`}
                         </div>
                         <div className="mt-2 text-[2.4rem] font-black leading-none tracking-[-0.04em]">{formatMoney(Number(advanceInvoice.total || 0))}</div>
                       </div>
                       
                       <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/5 p-4">
                         <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                          {advanceInvoice.advance_secondary_label || 'Balance after advance'}
+                          {advanceInvoice.custom_fields?.advance_invoice?.secondaryLabel || 'Balance after advance'}
                         </div>
                         <div className="text-base font-extrabold text-white">{formatMoney(Math.max(0, contractValue - Number(advanceInvoice.total || 0)))}</div>
                       </div>

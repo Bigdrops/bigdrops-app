@@ -34,18 +34,12 @@ export function mapAdvanceConfigToInvoice(parentInvoice: Invoice, config: Advanc
 
   return {
     ...parentInvoice,
-    // Use a deterministic virtual ID if needed, or null to signal it's virtual
     id: parentInvoice.id ? `virtual-advance-${parentInvoice.id}` : null,
     invoice_number: getAdvanceNumber(parentInvoice.invoice_number || '', config.suffix),
     total: advanceAmount,
-    is_advance: true,
-    advance_mode: config.mode,
-    advance_value: config.value,
-    total_contract_value: parentTotal,
-    thread_role: 'advance',
-    // thread_id is used by some logic to find the father
-    thread_id: parentInvoice.id,
-    advance_primary_label: config.primaryLabel,
-    advance_secondary_label: config.secondaryLabel,
+    custom_fields: {
+      ...(parentInvoice.custom_fields || {}),
+      advance_invoice: config
+    }
   }
 }

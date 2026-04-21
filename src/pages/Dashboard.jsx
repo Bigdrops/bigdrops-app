@@ -73,10 +73,12 @@ function getStatusStyle(status) {
 }
 
 function shouldShowInvoiceInRecentDocs(invoice) {
-  const threadRole = String(invoice?.thread_role || '').toLowerCase()
-  const isAdvanceInvoice = invoice?.is_advance === true || String(invoice?.is_advance || '').toLowerCase() === 'true'
-
-  return threadRole !== 'advance' && !isAdvanceInvoice
+  const customFields = typeof invoice?.custom_fields === 'string'
+    ? JSON.parse(invoice.custom_fields || '{}')
+    : (invoice?.custom_fields || {})
+    
+  const advanceConfig = customFields?.advance_invoice
+  return advanceConfig?.role !== 'advance'
 }
 
 function buildPriorityItems(projects, invoices, quotations) {
@@ -517,9 +519,8 @@ export default function Dashboard({ session }) {
       const [invoiceRes, quotationRes, csrRes, waybillRes, financialsRes, projectsRes] = await Promise.all([
         supabase
           .from('invoices')
-          .select('id, invoice_number, client_name, status, created_at, total, thread_role, is_advance')
-          .or('thread_role.is.null,thread_role.neq.advance')
-          .or('is_advance.is.null,is_advance.eq.false')
+          .select('id, invoice_number, client_name, status, created_at, total, custom_fields')
+          .or('custom_fields->advance_invoice->>role.is.null,custom_fields->advance_invoice->>role.neq.advance')
           .order('created_at', { ascending: false })
           .limit(8),
         supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
@@ -571,7 +572,7 @@ export default function Dashboard({ session }) {
           date: doc.created_at || doc.date,
           status: doc.status,
           amount: null,
-          meta: doc.vehicle_plate || formatStatus(doc.type),
+          meta: doc.vehicle_plate || 'Waybill',
         })),
       ]
         .filter((doc) => doc.date)
@@ -800,40 +801,16 @@ export default function Dashboard({ session }) {
                                   <div className="text-xs text-muted-foreground">{project.client_name || 'Open project'}</div>
                                 </div>
                               </div>
-                              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
                             </button>
                           ))}
                         </div>
-                      </div>
-
-                      <div className="mb-4">
-                        <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Archive</div>
-                        <button type="button" onClick={() => { navigate('/settings'); setQuickAccessOpen(false) }} className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 text-left transition hover:bg-muted/50">
-                          <div className="flex items-center gap-3">
-                            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-muted">
-                              <Archive className="h-5 w-5 text-slate-700" />
-                            </span>
-                            <div>
-                              <div className="text-sm font-semibold text-foreground">Archived items</div>
-                              <div className="text-xs text-muted-foreground">Open settings archive tools</div>
-                            </div>
-                          </div>
-                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                        </button>
-                      </div>
-
-                      <div className="mt-4">
-                        <Button variant="outline" className="w-full rounded-2xl border-border bg-card" onClick={() => setQuickAccessOpen(false)}>
-                          Close
-                        </Button>
                       </div>
                     </div>
                   </div>
                 </SheetContent>
               </Sheet>
             </section>
-
-            <div className="h-2" />
           </div>
         </div>
       </>

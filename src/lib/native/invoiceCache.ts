@@ -10,8 +10,6 @@ export type InvoiceCacheRow = {
   issue_date: string | null;
   due_date: string | null;
   status: string | null;
-  thread_id: string | null;
-  thread_role: string | null;
   project_id: string | null;
   custom_fields: string | Record<string, unknown> | null;
   payment_terms: string | null;
@@ -123,8 +121,6 @@ function normalizeInvoiceRow(row: InvoiceCacheRow): InvoiceCacheRow {
     issue_date: row.issue_date ?? null,
     due_date: row.due_date ?? null,
     status: row.status ?? null,
-    thread_id: row.thread_id ?? null,
-    thread_role: row.thread_role ?? null,
     project_id: row.project_id ?? null,
     custom_fields: serializeJsonField(row.custom_fields),
     payment_terms: row.payment_terms ?? null,
@@ -217,8 +213,6 @@ async function upsertInvoiceRow(row: InvoiceCacheRow): Promise<void> {
         issue_date,
         due_date,
         status,
-        thread_id,
-        thread_role,
         project_id,
         custom_fields,
         payment_terms,
@@ -242,7 +236,7 @@ async function upsertInvoiceRow(row: InvoiceCacheRow): Promise<void> {
         updated_at,
         cached_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         invoice_number = excluded.invoice_number,
         client_id = excluded.client_id,
@@ -251,8 +245,6 @@ async function upsertInvoiceRow(row: InvoiceCacheRow): Promise<void> {
         issue_date = excluded.issue_date,
         due_date = excluded.due_date,
         status = excluded.status,
-        thread_id = excluded.thread_id,
-        thread_role = excluded.thread_role,
         project_id = excluded.project_id,
         custom_fields = excluded.custom_fields,
         payment_terms = excluded.payment_terms,
@@ -285,8 +277,6 @@ async function upsertInvoiceRow(row: InvoiceCacheRow): Promise<void> {
       invoice.issue_date,
       invoice.due_date,
       invoice.status,
-      invoice.thread_id,
-      invoice.thread_role,
       invoice.project_id,
       invoice.custom_fields,
       invoice.payment_terms,
@@ -328,8 +318,6 @@ export async function bootstrapInvoiceCache(): Promise<void> {
               issue_date TEXT,
               due_date TEXT,
               status TEXT,
-              thread_id TEXT,
-              thread_role TEXT,
               project_id TEXT,
               custom_fields TEXT,
               payment_terms TEXT,

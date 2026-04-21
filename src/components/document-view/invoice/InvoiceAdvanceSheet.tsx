@@ -18,8 +18,12 @@ export default function InvoiceAdvanceSheet({
   onSaved,
   invoice,
 }: InvoiceAdvanceSheetProps) {
-  const [isAdvance, setIsAdvance] = useState(Boolean(invoice?.is_advance))
-  const [percentage, setPercentage] = useState(String(invoice?.advance_percentage || '0'))
+  const initialAdvanceData = typeof invoice?.custom_fields === 'string' 
+    ? JSON.parse(invoice.custom_fields || '{}')?.advance_invoice 
+    : invoice?.custom_fields?.advance_invoice
+
+  const [isAdvance, setIsAdvance] = useState(Boolean(initialAdvanceData?.enabled))
+  const [percentage, setPercentage] = useState(String(initialAdvanceData?.value || '0'))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -27,11 +31,24 @@ export default function InvoiceAdvanceSheet({
     setError('')
     setSaving(true)
     try {
+      const currentCustomFields = typeof invoice?.custom_fields === 'string'
+        ? JSON.parse(invoice.custom_fields || '{}')
+        : (invoice?.custom_fields || {})
+
+      const nextCustomFields = {
+        ...currentCustomFields,
+        advance_invoice: {
+          ...(currentCustomFields.advance_invoice || {}),
+          enabled: isAdvance,
+          mode: 'percent',
+          value: Number(percentage) || 0,
+        }
+      }
+
       const { error: updateError } = await supabase
         .from('invoices')
         .update({
-          is_advance: isAdvance,
-          advance_percentage: Number(percentage) || 0,
+          custom_fields: nextCustomFields
         })
         .eq('id', invoice.id)
 

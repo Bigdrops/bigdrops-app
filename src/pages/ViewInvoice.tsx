@@ -446,7 +446,7 @@ export default function ViewInvoice() {
           suffix: advanceSuffixValue,
           primaryLabel: advancePrimaryLabel,
           secondaryLabel: advanceSecondaryLabel,
-          threadPosition: Number(selectedAdvanceInvoice.thread_position || 1),
+          threadPosition: Number(selectedAdvanceInvoice.custom_fields?.advance_invoice?.position || 1),
         })
         showToast('Advance invoice updated', 'Advance child record saved successfully.', 'success')
       } else {
@@ -838,7 +838,7 @@ export default function ViewInvoice() {
           advanceInvoices={(Array.isArray(relatedAdvanceInvoices) ? relatedAdvanceInvoices : []).map((advance: any) => ({
             id: String(advance.id),
             title: advance.invoice_number || advance.invoice_title || 'Advance Invoice',
-            subtitle: advance.advance_primary_label || ADVANCE_PRIMARY_LABEL_DEFAULT,
+            subtitle: advance.custom_fields?.advance_invoice?.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
             amountLabel: formatNaira(Number(advance.total || 0)),
             onOpen: () => openAdvanceDetails(advance, 'view'),
             onDownload: () => {

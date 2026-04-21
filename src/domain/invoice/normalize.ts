@@ -164,8 +164,6 @@ export function mapDbInvoice(row: DbInvoice): Invoice {
     wht: toNumber(row.wht),
     subtotal: toNumber(row.subtotal),
     total: toNumber(row.total),
-    is_advance: Boolean(row.is_advance),
-    advance_percentage: toNumber(row.advance_percentage),
     work_duration: row.work_duration || '',
     amount_in_words: row.amount_in_words || '',
     invoice_title: row.invoice_title || '',

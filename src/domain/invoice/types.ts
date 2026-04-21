@@ -18,12 +18,16 @@ export interface InvoiceAttachment {
 }
 
 export interface AdvanceConfig {
-  enabled: boolean
+  enabled?: boolean
   mode: 'percent' | 'fixed'
   value: number
   suffix?: string
   primaryLabel?: string
   secondaryLabel?: string
+  parentId?: string | null
+  role?: string | null
+  position?: number
+  contractValue?: number
 }
 
 export interface InvoicePdfOutput {
@@ -100,8 +104,6 @@ export interface DbInvoice {
   wht?: number | string | null
   subtotal?: number | string | null
   total?: number | string | null
-  is_advance?: boolean | null
-  advance_percentage?: number | string | null
   work_duration?: string | null
   amount_in_words?: string | null
   invoice_title?: string | null
@@ -186,15 +188,7 @@ export interface Invoice extends InvoiceTotalsSource {
   wht?: number
   subtotal?: number
   total?: number
-  is_advance?: boolean
-  advance_percentage?: number
-  advance_mode?: 'percent' | 'fixed' | string
-  advance_value?: number
-  total_contract_value?: number
-  thread_id?: string | null
-  thread_role?: string | null
-  advance_primary_label?: string
-  advance_secondary_label?: string
+
 
   work_duration?: string
   amount_in_words?: string

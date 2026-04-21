@@ -50,14 +50,16 @@ test('advance child flow builds a child payload without converting the parent in
   })
 
   assert.equal(payload.invoice_number, 'INV-001-A')
-  assert.equal(payload.thread_id, 'parent-1')
-  assert.equal(payload.thread_role, 'advance')
-  assert.equal(payload.advance_mode, 'percent')
-  assert.equal(payload.advance_value, 30)
-  assert.equal(payload.total_contract_value, 500000)
+  const customFields = typeof payload.custom_fields === 'string' ? JSON.parse(payload.custom_fields) : payload.custom_fields
+  const config = customFields.advance_invoice
+  assert.equal(config.parentId, 'parent-1')
+  assert.equal(config.role, 'advance')
+  assert.equal(config.mode, 'percent')
+  assert.equal(config.value, 30)
+  assert.equal(config.contractValue, 500000)
   assert.equal(payload.total, 150000)
-  assert.equal(payload.advance_primary_label, ADVANCE_PRIMARY_LABEL_DEFAULT)
-  assert.equal(payload.advance_secondary_label, ADVANCE_SECONDARY_LABEL_DEFAULT)
+  assert.equal(config.primaryLabel, ADVANCE_PRIMARY_LABEL_DEFAULT)
+  assert.equal(config.secondaryLabel, ADVANCE_SECONDARY_LABEL_DEFAULT)
   assert.equal(payload.invoice_title, 'Main Invoice')
 })
 
@@ -65,11 +67,15 @@ test('advance child flow can prefill edit state from an existing child invoice',
   const draft = getAdvanceDraftFromInvoice({
     invoice_number: 'INV-001-A',
     total: 125000,
-    total_contract_value: 500000,
-    advance_mode: 'percent',
-    advance_value: 25,
-    advance_primary_label: 'Advance invoice due now',
-    advance_secondary_label: 'Balance upon completion',
+    custom_fields: {
+      advance_invoice: {
+        mode: 'percent',
+        value: 25,
+        contractValue: 500000,
+        primaryLabel: 'Advance invoice due now',
+        secondaryLabel: 'Balance upon completion',
+      }
+    }
   })
 
   assert.deepEqual(draft, {

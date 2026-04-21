@@ -71,9 +71,8 @@ export function useDashboardData() {
       const [invoiceRes, quotationRes, csrRes, waybillRes, financialsRes, projectsRes] = await Promise.all([
         supabase
           .from('invoices')
-          .select('id, invoice_number, client_name, status, created_at, total, thread_role, is_advance')
-          .or('thread_role.is.null,thread_role.neq.advance')
-          .or('is_advance.is.null,is_advance.eq.false')
+          .select('id, invoice_number, client_name, status, created_at, total, custom_fields')
+          .or('custom_fields->advance_invoice->>role.is.null,custom_fields->advance_invoice->>role.neq.advance')
           .order('created_at', { ascending: false })
           .limit(8),
         supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
@@ -84,9 +83,10 @@ export function useDashboardData() {
       ])
 
       const invoices = (invoiceRes.data || []).filter(inv => {
-        const threadRole = String(inv?.thread_role || '').toLowerCase()
-        const isAdvanceInvoice = inv?.is_advance === true || String(inv?.is_advance || '').toLowerCase() === 'true'
-        return threadRole !== 'advance' && !isAdvanceInvoice
+        const customFields = typeof inv?.custom_fields === 'string'
+          ? JSON.parse(inv.custom_fields || '{}')
+          : (inv?.custom_fields || {})
+        return customFields?.advance_invoice?.role !== 'advance'
       })
 
       const mergedDocs: RecentDoc[] = [

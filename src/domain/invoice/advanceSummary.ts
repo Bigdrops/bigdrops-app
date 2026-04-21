@@ -4,9 +4,8 @@ import {
 } from './advanceChildFlow'
 
 type AdvanceInvoiceLike = {
-  thread_role?: string | null
+  custom_fields?: any
   total?: number | string | null
-  total_contract_value?: number | string | null
   advance_primary_label?: string | null
   advance_secondary_label?: string | null
 }
@@ -27,7 +26,16 @@ function toNumber(value: number | string | null | undefined) {
 }
 
 export function isAdvanceInvoiceOutput(invoice: AdvanceInvoiceLike | null | undefined) {
-  return invoice?.thread_role === 'advance'
+  const advanceConfig = invoice?.custom_fields?.advance_invoice
+  if (typeof invoice?.custom_fields === 'string') {
+    try {
+      const parsed = JSON.parse(invoice.custom_fields)
+      return parsed?.advance_invoice?.role === 'advance'
+    } catch {
+      return false
+    }
+  }
+  return advanceConfig?.role === 'advance'
 }
 
 export function getAdvanceSummaryValues(
@@ -35,7 +43,17 @@ export function getAdvanceSummaryValues(
 ): AdvanceSummaryValues | null {
   if (!isAdvanceInvoiceOutput(invoice)) return null
 
-  const contractValue = Math.max(0, toNumber(invoice?.total_contract_value))
+  let advanceConfig = invoice?.custom_fields?.advance_invoice
+  if (typeof invoice?.custom_fields === 'string') {
+    try {
+      const parsed = JSON.parse(invoice.custom_fields)
+      advanceConfig = parsed?.advance_invoice
+    } catch {
+      // ignore
+    }
+  }
+
+  const contractValue = Math.max(0, toNumber(advanceConfig?.contractValue))
   const thisAdvance = Math.max(0, toNumber(invoice?.total))
   const balanceRemaining = Math.max(0, contractValue - thisAdvance)
 
@@ -48,7 +66,7 @@ export function getAdvanceSummaryValues(
     balanceRemaining,
     advancePercent: Math.round(advancePercent),
     balancePercent: Math.round(balancePercent),
-    primaryLabel: invoice?.advance_primary_label || ADVANCE_PRIMARY_LABEL_DEFAULT,
-    secondaryLabel: invoice?.advance_secondary_label || ADVANCE_SECONDARY_LABEL_DEFAULT,
+    primaryLabel: advanceConfig?.primaryLabel || invoice?.advance_primary_label || ADVANCE_PRIMARY_LABEL_DEFAULT,
+    secondaryLabel: advanceConfig?.secondaryLabel || invoice?.advance_secondary_label || ADVANCE_SECONDARY_LABEL_DEFAULT,
   }
 }

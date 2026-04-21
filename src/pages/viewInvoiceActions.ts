@@ -53,9 +53,6 @@ export async function duplicateInvoiceDraft({
       status: 'draft',
       issue_date: new Date().toISOString().split('T')[0],
       due_date: null,
-      thread_id: null,
-      thread_role: null,
-      thread_position: 1,
     },
     prefillItems: items.map((item) => ({ ...item, id: null })),
   }
@@ -102,8 +99,7 @@ export async function createAdvanceInvoiceRecord({
   const { count, error: countError } = await supabase
     .from('invoices')
     .select('id', { count: 'exact', head: true })
-    .eq('thread_id', parentInvoice?.id)
-    .eq('thread_role', 'advance')
+    .eq('custom_fields->advance_invoice->>parentId', parentInvoice?.id)
     .is('archived_at', null)
 
   if (countError) throw countError
