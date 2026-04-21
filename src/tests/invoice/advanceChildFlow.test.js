@@ -13,6 +13,7 @@ import {
 } from '../../domain/invoice/advanceChildFlow.ts'
 
 const viewInvoicePath = path.resolve('src/pages/ViewInvoice.tsx')
+const advanceSheetPath = path.resolve('src/components/invoice/view/InvoiceAdvanceSheet.tsx')
 
 test('advance child flow defaults match the restored popup copy', () => {
   assert.equal(ADVANCE_SUFFIX_DEFAULT, 'A')
@@ -86,4 +87,19 @@ test('invoice view wiring uses the child advance sheet and stops deriving advanc
   assert.match(source, /import InvoiceAdvanceSheet from ['"]@\/components\/invoice\/view\/InvoiceAdvanceSheet['"]/)
   assert.doesNotMatch(source, /import InvoiceAdvanceSheet from ['"]@\/components\/document-view\/invoice\/InvoiceAdvanceSheet['"]/)
   assert.doesNotMatch(source, /advanceInvoices=\{\s*invoice\.is_advance/s)
+})
+
+test('active advance sheet wording matches the child advance invoice flow and excludes converter language', () => {
+  const source = fs.readFileSync(advanceSheetPath, 'utf8')
+
+  assert.match(source, /Create Advance Invoice/)
+  assert.match(source, /Edit Advance Invoice/)
+  assert.match(source, /Advance Invoice Details/)
+  assert.match(source, /Parent Invoice/)
+  assert.match(source, /Advance due now/)
+  assert.match(source, /Balance after advance/)
+  assert.doesNotMatch(source, /Standard Invoice/)
+  assert.doesNotMatch(source, /Advance disabled/)
+  assert.doesNotMatch(source, /Edit Config/)
+  assert.doesNotMatch(source, /clear the advance configuration from this invoice/i)
 })

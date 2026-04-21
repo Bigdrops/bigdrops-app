@@ -97,20 +97,20 @@ export default function InvoiceAdvanceSheet({
             <SheetHeader className="border-b border-[#e7e5e4] bg-[#f5f5f4]/60 px-6 pb-5 pt-6 text-left backdrop-blur-md">
               <SheetTitle className="text-lg font-black tracking-tight text-slate-900">
                 {advanceSheetMode === 'edit'
-                  ? 'Edit Advance Payment'
+                  ? 'Edit Advance Invoice'
                   : advanceInvoice && advanceSheetMode === 'view'
-                    ? 'Advance Payment Details'
-                    : 'Create Advance Payment'}
+                    ? 'Advance Invoice Details'
+                    : 'Create Advance Invoice'}
               </SheetTitle>
               <SheetDescription className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Invoice {invoiceNumber || '—'}
+                Child invoice for {invoiceNumber || '—'}
               </SheetDescription>
             </SheetHeader>
 
             <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
               <div className="rounded-[28px] border border-[#e7e5e4] bg-[#f5f5f4] p-5 shadow-sm">
                 <div className="grid grid-cols-2 gap-8">
-                  <MetricBlock label="Invoice No" value={invoiceNumber || '—'} />
+                  <MetricBlock label="Parent Invoice" value={invoiceNumber || '—'} />
                   <MetricBlock label="Contract Value" value={formatMoney(contractValue)} />
                 </div>
               </div>
@@ -143,7 +143,7 @@ export default function InvoiceAdvanceSheet({
                       
                       <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/5 p-4">
                         <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                          {advanceInvoice.advance_secondary_label || ADVANCE_SECONDARY_LABEL_DEFAULT}
+                          {advanceInvoice.advance_secondary_label || 'Balance after advance'}
                         </div>
                         <div className="text-base font-extrabold text-white">{formatMoney(Math.max(0, contractValue - Number(advanceInvoice.total || 0)))}</div>
                       </div>
@@ -153,11 +153,11 @@ export default function InvoiceAdvanceSheet({
               ) : (
                 <>
                   <div className="rounded-[28px] border border-slate-200/60 bg-white p-6 shadow-sm">
-                    <div className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Configuration</div>
+                    <div className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Advance Invoice Setup</div>
                     
                     <div className="mt-5 space-y-6">
                       <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Pricing Mode</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Advance Type</Label>
                         <div className="flex w-full gap-1 rounded-2xl bg-slate-100 p-1.5">
                           <button
                             type="button"
@@ -183,7 +183,7 @@ export default function InvoiceAdvanceSheet({
                       <div className="grid gap-5 sm:grid-cols-2">
                         <div className="space-y-2.5">
                           <Label htmlFor="advance-value" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">
-                            {advanceMode === 'fixed' ? 'Calculation Base (Amount)' : 'Calculation Base (%)'}
+                            {advanceMode === 'fixed' ? 'Advance Amount' : 'Advance Percentage'}
                           </Label>
                           <Input
                             id="advance-value"
@@ -199,7 +199,7 @@ export default function InvoiceAdvanceSheet({
                           />
                         </div>
                         <div className="space-y-2.5">
-                          <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Suffix Variant</Label>
+                          <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Invoice Suffix</Label>
                           <div className="flex items-center gap-3">
                             <div className="flex h-14 flex-1 items-center rounded-[18px] bg-slate-100 px-4 text-sm font-bold text-slate-400">
                               {invoiceNumber || 'INV-000'} <span className="mx-2 text-slate-300">-</span>
@@ -255,14 +255,14 @@ export default function InvoiceAdvanceSheet({
                       
                       <div className="flex flex-col">
                         <div className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-500">
-                          {(advancePrimaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT) + ` · ${Math.round((advanceAmount / contractValue) * 100)}%`}
+                          {(advancePrimaryLabel || 'Advance due now') + ` · ${Math.round((advanceAmount / contractValue) * 100)}%`}
                         </div>
                         <div className="mt-2 text-[2.4rem] font-black leading-none tracking-[-0.04em]">{formatMoney(advanceAmount)}</div>
                       </div>
                       
                       <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/5 p-4">
                         <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                          {advanceSecondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT}
+                          {advanceSecondaryLabel || 'Balance after advance'}
                         </div>
                         <div className="text-base font-extrabold text-white">{formatMoney(balanceRemaining)}</div>
                       </div>
@@ -282,7 +282,7 @@ export default function InvoiceAdvanceSheet({
                     disabled={advanceSaving || advancePdfGenerating}
                     className="h-12 rounded-2xl font-bold text-red-600 hover:bg-red-50 hover:text-red-700"
                   >
-                    Remove Advance
+                    Delete Advance Invoice
                   </Button>
                   <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:justify-end">
                     <Button
@@ -300,7 +300,7 @@ export default function InvoiceAdvanceSheet({
                       disabled={advanceSaving || advancePdfGenerating}
                       className="h-12 rounded-2xl bg-slate-950 font-black uppercase tracking-widest text-white shadow-lg hover:bg-slate-800"
                     >
-                      Edit Config
+                      Edit Advance Invoice
                     </Button>
                   </div>
                 </div>
@@ -325,7 +325,7 @@ export default function InvoiceAdvanceSheet({
                   >
                     {advanceSaving
                       ? advanceSheetMode === 'edit' ? 'Saving...' : 'Creating...'
-                      : advanceSheetMode === 'edit' ? 'Save Changes' : 'Create Advance'}
+                      : advanceSheetMode === 'edit' ? 'Save Advance Invoice' : 'Create Advance Invoice'}
                   </Button>
                 </div>
               )}
@@ -337,9 +337,9 @@ export default function InvoiceAdvanceSheet({
       <ConfirmActionDialog
         open={deleteConfirmOpen}
         onOpenChange={onDeleteConfirmOpenChange}
-        title="Remove Advance?"
-        description="This will clear the advance configuration from this invoice. Any legacy advance child rows will also be removed."
-        confirmLabel="Remove Advance"
+        title="Delete Advance Invoice?"
+        description="This will delete the selected advance child invoice. The parent invoice will remain unchanged."
+        confirmLabel="Delete Advance Invoice"
         onConfirm={onDeleteConfirm}
       />
     </>
