@@ -325,6 +325,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
   const [showItemImages, setShowItemImages] = useState(false)
   const [groups, setGroups] = useState<QuotationGroupState[]>([])
+  const [initialQuotationSnapshot, setInitialQuotationSnapshot] = useState<Record<string, unknown> | null>(null)
   const [items, setItems] = useState<InvoiceItem[]>([
     { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' },
   ])
@@ -454,6 +455,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           payment_terms: String(state.quotation.custom_fields?.payment_terms || 'Custom'),
           custom_payment_terms: String(state.quotation.custom_fields?.custom_payment_terms || ''),
         })
+        setInitialQuotationSnapshot(quotationRow as Record<string, unknown>)
         setItems(normalizedGrouping.items)
         setColumns(state.columns)
         setHeaderFields(state.headerFields)
@@ -894,17 +896,21 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       if (!isEdit) {
         await recordQuotationCreated(resolvedId)
         await recordAuditLog({
-          tableName: 'quotations',
+          entityType: 'quotation',
           recordId: resolvedId,
-          operation: 'INSERT',
+          entityLabel: savedQuotation.quotation_number,
+          action: 'CREATE',
+          oldData: null,
           newData: savedQuotation,
           trackedFields: QUOTATION_TRACKED_FIELDS,
         })
       } else {
         await recordAuditLog({
-          tableName: 'quotations',
+          entityType: 'quotation',
           recordId: resolvedId,
-          operation: 'UPDATE',
+          entityLabel: savedQuotation.quotation_number,
+          action: 'UPDATE',
+          oldData: initialQuotationSnapshot,
           newData: savedQuotation,
           trackedFields: QUOTATION_TRACKED_FIELDS,
         })

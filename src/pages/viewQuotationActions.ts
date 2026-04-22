@@ -121,9 +121,11 @@ export async function duplicateQuotationRecord({
     const { recordQuotationCreated, recordAuditLog, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
     await recordQuotationCreated(createdQuotation.id)
     await recordAuditLog({
-      tableName: 'quotations',
+      entityType: 'quotation',
       recordId: createdQuotation.id,
-      operation: 'INSERT',
+      entityLabel: createdQuotation.quotation_number,
+      action: 'CREATE',
+      oldData: null,
       newData: createdQuotation,
       trackedFields: QUOTATION_TRACKED_FIELDS,
     })
@@ -191,21 +193,6 @@ export async function convertQuotationToInvoice({
   const { data: createdInvoice, error } = await supabase.from('invoices').insert([invoicePayload]).select().single()
   if (error || !createdInvoice) throw new Error(error?.message || 'Failed to create invoice')
 
-  // Audit Trail
-  try {
-    const { recordQuotationLinked, recordInvoiceCreated, recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
-    await recordQuotationLinked(id, createdInvoice.id)
-    await recordInvoiceCreated(createdInvoice.id)
-    await recordAuditLog({
-      tableName: 'invoices',
-      recordId: createdInvoice.id,
-      operation: 'INSERT',
-      newData: createdInvoice,
-      trackedFields: INVOICE_TRACKED_FIELDS,
-    })
-  } catch (auditErr) {
-    console.error('Audit trail failed:', auditErr)
-  }
   const itemRows = items
     .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
     .map((item, index) => toDbItem(item, createdInvoice.id, index))
@@ -221,11 +208,43 @@ export async function convertQuotationToInvoice({
     po_number: createdInvoice.po_number ?? quotation.po_number ?? null,
   })
   const updatedQuotationFields = appendDerivedTrail(quotationCustomFields, derivedLink)
+  const quotationBeforeLink = {
+    ...quotation,
+    status: quotation.status || 'open',
+  }
   const { error: trailError } = await supabase
     .from('quotations')
     .update({ status: 'converted', custom_fields: JSON.stringify(updatedQuotationFields) })
     .eq('id', id)
   if (trailError) throw trailError
+
+  try {
+    const { recordQuotationLinked, recordInvoiceCreated, recordAuditLog, INVOICE_TRACKED_FIELDS, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
+    await recordQuotationLinked(id, createdInvoice.id)
+    await recordInvoiceCreated(createdInvoice.id)
+    await recordAuditLog({
+      entityType: 'invoice',
+      recordId: createdInvoice.id,
+      entityLabel: createdInvoice.invoice_number,
+      action: 'CREATE',
+      oldData: null,
+      newData: createdInvoice,
+      trackedFields: INVOICE_TRACKED_FIELDS,
+    })
+
+    const { data: updatedQuotation } = await supabase.from('quotations').select('*').eq('id', id).single()
+    await recordAuditLog({
+      entityType: 'quotation',
+      recordId: id,
+      entityLabel: updatedQuotation?.quotation_number || quotation.quotation_number || null,
+      action: 'LINK',
+      oldData: quotationBeforeLink,
+      newData: updatedQuotation,
+      trackedFields: QUOTATION_TRACKED_FIELDS,
+    })
+  } catch (auditErr) {
+    console.error('Audit trail failed:', auditErr)
+  }
   return createdInvoice
 }
 
@@ -242,7 +261,7 @@ export async function archiveQuotationRecord(id: string) {
 }
 
 export async function updateQuotationStatus(id: string, status: string) {
-  const { data: oldQuo } = await supabase.from('quotations').select('status').eq('id', id).single()
+  const { data: oldQuo } = await supabase.from('quotations').select('*').eq('id', id).single()
   const { error } = await supabase.from('quotations').update({ status }).eq('id', id)
   if (error) throw error
 
@@ -252,9 +271,11 @@ export async function updateQuotationStatus(id: string, status: string) {
     const { data: updatedQuotation } = await supabase.from('quotations').select('*').eq('id', id).single()
     await recordQuotationStatusChanged(id, oldQuo?.status || 'unknown', status)
     await recordAuditLog({
-      tableName: 'quotations',
+      entityType: 'quotation',
       recordId: id,
-      operation: 'UPDATE',
+      entityLabel: updatedQuotation?.quotation_number || null,
+      action: 'STATUS_CHANGE',
+      oldData: oldQuo,
       newData: updatedQuotation,
       trackedFields: QUOTATION_TRACKED_FIELDS,
     })

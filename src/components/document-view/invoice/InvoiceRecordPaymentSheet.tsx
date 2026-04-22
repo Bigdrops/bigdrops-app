@@ -126,6 +126,8 @@ export default function InvoiceRecordPaymentSheet({
 
     setSaving(true)
     try {
+      const { data: previousInvoice } = await supabase.from('invoices').select('*').eq('id', invoice.id).single()
+
       const payload = {
         invoice_id: invoice.id,
         cash_amount: amountPaid,
@@ -146,15 +148,18 @@ export default function InvoiceRecordPaymentSheet({
       try {
         const { recordPaymentRecorded, recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
         if (paymentRow) {
-          await recordPaymentRecorded(invoice.id, paymentRow.id, paymentRow.amount)
+          await recordPaymentRecorded(invoice.id, paymentRow.amount, form.notes.trim() || null)
         }
         const { data: updatedInvoice } = await supabase.from('invoices').select('*').eq('id', invoice.id).single()
         await recordAuditLog({
-          tableName: 'invoices',
+          entityType: 'invoice',
           recordId: invoice.id,
-          operation: 'UPDATE',
+          entityLabel: updatedInvoice?.invoice_number || invoice.invoice_number,
+          action: 'UPDATE',
+          oldData: previousInvoice,
           newData: updatedInvoice,
           trackedFields: INVOICE_TRACKED_FIELDS,
+          reason: form.notes.trim() || null,
         })
       } catch (auditErr) {
         console.error('Audit trail failed:', auditErr)

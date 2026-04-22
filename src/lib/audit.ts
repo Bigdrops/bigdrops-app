@@ -61,6 +61,13 @@ function pick(obj: Record<string, any> | null | undefined, fields: string[]) {
   return result
 }
 
+function isSamePayload(
+  left: Record<string, any> | null | undefined,
+  right: Record<string, any> | null | undefined,
+) {
+  return JSON.stringify(left ?? null) === JSON.stringify(right ?? null)
+}
+
 async function getActor() {
   const {
     data: { user },
@@ -95,6 +102,14 @@ export async function recordAuditLog({
 
   const p_old_data = oldData ? pick(oldData, trackedFields) : null
   const p_new_data = newData ? pick(newData, trackedFields) : null
+
+  if (
+    action !== 'CREATE' &&
+    action !== 'DELETE' &&
+    isSamePayload(p_old_data, p_new_data)
+  ) {
+    return { data: null, error: null }
+  }
 
   return supabase.rpc('record_audit_log', {
     p_entity_type: entityType,

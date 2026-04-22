@@ -66,9 +66,11 @@ export default function NewProject() {
     try {
       const { recordAuditLog, PROJECT_TRACKED_FIELDS } = await import('@/lib/audit')
       await recordAuditLog({
-        tableName: 'projects',
+        entityType: 'project',
         recordId: data.id,
-        operation: 'INSERT',
+        entityLabel: data.name,
+        action: 'CREATE',
+        oldData: null,
         newData: data,
         trackedFields: PROJECT_TRACKED_FIELDS,
       })

@@ -174,9 +174,10 @@ export default function ProjectDetail() {
       }
       
       await recordAuditLog({
-        tableName: 'projects',
+        entityType: 'project',
         recordId: id,
-        operation: 'UPDATE',
+        entityLabel: updatedProject?.name || project?.name || null,
+        action: 'UPDATE',
         oldData: project,
         newData: updatedProject,
         trackedFields: PROJECT_TRACKED_FIELDS,
@@ -248,6 +249,7 @@ export default function ProjectDetail() {
     const selectedConfig = linkConfig[linkType]
 
     const data = dataToLink || pendingReassignData
+    const auditEntityType = linkType === 'invoice' || linkType === 'quotation' ? linkType : null
 
     if (
       isClientMismatch({
@@ -267,6 +269,10 @@ export default function ProjectDetail() {
       return
     }
 
+    const auditBeforeLink = auditEntityType
+      ? await supabase.from(selectedConfig.table).select('*').eq('id', data.id).single()
+      : { data: null }
+
     const { error: updateError } = await supabase
       .from(selectedConfig.table)
       .update({ project_id: id })
@@ -281,17 +287,20 @@ export default function ProjectDetail() {
     // Audit Trail
     try {
       const { recordProjectLinkedActivity, recordAuditLog, INVOICE_TRACKED_FIELDS, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
-      await recordProjectLinkedActivity(id, data.id, linkType)
+      if (auditEntityType) {
+        await recordProjectLinkedActivity(id, auditEntityType, data.id, data[selectedConfig.numberField] || null)
+      }
       
       // Update audit log for the linked document
       const { data: updatedDoc } = await supabase.from(selectedConfig.table).select('*').eq('id', data.id).single()
       const fields = selectedConfig.table === 'invoices' ? INVOICE_TRACKED_FIELDS : selectedConfig.table === 'quotations' ? QUOTATION_TRACKED_FIELDS : []
       if (fields.length > 0) {
         await recordAuditLog({
-          tableName: selectedConfig.table,
+          entityType: auditEntityType,
           recordId: data.id,
-          operation: 'UPDATE',
-          oldData: data,
+          entityLabel: updatedDoc?.[selectedConfig.numberField] || data[selectedConfig.numberField] || null,
+          action: 'LINK',
+          oldData: auditBeforeLink.data,
           newData: updatedDoc,
           trackedFields: fields,
         })

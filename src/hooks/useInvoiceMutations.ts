@@ -160,7 +160,8 @@ export function useInvoiceMutations({
 
   const handleStatusChange = async (newStatus: string) => {
     if (newStatus === invoice.status) return
-    const oldStatus = invoice.status
+    const { data: previousInvoice } = await supabase.from('invoices').select('*').eq('id', id).single()
+    const oldStatus = previousInvoice?.status ?? invoice.status
     const { error } = await supabase.from('invoices').update({ status: newStatus }).eq('id', id)
     if (error) throw error
 
@@ -170,9 +171,11 @@ export function useInvoiceMutations({
       const { data: updatedInvoice } = await supabase.from('invoices').select('*').eq('id', id).single()
       await recordInvoiceStatusChanged(id!, oldStatus, newStatus)
       await recordAuditLog({
-        tableName: 'invoices',
+        entityType: 'invoice',
         recordId: id!,
-        operation: 'UPDATE',
+        entityLabel: updatedInvoice?.invoice_number || invoice.invoice_number || null,
+        action: 'STATUS_CHANGE',
+        oldData: previousInvoice || invoice,
         newData: updatedInvoice,
         trackedFields: INVOICE_TRACKED_FIELDS,
       })

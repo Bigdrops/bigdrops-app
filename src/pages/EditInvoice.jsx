@@ -458,9 +458,10 @@ export default function EditInvoice() {
       const { data: updatedInvoice } = await supabase.from('invoices').select('*').eq('id', id).single()
       
       await recordAuditLog({
-        tableName: 'invoices',
+        entityType: 'invoice',
         recordId: id,
-        operation: 'UPDATE',
+        entityLabel: updatedInvoice?.invoice_number || initialInvoiceSnapshot?.invoice_number || null,
+        action: 'UPDATE',
         oldData: initialInvoiceSnapshot,
         newData: updatedInvoice,
         trackedFields: INVOICE_TRACKED_FIELDS,

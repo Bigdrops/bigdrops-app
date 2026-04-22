@@ -442,9 +442,11 @@ export default function NewInvoice() {
       const { recordInvoiceCreated, recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
       await recordInvoiceCreated(invoiceRow.id)
       await recordAuditLog({
-        tableName: 'invoices',
+        entityType: 'invoice',
         recordId: invoiceRow.id,
-        operation: 'INSERT',
+        entityLabel: invoiceRow.invoice_number,
+        action: 'CREATE',
+        oldData: null,
         newData: invoiceRow,
         trackedFields: INVOICE_TRACKED_FIELDS,
       })
