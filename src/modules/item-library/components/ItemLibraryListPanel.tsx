@@ -1,16 +1,28 @@
-import type { ItemCatalogItem, ItemLibraryFilterType } from '../types'
+import type {
+  DuplicateCandidateGroup,
+  ItemCatalogItem,
+  ItemLibraryFilterType,
+  ItemLibraryViewMode,
+} from '../types'
+import { ItemLibraryDuplicateGroupCard } from './ItemLibraryDuplicateGroupCard'
 import { ItemLibraryRow } from './ItemLibraryRow'
 import { ItemSearchBar } from './ItemSearchBar'
 
 type ItemLibraryListPanelProps = {
   items: ItemCatalogItem[]
+  duplicateGroups: DuplicateCandidateGroup[]
+  viewMode: ItemLibraryViewMode
   selectedItemId: string | null
+  selectedDuplicateGroupId: string | null
   loading: boolean
   searchText: string
   activeFilter: ItemLibraryFilterType
+  onViewModeChange: (value: ItemLibraryViewMode) => void
   onSearchTextChange: (value: string) => void
   onFilterChange: (value: ItemLibraryFilterType) => void
   onSelectItem: (itemId: string) => void
+  onSelectDuplicateGroup: (groupId: string) => void
+  onInspectDuplicateItem: (groupId: string, itemId: string) => void
 }
 
 function SkeletonRow({ wide }: { wide?: boolean }) {
@@ -48,13 +60,19 @@ function FilterChip({ label, active, onClick }: FilterChipProps) {
 
 export function ItemLibraryListPanel({
   items,
+  duplicateGroups,
+  viewMode,
   selectedItemId,
+  selectedDuplicateGroupId,
   loading,
   searchText,
   activeFilter,
+  onViewModeChange,
   onSearchTextChange,
   onFilterChange,
   onSelectItem,
+  onSelectDuplicateGroup,
+  onInspectDuplicateItem,
 }: ItemLibraryListPanelProps) {
   return (
     <div className="flex h-full flex-col overflow-hidden border-r border-[#d5c4af] bg-[linear-gradient(180deg,_#f6ede1_0%,_#f0e5d6_100%)] shadow-[inset_-1px_0_0_rgba(255,255,255,0.35)]">
@@ -67,6 +85,15 @@ export function ItemLibraryListPanel({
         </div>
 
         <ItemSearchBar value={searchText} onChange={onSearchTextChange} placeholder="Search items..." />
+      </div>
+
+      <div className="flex flex-shrink-0 gap-2 border-b border-[#e3d5c5]/80 px-4 py-[10px]">
+        <FilterChip label="Catalog" active={viewMode === 'catalog'} onClick={() => onViewModeChange('catalog')} />
+        <FilterChip
+          label={`Possible Duplicates${duplicateGroups.length ? ` (${duplicateGroups.length})` : ''}`}
+          active={viewMode === 'duplicates'}
+          onClick={() => onViewModeChange('duplicates')}
+        />
       </div>
 
       <div className="flex flex-shrink-0 gap-[6px] overflow-x-auto border-b border-[#e3d5c5]/80 px-4 pb-[10px] pt-[10px]">
@@ -89,6 +116,28 @@ export function ItemLibraryListPanel({
             <SkeletonRow wide />
             <SkeletonRow />
           </>
+        ) : viewMode === 'duplicates' ? (
+          duplicateGroups.length === 0 ? (
+            <div className="px-4 py-10 text-center">
+              <p className="text-[13px] font-semibold text-[#75624f]">No duplicate candidates found</p>
+              <p className="mt-1 text-[11px] text-[#a79580]">
+                Review similar item names will appear here when the current list has close matches.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3 p-3">
+              {duplicateGroups.map((group) => (
+                <ItemLibraryDuplicateGroupCard
+                  key={group.group_id}
+                  group={group}
+                  selectedGroupId={selectedDuplicateGroupId}
+                  selectedItemId={selectedItemId}
+                  onSelectGroup={onSelectDuplicateGroup}
+                  onInspectItem={onInspectDuplicateItem}
+                />
+              ))}
+            </div>
+          )
         ) : items.length === 0 ? (
           <div className="px-4 py-10 text-center">
             <p className="text-[13px] font-semibold text-[#75624f]">

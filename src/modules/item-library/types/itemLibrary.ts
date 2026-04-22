@@ -1,6 +1,7 @@
 export type ItemSourceType = 'invoice' | 'quotation'
 
 export type ItemLibraryFilterType = 'all' | ItemSourceType
+export type ItemLibraryViewMode = 'catalog' | 'duplicates'
 
 export interface ItemCatalogItem {
   item_id: string
@@ -59,4 +60,20 @@ export interface ItemHistoryRow {
   unit_price?: number | null
   amount?: number | null
   used_at?: string | null
+}
+
+export interface DuplicateCandidateMember {
+  item_id: string
+  name: string
+  usage_count: number
+  last_sold_price: number | null
+  last_used_at?: string | null
+}
+
+export interface DuplicateCandidateGroup {
+  group_id: string
+  label: string
+  reason: string
+  normalized_label: string
+  members: DuplicateCandidateMember[]
 }

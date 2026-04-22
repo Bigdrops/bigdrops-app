@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 
 import Layout from '@/components/Layout'
 import { ItemLibraryDetailPanel } from '../components/ItemLibraryDetailPanel'
+import { ItemLibraryDuplicateReviewPanel } from '../components/ItemLibraryDuplicateReviewPanel'
 import { ItemLibraryListPanel } from '../components/ItemLibraryListPanel'
+import { detectDuplicateGroups } from '../domain/duplicateDetection'
 import { useItemHistoryDetail, useItemHistoryList } from '../hooks'
-import type { ItemCatalogItem, ItemLibraryFilterType } from '../types'
+import type { ItemCatalogItem, ItemLibraryFilterType, ItemLibraryViewMode } from '../types'
 
 function DownloadIcon() {
   return (
@@ -57,8 +59,10 @@ function exportItems(items: ItemCatalogItem[]) {
 
 export default function ItemLibraryPage() {
   const [searchText, setSearchText] = useState('')
+  const [viewMode, setViewMode] = useState<ItemLibraryViewMode>('catalog')
   const [activeFilter, setActiveFilter] = useState<ItemLibraryFilterType>('all')
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
+  const [selectedDuplicateGroupId, setSelectedDuplicateGroupId] = useState<string | null>(null)
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false)
   const { data: summaryItems, loading: summaryLoading, error: summaryError } = useItemHistoryList(200)
 
@@ -77,6 +81,8 @@ export default function ItemLibraryPage() {
     })
   }, [activeFilter, searchText, summaryItems])
 
+  const duplicateGroups = useMemo(() => detectDuplicateGroups(filteredItems), [filteredItems])
+
   useEffect(() => {
     if (!filteredItems.length) {
       setSelectedItemId(null)
@@ -90,9 +96,39 @@ export default function ItemLibraryPage() {
     })
   }, [filteredItems])
 
+  useEffect(() => {
+    if (viewMode !== 'duplicates') return
+    if (!duplicateGroups.length) {
+      setSelectedDuplicateGroupId(null)
+      return
+    }
+
+    setSelectedDuplicateGroupId((current) => {
+      if (current && duplicateGroups.some((group) => group.group_id === current)) return current
+      return duplicateGroups[0].group_id
+    })
+  }, [duplicateGroups, viewMode])
+
+  useEffect(() => {
+    if (viewMode !== 'duplicates' || !selectedDuplicateGroupId) return
+
+    const activeGroup = duplicateGroups.find((group) => group.group_id === selectedDuplicateGroupId)
+    if (!activeGroup || !activeGroup.members.length) return
+
+    setSelectedItemId((current) => {
+      if (current && activeGroup.members.some((member) => member.item_id === current)) return current
+      return activeGroup.members[0].item_id
+    })
+  }, [duplicateGroups, selectedDuplicateGroupId, viewMode])
+
   const selectedItem = useMemo(
     () => filteredItems.find((item) => item.item_id === selectedItemId) || null,
     [filteredItems, selectedItemId],
+  )
+
+  const selectedDuplicateGroup = useMemo(
+    () => duplicateGroups.find((group) => group.group_id === selectedDuplicateGroupId) || null,
+    [duplicateGroups, selectedDuplicateGroupId],
   )
 
   const {
@@ -153,13 +189,30 @@ export default function ItemLibraryPage() {
           <div className={mobileDetailOpen ? 'hidden md:flex md:w-[38%] md:flex-shrink-0 md:flex-col md:overflow-hidden' : 'flex w-full flex-col overflow-hidden md:w-[38%] md:flex-shrink-0'}>
             <ItemLibraryListPanel
               items={filteredItems}
+              duplicateGroups={duplicateGroups}
+              viewMode={viewMode}
               selectedItemId={selectedItemId}
+              selectedDuplicateGroupId={selectedDuplicateGroupId}
               loading={summaryLoading}
               searchText={searchText}
               activeFilter={activeFilter}
+              onViewModeChange={setViewMode}
               onSearchTextChange={setSearchText}
               onFilterChange={setActiveFilter}
               onSelectItem={(itemId) => {
+                setSelectedItemId(itemId)
+                if (window.innerWidth < 768) setMobileDetailOpen(true)
+              }}
+              onSelectDuplicateGroup={(groupId) => {
+                const nextGroup = duplicateGroups.find((group) => group.group_id === groupId)
+                setSelectedDuplicateGroupId(groupId)
+                if (nextGroup?.members[0]) {
+                  setSelectedItemId(nextGroup.members[0].item_id)
+                }
+                if (window.innerWidth < 768) setMobileDetailOpen(true)
+              }}
+              onInspectDuplicateItem={(groupId, itemId) => {
+                setSelectedDuplicateGroupId(groupId)
                 setSelectedItemId(itemId)
                 if (window.innerWidth < 768) setMobileDetailOpen(true)
               }}
@@ -179,12 +232,23 @@ export default function ItemLibraryPage() {
             </div>
 
             <div className="flex-1 overflow-hidden">
-              <ItemLibraryDetailPanel
-                item={selectedItem}
-                historyRows={historyRows}
-                loading={historyLoading}
-                error={historyError}
-              />
+              {viewMode === 'duplicates' ? (
+                <ItemLibraryDuplicateReviewPanel
+                  group={selectedDuplicateGroup}
+                  item={selectedItem}
+                  historyRows={historyRows}
+                  loading={historyLoading}
+                  error={historyError}
+                  onInspectItem={(itemId) => setSelectedItemId(itemId)}
+                />
+              ) : (
+                <ItemLibraryDetailPanel
+                  item={selectedItem}
+                  historyRows={historyRows}
+                  loading={historyLoading}
+                  error={historyError}
+                />
+              )}
             </div>
           </div>
         </main>
