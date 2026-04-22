@@ -94,6 +94,11 @@ export function ItemLibraryListPanel({
           active={viewMode === 'duplicates'}
           onClick={() => onViewModeChange('duplicates')}
         />
+        <FilterChip
+          label="Advanced Cleanup"
+          active={viewMode === 'advanced_cleanup'}
+          onClick={() => onViewModeChange('advanced_cleanup')}
+        />
       </div>
 
       <div className="flex flex-shrink-0 gap-[6px] overflow-x-auto border-b border-[#e3d5c5]/80 px-4 pb-[10px] pt-[10px]">
@@ -116,7 +121,7 @@ export function ItemLibraryListPanel({
             <SkeletonRow wide />
             <SkeletonRow />
           </>
-        ) : viewMode === 'duplicates' ? (
+        ) : viewMode === 'duplicates' || viewMode === 'advanced_cleanup' ? (
           duplicateGroups.length === 0 ? (
             <div className="px-4 py-10 text-center">
               <p className="text-[13px] font-semibold text-[#75624f]">No duplicate candidates found</p>

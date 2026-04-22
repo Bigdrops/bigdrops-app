@@ -2,13 +2,15 @@ import { useEffect, useMemo, useState } from 'react'
 
 import Layout from '@/components/Layout'
 import { toast } from '@/hooks/use-toast'
+import { ItemLibraryAdvancedCleanupPanel } from '../components/ItemLibraryAdvancedCleanupPanel'
 import { ItemLibraryDetailPanel } from '../components/ItemLibraryDetailPanel'
 import { ItemLibraryDuplicateReviewPanel } from '../components/ItemLibraryDuplicateReviewPanel'
 import { ItemLibraryListPanel } from '../components/ItemLibraryListPanel'
 import { detectDuplicateGroups } from '../domain/duplicateDetection'
+import { buildFlaggedCleanupExportPayload } from '../domain/itemCleanupExchange'
 import { useItemAliases, useItemHistoryDetail, useItemHistoryList, useItemMerge } from '../hooks'
 import type { ItemLibraryMergeRequest } from '../types'
-import type { ItemCatalogItem, ItemLibraryFilterType, ItemLibraryViewMode } from '../types'
+import type { ItemLibraryFilterType, ItemLibraryViewMode } from '../types'
 
 function DownloadIcon() {
   return (
@@ -47,16 +49,6 @@ function BackArrow() {
       <path d="m12 19-7-7 7-7" />
     </svg>
   )
-}
-
-function exportItems(items: ItemCatalogItem[]) {
-  const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = `item-library-${new Date().toISOString().slice(0, 10)}.json`
-  anchor.click()
-  URL.revokeObjectURL(url)
 }
 
 export default function ItemLibraryPage() {
@@ -105,7 +97,7 @@ export default function ItemLibraryPage() {
   }, [filteredItems])
 
   useEffect(() => {
-    if (viewMode !== 'duplicates') return
+    if (viewMode !== 'duplicates' && viewMode !== 'advanced_cleanup') return
     if (!duplicateGroups.length) {
       setSelectedDuplicateGroupId(null)
       return
@@ -118,7 +110,7 @@ export default function ItemLibraryPage() {
   }, [duplicateGroups, viewMode])
 
   useEffect(() => {
-    if (viewMode !== 'duplicates' || !selectedDuplicateGroupId) return
+    if ((viewMode !== 'duplicates' && viewMode !== 'advanced_cleanup') || !selectedDuplicateGroupId) return
 
     const activeGroup = duplicateGroups.find((group) => group.group_id === selectedDuplicateGroupId)
     if (!activeGroup || !activeGroup.members.length) return
@@ -138,15 +130,28 @@ export default function ItemLibraryPage() {
     () => duplicateGroups.find((group) => group.group_id === selectedDuplicateGroupId) || null,
     [duplicateGroups, selectedDuplicateGroupId],
   )
-  const selectedDuplicateItemIds = useMemo(
-    () => selectedDuplicateGroup?.members.map((member) => member.item_id) || [],
-    [selectedDuplicateGroup],
+  const allDuplicateItemIds = useMemo(
+    () => duplicateGroups.flatMap((group) => group.members.map((member) => member.item_id)),
+    [duplicateGroups],
   )
   const {
-    data: selectedGroupAliases,
+    data: duplicateAliases,
     loading: aliasesLoading,
     error: aliasesError,
-  } = useItemAliases(selectedDuplicateItemIds)
+  } = useItemAliases(allDuplicateItemIds)
+  const selectedGroupAliases = useMemo(
+    () =>
+      selectedDuplicateGroup
+        ? duplicateAliases.filter((alias) =>
+            selectedDuplicateGroup.members.some((member) => member.item_id === alias.item_id),
+          )
+        : [],
+    [duplicateAliases, selectedDuplicateGroup],
+  )
+  const flaggedCleanupExport = useMemo(
+    () => buildFlaggedCleanupExportPayload({ duplicateGroups, aliases: duplicateAliases }),
+    [duplicateAliases, duplicateGroups],
+  )
   const { mergeItems, loading: mergeLoading } = useItemMerge()
 
   const {
@@ -210,16 +215,10 @@ export default function ItemLibraryPage() {
             ) : null}
           </div>
 
-          <button
-            type="button"
-            onClick={() => exportItems(filteredItems)}
-            disabled={summaryLoading || filteredItems.length === 0}
-            aria-label="Export catalog as JSON"
-            className="flex items-center gap-[6px] rounded-[10px] border border-[#ccb79b] bg-[#fffaf1] px-3 py-[7px] text-[12px] font-bold text-[#5d4b38] shadow-[0_10px_18px_rgba(94,72,46,0.09),inset_0_1px_0_rgba(255,255,255,0.65)] transition-all duration-150 hover:bg-[#f5e8d5] hover:text-[#2a2118] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c6a45]"
-          >
+          <div className="flex items-center gap-[6px] rounded-[10px] border border-[#ccb79b] bg-[#fffaf1] px-3 py-[7px] text-[11px] font-bold text-[#7b644c] shadow-[0_10px_18px_rgba(94,72,46,0.09),inset_0_1px_0_rgba(255,255,255,0.65)]">
             <DownloadIcon />
-            <span className="hidden sm:inline">Export</span>
-          </button>
+            <span className="hidden sm:inline">Advanced export in panel</span>
+          </div>
         </header>
 
         {summaryError ? (
@@ -289,6 +288,8 @@ export default function ItemLibraryPage() {
                   onInspectItem={(itemId) => setSelectedItemId(itemId)}
                   onMerge={handleMerge}
                 />
+              ) : viewMode === 'advanced_cleanup' ? (
+                <ItemLibraryAdvancedCleanupPanel exportPayload={flaggedCleanupExport} />
               ) : (
                 <ItemLibraryDetailPanel
                   item={selectedItem}

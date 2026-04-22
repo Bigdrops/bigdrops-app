@@ -1,7 +1,7 @@
 export type ItemSourceType = 'invoice' | 'quotation'
 
 export type ItemLibraryFilterType = 'all' | ItemSourceType
-export type ItemLibraryViewMode = 'catalog' | 'duplicates'
+export type ItemLibraryViewMode = 'catalog' | 'duplicates' | 'advanced_cleanup'
 
 export interface ItemCatalogItem {
   item_id: string
@@ -90,4 +90,76 @@ export interface ItemLibraryMergeResult {
   retired_item_ids: string[]
   relinked_invoice_rows: number
   relinked_quotation_rows: number
+}
+
+export interface FlaggedCleanupExportItem {
+  item_id: string
+  name: string
+  usage_count: number
+  last_price: number | null
+  is_active: boolean
+  aliases: string[]
+}
+
+export interface FlaggedCleanupExportGroup {
+  group_id: string
+  label: string
+  items: FlaggedCleanupExportItem[]
+}
+
+export interface FlaggedCleanupExportPayload {
+  export_type: 'flagged_cleanup'
+  schema_version: 1
+  generated_at: string
+  scope: {
+    mode: 'flagged'
+    group_count: number
+    item_count: number
+  }
+  groups: FlaggedCleanupExportGroup[]
+}
+
+export interface FlaggedCleanupResultGroup {
+  group_id: string
+  canonical_name: string
+  winner_item_id: string
+  merged_item_ids: string[]
+  aliases_to_keep: string[]
+  aliases_to_retire: string[]
+}
+
+export interface FlaggedCleanupImportPayload {
+  response_type: 'flagged_cleanup_result'
+  schema_version: 1
+  source_export_type: 'flagged_cleanup'
+  merge_groups: FlaggedCleanupResultGroup[]
+  ignored_group_ids: string[]
+}
+
+export interface CleanupPreviewGroup {
+  group_id: string
+  export_label: string
+  canonical_name: string
+  winner: FlaggedCleanupExportItem
+  merged_items: FlaggedCleanupExportItem[]
+  aliases_to_keep: string[]
+  aliases_to_retire: string[]
+}
+
+export interface CleanupPreviewRejectedGroup {
+  group_id: string
+  reason: string
+}
+
+export interface CleanupImportPreview {
+  merge_groups: CleanupPreviewGroup[]
+  ignored_groups: FlaggedCleanupExportGroup[]
+  rejected_groups: CleanupPreviewRejectedGroup[]
+}
+
+export interface CleanupImportValidationResult {
+  ok: boolean
+  errors: string[]
+  preview: CleanupImportPreview | null
+  parsed: FlaggedCleanupImportPayload | null
 }
