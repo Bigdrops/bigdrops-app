@@ -105,22 +105,22 @@ export default function ItemLibraryPage() {
       hidePageHeader
       contentClassName="mx-auto w-full max-w-6xl px-0 py-0 md:px-6 md:py-6"
     >
-      <div className="overflow-hidden bg-[#f5f3ef] md:rounded-[28px] md:border md:border-[#e8e4dc] md:shadow-[0_1px_3px_rgba(0,0,0,.05)]">
-        <header className="flex h-[54px] items-center gap-0 border-b border-[#e8e4dc] bg-[#faf9f7] px-5">
+      <div className="overflow-hidden bg-[radial-gradient(circle_at_top,_#f8f1e6_0%,_#eee4d6_36%,_#e5dac9_100%)] md:rounded-[28px] md:border md:border-[#d6c6b0] md:shadow-[0_24px_60px_rgba(88,67,41,0.12)]">
+        <header className="flex h-[54px] items-center gap-0 border-b border-[#d7c7b3] bg-[#f3eadf]/95 px-5 backdrop-blur-sm">
           <button
             type="button"
             onClick={() => window.history.back()}
             aria-label="Go back"
-            className="mr-0 hidden items-center gap-[6px] rounded-[8px] border-none bg-transparent px-[10px] py-[6px] text-[13px] font-semibold text-[#8a8277] transition-all duration-150 hover:bg-[#edeae4] hover:text-[#1a1814] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4338ca] md:flex"
+            className="mr-0 hidden items-center gap-[6px] rounded-[8px] border-none bg-transparent px-[10px] py-[6px] text-[13px] font-semibold text-[#7c6954] transition-all duration-150 hover:bg-[#e6dacb] hover:text-[#2a2118] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c6a45] md:flex"
           >
             <BackArrow />
             Back
           </button>
 
           <div className="pointer-events-none flex flex-1 items-center justify-center gap-2">
-            <h1 className="text-[14px] font-extrabold tracking-[-0.01em] text-[#1a1814]">Item Library</h1>
+            <h1 className="text-[14px] font-extrabold tracking-[-0.01em] text-[#2c2218]">Item Library</h1>
             {!summaryLoading ? (
-              <span className="rounded-full border border-[#dedad2] bg-[#edeae4] px-[9px] py-[2px] font-['JetBrains_Mono'] text-[10px] font-bold text-[#8a8277]">
+              <span className="rounded-full border border-[#d3c0a8] bg-[#e9dccb] px-[9px] py-[2px] font-['JetBrains_Mono'] text-[10px] font-bold text-[#78644e] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
                 {totalCount} {totalCount === 1 ? 'item' : 'items'}
               </span>
             ) : null}
@@ -131,7 +131,7 @@ export default function ItemLibraryPage() {
             onClick={() => exportItems(filteredItems)}
             disabled={summaryLoading || filteredItems.length === 0}
             aria-label="Export catalog as JSON"
-            className="flex items-center gap-[6px] rounded-[8px] border border-[#dedad2] bg-white px-3 py-[7px] text-[12px] font-bold text-[#57534a] shadow-[0_1px_3px_rgba(0,0,0,.05)] transition-all duration-150 hover:bg-[#edeae4] hover:text-[#1a1814] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4338ca]"
+            className="flex items-center gap-[6px] rounded-[10px] border border-[#ccb79b] bg-[#fffaf1] px-3 py-[7px] text-[12px] font-bold text-[#5d4b38] shadow-[0_10px_18px_rgba(94,72,46,0.09),inset_0_1px_0_rgba(255,255,255,0.65)] transition-all duration-150 hover:bg-[#f5e8d5] hover:text-[#2a2118] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c6a45]"
           >
             <DownloadIcon />
             <span className="hidden sm:inline">Export</span>
@@ -139,7 +139,7 @@ export default function ItemLibraryPage() {
         </header>
 
         {summaryError ? (
-          <div className="border-b border-[#f5c2c7] bg-[#fff5f5] px-5 py-3 text-[12px] text-[#b42318]">
+          <div className="border-b border-[#e0b7b1] bg-[#fff4f1] px-5 py-3 text-[12px] text-[#a0362b]">
             {summaryError.message || 'Failed to load item library.'}
           </div>
         ) : null}

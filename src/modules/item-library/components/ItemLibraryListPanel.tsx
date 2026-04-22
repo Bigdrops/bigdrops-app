@@ -15,9 +15,9 @@ type ItemLibraryListPanelProps = {
 
 function SkeletonRow({ wide }: { wide?: boolean }) {
   return (
-    <div className="border-b border-[#e8e4dc] px-4 py-[10px]">
-      <div className="mb-2 h-[13px] animate-pulse rounded bg-[#edeae4]" style={{ width: wide ? '72%' : '58%' }} />
-      <div className="h-[10px] w-[48%] animate-pulse rounded bg-[#f0ede8]" />
+    <div className="border-b border-[#d9cbb9] px-4 py-[10px]">
+      <div className="mb-2 h-[13px] animate-pulse rounded bg-[#e5d8c7]" style={{ width: wide ? '72%' : '58%' }} />
+      <div className="h-[10px] w-[48%] animate-pulse rounded bg-[#efe4d5]" />
     </div>
   )
 }
@@ -35,10 +35,10 @@ function FilterChip({ label, active, onClick }: FilterChipProps) {
       onClick={onClick}
       className={[
         'inline-flex flex-shrink-0 items-center gap-1 rounded-full border px-[10px] py-1 text-[11px] font-semibold transition-all duration-150',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4338ca]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c6a45]',
         active
-          ? 'border-[#c7d2fe] bg-[#eef2ff] text-[#4338ca]'
-          : 'border-[#dedad2] bg-white text-[#8a8277] hover:bg-[#edeae4] hover:text-[#57534a]',
+          ? 'border-[#c7ab85] bg-[#e8d5bc] text-[#5f4730] shadow-[inset_0_1px_0_rgba(255,255,255,0.48)]'
+          : 'border-[#d7c7b3] bg-[#fbf6ee] text-[#8b7863] hover:bg-[#efe4d4] hover:text-[#574633]',
       ].join(' ')}
     >
       {label}
@@ -57,11 +57,11 @@ export function ItemLibraryListPanel({
   onSelectItem,
 }: ItemLibraryListPanelProps) {
   return (
-    <div className="flex h-full flex-col overflow-hidden border-r border-[#dedad2] bg-[#faf9f7]">
-      <div className="flex-shrink-0 border-b border-[#e8e4dc] px-4 pb-3 pt-4">
+    <div className="flex h-full flex-col overflow-hidden border-r border-[#d5c4af] bg-[linear-gradient(180deg,_#f6ede1_0%,_#f0e5d6_100%)] shadow-[inset_-1px_0_0_rgba(255,255,255,0.35)]">
+      <div className="flex-shrink-0 border-b border-[#ddd0bf] px-4 pb-3 pt-4">
         <div className="mb-[10px] flex items-center justify-between">
-          <span className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#8a8277]">Catalog</span>
-          <span className="font-['JetBrains_Mono'] text-[11px] text-[#b8b2a8]">
+          <span className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#8a745f]">Catalog</span>
+          <span className="font-['JetBrains_Mono'] text-[11px] text-[#aa9984]">
             {loading ? '-' : `${items.length} item${items.length !== 1 ? 's' : ''}`}
           </span>
         </div>
@@ -69,7 +69,7 @@ export function ItemLibraryListPanel({
         <ItemSearchBar value={searchText} onChange={onSearchTextChange} placeholder="Search items..." />
       </div>
 
-      <div className="flex flex-shrink-0 gap-[6px] overflow-x-auto px-4 pb-[10px] pt-[10px]">
+      <div className="flex flex-shrink-0 gap-[6px] overflow-x-auto border-b border-[#e3d5c5]/80 px-4 pb-[10px] pt-[10px]">
         <FilterChip label="All" active={activeFilter === 'all'} onClick={() => onFilterChange('all')} />
         <FilterChip label="Invoice" active={activeFilter === 'invoice'} onClick={() => onFilterChange('invoice')} />
         <FilterChip
@@ -91,11 +91,11 @@ export function ItemLibraryListPanel({
           </>
         ) : items.length === 0 ? (
           <div className="px-4 py-10 text-center">
-            <p className="text-[13px] font-semibold text-[#8a8277]">
+            <p className="text-[13px] font-semibold text-[#75624f]">
               {searchText ? 'No matching items' : 'No items yet'}
             </p>
             {!searchText ? (
-              <p className="mt-1 text-[11px] text-[#b8b2a8]">
+              <p className="mt-1 text-[11px] text-[#a79580]">
                 Items appear here as invoices and quotations are created.
               </p>
             ) : null}

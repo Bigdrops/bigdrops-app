@@ -51,7 +51,7 @@ export function ItemSearchBar({
 }: ItemSearchBarProps) {
   return (
     <div className={`relative ${className}`.trim()}>
-      <span className="pointer-events-none absolute left-[11px] top-1/2 -translate-y-1/2 text-[#b8b2a8]">
+      <span className="pointer-events-none absolute left-[11px] top-1/2 -translate-y-1/2 text-[#a7937e]">
         <SearchIcon />
       </span>
 
@@ -61,7 +61,7 @@ export function ItemSearchBar({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         aria-label="Search items"
-        className="w-full rounded-lg border border-[#dedad2] bg-[#f5f3ef] py-[7px] pl-8 pr-8 text-[13px] text-[#1a1814] outline-none transition-all duration-150 placeholder:text-[#b8b2a8] focus:border-[#4338ca] focus:bg-white focus:ring-[3px] focus:ring-[#4338ca]/10"
+        className="w-full rounded-xl border border-[#d4c2ad] bg-[#fbf5ec] py-[8px] pl-8 pr-8 text-[13px] text-[#2c2218] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] outline-none transition-all duration-150 placeholder:text-[#ad9984] focus:border-[#a07a52] focus:bg-[#fffaf2] focus:ring-[3px] focus:ring-[#b79269]/15"
       />
 
       {value ? (
@@ -69,7 +69,7 @@ export function ItemSearchBar({
           type="button"
           onClick={() => onChange('')}
           aria-label="Clear search"
-          className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-[#e4e0d8] text-[#57534a] transition-colors duration-150 hover:bg-[#dedad2]"
+          className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-[#d2bfaa] bg-[#eadccd] text-[#5e4a36] transition-colors duration-150 hover:bg-[#e2d2bf]"
         >
           <ClearIcon />
         </button>
