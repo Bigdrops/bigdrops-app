@@ -89,7 +89,7 @@ export default function MobileItemCard({
     enableItemSuggestions && descriptionFocused && String(debouncedDescription || '').trim().length >= 2
       ? debouncedDescription
       : ''
-  const { data: suggestions, loading: suggestionsLoading } = useItemSuggestions(suggestionQuery, 5)
+  const { data: suggestions, loading: suggestionsLoading } = useItemSuggestions(suggestionQuery, 5, invoice?.client_id)
   const showSuggestions =
     enableItemSuggestions && descriptionFocused && String(item.description || '').trim().length >= 2
 
@@ -188,7 +188,7 @@ export default function MobileItemCard({
               </div>
             )}
             {item.item_id && selectedSuggestionContextText ? (
-              <div className="mt-2 text-[11px] font-medium leading-relaxed text-[var(--bd-text3)]">
+              <div className="mt-2 text-[11px] font-medium leading-relaxed text-[var(--bd-text3)] whitespace-pre-line">
                 {selectedSuggestionContextText}
               </div>
             ) : null}

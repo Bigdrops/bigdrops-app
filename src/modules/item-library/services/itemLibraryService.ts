@@ -2,10 +2,14 @@ import { normalizeSuggestionQuery, rankItemSuggestions } from '../domain/suggest
 import { getItemHistoryDetail, getItemSuggestions, getItemSummaryList } from '../repositories'
 import type { ItemCatalogItem, ItemHistoryRow, ItemSuggestion } from '../types'
 
-export async function loadSuggestions(searchText: string, resultLimit = 10): Promise<ItemSuggestion[]> {
+export async function loadSuggestions(
+  searchText: string,
+  resultLimit = 10,
+  clientId?: string | null,
+): Promise<ItemSuggestion[]> {
   const normalizedSearch = normalizeSuggestionQuery(searchText)
   if (!normalizedSearch) return []
-  return rankItemSuggestions(await getItemSuggestions(normalizedSearch, resultLimit))
+  return rankItemSuggestions(await getItemSuggestions(normalizedSearch, resultLimit, clientId))
 }
 
 export async function loadSummaryList(limit = 100): Promise<ItemCatalogItem[]> {

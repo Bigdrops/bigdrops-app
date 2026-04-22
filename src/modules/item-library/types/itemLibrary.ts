@@ -36,6 +36,9 @@ export interface ItemSuggestion {
   last_used_at?: string | null
   last_source_type?: 'invoice' | 'quotation' | string | null
   is_active?: boolean
+  last_price_for_client?: number | null
+  last_price_global?: number | null
+  last_source_document_number?: string | null
 }
 
 export interface ItemHistoryRow {

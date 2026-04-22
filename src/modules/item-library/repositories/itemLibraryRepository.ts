@@ -41,6 +41,9 @@ function normalizeSuggestionRow(row: Record<string, unknown>): ItemSuggestion {
     usage_count: toNumber(row.usage_count),
     last_used_at: row.last_used_at ? String(row.last_used_at) : null,
     last_source_type: row.last_source_type ? String(row.last_source_type) : null,
+    last_price_for_client: toNumber(row.last_price_for_client),
+    last_price_global: toNumber(row.last_price_global ?? row.last_sold_price),
+    last_source_document_number: row.last_source_document_number ? String(row.last_source_document_number) : null,
     is_active: typeof row.is_active === 'boolean' ? row.is_active : true,
   }
 }
@@ -62,57 +65,120 @@ function normalizeSummaryRow(row: Record<string, unknown>): ItemCatalogItem {
   }
 }
 
-export async function getItemSuggestions(searchText: string, resultLimit = 10): Promise<ItemSuggestion[]> {
+export async function getItemSuggestions(
+  searchText: string,
+  resultLimit = 10,
+  clientId?: string | null,
+): Promise<ItemSuggestion[]> {
   const trimmed = String(searchText || '').trim()
   if (!trimmed) return []
 
   const normalizeRows = (rows: unknown) =>
     (Array.isArray(rows) ? rows : []).map((row) => normalizeSuggestionRow(row as Record<string, unknown>))
 
-  // Try the current RPC signature first
-  {
+  let suggestions: ItemSuggestion[] = []
+
+  // 1. Fetch base suggestions
+  try {
     const { data, error } = await supabase.rpc('get_item_suggestions', {
       search_text: trimmed,
       result_limit: resultLimit,
     })
+    if (!error && data) suggestions = normalizeRows(data)
+  } catch (e) {
+    // ignore
+  }
 
-    if (!error) {
-      const normalized = normalizeRows(data)
-      if (normalized.length > 0) return normalized
+  if (suggestions.length === 0) {
+    try {
+      const { data, error } = await supabase.rpc('get_item_suggestions', {
+        p_search_text: trimmed,
+        p_result_limit: resultLimit,
+      })
+      if (!error && data) suggestions = normalizeRows(data)
+    } catch (e) {
+      // ignore
     }
   }
 
-  // Retry with prefixed parameter names in case the deployed function uses that convention
-  {
-    const { data, error } = await supabase.rpc('get_item_suggestions', {
-      p_search_text: trimmed,
-      p_result_limit: resultLimit,
+  if (suggestions.length === 0) {
+    const { data, error } = await supabase
+      .from('item_price_summary_v')
+      .select('item_id, name, standard_price, last_sold_price, usage_count, last_used_at, last_source_type, is_active')
+      .ilike('name', `%${trimmed}%`)
+      .order('usage_count', { ascending: false })
+      .order('last_used_at', { ascending: false, nullsFirst: false })
+      .limit(resultLimit)
+
+    if (!error && data) {
+      suggestions = (Array.isArray(data) ? data : []).map((row) =>
+        normalizeSuggestionRow({
+          ...row,
+          matched_text: row.name,
+          match_source: 'catalog',
+        } as Record<string, unknown>),
+      )
+    }
+  }
+
+  if (suggestions.length === 0) return []
+
+  // 2. Enrich with document numbers and client prices
+  const itemIds = suggestions.map((s) => s.item_id).filter(Boolean)
+  
+  const [invoiceHistory, quotationHistory] = await Promise.all([
+    supabase
+      .from('invoice_items')
+      .select('item_id, unit_price, updated_at, invoices(invoice_number, client_id)')
+      .in('item_id', itemIds)
+      .order('updated_at', { ascending: false }),
+    supabase
+      .from('quotation_items')
+      .select('item_id, unit_price, updated_at, quotations(quotation_number, client_id)')
+      .in('item_id', itemIds)
+      .order('updated_at', { ascending: false }),
+  ])
+
+  const historyRows: any[] = []
+  if (invoiceHistory.data) {
+    invoiceHistory.data.forEach((row: any) => {
+      historyRows.push({
+        item_id: row.item_id,
+        unit_price: row.unit_price,
+        updated_at: row.updated_at,
+        doc_number: row.invoices?.invoice_number,
+        client_id: row.invoices?.client_id,
+      })
     })
-
-    if (!error) {
-      const normalized = normalizeRows(data)
-      if (normalized.length > 0) return normalized
-    }
+  }
+  if (quotationHistory.data) {
+    quotationHistory.data.forEach((row: any) => {
+      historyRows.push({
+        item_id: row.item_id,
+        unit_price: row.unit_price,
+        updated_at: row.updated_at,
+        doc_number: row.quotations?.quotation_number,
+        client_id: row.quotations?.client_id,
+      })
+    })
   }
 
-  // Final fallback: direct summary view lookup so the UI still works
-  const { data, error } = await supabase
-    .from('item_price_summary_v')
-    .select('item_id, name, standard_price, last_sold_price, usage_count, last_used_at, last_source_type, is_active')
-    .ilike('name', `%${trimmed}%`)
-    .order('usage_count', { ascending: false })
-    .order('last_used_at', { ascending: false, nullsFirst: false })
-    .limit(resultLimit)
+  // Sort history rows by date desc
+  historyRows.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
 
-  if (error) throw error
+  return suggestions.map((s) => {
+    const itemHistory = historyRows.filter((h) => h.item_id === s.item_id)
+    const latestGlobal = itemHistory[0]
+    const latestClient = clientId ? itemHistory.find((h) => h.client_id === clientId) : null
 
-  return (Array.isArray(data) ? data : []).map((row) =>
-    normalizeSuggestionRow({
-      ...row,
-      matched_text: row.name,
-      match_source: 'catalog',
-    } as Record<string, unknown>),
-  )
+    return {
+      ...s,
+      last_price_global: latestGlobal ? latestGlobal.unit_price : s.last_sold_price,
+      last_used_at: latestGlobal ? latestGlobal.updated_at : s.last_used_at,
+      last_source_document_number: latestGlobal ? latestGlobal.doc_number : null,
+      last_price_for_client: latestClient ? latestClient.unit_price : null,
+    }
+  })
 }
 
 export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]> {

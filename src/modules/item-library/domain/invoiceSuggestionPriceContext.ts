@@ -16,24 +16,46 @@ function formatLastUsedDate(value: string | null | undefined): string | null {
 export function getInvoiceSuggestionPriceContextText(
   suggestion: Pick<
     ItemSuggestion,
-    'standard_price' | 'last_sold_price' | 'last_used_at' | 'last_source_type'
+    | 'last_price_for_client'
+    | 'last_price_global'
+    | 'last_used_at'
+    | 'last_source_document_number'
   > | null | undefined,
 ): string | null {
-  const fragments: string[] = []
+  if (!suggestion) return null
 
-  if (suggestion?.standard_price !== null && suggestion?.standard_price !== undefined) {
-    fragments.push(`Standard ${formatNaira(suggestion.standard_price)}`)
+  const clientPrice = suggestion.last_price_for_client
+  const globalPrice = suggestion.last_price_global
+  const date = formatLastUsedDate(suggestion.last_used_at)
+  const doc = suggestion.last_source_document_number
+  
+  const hasClientPrice = clientPrice !== null && clientPrice !== undefined
+  const hasGlobalPrice = globalPrice !== null && globalPrice !== undefined
+
+  const datePart = date ? ` · ${date}` : ''
+  const docPart = doc ? ` · ${doc}` : ''
+  const suffix = `${docPart}${datePart}`
+
+  // Case B: Client-specific price exists AND is same as latest global record
+  if (hasClientPrice && hasGlobalPrice && clientPrice === globalPrice) {
+    return `Last sold to this client: ${formatNaira(clientPrice)}${suffix}`
   }
 
-  if (suggestion?.last_sold_price !== null && suggestion?.last_sold_price !== undefined) {
-    fragments.push(`Last sold ${formatNaira(suggestion.last_sold_price)}`)
+  // Case A: Client-specific price exists AND differs from global
+  if (hasClientPrice) {
+    const line1 = `This client: ${formatNaira(clientPrice)}`
+    if (hasGlobalPrice) {
+      const line2 = `Last sold: ${formatNaira(globalPrice)}${suffix}`
+      return `${line1}\n${line2}`
+    }
+    return line1
   }
 
-  const lastUsedDate = formatLastUsedDate(suggestion?.last_used_at)
-  if (lastUsedDate) {
-    const sourceLabel = suggestion?.last_source_type ? ` in ${String(suggestion.last_source_type).toLowerCase()}` : ''
-    fragments.push(`Last used${sourceLabel} on ${lastUsedDate}`)
+  // Case C: Only global history exists
+  if (hasGlobalPrice) {
+    return `Last sold: ${formatNaira(globalPrice)}${suffix}`
   }
 
-  return fragments.length > 0 ? fragments.join(' · ') : null
+  // Case D: No history
+  return null
 }

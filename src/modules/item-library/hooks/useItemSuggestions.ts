@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { loadSuggestions } from '../services'
 import type { ItemSuggestion } from '../types'
 
-export function useItemSuggestions(searchText: string, resultLimit = 10) {
+export function useItemSuggestions(searchText: string, resultLimit = 10, clientId?: string | null) {
   const [data, setData] = useState<ItemSuggestion[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -22,7 +22,7 @@ export function useItemSuggestions(searchText: string, resultLimit = 10) {
       setError(null)
 
       try {
-        const nextData = await loadSuggestions(searchText, resultLimit)
+        const nextData = await loadSuggestions(searchText, resultLimit, clientId)
         if (!cancelled) setData(nextData)
       } catch (nextError) {
         if (!cancelled) {
@@ -38,7 +38,7 @@ export function useItemSuggestions(searchText: string, resultLimit = 10) {
     return () => {
       cancelled = true
     }
-  }, [resultLimit, searchText])
+  }, [resultLimit, searchText, clientId])
 
   return { data, loading, error }
 }
