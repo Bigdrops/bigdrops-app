@@ -7,6 +7,8 @@ export interface ItemCatalogItem {
   name: string
   standard_price: number | null
   is_active: boolean
+  appears_in_invoice?: boolean
+  appears_in_quotation?: boolean
   usage_count?: number | null
   min_price?: number | null
   max_price?: number | null

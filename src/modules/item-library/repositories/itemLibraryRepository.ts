@@ -54,6 +54,8 @@ function normalizeSummaryRow(row: Record<string, unknown>): ItemCatalogItem {
     name: String(row.name || ''),
     standard_price: toNumber(row.standard_price),
     is_active: row.is_active !== false,
+    appears_in_invoice: row.appears_in_invoice === true,
+    appears_in_quotation: row.appears_in_quotation === true,
     usage_count: toNumber(row.usage_count),
     min_price: toNumber(row.min_price),
     max_price: toNumber(row.max_price),
@@ -203,12 +205,25 @@ export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]
   if (invoiceItemsResult.error) throw invoiceItemsResult.error
   if (quotationItemsResult.error) throw quotationItemsResult.error
 
+  const invoiceRows = Array.isArray(invoiceItemsResult.data) ? invoiceItemsResult.data : []
+  const quotationRows = Array.isArray(quotationItemsResult.data) ? quotationItemsResult.data : []
+  const invoiceItemIds = new Set(invoiceRows.map((row) => String(row.item_id || '')).filter(Boolean))
+  const quotationItemIds = new Set(quotationRows.map((row) => String(row.item_id || '')).filter(Boolean))
+
   const summaryRows = (Array.isArray(summaryResult.data) ? summaryResult.data : []).map((row) =>
-    normalizeSummaryRow(row as Record<string, unknown>),
+    normalizeSummaryRow({
+      ...(row as Record<string, unknown>),
+      appears_in_invoice:
+        (row as Record<string, unknown>).appears_in_invoice === true ||
+        invoiceItemIds.has(String((row as Record<string, unknown>).item_id || (row as Record<string, unknown>).id || '')),
+      appears_in_quotation:
+        (row as Record<string, unknown>).appears_in_quotation === true ||
+        quotationItemIds.has(String((row as Record<string, unknown>).item_id || (row as Record<string, unknown>).id || '')),
+    }),
   )
   const fallbackRows = buildFallbackSummaryItems(
-    Array.isArray(invoiceItemsResult.data) ? invoiceItemsResult.data : [],
-    Array.isArray(quotationItemsResult.data) ? quotationItemsResult.data : [],
+    invoiceRows,
+    quotationRows,
     new Set(summaryRows.map((row) => row.item_id)),
   )
 

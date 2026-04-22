@@ -67,7 +67,12 @@ export default function ItemLibraryPage() {
 
     return summaryItems.filter((item) => {
       const matchesSearch = normalizedSearch ? item.name.toLowerCase().includes(normalizedSearch) : true
-      const matchesFilter = activeFilter === 'all' ? true : item.last_source_type === activeFilter
+      const matchesFilter =
+        activeFilter === 'all'
+          ? true
+          : activeFilter === 'invoice'
+            ? item.appears_in_invoice === true
+            : item.appears_in_quotation === true
       return matchesSearch && matchesFilter
     })
   }, [activeFilter, searchText, summaryItems])
@@ -145,12 +150,7 @@ export default function ItemLibraryPage() {
         ) : null}
 
         <main className="flex min-h-[calc(100dvh-14rem)] overflow-hidden">
-          <div
-            className={[
-              'flex-col overflow-hidden md:flex md:w-[38%] md:flex-shrink-0',
-              mobileDetailOpen ? 'hidden' : 'flex w-full',
-            ].join(' ')}
-          >
+          <div className={mobileDetailOpen ? 'hidden md:flex md:w-[38%] md:flex-shrink-0 md:flex-col md:overflow-hidden' : 'flex w-full flex-col overflow-hidden md:w-[38%] md:flex-shrink-0'}>
             <ItemLibraryListPanel
               items={filteredItems}
               selectedItemId={selectedItemId}
@@ -166,12 +166,7 @@ export default function ItemLibraryPage() {
             />
           </div>
 
-          <div
-            className={[
-              'hidden md:flex md:flex-1 md:flex-col md:overflow-hidden',
-              mobileDetailOpen ? 'flex w-full flex-col overflow-hidden' : '',
-            ].join(' ')}
-          >
+          <div className={mobileDetailOpen ? 'flex w-full flex-col overflow-hidden md:flex-1' : 'hidden md:flex md:flex-1 md:flex-col md:overflow-hidden'}>
             <div className="flex-shrink-0 border-b border-[#e8e4dc] bg-[#faf9f7] md:hidden">
               <button
                 type="button"

@@ -52,6 +52,8 @@ export function buildFallbackSummaryItems(
   const groups = new Map<string, {
     item_id: string
     name: string
+    appears_in_invoice: boolean
+    appears_in_quotation: boolean
     usage_count: number
     prices: number[]
     last_sold_price: number | null
@@ -78,6 +80,8 @@ export function buildFallbackSummaryItems(
       groups.set(itemId, {
         item_id: itemId,
         name: description || realItemId,
+        appears_in_invoice: sourceType === 'invoice',
+        appears_in_quotation: sourceType === 'quotation',
         usage_count: 1,
         prices: price === null ? [] : [price],
         last_sold_price: price,
@@ -90,6 +94,8 @@ export function buildFallbackSummaryItems(
 
     existing.usage_count += 1
     existing.name = pickDisplayName(existing.name, description || realItemId)
+    if (sourceType === 'invoice') existing.appears_in_invoice = true
+    if (sourceType === 'quotation') existing.appears_in_quotation = true
     if (price !== null) existing.prices.push(price)
 
     const existingTime = new Date(existing.last_used_at || 0).getTime() || 0
@@ -114,6 +120,8 @@ export function buildFallbackSummaryItems(
         name: group.name,
         standard_price: group.last_sold_price,
         is_active: true,
+        appears_in_invoice: group.appears_in_invoice,
+        appears_in_quotation: group.appears_in_quotation,
         usage_count: group.usage_count,
         min_price: prices.length > 0 ? Math.min(...prices) : null,
         max_price: prices.length > 0 ? Math.max(...prices) : null,
