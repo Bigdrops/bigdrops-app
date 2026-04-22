@@ -15,7 +15,8 @@ export const INVOICE_TRACKED_FIELDS = [
   'total',
   'po_number',
   'notes',
-  'custom_fields', // Included to catch linked_quote_id/linked_csr_id via parsing if needed, but the prompt asked for specific names.
+  'linked_quote_id',
+  'linked_csr_id',
 ]
 
 export const QUOTATION_TRACKED_FIELDS = [
@@ -48,51 +49,65 @@ export const PROJECT_TRACKED_FIELDS = [
   'location',
 ]
 
-function pick(obj: any, fields: string[]) {
+type AuditEntityType = 'invoice' | 'quotation' | 'project'
+type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'STATUS_CHANGE' | 'LINK' | 'UNLINK'
+
+function pick(obj: Record<string, any> | null | undefined, fields: string[]) {
   if (!obj) return null
-  const result: any = {}
-  fields.forEach((f) => {
-    if (f in obj) result[f] = obj[f]
-  })
+  const result: Record<string, any> = {}
+  for (const field of fields) {
+    if (field in obj) result[field] = obj[field]
+  }
   return result
 }
 
 async function getActor() {
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   return {
-    id: user?.id || null,
-    label: user?.email || 'web',
+    id: user?.id ?? null,
+    label: user?.email ?? 'web',
   }
 }
 
 export async function recordAuditLog({
-  tableName,
+  entityType,
   recordId,
-  operation,
+  entityLabel,
+  action,
   oldData,
   newData,
   trackedFields,
+  reason,
 }: {
-  tableName: string
+  entityType: AuditEntityType
   recordId: string
-  operation: 'INSERT' | 'UPDATE' | 'DELETE'
-  oldData?: any
-  newData?: any
+  entityLabel?: string | null
+  action: AuditAction
+  oldData?: Record<string, any> | null
+  newData?: Record<string, any> | null
   trackedFields: string[]
+  reason?: string | null
 }) {
   const actor = await getActor()
+
   const p_old_data = oldData ? pick(oldData, trackedFields) : null
   const p_new_data = newData ? pick(newData, trackedFields) : null
 
   return supabase.rpc('record_audit_log', {
-    p_table_name: tableName,
-    p_record_id: recordId,
-    p_operation: operation,
+    p_entity_type: entityType,
+    p_entity_id: recordId,
+    p_entity_label: entityLabel ?? null,
+    p_action: action,
     p_old_data,
     p_new_data,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
     p_source: 'web',
+    p_scope_type: 'app',
+    p_reason: reason ?? null,
   })
 }
 
@@ -106,7 +121,7 @@ export async function recordInvoiceCreated(invoiceId: string) {
   })
 }
 
-export async function recordInvoiceStatusChanged(invoiceId: string, oldStatus: string, newStatus: string) {
+export async function recordInvoiceStatusChanged(invoiceId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
   const actor = await getActor()
   return supabase.rpc('record_invoice_status_changed', {
     p_invoice_id: invoiceId,
@@ -115,18 +130,19 @@ export async function recordInvoiceStatusChanged(invoiceId: string, oldStatus: s
     p_actor_id: actor.id,
     p_actor_label: actor.label,
     p_source: 'web',
+    p_reason: reason ?? null,
   })
 }
 
-export async function recordPaymentRecorded(invoiceId: string, paymentId: string, amount: number) {
+export async function recordPaymentRecorded(invoiceId: string, amount: number, reason?: string | null) {
   const actor = await getActor()
   return supabase.rpc('record_payment_recorded', {
     p_invoice_id: invoiceId,
-    p_payment_id: paymentId,
     p_amount: amount,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
     p_source: 'web',
+    p_reason: reason ?? null,
   })
 }
 
@@ -140,7 +156,7 @@ export async function recordQuotationCreated(quotationId: string) {
   })
 }
 
-export async function recordQuotationStatusChanged(quotationId: string, oldStatus: string, newStatus: string) {
+export async function recordQuotationStatusChanged(quotationId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
   const actor = await getActor()
   return supabase.rpc('record_quotation_status_changed', {
     p_quotation_id: quotationId,
@@ -149,61 +165,83 @@ export async function recordQuotationStatusChanged(quotationId: string, oldStatu
     p_actor_id: actor.id,
     p_actor_label: actor.label,
     p_source: 'web',
+    p_reason: reason ?? null,
   })
 }
 
-export async function recordQuotationLinked(quotationId: string, invoiceId: string) {
+export async function recordQuotationLinked(
+  quotationId: string,
+  invoiceId?: string | null,
+  projectId?: string | null,
+  reason?: string | null,
+) {
   const actor = await getActor()
   return supabase.rpc('record_quotation_linked', {
     p_quotation_id: quotationId,
-    p_invoice_id: invoiceId,
+    p_invoice_id: invoiceId ?? null,
+    p_project_id: projectId ?? null,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
     p_source: 'web',
+    p_reason: reason ?? null,
   })
 }
 
-export async function recordProjectUpdated(projectId: string) {
+export async function recordProjectUpdated(projectId: string, reason?: string | null, metadata?: Record<string, any>) {
   const actor = await getActor()
   return supabase.rpc('record_project_updated', {
     p_project_id: projectId,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
     p_source: 'web',
+    p_reason: reason ?? null,
+    p_metadata: metadata ?? {},
   })
 }
 
-export async function recordProjectNoteAdded(projectId: string, note: string) {
+export async function recordProjectNoteAdded(projectId: string, note: string, reason?: string | null) {
   const actor = await getActor()
   return supabase.rpc('record_project_note_added', {
     p_project_id: projectId,
-    p_note: note,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
     p_source: 'web',
+    p_reason: reason ?? null,
+    p_metadata: { note },
   })
 }
 
-export async function recordProjectDocumentAdded(projectId: string, documentId: string, docType: string) {
+export async function recordProjectDocumentAdded(projectId: string, documentId: string, docType: string, reason?: string | null) {
   const actor = await getActor()
   return supabase.rpc('record_project_document_added', {
     p_project_id: projectId,
-    p_document_id: documentId,
-    p_document_type: docType,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
     p_source: 'web',
+    p_reason: reason ?? null,
+    p_metadata: {
+      document_id: documentId,
+      document_type: docType,
+    },
   })
 }
 
-export async function recordProjectLinkedActivity(projectId: string, docId: string, docType: 'invoice' | 'quotation' | 'csr' | 'waybill') {
+export async function recordProjectLinkedActivity(
+  projectId: string,
+  linkedEntityType: 'invoice' | 'quotation',
+  linkedEntityId: string,
+  linkedEntityLabel?: string | null,
+  reason?: string | null,
+) {
   const actor = await getActor()
   return supabase.rpc('record_project_linked_activity', {
     p_project_id: projectId,
-    p_document_id: docId,
-    p_document_type: docType,
+    p_linked_entity_type: linkedEntityType,
+    p_linked_entity_id: linkedEntityId,
+    p_linked_entity_label: linkedEntityLabel ?? null,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
     p_source: 'web',
+    p_reason: reason ?? null,
   })
 }
