@@ -82,6 +82,7 @@ export default function Projects() {
       .from('projects')
       .select('*')
       .is('archived_at', null)
+      .order('start_date', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
     setProjects(data || [])
 
@@ -141,10 +142,12 @@ export default function Projects() {
     })
 
     list.sort((a, b) => {
-      if (sortBy === 'Oldest') return new Date(a.created_at || 0) - new Date(b.created_at || 0)
+      const aTime = new Date(a.start_date || a.created_at || 0).getTime()
+      const bTime = new Date(b.start_date || b.created_at || 0).getTime()
+      if (sortBy === 'Oldest') return aTime - bTime
       if (sortBy === 'Highest Value') return Number(b.project_value || 0) - Number(a.project_value || 0)
       if (sortBy === 'Lowest Value') return Number(a.project_value || 0) - Number(b.project_value || 0)
-      return new Date(b.created_at || 0) - new Date(a.created_at || 0)
+      return bTime - aTime
     })
 
     return list

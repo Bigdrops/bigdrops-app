@@ -234,11 +234,11 @@ export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]
       .limit(limit),
     supabase
       .from('invoice_items')
-      .select('id, invoice_id, item_id, description, quantity, unit, unit_price, amount, updated_at')
+      .select('id, invoice_id, item_id, description, quantity, unit, unit_price, amount, updated_at, invoices(issue_date)')
       .limit(5000),
     supabase
       .from('quotation_items')
-      .select('id, quotation_id, item_id, description, quantity, unit, unit_price, amount, updated_at')
+      .select('id, quotation_id, item_id, description, quantity, unit, unit_price, amount, updated_at, quotations(issue_date)')
       .limit(5000),
   ])
 
@@ -246,8 +246,14 @@ export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]
   if (invoiceItemsResult.error) throw invoiceItemsResult.error
   if (quotationItemsResult.error) throw quotationItemsResult.error
 
-  const invoiceRows = Array.isArray(invoiceItemsResult.data) ? invoiceItemsResult.data : []
-  const quotationRows = Array.isArray(quotationItemsResult.data) ? quotationItemsResult.data : []
+  const invoiceRows = (Array.isArray(invoiceItemsResult.data) ? invoiceItemsResult.data : []).map((row: any) => ({
+    ...row,
+    issue_date: row.invoices?.issue_date,
+  }))
+  const quotationRows = (Array.isArray(quotationItemsResult.data) ? quotationItemsResult.data : []).map((row: any) => ({
+    ...row,
+    issue_date: row.quotations?.issue_date,
+  }))
   const invoiceItemIds = new Set(invoiceRows.map((row) => String(row.item_id || '')).filter(Boolean))
   const quotationItemIds = new Set(quotationRows.map((row) => String(row.item_id || '')).filter(Boolean))
 
@@ -341,18 +347,18 @@ export async function getItemHistoryDetail(itemId: string, limit = 50): Promise<
 
   const [invoiceDocsResult, quotationDocsResult] = await Promise.all([
     invoiceIds.length > 0
-      ? supabase.from('invoices').select('id, invoice_number').in('id', invoiceIds)
+      ? supabase.from('invoices').select('id, invoice_number, issue_date').in('id', invoiceIds)
       : Promise.resolve({ data: [], error: null }),
     quotationIds.length > 0
-      ? supabase.from('quotations').select('id, quotation_number').in('id', quotationIds)
+      ? supabase.from('quotations').select('id, quotation_number, issue_date').in('id', quotationIds)
       : Promise.resolve({ data: [], error: null }),
   ])
 
   if (invoiceDocsResult.error) throw invoiceDocsResult.error
   if (quotationDocsResult.error) throw quotationDocsResult.error
 
-  const invoiceNumbers = new Map((invoiceDocsResult.data || []).map((row) => [String(row.id), row.invoice_number ? String(row.invoice_number) : null]))
-  const quotationNumbers = new Map((quotationDocsResult.data || []).map((row) => [String(row.id), row.quotation_number ? String(row.quotation_number) : null]))
+  const invoiceNumbers = new Map((invoiceDocsResult.data || []).map((row) => [String(row.id), { number: row.invoice_number ? String(row.invoice_number) : null, date: row.issue_date || null }]))
+  const quotationNumbers = new Map((quotationDocsResult.data || []).map((row) => [String(row.id), { number: row.quotation_number ? String(row.quotation_number) : null, date: row.issue_date || null }]))
 
   return buildFallbackHistoryRows({
     itemId,

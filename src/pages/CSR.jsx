@@ -63,6 +63,7 @@ export default function CSR() {
     const { data } = await supabase
       .from("csrs")
       .select("*")
+      .order("date", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
 
     setCsrs(data || [])

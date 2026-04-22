@@ -107,19 +107,19 @@ export default function Invoices() {
     }
 
     if (sortBy === "Oldest") {
-      return query.order("created_at", { ascending: true, nullsFirst: false })
+      return query.order("issue_date", { ascending: true, nullsFirst: false })
     }
     if (sortBy === "Highest Value") {
       return query
         .order("total", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false, nullsFirst: false })
+        .order("issue_date", { ascending: false, nullsFirst: false })
     }
     if (sortBy === "Lowest Value") {
       return query
         .order("total", { ascending: true, nullsFirst: false })
-        .order("created_at", { ascending: false, nullsFirst: false })
+        .order("issue_date", { ascending: false, nullsFirst: false })
     }
-    return query.order("created_at", { ascending: false, nullsFirst: false })
+    return query.order("issue_date", { ascending: false, nullsFirst: false })
   }
 
   const fetchInvoices = async (pageIndex = 0, replace = false) => {
@@ -198,8 +198,8 @@ export default function Invoices() {
               return Number(left.total || 0) - Number(right.total || 0)
             }
 
-            const leftTime = new Date(left.created_at || left.issue_date || 0).getTime() || 0
-            const rightTime = new Date(right.created_at || right.issue_date || 0).getTime() || 0
+            const leftTime = new Date(left.issue_date || left.created_at || 0).getTime() || 0
+            const rightTime = new Date(right.issue_date || right.created_at || 0).getTime() || 0
             return sortBy === "Oldest" ? leftTime - rightTime : rightTime - leftTime
           })
 

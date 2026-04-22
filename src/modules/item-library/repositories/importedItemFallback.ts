@@ -11,9 +11,11 @@ type RawHistorySourceRow = {
   updated_at?: string | null
   invoice_id?: string | null
   quotation_id?: string | null
+  issue_date?: string | null
 }
 
-type DocumentNumberLookup = Map<string, string | null>
+type DocumentMetadata = { number: string | null; date: string | null }
+type DocumentMetadataLookup = Map<string, DocumentMetadata>
 
 const IMPORTED_ITEM_PREFIX = 'imported-desc:'
 
@@ -72,7 +74,7 @@ export function buildFallbackSummaryItems(
     if (realItemId && existingItemIds.has(realItemId)) return
 
     const price = toNumber(row.unit_price)
-    const usedAt = row.updated_at ? String(row.updated_at) : null
+    const usedAt = row.issue_date || (row.updated_at ? String(row.updated_at) : null)
     const sourceDocumentId = String(sourceType === 'invoice' ? row.invoice_id || '' : row.quotation_id || '') || null
     const existing = groups.get(itemId)
 
@@ -140,25 +142,25 @@ export function buildFallbackSummaryItems(
     })
 }
 
-function mapHistoryRow(
   row: RawHistorySourceRow,
   sourceType: 'invoice' | 'quotation',
   itemId: string,
-  documentNumberLookup: DocumentNumberLookup,
+  documentMetadataLookup: DocumentMetadataLookup,
 ): ItemHistoryRow {
   const documentId = String(sourceType === 'invoice' ? row.invoice_id || '' : row.quotation_id || '')
+  const meta = documentMetadataLookup.get(documentId)
   return {
     row_id: String(row.id || ''),
     item_id: itemId,
     source_type: sourceType,
     source_document_id: documentId,
-    source_document_number: documentNumberLookup.get(documentId) ?? null,
+    source_document_number: meta?.number ?? null,
     description: String(row.description || ''),
     quantity: toNumber(row.quantity),
     unit: row.unit ? String(row.unit) : null,
     unit_price: toNumber(row.unit_price),
     amount: toNumber(row.amount),
-    used_at: row.updated_at ? String(row.updated_at) : null,
+    used_at: meta?.date || row.issue_date || (row.updated_at ? String(row.updated_at) : null),
   }
 }
 
@@ -166,8 +168,8 @@ export function buildFallbackHistoryRows(args: {
   itemId: string
   invoiceRows: RawHistorySourceRow[]
   quotationRows: RawHistorySourceRow[]
-  invoiceNumbers: DocumentNumberLookup
-  quotationNumbers: DocumentNumberLookup
+  invoiceNumbers: DocumentMetadataLookup
+  quotationNumbers: DocumentMetadataLookup
   limit: number
 }) {
   const { itemId, invoiceRows, quotationRows, invoiceNumbers, quotationNumbers, limit } = args

@@ -50,6 +50,7 @@ export default function Waybills() {
     const { data } = await supabase
       .from('waybills')
       .select('*')
+      .order('date', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
 
     setWaybills(((data as Record<string, unknown>[]) || []).map((row) => mapDbWaybill(row)) as Waybill[])

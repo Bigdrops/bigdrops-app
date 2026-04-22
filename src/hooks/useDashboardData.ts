@@ -71,13 +71,12 @@ export function useDashboardData() {
 
     try {
       const [invoiceRes, quotationRes, csrRes, waybillRes, financialsRes, projectsRes] = await Promise.all([
-        supabase
           .from('invoices')
-          .select('id, invoice_number, client_name, status, created_at, total, custom_fields')
+          .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields')
           .or('custom_fields->advance_invoice->>role.is.null,custom_fields->advance_invoice->>role.neq.advance')
-          .order('created_at', { ascending: false })
+          .order('issue_date', { ascending: false })
           .limit(8),
-        supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
+        supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, issue_date, total').order('issue_date', { ascending: false }).limit(8),
         supabase.from('csrs').select('id, csr_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
         supabase.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
         supabase.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
@@ -97,7 +96,7 @@ export function useDashboardData() {
           type: 'Invoice' as const,
           number: doc.invoice_number,
           client: doc.client_name || 'Walking Client',
-          date: doc.created_at,
+          date: doc.issue_date || doc.created_at,
           status: doc.status,
           amount: doc.total,
         })),
@@ -106,7 +105,7 @@ export function useDashboardData() {
           type: 'Quotation' as const,
           number: doc.quotation_number,
           client: doc.client_name || 'Walking Client',
-          date: doc.created_at,
+          date: doc.issue_date || doc.created_at,
           status: doc.status,
           amount: doc.total,
         })),

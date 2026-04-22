@@ -61,7 +61,7 @@ export default function QuotationList() {
       .from('quotations')
       .select('*')
       .is('archived_at', null)
-      .order('created_at', { ascending: false })
+      .order('issue_date', { ascending: false })
     setQuotations((data || []) as DbQuotation[])
   }
 
@@ -239,11 +239,11 @@ export default function QuotationList() {
 
     next.sort((a, b) => {
       if (sortBy === 'Oldest') {
-        return new Date(a.created_at || a.issue_date || 0).getTime() - new Date(b.created_at || b.issue_date || 0).getTime()
+        return new Date(a.issue_date || a.created_at || 0).getTime() - new Date(b.issue_date || b.created_at || 0).getTime()
       }
       if (sortBy === 'Highest Value') return Number(b.total || 0) - Number(a.total || 0)
       if (sortBy === 'Lowest Value') return Number(a.total || 0) - Number(b.total || 0)
-      return new Date(b.created_at || b.issue_date || 0).getTime() - new Date(a.created_at || a.issue_date || 0).getTime()
+      return new Date(b.issue_date || b.created_at || 0).getTime() - new Date(a.issue_date || a.created_at || 0).getTime()
     })
 
     return next
