@@ -6,6 +6,7 @@ export function useItemHistoryDetail(itemId: string | null | undefined, limit = 
   const [data, setData] = useState<ItemHistoryRow[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -35,7 +36,7 @@ export function useItemHistoryDetail(itemId: string | null | undefined, limit = 
     return () => {
       cancelled = true
     }
-  }, [itemId, limit])
+  }, [itemId, limit, reloadKey])
 
-  return { data, loading, error }
+  return { data, loading, error, reload: () => setReloadKey((value) => value + 1) }
 }

@@ -6,6 +6,7 @@ export function useItemHistoryList(limit = 100) {
   const [data, setData] = useState<ItemCatalogItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -27,7 +28,7 @@ export function useItemHistoryList(limit = 100) {
     return () => {
       cancelled = true
     }
-  }, [limit])
+  }, [limit, reloadKey])
 
-  return { data, loading, error }
+  return { data, loading, error, reload: () => setReloadKey((value) => value + 1) }
 }

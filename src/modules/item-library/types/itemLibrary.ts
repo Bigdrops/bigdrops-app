@@ -77,3 +77,17 @@ export interface DuplicateCandidateGroup {
   normalized_label: string
   members: DuplicateCandidateMember[]
 }
+
+export interface ItemLibraryMergeRequest {
+  winnerItemId: string
+  mergedItemIds: string[]
+}
+
+export interface ItemLibraryMergeResult {
+  winner_item_id: string
+  merged_item_ids: string[]
+  aliases_added: string[]
+  retired_item_ids: string[]
+  relinked_invoice_rows: number
+  relinked_quotation_rows: number
+}

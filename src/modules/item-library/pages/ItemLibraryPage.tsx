@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import Layout from '@/components/Layout'
+import { toast } from '@/hooks/use-toast'
 import { ItemLibraryDetailPanel } from '../components/ItemLibraryDetailPanel'
 import { ItemLibraryDuplicateReviewPanel } from '../components/ItemLibraryDuplicateReviewPanel'
 import { ItemLibraryListPanel } from '../components/ItemLibraryListPanel'
 import { detectDuplicateGroups } from '../domain/duplicateDetection'
-import { useItemHistoryDetail, useItemHistoryList } from '../hooks'
+import { useItemAliases, useItemHistoryDetail, useItemHistoryList, useItemMerge } from '../hooks'
+import type { ItemLibraryMergeRequest } from '../types'
 import type { ItemCatalogItem, ItemLibraryFilterType, ItemLibraryViewMode } from '../types'
 
 function DownloadIcon() {
@@ -64,7 +66,13 @@ export default function ItemLibraryPage() {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
   const [selectedDuplicateGroupId, setSelectedDuplicateGroupId] = useState<string | null>(null)
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false)
-  const { data: summaryItems, loading: summaryLoading, error: summaryError } = useItemHistoryList(200)
+  const [pendingHistoryRefreshItemId, setPendingHistoryRefreshItemId] = useState<string | null>(null)
+  const {
+    data: summaryItems,
+    loading: summaryLoading,
+    error: summaryError,
+    reload: reloadSummaryItems,
+  } = useItemHistoryList(200)
 
   const filteredItems = useMemo(() => {
     const normalizedSearch = searchText.trim().toLowerCase()
@@ -130,12 +138,47 @@ export default function ItemLibraryPage() {
     () => duplicateGroups.find((group) => group.group_id === selectedDuplicateGroupId) || null,
     [duplicateGroups, selectedDuplicateGroupId],
   )
+  const selectedDuplicateItemIds = useMemo(
+    () => selectedDuplicateGroup?.members.map((member) => member.item_id) || [],
+    [selectedDuplicateGroup],
+  )
+  const {
+    data: selectedGroupAliases,
+    loading: aliasesLoading,
+    error: aliasesError,
+  } = useItemAliases(selectedDuplicateItemIds)
+  const { mergeItems, loading: mergeLoading } = useItemMerge()
 
   const {
     data: historyRows,
     loading: historyLoading,
     error: historyError,
+    reload: reloadHistoryRows,
   } = useItemHistoryDetail(selectedItem?.item_id, 50)
+
+  useEffect(() => {
+    if (!pendingHistoryRefreshItemId || selectedItemId !== pendingHistoryRefreshItemId) return
+    reloadHistoryRows()
+    setPendingHistoryRefreshItemId(null)
+  }, [pendingHistoryRefreshItemId, reloadHistoryRows, selectedItemId])
+
+  const handleMerge = async (request: ItemLibraryMergeRequest) => {
+    const result = await mergeItems(request)
+    const relinkedTotal = result.relinked_invoice_rows + result.relinked_quotation_rows
+
+    setViewMode('catalog')
+    setSelectedDuplicateGroupId(null)
+    setSelectedItemId(result.winner_item_id)
+    setPendingHistoryRefreshItemId(result.winner_item_id)
+    if (window.innerWidth < 768) setMobileDetailOpen(true)
+
+    reloadSummaryItems()
+
+    toast({
+      title: 'Merge complete',
+      description: `${result.merged_item_ids.length} duplicate item${result.merged_item_ids.length === 1 ? '' : 's'} merged into the selected primary item. ${relinkedTotal.toLocaleString()} linked ${relinkedTotal === 1 ? 'row was' : 'rows were'} updated.`,
+    })
+  }
 
   const totalCount = filteredItems.length
 
@@ -234,12 +277,17 @@ export default function ItemLibraryPage() {
             <div className="flex-1 overflow-hidden">
               {viewMode === 'duplicates' ? (
                 <ItemLibraryDuplicateReviewPanel
+                  aliases={selectedGroupAliases}
+                  aliasesError={aliasesError}
+                  aliasesLoading={aliasesLoading}
                   group={selectedDuplicateGroup}
                   item={selectedItem}
                   historyRows={historyRows}
                   loading={historyLoading}
                   error={historyError}
+                  mergeLoading={mergeLoading}
                   onInspectItem={(itemId) => setSelectedItemId(itemId)}
+                  onMerge={handleMerge}
                 />
               ) : (
                 <ItemLibraryDetailPanel

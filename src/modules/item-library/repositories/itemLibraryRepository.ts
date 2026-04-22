@@ -1,5 +1,12 @@
 import { supabase } from '@/supabase'
-import type { ItemCatalogItem, ItemHistoryRow, ItemSuggestion } from '../types'
+import type {
+  ItemAlias,
+  ItemCatalogItem,
+  ItemHistoryRow,
+  ItemLibraryMergeRequest,
+  ItemLibraryMergeResult,
+  ItemSuggestion,
+} from '../types'
 import {
   buildFallbackHistoryRows,
   buildFallbackSummaryItems,
@@ -67,6 +74,39 @@ function normalizeSummaryRow(row: Record<string, unknown>): ItemCatalogItem {
   }
 }
 
+function normalizeAliasRow(row: Record<string, unknown>): ItemAlias {
+  return {
+    id: String(row.id || ''),
+    item_id: String(row.item_id || ''),
+    alias_text: String(row.alias_text || ''),
+    normalized_alias_text: row.normalized_alias_text ? String(row.normalized_alias_text) : null,
+    is_active: typeof row.is_active === 'boolean' ? row.is_active : true,
+    is_retired: typeof row.is_retired === 'boolean' ? row.is_retired : false,
+    source: row.source ? String(row.source) : null,
+    created_at: row.created_at ? String(row.created_at) : null,
+    updated_at: row.updated_at ? String(row.updated_at) : null,
+  }
+}
+
+function normalizeMergeResult(payload: unknown, request: ItemLibraryMergeRequest): ItemLibraryMergeResult {
+  const row = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {}
+
+  return {
+    winner_item_id: String(row.winner_item_id || request.winnerItemId),
+    merged_item_ids: Array.isArray(row.merged_item_ids)
+      ? row.merged_item_ids.map((value) => String(value))
+      : request.mergedItemIds,
+    aliases_added: Array.isArray(row.aliases_added)
+      ? row.aliases_added.map((value) => String(value))
+      : [],
+    retired_item_ids: Array.isArray(row.retired_item_ids)
+      ? row.retired_item_ids.map((value) => String(value))
+      : request.mergedItemIds,
+    relinked_invoice_rows: toNumber(row.relinked_invoice_rows) || 0,
+    relinked_quotation_rows: toNumber(row.relinked_quotation_rows) || 0,
+  }
+}
+
 export async function getItemSuggestions(
   searchText: string,
   resultLimit = 10,
@@ -107,6 +147,7 @@ export async function getItemSuggestions(
     const { data, error } = await supabase
       .from('item_price_summary_v')
       .select('item_id, name, standard_price, last_sold_price, usage_count, last_used_at, last_source_type, is_active')
+      .eq('is_active', true)
       .ilike('name', `%${trimmed}%`)
       .order('usage_count', { ascending: false })
       .order('last_used_at', { ascending: false, nullsFirst: false })
@@ -228,6 +269,7 @@ export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]
   )
 
   return [...summaryRows, ...fallbackRows]
+    .filter((row) => row.is_active !== false)
     .sort((left, right) => {
       const rightTime = new Date(right.last_used_at || 0).getTime() || 0
       const leftTime = new Date(left.last_used_at || 0).getTime() || 0
@@ -235,6 +277,37 @@ export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]
       return left.name.localeCompare(right.name)
     })
     .slice(0, limit)
+}
+
+export async function getItemAliases(itemIds: string[]): Promise<ItemAlias[]> {
+  const stableItemIds = [...new Set(itemIds.filter(Boolean))]
+  if (!stableItemIds.length) return []
+
+  const { data, error } = await supabase
+    .from('item_aliases')
+    .select('id, item_id, alias_text, normalized_alias_text, is_active, is_retired, source, created_at, updated_at')
+    .in('item_id', stableItemIds)
+    .order('alias_text', { ascending: true })
+
+  if (error) throw error
+  return (Array.isArray(data) ? data : []).map((row) => normalizeAliasRow(row as Record<string, unknown>))
+}
+
+export async function mergeItems(request: ItemLibraryMergeRequest): Promise<ItemLibraryMergeResult> {
+  const { winnerItemId, mergedItemIds } = request
+  const stableMergedIds = [...new Set(mergedItemIds.filter((itemId) => itemId && itemId !== winnerItemId))]
+
+  if (!winnerItemId || stableMergedIds.length === 0) {
+    throw new Error('Choose a primary item and at least one duplicate to merge.')
+  }
+
+  const { data, error } = await supabase.rpc('merge_item_catalog_entries', {
+    p_winner_item_id: winnerItemId,
+    p_merged_item_ids: stableMergedIds,
+  })
+
+  if (error) throw error
+  return normalizeMergeResult(data, { winnerItemId, mergedItemIds: stableMergedIds })
 }
 
 export async function getItemHistoryDetail(itemId: string, limit = 50): Promise<ItemHistoryRow[]> {

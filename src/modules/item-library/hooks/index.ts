@@ -1,3 +1,5 @@
 export * from './useItemSuggestions'
 export * from './useItemHistoryList'
 export * from './useItemHistoryDetail'
+export * from './useItemAliases'
+export * from './useItemMerge'
