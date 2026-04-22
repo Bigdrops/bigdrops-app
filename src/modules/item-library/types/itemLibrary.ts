@@ -1,3 +1,7 @@
+export type ItemSourceType = 'invoice' | 'quotation'
+
+export type ItemLibraryFilterType = 'all' | ItemSourceType
+
 export interface ItemCatalogItem {
   item_id: string
   name: string
@@ -9,7 +13,7 @@ export interface ItemCatalogItem {
   avg_price?: number | null
   last_sold_price?: number | null
   last_used_at?: string | null
-  last_source_type?: 'invoice' | 'quotation' | string | null
+  last_source_type?: ItemSourceType | string | null
   last_source_document_id?: string | null
 }
 
@@ -34,7 +38,7 @@ export interface ItemSuggestion {
   last_sold_price?: number | null
   usage_count?: number | null
   last_used_at?: string | null
-  last_source_type?: 'invoice' | 'quotation' | string | null
+  last_source_type?: ItemSourceType | string | null
   is_active?: boolean
   last_price_for_client?: number | null
   last_price_global?: number | null
@@ -44,7 +48,7 @@ export interface ItemSuggestion {
 export interface ItemHistoryRow {
   row_id: string
   item_id: string
-  source_type: 'invoice' | 'quotation'
+  source_type: ItemSourceType
   source_document_id: string
   source_document_number?: string | null
   description: string
