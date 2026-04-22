@@ -888,6 +888,32 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     }
 
     setSaving(false)
+    // Audit Trail
+    try {
+      const { recordQuotationCreated, recordAuditLog, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
+      if (!isEdit) {
+        await recordQuotationCreated(resolvedId)
+        await recordAuditLog({
+          tableName: 'quotations',
+          recordId: resolvedId,
+          operation: 'INSERT',
+          newData: savedQuotation,
+          trackedFields: QUOTATION_TRACKED_FIELDS,
+        })
+      } else {
+        await recordAuditLog({
+          tableName: 'quotations',
+          recordId: resolvedId,
+          operation: 'UPDATE',
+          newData: savedQuotation,
+          trackedFields: QUOTATION_TRACKED_FIELDS,
+        })
+      }
+    } catch (auditErr) {
+      console.error('Audit trail failed:', auditErr)
+    }
+
+    setSaving(false)
     navigate(`/quotations/${resolvedId}`)
   }
 

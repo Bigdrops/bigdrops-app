@@ -61,6 +61,21 @@ export default function NewProject() {
       })
       return
     }
+
+    // Audit Trail
+    try {
+      const { recordAuditLog, PROJECT_TRACKED_FIELDS } = await import('@/lib/audit')
+      await recordAuditLog({
+        tableName: 'projects',
+        recordId: data.id,
+        operation: 'INSERT',
+        newData: data,
+        trackedFields: PROJECT_TRACKED_FIELDS,
+      })
+    } catch (auditErr) {
+      console.error('Audit trail failed:', auditErr)
+    }
+
     navigate(`/projects/${data.id}`)
   }
 

@@ -161,6 +161,30 @@ export default function ProjectDetail() {
       return
     }
 
+    // Audit Trail
+    try {
+      const { recordProjectUpdated, recordProjectNoteAdded, recordAuditLog, PROJECT_TRACKED_FIELDS } = await import('@/lib/audit')
+      const { data: updatedProject } = await supabase.from('projects').select('*').eq('id', id).single()
+      
+      await recordProjectUpdated(id)
+      
+      // If notes changed, record that specifically too
+      if (editForm.notes.trim() !== (project?.notes || '')) {
+        await recordProjectNoteAdded(id, editForm.notes.trim())
+      }
+      
+      await recordAuditLog({
+        tableName: 'projects',
+        recordId: id,
+        operation: 'UPDATE',
+        oldData: project,
+        newData: updatedProject,
+        trackedFields: PROJECT_TRACKED_FIELDS,
+      })
+    } catch (auditErr) {
+      console.error('Audit trail failed:', auditErr)
+    }
+
     setEditing(false)
     fetchAll()
   }
@@ -252,6 +276,28 @@ export default function ProjectDetail() {
     if (updateError) {
       setLinkError(updateError.message)
       return
+    }
+
+    // Audit Trail
+    try {
+      const { recordProjectLinkedActivity, recordAuditLog, INVOICE_TRACKED_FIELDS, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
+      await recordProjectLinkedActivity(id, data.id, linkType)
+      
+      // Update audit log for the linked document
+      const { data: updatedDoc } = await supabase.from(selectedConfig.table).select('*').eq('id', data.id).single()
+      const fields = selectedConfig.table === 'invoices' ? INVOICE_TRACKED_FIELDS : selectedConfig.table === 'quotations' ? QUOTATION_TRACKED_FIELDS : []
+      if (fields.length > 0) {
+        await recordAuditLog({
+          tableName: selectedConfig.table,
+          recordId: data.id,
+          operation: 'UPDATE',
+          oldData: data,
+          newData: updatedDoc,
+          trackedFields: fields,
+        })
+      }
+    } catch (auditErr) {
+      console.error('Audit trail failed:', auditErr)
     }
 
     const docLabel = DOC_TYPE_LABELS[linkType] || linkType

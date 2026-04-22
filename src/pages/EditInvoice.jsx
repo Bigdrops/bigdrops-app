@@ -63,7 +63,7 @@ export default function EditInvoice() {
   const [termsTitle, setTermsTitle] = useState('Terms and Conditions')
   const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
   const [invoiceTitle, setInvoiceTitle] = useState('')
-  const [invoice, setInvoice] = useState(null)
+  const [invoice, setInvoice] = useState(null); const [initialInvoiceSnapshot, setInitialInvoiceSnapshot] = useState(null)
   const [baseCustomFields, setBaseCustomFields] = useState({})
   const [items, setItems] = useState([{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }])
   const [groups, setGroups] = useState([])
@@ -145,7 +145,7 @@ export default function EditInvoice() {
       const loadedItems = (itemRows && itemRows.length > 0 ? itemRows : [makeEmptyItem()]).map((item) => mapDbInvoiceItem(item))
 
       setItems(loadedItems)
-      setInvoice({
+      setInitialInvoiceSnapshot(data); setInvoice({
         ...data,
         vat: legacyCalculationState.editableInputs.vatRate,
         discount: legacyCalculationState.editableInputs.discountValue,
@@ -450,6 +450,23 @@ export default function EditInvoice() {
         setSaving(false)
         return
       }
+    }
+
+    // Audit Trail
+    try {
+      const { recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
+      const { data: updatedInvoice } = await supabase.from('invoices').select('*').eq('id', id).single()
+      
+      await recordAuditLog({
+        tableName: 'invoices',
+        recordId: id,
+        operation: 'UPDATE',
+        oldData: initialInvoiceSnapshot,
+        newData: updatedInvoice,
+        trackedFields: INVOICE_TRACKED_FIELDS,
+      })
+    } catch (auditErr) {
+      console.error('Audit trail failed:', auditErr)
     }
 
     setSaving(false)

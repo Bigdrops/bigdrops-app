@@ -437,6 +437,21 @@ export default function NewInvoice() {
       await supabase.from('invoice_items').insert(itemsToSave)
     }
 
+    // Audit Trail
+    try {
+      const { recordInvoiceCreated, recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
+      await recordInvoiceCreated(invoiceRow.id)
+      await recordAuditLog({
+        tableName: 'invoices',
+        recordId: invoiceRow.id,
+        operation: 'INSERT',
+        newData: invoiceRow,
+        trackedFields: INVOICE_TRACKED_FIELDS,
+      })
+    } catch (auditErr) {
+      console.error('Audit trail failed:', auditErr)
+    }
+
     setSaving(false)
     navigate('/invoices/' + invoiceRow.id)
   }

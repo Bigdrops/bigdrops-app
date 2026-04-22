@@ -7,6 +7,12 @@ import { createClient } from '@supabase/supabase-js'
 type RawImportRow = {
   invoice_number?: string | null
   due_date?: string | null
+  items?: Array<{
+    description?: string | null
+    quantity?: number | string | null
+    rate?: number | string | null
+    unit?: string | null
+  }> | null
 }
 
 type ImportedInvoiceRow = {
@@ -204,6 +210,28 @@ async function main() {
     const canonicalItems = [...(invoiceItemMap.get(canonical.id) || [])]
     const canonicalSignatures = new Set(canonicalItems.map((item) => normalizeItemSignature(item)))
 
+    const sourceRow = invoiceSourceMap.get(invoiceNumber)
+    
+    // Restoration: If canonical row has no items and source has them, restore from source
+    if (canonicalItems.length === 0 && sourceRow?.items && sourceRow.items.length > 0) {
+      for (const item of sourceRow.items) {
+        const qty = toNumber(item.quantity)
+        const rate = toNumber(item.rate)
+        const movedItem = {
+          invoice_id: canonical.id,
+          item_id: null,
+          description: item.description || '',
+          quantity: qty,
+          unit: item.unit || null,
+          unit_price: rate,
+          amount: qty * rate,
+          sort_order: canonicalItems.length,
+        }
+        movedInvoiceItems.push(movedItem)
+        canonicalItems.push(movedItem as any)
+      }
+    }
+
     for (const row of rows) {
       if (row.id === canonical.id) continue
       const duplicateItems = invoiceItemMap.get(row.id) || []
@@ -230,7 +258,6 @@ async function main() {
       duplicateInvoiceIdsToDelete.push(row.id)
     }
 
-    const sourceRow = invoiceSourceMap.get(invoiceNumber)
     const computedSubtotal = canonicalItems.reduce((sum, item) => sum + toNumber(item.amount), 0)
     invoiceUpdates.push({
       id: canonical.id,
@@ -253,6 +280,28 @@ async function main() {
     const canonical = getCanonicalRow(rows)
     const canonicalItems = [...(quotationItemMap.get(canonical.id) || [])]
     const canonicalSignatures = new Set(canonicalItems.map((item) => normalizeItemSignature(item)))
+
+    const sourceRow = quotationSourceMap.get(quotationNumber)
+
+    // Restoration: If canonical row has no items and source has them, restore from source
+    if (canonicalItems.length === 0 && sourceRow?.items && sourceRow.items.length > 0) {
+      for (const item of sourceRow.items) {
+        const qty = toNumber(item.quantity)
+        const rate = toNumber(item.rate)
+        const movedItem = {
+          quotation_id: canonical.id,
+          item_id: null,
+          description: item.description || '',
+          quantity: qty,
+          unit: item.unit || null,
+          unit_price: rate,
+          amount: qty * rate,
+          sort_order: canonicalItems.length,
+        }
+        movedQuotationItems.push(movedItem)
+        canonicalItems.push(movedItem as any)
+      }
+    }
 
     for (const row of rows) {
       if (row.id === canonical.id) continue
@@ -280,7 +329,6 @@ async function main() {
       duplicateQuotationIdsToDelete.push(row.id)
     }
 
-    const sourceRow = quotationSourceMap.get(quotationNumber)
     const computedSubtotal = canonicalItems.reduce((sum, item) => sum + toNumber(item.amount), 0)
     quotationUpdates.push({
       id: canonical.id,
@@ -356,4 +404,8 @@ async function main() {
   }, null, 2))
 }
 
-await main()
+main().catch((error) => {
+  console.error(error)
+  process.exit(1)
+})
+

@@ -160,7 +160,26 @@ export function useInvoiceMutations({
 
   const handleStatusChange = async (newStatus: string) => {
     if (newStatus === invoice.status) return
-    await supabase.from('invoices').update({ status: newStatus }).eq('id', id)
+    const oldStatus = invoice.status
+    const { error } = await supabase.from('invoices').update({ status: newStatus }).eq('id', id)
+    if (error) throw error
+
+    // Audit Trail
+    try {
+      const { recordInvoiceStatusChanged, recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
+      const { data: updatedInvoice } = await supabase.from('invoices').select('*').eq('id', id).single()
+      await recordInvoiceStatusChanged(id!, oldStatus, newStatus)
+      await recordAuditLog({
+        tableName: 'invoices',
+        recordId: id!,
+        operation: 'UPDATE',
+        newData: updatedInvoice,
+        trackedFields: INVOICE_TRACKED_FIELDS,
+      })
+    } catch (auditErr) {
+      console.error('Audit trail failed:', auditErr)
+    }
+
     await refresh()
   }
 

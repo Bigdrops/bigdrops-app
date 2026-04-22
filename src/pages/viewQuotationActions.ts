@@ -115,6 +115,21 @@ export async function duplicateQuotationRecord({
   }
   const { data: createdQuotation, error } = await supabase.from('quotations').insert([payload]).select().single()
   if (error || !createdQuotation) throw new Error(error?.message || 'Failed to clone quotation')
+
+  // Audit Trail
+  try {
+    const { recordQuotationCreated, recordAuditLog, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
+    await recordQuotationCreated(createdQuotation.id)
+    await recordAuditLog({
+      tableName: 'quotations',
+      recordId: createdQuotation.id,
+      operation: 'INSERT',
+      newData: createdQuotation,
+      trackedFields: QUOTATION_TRACKED_FIELDS,
+    })
+  } catch (auditErr) {
+    console.error('Audit trail failed:', auditErr)
+  }
   const itemRows = items
     .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
     .map((item, index) => toQuotationItemRow(item, String(createdQuotation.id), index))
@@ -175,6 +190,22 @@ export async function convertQuotationToInvoice({
   }
   const { data: createdInvoice, error } = await supabase.from('invoices').insert([invoicePayload]).select().single()
   if (error || !createdInvoice) throw new Error(error?.message || 'Failed to create invoice')
+
+  // Audit Trail
+  try {
+    const { recordQuotationLinked, recordInvoiceCreated, recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
+    await recordQuotationLinked(id, createdInvoice.id)
+    await recordInvoiceCreated(createdInvoice.id)
+    await recordAuditLog({
+      tableName: 'invoices',
+      recordId: createdInvoice.id,
+      operation: 'INSERT',
+      newData: createdInvoice,
+      trackedFields: INVOICE_TRACKED_FIELDS,
+    })
+  } catch (auditErr) {
+    console.error('Audit trail failed:', auditErr)
+  }
   const itemRows = items
     .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
     .map((item, index) => toDbItem(item, createdInvoice.id, index))
@@ -211,6 +242,23 @@ export async function archiveQuotationRecord(id: string) {
 }
 
 export async function updateQuotationStatus(id: string, status: string) {
+  const { data: oldQuo } = await supabase.from('quotations').select('status').eq('id', id).single()
   const { error } = await supabase.from('quotations').update({ status }).eq('id', id)
   if (error) throw error
+
+  // Audit Trail
+  try {
+    const { recordQuotationStatusChanged, recordAuditLog, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
+    const { data: updatedQuotation } = await supabase.from('quotations').select('*').eq('id', id).single()
+    await recordQuotationStatusChanged(id, oldQuo?.status || 'unknown', status)
+    await recordAuditLog({
+      tableName: 'quotations',
+      recordId: id,
+      operation: 'UPDATE',
+      newData: updatedQuotation,
+      trackedFields: QUOTATION_TRACKED_FIELDS,
+    })
+  } catch (auditErr) {
+    console.error('Audit trail failed:', auditErr)
+  }
 }

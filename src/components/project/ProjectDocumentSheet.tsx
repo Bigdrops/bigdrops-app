@@ -193,14 +193,14 @@ export default function ProjectDocumentSheet({ open, onOpenChange, projectId, on
 
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
-    const { error } = await supabase.from('project_documents').insert([{
+    const { data: insertedDoc, error } = await supabase.from('project_documents').insert([{
       project_id: projectId, type: docType, title: normalizedTitle || config.label,
       reference_number: form.reference_number || null, voucher_number: docType === 'purchase_order' ? form.voucher_number || null : null,
       date: form.date || null, from_party: form.from_party || null, to_party: form.to_party || null,
       data, raw_input: rawInput, vat: ['purchase_order', 'receipt'].includes(docType) ? toNumber(form.vat) : 0,
       wht: ['purchase_order', 'receipt'].includes(docType) ? toNumber(form.wht) : 0,
       total: computedTotal || 0, created_by: user?.id || null,
-    }])
+    }]).select().single()
 
     setSaving(false)
     if (error) {
@@ -210,6 +210,16 @@ export default function ProjectDocumentSheet({ open, onOpenChange, projectId, on
         variant: 'destructive',
       })
       return
+    }
+
+    // Audit Trail
+    try {
+      const { recordProjectDocumentAdded } = await import('@/lib/audit')
+      if (insertedDoc) {
+        await recordProjectDocumentAdded(projectId, insertedDoc.id, docType)
+      }
+    } catch (auditErr) {
+      console.error('Audit trail failed:', auditErr)
     }
 
     toast({ title: `${config.label} saved`, description: 'Ready to view or export.' })

@@ -139,8 +139,26 @@ export default function InvoiceRecordPaymentSheet({
         bank_account_id: form.method === 'Transfer' && selectedBankId ? selectedBankId : null,
       }
 
-      const { error: insertError } = await supabase.from('payments').insert(payload)
+      const { data: paymentRow, error: insertError } = await supabase.from('payments').insert(payload).select().single()
       if (insertError) throw insertError
+
+      // Audit Trail
+      try {
+        const { recordPaymentRecorded, recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
+        if (paymentRow) {
+          await recordPaymentRecorded(invoice.id, paymentRow.id, paymentRow.amount)
+        }
+        const { data: updatedInvoice } = await supabase.from('invoices').select('*').eq('id', invoice.id).single()
+        await recordAuditLog({
+          tableName: 'invoices',
+          recordId: invoice.id,
+          operation: 'UPDATE',
+          newData: updatedInvoice,
+          trackedFields: INVOICE_TRACKED_FIELDS,
+        })
+      } catch (auditErr) {
+        console.error('Audit trail failed:', auditErr)
+      }
 
       // Refresh status via financials view if needed, but for now we'll just signal refresh
       onSaved()
