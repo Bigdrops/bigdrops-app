@@ -7,7 +7,7 @@ import type {
   InvoiceTotalsSource,
 } from '@/domain/invoice'
 
-export type QuotationStatus = 'draft' | 'sent' | 'accepted' | 'rejected'
+export type QuotationStatus = 'open' | 'converted' | 'archived'
 
 export interface DbQuotation {
   id?: string | null

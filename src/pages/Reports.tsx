@@ -34,7 +34,7 @@ import { formatNaira } from '@/lib/formatters/money'
 
 type ReportTab = 'receivables' | 'collections' | 'projects' | 'tax'
 type DatePreset = 'this_month' | 'last_month' | 'this_quarter' | 'custom'
-type ReceivablesFilter = 'all' | 'unpaid' | 'paid' | 'overdue'
+type ReceivablesFilter = 'all' | 'unpaid' | 'paid' | 'past_due'
 type MetricTone = 'green' | 'red' | 'amber' | 'blue'
 
 type InvoiceFinancialRow = {
@@ -158,6 +158,32 @@ const isWithinRange = (value: string | null | undefined, start: string, end: str
   return true
 }
 
+const isPastDue = (dueDate: string | null | undefined, balanceDue: number | null | undefined) => {
+  const balance = Number(balanceDue || 0)
+  if (balance <= 0 || !dueDate) return false
+  const due = new Date(dueDate)
+  if (Number.isNaN(due.getTime())) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  due.setHours(0, 0, 0, 0)
+  return due < today
+}
+
+const getReceivableStatus = (row: Pick<InvoiceFinancialRow, 'computed_status' | 'balance_due' | 'due_date'>) => {
+  const normalized = String(row.computed_status || '').toLowerCase()
+  if (normalized === 'paid' || Number(row.balance_due || 0) <= 0) return 'paid'
+  if (normalized === 'partial' || normalized === 'partially_paid') return 'partially_paid'
+  return 'unpaid'
+}
+
+const getReceivableStatusLabel = (row: Pick<InvoiceFinancialRow, 'computed_status' | 'balance_due' | 'due_date'>) => {
+  if (isPastDue(row.due_date, row.balance_due)) return 'Past Due'
+  const status = getReceivableStatus(row)
+  if (status === 'partially_paid') return 'Partially Paid'
+  if (status === 'paid') return 'Paid'
+  return 'Unpaid'
+}
+
 const getAgingBucket = (dueDate: string | null | undefined) => {
   if (!dueDate) return 'Current'
   const today = new Date()
@@ -175,16 +201,16 @@ const getStatusClass = (status: string | null | undefined) => {
   switch (String(status || '').toLowerCase()) {
     case 'paid':
       return 'bg-emerald-500 text-white'
-    case 'overdue':
+    case 'past_due':
       return 'bg-red-500 text-white'
-    case 'partial':
+    case 'partially_paid':
       return 'bg-amber-500 text-white'
+    case 'unpaid':
     case 'active':
-    case 'sent':
     case 'current':
       return 'bg-blue-500 text-white'
     case 'completed':
-    case 'draft':
+    case 'open':
       return 'bg-slate-500 text-white'
     default:
       return 'bg-slate-500 text-white'
@@ -223,16 +249,16 @@ const getLeftBorderClass = (status: string | null | undefined) => {
   switch (String(status || '').toLowerCase()) {
     case 'paid':
       return 'border-l-4 border-l-emerald-500'
-    case 'overdue':
+    case 'past_due':
       return 'border-l-4 border-l-red-500'
-    case 'partial':
+    case 'partially_paid':
       return 'border-l-4 border-l-amber-500'
+    case 'unpaid':
     case 'active':
-    case 'sent':
     case 'current':
       return 'border-l-4 border-l-blue-500'
     case 'completed':
-    case 'draft':
+    case 'open':
       return 'border-l-4 border-l-slate-500'
     default:
       return 'border-l-4 border-l-slate-300'
@@ -333,7 +359,7 @@ function Filters({
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="unpaid">Unpaid</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
+                  <SelectItem value="past_due">Past Due</SelectItem>
                 </SelectContent>
               </Select>
             ) : null}
@@ -504,7 +530,12 @@ function ReceivablesList({
               {rows.map((row) => {
                 const aging = getAgingBucket(row.due_date)
                 return (
-                  <div key={row.id} className={`rounded-2xl border border-border bg-card p-4 shadow-sm ${getLeftBorderClass(row.computed_status)}`}>
+                    <div
+                      key={row.id}
+                      className={`rounded-2xl border border-border bg-card p-4 shadow-sm ${getLeftBorderClass(
+                        isPastDue(row.due_date, row.balance_due) ? 'past_due' : getReceivableStatus(row),
+                      )}`}
+                    >
                     <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <div className="text-sm font-bold text-foreground">
@@ -514,8 +545,12 @@ function ReceivablesList({
                         </div>
                         <div className="mt-1 text-xs text-muted-foreground">{row.client_name || '—'}</div>
                       </div>
-                      <Badge className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusClass(row.computed_status)}`}>
-                        {row.computed_status || 'draft'}
+                      <Badge
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusClass(
+                          isPastDue(row.due_date, row.balance_due) ? 'past_due' : getReceivableStatus(row),
+                        )}`}
+                      >
+                        {getReceivableStatusLabel(row)}
                       </Badge>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -751,7 +786,7 @@ export default function Reports() {
       let taxQuery = supabase
         .from('invoices')
         .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
-        .not('status', 'in', '("draft","cancelled","archived")')
+        .not('status', 'eq', 'archived')
         .or('custom_fields->advance_invoice->>role.is.null,custom_fields->advance_invoice->>role.neq.advance')
         .order('issue_date', { ascending: false })
 
@@ -866,8 +901,8 @@ export default function Reports() {
       .filter((row) => isWithinRange(row.issue_date || null, start, end))
       .filter((row) => {
         if (receivablesFilter === 'unpaid') return Number(row.balance_due || 0) > 0
-        if (receivablesFilter === 'paid') return Number(row.balance_due || 0) <= 0 || String(row.computed_status || '').toLowerCase() === 'paid'
-        if (receivablesFilter === 'overdue') return String(row.computed_status || '').toLowerCase() === 'overdue'
+        if (receivablesFilter === 'paid') return getReceivableStatus(row) === 'paid'
+        if (receivablesFilter === 'past_due') return isPastDue(row.due_date, row.balance_due)
         return true
       })
       .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
@@ -899,11 +934,11 @@ export default function Reports() {
       const balance = Number(row.balance_due || 0)
       return balance > 0 ? sum + balance : sum
     }, 0)
-    const overdue = filteredReceivables.reduce((sum, row) => String(row.computed_status || '').toLowerCase() === 'overdue' ? sum + Number(row.balance_due || 0) : sum, 0)
+    const pastDue = filteredReceivables.reduce((sum, row) => (isPastDue(row.due_date, row.balance_due) ? sum + Number(row.balance_due || 0) : sum), 0)
     const collected = filteredReceivables.reduce((sum, row) => sum + Number(row.cash_received || 0), 0)
     return [
       { label: 'Outstanding', value: formatMoney(outstanding), tone: 'red', icon: <Receipt className="h-4 w-4" /> },
-      { label: 'Overdue', value: formatMoney(overdue), tone: 'red', icon: <CalendarDays className="h-4 w-4" /> },
+      { label: 'Past Due', value: formatMoney(pastDue), tone: 'red', icon: <CalendarDays className="h-4 w-4" /> },
       { label: 'Collected', value: formatMoney(collected), tone: 'green', icon: <Wallet className="h-4 w-4" /> },
       { label: 'Open Invoices', value: String(filteredReceivables.length), tone: 'blue', icon: <FileSpreadsheet className="h-4 w-4" /> },
     ]

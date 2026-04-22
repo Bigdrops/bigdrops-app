@@ -48,7 +48,7 @@ export default function ComplianceHub() {
           supabase
             .from('invoices')
             .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
-            .not('status', 'in', '("draft","cancelled","archived")')
+            .neq('status', 'archived')
             .order('issue_date', { ascending: false }),
           supabase
             .from('payments')

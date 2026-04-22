@@ -468,7 +468,7 @@ export default function ViewQuotation() {
     id: quotation.id,
     number: quotation.quotation_number,
     title: quotation.quotation_title || 'Quotation',
-    status: (quotation.status || 'draft') as any,
+    status: (quotation.status || 'open') as any,
   }
 
   const metrics = [
@@ -528,9 +528,6 @@ export default function ViewQuotation() {
             <QuotationMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)}
               onClose={ui.closeSheet}
-              onMarkAsSent={() => void handleUpdateStatus('sent', 'Marked as sent')}
-              onMarkAsAccepted={() => void handleUpdateStatus('accepted', 'Marked as accepted')}
-              onMarkAsRejected={() => void handleUpdateStatus('rejected', 'Marked as rejected')}
               onConvertToInvoice={() => ui.openModal(MODAL_CONVERT)}
               onLinkProject={() => setProjectLinkOpen(true)}
               onDuplicate={() => void handleDuplicate()}
@@ -543,7 +540,7 @@ export default function ViewQuotation() {
             <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_CONVERT)}
               title="Convert to Invoice?"
-              description="This will generate a new draft invoice based on this quotation. The quotation will be marked as accepted."
+              description="This will generate a new unpaid invoice based on this quotation. The quotation will be marked as converted."
               cancelLabel="Cancel"
               confirmLabel={converting ? 'Converting...' : 'Convert to Invoice'}
               onConfirm={() => void handleConvertToInvoice()}
@@ -599,7 +596,7 @@ export default function ViewQuotation() {
               meta={[
                 { label: 'Issue Date', value: quotation.issue_date || 'Not set' },
                 { label: 'Valid Until', value: quotation.valid_until || 'Open' },
-                { label: 'Status', value: quotation.status || 'draft' },
+                { label: 'Status', value: quotation.status || 'open' },
               ]}
               detailRows={previewDetailRows}
               items={previewItems}

@@ -140,7 +140,7 @@ export default function ViewCSR() {
     try {
       const created = await duplicateCSRRecord(id)
       navigate(`/csr/${created.id}`)
-      showToast('Record Cloned', 'A new draft service report has been created.', 'success')
+      showToast('Record Cloned', 'A new service report has been created.', 'success')
     } catch (error) {
       showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
     }
@@ -180,13 +180,13 @@ export default function ViewCSR() {
     id: csr.id,
     number: csr.csr_number,
     title: 'Customer Service Report',
-    status: (csr.status || 'draft') as any,
+    status: (csr.status || 'in_progress') as any,
   }
 
   const metrics = [
     { label: 'Equipment', value: csr.equipment_type || 'N/A' },
     { label: 'Date', value: csr.date || 'N/A', tone: 'amber' as const },
-    { label: 'Status', value: csr.status || 'draft', tone: csr.status === 'completed' ? 'green' as const : 'amber' as const },
+    { label: 'Status', value: csr.status || 'in_progress', tone: csr.status === 'completed' ? 'green' as const : 'amber' as const },
   ]
 
   return (
@@ -277,7 +277,7 @@ export default function ViewCSR() {
               onClose={ui.closeSheet}
               onMarkInProgress={() => void handleUpdateStatus('in_progress', 'Marked In Progress')}
               onMarkAsCompleted={() => ui.openModal(MODAL_COMPLETE)}
-              onReopenRecord={() => void handleUpdateStatus('draft', 'Record Reopened')}
+              onReopenRecord={() => void handleUpdateStatus('in_progress', 'Record Reopened')}
               onLinkProject={() => setProjectLinkOpen(true)}
               onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}

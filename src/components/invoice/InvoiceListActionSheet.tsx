@@ -38,7 +38,7 @@ function getActionTone(key: string) {
   if (value === "clone") {
     return "bg-primary/12 text-primary"
   }
-  if (value.includes("quote") || value.includes("sent")) {
+  if (value.includes("quote") || value.includes("convert")) {
     return "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
   }
   if (value.includes("csr") || value.includes("waybill")) {

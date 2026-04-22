@@ -12,10 +12,11 @@ interface DocumentHeroProps {
 }
 
 const statusClassNameMap: Record<string, string> = {
-  partial: styles.partial,
+  partially_paid: styles.partial,
   paid: styles.paid,
   unpaid: styles.unpaid,
-  draft: styles.draft,
+  open: styles.draft,
+  converted: styles.paid,
 }
 
 export default function DocumentHero({

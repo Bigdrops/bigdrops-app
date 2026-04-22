@@ -290,7 +290,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     client_name: '',
     issue_date: new Date().toISOString().split('T')[0],
     valid_until: '',
-    status: 'draft',
+    status: 'open',
     quotation_title: '',
     notes: '',
     terms: '',
@@ -764,7 +764,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       client_name: quotation.client_name || '',
       issue_date: quotation.issue_date || null,
       valid_until: quotation.valid_until || null,
-      status: status || 'draft',
+      status: status || 'open',
       notes: quotation.notes || '',
       terms: quotation.terms || '',
       workmanship: Number(quotation.workmanship || 0),
@@ -985,7 +985,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     <div className="mx-auto w-full max-w-4xl space-y-6 px-0 sm:px-2">
       <SharedDocumentForm
         title={isEdit ? 'Edit Quotation' : 'Create Quotation'}
-        modeLabel={formatQuotationStatus(quotation.status || 'draft')}
+        modeLabel={formatQuotationStatus(quotation.status || 'open')}
         invoice={invoiceLikeQuotation}
         invoiceTitle={quotation.quotation_title || ''}
         setInvoiceTitle={(value: string) => updateQuotation('quotation_title', value)}
@@ -1040,9 +1040,9 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         setWhtType={setWhtType}
         saving={saving}
         primaryLabel={isEdit ? 'Save Quotation' : 'Create Quotation'}
-        onSaveSent={() => handleSave('sent')}
-        onSaveDraft={() => handleSave('draft')}
-        onFloatingSave={() => handleSave('draft')}
+        onSaveSent={() => handleSave('open')}
+        onSaveDraft={() => handleSave('open')}
+        onFloatingSave={() => handleSave('open')}
         onCancel={() => navigate('/quotations')}
         onApplyImport={handleImportApply}
         importAdapter={quotationImportAdapter}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Send, Trash2, Truck, Wrench, Workflow } from "lucide-react"
+import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Trash2, Truck, Wrench, Workflow } from "lucide-react"
 import { supabase } from "../supabase"
 import { toast } from "@/hooks/use-toast"
 import { canUseNativeSqlite } from "@/lib/native/capacitor"
@@ -341,7 +341,7 @@ export default function Invoices() {
             client_id: null,
             client_name: "",
             project_id: null,
-            status: "draft",
+            status: "unpaid",
             issue_date: new Date().toISOString().split("T")[0],
             due_date: null,
             custom_fields: {},
@@ -352,13 +352,6 @@ export default function Invoices() {
     } catch (err) {
       toast({ title: "Clone failed", description: err.message, variant: "destructive" })
     }
-  }
-
-  const handleMarkSent = async () => {
-    const inv = activeInvoice
-    closeSheet()
-    await supabase.from("invoices").update({ status: "sent" }).eq("id", inv.id)
-    await fetchInvoices(0, true)
   }
 
   const handleArchive = async () => {
@@ -475,15 +468,14 @@ export default function Invoices() {
   })
 
   const getInvoiceStatusClassName = (status) => {
-    const normalized = (status || "draft").toLowerCase()
-    if (normalized === "sent") return "border border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-300"
+    const normalized = (status || "unpaid").toLowerCase()
+    if (normalized === "unpaid") return "border border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-300"
     if (normalized === "paid") return "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300"
-    if (normalized === "overdue") return "border border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300"
-    if (normalized === "partial") return "border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300"
+    if (normalized === "partially_paid") return "border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300"
     return "border border-border bg-muted text-muted-foreground"
   }
 
-  const formatInvoiceStatusLabel = (status) => formatStatusLabel(status, { fallback: "draft", lowercase: true })
+  const formatInvoiceStatusLabel = (status) => formatStatusLabel(status, { fallback: "unpaid", lowercase: true })
 
   const resetFilters = () => {
     setSearch("")
@@ -503,7 +495,7 @@ export default function Invoices() {
     {
       label: "Status",
       value: statusFilter,
-      options: ["All", "Draft", "Sent", "Paid", "Overdue", "Partial"],
+      options: ["All", "Unpaid", "Partially Paid", "Paid"],
       onChange: setStatusFilter,
     },
     {
@@ -527,7 +519,7 @@ export default function Invoices() {
     sortBy !== "Newest"
   )
 
-  const renderInvoiceRowNumber = (invoice) => invoice.invoice_number || "Draft invoice"
+  const renderInvoiceRowNumber = (invoice) => invoice.invoice_number || "Invoice"
 
   const renderInvoiceRowDate = (invoice) => formatInvoiceDate(invoice.issue_date) || "No date"
 
@@ -569,7 +561,7 @@ export default function Invoices() {
           if (!open) setActiveInvoice(null)
         }}
         eyebrow="Invoice"
-        title={activeInvoice ? `${activeInvoice.client_name || "No client"} · ${activeInvoice.invoice_number || "Draft"}` : "Invoice"}
+        title={activeInvoice ? `${activeInvoice.client_name || "No client"} · ${activeInvoice.invoice_number || "Invoice"}` : "Invoice"}
         subtitle={activeInvoice ? `${formatNaira(activeInvoice.total)} · Fast access actions from list context` : null}
         actions={activeInvoice ? (() => {
           const actionDefs = getInvoiceListActionDefs({
@@ -579,7 +571,6 @@ export default function Invoices() {
             hasLinkedDocuments: invoiceDocumentState.hasLinkedDocuments,
             isPaid: activeInvoice.status === "paid",
             isStandalone,
-            showMarkSent: activeInvoice.status === "draft",
           })
 
           const iconMap = {
@@ -594,7 +585,6 @@ export default function Invoices() {
             fileOutput: <FileOutput className="h-6 w-6" />,
             wrench: <Wrench className="h-6 w-6" />,
             truck: <Truck className="h-6 w-6" />,
-            send: <Send className="h-6 w-6" />,
             archive: <Archive className="h-6 w-6" />,
             trash: <Trash2 className="h-6 w-6" />,
           }
@@ -612,7 +602,6 @@ export default function Invoices() {
             quote: handleRevertToQuote,
             csr: () => { closeSheet(); toast({ title: "Unavailable", description: "Service reports are not available in this version." }) },
             waybill: () => { closeSheet(); toast({ title: "Unavailable", description: "Waybills are not available in this version." }) },
-            "mark-sent": handleMarkSent,
             archive: () => setShowArchiveWarn(true),
           }
 

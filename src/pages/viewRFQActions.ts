@@ -36,7 +36,7 @@ export async function duplicateRFQRecord(id: string) {
   const { data: created, error: insertError } = await supabase.from('rfqs').insert([{
     ...rest,
     rfq_number: `RFQ-${String(nextNum).padStart(4, '0')}`,
-    status: 'draft',
+    status: 'open',
     issue_date: new Date().toISOString().split('T')[0],
   }]).select().single()
 
@@ -67,7 +67,7 @@ export async function convertRFQToQuotation({
     client_id: null, // Vendor RFQs usually don't have a client link directly
     client_name: rfq.vendor_name || '',
     issue_date: new Date().toISOString().split('T')[0],
-    status: 'draft',
+    status: 'open',
     subtotal: 0,
     total: 0,
     custom_fields: JSON.stringify(

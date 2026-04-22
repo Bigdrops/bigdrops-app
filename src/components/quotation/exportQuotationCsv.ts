@@ -26,7 +26,7 @@ export function buildQuotationCsv(params: {
     ['Quotation Number', quotation.quotation_number || ''],
     ['P.O. Number', quotation.po_number || ''],
     ['Quotation Title', quotation.quotation_title || ''],
-    ['Status', quotation.status || 'draft'],
+    ['Status', quotation.status || 'open'],
     ['Client', quotation.client_name || ''],
     ['Issue Date', quotation.issue_date || ''],
     ['Valid Until', quotation.valid_until || ''],

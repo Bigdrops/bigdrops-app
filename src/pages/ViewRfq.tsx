@@ -162,7 +162,7 @@ export default function ViewRfq() {
     try {
       const created = await duplicateRFQRecord(id)
       navigate(`/rfqs/${created.id}`)
-      showToast('RFQ Cloned', 'A new draft RFQ has been created.', 'success')
+      showToast('RFQ Cloned', 'A new open RFQ has been created.', 'success')
     } catch (error) {
       showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
     }
@@ -193,7 +193,7 @@ export default function ViewRfq() {
     try {
       const created = await convertRFQToQuotation({ rfq, items: rfq.table_rows })
       navigate(`/quotations/${created.id}`)
-      showToast('Quotation Created', 'Linked quotation draft is ready.', 'success')
+      showToast('Quotation Created', 'Linked quotation is ready.', 'success')
     } catch (error) {
       showToast('Conversion failed', error instanceof Error ? error.message : 'Could not generate quotation.')
     } finally {
@@ -318,7 +318,6 @@ export default function ViewRfq() {
             <RfqMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)}
               onClose={ui.closeSheet}
-              onMarkAsSent={() => void handleUpdateStatus('sent', 'Marked as Sent')}
               onMarkAsClosed={() => void handleUpdateStatus('closed', 'Marked as Closed')}
               onConvertToQuotation={() => ui.openModal(MODAL_CONVERT)}
               onLinkProject={() => setProjectLinkOpen(true)}
@@ -332,7 +331,7 @@ export default function ViewRfq() {
             <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_CONVERT)}
               title="Generate Quotation?"
-              description="This will generate a new quotation draft supplying these requested items."
+              description="This will generate a new open quotation supplying these requested items."
               cancelLabel="Cancel"
               confirmLabel="Generate Quotation"
               onConfirm={() => void handleConvertToQuotation()}

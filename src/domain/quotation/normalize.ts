@@ -53,7 +53,7 @@ export function mapDbQuotation(row: DbQuotation): Quotation {
     project_id: row.project_id ?? null,
     issue_date: row.issue_date ?? null,
     valid_until: toNullableDate(row.valid_until),
-    status: (row.status as Quotation['status']) || 'draft',
+    status: (row.status as Quotation['status']) || 'open',
     notes: row.notes || customFields.notesHtml || '',
     terms: row.terms || customFields.termsHtml || '',
     workmanship: toNumber(row.workmanship),

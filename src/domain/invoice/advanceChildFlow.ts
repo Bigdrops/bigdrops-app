@@ -142,7 +142,7 @@ export function buildAdvanceChildInvoicePayload({
     project_id: parentInvoice?.project_id || null,
     issue_date: parentInvoice?.issue_date || new Date().toISOString().split('T')[0],
     due_date: parentInvoice?.due_date || null,
-    status: 'draft',
+    status: 'unpaid',
     document_type: 'INVOICE',
     notes: parentInvoice?.notes || '',
     terms: parentInvoice?.terms || '',

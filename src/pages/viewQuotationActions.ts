@@ -92,7 +92,7 @@ export async function duplicateQuotationRecord({
     project_id: quotation.project_id || null,
     issue_date: new Date().toISOString().split('T')[0],
     valid_until: quotation.valid_until || null,
-    status: 'draft',
+    status: 'open',
     notes: quotation.notes || '',
     terms: quotation.terms || '',
     workmanship: Number(quotation.workmanship || 0),
@@ -156,7 +156,7 @@ export async function convertQuotationToInvoice({
     project_id: quotation.project_id || null,
     issue_date: quotation.issue_date || new Date().toISOString().split('T')[0],
     due_date: quotation.valid_until || null,
-    status: 'draft',
+    status: 'unpaid',
     document_type: 'INVOICE',
     payment_terms: null,
     notes: quotation.notes || '',
@@ -190,7 +190,10 @@ export async function convertQuotationToInvoice({
     po_number: createdInvoice.po_number ?? quotation.po_number ?? null,
   })
   const updatedQuotationFields = appendDerivedTrail(quotationCustomFields, derivedLink)
-  const { error: trailError } = await supabase.from('quotations').update({ custom_fields: JSON.stringify(updatedQuotationFields) }).eq('id', id)
+  const { error: trailError } = await supabase
+    .from('quotations')
+    .update({ status: 'converted', custom_fields: JSON.stringify(updatedQuotationFields) })
+    .eq('id', id)
   if (trailError) throw trailError
   return createdInvoice
 }

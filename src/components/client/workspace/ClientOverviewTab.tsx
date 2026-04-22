@@ -39,6 +39,18 @@ const DOC_STYLES = {
 
 export const ClientOverviewTab: React.FC<Props> = ({ client, invoices, activity }) => {
   const navigate = useNavigate()
+  const isPastDue = React.useCallback((invoice: InvoiceRecord) => {
+    const balance = Number(invoice.balance_due || 0)
+    if (balance <= 0) return false
+    if (String(invoice.computed_status || '').toLowerCase() === 'overdue') return true
+    if (!invoice.due_date) return false
+    const dueDate = new Date(invoice.due_date)
+    if (Number.isNaN(dueDate.getTime())) return false
+    dueDate.setHours(0, 0, 0, 0)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return dueDate < today
+  }, [])
 
   const summary = invoices.reduce(
     (acc, inv) => {
@@ -50,7 +62,7 @@ export const ClientOverviewTab: React.FC<Props> = ({ client, invoices, activity 
     { total: 0, collected: 0, outstanding: 0 }
   )
 
-  const overdue = invoices.filter((inv) => inv.computed_status === 'overdue')
+  const overdue = invoices.filter(isPastDue)
 
   const addressLine = [client.address, client.city, client.state].filter(Boolean).join(', ')
 
@@ -92,7 +104,7 @@ export const ClientOverviewTab: React.FC<Props> = ({ client, invoices, activity 
                   <div key={inv.id} className="flex items-center justify-between rounded-lg bg-white p-3 shadow-sm ring-1 ring-red-100">
                     <div>
                         <span className="font-mono text-xs font-bold text-red-700">{inv.invoice_number}</span>
-                        <div className="text-[10px] text-red-500 font-medium">Overdue {formatCurrency(inv.balance_due)}</div>
+                        <div className="text-[10px] text-red-500 font-medium">Past Due {formatCurrency(inv.balance_due)}</div>
                     </div>
                     <Button
                         size="sm"

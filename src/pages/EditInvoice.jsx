@@ -511,9 +511,9 @@ export default function EditInvoice() {
           setWhtType={setWhtType}
           saving={saving}
           primaryLabel="Save Changes"
-          onSaveSent={() => handleSave('sent')}
-          onSaveDraft={() => handleSave('draft')}
-          onFloatingSave={() => handleSave('draft')}
+          onSaveSent={() => handleSave('unpaid')}
+          onSaveDraft={() => handleSave('unpaid')}
+          onFloatingSave={() => handleSave('unpaid')}
           onCancel={() => navigate('/invoices/' + id)}
           onApplyImport={handleImportApply}
           importAdapter={invoiceImportAdapter}

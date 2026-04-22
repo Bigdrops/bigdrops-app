@@ -63,7 +63,7 @@ export function InvoiceFloatingDownloadButton({
 }
 
 export function InvoiceHero({ eyebrow, number, title, clientName, status, metrics, meta }: InvoiceHeroProps) {
-  const statusKey = String(status || 'draft').toLowerCase()
+  const statusKey = String(status || 'unpaid').toLowerCase()
   const guardedMetrics = Array.isArray(metrics) ? metrics : []
   const guardedMeta = Array.isArray(meta) ? meta : []
 
@@ -79,9 +79,9 @@ export function InvoiceHero({ eyebrow, number, title, clientName, status, metric
           )}
         </div>
 
-        <div className={`${styles['status-pill']} ${styles[statusKey] || styles.draft}`}>
+        <div className={`${styles['status-pill']} ${styles[statusKey] || styles.unpaid}`}>
           <div className={styles['status-dot']} />
-          {status || 'Draft'}
+          {status || 'Unpaid'}
         </div>
       </div>
 
@@ -105,4 +105,3 @@ export function InvoiceHero({ eyebrow, number, title, clientName, status, metric
     </section>
   )
 }
-

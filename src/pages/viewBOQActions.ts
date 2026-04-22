@@ -36,7 +36,7 @@ export async function duplicateBOQRecord(id: string) {
   const { data: created, error: insertError } = await supabase.from('boqs').insert([{
     ...rest,
     boq_number: `BOQ-${String(nextNum).padStart(4, '0')}`,
-    status: 'draft',
+    status: 'open',
     issue_date: new Date().toISOString().split('T')[0],
   }]).select().single()
 
@@ -67,7 +67,7 @@ export async function convertBOQToQuotation({
     client_id: null,
     client_name: boq.vendor_name || boq.client_name || '',
     issue_date: new Date().toISOString().split('T')[0],
-    status: 'draft',
+    status: 'open',
     subtotal: 0,
     total: 0,
     custom_fields: JSON.stringify(

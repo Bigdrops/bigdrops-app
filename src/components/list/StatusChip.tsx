@@ -1,11 +1,11 @@
 import { cn } from '@/lib/utils'
 
 export type StatusChipTone =
-  | 'draft'
-  | 'sent'
+  | 'open'
+  | 'unpaid'
   | 'paid'
-  | 'overdue'
-  | 'partial'
+  | 'partially_paid'
+  | 'converted'
   | 'active'
   | 'completed'
   | 'dispatched'
@@ -14,11 +14,11 @@ export type StatusChipTone =
   | 'scope'
 
 const toneClass: Record<StatusChipTone, string> = {
-  draft: 'bg-[hsl(35,30%,93%)] text-[hsl(30,35%,32%)]',
-  sent: 'bg-[hsl(206,70%,94%)] text-[hsl(211,72%,38%)]',
+  open: 'bg-[hsl(206,70%,94%)] text-[hsl(211,72%,38%)]',
+  unpaid: 'bg-[hsl(35,30%,93%)] text-[hsl(30,35%,32%)]',
   paid: 'bg-[hsl(142,55%,93%)] text-[hsl(142,65%,30%)]',
-  overdue: 'bg-[hsl(0,100%,95%)] text-[hsl(0,72%,51%)]',
-  partial: 'bg-[hsl(45,60%,91%)] text-[hsl(35,76%,34%)]',
+  partially_paid: 'bg-[hsl(45,60%,91%)] text-[hsl(35,76%,34%)]',
+  converted: 'bg-[hsl(142,55%,93%)] text-[hsl(142,65%,30%)]',
   active: 'bg-[rgba(34,197,94,.13)] text-[#16a34a]',
   completed: 'bg-[hsl(206,70%,94%)] text-[hsl(211,72%,38%)]',
   dispatched: 'bg-[hsl(206,70%,94%)] text-[hsl(211,72%,38%)]',

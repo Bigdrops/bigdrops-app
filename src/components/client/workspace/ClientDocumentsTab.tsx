@@ -28,12 +28,14 @@ const DOC_CONFIG = {
 
 const STATUS_VARIANTS = {
   paid: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-  sent: 'bg-blue-50 text-blue-700 ring-blue-100',
+  unpaid: 'bg-blue-50 text-blue-700 ring-blue-100',
+  partially_paid: 'bg-amber-50 text-amber-700 ring-amber-100',
+  converted: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
   overdue: 'bg-red-50 text-red-700 ring-red-100',
   cancelled: 'bg-muted text-muted-foreground ring-border/20',
-  draft: 'bg-zinc-50 text-zinc-600 ring-zinc-200',
   open: 'bg-blue-50 text-blue-700 ring-blue-100',
   confirmed: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+  archived: 'bg-zinc-50 text-zinc-600 ring-zinc-200',
 }
 
 export const ClientDocumentsTab: React.FC<Props> = ({ type, documents }) => {
@@ -58,8 +60,8 @@ export const ClientDocumentsTab: React.FC<Props> = ({ type, documents }) => {
       {documents.map((doc) => {
         const number = doc.number || doc.title || cfg.label.slice(0, -1)
         const date = doc.date || doc.created_at
-        const status = (doc.status || 'draft').toLowerCase()
-        const statusClass = STATUS_VARIANTS[status as keyof typeof STATUS_VARIANTS] || STATUS_VARIANTS.draft
+        const status = (doc.status || 'open').toLowerCase()
+        const statusClass = STATUS_VARIANTS[status as keyof typeof STATUS_VARIANTS] || STATUS_VARIANTS.archived
 
         return (
           <button

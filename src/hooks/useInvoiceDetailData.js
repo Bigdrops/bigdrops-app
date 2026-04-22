@@ -44,8 +44,8 @@ function buildCachedInvoiceFinancials(invoiceRow, paymentRows) {
       balanceDue <= 0 && invoiceTotal > 0
         ? 'paid'
         : settledTotal > 0
-          ? 'partial'
-          : invoiceRow?.status || 'draft',
+          ? 'partially_paid'
+          : invoiceRow?.status || 'unpaid',
   }
 }
 

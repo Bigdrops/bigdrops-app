@@ -1,5 +1,5 @@
 export function formatStatusLabel(value, options = {}) {
-  const { fallback = 'draft', lowercase = false } = options
+  const { fallback = 'open', lowercase = false } = options
   const normalized = String(value || fallback).replace(/_/g, ' ').trim()
   const casedValue = lowercase ? normalized.toLowerCase() : normalized
 

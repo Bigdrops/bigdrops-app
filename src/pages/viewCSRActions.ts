@@ -34,7 +34,7 @@ export async function duplicateCSRRecord(id: string) {
   const { data: created, error: insertError } = await supabase.from('csrs').insert([{
     ...rest,
     csr_number: `CSR-${String(nextNum).padStart(4, '0')}`,
-    status: 'draft',
+    status: 'in_progress',
     date: new Date().toISOString().split('T')[0],
   }]).select().single()
 

@@ -159,7 +159,7 @@ export default function QuotationList() {
       ...quotationRow,
       project_id: safeProjectId,
       quotation_number: getNextQuotationNumber((quotationRows || []) as Array<{ quotation_number?: string | null }>),
-      status: 'draft',
+      status: 'open',
       issue_date: new Date().toISOString().split('T')[0],
       archived_at: null,
     } as Record<string, unknown>
@@ -230,7 +230,7 @@ export default function QuotationList() {
       const number = String(quotation.quotation_number || '').toLowerCase()
       const clientName = String(quotation.client_name || '').toLowerCase()
       const poNumber = String(quotation.po_number || '').toLowerCase()
-      const status = String(quotation.status || 'draft').toLowerCase()
+      const status = String(quotation.status || 'open').toLowerCase()
       const matchesSearch =
         !query || number.includes(query) || clientName.includes(query) || poNumber.includes(query)
       const matchesStatus = statusFilter === 'All' || status === statusFilter.toLowerCase()
@@ -322,7 +322,7 @@ export default function QuotationList() {
     {
       label: 'Status',
       value: statusFilter,
-      options: ['All', 'Draft', 'Sent', 'Accepted', 'Rejected'],
+      options: ['All', 'Open', 'Converted', 'Archived'],
       onChange: setStatusFilter,
     },
     {
@@ -334,7 +334,7 @@ export default function QuotationList() {
   ]
 
   const renderQuotationRowMeta = (quotation: ReturnType<typeof mapDbQuotation>) => {
-    return quotation.quotation_number || 'Draft quotation'
+    return quotation.quotation_number || 'Quotation'
   }
 
   const renderQuotationRowDate = (quotation: ReturnType<typeof mapDbQuotation>) =>
@@ -519,7 +519,7 @@ export default function QuotationList() {
           if (!open) setActiveQuotation(null)
         }}
         eyebrow="Quotation"
-        title={activeQuotation ? `${activeQuotation.client_name || 'No client selected'} · ${activeQuotation.quotation_number || 'Draft'}` : 'Quotation'}
+        title={activeQuotation ? `${activeQuotation.client_name || 'No client selected'} · ${activeQuotation.quotation_number || 'Quotation'}` : 'Quotation'}
         subtitle={activeQuotation ? `${formatMoney(activeQuotation.total || 0)} · Fast access actions from list context` : null}
         actions={activeQuotation ? [
           {

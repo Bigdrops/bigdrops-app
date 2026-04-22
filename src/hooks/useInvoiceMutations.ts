@@ -186,7 +186,7 @@ export function useInvoiceMutations({
             client_id: null,
             client_name: '',
             project_id: null,
-            status: 'draft',
+            status: 'unpaid',
             issue_date: new Date().toISOString().split('T')[0],
             due_date: null,
           },
@@ -250,7 +250,7 @@ export function useInvoiceMutations({
         project_id: safeProjectId,
         issue_date: invoice.issue_date || new Date().toISOString().split('T')[0],
         valid_until: invoice.due_date || null,
-        status: 'draft',
+        status: 'open',
         notes: invoice.notes || '',
         terms: invoice.terms || '',
         workmanship: Number(invoice.workmanship || 0),
@@ -315,11 +315,6 @@ export function useInvoiceMutations({
     } finally {
       setConverting(false)
     }
-  }
-
-  const handleMarkSent = () => {
-    void handleStatusChange('sent')
-    setShowMore(false)
   }
 
   const handleDelete = async () => {
@@ -401,7 +396,6 @@ export function useInvoiceMutations({
     handleStatusChange,
     handleClone,
     handleConvertToQuote,
-    handleMarkSent,
     handleDelete,
     confirmDelete,
     handleArchive,

@@ -1,7 +1,4 @@
 import {
-  Send,
-  CheckCircle2,
-  XCircle,
   Zap,
   Link,
   Copy,
@@ -14,9 +11,6 @@ import DocumentMoreSheet from '../shared/DocumentMoreSheet'
 interface QuotationMoreSheetProps {
   open: boolean
   onClose: () => void
-  onMarkAsSent: () => void
-  onMarkAsAccepted: () => void
-  onMarkAsRejected: () => void
   onConvertToInvoice: () => void
   onLinkProject: () => void
   onDuplicate: () => void
@@ -29,9 +23,6 @@ interface QuotationMoreSheetProps {
 export default function QuotationMoreSheet({
   open,
   onClose,
-  onMarkAsSent,
-  onMarkAsAccepted,
-  onMarkAsRejected,
   onConvertToInvoice,
   onLinkProject,
   onDuplicate,
@@ -44,27 +35,6 @@ export default function QuotationMoreSheet({
     {
       title: 'Lifecycle',
       items: [
-        {
-          id: 'mark-sent',
-          label: 'Mark as Sent',
-          description: 'Log that this quotation was delivered to client',
-          icon: <Send size={18} />,
-          onClick: onMarkAsSent,
-        },
-        {
-          id: 'mark-accepted',
-          label: 'Mark as Accepted',
-          description: 'Client has approved this quotation',
-          icon: <CheckCircle2 size={18} />,
-          onClick: onMarkAsAccepted,
-        },
-        {
-          id: 'mark-rejected',
-          label: 'Mark as Rejected',
-          description: 'Client has declined this quotation',
-          icon: <XCircle size={18} />,
-          onClick: onMarkAsRejected,
-        },
         {
           id: 'convert-invoice',
           label: 'Convert to Invoice',
@@ -138,4 +108,3 @@ export default function QuotationMoreSheet({
     />
   )
 }
-

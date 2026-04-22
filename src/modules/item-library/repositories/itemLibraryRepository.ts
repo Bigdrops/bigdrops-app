@@ -1,5 +1,10 @@
 import { supabase } from '@/supabase'
 import type { ItemCatalogItem, ItemHistoryRow, ItemSuggestion } from '../types'
+import {
+  buildFallbackHistoryRows,
+  buildFallbackSummaryItems,
+  isImportedDescriptionItemId,
+} from './importedItemFallback'
 
 function toNumber(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null
@@ -111,32 +116,65 @@ export async function getItemSuggestions(searchText: string, resultLimit = 10): 
 }
 
 export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]> {
-  const query = supabase
-    .from('item_price_summary_v')
-    .select('*')
-    .order('last_used_at', { ascending: false, nullsFirst: false })
-    .order('name', { ascending: true })
+  const [summaryResult, invoiceItemsResult, quotationItemsResult] = await Promise.all([
+    supabase
+      .from('item_price_summary_v')
+      .select('*')
+      .order('last_used_at', { ascending: false, nullsFirst: false })
+      .order('name', { ascending: true })
+      .limit(limit),
+    supabase
+      .from('invoice_items')
+      .select('id, invoice_id, item_id, description, quantity, unit, unit_price, amount, updated_at')
+      .limit(5000),
+    supabase
+      .from('quotation_items')
+      .select('id, quotation_id, item_id, description, quantity, unit, unit_price, amount, updated_at')
+      .limit(5000),
+  ])
 
-  const { data, error } = await query.limit(limit)
-  if (error) throw error
+  if (summaryResult.error) throw summaryResult.error
+  if (invoiceItemsResult.error) throw invoiceItemsResult.error
+  if (quotationItemsResult.error) throw quotationItemsResult.error
 
-  return (Array.isArray(data) ? data : []).map((row) => normalizeSummaryRow(row as Record<string, unknown>))
+  const summaryRows = (Array.isArray(summaryResult.data) ? summaryResult.data : []).map((row) =>
+    normalizeSummaryRow(row as Record<string, unknown>),
+  )
+  const fallbackRows = buildFallbackSummaryItems(
+    Array.isArray(invoiceItemsResult.data) ? invoiceItemsResult.data : [],
+    Array.isArray(quotationItemsResult.data) ? quotationItemsResult.data : [],
+    new Set(summaryRows.map((row) => row.item_id)),
+  )
+
+  return [...summaryRows, ...fallbackRows]
+    .sort((left, right) => {
+      const rightTime = new Date(right.last_used_at || 0).getTime() || 0
+      const leftTime = new Date(left.last_used_at || 0).getTime() || 0
+      if (rightTime !== leftTime) return rightTime - leftTime
+      return left.name.localeCompare(right.name)
+    })
+    .slice(0, limit)
 }
 
 export async function getItemHistoryDetail(itemId: string, limit = 50): Promise<ItemHistoryRow[]> {
+  const isImportedDescription = isImportedDescriptionItemId(itemId)
   const [invoiceRowsResult, quotationRowsResult] = await Promise.all([
-    supabase
-      .from('invoice_items')
-      .select('id, item_id, invoice_id, description, quantity, unit, unit_price, amount, updated_at')
-      .eq('item_id', itemId)
-      .order('updated_at', { ascending: false })
-      .limit(limit),
-    supabase
-      .from('quotation_items')
-      .select('id, item_id, quotation_id, description, quantity, unit, unit_price, amount, updated_at')
-      .eq('item_id', itemId)
-      .order('updated_at', { ascending: false })
-      .limit(limit),
+    (() => {
+      const query = supabase
+        .from('invoice_items')
+        .select('id, item_id, invoice_id, description, quantity, unit, unit_price, amount, updated_at')
+        .order('updated_at', { ascending: false })
+
+      return isImportedDescription ? query.is('item_id', null).limit(5000) : query.eq('item_id', itemId).limit(limit)
+    })(),
+    (() => {
+      const query = supabase
+        .from('quotation_items')
+        .select('id, item_id, quotation_id, description, quantity, unit, unit_price, amount, updated_at')
+        .order('updated_at', { ascending: false })
+
+      return isImportedDescription ? query.is('item_id', null).limit(5000) : query.eq('item_id', itemId).limit(limit)
+    })(),
   ])
 
   if (invoiceRowsResult.error) throw invoiceRowsResult.error
@@ -162,36 +200,12 @@ export async function getItemHistoryDetail(itemId: string, limit = 50): Promise<
   const invoiceNumbers = new Map((invoiceDocsResult.data || []).map((row) => [String(row.id), row.invoice_number ? String(row.invoice_number) : null]))
   const quotationNumbers = new Map((quotationDocsResult.data || []).map((row) => [String(row.id), row.quotation_number ? String(row.quotation_number) : null]))
 
-  const historyRows: ItemHistoryRow[] = [
-    ...invoiceRows.map((row) => ({
-      row_id: String(row.id || ''),
-      item_id: String(row.item_id || itemId),
-      source_type: 'invoice' as const,
-      source_document_id: String(row.invoice_id || ''),
-      source_document_number: invoiceNumbers.get(String(row.invoice_id || '')) ?? null,
-      description: String(row.description || ''),
-      quantity: toNumber(row.quantity),
-      unit: row.unit ? String(row.unit) : null,
-      unit_price: toNumber(row.unit_price),
-      amount: toNumber(row.amount),
-      used_at: row.updated_at ? String(row.updated_at) : null,
-    })),
-    ...quotationRows.map((row) => ({
-      row_id: String(row.id || ''),
-      item_id: String(row.item_id || itemId),
-      source_type: 'quotation' as const,
-      source_document_id: String(row.quotation_id || ''),
-      source_document_number: quotationNumbers.get(String(row.quotation_id || '')) ?? null,
-      description: String(row.description || ''),
-      quantity: toNumber(row.quantity),
-      unit: row.unit ? String(row.unit) : null,
-      unit_price: toNumber(row.unit_price),
-      amount: toNumber(row.amount),
-      used_at: row.updated_at ? String(row.updated_at) : null,
-    })),
-  ]
-
-  return historyRows
-    .sort((left, right) => (new Date(right.used_at || 0).getTime() || 0) - (new Date(left.used_at || 0).getTime() || 0))
-    .slice(0, limit)
+  return buildFallbackHistoryRows({
+    itemId,
+    invoiceRows,
+    quotationRows,
+    invoiceNumbers,
+    quotationNumbers,
+    limit,
+  })
 }

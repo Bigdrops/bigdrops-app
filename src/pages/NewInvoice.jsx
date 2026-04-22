@@ -90,7 +90,7 @@ export default function NewInvoice() {
           client_name: '',
           issue_date: new Date().toISOString().split('T')[0],
           due_date: '',
-          status: 'draft',
+          status: 'unpaid',
           document_type: 'INVOICE',
           payment_terms: 'Custom',
           custom_payment_terms: '',
@@ -495,10 +495,10 @@ export default function NewInvoice() {
           whtType={whtType}
           setWhtType={setWhtType}
           saving={saving}
-          primaryLabel="Save & Send"
-          onSaveSent={() => handleSave('sent')}
-          onSaveDraft={() => handleSave('draft')}
-          onFloatingSave={() => handleSave('draft')}
+          primaryLabel="Create Invoice"
+          onSaveSent={() => handleSave('unpaid')}
+          onSaveDraft={() => handleSave('unpaid')}
+          onFloatingSave={() => handleSave('unpaid')}
           onCancel={() => navigate('/invoices')}
           onApplyImport={handleImportApply}
           importAdapter={invoiceImportAdapter}

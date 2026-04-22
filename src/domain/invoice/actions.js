@@ -9,7 +9,6 @@ export function getInvoiceDetailActionDefs({
   canRecordPayment,
   isStandalone,
   reverting,
-  showMarkSent,
 }) {
   const actions = [
     {
@@ -50,14 +49,14 @@ export function getInvoiceDetailActionDefs({
     {
       key: 'clone',
       label: 'Clone Invoice',
-      subtitle: 'Duplicate this invoice as a new draft',
+      subtitle: 'Duplicate this invoice as a new unpaid record',
       iconKey: 'clone',
       visible: true,
     },
     {
       key: 'advance',
       label: 'Advance Invoice',
-      subtitle: 'Create an advance draft from this invoice',
+      subtitle: 'Create an advance invoice from this invoice',
       iconKey: 'payment',
       visible: isStandalone,
     },
@@ -82,13 +81,6 @@ export function getInvoiceDetailActionDefs({
       subtitle: 'Create a delivery waybill from this invoice',
       iconKey: 'export',
       visible: true,
-    },
-    {
-      key: 'mark-sent',
-      label: 'Mark as Sent',
-      subtitle: 'Move this invoice to sent',
-      iconKey: 'convert',
-      visible: showMarkSent,
     },
     {
       key: 'archive',
@@ -117,7 +109,6 @@ export function getInvoiceListActionDefs({
   hasLinkedDocuments,
   isPaid,
   isStandalone,
-  showMarkSent,
 }) {
   const actions = [
     { key: 'view', label: 'View', iconKey: 'eye', visible: true },
@@ -142,7 +133,6 @@ export function getInvoiceListActionDefs({
     { key: 'quote', label: 'To Quote', iconKey: 'fileOutput', visible: true },
     { key: 'csr', label: 'Gen. CSR', iconKey: 'wrench', visible: true },
     { key: 'waybill', label: 'Waybill', iconKey: 'truck', visible: true },
-    { key: 'mark-sent', label: 'Mark Sent', iconKey: 'send', visible: showMarkSent },
     { key: 'archive', label: 'Archive', iconKey: 'archive', closeOnClick: false, visible: true },
   ]
 

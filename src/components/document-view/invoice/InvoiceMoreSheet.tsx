@@ -1,5 +1,4 @@
 import {
-  Send,
   RotateCcw,
   Truck,
   Banknote,
@@ -15,7 +14,6 @@ import DocumentMoreSheet from '../shared/DocumentMoreSheet'
 interface InvoiceMoreSheetProps {
   open: boolean
   onClose: () => void
-  onMarkAsSent: () => void
   onRevert: () => void
   onGenerateWaybill: () => void
   onRecordPayment: () => void
@@ -31,7 +29,6 @@ interface InvoiceMoreSheetProps {
 export default function InvoiceMoreSheet({
   open,
   onClose,
-  onMarkAsSent,
   onRevert,
   onGenerateWaybill,
   onRecordPayment,
@@ -48,16 +45,9 @@ export default function InvoiceMoreSheet({
       title: 'Lifecycle',
       items: [
         {
-          id: 'mark-sent',
-          label: 'Mark as Sent',
-          description: 'Log that this invoice was delivered to client',
-          icon: <Send size={18} />,
-          onClick: onMarkAsSent,
-        },
-        {
           id: 'revert',
           label: 'Revert to Quotation',
-          description: 'Convert this invoice back to a draft quotation',
+          description: 'Convert this invoice back to an open quotation',
           icon: <RotateCcw size={18} />,
           onClick: onRevert,
         },
@@ -83,7 +73,7 @@ export default function InvoiceMoreSheet({
         {
           id: 'advance',
           label: 'Advance Invoice',
-          description: 'Create a partial/advance invoice',
+          description: 'Create an advance invoice',
           icon: <Zap size={18} />,
           onClick: onAdvanceInvoice,
         },
@@ -153,4 +143,3 @@ export default function InvoiceMoreSheet({
     />
   )
 }
-

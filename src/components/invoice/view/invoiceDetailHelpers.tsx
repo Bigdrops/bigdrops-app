@@ -148,16 +148,16 @@ export function buildInvoiceShellStatusItems({
   computedStatus,
   onStatusChange,
 }: BuildInvoiceShellStatusItemsArgs): ShellStatusItem[] {
-  return ['draft', 'sent', 'partial', 'paid', 'overdue'].map((status) => ({
+  return ['unpaid', 'partially_paid', 'paid'].map((status) => ({
     label: String(status)
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (char) => char.toUpperCase()),
     active: computedStatus === status,
     onClick: () => {
-      if (status === 'partial' || status === 'paid' || status === 'overdue') return
+      if (status === 'partially_paid' || status === 'paid') return
       void onStatusChange(status)
     },
-    disabled: status === 'partial' || status === 'paid' || status === 'overdue',
+    disabled: status === 'partially_paid' || status === 'paid',
   }))
 }
 

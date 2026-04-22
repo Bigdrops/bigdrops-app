@@ -5,7 +5,6 @@ import DocumentSheet from '../shared/DocumentSheet'
 interface RfqMoreSheetProps {
   open: boolean
   onClose: () => void
-  onMarkAsSent: () => void
   onMarkAsClosed: () => void
   onConvertToQuotation: () => void
   onLinkProject: () => void
@@ -19,7 +18,6 @@ interface RfqMoreSheetProps {
 export default function RfqMoreSheet({
   open,
   onClose,
-  onMarkAsSent,
   onMarkAsClosed,
   onConvertToQuotation,
   onLinkProject,
@@ -108,17 +106,6 @@ export default function RfqMoreSheet({
   return (
     <DocumentSheet open={open} onClose={onClose} title="More Actions">
       <SectionLabel>Lifecycle</SectionLabel>
-      <Action
-        label="Mark as Sent"
-        desc="Log that this RFQ was dispatched to vendors"
-        icon={
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="22" y1="2" x2="11" y2="13" />
-            <polygon points="22 2 15 22 11 13 2 9 22 2" />
-          </svg>
-        }
-        onClick={onMarkAsSent}
-      />
       <Action
         label="Mark as Closed / Cancelled"
         desc="Close this RFQ so no further responses are expected"

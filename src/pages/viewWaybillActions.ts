@@ -34,7 +34,7 @@ export async function duplicateWaybillRecord(id: string) {
   const { data: created, error: insertError } = await supabase.from('waybills').insert([{
     ...rest,
     waybill_number: `WB-${String(nextNum).padStart(4, '0')}`,
-    status: 'draft',
+    status: 'dispatched',
     date: new Date().toISOString().split('T')[0],
   }]).select().single()
 

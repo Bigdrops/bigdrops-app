@@ -133,7 +133,7 @@ export default function ViewBoq() {
     try {
       const created = await duplicateBOQRecord(id)
       navigate(`/boqs/${created.id}`)
-      showToast('BOQ Cloned', 'A new draft BOQ has been created.', 'success')
+      showToast('BOQ Cloned', 'A new BOQ copy has been created.', 'success')
     } catch (error) {
       showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
     }
@@ -164,7 +164,7 @@ export default function ViewBoq() {
     try {
       const created = await convertBOQToQuotation({ boq, items: boq.table_rows })
       navigate(`/quotations/${created.id}`)
-      showToast('Quotation Created', 'Linked quotation draft is ready.', 'success')
+      showToast('Quotation Created', 'Linked quotation is ready.', 'success')
     } catch (error) {
       showToast('Conversion failed', error instanceof Error ? error.message : 'Could not generate quotation.')
     } finally {
@@ -186,7 +186,7 @@ export default function ViewBoq() {
     id: boq.id,
     number: boq.boq_number,
     title: 'Bill of Quantities',
-    status: (boq.status || 'draft') as any,
+    status: (boq.status || 'open') as any,
   }
 
   const rowCount = Array.isArray(boq.table_rows) ? boq.table_rows.length : 0
@@ -195,7 +195,7 @@ export default function ViewBoq() {
   const metrics = [
     { label: 'Lines', value: `${rowCount} items` },
     { label: 'Subtotal', value: new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(subtotal), tone: 'blue' as const },
-    { label: 'Status', value: boq.status || 'draft', tone: boq.status === 'approved' ? 'green' as const : 'amber' as const },
+    { label: 'Status', value: boq.status || 'open', tone: boq.status === 'approved' ? 'green' as const : 'amber' as const },
   ]
 
   return (
@@ -274,7 +274,7 @@ export default function ViewBoq() {
             <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_GENERATE_QUOTE)}
               title="Generate Quotation?"
-              description="This will lock the current quantities and generate a new quotation draft."
+              description="This will lock the current quantities and generate a new open quotation."
               cancelLabel="Cancel"
               confirmLabel="Generate Quote"
               onConfirm={() => void handleConvertToQuotation()}

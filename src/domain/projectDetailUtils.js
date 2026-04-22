@@ -12,8 +12,9 @@ export const PROJECT_STATUS_CONFIG = {
 
 export const PAYMENT_STATUS_CONFIG = {
   paid: { label: 'Paid', className: 'bg-emerald-500 text-white' },
-  overdue: { label: 'Overdue', className: 'bg-red-500 text-white' },
-  partial: { label: 'Partial', className: 'bg-amber-500 text-white' },
+  overdue: { label: 'Past Due', className: 'bg-red-500 text-white' },
+  partially_paid: { label: 'Partially Paid', className: 'bg-amber-500 text-white' },
+  unpaid: { label: 'Unpaid', className: 'bg-blue-500 text-white' },
   active: { label: 'Active', className: 'bg-blue-500 text-white' },
   completed: { label: 'Completed', className: 'bg-slate-500 text-white' },
 }

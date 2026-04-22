@@ -500,17 +500,6 @@ export default function ViewInvoice() {
     showToast('CSV downloaded', 'Invoice CSV exported.', 'success')
   }
 
-  const handleMarkSent = async () => {
-    if (!invoice?.id) return
-    const { error } = await supabase.from('invoices').update({ status: 'sent' }).eq('id', invoice.id)
-    if (error) {
-      showToast('Status update failed', error.message)
-      return
-    }
-    await refresh()
-    showToast('Marked as sent', 'Invoice status updated.', 'success')
-  }
-
   const handleDuplicate = async () => {
     if (!invoice) return
     try {
@@ -568,7 +557,7 @@ export default function ViewInvoice() {
     id: invoice.id,
     number: invoice.invoice_number || '',
     title: invoice.invoice_title || 'Invoice',
-    status: toTitleCase(viewModel.statusLabel || invoice.status || 'draft'),
+    status: toTitleCase(viewModel.statusLabel || invoice.status || 'unpaid'),
   }
 
   const previewBankAccounts = (Array.isArray(bankAccounts) ? bankAccounts : []).map((account) => ({
@@ -747,7 +736,6 @@ export default function ViewInvoice() {
             <InvoiceMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)}
               onClose={ui.closeSheet}
-              onMarkAsSent={() => void handleMarkSent()}
               onRevert={openRevertFlow}
               onGenerateWaybill={() => navigate('/waybills/new', { state: buildWaybillPrefill(invoice) })}
               onRecordPayment={() => { ui.closeSheet(); ui.openSheet(SHEET_RECORD_PAYMENT) }}
@@ -763,7 +751,7 @@ export default function ViewInvoice() {
             <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_REVERT)}
               title="Revert to Quotation?"
-              description={`${docProps.number} will be converted back to a draft quotation. Existing payment records will be deleted and cannot be recovered.`}
+              description={`${docProps.number} will be converted back to an open quotation. Existing payment records will be deleted and cannot be recovered.`}
               cancelLabel="Cancel"
               confirmLabel={reverting ? 'Reverting...' : 'Revert'}
               onConfirm={() => void handleRevertToQuotation()}

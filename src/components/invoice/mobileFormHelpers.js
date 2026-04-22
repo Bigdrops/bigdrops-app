@@ -12,7 +12,7 @@ import {
 
 export function getActionsSheetItems({ mergeQtyUnit }) {
   return [
-    { key: 'draft', icon: Save, label: 'Save Draft', description: 'Keep progress without sending', tone: 'bg-emerald-50 text-emerald-700' },
+    { key: 'draft', icon: Save, label: 'Save Changes', description: 'Save this invoice without leaving the editor', tone: 'bg-emerald-50 text-emerald-700' },
     { key: 'cancel', icon: XCircle, label: 'Cancel', description: 'Leave this document editor', tone: 'bg-rose-50 text-rose-700' },
     { key: 'columns', icon: Settings2, label: 'Open Column Manager', description: 'Adjust columns and overrides', tone: 'bg-slate-100 text-slate-700' },
     { key: 'import', icon: FileInput, label: 'Open Import', description: 'Paste JSON items into the table', tone: 'bg-amber-50 text-amber-700' },

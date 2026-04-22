@@ -206,7 +206,7 @@ export default function RecordPaymentModal({
 
     const { error: statusError } = await supabase
       .from("invoices")
-      .update({ status: financialRow?.computed_status || "draft" })
+      .update({ status: financialRow?.computed_status || "unpaid" })
       .eq("id", invoice.id)
 
     if (statusError) {

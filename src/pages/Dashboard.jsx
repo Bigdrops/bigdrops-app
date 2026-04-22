@@ -64,11 +64,12 @@ function getUserDisplayName(session) {
 }
 
 function getStatusStyle(status) {
-  const label = formatStatusLabel(status, { fallback: 'draft' })
+  const label = formatStatusLabel(status, { fallback: 'open' })
   if (label === 'Paid' || label === 'Approved' || label === 'Delivered') return { badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: BadgeCheck, label }
-  if (label === 'Overdue') return { badge: 'bg-red-50 text-red-700 border-red-200', icon: AlertCircle, label }
+  if (label === 'Overdue' || label === 'Past due') return { badge: 'bg-red-50 text-red-700 border-red-200', icon: AlertCircle, label: 'Past Due' }
   if (label === 'In progress') return { badge: 'bg-slate-50 text-slate-700 border-slate-200', icon: Clock, label: 'In Progress' }
-  if (label === 'Sent' || label === 'Dispatched') return { badge: 'bg-blue-50 text-blue-700 border-blue-200', icon: BadgeCheck, label }
+  if (label === 'Unpaid' || label === 'Open' || label === 'Dispatched') return { badge: 'bg-blue-50 text-blue-700 border-blue-200', icon: BadgeCheck, label }
+  if (label === 'Partially paid') return { badge: 'bg-amber-50 text-amber-700 border-amber-200', icon: Clock, label: 'Partially Paid' }
   return { badge: 'bg-slate-50 text-slate-700 border-slate-200', icon: Clock, label }
 }
 
@@ -208,7 +209,7 @@ function MobileDashboardView({
               {heroStats.openWork}
             </strong>
             <span className="mt-2 block text-sm text-[#748197]">
-              7 invoices pending, 3 drafts need review.
+              Track live records that still need follow-through.
             </span>
           </article>
         </section>
@@ -381,7 +382,7 @@ function MobileDashboardView({
           <div className="grid grid-cols-1 gap-[14px] min-[390px]:grid-cols-2">
             <article className={`${operationalPanelClassName} bg-gradient-to-b from-rose-50/90 to-white/80 p-[18px]`}>
               <label className="block text-xs font-extrabold uppercase tracking-[0.18em] text-[#b33f4a]">
-                Overdue
+                Past Due
               </label>
               <strong className="mt-4 block text-[30px] font-black tracking-[-0.05em] text-[#111111]">
                 {naira(summary.overdue)}
@@ -581,8 +582,19 @@ export default function Dashboard({ session }) {
 
       const invoiceFinancials = financialsRes.data || []
 
+      const isPastDue = (row) => {
+        const balance = Number(row.balance_due || 0)
+        if (balance <= 0 || !row.due_date) return false
+        const dueDate = new Date(row.due_date)
+        if (Number.isNaN(dueDate.getTime())) return false
+        dueDate.setHours(0, 0, 0, 0)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        return dueDate < today
+      }
+
       const overdue = invoiceFinancials.reduce(
-        (sum, row) => String(row.computed_status || '').toLowerCase() === 'overdue' ? sum + Number(row.balance_due || 0) : sum,
+        (sum, row) => isPastDue(row) ? sum + Number(row.balance_due || 0) : sum,
         0
       )
 
@@ -603,7 +615,7 @@ export default function Dashboard({ session }) {
       const pendingFollowUp = invoiceFinancials.filter((row) => {
         const balance = Number(row.balance_due || 0)
         if (balance <= 0) return false
-        if (String(row.computed_status || '').toLowerCase() === 'overdue') return true
+        if (isPastDue(row)) return true
         const dueDate = row.due_date ? new Date(row.due_date) : null
         if (!dueDate || Number.isNaN(dueDate.getTime())) return false
         return dueDate >= now && dueDate <= endOfWeek
@@ -752,9 +764,9 @@ export default function Dashboard({ session }) {
               <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Action summary</div>
               <div className="grid grid-cols-2 gap-3">
                 <button type="button" onClick={() => navigate('/reports')} className="min-w-0 rounded-2xl border border-red-200 bg-red-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-red-700">Overdue</div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-red-700">Past Due</div>
                   <div className="mt-2 text-lg font-black text-foreground">{naira(summary.overdue)}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">Unpaid past due</div>
+                  <div className="mt-1 text-xs text-muted-foreground">Unpaid balances beyond due date</div>
                 </button>
                 <button type="button" onClick={() => navigate('/reports')} className="min-w-0 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
                   <div className="text-xs font-semibold uppercase tracking-wider text-amber-700">Due this week</div>

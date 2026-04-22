@@ -131,7 +131,7 @@ export default function ViewWaybill() {
     try {
       const created = await duplicateWaybillRecord(id)
       navigate(`/waybills/${created.id}`)
-      showToast('Waybill Cloned', 'A new draft waybill has been created.', 'success')
+      showToast('Waybill Cloned', 'A new waybill has been created.', 'success')
     } catch (error) {
       showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
     }
@@ -194,13 +194,13 @@ export default function ViewWaybill() {
     id: waybill.id,
     number: waybill.waybill_number,
     title: waybill.type === 'internal' ? 'Internal Waybill' : 'External Waybill',
-    status: (waybill.status || 'draft') as any,
+    status: (waybill.status || 'dispatched') as any,
   }
 
   const metrics = [
     { label: 'Dispatch From', value: waybill.sender_name || 'N/A' },
     { label: 'Vehicle', value: waybill.vehicle_plate || 'Self Pickup', tone: 'amber' as const },
-    { label: 'Status', value: waybill.status || 'draft', tone: waybill.status === 'delivered' ? 'green' as const : 'amber' as const },
+    { label: 'Status', value: waybill.status || 'dispatched', tone: waybill.status === 'delivered' ? 'green' as const : 'amber' as const },
   ]
 
   return (

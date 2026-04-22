@@ -20,7 +20,7 @@ export function buildInvoiceViewModel({
   const safeRelatedCsrs = Array.isArray(relatedCsrs) ? relatedCsrs : []
   const safeRelatedWaybills = Array.isArray(relatedWaybills) ? relatedWaybills : []
 
-  const computedStatus = financials?.computed_status || safeInvoice.status || 'draft'
+  const computedStatus = financials?.computed_status || safeInvoice.status || 'unpaid'
   const statusLabel = String(computedStatus || '').replace(/_/g, ' ')
   const invoiceTotal = toNumber(safeInvoice.total)
   const cashReceived = toNumber(financials?.cash_received)
@@ -61,13 +61,11 @@ export function buildInvoiceViewModel({
   const statusBadgeClass =
     computedStatus === 'paid'
       ? 'bg-emerald-50 text-emerald-700'
-      : computedStatus === 'overdue'
-        ? 'bg-red-50 text-red-700'
-        : computedStatus === 'sent'
+      : computedStatus === 'partially_paid'
+        ? 'bg-amber-50 text-amber-700'
+        : computedStatus === 'unpaid'
           ? 'bg-blue-50 text-blue-700'
-          : computedStatus === 'partial'
-            ? 'bg-amber-50 text-amber-700'
-            : 'bg-slate-100 text-slate-700'
+          : 'bg-slate-100 text-slate-700'
 
   const canRecordPayment = computedStatus !== 'paid'
 

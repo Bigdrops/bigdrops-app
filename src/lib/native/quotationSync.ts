@@ -232,7 +232,7 @@ async function processQuotationCreateQueueRow(
           project_id: localQuotation.project_id,
           issue_date: localQuotation.issue_date,
           valid_until: localQuotation.valid_until,
-          status: localQuotation.status || "draft",
+          status: localQuotation.status || "open",
           notes: localQuotation.notes,
           terms: localQuotation.terms,
           workmanship: Number(localQuotation.workmanship || 0),

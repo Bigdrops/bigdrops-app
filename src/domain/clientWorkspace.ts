@@ -28,6 +28,7 @@ export interface InvoiceRecord {
   invoice_number?: string | null
   invoice_title?: string | null
   issue_date?: string | null
+  due_date?: string | null
   total?: number | null
   status?: string | null
   balance_due?: number | null

@@ -39,7 +39,7 @@ export function buildInvoiceCsv(params: {
     ['P.O. Number', invoice.po_number || ''],
     ['Invoice Title', invoice.invoice_title || ''],
     ['Document Type', invoice.document_type || 'INVOICE'],
-    ['Status', invoice.status || 'draft'],
+    ['Status', invoice.status || 'unpaid'],
     ['Client', invoice.client_name || ''],
     ['Issue Date', invoice.issue_date || ''],
     ['Due Date', invoice.due_date || ''],

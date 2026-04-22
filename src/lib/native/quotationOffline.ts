@@ -9,7 +9,7 @@ import { requireAndroidDeviceAssignment } from "./deviceAssignment";
 import { getOfflineAccessState } from "./offlineAccess";
 import { executeSet, run } from "./sqlite";
 
-export type OfflineQuotationStatus = "draft" | "sent" | "accepted" | "rejected";
+export type OfflineQuotationStatus = "open" | "converted" | "archived";
 
 export type CreateOfflineQuotationInput = {
   quotation_number?: string | null;
@@ -41,7 +41,7 @@ let quotationOfflineBootstrapPromise: Promise<void> | null = null;
 
 function assertNativeOfflineContext(): void {
   if (!canUseAndroidNativeSqlite()) {
-    throw new Error("Offline quotation drafts are only available in the native Android app.");
+    throw new Error("Offline quotations are only available in the native Android app.");
   }
 }
 
@@ -129,7 +129,7 @@ export async function bootstrapQuotationOffline(): Promise<void> {
               project_id TEXT,
               issue_date TEXT,
               valid_until TEXT,
-              status TEXT NOT NULL DEFAULT 'draft',
+              status TEXT NOT NULL DEFAULT 'open',
               notes TEXT,
               terms TEXT,
               workmanship REAL NOT NULL DEFAULT 0,
@@ -182,7 +182,7 @@ export async function createOfflineQuotationDraft(
   assertNativeOfflineContext();
 
   if (!isOfflineNow()) {
-    throw new Error("Offline quotation draft creation should only run when the device is offline.");
+    throw new Error("Offline quotation creation should only run when the device is offline.");
   }
 
   await requireOfflineAccessWindow();
@@ -246,7 +246,7 @@ export async function createOfflineQuotationDraft(
       input.project_id ?? null,
       input.issue_date ?? null,
       input.valid_until ?? null,
-      input.status || "draft",
+      input.status || "open",
       input.notes ?? null,
       input.terms ?? null,
       Number(input.workmanship || 0),

@@ -33,6 +33,7 @@ type HeroStats = {
 
 type SummaryStats = {
   overdue: number
+  pastDue: number
   dueThisWeek: number
   thisMonthCollections: number
   pendingFollowUp: number
@@ -50,6 +51,7 @@ export function useDashboardData() {
   })
   const [summary, setSummary] = React.useState<SummaryStats>({
     overdue: 0,
+    pastDue: 0,
     dueThisWeek: 0,
     thisMonthCollections: 0,
     pendingFollowUp: 0,
@@ -134,10 +136,12 @@ export function useDashboardData() {
 
       const invoiceFinancials = financialsRes.data || []
 
-      const overdue = invoiceFinancials.reduce(
-        (sum, row) => String(row.computed_status || '').toLowerCase() === 'overdue' ? sum + Number(row.balance_due || 0) : sum,
-        0
-      )
+      const pastDue = invoiceFinancials.reduce((sum, row) => {
+        const balance = Number(row.balance_due || 0)
+        const dueDate = row.due_date ? new Date(row.due_date) : null
+        if (balance <= 0 || !dueDate || Number.isNaN(dueDate.getTime()) || dueDate >= now) return sum
+        return sum + balance
+      }, 0)
 
       const dueThisWeek = invoiceFinancials.reduce((sum, row) => {
         const dueDate = row.due_date ? new Date(row.due_date) : null
@@ -156,8 +160,8 @@ export function useDashboardData() {
       const pendingFollowUpCount = invoiceFinancials.filter((row) => {
         const balance = Number(row.balance_due || 0)
         if (balance <= 0) return false
-        if (String(row.computed_status || '').toLowerCase() === 'overdue') return true
         const dueDate = row.due_date ? new Date(row.due_date) : null
+        if (dueDate && !Number.isNaN(dueDate.getTime()) && dueDate < now) return true
         if (!dueDate || Number.isNaN(dueDate.getTime())) return false
         return dueDate >= now && dueDate <= endOfWeek
       }).length
@@ -184,11 +188,15 @@ export function useDashboardData() {
         })
       }
 
-      const overdueInvoice = invoiceFinancials.find(f => String(f.computed_status || '').toLowerCase() === 'overdue')
-      if (overdueInvoice) {
+      const pastDueInvoice = invoiceFinancials.find((row) => {
+        const balance = Number(row.balance_due || 0)
+        const dueDate = row.due_date ? new Date(row.due_date) : null
+        return balance > 0 && dueDate && !Number.isNaN(dueDate.getTime()) && dueDate < now
+      })
+      if (pastDueInvoice) {
         reminders.push({
-          key: `overdue-invoice`,
-          title: `Record payment — Overdue`,
+          key: `past-due-invoice`,
+          title: `Record payment — Past due`,
           meta: `Balance still pending for record capture`,
           dotClassName: 'bg-rose-500',
           dotRingClassName: 'ring-[6px] ring-rose-500/15',
@@ -200,14 +208,14 @@ export function useDashboardData() {
 
       const pendingQuotation = (quotationRes.data || []).find((quotation) => {
         const status = String(quotation.status || '').toLowerCase()
-        return status === 'sent' || status === 'draft'
+        return status === 'open'
       })
 
       if (pendingQuotation) {
         reminders.push({
           key: `quotation-${pendingQuotation.id}`,
           title: `Follow up quotation — ${pendingQuotation.quotation_number}`,
-          meta: `${pendingQuotation.client_name || 'Walking Client'} • status ${formatStatusLabel(pendingQuotation.status, { fallback: 'draft', lowercase: true })}`,
+          meta: `${pendingQuotation.client_name || 'Walking Client'} • status ${formatStatusLabel(pendingQuotation.status, { fallback: 'open', lowercase: true })}`,
           dotClassName: 'bg-blue-500',
           dotRingClassName: 'ring-[6px] ring-blue-500/15',
           badgeLabel: 'Quotation',
@@ -224,7 +232,7 @@ export function useDashboardData() {
         awaitingPaymentCount,
         inTransitWaybills,
       })
-      setSummary({ overdue, dueThisWeek, thisMonthCollections, pendingFollowUp: pendingFollowUpCount })
+      setSummary({ overdue: pastDue, pastDue, dueThisWeek, thisMonthCollections, pendingFollowUp: pendingFollowUpCount })
     } catch (error) {
       console.error('Dashboard data load failed:', error)
     } finally {

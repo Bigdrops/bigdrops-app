@@ -1,9 +1,9 @@
 export type DocumentStatus =
-  | 'draft'
   | 'open'
-  | 'partial'
+  | 'unpaid'
+  | 'partially_paid'
   | 'paid'
-  | 'overdue'
+  | 'converted'
   | 'archived'
   | 'void'
   | (string & {})
