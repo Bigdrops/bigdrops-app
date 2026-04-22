@@ -1,12 +1,35 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { buildFlaggedCleanupPrompt, validateFlaggedCleanupImport } from '../domain/itemCleanupExchange'
-import type { CleanupImportValidationResult, FlaggedCleanupExportPayload } from '../types'
+import {
+  buildFlaggedCleanupPrompt,
+  createCleanupApplyProposal,
+  isCleanupProposalStale,
+  summarizeCleanupApplyResults,
+  validateFlaggedCleanupImport,
+} from '../domain/itemCleanupExchange'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import type {
+  CleanupApplyProposal,
+  CleanupApplyResult,
+  CleanupImportValidationResult,
+  FlaggedCleanupExportPayload,
+} from '../types'
 import { formatItemPrice } from './itemLibraryFormatters'
 
 type ItemLibraryAdvancedCleanupPanelProps = {
+  applyLoading: boolean
   exportPayload: FlaggedCleanupExportPayload
+  onApplyProposals: (proposals: CleanupApplyProposal[]) => Promise<CleanupApplyResult[]>
 }
 
 function copyText(value: string) {
@@ -88,11 +111,17 @@ function ValidationBanner({ result }: { result: CleanupImportValidationResult })
 }
 
 export function ItemLibraryAdvancedCleanupPanel({
+  applyLoading,
   exportPayload,
+  onApplyProposals,
 }: ItemLibraryAdvancedCleanupPanelProps) {
   const [showPrompt, setShowPrompt] = useState(false)
   const [importText, setImportText] = useState('')
   const [copyState, setCopyState] = useState<'idle' | 'json' | 'prompt'>('idle')
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([])
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [applyResults, setApplyResults] = useState<CleanupApplyResult[]>([])
+  const [applyError, setApplyError] = useState<string | null>(null)
 
   const exportJson = useMemo(() => JSON.stringify(exportPayload, null, 2), [exportPayload])
   const aiPrompt = useMemo(() => buildFlaggedCleanupPrompt(exportPayload), [exportPayload])
@@ -100,11 +129,74 @@ export function ItemLibraryAdvancedCleanupPanel({
     () => validateFlaggedCleanupImport(importText, exportPayload),
     [exportPayload, importText],
   )
+  const validPreviewGroups = validation.preview?.merge_groups || []
+  const validPreviewGroupIds = useMemo(
+    () => validPreviewGroups.map((group) => group.group_id),
+    [validPreviewGroups],
+  )
+  const selectedPreviewGroups = useMemo(
+    () => validPreviewGroups.filter((group) => selectedGroupIds.includes(group.group_id)),
+    [selectedGroupIds, validPreviewGroups],
+  )
+  const selectionSummary = useMemo(
+    () =>
+      selectedPreviewGroups.reduce(
+        (summary, group) => {
+          summary.groupCount += 1
+          summary.mergedItemCount += group.merged_items.length
+          summary.aliasKeepCount += group.aliases_to_keep.length
+          summary.aliasRetireCount += group.aliases_to_retire.length
+          return summary
+        },
+        { groupCount: 0, mergedItemCount: 0, aliasKeepCount: 0, aliasRetireCount: 0 },
+      ),
+    [selectedPreviewGroups],
+  )
+  const resultSummary = useMemo(() => summarizeCleanupApplyResults(applyResults), [applyResults])
+
+  useEffect(() => {
+    setSelectedGroupIds((current) => current.filter((groupId) => validPreviewGroupIds.includes(groupId)))
+  }, [validPreviewGroupIds])
+
+  useEffect(() => {
+    setApplyResults([])
+    setApplyError(null)
+    setConfirmOpen(false)
+  }, [importText])
 
   const handleCopy = async (value: string, nextState: 'json' | 'prompt') => {
     await copyText(value)
     setCopyState(nextState)
     window.setTimeout(() => setCopyState('idle'), 1800)
+  }
+
+  const toggleGroupSelection = (groupId: string) => {
+    setSelectedGroupIds((current) =>
+      current.includes(groupId) ? current.filter((value) => value !== groupId) : [...current, groupId],
+    )
+  }
+
+  const handleSelectAll = () => {
+    setSelectedGroupIds(validPreviewGroupIds)
+  }
+
+  const handleClearSelection = () => {
+    setSelectedGroupIds([])
+  }
+
+  const handleApplySelected = async () => {
+    if (!selectedPreviewGroups.length) return
+
+    try {
+      setApplyError(null)
+      const nextResults = await onApplyProposals(
+        selectedPreviewGroups.map((group) => createCleanupApplyProposal(group)),
+      )
+      setApplyResults(nextResults)
+      setConfirmOpen(false)
+    } catch (error) {
+      setApplyError(error instanceof Error ? error.message : 'Could not apply the selected cleanup proposals.')
+    }
   }
 
   return (
@@ -247,6 +339,49 @@ export function ItemLibraryAdvancedCleanupPanel({
 
             {validation.preview?.merge_groups.length ? (
               <div className="space-y-3">
+                <div className="rounded-[14px] border border-[#dac8b1] bg-[#fcf7ef] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Proposal selection</div>
+                      <p className="mt-1 text-[11px] text-[#8b7761]">
+                        Only valid proposals can be selected. Rejected proposals remain preview-only.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleSelectAll}
+                        disabled={!validPreviewGroupIds.length}
+                        className="rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-3 py-2 text-[11px] font-semibold text-[#6d543a] transition-colors hover:bg-[#f2e5d2] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Select all valid
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleClearSelection}
+                        disabled={!selectedGroupIds.length}
+                        className="rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-3 py-2 text-[11px] font-semibold text-[#6d543a] transition-colors hover:bg-[#f2e5d2] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Clear selection
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmOpen(true)}
+                        disabled={!selectedPreviewGroups.length || applyLoading}
+                        className="rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2 text-[11px] font-bold text-[#523b25] shadow-[0_10px_18px_rgba(92,68,41,0.10),inset_0_1px_0_rgba(255,255,255,0.5)] transition-colors hover:bg-[#dcc39f] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Apply selected proposals
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 text-[11px] text-[#7d6954]">
+                    {selectedPreviewGroups.length
+                      ? `${selectedPreviewGroups.length} proposal${selectedPreviewGroups.length === 1 ? '' : 's'} selected for review before applying.`
+                      : 'No valid proposals selected yet.'}
+                  </div>
+                </div>
+
                 {validation.preview.merge_groups.map((group) => (
                   <article
                     key={group.group_id}
@@ -254,13 +389,24 @@ export function ItemLibraryAdvancedCleanupPanel({
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Accepted merge group</div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Accepted merge group</div>
                         <h3 className="mt-1 text-[15px] font-extrabold text-[#2f2419]">{group.canonical_name}</h3>
                         <p className="mt-1 text-[11px] text-[#8b7761]">
                           Source flagged group: {group.export_label}
                         </p>
                       </div>
-                      <PreviewPill>{group.group_id}</PreviewPill>
+                      <div className="flex items-center gap-2">
+                        <label className="inline-flex items-center gap-2 rounded-full border border-[#d8c5ad] bg-[#fbf5ec] px-3 py-1.5 text-[11px] font-semibold text-[#6d543b]">
+                          <input
+                            type="checkbox"
+                            checked={selectedGroupIds.includes(group.group_id)}
+                            onChange={() => toggleGroupSelection(group.group_id)}
+                            className="h-3.5 w-3.5 rounded border-[#b89a76] text-[#8b6845] focus:ring-[#8b6845]"
+                          />
+                          Select
+                        </label>
+                        <PreviewPill>{group.group_id}</PreviewPill>
+                      </div>
                     </div>
 
                     <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -334,9 +480,106 @@ export function ItemLibraryAdvancedCleanupPanel({
                 </div>
               </div>
             ) : null}
+
+            {applyError ? (
+              <div className="rounded-[14px] border border-[#e4c3ba] bg-[#fff2ee] px-4 py-3 text-[11px] text-[#9a4a3f]">
+                {applyError}
+              </div>
+            ) : null}
+
+            {applyResults.length ? (
+              <div className="rounded-[14px] border border-[#dac8b1] bg-[#fcf7ef] p-4">
+                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Apply results</div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <PreviewPill>{resultSummary.applied.length} applied</PreviewPill>
+                  <PreviewPill>{resultSummary.stale.length} stale</PreviewPill>
+                  <PreviewPill>{resultSummary.failed.length} failed</PreviewPill>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {applyResults.map((result) => (
+                    <div
+                      key={`${result.group_id}-${result.status}-${result.message}`}
+                      className={[
+                        'rounded-[10px] border px-3 py-2',
+                        result.status === 'applied'
+                          ? 'border-[#c9d7bd] bg-[#f4f8ef]'
+                          : result.status === 'stale'
+                            ? 'border-[#e2d3b6] bg-[#fff8ec]'
+                            : 'border-[#ebc8bf] bg-[#fff8f5]',
+                      ].join(' ')}
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-['JetBrains_Mono'] text-[10px] font-bold text-[#604c38]">{result.group_id}</span>
+                        <PreviewPill>{result.status}</PreviewPill>
+                        <span className="text-[11px] font-semibold text-[#2f2419]">{result.canonical_name}</span>
+                      </div>
+                      <div className="mt-1 text-[11px] text-[#7f6b56]">{result.message}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </section>
       </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Review before applying</AlertDialogTitle>
+            <AlertDialogDescription>
+              These changes will merge item records and relink history through the existing safe merge flow. The
+              selected proposals below will be applied one by one, and stale proposals will be rejected instead of
+              guessed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <PreviewPill>{selectionSummary.groupCount} merge groups</PreviewPill>
+              <PreviewPill>{selectionSummary.mergedItemCount} merged items</PreviewPill>
+              <PreviewPill>{selectionSummary.aliasKeepCount} aliases to keep</PreviewPill>
+              <PreviewPill>{selectionSummary.aliasRetireCount} aliases to retire</PreviewPill>
+            </div>
+
+            <div className="max-h-72 space-y-2 overflow-y-auto rounded-[12px] border border-[#ddd0be] bg-[#f9f2e7] p-3">
+              {selectedPreviewGroups.map((group) => {
+                const staleState = isCleanupProposalStale(createCleanupApplyProposal(group), exportPayload)
+
+                return (
+                  <div key={group.group_id} className="rounded-[10px] border border-[#e0d2c1] bg-[#fffaf3] px-3 py-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] font-bold text-[#2f2419]">{group.canonical_name}</span>
+                      <PreviewPill>{group.winner.name}</PreviewPill>
+                      {staleState.stale ? <PreviewPill>stale on current data</PreviewPill> : null}
+                    </div>
+                    <div className="mt-1 text-[11px] text-[#7f6b56]">
+                      Merge into primary: {group.merged_items.map((item) => item.name).join(', ')}
+                    </div>
+                    {staleState.stale ? (
+                      <div className="mt-1 text-[11px] text-[#9a4a3f]">{staleState.reason}</div>
+                    ) : null}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={applyLoading}>Keep reviewing</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!selectedPreviewGroups.length || applyLoading}
+              onClick={(event) => {
+                event.preventDefault()
+                void handleApplySelected()
+              }}
+            >
+              {applyLoading ? 'Applying…' : 'Apply selected proposals'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -1,6 +1,16 @@
+import { buildFlaggedCleanupExportPayload } from '../domain/itemCleanupExchange'
+import { detectDuplicateGroups } from '../domain/duplicateDetection'
 import { normalizeSuggestionQuery, rankItemSuggestions } from '../domain/suggestionRanking'
 import { getItemAliases, getItemHistoryDetail, getItemSuggestions, getItemSummaryList, mergeItems } from '../repositories'
-import type { ItemAlias, ItemCatalogItem, ItemHistoryRow, ItemLibraryMergeRequest, ItemLibraryMergeResult, ItemSuggestion } from '../types'
+import type {
+  FlaggedCleanupExportPayload,
+  ItemAlias,
+  ItemCatalogItem,
+  ItemHistoryRow,
+  ItemLibraryMergeRequest,
+  ItemLibraryMergeResult,
+  ItemSuggestion,
+} from '../types'
 
 export async function loadSuggestions(
   searchText: string,
@@ -27,4 +37,12 @@ export async function loadItemAliases(itemIds: string[]): Promise<ItemAlias[]> {
 
 export async function mergeCatalogItems(request: ItemLibraryMergeRequest): Promise<ItemLibraryMergeResult> {
   return mergeItems(request)
+}
+
+export async function loadFlaggedCleanupExport(limit = 200): Promise<FlaggedCleanupExportPayload> {
+  const summaryItems = await getItemSummaryList(limit)
+  const duplicateGroups = detectDuplicateGroups(summaryItems)
+  const duplicateItemIds = duplicateGroups.flatMap((group) => group.members.map((member) => member.item_id))
+  const aliases = duplicateItemIds.length ? await getItemAliases(duplicateItemIds) : []
+  return buildFlaggedCleanupExportPayload({ duplicateGroups, aliases })
 }

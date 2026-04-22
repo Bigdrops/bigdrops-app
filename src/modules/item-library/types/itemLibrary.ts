@@ -163,3 +163,19 @@ export interface CleanupImportValidationResult {
   preview: CleanupImportPreview | null
   parsed: FlaggedCleanupImportPayload | null
 }
+
+export interface CleanupApplyProposal {
+  group_id: string
+  canonical_name: string
+  winner_item_id: string
+  merged_item_ids: string[]
+  aliases_to_keep: string[]
+  aliases_to_retire: string[]
+}
+
+export interface CleanupApplyResult {
+  group_id: string
+  canonical_name: string
+  status: 'applied' | 'stale' | 'failed'
+  message: string
+}

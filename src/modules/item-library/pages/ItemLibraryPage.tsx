@@ -7,9 +7,10 @@ import { ItemLibraryDetailPanel } from '../components/ItemLibraryDetailPanel'
 import { ItemLibraryDuplicateReviewPanel } from '../components/ItemLibraryDuplicateReviewPanel'
 import { ItemLibraryListPanel } from '../components/ItemLibraryListPanel'
 import { detectDuplicateGroups } from '../domain/duplicateDetection'
-import { buildFlaggedCleanupExportPayload } from '../domain/itemCleanupExchange'
+import { buildFlaggedCleanupExportPayload, isCleanupProposalStale } from '../domain/itemCleanupExchange'
 import { useItemAliases, useItemHistoryDetail, useItemHistoryList, useItemMerge } from '../hooks'
-import type { ItemLibraryMergeRequest } from '../types'
+import { loadFlaggedCleanupExport } from '../services'
+import type { CleanupApplyProposal, CleanupApplyResult, ItemLibraryMergeRequest } from '../types'
 import type { ItemLibraryFilterType, ItemLibraryViewMode } from '../types'
 
 function DownloadIcon() {
@@ -185,6 +186,71 @@ export default function ItemLibraryPage() {
     })
   }
 
+  const handleApplyCleanupProposals = async (proposals: CleanupApplyProposal[]): Promise<CleanupApplyResult[]> => {
+    const results: CleanupApplyResult[] = []
+
+    for (const proposal of proposals) {
+      let currentExport
+      try {
+        currentExport = await loadFlaggedCleanupExport(200)
+      } catch (error) {
+        results.push({
+          group_id: proposal.group_id,
+          canonical_name: proposal.canonical_name,
+          status: 'failed',
+          message: error instanceof Error ? error.message : 'Could not refresh the current flagged cleanup scope.',
+        })
+        continue
+      }
+
+      const staleState = isCleanupProposalStale(proposal, currentExport)
+      if (staleState.stale) {
+        results.push({
+          group_id: proposal.group_id,
+          canonical_name: proposal.canonical_name,
+          status: 'stale',
+          message: staleState.reason,
+        })
+        continue
+      }
+
+      try {
+        const mergeResult = await mergeItems({
+          winnerItemId: proposal.winner_item_id,
+          mergedItemIds: proposal.merged_item_ids,
+        })
+
+        results.push({
+          group_id: proposal.group_id,
+          canonical_name: proposal.canonical_name,
+          status: 'applied',
+          message: `${mergeResult.merged_item_ids.length} item${mergeResult.merged_item_ids.length === 1 ? '' : 's'} merged into the selected primary item.`,
+        })
+      } catch (error) {
+        results.push({
+          group_id: proposal.group_id,
+          canonical_name: proposal.canonical_name,
+          status: 'failed',
+          message: error instanceof Error ? error.message : 'Could not apply this cleanup proposal.',
+        })
+      }
+    }
+
+    reloadSummaryItems()
+    reloadHistoryRows()
+
+    const appliedCount = results.filter((result) => result.status === 'applied').length
+    const staleCount = results.filter((result) => result.status === 'stale').length
+    const failedCount = results.filter((result) => result.status === 'failed').length
+
+    toast({
+      title: 'Cleanup apply finished',
+      description: `${appliedCount} applied, ${staleCount} stale, ${failedCount} failed.`,
+    })
+
+    return results
+  }
+
   const totalCount = filteredItems.length
 
   return (
@@ -289,7 +355,11 @@ export default function ItemLibraryPage() {
                   onMerge={handleMerge}
                 />
               ) : viewMode === 'advanced_cleanup' ? (
-                <ItemLibraryAdvancedCleanupPanel exportPayload={flaggedCleanupExport} />
+                <ItemLibraryAdvancedCleanupPanel
+                  applyLoading={mergeLoading}
+                  exportPayload={flaggedCleanupExport}
+                  onApplyProposals={handleApplyCleanupProposals}
+                />
               ) : (
                 <ItemLibraryDetailPanel
                   item={selectedItem}

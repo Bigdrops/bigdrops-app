@@ -1,5 +1,7 @@
 import type {
   DuplicateCandidateGroup,
+  CleanupApplyProposal,
+  CleanupApplyResult,
   FlaggedCleanupExportGroup,
   FlaggedCleanupExportItem,
   FlaggedCleanupExportPayload,
@@ -303,5 +305,55 @@ export function validateFlaggedCleanupImport(
       ],
     },
     parsed,
+  }
+}
+
+export function isCleanupProposalStale(
+  proposal: CleanupApplyProposal,
+  exportPayload: FlaggedCleanupExportPayload,
+) {
+  const exportGroup = exportPayload.groups.find((group) => group.group_id === proposal.group_id)
+  if (!exportGroup) {
+    return {
+      stale: true,
+      reason: 'This flagged group is no longer present in the current duplicate review scope.',
+    }
+  }
+
+  const groupItemIds = new Set(exportGroup.items.map((item) => item.item_id))
+  if (!groupItemIds.has(proposal.winner_item_id)) {
+    return {
+      stale: true,
+      reason: 'The proposed primary item is no longer available in this flagged group.',
+    }
+  }
+
+  const outsideIds = proposal.merged_item_ids.filter((itemId) => !groupItemIds.has(itemId))
+  if (outsideIds.length > 0) {
+    return {
+      stale: true,
+      reason: 'One or more proposed merge items are no longer available in this flagged group.',
+    }
+  }
+
+  return { stale: false, reason: '' }
+}
+
+export function createCleanupApplyProposal(group: CleanupPreviewGroup): CleanupApplyProposal {
+  return {
+    group_id: group.group_id,
+    canonical_name: group.canonical_name,
+    winner_item_id: group.winner.item_id,
+    merged_item_ids: group.merged_items.map((item) => item.item_id),
+    aliases_to_keep: group.aliases_to_keep,
+    aliases_to_retire: group.aliases_to_retire,
+  }
+}
+
+export function summarizeCleanupApplyResults(results: CleanupApplyResult[]) {
+  return {
+    applied: results.filter((result) => result.status === 'applied'),
+    stale: results.filter((result) => result.status === 'stale'),
+    failed: results.filter((result) => result.status === 'failed'),
   }
 }
