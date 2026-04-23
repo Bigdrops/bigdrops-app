@@ -29,7 +29,6 @@ import {
   ADVANCE_PRIMARY_LABEL_DEFAULT,
   ADVANCE_SECONDARY_LABEL_DEFAULT,
   ADVANCE_SUFFIX_DEFAULT,
-  calculateAdvanceAmount,
   getAdvanceDraftFromInvoice,
   type AdvanceMode,
 } from '@/domain/invoice/advanceChildFlow'
@@ -116,11 +115,6 @@ export default function ViewInvoice() {
   const customFields = useMemo(() => parseCustomFields(invoice?.custom_fields), [invoice?.custom_fields])
   const sourceDocument = useMemo(() => getInvoiceSourceDocument(invoice), [invoice])
   const contractValue = Math.max(0, Number(invoice?.total || 0))
-  const advanceAmount = useMemo(
-    () => calculateAdvanceAmount({ contractValue, mode: advanceMode, inputValue: advanceInputValue }),
-    [advanceInputValue, advanceMode, contractValue],
-  )
-  const advanceBalanceRemaining = Math.max(0, contractValue - advanceAmount)
 
   const resetAdvanceDraft = useCallback(() => {
     setAdvanceMode('percent')
@@ -764,7 +758,6 @@ export default function ViewInvoice() {
               onOpenChange={closeAdvanceSheet}
               invoiceNumber={invoice.invoice_number || 'Invoice'}
               contractValue={contractValue}
-              formatMoney={(value) => formatNaira(Number(value || 0), { preserveFraction: true })}
               advanceSheetMode={advanceSheetMode}
               advanceInvoice={selectedAdvanceInvoice}
               advanceSaving={advanceSaving}
@@ -779,8 +772,6 @@ export default function ViewInvoice() {
               setAdvancePrimaryLabel={setAdvancePrimaryLabel}
               advanceSecondaryLabel={advanceSecondaryLabel}
               setAdvanceSecondaryLabel={setAdvanceSecondaryLabel}
-              advanceAmount={advanceAmount}
-              balanceRemaining={advanceBalanceRemaining}
               onSave={() => void handleAdvanceSave()}
               onDownloadPdf={handleAdvanceDownload}
               onEdit={() => {
