@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { PdfBankControls, PdfSupportingOptions, type PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
+import { PdfBankControls, PdfDocumentOptionsCard, type PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import type { PdfDesignPreset, PdfDesignPresetDocument } from '@/lib/pdfDesignPreset'
 import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
@@ -27,6 +27,7 @@ interface PdfOutputCustomizeSheetProps {
   companyTagline?: string
   footerText?: string
   showBalanceDueOption?: boolean
+  designOnly?: boolean
   onSave: (value: PdfOutputSettingsValue, preset: PdfDesignPreset) => void | Promise<void>
 }
 
@@ -41,6 +42,7 @@ export default function PdfOutputCustomizeSheet({
   companyTagline = '',
   footerText = '',
   showBalanceDueOption = false,
+  designOnly = false,
   onSave,
 }: PdfOutputCustomizeSheetProps) {
   const [draftValue, setDraftValue] = useState<PdfOutputSettingsValue>(value)
@@ -67,15 +69,20 @@ export default function PdfOutputCustomizeSheet({
   return (
     <DocumentSheet open={open} onClose={onClose} title={title} subtitle={subtitle}>
       <div className="space-y-4">
-        <PdfBankControls value={draftValue} onChange={setDraftValue} bankAccounts={bankAccounts} />
+        {!designOnly ? (
+          <>
+            <PdfBankControls value={draftValue} onChange={setDraftValue} bankAccounts={bankAccounts} />
 
-        <PdfSupportingOptions
-          value={draftValue}
-          onChange={setDraftValue}
-          companyTagline={companyTagline}
-          footerText={footerText}
-          showBalanceDueOption={showBalanceDueOption}
-        />
+            <PdfDocumentOptionsCard
+              value={draftValue}
+              onChange={setDraftValue}
+              companyTagline={companyTagline}
+              footerText={footerText}
+              showBalanceDueOption={showBalanceDueOption}
+              defaultOpen
+            />
+          </>
+        ) : null}
 
         <div className="rounded-[24px] border border-border bg-card p-4">
           <div className="mb-3 text-sm font-semibold text-foreground">PDF Design</div>

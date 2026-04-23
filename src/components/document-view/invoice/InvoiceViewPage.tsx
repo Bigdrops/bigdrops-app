@@ -30,6 +30,7 @@ function SupportingSection({ title, action, children }: SupportingSectionProps) 
 
 interface InvoiceViewPageProps {
   documentPreview: ReactNode
+  previewControls?: ReactNode
   paymentSummary: Array<{ label: string; value: string; tone?: 'green' | 'amber' }>
   paymentProgressLabel: string
   paymentProgressWidth: string
@@ -67,6 +68,7 @@ interface InvoiceViewPageProps {
 
 export default function InvoiceViewPage({
   documentPreview,
+  previewControls,
   paymentSummary,
   paymentProgressLabel,
   paymentProgressWidth,
@@ -104,6 +106,12 @@ export default function InvoiceViewPage({
       <div className={styles.documentBody}>
         {documentPreview}
       </div>
+
+      {previewControls ? (
+        <div className={styles.previewControls}>
+          {previewControls}
+        </div>
+      ) : null}
 
       <div className={styles.supportingArea}>
         {gPaymentSummary.length > 0 && (

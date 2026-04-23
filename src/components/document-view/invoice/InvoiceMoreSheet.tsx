@@ -8,6 +8,7 @@ import {
   DownloadCloud,
   Archive,
   Trash2,
+  Merge,
 } from 'lucide-react'
 import DocumentMoreSheet from '../shared/DocumentMoreSheet'
 
@@ -22,6 +23,8 @@ interface InvoiceMoreSheetProps {
   onDuplicate: () => void
   onCopyNumber: () => void
   onExportCsv: () => void
+  mergeQtyUnit: boolean
+  onToggleMergeQtyUnit: () => void
   onArchive: () => void
   onDelete: () => void
 }
@@ -37,6 +40,8 @@ export default function InvoiceMoreSheet({
   onDuplicate,
   onCopyNumber,
   onExportCsv,
+  mergeQtyUnit,
+  onToggleMergeQtyUnit,
   onArchive,
   onDelete,
 }: InvoiceMoreSheetProps) {
@@ -109,6 +114,16 @@ export default function InvoiceMoreSheet({
           description: 'Download line items as spreadsheet',
           icon: <DownloadCloud size={18} />,
           onClick: onExportCsv,
+        },
+        {
+          id: 'qty-unit-merge',
+          label: 'Qty + Unit merge',
+          description: mergeQtyUnit ? 'Currently on for exports and print views' : 'Currently off for exports and print views',
+          icon: <Merge size={18} />,
+          selected: mergeQtyUnit,
+          statusLabel: mergeQtyUnit ? 'On' : 'Off',
+          closeOnClick: false,
+          onClick: onToggleMergeQtyUnit,
         },
       ],
     },

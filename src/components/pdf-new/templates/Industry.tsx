@@ -379,62 +379,6 @@ export default function IndustryTemplate({ data }: TemplateProps) {
               </View>
             ))}
 
-            {data.advanceSummary ? (
-              <View
-                style={[
-                  styles.advanceBox,
-                  groupRuleColor ? { borderLeftColor: groupRuleColor } : null,
-                  subtleSurfaceColor ? { backgroundColor: subtleSurfaceColor } : null,
-                ]}
-              >
-                {data.advanceSummary.advanceAmount ? (
-                  <View style={styles.advanceRow}>
-                    <Text
-                      style={[
-                        styles.advanceProminentLabel,
-                        textColor ? { color: textColor } : null,
-                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
-                      ]}
-                    >
-                      {data.advanceSummary.primaryLabel}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.advanceProminentValue,
-                        accentColor ? { color: accentColor } : null,
-                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
-                      ]}
-                    >
-                      {data.advanceSummary.advanceAmount}
-                    </Text>
-                  </View>
-                ) : null}
-
-                {data.advanceSummary.balanceRemaining ? (
-                  <View style={styles.advanceRow}>
-                    <Text
-                      style={[
-                        styles.advanceLabel,
-                        mutedColor ? { color: mutedColor } : null,
-                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
-                      ]}
-                    >
-                      {data.advanceSummary.secondaryLabel}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.advanceValue,
-                        textColor ? { color: textColor } : null,
-                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
-                      ]}
-                    >
-                      {data.advanceSummary.balanceRemaining}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            ) : null}
-
             {data.totals.mainLine ? (
               <View
                 style={[
@@ -500,6 +444,62 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                 >
                   {data.totals.balanceDue.value}
                 </Text>
+              </View>
+            ) : null}
+
+            {data.advanceSummary ? (
+              <View
+                style={[
+                  styles.advanceBox,
+                  groupRuleColor ? { borderLeftColor: groupRuleColor } : null,
+                  subtleSurfaceColor ? { backgroundColor: subtleSurfaceColor } : null,
+                ]}
+              >
+                {data.advanceSummary.advanceAmount ? (
+                  <View style={styles.advanceRow}>
+                    <Text
+                      style={[
+                        styles.advanceProminentLabel,
+                        textColor ? { color: textColor } : null,
+                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                      ]}
+                    >
+                      {data.advanceSummary.primaryLabel}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.advanceProminentValue,
+                        accentColor ? { color: accentColor } : null,
+                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                      ]}
+                    >
+                      {data.advanceSummary.advanceAmount}
+                    </Text>
+                  </View>
+                ) : null}
+
+                {data.advanceSummary.balanceRemaining ? (
+                  <View style={styles.advanceRow}>
+                    <Text
+                      style={[
+                        styles.advanceLabel,
+                        mutedColor ? { color: mutedColor } : null,
+                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                      ]}
+                    >
+                      {data.advanceSummary.secondaryLabel}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.advanceValue,
+                        textColor ? { color: textColor } : null,
+                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                      ]}
+                    >
+                      {data.advanceSummary.balanceRemaining}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
             ) : null}
           </View>

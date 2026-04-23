@@ -287,6 +287,13 @@
   box-shadow: var(--shadow);
 }
 
+.previewControls {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* ─── PAYMENT CARD ─── */
 .payment-card {
   background: var(--surface);

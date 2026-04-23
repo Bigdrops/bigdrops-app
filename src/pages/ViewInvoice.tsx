@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
-import { PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
+import { PdfBankControls, PdfDocumentOptionsCard, PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
 import InvoiceHtmlView from '@/components/document-view/invoice/InvoiceHtmlView'
 import {
   InvoiceHero,
@@ -443,8 +443,10 @@ export default function ViewInvoice() {
     }
   }
 
-  const handleSaveCustomization = async (nextPdfOutput: PdfOutputSettingsValue) => {
+  const handleSaveCustomization = useCallback(async (nextPdfOutput: PdfOutputSettingsValue) => {
     if (!invoice?.id) return
+    const previousPdfOutput = pdfOutput
+    setPdfOutput(nextPdfOutput)
     try {
       const nextCustomFields = {
         ...(customFields || {}),
@@ -452,14 +454,44 @@ export default function ViewInvoice() {
       }
       const { error } = await supabase.from('invoices').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', invoice.id)
       if (error) throw error
-      
-      setPdfOutput(nextPdfOutput)
+
       await refresh()
       showToast('Settings saved', 'Invoice PDF output settings updated.', 'success')
     } catch (err) {
+      setPdfOutput(previousPdfOutput)
       showToast('Save failed', err instanceof Error ? err.message : 'Could not save customize settings')
     }
-  }
+  }, [customFields, invoice?.id, pdfOutput, refresh])
+
+  const handleInlinePdfOutputChange = useCallback((nextPdfOutput: PdfOutputSettingsValue) => {
+    void handleSaveCustomization(nextPdfOutput)
+  }, [handleSaveCustomization])
+
+  const handleToggleMergeQtyUnit = useCallback(async () => {
+    if (!invoice?.id) return
+
+    try {
+      const nextCustomFields = {
+        ...(customFields || {}),
+        mergeQtyUnit: customFields?.mergeQtyUnit !== true,
+      }
+      const { error } = await supabase
+        .from('invoices')
+        .update({ custom_fields: JSON.stringify(nextCustomFields) })
+        .eq('id', invoice.id)
+
+      if (error) throw error
+
+      await refresh()
+      showToast(
+        'Table setting updated',
+        nextCustomFields.mergeQtyUnit ? 'Qty + Unit merge is now on for exports and preview.' : 'Qty + Unit merge is now off for exports and preview.',
+        'success',
+      )
+    } catch (err) {
+      showToast('Update failed', err instanceof Error ? err.message : 'Could not update the table export setting.')
+    }
+  }, [customFields, invoice?.id, refresh])
 
   const handleDownload = async () => {
     if (!invoice || downloading) return
@@ -785,13 +817,14 @@ export default function ViewInvoice() {
               open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
               onClose={ui.closeSheet}
               title="Customize Invoice PDF"
-              subtitle="Configure how the PDF version of this invoice is generated."
+              subtitle="Adjust template, font, and color styling for this invoice PDF."
               documentType="invoice"
               value={pdfOutput}
               bankAccounts={previewBankAccounts}
               companyTagline={String(settingsData?.company_tagline || '')}
               footerText={String(settingsData?.footer_text || '')}
               showBalanceDueOption={true}
+              designOnly
               onSave={(nextValue) => handleSaveCustomization(nextValue)}
             />
 
@@ -850,6 +883,8 @@ export default function ViewInvoice() {
               onDuplicate={() => void handleDuplicate()}
               onCopyNumber={handleCopyNumber}
               onExportCsv={handleDownloadCsv}
+              mergeQtyUnit={customFields?.mergeQtyUnit === true}
+              onToggleMergeQtyUnit={() => void handleToggleMergeQtyUnit()}
               onArchive={() => ui.openModal(MODAL_ARCHIVE)}
               onDelete={() => ui.openModal(MODAL_DELETE)}
             />
@@ -906,6 +941,22 @@ export default function ViewInvoice() {
               settingsData={settingsData}
               mergeQtyUnit={customFields?.mergeQtyUnit === true}
             />
+          }
+          previewControls={
+            <>
+              <PdfBankControls
+                value={pdfOutput}
+                onChange={handleInlinePdfOutputChange}
+                bankAccounts={previewBankAccounts}
+              />
+              <PdfDocumentOptionsCard
+                value={pdfOutput}
+                onChange={handleInlinePdfOutputChange}
+                companyTagline={String(settingsData?.company_tagline || '')}
+                footerText={String(settingsData?.footer_text || '')}
+                showBalanceDueOption
+              />
+            </>
           }
           paymentSummary={[
             { label: 'Cash Received', value: formatNaira(viewModel.cashReceived || 0), tone: 'green' },

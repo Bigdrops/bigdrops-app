@@ -9,6 +9,9 @@ export type DocumentMoreSheetItem = {
   onClick?: () => void
   destructive?: boolean
   disabled?: boolean
+  closeOnClick?: boolean
+  selected?: boolean
+  statusLabel?: string
 }
 
 export type DocumentMoreSheetSection = {
@@ -62,12 +65,14 @@ export default function DocumentMoreSheet({
                   key={item.id}
                   type="button"
                   disabled={item.disabled}
-                  className={`${styles.action} ${item.destructive ? styles.destructive : ''}`}
+                  className={`${styles.action} ${item.destructive ? styles.destructive : ''} ${item.selected ? styles.selected : ''}`}
                   onClick={() => {
                     if (item.onClick) {
                       item.onClick()
                     }
-                    onClose()
+                    if (item.closeOnClick !== false) {
+                      onClose()
+                    }
                   }}
                 >
                   <div className={styles.iconWrapper}>{item.icon}</div>
@@ -77,6 +82,11 @@ export default function DocumentMoreSheet({
                       <div className={styles.description}>{item.description}</div>
                     )}
                   </div>
+                  {item.statusLabel ? (
+                    <div className={`${styles.statusPill} ${item.selected ? styles.statusPillActive : ''}`}>
+                      {item.statusLabel}
+                    </div>
+                  ) : null}
                 </button>
               ))}
             </div>

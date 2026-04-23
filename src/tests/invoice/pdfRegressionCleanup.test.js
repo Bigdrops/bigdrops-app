@@ -6,8 +6,13 @@ import path from 'node:path'
 const previewModelPath = path.resolve('src/domain/invoice/previewModel.ts')
 const documentMediaPath = path.resolve('src/domain/documentMedia.js')
 const industryStylesPath = path.resolve('src/components/pdf-new/templates/industryStyles.ts')
+const industryTemplatePath = path.resolve('src/components/pdf-new/templates/Industry.tsx')
 const industryAdapterPath = path.resolve('src/components/pdf-new/industryAdapter.ts')
 const tablePath = path.resolve('src/components/pdf-new/table.ts')
+const pdfOutputSettingsPath = path.resolve('src/components/PdfOutputSettings.tsx')
+const customizeSheetPath = path.resolve('src/components/document-view/shared/PdfOutputCustomizeSheet.tsx')
+const invoiceMoreSheetPath = path.resolve('src/components/document-view/invoice/InvoiceMoreSheet.tsx')
+const viewInvoicePath = path.resolve('src/pages/ViewInvoice.tsx')
 
 test('invoice preview detail rows exclude duplicate title and client header entries', () => {
   const source = fs.readFileSync(previewModelPath, 'utf8')
@@ -44,6 +49,13 @@ test('industry pdf header keeps a wider logo and stable horizontal meta layout',
   assert.match(source, /metaValue:\s*\{[^}]*flexShrink:\s*1/s)
 })
 
+test('advance invoice summary renders after the shared totals block', () => {
+  const source = fs.readFileSync(industryTemplatePath, 'utf8')
+
+  assert.ok(source.indexOf('{data.totals.mainLine ? (') < source.indexOf('{data.advanceSummary ? ('), 'advance summary should render after the main totals block')
+  assert.ok(source.indexOf('{data.totals.balanceDue ? (') < source.indexOf('{data.advanceSummary ? ('), 'advance summary should render after balance due handling')
+})
+
 test('industry adapter removes duplicated standard metadata from custom header fields', () => {
   const source = fs.readFileSync(industryAdapterPath, 'utf8')
 
@@ -63,6 +75,38 @@ test('merged qty and unit column gets extra width in pdf table settings', () => 
   const source = fs.readFileSync(tablePath, 'utf8')
 
   assert.match(source, /label: 'Qty \/ Unit'/)
-  assert.match(source, /pdfWidth: 96/)
-  assert.match(source, /pdfFlex: 1\.6/)
+  assert.match(source, /pdfWidth: 112/)
+  assert.match(source, /pdfFlex: 1\.85/)
+})
+
+test('document settings use Document options instead of Advanced Options', () => {
+  const source = fs.readFileSync(pdfOutputSettingsPath, 'utf8')
+
+  assert.match(source, /Document options/)
+  assert.doesNotMatch(source, /Advanced Options/)
+})
+
+test('customize sheet supports design-only mode for the paint popup', () => {
+  const source = fs.readFileSync(customizeSheetPath, 'utf8')
+
+  assert.match(source, /designOnly\?: boolean/)
+  assert.match(source, /!designOnly \? \(/)
+  assert.match(source, /<PdfDocumentOptionsCard/)
+})
+
+test('view invoice page exposes bank controls and document options below the preview', () => {
+  const source = fs.readFileSync(viewInvoicePath, 'utf8')
+
+  assert.match(source, /previewControls=\{/)
+  assert.match(source, /<PdfBankControls/)
+  assert.match(source, /<PdfDocumentOptionsCard/)
+  assert.match(source, /designOnly/)
+})
+
+test('view invoice actions include the qty plus unit merge toggle with persistent state', () => {
+  const source = fs.readFileSync(invoiceMoreSheetPath, 'utf8')
+
+  assert.match(source, /id: 'qty-unit-merge'/)
+  assert.match(source, /closeOnClick: false/)
+  assert.match(source, /statusLabel: mergeQtyUnit \? 'On' : 'Off'/)
 })

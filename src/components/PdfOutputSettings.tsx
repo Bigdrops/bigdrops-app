@@ -118,43 +118,6 @@ function OutputToggle({ checked, onToggle }: { checked: boolean; onToggle: () =>
   )
 }
 
-function SettingsSection({
-  title,
-  subtitle,
-  open,
-  onToggle,
-  children,
-}: {
-  title: string
-  subtitle?: string
-  open: boolean
-  onToggle: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <div className="rounded-[16px] border border-border bg-white">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-      >
-        <div className="min-w-0">
-          <div className="text-sm font-semibold tracking-tight text-foreground">{title}</div>
-          {subtitle ? (
-            <div className="mt-0.5 text-[11px] leading-4 text-muted-foreground">{subtitle}</div>
-          ) : null}
-        </div>
-        {open ? (
-          <ChevronUp className="h-4 w-4 shrink-0 text-slate-400" />
-        ) : (
-          <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
-        )}
-      </button>
-      {open ? <div className="border-t border-border px-4 py-2.5">{children}</div> : null}
-    </div>
-  )
-}
-
 function SettingsRow({
   label,
   control,
@@ -257,78 +220,111 @@ export function PdfBankControls({
   )
 }
 
-export function PdfSupportingOptions({
+type PdfDocumentOptionsCardProps = Pick<
+  PdfOutputSettingsProps,
+  'value' | 'onChange' | 'companyTagline' | 'footerText' | 'showBalanceDueOption'
+> & {
+  defaultOpen?: boolean
+}
+
+export function PdfDocumentOptionsCard({
   value,
   onChange,
   companyTagline = 'Reliable power for every site',
   footerText = 'Thank you for your business. Payment is due within 7 days unless otherwise agreed.',
   showBalanceDueOption = false,
-}: Pick<PdfOutputSettingsProps, 'value' | 'onChange' | 'companyTagline' | 'footerText' | 'showBalanceDueOption'>) {
+  defaultOpen = false,
+}: PdfDocumentOptionsCardProps) {
   const state = mergeOutputState(value, null)
+  const [open, setOpen] = React.useState(defaultOpen)
 
   function update(patch: Partial<PdfOutputSettingsValue>) {
     onChange?.({ ...state, ...patch })
   }
 
   return (
-    <div className="space-y-3">
-      <div className="rounded-[20px] border border-border bg-card px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold text-foreground">Letterhead Tagline</div>
-          <OutputToggle checked={state.showTagline} onToggle={() => update({ showTagline: !state.showTagline })} />
-        </div>
-        {state.showTagline ? (
-          <div className="mt-3 rounded-[16px] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
-            {companyTagline || 'No tagline'}
+    <Card className="rounded-[24px] border-border shadow-sm">
+      <CardContent className="p-0">
+        <button
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left"
+        >
+          <div className="min-w-0">
+            <div className="text-sm font-extrabold tracking-[-0.02em] text-foreground">Document options</div>
+            <div className="mt-1 text-xs text-muted-foreground">Output switches for footer, labels, wording, and totals display.</div>
           </div>
-        ) : null}
-      </div>
+          {open ? (
+            <ChevronUp className="h-4 w-4 shrink-0 text-slate-400" />
+          ) : (
+            <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+          )}
+        </button>
 
-      {showBalanceDueOption ? (
-        <div className="rounded-[20px] border border-border bg-card px-4 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-sm font-semibold text-foreground">Show balance due</div>
-            <OutputToggle checked={state.showBalanceDue} onToggle={() => update({ showBalanceDue: !state.showBalanceDue })} />
-          </div>
-        </div>
-      ) : null}
+        {open ? (
+          <div className="border-t border-border px-4 py-2.5">
+            <SettingsRow
+              label="Tagline"
+              control={<OutputToggle checked={state.showTagline} onToggle={() => update({ showTagline: !state.showTagline })} />}
+            >
+              {state.showTagline ? (
+                <div className="rounded-[16px] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+                  {companyTagline || 'No tagline'}
+                </div>
+              ) : null}
+            </SettingsRow>
 
-      <div className="rounded-[20px] border border-border bg-card px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold text-foreground">Show amount in words</div>
-          <OutputToggle checked={state.showAmountInWords} onToggle={() => update({ showAmountInWords: !state.showAmountInWords })} />
-        </div>
-      </div>
+            <SettingsRow
+              label="Footer"
+              control={<OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />}
+            >
+              {state.showFooter ? (
+                <div className="rounded-[16px] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+                  {footerText || 'No footer text'}
+                </div>
+              ) : null}
+            </SettingsRow>
 
-      <div className="rounded-[20px] border border-border bg-card px-4 py-4">
-        <div className="text-sm font-semibold text-foreground">Totals Labels</div>
-        <div className="mt-3 space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-sm text-foreground">Show VAT percentage in brackets</div>
-            <OutputToggle checked={state.showVatPercentage} onToggle={() => update({ showVatPercentage: !state.showVatPercentage })} />
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-sm text-foreground">Show WHT percentage in brackets</div>
-            <OutputToggle checked={state.showWhtPercentage} onToggle={() => update({ showWhtPercentage: !state.showWhtPercentage })} />
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-sm text-foreground">Show Discount percentage in brackets</div>
-            <OutputToggle
-              checked={state.showDiscountPercentage}
-              onToggle={() => update({ showDiscountPercentage: !state.showDiscountPercentage })}
+            {showBalanceDueOption ? (
+              <SettingsRow
+                label="Show balance due"
+                control={<OutputToggle checked={state.showBalanceDue} onToggle={() => update({ showBalanceDue: !state.showBalanceDue })} />}
+              />
+            ) : null}
+
+            <SettingsRow
+              label="Show amount in words"
+              control={<OutputToggle checked={state.showAmountInWords} onToggle={() => update({ showAmountInWords: !state.showAmountInWords })} />}
+            />
+
+            <SettingsRow
+              label="Show VAT % in brackets"
+              control={<OutputToggle checked={state.showVatPercentage} onToggle={() => update({ showVatPercentage: !state.showVatPercentage })} />}
+            />
+
+            <SettingsRow
+              label="Show WHT % in brackets"
+              control={<OutputToggle checked={state.showWhtPercentage} onToggle={() => update({ showWhtPercentage: !state.showWhtPercentage })} />}
+            />
+
+            <SettingsRow
+              label="Show discount % in brackets"
+              control={
+                <OutputToggle
+                  checked={state.showDiscountPercentage}
+                  onToggle={() => update({ showDiscountPercentage: !state.showDiscountPercentage })}
+                />
+              }
             />
           </div>
-        </div>
-      </div>
-
-      <div className="rounded-[20px] border border-border bg-card px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold text-foreground">Footer</div>
-          <OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />
-        </div>
-      </div>
-    </div>
+        ) : null}
+      </CardContent>
+    </Card>
   )
+}
+
+export function PdfSupportingOptions(props: Pick<PdfOutputSettingsProps, 'value' | 'onChange' | 'companyTagline' | 'footerText' | 'showBalanceDueOption'>) {
+  return <PdfDocumentOptionsCard {...props} defaultOpen />
 }
 
 export function PdfOutputSettings({
@@ -339,148 +335,17 @@ export function PdfOutputSettings({
   footerText = "Thank you for your business. Payment is due within 7 days unless otherwise agreed.",
   showBalanceDueOption = false,
 }: PdfOutputSettingsProps) {
-  const banks = resolveBanks(bankAccounts)
-  const defaultBank = getDefaultBank(banks)
-
-  const initialState = React.useMemo<PdfOutputSettingsValue>(() => {
-    return mergeOutputState(value, defaultBank)
-  }, [
-    value?.showBankDetails,
-    value?.bankAccountId,
-    value?.showFooter,
-    value?.showTagline,
-    value?.showBalanceDue,
-    value?.showAmountInWords,
-    value?.showVatPercentage,
-    value?.showWhtPercentage,
-    value?.showDiscountPercentage,
-    defaultBank?.id,
-  ])
-
-  const [state, setState] = React.useState<PdfOutputSettingsValue>(initialState)
-  const [bankSheetOpen, setBankSheetOpen] = React.useState(false)
-  const [sectionsOpen, setSectionsOpen] = React.useState({
-    visibility: true,
-    branding: false,
-  })
-  React.useEffect(() => {
-    setState(initialState)
-  }, [initialState])
-
-  const selectedBank =
-    banks.find((b) => b.id === state.bankAccountId) || defaultBank || null
-
-  function update(patch: Partial<PdfOutputSettingsValue>) {
-    setState((prev) => {
-      const next = { ...prev, ...patch }
-      onChange?.(next)
-      return next
-    })
-  }
-
-  function toggleSection(section: 'visibility' | 'branding') {
-    setSectionsOpen((prev) => ({ ...prev, [section]: !prev[section] }))
-  }
-
   return (
-    <Card className="rounded-xl border-border bg-card shadow-sm">
-      <CardContent className="px-4 py-4">
-        <div className="text-sm font-semibold tracking-tight text-foreground">Advanced Options</div>
-        <div className="mt-1 text-xs text-muted-foreground">Document visibility and branding.</div>
-
-        <div className="mt-4 space-y-3">
-          <SettingsSection
-            title="Document Visibility"
-            subtitle="Control supporting details and totals labels."
-            open={sectionsOpen.visibility}
-            onToggle={() => toggleSection('visibility')}
-          >
-            <SettingsRow
-              label="Show Bank Details"
-              control={
-                <OutputToggle
-                  checked={state.showBankDetails}
-                  onToggle={() =>
-                    update({
-                      showBankDetails: !state.showBankDetails,
-                      bankAccountId: !state.showBankDetails
-                        ? state.bankAccountId || defaultBank?.id || null
-                        : state.bankAccountId,
-                    })
-                  }
-                />
-              }
-            >
-              {state.showBankDetails && selectedBank ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-10 w-full justify-between rounded-[12px] border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
-                  onClick={() => setBankSheetOpen(true)}
-                >
-                  <span>{selectedBank.bankName} • {selectedBank.accountNumber}</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              ) : null}
-            </SettingsRow>
-            {showBalanceDueOption ? (
-              <SettingsRow
-                label="Show Balance Due"
-                control={<OutputToggle checked={state.showBalanceDue} onToggle={() => update({ showBalanceDue: !state.showBalanceDue })} />}
-              />
-            ) : null}
-            <SettingsRow
-              label="Show Amount in Words"
-              control={<OutputToggle checked={state.showAmountInWords} onToggle={() => update({ showAmountInWords: !state.showAmountInWords })} />}
-            />
-            <SettingsRow
-              label="Show VAT % in brackets"
-              control={<OutputToggle checked={state.showVatPercentage} onToggle={() => update({ showVatPercentage: !state.showVatPercentage })} />}
-            />
-            <SettingsRow
-              label="Show WHT % in brackets"
-              control={<OutputToggle checked={state.showWhtPercentage} onToggle={() => update({ showWhtPercentage: !state.showWhtPercentage })} />}
-            />
-            <SettingsRow
-              label="Show Discount % in brackets"
-              control={
-                <OutputToggle
-                  checked={state.showDiscountPercentage}
-                  onToggle={() => update({ showDiscountPercentage: !state.showDiscountPercentage })}
-                />
-              }
-            />
-          </SettingsSection>
-
-          <SettingsSection
-            title="Branding"
-            subtitle="Control optional document identity elements."
-            open={sectionsOpen.branding}
-            onToggle={() => toggleSection('branding')}
-          >
-            <SettingsRow
-              label="Show Tagline"
-              control={<OutputToggle checked={state.showTagline} onToggle={() => update({ showTagline: !state.showTagline })} />}
-            />
-            <SettingsRow
-              label="Show Footer"
-              control={<OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />}
-            />
-          </SettingsSection>
-        </div>
-      </CardContent>
-
-      <BankAccountPickerSheet
-        open={bankSheetOpen}
-        onOpenChange={setBankSheetOpen}
-        bankAccounts={banks}
-        selectedBankId={state.bankAccountId}
-        onSelect={(bankId) => {
-          update({ bankAccountId: bankId, showBankDetails: true })
-          setBankSheetOpen(false)
-        }}
+    <div className="space-y-3">
+      <PdfBankControls value={value} onChange={onChange} bankAccounts={bankAccounts} />
+      <PdfDocumentOptionsCard
+        value={value}
+        onChange={onChange}
+        companyTagline={companyTagline}
+        footerText={footerText}
+        showBalanceDueOption={showBalanceDueOption}
       />
-    </Card>
+    </div>
   )
 }
 
