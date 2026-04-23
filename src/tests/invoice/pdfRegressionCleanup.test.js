@@ -6,6 +6,8 @@ import path from 'node:path'
 const previewModelPath = path.resolve('src/domain/invoice/previewModel.ts')
 const documentMediaPath = path.resolve('src/domain/documentMedia.js')
 const industryStylesPath = path.resolve('src/components/pdf-new/templates/industryStyles.ts')
+const industryAdapterPath = path.resolve('src/components/pdf-new/industryAdapter.ts')
+const tablePath = path.resolve('src/components/pdf-new/table.ts')
 
 test('invoice preview detail rows exclude duplicate title and client header entries', () => {
   const source = fs.readFileSync(previewModelPath, 'utf8')
@@ -40,4 +42,27 @@ test('industry pdf header keeps a wider logo and stable horizontal meta layout',
   assert.match(source, /logo:\s*\{[^}]*width:\s*86,[^}]*height:\s*86/s)
   assert.match(source, /metaLabel:\s*\{[^}]*flexShrink:\s*0/s)
   assert.match(source, /metaValue:\s*\{[^}]*flexShrink:\s*1/s)
+})
+
+test('industry adapter removes duplicated standard metadata from custom header fields', () => {
+  const source = fs.readFileSync(industryAdapterPath, 'utf8')
+
+  assert.match(source, /const standardHeaderLabels = new Set\(\[/)
+  assert.match(source, /normalizeHeaderLabel\('PO Number'\)/)
+  assert.match(source, /customHeaderFields: \(model\.headerFields \|\| \[\]\)\.filter\(\(field\) => !standardHeaderLabels\.has\(normalizeHeaderLabel\(field\.label\)\)\)/)
+})
+
+test('advance invoice pdf removes balance due while keeping the shared totals lines', () => {
+  const source = fs.readFileSync(industryAdapterPath, 'utf8').replace(/\s+/g, ' ')
+
+  assert.match(source, /const isAdvanceDocument = Boolean\(model\.totals\.advanceSummary\)/)
+  assert.match(source, /balanceDue: !isAdvanceDocument && model\.totals\.balanceDue !== null && model\.totals\.balanceDue !== undefined/)
+})
+
+test('merged qty and unit column gets extra width in pdf table settings', () => {
+  const source = fs.readFileSync(tablePath, 'utf8')
+
+  assert.match(source, /label: 'Qty \/ Unit'/)
+  assert.match(source, /pdfWidth: 96/)
+  assert.match(source, /pdfFlex: 1\.6/)
 })

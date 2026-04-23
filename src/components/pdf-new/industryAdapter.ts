@@ -122,6 +122,14 @@ function getDateLabel(kind: PdfDocumentModel['identity']['kind']) {
   return kind === 'invoice' ? 'Due Date' : 'Valid Until'
 }
 
+function normalizeHeaderLabel(value: string | null | undefined) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
 function splitAddressLines(lines: string[] = []) {
   const filtered = lines.filter(Boolean)
   return {
@@ -312,6 +320,12 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
   const primaryTitle = model.identity.kind === 'invoice' ? 'INVOICE' : 'QUOTATION'
   const rawTitle = (model.identity.title || '').trim()
   const isDuplicate = rawTitle.toUpperCase() === primaryTitle
+  const standardHeaderLabels = new Set([
+    normalizeHeaderLabel(getDocumentNumberLabel(model.identity.kind)),
+    normalizeHeaderLabel('Issue Date'),
+    normalizeHeaderLabel(getDateLabel(model.identity.kind)),
+    normalizeHeaderLabel('PO Number'),
+  ])
 
   return {
     title: primaryTitle,
@@ -324,7 +338,7 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
     dueDateOrValidityDateLabel: getDateLabel(model.identity.kind),
     poNumber: model.identity.poNumber,
     poNumberLabel: 'PO Number',
-    customHeaderFields: model.headerFields || [],
+    customHeaderFields: (model.headerFields || []).filter((field) => !standardHeaderLabels.has(normalizeHeaderLabel(field.label))),
     showTagline: Boolean(model.tagline),
     showBankDetails: Boolean(model.bankDetails),
     company: model.issuer
@@ -382,7 +396,7 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
           }
         : null,
       amountInWords: model.totals.amountInWords || '',
-      balanceDue: model.totals.balanceDue !== null && model.totals.balanceDue !== undefined
+      balanceDue: !isAdvanceDocument && model.totals.balanceDue !== null && model.totals.balanceDue !== undefined
         ? {
             label: 'Balance Due',
             value: formatPdfMoney(model.totals.balanceDue),
