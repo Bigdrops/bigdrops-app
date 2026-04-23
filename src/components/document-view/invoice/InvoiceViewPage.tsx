@@ -1,5 +1,6 @@
-import { FileText, Plus, Receipt, ExternalLink, Link as LinkIcon, Paperclip, Edit3, Download } from 'lucide-react'
+import { Plus, Receipt, ExternalLink, Paperclip, Edit3, Download } from 'lucide-react'
 import type { ReactNode } from 'react'
+import DocumentRelatedDocsSection from '../shared/DocumentRelatedDocsSection'
 import styles from './InvoicePresentation.module.css'
 
 interface SupportingSectionProps {
@@ -167,24 +168,7 @@ export default function InvoiceViewPage({
           </SupportingSection>
         )}
 
-        {gRelatedDocuments.length > 0 && (
-          <SupportingSection title="Linked Documents">
-            <div className={styles['linked-list']}>
-              {gRelatedDocuments.map((doc) => (
-                <div key={doc.id} className={styles['linked-item']} onClick={doc.onClick}>
-                  <div className={`${styles['linked-icon']} ${styles[doc.kind] || ''}`}>
-                    {doc.kind === 'quotation' ? <FileText size={16} /> : <LinkIcon size={16} />}
-                  </div>
-                  <div className={styles['linked-body']}>
-                    <div className={styles['linked-title']}>{doc.title}</div>
-                    <div className={styles['linked-sub']}>{doc.subtitle}</div>
-                  </div>
-                  <ExternalLink size={14} className={styles['linked-chev']} />
-                </div>
-              ))}
-            </div>
-          </SupportingSection>
-        )}
+        <DocumentRelatedDocsSection items={relatedDocuments} />
 
         {gAttachments.length > 0 && (
           <SupportingSection title="Attachments">
