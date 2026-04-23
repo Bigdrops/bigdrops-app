@@ -100,7 +100,7 @@ export function useInvoiceDetailData(id) {
   const fetchAdvanceInvoices = useCallback(async () => {
     const { data, error: advanceError } = await supabase
       .from('invoices')
-      .select('id, invoice_number, invoice_title, total, status, created_at, issue_date, due_date, custom_fields')
+      .select('id, invoice_number, invoice_title, total, status, created_at, issue_date, due_date, po_number, client_id, client_name, notes, terms, amount_in_words, custom_fields')
       .eq('custom_fields->advance_invoice->>parentId', id)
       .is('archived_at', null)
       .order('created_at', { ascending: true })

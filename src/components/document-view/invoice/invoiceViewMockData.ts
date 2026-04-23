@@ -35,12 +35,6 @@ export interface InvoicePaymentEntry {
   tag?: string
 }
 
-export interface AdvanceInvoiceEntry {
-  label: string
-  subtitle: string
-  amount: string
-}
-
 export const invoiceDocument: BaseDocument = {
   id: 'phase-1-invoice',
   number: 'SASINV-B047',
@@ -136,18 +130,5 @@ export const invoicePaymentHistory: InvoicePaymentEntry[] = [
     date: '12 Apr 2025',
     kind: 'wht',
     tag: '5% WHT rate',
-  },
-]
-
-export const invoiceAdvanceItems: AdvanceInvoiceEntry[] = [
-  {
-    label: 'Mobilisation Advance',
-    subtitle: '30% · Generated 01 Mar 2025',
-    amount: '₦1,416,000',
-  },
-  {
-    label: 'Generator Delivery Balance',
-    subtitle: '20% · Generated 18 Mar 2025',
-    amount: '₦944,000',
   },
 ]

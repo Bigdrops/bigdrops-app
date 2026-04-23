@@ -95,17 +95,28 @@ test('invoice view wiring uses the child advance sheet and stops deriving advanc
   assert.doesNotMatch(source, /advanceInvoices=\{\s*invoice\.is_advance/s)
 })
 
-test('active advance sheet wording matches the child advance invoice flow and excludes converter language', () => {
+test('active advance sheet stays compact and removes setup-era wording', () => {
   const source = fs.readFileSync(advanceSheetPath, 'utf8')
 
+  assert.match(source, /SheetTitle[^]*Advance Invoice/s)
+  assert.match(source, /Secondary Label/)
+  assert.match(source, /Save Advance Invoice/)
   assert.match(source, /Create Advance Invoice/)
-  assert.match(source, /Edit Advance Invoice/)
-  assert.match(source, /Advance Invoice Details/)
-  assert.match(source, /Parent Invoice/)
-  assert.match(source, /Advance due now/)
-  assert.match(source, /Balance after advance/)
-  assert.doesNotMatch(source, /Standard Invoice/)
-  assert.doesNotMatch(source, /Advance disabled/)
-  assert.doesNotMatch(source, /Edit Config/)
-  assert.doesNotMatch(source, /clear the advance configuration from this invoice/i)
+  assert.doesNotMatch(source, /Advance Invoice Setup/)
+  assert.doesNotMatch(source, /Advance Invoice Settings/)
+  assert.doesNotMatch(source, /Child invoice for/i)
+  assert.doesNotMatch(source, /Contract Value/)
+  assert.doesNotMatch(source, /\?\s*'Edit Advance Invoice'/)
+  assert.doesNotMatch(source, /Advance Invoice Details/)
+})
+
+test('advance invoice rows use row click only and do not bounce through the standalone child invoice page for downloads', () => {
+  const viewInvoiceSource = fs.readFileSync(viewInvoicePath, 'utf8')
+  const invoiceViewPageSource = fs.readFileSync(path.resolve('src/components/document-view/invoice/InvoiceViewPage.tsx'), 'utf8')
+
+  assert.doesNotMatch(viewInvoiceSource, /navigate\(`\/invoices\/\$\{selectedAdvanceInvoice\.id\}`/)
+  assert.doesNotMatch(viewInvoiceSource, /navigate\(`\/invoices\/\$\{advance\.id\}`/)
+  assert.doesNotMatch(invoiceViewPageSource, /advance-item-trigger/)
+  assert.doesNotMatch(invoiceViewPageSource, /DropdownMenu/)
+  assert.doesNotMatch(invoiceViewPageSource, /MoreHorizontal/)
 })

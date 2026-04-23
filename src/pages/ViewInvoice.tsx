@@ -104,6 +104,7 @@ export default function ViewInvoice() {
   const [advanceSheetMode, setAdvanceSheetMode] = useState<AdvanceSheetMode>('create')
   const [selectedAdvanceInvoice, setSelectedAdvanceInvoice] = useState<any | null>(null)
   const [advanceSaving, setAdvanceSaving] = useState(false)
+  const [advancePdfGenerating, setAdvancePdfGenerating] = useState(false)
   const [advanceDeleteConfirmOpen, setAdvanceDeleteConfirmOpen] = useState(false)
   const [advanceMode, setAdvanceMode] = useState<AdvanceMode>('percent')
   const [advanceInputValue, setAdvanceInputValue] = useState('30')
@@ -272,6 +273,155 @@ export default function ViewInvoice() {
     toastStack.showToast({ title, description, tone })
   }
 
+  const downloadInvoicePdfDocument = useCallback(async ({
+    targetInvoice,
+    targetItems,
+    targetPayments,
+  }: {
+    targetInvoice: any
+    targetItems: any[]
+    targetPayments?: any[]
+  }) => {
+    const targetCustomFields = parseCustomFields(targetInvoice?.custom_fields)
+    const savedColumns = Array.isArray(targetCustomFields?.columnConfig) ? targetCustomFields.columnConfig : BUILTIN_COLUMNS
+    const totals = computeDocument({
+      items: Array.isArray(targetItems) ? targetItems : [],
+      document: targetInvoice,
+      cf: targetCustomFields || {},
+      columns: savedColumns as any,
+    })
+    const settledTotal = (Array.isArray(targetPayments) ? targetPayments : []).reduce((sum, payment) => {
+      if (payment?.voided_at) return sum
+      return sum + Number(payment?.cash_amount || 0) + Number(payment?.wht_amount || 0)
+    }, 0)
+    const targetPreviewModel = buildInvoicePreviewModel({
+      invoice: targetInvoice || {},
+      items: Array.isArray(targetItems) ? targetItems : [],
+      client: client || undefined,
+      settings: settings || undefined,
+      bankAccounts: Array.isArray(bankAccounts) ? bankAccounts : [],
+      customFieldObject: targetCustomFields as any,
+      pdfOutput,
+      poNumber: String(targetInvoice?.po_number || ''),
+      invoiceTotal: totals.totalPayable || Number(targetInvoice?.total || 0),
+      cashReceived: settledTotal,
+      balanceDue: Math.max(0, (totals.totalPayable || Number(targetInvoice?.total || 0)) - settledTotal),
+      totals: {
+        rawSubtotal: totals.subtotal,
+        vatAmount: totals.vat,
+        discountAmount: totals.discount,
+        whtAmount: totals.wht,
+        installRateTotal: totals.installRateTotal,
+      },
+      formatMoney: (value) => formatNaira(value, { preserveFraction: true }),
+    })
+    const resolvedTable = interpretPdfTableSettings(savedColumns as any, {
+      mergeQtyUnit: targetCustomFields?.mergeQtyUnit === true,
+    })
+    const referenceLinks = Array.isArray(targetCustomFields?.attachments)
+      ? targetCustomFields.attachments
+          .filter((entry: any) => entry?.url)
+          .map((entry: any, index: number) => ({
+            label: String(entry.label || entry.name || `Reference ${index + 1}`),
+            url: String(entry.url),
+          }))
+      : []
+
+    await generateInvoicePdf({
+      model: {
+        identity: {
+          id: String(targetInvoice.id || id),
+          kind: 'invoice',
+          number: String(targetInvoice.invoice_number || 'invoice'),
+          title: String(targetInvoice.invoice_title || 'Invoice'),
+          issueDate: String(targetInvoice.issue_date || ''),
+          dueDate: String(targetInvoice.due_date || ''),
+          poNumber: String(targetInvoice.po_number || ''),
+          status: String(targetInvoice.status || ''),
+          currency: 'NGN',
+        },
+        issuer: {
+          label: 'From',
+          name: String(settingsData?.company_name || ''),
+          addressLines: Array.isArray(targetPreviewModel?.companyPreviewLines) ? targetPreviewModel.companyPreviewLines : [],
+          phone: String(settingsData?.company_phone || ''),
+          email: String(settingsData?.company_email || ''),
+          taxId: String(settingsData?.company_vat || ''),
+        },
+        recipient: {
+          label: 'Bill To',
+          name: String(targetInvoice.client_name || ''),
+          attention: String(client?.contact_person || ''),
+          addressLines: Array.isArray(targetPreviewModel?.clientPreviewLines) ? targetPreviewModel.clientPreviewLines : [],
+          phone: String(client?.phone || ''),
+          email: String(client?.email || ''),
+        },
+        headerFields: Array.isArray(targetPreviewModel?.previewDetailRows) ? targetPreviewModel.previewDetailRows : [],
+        columns: resolvedTable.columns,
+        mergeQtyUnit: resolvedTable.mergeQtyUnit,
+        items: (Array.isArray(targetItems) ? targetItems : []).map((item, index) => ({
+          id: String(item.id || item._uiKey || index),
+          rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
+          groupLabel: item.group_name || null,
+          groupId: item.group_id || null,
+          description: item.description || '',
+          subDescription: item.sub_description || '',
+          make: item.make || '',
+          quantity: item.quantity ?? null,
+          unit: item.unit || '',
+          unitPrice: item.unit_price ?? 0,
+          installRate: item.install_rate ?? null,
+          vatRate: item.vat_rate ?? null,
+          discountRate: item.discount_rate ?? null,
+          amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
+          imageUrl: resolveCanonicalItemImageUrl(item),
+          cells:
+            item.row_type === 'group_header'
+              ? undefined
+              : buildPdfRowCells(item, resolvedTable.columns, {
+                  mergeQtyUnit: resolvedTable.mergeQtyUnit,
+                  configuredColumns: resolvedTable.configuredColumns,
+                }),
+          customData: {
+            ...(item.custom_data || {}),
+            ...(item.row_type === 'group_header' ? { showSubtotal: targetCustomFields?.groupMeta?.[item.group_id]?.showSubtotal === true } : {}),
+          },
+        })),
+        totals: {
+          mode: targetPreviewModel?.advanceSummary ? 'advance' : 'standard',
+          rows: (Array.isArray(targetPreviewModel?.previewTotals) ? targetPreviewModel.previewTotals : []).map((row) => ({
+            key: String(row.label || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            label: String(row.label || ''),
+            amount: Number(String(row.value || '0').replace(/[^\d.-]/g, '')) || 0,
+            emphasis: row.emphasis === true,
+          })),
+          amountInWords: String(targetPreviewModel?.previewAmountInWords || ''),
+          balanceDue: targetPreviewModel?.previewBalanceDueAmount ?? null,
+          advanceSummary: targetPreviewModel?.advanceSummary || null,
+        },
+        bankDetails: pdfOutput.showBankDetails ? targetPreviewModel?.selectedPreviewBank : null,
+        notes: targetInvoice.notes
+          ? { title: String(targetCustomFields?.notesTitle || 'Notes'), content: targetInvoice.notes, format: 'html' }
+          : null,
+        terms: targetInvoice.terms
+          ? { title: String(targetCustomFields?.termsTitle || 'Terms and Conditions'), content: targetInvoice.terms, format: 'html' }
+          : null,
+        additionalSections: [],
+        referenceLinks,
+        signature: null,
+        logo: {
+          imageUrl: resolveCanonicalLogoUrl(settingsData),
+          altText: String(settingsData?.company_name || ''),
+        },
+        footerText: pdfOutput.showFooter ? String(settingsData?.footer_text || '') : '',
+        tagline: pdfOutput.showTagline ? String(settingsData?.company_tagline || '') : '',
+        metaFooter: { companyName: String(settingsData?.company_name || '') },
+        template: { designPreset: getPdfDesignPreset('invoice') },
+      },
+      templateId: 'industry',
+    })
+  }, [bankAccounts, client, id, pdfOutput, settings, settingsData])
+
   const handleCopyNumber = async () => {
     if (!invoice?.invoice_number) return
     try {
@@ -304,112 +454,13 @@ export default function ViewInvoice() {
     if (!invoice || downloading) return
     setDownloading(true)
     try {
-      const pdfDesignPreset = getPdfDesignPreset('invoice')
-      const savedColumns = Array.isArray(customFields?.columnConfig) ? customFields.columnConfig : (BUILTIN_COLUMNS as any)
-      const resolvedTable = interpretPdfTableSettings(savedColumns, { 
-        mergeQtyUnit: customFields?.mergeQtyUnit === true 
-      })
-      const referenceLinks = Array.isArray(customFields?.attachments)
-        ? customFields.attachments
-            .filter((entry: any) => entry?.url)
-            .map((entry: any, index: number) => ({
-              label: String(entry.label || entry.name || `Reference ${index + 1}`),
-              url: String(entry.url),
-            }))
-        : []
-
-      await generateInvoicePdf({
-        model: {
-          identity: {
-            id: String(invoice.id || id),
-            kind: 'invoice',
-            number: String(invoice.invoice_number || 'invoice'),
-            title: String(invoice.invoice_title || 'Invoice'),
-            issueDate: String(invoice.issue_date || ''),
-            dueDate: String(invoice.due_date || ''),
-            poNumber: String(invoice.po_number || ''),
-            status: String(viewModel.computedStatus || invoice.status || ''),
-            currency: 'NGN',
-          },
-          issuer: {
-            label: 'From',
-            name: String(settingsData?.company_name || ''),
-            addressLines: Array.isArray(previewModel?.companyPreviewLines) ? previewModel.companyPreviewLines : [],
-            phone: String(settingsData?.company_phone || ''),
-            email: String(settingsData?.company_email || ''),
-            taxId: String(settingsData?.company_vat || ''),
-          },
-          recipient: {
-            label: 'Bill To',
-            name: String(invoice.client_name || ''),
-            attention: String(client?.contact_person || ''),
-            addressLines: Array.isArray(previewModel?.clientPreviewLines) ? previewModel.clientPreviewLines : [],
-            phone: String(client?.phone || ''),
-            email: String(client?.email || ''),
-          },
-          headerFields: Array.isArray(previewModel?.previewDetailRows) ? previewModel.previewDetailRows : [],
-          columns: resolvedTable.columns,
-          mergeQtyUnit: resolvedTable.mergeQtyUnit,
-          items: (Array.isArray(items) ? items : []).map((item, index) => ({
-            id: String(item.id || item._uiKey || index),
-            rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
-            groupLabel: item.group_name || null,
-            groupId: item.group_id || null,
-            description: item.description || '',
-            subDescription: item.sub_description || '',
-            make: item.make || '',
-            quantity: item.quantity ?? null,
-            unit: item.unit || '',
-            unitPrice: item.unit_price ?? 0,
-            installRate: item.install_rate ?? null,
-            vatRate: item.vat_rate ?? null,
-            discountRate: item.discount_rate ?? null,
-            amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
-            imageUrl: resolveCanonicalItemImageUrl(item),
-            cells:
-              item.row_type === 'group_header'
-                ? undefined
-                : buildPdfRowCells(item, resolvedTable.columns, {
-                    mergeQtyUnit: resolvedTable.mergeQtyUnit,
-                    configuredColumns: resolvedTable.configuredColumns,
-                  }),
-            customData: {
-              ...(item.custom_data || {}),
-              ...(item.row_type === 'group_header' ? { showSubtotal: customFields?.groupMeta?.[item.group_id]?.showSubtotal === true } : {}),
-            },
-          })),
-          totals: {
-            mode: previewModel?.advanceSummary ? 'advance' : 'standard',
-            rows: (Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : []).map((row) => ({
-              key: String(row.label || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-              label: String(row.label || ''),
-              amount: Number(String(row.value || '0').replace(/[^\d.-]/g, '')) || 0,
-              emphasis: row.emphasis === true,
-            })),
-            amountInWords: String(previewModel?.previewAmountInWords || ''),
-            balanceDue: previewModel?.previewBalanceDueAmount ?? null,
-            advanceSummary: previewModel?.advanceSummary || null,
-          },
-          bankDetails: pdfOutput.showBankDetails ? previewModel?.selectedPreviewBank : null,
-          notes: invoice.notes
-            ? { title: String(customFields?.notesTitle || 'Notes'), content: invoice.notes, format: 'html' }
-            : null,
-          terms: invoice.terms
-            ? { title: String(customFields?.termsTitle || 'Terms and Conditions'), content: invoice.terms, format: 'html' }
-            : null,
-          additionalSections: [],
-          referenceLinks,
-          signature: null,
-          logo: {
-            imageUrl: resolveCanonicalLogoUrl(settingsData),
-            altText: String(settingsData?.company_name || ''),
-          },
-          footerText: pdfOutput.showFooter ? String(settingsData?.footer_text || '') : '',
-          tagline: pdfOutput.showTagline ? String(settingsData?.company_tagline || '') : '',
-          metaFooter: { companyName: String(settingsData?.company_name || '') },
-          template: { designPreset: pdfDesignPreset },
+      await downloadInvoicePdfDocument({
+        targetInvoice: {
+          ...invoice,
+          status: viewModel.computedStatus || invoice.status || '',
         },
-        templateId: 'industry',
+        targetItems: Array.isArray(items) ? items : [],
+        targetPayments: Array.isArray(payments) ? payments : [],
       })
       showToast('Download ready', 'Invoice PDF downloaded.', 'success')
     } catch (error) {
@@ -447,7 +498,7 @@ export default function ViewInvoice() {
           suffix: advanceSuffixValue,
           primaryLabel: advancePrimaryLabel,
           secondaryLabel: advanceSecondaryLabel,
-          threadPosition: Number(selectedAdvanceInvoice.custom_fields?.advance_invoice?.position || 1),
+          threadPosition: Number(parseCustomFields(selectedAdvanceInvoice.custom_fields)?.advance_invoice?.position || 1),
         })
         showToast('Advance invoice updated', 'Advance child record saved successfully.', 'success')
       } else {
@@ -471,13 +522,22 @@ export default function ViewInvoice() {
     }
   }
 
-  const handleAdvanceDownload = useCallback(() => {
-    if (!selectedAdvanceInvoice?.id) return
-    ui.closeSheet()
-    navigate(`/invoices/${selectedAdvanceInvoice.id}`, {
-      state: { autoDownload: true },
-    })
-  }, [navigate, selectedAdvanceInvoice?.id, ui])
+  const handleAdvanceDownload = useCallback(async () => {
+    if (!selectedAdvanceInvoice?.id || advancePdfGenerating) return
+    setAdvancePdfGenerating(true)
+    try {
+      await downloadInvoicePdfDocument({
+        targetInvoice: selectedAdvanceInvoice,
+        targetItems: [],
+        targetPayments: [],
+      })
+      showToast('Download ready', 'Advance invoice PDF downloaded.', 'success')
+    } catch (error) {
+      showToast('Download failed', error instanceof Error ? error.message : 'Could not generate the advance invoice PDF.')
+    } finally {
+      setAdvancePdfGenerating(false)
+    }
+  }, [advancePdfGenerating, downloadInvoicePdfDocument, selectedAdvanceInvoice])
 
   const handleAdvanceDelete = async () => {
     if (!selectedAdvanceInvoice?.id || advanceSaving) return
@@ -708,7 +768,7 @@ export default function ViewInvoice() {
               advanceSheetMode={advanceSheetMode}
               advanceInvoice={selectedAdvanceInvoice}
               advanceSaving={advanceSaving}
-              advancePdfGenerating={false}
+              advancePdfGenerating={advancePdfGenerating}
               advanceMode={advanceMode}
               setAdvanceMode={setAdvanceMode}
               advanceInputValue={advanceInputValue}
@@ -834,17 +894,6 @@ export default function ViewInvoice() {
               subtitle: advConfig.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
               amountLabel: formatNaira(Number(advance.total || 0)),
               onOpen: () => openAdvanceDetails(advance, 'view'),
-              onDownload: () => {
-                navigate(`/invoices/${advance.id}`, {
-                  state: { autoDownload: true },
-                })
-              },
-              onEdit: () => openAdvanceDetails(advance, 'edit'),
-              onDelete: () => {
-                setSelectedAdvanceInvoice(advance)
-                applyAdvanceDraft(advance)
-                setAdvanceDeleteConfirmOpen(true)
-              },
             }
           })}
           relatedDocuments={relatedDocuments}
