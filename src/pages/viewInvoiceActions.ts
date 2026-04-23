@@ -99,7 +99,7 @@ export async function createAdvanceInvoiceRecord({
   const { count, error: countError } = await supabase
     .from('invoices')
     .select('id', { count: 'exact', head: true })
-    .contains('custom_fields', { advance_invoice: { parentId: parentInvoice?.id } })
+    .eq('custom_fields->advance_invoice->>parentId', parentInvoice?.id)
     .is('archived_at', null)
 
   if (countError) throw countError
@@ -114,7 +114,14 @@ export async function createAdvanceInvoiceRecord({
     threadPosition: Number(count || 0) + 1,
   })
 
-  const { data, error } = await supabase.from('invoices').insert([payload]).select().single()
+  const { data, error } = await supabase
+    .from('invoices')
+    .insert([{
+      ...payload,
+      custom_fields: JSON.stringify(payload.custom_fields)
+    }])
+    .select()
+    .single()
   if (error || !data) throw new Error(error?.message || 'Failed to create advance invoice')
   return data
 }
@@ -148,7 +155,15 @@ export async function updateAdvanceInvoiceRecord({
     threadPosition,
   })
 
-  const { data, error } = await supabase.from('invoices').update(payload).eq('id', advanceInvoiceId).select().single()
+  const { data, error } = await supabase
+    .from('invoices')
+    .update({
+      ...payload,
+      custom_fields: JSON.stringify(payload.custom_fields)
+    })
+    .eq('id', advanceInvoiceId)
+    .select()
+    .single()
   if (error || !data) throw new Error(error?.message || 'Failed to update advance invoice')
   return data
 }
