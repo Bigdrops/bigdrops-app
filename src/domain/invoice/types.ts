@@ -42,6 +42,8 @@ export interface InvoicePdfOutput {
   showDiscountPercentage: boolean
 }
 
+export type InvoicePdfTemplateId = 'industry' | 'nexus'
+
 export interface Payment {
   id: string
   invoice_id: string
@@ -290,6 +292,7 @@ export interface InvoiceCustomFields {
   discountTiming?: DiscountTiming
   whtType?: WhtType
   pdfOutput?: Partial<InvoicePdfOutput>
+  pdfTemplateId?: InvoicePdfTemplateId
   signatoryId?: string | null
   extraCharges?: ExtraCharge[]
   groupMeta?: Record<string, { name?: string; showSubtotal?: boolean }>

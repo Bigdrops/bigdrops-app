@@ -13,6 +13,7 @@ const pdfOutputSettingsPath = path.resolve('src/components/PdfOutputSettings.tsx
 const customizeSheetPath = path.resolve('src/components/document-view/shared/PdfOutputCustomizeSheet.tsx')
 const invoiceMoreSheetPath = path.resolve('src/components/document-view/invoice/InvoiceMoreSheet.tsx')
 const viewInvoicePath = path.resolve('src/pages/ViewInvoice.tsx')
+const pdfIndexPath = path.resolve('src/components/pdf-new/index.ts')
 
 test('invoice preview detail rows exclude duplicate title and client header entries', () => {
   const source = fs.readFileSync(previewModelPath, 'utf8')
@@ -94,6 +95,15 @@ test('customize sheet supports design-only mode for the paint popup', () => {
   assert.match(source, /<PdfDocumentOptionsCard/)
 })
 
+test('invoice customize sheet includes a compact industry and nexus template picker', () => {
+  const source = fs.readFileSync(customizeSheetPath, 'utf8')
+
+  assert.match(source, /INVOICE_PDF_TEMPLATE_OPTIONS/)
+  assert.match(source, /id: 'industry'/)
+  assert.match(source, /id: 'nexus'/)
+  assert.match(source, /setDraftTemplateId\(option\.id\)/)
+})
+
 test('view invoice page exposes bank controls and document options below the preview', () => {
   const source = fs.readFileSync(viewInvoicePath, 'utf8')
 
@@ -103,10 +113,27 @@ test('view invoice page exposes bank controls and document options below the pre
   assert.match(source, /designOnly/)
 })
 
+test('view invoice saves and reuses the selected pdf template id', () => {
+  const source = fs.readFileSync(viewInvoicePath, 'utf8')
+
+  assert.match(source, /const pdfTemplateId = customFields\?\.pdfTemplateId === 'nexus' \? 'nexus' : 'industry'/)
+  assert.match(source, /pdfTemplateId: nextTemplateId/)
+  assert.match(source, /templateId=\{pdfTemplateId\}/)
+  assert.match(source, /templateId: targetTemplateId/)
+})
+
 test('view invoice actions include the qty plus unit merge toggle with persistent state', () => {
   const source = fs.readFileSync(invoiceMoreSheetPath, 'utf8')
 
   assert.match(source, /id: 'qty-unit-merge'/)
   assert.match(source, /closeOnClick: false/)
   assert.match(source, /statusLabel: mergeQtyUnit \? 'On' : 'Off'/)
+})
+
+test('pdf generation can switch invoice output to nexus', () => {
+  const source = fs.readFileSync(pdfIndexPath, 'utf8')
+
+  assert.match(source, /import Nexus from '.\/templates\/Nexus'/)
+  assert.match(source, /case 'nexus':/)
+  assert.match(source, /Template = Nexus/)
 })

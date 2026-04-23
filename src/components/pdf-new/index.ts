@@ -5,6 +5,7 @@ import { adaptIndustryData } from './industryAdapter'
 import { PdfRenderer } from './renderers/PdfRenderer'
 import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings } from './table'
 import Industry from './templates/Industry'
+import Nexus from './templates/Nexus'
 import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel } from './types'
 
 export type PdfGenerationResult = {
@@ -43,10 +44,14 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
 
   const activeTemplateId = request.templateId || 'industry'
 
-  let Template = Industry
-  let templateData = adaptIndustryData(request.model)
+  let Template: React.ComponentType<any> = Industry as React.ComponentType<any>
+  let templateData: unknown = adaptIndustryData(request.model)
 
   switch (activeTemplateId) {
+    case 'nexus':
+      Template = Nexus
+      templateData = request.model
+      break
     case 'industry':
     default:
       Template = Industry

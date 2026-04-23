@@ -114,6 +114,7 @@ export default function ViewInvoice() {
   const settingsData: any = settings || {}
 
   const customFields = useMemo(() => parseCustomFields(invoice?.custom_fields), [invoice?.custom_fields])
+  const pdfTemplateId = customFields?.pdfTemplateId === 'nexus' ? 'nexus' : 'industry'
   const sourceDocument = useMemo(() => getInvoiceSourceDocument(invoice), [invoice])
   const contractValue = Math.max(0, Number(invoice?.total || 0))
 
@@ -287,6 +288,7 @@ export default function ViewInvoice() {
     targetPayments?: any[]
   }) => {
     const targetCustomFields = parseCustomFields(targetInvoice?.custom_fields)
+    const targetTemplateId = targetCustomFields?.pdfTemplateId === 'nexus' ? 'nexus' : 'industry'
     const savedColumns = Array.isArray(targetCustomFields?.columnConfig) ? targetCustomFields.columnConfig : BUILTIN_COLUMNS
     const totals = computeDocument({
       items: Array.isArray(targetItems) ? targetItems : [],
@@ -429,7 +431,7 @@ export default function ViewInvoice() {
         metaFooter: { companyName: String(settingsData?.company_name || '') },
         template: { designPreset: getPdfDesignPreset('invoice') },
       },
-      templateId: 'industry',
+      templateId: targetTemplateId,
     })
   }, [bankAccounts, client, id, pdfOutput, settings, settingsData])
 
@@ -443,7 +445,11 @@ export default function ViewInvoice() {
     }
   }
 
-  const handleSaveCustomization = useCallback(async (nextPdfOutput: PdfOutputSettingsValue) => {
+  const handleSaveCustomization = useCallback(async (
+    nextPdfOutput: PdfOutputSettingsValue,
+    _nextPreset?: unknown,
+    nextTemplateId: 'industry' | 'nexus' = 'industry',
+  ) => {
     if (!invoice?.id) return
     const previousPdfOutput = pdfOutput
     setPdfOutput(nextPdfOutput)
@@ -451,6 +457,7 @@ export default function ViewInvoice() {
       const nextCustomFields = {
         ...(customFields || {}),
         pdfOutput: nextPdfOutput,
+        pdfTemplateId: nextTemplateId,
       }
       const { error } = await supabase.from('invoices').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', invoice.id)
       if (error) throw error
@@ -825,7 +832,8 @@ export default function ViewInvoice() {
               footerText={String(settingsData?.footer_text || '')}
               showBalanceDueOption={true}
               designOnly
-              onSave={(nextValue) => handleSaveCustomization(nextValue)}
+              templateId={pdfTemplateId}
+              onSave={(nextValue, nextPreset, nextTemplateId) => handleSaveCustomization(nextValue, nextPreset, nextTemplateId)}
             />
 
             <InvoiceRecordPaymentSheet
