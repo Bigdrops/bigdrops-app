@@ -492,8 +492,9 @@ export default function ViewInvoice() {
     if (!invoice?.id || advanceSaving) return
     setAdvanceSaving(true)
     try {
+      let savedId: string | null = null
       if (advanceSheetMode === 'edit' && selectedAdvanceInvoice?.id) {
-        await updateAdvanceInvoiceRecord({
+        const updated = await updateAdvanceInvoiceRecord({
           advanceInvoiceId: String(selectedAdvanceInvoice.id),
           parentInvoice: invoice,
           mode: advanceMode,
@@ -503,9 +504,9 @@ export default function ViewInvoice() {
           secondaryLabel: advanceSecondaryLabel,
           threadPosition: Number(parseCustomFields(selectedAdvanceInvoice.custom_fields)?.advance_invoice?.position || 1),
         })
-        showToast('Advance invoice updated', 'Advance child record saved successfully.', 'success')
+        savedId = updated?.id ?? null
       } else {
-        await createAdvanceInvoiceRecord({
+        const created = await createAdvanceInvoiceRecord({
           parentInvoice: invoice,
           mode: advanceMode,
           inputValue: advanceInputValue,
@@ -513,10 +514,32 @@ export default function ViewInvoice() {
           primaryLabel: advancePrimaryLabel,
           secondaryLabel: advanceSecondaryLabel,
         })
-        showToast('Advance invoice created', 'Advance child record created successfully.', 'success')
+        savedId = created?.id ?? null
+      }
+
+      if (!savedId) {
+        throw new Error('No record returned after save')
       }
 
       await refresh()
+
+      const { data: verifyRow, error: verifyError } = await supabase
+        .from('invoices')
+        .select('id, custom_fields')
+        .eq('id', savedId)
+        .filter('custom_fields', 'ilike', `%"parentId":"${invoice.id}"%`)
+        .is('archived_at', null)
+        .single()
+
+      if (verifyError || !verifyRow) {
+        throw new Error('Saved advance invoice could not be verified. It may not appear on this page.')
+      }
+
+      showToast(
+        advanceSheetMode === 'edit' ? 'Advance invoice updated' : 'Advance invoice created',
+        'Advance child record saved successfully.',
+        'success'
+      )
       closeAdvanceSheet(false)
     } catch (error) {
       showToast('Advance invoice failed', error instanceof Error ? error.message : 'Could not save advance invoice')
