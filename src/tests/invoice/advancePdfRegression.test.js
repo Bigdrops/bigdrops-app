@@ -20,7 +20,7 @@ test('advance invoice pdf download reuses parent items and removes legacy advanc
   const source = fs.readFileSync(viewInvoicePath, 'utf8')
 
   assert.match(source, /targetItems:\s*Array\.isArray\(items\)\s*\?\s*items\s*:\s*\[\]/)
-  assert.match(source, /rows:\s*targetPreviewModel\?\.advanceSummary\s*\?\s*\[\]\s*:\s*\(Array\.isArray\(targetPreviewModel\?\.previewTotals\)/)
+  assert.match(source, /rows:\s*\(Array\.isArray\(targetPreviewModel\?\.previewTotals\)\s*\?\s*targetPreviewModel\.previewTotals\s*:\s*\[\]\)\.map/)
 })
 
 test('advance invoice creation flow opens the existing child and skips duplicate creation attempts', () => {

@@ -264,6 +264,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                   const alignStyle = resolveTextAlignmentStyle(column)
                   const isDescription = column.key === 'description'
                   const isMake = column.key === 'make'
+                  const isTightSingleLineCell = column.key === 'quantity' || column.key === 'unit'
 
                   return (
                     <View
@@ -287,6 +288,8 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                         </>
                       ) : isMake ? (
                         <Text style={styles.makeText}>{getCellText(cell)}</Text>
+                      ) : isTightSingleLineCell ? (
+                        <Text style={[styles.tightCellText, alignStyle]}>{getCellText(cell)}</Text>
                       ) : (
                         <Text style={alignStyle}>{getCellText(cell)}</Text>
                       )}

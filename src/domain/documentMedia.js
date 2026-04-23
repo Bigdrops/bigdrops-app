@@ -46,7 +46,6 @@ export function formatMergedQtyUnit(quantity, unit) {
 
   if (!quantityText) return ''
   if (!unitText) return quantityText
-  
-  // Use a non-breaking space to keep them together as one token
-  return `${quantityText}\u00A0${unitText}`
+
+  return `${quantityText}${unitText}`
 }

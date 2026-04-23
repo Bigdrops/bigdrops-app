@@ -394,7 +394,7 @@ export default function ViewInvoice() {
         })),
         totals: {
           mode: targetPreviewModel?.advanceSummary ? 'advance' : 'standard',
-          rows: targetPreviewModel?.advanceSummary ? [] : (Array.isArray(targetPreviewModel?.previewTotals) ? targetPreviewModel.previewTotals : []).map((row) => ({
+          rows: (Array.isArray(targetPreviewModel?.previewTotals) ? targetPreviewModel.previewTotals : []).map((row) => ({
             key: String(row.label || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
             label: String(row.label || ''),
             amount: Number(String(row.value || '0').replace(/[^\d.-]/g, '')) || 0,

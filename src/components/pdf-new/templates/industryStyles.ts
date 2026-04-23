@@ -34,17 +34,19 @@ export const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
     marginBottom: 22,
   },
   headerLeft: {
     flexGrow: 1,
     flexShrink: 1,
-    paddingRight: 14,
+    flexBasis: 0,
+    paddingRight: 18,
   },
   headerRight: {
-    width: 74,
+    width: 96,
     alignItems: 'flex-end',
+    justifyContent: 'flex-start',
   },
   title: {
     fontSize: 27,
@@ -64,22 +66,27 @@ export const styles = StyleSheet.create({
   },
   metaRow: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     marginBottom: 7,
   },
   metaLabel: {
     width: 88,
+    flexShrink: 0,
     color: '#666666',
     fontSize: 10,
     fontFamily: 'Helvetica-Bold',
   },
   metaValue: {
     flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
     color: '#333333',
     fontSize: 10,
+    lineHeight: 1.3,
   },
   logo: {
-    width: 64,
-    height: 64,
+    width: 86,
+    height: 86,
     objectFit: 'contain',
   },
   partyRow: {
@@ -185,6 +192,7 @@ export const styles = StyleSheet.create({
     color: '#333333',
     borderRightWidth: 0.5,
     borderRightColor: '#ececec',
+    justifyContent: 'center',
   },
   groupTitleCell: {
     textAlign: 'left',
@@ -225,6 +233,11 @@ export const styles = StyleSheet.create({
     lineHeight: 1.35,
   },
   makeText: { fontSize: 9.6, color: '#6b7280' },
+  tightCellText: {
+    fontSize: 10,
+    color: '#333333',
+    lineHeight: 1.2,
+  },
   textRight: { textAlign: 'right' },
   textCenter: { textAlign: 'center' },
   imageThumb: {

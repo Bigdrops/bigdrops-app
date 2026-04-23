@@ -232,10 +232,8 @@ export function buildInvoicePreviewModel({
     : []
 
   const previewDetailRows: PreviewDetailRow[] = [
-    { label: 'Client', value: invoice.client_name || 'Unassigned' },
     { label: 'PO Number', value: poNumber || '' },
     { label: 'Payment Terms', value: invoice.payment_terms || '' },
-    { label: 'Title', value: invoice.invoice_title || invoice.document_type || '' },
     { label: 'Work Duration', value: invoice.work_duration || '' },
     ...topHeaderFields.map((field) => ({ label: field.label || '', value: field.value || '' })),
   ].filter((row) => String(row.value || '').trim().length > 0)
@@ -301,33 +299,20 @@ export function buildInvoicePreviewModel({
   const advanceSummary = getAdvanceSummaryValues(invoice)
   const summaryLabels = getPdfSummaryLabels(invoice, pdfOutput)
 
-  const previewTotals: PreviewTotalRow[] = advanceSummary
-    ? [
-        { label: 'Contract Value', value: formatMoney(advanceSummary.contractValue) },
-        { label: 'This Advance', value: formatMoney(advanceSummary.thisAdvance), emphasis: true, valueClassName: 'text-slate-950' },
-        ...(pdfOutput?.showBalanceDue === false
-          ? []
-          : [{
-              label: 'Balance Remaining',
-              value: formatMoney(advanceSummary.balanceRemaining),
-              emphasis: true,
-              valueClassName: advanceSummary.balanceRemaining > 0 ? 'text-red-600' : 'text-emerald-600',
-            }]),
-      ]
-    : [
-        ...buildSummaryRows({
-          invoice,
-          totals,
-          customFields: customFieldObject,
-          chargeLabels: customFieldObject?.chargeLabels,
-          summaryLabels,
-        }).map((row) => ({
-          label: row.label,
-          value: formatMoney(Number(row.amount || 0)),
-          valueClassName: row.tone === 'danger' ? 'text-red-600' : undefined,
-        })),
-        { label: 'Total', value: formatMoney(invoiceTotal), emphasis: true, valueClassName: 'text-slate-950' },
-      ]
+  const previewTotals: PreviewTotalRow[] = [
+    ...buildSummaryRows({
+      invoice,
+      totals,
+      customFields: customFieldObject,
+      chargeLabels: customFieldObject?.chargeLabels,
+      summaryLabels,
+    }).map((row) => ({
+      label: row.label,
+      value: formatMoney(Number(row.amount || 0)),
+      valueClassName: row.tone === 'danger' ? 'text-red-600' : undefined,
+    })),
+    { label: 'Total', value: formatMoney(invoiceTotal), emphasis: true, valueClassName: 'text-slate-950' },
+  ]
 
   const previewNotesSections: PreviewNoteSection[] = [
     invoice.notes
@@ -370,7 +355,7 @@ export function buildInvoicePreviewModel({
     previewItems,
     previewTotals,
     previewAmountInWords: pdfOutput?.showAmountInWords === false ? '' : String(invoice.amount_in_words || ''),
-    previewBalanceDue: advanceSummary || pdfOutput?.showBalanceDue === false
+    previewBalanceDue: pdfOutput?.showBalanceDue === false
       ? null
       : {
           label: 'Balance Due',
@@ -378,7 +363,7 @@ export function buildInvoicePreviewModel({
           emphasis: true,
           valueClassName: balanceDue > 0 ? 'text-red-600' : 'text-emerald-600',
         },
-    previewBalanceDueAmount: advanceSummary || pdfOutput?.showBalanceDue === false ? null : balanceDue,
+    previewBalanceDueAmount: pdfOutput?.showBalanceDue === false ? null : balanceDue,
     previewNotesSections,
     advanceSummary: advanceSummary
       ? {
