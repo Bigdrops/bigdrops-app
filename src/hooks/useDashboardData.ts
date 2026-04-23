@@ -71,6 +71,7 @@ export function useDashboardData() {
 
     try {
       const [invoiceRes, quotationRes, csrRes, waybillRes, financialsRes, projectsRes] = await Promise.all([
+        supabase
           .from('invoices')
           .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields')
           .or('custom_fields->advance_invoice->>role.is.null,custom_fields->advance_invoice->>role.neq.advance')

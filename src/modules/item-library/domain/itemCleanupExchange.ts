@@ -209,7 +209,7 @@ export function validateFlaggedCleanupImport(
   const validPreviewGroups: CleanupPreviewGroup[] = []
   const rejectedGroups: CleanupPreviewRejectedGroup[] = []
 
-  mergeGroupsRaw.forEach((entry, index) => {
+  ;(mergeGroupsRaw as any[]).forEach((entry, index) => {
     if (!isRecord(entry)) {
       rejectedGroups.push({
         group_id: `row-${index + 1}`,

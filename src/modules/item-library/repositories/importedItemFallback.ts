@@ -142,6 +142,7 @@ export function buildFallbackSummaryItems(
     })
 }
 
+function mapHistoryRow(
   row: RawHistorySourceRow,
   sourceType: 'invoice' | 'quotation',
   itemId: string,
