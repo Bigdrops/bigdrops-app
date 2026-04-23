@@ -153,9 +153,6 @@ export default function InvoiceViewPage({
             <div className={styles['advance-list']}>
               {gAdvanceInvoices.map((adv) => (
                 <div key={adv.id} className={styles['advance-item-row']} onClick={adv.onOpen}>
-                  <div className={`${styles['advance-icon']} ${styles.advance}`}>
-                    <Receipt size={16} />
-                  </div>
                   <div className={styles['advance-body']}>
                     <div className={styles['advance-title']}>{adv.title}</div>
                     <div className={styles['advance-sub']}>{adv.subtitle}</div>

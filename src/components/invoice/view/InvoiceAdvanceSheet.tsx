@@ -101,11 +101,11 @@ export default function InvoiceAdvanceSheet({
             <div className="px-6 py-4">
               <div className="mb-4 space-y-1.5">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Invoice Number</Label>
-                <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1 pr-2 shadow-sm">
-                  <div className="flex h-8 items-center rounded-lg bg-slate-50 px-2.5 text-[13px] font-bold tracking-tight text-slate-400">
+                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 pr-3 shadow-sm focus-within:border-slate-400 transition-colors">
+                  <div className="flex h-8 items-center rounded-lg bg-slate-50 px-3 text-[12px] font-black tracking-tight text-slate-400 select-none">
                     {invoiceNumber || 'INV-000'}
                   </div>
-                  <span className="text-slate-300 font-black">/</span>
+                  <div className="h-4 w-[1px] bg-slate-200" />
                   <div className="relative flex-1">
                     <Input
                       id="advance-suffix"
@@ -114,7 +114,7 @@ export default function InvoiceAdvanceSheet({
                       value={advanceSuffixValue}
                       onChange={(event) => setAdvanceSuffixValue(event.target.value.toUpperCase())}
                       disabled={isViewMode || advanceSaving}
-                      className="h-8 w-full rounded-lg border-slate-200 bg-white text-center font-mono text-sm font-black text-slate-900 shadow-none ring-offset-0 focus:border-slate-400 focus:ring-0"
+                      className="h-8 w-full border-none bg-transparent px-0 text-center font-mono text-sm font-black text-slate-900 shadow-none ring-0 ring-offset-0 focus:ring-0 focus-visible:ring-0"
                     />
                   </div>
                 </div>

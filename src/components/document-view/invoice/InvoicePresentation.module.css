@@ -390,18 +390,6 @@
 
 .advance-item-row:hover { background: var(--bg2); }
 
-.advance-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.advance-icon.advance { background: var(--primary-bg); color: var(--primary); }
-
 .advance-body { flex: 1; min-width: 0; }
 .advance-title { font-size: 12px; font-weight: 600; color: var(--text); }
 .advance-sub { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-top: 1px; }
