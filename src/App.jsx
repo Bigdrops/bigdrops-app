@@ -7,6 +7,7 @@ import AppShell from '@/components/app/AppShell'
 import PageLoader from '@/components/app/PageLoader'
 import OfflineAccessBlocked from '@/components/app/OfflineAccessBlocked'
 import SplashOverlay from '@/components/app/SplashOverlay'
+import { useSyncBootstrap } from '@/app/useSyncBootstrap'
 import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
 import { isInvalidSessionError } from '@/auth/sessionErrors'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
@@ -30,9 +31,6 @@ const AUTH_DEBUG = import.meta.env.DEV
 
 let offlineAccessModulePromise
 let deviceHydrationModulePromise
-let waybillSyncModulePromise
-let csrSyncModulePromise
-let quotationSyncModulePromise
 
 const loadOfflineAccessModule = () => {
   if (!offlineAccessModulePromise) {
@@ -46,27 +44,6 @@ const loadDeviceHydrationModule = () => {
     deviceHydrationModulePromise = import('@/lib/native/deviceHydration')
   }
   return deviceHydrationModulePromise
-}
-
-const loadWaybillSyncModule = () => {
-  if (!waybillSyncModulePromise) {
-    waybillSyncModulePromise = import('@/lib/native/waybillSync')
-  }
-  return waybillSyncModulePromise
-}
-
-const loadCsrSyncModule = () => {
-  if (!csrSyncModulePromise) {
-    csrSyncModulePromise = import('@/lib/native/csrSync')
-  }
-  return csrSyncModulePromise
-}
-
-const loadQuotationSyncModule = () => {
-  if (!quotationSyncModulePromise) {
-    quotationSyncModulePromise = import('@/lib/native/quotationSync')
-  }
-  return quotationSyncModulePromise
 }
 
 function debugAuth(...args) {
@@ -95,14 +72,10 @@ function App() {
   const splashStartRef = useRef(Date.now())
   const hasBootedRef = useRef(false)
   const lastUserIdRef = useRef(null)
-  const hiddenAtRef = useRef(null)
   const recoveringRef = useRef(false)
   const lastRecoveryAtRef = useRef(0)
   const profileRef = useRef(null)
   const sessionRef = useRef(null)
-  const waybillSyncingRef = useRef(false)
-  const csrSyncingRef = useRef(false)
-  const quotationSyncingRef = useRef(false)
 
   const { runLatest: runLatestProfileTask, cancel: cancelProfileTask } = useSafeAsyncTask()
 
@@ -185,111 +158,6 @@ function App() {
       }
       setOfflineAccessState(fallbackAccessState)
       return fallbackAccessState
-    }
-  }
-
-  const processOnePendingWaybillCreateSync = async (reason) => {
-    if (!canUseAndroidNativeSqlite()) return
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) return
-    if (waybillSyncingRef.current) return
-
-    waybillSyncingRef.current = true
-
-    try {
-      const { processNextPendingWaybillCreate } = await loadWaybillSyncModule()
-      const result = await processNextPendingWaybillCreate()
-
-      if (result.status === 'synced') {
-        debugAuth('waybillSync:oneShotSynced', {
-          reason,
-          queueItemId: result.queueItemId || null,
-          localWaybillId: result.localWaybillId || null,
-          remoteWaybillId: result.remoteWaybillId || null,
-        })
-      }
-
-      if (result.status === 'failed') {
-        console.warn('One-shot waybill sync failed:', {
-          reason,
-          queueItemId: result.queueItemId || null,
-          localWaybillId: result.localWaybillId || null,
-          error: result.error || null,
-        })
-      }
-    } catch (error) {
-      console.warn(`One-shot waybill sync crashed during ${reason}:`, error)
-    } finally {
-      waybillSyncingRef.current = false
-    }
-  }
-
-  const processOnePendingCsrCreateSync = async (reason) => {
-    if (!canUseAndroidNativeSqlite()) return
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) return
-    if (csrSyncingRef.current) return
-
-    csrSyncingRef.current = true
-
-    try {
-      const { processNextPendingCsrCreate } = await loadCsrSyncModule()
-      const result = await processNextPendingCsrCreate()
-
-      if (result.status === 'synced') {
-        debugAuth('csrSync:oneShotSynced', {
-          reason,
-          queueItemId: result.queueItemId || null,
-          localCsrId: result.localCsrId || null,
-          remoteCsrId: result.remoteCsrId || null,
-        })
-      }
-
-      if (result.status === 'failed') {
-        console.warn('One-shot CSR sync failed:', {
-          reason,
-          queueItemId: result.queueItemId || null,
-          localCsrId: result.localCsrId || null,
-          error: result.error || null,
-        })
-      }
-    } catch (error) {
-      console.warn(`One-shot CSR sync crashed during ${reason}:`, error)
-    } finally {
-      csrSyncingRef.current = false
-    }
-  }
-
-  const processOnePendingQuotationCreateSync = async (reason) => {
-    if (!canUseAndroidNativeSqlite()) return
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) return
-    if (quotationSyncingRef.current) return
-
-    quotationSyncingRef.current = true
-
-    try {
-      const { processNextPendingQuotationCreate } = await loadQuotationSyncModule()
-      const result = await processNextPendingQuotationCreate()
-
-      if (result.status === 'synced') {
-        debugAuth('quotationSync:oneShotSynced', {
-          reason,
-          queueItemId: result.queueItemId || null,
-          localQuotationId: result.localQuotationId || null,
-          remoteQuotationId: result.remoteQuotationId || null,
-        })
-      }
-
-      if (result.status === 'failed') {
-        console.warn('One-shot quotation sync failed:', {
-          reason,
-          queueItemId: result.queueItemId || null,
-          localQuotationId: result.localQuotationId || null,
-          error: result.error || null,
-        })
-      }
-    } catch (error) {
-      console.warn(`One-shot quotation sync crashed during ${reason}:`, error)
-    } finally {
-      quotationSyncingRef.current = false
     }
   }
 
@@ -426,10 +294,15 @@ function App() {
       console.error('Lifecycle recovery error:', error)
     } finally {
       setAuthLoading(false)
-      hiddenAtRef.current = null
       recoveringRef.current = false
     }
   }
+
+  const { runSyncBootstrap } = useSyncBootstrap({
+    refreshOfflineAccessState,
+    recoverAppState,
+    debug: debugAuth,
+  })
 
   useEffect(() => {
     const style = document.createElement('style')
@@ -578,9 +451,7 @@ function App() {
           setResolvedProfileUserId(null)
         }
 
-        await processOnePendingWaybillCreateSync('app bootstrap')
-        await processOnePendingCsrCreateSync('app bootstrap')
-        await processOnePendingQuotationCreateSync('app bootstrap')
+        await runSyncBootstrap('app bootstrap')
       } finally {
         if (isActive) {
           setAuthLoading(false)
@@ -608,46 +479,6 @@ function App() {
 
   useEffect(() => {
     hasBootedRef.current = true
-  }, [])
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        hiddenAtRef.current = Date.now()
-        return
-      }
-
-      if (!hiddenAtRef.current) return
-      void refreshOfflineAccessState().then((nextAccessState) => {
-        if (nextAccessState.allowed) {
-          void recoverAppState('visibility').then(() => {
-            void processOnePendingWaybillCreateSync('visibility')
-            void processOnePendingCsrCreateSync('visibility')
-            void processOnePendingQuotationCreateSync('visibility')
-          })
-        }
-      })
-    }
-
-    const handleOnline = () => {
-      void refreshOfflineAccessState().then((nextAccessState) => {
-        if (nextAccessState.allowed) {
-          void recoverAppState('online', { force: true }).then(() => {
-            void processOnePendingWaybillCreateSync('online')
-            void processOnePendingCsrCreateSync('online')
-            void processOnePendingQuotationCreateSync('online')
-          })
-        }
-      })
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('online', handleOnline)
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('online', handleOnline)
-    }
   }, [])
 
   useEffect(() => {
