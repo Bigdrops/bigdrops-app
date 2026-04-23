@@ -22,6 +22,7 @@ import {
 import { getDocumentActionState, getProjectActionState } from "@/domain/document/documentActionState"
 import { getInvoiceListActionDefs, getInvoiceListDeleteActionDef } from "@/domain/invoice/actions"
 import { fetchInvoiceChildDocuments, fetchProjectSummary, getInvoiceSourceDocument } from "@/domain/documentRelationships"
+import { ADVANCE_INVOICE_EXCLUSION_FILTER, shouldIncludeInvoiceInList } from "@/domain/invoice/advanceList"
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
 import { formatStatusLabel } from "@/lib/formatters/status"
@@ -36,14 +37,6 @@ function canUseInvoiceCacheFallback() {
     typeof navigator !== "undefined" &&
     navigator.onLine === false
   )
-}
-
-function shouldShowInvoiceInList(invoice) {
-  const customFields = typeof invoice?.custom_fields === 'string'
-    ? JSON.parse(invoice.custom_fields || '{}')
-    : (invoice?.custom_fields || {})
-    
-  return customFields?.advance_invoice?.role !== 'advance'
 }
 
 export default function Invoices() {
@@ -65,6 +58,7 @@ export default function Invoices() {
   const [loadingMore, setLoadingMore]     = useState(false)
   const [activeInvoiceRelatedDocs, setActiveInvoiceRelatedDocs] = useState({ csrs: [], waybills: [] })
   const [activeInvoiceProject, setActiveInvoiceProject] = useState(null)
+  const [activeInvoiceCustomFields, setActiveInvoiceCustomFields] = useState(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const navigate = useNavigate()
@@ -72,8 +66,9 @@ export default function Invoices() {
   const buildInvoiceQuery = () => {
     let query = supabase
       .from("invoices")
-      .select("*", { count: "exact" })
+      .select("id, invoice_number, client_name, issue_date, created_at, total, status, project_id, thread_id", { count: "exact" })
       .is("archived_at", null)
+      .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
 
     const searchTerm = search.trim()
     if (searchTerm) {
@@ -130,7 +125,7 @@ export default function Invoices() {
       const { data, count, error } = await buildInvoiceQuery().range(from, to)
       if (error) throw error
 
-      const nextRows = (data || []).filter(shouldShowInvoiceInList)
+      const nextRows = data || []
 
       setInvoices((current) => (replace ? nextRows : [...current, ...nextRows]))
       setTotalCount(count || 0)
@@ -157,7 +152,7 @@ export default function Invoices() {
 
         const filteredRows = cachedRows
           .filter((row) => !row.archived_at)
-          .filter(shouldShowInvoiceInList)
+          .filter(shouldIncludeInvoiceInList)
           .filter((row) => {
             if (!searchTerm) return true
             const invoiceNumber = String(row.invoice_number || "").toLowerCase()
@@ -224,13 +219,14 @@ export default function Invoices() {
     try {
       const { data, error } = await supabase
         .from("invoices")
-        .select("client_name, custom_fields")
+        .select("client_name")
         .is("archived_at", null)
+        .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
 
       if (error) throw error
 
       const nextOptions = Array.from(
-        new Set((data || []).filter(shouldShowInvoiceInList).map((row) => row.client_name).filter(Boolean)),
+        new Set((data || []).map((row) => row.client_name).filter(Boolean)),
       ).sort((a, b) => a.localeCompare(b))
 
       setClientOptions(nextOptions)
@@ -244,7 +240,7 @@ export default function Invoices() {
       try {
         const cachedRows = await getCachedInvoiceList()
         const nextOptions = Array.from(
-          new Set((cachedRows || []).filter(shouldShowInvoiceInList).map((row) => row.client_name).filter(Boolean)),
+          new Set((cachedRows || []).filter(shouldIncludeInvoiceInList).map((row) => row.client_name).filter(Boolean)),
         ).sort((a, b) => a.localeCompare(b))
         setClientOptions(nextOptions)
       } catch (cacheError) {
@@ -272,17 +268,20 @@ export default function Invoices() {
       if (!activeInvoice?.id) {
         setActiveInvoiceRelatedDocs({ csrs: [], waybills: [] })
         setActiveInvoiceProject(null)
+        setActiveInvoiceCustomFields(null)
         return
       }
 
-      const [relatedDocs, project] = await Promise.all([
+      const [relatedDocs, project, invoiceMeta] = await Promise.all([
         fetchInvoiceChildDocuments(activeInvoice.id),
         activeInvoice.project_id ? fetchProjectSummary(activeInvoice.project_id) : Promise.resolve(null),
+        supabase.from("invoices").select("custom_fields").eq("id", activeInvoice.id).single(),
       ])
 
       if (cancelled) return
       setActiveInvoiceRelatedDocs(relatedDocs)
       setActiveInvoiceProject(project)
+      setActiveInvoiceCustomFields(invoiceMeta.data?.custom_fields || null)
     }
 
     void loadActiveInvoiceRelationships()
@@ -296,6 +295,7 @@ export default function Invoices() {
     setActiveInvoice(null)
     setShowArchiveWarn(false)
     setShowDeleteWarn(false)
+    setActiveInvoiceCustomFields(null)
   }
 
   // Ã¢â€ â‚¬Ã¢â€ â‚¬ Actions Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬
@@ -324,6 +324,14 @@ export default function Invoices() {
     const inv = activeInvoice
     closeSheet()
     try {
+      const { data: invoiceDetail, error: invoiceDetailError } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("id", inv.id)
+        .single()
+
+      if (invoiceDetailError || !invoiceDetail) throw invoiceDetailError || new Error("Invoice not found")
+
       const { data: all } = await supabase
         .from("invoices").select("invoice_number").like("invoice_number", "SASINV-B%").order("created_at", { ascending: false })
       let nextNum = 1
@@ -336,7 +344,7 @@ export default function Invoices() {
       navigate("/invoices/new", {
         state: {
           prefill: {
-            ...inv,
+            ...invoiceDetail,
             invoice_number: newNumber,
             client_id: null,
             client_name: "",
@@ -372,7 +380,7 @@ export default function Invoices() {
   }
 
   const isStandalone = activeInvoice && !activeInvoice.thread_id
-  const activeInvoiceSource = activeInvoice ? getInvoiceSourceDocument(activeInvoice) : null
+  const activeInvoiceSource = activeInvoice ? getInvoiceSourceDocument({ custom_fields: activeInvoiceCustomFields }) : null
   const invoiceProjectState = getProjectActionState({ projectId: activeInvoice?.project_id, project: activeInvoiceProject })
   const invoiceDocumentState = getDocumentActionState({
     sourceDocument: activeInvoiceSource,

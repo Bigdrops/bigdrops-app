@@ -6,6 +6,9 @@ import {
   FolderKanban,
   Loader2,
 } from 'lucide-react'
+import { ADVANCE_INVOICE_EXCLUSION_FILTER } from '@/domain/invoice/advanceList'
+import { formatDisplayDate } from '@/lib/formatters/date'
+import { formatNaira } from '@/lib/formatters/money'
 import { supabase } from '@/supabase'
 import type { SettingsToastFn } from './settings-types'
 
@@ -69,7 +72,7 @@ export function ArchivesSettingsSection({ onToast }: { onToast: SettingsToastFn 
         .from('invoices')
         .select('id, invoice_number, client_name, total, status, issue_date, archived_at')
         .not('archived_at', 'is', null)
-        .or('custom_fields->advance_invoice->>role.is.null,custom_fields->advance_invoice->>role.neq.advance')
+        .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
         .order('archived_at', { ascending: false }),
       supabase
         .from('quotations')
@@ -97,16 +100,18 @@ export function ArchivesSettingsSection({ onToast }: { onToast: SettingsToastFn 
   }, [loadArchives])
 
   const formatMoney = (value: number | string | null | undefined) =>
-    `₦${Number(value || 0).toLocaleString()}`
+    formatNaira(value)
 
   const formatDate = (value: string | null | undefined) => {
-    if (!value) return 'Not set'
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return String(value)
-    return date.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
+    return formatDisplayDate(value, {
+      fallback: 'Not set',
+      invalidFallback: value || 'Not set',
+      locale: 'en-GB',
+      dateOptions: {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      },
     })
   }
 

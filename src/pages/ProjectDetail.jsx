@@ -8,6 +8,7 @@ import { CenteredSpinner, SkeletonCard, SkeletonRow } from '@/components/loading
 import ProjectDocumentCard from '@/components/project/ProjectDocumentCard'
 import ProjectDocumentSheet from '@/components/project/ProjectDocumentSheet'
 import { toast } from '@/hooks/use-toast'
+import { ADVANCE_INVOICE_EXCLUSION_FILTER } from '@/domain/invoice/advanceList'
 import { getClientMismatchMessage, isClientMismatch } from '@/domain/projects'
 import { supabase } from '../supabase'
 
@@ -72,7 +73,7 @@ export default function ProjectDetail() {
           .select('id, invoice_number, invoice_title, status, total, issue_date, document_type, custom_fields')
           .eq('project_id', id)
           .is('archived_at', null)
-          .or('custom_fields->advance_invoice->>role.is.null,custom_fields->advance_invoice->>role.neq.advance')
+          .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
           .order('issue_date', { ascending: false }),
         supabase
           .from('csrs')

@@ -26,6 +26,7 @@ import { SkeletonCard, SkeletonRow } from '@/components/loading/AppLoadingStates
 import Layout, { MobileChromeContext } from '../components/Layout'
 import { getCreateActions, getQuickTiles, loadStoredQuickTiles } from '../config/quickTiles'
 import { supabase } from '../supabase'
+import { ADVANCE_INVOICE_EXCLUSION_FILTER, shouldIncludeInvoiceInList } from '@/domain/invoice/advanceList'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
 
@@ -71,15 +72,6 @@ function getStatusStyle(status) {
   if (label === 'Unpaid' || label === 'Open' || label === 'Dispatched') return { badge: 'bg-blue-50 text-blue-700 border-blue-200', icon: BadgeCheck, label }
   if (label === 'Partially paid') return { badge: 'bg-amber-50 text-amber-700 border-amber-200', icon: Clock, label: 'Partially Paid' }
   return { badge: 'bg-slate-50 text-slate-700 border-slate-200', icon: Clock, label }
-}
-
-function shouldShowInvoiceInRecentDocs(invoice) {
-  const customFields = typeof invoice?.custom_fields === 'string'
-    ? JSON.parse(invoice.custom_fields || '{}')
-    : (invoice?.custom_fields || {})
-    
-  const advanceConfig = customFields?.advance_invoice
-  return advanceConfig?.role !== 'advance'
 }
 
 function buildPriorityItems(projects, invoices, quotations) {
@@ -521,7 +513,7 @@ export default function Dashboard({ session }) {
         supabase
           .from('invoices')
           .select('id, invoice_number, client_name, status, created_at, total, custom_fields')
-          .or('custom_fields->advance_invoice->>role.is.null,custom_fields->advance_invoice->>role.neq.advance')
+          .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
           .order('created_at', { ascending: false })
           .limit(8),
         supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
@@ -531,7 +523,7 @@ export default function Dashboard({ session }) {
         supabase.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
       ])
 
-      const invoices = (invoiceRes.data || []).filter(shouldShowInvoiceInRecentDocs)
+      const invoices = (invoiceRes.data || []).filter(shouldIncludeInvoiceInList)
       const quotations = quotationRes.data || []
       const csrs = csrRes.data || []
       const waybills = waybillRes.data || []

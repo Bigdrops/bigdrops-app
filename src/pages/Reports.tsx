@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 
 import Layout from '../components/Layout'
+import { ADVANCE_INVOICE_EXCLUSION_FILTER } from '@/domain/invoice/advanceList'
 import { supabase } from '../supabase'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -745,158 +746,245 @@ export default function Reports() {
   const [projects, setProjects] = useState<ProjectFinancialRow[]>([])
   const [taxInvoices, setTaxInvoices] = useState<TaxInvoiceRow[]>([])
   const [loading, setLoading] = useState({
-    receivables: true,
-    collections: true,
-    projects: true,
-    tax: true,
+    receivables: false,
+    collections: false,
+    projects: false,
+    tax: false,
+  })
+  const [loaded, setLoaded] = useState({
+    receivables: null as string | null,
+    collections: null as string | null,
+    projects: false,
+    tax: null as string | null,
   })
   const [error, setError] = useState({
     receivables: '',
     collections: '',
     projects: '',
+    tax: '',
+  })
+  const requestIds = useRef({
+    receivables: 0,
+    collections: 0,
+    projects: 0,
+    tax: 0,
   })
 
   const { start, end } = useMemo(() => getPresetRange(datePreset, customStart, customEnd), [datePreset, customStart, customEnd])
   const queryStart = useMemo(() => safeDate(start), [start])
   const queryEnd = useMemo(() => safeDate(end), [end])
+  const rangeKey = `${queryStart || ''}:${queryEnd || ''}`
   const searchTerm = search.trim().toLowerCase()
 
+  const loadReceivables = useCallback(async (startDate: string | null, endDate: string | null, nextRangeKey: string) => {
+    const requestId = ++requestIds.current.receivables
+
+    setLoading((current) => ({ ...current, receivables: true }))
+    setError((current) => ({ ...current, receivables: '' }))
+
+    let receivablesQuery = supabase.from('invoice_financials_v').select('*').order('issue_date', { ascending: false })
+
+    if (startDate) receivablesQuery = receivablesQuery.gte('issue_date', startDate)
+    if (endDate) receivablesQuery = receivablesQuery.lte('issue_date', endDate)
+
+    const receivablesResult = await receivablesQuery
+
+    if (requestIds.current.receivables !== requestId) return
+
+    setReceivables((receivablesResult.data || []) as InvoiceFinancialRow[])
+    setLoading((current) => ({ ...current, receivables: false }))
+    setError((current) => ({ ...current, receivables: receivablesResult.error?.message || '' }))
+
+    if (!receivablesResult.error) {
+      setLoaded((current) => ({ ...current, receivables: nextRangeKey }))
+    }
+  }, [])
+
+  const loadCollections = useCallback(async (startDate: string | null, endDate: string | null, nextRangeKey: string) => {
+    const requestId = ++requestIds.current.collections
+
+    setLoading((current) => ({ ...current, collections: true }))
+    setError((current) => ({ ...current, collections: '' }))
+
+    let paymentsQuery = supabase
+      .from('payments')
+      .select('*, invoices(invoice_number, client_name)')
+      .is('voided_at', null)
+      .order('date', { ascending: false })
+
+    if (startDate) paymentsQuery = paymentsQuery.gte('date', startDate)
+    if (endDate) paymentsQuery = paymentsQuery.lte('date', endDate)
+
+    const paymentsResult = await paymentsQuery
+
+    if (requestIds.current.collections !== requestId) return
+
+    const paymentsData = (paymentsResult.data || []) as CollectionRow[]
+    const bankAccountIds = Array.from(
+      new Set(
+        paymentsData
+          .map((payment) => payment.bank_account_id)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    )
+
+    let bankAccountsMap = new Map<string, BankAccountLookupRow>()
+    let bankAccountsErrorMessage = ''
+
+    if (!paymentsResult.error && bankAccountIds.length > 0) {
+      const { data: bankAccountRows, error: bankAccountsError } = await supabase
+        .from('bank_accounts')
+        .select('id, bank_name, account_number')
+        .in('id', bankAccountIds)
+
+      if (requestIds.current.collections !== requestId) return
+
+      bankAccountsErrorMessage = bankAccountsError?.message || ''
+      if (!bankAccountsError) {
+        bankAccountsMap = new Map(
+          ((bankAccountRows || []) as BankAccountLookupRow[]).map((bankAccount) => [bankAccount.id, bankAccount]),
+        )
+      }
+    }
+
+    const collectionRows = paymentsData.map((payment) => {
+      const joinedInvoice = Array.isArray(payment.invoices) ? payment.invoices[0] : payment.invoices
+      const linkedAccount = payment.bank_account_id ? bankAccountsMap.get(payment.bank_account_id) : null
+      return {
+        ...payment,
+        invoice_number: joinedInvoice?.invoice_number || '—',
+        client_name: joinedInvoice?.client_name || '—',
+        account_label: linkedAccount?.bank_name
+          ? `${linkedAccount.bank_name} — ${linkedAccount.account_number || 'No account'}`
+          : payment.method || '—',
+      }
+    })
+
+    setCollections(collectionRows)
+    setLoading((current) => ({ ...current, collections: false }))
+    setError((current) => ({
+      ...current,
+      collections: paymentsResult.error?.message || bankAccountsErrorMessage,
+    }))
+
+    if (!paymentsResult.error && !bankAccountsErrorMessage) {
+      setLoaded((current) => ({ ...current, collections: nextRangeKey }))
+    }
+  }, [])
+
+  const loadProjects = useCallback(async () => {
+    const requestId = ++requestIds.current.projects
+
+    setLoading((current) => ({ ...current, projects: true }))
+    setError((current) => ({ ...current, projects: '' }))
+
+    const projectsResult = await supabase.from('project_financials_v').select('*').order('outstanding', { ascending: false })
+
+    if (requestIds.current.projects !== requestId) return
+
+    setProjects((projectsResult.data || []) as ProjectFinancialRow[])
+    setLoading((current) => ({ ...current, projects: false }))
+    setError((current) => ({ ...current, projects: projectsResult.error?.message || '' }))
+
+    if (!projectsResult.error) {
+      setLoaded((current) => ({ ...current, projects: true }))
+    }
+  }, [])
+
+  const loadTax = useCallback(async (startDate: string | null, endDate: string | null, nextRangeKey: string) => {
+    const requestId = ++requestIds.current.tax
+
+    setLoading((current) => ({ ...current, tax: true }))
+    setError((current) => ({ ...current, tax: '' }))
+
+    let taxQuery = supabase
+      .from('invoices')
+      .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
+      .not('status', 'eq', 'archived')
+      .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
+      .order('issue_date', { ascending: false })
+
+    if (startDate) taxQuery = taxQuery.gte('issue_date', startDate)
+    if (endDate) taxQuery = taxQuery.lte('issue_date', endDate)
+
+    const taxResult = await taxQuery
+
+    if (requestIds.current.tax !== requestId) return
+
+    setTaxInvoices((taxResult.data || []) as TaxInvoiceRow[])
+    setLoading((current) => ({ ...current, tax: false }))
+    setError((current) => ({ ...current, tax: taxResult.error?.message || '' }))
+
+    if (!taxResult.error) {
+      setLoaded((current) => ({ ...current, tax: nextRangeKey }))
+    }
+  }, [])
+
   useEffect(() => {
-    let cancelled = false
+    const startDate = safeDate(queryStart)
+    const endDate = safeDate(queryEnd)
 
-    const load = async () => {
-      setLoading({
-        receivables: true,
-        collections: true,
-        projects: true,
-        tax: true,
-      })
-      setError({
-        receivables: '',
-        collections: '',
-        projects: '',
-      })
-
-      let receivablesQuery = supabase.from('invoice_financials_v').select('*').order('issue_date', { ascending: false })
-      let paymentsQuery = supabase
-        .from('payments')
-        .select('*, invoices(invoice_number, client_name)')
-        .is('voided_at', null)
-        .order('date', { ascending: false })
-      let taxQuery = supabase
-        .from('invoices')
-        .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
-        .not('status', 'eq', 'archived')
-        .or('custom_fields->advance_invoice->>role.is.null,custom_fields->advance_invoice->>role.neq.advance')
-        .order('issue_date', { ascending: false })
-
-      const startDate = safeDate(queryStart)
-      const endDate = safeDate(queryEnd)
-
-      if (startDate) {
-        receivablesQuery = receivablesQuery.gte('issue_date', startDate)
-        paymentsQuery = paymentsQuery.gte('date', startDate)
-        taxQuery = taxQuery.gte('issue_date', startDate)
-      }
-      if (endDate) {
-        receivablesQuery = receivablesQuery.lte('issue_date', endDate)
-        paymentsQuery = paymentsQuery.lte('date', endDate)
-        taxQuery = taxQuery.lte('issue_date', endDate)
-      }
-
-      const [receivablesResult, paymentsResult, projectsResult, taxResult] = await Promise.all([
-        receivablesQuery,
-        paymentsQuery,
-        supabase.from('project_financials_v').select('*').order('outstanding', { ascending: false }),
-        taxQuery,
-      ])
-
-      if (cancelled) return
-
-      setReceivables((receivablesResult.data || []) as InvoiceFinancialRow[])
-      setProjects((projectsResult.data || []) as ProjectFinancialRow[])
-      setTaxInvoices((taxResult.data || []) as TaxInvoiceRow[])
-
-      const bankAccountIds = Array.from(
-        new Set(
-          ((paymentsResult.data || []) as CollectionRow[])
-            .map((payment) => payment.bank_account_id)
-            .filter((value): value is string => Boolean(value)),
-        ),
-      )
-
-      let bankAccountsMap = new Map<string, BankAccountLookupRow>()
-      if (bankAccountIds.length > 0) {
-        const { data: bankAccountRows, error: bankAccountsError } = await supabase
-          .from('bank_accounts')
-          .select('id, bank_name, account_number')
-          .in('id', bankAccountIds)
-
-        if (bankAccountsError && !cancelled) {
-          setError((current) => ({
-            ...current,
-            collections: bankAccountsError.message,
-          }))
-        } else {
-          bankAccountsMap = new Map(
-            ((bankAccountRows || []) as BankAccountLookupRow[]).map((bankAccount) => [bankAccount.id, bankAccount]),
-          )
-        }
-      }
-
-      const collectionRows = ((paymentsResult.data || []) as CollectionRow[]).map((payment) => {
-        const joinedInvoice = Array.isArray(payment.invoices) ? payment.invoices[0] : payment.invoices
-        const linkedAccount = payment.bank_account_id ? bankAccountsMap.get(payment.bank_account_id) : null
-        return {
-          ...payment,
-          invoice_number: joinedInvoice?.invoice_number || '—',
-          client_name: joinedInvoice?.client_name || '—',
-          account_label: linkedAccount?.bank_name
-            ? `${linkedAccount.bank_name} — ${linkedAccount.account_number || 'No account'}`
-            : payment.method || '—',
-        }
-      })
-      setCollections(collectionRows)
-
-      setLoading({
-        receivables: false,
-        collections: false,
-        projects: false,
-        tax: false,
-      })
-
-      setError({
-        receivables: receivablesResult.error?.message || '',
-        collections: paymentsResult.error?.message || '',
-        projects: projectsResult.error?.message || '',
-      })
+    if (tab === 'receivables' && loaded.receivables !== rangeKey && !loading.receivables) {
+      void loadReceivables(startDate, endDate, rangeKey)
     }
 
-    void load()
-
-    return () => {
-      cancelled = true
+    if (tab === 'collections' && loaded.collections !== rangeKey && !loading.collections) {
+      void loadCollections(startDate, endDate, rangeKey)
     }
-  }, [queryEnd, queryStart])
+
+    if (tab === 'projects' && !loaded.projects && !loading.projects) {
+      void loadProjects()
+    }
+
+    if (tab === 'tax') {
+      if (loaded.tax !== rangeKey && !loading.tax) {
+        void loadTax(startDate, endDate, rangeKey)
+      }
+      if (loaded.collections !== rangeKey && !loading.collections) {
+        void loadCollections(startDate, endDate, rangeKey)
+      }
+    }
+  }, [
+    tab,
+    queryStart,
+    queryEnd,
+    rangeKey,
+    loaded.receivables,
+    loaded.collections,
+    loaded.projects,
+    loaded.tax,
+    loading.receivables,
+    loading.collections,
+    loading.projects,
+    loading.tax,
+    loadReceivables,
+    loadCollections,
+    loadProjects,
+    loadTax,
+  ])
 
   const clientOptions = useMemo(() => {
     const allClients = new Set<string>()
-    receivables.forEach((row) => {
-      if (row.client_name) allClients.add(row.client_name)
-    })
-    collections.forEach((row) => {
-      if (row.client_name) allClients.add(row.client_name)
-    })
-    projects.forEach((row) => {
-      if (row.client_name) allClients.add(row.client_name)
-    })
-    taxInvoices.forEach((row) => {
-      if (row.client_name) allClients.add(row.client_name)
-    })
+    const appendClients = (values: Array<{ client_name?: string | null }>) => {
+      values.forEach((row) => {
+        if (row.client_name) allClients.add(row.client_name)
+      })
+    }
+
+    if (tab === 'receivables') appendClients(receivables)
+    if (tab === 'collections') appendClients(collections)
+    if (tab === 'projects') appendClients(projects)
+    if (tab === 'tax') {
+      appendClients(taxInvoices)
+      appendClients(collections)
+    }
+
     return Array.from(allClients).sort((a, b) => a.localeCompare(b))
-  }, [receivables, collections, projects, taxInvoices])
+  }, [tab, receivables, collections, projects, taxInvoices])
 
   const filteredReceivables = useMemo(() => {
+    if (tab !== 'receivables') return []
+
     return receivables
       .filter((row) => isWithinRange(row.issue_date || null, start, end))
       .filter((row) => {
@@ -907,29 +995,37 @@ export default function Reports() {
       })
       .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
       .filter((row) => !searchTerm || [row.invoice_number, row.client_name].some((value) => String(value || '').toLowerCase().includes(searchTerm)))
-  }, [receivables, start, end, receivablesFilter, clientFilter, searchTerm])
+  }, [tab, receivables, start, end, receivablesFilter, clientFilter, searchTerm])
 
   const filteredCollections = useMemo(() => {
+    if (tab !== 'collections' && tab !== 'tax') return []
+
     return collections
       .filter((row) => isWithinRange(row.date || null, start, end))
       .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
       .filter((row) => !searchTerm || [row.invoice_number, row.client_name].some((value) => String(value || '').toLowerCase().includes(searchTerm)))
-  }, [collections, start, end, clientFilter, searchTerm])
+  }, [tab, collections, start, end, clientFilter, searchTerm])
 
   const filteredProjects = useMemo(() => {
+    if (tab !== 'projects') return []
+
     return projects
       .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
       .filter((row) => !searchTerm || [row.project_name, row.name, row.client_name].some((value) => String(value || '').toLowerCase().includes(searchTerm)))
-  }, [projects, clientFilter, searchTerm])
+  }, [tab, projects, clientFilter, searchTerm])
 
   const filteredTaxInvoices = useMemo(() => {
+    if (tab !== 'tax') return []
+
     return taxInvoices
       .filter((row) => isWithinRange(row.issue_date, start, end))
       .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
       .filter((row) => !searchTerm || [row.invoice_number, row.client_name].some((value) => String(value || '').toLowerCase().includes(searchTerm)))
-  }, [taxInvoices, start, end, clientFilter, searchTerm])
+  }, [tab, taxInvoices, start, end, clientFilter, searchTerm])
 
   const receivablesMetrics = useMemo<Metric[]>(() => {
+    if (tab !== 'receivables') return []
+
     const outstanding = filteredReceivables.reduce((sum, row) => {
       const balance = Number(row.balance_due || 0)
       return balance > 0 ? sum + balance : sum
@@ -942,9 +1038,11 @@ export default function Reports() {
       { label: 'Collected', value: formatMoney(collected), tone: 'green', icon: <Wallet className="h-4 w-4" /> },
       { label: 'Open Invoices', value: String(filteredReceivables.length), tone: 'blue', icon: <FileSpreadsheet className="h-4 w-4" /> },
     ]
-  }, [filteredReceivables])
+  }, [tab, filteredReceivables])
 
   const collectionMetrics = useMemo<Metric[]>(() => {
+    if (tab !== 'collections') return []
+
     const totalCash = filteredCollections.reduce((sum, row) => sum + Number(row.cash_amount || 0), 0)
     const totalSettlements = filteredCollections.reduce((sum, row) => sum + Number(row.cash_amount || 0) + Number(row.wht_amount || 0), 0)
     const pending = filteredCollections.filter((row) => row.voided_at == null).length
@@ -954,9 +1052,11 @@ export default function Reports() {
       { label: 'Transactions', value: String(filteredCollections.length), tone: 'green', icon: <CreditCard className="h-4 w-4" /> },
       { label: 'Pending', value: String(pending), tone: 'amber', icon: <Filter className="h-4 w-4" /> },
     ]
-  }, [filteredCollections])
+  }, [tab, filteredCollections])
 
   const projectMetrics = useMemo<Metric[]>(() => {
+    if (tab !== 'projects') return []
+
     const totalInvoiced = filteredProjects.reduce((sum, row) => sum + Number(row.total_invoiced || 0), 0)
     const collected = filteredProjects.reduce((sum, row) => sum + Number(row.cash_collected || 0), 0)
     const outstanding = filteredProjects.reduce((sum, row) => sum + Number(row.outstanding || 0), 0)
@@ -966,9 +1066,11 @@ export default function Reports() {
       { label: 'Outstanding', value: formatMoney(outstanding), tone: 'red', icon: <Receipt className="h-4 w-4" /> },
       { label: 'Projects', value: String(filteredProjects.length), tone: 'blue', icon: <FileSpreadsheet className="h-4 w-4" /> },
     ]
-  }, [filteredProjects])
+  }, [tab, filteredProjects])
 
   const taxMetrics = useMemo<Metric[]>(() => {
+    if (tab !== 'tax') return []
+
     const vatCharged = filteredTaxInvoices
       .reduce((sum, row) => sum + Number(row.vat || 0), 0)
 
@@ -986,7 +1088,14 @@ export default function Reports() {
       { label: 'WHT Received', value: formatMoney(whtReceived), tone: 'green', icon: <Wallet className="h-4 w-4" /> },
       { label: 'Net Position', value: formatMoney(netPosition), tone: netPosition >= 0 ? 'blue' : 'red', icon: <Banknote className="h-4 w-4" /> },
     ]
-  }, [filteredTaxInvoices, filteredCollections])
+  }, [tab, filteredTaxInvoices, filteredCollections])
+
+  const isReceivablesLoading = loading.receivables || (tab === 'receivables' && loaded.receivables !== rangeKey)
+  const isCollectionsLoading = loading.collections || (tab === 'collections' && loaded.collections !== rangeKey)
+  const isProjectsLoading = loading.projects || (tab === 'projects' && !loaded.projects)
+  const isTaxLoading =
+    loading.tax ||
+    (tab === 'tax' && (loaded.tax !== rangeKey || loaded.collections !== rangeKey))
 
   return (
     <Layout title="Reports" session={null} hidePageHeader contentClassName="w-full max-w-none bg-slate-50 p-0 pb-24 md:px-4 md:pb-10">
@@ -1009,24 +1118,24 @@ export default function Reports() {
                 <MetricStrip metrics={receivablesMetrics} />
                 <Filters activeDate={datePreset} setActiveDate={setDatePreset} statusFilter={receivablesFilter} setStatusFilter={setReceivablesFilter} clientFilter={clientFilter} setClientFilter={setClientFilter} clientOptions={clientOptions} search={search} setSearch={setSearch} showStatus />
                 {datePreset === 'custom' ? <Card className="border-blue-200 bg-card shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
-                <ReceivablesList loading={loading.receivables} error={error.receivables} rows={filteredReceivables} />
+                <ReceivablesList loading={isReceivablesLoading} error={error.receivables} rows={filteredReceivables} />
               </TabsContent>
               <TabsContent value="collections" className="mt-0 space-y-4">
                 <MetricStrip metrics={collectionMetrics} />
                 <Filters activeDate={datePreset} setActiveDate={setDatePreset} statusFilter={receivablesFilter} setStatusFilter={setReceivablesFilter} clientFilter={clientFilter} setClientFilter={setClientFilter} clientOptions={clientOptions} search={search} setSearch={setSearch} showStatus={false} />
                 {datePreset === 'custom' ? <Card className="border-emerald-200 bg-card shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
-                <CollectionsList loading={loading.collections} error={error.collections} rows={filteredCollections} />
+                <CollectionsList loading={isCollectionsLoading} error={error.collections} rows={filteredCollections} />
               </TabsContent>
               <TabsContent value="projects" className="mt-0 space-y-4">
                 <MetricStrip metrics={projectMetrics} />
                 <Filters activeDate={datePreset} setActiveDate={setDatePreset} statusFilter={receivablesFilter} setStatusFilter={setReceivablesFilter} clientFilter={clientFilter} setClientFilter={setClientFilter} clientOptions={clientOptions} search={search} setSearch={setSearch} showStatus={false} />
-                <ProjectsList loading={loading.projects} error={error.projects} rows={filteredProjects} />
+                <ProjectsList loading={isProjectsLoading} error={error.projects} rows={filteredProjects} />
               </TabsContent>
               <TabsContent value="tax" className="mt-0 space-y-4">
                 <MetricStrip metrics={taxMetrics} />
                 <Filters activeDate={datePreset} setActiveDate={setDatePreset} statusFilter={receivablesFilter} setStatusFilter={setReceivablesFilter} clientFilter={clientFilter} setClientFilter={setClientFilter} clientOptions={clientOptions} search={search} setSearch={setSearch} showStatus={false} />
                 {datePreset === 'custom' ? <Card className="border-amber-200 bg-card shadow-sm"><CardContent className="grid gap-3 p-3 md:grid-cols-2"><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Start</div><Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></div><div><div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">End</div><Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></div></CardContent></Card> : null}
-                <TaxReport rows={filteredTaxInvoices} collections={filteredCollections} loading={loading.tax} />
+                <TaxReport rows={filteredTaxInvoices} collections={filteredCollections} loading={isTaxLoading} />
               </TabsContent>
             </div>
           </Tabs>

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { ADVANCE_INVOICE_EXCLUSION_FILTER, shouldIncludeInvoiceInList } from '@/domain/invoice/advanceList'
 import { supabase } from '@/supabase'
 import { formatStatusLabel } from '@/lib/formatters/status'
 
@@ -39,6 +40,19 @@ type SummaryStats = {
   pendingFollowUp: number
 }
 
+type DashboardFinancialMetrics = {
+  overdue: number | string | null
+  due_this_week: number | string | null
+  this_month_collections: number | string | null
+  pending_follow_up: number | string | null
+  awaiting_payment_count: number | string | null
+  has_past_due: boolean | null
+}
+
+function toNumber(value: number | string | null | undefined) {
+  return Number(value || 0)
+}
+
 export function useDashboardData() {
   const [loading, setLoading] = React.useState(true)
   const [recentDocs, setRecentDocs] = React.useState<RecentDoc[]>([])
@@ -63,33 +77,35 @@ export function useDashboardData() {
     const startOfMonth = new Date()
     startOfMonth.setDate(1)
     startOfMonth.setHours(0, 0, 0, 0)
+    const startOfMonthIso = startOfMonth.toISOString()
 
     const now = new Date()
     const endOfWeek = new Date(now)
     endOfWeek.setDate(now.getDate() + 7)
     endOfWeek.setHours(23, 59, 59, 999)
+    const nowIso = now.toISOString()
+    const endOfWeekIso = endOfWeek.toISOString()
 
     try {
-      const [invoiceRes, quotationRes, csrRes, waybillRes, financialsRes, projectsRes] = await Promise.all([
+      const [invoiceRes, quotationRes, csrRes, waybillRes, financialMetricsRes, projectsRes] = await Promise.all([
         supabase
           .from('invoices')
           .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields')
-          .or('custom_fields->advance_invoice->>role.is.null,custom_fields->advance_invoice->>role.neq.advance')
+          .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
           .order('issue_date', { ascending: false })
           .limit(8),
         supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, issue_date, total').order('issue_date', { ascending: false }).limit(8),
         supabase.from('csrs').select('id, csr_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
         supabase.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
-        supabase.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
+        supabase.rpc('get_dashboard_financial_metrics', {
+          p_now: nowIso,
+          p_end_of_week: endOfWeekIso,
+          p_start_of_month: startOfMonthIso,
+        }),
         supabase.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
       ])
 
-      const invoices = (invoiceRes.data || []).filter(inv => {
-        const customFields = typeof inv?.custom_fields === 'string'
-          ? JSON.parse(inv.custom_fields || '{}')
-          : (inv?.custom_fields || {})
-        return customFields?.advance_invoice?.role !== 'advance'
-      })
+      const invoices = (invoiceRes.data || []).filter((invoice) => shouldIncludeInvoiceInList(invoice))
 
       const mergedDocs: RecentDoc[] = [
         ...invoices.map((doc) => ({
@@ -134,39 +150,15 @@ export function useDashboardData() {
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 5) as RecentDoc[]
 
-      const invoiceFinancials = financialsRes.data || []
+      const financialMetrics = Array.isArray(financialMetricsRes.data)
+        ? (financialMetricsRes.data[0] as DashboardFinancialMetrics | undefined)
+        : (financialMetricsRes.data as DashboardFinancialMetrics | null)
 
-      const pastDue = invoiceFinancials.reduce((sum, row) => {
-        const balance = Number(row.balance_due || 0)
-        const dueDate = row.due_date ? new Date(row.due_date) : null
-        if (balance <= 0 || !dueDate || Number.isNaN(dueDate.getTime()) || dueDate >= now) return sum
-        return sum + balance
-      }, 0)
-
-      const dueThisWeek = invoiceFinancials.reduce((sum, row) => {
-        const dueDate = row.due_date ? new Date(row.due_date) : null
-        const balance = Number(row.balance_due || 0)
-        if (!dueDate || Number.isNaN(dueDate.getTime()) || balance <= 0) return sum
-        if (dueDate < now || dueDate > endOfWeek) return sum
-        return sum + balance
-      }, 0)
-
-      const thisMonthCollections = invoiceFinancials.reduce((sum, row) => {
-        const issueDate = row.issue_date ? new Date(row.issue_date) : null
-        if (!issueDate || Number.isNaN(issueDate.getTime()) || issueDate < startOfMonth) return sum
-        return sum + Number(row.cash_received || 0)
-      }, 0)
-
-      const pendingFollowUpCount = invoiceFinancials.filter((row) => {
-        const balance = Number(row.balance_due || 0)
-        if (balance <= 0) return false
-        const dueDate = row.due_date ? new Date(row.due_date) : null
-        if (dueDate && !Number.isNaN(dueDate.getTime()) && dueDate < now) return true
-        if (!dueDate || Number.isNaN(dueDate.getTime())) return false
-        return dueDate >= now && dueDate <= endOfWeek
-      }).length
-
-      const awaitingPaymentCount = invoiceFinancials.filter((row) => Number(row.balance_due || 0) > 0).length
+      const pastDue = toNumber(financialMetrics?.overdue)
+      const dueThisWeek = toNumber(financialMetrics?.due_this_week)
+      const thisMonthCollections = toNumber(financialMetrics?.this_month_collections)
+      const pendingFollowUpCount = toNumber(financialMetrics?.pending_follow_up)
+      const awaitingPaymentCount = toNumber(financialMetrics?.awaiting_payment_count)
       const inTransitWaybills = (waybillRes.data || []).filter(
         (row) => String(row.status || '').toLowerCase() === 'dispatched'
       ).length
@@ -188,12 +180,7 @@ export function useDashboardData() {
         })
       }
 
-      const pastDueInvoice = invoiceFinancials.find((row) => {
-        const balance = Number(row.balance_due || 0)
-        const dueDate = row.due_date ? new Date(row.due_date) : null
-        return balance > 0 && dueDate && !Number.isNaN(dueDate.getTime()) && dueDate < now
-      })
-      if (pastDueInvoice) {
+      if (financialMetrics?.has_past_due) {
         reminders.push({
           key: `past-due-invoice`,
           title: `Record payment — Past due`,
