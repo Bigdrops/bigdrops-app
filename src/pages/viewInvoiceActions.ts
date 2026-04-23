@@ -99,7 +99,7 @@ export async function createAdvanceInvoiceRecord({
   const { count, error: countError } = await supabase
     .from('invoices')
     .select('id', { count: 'exact', head: true })
-    .eq('custom_fields->advance_invoice->>parentId', parentInvoice?.id)
+    .contains('custom_fields', { advance_invoice: { parentId: parentInvoice?.id } })
     .is('archived_at', null)
 
   if (countError) throw countError

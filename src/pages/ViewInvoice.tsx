@@ -179,7 +179,23 @@ export default function ViewInvoice() {
     })
   }, [ui])
 
+  const openAdvanceDetails = useCallback((advanceInvoice: any, mode: AdvanceSheetMode = 'view') => {
+    setSelectedAdvanceInvoice(advanceInvoice)
+    setAdvanceDeleteConfirmOpen(false)
+    setAdvanceSheetMode(mode)
+    applyAdvanceDraft(advanceInvoice)
+    ui.closeSheet()
+    requestAnimationFrame(() => {
+      ui.openSheet(SHEET_ADVANCE)
+    })
+  }, [applyAdvanceDraft, ui])
+
   const openCreateAdvanceSheet = useCallback(() => {
+    if (Array.isArray(relatedAdvanceInvoices) && relatedAdvanceInvoices.length === 1) {
+      openAdvanceDetails(relatedAdvanceInvoices[0], 'view')
+      return
+    }
+
     setSelectedAdvanceInvoice(null)
     setAdvanceDeleteConfirmOpen(false)
     setAdvanceSheetMode('create')
@@ -188,15 +204,7 @@ export default function ViewInvoice() {
     requestAnimationFrame(() => {
       ui.openSheet(SHEET_ADVANCE)
     })
-  }, [resetAdvanceDraft, ui])
-
-  const openAdvanceDetails = useCallback((advanceInvoice: any, mode: AdvanceSheetMode = 'view') => {
-    setSelectedAdvanceInvoice(advanceInvoice)
-    setAdvanceDeleteConfirmOpen(false)
-    setAdvanceSheetMode(mode)
-    applyAdvanceDraft(advanceInvoice)
-    ui.openSheet(SHEET_ADVANCE)
-  }, [applyAdvanceDraft, ui])
+  }, [relatedAdvanceInvoices, openAdvanceDetails, resetAdvanceDraft, ui])
 
   const closeAdvanceSheet = useCallback((nextOpen: boolean) => {
     if (nextOpen) {
