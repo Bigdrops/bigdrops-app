@@ -32,6 +32,7 @@ import {
   getAdvanceDraftFromInvoice,
   type AdvanceMode,
 } from '@/domain/invoice/advanceChildFlow'
+import { getAdvanceSummaryValues } from '@/domain/invoice/advanceSummary'
 import {
   BUILTIN_COLUMNS,
   DEFAULT_INVOICE_PDF_OUTPUT,
@@ -191,7 +192,7 @@ export default function ViewInvoice() {
   }, [applyAdvanceDraft, ui])
 
   const openCreateAdvanceSheet = useCallback(() => {
-    if (Array.isArray(relatedAdvanceInvoices) && relatedAdvanceInvoices.length === 1) {
+    if (Array.isArray(relatedAdvanceInvoices) && relatedAdvanceInvoices.length > 0) {
       openAdvanceDetails(relatedAdvanceInvoices[0], 'view')
       return
     }
@@ -318,6 +319,7 @@ export default function ViewInvoice() {
       },
       formatMoney: (value) => formatNaira(value, { preserveFraction: true }),
     })
+    const targetAdvanceSummary = getAdvanceSummaryValues(targetInvoice)
     const resolvedTable = interpretPdfTableSettings(savedColumns as any, {
       mergeQtyUnit: targetCustomFields?.mergeQtyUnit === true,
     })
@@ -392,7 +394,7 @@ export default function ViewInvoice() {
         })),
         totals: {
           mode: targetPreviewModel?.advanceSummary ? 'advance' : 'standard',
-          rows: (Array.isArray(targetPreviewModel?.previewTotals) ? targetPreviewModel.previewTotals : []).map((row) => ({
+          rows: targetPreviewModel?.advanceSummary ? [] : (Array.isArray(targetPreviewModel?.previewTotals) ? targetPreviewModel.previewTotals : []).map((row) => ({
             key: String(row.label || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
             label: String(row.label || ''),
             amount: Number(String(row.value || '0').replace(/[^\d.-]/g, '')) || 0,
@@ -400,7 +402,13 @@ export default function ViewInvoice() {
           })),
           amountInWords: String(targetPreviewModel?.previewAmountInWords || ''),
           balanceDue: targetPreviewModel?.previewBalanceDueAmount ?? null,
-          advanceSummary: targetPreviewModel?.advanceSummary || null,
+          advanceSummary: targetPreviewModel?.advanceSummary
+            ? {
+                ...targetPreviewModel.advanceSummary,
+                primaryLabel: targetAdvanceSummary?.primaryLabelWithPercent || targetPreviewModel.advanceSummary.primaryLabel,
+                secondaryLabel: targetAdvanceSummary?.secondaryLabelWithPercent || targetPreviewModel.advanceSummary.secondaryLabel,
+              }
+            : null,
         },
         bankDetails: pdfOutput.showBankDetails ? targetPreviewModel?.selectedPreviewBank : null,
         notes: targetInvoice.notes
@@ -493,6 +501,7 @@ export default function ViewInvoice() {
     setAdvanceSaving(true)
     try {
       let savedId: string | null = null
+      let created = true
       if (advanceSheetMode === 'edit' && selectedAdvanceInvoice?.id) {
         const updated = await updateAdvanceInvoiceRecord({
           advanceInvoiceId: String(selectedAdvanceInvoice.id),
@@ -506,7 +515,7 @@ export default function ViewInvoice() {
         })
         savedId = updated?.id ?? null
       } else {
-        const created = await createAdvanceInvoiceRecord({
+        const result = await createAdvanceInvoiceRecord({
           parentInvoice: invoice,
           mode: advanceMode,
           inputValue: advanceInputValue,
@@ -514,7 +523,8 @@ export default function ViewInvoice() {
           primaryLabel: advancePrimaryLabel,
           secondaryLabel: advanceSecondaryLabel,
         })
-        savedId = created?.id ?? null
+        savedId = result?.invoice?.id ?? null
+        created = result?.created === true
       }
 
       if (!savedId) {
@@ -536,8 +546,16 @@ export default function ViewInvoice() {
       }
 
       showToast(
-        advanceSheetMode === 'edit' ? 'Advance invoice updated' : 'Advance invoice created',
-        'Advance child record saved successfully.',
+        advanceSheetMode === 'edit'
+          ? 'Advance invoice updated'
+          : created
+            ? 'Advance invoice created'
+            : 'Advance invoice already exists',
+        advanceSheetMode === 'edit'
+          ? 'Advance child record saved successfully.'
+          : created
+            ? 'Advance child record saved successfully.'
+            : 'Opened the existing advance child invoice instead of creating another one.',
         'success'
       )
       closeAdvanceSheet(false)
@@ -553,8 +571,12 @@ export default function ViewInvoice() {
     setAdvancePdfGenerating(true)
     try {
       await downloadInvoicePdfDocument({
-        targetInvoice: selectedAdvanceInvoice,
-        targetItems: [],
+        targetInvoice: {
+          ...invoice,
+          ...selectedAdvanceInvoice,
+          status: selectedAdvanceInvoice.status || 'unpaid',
+        },
+        targetItems: Array.isArray(items) ? items : [],
         targetPayments: [],
       })
       showToast('Download ready', 'Advance invoice PDF downloaded.', 'success')
@@ -563,7 +585,7 @@ export default function ViewInvoice() {
     } finally {
       setAdvancePdfGenerating(false)
     }
-  }, [advancePdfGenerating, downloadInvoicePdfDocument, selectedAdvanceInvoice])
+  }, [advancePdfGenerating, downloadInvoicePdfDocument, invoice, items, selectedAdvanceInvoice])
 
   const handleAdvanceDelete = async () => {
     if (!selectedAdvanceInvoice?.id || advanceSaving) return

@@ -18,6 +18,8 @@ export type AdvanceSummaryValues = {
   balancePercent: number
   primaryLabel: string
   secondaryLabel: string
+  primaryLabelWithPercent: string
+  secondaryLabelWithPercent: string
 }
 
 function toNumber(value: number | string | null | undefined) {
@@ -59,14 +61,20 @@ export function getAdvanceSummaryValues(
 
   const advancePercent = contractValue > 0 ? (thisAdvance / contractValue) * 100 : 0
   const balancePercent = Math.max(0, 100 - advancePercent)
+  const roundedAdvancePercent = Math.round(advancePercent)
+  const roundedBalancePercent = Math.round(balancePercent)
+  const primaryLabel = advanceConfig?.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT
+  const secondaryLabel = advanceConfig?.secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT
 
   return {
     contractValue,
     thisAdvance,
     balanceRemaining,
-    advancePercent: Math.round(advancePercent),
-    balancePercent: Math.round(balancePercent),
-    primaryLabel: advanceConfig?.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
-    secondaryLabel: advanceConfig?.secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT,
+    advancePercent: roundedAdvancePercent,
+    balancePercent: roundedBalancePercent,
+    primaryLabel,
+    secondaryLabel,
+    primaryLabelWithPercent: `${primaryLabel} (${Math.round(advancePercent)}%)`,
+    secondaryLabelWithPercent: `${secondaryLabel} (${Math.round(balancePercent)}%)`,
   }
 }

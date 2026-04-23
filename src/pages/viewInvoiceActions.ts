@@ -96,13 +96,20 @@ export async function createAdvanceInvoiceRecord({
   primaryLabel: string
   secondaryLabel: string
 }) {
-  const { count, error: countError } = await supabase
+  const { data: existingAdvance, error: existingAdvanceError } = await supabase
     .from('invoices')
-    .select('id', { count: 'exact', head: true })
+    .select('id, invoice_number, invoice_title, total, custom_fields')
     .filter('custom_fields', 'ilike', `%"parentId":"${parentInvoice?.id}"%`)
     .is('archived_at', null)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
 
-  if (countError) throw countError
+  if (existingAdvanceError) throw existingAdvanceError
+
+  if (existingAdvance) {
+    return { invoice: existingAdvance, created: false }
+  }
 
   const payload = buildAdvanceChildInvoicePayload({
     parentInvoice,
@@ -111,7 +118,7 @@ export async function createAdvanceInvoiceRecord({
     suffix,
     primaryLabel,
     secondaryLabel,
-    threadPosition: Number(count || 0) + 1,
+    threadPosition: 1,
   })
 
   const { data, error } = await supabase
@@ -123,7 +130,7 @@ export async function createAdvanceInvoiceRecord({
     .select()
     .single()
   if (error || !data) throw new Error(error?.message || 'Failed to create advance invoice')
-  return data
+  return { invoice: data, created: true }
 }
 
 export async function updateAdvanceInvoiceRecord({
