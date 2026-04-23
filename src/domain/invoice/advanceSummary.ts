@@ -66,7 +66,7 @@ export function getAdvanceSummaryValues(
     balanceRemaining,
     advancePercent: Math.round(advancePercent),
     balancePercent: Math.round(balancePercent),
-    primaryLabel: advanceConfig?.primaryLabel || invoice?.advance_primary_label || ADVANCE_PRIMARY_LABEL_DEFAULT,
-    secondaryLabel: advanceConfig?.secondaryLabel || invoice?.advance_secondary_label || ADVANCE_SECONDARY_LABEL_DEFAULT,
+    primaryLabel: advanceConfig?.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
+    secondaryLabel: advanceConfig?.secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT,
   }
 }

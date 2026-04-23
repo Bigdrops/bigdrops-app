@@ -379,7 +379,7 @@ export default function ViewInvoice() {
             },
           })),
           totals: {
-            mode: 'standard',
+            mode: previewModel?.advanceSummary ? 'advance' : 'standard',
             rows: (Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : []).map((row) => ({
               key: String(row.label || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
               label: String(row.label || ''),
@@ -388,6 +388,7 @@ export default function ViewInvoice() {
             })),
             amountInWords: String(previewModel?.previewAmountInWords || ''),
             balanceDue: previewModel?.previewBalanceDueAmount ?? null,
+            advanceSummary: previewModel?.advanceSummary || null,
           },
           bankDetails: pdfOutput.showBankDetails ? previewModel?.selectedPreviewBank : null,
           notes: invoice.notes
@@ -823,24 +824,29 @@ export default function ViewInvoice() {
             referenceLabel: payment.reference || '',
             kind: Number(payment.wht_amount || 0) > 0 && Number(payment.cash_amount || 0) === 0 ? 'wht' : 'cash',
           }))}
-          advanceInvoices={(Array.isArray(relatedAdvanceInvoices) ? relatedAdvanceInvoices : []).map((advance: any) => ({
-            id: String(advance.id),
-            title: advance.invoice_number || advance.invoice_title || 'Advance Invoice',
-            subtitle: advance.custom_fields?.advance_invoice?.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
-            amountLabel: formatNaira(Number(advance.total || 0)),
-            onOpen: () => openAdvanceDetails(advance, 'view'),
-            onDownload: () => {
-              navigate(`/invoices/${advance.id}`, {
-                state: { autoDownload: true },
-              })
-            },
-            onEdit: () => openAdvanceDetails(advance, 'edit'),
-            onDelete: () => {
-              setSelectedAdvanceInvoice(advance)
-              applyAdvanceDraft(advance)
-              setAdvanceDeleteConfirmOpen(true)
-            },
-          }))}
+          advanceInvoices={(Array.isArray(relatedAdvanceInvoices) ? relatedAdvanceInvoices : []).map((advance: any) => {
+            const rawCf = advance.custom_fields
+            const cf = typeof rawCf === 'string' ? parseCustomFields(rawCf) : (rawCf || {})
+            const advConfig = cf.advance_invoice || {}
+            return {
+              id: String(advance.id),
+              title: advance.invoice_number || advance.invoice_title || 'Advance Invoice',
+              subtitle: advConfig.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
+              amountLabel: formatNaira(Number(advance.total || 0)),
+              onOpen: () => openAdvanceDetails(advance, 'view'),
+              onDownload: () => {
+                navigate(`/invoices/${advance.id}`, {
+                  state: { autoDownload: true },
+                })
+              },
+              onEdit: () => openAdvanceDetails(advance, 'edit'),
+              onDelete: () => {
+                setSelectedAdvanceInvoice(advance)
+                applyAdvanceDraft(advance)
+                setAdvanceDeleteConfirmOpen(true)
+              },
+            }
+          })}
           relatedDocuments={relatedDocuments}
           attachments={attachments}
           onRecordPayment={() => ui.openSheet(SHEET_RECORD_PAYMENT)}

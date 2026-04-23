@@ -87,8 +87,8 @@ export function getAdvanceDraftFromInvoice(invoice: AdvanceInvoiceLike | null | 
     mode,
     inputValue,
     suffix: suffix || ADVANCE_SUFFIX_DEFAULT,
-    primaryLabel: String(advanceConfig?.primaryLabel || invoice?.advance_primary_label || ADVANCE_PRIMARY_LABEL_DEFAULT),
-    secondaryLabel: String(advanceConfig?.secondaryLabel || invoice?.advance_secondary_label || ADVANCE_SECONDARY_LABEL_DEFAULT),
+    primaryLabel: String(advanceConfig?.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT),
+    secondaryLabel: String(advanceConfig?.secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT),
   }
 }
 

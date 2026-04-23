@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { parseCustomFields } from '@/domain/invoice'
 
 type AdvanceMode = 'percent' | 'fixed'
 type AdvanceSheetMode = 'create' | 'edit' | 'view'
@@ -114,42 +115,51 @@ export default function InvoiceAdvanceSheet({
                 </div>
               </div>
 
-              {advanceSheetMode === 'view' && advanceInvoice ? (
-                <div className="space-y-4">
-                  <div className="rounded-[28px] border border-slate-200/60 bg-white p-5 shadow-sm">
-                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Advance Invoice</div>
-                    <div className="mt-1.5 flex items-baseline justify-between">
-                      <div className="text-lg font-extrabold tracking-tight text-slate-900">{advanceInvoice.invoice_number || 'Advance Invoice'}</div>
-                      <div className="text-xl font-black text-slate-950">{formatMoney(advanceInvoice.total || 0)}</div>
-                    </div>
-                  </div>
+              {advanceSheetMode === 'view' && advanceInvoice ? (() => {
+                const cf = parseCustomFields(advanceInvoice.custom_fields)
+                const advConfig = cf.advance_invoice
+                const pLabel = advConfig?.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT
+                const sLabel = advConfig?.secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT
+                const advTotal = Number(advanceInvoice.total || 0)
+                const advPercent = contractValue > 0 ? Math.round((advTotal / contractValue) * 100) : 0
 
-                  <div className="overflow-hidden rounded-[32px] bg-slate-950 p-7 text-white shadow-2xl shadow-slate-900/40">
-                    <div className="flex flex-col gap-6">
-                      <div className="flex items-center justify-between">
-                        <div className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-slate-500">Contract Value</div>
-                        <div className="text-sm font-bold text-slate-400">{formatMoney(contractValue)}</div>
-                      </div>
-                      
-                      <div className="h-px bg-white/5" />
-
-                      <div className="flex flex-col">
-                        <div className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-500">
-                          {(advanceInvoice.custom_fields?.advance_invoice?.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT) + ` · ${Math.round((Number(advanceInvoice.total || 0) / contractValue) * 100)}%`}
-                        </div>
-                        <div className="mt-2 text-[2.4rem] font-black leading-none tracking-[-0.04em]">{formatMoney(Number(advanceInvoice.total || 0))}</div>
-                      </div>
-                      
-                      <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/5 p-4">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                          {advanceInvoice.custom_fields?.advance_invoice?.secondaryLabel || 'Balance after advance'}
-                        </div>
-                        <div className="text-base font-extrabold text-white">{formatMoney(Math.max(0, contractValue - Number(advanceInvoice.total || 0)))}</div>
+                return (
+                  <div className="space-y-4">
+                    <div className="rounded-[28px] border border-slate-200/60 bg-white p-5 shadow-sm">
+                      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Advance Invoice</div>
+                      <div className="mt-1.5 flex items-baseline justify-between">
+                        <div className="text-lg font-extrabold tracking-tight text-slate-900">{advanceInvoice.invoice_number || 'Advance Invoice'}</div>
+                        <div className="text-xl font-black text-slate-950">{formatMoney(advTotal)}</div>
                       </div>
                     </div>
+
+                    <div className="overflow-hidden rounded-[32px] bg-slate-950 p-7 text-white shadow-2xl shadow-slate-900/40">
+                      <div className="flex flex-col gap-6">
+                        <div className="flex items-center justify-between">
+                          <div className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-slate-500">Contract Value</div>
+                          <div className="text-sm font-bold text-slate-400">{formatMoney(contractValue)}</div>
+                        </div>
+                        
+                        <div className="h-px bg-white/5" />
+
+                        <div className="flex flex-col">
+                          <div className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-500">
+                            {pLabel} · {advPercent}%
+                          </div>
+                          <div className="mt-2 text-[2.4rem] font-black leading-none tracking-[-0.04em]">{formatMoney(advTotal)}</div>
+                        </div>
+                        
+                        <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/5 p-4">
+                          <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
+                            {sLabel}
+                          </div>
+                          <div className="text-base font-extrabold text-white">{formatMoney(Math.max(0, contractValue - advTotal))}</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ) : (
+                )
+              })() : (
                 <>
                   <div className="rounded-[28px] border border-slate-200/60 bg-white p-6 shadow-sm">
                     <div className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Advance Invoice Setup</div>

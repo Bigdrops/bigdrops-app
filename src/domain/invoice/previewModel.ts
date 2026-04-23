@@ -380,5 +380,11 @@ export function buildInvoicePreviewModel({
         },
     previewBalanceDueAmount: advanceSummary || pdfOutput?.showBalanceDue === false ? null : balanceDue,
     previewNotesSections,
+    advanceSummary: advanceSummary
+      ? {
+          ...advanceSummary,
+          requestedAmount: advanceSummary.thisAdvance,
+        }
+      : null,
   }
 }
