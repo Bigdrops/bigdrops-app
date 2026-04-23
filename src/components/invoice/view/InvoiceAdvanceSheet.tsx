@@ -99,14 +99,31 @@ export default function InvoiceAdvanceSheet({
             </SheetHeader>
 
             <div className="px-6 py-4">
-              <div className="mb-4 text-[11px] font-black uppercase tracking-widest text-slate-400">
-                Parent: <span className="text-slate-900">{invoiceNumber || '—'}</span>
+              <div className="mb-4 space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Invoice Number</Label>
+                <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1 pr-2 shadow-sm">
+                  <div className="flex h-8 items-center rounded-lg bg-slate-50 px-2.5 text-[13px] font-bold tracking-tight text-slate-400">
+                    {invoiceNumber || 'INV-000'}
+                  </div>
+                  <span className="text-slate-300 font-black">/</span>
+                  <div className="relative flex-1">
+                    <Input
+                      id="advance-suffix"
+                      type="text"
+                      placeholder={ADVANCE_SUFFIX_DEFAULT}
+                      value={advanceSuffixValue}
+                      onChange={(event) => setAdvanceSuffixValue(event.target.value.toUpperCase())}
+                      disabled={isViewMode || advanceSaving}
+                      className="h-8 w-full rounded-lg border-slate-200 bg-white text-center font-mono text-sm font-black text-slate-900 shadow-none ring-offset-0 focus:border-slate-400 focus:ring-0"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="grid gap-4">
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Advance Type</Label>
-                  <div className="flex gap-1 rounded-xl bg-slate-200/50 p-1">
+                  <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
                     <button
                       type="button"
                       disabled={isViewMode || advanceSaving}
@@ -130,39 +147,22 @@ export default function InvoiceAdvanceSheet({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="advance-value" className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                      {advanceMode === 'fixed' ? 'Amount' : 'Percentage'}
-                    </Label>
-                    <Input
-                      id="advance-value"
-                      type="number"
-                      min="0"
-                      max={advanceMode === 'fixed' ? String(contractValue) : '100'}
-                      step={advanceMode === 'fixed' ? '0.01' : '1'}
-                      inputMode="decimal"
-                      value={advanceInputValue}
-                      onChange={(event) => setAdvanceInputValue(event.target.value)}
-                      disabled={isViewMode || advanceSaving}
-                      className="h-10 rounded-xl border-slate-200 bg-white text-sm font-bold shadow-none ring-offset-0 focus:ring-0"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="advance-suffix" className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                      Suffix
-                    </Label>
-                    <Input
-                      id="advance-suffix"
-                      type="text"
-                      placeholder={ADVANCE_SUFFIX_DEFAULT}
-                      value={advanceSuffixValue}
-                      onChange={(event) => setAdvanceSuffixValue(event.target.value)}
-                      disabled={isViewMode || advanceSaving}
-                      className="h-10 rounded-xl border-slate-200 bg-white text-sm font-black shadow-none ring-offset-0 focus:ring-0"
-                    />
-                  </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="advance-value" className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    {advanceMode === 'fixed' ? 'Amount' : 'Percentage'}
+                  </Label>
+                  <Input
+                    id="advance-value"
+                    type="number"
+                    min="0"
+                    max={advanceMode === 'fixed' ? String(contractValue) : '100'}
+                    step={advanceMode === 'fixed' ? '0.01' : '1'}
+                    inputMode="decimal"
+                    value={advanceInputValue}
+                    onChange={(event) => setAdvanceInputValue(event.target.value)}
+                    disabled={isViewMode || advanceSaving}
+                    className="h-10 rounded-xl border-slate-200 bg-white text-sm font-bold shadow-none ring-offset-0 focus:border-slate-400 focus:ring-0"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -176,7 +176,7 @@ export default function InvoiceAdvanceSheet({
                       value={advancePrimaryLabel}
                       onChange={(event) => setAdvancePrimaryLabel(event.target.value)}
                       disabled={isViewMode || advanceSaving}
-                      className="h-10 rounded-xl border-slate-200 bg-white text-[11px] font-semibold shadow-none ring-offset-0 focus:ring-0"
+                      className="h-10 rounded-xl border-slate-200 bg-white text-[11px] font-semibold shadow-none ring-offset-0 focus:border-slate-400 focus:ring-0"
                     />
                   </div>
 
@@ -190,7 +190,7 @@ export default function InvoiceAdvanceSheet({
                       value={advanceSecondaryLabel}
                       onChange={(event) => setAdvanceSecondaryLabel(event.target.value)}
                       disabled={isViewMode || advanceSaving}
-                      className="h-10 rounded-xl border-slate-200 bg-white text-[11px] font-semibold shadow-none ring-offset-0 focus:ring-0"
+                      className="h-10 rounded-xl border-slate-200 bg-white text-[11px] font-semibold shadow-none ring-offset-0 focus:border-slate-400 focus:ring-0"
                     />
                   </div>
                 </div>

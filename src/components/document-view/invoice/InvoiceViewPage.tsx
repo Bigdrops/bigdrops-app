@@ -150,18 +150,22 @@ export default function InvoiceViewPage({
 
         {gAdvanceInvoices.length > 0 && (
           <SupportingSection title="Advance Invoices">
-            <div className={styles['advance-card']}>
-              <div className={styles['advance-card-body']}>
-                {gAdvanceInvoices.map((adv) => (
-                  <button type="button" key={adv.id} className={styles['advance-item']} onClick={adv.onOpen}>
-                    <div className={styles['advance-item-left']}>
-                      <div className={styles['advance-item-label']}>{adv.title}</div>
-                      <div className={styles['advance-item-sub']}>{adv.subtitle}</div>
-                    </div>
-                    <div className={styles['advance-item-amount']}>{adv.amountLabel}</div>
-                  </button>
-                ))}
-              </div>
+            <div className={styles['advance-list']}>
+              {gAdvanceInvoices.map((adv) => (
+                <div key={adv.id} className={styles['advance-item-row']} onClick={adv.onOpen}>
+                  <div className={`${styles['advance-icon']} ${styles.advance}`}>
+                    <Receipt size={16} />
+                  </div>
+                  <div className={styles['advance-body']}>
+                    <div className={styles['advance-title']}>{adv.title}</div>
+                    <div className={styles['advance-sub']}>{adv.subtitle}</div>
+                  </div>
+                  <div className={styles['advance-right']}>
+                    <div className={styles['advance-amount']}>{adv.amountLabel}</div>
+                    <ExternalLink size={14} className={styles['advance-chev']} />
+                  </div>
+                </div>
+              ))}
             </div>
           </SupportingSection>
         )}

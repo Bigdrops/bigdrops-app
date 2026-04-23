@@ -372,56 +372,49 @@
 .pay-hist-amount { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--emerald); }
 .pay-hist-date { font-size: 10px; color: var(--text3); margin-top: 2px; }
 
-/* ─── ADVANCE CARD ─── */
-.advance-card {
+/* ─── ADVANCE LIST ─── */
+.advance-list { display: flex; flex-direction: column; gap: 7px; }
+
+.advance-item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
   background: var(--surface);
-  border: 1px solid var(--primary-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
   box-shadow: var(--shadow-sm);
 }
 
-.advance-card-head {
-  padding: 13px 14px;
-  background: var(--primary-bg);
-  border-bottom: 1px solid var(--primary-border);
-}
+.advance-item-row:hover { background: var(--bg2); }
 
-.advance-card-title { font-size: 13px; font-weight: 700; color: var(--primary); }
-
-.advance-card-body {
-  padding: 14px;
+.advance-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.advance-item {
-  width: 100%;
+.advance-icon.advance { background: var(--primary-bg); color: var(--primary); }
+
+.advance-body { flex: 1; min-width: 0; }
+.advance-title { font-size: 12px; font-weight: 600; color: var(--text); }
+.advance-sub { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-top: 1px; }
+
+.advance-right { 
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--bg);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
-  padding: 10px 12px;
-  background: transparent;
-  border: 1px solid var(--border-soft);
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.15s;
+  text-align: right; 
+  flex-shrink: 0; 
 }
-
-.advance-item:hover {
-  background: rgba(255,255,255,0.45);
-  border-color: var(--border);
-}
-
-.advance-item-left { flex: 1; min-width: 0; }
-.advance-item-label { font-size: 12px; font-weight: 600; color: var(--text); }
-.advance-item-sub { font-size: 11px; color: var(--text3); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.advance-item-amount { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--primary); flex-shrink: 0; }
+.advance-amount { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--text); }
+.advance-chev { color: var(--text4); }
 
 /* ─── LINKED LIST ─── */
 .linked-list { display: flex; flex-direction: column; gap: 7px; }

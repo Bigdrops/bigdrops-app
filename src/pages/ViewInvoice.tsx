@@ -204,6 +204,7 @@ export default function ViewInvoice() {
       return
     }
     setAdvanceDeleteConfirmOpen(false)
+    setSelectedAdvanceInvoice(null)
     ui.closeSheet()
   }, [ui])
 
