@@ -9,11 +9,16 @@ const inputCls =
 const cardCls =
   'rounded-[20px] border border-[#e2e8f0] bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]'
 
-function formatCurrency(value) {
+function formatCurrency(value: number | string) {
   return `NGN ${Number(value || 0).toLocaleString()}`
 }
 
-function SectionHeader({ color, label }) {
+interface SectionHeaderProps {
+  color: string
+  label: string
+}
+
+function SectionHeader({ color, label }: SectionHeaderProps) {
   return (
     <div className={sectionLabelCls}>
       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
@@ -22,7 +27,16 @@ function SectionHeader({ color, label }) {
   )
 }
 
-function CollapseCard({ color, title, subtitle, open, onToggle, children }) {
+interface CollapseCardProps {
+  color: string
+  title: string
+  subtitle: string
+  open: boolean
+  onToggle: () => void
+  children: React.ReactNode
+}
+
+function CollapseCard({ color, title, subtitle, open, onToggle, children }: CollapseCardProps) {
   return (
     <div className={cardCls}>
       <button
@@ -51,7 +65,18 @@ function CollapseCard({ color, title, subtitle, open, onToggle, children }) {
   )
 }
 
-function Segment({ value, onChange, options }) {
+interface SegmentOption {
+  value: string
+  label: string
+}
+
+interface SegmentProps {
+  value: string
+  onChange: (value: any) => void
+  options: SegmentOption[]
+}
+
+function Segment({ value, onChange, options }: SegmentProps) {
   return (
     <div className="flex gap-[3px] rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] p-[3px]">
       {options.map((option) => {
@@ -71,6 +96,48 @@ function Segment({ value, onChange, options }) {
       })}
     </div>
   )
+}
+
+export interface ExtraCharge {
+  id: string | number
+  label: string | null
+  value: number | null
+  withTax: boolean
+}
+
+export interface ChargeLabels {
+  workmanship?: string
+  transportation?: string
+  shipping?: string
+}
+
+interface TotalsPanelProps {
+  rawSubtotal: number
+  installRateTotal: number
+  workmanship: number
+  transportation: number
+  shipping: number
+  chargeLabels: ChargeLabels
+  extraCharges: ExtraCharge[]
+  onAddExtraCharge: (withTax: boolean) => void
+  onUpdateExtraCharge: (id: string | number, field: string, value: any) => void
+  onRemoveExtraCharge: (id: string | number) => void
+  discountValue: number
+  discountType: string
+  discountTiming: string
+  onDiscountValueChange: (value: number) => void
+  onDiscountTypeChange: (type: any) => void
+  onDiscountTimingChange: (timing: any) => void
+  discountAmount: number
+  vatAmount: number
+  whtValue: number
+  whtType: string
+  onWhtValueChange: (value: number) => void
+  onWhtTypeChange: (type: any) => void
+  whtAmount: number
+  grandTotal: number
+  totalPayable: number
+  amountInWords: string
 }
 
 export default function TotalsPanel({
@@ -100,7 +167,7 @@ export default function TotalsPanel({
   grandTotal,
   totalPayable,
   amountInWords,
-}) {
+}: TotalsPanelProps) {
   const [showCharges, setShowCharges] = useState(false)
   const [showDiscount, setShowDiscount] = useState(false)
   const [showWht, setShowWht] = useState(false)
@@ -108,15 +175,15 @@ export default function TotalsPanel({
   const summaryRows = useMemo(
     () =>
       [
-        { label: 'Subtotal', value: rawSubtotal },
-        installRateTotal > 0 ? { label: 'Install Rate', value: installRateTotal } : null,
-        workmanship > 0 ? { label: chargeLabels.workmanship || 'Workmanship', value: workmanship } : null,
-        transportation > 0 ? { label: chargeLabels.transportation || 'Transportation', value: transportation } : null,
-        shipping > 0 ? { label: chargeLabels.shipping || 'Shipping', value: shipping } : null,
+        { label: 'Subtotal', value: rawSubtotal, negative: false },
+        installRateTotal > 0 ? { label: 'Install Rate', value: installRateTotal, negative: false } : null,
+        workmanship > 0 ? { label: chargeLabels.workmanship || 'Workmanship', value: workmanship, negative: false } : null,
+        transportation > 0 ? { label: chargeLabels.transportation || 'Transportation', value: transportation, negative: false } : null,
+        shipping > 0 ? { label: chargeLabels.shipping || 'Shipping', value: shipping, negative: false } : null,
         discountAmount > 0 ? { label: 'Discount', value: -discountAmount, negative: true } : null,
-        { label: 'VAT', value: vatAmount },
+        { label: 'VAT', value: vatAmount, negative: false },
         whtAmount > 0 ? { label: 'WHT', value: -whtAmount, negative: true } : null,
-      ].filter(Boolean),
+      ].filter((row): row is { label: string; value: number; negative: boolean } => row !== null),
     [
       chargeLabels.shipping,
       chargeLabels.transportation,
