@@ -1,11 +1,7 @@
-import { pdf } from '@react-pdf/renderer'
 import React from 'react'
 import { registerPdfFonts } from '@/lib/pdfFontRegistry'
 import { adaptIndustryData } from './industryAdapter'
-import { PdfRenderer } from './renderers/PdfRenderer'
 import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings } from './table'
-import Industry from './templates/Industry'
-import Nexus from './templates/Nexus'
 import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel } from './types'
 
 export type PdfGenerationResult = {
@@ -40,6 +36,21 @@ function resolveFilename(model: PdfDocumentModel, fallbackNumber?: string | null
 }
 
 async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerationRequest<TModel>): Promise<PdfGenerationResult> {
+  const [
+    { pdf },
+    { PdfRenderer },
+    IndustryModule,
+    NexusModule,
+  ] = await Promise.all([
+    import('@react-pdf/renderer'),
+    import('./renderers/PdfRenderer'),
+    import('./templates/Industry'),
+    import('./templates/Nexus'),
+  ])
+
+  const Industry = IndustryModule.default
+  const Nexus = NexusModule.default
+
   registerPdfFonts()
 
   const activeTemplateId = request.templateId || 'industry'
