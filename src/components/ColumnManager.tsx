@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type DragEvent, type ReactNode } from 'react'
 import {
   ChevronDown,
   Eye,
@@ -15,16 +15,43 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import { Input } from '../components/ui/input'
 import { Sheet, SheetContent } from '../components/ui/sheet'
 import { cn } from '@/lib/utils'
-import { COLUMN_TYPES } from './useInvoiceColumns.jsx'
+import { COLUMN_TYPES } from './useInvoiceColumns'
+import type { ColumnConfig, InvoiceItem } from '@/domain/invoice/types'
 
-const FIXED_PDF_COLUMNS = [
+const FIXED_PDF_COLUMNS: Array<{ key: string; label: string }> = [
   { key: 'description', label: 'Description' },
   { key: 'quantity', label: 'Quantity' },
   { key: 'unit_price', label: 'Unit Price' },
   { key: 'amount', label: 'Amount' },
 ]
 
-function SectionTitle({ children, action }) {
+type ColumnUpdateValue = string | boolean
+
+type OverrideResetFields = {
+  vat?: boolean
+  discount?: boolean
+  install?: boolean
+}
+
+export interface ColumnManagerProps {
+  columns: ColumnConfig[]
+  onUpdate: (key: string, field: string, value: ColumnUpdateValue) => void
+  onToggle: (key: string) => void
+  onAddCustom: () => void
+  onRemoveCustom: (key: string) => void
+  onReset: () => void
+  onMove?: (key: string, dir: number) => void
+  onClose: () => void
+  items?: InvoiceItem[]
+  onResetItemOverrides?: (fields: OverrideResetFields) => void
+}
+
+type SectionTitleProps = {
+  children: ReactNode
+  action?: ReactNode
+}
+
+function SectionTitle({ children, action }: SectionTitleProps) {
   return (
     <div className="mb-2.5 flex items-center justify-between gap-3 px-1">
       <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--bd-text3)]">
@@ -33,6 +60,20 @@ function SectionTitle({ children, action }) {
       {action}
     </div>
   )
+}
+
+type BuiltInColumnRowProps = {
+  col: ColumnConfig
+  onToggle: (key: string) => void
+  onUpdate: (key: string, field: string, value: ColumnUpdateValue) => void
+  onDragStart: (e: DragEvent<HTMLElement>, key: string) => void
+  onDragOver: (e: DragEvent<HTMLElement>) => void
+  onDrop: (e: DragEvent<HTMLElement>, targetKey: string) => void
+  onMoveUp?: (key: string) => void
+  onMoveDown?: (key: string) => void
+  disableMoveUp: boolean
+  disableMoveDown: boolean
+  typeLabel: (type: string | undefined) => string
 }
 
 function BuiltInColumnRow({
@@ -47,7 +88,7 @@ function BuiltInColumnRow({
   disableMoveUp,
   disableMoveDown,
   typeLabel,
-}) {
+}: BuiltInColumnRowProps) {
   return (
     <div
       className={cn(
@@ -126,7 +167,6 @@ function BuiltInColumnRow({
               {col.visible ? 'Visible' : 'Hidden'}
             </div>
           </div>
-
         </div>
 
         <div className="flex shrink-0 flex-col gap-1 pt-1">
@@ -154,12 +194,19 @@ function BuiltInColumnRow({
   )
 }
 
+type CustomColumnCardProps = {
+  col: ColumnConfig
+  onToggle: (key: string) => void
+  onUpdate: (key: string, field: string, value: ColumnUpdateValue) => void
+  onRemoveCustom: (key: string) => void
+}
+
 function CustomColumnCard({
   col,
   onToggle,
   onUpdate,
   onRemoveCustom,
-}) {
+}: CustomColumnCardProps) {
   return (
     <div
       className={cn(
@@ -174,11 +221,11 @@ function CustomColumnCard({
           type="button"
           onClick={() => onToggle(col.key)}
           className={cn(
-              'mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border transition',
-              col.visible
-                ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text)]'
-                : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]',
-            )}
+            'mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border transition',
+            col.visible
+              ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text)]'
+              : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]',
+          )}
           aria-label={col.visible ? `Hide ${col.label}` : `Show ${col.label}`}
           title={col.visible ? 'Hide column' : 'Show column'}
         >
@@ -196,8 +243,8 @@ function CustomColumnCard({
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <div className="inline-flex rounded-full border border-[var(--bd-border)] bg-[var(--bd-bg)] p-1">
               {COLUMN_TYPES.map((t) => {
-                const value = t.value ?? t
-                const label = t.label ?? t
+                const value = t.value
+                const label = t.label
                 const active = col.type === value
 
                 return (
@@ -245,7 +292,11 @@ function CustomColumnCard({
   )
 }
 
-function FixedColumnRow({ col }) {
+type FixedColumnRowProps = {
+  col: { key: string; label: string }
+}
+
+function FixedColumnRow({ col }: FixedColumnRowProps) {
   return (
     <div className="rounded-[18px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-3 py-3">
       <div className="flex items-start gap-3">
@@ -269,7 +320,13 @@ function FixedColumnRow({ col }) {
   )
 }
 
-function OverrideRow({ label, count, onReset }) {
+type OverrideRowProps = {
+  label: string
+  count: number
+  onReset: () => void
+}
+
+function OverrideRow({ label, count, onReset }: OverrideRowProps) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-[14px] border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-3 py-2.5">
       <div className="flex items-center gap-2">
@@ -292,7 +349,13 @@ function OverrideRow({ label, count, onReset }) {
   )
 }
 
-function ResetConfirmDialog({ open, onCancel, onConfirm }) {
+type ResetConfirmDialogProps = {
+  open: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}
+
+function ResetConfirmDialog({ open, onCancel, onConfirm }: ResetConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onCancel()}>
       <DialogContent className="max-w-sm rounded-[20px] bg-[var(--bd-surface)] p-0">
@@ -337,8 +400,8 @@ export default function ColumnManager({
   onClose,
   items = [],
   onResetItemOverrides,
-}) {
-  const [confirmReset, setConfirmReset] = useState(false)
+}: ColumnManagerProps) {
+  const [confirmReset, setConfirmReset] = useState<boolean>(false)
 
   const builtinCols = columns.filter((c) => !c.key.startsWith('custom_'))
   const customCols = columns.filter((c) => c.key.startsWith('custom_'))
@@ -349,15 +412,15 @@ export default function ColumnManager({
   const installOverrideCount = standardItems.filter((i) => i.install_rate_override === true).length
   const totalOverrideCount = vatOverrideCount + discountOverrideCount + installOverrideCount
 
-  const handleDragStart = (e, key) => {
+  const handleDragStart = (e: DragEvent<HTMLElement>, key: string) => {
     e.dataTransfer.setData('text/plain', key)
   }
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: DragEvent<HTMLElement>) => {
     e.preventDefault()
   }
 
-  const handleDrop = (e, targetKey) => {
+  const handleDrop = (e: DragEvent<HTMLElement>, targetKey: string) => {
     e.preventDefault()
     const draggedKey = e.dataTransfer.getData('text/plain')
     if (!draggedKey || draggedKey === targetKey || !onMove) return
@@ -371,14 +434,16 @@ export default function ColumnManager({
     setConfirmReset(false)
   }
 
-  const typeLabel = (t) =>
-    ({ 
-      install_rate: 'Install Rate', 
-      vat_rate: 'VAT %', 
-      discount_rate: 'Discount %',
-      make: 'Make',
-      unit: 'Unit'
-    }[t] || t)
+  const typeLabel = (type: string | undefined) =>
+    (
+      {
+        install_rate: 'Install Rate',
+        vat_rate: 'VAT %',
+        discount_rate: 'Discount %',
+        make: 'Make',
+        unit: 'Unit',
+      } as Record<string, string>
+    )[type || ''] || type || ''
 
   return (
     <>
@@ -421,28 +486,28 @@ export default function ColumnManager({
               <div className="mt-7">
                 <SectionTitle>B. Form Fields (Built-ins)</SectionTitle>
                 <div className="space-y-3">
-                {builtinCols.map((col, index) => (
-                  <BuiltInColumnRow
-                    key={col.key}
-                    col={col}
-                    onToggle={onToggle}
-                    onUpdate={onUpdate}
-                    onDragStart={handleDragStart}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                    onMoveUp={(key) => {
-                      if (!onMove || index === 0) return
-                      onMove(key, index - 1)
-                    }}
-                    onMoveDown={(key) => {
-                      if (!onMove || index === builtinCols.length - 1) return
-                      onMove(key, index + 1)
-                    }}
-                    disableMoveUp={index === 0}
-                    disableMoveDown={index === builtinCols.length - 1}
-                    typeLabel={typeLabel}
-                  />
-                ))}
+                  {builtinCols.map((col, index) => (
+                    <BuiltInColumnRow
+                      key={col.key}
+                      col={col}
+                      onToggle={onToggle}
+                      onUpdate={onUpdate}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      onMoveUp={(key) => {
+                        if (!onMove || index === 0) return
+                        onMove(key, index - 1)
+                      }}
+                      onMoveDown={(key) => {
+                        if (!onMove || index === builtinCols.length - 1) return
+                        onMove(key, index + 1)
+                      }}
+                      disableMoveUp={index === 0}
+                      disableMoveDown={index === builtinCols.length - 1}
+                      typeLabel={typeLabel}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -485,7 +550,9 @@ export default function ColumnManager({
               {onResetItemOverrides ? (
                 <div className="mt-7 rounded-[24px] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
                   <div className="text-[16px] font-bold text-[var(--bd-text)]">D. Row Overrides Status</div>
-                  <div className="mt-1 text-[13px] text-[var(--bd-text3)]">Reset row-level VAT, discount, and install overrides.</div>
+                  <div className="mt-1 text-[13px] text-[var(--bd-text3)]">
+                    Reset row-level VAT, discount, and install overrides.
+                  </div>
 
                   <div className="mt-4 space-y-2.5">
                     <OverrideRow
@@ -525,7 +592,9 @@ export default function ColumnManager({
               <div className="mt-7 rounded-[24px] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <div className="text-[15px] font-semibold text-[var(--bd-text)]">Reset Table Settings</div>
+                    <div className="text-[15px] font-semibold text-[var(--bd-text)]">
+                      Reset Table Settings
+                    </div>
                     <div className="text-[13px] text-[var(--bd-text3)]">
                       Restores columns, labels, and layout. Does not remove items.
                     </div>
