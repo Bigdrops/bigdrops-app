@@ -156,11 +156,16 @@ export default function ViewQuotation() {
     }
   }
 
-  const handleSaveCustomization = async (nextPdfOutput: PdfOutputSettingsValue) => {
+  const handleSaveCustomization = async (
+    nextPdfOutput: PdfOutputSettingsValue,
+    _nextPreset?: unknown,
+    nextTemplateId: 'industry' | 'obsidian-receipt' = 'industry',
+  ) => {
     if (!quotation || !id) return
     const nextCustomFields = {
       ...customFields,
       pdfOutput: nextPdfOutput,
+      pdfTemplateId: nextTemplateId,
     }
     const { error } = await supabase.from('quotations').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', id)
     if (error) throw error
@@ -386,7 +391,7 @@ export default function ViewQuotation() {
           metaFooter: { companyName: String(settings?.company_name || '') },
           template: { designPreset: pdfDesignPreset },
         },
-        templateId: 'industry',
+        templateId: customFields?.pdfTemplateId || 'industry',
       })
       showToast('Download ready', 'Quotation PDF downloaded.', 'success')
     } catch (error) {
@@ -522,7 +527,8 @@ export default function ViewQuotation() {
               bankAccounts={previewBankAccounts}
               companyTagline={String(settings?.company_tagline || '')}
               footerText={String(settings?.footer_text || '')}
-              onSave={(nextValue) => handleSaveCustomization(nextValue)}
+              templateId={customFields?.pdfTemplateId || 'industry'}
+              onSave={(nextValue, nextPreset, nextTemplateId) => handleSaveCustomization(nextValue, nextPreset, nextTemplateId)}
             />
 
             <QuotationMoreSheet

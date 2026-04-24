@@ -95,12 +95,12 @@ test('customize sheet supports design-only mode for the paint popup', () => {
   assert.match(source, /<PdfDocumentOptionsCard/)
 })
 
-test('invoice customize sheet includes a compact industry and nexus template picker', () => {
+test('invoice customize sheet includes a compact industry and obsidian-receipt template picker', () => {
   const source = fs.readFileSync(customizeSheetPath, 'utf8')
 
   assert.match(source, /INVOICE_PDF_TEMPLATE_OPTIONS/)
   assert.match(source, /id: 'industry'/)
-  assert.match(source, /id: 'nexus'/)
+  assert.match(source, /id: 'obsidian-receipt'/)
   assert.match(source, /setDraftTemplateId\(option\.id\)/)
 })
 
@@ -116,7 +116,7 @@ test('view invoice page exposes bank controls and document options below the pre
 test('view invoice saves and reuses the selected pdf template id', () => {
   const source = fs.readFileSync(viewInvoicePath, 'utf8')
 
-  assert.match(source, /const pdfTemplateId = customFields\?\.pdfTemplateId === 'nexus' \? 'nexus' : 'industry'/)
+  assert.match(source, /const pdfTemplateId = customFields\?\.pdfTemplateId === 'obsidian-receipt' \? 'obsidian-receipt' : 'industry'/)
   assert.match(source, /pdfTemplateId: nextTemplateId/)
   assert.match(source, /templateId=\{pdfTemplateId\}/)
   assert.match(source, /templateId: targetTemplateId/)
@@ -130,10 +130,10 @@ test('view invoice actions include the qty plus unit merge toggle with persisten
   assert.match(source, /statusLabel: mergeQtyUnit \? 'On' : 'Off'/)
 })
 
-test('pdf generation can switch invoice output to nexus', () => {
+test('pdf generation can switch invoice output to obsidian-receipt', () => {
   const source = fs.readFileSync(pdfIndexPath, 'utf8')
 
-  assert.match(source, /import Nexus from '.\/templates\/Nexus'/)
-  assert.match(source, /case 'nexus':/)
-  assert.match(source, /Template = Nexus/)
+  assert.match(source, /import Obsidian from '.\/templates\/ObsidianReceipt'/)
+  assert.match(source, /case 'obsidian-receipt':/)
+  assert.match(source, /Template = Obsidian/)
 })

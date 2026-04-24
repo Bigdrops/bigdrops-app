@@ -1,5 +1,6 @@
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
-import { styles, resolveAlignment } from './CivicslateStyles';
+import { styles, resolveAlignment } from './Civicslatestyles';
+import type { IndustryTemplateData } from '../industryAdapter';
 
 export default function Template({ data }: { data: IndustryTemplateData }) {
   const accent = data.design.accentColor || '#2F3A44';
@@ -165,8 +166,8 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
               style={[
                 styles.tableRow,
                 { borderBottomColor: border },
-                row.isInGroup ? [styles.nestedRow, { borderLeftColor: accent }] : null,
-              ]}
+                row.isInGroup ? ([styles.nestedRow, { borderLeftColor: accent }] as any) : null,
+              ] as any}
             >
               {data.table.columns.map((column, columnIndex) => {
                 const value = renderCellValue(row.cells?.[column.key]);

@@ -1,8 +1,8 @@
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
-import { styles, resolveAlignment } from './NaijabizStyles';
-import type { IndustryTemplateData } from './types'; // Adjust import path as needed
+import { styles, resolveAlignment } from './Naijabizstyles';
+import type { IndustryTemplateData } from '../industryAdapter';
 
-export default function Template({ data }: {  IndustryTemplateData }) {
+export default function Template({ data }: { data: IndustryTemplateData }) {
   const accentColor = data.design?.accentColor || '#0f172a';
   const textColor = data.design?.textColor || '#334155';
   const mutedColor = data.design?.mutedColor || '#64748b';
@@ -128,8 +128,8 @@ export default function Template({ data }: {  IndustryTemplateData }) {
               style={[
                 styles.tableRow,
                 rowIndex === data.table.rows.length - 1 && styles.tableRowLast,
-                row.isInGroup && { borderLeftWidth: 2, borderLeftColor: surfaceColor, paddingLeft: 12 },
-              ]}
+                row.isInGroup && ({ borderLeftWidth: 2, borderLeftColor: surfaceColor, paddingLeft: 12 } as any),
+              ] as any}
             >
               {data.table.columns.map((col) => {
                 const cellValue = row.cells?.[col.key];
@@ -147,10 +147,10 @@ export default function Template({ data }: {  IndustryTemplateData }) {
                     {isDescription && row.imageUrl && (
                       <Image src={row.imageUrl} style={styles.tableCellImage} />                    )}
                     <Text style={[styles.tableCell, resolveAlignment(col.align), { color: textColor }]}>
-                      {cellValue}
+                      {cellValue as any}
                     </Text>
                     {isDescription && row.cells?.descriptionSub && (
-                      <Text style={[styles.tableCellSub, { color: mutedColor }]}>{row.cells.descriptionSub}</Text>
+                      <Text style={[styles.tableCellSub, { color: mutedColor }]}>{row.cells.descriptionSub as any}</Text>
                     )}
                   </View>
                 );

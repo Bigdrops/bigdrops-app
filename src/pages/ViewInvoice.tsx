@@ -113,7 +113,7 @@ export default function ViewInvoice() {
   const settingsData: any = settings || {}
 
   const customFields = useMemo(() => parseCustomFields(invoice?.custom_fields), [invoice?.custom_fields])
-  const pdfTemplateId = customFields?.pdfTemplateId === 'nexus' ? 'nexus' : 'industry'
+  const pdfTemplateId = customFields?.pdfTemplateId === 'obsidian-receipt' ? 'obsidian-receipt' : 'industry'
   const sourceDocument = useMemo(() => getInvoiceSourceDocument(invoice), [invoice])
   const contractValue = Math.max(0, Number(invoice?.total || 0))
 
@@ -288,7 +288,7 @@ export default function ViewInvoice() {
   }) => {
     const { buildPdfRowCells, generateInvoicePdf, interpretPdfTableSettings } = await import('@/components/pdf-new')
     const targetCustomFields = parseCustomFields(targetInvoice?.custom_fields)
-    const targetTemplateId = targetCustomFields?.pdfTemplateId === 'nexus' ? 'nexus' : 'industry'
+    const targetTemplateId = targetCustomFields?.pdfTemplateId || pdfTemplateId || 'industry'
     const savedColumns = Array.isArray(targetCustomFields?.columnConfig) ? targetCustomFields.columnConfig : BUILTIN_COLUMNS
     const totals = computeDocument({
       items: Array.isArray(targetItems) ? targetItems : [],
@@ -448,7 +448,7 @@ export default function ViewInvoice() {
   const handleSaveCustomization = useCallback(async (
     nextPdfOutput: PdfOutputSettingsValue,
     _nextPreset?: unknown,
-    nextTemplateId: 'industry' | 'nexus' = 'industry',
+    nextTemplateId: 'industry' | 'obsidian-receipt' = 'industry',
   ) => {
     if (!invoice?.id) return
     const previousPdfOutput = pdfOutput

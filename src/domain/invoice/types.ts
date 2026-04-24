@@ -42,7 +42,7 @@ export interface InvoicePdfOutput {
   showDiscountPercentage: boolean
 }
 
-export type InvoicePdfTemplateId = 'industry' | 'nexus'
+export type InvoicePdfTemplateId = 'industry' | 'obsidian-receipt'
 
 export interface Payment {
   id: string

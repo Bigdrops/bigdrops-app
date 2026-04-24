@@ -47,7 +47,8 @@ export const styles = StyleSheet.create({
   metaValue: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: '#0f172a',    marginBottom: 6,
+    color: '#0f172a',
+    marginBottom: 6,
   },
   // Addresses
   addresses: {
@@ -96,7 +97,8 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 0,
   },
   tableCell: {
-    fontSize: 10,    color: '#334155',
+    fontSize: 10,
+    color: '#334155',
   },
   tableCellBold: {
     fontWeight: 'bold',
@@ -145,7 +147,8 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#0f172a',
   },
-  // Totals  totalsSection: {
+  // Totals
+  totalsSection: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginBottom: 25,
@@ -194,7 +197,8 @@ export const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
     color: '#065f46',
-  },  // Bank details
+  },
+  // Bank details
   bankSection: {
     backgroundColor: '#f8fafc',
     padding: 15,
@@ -243,7 +247,8 @@ export const styles = StyleSheet.create({
     marginTop: 30,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',  },
+    borderTopColor: '#e2e8f0',
+  },
   signatureImage: {
     width: 120,
     height: 60,
@@ -292,7 +297,8 @@ export const styles = StyleSheet.create({
   itemsCenter: {
     alignItems: 'center',
   },
-  mb4: { marginBottom: 4 },  mb8: { marginBottom: 8 },
+  mb4: { marginBottom: 4 },
+  mb8: { marginBottom: 8 },
   mb12: { marginBottom: 12 },
   mb20: { marginBottom: 20 },
   mt8: { marginTop: 8 },

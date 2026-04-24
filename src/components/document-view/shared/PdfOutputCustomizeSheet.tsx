@@ -26,11 +26,11 @@ const INVOICE_PDF_TEMPLATE_OPTIONS = [
     columns: ['h-7 w-full rounded-md border border-slate-200 bg-white', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-5/6 rounded-full bg-slate-200'],
   },
   {
-    id: 'nexus',
-    label: 'Nexus',
-    eyebrow: 'Editorial',
-    shell: 'bg-slate-950 border border-slate-800',
-    accents: ['h-1 w-full rounded-full bg-cyan-400', 'h-3 w-3/5 rounded bg-slate-700', 'h-1 w-4/5 rounded-full bg-slate-700'],
+    id: 'obsidian-receipt',
+    label: 'Obsidian Receipt',
+    eyebrow: 'Premium',
+    shell: 'bg-[#17191F] border border-slate-800',
+    accents: ['h-1 w-full rounded-full bg-[#B98248]', 'h-3 w-3/5 rounded bg-slate-700', 'h-1 w-4/5 rounded-full bg-slate-700'],
     columns: ['h-7 w-full rounded-md border border-slate-700 bg-slate-900', 'h-1 w-full rounded-full bg-slate-700', 'h-1 w-3/4 rounded-full bg-slate-700'],
   },
 ] as const
@@ -47,8 +47,8 @@ interface PdfOutputCustomizeSheetProps {
   footerText?: string
   showBalanceDueOption?: boolean
   designOnly?: boolean
-  templateId?: 'industry' | 'nexus'
-  onSave: (value: PdfOutputSettingsValue, preset: PdfDesignPreset, templateId: 'industry' | 'nexus') => void | Promise<void>
+  templateId?: 'industry' | 'obsidian-receipt'
+  onSave: (value: PdfOutputSettingsValue, preset: PdfDesignPreset, templateId: 'industry' | 'obsidian-receipt') => void | Promise<void>
 }
 
 export default function PdfOutputCustomizeSheet({
@@ -68,7 +68,7 @@ export default function PdfOutputCustomizeSheet({
 }: PdfOutputCustomizeSheetProps) {
   const [draftValue, setDraftValue] = useState<PdfOutputSettingsValue>(value)
   const [draftPreset, setDraftPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset(documentType))
-  const [draftTemplateId, setDraftTemplateId] = useState<'industry' | 'nexus'>(templateId)
+  const [draftTemplateId, setDraftTemplateId] = useState<'industry' | 'obsidian-receipt'>(templateId)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {

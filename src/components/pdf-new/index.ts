@@ -40,16 +40,16 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     { pdf },
     { PdfRenderer },
     IndustryModule,
-    NexusModule,
+    ObsidianModule,
   ] = await Promise.all([
     import('@react-pdf/renderer'),
     import('./renderers/PdfRenderer'),
     import('./templates/Industry'),
-    import('./templates/Nexus'),
+    import('./templates/ObsidianReceipt'),
   ])
 
   const Industry = IndustryModule.default
-  const Nexus = NexusModule.default
+  const Obsidian = ObsidianModule.default
 
   registerPdfFonts()
 
@@ -59,9 +59,9 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
   let templateData: unknown = adaptIndustryData(request.model)
 
   switch (activeTemplateId) {
-    case 'nexus':
-      Template = Nexus
-      templateData = request.model
+    case 'obsidian-receipt':
+      Template = Obsidian
+      templateData = adaptIndustryData(request.model)
       break
     case 'industry':
     default:

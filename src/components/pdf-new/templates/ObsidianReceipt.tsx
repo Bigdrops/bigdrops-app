@@ -1,8 +1,10 @@
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
-import { styles, resolveAlignment, palette } from './ObsidianrecieptTemplateStyles';
+import type { IndustryTemplateData } from '../industryAdapter';
+import { styles, resolveAlignment, palette } from './ObsidianReceiptStyles';
+import { getCellText } from './industryStyles';
 
 export default function Template({ data }: { data: IndustryTemplateData }) {
-  const design = data.design || {};
+  const design: IndustryTemplateData['design'] = data.design || ({} as any);
   const accentColor = design.accentColor || palette.bronze;
   const textColor = design.textColor || palette.ink;
   const mutedColor = design.mutedColor || palette.muted;
@@ -61,8 +63,7 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
   };
 
   const renderCellValue = (value: any) => {
-    if (value === null || value === undefined) return '';
-    return String(value);
+    return getCellText(value);
   };
 
   const renderDescriptionCell = (row: IndustryTemplateData['table']['rows'][number], columnKey: string) => {
@@ -120,21 +121,25 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
           const widthStyle = column.width ? { width: column.width } : { flex: column.flex || 1 };
           const isDescription = columnIndex === 0 || column.key === 'description' || column.key === 'item' || column.key === 'name';
 
+          const cellStyle: any = {
+            ...styles.tableCell,
+            ...widthStyle,
+            ...resolveAlignment(column.align),
+          };
+          if (row.isInGroup && columnIndex === 0) {
+            Object.assign(cellStyle, styles.nestedCell);
+            cellStyle.borderLeftColor = accentColor;
+          }
+
           return (
             <View
               key={`${column.key}-${columnIndex}`}
-              style={[
-                styles.tableCell,
-                widthStyle,
-                resolveAlignment(column.align),
-                row.isInGroup && columnIndex === 0 ? styles.nestedCell : null,
-                row.isInGroup && columnIndex === 0 ? { borderLeftColor: accentColor } : null,
-              ]}
+              style={cellStyle}
             >
               {isDescription ? (
                 renderDescriptionCell(row, column.key)
               ) : (
-                <Text style={[{ color: textColor }, resolveAlignment(column.align)]}>
+                <Text style={{ color: textColor, ...resolveAlignment(column.align) } as any}>
                   {renderCellValue(row.cells?.[column.key])}
                 </Text>
               )}
@@ -153,15 +158,15 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
   const hasSignature = Boolean(data.signature);
 
   return (
-    <Page size="A4" style={[styles.page, { backgroundColor: surfaceColor, color: textColor }]}>
+    <Page size="A4" style={{ ...styles.page, backgroundColor: surfaceColor, color: textColor } as any}>
       <View style={styles.masthead} wrap={false}>
         <View style={styles.heroCard}>
           <View style={styles.brandRow}>
             {data.company?.companyLogoUrl ? (
               <Image src={data.company.companyLogoUrl} style={styles.logoImage} />
             ) : (
-              <View style={[styles.logoMark, { backgroundColor: accentColor }]}>
-                <Text style={styles.logoMarkText}>{companyInitials}</Text>
+              <View style={{ ...styles.logoMark, backgroundColor: accentColor } as any}>
+                <Text style={styles.logoMarkText}>{companyInitials as any}</Text>
               </View>
             )}
             <View>
@@ -171,9 +176,9 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
           </View>
 
           <View>
-            <Text style={[styles.docKicker, { color: accentColor }]}>Commercial Document</Text>
-            <Text style={styles.docTitle}>{data.title}</Text>
-            {data.customTitle ? <Text style={styles.secondaryLabel}>{data.customTitle}</Text> : null}
+            <Text style={{ ...styles.docKicker, color: accentColor } as any}>Commercial Document</Text>
+            <Text style={styles.docTitle}>{data.title as any}</Text>
+            {data.customTitle ? <Text style={styles.secondaryLabel}>{data.customTitle as any}</Text> : null}
           </View>
         </View>
 
@@ -189,9 +194,9 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
                     : styles.metaTilePaper;
 
             return (
-              <View key={`${field.label}-${index}`} style={[styles.metaTile, tileStyle, { borderColor }]}>
-                <Text style={[styles.metaLabel, { color: mutedColor }]}>{field.label}</Text>
-                <Text style={[styles.metaValue, { color: textColor }]}>{field.value}</Text>
+              <View key={`${field.label}-${index}`} style={{ ...styles.metaTile, ...tileStyle, borderColor } as any}>
+                <Text style={{ ...styles.metaLabel, color: mutedColor } as any}>{field.label as any}</Text>
+                <Text style={{ ...styles.metaValue, color: textColor } as any}>{field.value as any}</Text>
               </View>
             );
           })}

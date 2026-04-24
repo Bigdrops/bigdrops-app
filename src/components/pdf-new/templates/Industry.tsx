@@ -255,7 +255,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                   rowIdx % 2 === 1 ? styles.tableRowEven : null,
                   row.isInGroup ? styles.tableRowInGroup : null,
                   row.isInGroup && accentColor ? { borderLeftColor: accentColor } : null,
-                ]}
+                ] as any}
                 wrap={false}
               >
                 {data.table.columns.map((column, colIdx) => {
