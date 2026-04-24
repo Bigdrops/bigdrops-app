@@ -1,5 +1,6 @@
-import { Plus, Receipt, ExternalLink, Paperclip, Edit3, Download } from 'lucide-react'
+import { Plus, Receipt, Paperclip, Edit3, Download } from 'lucide-react'
 import type { ReactNode } from 'react'
+import InvoiceAdvanceInvoicesSection from './InvoiceAdvanceInvoicesSection'
 import DocumentRelatedDocsSection from '../shared/DocumentRelatedDocsSection'
 import styles from './InvoicePresentation.module.css'
 
@@ -157,24 +158,7 @@ export default function InvoiceViewPage({
           </SupportingSection>
         )}
 
-        {gAdvanceInvoices.length > 0 && (
-          <SupportingSection title="Advance Invoices">
-            <div className={styles['advance-list']}>
-              {gAdvanceInvoices.map((adv) => (
-                <div key={adv.id} className={styles['advance-item-row']} onClick={adv.onOpen}>
-                  <div className={styles['advance-body']}>
-                    <div className={styles['advance-title']}>{adv.title}</div>
-                    <div className={styles['advance-sub']}>{adv.subtitle}</div>
-                  </div>
-                  <div className={styles['advance-right']}>
-                    <div className={styles['advance-amount']}>{adv.amountLabel}</div>
-                    <ExternalLink size={14} className={styles['advance-chev']} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </SupportingSection>
-        )}
+        <InvoiceAdvanceInvoicesSection items={gAdvanceInvoices} />
 
         <DocumentRelatedDocsSection items={relatedDocuments} />
 
