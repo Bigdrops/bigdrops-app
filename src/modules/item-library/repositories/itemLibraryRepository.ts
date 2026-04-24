@@ -234,7 +234,7 @@ export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]
       .limit(limit),
     supabase
       .from('invoice_items')
-      .select('id, invoice_id, item_id, description, quantity, unit, unit_price, amount, updated_at, invoices(issue_date)')
+      .select('id, invoice_id, item_id, description, quantity, unit, unit_price, amount, updated_at')
       .limit(5000),
     supabase
       .from('quotation_items')
@@ -246,9 +246,21 @@ export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]
   if (invoiceItemsResult.error) throw invoiceItemsResult.error
   if (quotationItemsResult.error) throw quotationItemsResult.error
 
-  const invoiceRows = (Array.isArray(invoiceItemsResult.data) ? invoiceItemsResult.data : []).map((row: any) => ({
+  const rawInvoiceRows = Array.isArray(invoiceItemsResult.data) ? invoiceItemsResult.data : []
+  const invoiceIds = [...new Set(rawInvoiceRows.map((row: any) => String(row.invoice_id || '')).filter(Boolean))]
+  const invoiceDocsResult = invoiceIds.length > 0
+    ? await supabase.from('invoices').select('id, issue_date').in('id', invoiceIds)
+    : { data: [], error: null }
+
+  if (invoiceDocsResult.error) throw invoiceDocsResult.error
+
+  const invoiceDates = new Map(
+    (invoiceDocsResult.data || []).map((row: any) => [String(row.id), row.issue_date || null]),
+  )
+
+  const invoiceRows = rawInvoiceRows.map((row: any) => ({
     ...row,
-    issue_date: row.invoices?.issue_date,
+    issue_date: invoiceDates.get(String(row.invoice_id || '')) || null,
   }))
   const quotationRows = (Array.isArray(quotationItemsResult.data) ? quotationItemsResult.data : []).map((row: any) => ({
     ...row,
