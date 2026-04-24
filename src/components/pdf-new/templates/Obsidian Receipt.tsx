@@ -1,5 +1,5 @@
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
-import { styles, resolveAlignment, palette } from './TemplateStyles';
+import { styles, resolveAlignment, palette } from './ObsidianrecieptTemplateStyles';
 
 export default function Template({ data }: { data: IndustryTemplateData }) {
   const design = data.design || {};
