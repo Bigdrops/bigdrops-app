@@ -225,13 +225,60 @@ export async function getItemSuggestions(
 }
 
 export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]> {
-  const [summaryResult, invoiceItemsResult, quotationItemsResult] = await Promise.all([
-    supabase
-      .from('item_price_summary_v')
-      .select('*')
-      .order('last_used_at', { ascending: false, nullsFirst: false })
-      .order('name', { ascending: true })
-      .limit(limit),
+  const summaryResult = await supabase
+    .from('item_price_summary_v')
+    .select('*')
+    .order('last_used_at', { ascending: false, nullsFirst: false })
+    .order('name', { ascending: true })
+    .limit(limit)
+
+  if (summaryResult.error) throw summaryResult.error
+
+  const rawSummaryRows = Array.isArray(summaryResult.data) ? summaryResult.data : []
+  const summaryItemIds = rawSummaryRows
+    .map((row) => String((row as Record<string, unknown>).item_id || (row as Record<string, unknown>).id || ''))
+    .filter(Boolean)
+
+  const [invoiceUsageResult, quotationUsageResult] = await Promise.all([
+    summaryItemIds.length > 0
+      ? supabase.from('invoice_items').select('item_id').in('item_id', summaryItemIds)
+      : Promise.resolve({ data: [], error: null }),
+    summaryItemIds.length > 0
+      ? supabase.from('quotation_items').select('item_id').in('item_id', summaryItemIds)
+      : Promise.resolve({ data: [], error: null }),
+  ])
+
+  if (invoiceUsageResult.error) throw invoiceUsageResult.error
+  if (quotationUsageResult.error) throw quotationUsageResult.error
+
+  const invoiceItemIds = new Set((invoiceUsageResult.data || []).map((row: any) => String(row.item_id || '')).filter(Boolean))
+  const quotationItemIds = new Set((quotationUsageResult.data || []).map((row: any) => String(row.item_id || '')).filter(Boolean))
+
+  const summaryRows = rawSummaryRows.map((row) =>
+    normalizeSummaryRow({
+      ...(row as Record<string, unknown>),
+      appears_in_invoice:
+        (row as Record<string, unknown>).appears_in_invoice === true ||
+        invoiceItemIds.has(String((row as Record<string, unknown>).item_id || (row as Record<string, unknown>).id || '')),
+      appears_in_quotation:
+        (row as Record<string, unknown>).appears_in_quotation === true ||
+        quotationItemIds.has(String((row as Record<string, unknown>).item_id || (row as Record<string, unknown>).id || '')),
+    }),
+  )
+
+  if (summaryRows.length >= limit) {
+    return summaryRows
+      .filter((row) => row.is_active !== false)
+      .sort((left, right) => {
+        const rightTime = new Date(right.last_used_at || 0).getTime() || 0
+        const leftTime = new Date(left.last_used_at || 0).getTime() || 0
+        if (rightTime !== leftTime) return rightTime - leftTime
+        return left.name.localeCompare(right.name)
+      })
+      .slice(0, limit)
+  }
+
+  const [invoiceItemsResult, quotationItemsResult] = await Promise.all([
     supabase
       .from('invoice_items')
       .select('id, invoice_id, item_id, description, quantity, unit, unit_price, amount, updated_at')
@@ -242,7 +289,6 @@ export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]
       .limit(5000),
   ])
 
-  if (summaryResult.error) throw summaryResult.error
   if (invoiceItemsResult.error) throw invoiceItemsResult.error
   if (quotationItemsResult.error) throw quotationItemsResult.error
 
@@ -266,20 +312,6 @@ export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]
     ...row,
     issue_date: row.quotations?.issue_date,
   }))
-  const invoiceItemIds = new Set(invoiceRows.map((row) => String(row.item_id || '')).filter(Boolean))
-  const quotationItemIds = new Set(quotationRows.map((row) => String(row.item_id || '')).filter(Boolean))
-
-  const summaryRows = (Array.isArray(summaryResult.data) ? summaryResult.data : []).map((row) =>
-    normalizeSummaryRow({
-      ...(row as Record<string, unknown>),
-      appears_in_invoice:
-        (row as Record<string, unknown>).appears_in_invoice === true ||
-        invoiceItemIds.has(String((row as Record<string, unknown>).item_id || (row as Record<string, unknown>).id || '')),
-      appears_in_quotation:
-        (row as Record<string, unknown>).appears_in_quotation === true ||
-        quotationItemIds.has(String((row as Record<string, unknown>).item_id || (row as Record<string, unknown>).id || '')),
-    }),
-  )
   const fallbackRows = buildFallbackSummaryItems(
     invoiceRows,
     quotationRows,
