@@ -22,7 +22,7 @@ import {
 import { getDocumentActionState, getProjectActionState } from "@/domain/document/documentActionState"
 import { getInvoiceListActionDefs, getInvoiceListDeleteActionDef } from "@/domain/invoice/actions"
 import { fetchInvoiceChildDocuments, fetchProjectSummary, getInvoiceSourceDocument } from "@/domain/documentRelationships"
-import { ADVANCE_INVOICE_EXCLUSION_FILTER, shouldIncludeInvoiceInList } from "@/domain/invoice/advanceList"
+import { shouldIncludeInvoiceInList } from "@/domain/invoice/advanceList"
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
 import { formatStatusLabel } from "@/lib/formatters/status"
@@ -66,9 +66,8 @@ export default function Invoices() {
   const buildInvoiceQuery = () => {
     let query = supabase
       .from("invoices")
-      .select("id, invoice_number, client_name, issue_date, created_at, total, status, project_id, thread_id", { count: "exact" })
+      .select("id, invoice_number, client_name, issue_date, created_at, total, status, project_id, custom_fields")
       .is("archived_at", null)
-      .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
 
     const searchTerm = search.trim()
     if (searchTerm) {
@@ -122,18 +121,19 @@ export default function Invoices() {
     const from = pageIndex * PAGE_SIZE
     const to = from + PAGE_SIZE - 1
     try {
-      const { data, count, error } = await buildInvoiceQuery().range(from, to)
+      const { data, error } = await buildInvoiceQuery()
       if (error) throw error
 
-      const nextRows = data || []
+      const filteredRows = (data || []).filter(shouldIncludeInvoiceInList)
+      const nextRows = filteredRows.slice(from, to + 1)
 
       setInvoices((current) => (replace ? nextRows : [...current, ...nextRows]))
-      setTotalCount(count || 0)
+      setTotalCount(filteredRows.length)
       setPage(pageIndex)
-      setHasMore(count !== null ? to + 1 < count : nextRows.length === PAGE_SIZE)
+      setHasMore(to + 1 < filteredRows.length)
 
-      if (canUseNativeSqlite() && nextRows.length > 0) {
-        void cacheInvoiceList(nextRows).catch((cacheError) => {
+      if (canUseNativeSqlite() && filteredRows.length > 0) {
+        void cacheInvoiceList(filteredRows).catch((cacheError) => {
           console.warn("Invoice list cache write failed:", cacheError)
         })
       }
@@ -219,14 +219,13 @@ export default function Invoices() {
     try {
       const { data, error } = await supabase
         .from("invoices")
-        .select("client_name")
+        .select("client_name, custom_fields")
         .is("archived_at", null)
-        .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
 
       if (error) throw error
 
       const nextOptions = Array.from(
-        new Set((data || []).map((row) => row.client_name).filter(Boolean)),
+        new Set((data || []).filter(shouldIncludeInvoiceInList).map((row) => row.client_name).filter(Boolean)),
       ).sort((a, b) => a.localeCompare(b))
 
       setClientOptions(nextOptions)
@@ -379,8 +378,8 @@ export default function Invoices() {
     await fetchInvoices(0, true)
   }
 
-  const isStandalone = activeInvoice && !activeInvoice.thread_id
   const activeInvoiceSource = activeInvoice ? getInvoiceSourceDocument({ custom_fields: activeInvoiceCustomFields }) : null
+  const isStandalone = Boolean(activeInvoice) && !activeInvoiceSource
   const invoiceProjectState = getProjectActionState({ projectId: activeInvoice?.project_id, project: activeInvoiceProject })
   const invoiceDocumentState = getDocumentActionState({
     sourceDocument: activeInvoiceSource,
