@@ -20,7 +20,6 @@ import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
-import { buildPdfRowCells, generateQuotationPdf, interpretPdfTableSettings } from '@/components/pdf-new'
 import { formatMergedQtyUnit, resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '@/domain/documentMedia.js'
 import { BUILTIN_COLUMNS, buildSummaryRows } from '@/domain/invoice'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
@@ -305,6 +304,7 @@ export default function ViewQuotation() {
     if (!quotation || downloading) return
     setDownloading(true)
     try {
+      const { buildPdfRowCells, generateQuotationPdf, interpretPdfTableSettings } = await import('@/components/pdf-new')
       const pdfDesignPreset = getPdfDesignPreset('quotation')
       const resolvedTable = interpretPdfTableSettings(BUILTIN_COLUMNS as any, {
         mergeQtyUnit: customFields?.mergeQtyUnit === true,

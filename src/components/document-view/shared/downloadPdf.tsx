@@ -1,7 +1,5 @@
 import type { ReactElement } from 'react'
 
-import { pdf } from '@react-pdf/renderer'
-
 import { exportPdfToDevice } from '@/lib/native/pdfexport'
 
 type DownloadPdfFromElementOptions = {
@@ -18,6 +16,9 @@ export async function downloadPdfFromElement({
   return exportPdfToDevice({
     fileName,
     subdirectory,
-    buildBlob: () => pdf(element).toBlob(),
+    buildBlob: async () => {
+      const { pdf } = await import('@react-pdf/renderer')
+      return pdf(element).toBlob()
+    },
   })
 }

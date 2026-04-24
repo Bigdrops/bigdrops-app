@@ -21,7 +21,6 @@ import DocumentConfirmDialog from '@/components/document-view/shared/DocumentCon
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
-import { buildPdfRowCells, generateInvoicePdf, interpretPdfTableSettings } from '@/components/pdf-new'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
 import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '@/domain/documentMedia.js'
@@ -287,6 +286,7 @@ export default function ViewInvoice() {
     targetItems: any[]
     targetPayments?: any[]
   }) => {
+    const { buildPdfRowCells, generateInvoicePdf, interpretPdfTableSettings } = await import('@/components/pdf-new')
     const targetCustomFields = parseCustomFields(targetInvoice?.custom_fields)
     const targetTemplateId = targetCustomFields?.pdfTemplateId === 'nexus' ? 'nexus' : 'industry'
     const savedColumns = Array.isArray(targetCustomFields?.columnConfig) ? targetCustomFields.columnConfig : BUILTIN_COLUMNS
