@@ -10,12 +10,13 @@ import {
   X,
 } from 'lucide-react'
 
-import { Button } from '../components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
-import { Input } from '../components/ui/input'
-import { Sheet, SheetContent } from '../components/ui/sheet'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
-import { COLUMN_TYPES } from './useInvoiceColumns.jsx'
+import { COLUMN_TYPES } from '@/domain/invoice'
+import type { ColumnConfig, ColumnDataType, ColumnTypeOption, InvoiceItem } from '@/domain/invoice'
 
 const FIXED_PDF_COLUMNS = [
   { key: 'description', label: 'Description' },
@@ -24,7 +25,12 @@ const FIXED_PDF_COLUMNS = [
   { key: 'amount', label: 'Amount' },
 ]
 
-function SectionTitle({ children, action }) {
+interface SectionTitleProps {
+  children: React.ReactNode
+  action?: React.ReactNode
+}
+
+function SectionTitle({ children, action }: SectionTitleProps) {
   return (
     <div className="mb-2.5 flex items-center justify-between gap-3 px-1">
       <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--bd-text3)]">
@@ -33,6 +39,20 @@ function SectionTitle({ children, action }) {
       {action}
     </div>
   )
+}
+
+interface BuiltInColumnRowProps {
+  col: ColumnConfig
+  onToggle: (key: string) => void
+  onUpdate: (key: string, field: keyof ColumnConfig, value: unknown) => void
+  onDragStart: (e: React.DragEvent<HTMLButtonElement>, key: string) => void
+  onDragOver: (e: React.DragEvent<HTMLElement>) => void
+  onDrop: (e: React.DragEvent<HTMLElement>, key: string) => void
+  onMoveUp?: (key: string) => void
+  onMoveDown?: (key: string) => void
+  disableMoveUp: boolean
+  disableMoveDown: boolean
+  typeLabel: (t: ColumnDataType | string) => string
 }
 
 function BuiltInColumnRow({
@@ -47,7 +67,7 @@ function BuiltInColumnRow({
   disableMoveUp,
   disableMoveDown,
   typeLabel,
-}) {
+}: BuiltInColumnRowProps) {
   return (
     <div
       className={cn(
@@ -154,12 +174,19 @@ function BuiltInColumnRow({
   )
 }
 
+interface CustomColumnCardProps {
+  col: ColumnConfig
+  onToggle: (key: string) => void
+  onUpdate: (key: string, field: keyof ColumnConfig, value: unknown) => void
+  onRemoveCustom: (key: string) => void
+}
+
 function CustomColumnCard({
   col,
   onToggle,
   onUpdate,
   onRemoveCustom,
-}) {
+}: CustomColumnCardProps) {
   return (
     <div
       className={cn(
@@ -195,9 +222,8 @@ function CustomColumnCard({
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <div className="inline-flex rounded-full border border-[var(--bd-border)] bg-[var(--bd-bg)] p-1">
-              {COLUMN_TYPES.map((t) => {
-                const value = t.value ?? t
-                const label = t.label ?? t
+              {COLUMN_TYPES.map((t: ColumnTypeOption) => {
+                const value = t.value
                 const active = col.type === value
 
                 return (
@@ -212,7 +238,7 @@ function CustomColumnCard({
                         : 'text-[var(--bd-text3)]',
                     )}
                   >
-                    {label}
+                    {t.label}
                   </button>
                 )
               })}
@@ -245,7 +271,11 @@ function CustomColumnCard({
   )
 }
 
-function FixedColumnRow({ col }) {
+interface FixedColumnRowProps {
+  col: { key: string; label: string }
+}
+
+function FixedColumnRow({ col }: FixedColumnRowProps) {
   return (
     <div className="rounded-[18px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-3 py-3">
       <div className="flex items-start gap-3">
@@ -269,7 +299,13 @@ function FixedColumnRow({ col }) {
   )
 }
 
-function OverrideRow({ label, count, onReset }) {
+interface OverrideRowProps {
+  label: string
+  count: number
+  onReset: () => void
+}
+
+function OverrideRow({ label, count, onReset }: OverrideRowProps) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-[14px] border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-3 py-2.5">
       <div className="flex items-center gap-2">
@@ -292,7 +328,13 @@ function OverrideRow({ label, count, onReset }) {
   )
 }
 
-function ResetConfirmDialog({ open, onCancel, onConfirm }) {
+interface ResetConfirmDialogProps {
+  open: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}
+
+function ResetConfirmDialog({ open, onCancel, onConfirm }: ResetConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onCancel()}>
       <DialogContent className="max-w-sm rounded-[20px] bg-[var(--bd-surface)] p-0">
@@ -326,6 +368,19 @@ function ResetConfirmDialog({ open, onCancel, onConfirm }) {
   )
 }
 
+export interface ColumnManagerProps {
+  columns: ColumnConfig[]
+  onUpdate: (key: string, field: keyof ColumnConfig, value: unknown) => void
+  onToggle: (key: string) => void
+  onAddCustom: () => void
+  onRemoveCustom: (key: string) => void
+  onReset: () => void
+  onMove?: (key: string, newIndex: number) => void
+  onClose: () => void
+  items?: InvoiceItem[]
+  onResetItemOverrides?: (overrides: { vat?: boolean; discount?: boolean; install?: boolean }) => void
+}
+
 export default function ColumnManager({
   columns,
   onUpdate,
@@ -337,7 +392,7 @@ export default function ColumnManager({
   onClose,
   items = [],
   onResetItemOverrides,
-}) {
+}: ColumnManagerProps) {
   const [confirmReset, setConfirmReset] = useState(false)
 
   const builtinCols = columns.filter((c) => !c.key.startsWith('custom_'))
@@ -349,15 +404,15 @@ export default function ColumnManager({
   const installOverrideCount = standardItems.filter((i) => i.install_rate_override === true).length
   const totalOverrideCount = vatOverrideCount + discountOverrideCount + installOverrideCount
 
-  const handleDragStart = (e, key) => {
+  const handleDragStart = (e: React.DragEvent<HTMLButtonElement>, key: string) => {
     e.dataTransfer.setData('text/plain', key)
   }
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault()
   }
 
-  const handleDrop = (e, targetKey) => {
+  const handleDrop = (e: React.DragEvent<HTMLElement>, targetKey: string) => {
     e.preventDefault()
     const draggedKey = e.dataTransfer.getData('text/plain')
     if (!draggedKey || draggedKey === targetKey || !onMove) return
@@ -371,7 +426,7 @@ export default function ColumnManager({
     setConfirmReset(false)
   }
 
-  const typeLabel = (t) =>
+  const typeLabel = (t: ColumnDataType | string): string =>
     ({ 
       install_rate: 'Install Rate', 
       vat_rate: 'VAT %', 
