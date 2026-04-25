@@ -1,7 +1,7 @@
-import { formatCurrency } from '../../lib/formatters/money.js'
+import { formatCurrency } from '../../lib/formatters/money'
 import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
-import { richTextToPlainText } from '../../lib/richTextPlain.js'
-import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '../../domain/documentMedia.js'
+import { richTextToPlainText } from '../../lib/richTextPlain'
+import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '../../domain/documentMedia'
 import type { PdfColumnDefinition, PdfDocumentModel, PdfPageLayout } from './types'
 
 type IndustryTemplateDesign = Pick<
@@ -159,7 +159,7 @@ function normalizePdfTextSection(section: PdfDocumentModel['notes']) {
 export function formatPdfMoney(value: unknown, options: { withSymbol?: boolean } = { withSymbol: true }) {
   if (!hasDisplayValue(value)) return ''
 
-  return formatCurrency(value, {
+  return formatCurrency(value as any, {
     currencySymbol: options.withSymbol ? 'NGN ' : '',
     locale: 'en-NG',
     preserveFraction: true,

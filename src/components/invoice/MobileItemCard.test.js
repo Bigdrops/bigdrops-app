@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const mobileItemCardPath = path.resolve('src/components/invoice/MobileItemCard.jsx')
+const mobileItemCardPath = path.resolve('src/components/invoice/MobileItemCard.tsx')
 
 test('mobile item card treats row duplication as optional in shared form flows', () => {
   const source = fs.readFileSync(mobileItemCardPath, 'utf8')

@@ -1,6 +1,6 @@
 import type { ItemCatalogItem, ItemHistoryRow, ItemSourceType } from '../types'
-import { formatNaira } from '@/lib/formatters/money.js'
-import { formatDisplayDate } from '@/lib/formatters/date.js'
+import { formatNaira } from '@/lib/formatters/money'
+import { formatDisplayDate } from '@/lib/formatters/date'
 
 export function formatItemPrice(value: number | null | undefined, fallback = 'Not set'): string {
   if (value === null || value === undefined) return fallback

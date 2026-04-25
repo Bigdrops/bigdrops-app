@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import {
   Camera,
@@ -17,11 +18,17 @@ import { useItemSuggestions } from '@/modules/item-library/hooks'
 import { getInvoiceSuggestionSelection } from '@/modules/item-library/domain/invoiceSuggestionSelection'
 import { getInvoiceSuggestionPriceContextText } from '@/modules/item-library/domain/invoiceSuggestionPriceContext'
 import { fieldCls, labelCls } from '@/components/invoice/mobile/mobileFormPrimitives'
+import type { InvoiceItem } from '@/domain/invoice/types'
+import type { ItemSuggestion } from '@/modules/item-library/types'
 
 const CLOUD_NAME = 'ddhqvv77g'
 const UPLOAD_PRESET = 'ml_default'
 
-function ItemMiniBtn({ children, className = '', ...props }) {
+interface ItemMiniBtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode
+}
+
+function ItemMiniBtn({ children, className = '', ...props }: ItemMiniBtnProps) {
   return (
     <button
       type="button"
@@ -33,8 +40,29 @@ function ItemMiniBtn({ children, className = '', ...props }) {
   )
 }
 
-function formatCurrency(value) {
+function formatCurrency(value: number | string | null | undefined): string {
   return `NGN ${Number(value || 0).toLocaleString()}`
+}
+
+interface MobileItemCardProps {
+  item: InvoiceItem
+  index: number
+  number: number | string
+  invoice?: any
+  enableItemSuggestions?: boolean
+  customColumns?: any
+  computedAmount: number | string
+  isFirst: boolean
+  isLast: boolean
+  onUpdate: (index: number, field: string, value: any) => void
+  onRemove: (index: number) => void
+  onMoveUp: (index: number) => void
+  onMoveDown: (index: number) => void
+  onInsertBelow: (index: number) => void
+  onDuplicate?: (index: number) => void
+  isVisible: (field: string) => boolean
+  getColumn: (field: string) => any
+  compact?: boolean
 }
 
 export default function MobileItemCard({
@@ -56,13 +84,13 @@ export default function MobileItemCard({
   isVisible,
   getColumn,
   compact = false,
-}) {
+}: MobileItemCardProps) {
   const [showDetails, setShowDetails] = useState(Boolean(item.sub_description))
   const [uploading, setUploading] = useState(false)
   const [descriptionFocused, setDescriptionFocused] = useState(false)
   const [debouncedDescription, setDebouncedDescription] = useState(item.description || '')
-  const [selectedSuggestionContextText, setSelectedSuggestionContextText] = useState(null)
-  const fileInputRef = useRef(null)
+  const [selectedSuggestionContextText, setSelectedSuggestionContextText] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -93,7 +121,7 @@ export default function MobileItemCard({
   const showSuggestions =
     enableItemSuggestions && descriptionFocused && String(item.description || '').trim().length >= 2
 
-  const handleImageUpload = async (event) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -120,7 +148,7 @@ export default function MobileItemCard({
     }
   }
 
-  const handleSuggestionSelect = (suggestion) => {
+  const handleSuggestionSelect = (suggestion: ItemSuggestion) => {
     const selection = getInvoiceSuggestionSelection(suggestion)
     onUpdate(index, 'description', selection.description)
     onUpdate(index, 'item_id', selection.item_id)
@@ -131,7 +159,7 @@ export default function MobileItemCard({
     setDescriptionFocused(false)
   }
 
-  const handleDescriptionChange = (event) => {
+  const handleDescriptionChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const nextDescription = event.target.value
     onUpdate(index, 'description', nextDescription)
     if (item.item_id) {
@@ -246,37 +274,37 @@ export default function MobileItemCard({
             {isVisible('make') && (
               <div className="min-w-0">
                 <label className={labelCls}>Make</label>
-                <Input value={item.make || ''} onChange={(e) => onUpdate(index, 'make', e.target.value)} className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]" />
+                <Input value={(item.make as string) || ''} onChange={(e) => onUpdate(index, 'make', e.target.value)} className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]" />
               </div>
             )}
             <div className="min-w-0">
               <label className={labelCls}>Qty</label>
-              <Input type="number" value={item.quantity ?? 1} onChange={(e) => onUpdate(index, 'quantity', Number(e.target.value))} className="h-9 px-2 text-center text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
+              <Input type="number" value={(item.quantity as number) ?? 1} onChange={(e) => onUpdate(index, 'quantity', Number(e.target.value))} className="h-9 px-2 text-center text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
             </div>
             {isVisible('unit') && (
               <div className="min-w-0">
                 <label className={labelCls}>Unit</label>
-                <UnitInput value={item.unit || ''} onChange={(val) => onUpdate(index, 'unit', val)} className="h-9 px-2 text-[13px] rounded-lg border-[var(--bd-border-soft)]" />
+                <UnitInput value={(item.unit as string) || ''} onChange={(val: string) => onUpdate(index, 'unit', val)} />
               </div>
             )}
             <div className="min-w-0">
               <label className={labelCls}>Rate</label>
-              <Input type="number" value={item.unit_price ?? 0} onChange={(e) => onUpdate(index, 'unit_price', Number(e.target.value))} className="h-9 px-2.5 text-right font-mono text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
+              <Input type="number" value={(item.unit_price as number) ?? 0} onChange={(e) => onUpdate(index, 'unit_price', Number(e.target.value))} className="h-9 px-2.5 text-right font-mono text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
             </div>
 
             {isVisible('install_rate') && (
               <div className="min-w-0">
-              <label className={labelCls}>Install Rate</label>
-              <Input
-                type="number"
-                value={item.install_rate_override ? item.install_rate ?? '' : ''}
-                placeholder={autoInstall !== null ? String(Number(autoInstall.toFixed(2))) : 'Auto formula'}
-                onChange={(e) => {
-                  const val = e.target.value
-                  onUpdate(index, '__install_rate_override', val === '' ? { install_rate_override: false, install_rate: null } : { install_rate_override: true, install_rate: Number(val) })
-                }}
-                className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
-              />
+                <label className={labelCls}>Install Rate</label>
+                <Input
+                  type="number"
+                  value={item.install_rate_override ? (item.install_rate as number) ?? '' : ''}
+                  placeholder={autoInstall !== null ? String(Number(autoInstall.toFixed(2))) : 'Auto formula'}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    onUpdate(index, '__install_rate_override', val === '' ? { install_rate_override: false, install_rate: null } : { install_rate_override: true, install_rate: Number(val) })
+                  }}
+                  className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
+                />
               </div>
             )}
           </div>

@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify'
-import { richTextToPlainText } from './richTextPlain.js'
+import { richTextToPlainText } from './richTextPlain'
 
 function canUseDomPurify() {
   return typeof window !== 'undefined' && typeof window.document !== 'undefined'

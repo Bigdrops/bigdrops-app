@@ -1,4 +1,4 @@
-function decodeHtmlEntities(value) {
+function decodeHtmlEntities(value: string | null | undefined): string {
   if (!value) return ''
   if (typeof document !== 'undefined') {
     const textarea = document.createElement('textarea')
@@ -15,7 +15,7 @@ function decodeHtmlEntities(value) {
     .replace(/&#39;/gi, "'")
 }
 
-export function richTextToPlainText(value) {
+export function richTextToPlainText(value: string | null | undefined): string {
   if (typeof value !== 'string' || !value.trim()) return ''
 
   const withBreaks = value

@@ -1,5 +1,5 @@
-import { formatDisplayDate } from '../../../lib/formatters/date.js'
-import { formatNaira } from '../../../lib/formatters/money.js'
+import { formatDisplayDate } from '../../../lib/formatters/date'
+import { formatNaira } from '../../../lib/formatters/money'
 import type { ItemSuggestion } from '../types'
 
 function formatLastUsedDate(value: string | null | undefined): string | null {

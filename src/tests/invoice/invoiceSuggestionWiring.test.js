@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const lineItemsComponentPath = path.resolve('src/components/document/FormLineItems.tsx')
-const liveMobileItemCardPath = path.resolve('src/components/invoice/MobileItemCard.jsx')
+const liveMobileItemCardPath = path.resolve('src/components/invoice/MobileItemCard.tsx')
 
 test('shared document line items wire suggestion behavior into the real mobile row component', () => {
   const formSource = fs.readFileSync(lineItemsComponentPath, 'utf8')

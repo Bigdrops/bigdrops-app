@@ -1,4 +1,4 @@
-function toFiniteAmount(value) {
+function toFiniteAmount(value: number | string | null | undefined): number {
   const parsed =
     typeof value === 'string'
       ? Number(value.replace(/[^0-9.-]/g, '') || 0)
@@ -7,7 +7,14 @@ function toFiniteAmount(value) {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-export function formatCurrency(value, options = {}) {
+export interface CurrencyOptions {
+  currencySymbol?: string
+  locale?: string
+  preserveFraction?: boolean
+  round?: boolean
+}
+
+export function formatCurrency(value: number | string | null | undefined, options: CurrencyOptions = {}): string {
   const {
     currencySymbol = '₦',
     locale = 'en-NG',
@@ -24,7 +31,7 @@ export function formatCurrency(value, options = {}) {
   })}`
 }
 
-export function formatNaira(value, options = {}) {
+export function formatNaira(value: number | string | null | undefined, options: CurrencyOptions = {}): string {
   return formatCurrency(value, {
     currencySymbol: '₦',
     locale: 'en-NG',
