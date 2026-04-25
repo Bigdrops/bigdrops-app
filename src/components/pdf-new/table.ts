@@ -36,10 +36,10 @@ const CONFIGURABLE_DEFAULT_COLUMNS: SavedColumnConfig[] = [
 
 const FIXED_PDF_COLUMNS: PdfColumnDefinition[] = [
   { key: 'num', label: '#', kind: 'builtin', align: 'center', pdfWidth: 20, pdfFlex: 0.45 },
-  { key: 'description', label: 'Description', kind: 'builtin', align: 'left', pdfWidth: 0, pdfFlex: 2.35 },
+  { key: 'description', label: 'Description', kind: 'builtin', align: 'left', pdfWidth: 0, pdfFlex: 2.9 },
   { key: 'quantity', label: 'Qty', kind: 'builtin', align: 'center', pdfWidth: 28, pdfFlex: 0.7 },
-  { key: 'unit_price', label: 'Unit Price', kind: 'builtin', align: 'right', pdfWidth: 60, pdfFlex: 1.2 },
-  { key: 'amount', label: 'Amount', kind: 'builtin', align: 'right', pdfWidth: 70, pdfFlex: 1.35 },
+  { key: 'unit_price', label: 'Unit Price', kind: 'builtin', align: 'right', pdfWidth: 54, pdfFlex: 1.2 },
+  { key: 'amount', label: 'Amount', kind: 'builtin', align: 'right', pdfWidth: 62, pdfFlex: 1.35 },
 ]
 
 function normalizeSavedColumns(columns: SavedColumnConfig[] = []) {
@@ -124,9 +124,9 @@ export function interpretPdfTableSettings(
         ...fixedBase,
         label: col.label || fixedBase.label,
         ...(key === 'quantity' && mergeQtyUnit ? {
-          label: 'Qty / Unit',
-          pdfWidth: 96,
-          pdfFlex: 1.45
+          label: 'Qty',
+          pdfWidth: 56,
+          pdfFlex: 0.9
         } : {})
       })
     } else if (isConfigurable) {

@@ -26,14 +26,15 @@ test('interpretPdfTableSettings keeps fixed pdf columns and visible configurable
   )
 })
 
-test('interpretPdfTableSettings respects merged qty-unit without inventing layout metadata', () => {
+test('interpretPdfTableSettings respects merged qty-unit on the existing quantity column', () => {
   const resolved = interpretPdfTableSettings(
     [{ key: 'unit', label: 'Unit', visible: true }],
     { mergeQtyUnit: true },
   )
 
   assert.equal(resolved.mergeQtyUnit, true)
-  assert.equal(resolved.columns.find((column) => column.key === 'quantity')?.label, 'Qty / Unit')
+  assert.equal(resolved.columns.find((column) => column.key === 'quantity')?.label, 'Qty')
+  assert.equal(resolved.columns.find((column) => column.key === 'quantity')?.pdfWidth, 56)
   assert.equal(resolved.columns.some((column) => column.key === 'unit'), false)
 })
 
@@ -113,17 +114,18 @@ test('buildPdfRowCells keeps merged qty-unit on one inline token', () => {
   assert.equal(cells.quantity, '12pcs')
 })
 
-test('merged qty-unit gets enough fixed width for Industry PDF rendering', () => {
+test('merged qty-unit widens only the existing Qty column', () => {
   const resolved = interpretPdfTableSettings([], { mergeQtyUnit: true })
   const description = resolved.columns.find((column) => column.key === 'description')
   const quantity = resolved.columns.find((column) => column.key === 'quantity')
   const unitPrice = resolved.columns.find((column) => column.key === 'unit_price')
   const amount = resolved.columns.find((column) => column.key === 'amount')
 
-  assert.equal(description?.pdfFlex, 2.35)
-  assert.equal(quantity?.pdfWidth, 96)
-  assert.equal(unitPrice?.pdfWidth, 60)
-  assert.equal(amount?.pdfWidth, 70)
+  assert.equal(description?.pdfFlex, 2.9)
+  assert.equal(quantity?.pdfWidth, 56)
+  assert.equal(quantity?.pdfFlex, 0.9)
+  assert.equal(unitPrice?.pdfWidth, 54)
+  assert.equal(amount?.pdfWidth, 62)
 })
 
 test('resolvePdfPageLayout keeps narrow tables portrait and promotes wide tables to landscape', () => {
