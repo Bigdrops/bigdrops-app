@@ -26,12 +26,50 @@ import {
   Palette,
   Shield,
   UserCheck,
+  type LucideIcon,
 } from 'lucide-react'
+import type { SettingsSession } from './settings/settings-types'
 
 const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
 
+type ActiveSectionId =
+  | 'user'
+  | 'theme'
+  | 'company'
+  | 'branding'
+  | 'banking'
+  | 'documents'
+  | 'signatories'
+  | 'dashboard'
+  | 'archives'
+  | 'admin'
+
+type GroupUIConfig = {
+  label: string
+  icon: string
+  hover: string
+  border: string
+}
+
+type GroupId = 'account' | 'workspace' | 'operations' | 'interface' | 'system'
+
+type SettingsItem = {
+  id: ActiveSectionId
+  label: string
+  icon: LucideIcon
+  desc: string
+  adminOnly?: boolean
+}
+
+type SettingsGroup = {
+  id: GroupId
+  label: string
+  items: SettingsItem[]
+  variant?: 'system'
+}
+
 // Group visual identities
-const GROUP_UI = {
+const GROUP_UI: Record<GroupId, GroupUIConfig> = {
   account: {
     label: 'text-slate-500',
     icon: 'bg-slate-100 text-slate-600',
@@ -64,7 +102,7 @@ const GROUP_UI = {
   },
 }
 
-const SETTINGS_GROUPS = [
+const SETTINGS_GROUPS: SettingsGroup[] = [
   {
     id: 'account',
     label: 'Account',
@@ -139,7 +177,7 @@ const SETTINGS_GROUPS = [
   },
 ]
 
-const SYSTEM_GROUP = {
+const SYSTEM_GROUP: SettingsGroup = {
   id: 'system',
   label: 'System',
   variant: 'system',
@@ -160,7 +198,7 @@ const SYSTEM_GROUP = {
   ],
 }
 
-function buildGroups(isAdmin) {
+function buildGroups(isAdmin: boolean): SettingsGroup[] {
   const systemItems = SYSTEM_GROUP.items.filter((item) =>
     item.adminOnly ? isAdmin : true
   )
@@ -174,8 +212,12 @@ function buildGroups(isAdmin) {
   ].filter((group) => group.items.length > 0)
 }
 
-function getSectionSummary(id, session, isAdmin) {
-  // Only show summaries for sections where they add value
+function getSectionSummary(
+  id: ActiveSectionId,
+  session: SettingsSession,
+  isAdmin: boolean
+): string | null {
+  void session
   switch (id) {
     case 'banking':
       return 'Accounts'
@@ -191,19 +233,19 @@ function getSectionSummary(id, session, isAdmin) {
 }
 
 export default function Settings() {
-  const [active, setActive] = useState(null)
-  const [session, setSession] = useState(null)
-  const [toast, setToast] = useState(null)
+  const [active, setActive] = useState<ActiveSectionId | null>(null)
+  const [session, setSession] = useState<SettingsSession>(null)
+  const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
   }, [])
 
-  const isAdmin = ADMIN_EMAILS.includes(session?.user?.email)
+  const isAdmin = ADMIN_EMAILS.includes(session?.user?.email || '')
   const groups = buildGroups(isAdmin)
   const allSections = groups.flatMap((group) => group.items)
 
-  const showToast = useCallback((msg) => setToast(msg), [])
+  const showToast = useCallback((msg: string) => setToast(msg), [])
 
   const renderSection = () => {
     switch (active) {

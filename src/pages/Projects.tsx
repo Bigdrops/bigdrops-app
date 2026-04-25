@@ -1,23 +1,49 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
+import { Archive, Eye, FolderKanban, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+
+import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
+import MobileFab from '@/components/layout/MobileFab'
+import MobileListPageShell from '@/components/layout/MobileListPageShell'
+import { SkeletonRow } from '@/components/loading/AppLoadingStates'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import type { ProjectRecord } from '@/domain/clientWorkspace'
 import ConfirmActionDialog from '../components/ConfirmActionDialog'
 import Layout from '../components/Layout'
-import { Archive, Eye, FolderKanban, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import MobileFab from '../components/layout/MobileFab'
-import MobileListPageShell from '../components/layout/MobileListPageShell'
-import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
-import { SkeletonRow } from '@/components/loading/AppLoadingStates'
+import { supabase } from '../supabase'
+
+type StatusKey = keyof typeof STATUS_CONFIG
+type StatusFilterOption = 'All' | 'Active' | 'Completed' | 'On Hold' | 'Cancelled'
+type DateFilterOption = 'All Time' | 'This Month' | 'Last Month' | 'This Year'
+type SortOption = 'Newest' | 'Oldest' | 'Highest Value' | 'Lowest Value'
+
+type ProjectRow = ProjectRecord & {
+  client_name?: string | null
+  created_at?: string | null
+  archived_at?: string | null
+}
+
+type AccentVariant = {
+  rail: string
+  tile: string
+  eyebrow: string
+  meta: string
+  chip: string
+  value: string
+}
+
+type ProjectIdRow = {
+  project_id?: string | null
+}
 
 const STATUS_CONFIG = {
   active: { label: 'Active' },
   completed: { label: 'Completed' },
   on_hold: { label: 'On Hold' },
   cancelled: { label: 'Cancelled' },
-}
+} as const
 
-const ACCENT_VARIANTS = [
+const ACCENT_VARIANTS: AccentVariant[] = [
   {
     rail: 'bg-emerald-500',
     tile: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200',
@@ -62,21 +88,23 @@ const ACCENT_VARIANTS = [
 
 export default function Projects() {
   const navigate = useNavigate()
-  const [projects, setProjects] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [clientFilter, setClientFilter] = useState('All')
-  const [statusFilter, setStatusFilter] = useState('All')
-  const [dateFilter, setDateFilter] = useState('All Time')
-  const [sortBy, setSortBy] = useState('Newest')
-  const [showFilters, setShowFilters] = useState(false)
-  const [docCounts, setDocCounts] = useState({})
-  const [projectToDelete, setProjectToDelete] = useState(null)
-  const [activeProject, setActiveProject] = useState(null)
+  const [projects, setProjects] = useState<ProjectRow[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [search, setSearch] = useState<string>('')
+  const [clientFilter, setClientFilter] = useState<string>('All')
+  const [statusFilter, setStatusFilter] = useState<StatusFilterOption>('All')
+  const [dateFilter, setDateFilter] = useState<DateFilterOption>('All Time')
+  const [sortBy, setSortBy] = useState<SortOption>('Newest')
+  const [showFilters, setShowFilters] = useState<boolean>(false)
+  const [docCounts, setDocCounts] = useState<Record<string, number>>({})
+  const [projectToDelete, setProjectToDelete] = useState<ProjectRow | null>(null)
+  const [activeProject, setActiveProject] = useState<ProjectRow | null>(null)
 
-  useEffect(() => { fetchProjects() }, [])
+  useEffect(() => {
+    void fetchProjects()
+  }, [])
 
-  const fetchProjects = async () => {
+  const fetchProjects = async (): Promise<void> => {
     setLoading(true)
     const { data } = await supabase
       .from('projects')
@@ -84,34 +112,38 @@ export default function Projects() {
       .is('archived_at', null)
       .order('start_date', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
-    setProjects(data || [])
 
-    if (data?.length) {
-      const ids = data.map(p => p.id)
+    const projectRows = (data || []) as ProjectRow[]
+    setProjects(projectRows)
+
+    if (projectRows.length > 0) {
+      const ids = projectRows.map((project) => project.id)
       const [invRes, csrRes, quotationRes, waybillRes] = await Promise.all([
         supabase.from('invoices').select('project_id').in('project_id', ids).is('archived_at', null),
         supabase.from('csrs').select('project_id').in('project_id', ids),
         supabase.from('quotations').select('project_id').in('project_id', ids),
         supabase.from('waybills').select('project_id').in('project_id', ids),
       ])
-      const counts = {}
-      ids.forEach(id => { counts[id] = 0 })
-      ;(invRes.data || []).forEach(r => { counts[r.project_id] = (counts[r.project_id] || 0) + 1 })
-      ;(csrRes.data || []).forEach(r => { counts[r.project_id] = (counts[r.project_id] || 0) + 1 })
-      ;(quotationRes.data || []).forEach(r => { counts[r.project_id] = (counts[r.project_id] || 0) + 1 })
-      ;(waybillRes.data || []).forEach(r => { counts[r.project_id] = (counts[r.project_id] || 0) + 1 })
+
+      const counts: Record<string, number> = {}
+      ids.forEach((id) => { counts[id] = 0 })
+      ;((invRes.data || []) as ProjectIdRow[]).forEach((row) => { if (row.project_id) counts[row.project_id] = (counts[row.project_id] || 0) + 1 })
+      ;((csrRes.data || []) as ProjectIdRow[]).forEach((row) => { if (row.project_id) counts[row.project_id] = (counts[row.project_id] || 0) + 1 })
+      ;((quotationRes.data || []) as ProjectIdRow[]).forEach((row) => { if (row.project_id) counts[row.project_id] = (counts[row.project_id] || 0) + 1 })
+      ;((waybillRes.data || []) as ProjectIdRow[]).forEach((row) => { if (row.project_id) counts[row.project_id] = (counts[row.project_id] || 0) + 1 })
       setDocCounts(counts)
     } else {
       setDocCounts({})
     }
+
     setLoading(false)
   }
 
-  const clientOptions = useMemo(() => {
-    return Array.from(new Set(projects.map(p => p.client_name).filter(Boolean))).sort((a, b) => a.localeCompare(b))
+  const clientOptions = useMemo<string[]>(() => {
+    return Array.from(new Set(projects.map((project) => project.client_name).filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b))
   }, [projects])
 
-  const filtered = useMemo(() => {
+  const filtered = useMemo<ProjectRow[]>(() => {
     const now = new Date()
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
@@ -119,7 +151,7 @@ export default function Projects() {
     const currentYearStart = new Date(now.getFullYear(), 0, 1)
     const searchTerm = search.trim().toLowerCase()
 
-    const matchesDateRange = (value, fallback) => {
+    const matchesDateRange = (value?: string | null, fallback?: string | null) => {
       if (dateFilter === 'All Time') return true
       const date = new Date(value || fallback || 0)
       if (Number.isNaN(date.getTime())) return false
@@ -129,8 +161,8 @@ export default function Projects() {
       return true
     }
 
-    const list = projects.filter(project => {
-      const normalizedStatus = (project.status || '').replace('_', ' ')
+    const list = projects.filter((project) => {
+      const normalizedStatus = String(project.status || '').replace('_', ' ')
       const matchSearch = !searchTerm
         || project.project_code?.toLowerCase().includes(searchTerm)
         || project.name?.toLowerCase().includes(searchTerm)
@@ -138,7 +170,7 @@ export default function Projects() {
       const matchClient = clientFilter === 'All' || (project.client_name || '') === clientFilter
       const matchStatus = statusFilter === 'All' || normalizedStatus === statusFilter.toLowerCase()
       const matchDate = matchesDateRange(project.start_date, project.created_at)
-      return matchSearch && matchClient && matchStatus && matchDate
+      return Boolean(matchSearch && matchClient && matchStatus && matchDate)
     })
 
     list.sort((a, b) => {
@@ -161,23 +193,21 @@ export default function Projects() {
     setSortBy('Newest')
   }
 
-  const handleDelete = async (project) => {
+  const handleDelete = async (project: ProjectRow): Promise<void> => {
     await supabase.from('projects').delete().eq('id', project.id)
     setProjectToDelete(null)
     setActiveProject(null)
     await fetchProjects()
   }
 
-  const handleArchive = async (project) => {
+  const handleArchive = async (project: ProjectRow): Promise<void> => {
     await supabase.from('projects').update({ archived_at: new Date().toISOString() }).eq('id', project.id)
     setActiveProject(null)
     await fetchProjects()
   }
 
   const hasActiveFilters = !!search || clientFilter !== 'All' || statusFilter !== 'All' || dateFilter !== 'All Time' || sortBy !== 'Newest'
-  const activeFilterCount = [search, clientFilter !== 'All', statusFilter !== 'All', dateFilter !== 'All Time', sortBy !== 'Newest'].filter(Boolean).length
-
-  const formatProjectValue = (value) => {
+  const formatProjectValue = (value?: number | null) => {
     const amount = Number(value || 0)
     if (!amount) return '₦0'
     if (amount >= 1_000_000) return '₦' + (amount / 1_000_000).toFixed(1) + 'M'
@@ -186,67 +216,67 @@ export default function Projects() {
   }
 
   return (
-    <Layout title="Projects" hidePageHeader>
+    <Layout title="Projects" session={null} hidePageHeader>
       <MobileListPageShell
-          eyebrow="Projects"
-          title="Projects"
-          summary={`${projects.length} projects total`}
-          tone="emerald"
-          onPrimaryAction={() => navigate('/projects/new')}
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search projects..."
-          onFilterClick={() => setShowFilters((p) => !p)}
-          filterPanel={showFilters ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Client</div>
-                <Select value={clientFilter} onValueChange={setClientFilter}>
-                  <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All</SelectItem>
-                    {clientOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Status</div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {['All', 'Active', 'Completed', 'On Hold', 'Cancelled'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Period</div>
-                <Select value={dateFilter} onValueChange={setDateFilter}>
-                  <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {['All Time', 'This Month', 'Last Month', 'This Year'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Sort</div>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              {hasActiveFilters ? (
-                <button
-                  type="button"
-                  onClick={resetFilters}
-                  className="h-10 rounded-xl border border-border px-4 text-xs font-bold uppercase text-muted-foreground transition hover:bg-muted/50 sm:col-span-2"
-                >
-                  Clear
-                </button>
-              ) : null}
+        eyebrow="Projects"
+        title="Projects"
+        summary={`${projects.length} projects total`}
+        tone="emerald"
+        onPrimaryAction={() => navigate('/projects/new')}
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search projects..."
+        onFilterClick={() => setShowFilters((previous) => !previous)}
+        filterPanel={showFilters ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Client</div>
+              <Select value={clientFilter} onValueChange={setClientFilter}>
+                <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All</SelectItem>
+                  {clientOptions.map((client) => <SelectItem key={client} value={client}>{client}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
-          ) : null}
+            <div className="space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Status</div>
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilterOption)}>
+                <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['All', 'Active', 'Completed', 'On Hold', 'Cancelled'].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Period</div>
+              <Select value={dateFilter} onValueChange={(value) => setDateFilter(value as DateFilterOption)}>
+                <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['All Time', 'This Month', 'Last Month', 'This Year'].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Sort</div>
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="h-10 rounded-xl border border-border px-4 text-xs font-bold uppercase text-muted-foreground transition hover:bg-muted/50 sm:col-span-2"
+              >
+                Clear
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       >
         {loading ? (
           <div className="grid gap-3">
@@ -271,7 +301,8 @@ export default function Projects() {
               const startedText = project.start_date
                 ? new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                 : null
-              const statusLabel = (STATUS_CONFIG[project.status] || STATUS_CONFIG.active).label
+              const statusKey = (project.status in STATUS_CONFIG ? project.status : 'active') as StatusKey
+              const statusLabel = STATUS_CONFIG[statusKey].label
               const statusTone =
                 project.status === 'completed'
                   ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
@@ -337,7 +368,7 @@ export default function Projects() {
       <MobileFab onClick={() => navigate('/projects/new')} ariaLabel="Create project" />
       <ConfirmActionDialog
         open={Boolean(projectToDelete)}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           if (!open) setProjectToDelete(null)
         }}
         title="Delete this project?"
@@ -376,7 +407,7 @@ export default function Projects() {
             key: 'archive',
             label: 'Archive',
             icon: <Archive className="h-6 w-6" />,
-            onClick: () => handleArchive(activeProject),
+            onClick: () => void handleArchive(activeProject),
           },
         ] : []}
         deleteAction={activeProject ? {

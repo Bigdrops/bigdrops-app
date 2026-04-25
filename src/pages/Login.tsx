@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Loader2, Mail, Lock } from 'lucide-react'
+import { useState, type SVGProps, type ReactNode, type ChangeEvent } from 'react'
+import { Mail, Lock } from 'lucide-react'
 import { supabase } from '../supabase'
 import { isAndroidNative } from '@/lib/native/capacitor'
 import { NATIVE_AUTH_REDIRECT_URL } from '@/components/app/NativeAuthRedirect'
@@ -10,7 +10,22 @@ import { Input } from '../components/ui/input'
 import { ButtonLoading } from '@/components/loading/AppLoadingStates'
 import { Label } from '../components/ui/label'
 
-function GoogleIcon(props) {
+type AuthMode = 'signin' | 'signup'
+
+type LoginFormState = {
+  email: string
+  password: string
+  confirmPassword: string
+}
+
+type NoticeKind = 'info' | 'error' | 'success'
+
+type NoticeProps = {
+  kind?: NoticeKind
+  children: ReactNode
+}
+
+function GoogleIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
       <path
@@ -33,7 +48,7 @@ function GoogleIcon(props) {
   )
 }
 
-function Notice({ kind = 'info', children }) {
+function Notice({ kind = 'info', children }: NoticeProps) {
   const styles =
     kind === 'error'
       ? 'border-red-200 bg-red-50 text-red-700'
@@ -43,15 +58,18 @@ function Notice({ kind = 'info', children }) {
 }
 
 export default function Login() {
-  const [mode, setMode] = useState('signin')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+  const [mode, setMode] = useState<AuthMode>('signin')
+  const [form, setForm] = useState<LoginFormState>({
+    email: '',
+    password: '',
+    confirmPassword: '',
+  })
   const [signupCompleteEmail, setSignupCompleteEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
+  const { email, password, confirmPassword } = form
   const isSignup = mode === 'signup'
 
   const resetFeedback = () => {
@@ -59,7 +77,15 @@ export default function Login() {
     setMessage('')
   }
 
-  const handleSignIn = async () => {
+  const updateField =
+    (field: keyof LoginFormState) => (event: ChangeEvent<HTMLInputElement>) => {
+      setForm((current) => ({
+        ...current,
+        [field]: event.target.value,
+      }))
+    }
+
+  const handleSignIn = async (): Promise<void> => {
     resetFeedback()
 
     if (!email || !password) {
@@ -75,7 +101,7 @@ export default function Login() {
     else setMessage('Signed in successfully.')
   }
 
-  const handleSignUp = async () => {
+  const handleSignUp = async (): Promise<void> => {
     resetFeedback()
 
     if (!email || !password || !confirmPassword) {
@@ -110,7 +136,7 @@ export default function Login() {
     }
   }
 
-  const handleForgotPassword = async () => {
+  const handleForgotPassword = async (): Promise<void> => {
     resetFeedback()
 
     if (!email) {
@@ -128,7 +154,7 @@ export default function Login() {
     else setMessage('Password reset email sent. Please check your inbox.')
   }
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (): Promise<void> => {
     resetFeedback()
     setLoading(true)
 
@@ -257,7 +283,7 @@ export default function Login() {
                           id="email"
                           type="email"
                           value={email}
-                          onChange={e => setEmail(e.target.value)}
+                          onChange={updateField('email')}
                           placeholder="you@example.com"
                           className="h-12 rounded-xl border-black/10 bg-background pl-9 text-base shadow-none"
                         />
@@ -274,7 +300,7 @@ export default function Login() {
                           id="password"
                           type="password"
                           value={password}
-                          onChange={e => setPassword(e.target.value)}
+                          onChange={updateField('password')}
                           placeholder="Password"
                           className="h-12 rounded-xl border-black/10 bg-background pl-9 text-base shadow-none"
                         />
@@ -292,7 +318,7 @@ export default function Login() {
                             id="confirmPassword"
                             type="password"
                             value={confirmPassword}
-                            onChange={e => setConfirmPassword(e.target.value)}
+                            onChange={updateField('confirmPassword')}
                             placeholder="Confirm password"
                             className="h-12 rounded-xl border-black/10 bg-background pl-9 text-base shadow-none"
                           />

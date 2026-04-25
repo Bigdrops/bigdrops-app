@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { supabase } from '../supabase'
+import type { ChangeEvent } from 'react'
+
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -7,13 +8,42 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import type { ClientRecord } from '@/domain/clientWorkspace'
 import { toast } from '@/hooks/use-toast'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
-import { X } from 'lucide-react'
+import { supabase } from '../supabase'
 
-const CATEGORIES = ['Residential', 'Commercial', 'Industrial', 'Government', 'NGO', 'Other']
+type ClientDraft = {
+  name: string
+  email: string
+  phone: string
+  address: string
+  address2: string
+  city: string
+  state: string
+  contact_person: string
+  category: string
+}
 
-const emptyClient = {
+type ClientSelectorClient = ClientRecord
+
+export type ClientSelectorProps = {
+  clientId?: string | null
+  clientName?: string | null
+  onClientChange: (clientId: string, clientName: string, client: ClientSelectorClient | null) => void
+  isMobile?: boolean
+  compact?: boolean
+  hideHeader?: boolean
+  dense?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  hideTrigger?: boolean
+  allowClear?: boolean
+}
+
+const CATEGORIES = ['Residential', 'Commercial', 'Industrial', 'Government', 'NGO', 'Other'] as const
+
+const emptyClient: ClientDraft = {
   name: '',
   email: '',
   phone: '',
@@ -47,22 +77,23 @@ export default function ClientSelector({
   onOpenChange,
   hideTrigger = false,
   allowClear = true,
-}) {
-  const [clients, setClients] = useState([])
-  const [selectedClient, setSelectedClient] = useState(null)
-  const [internalOpen, setInternalOpen] = useState(false)
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [newClient, setNewClient] = useState({ ...emptyClient })
-  const [saving, setSaving] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const containerRef = useRef(null)
+}: ClientSelectorProps) {
+  const [clients, setClients] = useState<ClientSelectorClient[]>([])
+  const [selectedClient, setSelectedClient] = useState<ClientSelectorClient | null>(null)
+  const [internalOpen, setInternalOpen] = useState<boolean>(false)
+  const [showAddModal, setShowAddModal] = useState<boolean>(false)
+  const [newClient, setNewClient] = useState<ClientDraft>({ ...emptyClient })
+  const [saving, setSaving] = useState<boolean>(false)
+  const [searchTerm, setSearchTerm] = useState<string>('')
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  void dense
 
   useEffect(() => {
-    fetchClients()
+    void fetchClients()
   }, [])
 
   const open = controlledOpen ?? internalOpen
-  const setOpen = (nextOpen) => {
+  const setOpen = (nextOpen: boolean) => {
     if (controlledOpen === undefined) setInternalOpen(nextOpen)
     onOpenChange?.(nextOpen)
   }
@@ -81,8 +112,9 @@ export default function ClientSelector({
   useEffect(() => {
     if (isMobile) return undefined
 
-    const handlePointerDown = (event) => {
-      if (!containerRef.current?.contains(event.target)) {
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      const target = event.target
+      if (target instanceof Node && !containerRef.current?.contains(target)) {
         setOpen(false)
         setSearchTerm('')
       }
@@ -96,12 +128,12 @@ export default function ClientSelector({
     }
   }, [isMobile])
 
-  const fetchClients = async () => {
+  const fetchClients = async (): Promise<void> => {
     const { data } = await supabase.from('clients').select('*').order('name')
-    setClients(data || [])
+    setClients((data || []) as ClientSelectorClient[])
   }
 
-  const updateNew = (field, value) => setNewClient((client) => ({ ...client, [field]: value }))
+  const updateNew = (field: keyof ClientDraft, value: string) => setNewClient((client) => ({ ...client, [field]: value }))
 
   const filteredClients = useMemo(() => {
     const query = searchTerm.trim().toLowerCase()
@@ -127,7 +159,7 @@ export default function ClientSelector({
     setOpen(true)
   }
 
-  const selectClient = (client) => {
+  const selectClient = (client: ClientSelectorClient) => {
     setSelectedClient(client)
     onClientChange(client?.id || '', client?.name || '', client || null)
     setSearchTerm('')
@@ -141,12 +173,12 @@ export default function ClientSelector({
     onClientChange('', '', null)
   }
 
-  const closePicker = (nextOpen) => {
+  const closePicker = (nextOpen: boolean) => {
     setOpen(nextOpen)
     if (!nextOpen) setSearchTerm('')
   }
 
-  const handleSaveNewClient = async () => {
+  const handleSaveNewClient = async (): Promise<void> => {
     if (!newClient.name.trim()) {
       toast({ title: 'Client name required', description: 'Client name is required', variant: 'destructive' })
       return
@@ -183,8 +215,9 @@ export default function ClientSelector({
     }
 
     await fetchClients()
-    setSelectedClient(data)
-    onClientChange(data?.id || '', data?.name || '', data || null)
+    const savedClient = (data || null) as ClientSelectorClient | null
+    setSelectedClient(savedClient)
+    onClientChange(savedClient?.id || '', savedClient?.name || '', savedClient || null)
     setSearchTerm('')
     setNewClient({ ...emptyClient })
     setShowAddModal(false)
@@ -194,6 +227,10 @@ export default function ClientSelector({
 
   const selectedSummary = selectedClient || (clientId ? { name: clientName } : null)
   const useMobileSheet = isMobile && compact
+
+  const handleDraftChange = (field: keyof ClientDraft) => (event: ChangeEvent<HTMLInputElement>) => {
+    updateNew(field, event.target.value)
+  }
 
   return (
     <>
@@ -210,7 +247,7 @@ export default function ClientSelector({
                 <Input
                   className="mt-2 bg-background"
                   value={newClient.name}
-                  onChange={(e) => updateNew('name', e.target.value)}
+                  onChange={handleDraftChange('name')}
                   placeholder="e.g. Coronation Power & Gas Ltd"
                   autoFocus
                 />
@@ -219,7 +256,7 @@ export default function ClientSelector({
               <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <div>
                   <Label>Contact Person</Label>
-                  <Input className="mt-2 bg-background" value={newClient.contact_person} onChange={(e) => updateNew('contact_person', e.target.value)} />
+                  <Input className="mt-2 bg-background" value={newClient.contact_person} onChange={handleDraftChange('contact_person')} />
                 </div>
                 <div>
                   <Label>Category</Label>
@@ -242,31 +279,31 @@ export default function ClientSelector({
               <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <div>
                   <Label>Phone</Label>
-                  <Input className="mt-2 bg-background" value={newClient.phone} onChange={(e) => updateNew('phone', e.target.value)} />
+                  <Input className="mt-2 bg-background" value={newClient.phone} onChange={handleDraftChange('phone')} />
                 </div>
                 <div>
                   <Label>Email</Label>
-                  <Input className="mt-2 bg-background" type="email" value={newClient.email} onChange={(e) => updateNew('email', e.target.value)} />
+                  <Input className="mt-2 bg-background" type="email" value={newClient.email} onChange={handleDraftChange('email')} />
                 </div>
               </div>
 
               <div>
                 <Label>Address Line 1</Label>
-                <Input className="mt-2 bg-background" value={newClient.address} onChange={(e) => updateNew('address', e.target.value)} />
+                <Input className="mt-2 bg-background" value={newClient.address} onChange={handleDraftChange('address')} />
               </div>
               <div>
                 <Label>Address Line 2</Label>
-                <Input className="mt-2 bg-background" value={newClient.address2} onChange={(e) => updateNew('address2', e.target.value)} />
+                <Input className="mt-2 bg-background" value={newClient.address2} onChange={handleDraftChange('address2')} />
               </div>
 
               <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <div>
                   <Label>City</Label>
-                  <Input className="mt-2 bg-background" value={newClient.city} onChange={(e) => updateNew('city', e.target.value)} />
+                  <Input className="mt-2 bg-background" value={newClient.city} onChange={handleDraftChange('city')} />
                 </div>
                 <div>
                   <Label>State</Label>
-                  <Input className="mt-2 bg-background" value={newClient.state} onChange={(e) => updateNew('state', e.target.value)} />
+                  <Input className="mt-2 bg-background" value={newClient.state} onChange={handleDraftChange('state')} />
                 </div>
               </div>
 
@@ -332,7 +369,7 @@ export default function ClientSelector({
                   <div className="border-b border-[#edf2f7] px-5 py-4">
                     <Input
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={(event) => setSearchTerm(event.target.value)}
                       placeholder="Search by name, contact, city…"
                       className="h-12 rounded-[24px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-4 text-[16px] text-[#0f1a24] placeholder:text-[#8a9aac] focus:border-[#94a3b8] focus:bg-white"
                       autoFocus
@@ -353,7 +390,7 @@ export default function ClientSelector({
                           onClick={() => selectClient(client)}
                         >
                           <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[14px] bg-[#eaf6ef] text-[16px] font-bold uppercase text-[#0e7b4e]">
-                            {getInitials(client.name)}
+                            {getInitials(client.name || '')}
                           </div>
 
                           <div className="min-w-0 flex-1">
@@ -397,7 +434,7 @@ export default function ClientSelector({
                     </DialogHeader>
                     <Input
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={(event) => setSearchTerm(event.target.value)}
                       placeholder={`Search ${clients.length} clients`}
                       className="h-11 bg-background"
                       autoFocus
@@ -433,8 +470,8 @@ export default function ClientSelector({
             <Input
               value={open ? searchTerm : selectedSummary?.name || ''}
               onFocus={openPicker}
-              onChange={(e) => {
-                setSearchTerm(e.target.value)
+              onChange={(event) => {
+                setSearchTerm(event.target.value)
                 setOpen(true)
               }}
               placeholder={`Search ${clients.length} clients`}

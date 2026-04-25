@@ -1,4 +1,7 @@
+import type { CSSProperties } from 'react'
+
 import { useLayoutMode } from '@/hooks/useLayoutMode'
+import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { getEffectiveFillableFont, resolvePdfWebFontFamily } from '@/lib/pdfDesignPreset'
 import {
   CSR_READING_FIELDS,
@@ -8,7 +11,99 @@ import {
   getCsrTemplateVariant,
 } from './CSRPreviewContent'
 
-const statusColor = {
+type Branding = {
+  companyName?: string | null
+  companyTagline?: string | null
+  contactLine?: string | null
+}
+
+type TechnicianSignatory = {
+  name?: string | null
+  role?: string | null
+  signatureUrl?: string | null
+}
+
+type CsrReadingField = {
+  key: string
+  label: string
+}
+
+type CsrTemplateOption = {
+  key: string
+  label: string
+  blurb: string
+  accent: string
+}
+
+type CsrTemplateTheme = {
+  compact?: boolean
+  headerMode?: string
+  statusStyle?: string
+  headerBg: string
+  headerFg: string
+  accent: string
+  border: string
+  mutedBg: string
+  sectionBg?: string
+  sectionTitleBg?: string
+  sectionTitleFg?: string
+  pageFg: string
+  previewShell: string
+  previewSurface: string
+}
+
+type CsrPreviewData = {
+  status?: string | null
+  csr_number?: string | null
+  date?: string | null
+  client_name?: string | null
+  po_number?: string | null
+  show_po?: boolean | null
+  address?: string | null
+  problem_reported?: string | null
+  equipment_type?: string | null
+  capacity?: string | null
+  make?: string | null
+  model?: string | null
+  modelLabel?: string | null
+  serialLabel?: string | null
+  serial_no?: string | null
+  equipment_location?: string | null
+  showOperationalReadings?: boolean | null
+  materialsText?: string | null
+  service_rendered?: string | null
+  customer_feedback?: string | null
+  showTechnicianSignLine?: boolean | null
+  technicianRemarks?: string | null
+  start_date?: string | null
+  start_time?: string | null
+  end_date?: string | null
+  end_time?: string | null
+  showAcknowledgement?: boolean | null
+  recipientTitle?: string | null
+  acknowledgement_name?: string | null
+  recipientRole?: string | null
+  technicianName?: string | null
+  technicianSignatory?: TechnicianSignatory | null
+  [key: string]: unknown
+}
+
+export type CSRPreviewPanelProps = {
+  csr: CsrPreviewData
+  template: string
+  onTemplateChange: (template: string) => void
+  branding?: Branding
+  designPreset?: PdfDesignPreset
+}
+
+type HeaderRenderProps = {
+  csr: CsrPreviewData
+  branding: Branding
+  theme: CsrTemplateTheme
+  compact: boolean
+}
+
+const statusColor: Record<string, { bg: string; color: string }> = {
   Complete: { bg: '#DCFCE7', color: '#16A34A' },
   Incomplete: { bg: '#FEE2E2', color: '#CC0000' },
   'Pending for spares': { bg: '#FEF9C3', color: '#CA8A04' },
@@ -17,14 +112,17 @@ const statusColor = {
   'Field Entry Pending': { bg: '#EDE9FE', color: '#4B5563' },
 }
 
-const safe = (value) => String(value || '').trim()
-const hasText = (value) => safe(value).length > 0
+const safe = (value: unknown) => String(value || '').trim()
+const hasText = (value: unknown) => safe(value).length > 0
 
-function hasOperationalReadings(csr) {
-  return csr.showOperationalReadings && CSR_READING_FIELDS.some(({ key }) => hasText(csr[key]))
+function hasOperationalReadings(csr: CsrPreviewData) {
+  return Boolean(
+    csr.showOperationalReadings &&
+      (CSR_READING_FIELDS as CsrReadingField[]).some(({ key }) => hasText(csr[key])),
+  )
 }
 
-function renderTemplateThumb(option, active) {
+function renderTemplateThumb(option: CsrTemplateOption, active: boolean) {
   const isClassicCompact = option.key === '4'
   const isEditorialCompact = option.key === '5'
 
@@ -92,8 +190,8 @@ function renderTemplateThumb(option, active) {
   )
 }
 
-function renderPreviewHeader({ csr, branding, theme, compact }) {
-  const metaPillStyle = {
+function renderPreviewHeader({ csr, branding, theme, compact }: HeaderRenderProps) {
+  const metaPillStyle: CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '6px',
@@ -189,20 +287,29 @@ function renderPreviewHeader({ csr, branding, theme, compact }) {
   )
 }
 
-export default function CSRPreviewPanel({ csr, template, onTemplateChange, branding = {}, designPreset }) {
+export default function CSRPreviewPanel({
+  csr,
+  template,
+  onTemplateChange,
+  branding = {},
+  designPreset,
+}: CSRPreviewPanelProps) {
   const { isMobile } = useLayoutMode()
 
-  const selectedTemplate = CSR_TEMPLATE_OPTIONS.find((option) => option.key === template) || CSR_TEMPLATE_OPTIONS[3]
-  const theme = CSR_TEMPLATE_VARIANTS[getCsrTemplateVariant(template)]
-  const s = statusColor[csr.status] || { bg: '#F5F5F5', color: '#555' }
-  const compact = !!theme.compact
+  const templateOptions = CSR_TEMPLATE_OPTIONS as CsrTemplateOption[]
+  const readingFields = CSR_READING_FIELDS as CsrReadingField[]
+  const templateVariants = CSR_TEMPLATE_VARIANTS as Record<string, CsrTemplateTheme>
+  const selectedTemplate = templateOptions.find((option) => option.key === template) || templateOptions[3]
+  const theme = templateVariants[getCsrTemplateVariant(template)]
+  const s = statusColor[safe(csr.status)] || { bg: '#F5F5F5', color: '#555' }
+  const compact = Boolean(theme.compact)
   const hasBranding = Boolean(branding.companyName || branding.companyTagline || branding.contactLine)
   const showDocumentHeader = hasBranding || theme.headerMode === 'compactRibbon' || theme.headerMode === 'editorialSplit'
-  const lbl = { fontSize: compact ? '10px' : '11px', fontWeight: '700', color: theme.accent, textTransform: 'uppercase', letterSpacing: compact ? '0.24px' : '0.3px', display: 'block', marginBottom: '4px' }
-  const fillableFontFamily = resolvePdfWebFontFamily(getEffectiveFillableFont(designPreset))
+  const lbl: CSSProperties = { fontSize: compact ? '10px' : '11px', fontWeight: '700', color: theme.accent, textTransform: 'uppercase', letterSpacing: compact ? '0.24px' : '0.3px', display: 'block', marginBottom: '4px' }
+  const fillableFontFamily = resolvePdfWebFontFamily(getEffectiveFillableFont(designPreset || { useCustomColors: false, useCustomFonts: false, accentColor: '#0f172a', textColor: '#0f172a', mutedColor: '#475569', borderColor: '#cbd5e1', surfaceColor: '#f8fafc', headerFont: 'Inter', bodyFont: 'Inter', fillableFont: 'Patrick Hand', fillableFontMode: 'custom', fillableColor: '#0f172a' }))
   const fillableColor = designPreset?.fillableColor || theme.pageFg || '#1a1a1a'
-  const val = { fontSize: compact ? '12px' : '13px', color: fillableColor, fontFamily: fillableFontFamily }
-  const sec = {
+  const val: CSSProperties = { fontSize: compact ? '12px' : '13px', color: fillableColor, fontFamily: fillableFontFamily }
+  const sec: CSSProperties = {
     backgroundColor: theme.sectionBg || 'white',
     borderRadius: isMobile ? '8px' : '10px',
     boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
@@ -210,7 +317,7 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
     overflow: 'hidden',
     border: `1px solid ${theme.border}`,
   }
-  const secH = {
+  const secH: CSSProperties = {
     backgroundColor: theme.sectionTitleBg || theme.mutedBg,
     padding: compact ? '7px 14px' : '8px 16px',
     fontWeight: '700',
@@ -220,14 +327,14 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
     letterSpacing: '0.5px',
     borderBottom: `1px solid ${theme.border}`,
   }
-  const readings = CSR_READING_FIELDS.map(({ key, label }) => [label, csr[key]])
+  const readings = readingFields.map(({ key, label }) => [label, csr[key]] as const)
   const hasReadings = hasOperationalReadings(csr)
   const technicianDisplayName = csr.technicianSignatory?.name || csr.technicianName || ''
   const technicianRole = csr.technicianSignatory?.role || ''
   const technicianSignatureUrl = csr.technicianSignatory?.signatureUrl || ''
   const hasMaterials = hasText(csr.materialsText)
   const hasCustomerFeedback = hasText(csr.customer_feedback)
-  const hasTechnicianSection = !!csr.showTechnicianSignLine
+  const hasTechnicianSection = Boolean(csr.showTechnicianSignLine)
   const acknowledgementColumns = hasTechnicianSection && !isMobile ? '1fr 1fr' : '1fr'
 
   return (
@@ -251,7 +358,7 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
         </div>
 
         <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
-          {CSR_TEMPLATE_OPTIONS.map((option) => {
+          {templateOptions.map((option) => {
             const active = template === option.key
             return (
               <button
@@ -347,7 +454,7 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
                   <tbody>
                     <tr>
                       {readings.map(([heading, value]) => (
-                        <td key={heading} style={{ padding: compact ? '8px 8px' : '10px 12px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>{value || '-'}</td>
+                        <td key={heading} style={{ padding: compact ? '8px 8px' : '10px 12px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>{value ? String(value) : '-'}</td>
                       ))}
                     </tr>
                   </tbody>
@@ -383,7 +490,7 @@ export default function CSRPreviewPanel({ csr, template, onTemplateChange, brand
                 <div><span style={lbl}>End of Service</span><span style={val}>{[csr.end_date, csr.end_time].filter(Boolean).join(' ') || '-'}</span></div>
               </div>
               <div style={{ fontWeight: '700', fontSize: compact ? '11px' : '12px', marginBottom: '10px' }}>Status</div>
-              {CSR_STATUS_OPTIONS.map((option) => {
+              {(CSR_STATUS_OPTIONS as string[]).map((option) => {
                 const active = csr.status === option
                 return (
                   <div key={option} style={{ display: 'flex', alignItems: 'center', gap: compact ? '6px' : '8px', marginBottom: compact ? '6px' : '8px' }}>

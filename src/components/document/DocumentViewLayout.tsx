@@ -1,4 +1,5 @@
 import * as React from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import {
   ArrowLeft,
   ChevronDown,
@@ -9,10 +10,110 @@ import {
   FileText,
   Pencil,
 } from 'lucide-react'
+import type { VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+
+type ActionIconProps = {
+  className?: string
+}
+
+type ActionIcon = ComponentType<ActionIconProps>
+
+type HeroStat = {
+  label: string
+  value: ReactNode
+  className?: string
+}
+
+type DetailRow = {
+  label: string
+  value: ReactNode
+}
+
+type SummaryRow = {
+  label: string
+  value: ReactNode
+  emphasis?: boolean
+  divider?: boolean
+  labelClassName?: string
+  valueClassName?: string
+}
+
+type LivePreviewMetaEntry = {
+  label: string
+  value?: ReactNode
+}
+
+type LivePreviewLineItem =
+  | {
+      type: 'group'
+      label: string
+    }
+  | {
+      type?: Exclude<string, 'group'>
+      label: string
+      detail?: ReactNode
+      value?: ReactNode
+      facts?: string[]
+    }
+
+function isGroupPreviewItem(item: LivePreviewLineItem): item is Extract<LivePreviewLineItem, { type: 'group' }> {
+  return item.type === 'group'
+}
+
+type LivePreviewNoteSection = {
+  title?: string
+  content?: ReactNode
+}
+
+type LivePreviewBankDetails = {
+  accountName?: ReactNode
+  accountNumber?: ReactNode
+  bankName?: ReactNode
+  sortCode?: ReactNode
+}
+
+type LivePreviewSignatory = {
+  name: string
+  role?: ReactNode
+  signatureUrl?: string
+}
+
+type BottomBarAction = {
+  label: string
+  onClick?: () => void
+  disabled?: boolean
+  className?: string
+  variant?: VariantProps<typeof Button>['variant']
+}
+
+type GridAction = {
+  key: string
+  label: string
+  icon?: ActionIcon
+  onClick?: () => void
+  disabled?: boolean
+  variant?: 'dark' | 'emerald' | 'blue' | 'outline'
+}
+
+type StatusStripItem = {
+  label: string
+  onClick?: () => void
+  disabled?: boolean
+  active?: boolean
+}
+
+export type DocumentTopBarProps = {
+  title: ReactNode
+  subtitle: ReactNode
+  statusLabel?: ReactNode
+  statusClassName?: string
+  onBack?: () => void
+  onMore?: () => void
+}
 
 export function DocumentTopBar({
   title,
@@ -21,7 +122,7 @@ export function DocumentTopBar({
   statusClassName,
   onBack,
   onMore,
-}) {
+}: DocumentTopBarProps) {
   return (
     <div className="sticky top-0 z-30 -mx-4 border-b border-border bg-muted/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6">
       <div className="flex items-center gap-3 pl-12 md:pl-0">
@@ -53,7 +154,14 @@ export function DocumentTopBar({
   )
 }
 
-export function DocumentHeroCard({ eyebrow, value, helper, stats = [] }) {
+export type DocumentHeroCardProps = {
+  eyebrow: ReactNode
+  value: ReactNode
+  helper?: ReactNode
+  stats?: HeroStat[]
+}
+
+export function DocumentHeroCard({ eyebrow, value, helper, stats = [] }: DocumentHeroCardProps) {
   return (
     <div className="overflow-hidden rounded-[26px] bg-slate-950 p-5 text-white shadow-[0_18px_40px_-18px_rgba(15,23,42,0.65)]">
       <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</div>
@@ -73,6 +181,17 @@ export function DocumentHeroCard({ eyebrow, value, helper, stats = [] }) {
   )
 }
 
+export type DocumentSummaryDisclosureProps = {
+  eyebrow: ReactNode
+  value: ReactNode
+  helper?: ReactNode
+  stats?: HeroStat[]
+  defaultOpen?: boolean
+  compactLabel?: string
+  openLabel?: string
+  closeLabel?: string
+}
+
 export function DocumentSummaryDisclosure({
   eyebrow,
   value,
@@ -82,8 +201,8 @@ export function DocumentSummaryDisclosure({
   compactLabel = 'Quick Summary',
   openLabel = 'Show full summary',
   closeLabel = 'Hide full summary',
-}) {
-  const [open, setOpen] = React.useState(defaultOpen)
+}: DocumentSummaryDisclosureProps) {
+  const [open, setOpen] = React.useState<boolean>(defaultOpen)
   const compactStats = stats.slice(0, 2)
 
   return (
@@ -121,8 +240,12 @@ export function DocumentSummaryDisclosure({
   )
 }
 
-export function DocumentActionGrid({ actions }) {
-  const iconByKey = {
+export type DocumentActionGridProps = {
+  actions: GridAction[]
+}
+
+export function DocumentActionGrid({ actions }: DocumentActionGridProps) {
+  const iconByKey: Record<string, ActionIcon> = {
     pdf: FileText,
     payment: CircleDollarSign,
     edit: Pencil,
@@ -158,7 +281,11 @@ export function DocumentActionGrid({ actions }) {
   )
 }
 
-export function DocumentStatusStrip({ items }) {
+export type DocumentStatusStripProps = {
+  items: StatusStripItem[]
+}
+
+export function DocumentStatusStrip({ items }: DocumentStatusStripProps) {
   return (
     <div className="space-y-2">
       <div className="px-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Status</div>
@@ -183,8 +310,16 @@ export function DocumentStatusStrip({ items }) {
   )
 }
 
-export function DocumentSection({ title, children, className = '', defaultOpen = false, summary = '' }) {
-  const [open, setOpen] = React.useState(defaultOpen)
+export type DocumentSectionProps = {
+  title: ReactNode
+  children: ReactNode
+  className?: string
+  defaultOpen?: boolean
+  summary?: ReactNode
+}
+
+export function DocumentSection({ title, children, className = '', defaultOpen = false, summary = '' }: DocumentSectionProps) {
+  const [open, setOpen] = React.useState<boolean>(defaultOpen)
 
   return (
     <section className={cn('space-y-2', className)}>
@@ -206,6 +341,27 @@ export function DocumentSection({ title, children, className = '', defaultOpen =
   )
 }
 
+export type DocumentLivePreviewCardProps = {
+  templateLabel: ReactNode
+  documentLabel: ReactNode
+  documentNumber?: ReactNode
+  companyName?: ReactNode
+  companyTagline?: ReactNode
+  companyLines?: string[]
+  recipientLabel?: ReactNode
+  recipientName?: ReactNode
+  recipientLines?: string[]
+  meta?: LivePreviewMetaEntry[]
+  detailRows?: DetailRow[]
+  items?: LivePreviewLineItem[]
+  totals?: SummaryRow[]
+  amountInWords?: ReactNode
+  bankDetails?: LivePreviewBankDetails
+  notesSections?: LivePreviewNoteSection[]
+  signatory?: LivePreviewSignatory
+  accentColor?: string
+}
+
 export function DocumentLivePreviewCard({
   templateLabel,
   documentLabel,
@@ -225,7 +381,7 @@ export function DocumentLivePreviewCard({
   notesSections = [],
   signatory,
   accentColor = '#0f172a',
-}) {
+}: DocumentLivePreviewCardProps) {
   const previewItems = items.slice(0, 16)
   const previewNotes = notesSections.filter((section) => section?.title && section?.content)
 
@@ -302,7 +458,7 @@ export function DocumentLivePreviewCard({
               {previewItems.length > 0 ? (
                 <div className="space-y-3">
                   {previewItems.map((item, index) =>
-                    item.type === 'group' ? (
+                    isGroupPreviewItem(item) ? (
                       <div key={`${item.label}-${index}`} className="rounded-[18px] bg-slate-950 px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-300">
                         {item.label}
                       </div>
@@ -382,7 +538,7 @@ export function DocumentLivePreviewCard({
             {previewNotes.length > 0 ? (
               <div className="space-y-4 border-b border-slate-200 pb-5">
                 {previewNotes.map((section) => (
-                  <div key={section.title} className="space-y-2">
+                  <div key={String(section.title)} className="space-y-2">
                     <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">{section.title}</div>
                     <div className="rounded-[18px] bg-slate-50 px-4 py-4 text-sm leading-6 text-foreground">
                       {section.content}
@@ -441,7 +597,11 @@ export function DocumentLivePreviewCard({
   )
 }
 
-export function DocumentDetailRows({ rows }) {
+export type DocumentDetailRowsProps = {
+  rows: DetailRow[]
+}
+
+export function DocumentDetailRows({ rows }: DocumentDetailRowsProps) {
   return (
     <Card className="rounded-[22px] border-border shadow-sm">
       <CardContent className="px-4 py-1.5">
@@ -456,7 +616,11 @@ export function DocumentDetailRows({ rows }) {
   )
 }
 
-export function DocumentSummaryList({ rows }) {
+export type DocumentSummaryListProps = {
+  rows: SummaryRow[]
+}
+
+export function DocumentSummaryList({ rows }: DocumentSummaryListProps) {
   return (
     <Card className="rounded-[22px] border-border shadow-sm">
       <CardContent className="p-4">
@@ -480,7 +644,11 @@ export function DocumentSummaryList({ rows }) {
   )
 }
 
-export function DocumentBottomBar({ actions }) {
+export type DocumentBottomBarProps = {
+  actions: BottomBarAction[]
+}
+
+export function DocumentBottomBar({ actions }: DocumentBottomBarProps) {
   const columnsClassName = actions.length === 3 ? 'grid-cols-[1fr_1fr_1.4fr]' : actions.length === 2 ? 'grid-cols-2' : ''
 
   return (
@@ -505,7 +673,12 @@ export function DocumentBottomBar({ actions }) {
   )
 }
 
-export function DocumentFloatingFab({ onClick, label = 'Download PDF' }) {
+export type DocumentFloatingFabProps = {
+  onClick?: () => void
+  label?: string
+}
+
+export function DocumentFloatingFab({ onClick, label = 'Download PDF' }: DocumentFloatingFabProps) {
   return (
     <button
       type="button"
