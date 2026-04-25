@@ -51,7 +51,6 @@ export default function AddClient() {
   }
 
   return (
-    /* @ts-expect-error Layout expects session but it's not provided in the original code */
     <Layout title="Add Client">
       <Card className={pageFormCardClassName}>
         <CardHeader>

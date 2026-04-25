@@ -62,7 +62,7 @@ export default function EditClient() {
   }
 
   if (loading) return (
-    /* @ts-expect-error Layout expects session but it's not provided in the original code */
+
     <Layout title="Edit Client">
       <Card className={pageFormCardClassName}>
         <CardHeader>
@@ -77,7 +77,7 @@ export default function EditClient() {
   )
 
   return (
-    /* @ts-expect-error Layout expects session but it's not provided in the original code */
+
     <Layout title="Edit Client">
       <Card className={pageFormCardClassName}>
         <CardHeader>

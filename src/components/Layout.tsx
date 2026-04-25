@@ -10,6 +10,7 @@ import {
   LogOut,
   ClipboardList,
 } from 'lucide-react'
+import type { Session } from '@supabase/supabase-js'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -37,12 +38,27 @@ import {
   getPreSalesPath,
   isPathActive,
   getActiveTab,
+  type TabKey,
 } from './layout/navData'
 import { BusinessSwitcher } from './layout/BusinessSwitcher'
 import { MobileSidebar } from './layout/MobileSidebar'
 
-export const MobileChromeContext = React.createContext({ openSidebar: () => {} })
+export interface MobileChromeContextValue {
+  openSidebar: () => void
+}
 
+export const MobileChromeContext = React.createContext<MobileChromeContextValue>({ 
+  openSidebar: () => {} 
+})
+
+interface LayoutProps {
+  title?: string
+  children: React.ReactNode
+  session?: Session | null
+  hidePageHeader?: boolean
+  hideMobileHomeHeader?: boolean
+  contentClassName?: string
+}
 
 export default function Layout({
   title,
@@ -51,7 +67,7 @@ export default function Layout({
   hidePageHeader = false,
   hideMobileHomeHeader = false,
   contentClassName = '',
-}) {
+}: LayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { settings } = useSettings()
@@ -59,19 +75,21 @@ export default function Layout({
   const [salesOpen, setSalesOpen] = React.useState(false)
   const [moreOpen, setMoreOpen] = React.useState(false)
   const [drawerSalesOpen, setDrawerSalesOpen] = React.useState(false)
-  const presalesRouteActive = isPathActive(location.pathname, '/rfqs') || isPathActive(location.pathname, '/boqs')
+  
   const activeTab = getActiveTab(location.pathname)
   const isHome = location.pathname === '/'
   const salesRouteActive = activeTab === 'sales'
+  const presalesRouteActive = isPathActive(location.pathname, '/rfqs') || isPathActive(location.pathname, '/boqs')
+  
   const openSidebar = React.useCallback(() => setSidebarOpen(true), [])
 
-  const handleSalesPick = (key) => {
+  const handleSalesPick = (key: string) => {
     setSalesOpen(false)
     setSidebarOpen(false)
     navigate(getSalesPath(key))
   }
 
-  const handleMorePick = async (key) => {
+  const handleMorePick = async (key: string) => {
     if (key === 'signout') {
       await supabase.auth.signOut()
       navigate('/login')
@@ -80,7 +98,7 @@ export default function Layout({
       return
     }
 
-    const pathByKey = {
+    const pathByKey: Record<string, string> = {
       rfqs: '/rfqs',
       boqs: '/boqs',
       reports: '/reports',
@@ -93,16 +111,17 @@ export default function Layout({
     navigate(pathByKey[key] || '/')
   }
 
-  const onTabClick = (key) => {
+  const onTabClick = (key: string) => {
     if (key === 'sales') return setSalesOpen(true)
     if (key === 'more') return setMoreOpen(true)
-    const pathByKey = {
+    
+    const pathByKey: Record<string, string> = {
       home: '/',
       projects: '/projects',
       clients: '/clients',
       'item-library': '/item-library',
     }
-    navigate(pathByKey[key] || '/')
+    navigate(pathByKey[key as keyof typeof pathByKey] || '/')
   }
 
   React.useEffect(() => {
@@ -113,6 +132,7 @@ export default function Layout({
 
   const desktopContentClassName = contentClassName || 'mx-auto w-full max-w-5xl px-6 py-6'
   const mobileContentClassName = contentClassName || 'w-full overflow-x-hidden px-0 pb-24 pt-0'
+  
   const mobileChromeValue = React.useMemo(
     () => ({
       openSidebar,
@@ -272,6 +292,7 @@ export default function Layout({
         </MobileChromeContext.Provider>
 
         <MobileBottomNav active={activeTab} onSelect={onTabClick} />
+        
         <MobileSidebar
           open={sidebarOpen}
           onOpenChange={setSidebarOpen}
@@ -284,7 +305,6 @@ export default function Layout({
           handleSalesPick={handleSalesPick}
           handleMorePick={handleMorePick}
         />
-
 
         <Sheet open={salesOpen} onOpenChange={setSalesOpen}>
           <SheetContent
