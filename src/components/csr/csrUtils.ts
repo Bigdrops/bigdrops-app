@@ -1,14 +1,34 @@
+import { getCsrPdfDocument } from './CSRPreviewTemplates'
+
+export { getCsrPdfDocument }
+
 export const CSR_META_PREFIX = '__CSR_META_V1__'
 
-export { getCsrPdfDocument } from './CSRPreviewTemplates'
+export interface MaterialRow {
+  item: string
+  quantity: string
+  unit: string
+}
 
-export const DEFAULT_MATERIAL_ROW = {
+export const DEFAULT_MATERIAL_ROW: MaterialRow = {
   item: '',
   quantity: '',
   unit: '',
 }
 
-export const DEFAULT_CSR_META = {
+export interface CsrMeta {
+  showOperationalReadings: boolean
+  modelLabel: string
+  serialLabel: string
+  showAcknowledgement: boolean
+  recipientTitle: string
+  recipientRole: string
+  technicianName: string
+  showTechnicianSignLine: boolean
+  materialsOutputStyle: 'list' | 'comma'
+}
+
+export const DEFAULT_CSR_META: CsrMeta = {
   showOperationalReadings: true,
   modelLabel: 'Model',
   serialLabel: 'Serial No.',
@@ -20,7 +40,14 @@ export const DEFAULT_CSR_META = {
   materialsOutputStyle: 'list',
 }
 
-function normalizeSignatory(input) {
+export interface CsrSignatory {
+  id: string | number | null
+  name: string
+  role: string
+  signatureUrl: string
+}
+
+function normalizeSignatory(input: any): CsrSignatory | null {
   if (!input) return null
   return {
     id: input.id || null,
@@ -30,7 +57,46 @@ function normalizeSignatory(input) {
   }
 }
 
-export function createDefaultCsr(isField = false) {
+export interface CsrObject {
+  csr_number: string
+  date: string
+  client_id: any
+  client_name: string
+  call_type: string
+  system_down: string
+  address: string
+  problem_reported: string
+  equipment_type: string
+  equipment_location: string
+  make: string
+  model: string
+  serial_no: string
+  capacity: string
+  voltage: string
+  frequency: string
+  battery: string
+  temperature: string
+  pressure: string
+  hours: string
+  materials_used: string
+  service_rendered: string
+  defects_found: string
+  engineer_remarks: string
+  status: string
+  start_date: string
+  start_time: string
+  end_date: string
+  end_time: string
+  customer_feedback: string
+  acknowledgement_name: string
+  technician_signatory_id: any
+  linked_invoice_id: any
+  show_po: boolean
+  po_number: string
+  [key: string]: any
+}
+
+export function createDefaultCsr(isField = false): CsrObject {
   const today = new Date().toISOString().split('T')[0]
   return {
     csr_number: '',
@@ -71,11 +137,11 @@ export function createDefaultCsr(isField = false) {
   }
 }
 
-function normalizeLetters(value) {
+function normalizeLetters(value: string): string {
   return value.toUpperCase()
 }
 
-export function incrementTrailingLetters(value) {
+export function incrementTrailingLetters(value: string): string {
   if (!value) return 'A'
   const chars = normalizeLetters(value).split('')
   let carry = 1
@@ -96,7 +162,7 @@ export function incrementTrailingLetters(value) {
   return chars.join('')
 }
 
-export function getNextCsrNumber(lastValue) {
+export function getNextCsrNumber(lastValue: string | null | undefined): string {
   if (!lastValue) return 'CSR-001'
 
   const digitMatch = lastValue.match(/(\d+)$/)
@@ -117,7 +183,7 @@ export function getNextCsrNumber(lastValue) {
   return `${lastValue}-1`
 }
 
-export function formatMaterialsRows(rows, outputStyle = 'list') {
+export function formatMaterialsRows(rows: MaterialRow[], outputStyle: 'list' | 'comma' = 'list'): string {
   const cleanedRows = (rows || []).filter((row) => row.item || row.quantity || row.unit)
   if (cleanedRows.length === 0) return ''
 
@@ -131,7 +197,13 @@ export function formatMaterialsRows(rows, outputStyle = 'list') {
   return outputStyle === 'comma' ? parts.join(', ') : parts.join('\n')
 }
 
-export function parseCsrMaterials(rawValue, csr = {}) {
+export interface ParsedCsrMaterials {
+  materialsRows: MaterialRow[]
+  materialsText: string
+  meta: CsrMeta
+}
+
+export function parseCsrMaterials(rawValue: string | null | undefined, csr: Partial<CsrObject> = {}): ParsedCsrMaterials {
   const hasAnyReadings = [
     csr.voltage,
     csr.frequency,
@@ -156,7 +228,7 @@ export function parseCsrMaterials(rawValue, csr = {}) {
   try {
     const parsed = JSON.parse(rawValue.slice(CSR_META_PREFIX.length))
     const materialsRows = Array.isArray(parsed.materialsRows) && parsed.materialsRows.length > 0
-      ? parsed.materialsRows.map((row) => ({ ...DEFAULT_MATERIAL_ROW, ...row }))
+      ? parsed.materialsRows.map((row: any) => ({ ...DEFAULT_MATERIAL_ROW, ...row }))
       : [{ ...DEFAULT_MATERIAL_ROW }]
     const meta = { ...DEFAULT_CSR_META, ...(parsed.meta || {}) }
     const materialsText = parsed.materialsText || formatMaterialsRows(materialsRows, meta.materialsOutputStyle)
@@ -179,7 +251,7 @@ export function parseCsrMaterials(rawValue, csr = {}) {
   }
 }
 
-export function serializeCsrMaterials(rows, meta) {
+export function serializeCsrMaterials(rows: MaterialRow[], meta: Partial<CsrMeta>): string {
   const normalizedMeta = { ...DEFAULT_CSR_META, ...(meta || {}) }
   const materialsRows = (rows || [])
     .map((row) => ({
@@ -199,7 +271,15 @@ export function serializeCsrMaterials(rows, meta) {
   })
 }
 
-export function buildCsrPreviewData(csr, options = {}) {
+export interface CsrPreviewOptions {
+  meta?: Partial<CsrMeta>
+  materialsRows?: MaterialRow[]
+  materialsText?: string
+  signatories?: any[]
+  technicianSignatory?: any
+}
+
+export function buildCsrPreviewData(csr: CsrObject, options: CsrPreviewOptions = {}): any {
   const parsed = options.meta || options.materialsRows
     ? {
         materialsRows:
@@ -262,7 +342,14 @@ export function buildCsrPreviewData(csr, options = {}) {
   }
 }
 
-export function getCsrBranding(settings = {}) {
+export interface CsrBranding {
+  companyName: string
+  companyTagline: string
+  contactLine: string
+  footerText: string
+}
+
+export function getCsrBranding(settings: any = {}): CsrBranding {
   const companyName = settings.company_name || ''
   const companyTagline = settings.company_tagline || ''
   const contactBits = [
@@ -280,6 +367,6 @@ export function getCsrBranding(settings = {}) {
   }
 }
 
-export function getCsrViewData(csr, options = {}) {
+export function getCsrViewData(csr: CsrObject, options: CsrPreviewOptions = {}): any {
   return buildCsrPreviewData(csr, options)
 }

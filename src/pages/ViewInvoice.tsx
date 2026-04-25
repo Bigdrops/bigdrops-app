@@ -23,7 +23,7 @@ import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { getInvoiceSourceDocument } from '@/domain/documentRelationships'
-import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '@/domain/documentMedia.js'
+import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '@/domain/documentMedia'
 import {
   ADVANCE_PRIMARY_LABEL_DEFAULT,
   ADVANCE_SECONDARY_LABEL_DEFAULT,

@@ -1,16 +1,21 @@
-import { FileText, Wrench, ClipboardList, Truck } from 'lucide-react'
+import { FileText, Wrench, ClipboardList, Truck, LucideIcon } from 'lucide-react'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
 
-export const PROJECT_STATUS_CONFIG = {
+export interface ProjectStatusConfig {
+  label: string
+  className: string
+}
+
+export const PROJECT_STATUS_CONFIG: Record<string, ProjectStatusConfig> = {
   active: { label: 'Active', className: 'bg-blue-500 text-white' },
   completed: { label: 'Completed', className: 'bg-slate-500 text-white' },
   on_hold: { label: 'On Hold', className: 'bg-amber-500 text-white' },
   cancelled: { label: 'Cancelled', className: 'bg-red-500 text-white' },
 }
 
-export const PAYMENT_STATUS_CONFIG = {
+export const PAYMENT_STATUS_CONFIG: Record<string, ProjectStatusConfig> = {
   paid: { label: 'Paid', className: 'bg-emerald-500 text-white' },
   overdue: { label: 'Past Due', className: 'bg-red-500 text-white' },
   partially_paid: { label: 'Partially Paid', className: 'bg-amber-500 text-white' },
@@ -19,7 +24,14 @@ export const PAYMENT_STATUS_CONFIG = {
   completed: { label: 'Completed', className: 'bg-slate-500 text-white' },
 }
 
-export const DOC_TYPE = {
+export interface DocTypeConfig {
+  label: string
+  icon: LucideIcon
+  iconWrapClassName: string
+  labelClassName: string
+}
+
+export const DOC_TYPE: Record<string, DocTypeConfig> = {
   invoice: {
     label: 'Invoice',
     icon: FileText,
@@ -46,9 +58,9 @@ export const DOC_TYPE = {
   },
 }
 
-export const formatCurrency = (value) => formatNaira(value)
+export const formatCurrency = (value: number | string | null | undefined): string => formatNaira(value)
 
-export const formatDate = (value) =>
+export const formatDate = (value: string | number | Date | null | undefined): string =>
   formatDisplayDate(value, {
     fallback: '',
     invalidFallback: '',
@@ -60,8 +72,8 @@ export const formatDate = (value) =>
     },
   })
 
-export function getPaymentStatusConfig(status) {
-  return PAYMENT_STATUS_CONFIG[status] || {
+export function getPaymentStatusConfig(status: string | null | undefined): ProjectStatusConfig {
+  return PAYMENT_STATUS_CONFIG[status as string] || {
     label: status ? formatStatusLabel(status) : 'Open',
     className: 'bg-slate-500 text-white',
   }
@@ -69,7 +81,7 @@ export function getPaymentStatusConfig(status) {
 
 export const cardClassName = 'rounded-2xl border border-slate-200 bg-card shadow-sm ring-1 ring-slate-100'
 export const inputClassName = 'w-full rounded-lg border border-slate-200 bg-background px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
-export const DOC_TYPE_LABELS = {
+export const DOC_TYPE_LABELS: Record<string, string> = {
   invoice: 'Invoice',
   quotation: 'Quotation',
   csr: 'CSR',
