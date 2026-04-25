@@ -69,7 +69,7 @@ test('Industry PDF receives merged qty-unit as a visible fixed-width token', () 
     columns: [
       { key: 'num', label: '#', kind: 'builtin', align: 'center', pdfWidth: 20, pdfFlex: 0.45 },
       { key: 'description', label: 'Description', kind: 'builtin', align: 'left', pdfWidth: 0, pdfFlex: 2.9 },
-      { key: 'quantity', label: 'Qty', kind: 'builtin', align: 'center', pdfWidth: 56, pdfFlex: 0.9 },
+      { key: 'quantity', label: 'Qty', kind: 'builtin', align: 'center', pdfWidth: 72, pdfFlex: 0 },
       { key: 'unit_price', label: 'Unit Price', kind: 'builtin', align: 'right', pdfWidth: 54, pdfFlex: 1.2 },
       { key: 'amount', label: 'Amount', kind: 'builtin', align: 'right', pdfWidth: 62, pdfFlex: 1.35 },
     ],
@@ -104,7 +104,8 @@ test('Industry PDF receives merged qty-unit as a visible fixed-width token', () 
   assert.equal(data.table.rows[0].cells?.quantity, '3500m')
   assert.equal(data.table.columns.find((column) => column.key === 'quantity')?.key, 'quantity')
   assert.equal(data.table.columns.find((column) => column.key === 'quantity')?.label, 'Qty')
-  assert.equal(data.table.columns.find((column) => column.key === 'quantity')?.width, 56)
+  assert.equal(data.table.columns.find((column) => column.key === 'quantity')?.width, 72)
+  assert.equal(data.table.columns.find((column) => column.key === 'quantity')?.flex, 0)
   const source = fs.readFileSync(industryTemplatePath, 'utf8')
   assert.match(source, /styles\.qtyUnitToken/)
   assert.match(source, /wrap=\{false\}/)

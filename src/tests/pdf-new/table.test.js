@@ -34,7 +34,8 @@ test('interpretPdfTableSettings respects merged qty-unit on the existing quantit
 
   assert.equal(resolved.mergeQtyUnit, true)
   assert.equal(resolved.columns.find((column) => column.key === 'quantity')?.label, 'Qty')
-  assert.equal(resolved.columns.find((column) => column.key === 'quantity')?.pdfWidth, 56)
+  assert.equal(resolved.columns.find((column) => column.key === 'quantity')?.pdfWidth, 72)
+  assert.equal(resolved.columns.find((column) => column.key === 'quantity')?.pdfFlex, 0)
   assert.equal(resolved.columns.some((column) => column.key === 'unit'), false)
 })
 
@@ -122,8 +123,8 @@ test('merged qty-unit widens only the existing Qty column', () => {
   const amount = resolved.columns.find((column) => column.key === 'amount')
 
   assert.equal(description?.pdfFlex, 2.9)
-  assert.equal(quantity?.pdfWidth, 56)
-  assert.equal(quantity?.pdfFlex, 0.9)
+  assert.equal(quantity?.pdfWidth, 72)
+  assert.equal(quantity?.pdfFlex, 0)
   assert.equal(unitPrice?.pdfWidth, 54)
   assert.equal(amount?.pdfWidth, 62)
 })
