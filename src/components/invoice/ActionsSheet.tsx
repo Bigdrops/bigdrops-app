@@ -1,10 +1,26 @@
+import * as React from 'react'
 import {
   Check,
   ChevronRight,
   FileText,
+  type LucideIcon,
 } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { getActionsSheetItems } from './mobileFormHelpers.js'
+
+interface ActionsSheetProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onOpenColumnManager: () => void
+  onImport: () => void
+  onAddGroup: () => void
+  onScrollToAdditionalInfo: () => void
+  onSaveDraft: () => void
+  onCancel: () => void
+  onScrollToLinks: () => void
+  mergeQtyUnit: boolean
+  onToggleMergeQtyUnit: () => void
+}
 
 export default function ActionsSheet({
   open,
@@ -18,9 +34,9 @@ export default function ActionsSheet({
   onScrollToLinks,
   mergeQtyUnit,
   onToggleMergeQtyUnit,
-}) {
+}: ActionsSheetProps) {
   const actions = getActionsSheetItems({ mergeQtyUnit })
-  const actionMap = {
+  const actionMap: Record<string, (() => void) | undefined> = {
     draft: onSaveDraft,
     cancel: onCancel,
     columns: onOpenColumnManager,
@@ -45,7 +61,7 @@ export default function ActionsSheet({
         </SheetHeader>
 
         <div className="space-y-2 px-4 pb-6 pt-4">
-          {actions.map((action) => (
+          {actions.map((action: any) => (
             <button
               key={action.key}
               type="button"

@@ -16,6 +16,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
+interface RevertInvoiceDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  invoiceNumber: string | number | undefined
+  paymentCount: number | string
+  paymentTotal: string
+  submitting: boolean
+  onConfirm: () => void | Promise<void>
+}
+
 export default function RevertInvoiceDialog({
   open,
   onOpenChange,
@@ -24,7 +34,7 @@ export default function RevertInvoiceDialog({
   paymentTotal,
   submitting,
   onConfirm,
-}) {
+}: RevertInvoiceDialogProps) {
   const [confirmInput, setConfirmInput] = useState('')
   const [reason, setReason] = useState('')
 
@@ -98,7 +108,7 @@ export default function RevertInvoiceDialog({
               id="revert-confirm-number"
               value={confirmInput}
               onChange={(e) => setConfirmInput(e.target.value)}
-              placeholder={invoiceNumber || 'Invoice number'}
+              placeholder={String(invoiceNumber || 'Invoice number')}
               autoFocus
             />
           </div>

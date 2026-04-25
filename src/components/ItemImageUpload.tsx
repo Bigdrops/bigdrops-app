@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { useRef, useState } from 'react'
 import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
@@ -6,13 +7,22 @@ import { ImagePlus, LoaderCircle } from 'lucide-react'
 const CLOUD_NAME = 'ddhqvv77g'
 const UPLOAD_PRESET = 'ml_default'
 
-export default function ItemImageUpload({ value, onChange }) {
-  const ref = useRef()
-  const [uploading, setUploading] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [validationError, setValidationError] = useState(null)
+interface ItemImageUploadProps {
+  value: string | null | undefined
+  onChange: (url: string | null) => void
+}
 
-  const handleFile = async (file) => {
+interface CloudinaryResponse {
+  secure_url: string
+  [key: string]: any
+}
+
+export default function ItemImageUpload({ value, onChange }: ItemImageUploadProps) {
+  const ref = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [validationError, setValidationError] = useState<string | null>(null)
+
+  const handleFile = async (file: File | undefined) => {
     if (!file) return
     setValidationError(null)
 
@@ -28,7 +38,6 @@ export default function ItemImageUpload({ value, onChange }) {
     }
 
     setUploading(true)
-    setProgress(0)
     try {
       const formData = new FormData()
       formData.append('file', file)
@@ -40,16 +49,15 @@ export default function ItemImageUpload({ value, onChange }) {
       })
 
       if (!res.ok) throw new Error('Upload failed')
-      const data = await res.json()
+      const data: CloudinaryResponse = await res.json()
       onChange(data.secure_url)
-    } catch (e) {
+    } catch (e: any) {
       toast({ title: 'Upload failed', description: e.message, variant: 'destructive' })
     }
     setUploading(false)
-    setProgress(0)
   }
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLButtonElement>) => {
     e.preventDefault()
     const file = e.dataTransfer.files[0]
     if (file) handleFile(file)
@@ -66,15 +74,33 @@ export default function ItemImageUpload({ value, onChange }) {
           />
         </a>
         <div className="mt-1 flex gap-2">
-          <Button type="button" variant="outline" size="sm" className="h-8 rounded-md px-2 text-xs text-slate-600" onClick={() => ref.current.click()}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            className="h-8 rounded-md px-2 text-xs text-slate-600" 
+            onClick={() => ref.current?.click()}
+          >
             Change
           </Button>
-          <Button type="button" variant="outline" size="sm" className="h-8 rounded-md px-2 text-xs text-red-700 hover:bg-red-50 hover:text-red-700" onClick={() => onChange(null)}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            className="h-8 rounded-md px-2 text-xs text-red-700 hover:bg-red-50 hover:text-red-700" 
+            onClick={() => onChange(null)}
+          >
             Remove
           </Button>
         </div>
         {validationError && <div className="mt-1.5 text-[10px] font-medium text-red-600">{validationError}</div>}
-        <input ref={ref} type="file" accept="image/*" className="hidden" onChange={e => handleFile(e.target.files[0])} />
+        <input 
+          ref={ref} 
+          type="file" 
+          accept="image/*" 
+          className="hidden" 
+          onChange={e => handleFile(e.target.files?.[0])} 
+        />
       </div>
     )
   }
@@ -83,7 +109,7 @@ export default function ItemImageUpload({ value, onChange }) {
     <div className="flex flex-col items-start">
       <button
         type="button"
-        onClick={() => ref.current.click()}
+        onClick={() => ref.current?.click()}
         onDrop={handleDrop}
         onDragOver={e => e.preventDefault()}
         className={`mt-1.5 flex h-14 w-14 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md border-2 border-dashed text-center transition ${
@@ -98,7 +124,13 @@ export default function ItemImageUpload({ value, onChange }) {
             <div className="text-[9px] text-zinc-400">Uploading</div>
           </>
         ) : <ImagePlus className="h-5 w-5" />}
-        <input ref={ref} type="file" accept="image/*" className="hidden" onChange={e => handleFile(e.target.files[0])} />
+        <input 
+          ref={ref} 
+          type="file" 
+          accept="image/*" 
+          className="hidden" 
+          onChange={e => handleFile(e.target.files?.[0])} 
+        />
       </button>
       {validationError && <div className="mt-1.5 text-[10px] font-medium text-red-600">{validationError}</div>}
     </div>
