@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState, ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
@@ -8,9 +8,17 @@ import { pageFormCardClassName, pageFormFieldClassName, pageFormPrimaryActionCla
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 
+interface ClientForm {
+  name: string
+  contact_person: string
+  email: string
+  phone: string
+  address: string
+}
+
 export default function AddClient() {
   const navigate = useNavigate()
-  const [client, setClient] = useState({
+  const [client, setClient] = useState<ClientForm>({
     name: '',
     contact_person: '',
     email: '',
@@ -19,7 +27,7 @@ export default function AddClient() {
   })
   const [saving, setSaving] = useState(false)
 
-  const update = (field, value) =>
+  const update = (field: keyof ClientForm, value: string) =>
     setClient(c => ({ ...c, [field]: value }))
 
   const handleSave = async () => {
@@ -43,6 +51,7 @@ export default function AddClient() {
   }
 
   return (
+    /* @ts-expect-error Layout expects session but it's not provided in the original code */
     <Layout title="Add Client">
       <Card className={pageFormCardClassName}>
         <CardHeader>
@@ -53,32 +62,32 @@ export default function AddClient() {
             className={pageFormFieldClassName}
             placeholder="Company Name"
             value={client.name}
-            onChange={e => update('name', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => update('name', e.target.value)}
           />
           <Input
             className={pageFormFieldClassName}
             placeholder="Contact Person"
             value={client.contact_person}
-            onChange={e => update('contact_person', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => update('contact_person', e.target.value)}
           />
           <Input
             className={pageFormFieldClassName}
             placeholder="Email"
             type="email"
             value={client.email}
-            onChange={e => update('email', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => update('email', e.target.value)}
           />
           <Input
             className={pageFormFieldClassName}
             placeholder="Phone"
             value={client.phone}
-            onChange={e => update('phone', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => update('phone', e.target.value)}
           />
           <Input
             className={pageFormFieldClassName}
             placeholder="Address"
             value={client.address}
-            onChange={e => update('address', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => update('address', e.target.value)}
           />
           <div className="flex justify-end pt-2">
             <Button type="button" className={pageFormPrimaryActionClassName} onClick={handleSave}>

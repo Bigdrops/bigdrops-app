@@ -1,9 +1,14 @@
+import React from 'react'
 import { supabase } from '../supabase'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ShieldAlert } from 'lucide-react'
 
-export default function PendingApproval({ email }) {
+interface PendingApprovalProps {
+  email?: string | null
+}
+
+export default function PendingApproval({ email }: PendingApprovalProps) {
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     window.location.href = '/'

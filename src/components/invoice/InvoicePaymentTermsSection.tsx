@@ -9,7 +9,18 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-export default function InvoicePaymentTermsSection({ invoice, updateInvoice }) {
+interface InvoicePaymentTermsSectionProps {
+  invoice: {
+    payment_terms?: string | null
+    custom_payment_terms?: string | null
+  }
+  updateInvoice: (field: 'payment_terms' | 'custom_payment_terms', value: string) => void
+}
+
+export default function InvoicePaymentTermsSection({
+  invoice,
+  updateInvoice,
+}: InvoicePaymentTermsSectionProps) {
   return (
     <Card className="mb-5 rounded-xl border border-border bg-card shadow-sm">
       <CardHeader className="space-y-1 px-6 pb-0 pt-6">

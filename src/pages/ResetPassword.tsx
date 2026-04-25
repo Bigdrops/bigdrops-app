@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -17,7 +17,7 @@ export default function ResetPassword() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    let timeout
+    let timeout: NodeJS.Timeout
     if (message) {
       timeout = setTimeout(() => {
         navigate('/')

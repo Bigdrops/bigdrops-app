@@ -1,7 +1,7 @@
+import React, { ReactNode, useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
-import { useEffect } from 'react'
 import {
   Bold,
   Italic,
@@ -12,7 +12,15 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-function ToolbarBtn({ onClick, active, title, children, wide = false }) {
+interface ToolbarBtnProps {
+  onClick: () => void
+  active: boolean
+  title: string
+  children: ReactNode
+  wide?: boolean
+}
+
+function ToolbarBtn({ onClick, active, title, children, wide = false }: ToolbarBtnProps) {
   return (
     <button
       type="button"
@@ -32,7 +40,13 @@ function ToolbarBtn({ onClick, active, title, children, wide = false }) {
   )
 }
 
-export default function RichTextEditor({ value, onChange, placeholder = '' }) {
+interface RichTextEditorProps {
+  value: string | null | undefined
+  onChange: (value: string) => void
+  placeholder?: string
+}
+
+export default function RichTextEditor({ value, onChange, placeholder = '' }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ strike: false }),
@@ -51,7 +65,7 @@ export default function RichTextEditor({ value, onChange, placeholder = '' }) {
     if (!editor || editor.isDestroyed) return
     if (value === undefined || value === null) return
     if (!editor.isFocused && editor.getHTML() !== value) {
-      editor.commands.setContent(value || '', false)
+      editor.commands.setContent(value || '', false as any)
     }
   }, [value, editor])
 

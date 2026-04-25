@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, ChangeEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
@@ -10,10 +10,21 @@ import { pageFormCardClassName, pageFormFieldClassName, pageFormPrimaryActionCla
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 
+interface ClientData {
+  id?: string
+  name: string
+  contact_person: string
+  email: string
+  phone: string
+  address: string
+  city: string
+  state: string
+}
+
 export default function EditClient() {
-  const { id } = useParams()
+  const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [client, setClient] = useState({
+  const [client, setClient] = useState<ClientData>({
     name: '',
     contact_person: '',
     email: '',
@@ -29,13 +40,13 @@ export default function EditClient() {
     const load = async () => {
       const { data, error } = await supabase.from('clients').select('*').eq('id', id).single()
       if (error) console.error(error)
-      else setClient(data || {})
+      else if (data) setClient(data)
       setLoading(false)
     }
     if (id) load()
   }, [id])
 
-  const update = (field, value) =>
+  const update = (field: keyof ClientData, value: string) =>
     setClient(c => ({ ...c, [field]: value }))
 
   const handleSave = async () => {
@@ -50,9 +61,23 @@ export default function EditClient() {
     }
   }
 
-  if (loading) return (<Layout title="Edit Client"><Card className={pageFormCardClassName}><CardHeader><Skeleton className="h-6 w-32" /></CardHeader><CardContent className="space-y-3">{Array.from({ length: 7 }).map((_, idx) => <Skeleton key={idx} className="h-11 w-full rounded-xl" />)}<Skeleton className="ml-auto h-10 w-24 rounded-xl" /></CardContent></Card></Layout>)
+  if (loading) return (
+    /* @ts-expect-error Layout expects session but it's not provided in the original code */
+    <Layout title="Edit Client">
+      <Card className={pageFormCardClassName}>
+        <CardHeader>
+          <Skeleton className="h-6 w-32" />
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {Array.from({ length: 7 }).map((_, idx) => <Skeleton key={idx} className="h-11 w-full rounded-xl" />)}
+          <Skeleton className="ml-auto h-10 w-24 rounded-xl" />
+        </CardContent>
+      </Card>
+    </Layout>
+  )
 
   return (
+    /* @ts-expect-error Layout expects session but it's not provided in the original code */
     <Layout title="Edit Client">
       <Card className={pageFormCardClassName}>
         <CardHeader>
@@ -63,44 +88,44 @@ export default function EditClient() {
             className={pageFormFieldClassName}
             placeholder="Company Name"
             value={client.name || ''}
-            onChange={e => update('name', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => update('name', e.target.value)}
           />
           <Input
             className={pageFormFieldClassName}
             placeholder="Contact Person"
             value={client.contact_person || ''}
-            onChange={e => update('contact_person', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => update('contact_person', e.target.value)}
           />
           <Input
             className={pageFormFieldClassName}
             placeholder="Email"
             type="email"
             value={client.email || ''}
-            onChange={e => update('email', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => update('email', e.target.value)}
           />
           <Input
             className={pageFormFieldClassName}
             placeholder="Phone"
             value={client.phone || ''}
-            onChange={e => update('phone', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => update('phone', e.target.value)}
           />
           <Input
             className={pageFormFieldClassName}
             placeholder="Address"
             value={client.address || ''}
-            onChange={e => update('address', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => update('address', e.target.value)}
           />
           <Input
             className={pageFormFieldClassName}
             placeholder="City"
             value={client.city || ''}
-            onChange={e => update('city', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => update('city', e.target.value)}
           />
           <Input
             className={pageFormFieldClassName}
             placeholder="State"
             value={client.state || ''}
-            onChange={e => update('state', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => update('state', e.target.value)}
           />
           <div className="flex justify-end pt-2">
             <Button type="button" className={pageFormPrimaryActionClassName} onClick={handleSave} disabled={saving}>

@@ -1,4 +1,5 @@
-import { ArrowRight, FileText, FolderOpen, GitBranch, Layers3 } from 'lucide-react'
+import * as React from 'react'
+import { ArrowRight, FileText, FolderOpen, GitBranch, Layers3, LucideIcon } from 'lucide-react'
 
 import {
   Sheet,
@@ -9,11 +10,37 @@ import {
 } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 
-const sectionIcons = {
+const sectionIcons: Record<string, LucideIcon> = {
   source: GitBranch,
   related: Layers3,
   generated: FileText,
   project: FolderOpen,
+}
+
+interface LinkedDocumentItem {
+  key: string
+  label: string
+  subtitle?: string
+  disabled?: boolean
+  onClick?: () => void
+}
+
+interface LinkedDocumentSection {
+  key: string
+  title: string
+  description?: string
+  icon?: LucideIcon
+  items: LinkedDocumentItem[]
+}
+
+interface LinkedDocumentsSheetProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  subtitle?: string | null
+  sections: LinkedDocumentSection[]
+  emptyTitle?: string
+  emptyDescription?: string
 }
 
 export default function LinkedDocumentsSheet({
@@ -24,7 +51,7 @@ export default function LinkedDocumentsSheet({
   sections,
   emptyTitle = 'No linked documents yet',
   emptyDescription = 'This record is not connected to any source, generated, or related documents yet.',
-}) {
+}: LinkedDocumentsSheetProps) {
   const visibleSections = (sections || []).filter((section) => (section.items || []).length > 0)
 
   return (
@@ -45,7 +72,7 @@ export default function LinkedDocumentsSheet({
           ) : (
             <div className="space-y-3">
               {visibleSections.map((section) => {
-                const SectionIcon = section.icon || sectionIcons[section.key] || FileText
+                const SectionIcon = (section.icon || sectionIcons[section.key] || FileText) as LucideIcon
                 return (
                   <section key={section.key} className="rounded-[22px] border border-border bg-card p-3 shadow-sm">
                     <div className="mb-2 flex items-center gap-2 px-1">

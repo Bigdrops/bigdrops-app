@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, ChangeEvent, KeyboardEvent } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -17,24 +17,29 @@ const DEFAULT_UNITS = [
   'LOT', 'JOB', 'SERVICE', 'TRIP', 'VISIT',
 ]
 
-export default function UnitInput({ value, onChange }) {
-  const [query, setQuery] = useState(value || '')
+interface UnitInputProps {
+  value: string | number | null | undefined
+  onChange: (value: string) => void
+}
+
+export default function UnitInput({ value, onChange }: UnitInputProps) {
+  const [query, setQuery] = useState(String(value || ''))
   const [open, setOpen] = useState(false)
-  const [units, setUnits] = useState(() => {
+  const [units, setUnits] = useState<string[]>(() => {
     const saved = localStorage.getItem('bigdrops_units')
     return saved ? JSON.parse(saved) : DEFAULT_UNITS
   })
   const [addingNew, setAddingNew] = useState(false)
   const [newUnit, setNewUnit] = useState('')
-  const ref = useRef()
+  const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setQuery(value || '')
+    setQuery(String(value || ''))
   }, [value])
 
   useEffect(() => {
-    const handleClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false)
         setAddingNew(false)
       }
@@ -47,7 +52,7 @@ export default function UnitInput({ value, onChange }) {
     ? units.filter(u => u.toLowerCase().startsWith(query.toLowerCase()))
     : units
 
-  const handleInput = (e) => {
+  const handleInput = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value
     setQuery(val)
     setOpen(true)
@@ -59,13 +64,13 @@ export default function UnitInput({ value, onChange }) {
     }
   }
 
-  const handleSelect = (unit) => {
+  const handleSelect = (unit: string) => {
     setQuery(unit)
     onChange(unit)
     setOpen(false)
   }
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && filtered.length > 0) {
       handleSelect(filtered[0])
     }

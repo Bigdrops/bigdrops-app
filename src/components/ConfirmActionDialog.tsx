@@ -1,3 +1,4 @@
+import * as React from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,6 +10,17 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
+interface ConfirmActionDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description: string
+  confirmLabel?: string
+  cancelLabel?: string
+  onConfirm: () => void
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+}
+
 export default function ConfirmActionDialog({
   open,
   onOpenChange,
@@ -18,7 +30,7 @@ export default function ConfirmActionDialog({
   cancelLabel = 'Cancel',
   onConfirm,
   variant = 'destructive',
-}) {
+}: ConfirmActionDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -28,7 +40,7 @@ export default function ConfirmActionDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
-          <AlertDialogAction variant={variant} onClick={onConfirm}>
+          <AlertDialogAction variant={variant as any} onClick={onConfirm}>
             {confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>

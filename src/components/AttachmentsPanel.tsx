@@ -1,3 +1,4 @@
+import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -14,17 +15,30 @@ const SUGGESTED_LABELS = [
   'Custom',
 ]
 
-const emptyAttachment = () => ({ label: '', customLabel: '', url: '', _isCustom: false })
+interface Attachment {
+  label: string
+  customLabel: string
+  url: string
+  _isCustom: boolean
+  _uiKey?: string
+}
+
+const emptyAttachment = (): Attachment => ({ label: '', customLabel: '', url: '', _isCustom: false })
 
 const fieldClassName = 'h-10 rounded-lg border-zinc-300 bg-background px-3 text-sm text-zinc-900'
 
-export default function AttachmentsPanel({ attachments = [], onChange }) {
+interface AttachmentsPanelProps {
+  attachments?: Attachment[]
+  onChange: (attachments: Attachment[]) => void
+}
+
+export default function AttachmentsPanel({ attachments = [], onChange }: AttachmentsPanelProps) {
 
   const addRow = () => onChange([...attachments, emptyAttachment()])
 
-  const removeRow = (idx) => onChange(attachments.filter((_, i) => i !== idx))
+  const removeRow = (idx: number) => onChange(attachments.filter((_, i) => i !== idx))
 
-  const updateRow = (idx, field, value) => {
+  const updateRow = (idx: number, field: keyof Attachment, value: string) => {
     onChange(attachments.map((att, i) => {
       if (i !== idx) return att
       if (field === 'label') {

@@ -2,6 +2,18 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import RichTextEditor from '../RichTextEditor'
 
+interface InvoiceNotesTermsSectionProps {
+  invoice: {
+    notes?: string | null
+    terms?: string | null
+  }
+  updateInvoice: (field: 'notes' | 'terms', value: string) => void
+  notesTitle: string
+  setNotesTitle: (val: string) => void
+  termsTitle: string
+  setTermsTitle: (val: string) => void
+}
+
 export default function InvoiceNotesTermsSection({
   invoice,
   updateInvoice,
@@ -9,7 +21,7 @@ export default function InvoiceNotesTermsSection({
   setNotesTitle,
   termsTitle,
   setTermsTitle,
-}) {
+}: InvoiceNotesTermsSectionProps) {
   return (
     <Card className="mb-5 rounded-xl border border-border bg-card shadow-sm">
       <CardContent className="p-4 pt-5 sm:p-6">
@@ -22,7 +34,7 @@ export default function InvoiceNotesTermsSection({
             />
             <RichTextEditor
               value={invoice.notes || ''}
-              onChange={(val) => updateInvoice('notes', val)}
+              onChange={(val: string) => updateInvoice('notes', val)}
               placeholder="Notes to client..."
             />
           </div>
@@ -34,7 +46,7 @@ export default function InvoiceNotesTermsSection({
             />
             <RichTextEditor
               value={invoice.terms || ''}
-              onChange={(val) => updateInvoice('terms', val)}
+              onChange={(val: string) => updateInvoice('terms', val)}
               placeholder="Terms and conditions..."
             />
           </div>

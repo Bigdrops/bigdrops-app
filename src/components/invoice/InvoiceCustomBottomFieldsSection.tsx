@@ -1,25 +1,38 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import React from 'react'
+
+interface CustomField {
+  id: string
+  text: string
+}
+
+interface InvoiceCustomBottomFieldsSectionProps {
+  bottomFields: CustomField[]
+  setBottomFields: React.Dispatch<React.SetStateAction<CustomField[]>>
+  emptyStateText: string
+  placeholder: string
+}
 
 export default function InvoiceCustomBottomFieldsSection({
   bottomFields,
   setBottomFields,
   emptyStateText,
   placeholder,
-}) {
+}: InvoiceCustomBottomFieldsSectionProps) {
   const addField = () =>
     setBottomFields((fields) => [
       ...fields,
       { id: 'bottom_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), text: '' },
     ])
 
-  const updateField = (id, text) =>
+  const updateField = (id: string, text: string) =>
     setBottomFields((fields) =>
       fields.map((field) => (field.id === id ? { ...field, text } : field)),
     )
 
-  const removeField = (id) =>
+  const removeField = (id: string) =>
     setBottomFields((fields) => fields.filter((field) => field.id !== id))
 
   return (

@@ -1,3 +1,4 @@
+import * as React from 'react'
 import {
   mobileDetailAmountClassName,
   mobileDetailCardClassName,
@@ -11,13 +12,31 @@ import {
 } from '@/components/ui/operational-card-styles'
 
 /**
- * ViewMobileItemCard.jsx
+ * ViewMobileItemCard.tsx
  *
  * Read-only vertical card for viewing invoice line items on mobile.
  * Used in ViewInvoice page to replace horizontal scrolling table.
  */
 
-export default function ViewMobileItemCard({ item, number }) {
+interface MobileItem {
+  row_type: 'group_header' | 'standard' | string
+  group_name?: string | null
+  amount?: number | null
+  quantity: number
+  unit_price: number
+  description: string
+  sub_description?: string | null
+  make?: string | null
+  unit?: string | null
+  image_url?: string | null
+}
+
+interface ViewMobileItemCardProps {
+  item: MobileItem
+  number: number | string
+}
+
+export default function ViewMobileItemCard({ item, number }: ViewMobileItemCardProps) {
   if (item.row_type === 'group_header') {
     return (
       <div className={mobileDetailGroupHeaderClassName}>
