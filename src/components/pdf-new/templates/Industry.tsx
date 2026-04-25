@@ -21,6 +21,15 @@ type TemplateProps = { data: IndustryTemplateData }
 
 const keepWholePdfWord = (word: string) => [word]
 
+function resolveFinalIndustryColumnStyle(column: IndustryTemplateData['table']['columns'][number]) {
+  const columnStyle = resolveIndustryColumnStyle(column)
+  return [
+    columnStyle,
+    column.key === 'description' ? styles.descriptionCellYield : null,
+    column.key === 'quantity' ? styles.quantityCellFixed : null,
+  ]
+}
+
 export default function IndustryTemplate({ data }: TemplateProps) {
   const design: IndustryTemplateData['design'] = data?.design || {
     accentColor: null,
@@ -196,15 +205,15 @@ export default function IndustryTemplate({ data }: TemplateProps) {
             fixed
           >
             {data.table.columns.map((column, idx) => {
-              const columnStyle = resolveIndustryColumnStyle(column)
               const alignStyle = resolveTextAlignmentStyle(column)
+              const finalColumnStyle = resolveFinalIndustryColumnStyle(column)
 
               return (
                 <Text
                   key={`head-${idx}`}
                   style={[
                     styles.tableHeaderCell,
-                    columnStyle,
+                    ...finalColumnStyle,
                     alignStyle,
                     !accentColor && panelSurfaceColor ? { backgroundColor: panelSurfaceColor } : null,
                     headerFontFamily ? { fontFamily: headerFontFamily } : null,
@@ -262,11 +271,10 @@ export default function IndustryTemplate({ data }: TemplateProps) {
               >
                 {data.table.columns.map((column, colIdx) => {
                   const cell = row.cells?.[column.key]
-                  const columnStyle = resolveIndustryColumnStyle(column)
                   const alignStyle = resolveTextAlignmentStyle(column)
+                  const finalColumnStyle = resolveFinalIndustryColumnStyle(column)
                   const isDescription = column.key === 'description'
                   const isMake = column.key === 'make'
-                  const isQuantity = column.key === 'quantity'
                   const isTightSingleLineCell = column.key === 'quantity' || column.key === 'unit'
 
                   return (
@@ -274,10 +282,8 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                       key={`cell-${rowIdx}-${colIdx}`}
                       style={[
                         styles.tableCell,
-                        columnStyle,
+                        ...finalColumnStyle,
                         alignStyle,
-                        isDescription ? styles.descriptionCellYield : null,
-                        isQuantity ? styles.quantityCellFixed : null,
                       ]}
                     >
                       {isDescription ? (
