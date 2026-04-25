@@ -1,5 +1,7 @@
+import * as React from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useEffect, useState, useRef, lazy, Suspense } from 'react'
+import type { Session, AuthChangeEvent, Subscription } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { Toaster } from '@/components/ui/toaster'
 import ErrorBoundary from '@/components/ErrorBoundary'
@@ -14,6 +16,7 @@ import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import AndroidBackHandler from '@/components/app/AndroidBackHandler'
 import NativeAuthRedirect from '@/components/app/NativeAuthRedirect'
 import { isAndroidNative } from '@/lib/native/capacitor'
+import type { OfflineAccessState } from '@/lib/native/offlineAccess'
 
 const Login = lazy(() => import('./pages/Login'))
 const PendingApproval = lazy(() => import('./pages/PendingApproval'))
@@ -29,8 +32,8 @@ const RECOVERY_COOLDOWN_MS = 1500
 
 const AUTH_DEBUG = import.meta.env.DEV
 
-let offlineAccessModulePromise
-let deviceHydrationModulePromise
+let offlineAccessModulePromise: Promise<typeof import('@/lib/native/offlineAccess')> | null = null
+let deviceHydrationModulePromise: Promise<typeof import('@/lib/native/deviceHydration')> | null = null
 
 const loadOfflineAccessModule = () => {
   if (!offlineAccessModulePromise) {
@@ -46,36 +49,44 @@ const loadDeviceHydrationModule = () => {
   return deviceHydrationModulePromise
 }
 
-function debugAuth(...args) {
+function debugAuth(...args: any[]) {
   if (!AUTH_DEBUG) return
   console.log('[auth-debug]', ...args)
 }
 
-const withBoundary = (element) => <ErrorBoundary>{element}</ErrorBoundary>
+const withBoundary = (element: React.ReactNode) => <ErrorBoundary>{element}</ErrorBoundary>
+
+export interface Profile {
+  id: string
+  has_password?: boolean | null
+  is_approved?: boolean | null
+  email?: string | null
+  [key: string]: any
+}
 
 function App() {
   const [authLoading, setAuthLoading] = useState(true)
   const [offlineAccessLoading, setOfflineAccessLoading] = useState(true)
-  const [offlineAccessState, setOfflineAccessState] = useState({
+  const [offlineAccessState, setOfflineAccessState] = useState<OfflineAccessState>({
     allowed: true,
     expiresAt: null,
     reason: 'not_native',
   })
   const [profileLoading, setProfileLoading] = useState(false)
   const [showSplash, setShowSplash] = useState(true)
-  const [session, setSession] = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [resolvedProfileUserId, setResolvedProfileUserId] = useState(null)
+  const [session, setSession] = useState<Session | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [resolvedProfileUserId, setResolvedProfileUserId] = useState<string | null>(null)
   const [tipIndex, setTipIndex] = useState(0)
 
   const loadingRef = useRef(false)
   const splashStartRef = useRef(Date.now())
   const hasBootedRef = useRef(false)
-  const lastUserIdRef = useRef(null)
+  const lastUserIdRef = useRef<string | null>(null)
   const recoveringRef = useRef(false)
   const lastRecoveryAtRef = useRef(0)
-  const profileRef = useRef(null)
-  const sessionRef = useRef(null)
+  const profileRef = useRef<Profile | null>(null)
+  const sessionRef = useRef<Session | null>(null)
 
   const { runLatest: runLatestProfileTask, cancel: cancelProfileTask } = useSafeAsyncTask()
 
@@ -100,7 +111,7 @@ function App() {
     loadingRef.current = false
   }
 
-  const clearBadSession = async (reason, error) => {
+  const clearBadSession = async (reason: string, error: any) => {
     console.warn(`Clearing bad auth state during ${reason}:`, error)
     try {
       await supabase.auth.signOut({ scope: 'local' })
@@ -111,7 +122,7 @@ function App() {
     }
   }
 
-  const resolveSessionSafely = async (reason) => {
+  const resolveSessionSafely = async (reason: string): Promise<Session | null> => {
     try {
       const {
         data: { session: nextSession },
@@ -133,9 +144,9 @@ function App() {
     }
   }
 
-  const refreshOfflineAccessState = async () => {
+  const refreshOfflineAccessState = async (): Promise<OfflineAccessState> => {
     if (!canUseAndroidNativeSqlite()) {
-      const fallbackAccessState = {
+      const fallbackAccessState: OfflineAccessState = {
         allowed: true,
         expiresAt: null,
         reason: 'not_native',
@@ -151,7 +162,7 @@ function App() {
       return nextAccessState
     } catch (error) {
       console.warn('Offline access state check failed:', error)
-      const fallbackAccessState = {
+      const fallbackAccessState: OfflineAccessState = {
         allowed: true,
         expiresAt: null,
         reason: 'not_native',
@@ -161,7 +172,7 @@ function App() {
     }
   }
 
-  const loadProfile = async (userId) => {
+  const loadProfile = async (userId: string) => {
     if (!userId) return
 
     debugAuth('loadProfile:start', {
@@ -172,13 +183,13 @@ function App() {
     setProfileLoading(true)
     setResolvedProfileUserId(null)
 
-    await runLatestProfileTask(
+    await runLatestProfileTask<Profile | null>(
       async (signal) => {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
-          .single()
+          .single() as any)
           .abortSignal(signal)
 
         debugAuth('loadProfile:queryResult', { userId, data, error })
@@ -238,7 +249,7 @@ function App() {
     )
   }
 
-  const recoverAppState = async (reason, options = {}) => {
+  const recoverAppState = async (reason: string, options: { force?: boolean } = {}) => {
     const { force = false } = options
     const now = Date.now()
 
@@ -328,9 +339,9 @@ function App() {
 
   useEffect(() => {
     let isActive = true
-    let subscription = null
+    let subscription: Subscription | null = null
 
-    const handleAuthStateChange = async (event, nextSession) => {
+    const handleAuthStateChange = async (event: AuthChangeEvent, nextSession: Session | null) => {
       if (!isActive) return
 
       const nextUserId = nextSession?.user?.id || null
@@ -351,7 +362,7 @@ function App() {
         return
       }
 
-      if (event === 'INITIAL_SESSION') {
+      if ((event as string) === 'INITIAL_SESSION') {
         sessionRef.current = nextSession
         setSession(nextSession)
         lastUserIdRef.current = nextUserId
@@ -373,7 +384,7 @@ function App() {
         return
       }
 
-      if (event === 'TOKEN_REFRESH_FAILED') {
+      if ((event as string) === 'TOKEN_REFRESH_FAILED') {
         await clearBadSession('token refresh failure', new Error('Supabase token refresh failed'))
         return
       }
@@ -543,7 +554,7 @@ function App() {
         }
         console.log('[DB_INSPECTOR] All rows in settings:', data)
         
-        const row1 = data.find(r => r.id === 1)
+        const row1 = (data as any[]).find(r => r.id === 1)
         if (row1) {
           console.log('[DB_INSPECTOR] Row ID=1 columns:', Object.keys(row1))
           console.log('[DB_INSPECTOR] Row ID=1 values:', {
@@ -579,14 +590,14 @@ function App() {
               element={
                 !session
                   ? !offlineAccessState.allowed
-                    ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState} />)
+                    ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState as any} />)
                     : offlineAccessLoading
                       ? withBoundary(<PageLoader />)
                       : withBoundary(<Login />)
                   : waitingForProfileResolution
                     ? withBoundary(<PageLoader />)
                     : !offlineAccessState.allowed
-                      ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState} />)
+                      ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState as any} />)
                       : !approved
                       ? withBoundary(<PendingApproval email={session?.user?.email || ''} />)
                       : withBoundary(

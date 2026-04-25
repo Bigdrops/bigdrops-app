@@ -58,6 +58,17 @@ export function registerPdfFonts() {
   Object.values(REGISTERED_FILLABLE_FONTS).forEach(registerFillableFontConfig)
   Object.values(REGISTERED_SHARED_FONTS).forEach(registerSharedFontConfig)
 
+  // Prevent hyphenation for qty/unit tokens and disable default hyphenation dashes
+  Font.registerHyphenationCallback(word => {
+    // Guard against splitting tokens like 1800m, 120set, 210pcs
+    if (/^\d+[a-zA-Z]+$/.test(word)) {
+      return [word]
+    }
+
+    // Return the word as-is for everything else to let it wrap normally (no hyphenation)
+    return [word]
+  })
+
   pdfFontsRegistered = true
 }
 
