@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AlertCircle } from 'lucide-react'
@@ -30,36 +31,109 @@ import {
   DOC_TYPE_LABELS,
 } from '@/domain/projectDetailUtils'
 
+interface Project {
+  id: string
+  name: string
+  status: string
+  project_value: number | null
+  po_number: string | null
+  start_date: string | null
+  notes: string | null
+  location: string | null
+  project_code: string | null
+  client_id: string | null
+  client_name: string | null
+  [key: string]: any
+}
+
+interface Financials {
+  total_invoiced: number
+  cash_collected: number
+  wht_collected: number
+  outstanding: number
+  invoice_count: number
+}
+
+interface Invoice {
+  id: string
+  invoice_number: string
+  invoice_title: string | null
+  status: string
+  total: number
+  issue_date: string
+  document_type: string
+  custom_fields: any
+  invoiceFinancials: {
+    balance_due: number
+    computed_status: string
+    cash_received: number
+  } | null
+}
+
+interface CSR {
+  id: string
+  csr_number: string
+  title: string | null
+  status: string
+  created_at: string
+}
+
+interface Quotation {
+  id: string
+  quotation_number: string
+  status: string
+  total: number
+  issue_date: string
+}
+
+interface Waybill {
+  id: string
+  waybill_number: string
+  status: string
+  date: string | null
+  created_at: string
+  type: string | null
+}
+
+interface ProjectDoc {
+  id: string
+  name: string
+  url: string
+  created_at: string
+}
+
 export default function ProjectDetail() {
-  const { id } = useParams()
+  const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  const [project, setProject] = useState(null)
-  const [financials, setFinancials] = useState(null)
-  const [invoices, setInvoices] = useState([])
-  const [csrs, setCsrs] = useState([])
-  const [quotations, setQuotations] = useState([])
-  const [waybills, setWaybills] = useState([])
-  const [projectDocs, setProjectDocs] = useState([])
+  const [project, setProject] = useState<Project | null>(null)
+  const [financials, setFinancials] = useState<Financials | null>(null)
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [csrs, setCsrs] = useState<CSR[]>([])
+  const [quotations, setQuotations] = useState<Quotation[]>([])
+  const [waybills, setWaybills] = useState<Waybill[]>([])
+  const [projectDocs, setProjectDocs] = useState<ProjectDoc[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const [showLink, setShowLink] = useState(false)
   const [showProjectDocumentSheet, setShowProjectDocumentSheet] = useState(false)
-  const [projectDocumentToDelete, setProjectDocumentToDelete] = useState(null)
+  const [projectDocumentToDelete, setProjectDocumentToDelete] = useState<string | null>(null)
   const [linkDocId, setLinkDocId] = useState('')
-  const [linkType, setLinkType] = useState('invoice')
+  const [linkType, setLinkType] = useState<'invoice' | 'csr' | 'quotation' | 'waybill'>('invoice')
   const [linking, setLinking] = useState(false)
   const [linkError, setLinkError] = useState('')
   const [confirmingReassign, setConfirmingReassign] = useState(false)
-  const [pendingReassignData, setPendingReassignData] = useState(null)
+  const [pendingReassignData, setPendingReassignData] = useState<any>(null)
 
-  const [editForm, setEditForm] = useState({})
+  const [editForm, setEditForm] = useState<any>({})
   const [actionsOpen, setActionsOpen] = useState(false)
 
   useEffect(() => {
-    fetchAll()
+    if (id) {
+      fetchAll()
+    }
   }, [id])
 
   const fetchAll = async () => {
@@ -98,20 +172,20 @@ export default function ProjectDetail() {
       const invoiceRows = invoiceRes.data || []
       const invoiceIds = invoiceRows.map((invoice) => invoice.id)
 
-      let invoiceFinancialsById = {}
+      let invoiceFinancialsById: Record<string, any> = {}
       if (invoiceIds.length > 0) {
         const { data: invoiceFinancialsRows } = await supabase
           .from('invoice_financials_v')
           .select('id, balance_due, computed_status, cash_received')
           .in('id', invoiceIds)
 
-        invoiceFinancialsById = (invoiceFinancialsRows || []).reduce((acc, row) => {
+        invoiceFinancialsById = (invoiceFinancialsRows || []).reduce((acc: Record<string, any>, row) => {
           acc[row.id] = row
           return acc
         }, {})
       }
 
-      const enrichedInvoices = invoiceRows.map((invoice) => ({
+      const enrichedInvoices: Invoice[] = invoiceRows.map((invoice) => ({
         ...invoice,
         invoiceFinancials: invoiceFinancialsById[invoice.id] || null,
       }))
@@ -167,16 +241,16 @@ export default function ProjectDetail() {
       const { recordProjectUpdated, recordProjectNoteAdded, recordAuditLog, PROJECT_TRACKED_FIELDS } = await import('@/lib/audit')
       const { data: updatedProject } = await supabase.from('projects').select('*').eq('id', id).single()
       
-      await recordProjectUpdated(id)
+      await recordProjectUpdated(id!)
       
       // If notes changed, record that specifically too
       if (editForm.notes.trim() !== (project?.notes || '')) {
-        await recordProjectNoteAdded(id, editForm.notes.trim())
+        await recordProjectNoteAdded(id!, editForm.notes.trim())
       }
       
       await recordAuditLog({
         entityType: 'project',
-        recordId: id,
+        recordId: id!,
         entityLabel: updatedProject?.name || project?.name || null,
         action: 'UPDATE',
         oldData: project,
@@ -200,18 +274,18 @@ export default function ProjectDetail() {
     }
 
     setLinking(true)
-    const linkConfig = {
+    const linkConfig: Record<string, { table: string; numberField: string }> = {
       invoice: { table: 'invoices', numberField: 'invoice_number' },
       csr: { table: 'csrs', numberField: 'csr_number' },
       quotation: { table: 'quotations', numberField: 'quotation_number' },
       waybill: { table: 'waybills', numberField: 'waybill_number' },
     }
     const selectedConfig = linkConfig[linkType]
-    const { data, error } = await supabase
+    const { data, error } = (await supabase
       .from(selectedConfig.table)
-      .select(`id, ${selectedConfig.numberField}, client_id, client_name, project_id`)
+      .select(`id, ${selectedConfig.numberField}, client_id, client_name, project_id` as any)
       .ilike(selectedConfig.numberField, val)
-      .maybeSingle()
+      .maybeSingle()) as any
 
     if (error) {
       setLinking(false)
@@ -238,10 +312,10 @@ export default function ProjectDetail() {
   }
 
 
-  const executeLink = async (dataToLink) => {
+  const executeLink = async (dataToLink?: any) => {
     setConfirmingReassign(false)
     setLinking(true)
-    const linkConfig = {
+    const linkConfig: Record<string, { table: string; numberField: string }> = {
       invoice: { table: 'invoices', numberField: 'invoice_number' },
       csr: { table: 'csrs', numberField: 'csr_number' },
       quotation: { table: 'quotations', numberField: 'quotation_number' },
@@ -289,7 +363,7 @@ export default function ProjectDetail() {
     try {
       const { recordProjectLinkedActivity, recordAuditLog, INVOICE_TRACKED_FIELDS, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
       if (auditEntityType) {
-        await recordProjectLinkedActivity(id, auditEntityType, data.id, data[selectedConfig.numberField] || null)
+        await recordProjectLinkedActivity(id!, auditEntityType as any, data.id, data[selectedConfig.numberField] || null)
       }
       
       // Update audit log for the linked document
@@ -297,7 +371,7 @@ export default function ProjectDetail() {
       const fields = selectedConfig.table === 'invoices' ? INVOICE_TRACKED_FIELDS : selectedConfig.table === 'quotations' ? QUOTATION_TRACKED_FIELDS : []
       if (fields.length > 0) {
         await recordAuditLog({
-          entityType: auditEntityType,
+          entityType: auditEntityType as any,
           recordId: data.id,
           entityLabel: updatedDoc?.[selectedConfig.numberField] || data[selectedConfig.numberField] || null,
           action: 'LINK',
@@ -310,14 +384,14 @@ export default function ProjectDetail() {
       console.error('Audit trail failed:', auditErr)
     }
 
-    const docLabel = DOC_TYPE_LABELS[linkType] || linkType
+    const docLabel = (DOC_TYPE_LABELS as any)[linkType] || linkType
     setLinkDocId('')
     setShowLink(false)
     toast({ title: `${docLabel} linked`, description: `${linkDocId.trim() || docLabel} has been linked to this project.` })
     fetchAll()
   }
 
-  const handleDeleteProjectDocument = async (docId) => {
+  const handleDeleteProjectDocument = async (docId: string) => {
     const { error } = await supabase.from('project_documents').delete().eq('id', docId)
     if (error) {
       toast({ title: 'Delete failed', description: error.message, variant: 'destructive' })
@@ -329,7 +403,7 @@ export default function ProjectDetail() {
     fetchAll()
   }
 
-  const timeline = [
+  const timeline: any[] = [
     ...invoices.map((invoice) => ({
       ...invoice,
       _type: 'invoice',
@@ -350,9 +424,7 @@ export default function ProjectDetail() {
       _type: 'waybill',
       _date: waybill.date || waybill.created_at,
     })),
-  ].sort((a, b) => new Date(b._date) - new Date(a._date))
-
-  const docCount = timeline.length
+  ].sort((a, b) => new Date(b._date).getTime() - new Date(a._date).getTime())
 
   if (loading) {
     return (
@@ -376,8 +448,6 @@ export default function ProjectDetail() {
     )
   }
 
-  const projectStatus = PROJECT_STATUS_CONFIG[project.status] || PROJECT_STATUS_CONFIG.active
-
   const projectState = {
     projectId: id,
     projectCode: project.project_code,
@@ -392,28 +462,28 @@ export default function ProjectDetail() {
       path: '/invoices/new',
       className: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm',
       state: projectState,
-      icon: DOC_TYPE.invoice.icon,
+      icon: (DOC_TYPE as any).invoice.icon,
     },
     {
       label: 'Create Quotation',
       path: '/quotations/new',
       className: 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm',
       state: projectState,
-      icon: DOC_TYPE.quotation.icon,
+      icon: (DOC_TYPE as any).quotation.icon,
     },
     {
       label: 'Create CSR',
       path: '/csr/new',
       className: 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
       state: projectState,
-      icon: DOC_TYPE.csr.icon,
+      icon: (DOC_TYPE as any).csr.icon,
     },
     {
       label: 'Create Waybill',
       path: '/waybills/new',
       className: 'border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100',
       state: projectState,
-      icon: DOC_TYPE.waybill.icon,
+      icon: (DOC_TYPE as any).waybill.icon,
     },
   ]
 
@@ -512,7 +582,7 @@ export default function ProjectDetail() {
               ) : (
                 <div className="space-y-3">
                   {projectDocs.map((document) => (
-                    <ProjectDocumentCard key={document.id} document={document} onDelete={setProjectDocumentToDelete} />
+                    <ProjectDocumentCard key={document.id} document={document} onDelete={(id) => setProjectDocumentToDelete(id)} />
                   ))}
                 </div>
               )}
@@ -533,7 +603,7 @@ export default function ProjectDetail() {
         <ProjectDocumentSheet
           open={showProjectDocumentSheet}
           onOpenChange={setShowProjectDocumentSheet}
-          projectId={id}
+          projectId={id!}
           onSuccess={fetchAll}
         />
 
@@ -541,7 +611,7 @@ export default function ProjectDetail() {
           showLink={showLink}
           setShowLink={setShowLink}
           linkType={linkType}
-          setLinkType={setLinkType}
+          setLinkType={setLinkType as any}
           linkDocId={linkDocId}
           setLinkDocId={setLinkDocId}
           linkError={linkError}
@@ -566,11 +636,11 @@ export default function ProjectDetail() {
         <ConfirmActionDialog
           open={confirmingReassign}
           onOpenChange={setConfirmingReassign}
-          title={`Reassign ${DOC_TYPE_LABELS[linkType] || linkType}?`}
+          title={`Reassign ${(DOC_TYPE_LABELS as any)[linkType] || linkType}?`}
           description={
             linkType === 'invoice' || linkType === 'quotation'
-              ? `This ${DOC_TYPE_LABELS[linkType] || linkType} is already linked to another project. Reassigning will move it to this project and break the existing project connection. Make sure this is correct.`
-              : `This ${DOC_TYPE_LABELS[linkType] || linkType} is already linked to another project. Are you sure you want to reassign it?`
+              ? `This ${(DOC_TYPE_LABELS as any)[linkType] || linkType} is already linked to another project. Reassigning will move it to this project and break the existing project connection. Make sure this is correct.`
+              : `This ${(DOC_TYPE_LABELS as any)[linkType] || linkType} is already linked to another project. Are you sure you want to reassign it?`
           }
           confirmLabel="Reassign"
           onConfirm={() => void executeLink()}
