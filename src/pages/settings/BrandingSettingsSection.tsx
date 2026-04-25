@@ -431,7 +431,7 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
           </SettingsField>
         </div>
 
-        <div className="border-t border-slate-200/80 px-4 py-4">
+        <div className="sticky bottom-0 border-t border-slate-200/80 bg-card px-4 py-4 shadow-[0_-10px_24px_rgba(15,23,42,0.08)]">
           <SettingsSaveButton saving={saving} saved={saved} onClick={save} />
         </div>
       </div>

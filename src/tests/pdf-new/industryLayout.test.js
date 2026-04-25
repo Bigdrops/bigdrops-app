@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { styles } from '../../components/pdf-new/templates/industryStyles.ts'
+import { adaptIndustryData } from '../../components/pdf-new/industryAdapter.ts'
 
 const industryTemplatePath = path.resolve('src/components/pdf-new/templates/Industry.tsx')
 const industryBlocksPath = path.resolve('src/components/pdf-new/templates/industryTemplateBlocks.tsx')
@@ -57,4 +58,52 @@ test('Industry group footer stays quiet and does not render subtotal label text'
 
   assert.doesNotMatch(blocksSource, /Group Subtotal/)
   assert.doesNotMatch(blocksSource, /groupSubtotalLabel \?/)
+})
+
+test('Industry PDF receives merged qty-unit as a visible fixed-width token', () => {
+  const data = adaptIndustryData({
+    identity: { id: 'inv-1', kind: 'invoice', number: 'INV-1', title: 'Invoice', issueDate: '', dueDate: '', poNumber: '', status: '', currency: 'NGN' },
+    issuer: { label: 'From', name: 'Bigdrops', addressLines: [], phone: '', email: '', taxId: '' },
+    recipient: { label: 'To', name: 'Client', addressLines: [], phone: '', email: '' },
+    headerFields: [],
+    columns: [
+      { key: 'num', label: '#', kind: 'builtin', align: 'center', pdfWidth: 20, pdfFlex: 0.45 },
+      { key: 'description', label: 'Description', kind: 'builtin', align: 'left', pdfWidth: 0, pdfFlex: 2.35 },
+      { key: 'quantity', label: 'Qty / Unit', kind: 'builtin', align: 'center', pdfWidth: 96, pdfFlex: 1.45 },
+      { key: 'unit_price', label: 'Unit Price', kind: 'builtin', align: 'right', pdfWidth: 60, pdfFlex: 1.2 },
+      { key: 'amount', label: 'Amount', kind: 'builtin', align: 'right', pdfWidth: 70, pdfFlex: 1.35 },
+    ],
+    mergeQtyUnit: true,
+    items: [{
+      id: 'line-1',
+      rowType: 'line',
+      description: 'Long description that should yield space before starving quantity',
+      subDescription: '',
+      quantity: 3500,
+      unit: 'm',
+      unitPrice: 10,
+      amount: 35000,
+      cells: { num: '1', description: 'Long description', quantity: '3500m', unit_price: '10', amount: '35000' },
+      customData: {},
+    }],
+    totals: { mode: 'standard', rows: [], amountInWords: '', balanceDue: null, advanceSummary: null },
+    bankDetails: null,
+    notes: null,
+    terms: null,
+    additionalSections: [],
+    referenceLinks: [],
+    attachments: [],
+    signature: null,
+    logo: null,
+    footerText: '',
+    tagline: '',
+    metaFooter: { companyName: 'Bigdrops' },
+    template: {},
+  })
+
+  assert.equal(data.table.rows[0].cells?.quantity, '3500m')
+  assert.equal(data.table.columns.find((column) => column.key === 'quantity')?.width, 96)
+  const source = fs.readFileSync(industryTemplatePath, 'utf8')
+  assert.match(source, /styles\.qtyUnitToken/)
+  assert.match(source, /wrap=\{false\}/)
 })

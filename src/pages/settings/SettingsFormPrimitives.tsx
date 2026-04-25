@@ -53,7 +53,7 @@ export function SettingsSaveButton({
     <button
       onClick={onClick}
       disabled={saving}
-      className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+      className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
     >
       {saving ? (
         <Loader2 size={15} className="animate-spin" />

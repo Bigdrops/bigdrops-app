@@ -10,12 +10,12 @@ type IndustryColumn = {
 
 const INDUSTRY_COLUMN_OVERRIDES: Record<string, { width?: number; flex?: number }> = {
   num: { width: 20, flex: 0.45 },
-  description: { flex: 3.7 },
+  description: { flex: 2.35 },
   make: { flex: 1.1 },
-  quantity: { width: 44, flex: 0.8 },
+  quantity: { width: 96, flex: 1.45 },
   unit: { width: 44, flex: 0.85 },
-  unit_price: { width: 74, flex: 1.35 },
-  amount: { width: 82, flex: 1.55 },
+  unit_price: { width: 60, flex: 1.2 },
+  amount: { width: 70, flex: 1.35 },
   install_rate: { width: 74, flex: 1.3 },
   vat_rate: { width: 42, flex: 0.82 },
   discount_rate: { width: 48, flex: 0.92 },
@@ -237,6 +237,10 @@ export const styles = StyleSheet.create({
     fontSize: 10,
     color: '#333333',
     lineHeight: 1.2,
+  },
+  qtyUnitToken: {
+    width: '100%',
+    flexShrink: 0,
   },
   textRight: { textAlign: 'right' },
   textCenter: { textAlign: 'center' },

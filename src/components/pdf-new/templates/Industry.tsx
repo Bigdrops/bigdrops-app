@@ -289,7 +289,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                       ) : isMake ? (
                         <Text style={styles.makeText}>{getCellText(cell)}</Text>
                       ) : isTightSingleLineCell ? (
-                        <Text style={[styles.tightCellText, alignStyle]} wrap={false}>{getCellText(cell)}</Text>
+                        <Text style={[styles.tightCellText, styles.qtyUnitToken, alignStyle]} wrap={false}>{getCellText(cell)}</Text>
                       ) : (
                         <Text style={alignStyle}>{getCellText(cell)}</Text>
                       )}

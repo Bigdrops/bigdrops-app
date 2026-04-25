@@ -110,7 +110,20 @@ test('buildPdfRowCells keeps merged qty-unit on one inline token', () => {
     configuredColumns: resolved.configuredColumns,
   })
 
-  assert.equal(cells.quantity, '12\u00A0pcs')
+  assert.equal(cells.quantity, '12pcs')
+})
+
+test('merged qty-unit gets enough fixed width for Industry PDF rendering', () => {
+  const resolved = interpretPdfTableSettings([], { mergeQtyUnit: true })
+  const description = resolved.columns.find((column) => column.key === 'description')
+  const quantity = resolved.columns.find((column) => column.key === 'quantity')
+  const unitPrice = resolved.columns.find((column) => column.key === 'unit_price')
+  const amount = resolved.columns.find((column) => column.key === 'amount')
+
+  assert.equal(description?.pdfFlex, 2.35)
+  assert.equal(quantity?.pdfWidth, 96)
+  assert.equal(unitPrice?.pdfWidth, 60)
+  assert.equal(amount?.pdfWidth, 70)
 })
 
 test('resolvePdfPageLayout keeps narrow tables portrait and promotes wide tables to landscape', () => {
