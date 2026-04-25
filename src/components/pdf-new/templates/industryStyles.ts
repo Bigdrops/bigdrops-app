@@ -194,6 +194,16 @@ export const styles = StyleSheet.create({
     borderRightColor: '#ececec',
     justifyContent: 'center',
   },
+  descriptionCellYield: {
+    flexBasis: 0,
+    flexGrow: 1,
+    flexShrink: 1,
+  },
+  quantityCellFixed: {
+    width: 72,
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   groupTitleCell: {
     textAlign: 'left',
     fontSize: 10.5,
@@ -239,7 +249,7 @@ export const styles = StyleSheet.create({
     lineHeight: 1.2,
   },
   qtyUnitToken: {
-    width: '100%',
+    flexGrow: 0,
     flexShrink: 0,
   },
   textRight: { textAlign: 'right' },

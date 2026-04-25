@@ -19,6 +19,8 @@ import {
 
 type TemplateProps = { data: IndustryTemplateData }
 
+const keepWholePdfWord = (word: string) => [word]
+
 export default function IndustryTemplate({ data }: TemplateProps) {
   const design: IndustryTemplateData['design'] = data?.design || {
     accentColor: null,
@@ -264,12 +266,19 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                   const alignStyle = resolveTextAlignmentStyle(column)
                   const isDescription = column.key === 'description'
                   const isMake = column.key === 'make'
+                  const isQuantity = column.key === 'quantity'
                   const isTightSingleLineCell = column.key === 'quantity' || column.key === 'unit'
 
                   return (
                     <View
                       key={`cell-${rowIdx}-${colIdx}`}
-                      style={[styles.tableCell, columnStyle, alignStyle]}
+                      style={[
+                        styles.tableCell,
+                        columnStyle,
+                        alignStyle,
+                        isDescription ? styles.descriptionCellYield : null,
+                        isQuantity ? styles.quantityCellFixed : null,
+                      ]}
                     >
                       {isDescription ? (
                         <>
@@ -287,9 +296,15 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                           ) : null}
                         </>
                       ) : isMake ? (
-                        <Text style={styles.makeText}>{getCellText(cell)}</Text>
+                          <Text style={styles.makeText}>{getCellText(cell)}</Text>
                       ) : isTightSingleLineCell ? (
-                        <Text style={[styles.tightCellText, styles.qtyUnitToken, alignStyle]} wrap={false}>{getCellText(cell)}</Text>
+                        <Text
+                          style={[styles.tightCellText, styles.qtyUnitToken, alignStyle]}
+                          wrap={false}
+                          hyphenationCallback={keepWholePdfWord}
+                        >
+                          {getCellText(cell)}
+                        </Text>
                       ) : (
                         <Text style={alignStyle}>{getCellText(cell)}</Text>
                       )}

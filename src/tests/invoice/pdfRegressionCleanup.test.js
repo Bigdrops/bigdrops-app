@@ -75,9 +75,9 @@ test('advance invoice pdf removes balance due while keeping the shared totals li
 test('merged qty and unit column gets extra width in pdf table settings', () => {
   const source = fs.readFileSync(tablePath, 'utf8')
 
-  assert.match(source, /label: 'Qty \/ Unit'/)
-  assert.match(source, /pdfWidth: 112/)
-  assert.match(source, /pdfFlex: 1\.85/)
+  assert.match(source, /label: 'Qty'/)
+  assert.match(source, /pdfWidth: 72/)
+  assert.match(source, /pdfFlex: 0/)
 })
 
 test('document settings use Document options instead of Advanced Options', () => {
