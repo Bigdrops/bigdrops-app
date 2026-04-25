@@ -27,7 +27,7 @@ const EMPTY_BRANDING = {
   footerText: '',
 }
 
-const hasInvoicePrefillDetails = (invoice) =>
+const hasInvoicePrefillDetails = (invoice: any) =>
   Boolean(invoice?.invoiceNumber || invoice?.clientId || invoice?.clientName || invoice?.poNumber)
 
 const canUseOfflineCsrDrafts = () =>
@@ -39,7 +39,7 @@ export default function NewCSR() {
   const [searchParams] = useSearchParams()
   const type = searchParams.get('type')
   const isField = type === 'field'
-  const routeState = location.state || {}
+  const routeState = (location.state as any) || {}
   const sourceInvoice = routeState.sourceInvoice || null
   const projectPrefill = {
     projectId: String(routeState.projectId || ''),
@@ -60,7 +60,7 @@ export default function NewCSR() {
         try {
           const nextNumber = await peekNextOfflineCsrNumber()
           if (mounted) {
-            setCsr((current) => ({
+            setCsr((current: any) => ({
               ...current,
               csr_number: current.csr_number || nextNumber,
               status: isField ? 'Field Entry Pending' : current.status,
@@ -83,7 +83,7 @@ export default function NewCSR() {
       const nextNumber = getNextCsrNumber(latestNumber)
 
       if (mounted) {
-        setCsr((current) => ({
+        setCsr((current: any) => ({
           ...current,
           csr_number: current.csr_number || nextNumber,
           status: isField ? 'Field Entry Pending' : current.status,
@@ -91,7 +91,7 @@ export default function NewCSR() {
       }
     }
 
-    load()
+    void load()
     return () => {
       mounted = false
     }
@@ -100,7 +100,7 @@ export default function NewCSR() {
   useEffect(() => {
     if (!projectPrefill.projectId && !projectPrefill.clientId && !projectPrefill.clientName) return
 
-    setCsr((current) => ({
+    setCsr((current: any) => ({
       ...current,
       project_id: current.project_id || projectPrefill.projectId || '',
       client_id: current.client_id || projectPrefill.clientId || '',
@@ -111,10 +111,10 @@ export default function NewCSR() {
   useEffect(() => {
     let active = true
 
-    const applyInvoicePrefill = (invoice) => {
+    const applyInvoicePrefill = (invoice: any) => {
       if (!active || !invoice?.invoiceId) return
 
-      setCsr((current) => ({
+      setCsr((current: any) => ({
         ...current,
         linked_invoice_id: current.linked_invoice_id || String(invoice.invoiceId || ''),
         client_id: current.client_id || String(invoice.clientId || ''),
@@ -156,43 +156,43 @@ export default function NewCSR() {
     }
   }, [sourceInvoice])
 
-  const update = (field, value) => {
-    setCsr((current) => ({ ...current, [field]: value }))
+  const update = (field: string, value: any) => {
+    setCsr((current: any) => ({ ...current, [field]: value }))
   }
 
-  const updateMeta = (field, value) => {
-    setCsrMeta((current) => ({ ...current, [field]: value }))
+  const updateMeta = (field: string, value: any) => {
+    setCsrMeta((current: any) => ({ ...current, [field]: value }))
   }
 
-  const updateMaterialRow = (index, field, value) => {
-    setMaterialsRows((current) =>
+  const updateMaterialRow = (index: number, field: string, value: any) => {
+    setMaterialsRows((current: any[]) =>
       current.map((row, rowIndex) => (rowIndex === index ? { ...row, [field]: value } : row)),
     )
   }
 
   const addMaterialRow = () => {
-    setMaterialsRows((current) => [...current, { ...DEFAULT_MATERIAL_ROW }])
+    setMaterialsRows((current: any[]) => [...current, { ...DEFAULT_MATERIAL_ROW }])
   }
 
-  const removeMaterialRow = (index) => {
-    setMaterialsRows((current) =>
+  const removeMaterialRow = (index: number) => {
+    setMaterialsRows((current: any[]) =>
       current.length === 1 ? [{ ...DEFAULT_MATERIAL_ROW }] : current.filter((_, rowIndex) => rowIndex !== index),
     )
   }
 
-  const handleApplyImport = (result) => {
-    setCsr((current) => ({ ...current, ...result.fields }))
+  const handleApplyImport = (result: any) => {
+    setCsr((current: any) => ({ ...current, ...result.fields }))
 
     if (result.hasMaterials) {
       setMaterialsRows(
         result.materials.length > 0
-          ? result.materials.map((row) => ({ ...DEFAULT_MATERIAL_ROW, ...row }))
+          ? result.materials.map((row: any) => ({ ...DEFAULT_MATERIAL_ROW, ...row }))
           : [{ ...DEFAULT_MATERIAL_ROW }],
       )
     }
 
     if (result.hasOperationalReadings) {
-      setCsrMeta((current) => ({ ...current, showOperationalReadings: true }))
+      setCsrMeta((current: any) => ({ ...current, showOperationalReadings: true }))
     }
   }
 
@@ -202,7 +202,7 @@ export default function NewCSR() {
       return
     }
 
-    const { project: validatedProject, error: projectError } = await validateProjectAssignment(supabase, {
+    const { project: validatedProject, error: projectError } = await validateProjectAssignment(supabase as any, {
       projectId: csr.project_id,
       documentClientId: csr.client_id,
       documentClientName: csr.client_name,
@@ -219,14 +219,14 @@ export default function NewCSR() {
       client_id: csr.client_id || null,
       linked_invoice_id: csr.linked_invoice_id || null,
       show_po: Boolean(String(csr.po_number || '').trim()),
-      materials_used: serializeCsrMaterials(materialsRows, csrMeta),
+      materials_used: serializeCsrMaterials(materialsRows, csrMeta as any),
     }
 
     if (canUseOfflineCsrDrafts()) {
       setSaving(true)
       try {
         const savedDraft = await createOfflineCsrDraft(csrData)
-        setCsr((current) => ({ ...current, csr_number: savedDraft.csrNumber }))
+        setCsr((current: any) => ({ ...current, csr_number: savedDraft.csrNumber }))
         toast({
           title: 'Saved offline',
           description: 'CSR draft saved on this device and queued for sync when you are back online.',
@@ -278,7 +278,7 @@ export default function NewCSR() {
             ).data
           : null
         const previewData = buildCsrPreviewData(csrData, { technicianSignatory })
-        const blob = await pdf(getCsrPdfDocument({ csr: previewData, branding: EMPTY_BRANDING, template: '3' })).toBlob()
+        const blob = await pdf(getCsrPdfDocument({ csr: previewData, branding: EMPTY_BRANDING, template: '3', designPreset: {} as any })).toBlob()
         const url = URL.createObjectURL(blob)
         const anchor = document.createElement('a')
         anchor.href = url
@@ -297,7 +297,7 @@ export default function NewCSR() {
       <CsrFormScreen
         mode="new"
         csr={csr}
-        csrMeta={csrMeta}
+        csrMeta={csrMeta as any}
         materialsRows={materialsRows}
         saving={saving}
         onUpdate={update}

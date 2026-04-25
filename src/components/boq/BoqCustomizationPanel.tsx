@@ -20,7 +20,7 @@ export function BoqCustomizationPanel({
       <div>
         <Label className={pageFormLabelClassName}>Template</Label>
         <div className="mt-2">
-          <DocumentTemplatePicker value={boq.template_id} onChange={(template_id) => onChange({ template_id })} templates={SHARED_TABLE_TEMPLATES} />
+          <DocumentTemplatePicker value={boq.template_id} onChange={(template_id) => onChange({ template_id: template_id as any })} templates={SHARED_TABLE_TEMPLATES} />
         </div>
       </div>
 

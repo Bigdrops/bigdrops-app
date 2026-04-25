@@ -11,12 +11,18 @@ import {
   PDF_ACCENT_SWATCHES,
   PDF_FILLABLE_FONT_OPTIONS,
   PDF_FONT_OPTIONS,
+  type PdfDesignPreset,
 } from '@/lib/pdfDesignPreset'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-const templatePreviewById = {
+interface TemplatePreview {
+  shell: string
+  nodes: string[]
+}
+
+const templatePreviewById: Record<string, TemplatePreview> = {
   bordered_schedule: {
     shell: 'bg-white border border-slate-300',
     nodes: ['h-1.5 w-full bg-slate-700', 'h-0.5 w-full bg-slate-300', 'h-4 w-full border border-slate-400 bg-white'],
@@ -31,7 +37,21 @@ const templatePreviewById = {
   },
 }
 
-export function DocumentTemplatePicker({ value, onChange, templates }) {
+interface Template {
+  id: string
+  label?: string
+  description?: string
+  name?: string
+  thumbnail?: string
+}
+
+interface DocumentTemplatePickerProps {
+  value: string
+  onChange: (templateId: string) => void
+  templates: Template[]
+}
+
+export function DocumentTemplatePicker({ value, onChange, templates }: DocumentTemplatePickerProps) {
   return (
     <div className="flex gap-2 overflow-x-auto pb-1">
       {templates.map((template) => {
@@ -53,7 +73,7 @@ export function DocumentTemplatePicker({ value, onChange, templates }) {
                 <div key={`${template.id}-${index}`} className={nodeClass} />
               ))}
             </div>
-            <div className="text-xs font-bold">{template.label}</div>
+            <div className="text-xs font-bold">{template.label || template.name}</div>
             <div className={cn('mt-1 text-[10px]', active ? 'text-slate-300' : 'text-muted-foreground')}>{template.description}</div>
             {active ? <div className="mt-2 text-[9px] font-bold uppercase tracking-[0.18em] text-blue-400">Active</div> : null}
           </button>
@@ -63,8 +83,23 @@ export function DocumentTemplatePicker({ value, onChange, templates }) {
   )
 }
 
-export function DocumentDesignPanel({ title, subtitle = '', badge = 'Persistent preset', sections }) {
-  const [openSections, setOpenSections] = React.useState(() =>
+interface DesignSection {
+  key?: string
+  title: string
+  description?: string
+  content: React.ReactNode
+  defaultOpen?: boolean
+}
+
+interface DocumentDesignPanelProps {
+  title: string
+  subtitle?: string
+  badge?: string
+  sections: DesignSection[]
+}
+
+export function DocumentDesignPanel({ title, subtitle = '', badge = 'Persistent preset', sections }: DocumentDesignPanelProps) {
+  const [openSections, setOpenSections] = React.useState<Record<string, boolean>>(() =>
     Object.fromEntries(sections.map((section, index) => [section.key || String(index), section.defaultOpen !== false])),
   )
 
@@ -117,10 +152,16 @@ export function DocumentDesignPanel({ title, subtitle = '', badge = 'Persistent 
   )
 }
 
-function FillableWritingControls({ value, onChange, showModeToggle = true }) {
+interface FillableWritingControlsProps {
+  value: PdfDesignPreset
+  onChange: (preset: PdfDesignPreset) => void
+  showModeToggle?: boolean
+}
+
+function FillableWritingControls({ value, onChange, showModeToggle = true }: FillableWritingControlsProps) {
   const effectiveFillableFont = getEffectiveFillableFont(value)
 
-  const update = (patch) => {
+  const update = (patch: Partial<PdfDesignPreset>) => {
     onChange({
       ...value,
       ...patch,
@@ -174,7 +215,7 @@ function FillableWritingControls({ value, onChange, showModeToggle = true }) {
           <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Fillable Font Choice</div>
           <Select
             value={value.fillableFontMode === 'custom' ? value.fillableFont : effectiveFillableFont}
-            onValueChange={(next) => update({ fillableFont: next, fillableFontMode: 'custom' })}
+            onValueChange={(next) => update({ fillableFont: next as any, fillableFontMode: 'custom' })}
             disabled={showModeToggle && value.fillableFontMode !== 'custom'}
           >
             <SelectTrigger className="h-11 rounded-[14px] bg-white disabled:opacity-70">
@@ -207,6 +248,15 @@ function FillableWritingControls({ value, onChange, showModeToggle = true }) {
   )
 }
 
+interface DocumentDesignStyleEditorProps {
+  value: PdfDesignPreset
+  onChange: (preset: PdfDesignPreset) => void
+  accentLabel?: string
+  showAccentControls?: boolean
+  showFontControls?: boolean
+  showFillableControls?: boolean
+}
+
 export function DocumentDesignStyleEditor({
   value,
   onChange,
@@ -214,8 +264,8 @@ export function DocumentDesignStyleEditor({
   showAccentControls = true,
   showFontControls = true,
   showFillableControls = true,
-}) {
-  const update = (patch) => {
+}: DocumentDesignStyleEditorProps) {
+  const update = (patch: Partial<PdfDesignPreset>) => {
     onChange({
       ...value,
       ...patch,
@@ -260,7 +310,7 @@ export function DocumentDesignStyleEditor({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Header Font</div>
-            <Select value={value.headerFont} onValueChange={(next) => update({ headerFont: next })}>
+            <Select value={value.headerFont} onValueChange={(next) => update({ headerFont: next as any })}>
               <SelectTrigger className="h-11 rounded-[14px] bg-white">
                 <SelectValue />
               </SelectTrigger>
@@ -279,7 +329,7 @@ export function DocumentDesignStyleEditor({
 
           <div className="space-y-2">
             <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Body Font</div>
-            <Select value={value.bodyFont} onValueChange={(next) => update({ bodyFont: next })}>
+            <Select value={value.bodyFont} onValueChange={(next) => update({ bodyFont: next as any })}>
               <SelectTrigger className="h-11 rounded-[14px] bg-white">
                 <SelectValue />
               </SelectTrigger>
@@ -303,6 +353,11 @@ export function DocumentDesignStyleEditor({
   )
 }
 
-export function DocumentFillableWritingEditor({ value, onChange }) {
+interface DocumentFillableWritingEditorProps {
+  value: PdfDesignPreset
+  onChange: (preset: PdfDesignPreset) => void
+}
+
+export function DocumentFillableWritingEditor({ value, onChange }: DocumentFillableWritingEditorProps) {
   return <FillableWritingControls value={value} onChange={onChange} showModeToggle={false} />
 }

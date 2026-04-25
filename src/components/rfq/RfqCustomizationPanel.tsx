@@ -89,7 +89,7 @@ export const RfqCustomizationPanel: React.FC<RfqCustomizationPanelProps> = ({
           <div className="mt-2">
             <DocumentTemplatePicker
               value={rfq.template_id || 'modern'}
-              onChange={(templateId) => onUpdateRfq({ template_id: templateId })}
+              onChange={(templateId) => onUpdateRfq({ template_id: templateId as any })}
               templates={SHARED_TABLE_TEMPLATES}
             />
           </div>

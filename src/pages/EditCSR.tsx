@@ -38,8 +38,8 @@ export default function EditCSR() {
         }
 
         const parsed = parseCsrMaterials(data.materials_used, data)
-        setCsr((current) => ({ ...current, ...data }))
-        setCsrMeta(parsed.meta)
+        setCsr((current: any) => ({ ...current, ...data }))
+        setCsrMeta(parsed.meta as any)
         setMaterialsRows(parsed.materialsRows.length > 0 ? parsed.materialsRows : [{ ...DEFAULT_MATERIAL_ROW }])
       } finally {
         setLoading(false)
@@ -47,47 +47,47 @@ export default function EditCSR() {
     }
 
     if (id) {
-      loadData()
+      void loadData()
     }
   }, [id, navigate])
 
-  const update = (field, value) => {
-    setCsr((current) => ({ ...current, [field]: value }))
+  const update = (field: string, value: any) => {
+    setCsr((current: any) => ({ ...current, [field]: value }))
   }
 
-  const updateMeta = (field, value) => {
-    setCsrMeta((current) => ({ ...current, [field]: value }))
+  const updateMeta = (field: string, value: any) => {
+    setCsrMeta((current: any) => ({ ...current, [field]: value }))
   }
 
-  const updateMaterialRow = (index, field, value) => {
-    setMaterialsRows((current) =>
+  const updateMaterialRow = (index: number, field: string, value: any) => {
+    setMaterialsRows((current: any[]) =>
       current.map((row, rowIndex) => (rowIndex === index ? { ...row, [field]: value } : row)),
     )
   }
 
   const addMaterialRow = () => {
-    setMaterialsRows((current) => [...current, { ...DEFAULT_MATERIAL_ROW }])
+    setMaterialsRows((current: any[]) => [...current, { ...DEFAULT_MATERIAL_ROW }])
   }
 
-  const removeMaterialRow = (index) => {
-    setMaterialsRows((current) =>
+  const removeMaterialRow = (index: number) => {
+    setMaterialsRows((current: any[]) =>
       current.length === 1 ? [{ ...DEFAULT_MATERIAL_ROW }] : current.filter((_, rowIndex) => rowIndex !== index),
     )
   }
 
-  const handleApplyImport = (result) => {
-    setCsr((current) => ({ ...current, ...result.fields }))
+  const handleApplyImport = (result: any) => {
+    setCsr((current: any) => ({ ...current, ...result.fields }))
 
     if (result.hasMaterials) {
       setMaterialsRows(
         result.materials.length > 0
-          ? result.materials.map((row) => ({ ...DEFAULT_MATERIAL_ROW, ...row }))
+          ? result.materials.map((row: any) => ({ ...DEFAULT_MATERIAL_ROW, ...row }))
           : [{ ...DEFAULT_MATERIAL_ROW }],
       )
     }
 
     if (result.hasOperationalReadings) {
-      setCsrMeta((current) => ({ ...current, showOperationalReadings: true }))
+      setCsrMeta((current: any) => ({ ...current, showOperationalReadings: true }))
     }
   }
 
@@ -107,7 +107,7 @@ export default function EditCSR() {
 
     const { data: existing } = await supabase.from('csrs').select('id').eq('csr_number', csrData.csr_number)
 
-    if ((existing || []).some((item) => String(item.id) !== String(id))) {
+    if ((existing || []).some((item: any) => String(item.id) !== String(id))) {
       toast({ title: 'Duplicate CSR number', description: 'CSR number already exists. Please use a different number.', variant: 'destructive' })
       return
     }
@@ -142,7 +142,7 @@ export default function EditCSR() {
       <CsrFormScreen
         mode="edit"
         csr={csr}
-        csrMeta={csrMeta}
+        csrMeta={csrMeta as any}
         materialsRows={materialsRows}
         saving={saving}
         onUpdate={update}

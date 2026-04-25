@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
@@ -14,13 +14,25 @@ import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import ClientSelector from '../components/ClientSelector'
 
+interface ProjectFormState {
+  name: string
+  client_id: string | null
+  client_name: string
+  status: string
+  project_value: string
+  po_number: string
+  notes: string
+  location: string
+  start_date: string
+}
+
 export default function NewProject() {
   const navigate = useNavigate()
   const location = useLocation()
-  const prefill = location.state || {}
+  const prefill = (location.state as { clientId?: string; clientName?: string }) || {}
 
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<ProjectFormState>({
     name: '',
     client_id: prefill.clientId || null,
     client_name: prefill.clientName || '',
@@ -32,7 +44,8 @@ export default function NewProject() {
     start_date: new Date().toISOString().split('T')[0],
   })
 
-  const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+  const set = <K extends keyof ProjectFormState>(key: K, val: ProjectFormState[K]) => 
+    setForm(f => ({ ...f, [key]: val }))
 
   const handleSave = async () => {
     if (!form.name.trim()) {
@@ -40,7 +53,7 @@ export default function NewProject() {
       return
     }
     setSaving(true)
-    const { data, error } = await createProjectWithGeneratedCode(supabase, {
+    const { data, error } = await createProjectWithGeneratedCode(supabase as any, {
       name: form.name.trim(),
       client_id: form.client_id || null,
       client_name: form.client_name || null,
@@ -61,6 +74,8 @@ export default function NewProject() {
       })
       return
     }
+
+    if (!data) return
 
     // Audit Trail
     try {
@@ -107,9 +122,9 @@ export default function NewProject() {
             <div className="space-y-1.5">
               <Label className={pageFormLabelClassName}>Client</Label>
               <ClientSelector
-                value={form.client_id}
+                clientId={form.client_id}
                 clientName={form.client_name}
-                onClientChange={(id, name) => { set('client_id', id); set('client_name', name) }}
+                onClientChange={(id, name) => { set('client_id', id); set('client_name', name || '') }}
               />
             </div>
 
@@ -198,7 +213,7 @@ export default function NewProject() {
           <Button
             type="button"
             className={`${pageFormPrimaryActionClassName} flex-[2] bg-slate-900 text-white hover:bg-slate-800`}
-            onClick={handleSave}
+            onClick={() => void handleSave()}
             disabled={saving}
           >
             {saving ? 'Creating...' : 'Create Project'}

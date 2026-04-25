@@ -1,3 +1,4 @@
+import * as React from 'react'
 import {
   Archive,
   ChevronRight,
@@ -11,6 +12,7 @@ import {
   GitBranchPlus,
   Trash2,
   Workflow,
+  type LucideIcon,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -24,8 +26,41 @@ import {
 } from '@/components/ui/sheet'
 import { DocumentTemplatePicker } from './DocumentDesignControls'
 
-export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actions }) {
-  const iconMap = {
+export type DocumentActionKey =
+  | 'payment'
+  | 'copy'
+  | 'clone'
+  | 'convert'
+  | 'archive'
+  | 'delete'
+  | 'open'
+  | 'export'
+  | 'pdf'
+  | 'projectLink'
+  | 'projectView'
+  | 'documentsLink'
+  | 'documentsView'
+
+export interface DocumentAction {
+  label: string
+  subtitle?: string
+  iconKey: string
+  icon?: LucideIcon
+  onClick: () => void
+  danger?: boolean
+  disabled?: boolean
+}
+
+interface DocumentActionSheetProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  subtitle?: string
+  actions: DocumentAction[]
+}
+
+export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actions }: DocumentActionSheetProps) {
+  const iconMap: Record<DocumentActionKey, LucideIcon> = {
     payment: CircleDollarSign,
     copy: Copy,
     clone: Copy,
@@ -40,7 +75,7 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
     documentsLink: GitBranchPlus,
     documentsView: Workflow,
   }
-  const toneMap = {
+  const toneMap: Record<string, { tile: string; chevron: string; row: string }> = {
     payment: {
       tile: 'bg-emerald-600 text-white',
       chevron: 'text-emerald-300',
@@ -118,7 +153,7 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
           <div className="space-y-0.5 pb-1">
             {actions.map((action, index) => {
               const danger = !!action.danger
-              const Icon = action.icon || iconMap[action.iconKey] || Ellipsis
+              const Icon = action.icon || iconMap[action.iconKey as DocumentActionKey] || Ellipsis
               const tone = toneMap[action.iconKey] || toneMap.export
               const nextNeedsSeparator = !danger && actions[index + 1]?.danger
 
@@ -162,6 +197,26 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
   )
 }
 
+export interface PdfAction {
+  label: string
+  onClick: () => void
+  variant?: 'outline' | 'default' | 'ghost' | 'link' | 'destructive' | 'secondary'
+  className?: string
+  disabled?: boolean
+}
+
+interface DocumentPdfSheetProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  subtitle?: string
+  settingsNode?: React.ReactNode
+  templateValue?: string
+  onTemplateChange?: (templateId: string) => void
+  templates?: Array<{ id: string; label?: string; description?: string; name?: string; thumbnail?: string }>
+  actions?: PdfAction[]
+}
+
 export function DocumentPdfSheet({
   open,
   onOpenChange,
@@ -172,7 +227,7 @@ export function DocumentPdfSheet({
   onTemplateChange,
   templates,
   actions = [],
-}) {
+}: DocumentPdfSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-[50vh] max-h-[50vh] overflow-hidden rounded-t-[30px] px-0 pb-6">
@@ -186,7 +241,7 @@ export function DocumentPdfSheet({
           {templateValue && onTemplateChange && templates?.length ? (
             <div className="space-y-2">
               <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Template</div>
-              <DocumentTemplatePicker value={templateValue} onChange={onTemplateChange} templates={templates} />
+              <DocumentTemplatePicker value={templateValue} onChange={onTemplateChange} templates={templates as any} />
             </div>
           ) : null}
           {actions.length > 0 ? (

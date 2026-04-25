@@ -28,7 +28,7 @@ export default function InvoiceActionsSheet({
       onOpenChange={onOpenChange}
       title="Invoice Actions"
       subtitle={invoiceNumber}
-      actions={actions}
+      actions={actions as any}
     />
   )
 }

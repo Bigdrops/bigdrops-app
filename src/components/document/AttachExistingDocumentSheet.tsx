@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Search, Link2, AlertTriangle } from 'lucide-react'
+import { Search, Link2 } from 'lucide-react'
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Badge } from '@/components/ui/badge'
@@ -9,8 +9,16 @@ import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/supabase'
 
-function normalize(value) {
+function normalize(value: string | number | null | undefined): string {
   return String(value || '').trim().toLowerCase()
+}
+
+interface ScoreMatchParams {
+  query: string
+  numberValue: string | number | null | undefined
+  clientValue: string | number | null | undefined
+  poValue: string | number | null | undefined
+  sameClient: boolean
 }
 
 function scoreMatch({
@@ -19,7 +27,7 @@ function scoreMatch({
   clientValue,
   poValue,
   sameClient,
-}) {
+}: ScoreMatchParams): number {
   if (!query) return sameClient ? 10 : 0
   const q = normalize(query)
   const number = normalize(numberValue)
@@ -42,6 +50,34 @@ function scoreMatch({
   return 0
 }
 
+interface DocumentItem {
+  id: string
+  [key: string]: any
+  _sameClient?: boolean
+}
+
+interface ConfirmState {
+  type: 'reassign' | 'client-mismatch'
+  item: DocumentItem
+  linkedTo?: string | null
+}
+
+interface AttachExistingDocumentSheetProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description?: string
+  table: string
+  numberField: string
+  clientField: string
+  poField: string
+  linkedInvoiceField?: string
+  currentInvoiceId?: string | null
+  currentClientName?: string | null
+  searchPlaceholder?: string
+  onAttach?: (item: DocumentItem) => void
+}
+
 export default function AttachExistingDocumentSheet({
   open,
   onOpenChange,
@@ -56,12 +92,12 @@ export default function AttachExistingDocumentSheet({
   currentClientName,
   searchPlaceholder = 'Search',
   onAttach,
-}) {
+}: AttachExistingDocumentSheetProps) {
   const [query, setQuery] = React.useState('')
-  const [recentItems, setRecentItems] = React.useState([])
-  const [results, setResults] = React.useState([])
+  const [recentItems, setRecentItems] = React.useState<DocumentItem[]>([])
+  const [results, setResults] = React.useState<DocumentItem[]>([])
   const [loading, setLoading] = React.useState(false)
-  const [confirmState, setConfirmState] = React.useState(null)
+  const [confirmState, setConfirmState] = React.useState<ConfirmState | null>(null)
 
   const currentClient = normalize(currentClientName)
 
@@ -80,19 +116,20 @@ export default function AttachExistingDocumentSheet({
       .order('created_at', { ascending: false })
       .limit(5)
 
-    const next = (data || []).map((item) => ({
+    const next = (data || []).map((item: any) => ({
       ...item,
       _sameClient: currentClient && normalize(item[clientField]) === currentClient,
     }))
 
-    next.sort((a, b) => scoreMatch({ query: '', numberValue: b[numberField], clientValue: b[clientField], poValue: b[poField], sameClient: b._sameClient })
-      - scoreMatch({ query: '', numberValue: a[numberField], clientValue: a[clientField], poValue: a[poField], sameClient: a._sameClient }))
+    next.sort((a: DocumentItem, b: DocumentItem) => 
+      scoreMatch({ query: '', numberValue: b[numberField], clientValue: b[clientField], poValue: b[poField], sameClient: !!b._sameClient })
+      - scoreMatch({ query: '', numberValue: a[numberField], clientValue: a[clientField], poValue: a[poField], sameClient: !!a._sameClient }))
 
     setRecentItems(next)
     setLoading(false)
   }, [table, fields, currentClient, clientField, numberField, poField])
 
-  const runSearch = React.useCallback(async (term) => {
+  const runSearch = React.useCallback(async (term: string) => {
     const q = normalize(term)
     if (!q) {
       setResults([])
@@ -111,23 +148,23 @@ export default function AttachExistingDocumentSheet({
       .or(orParts)
       .limit(15)
 
-    const next = (data || []).map((item) => ({
+    const next = (data || []).map((item: any) => ({
       ...item,
       _sameClient: currentClient && normalize(item[clientField]) === currentClient,
     }))
 
-    next.sort((a, b) => scoreMatch({
+    next.sort((a: DocumentItem, b: DocumentItem) => scoreMatch({
       query: term,
       numberValue: b[numberField],
       clientValue: b[clientField],
       poValue: b[poField],
-      sameClient: b._sameClient,
+      sameClient: !!b._sameClient,
     }) - scoreMatch({
       query: term,
       numberValue: a[numberField],
       clientValue: a[clientField],
       poValue: a[poField],
-      sameClient: a._sameClient,
+      sameClient: !!a._sameClient,
     }))
 
     setResults(next)
@@ -151,7 +188,7 @@ export default function AttachExistingDocumentSheet({
 
   const itemsToShow = query.trim() ? results : recentItems
 
-  const handleSelect = (item) => {
+  const handleSelect = (item: DocumentItem) => {
     if (!item) return
     const linkedTo = linkedInvoiceField ? item[linkedInvoiceField] : null
     if (linkedTo && currentInvoiceId && linkedTo !== currentInvoiceId) {

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Check, Search, AlertTriangle } from 'lucide-react'
+import { Check, Search } from 'lucide-react'
 
 import { supabase } from '@/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -18,6 +17,31 @@ import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { cn } from '@/lib/utils'
 import { getClientMismatchMessage, isClientMismatch } from '@/domain/projects'
 
+interface Project {
+  id: string
+  project_code: string | null
+  name: string
+  client_id: string | null
+  client_name: string | null
+  created_at: string
+}
+
+interface DocumentRecord {
+  id: string
+  client_id: string | null
+  client_name: string | null
+  project_id: string | null
+}
+
+interface ProjectLinkDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  tableName: string
+  recordId: string
+  documentLabel: string
+  onLinked?: () => void | Promise<void>
+}
+
 export default function ProjectLinkDialog({
   open,
   onOpenChange,
@@ -25,12 +49,11 @@ export default function ProjectLinkDialog({
   recordId,
   documentLabel,
   onLinked,
-}) {
-  const navigate = useNavigate()
+}: ProjectLinkDialogProps) {
   const [query, setQuery] = useState('')
-  const [projects, setProjects] = useState([])
+  const [projects, setProjects] = useState<Project[]>([])
   const [selectedProjectId, setSelectedProjectId] = useState('')
-  const [documentRecord, setDocumentRecord] = useState(null)
+  const [documentRecord, setDocumentRecord] = useState<DocumentRecord | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -103,7 +126,7 @@ export default function ProjectLinkDialog({
       }
 
       const { data } = await request
-      setProjects(data || [])
+      setProjects((data as Project[]) || [])
       setLoading(false)
     }, 180)
 
