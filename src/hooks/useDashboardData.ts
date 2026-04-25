@@ -1,7 +1,10 @@
 import * as React from 'react'
+
 import { ADVANCE_INVOICE_EXCLUSION_FILTER, shouldIncludeInvoiceInList } from '@/domain/invoice/advanceList'
-import { supabase } from '@/supabase'
+import { toast } from '@/hooks/use-toast'
+import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
+import { supabase } from '@/supabase'
 
 export type RecentDoc = {
   id: string
@@ -10,8 +13,15 @@ export type RecentDoc = {
   client: string
   date: string
   status: string
-  amount: number | null
+  amount?: number | null
   meta?: string
+  path: string
+}
+
+export type RecentProject = {
+  id: string
+  name: string
+  client_name: string | null
 }
 
 export type PriorityItem = {
@@ -22,17 +32,17 @@ export type PriorityItem = {
   dotRingClassName: string
   badgeLabel: string
   badgeClassName: string
-  type: string
+  type?: string
 }
 
-type HeroStats = {
+export type HeroStats = {
   collections: number
   openWork: number
   awaitingPaymentCount: number
   inTransitWaybills: number
 }
 
-type SummaryStats = {
+export type SummaryStats = {
   overdue: number
   pastDue: number
   dueThisWeek: number
@@ -49,30 +59,368 @@ type DashboardFinancialMetrics = {
   has_past_due: boolean | null
 }
 
+type UseDashboardDataOptions = {
+  variant?: 'overview' | 'classic'
+}
+
+type UseDashboardDataResult = {
+  loading: boolean
+  recentDocs: RecentDoc[]
+  recentProjects: RecentProject[]
+  priorityItems: PriorityItem[]
+  heroStats: HeroStats
+  summary: SummaryStats
+  refresh: () => Promise<void>
+}
+
+const defaultHeroStats: HeroStats = {
+  collections: 0,
+  openWork: 0,
+  awaitingPaymentCount: 0,
+  inTransitWaybills: 0,
+}
+
+const defaultSummary: SummaryStats = {
+  overdue: 0,
+  pastDue: 0,
+  dueThisWeek: 0,
+  thisMonthCollections: 0,
+  pendingFollowUp: 0,
+}
+
 function toNumber(value: number | string | null | undefined) {
   return Number(value || 0)
 }
 
-export function useDashboardData() {
+function formatDashboardAmount(amount: number | string | null | undefined) {
+  return formatNaira(Number(amount || 0), { round: true })
+}
+
+function isValidDateString(value: string | null | undefined): value is string {
+  if (!value) return false
+  return !Number.isNaN(new Date(value).getTime())
+}
+
+function mergeRecentDocs(docs: RecentDoc[]) {
+  return docs
+    .filter((doc) => isValidDateString(doc.date))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 6)
+}
+
+function buildClassicPriorityItems(projects: RecentProject[], invoices: any[], quotations: any[]) {
+  const items: PriorityItem[] = []
+
+  if (projects[0]) {
+    items.push({
+      key: `project-${projects[0].id}`,
+      title: `Update project status — ${projects[0].name}`,
+      meta: `${projects[0].client_name || 'Open project'} • no movement recorded recently`,
+      dotClassName: 'bg-emerald-500',
+      dotRingClassName: 'ring-[6px] ring-emerald-500/15',
+      badgeLabel: 'Project',
+      badgeClassName: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      type: 'project',
+    })
+  }
+
+  const paymentInvoice = invoices.find((doc) => {
+    const status = String(doc.status || '').toLowerCase()
+    return status && status !== 'paid'
+  })
+
+  if (paymentInvoice) {
+    items.push({
+      key: `payment-${paymentInvoice.id}`,
+      title: `Record payment — ${paymentInvoice.invoice_number}`,
+      meta: `${paymentInvoice.client_name || 'Walking Client'} • ${formatDashboardAmount(paymentInvoice.total)}`,
+      dotClassName: 'bg-blue-500',
+      dotRingClassName: 'ring-[6px] ring-blue-500/15',
+      badgeLabel: 'Payment',
+      badgeClassName: 'bg-blue-50 text-blue-700 border-blue-200',
+      type: 'payment',
+    })
+  }
+
+  if (projects[1]) {
+    items.push({
+      key: `project-review-${projects[1].id}`,
+      title: `Confirm progress — ${projects[1].name}`,
+      meta: `${projects[1].client_name || 'Open project'} • team follow-up needed`,
+      dotClassName: 'bg-amber-500',
+      dotRingClassName: 'ring-[6px] ring-amber-500/15',
+      badgeLabel: 'Review',
+      badgeClassName: 'bg-amber-50 text-amber-700 border-amber-200',
+      type: 'project',
+    })
+  } else if (quotations[0]) {
+    items.push({
+      key: `quote-${quotations[0].id}`,
+      title: `Follow up quotation — ${quotations[0].quotation_number}`,
+      meta: `${quotations[0].client_name || 'Walking Client'} • awaiting response`,
+      dotClassName: 'bg-violet-500',
+      dotRingClassName: 'ring-[6px] ring-violet-500/15',
+      badgeLabel: 'Quote',
+      badgeClassName: 'bg-violet-50 text-violet-700 border-violet-200',
+      type: 'quotation',
+    })
+  }
+
+  return items.slice(0, 3)
+}
+
+function buildOverviewPriorityItems(projects: RecentProject[], quotations: any[], hasPastDue: boolean) {
+  const items: PriorityItem[] = []
+
+  if (projects[0]) {
+    items.push({
+      key: `project-${projects[0].id}`,
+      title: `Update project status — ${projects[0].name}`,
+      meta: `${projects[0].client_name || 'Open project'} • no movement recorded recently`,
+      dotClassName: 'bg-emerald-500',
+      dotRingClassName: 'ring-[6px] ring-emerald-500/15',
+      badgeLabel: 'Project',
+      badgeClassName: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      type: 'project',
+    })
+  }
+
+  if (hasPastDue) {
+    items.push({
+      key: 'past-due-invoice',
+      title: 'Record payment — Past due',
+      meta: 'Balance still pending for record capture',
+      dotClassName: 'bg-rose-500',
+      dotRingClassName: 'ring-[6px] ring-rose-500/15',
+      badgeLabel: 'Payment',
+      badgeClassName: 'bg-rose-50 text-rose-700 border-rose-200',
+      type: 'payment',
+    })
+  }
+
+  const pendingQuotation = quotations.find((quotation) => {
+    const status = String(quotation.status || '').toLowerCase()
+    return status === 'open'
+  })
+
+  if (pendingQuotation) {
+    items.push({
+      key: `quotation-${pendingQuotation.id}`,
+      title: `Follow up quotation — ${pendingQuotation.quotation_number}`,
+      meta: `${pendingQuotation.client_name || 'Walking Client'} • status ${formatStatusLabel(pendingQuotation.status, { fallback: 'open', lowercase: true })}`,
+      dotClassName: 'bg-blue-500',
+      dotRingClassName: 'ring-[6px] ring-blue-500/15',
+      badgeLabel: 'Quotation',
+      badgeClassName: 'bg-blue-50 text-blue-700 border-blue-200',
+      type: 'quotation',
+    })
+  }
+
+  return items.slice(0, 3)
+}
+
+function buildClassicRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[]) {
+  return mergeRecentDocs([
+    ...invoices.map((doc) => ({
+      id: doc.id,
+      type: 'Invoice' as const,
+      number: doc.invoice_number,
+      client: doc.client_name || 'Walking Client',
+      date: doc.created_at,
+      status: String(doc.status || ''),
+      amount: doc.total,
+      path: `/invoices/${doc.id}`,
+    })),
+    ...quotations.map((doc) => ({
+      id: doc.id,
+      type: 'Quotation' as const,
+      number: doc.quotation_number,
+      client: doc.client_name || 'Walking Client',
+      date: doc.created_at,
+      status: String(doc.status || ''),
+      amount: doc.total,
+      path: `/quotations/${doc.id}`,
+    })),
+    ...csrs.map((doc) => ({
+      id: doc.id,
+      type: 'CSR' as const,
+      number: doc.csr_number,
+      client: doc.client_name || 'Walking Client',
+      date: doc.created_at,
+      status: String(doc.status || ''),
+      amount: null,
+      path: `/csr/${doc.id}`,
+    })),
+    ...waybills.map((doc) => ({
+      id: doc.id,
+      type: 'Waybill' as const,
+      number: doc.waybill_number || 'Waybill',
+      client: doc.client_name || 'No client',
+      date: doc.created_at || doc.date,
+      status: String(doc.status || ''),
+      amount: null,
+      meta: doc.vehicle_plate || 'Waybill',
+      path: `/waybills/${doc.id}`,
+    })),
+  ])
+}
+
+function buildOverviewRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[]) {
+  return mergeRecentDocs([
+    ...invoices.map((doc) => ({
+      id: doc.id,
+      type: 'Invoice' as const,
+      number: doc.invoice_number,
+      client: doc.client_name || 'Walking Client',
+      date: doc.issue_date || doc.created_at,
+      status: String(doc.status || ''),
+      amount: doc.total,
+      path: `/invoices/${doc.id}`,
+    })),
+    ...quotations.map((doc) => ({
+      id: doc.id,
+      type: 'Quotation' as const,
+      number: doc.quotation_number,
+      client: doc.client_name || 'Walking Client',
+      date: doc.issue_date || doc.created_at,
+      status: String(doc.status || ''),
+      amount: doc.total,
+      path: `/quotations/${doc.id}`,
+    })),
+    ...csrs.map((doc) => ({
+      id: doc.id,
+      type: 'CSR' as const,
+      number: doc.csr_number,
+      client: doc.client_name || 'Walking Client',
+      date: doc.created_at,
+      status: String(doc.status || ''),
+      amount: null,
+      path: `/csr/${doc.id}`,
+    })),
+    ...waybills.map((doc) => ({
+      id: doc.id,
+      type: 'Waybill' as const,
+      number: doc.waybill_number || 'Waybill',
+      client: doc.client_name || 'No client',
+      date: doc.created_at || doc.date,
+      status: String(doc.status || ''),
+      amount: null,
+      meta: doc.vehicle_plate,
+      path: `/waybills/${doc.id}`,
+    })),
+  ])
+}
+
+export function useDashboardData(options: UseDashboardDataOptions = {}): UseDashboardDataResult {
+  const { variant = 'overview' } = options
+
   const [loading, setLoading] = React.useState(true)
   const [recentDocs, setRecentDocs] = React.useState<RecentDoc[]>([])
+  const [recentProjects, setRecentProjects] = React.useState<RecentProject[]>([])
   const [priorityItems, setPriorityItems] = React.useState<PriorityItem[]>([])
-  const [heroStats, setHeroStats] = React.useState<HeroStats>({
-    collections: 0,
-    openWork: 0,
-    awaitingPaymentCount: 0,
-    inTransitWaybills: 0,
-  })
-  const [summary, setSummary] = React.useState<SummaryStats>({
-    overdue: 0,
-    pastDue: 0,
-    dueThisWeek: 0,
-    thisMonthCollections: 0,
-    pendingFollowUp: 0,
-  })
+  const [heroStats, setHeroStats] = React.useState<HeroStats>(defaultHeroStats)
+  const [summary, setSummary] = React.useState<SummaryStats>(defaultSummary)
 
   const load = React.useCallback(async () => {
     setLoading(true)
+
+    if (variant === 'classic') {
+      try {
+        const startOfMonth = new Date()
+        startOfMonth.setDate(1)
+        startOfMonth.setHours(0, 0, 0, 0)
+
+        const now = new Date()
+        const endOfWeek = new Date(now)
+        endOfWeek.setDate(now.getDate() + 7)
+        endOfWeek.setHours(23, 59, 59, 999)
+
+        const [invoiceRes, quotationRes, csrRes, waybillRes, financialsRes, projectsRes] = await Promise.all([
+          supabase
+            .from('invoices')
+            .select('id, invoice_number, client_name, status, created_at, total, custom_fields')
+            .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
+            .order('created_at', { ascending: false })
+            .limit(8),
+          supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
+          supabase.from('csrs').select('id, csr_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
+          supabase.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
+          supabase.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
+          supabase.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
+        ])
+
+        const invoices = (invoiceRes.data || []).filter((invoice) => shouldIncludeInvoiceInList(invoice))
+        const quotations = quotationRes.data || []
+        const csrs = csrRes.data || []
+        const waybills = waybillRes.data || []
+        const projects = (projectsRes.data || []) as RecentProject[]
+        const invoiceFinancials = financialsRes.data || []
+
+        const isPastDue = (row: any) => {
+          const balance = Number(row.balance_due || 0)
+          if (balance <= 0 || !row.due_date) return false
+          const dueDate = new Date(row.due_date)
+          if (Number.isNaN(dueDate.getTime())) return false
+          dueDate.setHours(0, 0, 0, 0)
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          return dueDate < today
+        }
+
+        const overdue = invoiceFinancials.reduce(
+          (sum: number, row: any) => (isPastDue(row) ? sum + Number(row.balance_due || 0) : sum),
+          0,
+        )
+
+        const dueThisWeek = invoiceFinancials.reduce((sum: number, row: any) => {
+          const dueDate = row.due_date ? new Date(row.due_date) : null
+          const balance = Number(row.balance_due || 0)
+          if (!dueDate || Number.isNaN(dueDate.getTime()) || balance <= 0) return sum
+          if (dueDate < now || dueDate > endOfWeek) return sum
+          return sum + balance
+        }, 0)
+
+        const thisMonthCollections = invoiceFinancials.reduce((sum: number, row: any) => {
+          const issueDate = row.issue_date ? new Date(row.issue_date) : null
+          if (!issueDate || Number.isNaN(issueDate.getTime()) || issueDate < startOfMonth) return sum
+          return sum + Number(row.cash_received || 0)
+        }, 0)
+
+        const pendingFollowUp = invoiceFinancials.filter((row: any) => {
+          const balance = Number(row.balance_due || 0)
+          if (balance <= 0) return false
+          if (isPastDue(row)) return true
+          const dueDate = row.due_date ? new Date(row.due_date) : null
+          if (!dueDate || Number.isNaN(dueDate.getTime())) return false
+          return dueDate >= now && dueDate <= endOfWeek
+        }).length
+
+        const reminders = buildClassicPriorityItems(projects, invoices, quotations)
+
+        setRecentDocs(buildClassicRecentDocs(invoices, quotations, csrs, waybills))
+        setRecentProjects(projects)
+        setPriorityItems(reminders)
+        setHeroStats({
+          collections: thisMonthCollections,
+          openWork: reminders.length || pendingFollowUp,
+          awaitingPaymentCount: 0,
+          inTransitWaybills: 0,
+        })
+        setSummary({
+          overdue,
+          pastDue: overdue,
+          dueThisWeek,
+          thisMonthCollections,
+          pendingFollowUp,
+        })
+      } catch (error) {
+        console.error('Dashboard data load failed:', error)
+      } finally {
+        setLoading(false)
+      }
+
+      return
+    }
 
     const startOfMonth = new Date()
     startOfMonth.setDate(1)
@@ -106,50 +454,10 @@ export function useDashboardData() {
       ])
 
       const invoices = (invoiceRes.data || []).filter((invoice) => shouldIncludeInvoiceInList(invoice))
-
-      const mergedDocs: RecentDoc[] = [
-        ...invoices.map((doc) => ({
-          id: doc.id,
-          type: 'Invoice' as const,
-          number: doc.invoice_number,
-          client: doc.client_name || 'Walking Client',
-          date: doc.issue_date || doc.created_at,
-          status: doc.status,
-          amount: doc.total,
-        })),
-        ...(quotationRes.data || []).map((doc) => ({
-          id: doc.id,
-          type: 'Quotation' as const,
-          number: doc.quotation_number,
-          client: doc.client_name || 'Walking Client',
-          date: doc.issue_date || doc.created_at,
-          status: doc.status,
-          amount: doc.total,
-        })),
-        ...(csrRes.data || []).map((doc) => ({
-          id: doc.id,
-          type: 'CSR' as const,
-          number: doc.csr_number,
-          client: doc.client_name || 'Walking Client',
-          date: doc.created_at,
-          status: doc.status,
-          amount: null,
-        })),
-        ...(waybillRes.data || []).map((doc) => ({
-          id: doc.id,
-          type: 'Waybill' as const,
-          number: doc.waybill_number || 'Waybill',
-          client: doc.client_name || 'No client',
-          date: doc.created_at || doc.date,
-          status: doc.status,
-          amount: null,
-          meta: doc.vehicle_plate,
-        })),
-      ]
-        .filter((doc) => doc.date)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 5) as RecentDoc[]
-
+      const quotations = quotationRes.data || []
+      const csrs = csrRes.data || []
+      const waybills = waybillRes.data || []
+      const projects = (projectsRes.data || []) as RecentProject[]
       const financialMetrics = Array.isArray(financialMetricsRes.data)
         ? (financialMetricsRes.data[0] as DashboardFinancialMetrics | undefined)
         : (financialMetricsRes.data as DashboardFinancialMetrics | null)
@@ -157,79 +465,44 @@ export function useDashboardData() {
       const pastDue = toNumber(financialMetrics?.overdue)
       const dueThisWeek = toNumber(financialMetrics?.due_this_week)
       const thisMonthCollections = toNumber(financialMetrics?.this_month_collections)
-      const pendingFollowUpCount = toNumber(financialMetrics?.pending_follow_up)
+      const pendingFollowUp = toNumber(financialMetrics?.pending_follow_up)
       const awaitingPaymentCount = toNumber(financialMetrics?.awaiting_payment_count)
-      const inTransitWaybills = (waybillRes.data || []).filter(
-        (row) => String(row.status || '').toLowerCase() === 'dispatched'
+      const inTransitWaybills = waybills.filter(
+        (row: any) => String(row.status || '').toLowerCase() === 'dispatched',
       ).length
+      const reminders = buildOverviewPriorityItems(projects, quotations, Boolean(financialMetrics?.has_past_due))
 
-      // Build Priority Items
-      const projects = projectsRes.data || []
-      const reminders: PriorityItem[] = []
-
-      if (projects[0]) {
-        reminders.push({
-          key: `project-${projects[0].id}`,
-          title: `Update project status — ${projects[0].name}`,
-          meta: `${projects[0].client_name || 'Open project'} • no movement recorded recently`,
-          dotClassName: 'bg-emerald-500',
-          dotRingClassName: 'ring-[6px] ring-emerald-500/15',
-          badgeLabel: 'Project',
-          badgeClassName: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-          type: 'project'
-        })
-      }
-
-      if (financialMetrics?.has_past_due) {
-        reminders.push({
-          key: `past-due-invoice`,
-          title: `Record payment — Past due`,
-          meta: `Balance still pending for record capture`,
-          dotClassName: 'bg-rose-500',
-          dotRingClassName: 'ring-[6px] ring-rose-500/15',
-          badgeLabel: 'Payment',
-          badgeClassName: 'bg-rose-50 text-rose-700 border-rose-200',
-          type: 'payment'
-        })
-      }
-
-      const pendingQuotation = (quotationRes.data || []).find((quotation) => {
-        const status = String(quotation.status || '').toLowerCase()
-        return status === 'open'
-      })
-
-      if (pendingQuotation) {
-        reminders.push({
-          key: `quotation-${pendingQuotation.id}`,
-          title: `Follow up quotation — ${pendingQuotation.quotation_number}`,
-          meta: `${pendingQuotation.client_name || 'Walking Client'} • status ${formatStatusLabel(pendingQuotation.status, { fallback: 'open', lowercase: true })}`,
-          dotClassName: 'bg-blue-500',
-          dotRingClassName: 'ring-[6px] ring-blue-500/15',
-          badgeLabel: 'Quotation',
-          badgeClassName: 'bg-blue-50 text-blue-700 border-blue-200',
-          type: 'quotation'
-        })
-      }
-
-      setRecentDocs(mergedDocs)
-      setPriorityItems(reminders.slice(0, 3))
+      setRecentDocs(buildOverviewRecentDocs(invoices, quotations, csrs, waybills))
+      setRecentProjects(projects)
+      setPriorityItems(reminders)
       setHeroStats({
         collections: thisMonthCollections,
-        openWork: reminders.length || pendingFollowUpCount,
+        openWork: reminders.length || pendingFollowUp,
         awaitingPaymentCount,
         inTransitWaybills,
       })
-      setSummary({ overdue: pastDue, pastDue, dueThisWeek, thisMonthCollections, pendingFollowUp: pendingFollowUpCount })
+      setSummary({
+        overdue: pastDue,
+        pastDue,
+        dueThisWeek,
+        thisMonthCollections,
+        pendingFollowUp,
+      })
     } catch (error) {
       console.error('Dashboard data load failed:', error)
+      toast({
+        title: 'Dashboard unavailable',
+        description: 'We could not load dashboard data right now.',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [variant])
 
   React.useEffect(() => {
     void load()
   }, [load])
 
-  return { loading, recentDocs, priorityItems, heroStats, summary, refresh: load }
+  return { loading, recentDocs, recentProjects, priorityItems, heroStats, summary, refresh: load }
 }
