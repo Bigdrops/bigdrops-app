@@ -59,7 +59,7 @@ const dashboardMetricCards = [
     label: 'Collections',
     helper: 'Month to date',
     Icon: TrendingUp,
-    iconClassName: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+    iconClassName: 'bg-[var(--tone-success-soft)] text-[var(--tone-success)] dark:bg-[var(--tone-success)]/10',
     value: (heroStats: DashboardOverviewProps['heroStats']) =>
       formatNaira(heroStats.collections, { round: true }),
   },
@@ -73,7 +73,7 @@ const dashboardMetricCards = [
         : 'Nothing urgent right now'
     },
     Icon: AlertCircle,
-    iconClassName: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+    iconClassName: 'bg-[var(--tone-warning-soft)] text-[var(--tone-warning)] dark:bg-[var(--tone-warning)]/10',
     value: (heroStats: DashboardOverviewProps['heroStats']) => String(heroStats.openWork),
   },
 ] as const
@@ -82,22 +82,22 @@ const recentRecordMeta = {
   Invoice: {
     Icon: Receipt,
     iconClassName:
-      'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300',
+      'tone-success-panel text-[var(--tone-success)] dark:bg-[var(--tone-success)]/10 dark:border-[var(--tone-success-border)]',
   },
   Quotation: {
     Icon: FileSignature,
     iconClassName:
-      'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/15 dark:text-violet-300',
+      'tone-accent-panel text-[var(--tone-accent)] dark:bg-[var(--tone-accent)]/10 dark:border-[var(--tone-accent-border)]',
   },
   CSR: {
     Icon: ClipboardCheck,
     iconClassName:
-      'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300',
+      'tone-warning-panel text-[var(--tone-warning)] dark:bg-[var(--tone-warning)]/10 dark:border-[var(--tone-warning-border)]',
   },
   Waybill: {
     Icon: Truck,
     iconClassName:
-      'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-500/15 dark:text-cyan-300',
+      'tone-data-panel text-[var(--tone-data)] dark:bg-[var(--tone-data)]/10 dark:border-[var(--tone-data-border)]',
   },
 } as const
 
@@ -114,14 +114,14 @@ function getFollowUpBadgeClassName(item: PriorityItem) {
   const type = String(item.type || '').toLowerCase()
 
   if (label.includes('payment') || type === 'payment') {
-    return 'border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-300'
+    return 'bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.18)] dark:bg-[hsl(var(--destructive)/0.15)]'
   }
 
   if (label.includes('quotation') || type === 'quotation') {
-    return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300'
+    return 'tone-warning-panel text-[var(--tone-warning)]'
   }
 
-  return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300'
+  return 'tone-success-panel text-[var(--tone-success)]'
 }
 
 function getFollowUpDotClassName(item: PriorityItem) {
@@ -129,15 +129,16 @@ function getFollowUpDotClassName(item: PriorityItem) {
   const type = String(item.type || '').toLowerCase()
 
   if (label.includes('payment') || type === 'payment') {
-    return 'bg-red-600 dark:bg-red-400'
+    return 'bg-[hsl(var(--destructive))]'
   }
 
   if (label.includes('quotation') || type === 'quotation') {
-    return 'bg-amber-500 dark:bg-amber-400'
+    return 'bg-[var(--tone-warning)]'
   }
 
-  return 'bg-emerald-600 dark:bg-emerald-400'
+  return 'bg-[var(--tone-success)]'
 }
+
 
 function getIdentityLine(userName: string, businessName: string) {
   const trimmedName = String(userName || '').trim()
@@ -308,7 +309,7 @@ export function DashboardOverview({
           <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
             Follow Up Required
           </div>
-          <span className="inline-flex h-5 items-center rounded-full border border-red-200 bg-red-50 px-[7px] text-[9px] font-bold uppercase tracking-[0.06em] text-red-700 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-300">
+          <span className="inline-flex h-5 items-center rounded-full border border-[hsl(var(--destructive)/0.18)] bg-[hsl(var(--destructive)/0.08)] px-[7px] text-[9px] font-bold uppercase tracking-[0.06em] text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive)/0.15)]">
             {priorityItems.length} Tasks
           </span>
         </div>
