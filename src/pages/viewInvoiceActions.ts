@@ -98,7 +98,7 @@ export async function createAdvanceInvoiceRecord({
   const { data: existingAdvance, error: existingAdvanceError } = await supabase
     .from('invoices')
     .select('id, invoice_number, invoice_title, total, custom_fields')
-    .contains('custom_fields', { advance_invoice: { parentId: parentInvoice?.id } })
+    .ilike('custom_fields', `%"parentId":"${parentInvoice?.id}"%`)
     .is('archived_at', null)
     .order('created_at', { ascending: true })
     .limit(1)

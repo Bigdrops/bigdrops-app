@@ -114,4 +114,4 @@ CREATE INDEX IF NOT EXISTS idx_csrs_linked_invoice_id ON csrs(linked_invoice_id)
 CREATE INDEX IF NOT EXISTS idx_sync_queue_status ON sync_queue(status);
 
 -- 3. GIN index for JSONB custom_fields for containment queries
-CREATE INDEX IF NOT EXISTS idx_invoices_custom_fields_gin ON invoices USING GIN (custom_fields);
+-- CREATE INDEX IF NOT EXISTS idx_invoices_custom_fields_gin ON invoices USING GIN (custom_fields); -- Invalid for TEXT
