@@ -3,8 +3,8 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const newInvoicePath = path.resolve('src/pages/NewInvoice.jsx')
-const editInvoicePath = path.resolve('src/pages/EditInvoice.jsx')
+const newInvoicePath = path.resolve('src/pages/NewInvoice.tsx')
+const editInvoicePath = path.resolve('src/pages/EditInvoice.tsx')
 const quotationFormPath = path.resolve('src/components/quotation/QuotationForm.tsx')
 const sharedFormPath = path.resolve('src/components/document/SharedDocumentForm.tsx')
 const formHeaderPath = path.resolve('src/components/document/FormHeader.tsx')

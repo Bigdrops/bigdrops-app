@@ -6,8 +6,8 @@ import path from 'node:path'
 const read = (relativePath) => fs.readFileSync(path.resolve(relativePath), 'utf8')
 
 test('invoice and quotation flows no longer default to legacy workflow statuses', () => {
-  const newInvoiceSource = read('src/pages/NewInvoice.jsx')
-  const editInvoiceSource = read('src/pages/EditInvoice.jsx')
+  const newInvoiceSource = read('src/pages/NewInvoice.tsx')
+  const editInvoiceSource = read('src/pages/EditInvoice.tsx')
   const invoiceActionsSource = read('src/pages/viewInvoiceActions.ts')
   const quotationActionsSource = read('src/pages/viewQuotationActions.ts')
   const quotationStatusSource = read('src/components/quotation/quotationStatus.ts')

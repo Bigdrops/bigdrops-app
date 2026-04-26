@@ -13,6 +13,17 @@ import {
   parseCustomFields,
   filterPopulatedAdditionalFields,
 } from '@/domain/invoice'
+import type { 
+  InvoiceItem, 
+  InvoiceAttachment, 
+  InvoiceFieldEntry, 
+  ExtraCharge, 
+  InvoicePdfOutput,
+  DiscountType,
+  DiscountTiming,
+  WhtType,
+  InvoiceCustomFields,
+} from '@/domain/invoice'
 import {
   makeEmptyGroup,
   makeEmptyItem,
@@ -22,7 +33,7 @@ import {
   useInvoiceColumns,
   buildCalculationInputs,
   ensureUiKey,
-} from '../components/useInvoiceColumns.jsx'
+} from '../components/useInvoiceColumns'
 import { computeDocument } from '../lib/Calculations'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { numberToWords } from '../hooks/useInvoiceForm'
@@ -30,33 +41,74 @@ import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { toast } from '@/hooks/use-toast'
 import { validateProjectAssignment } from '@/domain/projects'
 
+interface InvoiceFormFields {
+  invoice_number: string
+  po_number: string
+  project_id: string
+  client_id: string
+  client_name: string
+  issue_date: string
+  due_date: string
+  status: string
+  document_type: string
+  payment_terms: string
+  custom_payment_terms: string
+  notes: string
+  terms: string
+  workmanship: number
+  transportation: number
+  shipping: number
+  discount: number
+  vat: number
+  wht: number
+  work_duration: string
+  amount_in_words: string
+  [key: string]: any
+}
+
+interface InvoiceGroup {
+  id?: string
+  name?: string
+  showSubtotal?: boolean
+}
+
+interface LocationState {
+  prefill?: any
+  prefillItems?: any[]
+  projectId?: string | number
+  clientId?: string | number
+  clientName?: string
+}
+
 export default function NewInvoice() {
   const navigate = useNavigate()
   const location = useLocation()
-  const routeState = location.state || {}
+  const routeState = (location.state as LocationState) || {}
   const prefill = routeState.prefill
   const prefillItems = routeState.prefillItems
   const { isMobile } = useLayoutMode()
+  
   const projectPrefill = {
     projectId: String(routeState.projectId || prefill?.project_id || ''),
     clientId: String(routeState.clientId || prefill?.client_id || ''),
     clientName: String(routeState.clientName || prefill?.client_name || ''),
   }
+
   const [saving, setSaving] = useState(false)
   const [showColumnManager, setShowColumnManager] = useState(false)
-  const [discountType, setDiscountType] = useState('fixed')
-  const [discountTiming, setDiscountTiming] = useState('after')
-  const [whtType, setWhtType] = useState('percent')
-  const [attachments, setAttachments] = useState([])
-  const [signatories, setSignatories] = useState([])
-  const [bankAccounts, setBankAccounts] = useState([])
-  const [settingsData, setSettingsData] = useState(null)
-  const [customFields, setCustomFields] = useState([])
-  const [signatoryId, setSignatoryId] = useState(null)
-  const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT)
-  const [additionalFields, setAdditionalFields] = useState([])
-  const [extraCharges, setExtraCharges] = useState([])
-  const [chargeLabels, setChargeLabels] = useState({
+  const [discountType, setDiscountType] = useState<DiscountType>('fixed')
+  const [discountTiming, setDiscountTiming] = useState<DiscountTiming>('after')
+  const [whtType, setWhtType] = useState<WhtType>('percent')
+  const [attachments, setAttachments] = useState<InvoiceAttachment[]>([])
+  const [signatories, setSignatories] = useState<any[]>([])
+  const [bankAccounts, setBankAccounts] = useState<any[]>([])
+  const [settingsData, setSettingsData] = useState<any>(null)
+  const [customFields, setCustomFields] = useState<InvoiceFieldEntry[]>([])
+  const [signatoryId, setSignatoryId] = useState<string | null>(null)
+  const [pdfOutput, setPdfOutput] = useState<InvoicePdfOutput>(DEFAULT_INVOICE_PDF_OUTPUT)
+  const [additionalFields, setAdditionalFields] = useState<InvoiceFieldEntry[]>([])
+  const [extraCharges, setExtraCharges] = useState<ExtraCharge[]>([])
+  const [chargeLabels, setChargeLabels] = useState<Record<string, string>>({
     workmanship: 'Workmanship',
     transportation: 'Transportation',
     shipping: 'Shipping',
@@ -65,6 +117,7 @@ export default function NewInvoice() {
   const [termsTitle, setTermsTitle] = useState('Terms and Conditions')
   const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
   const [invoiceTitle, setInvoiceTitle] = useState(prefill?.invoice_title || '')
+
   const {
     columns,
     setColumns,
@@ -79,7 +132,7 @@ export default function NewInvoice() {
     customColumns,
   } = useInvoiceColumns()
 
-  const [invoice, setInvoice] = useState(
+  const [invoice, setInvoice] = useState<InvoiceFormFields>(
     prefill
       ? { ...prefill }
       : {
@@ -107,17 +160,17 @@ export default function NewInvoice() {
         },
   )
 
-  const [items, setItems] = useState(
+  const [items, setItems] = useState<InvoiceItem[]>(
     prefillItems
-      ? prefillItems.map((item) => ({
+      ? prefillItems.map((item: any) => ({
           ...ensureUiKey(item),
           row_type: item.row_type || 'standard',
           group_id: item.group_id || null,
           group_name: item.group_name || '',
         }))
-      : [{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }],
+      : [{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' } as InvoiceItem],
   )
-  const [groups, setGroups] = useState([])
+  const [groups, setGroups] = useState<InvoiceGroup[]>([])
   const initialCustomFields = useMemo(() => parseCustomFields(prefill?.custom_fields), [prefill?.custom_fields])
 
   useEffect(() => {
@@ -175,9 +228,9 @@ export default function NewInvoice() {
     setPdfOutput(getInvoicePdfOutput(prefill?.custom_fields))
   }, [prefill?.custom_fields])
 
-  const updateInvoice = (field, value) => setInvoice((current) => ({ ...current, [field]: value }))
+  const updateInvoice = (field: string, value: any) => setInvoice((current) => ({ ...current, [field]: value }))
 
-  const updateItem = (index, field, value) =>
+  const updateItem = (index: number, field: string, value: any) =>
     setItems((current) =>
       current.map((item, itemIndex) => {
         if (itemIndex !== index) return item
@@ -188,21 +241,25 @@ export default function NewInvoice() {
       }),
     )
 
-  const resetItemOverrides = (fields) =>
+  const resetItemOverrides = (fields: { vat?: boolean; discount?: boolean; install?: boolean }) =>
     setItems((current) =>
       current.map((item) => {
         if (item.row_type !== 'standard') return item
-        const patch = {}
+        const patch: Partial<InvoiceItem> = {}
         if (fields.vat)      patch.vat_rate = null
         if (fields.discount) patch.discount_rate = null
-        if (fields.install)  patch.install_rate = null, patch.install_rate_override = false
+        if (fields.install)  {
+          patch.install_rate = null
+          // @ts-ignore - install_rate_override is a UI-only field often used in this codebase
+          patch.install_rate_override = false
+        }
         return { ...item, ...patch }
       }),
     )
 
-  const addUngroupedItem = (insertAt = null, groupId = null, groupName = '') => {
+  const addUngroupedItem = (insertAt: number | null = null, groupId: string | null = null, groupName = '') => {
     setItems((current) => {
-      const newItem = { ...makeEmptyItem(), row_type: 'standard', group_id: groupId, group_name: groupName }
+      const newItem: InvoiceItem = { ...makeEmptyItem(), row_type: 'standard', group_id: groupId, group_name: groupName }
       if (insertAt === null || insertAt >= current.length) {
         return [...current, { ...newItem, sort_order: current.length }]
       }
@@ -213,13 +270,13 @@ export default function NewInvoice() {
   }
 
   const addItem = () => addUngroupedItem()
-  const removeItem = (index) =>
+  const removeItem = (index: number) =>
     setItems((current) => current.filter((_, itemIndex) => itemIndex !== index).map((item, itemIndex) => ({ ...item, sort_order: itemIndex })))
-  const insertItemAfter = (index) => {
+  const insertItemAfter = (index: number) => {
     const item = items[index]
     addUngroupedItem(index + 1, item?.group_id || null, item?.group_name || '')
   }
-  const moveItem = (index, direction) => {
+  const moveItem = (index: number, direction: number) => {
     const nextIndex = index + direction
     if (nextIndex < 0 || nextIndex >= items.length) return
     setItems((current) => {
@@ -231,7 +288,7 @@ export default function NewInvoice() {
 
   const addGroup = () => {
     const baseGroup = makeEmptyGroup()
-    const group = {
+    const group: InvoiceGroup = {
       ...baseGroup,
       name: baseGroup.name || `Group ${groups.length + 1}`,
       showSubtotal: !!baseGroup.showSubtotal,
@@ -246,19 +303,19 @@ export default function NewInvoice() {
         group_id: group.id,
         group_name: group.name,
         sort_order: current.length,
-      },
+      } as InvoiceItem,
     ])
   }
 
-  const updateGroupName = (groupId, name) => {
+  const updateGroupName = (groupId: string, name: string) => {
     setGroups((current) => current.map((group) => (group.id === groupId ? { ...group, name } : group)))
     setItems((current) => current.map((item) => (item.group_id === groupId ? { ...item, group_name: name } : item)))
   }
 
-  const toggleGroupSubtotal = (groupId) =>
+  const toggleGroupSubtotal = (groupId: string) =>
     setGroups((current) => current.map((group) => (group.id === groupId ? { ...group, showSubtotal: !group.showSubtotal } : group)))
 
-  const deleteGroup = (groupId) => {
+  const deleteGroup = (groupId: string) => {
     setGroups((current) => current.filter((group) => group.id !== groupId))
     setItems((current) =>
       current
@@ -271,7 +328,7 @@ export default function NewInvoice() {
     )
   }
 
-  const addItemToGroup = (groupId) => {
+  const addItemToGroup = (groupId: string) => {
     const group = groups.find((entry) => entry.id === groupId)
     if (!group) return
 
@@ -284,7 +341,7 @@ export default function NewInvoice() {
         if (current[index].group_id === groupId) insertAt = index
       }
 
-      const newItem = {
+      const newItem: InvoiceItem = {
         ...makeEmptyItem(),
         row_type: 'standard',
         group_id: groupId,
@@ -297,12 +354,12 @@ export default function NewInvoice() {
     })
   }
 
-  const handleImportApply = (result) => {
+  const handleImportApply = (result: any) => {
     invoiceImportAdapter.applyResult({
       result,
       setColumns,
       setItems,
-      updateTopLevelField: (field, value) => updateInvoice(field, value),
+      updateTopLevelField: (field: string, value: any) => updateInvoice(field, value),
       setExtraCharges,
     })
   }
@@ -323,7 +380,7 @@ export default function NewInvoice() {
     },
   })
 
-  const handleSave = async (status) => {
+  const handleSave = async (status: string) => {
     if (!invoice.client_id) {
       toast({ title: 'Validation Error', description: 'Pick a client before saving', variant: 'destructive' })
       return
@@ -342,7 +399,7 @@ export default function NewInvoice() {
       return
     }
 
-    const { project: validatedProject, error: projectError } = await validateProjectAssignment(supabase, {
+    const { project: validatedProject, error: projectError } = await validateProjectAssignment(supabase as any, {
       projectId: invoice.project_id,
       documentClientId: invoice.client_id,
       documentClientName: invoice.client_name,
@@ -355,7 +412,7 @@ export default function NewInvoice() {
 
     setSaving(true)
 
-    const groupMeta = {}
+    const groupMeta: Record<string, { name: string; showSubtotal: boolean }> = {}
     groups.forEach((group) => {
       groupMeta[group.id] = { name: group.name, showSubtotal: group.showSubtotal }
     })
@@ -364,9 +421,9 @@ export default function NewInvoice() {
     const sanitizedInitialCustomFields = { ...initialCustomFields }
     delete sanitizedInitialCustomFields.bottom
 
-    const customFieldsData = {
+    const customFieldsData: InvoiceCustomFields = {
       ...sanitizedInitialCustomFields,
-      header: customFields.filter((field) => field.label && field.value),
+      header: customFields.filter((field) => field.label && field.value) as any[],
       additionalFields: filterPopulatedAdditionalFields(additionalFields),
       extraCharges: extraCharges.filter((charge) => charge.label),
       chargeLabels,
@@ -385,41 +442,41 @@ export default function NewInvoice() {
       pdfOutput,
     }
 
-    const { data: invoiceRow, error } = await supabase
-      .from('invoices')
-      .insert([
-        {
-          invoice_number: invoice.invoice_number,
-          po_number: String(invoice.po_number || '').trim() || null,
-          invoice_title: invoiceTitle || null,
-          project_id: validatedProject?.id || null,
-          client_id: invoice.client_id || null,
-          client_name: invoice.client_name,
-          issue_date: invoice.issue_date,
-          due_date: invoice.due_date || null,
-          status,
-          document_type: invoice.document_type,
-          payment_terms: paymentTermsValue,
-          notes: invoice.notes,
-          terms: invoice.terms,
-          workmanship: Number(invoice.workmanship || 0),
-          transportation: Number(invoice.transportation || 0),
-          shipping: Number(invoice.shipping || 0),
-          discount: documentTotals.discount,
-          vat: documentTotals.vat,
-          wht: documentTotals.wht,
-          custom_fields: JSON.stringify(customFieldsData),
-          work_duration: invoice.work_duration,
-          subtotal: documentTotals.subtotal,
-          install_rate_total: documentTotals.installRateTotal,
-          total: documentTotals.totalPayable,
-          amount_in_words: numberToWords(documentTotals.totalPayable),
-        },
-      ])
+    const insertPayload: any = {
+      invoice_number: invoice.invoice_number,
+      po_number: String(invoice.po_number || '').trim() || null,
+      invoice_title: invoiceTitle || null,
+      project_id: validatedProject?.id || null,
+      client_id: invoice.client_id || null,
+      client_name: invoice.client_name,
+      issue_date: invoice.issue_date,
+      due_date: invoice.due_date || null,
+      status,
+      document_type: invoice.document_type,
+      payment_terms: paymentTermsValue,
+      notes: invoice.notes,
+      terms: invoice.terms,
+      workmanship: Number(invoice.workmanship || 0),
+      transportation: Number(invoice.transportation || 0),
+      shipping: Number(invoice.shipping || 0),
+      discount: documentTotals.discount,
+      vat: documentTotals.vat,
+      wht: documentTotals.wht,
+      custom_fields: JSON.stringify(customFieldsData),
+      work_duration: invoice.work_duration,
+      subtotal: documentTotals.subtotal,
+      install_rate_total: documentTotals.installRateTotal,
+      total: documentTotals.totalPayable,
+      amount_in_words: numberToWords(documentTotals.totalPayable),
+    }
+
+    const { data: invoiceRow, error } = await (supabase
+      .from('invoices') as any)
+      .insert([insertPayload])
       .select()
       .single()
 
-    if (error) {
+    if (error || !invoiceRow) {
       toast({
         title: 'Save failed',
         description: getUserFacingMutationMessage(error, { action: 'save' }),
@@ -547,7 +604,7 @@ export default function NewInvoice() {
           onUpdateExtraCharge={(id, field, value) =>
             setExtraCharges((current) => current.map((charge) => (charge.id === id ? { ...charge, [field]: value } : charge)))
           }
-          onRemoveExtraCharge={(id) => setExtraCharges((current) => current.filter((charge) => charge.id !== id))}
+          onRemoveExtraCharge={(id) => setExtraCharges((current) => extraCharges.filter((charge) => charge.id !== id))}
           showColumnManager={showColumnManager}
           setShowColumnManager={setShowColumnManager}
           isMobile={isMobile}
