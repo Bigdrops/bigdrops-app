@@ -576,7 +576,7 @@ export default function ViewInvoice() {
         .from('invoices')
         .select('id, custom_fields')
         .eq('id', savedId)
-        .filter('custom_fields', 'ilike', `%"parentId":"${invoice.id}"%`)
+        .contains('custom_fields', { advance_invoice: { parentId: invoice.id } })
         .is('archived_at', null)
         .single()
 

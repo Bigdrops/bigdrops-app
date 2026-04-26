@@ -76,8 +76,7 @@ export async function archiveInvoiceRecord(id: string) {
 }
 
 export async function deleteInvoiceRecord(id: string) {
-  await supabase.from('invoice_items').delete().eq('invoice_id', id)
-  const { error } = await supabase.from('invoices').delete().eq('id', id)
+  const { error } = await supabase.rpc('delete_invoice_transaction', { p_invoice_id: id })
   if (error) throw error
 }
 
@@ -99,7 +98,7 @@ export async function createAdvanceInvoiceRecord({
   const { data: existingAdvance, error: existingAdvanceError } = await supabase
     .from('invoices')
     .select('id, invoice_number, invoice_title, total, custom_fields')
-    .filter('custom_fields', 'ilike', `%"parentId":"${parentInvoice?.id}"%`)
+    .contains('custom_fields', { advance_invoice: { parentId: parentInvoice?.id } })
     .is('archived_at', null)
     .order('created_at', { ascending: true })
     .limit(1)
@@ -176,8 +175,7 @@ export async function updateAdvanceInvoiceRecord({
 }
 
 export async function deleteAdvanceInvoiceRecord(id: string) {
-  await supabase.from('invoice_items').delete().eq('invoice_id', id)
-  const { error } = await supabase.from('invoices').delete().eq('id', id)
+  const { error } = await supabase.rpc('delete_invoice_transaction', { p_invoice_id: id })
   if (error) throw error
 }
 
@@ -237,17 +235,16 @@ export async function revertInvoiceToQuotation({
       ),
     ),
   }
-  const { data: createdQuotation, error } = await supabase.from('quotations').insert([quotationPayload]).select().single()
-  if (error || !createdQuotation) throw new Error(error?.message || 'Failed to create quotation')
   const itemRows = items
     .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-    .map((item, index) => toQuotationItemRow(item, createdQuotation.id, index))
-  if (itemRows.length > 0) {
-    const { error: itemError } = await supabase.from('quotation_items').insert(itemRows)
-    if (itemError) throw itemError
-  }
-  await supabase.from('invoice_items').delete().eq('invoice_id', invoice.id)
-  const { error: deleteInvoiceError } = await supabase.from('invoices').delete().eq('id', invoice.id)
-  if (deleteInvoiceError) throw deleteInvoiceError
+    .map((item, index) => toQuotationItemRow(item, '' as any, index))
+
+  const { data: createdQuotation, error } = await supabase.rpc('revert_invoice_to_quotation_transaction', {
+    p_invoice_id: invoice.id,
+    p_quotation_payload: quotationPayload,
+    p_quotation_items_payload: itemRows,
+  })
+
+  if (error || !createdQuotation) throw new Error(error?.message || 'Failed to revert invoice')
   return createdQuotation
 }

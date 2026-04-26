@@ -23,6 +23,19 @@ import './index.css'
 import './styles/formTheme.css'
 import App from './App.jsx'
 
+// TODO: Prepare Sentry frontend integration
+// import * as Sentry from "@sentry/react";
+// if (import.meta.env.VITE_SENTRY_DSN) {
+//   Sentry.init({
+//     dsn: import.meta.env.VITE_SENTRY_DSN,
+//     integrations: [
+//       Sentry.browserTracingIntegration(),
+//       Sentry.replayIntegration(),
+//     ],
+//     tracesSampleRate: 1.0,
+//   });
+// }
+
 const rootElement = document.getElementById('root')
 
 if (rootElement) {

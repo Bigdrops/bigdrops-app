@@ -21,7 +21,7 @@ public sealed class RevertInvoiceToQuotationHandler
     RevertInvoiceToQuotationRequest request,
     CancellationToken cancellationToken)
   {
-    await using var connection = _connectionFactory.CreateConnection();
+    await using var connection = (System.Data.Common.DbConnection)_connectionFactory.CreateConnection();
     await connection.OpenAsync(cancellationToken);
 
     await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
