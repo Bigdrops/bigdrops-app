@@ -39,9 +39,21 @@ function canUseInvoiceCacheFallback() {
   )
 }
 
+export type InvoiceRow = {
+  id: string
+  invoice_number: string | null
+  client_name: string | null
+  issue_date: string | null
+  created_at: string
+  total: number | null
+  status: string | null
+  project_id: string | null
+  custom_fields: any
+}
+
 export default function Invoices() {
-  const [invoices, setInvoices]           = useState([])
-  const [activeInvoice, setActiveInvoice] = useState(null)
+  const [invoices, setInvoices]           = useState<InvoiceRow[]>([])
+  const [activeInvoice, setActiveInvoice] = useState<InvoiceRow | null>(null)
   const [search, setSearch]               = useState("")
   const [clientFilter, setClientFilter]   = useState("All")
   const [statusFilter, setStatusFilter]   = useState("All")
@@ -49,16 +61,16 @@ export default function Invoices() {
   const [sortBy, setSortBy]               = useState("Newest")
   const [showArchiveWarn, setShowArchiveWarn] = useState(false)
   const [showDeleteWarn,  setShowDeleteWarn]  = useState(false)
-  const [attachKind, setAttachKind] = useState(null)
+  const [attachKind, setAttachKind]       = useState<"csr" | "waybill" | null>(null)
   const [showAttachSheet, setShowAttachSheet] = useState(false)
-  const [clientOptions, setClientOptions] = useState([])
+  const [clientOptions, setClientOptions] = useState<string[]>([])
   const [totalCount, setTotalCount]       = useState(0)
   const [page, setPage]                   = useState(0)
   const [hasMore, setHasMore]             = useState(false)
   const [loadingMore, setLoadingMore]     = useState(false)
-  const [activeInvoiceRelatedDocs, setActiveInvoiceRelatedDocs] = useState({ csrs: [], waybills: [] })
-  const [activeInvoiceProject, setActiveInvoiceProject] = useState(null)
-  const [activeInvoiceCustomFields, setActiveInvoiceCustomFields] = useState(null)
+  const [activeInvoiceRelatedDocs, setActiveInvoiceRelatedDocs] = useState<{ csrs: any[], waybills: any[] }>({ csrs: [], waybills: [] })
+  const [activeInvoiceProject, setActiveInvoiceProject] = useState<any>(null)
+  const [activeInvoiceCustomFields, setActiveInvoiceCustomFields] = useState<any>(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const navigate = useNavigate()
@@ -124,7 +136,7 @@ export default function Invoices() {
       const { data, error } = await buildInvoiceQuery()
       if (error) throw error
 
-      const filteredRows = (data || []).filter(shouldIncludeInvoiceInList)
+      const filteredRows = ((data as any[]) || []).filter(shouldIncludeInvoiceInList)
       const nextRows = filteredRows.slice(from, to + 1)
 
       setInvoices((current) => (replace ? nextRows : [...current, ...nextRows]))
@@ -151,17 +163,17 @@ export default function Invoices() {
         const searchTerm = search.trim().toLowerCase()
 
         const filteredRows = cachedRows
-          .filter((row) => !row.archived_at)
+          .filter((row: any) => !row.archived_at)
           .filter(shouldIncludeInvoiceInList)
-          .filter((row) => {
+          .filter((row: any) => {
             if (!searchTerm) return true
             const invoiceNumber = String(row.invoice_number || "").toLowerCase()
             const clientName = String(row.client_name || "").toLowerCase()
             return invoiceNumber.includes(searchTerm) || clientName.includes(searchTerm)
           })
-          .filter((row) => clientFilter === "All" || row.client_name === clientFilter)
-          .filter((row) => statusFilter === "All" || String(row.status || "").toLowerCase() === statusFilter.toLowerCase())
-          .filter((row) => {
+          .filter((row: any) => clientFilter === "All" || row.client_name === clientFilter)
+          .filter((row: any) => statusFilter === "All" || String(row.status || "").toLowerCase() === statusFilter.toLowerCase())
+          .filter((row: any) => {
             if (dateFilter === "All Time") return true
             if (!row.issue_date) return false
 
@@ -185,7 +197,7 @@ export default function Invoices() {
 
             return true
           })
-          .sort((left, right) => {
+          .sort((left: any, right: any) => {
             if (sortBy === "Highest Value") {
               return Number(right.total || 0) - Number(left.total || 0)
             }
@@ -225,8 +237,8 @@ export default function Invoices() {
       if (error) throw error
 
       const nextOptions = Array.from(
-        new Set((data || []).filter(shouldIncludeInvoiceInList).map((row) => row.client_name).filter(Boolean)),
-      ).sort((a, b) => a.localeCompare(b))
+        new Set(((data as any[]) || []).filter(shouldIncludeInvoiceInList).map((row) => row.client_name).filter(Boolean)),
+      ).sort((a: any, b: any) => a.localeCompare(b))
 
       setClientOptions(nextOptions)
     } catch (error) {
@@ -239,8 +251,8 @@ export default function Invoices() {
       try {
         const cachedRows = await getCachedInvoiceList()
         const nextOptions = Array.from(
-          new Set((cachedRows || []).filter(shouldIncludeInvoiceInList).map((row) => row.client_name).filter(Boolean)),
-        ).sort((a, b) => a.localeCompare(b))
+          new Set((cachedRows || []).filter(shouldIncludeInvoiceInList).map((row: any) => row.client_name).filter(Boolean)),
+        ).sort((a: any, b: any) => a.localeCompare(b))
         setClientOptions(nextOptions)
       } catch (cacheError) {
         console.warn("Invoice client options cache fallback failed:", cacheError)
@@ -297,10 +309,10 @@ export default function Invoices() {
     setActiveInvoiceCustomFields(null)
   }
 
-  // Ã¢â€ â‚¬Ã¢â€ â‚¬ Actions Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬Ã¢â€ â‚¬
+  // ──────────────────────────────────────────────────────────────────────────────────────────────────
 
-  const handleView  = () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) }
-  const handleEdit  = () => { closeSheet(); navigate(`/invoices/edit/${activeInvoice.id}`) }
+  const handleView  = () => { if (activeInvoice?.id) { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) } }
+  const handleEdit  = () => { if (activeInvoice?.id) { closeSheet(); navigate(`/invoices/edit/${activeInvoice.id}`) } }
   const handleAdvance = () => {
     const invoiceId = activeInvoice?.id
     closeSheet()
@@ -322,6 +334,7 @@ export default function Invoices() {
   const handleClone = async () => {
     const inv = activeInvoice
     closeSheet()
+    if (!inv) return;
     try {
       const { data: invoiceDetail, error: invoiceDetailError } = await supabase
         .from("invoices")
@@ -356,7 +369,7 @@ export default function Invoices() {
           prefillItems: (srcItems || []).map(it => ({ ...it, id: null })),
         }
       })
-    } catch (err) {
+    } catch (err: any) {
       toast({ title: "Clone failed", description: err.message, variant: "destructive" })
     }
   }
@@ -364,6 +377,7 @@ export default function Invoices() {
   const handleArchive = async () => {
     const inv = activeInvoice
     setShowArchiveWarn(false)
+    if (!inv) return;
     await supabase.from("invoices").update({ archived_at: new Date().toISOString() }).eq("id", inv.id)
     closeSheet()
     await fetchInvoices(0, true)
@@ -372,6 +386,7 @@ export default function Invoices() {
   const handleDelete = async () => {
     const inv = activeInvoice
     setShowDeleteWarn(false)
+    if (!inv) return;
     await supabase.from("invoice_items").delete().eq("invoice_id", inv.id)
     await supabase.from("invoices").delete().eq("id", inv.id)
     closeSheet()
@@ -385,7 +400,7 @@ export default function Invoices() {
     sourceDocument: activeInvoiceSource,
     relatedDocuments: [...(activeInvoiceRelatedDocs.csrs || []), ...(activeInvoiceRelatedDocs.waybills || [])],
   })
-  const activeInvoiceHasLinkedDocuments = invoiceDocumentState.hasLinkedDocuments
+
   const activeInvoiceLinkedSections = activeInvoice ? [
     createLinkedDocumentsSection({
       key: "source",
@@ -401,7 +416,7 @@ export default function Invoices() {
           },
           disabled: !activeInvoiceSource.id,
         }),
-      ] : [],
+      ].filter(Boolean) : [],
     }),
     createLinkedDocumentsSection({
       key: "generated",
@@ -428,19 +443,19 @@ export default function Invoices() {
             setShowAttachSheet(true)
           },
         }),
-        ...(activeInvoiceRelatedDocs.csrs || []).map((csr) => createLinkedDocumentItem({
+        ...(activeInvoiceRelatedDocs.csrs || []).map((csr: any) => createLinkedDocumentItem({
           key: `csr-${csr.id}`,
           label: `CSR ${csr.csr_number || csr.id}`,
           subtitle: "Open linked CSR",
           onClick: () => navigate(`/csr/${csr.id}`),
         })),
-        ...(activeInvoiceRelatedDocs.waybills || []).map((waybill) => createLinkedDocumentItem({
+        ...(activeInvoiceRelatedDocs.waybills || []).map((waybill: any) => createLinkedDocumentItem({
           key: `waybill-${waybill.id}`,
           label: `Waybill ${waybill.waybill_number || waybill.id}`,
           subtitle: "Open linked waybill",
           onClick: () => navigate(`/waybills/${waybill.id}`),
         })),
-      ],
+      ].filter(Boolean),
     }),
     createLinkedProjectSection({
       project: activeInvoiceProject,
@@ -449,7 +464,7 @@ export default function Invoices() {
     }),
   ] : []
 
-  const handleAttachExisting = async (item) => {
+  const handleAttachExisting = async (item: any) => {
     if (!item?.id || !activeInvoice || !attachKind) return
     if (attachKind === "csr") {
       await supabase.from("csrs").update({ linked_invoice_id: activeInvoice.id }).eq("id", item.id)
@@ -463,7 +478,7 @@ export default function Invoices() {
     setAttachKind(null)
   }
 
-  const formatInvoiceDate = (value) => formatDisplayDate(value, {
+  const formatInvoiceDate = (value: string | null | undefined) => formatDisplayDate(value, {
     fallback: "",
     invalidFallback: "",
     locale: "en-GB",
@@ -474,7 +489,7 @@ export default function Invoices() {
     },
   })
 
-  const getInvoiceStatusClassName = (status) => {
+  const getInvoiceStatusClassName = (status: string | null | undefined) => {
     const normalized = (status || "unpaid").toLowerCase()
     if (normalized === "unpaid") return "border border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-300"
     if (normalized === "paid") return "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300"
@@ -482,7 +497,7 @@ export default function Invoices() {
     return "border border-border bg-muted text-muted-foreground"
   }
 
-  const formatInvoiceStatusLabel = (status) => formatStatusLabel(status, { fallback: "unpaid", lowercase: true })
+  const formatInvoiceStatusLabel = (status: string | null | undefined) => formatStatusLabel(status, { fallback: "unpaid", lowercase: true })
 
   const resetFilters = () => {
     setSearch("")
@@ -526,9 +541,9 @@ export default function Invoices() {
     sortBy !== "Newest"
   )
 
-  const renderInvoiceRowNumber = (invoice) => invoice.invoice_number || "Invoice"
+  const renderInvoiceRowNumber = (invoice: InvoiceRow) => invoice.invoice_number || "Invoice"
 
-  const renderInvoiceRowDate = (invoice) => formatInvoiceDate(invoice.issue_date) || "No date"
+  const renderInvoiceRowDate = (invoice: InvoiceRow) => formatInvoiceDate(invoice.issue_date) || "No date"
 
   return (
     <Layout title="Invoices" hidePageHeader>
@@ -543,13 +558,13 @@ export default function Invoices() {
         hasActiveFilters={hasActiveFilters}
         onResetFilters={resetFilters}
         records={invoices}
-        onRowClick={(invoice) => navigate(`/invoices/${invoice.id}`)}
-        onRowActionClick={setActiveInvoice}
-        renderAmount={formatNaira}
-        renderStatusLabel={formatInvoiceStatusLabel}
+        onRowClick={(invoice: InvoiceRow) => navigate(`/invoices/${invoice.id}`)}
+        onRowActionClick={(invoice: InvoiceRow) => setActiveInvoice(invoice)}
+        renderAmount={(val: any) => formatNaira(val)}
+        renderStatusLabel={(status: any) => formatInvoiceStatusLabel(status)}
         renderDocumentNumber={renderInvoiceRowNumber}
         renderDocumentDate={renderInvoiceRowDate}
-        renderStatusClassName={getInvoiceStatusClassName}
+        renderStatusClassName={(status: any) => getInvoiceStatusClassName(status)}
         loadMoreLabel="Load more invoices"
         emptyState={(
           <div className="rounded-[20px] border border-dashed border-border bg-card px-6 py-16 text-center text-sm text-muted-foreground shadow-sm">
@@ -569,7 +584,7 @@ export default function Invoices() {
         }}
         eyebrow="Invoice"
         title={activeInvoice ? `${activeInvoice.client_name || "No client"} · ${activeInvoice.invoice_number || "Invoice"}` : "Invoice"}
-        subtitle={activeInvoice ? `${formatNaira(activeInvoice.total)} · Fast access actions from list context` : null}
+        subtitle={activeInvoice ? `${formatNaira(activeInvoice.total)} · Fast access actions from list context` : undefined}
         actions={activeInvoice ? (() => {
           const actionDefs = getInvoiceListActionDefs({
             projectActionLabel: invoiceProjectState.label,
@@ -580,7 +595,7 @@ export default function Invoices() {
             isStandalone,
           })
 
-          const iconMap = {
+          const iconMap: Record<string, React.ReactNode> = {
             eye: <Eye className="h-6 w-6" />,
             pencil: <Pencil className="h-6 w-6" />,
             folderOpen: <FolderOpen className="h-6 w-6" />,
@@ -596,7 +611,7 @@ export default function Invoices() {
             trash: <Trash2 className="h-6 w-6" />,
           }
 
-          const handlers = {
+          const handlers: Record<string, () => void> = {
             view: handleView,
             edit: handleEdit,
             project: () => {
@@ -665,7 +680,7 @@ export default function Invoices() {
         poField="po_number"
         linkedInvoiceField={attachKind === "csr" ? "linked_invoice_id" : "invoice_id"}
         currentInvoiceId={activeInvoice?.id}
-        currentClientName={activeInvoice?.client_name}
+        currentClientName={activeInvoice?.client_name || undefined}
         searchPlaceholder={attachKind === "csr" ? "Search CSR number, client, or PO" : "Search waybill number, client, or PO"}
         onAttach={handleAttachExisting}
       />
