@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BigDrops.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+135545b171bf0f23ffbe16849ebfee040416c44e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7bb9588de31185ab56087b4f2c82121341e3f2e8")]
 [assembly: System.Reflection.AssemblyProductAttribute("BigDrops.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BigDrops.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
