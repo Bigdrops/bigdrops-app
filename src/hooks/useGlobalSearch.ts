@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '@/supabase'
 import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
+import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
 
 export type SearchResult = {
   id: string
@@ -40,7 +41,7 @@ export function useGlobalSearch(query: string) {
         ] = await Promise.all([
           supabase.from('clients').select('id, name').ilike('name', `%${cleanQuery}%`).limit(3).abortSignal(signal),
           supabase.from('projects').select('id, name, client_name').ilike('name', `%${cleanQuery}%`).limit(3).abortSignal(signal),
-          supabase.from('invoices').select('id, invoice_number, client_name, total, status, created_at').ilike('invoice_number', `%${cleanQuery}%`).limit(3).abortSignal(signal),
+          applyParentInvoiceFilter(supabase.from('invoices').select('id, invoice_number, client_name, total, status, created_at').ilike('invoice_number', `%${cleanQuery}%`)).limit(3).abortSignal(signal),
           supabase.from('quotations').select('id, quotation_number, client_name, total, status, created_at').ilike('quotation_number', `%${cleanQuery}%`).limit(3).abortSignal(signal),
           supabase.from('csrs').select('id, csr_number, client_name, status, created_at').ilike('csr_number', `%${cleanQuery}%`).limit(3).abortSignal(signal),
           supabase.from('waybills').select('id, waybill_number, client_name, status, created_at').ilike('waybill_number', `%${cleanQuery}%`).limit(3).abortSignal(signal),

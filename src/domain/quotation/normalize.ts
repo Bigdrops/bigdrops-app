@@ -9,6 +9,7 @@ import {
   toNullableDate,
 } from '@/domain/invoice'
 import { resolveCanonicalItemImageUrl } from '@/domain/documentMedia.js'
+import { safeParseJson } from '@/lib/json/safeParseJson'
 import type { InvoiceItem } from '@/domain/invoice'
 import type {
   DbQuotation,
@@ -76,13 +77,7 @@ export function mapDbQuotation(row: DbQuotation): Quotation {
 export function mapDbQuotationItem(row: DbQuotationItem): InvoiceItem {
   const customData =
     typeof row.custom_data === 'string'
-      ? (() => {
-          try {
-            return JSON.parse(row.custom_data || '{}')
-          } catch {
-            return {}
-          }
-        })()
+      ? safeParseJson(row.custom_data, {})
       : row.custom_data && typeof row.custom_data === 'object'
         ? row.custom_data
         : {}

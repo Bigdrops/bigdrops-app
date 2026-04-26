@@ -9,7 +9,7 @@ import { CenteredSpinner, SkeletonCard, SkeletonRow } from '@/components/loading
 import ProjectDocumentCard from '@/components/project/ProjectDocumentCard'
 import ProjectDocumentSheet from '@/components/project/ProjectDocumentSheet'
 import { toast } from '@/hooks/use-toast'
-import { ADVANCE_INVOICE_EXCLUSION_FILTER } from '@/domain/invoice/advanceList'
+import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
 import { getClientMismatchMessage, isClientMismatch } from '@/domain/projects'
 import { supabase } from '../supabase'
 
@@ -142,12 +142,11 @@ export default function ProjectDetail() {
     try {
       const [projectRes, invoiceRes, csrRes, quotationRes, waybillRes, financialsRes, projectDocsRes] = await Promise.all([
         supabase.from('projects').select('*').eq('id', id).single(),
-        supabase
+        applyParentInvoiceFilter(supabase
           .from('invoices')
           .select('id, invoice_number, invoice_title, status, total, issue_date, document_type, custom_fields')
           .eq('project_id', id)
-          .is('archived_at', null)
-          .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
+          .is('archived_at', null))
           .order('issue_date', { ascending: false }),
         supabase
           .from('csrs')

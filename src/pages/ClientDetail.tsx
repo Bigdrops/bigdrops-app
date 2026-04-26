@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
-import { ADVANCE_INVOICE_EXCLUSION_FILTER } from '@/domain/invoice/advanceList'
+import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
 import { supabase } from '../supabase'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/hooks/use-toast'
@@ -149,12 +149,11 @@ export default function ClientDetail() {
         projectRecentRes,
       ] = await Promise.all([
         supabase.from('clients').select('*').eq('id', id).single(),
-        supabase
+        applyParentInvoiceFilter(supabase
           .from('invoices')
           .select('id, invoice_number, invoice_title, status, total, issue_date, due_date, document_type, custom_fields')
           .eq('client_id', id)
-          .is('archived_at', null)
-          .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
+          .is('archived_at', null))
           .order('issue_date', { ascending: false }),
         supabase
           .from('quotations')

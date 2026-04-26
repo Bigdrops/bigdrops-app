@@ -1,6 +1,7 @@
 import * as React from 'react'
 
-import { ADVANCE_INVOICE_EXCLUSION_FILTER, shouldIncludeInvoiceInList } from '@/domain/invoice/advanceList'
+import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
+import { shouldIncludeInvoiceInList } from '@/domain/invoice/advanceList'
 import { toast } from '@/hooks/use-toast'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
@@ -336,10 +337,9 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         endOfWeek.setHours(23, 59, 59, 999)
 
         const [invoiceRes, quotationRes, csrRes, waybillRes, financialsRes, projectsRes] = await Promise.all([
-          supabase
+          applyParentInvoiceFilter(supabase
             .from('invoices')
-            .select('id, invoice_number, client_name, status, created_at, total, custom_fields')
-            .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
+            .select('id, invoice_number, client_name, status, created_at, total, custom_fields'))
             .order('created_at', { ascending: false })
             .limit(8),
           supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
@@ -436,10 +436,9 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
 
     try {
       const [invoiceRes, quotationRes, csrRes, waybillRes, financialMetricsRes, projectsRes] = await Promise.all([
-        supabase
+        applyParentInvoiceFilter(supabase
           .from('invoices')
-          .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields')
-          .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
+          .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields'))
           .order('issue_date', { ascending: false })
           .limit(8),
         supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, issue_date, total').order('issue_date', { ascending: false }).limit(8),

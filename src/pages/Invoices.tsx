@@ -23,6 +23,7 @@ import { getDocumentActionState, getProjectActionState } from "@/domain/document
 import { getInvoiceListActionDefs, getInvoiceListDeleteActionDef } from "@/domain/invoice/actions"
 import { fetchInvoiceChildDocuments, fetchProjectSummary, getInvoiceSourceDocument } from "@/domain/documentRelationships"
 import { shouldIncludeInvoiceInList } from "@/domain/invoice/advanceList"
+import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
 import { formatStatusLabel } from "@/lib/formatters/status"
@@ -76,10 +77,10 @@ export default function Invoices() {
   const navigate = useNavigate()
 
   const buildInvoiceQuery = () => {
-    let query = supabase
+    let query = applyParentInvoiceFilter(supabase
       .from("invoices")
       .select("id, invoice_number, client_name, issue_date, created_at, total, status, project_id, custom_fields")
-      .is("archived_at", null)
+      .is("archived_at", null))
 
     const searchTerm = search.trim()
     if (searchTerm) {

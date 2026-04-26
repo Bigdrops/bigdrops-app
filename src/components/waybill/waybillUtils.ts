@@ -1,4 +1,5 @@
 import { formatDisplayDate } from '@/lib/formatters/date'
+import { safeParseJson } from '@/lib/json/safeParseJson'
 
 export type WaybillType = 'internal' | 'external'
 export type WaybillStatus = 'draft' | 'dispatched' | 'delivered'
@@ -177,13 +178,7 @@ export function parseWaybillCustomFields(value: unknown): WaybillCustomFields {
 
   const candidate =
     typeof value === 'string'
-      ? (() => {
-          try {
-            return JSON.parse(value)
-          } catch {
-            return {}
-          }
-        })()
+      ? safeParseJson(value, {})
       : value
 
   if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return {}

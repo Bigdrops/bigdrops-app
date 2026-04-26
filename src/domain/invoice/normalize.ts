@@ -10,6 +10,7 @@ import type {
 } from './types'
 import { resolveCanonicalItemImageUrl } from '../documentMedia.js'
 import { normalizeExtraCharges } from './factories'
+import { safeParseJson } from '@/lib/json/safeParseJson'
 
 export const DEFAULT_INVOICE_PDF_OUTPUT: InvoicePdfOutput = {
   showBankDetails: false,
@@ -65,20 +66,16 @@ export function parseCustomFields(value: unknown): InvoiceCustomFields {
   if (typeof value !== 'string') return {}
   if (!value.trim()) return {}
 
-  try {
-    const parsed = JSON.parse(value)
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      const customFields = parsed as InvoiceCustomFields
-      return {
-        ...customFields,
-        attachments: normalizeAttachments(customFields.attachments),
-        extraCharges: normalizeExtraCharges(customFields.extraCharges),
-      }
+  const parsed = safeParseJson(value, null as any)
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    const customFields = parsed as InvoiceCustomFields
+    return {
+      ...customFields,
+      attachments: normalizeAttachments(customFields.attachments),
+      extraCharges: normalizeExtraCharges(customFields.extraCharges),
     }
-    return {}
-  } catch {
-    return {}
   }
+  return {}
 }
 
 export function getInvoicePdfOutput(value: unknown): InvoicePdfOutput {
@@ -127,15 +124,11 @@ function parseCustomData(value: unknown): CustomDataMap {
 
   if (typeof value !== 'string' || !value.trim()) return {}
 
-  try {
-    const parsed = JSON.parse(value)
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      return parsed as CustomDataMap
-    }
-    return {}
-  } catch {
-    return {}
+  const parsed = safeParseJson(value, null as any)
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    return parsed as CustomDataMap
   }
+  return {}
 }
 
 export function mapDbInvoice(row: DbInvoice): Invoice {

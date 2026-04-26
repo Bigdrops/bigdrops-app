@@ -2,6 +2,7 @@ import { Rfq, DbRfq, RfqItem, DbRfqItem } from './types'
 import { DEFAULT_TABLE_TEMPLATE, getDefaultColumnsForDocument } from '@/domain/table-document/templateRegistry'
 import { createEmptyTableRow, ensureTableRowKeys } from '@/domain/table-document/rows'
 import type { TableDocumentRow } from '@/domain/table-document/types'
+import { safeParseJson } from '@/lib/json/safeParseJson'
 
 const normalizeDate = (value?: string | null): string | null =>
   value && value.trim() ? value : null

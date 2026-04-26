@@ -2,6 +2,8 @@ export const ADVANCE_SUFFIX_DEFAULT = 'A'
 export const ADVANCE_PRIMARY_LABEL_DEFAULT = 'Advance invoice due now'
 export const ADVANCE_SECONDARY_LABEL_DEFAULT = 'Balance upon completion'
 
+import { safeParseJson } from '@/lib/json/safeParseJson'
+
 export type AdvanceMode = 'percent' | 'fixed'
 
 function getAdvanceNumber(parentNumber: string, suffix?: string) {
@@ -70,12 +72,8 @@ export function getAdvanceDraftFromInvoice(invoice: AdvanceInvoiceLike | null | 
   let advanceConfig = invoice?.custom_fields?.advance_invoice
 
   if (typeof invoice?.custom_fields === 'string') {
-    try {
-      const parsed = JSON.parse(invoice.custom_fields)
-      advanceConfig = parsed?.advance_invoice
-    } catch {
-      // ignore
-    }
+    const parsed = safeParseJson(invoice.custom_fields, {} as any)
+    advanceConfig = parsed?.advance_invoice
   }
 
   const mode: AdvanceMode = advanceConfig?.mode === 'fixed' ? 'fixed' : 'percent'
@@ -118,8 +116,8 @@ export function buildAdvanceChildInvoicePayload({
   )
 
   const currentCustomFields = typeof parentInvoice?.custom_fields === 'string'
-    ? JSON.parse(parentInvoice.custom_fields || '{}')
-    : (parentInvoice?.custom_fields || {})
+    ? safeParseJson(parentInvoice.custom_fields || '{}', {} as Record<string, unknown>)
+    : ((parentInvoice?.custom_fields || {}) as Record<string, unknown>)
 
   const advanceConfig = {
     mode,
