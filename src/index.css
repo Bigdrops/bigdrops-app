@@ -61,6 +61,13 @@
   --tone-warning-border: color-mix(in oklab, var(--tone-warning) 20%, hsl(var(--background)));
   --tone-data-soft: color-mix(in oklab, var(--tone-data) 8%, hsl(var(--background)));
   --tone-data-border: color-mix(in oklab, var(--tone-data) 18%, hsl(var(--background)));
+
+  --tone-neutral-foreground: color-mix(in oklab, hsl(var(--foreground)) 65%, transparent);
+  --tone-info-foreground: var(--tone-info);
+  --tone-accent-foreground: var(--tone-accent);
+  --tone-success-foreground: var(--tone-success);
+  --tone-warning-foreground: var(--tone-warning);
+  --tone-data-foreground: var(--tone-data);
 }
 
 .dark {
@@ -91,6 +98,13 @@
   --border: 220 18% 18%;
   --input: 220 18% 18%;
   --ring: 235 70% 60%;
+
+  --tone-neutral-foreground: color-mix(in oklab, hsl(var(--foreground)) 65%, transparent);
+  --tone-info-foreground: var(--tone-info);
+  --tone-accent-foreground: var(--tone-accent);
+  --tone-success-foreground: var(--tone-success);
+  --tone-warning-foreground: var(--tone-warning);
+  --tone-data-foreground: var(--tone-data);
 }
 
 @layer base {
@@ -341,6 +355,14 @@
     background-color: var(--tone-data);
     color: var(--surface-strong-foreground);
   }
+
+  /* Tone text utilities */
+  .text-tone-neutral { color: var(--tone-neutral-foreground); }
+  .text-tone-info { color: var(--tone-info-foreground); }
+  .text-tone-accent { color: var(--tone-accent-foreground); }
+  .text-tone-success { color: var(--tone-success-foreground); }
+  .text-tone-warning { color: var(--tone-warning-foreground); }
+  .text-tone-data { color: var(--tone-data-foreground); }
 }
 
 @keyframes app-wave-float-1 {

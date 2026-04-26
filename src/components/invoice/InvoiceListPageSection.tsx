@@ -102,12 +102,13 @@ export default function InvoiceListPageSection<T extends ListRecord>({
   )
 
   return (
-    <div className="min-h-screen bg-transparent px-[14px] pb-32 pt-2 font-['DM_Sans',sans-serif]">
+    <div className="min-h-screen bg-transparent px-4 pb-32 pt-2 font-['DM_Sans',sans-serif]">
       <MobilePageHeader
         eyebrow={eyebrow}
         title={title}
         subtitle={summary}
         accentClassName="tone-info-accent"
+        eyebrowClassName="text-tone-info"
         onMenuClick={mobileChrome.openSidebar}
         hideGlobalSearch
         actions={
@@ -211,11 +212,11 @@ export default function InvoiceListPageSection<T extends ListRecord>({
                   index > 0 && "border-t border-border",
                 )}
                 >
-                  <div className="min-w-0">
-                    <div className="truncate text-[14px] font-bold tracking-[-0.02em] text-foreground">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[16px] font-bold tracking-[-0.03em] text-foreground">
                       {record.client_name || "No client"}
                     </div>
-                    <div className="mt-1 truncate text-[12px] font-semibold leading-[1.3] text-muted-foreground">
+                    <div className="mt-1 truncate text-[13px] font-semibold leading-[1.3] text-muted-foreground">
                       {renderDocumentNumber(record)}
                     </div>
                     <div className="mt-0.5 truncate text-[12px] leading-[1.3] text-muted-foreground">
@@ -224,7 +225,7 @@ export default function InvoiceListPageSection<T extends ListRecord>({
                   </div>
 
                   <div className="shrink-0 text-right">
-                    <div className="text-[15px] font-extrabold tracking-[-0.03em] text-foreground">
+                    <div className="text-[17px] font-extrabold tracking-[-0.03em] text-foreground">
                       {renderAmount(record.total)}
                     </div>
                     <div className="mt-1.5">

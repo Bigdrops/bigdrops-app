@@ -472,23 +472,24 @@ export default function CSR() {
             </div>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-[24px] border border-border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+          <div className="grid gap-3">
             {filteredCsrs.map((csr, index) => {
-              const statusKey = getCsrStatusKey(csr.status)
-              const statusClasses = statusKey === "completed"
-                ? "bg-secondary text-secondary-foreground"
-                : statusKey === "cancelled"
-                  ? "bg-destructive/10 text-destructive"
-                  : statusKey === "pending"
-                    ? "bg-accent/15 text-accent-foreground"
-                    : "bg-muted text-muted-foreground"
+              const statusKey = (csr.status || "pending").toLowerCase()
+              const statusClasses =
+                statusKey === "completed"
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                  : statusKey === "cancelled"
+                    ? "bg-destructive/10 text-destructive"
+                    : statusKey === "pending"
+                      ? "bg-accent/15 text-accent-foreground"
+                      : "bg-muted text-muted-foreground"
               const secondaryLabel = csr.make || csr.equipment_type
 
               return (
                 <div
                   key={csr.id}
                   onClick={() => navigate("/csr/" + csr.id)}
-                  className={`cursor-pointer px-4 py-4 transition hover:bg-muted/20 ${index === 0 ? '' : 'border-t border-border/80'}`}
+                  className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
                   <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                     <div className="flex min-w-0 gap-3">

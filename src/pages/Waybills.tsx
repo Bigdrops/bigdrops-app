@@ -249,9 +249,9 @@ export default function Waybills() {
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-accent-foreground">
                   Offline sync recovery
                 </div>
-              <div className="mt-1 text-sm text-muted-foreground">
-                Retry pending or failed waybill uploads from this device.
-              </div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  Retry pending or failed waybill uploads from this device.
+                </div>
               </div>
               <Button
                 type="button"
@@ -357,7 +357,7 @@ export default function Waybills() {
             )}
           </div>
         ) : (
-          <div className="overflow-hidden rounded-[24px] border border-border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+          <div className="grid gap-3">
             {filtered.map((w, index) => {
               const statusMeta = getStatusMeta(w.status)
               const typeMeta = getTypeMeta(w.type)
@@ -376,7 +376,7 @@ export default function Waybills() {
                 <div
                   key={w.id}
                   onClick={() => navigate(`/waybills/${w.id}`)}
-                  className={`cursor-pointer px-4 py-4 transition hover:bg-muted/20 ${index === 0 ? '' : 'border-t border-border/80'}`}
+                  className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                 >
                   <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                     <div className="flex min-w-0 gap-3">

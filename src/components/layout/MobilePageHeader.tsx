@@ -11,6 +11,7 @@ type MobilePageHeaderProps = {
   subtitle?: string
   eyebrow?: string
   accentClassName?: string
+  eyebrowClassName?: string
   onMenuClick: () => void
   actions?: ReactNode
   className?: string
@@ -22,6 +23,7 @@ export default function MobilePageHeader({
   subtitle,
   eyebrow,
   accentClassName = 'tone-neutral-accent',
+  eyebrowClassName,
   onMenuClick,
   actions,
   className,
@@ -48,7 +50,10 @@ export default function MobilePageHeader({
 
         <div className="min-w-0 flex-1">
           {eyebrow ? (
-            <div className="mb-0.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <div className={cn(
+              "mb-0.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]",
+              eyebrowClassName || "text-muted-foreground"
+            )}>
               <span className={cn('h-1.5 w-1.5 rounded-full', accentClassName)} aria-hidden="true" />
               <span className="truncate">{eyebrow}</span>
             </div>

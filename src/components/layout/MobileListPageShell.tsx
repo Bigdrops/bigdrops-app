@@ -10,22 +10,27 @@ import { MobileChromeContext } from '@/components/Layout'
 const toneStyles = {
   blue: {
     accent: 'tone-info-accent',
+    foreground: 'text-tone-info',
     glow: 'shell-surface-info',
   },
   emerald: {
     accent: 'tone-success-accent',
+    foreground: 'text-tone-success',
     glow: 'shell-surface-success',
   },
   amber: {
     accent: 'tone-warning-accent',
+    foreground: 'text-tone-warning',
     glow: 'shell-surface-warning',
   },
   cyan: {
     accent: 'tone-data-accent',
+    foreground: 'text-tone-data',
     glow: 'shell-surface-data',
   },
   violet: {
     accent: 'tone-accent-accent',
+    foreground: 'text-tone-accent',
     glow: 'shell-surface-accent',
   },
 } as const
@@ -84,6 +89,7 @@ export default function MobileListPageShell({
         title={title}
         subtitle={summary}
         accentClassName={toneStyle.accent}
+        eyebrowClassName={toneStyle.foreground}
         onMenuClick={mobileChrome.openSidebar}
         hideGlobalSearch
         actions={
