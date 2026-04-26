@@ -120,6 +120,8 @@ export async function createAdvanceInvoiceRecord({
     threadPosition: 1,
   })
 
+  console.log('Advance invoice insert payload:', payload)
+
   const { data, error } = await supabase
     .from('invoices')
     .insert([{
@@ -128,7 +130,14 @@ export async function createAdvanceInvoiceRecord({
     }])
     .select()
     .single()
-  if (error || !data) throw new Error(error?.message || 'Failed to create advance invoice')
+
+  if (error) {
+    console.error('Supabase error creating advance invoice:', error)
+    throw new Error(`Could not save advance invoice: ${error.message}`)
+  }
+  if (!data) {
+    throw new Error('Could not save advance invoice: No data returned from server')
+  }
   return { invoice: data, created: true }
 }
 
@@ -161,6 +170,8 @@ export async function updateAdvanceInvoiceRecord({
     threadPosition,
   })
 
+  console.log('Advance invoice update payload:', payload)
+
   const { data, error } = await supabase
     .from('invoices')
     .update({
@@ -170,7 +181,14 @@ export async function updateAdvanceInvoiceRecord({
     .eq('id', advanceInvoiceId)
     .select()
     .single()
-  if (error || !data) throw new Error(error?.message || 'Failed to update advance invoice')
+
+  if (error) {
+    console.error('Supabase error updating advance invoice:', error)
+    throw new Error(`Could not save advance invoice: ${error.message}`)
+  }
+  if (!data) {
+    throw new Error('Could not save advance invoice: No data returned from server')
+  }
   return data
 }
 

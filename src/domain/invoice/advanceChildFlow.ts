@@ -79,7 +79,9 @@ export function getAdvanceDraftFromInvoice(invoice: AdvanceInvoiceLike | null | 
   const mode: AdvanceMode = advanceConfig?.mode === 'fixed' ? 'fixed' : 'percent'
   const inputValue = String(advanceConfig?.value ?? '')
   const invoiceNumber = String(invoice?.invoice_number || '')
-  const suffix = invoiceNumber.includes('-') ? invoiceNumber.split('-').pop() || ADVANCE_SUFFIX_DEFAULT : ADVANCE_SUFFIX_DEFAULT
+  
+  // Do NOT rely on suffix extraction from string if we have it in config
+  const suffix = advanceConfig?.suffix || (invoiceNumber.includes('-') ? invoiceNumber.split('-').pop() : ADVANCE_SUFFIX_DEFAULT)
 
   return {
     mode,
@@ -115,9 +117,26 @@ export function buildAdvanceChildInvoicePayload({
     mode === 'fixed' ? contractValue : 100,
   )
 
-  const currentCustomFields = typeof parentInvoice?.custom_fields === 'string'
-    ? safeParseJson(parentInvoice.custom_fields || '{}', {} as Record<string, unknown>)
-    : ((parentInvoice?.custom_fields || {}) as Record<string, unknown>)
+  if (!parentInvoice?.client_id) {
+    throw new Error('Cannot create advance invoice: Parent invoice is missing a client ID.')
+  }
+
+  const status = 'unpaid'
+  const allowedStatuses = ['unpaid', 'partially_paid', 'paid', 'archived']
+  if (!allowedStatuses.includes(status)) {
+    throw new Error(`Cannot create advance invoice: Invalid status "${status}"`)
+  }
+
+  const customFieldsString = typeof parentInvoice?.custom_fields === 'string' 
+    ? parentInvoice.custom_fields 
+    : JSON.stringify(parentInvoice?.custom_fields || {})
+
+  const currentCustomFields = safeParseJson(customFieldsString, {} as Record<string, unknown>)
+  
+  // Validation: Ensure safeParseJson did not return {} if input was potentially valid
+  if (customFieldsString !== '{}' && Object.keys(currentCustomFields).length === 0) {
+    console.warn('Warning: custom_fields parsed to empty object from non-empty string')
+  }
 
   const advanceConfig = {
     mode,
