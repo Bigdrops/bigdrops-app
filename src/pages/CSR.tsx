@@ -20,6 +20,7 @@ import { canUseNativeSqlite } from "@/lib/native/capacitor"
 import {
   listPendingOrFailedCsrCreateQueueItems,
   processCsrCreateQueueItem,
+  type CsrCreateQueueItem,
 } from "@/lib/native/csrSync"
 import {
   createLinkedDocumentItem,
@@ -29,14 +30,27 @@ import {
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatStatusLabel } from "@/lib/formatters/status"
 
-function normalizeStatus(status) {
+export type CsrRow = {
+  id: string
+  csr_number: string | null
+  client_name: string | null
+  equipment_type: string | null
+  make: string | null
+  date: string | null
+  created_at: string
+  status: string | null
+  linked_invoice_id: string | null
+  project_id: string | null
+}
+
+function normalizeStatus(status: string | null | undefined): string {
   return (status || "").trim().toLowerCase()
 }
 
 export default function CSR() {
   const navigate = useNavigate()
 
-  const [csrs, setCsrs] = useState([])
+  const [csrs, setCsrs] = useState<CsrRow[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [clientFilter, setClientFilter] = useState("All")
@@ -44,17 +58,17 @@ export default function CSR() {
   const [dateFilter, setDateFilter] = useState("All Time")
   const [sortBy, setSortBy] = useState("Newest")
   const [showFilters, setShowFilters] = useState(false)
-  const [csrToDelete, setCsrToDelete] = useState(null)
-  const [activeCsr, setActiveCsr] = useState(null)
+  const [csrToDelete, setCsrToDelete] = useState<CsrRow | null>(null)
+  const [activeCsr, setActiveCsr] = useState<CsrRow | null>(null)
   const [showAttachInvoice, setShowAttachInvoice] = useState(false)
-  const [pendingAttachInvoice, setPendingAttachInvoice] = useState(null)
-  const [activeCsrInvoice, setActiveCsrInvoice] = useState(null)
-  const [activeCsrProject, setActiveCsrProject] = useState(null)
+  const [pendingAttachInvoice, setPendingAttachInvoice] = useState<{ id: string } | null>(null)
+  const [activeCsrInvoice, setActiveCsrInvoice] = useState<any>(null)
+  const [activeCsrProject, setActiveCsrProject] = useState<any>(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
-  const [syncQueueItems, setSyncQueueItems] = useState([])
+  const [syncQueueItems, setSyncQueueItems] = useState<CsrCreateQueueItem[]>([])
   const [syncQueueLoading, setSyncQueueLoading] = useState(() => canUseNativeSqlite())
-  const [retryingQueueItemId, setRetryingQueueItemId] = useState(null)
+  const [retryingQueueItemId, setRetryingQueueItemId] = useState<string | null>(null)
   const showCsrSyncRecovery = useMemo(() => canUseNativeSqlite(), [])
 
   const fetchCsrs = async () => {
@@ -66,7 +80,7 @@ export default function CSR() {
       .order("date", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
 
-    setCsrs(data || [])
+    setCsrs((data as CsrRow[]) || [])
     setLoading(false)
   }
 
@@ -115,7 +129,7 @@ export default function CSR() {
     }
   }, [activeCsr?.id, activeCsr?.linked_invoice_id, activeCsr?.project_id])
 
-  const getCsrStatusKey = (status) => {
+  const getCsrStatusKey = (status: string | null | undefined): string => {
     const normalized = normalizeStatus(status)
     if (!normalized) return "draft"
     if (normalized.includes("cancel")) return "cancelled"
@@ -125,9 +139,9 @@ export default function CSR() {
     return normalized
   }
 
-  const formatCsrStatusLabel = (status) => formatStatusLabel(getCsrStatusKey(status), { fallback: "draft" })
+  const formatCsrStatusLabel = (status: string | null | undefined): string => formatStatusLabel(getCsrStatusKey(status), { fallback: "draft" })
 
-  const formatCardDate = (value) => formatDisplayDate(value, {
+  const formatCardDate = (value: string | null | undefined): string => formatDisplayDate(value, {
     fallback: "-",
     locale: "en-GB",
     dateOptions: {
@@ -138,7 +152,7 @@ export default function CSR() {
   })
 
   const clientOptions = useMemo(() => {
-    return Array.from(new Set(csrs.map((csr) => csr.client_name).filter(Boolean))).sort((a, b) => a.localeCompare(b))
+    return Array.from(new Set(csrs.map((csr) => csr.client_name).filter(Boolean))).sort((a, b) => (a as string).localeCompare(b as string))
   }, [csrs])
 
   const csrProjectState = getProjectActionState({ projectId: activeCsr?.project_id, project: activeCsrProject })
@@ -179,18 +193,18 @@ export default function CSR() {
     }),
   ] : []
 
-  const attachInvoice = async (invoice) => {
+  const attachInvoice = async (invoice: { id: string } | null) => {
     if (!activeCsr?.id || !invoice?.id) return
     await supabase.from("csrs").update({ linked_invoice_id: invoice.id }).eq("id", activeCsr.id)
     const { data } = await supabase.from("csrs").select("*").eq("id", activeCsr.id).single()
     if (data) {
-      setActiveCsr(data)
+      setActiveCsr(data as CsrRow)
       setActiveCsrInvoice(data.linked_invoice_id ? await fetchInvoiceSummary(data.linked_invoice_id) : null)
     }
     setShowAttachInvoice(false)
   }
 
-  const handleAttachInvoice = (invoice) => {
+  const handleAttachInvoice = (invoice: { id: string } | null) => {
     if (!activeCsr?.id || !invoice?.id) return
     if (activeCsr.linked_invoice_id && activeCsr.linked_invoice_id !== invoice.id) {
       setPendingAttachInvoice(invoice)
@@ -207,7 +221,7 @@ export default function CSR() {
     const currentYearStart = new Date(now.getFullYear(), 0, 1)
     const searchTerm = search.trim().toLowerCase()
 
-    const matchesDateRange = (value, fallback) => {
+    const matchesDateRange = (value: string | null | undefined, fallback: string | null | undefined) => {
       if (dateFilter === "All Time") return true
       const date = new Date(value || fallback || 0)
       if (Number.isNaN(date.getTime())) return false
@@ -230,8 +244,8 @@ export default function CSR() {
     })
 
     sorted.sort((a, b) => {
-      const aDate = new Date(a.date || a.created_at || 0)
-      const bDate = new Date(b.date || b.created_at || 0)
+      const aDate = new Date(a.date || a.created_at || 0).getTime()
+      const bDate = new Date(b.date || b.created_at || 0).getTime()
       if (sortBy === "Oldest") return aDate - bDate
       return bDate - aDate
     })
@@ -247,7 +261,7 @@ export default function CSR() {
     setSortBy("Newest")
   }
 
-  const handleDelete = async (csr) => {
+  const handleDelete = async (csr: CsrRow) => {
     const { error } = await supabase.from("csrs").delete().eq("id", csr.id)
     if (error) {
       toast({ title: "Delete failed", description: "Unable to delete CSR right now. Please try again.", variant: "destructive" })
@@ -257,7 +271,7 @@ export default function CSR() {
     await fetchCsrs()
   }
 
-  const handleRetryQueueItem = async (queueItemId) => {
+  const handleRetryQueueItem = async (queueItemId: string) => {
     setRetryingQueueItemId(queueItemId)
 
     const result = await processCsrCreateQueueItem(queueItemId)
@@ -309,7 +323,7 @@ export default function CSR() {
                   <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="All">All</SelectItem>
-                    {clientOptions.map((client) => <SelectItem key={client} value={client}>{client}</SelectItem>)}
+                    {clientOptions.map((client) => <SelectItem key={client as string} value={client as string}>{client as React.ReactNode}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -604,7 +618,7 @@ export default function CSR() {
         numberField="invoice_number"
         clientField="client_name"
         poField="po_number"
-        currentClientName={activeCsr?.client_name}
+        currentClientName={activeCsr?.client_name || undefined}
         searchPlaceholder="Search invoice number, client, or PO"
         onAttach={handleAttachInvoice}
       />
