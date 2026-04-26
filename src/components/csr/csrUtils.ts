@@ -1,4 +1,4 @@
-import { getCsrPdfDocument } from './CSRPreviewTemplates'
+import { getCsrPdfDocument } from './preview-templates'
 
 export { getCsrPdfDocument }
 

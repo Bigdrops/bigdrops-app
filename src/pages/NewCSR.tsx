@@ -14,7 +14,7 @@ import {
   getNextCsrNumber,
   serializeCsrMaterials,
 } from '../components/csr/csrUtils'
-import { getCsrPdfDocument } from '../components/csr/CSRPreviewTemplates'
+import { getCsrPdfDocument } from '../components/csr/preview-templates'
 import { canUseAndroidNativeSqlite } from '../lib/native/capacitor'
 import { createOfflineCsrDraft, peekNextOfflineCsrNumber } from '../lib/native/csrOffline'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
