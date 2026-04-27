@@ -5,9 +5,14 @@
 export function safeString(value: any): string {
   if (value === null || value === undefined) return '';
   if (typeof value === 'object') {
-    // If it's an object, we try to see if it's a date or has a toString, 
-    // otherwise we return empty or a specific placeholder to avoid [object Object]
     if (value instanceof Date) return value.toLocaleDateString();
+    
+    // Prefer label, name, or text properties
+    const preferredValue = value.label ?? value.name ?? value.text ?? value.value;
+    if (preferredValue !== undefined && preferredValue !== null) {
+      return safeString(preferredValue);
+    }
+    
     return ''; // Better to show nothing than [object Object] in a PDF
   }
   return String(value);

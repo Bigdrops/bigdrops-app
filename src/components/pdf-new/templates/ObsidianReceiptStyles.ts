@@ -11,12 +11,12 @@ export const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingBottom: 8,
+    alignItems: 'flex-start',
+    paddingBottom: 12,
     marginBottom: 0,
-    borderBottomWidth: 2,
+    borderBottomWidth: 1.5,
     borderBottomStyle: 'solid',
-    borderBottomColor: '#1a1a1a', // will be overridden by accent if set
+    borderBottomColor: '#1a1a1a', 
   },
   headerLeft: {
     flexDirection: 'column',
@@ -192,10 +192,18 @@ export const styles = StyleSheet.create({
     color: '#3a3a3a',
   },
   itemImage: {
-    width: 40,
-    height: 30,
-    objectFit: 'contain',
-    marginRight: 8,
+    width: 32,
+    height: 32,
+    objectFit: 'cover',
+    marginRight: 10,
+    borderRadius: 4,
+    backgroundColor: '#f6f3ef',
+  },
+  itemDescriptionSub: {
+    fontSize: 7,
+    color: '#8c8279',
+    marginTop: 2,
+    lineHeight: 1.3,
   },
   groupHeaderRow: {
     flexDirection: 'row',
@@ -300,6 +308,7 @@ export const styles = StyleSheet.create({
     fontWeight: 'normal',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    color: '#1a1a1a',
   },
   // Utility
   collapse: {

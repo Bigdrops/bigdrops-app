@@ -2,6 +2,7 @@ import React from 'react';
 import { Page, Text, View, Image } from '@react-pdf/renderer';
 import { styles, resolveAlignment } from './ObsidianReceiptStyles';
 import type { IndustryTemplateData } from '../industryAdapter';
+import { safeString } from './safeValue';
 
 export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }) {
   const safeData = data ?? ({} as IndustryTemplateData);
@@ -44,64 +45,69 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
 
   const columns = Array.isArray(table?.columns) ? table.columns.filter(Boolean) : [];
   const rows = Array.isArray(table?.rows) ? table.rows.filter(Boolean) : [];
-  const safeCustomHeaderFields = Array.isArray(customHeaderFields) ? customHeaderFields.filter(Boolean) : [];
+  const safeCustomHeaderFields = Array.isArray(customHeaderFields) 
+    ? customHeaderFields.filter(f => f && f.label && f.value && !String(f.label).toLowerCase().includes('.md')) 
+    : [];
+    
   const companyLogoUrl = typeof company?.companyLogoUrl === 'string' && company.companyLogoUrl.trim()
     ? company.companyLogoUrl
     : undefined;
   const signatureImageUrl = typeof signature?.imageUrl === 'string' && signature.imageUrl.trim()
     ? signature.imageUrl
     : undefined;
-  const compactStyles = (...styleList: any[]) => styleList.filter(Boolean) as any;
-  const asText = (value: unknown) => (value === null || value === undefined ? '' : String(value));
-  const asLineBreakText = (...values: Array<unknown>) => values.map(asText).filter(Boolean).join('\n');
 
+  const compactStyles = (...styleList: any[]) => styleList.filter(Boolean) as any;
+  const asLineBreakText = (...values: Array<unknown>) => values.map(safeString).filter(Boolean).join('\n');
+
+  // Header Elements
   const headerLeftChildren = [];
   if (companyLogoUrl) {
     headerLeftChildren.push(
       <Image
         key="company-logo"
         src={companyLogoUrl}
-        style={{ width: 60, height: 24, marginBottom: 4 }}
+        style={{ width: 100, height: 40, objectFit: 'contain', marginBottom: 6 }}
       />,
     );
   }
   headerLeftChildren.push(
     <Text key="company-name" style={compactStyles(styles.companyName, { color: text })}>
-      {asText(company?.name || 'Company Name')}
+      {safeString(company?.name || 'Company Name')}
     </Text>,
   );
   if (showTagline && company?.tagline) {
     headerLeftChildren.push(
       <Text key="company-tagline" style={compactStyles(styles.tagline, { color: muted })}>
-        {asText(company.tagline)}
+        {safeString(company.tagline)}
       </Text>,
     );
   }
 
   const headerRightChildren = [
     <Text key="title" style={compactStyles(styles.invoiceTitle, { color: accent })}>
-      {asText(title)}
+      {safeString(title)}
     </Text>,
   ];
   if (customTitle) {
     headerRightChildren.push(
       <Text key="custom-title" style={{ fontSize: 8, color: muted, marginTop: 1 }}>
-        {asText(customTitle)}
+        {safeString(customTitle)}
       </Text>,
     );
   }
   headerRightChildren.push(
     <View key="document-number" style={compactStyles(styles.documentNumberBadge, { backgroundColor: surface, color: text })}>
-      <Text>{`${asText(documentNumberLabel)}: ${asText(documentNumber)}`}</Text>
+      <Text>{`${safeString(documentNumberLabel)}: ${safeString(documentNumber)}`}</Text>
     </View>,
   );
 
+  // Parties & Totals Grid
   const metaLeftChildren = [];
   if (company) {
     metaLeftChildren.push(
       <View key="company-party" style={styles.partyBlock}>
         <Text style={compactStyles(styles.partyLabel, { color: muted })}>From</Text>
-        <Text style={styles.partyName}>{asText(company.name)}</Text>
+        <Text style={styles.partyName}>{safeString(company.name)}</Text>
         <Text style={styles.partyDetail}>{asLineBreakText(company.address, company.cityState, company.phone, company.email)}</Text>
       </View>,
     );
@@ -110,7 +116,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
     metaLeftChildren.push(
       <View key="client-party" style={styles.partyBlock}>
         <Text style={compactStyles(styles.partyLabel, { color: muted })}>Bill To</Text>
-        <Text style={styles.partyName}>{asText(client.name)}</Text>
+        <Text style={styles.partyName}>{safeString(client.name)}</Text>
         <Text style={styles.partyDetail}>{asLineBreakText(client.address, client.cityState, client.phone, client.email)}</Text>
       </View>,
     );
@@ -120,40 +126,40 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
       <View key="custom-fields" style={styles.customFieldsContainer}>
         {safeCustomHeaderFields.map((field, idx) => (
           <View key={`custom-field-${idx}`} style={styles.customField}>
-            <Text style={compactStyles(styles.customFieldLabel, { color: muted })}>{asText(field.label)}</Text>
-            <Text style={compactStyles(styles.customFieldValue, { color: text })}>{asText(field.value)}</Text>
+            <Text style={compactStyles(styles.customFieldLabel, { color: muted })}>{safeString(field.label)}</Text>
+            <Text style={compactStyles(styles.customFieldValue, { color: text })}>{safeString(field.value)}</Text>
           </View>
         ))}
       </View>,
     );
   }
 
-  const totalsChildren = lines.map((line, idx) => (
+  const totalsLines = lines.map((line, idx) => (
     <View key={`total-line-${idx}`} style={styles.totalLine}>
-      <Text>{asText(line.label)}</Text>
-      <Text>{asText(line.value)}</Text>
+      <Text>{safeString(line.label)}</Text>
+      <Text>{safeString(line.value)}</Text>
     </View>
   ));
   if (mainLine) {
-    totalsChildren.push(
+    totalsLines.push(
       <View key="main-total" style={compactStyles(styles.totalLine, styles.dueLine, { borderTopColor: border })}>
-        <Text>{asText(mainLine.label)}</Text>
-        <Text>{asText(mainLine.value)}</Text>
+        <Text>{safeString(mainLine.label)}</Text>
+        <Text>{safeString(mainLine.value)}</Text>
       </View>,
     );
   }
   if (amountInWords) {
-    totalsChildren.push(
+    totalsLines.push(
       <Text key="amount-in-words" style={styles.amountInWords}>
-        {asText(amountInWords)}
+        {safeString(amountInWords)}
       </Text>,
     );
   }
   if (balanceDue) {
-    totalsChildren.push(
+    totalsLines.push(
       <View key="balance-due" style={compactStyles(styles.totalLine, { marginTop: 4 })}>
-        <Text>{asText(balanceDue.label)}</Text>
-        <Text>{asText(balanceDue.value)}</Text>
+        <Text>{safeString(balanceDue.label)}</Text>
+        <Text>{safeString(balanceDue.value)}</Text>
       </View>,
     );
   }
@@ -162,22 +168,22 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
   if (issueDate) {
     metaRightChildren.push(
       <View key="issue-date" style={styles.dateRow}>
-        <Text style={compactStyles(styles.dateLabel, { color: muted })}>{asText(issueDateLabel)}</Text>
-        <Text style={compactStyles(styles.dateValue, { color: text })}>{asText(issueDate)}</Text>
+        <Text style={compactStyles(styles.dateLabel, { color: muted })}>{safeString(issueDateLabel)}</Text>
+        <Text style={compactStyles(styles.dateValue, { color: text })}>{safeString(issueDate)}</Text>
       </View>,
     );
   }
   if (dueDateOrValidityDate) {
     metaRightChildren.push(
       <View key="due-date" style={styles.dateRow}>
-        <Text style={compactStyles(styles.dateLabel, { color: muted })}>{asText(dueDateOrValidityDateLabel)}</Text>
-        <Text style={compactStyles(styles.dateValue, { color: text })}>{asText(dueDateOrValidityDate)}</Text>
+        <Text style={compactStyles(styles.dateLabel, { color: muted })}>{safeString(dueDateOrValidityDateLabel)}</Text>
+        <Text style={compactStyles(styles.dateValue, { color: text })}>{safeString(dueDateOrValidityDate)}</Text>
       </View>,
     );
   }
   metaRightChildren.push(
     <View key="totals-block" style={compactStyles(styles.totalsBlock, { borderTopColor: text })}>
-      {totalsChildren}
+      {totalsLines}
     </View>,
   );
   if (advanceSummary) {
@@ -185,16 +191,16 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
     if (advanceSummary.primaryLabel && advanceSummary.advanceAmount) {
       advanceChildren.push(
         <View key="advance-primary" style={styles.totalLine}>
-          <Text>{asText(advanceSummary.primaryLabel)}</Text>
-          <Text>{asText(advanceSummary.advanceAmount)}</Text>
+          <Text>{safeString(advanceSummary.primaryLabel)}</Text>
+          <Text>{safeString(advanceSummary.advanceAmount)}</Text>
         </View>,
       );
     }
     if (advanceSummary.secondaryLabel && advanceSummary.balanceRemaining) {
       advanceChildren.push(
         <View key="advance-secondary" style={styles.totalLine}>
-          <Text>{asText(advanceSummary.secondaryLabel)}</Text>
-          <Text>{asText(advanceSummary.balanceRemaining)}</Text>
+          <Text>{safeString(advanceSummary.secondaryLabel)}</Text>
+          <Text>{safeString(advanceSummary.balanceRemaining)}</Text>
         </View>,
       );
     }
@@ -207,18 +213,18 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
     }
   }
 
+  // Table Building
   const tableChildren = [];
   if (columns.length > 0) {
     tableChildren.push(
       <View key="table-header" style={compactStyles(styles.tableHeader, { borderBottomColor: text })}>
         {columns.map((col, idx) => {
           const alignStyle = resolveAlignment(col.align);
-          const widthStyle = col.width ? { width: col.width } : undefined;
           const flexStyle = col.flex ? { flex: col.flex } : { flex: 1 };
           return (
-            <View key={`column-${idx}`} style={compactStyles(widthStyle, flexStyle)}>
+            <View key={`column-${idx}`} style={flexStyle}>
               <Text style={compactStyles(styles.columnHeader, { color: muted, ...alignStyle })}>
-                {asText(col.label)}
+                {safeString(col.label)}
               </Text>
             </View>
           );
@@ -226,12 +232,13 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
       </View>,
     );
   }
+
   rows.forEach((row, rowIdx) => {
     if (row.isGroupHeader) {
       tableChildren.push(
         <View key={`group-header-${rowIdx}`} style={compactStyles(styles.groupHeaderRow, { backgroundColor: surface })}>
           <Text style={compactStyles(styles.groupHeaderText, { color: text })}>
-            {asText(row.groupLabel)}
+            {safeString(row.groupLabel)}
           </Text>
         </View>,
       );
@@ -243,7 +250,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
           <View key={`group-footer-${rowIdx}`} style={styles.groupFooterRow}>
             <Text style={compactStyles(styles.groupSubtotalLabel, { color: muted })}>Subtotal</Text>
             <Text style={compactStyles(styles.groupSubtotalValue, { color: text })}>
-              {asText(row.groupSubtotalValue)}
+              {safeString(row.groupSubtotalValue)}
             </Text>
           </View>,
         );
@@ -262,22 +269,30 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
         )}
       >
         {columns.map((col, colIdx) => {
-          const value = cells[col.key] ?? '';
+          const rawValue = cells[col.key] ?? '';
+          const value = safeString(rawValue);
+          const subValue = safeString(cells[`${col.key}Sub`] || cells.descriptionSub || '');
+          
           const alignStyle = resolveAlignment(col.align);
-          const widthStyle = col.width ? { width: col.width } : undefined;
           const flexStyle = col.flex ? { flex: col.flex } : { flex: 1 };
           const rowImageUrl = typeof row.imageUrl === 'string' && row.imageUrl.trim() ? row.imageUrl : undefined;
-          const isFirst = colIdx === 0;
+          const isDescriptionCol = col.key === 'description' || col.key === 'item';
+
           return (
-            <View key={`cell-${rowIdx}-${colIdx}`} style={compactStyles(widthStyle, flexStyle, styles.tableCell)}>
-              {isFirst && rowImageUrl ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View key={`cell-${rowIdx}-${colIdx}`} style={compactStyles(flexStyle, styles.tableCell)}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                {isDescriptionCol && rowImageUrl && (
                   <Image src={rowImageUrl} style={styles.itemImage} />
-                  <Text style={alignStyle}>{asText(value)}</Text>
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={alignStyle}>{value}</Text>
+                  {isDescriptionCol && subValue ? (
+                    <Text style={compactStyles(styles.itemDescriptionSub, alignStyle)}>
+                      {subValue}
+                    </Text>
+                  ) : null}
                 </View>
-              ) : (
-                <Text style={alignStyle}>{asText(value)}</Text>
-              )}
+              </View>
             </View>
           );
         })}
@@ -285,86 +300,62 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
     );
   });
 
-  const notesSection = notes ? (
-    <View style={styles.notesBlock}>
-      <Text style={compactStyles(styles.notesTitle, { color: text })}>{asText(notes.title)}</Text>
-      <Text style={compactStyles(styles.notesContent, { color: muted })}>{asText(notes.content)}</Text>
-    </View>
-  ) : undefined;
-
-  const bankDetailsSection = showBankDetails && paymentDetails ? (
-    <View style={compactStyles(styles.notesBlock, { marginTop: 4 })}>
-      <Text style={compactStyles(styles.notesTitle, { color: text })}>Bank Details</Text>
-      <View style={styles.bankDetailsRow}>
-        <Text>{`Bank: ${asText(paymentDetails.bankName)}`}</Text>
-        <Text>{`Account: ${asText(paymentDetails.accountName)}`}</Text>
-        <Text>{`No: ${asText(paymentDetails.accountNumber)}`}</Text>
-      </View>
-    </View>
-  ) : undefined;
-
-  const termsSection = terms ? (
-    <View
-      style={compactStyles(
-        styles.termsBlock,
-        { borderTopColor: border },
-        !notes && !showBankDetails ? { marginTop: 20 } : undefined,
-      )}
-    >
-      <Text style={compactStyles(styles.termsTitle, { color: text })}>{asText(terms.title)}</Text>
-      <Text style={compactStyles(styles.termsContent, { color: muted })}>{asText(terms.content)}</Text>
-    </View>
-  ) : undefined;
-
-  const signatureSection = signature && (signatureImageUrl || signature.name || signature.role) ? (
-    <View style={styles.signatureBlock}>
-      {signatureImageUrl ? <Image src={signatureImageUrl} style={styles.signatureImage} /> : undefined}
-      <Text style={{ fontFamily: 'Helvetica-Bold', marginTop: 4 }}>{asText(signature.name)}</Text>
-      <Text style={{ fontSize: 8, color: muted }}>{asText(signature.role)}</Text>
-    </View>
-  ) : undefined;
-
+  // Footer & Final Layout
   return (
     <Page size="A4" style={[styles.page, { color: text }]}>
-      {/* Fixed footer */}
       <View fixed style={styles.footerFixed}>
-        <Text style={styles.footerLeft}>{footer?.documentNumber || ''}</Text>
+        <Text style={styles.footerLeft}>{safeString(footer?.documentNumber)}</Text>
         <Text
           style={styles.footerCenter}
-          render={({ pageNumber, totalPages }) =>
-            `Page ${pageNumber} of ${totalPages}`
-          }
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
         />
-        <Text style={styles.footerRight}>{footer?.companyName || ''}</Text>
+        <Text style={styles.footerRight}>{safeString(footer?.companyName)}</Text>
       </View>
 
-      {/* Header */}
       <View style={[styles.header, { borderBottomColor: accent }]}>
         <View style={styles.headerLeft}>{headerLeftChildren}</View>
         <View style={styles.headerRight}>{headerRightChildren}</View>
       </View>
 
-      {/* Meta grid */}
       <View style={[styles.metaGrid, { borderBottomColor: border }]}>
         <View style={[styles.metaLeft, { borderRightColor: border }]}>{metaLeftChildren}</View>
-
         <View style={[styles.metaRight, { backgroundColor: surface }]}>{metaRightChildren}</View>
       </View>
 
-      {/* Table */}
       <View style={styles.items}>{tableChildren}</View>
 
-      {/* Notes */}
-      {notesSection}
+      {notes && (
+        <View style={styles.notesBlock}>
+          <Text style={compactStyles(styles.notesTitle, { color: text })}>{safeString(notes.title)}</Text>
+          <Text style={compactStyles(styles.notesContent, { color: muted })}>{safeString(notes.content)}</Text>
+        </View>
+      )}
 
-      {/* Bank details */}
-      {bankDetailsSection}
+      {showBankDetails && paymentDetails && (
+        <View style={compactStyles(styles.notesBlock, { marginTop: 4 })}>
+          <Text style={compactStyles(styles.notesTitle, { color: text })}>Bank Details</Text>
+          <View style={styles.bankDetailsRow}>
+            <Text>{`Bank: ${safeString(paymentDetails.bankName)}`}</Text>
+            <Text>{`Account: ${safeString(paymentDetails.accountName)}`}</Text>
+            <Text>{`No: ${safeString(paymentDetails.accountNumber)}`}</Text>
+          </View>
+        </View>
+      )}
 
-      {/* Terms */}
-      {termsSection}
+      {terms && (
+        <View style={compactStyles(styles.termsBlock, { borderTopColor: border, marginTop: notes || showBankDetails ? 10 : 20 })}>
+          <Text style={compactStyles(styles.termsTitle, { color: text })}>{safeString(terms.title)}</Text>
+          <Text style={compactStyles(styles.termsContent, { color: muted })}>{safeString(terms.content)}</Text>
+        </View>
+      )}
 
-      {/* Signature */}
-      {signatureSection}
+      {signature && (signatureImageUrl || signature.name || signature.role) && (
+        <View style={styles.signatureBlock}>
+          {signatureImageUrl && <Image src={signatureImageUrl} style={styles.signatureImage} />}
+          <Text style={{ fontFamily: 'Helvetica-Bold', marginTop: 4 }}>{safeString(signature.name)}</Text>
+          <Text style={{ fontSize: 8, color: muted }}>{safeString(signature.role)}</Text>
+        </View>
+      )}
     </Page>
   );
 }
