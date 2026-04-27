@@ -1,6 +1,6 @@
 import React from 'react';
 import { Page, Text, View, Image } from '@react-pdf/renderer';
-import { styles, resolveAlignment } from './EngineeringInvoiceStyles';
+import { styles, resolveAlignment } from './ObsidianRecieptStyles';
 import type { IndustryTemplateData } from './types'; // import your actual type
 
 export default function EngineeringInvoice({ data }: { data: IndustryTemplateData }) {
