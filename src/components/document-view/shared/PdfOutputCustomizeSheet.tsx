@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { CheckCircle2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 import { PdfBankControls, PdfDocumentOptionsCard, type PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
@@ -41,6 +43,14 @@ const INVOICE_PDF_TEMPLATE_OPTIONS = [
     shell: 'bg-white border border-slate-200',
     accents: ['h-1.5 w-full rounded-full bg-slate-900', 'h-1 w-2/5 rounded-full bg-amber-500', 'h-1 w-4/5 rounded-full bg-slate-300'],
     columns: ['h-7 w-full rounded-md bg-slate-900', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-3/4 rounded-full bg-slate-200'],
+  },
+  {
+    id: 'obsidian-receipt',
+    label: 'Obsidian Receipt',
+    eyebrow: 'Elegant',
+    shell: 'bg-white border border-slate-200',
+    accents: ['h-1.5 w-full rounded-full bg-[#2f7f7c]', 'h-1 w-2/5 rounded-full bg-[#8c8279]', 'h-1 w-3/5 rounded-full bg-slate-100'],
+    columns: ['h-7 w-full rounded-md bg-slate-50', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-2/3 rounded-full bg-slate-200'],
   },
 ] as const satisfies ReadonlyArray<{
   id: InvoicePdfTemplateId
@@ -131,7 +141,7 @@ export default function PdfOutputCustomizeSheet({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-4">
             {INVOICE_PDF_TEMPLATE_OPTIONS.map((option) => {
               const active = draftTemplateId === option.id
 
@@ -140,49 +150,55 @@ export default function PdfOutputCustomizeSheet({
                   key={option.id}
                   type="button"
                   onClick={() => setDraftTemplateId(option.id)}
-                  className={[
-                    'rounded-[18px] border p-2.5 text-left transition',
+                  className={cn(
+                    'relative flex w-[240px] shrink-0 flex-col overflow-hidden rounded-[24px] border p-1.5 transition-all duration-300',
                     active
-                      ? 'border-slate-950 bg-slate-950 text-white shadow-[0_8px_24px_rgba(15,23,42,0.18)]'
-                      : 'border-border bg-white text-foreground hover:border-slate-300 hover:bg-slate-50',
-                  ].join(' ')}
+                      ? 'border-slate-950 bg-slate-950 text-white shadow-xl ring-2 ring-slate-950 ring-offset-2'
+                      : 'border-border bg-card text-foreground hover:border-slate-300 hover:bg-slate-50/50',
+                  )}
                 >
-                  <div className="mb-2.5 overflow-hidden rounded-[14px] border border-black/5 bg-slate-100 p-2">
-                    <div className={`flex h-[68px] flex-col justify-between rounded-[12px] p-2 ${option.shell}`}>
-                      <div className="space-y-1">
-                        {option.accents.map((nodeClass, index) => (
-                          <div key={`${option.id}-accent-${index}`} className={nodeClass} />
-                        ))}
-                      </div>
-                      <div className="space-y-1.5">
-                        {option.columns.map((nodeClass, index) => (
-                          <div key={`${option.id}-column-${index}`} className={nodeClass} />
-                        ))}
-                      </div>
+                  <div className={cn('mb-3 flex h-[120px] flex-col justify-between rounded-[18px] p-3.5 shadow-inner', option.shell)}>
+                    <div className="space-y-1.5">
+                      {option.accents.map((nodeClass, index) => (
+                        <div key={`${option.id}-accent-${index}`} className={cn(nodeClass, 'opacity-80')} />
+                      ))}
+                    </div>
+                    <div className="space-y-2">
+                      {option.columns.map((nodeClass, index) => (
+                        <div key={`${option.id}-column-${index}`} className={nodeClass} />
+                      ))}
                     </div>
                   </div>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className={`text-[10px] font-extrabold uppercase tracking-[0.16em] ${active ? 'text-slate-300' : 'text-muted-foreground'}`}>
-                        {option.eyebrow}
+                  
+                  <div className="px-2 pb-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className={cn(
+                          'text-[10px] font-extrabold uppercase tracking-[0.16em]',
+                          active ? 'text-slate-400' : 'text-muted-foreground'
+                        )}>
+                          {option.eyebrow}
+                        </div>
+                        <div className="mt-0.5 truncate text-sm font-bold tracking-tight">
+                          {option.label}
+                        </div>
                       </div>
-                      <div className="mt-1 text-sm font-bold tracking-[-0.02em]">{option.label}</div>
-                    </div>
-                    <div
-                      className={[
-                        'inline-flex shrink-0 rounded-full border px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.18em]',
-                        active
-                          ? 'border-white/15 bg-white/10 text-white'
-                          : 'border-slate-200 bg-slate-50 text-slate-500',
-                      ].join(' ')}
-                    >
-                      {active ? 'Selected' : 'Choose'}
+                      {active && (
+                        <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-500">
+                          <CheckCircle2 className="size-3 text-white" />
+                        </div>
+                      )}
                     </div>
                   </div>
+
+                  {!active && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 transition-opacity hover:opacity-100" />
+                  )}
                 </button>
               )
             })}
           </div>
+
 
           <div className="mt-4 border-t border-slate-100 pt-4">
             <DocumentTemplateDesignOverrides value={draftPreset} onChange={setDraftPreset} />

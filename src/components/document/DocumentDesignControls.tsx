@@ -23,6 +23,22 @@ interface TemplatePreview {
 }
 
 const templatePreviewById: Record<string, TemplatePreview> = {
+  industry: {
+    shell: 'bg-white border border-slate-200',
+    nodes: ['h-1.5 w-full rounded-full bg-slate-700', 'h-0.5 w-full rounded-full bg-slate-200', 'h-0.5 w-4/5 rounded-full bg-slate-200'],
+  },
+  civicslate: {
+    shell: 'bg-[#2F3A44] border border-[#24303A]',
+    nodes: ['h-2.5 w-12 rounded-full bg-[#D8C7A3]', 'h-1 w-4/5 rounded-full bg-white/70', 'h-1 w-3/5 rounded-full bg-white/40'],
+  },
+  naijabiz: {
+    shell: 'bg-white border border-slate-200',
+    nodes: ['h-1.5 w-full rounded-full bg-slate-900', 'h-1 w-2/5 rounded-full bg-amber-500', 'h-1 w-4/5 rounded-full bg-slate-300'],
+  },
+  'obsidian-receipt': {
+    shell: 'bg-white border border-slate-200',
+    nodes: ['h-1.5 w-full rounded-full bg-[#2f7f7c]', 'h-1 w-2/5 rounded-full bg-[#8c8279]', 'h-1 w-3/5 rounded-full bg-slate-100'],
+  },
   bordered_schedule: {
     shell: 'bg-white border border-slate-300',
     nodes: ['h-1.5 w-full bg-slate-700', 'h-0.5 w-full bg-slate-300', 'h-4 w-full border border-slate-400 bg-white'],
@@ -53,7 +69,7 @@ interface DocumentTemplatePickerProps {
 
 export function DocumentTemplatePicker({ value, onChange, templates }: DocumentTemplatePickerProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1">
+    <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-4">
       {templates.map((template) => {
         const active = value === template.id
         const preview = templatePreviewById[template.id] || templatePreviewById.minimal
@@ -64,18 +80,47 @@ export function DocumentTemplatePicker({ value, onChange, templates }: DocumentT
             type="button"
             onClick={() => onChange(template.id)}
             className={cn(
-              'w-28 shrink-0 rounded-2xl border-2 px-3 py-3 text-left transition',
-              active ? 'border-slate-950 bg-slate-950 text-white' : 'border-border bg-card text-foreground',
+              'relative flex w-[220px] shrink-0 flex-col overflow-hidden rounded-[24px] border p-1.5 transition-all duration-300',
+              active
+                ? 'border-slate-950 bg-slate-950 text-white shadow-xl ring-2 ring-slate-950 ring-offset-2'
+                : 'border-border bg-card text-foreground hover:border-slate-300 hover:bg-slate-50/50',
             )}
           >
-            <div className={cn('mb-3 flex h-10 flex-col gap-1 rounded-lg p-2', preview.shell)}>
-              {preview.nodes.map((nodeClass, index) => (
-                <div key={`${template.id}-${index}`} className={nodeClass} />
-              ))}
+            <div className={cn('mb-3 flex h-[100px] flex-col justify-between rounded-[18px] p-3 shadow-inner', preview.shell)}>
+              <div className="space-y-1.5">
+                {preview.nodes.slice(0, 2).map((nodeClass, index) => (
+                  <div key={`${template.id}-${index}`} className={cn(nodeClass, 'opacity-80')} />
+                ))}
+              </div>
+              <div className="space-y-2">
+                {preview.nodes.slice(2).map((nodeClass, index) => (
+                  <div key={`${template.id}-col-${index}`} className={nodeClass} />
+                ))}
+              </div>
             </div>
-            <div className="text-xs font-bold">{template.label || template.name}</div>
-            <div className={cn('mt-1 text-[10px]', active ? 'text-slate-300' : 'text-muted-foreground')}>{template.description}</div>
-            {active ? <div className="mt-2 text-[9px] font-bold uppercase tracking-[0.18em] text-blue-400">Active</div> : null}
+            
+            <div className="px-2 pb-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate text-sm font-bold tracking-tight">
+                  {template.label || template.name}
+                </span>
+                {active && (
+                  <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-500">
+                    <CheckCircle2 className="size-3 text-white" />
+                  </div>
+                )}
+              </div>
+              <div className={cn(
+                'mt-0.5 line-clamp-1 text-[11px] leading-tight',
+                active ? 'text-slate-400' : 'text-muted-foreground'
+              )}>
+                {template.description}
+              </div>
+            </div>
+
+            {!active && (
+              <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 transition-opacity hover:opacity-100" />
+            )}
           </button>
         )
       })}

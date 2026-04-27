@@ -141,6 +141,11 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       label: 'Industry',
       description: 'Structured professional layout',
     },
+    {
+      id: 'obsidian-receipt',
+      label: 'Obsidian Receipt',
+      description: 'Dark elegant minimalist receipt',
+    },
   ]
 
   useEffect(() => {
