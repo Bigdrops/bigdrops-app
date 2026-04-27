@@ -14,7 +14,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 8,
     marginBottom: 0,
-    borderBottom: '2px solid',
+    borderBottomWidth: 2,
+    borderBottomStyle: 'solid',
     borderBottomColor: '#1a1a1a', // will be overridden by accent if set
   },
   headerLeft: {
@@ -54,13 +55,15 @@ export const styles = StyleSheet.create({
   /* ---------- META GRID ---------- */
   metaGrid: {
     flexDirection: 'row',
-    borderBottom: '1px solid',
+    borderBottomWidth: 1,
+    borderBottomStyle: 'solid',
     borderBottomColor: '#e4ded4',
   },
   metaLeft: {
     flex: 1,
     padding: 14,
-    borderRight: '1px solid',
+    borderRightWidth: 1,
+    borderRightStyle: 'solid',
     borderRightColor: '#e4ded4',
   },
   partyBlock: {
@@ -87,12 +90,13 @@ export const styles = StyleSheet.create({
   customFieldsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
     marginTop: 6,
   },
   customField: {
     fontSize: 8,
     lineHeight: 1.3,
+    marginRight: 12,
+    marginBottom: 4,
   },
   customFieldLabel: {
     fontFamily: 'Helvetica-Bold',
@@ -125,7 +129,8 @@ export const styles = StyleSheet.create({
   totalsBlock: {
     marginTop: 'auto',
     paddingTop: 8,
-    borderTop: '2px solid',
+    borderTopWidth: 2,
+    borderTopStyle: 'solid',
     borderTopColor: '#1a1a1a',
   },
   totalLine: {
@@ -139,7 +144,8 @@ export const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     marginTop: 4,
     paddingTop: 5,
-    borderTop: '1px solid',
+    borderTopWidth: 1,
+    borderTopStyle: 'solid',
     borderTopColor: '#cbc5bd',
   },
   amountInWords: {
@@ -154,7 +160,8 @@ export const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: 'row',
-    borderBottom: '2px solid',
+    borderBottomWidth: 2,
+    borderBottomStyle: 'solid',
     borderBottomColor: '#1a1a1a',
     paddingBottom: 4,
     marginBottom: 4,
@@ -168,7 +175,8 @@ export const styles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: 'row',
-    borderBottom: '1px dashed',
+    borderBottomWidth: 1,
+    borderBottomStyle: 'dashed',
     borderBottomColor: '#e4ded4',
     paddingVertical: 5,
     alignItems: 'flex-start',
@@ -196,7 +204,9 @@ export const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 8,
     borderRadius: 2,
-    borderBottom: '1px solid #cbc5bd',
+    borderBottomWidth: 1,
+    borderBottomStyle: 'solid',
+    borderBottomColor: '#cbc5bd',
   },
   groupHeaderText: {
     fontSize: 9,
@@ -235,7 +245,9 @@ export const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 12,
     paddingBottom: 4,
-    borderTop: '1px solid #e4ded4',
+    borderTopWidth: 1,
+    borderTopStyle: 'solid',
+    borderTopColor: '#e4ded4',
   },
   termsTitle: {
     fontSize: 8,
@@ -269,7 +281,9 @@ export const styles = StyleSheet.create({
     right: 24,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    borderTop: '1px solid #cbc5bd',
+    borderTopWidth: 1,
+    borderTopStyle: 'solid',
+    borderTopColor: '#cbc5bd',
     paddingTop: 8,
     fontSize: 7,
     color: '#6b625a',
@@ -291,12 +305,12 @@ export const styles = StyleSheet.create({
   collapse: {
     margin: 0,
     padding: 0,
-    border: 'none',
+    borderWidth: 0,
   },
 });
 
 export function resolveAlignment(align?: string) {
-  if (align === 'right') return { textAlign: 'right' };
-  if (align === 'center') return { textAlign: 'center' };
-  return { textAlign: 'left' };
+  if (align === 'right') return { textAlign: 'right' as const };
+  if (align === 'center') return { textAlign: 'center' as const };
+  return { textAlign: 'left' as const };
 }

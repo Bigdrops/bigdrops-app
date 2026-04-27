@@ -1,6 +1,7 @@
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import { styles, resolveAlignment } from './Naijabizstyles';
 import type { IndustryTemplateData } from '../industryAdapter';
+import { isTightTokenColumn, keepPdfWordUnbroken, resolveTemplateTableColumnStyle } from '../templateTableLayout';
 
 export default function Template({ data }: { data: IndustryTemplateData }) {
   const accentColor = data.design?.accentColor || '#0f172a';
@@ -94,8 +95,7 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
             <View
               key={col.key}
               style={{
-                flex: col.flex || (col.width ? undefined : 1),
-                width: col.width,
+                ...resolveTemplateTableColumnStyle(col),
                 paddingHorizontal: 4,              }}
             >
               <Text style={[styles.tableHeaderCell, resolveAlignment(col.align)]}>{col.label}</Text>
@@ -134,19 +134,22 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
               {data.table.columns.map((col) => {
                 const cellValue = row.cells?.[col.key];
                 const isDescription = col.key === 'description' || col.key === 'item';
+                const isTightToken = isTightTokenColumn(col.key);
                 return (
                   <View
                     key={col.key}
                     style={{
-                      flex: col.flex || (col.width ? undefined : 1),
-                      width: col.width,
+                      ...resolveTemplateTableColumnStyle(col),
                       paddingHorizontal: 4,
-                      ...resolveAlignment(col.align),
                     }}
                   >
                     {isDescription && row.imageUrl && (
                       <Image src={row.imageUrl} style={styles.tableCellImage} />                    )}
-                    <Text style={[styles.tableCell, resolveAlignment(col.align), { color: textColor }]}>
+                    <Text
+                      style={[styles.tableCell, resolveAlignment(col.align), { color: textColor }]}
+                      wrap={isTightToken ? false : undefined}
+                      hyphenationCallback={isTightToken ? keepPdfWordUnbroken : undefined}
+                    >
                       {cellValue as any}
                     </Text>
                     {isDescription && row.cells?.descriptionSub && (

@@ -1,6 +1,7 @@
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import { styles, resolveAlignment } from './Civicslatestyles';
 import type { IndustryTemplateData } from '../industryAdapter';
+import { isTightTokenColumn, keepPdfWordUnbroken, resolveTemplateTableColumnStyle } from '../templateTableLayout';
 
 export default function Template({ data }: { data: IndustryTemplateData }) {
   const accent = data.design.accentColor || '#2F3A44';
@@ -126,7 +127,8 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
               key={column.key}
               style={[
                 styles.tableHeaderCell,
-                { width: column.width, flex: column.flex, color: accent },
+                resolveTemplateTableColumnStyle(column),
+                { color: accent },
                 resolveAlignment(column.align),
               ]}
             >
@@ -171,14 +173,16 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
             >
               {data.table.columns.map((column, columnIndex) => {
                 const value = renderCellValue(row.cells?.[column.key]);
-                const isDescription = columnIndex === 0;
+                const isDescription = column.key === 'description';
+                const isTightToken = isTightTokenColumn(column.key);
 
                 return (
                   <View
                     key={column.key}
                     style={[
                       styles.tableCell,
-                      { width: column.width, flex: column.flex, color: text },
+                      resolveTemplateTableColumnStyle(column),
+                      { color: text },
                       resolveAlignment(column.align),
                     ]}
                   >
@@ -188,7 +192,12 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
                         <Text>{value}</Text>
                       </View>
                     ) : (
-                      <Text>{value}</Text>
+                      <Text
+                        wrap={isTightToken ? false : undefined}
+                        hyphenationCallback={isTightToken ? keepPdfWordUnbroken : undefined}
+                      >
+                        {value}
+                      </Text>
                     )}
                   </View>
                 );

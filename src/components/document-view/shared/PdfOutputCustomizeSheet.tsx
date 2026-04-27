@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { PdfBankControls, PdfDocumentOptionsCard, type PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
+import { type InvoicePdfTemplateId } from '@/domain/invoice/types'
 import type { PdfDesignPreset, PdfDesignPresetDocument } from '@/lib/pdfDesignPreset'
 import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 
@@ -26,14 +27,29 @@ const INVOICE_PDF_TEMPLATE_OPTIONS = [
     columns: ['h-7 w-full rounded-md border border-slate-200 bg-white', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-5/6 rounded-full bg-slate-200'],
   },
   {
-    id: 'obsidian-receipt',
-    label: 'Obsidian Receipt',
-    eyebrow: 'Premium',
-    shell: 'bg-[#17191F] border border-slate-800',
-    accents: ['h-1 w-full rounded-full bg-[#B98248]', 'h-3 w-3/5 rounded bg-slate-700', 'h-1 w-4/5 rounded-full bg-slate-700'],
-    columns: ['h-7 w-full rounded-md border border-slate-700 bg-slate-900', 'h-1 w-full rounded-full bg-slate-700', 'h-1 w-3/4 rounded-full bg-slate-700'],
+    id: 'civicslate',
+    label: 'Civicslate',
+    eyebrow: 'Editorial',
+    shell: 'bg-[#2F3A44] border border-[#24303A]',
+    accents: ['h-2.5 w-12 rounded-full bg-[#D8C7A3]', 'h-1 w-4/5 rounded-full bg-white/70', 'h-1 w-3/5 rounded-full bg-white/40'],
+    columns: ['h-7 w-full rounded-md bg-[#F3EFE6]', 'h-1 w-full rounded-full bg-white/45', 'h-1 w-2/3 rounded-full bg-white/30'],
   },
-] as const
+  {
+    id: 'naijabiz',
+    label: 'Naijabiz',
+    eyebrow: 'Clean',
+    shell: 'bg-white border border-slate-200',
+    accents: ['h-1.5 w-full rounded-full bg-slate-900', 'h-1 w-2/5 rounded-full bg-amber-500', 'h-1 w-4/5 rounded-full bg-slate-300'],
+    columns: ['h-7 w-full rounded-md bg-slate-900', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-3/4 rounded-full bg-slate-200'],
+  },
+] as const satisfies ReadonlyArray<{
+  id: InvoicePdfTemplateId
+  label: string
+  eyebrow: string
+  shell: string
+  accents: readonly string[]
+  columns: readonly string[]
+}>
 
 interface PdfOutputCustomizeSheetProps {
   open: boolean
@@ -47,8 +63,8 @@ interface PdfOutputCustomizeSheetProps {
   footerText?: string
   showBalanceDueOption?: boolean
   designOnly?: boolean
-  templateId?: 'industry' | 'obsidian-receipt'
-  onSave: (value: PdfOutputSettingsValue, preset: PdfDesignPreset, templateId: 'industry' | 'obsidian-receipt') => void | Promise<void>
+  templateId?: InvoicePdfTemplateId
+  onSave: (value: PdfOutputSettingsValue, preset: PdfDesignPreset, templateId: InvoicePdfTemplateId) => void | Promise<void>
 }
 
 export default function PdfOutputCustomizeSheet({
@@ -68,7 +84,7 @@ export default function PdfOutputCustomizeSheet({
 }: PdfOutputCustomizeSheetProps) {
   const [draftValue, setDraftValue] = useState<PdfOutputSettingsValue>(value)
   const [draftPreset, setDraftPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset(documentType))
-  const [draftTemplateId, setDraftTemplateId] = useState<'industry' | 'obsidian-receipt'>(templateId)
+  const [draftTemplateId, setDraftTemplateId] = useState<InvoicePdfTemplateId>(templateId)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -115,7 +131,7 @@ export default function PdfOutputCustomizeSheet({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {INVOICE_PDF_TEMPLATE_OPTIONS.map((option) => {
               const active = draftTemplateId === option.id
 

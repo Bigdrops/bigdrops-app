@@ -42,7 +42,13 @@ export interface InvoicePdfOutput {
   showDiscountPercentage: boolean
 }
 
-export type InvoicePdfTemplateId = 'industry' | 'obsidian-receipt'
+export const INVOICE_PDF_TEMPLATE_IDS = ['industry', 'civicslate', 'naijabiz'] as const
+
+export type InvoicePdfTemplateId = (typeof INVOICE_PDF_TEMPLATE_IDS)[number]
+
+export function isInvoicePdfTemplateId(value: unknown): value is InvoicePdfTemplateId {
+  return typeof value === 'string' && (INVOICE_PDF_TEMPLATE_IDS as readonly string[]).includes(value)
+}
 
 export interface Payment {
   id: string

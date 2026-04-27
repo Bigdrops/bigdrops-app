@@ -35,11 +35,11 @@ const CONFIGURABLE_DEFAULT_COLUMNS: SavedColumnConfig[] = [
 ]
 
 const FIXED_PDF_COLUMNS: PdfColumnDefinition[] = [
-  { key: 'num', label: '#', kind: 'builtin', align: 'center', pdfWidth: 20, pdfFlex: 0.45 },
-  { key: 'description', label: 'Description', kind: 'builtin', align: 'left', pdfWidth: 0, pdfFlex: 2.9 },
-  { key: 'quantity', label: 'Qty', kind: 'builtin', align: 'center', pdfWidth: 28, pdfFlex: 0.7 },
-  { key: 'unit_price', label: 'Unit Price', kind: 'builtin', align: 'right', pdfWidth: 54, pdfFlex: 1.2 },
-  { key: 'amount', label: 'Amount', kind: 'builtin', align: 'right', pdfWidth: 62, pdfFlex: 1.35 },
+  { key: 'num', label: '#', kind: 'builtin', align: 'center', pdfWidth: 20, pdfFlex: 0.4 },
+  { key: 'description', label: 'Description', kind: 'builtin', align: 'left', pdfWidth: 0, pdfFlex: 1.55 },
+  { key: 'quantity', label: 'Qty', kind: 'builtin', align: 'center', pdfWidth: 44, pdfFlex: 0.72 },
+  { key: 'unit_price', label: 'Unit Price', kind: 'builtin', align: 'right', pdfWidth: 72, pdfFlex: 0 },
+  { key: 'amount', label: 'Amount', kind: 'builtin', align: 'right', pdfWidth: 78, pdfFlex: 0 },
 ]
 
 function normalizeSavedColumns(columns: SavedColumnConfig[] = []) {
@@ -125,15 +125,15 @@ export function interpretPdfTableSettings(
         label: col.label || fixedBase.label,
         ...(key === 'quantity' && mergeQtyUnit ? {
           label: 'Qty',
-          pdfWidth: 72,
-          pdfFlex: 0
+          pdfWidth: 76,
+          pdfFlex: 0,
         } : {})
       })
     } else if (isConfigurable) {
       let overrides: Partial<PdfColumnDefinition> = {}
-      if (key === 'make') overrides = { pdfWidth: 48, pdfFlex: 1.25 }
-      if (key === 'unit' && !mergeQtyUnit) overrides = { pdfWidth: 34, pdfFlex: 0.85 }
-      if (key === 'install_rate') overrides = { dataType: 'install_rate', pdfWidth: 54, pdfFlex: 1.15 }
+      if (key === 'make') overrides = { pdfWidth: 58, pdfFlex: 1.1 }
+      if (key === 'unit' && !mergeQtyUnit) overrides = { pdfWidth: 42, pdfFlex: 0 }
+      if (key === 'install_rate') overrides = { dataType: 'install_rate', pdfWidth: 72, pdfFlex: 0 }
       if (key === 'vat_rate') overrides = { dataType: 'vat_rate', pdfWidth: 32, pdfFlex: 0.8 }
       if (key === 'discount_rate') overrides = { dataType: 'discount_rate', pdfWidth: 40, pdfFlex: 0.95 }
       

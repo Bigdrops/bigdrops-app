@@ -76,7 +76,7 @@ test('merged qty and unit column gets extra width in pdf table settings', () => 
   const source = fs.readFileSync(tablePath, 'utf8')
 
   assert.match(source, /label: 'Qty'/)
-  assert.match(source, /pdfWidth: 72/)
+  assert.match(source, /pdfWidth: 76/)
   assert.match(source, /pdfFlex: 0/)
 })
 
@@ -95,12 +95,13 @@ test('customize sheet supports design-only mode for the paint popup', () => {
   assert.match(source, /<PdfDocumentOptionsCard/)
 })
 
-test('invoice customize sheet includes a compact industry and obsidian-receipt template picker', () => {
+test('invoice customize sheet includes industry, civicslate, and naijabiz template picker options', () => {
   const source = fs.readFileSync(customizeSheetPath, 'utf8')
 
   assert.match(source, /INVOICE_PDF_TEMPLATE_OPTIONS/)
   assert.match(source, /id: 'industry'/)
-  assert.match(source, /id: 'obsidian-receipt'/)
+  assert.match(source, /id: 'civicslate'/)
+  assert.match(source, /id: 'naijabiz'/)
   assert.match(source, /setDraftTemplateId\(option\.id\)/)
 })
 
@@ -116,7 +117,7 @@ test('view invoice page exposes bank controls and document options below the pre
 test('view invoice saves and reuses the selected pdf template id', () => {
   const source = fs.readFileSync(viewInvoicePath, 'utf8')
 
-  assert.match(source, /const pdfTemplateId = customFields\?\.pdfTemplateId === 'obsidian-receipt' \? 'obsidian-receipt' : 'industry'/)
+  assert.match(source, /isInvoicePdfTemplateId\(customFields\?\.pdfTemplateId\) \? customFields\.pdfTemplateId : 'industry'/)
   assert.match(source, /pdfTemplateId: nextTemplateId/)
   assert.match(source, /templateId=\{pdfTemplateId\}/)
   assert.match(source, /templateId: targetTemplateId/)
@@ -130,10 +131,11 @@ test('view invoice actions include the qty plus unit merge toggle with persisten
   assert.match(source, /statusLabel: mergeQtyUnit \? 'On' : 'Off'/)
 })
 
-test('pdf generation can switch invoice output to obsidian-receipt', () => {
+test('pdf generation can switch invoice output to civicslate and naijabiz', () => {
   const source = fs.readFileSync(pdfIndexPath, 'utf8')
 
-  assert.match(source, /import Obsidian from '.\/templates\/ObsidianReceipt'/)
-  assert.match(source, /case 'obsidian-receipt':/)
-  assert.match(source, /Template = Obsidian/)
+  assert.match(source, /import\('\.\/templates\/Civicslate'\)/)
+  assert.match(source, /import\('\.\/templates\/Naijabiz'\)/)
+  assert.match(source, /case 'civicslate':/)
+  assert.match(source, /case 'naijabiz':/)
 })

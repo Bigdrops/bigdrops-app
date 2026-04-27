@@ -26,7 +26,6 @@ function resolveFinalIndustryColumnStyle(column: IndustryTemplateData['table']['
   return [
     columnStyle,
     column.key === 'description' ? styles.descriptionCellYield : null,
-    column.key === 'quantity' ? styles.quantityCellFixed : null,
   ]
 }
 

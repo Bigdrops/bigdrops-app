@@ -1,4 +1,5 @@
 import React from 'react'
+import { isInvoicePdfTemplateId } from '@/domain/invoice/types'
 import { registerPdfFonts } from '@/lib/pdfFontRegistry'
 import { adaptIndustryData } from './industryAdapter'
 import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings } from './table'
@@ -41,26 +42,43 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     { PdfRenderer },
     IndustryModule,
     ObsidianModule,
+    CivicslateModule,
+    NaijabizModule,
   ] = await Promise.all([
     import('@react-pdf/renderer'),
     import('./renderers/PdfRenderer'),
     import('./templates/Industry'),
     import('./templates/ObsidianReceipt'),
+    import('./templates/Civicslate'),
+    import('./templates/Naijabiz'),
   ])
 
   const Industry = IndustryModule.default
-  const Obsidian = ObsidianModule.default
+  const ObsidianReceipt = ObsidianModule.default
+  const Civicslate = CivicslateModule.default
+  const Naijabiz = NaijabizModule.default
 
   registerPdfFonts()
 
-  const activeTemplateId = request.templateId || 'industry'
+  const activeTemplateId =
+    request.templateId === 'obsidian-receipt' || isInvoicePdfTemplateId(request.templateId)
+      ? request.templateId
+      : 'industry'
 
   let Template: React.ComponentType<any> = Industry as React.ComponentType<any>
   let templateData: unknown = adaptIndustryData(request.model)
 
   switch (activeTemplateId) {
     case 'obsidian-receipt':
-      Template = Obsidian
+      Template = ObsidianReceipt
+      templateData = adaptIndustryData(request.model)
+      break
+    case 'civicslate':
+      Template = Civicslate
+      templateData = adaptIndustryData(request.model)
+      break
+    case 'naijabiz':
+      Template = Naijabiz
       templateData = adaptIndustryData(request.model)
       break
     case 'industry':
