@@ -66,7 +66,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
       <Image
         key="company-logo"
         src={companyLogoUrl}
-        style={{ width: 100, height: 40, objectFit: 'contain', marginBottom: 6 }}
+        style={{ width: 140, height: 50, objectFit: 'contain', marginBottom: 12 }}
       />,
     );
   }
@@ -90,7 +90,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
   ];
   if (customTitle) {
     headerRightChildren.push(
-      <Text key="custom-title" style={{ fontSize: 8, color: muted, marginTop: 1 }}>
+      <Text key="custom-title" style={{ fontSize: 10, color: muted, marginTop: 4 }}>
         {safeString(customTitle)}
       </Text>,
     );
@@ -186,32 +186,6 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
       {totalsLines}
     </View>,
   );
-  if (advanceSummary) {
-    const advanceChildren = [];
-    if (advanceSummary.primaryLabel && advanceSummary.advanceAmount) {
-      advanceChildren.push(
-        <View key="advance-primary" style={styles.totalLine}>
-          <Text>{safeString(advanceSummary.primaryLabel)}</Text>
-          <Text>{safeString(advanceSummary.advanceAmount)}</Text>
-        </View>,
-      );
-    }
-    if (advanceSummary.secondaryLabel && advanceSummary.balanceRemaining) {
-      advanceChildren.push(
-        <View key="advance-secondary" style={styles.totalLine}>
-          <Text>{safeString(advanceSummary.secondaryLabel)}</Text>
-          <Text>{safeString(advanceSummary.balanceRemaining)}</Text>
-        </View>,
-      );
-    }
-    if (advanceChildren.length > 0) {
-      metaRightChildren.push(
-        <View key="advance-summary" style={{ marginTop: 8 }}>
-          {advanceChildren}
-        </View>,
-      );
-    }
-  }
 
   // Table Building
   const tableChildren = [];
@@ -269,9 +243,15 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
         )}
       >
         {columns.map((col, colIdx) => {
-          const rawValue = cells[col.key] ?? '';
+          const rawValue = cells[col.key];
           const value = safeString(rawValue);
-          const subValue = safeString(cells[`${col.key}Sub`] || cells.descriptionSub || '');
+          
+          // Extract sub-description carefully from nested objects or fallback props
+          let subValueStr = cells[`${col.key}Sub`] || cells.descriptionSub || '';
+          if (!subValueStr && rawValue && typeof rawValue === 'object') {
+            subValueStr = (rawValue as any).sub || '';
+          }
+          const subValue = safeString(subValueStr);
           
           const alignStyle = resolveAlignment(col.align);
           const flexStyle = col.flex ? { flex: col.flex } : { flex: 1 };
@@ -323,6 +303,22 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
       </View>
 
       <View style={styles.items}>{tableChildren}</View>
+
+      {/* Advance Summary Section (Visually Prominent) */}
+      {advanceSummary && (
+        <View style={[styles.advanceSummaryContainer, { borderColor: border, backgroundColor: surface }]}>
+          <View style={styles.advanceSummaryRow}>
+            <Text style={styles.advanceSummaryLabel}>{safeString(advanceSummary.primaryLabel)}</Text>
+            <Text style={[styles.advanceSummaryValue, { color: accent }]}>{safeString(advanceSummary.advanceAmount)}</Text>
+          </View>
+          {advanceSummary.secondaryLabel && advanceSummary.balanceRemaining && (
+            <View style={[styles.advanceSummaryRow, { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: border }]}>
+              <Text style={styles.advanceSummaryLabel}>{safeString(advanceSummary.secondaryLabel)}</Text>
+              <Text style={styles.advanceSummaryValue}>{safeString(advanceSummary.balanceRemaining)}</Text>
+            </View>
+          )}
+        </View>
+      )}
 
       {notes && (
         <View style={styles.notesBlock}>

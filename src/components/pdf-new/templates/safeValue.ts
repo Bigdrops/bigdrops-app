@@ -7,8 +7,8 @@ export function safeString(value: any): string {
   if (typeof value === 'object') {
     if (value instanceof Date) return value.toLocaleDateString();
     
-    // Prefer label, name, or text properties
-    const preferredValue = value.label ?? value.name ?? value.text ?? value.value;
+    // Prefer label, name, text, value, or main properties
+    const preferredValue = value.label ?? value.name ?? value.text ?? value.main ?? value.value;
     if (preferredValue !== undefined && preferredValue !== null) {
       return safeString(preferredValue);
     }
