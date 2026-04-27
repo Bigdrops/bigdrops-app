@@ -1,95 +1,101 @@
 import React from 'react';
 import { Page, Text, View, Image } from '@react-pdf/renderer';
 import { styles, resolveAlignment } from './ObsidianReceiptStyles';
-import type { IndustryTemplateData } from './types'; // import your actual type
+import type { IndustryTemplateData } from './types'; // adjust your actual type path
 
-export default function EngineeringInvoice({ data }: { data: IndustryTemplateData }) {
+export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }) {
+  // **CRITICAL**: If data is null/undefined for any reason, render nothing.
+  if (!data) return null;
+
+  // Safely destructure with fallback empty objects/arrays for everything nullable.
   const {
-    title,
-    customTitle,
-    documentNumber,
-    documentNumberLabel,
-    issueDate,
-    issueDateLabel,
-    dueDateOrValidityDate,
-    dueDateOrValidityDateLabel,
-    poNumber: _poNumber, // we'll render via customHeaderFields if needed
-    poNumberLabel: _poNumberLabel,
-    customHeaderFields,
-    showTagline,
-    showBankDetails,
-    company,
-    client,
-    table,
-    paymentDetails,
-    totals,
-    advanceSummary,
-    notes,
-    terms,
-    attachments: _attachments, // not used in this layout, can be ignored
-    additionalFields: _additionalFields,
-    signature,
-    footer,
-    design,
+    title = '',
+    customTitle = null,
+    documentNumber = '',
+    documentNumberLabel = '',
+    issueDate = null,
+    issueDateLabel = '',
+    dueDateOrValidityDate = null,
+    dueDateOrValidityDateLabel = '',
+    customHeaderFields = [],
+    showTagline = false,
+    showBankDetails = false,
+    company = null,
+    client = null,
+    table = { columns: [], rows: [] },
+    paymentDetails = null,
+    totals = { lines: [], mainLine: null, amountInWords: '', balanceDue: null },
+    advanceSummary = null,
+    notes = null,
+    terms = null,
+    signature = null,
+    footer = { documentNumber: '', companyName: '', extraText: '' },
+    design = {},
   } = data;
 
-  // Fallback design colors
-  const accent = design.accentColor || '#2f7f7c';
-  const text = design.textColor || '#1a1a1a';
-  const muted = design.mutedColor || '#8c8279';
-  const border = design.borderColor || '#cbc5bd';
-  const surface = design.surfaceColor || '#f6f3ef';
+  // Ensure design is at least an object
+  const safeDesign = design || {};
+  const accent = safeDesign.accentColor || '#2f7f7c';
+  const text = safeDesign.textColor || '#1a1a1a';
+  const muted = safeDesign.mutedColor || '#8c8279';
+  const border = safeDesign.borderColor || '#cbc5bd';
+  const surface = safeDesign.surfaceColor || '#f6f3ef';
 
-  // Dynamic colors for header border and invoice title
-  const headerBorderColor = accent;
-  const titleColor = accent;
+  // Safeguard totals
+  const lines = totals?.lines || [];
+  const mainLine = totals?.mainLine || null;
+  const amountInWords = totals?.amountInWords || '';
+  const balanceDue = totals?.balanceDue || null;
 
-  const hasCompany = company !== null;
-  const hasClient = client !== null;
+  // Safeguard table
+  const columns = table?.columns || [];
+  const rows = table?.rows || [];
 
   return (
     <Page size="A4" style={[styles.page, { color: text }]}>
-      {/* ---------- FIXED FOOTER ---------- */}
+      {/* Fixed footer */}
       <View fixed style={styles.footerFixed}>
-        <Text style={styles.footerLeft}>{footer.documentNumber}</Text>
+        <Text style={styles.footerLeft}>{footer?.documentNumber || ''}</Text>
         <Text
           style={styles.footerCenter}
           render={({ pageNumber, totalPages }) =>
             `Page ${pageNumber} of ${totalPages}`
           }
         />
-        <Text style={styles.footerRight}>{footer.companyName}</Text>
+        <Text style={styles.footerRight}>{footer?.companyName || ''}</Text>
       </View>
 
-      {/* ---------- HEADER ---------- */}
-      <View style={[styles.header, { borderBottomColor: headerBorderColor }]}>
+      {/* Header */}
+      <View style={[styles.header, { borderBottomColor: accent }]}>
         <View style={styles.headerLeft}>
-          {hasCompany && company.companyLogoUrl && (
-            <Image src={company.companyLogoUrl} style={{ width: 60, height: 24, marginBottom: 4 }} />
-          )}
+          {company?.companyLogoUrl ? (
+            <Image
+              src={company.companyLogoUrl}
+              style={{ width: 60, height: 24, marginBottom: 4 }}
+            />
+          ) : null}
           <Text style={[styles.companyName, { color: text }]}>
             {company?.name || 'Company Name'}
           </Text>
-          {showTagline && company?.tagline && (
+          {showTagline && company?.tagline ? (
             <Text style={[styles.tagline, { color: muted }]}>{company.tagline}</Text>
-          )}
+          ) : null}
         </View>
         <View style={styles.headerRight}>
-          <Text style={[styles.invoiceTitle, { color: titleColor }]}>{title}</Text>
-          {customTitle && (
+          <Text style={[styles.invoiceTitle, { color: accent }]}>{title}</Text>
+          {customTitle ? (
             <Text style={{ fontSize: 8, color: muted, marginTop: 1 }}>{customTitle}</Text>
-          )}
+          ) : null}
           <View style={[styles.documentNumberBadge, { backgroundColor: surface, color: text }]}>
             <Text>{documentNumberLabel}: {documentNumber}</Text>
           </View>
         </View>
       </View>
 
-      {/* ---------- META GRID (addresses + dates + totals) ---------- */}
+      {/* Meta grid */}
       <View style={[styles.metaGrid, { borderBottomColor: border }]}>
-        {/* Left column: From, Bill To, custom fields */}
         <View style={[styles.metaLeft, { borderRightColor: border }]}>
-          {hasCompany && (
+          {company ? (
             <View style={styles.partyBlock}>
               <Text style={[styles.partyLabel, { color: muted }]}>From</Text>
               <Text style={styles.partyName}>{company.name}</Text>
@@ -100,8 +106,8 @@ export default function EngineeringInvoice({ data }: { data: IndustryTemplateDat
                 {company.email}
               </Text>
             </View>
-          )}
-          {hasClient && (
+          ) : null}
+          {client ? (
             <View style={styles.partyBlock}>
               <Text style={[styles.partyLabel, { color: muted }]}>Bill To</Text>
               <Text style={styles.partyName}>{client.name}</Text>
@@ -112,9 +118,8 @@ export default function EngineeringInvoice({ data }: { data: IndustryTemplateDat
                 {client.email}
               </Text>
             </View>
-          )}
-          {/* Custom header fields (like P.O. Number) */}
-          {customHeaderFields.length > 0 && (
+          ) : null}
+          {customHeaderFields.length > 0 ? (
             <View style={styles.customFieldsContainer}>
               {customHeaderFields.map((field, idx) => (
                 <View key={idx} style={styles.customField}>
@@ -123,91 +128,88 @@ export default function EngineeringInvoice({ data }: { data: IndustryTemplateDat
                 </View>
               ))}
             </View>
-          )}
+          ) : null}
         </View>
 
-        {/* Right column: dates + totals */}
         <View style={[styles.metaRight, { backgroundColor: surface }]}>
-          {issueDate && (
+          {issueDate ? (
             <View style={styles.dateRow}>
               <Text style={[styles.dateLabel, { color: muted }]}>{issueDateLabel}</Text>
               <Text style={[styles.dateValue, { color: text }]}>{issueDate}</Text>
             </View>
-          )}
-          {dueDateOrValidityDate && (
+          ) : null}
+          {dueDateOrValidityDate ? (
             <View style={styles.dateRow}>
               <Text style={[styles.dateLabel, { color: muted }]}>{dueDateOrValidityDateLabel}</Text>
               <Text style={[styles.dateValue, { color: text }]}>{dueDateOrValidityDate}</Text>
             </View>
-          )}
-          {/* Totals section */}
+          ) : null}
           <View style={[styles.totalsBlock, { borderTopColor: text }]}>
-            {totals.lines.map((line, idx) => (
+            {lines.map((line, idx) => (
               <View key={idx} style={styles.totalLine}>
                 <Text>{line.label}</Text>
                 <Text>{line.value}</Text>
               </View>
             ))}
-            {totals.mainLine && (
+            {mainLine ? (
               <View style={[styles.totalLine, styles.dueLine, { borderTopColor: border }]}>
-                <Text>{totals.mainLine.label}</Text>
-                <Text>{totals.mainLine.value}</Text>
+                <Text>{mainLine.label}</Text>
+                <Text>{mainLine.value}</Text>
               </View>
-            )}
-            {totals.amountInWords ? (
-              <Text style={styles.amountInWords}>{totals.amountInWords}</Text>
             ) : null}
-            {totals.balanceDue && (
+            {amountInWords ? (
+              <Text style={styles.amountInWords}>{amountInWords}</Text>
+            ) : null}
+            {balanceDue ? (
               <View style={[styles.totalLine, { marginTop: 4 }]}>
-                <Text>{totals.balanceDue.label}</Text>
-                <Text>{totals.balanceDue.value}</Text>
+                <Text>{balanceDue.label}</Text>
+                <Text>{balanceDue.value}</Text>
               </View>
-            )}
+            ) : null}
           </View>
-          {/* Advance invoice summary block (if present) */}
-          {advanceSummary && (
+          {advanceSummary ? (
             <View style={{ marginTop: 8 }}>
-              {advanceSummary.primaryLabel && advanceSummary.advanceAmount && (
+              {advanceSummary.primaryLabel && advanceSummary.advanceAmount ? (
                 <View style={styles.totalLine}>
                   <Text>{advanceSummary.primaryLabel}</Text>
                   <Text>{advanceSummary.advanceAmount}</Text>
                 </View>
-              )}
-              {advanceSummary.secondaryLabel && advanceSummary.balanceRemaining && (
+              ) : null}
+              {advanceSummary.secondaryLabel && advanceSummary.balanceRemaining ? (
                 <View style={styles.totalLine}>
                   <Text>{advanceSummary.secondaryLabel}</Text>
                   <Text>{advanceSummary.balanceRemaining}</Text>
                 </View>
-              )}
+              ) : null}
             </View>
-          )}
+          ) : null}
         </View>
       </View>
 
-      {/* ---------- TABLE ---------- */}
+      {/* Table */}
       <View style={styles.items}>
-        {/* Column headers */}
-        <View style={[styles.tableHeader, { borderBottomColor: text }]}>
-          {table.columns.map((col, idx) => {
-            const alignStyle = resolveAlignment(col.align);
-            const widthStyle = col.width ? { width: col.width } : {};
-            const flexStyle = col.flex ? { flex: col.flex } : { flex: 1 };
-            return (
-              <View key={idx} style={[widthStyle, flexStyle]}>
-                <Text style={[styles.columnHeader, { color: muted, ...alignStyle }]}>
-                  {col.label}
-                </Text>
-              </View>
-            );
-          })}
-        </View>
-        {/* Rows */}
-        {table.rows.map((row, rowIdx) => {
+        {columns.length > 0 ? (
+          <View style={[styles.tableHeader, { borderBottomColor: text }]}>
+            {columns.map((col, idx) => {
+              const alignStyle = resolveAlignment(col.align);
+              const widthStyle = col.width ? { width: col.width } : {};
+              const flexStyle = col.flex ? { flex: col.flex } : { flex: 1 };
+              return (
+                <View key={idx} style={[widthStyle, flexStyle]}>
+                  <Text style={[styles.columnHeader, { color: muted, ...alignStyle }]}>
+                    {col.label}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
+        {rows.map((row, rowIdx) => {
           if (row.isGroupHeader) {
             return (
               <View key={rowIdx} style={[styles.groupHeaderRow, { backgroundColor: surface }]}>
                 <Text style={[styles.groupHeaderText, { color: text }]}>
-                  {row.groupLabel}
+                  {row.groupLabel || ''}
                 </Text>
               </View>
             );
@@ -217,7 +219,7 @@ export default function EngineeringInvoice({ data }: { data: IndustryTemplateDat
               <View key={rowIdx} style={styles.groupFooterRow}>
                 <Text style={[styles.groupSubtotalLabel, { color: muted }]}>Subtotal</Text>
                 <Text style={[styles.groupSubtotalValue, { color: text }]}>
-                  {row.groupSubtotalValue}
+                  {row.groupSubtotalValue || ''}
                 </Text>
               </View>
             );
@@ -233,7 +235,7 @@ export default function EngineeringInvoice({ data }: { data: IndustryTemplateDat
                 row.isInGroup ? { marginLeft: 12 } : {},
               ]}
             >
-              {table.columns.map((col, colIdx) => {
+              {columns.map((col, colIdx) => {
                 const value = cells[col.key] ?? '';
                 const alignStyle = resolveAlignment(col.align);
                 const widthStyle = col.width ? { width: col.width } : {};
@@ -257,16 +259,16 @@ export default function EngineeringInvoice({ data }: { data: IndustryTemplateDat
         })}
       </View>
 
-      {/* ---------- NOTES (optional) ---------- */}
-      {notes && (
+      {/* Notes */}
+      {notes ? (
         <View style={styles.notesBlock}>
-          <Text style={[styles.notesTitle, { color: text }]}>{notes.title}</Text>
-          <Text style={[styles.notesContent, { color: muted }]}>{notes.content}</Text>
+          <Text style={[styles.notesTitle, { color: text }]}>{notes.title || ''}</Text>
+          <Text style={[styles.notesContent, { color: muted }]}>{notes.content || ''}</Text>
         </View>
-      )}
+      ) : null}
 
-      {/* ---------- BANK DETAILS (optional) ---------- */}
-      {showBankDetails && paymentDetails && (
+      {/* Bank details */}
+      {showBankDetails && paymentDetails ? (
         <View style={[styles.notesBlock, { marginTop: 4 }]}>
           <Text style={[styles.notesTitle, { color: text }]}>Bank Details</Text>
           <View style={styles.bankDetailsRow}>
@@ -275,30 +277,34 @@ export default function EngineeringInvoice({ data }: { data: IndustryTemplateDat
             <Text>No: {paymentDetails.accountNumber}</Text>
           </View>
         </View>
-      )}
+      ) : null}
 
-      {/* ---------- TERMS & CONDITIONS (optional) ---------- */}
-      {terms && (
-        <View style={[
-          styles.termsBlock,
-          { borderTopColor: border },
-          !notes && !showBankDetails ? { marginTop: 20 } : {},
-        ]}>
-          <Text style={[styles.termsTitle, { color: text }]}>{terms.title}</Text>
-          <Text style={[styles.termsContent, { color: muted }]}>{terms.content}</Text>
+      {/* Terms */}
+      {terms ? (
+        <View
+          style={[
+            styles.termsBlock,
+            { borderTopColor: border },
+            !notes && !showBankDetails ? { marginTop: 20 } : {},
+          ]}
+        >
+          <Text style={[styles.termsTitle, { color: text }]}>{terms.title || ''}</Text>
+          <Text style={[styles.termsContent, { color: muted }]}>{terms.content || ''}</Text>
         </View>
-      )}
+      ) : null}
 
-      {/* ---------- SIGNATURE (optional) ---------- */}
-      {signature && (
+      {/* Signature */}
+      {signature ? (
         <View style={styles.signatureBlock}>
-          {signature.imageUrl && <Image src={signature.imageUrl} style={styles.signatureImage} />}
+          {signature.imageUrl ? (
+            <Image src={signature.imageUrl} style={styles.signatureImage} />
+          ) : null}
           <Text style={{ fontFamily: 'Helvetica-Bold', marginTop: 4 }}>
             {signature.name || ''}
           </Text>
           <Text style={{ fontSize: 8, color: muted }}>{signature.role || ''}</Text>
         </View>
-      )}
+      ) : null}
     </Page>
   );
 }
