@@ -2,6 +2,7 @@ import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import { styles, resolveAlignment } from './Civicslatestyles';
 import type { IndustryTemplateData } from '../industryAdapter';
 import { isTightTokenColumn, keepPdfWordUnbroken, resolveTemplateTableColumnStyle } from '../templateTableLayout';
+import { safeString } from './safeValue';
 
 export default function Template({ data }: { data: IndustryTemplateData }) {
   const accent = data.design.accentColor || '#2F3A44';
@@ -17,7 +18,7 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
       ? { label: data.dueDateOrValidityDateLabel, value: data.dueDateOrValidityDate }
       : null,
     data.poNumber ? { label: data.poNumberLabel, value: data.poNumber } : null,
-    ...data.customHeaderFields,
+    ...data.customHeaderFields.map(f => ({ label: safeString(f.label), value: safeString(f.value) })),
   ].filter(Boolean) as Array<{ label: string; value: string }>;
 
   const renderAddress = (
@@ -40,8 +41,7 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
   };
 
   const renderCellValue = (value: any) => {
-    if (value === null || value === undefined) return '';
-    return String(value);
+    return safeString(value);
   };
 
   return (
@@ -106,7 +106,7 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
             {renderAddress(data.company)}
             {data.company.customInfo.map((item, index) => (
               <Text key={`${item.label}-${index}`} style={[styles.mutedText, { color: muted }]}>
-                {item.label}: {item.value}
+                {safeString(item.label)}: {safeString(item.value)}
               </Text>
             ))}
           </View>
@@ -232,10 +232,10 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
               {data.attachments.map((item, index) =>
                 item.url ? (
                   <Link key={`${item.label}-${index}`} src={item.url}>
-                    {item.label}
+                    {safeString(item.label)}
                   </Link>
                 ) : (
-                  <Text key={`${item.label}-${index}`}>{item.label}</Text>
+                  <Text key={`${item.label}-${index}`}>{safeString(item.label)}</Text>
                 )
               )}
             </View>
@@ -246,7 +246,7 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
               <Text style={[styles.panelTitle, { color: muted }]}>Additional Information</Text>
               {data.additionalFields.map((field, index) => (
                 <Text key={`${field.label}-${index}`}>
-                  {field.label}: {field.value}
+                  {safeString(field.label)}: {safeString(field.value)}
                 </Text>
               ))}
             </View>

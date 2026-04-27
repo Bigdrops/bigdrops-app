@@ -2,6 +2,7 @@ import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import { styles, resolveAlignment } from './Naijabizstyles';
 import type { IndustryTemplateData } from '../industryAdapter';
 import { isTightTokenColumn, keepPdfWordUnbroken, resolveTemplateTableColumnStyle } from '../templateTableLayout';
+import { safeString } from './safeValue';
 
 export default function Template({ data }: { data: IndustryTemplateData }) {
   const accentColor = data.design?.accentColor || '#0f172a';
@@ -26,7 +27,7 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
           )}
           {data.company?.customInfo?.map((info, idx) => (
             <Text key={idx} style={[styles.brandMeta, { color: mutedColor }]}>
-              {info.label}: {info.value}
+              {safeString(info.label)}: {safeString(info.value)}
             </Text>
           ))}
         </View>
@@ -52,8 +53,8 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
           )}
           {data.customHeaderFields?.map((field, idx) => (
             <View key={idx} style={{ marginBottom: 6 }}>
-              <Text style={[styles.metaLabel, { color: mutedColor }]}>{field.label}</Text>
-              <Text style={[styles.metaValue, { color: textColor }]}>{field.value}</Text>
+              <Text style={[styles.metaLabel, { color: mutedColor }]}>{safeString(field.label)}</Text>
+              <Text style={[styles.metaValue, { color: textColor }]}>{safeString(field.value)}</Text>
             </View>
           ))}
         </View>
@@ -61,27 +62,27 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
 
       {/* Addresses */}
       <View style={styles.addresses}>
-        {data.client && (
+        {!!data.client && (
           <View style={styles.addressBox}>
             <Text style={[styles.addressLabel, { color: mutedColor }]}>Bill To</Text>
             <View style={styles.addressText}>
               <Text style={{ fontWeight: 'bold', color: textColor }}>{data.client.name}</Text>
-              {data.client.address && <Text>{data.client.address}</Text>}
-              {data.client.cityState && <Text>{data.client.cityState}</Text>}
-              {data.client.phone && <Text>{data.client.phone}</Text>}
-              {data.client.email && <Text>{data.client.email}</Text>}
+              {!!data.client.address && <Text>{data.client.address}</Text>}
+              {!!data.client.cityState && <Text>{data.client.cityState}</Text>}
+              {!!data.client.phone && <Text>{data.client.phone}</Text>}
+              {!!data.client.email && <Text>{data.client.email}</Text>}
             </View>
           </View>
         )}
-        {data.company && (
+        {!!data.company && (
           <View style={[styles.addressBox, styles.textRight]}>
             <Text style={[styles.addressLabel, { color: mutedColor }]}>From</Text>
             <View style={[styles.addressText, styles.textRight]}>
               <Text style={{ fontWeight: 'bold', color: textColor }}>{data.company.name}</Text>
-              {data.company.address && <Text>{data.company.address}</Text>}
-              {data.company.cityState && <Text>{data.company.cityState}</Text>}
-              {data.company.phone && <Text>{data.company.phone}</Text>}
-              {data.company.email && <Text>{data.company.email}</Text>}
+              {!!data.company.address && <Text>{data.company.address}</Text>}
+              {!!data.company.cityState && <Text>{data.company.cityState}</Text>}
+              {!!data.company.phone && <Text>{data.company.phone}</Text>}
+              {!!data.company.email && <Text>{data.company.email}</Text>}
             </View>
           </View>
         )}
@@ -150,10 +151,10 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
                       wrap={isTightToken ? false : undefined}
                       hyphenationCallback={isTightToken ? keepPdfWordUnbroken : undefined}
                     >
-                      {cellValue as any}
+                      {safeString(cellValue)}
                     </Text>
                     {isDescription && row.cells?.descriptionSub && (
-                      <Text style={[styles.tableCellSub, { color: mutedColor }]}>{row.cells.descriptionSub as any}</Text>
+                      <Text style={[styles.tableCellSub, { color: mutedColor }]}>{safeString(row.cells.descriptionSub)}</Text>
                     )}
                   </View>
                 );
@@ -264,7 +265,7 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
           <Text style={[styles.notesTitle, { color: textColor }]}>Attachments</Text>
           {data.attachments.map((att, idx) => (
             <Text key={idx} style={{ fontSize: 9, color: mutedColor, marginBottom: 4 }}>
-              {att.url ? <Link src={att.url}>{att.label}</Link> : att.label}
+              {att.url ? <Link src={att.url}>{safeString(att.label)}</Link> : safeString(att.label)}
             </Text>
           ))}
         </View>
@@ -273,7 +274,9 @@ export default function Template({ data }: { data: IndustryTemplateData }) {
       {/* Additional Fields */}
       {data.additionalFields?.map((field, idx) => (
         <View key={idx} style={{ marginBottom: 6 }}>
-          <Text style={{ fontSize: 9, color: mutedColor }}>{field.label}: <Text style={{ color: textColor, fontWeight: 'bold' }}>{field.value}</Text></Text>
+          <Text style={{ fontSize: 9, color: mutedColor }}>
+            {safeString(field.label)}: <Text style={{ color: textColor, fontWeight: 'bold' }}>{safeString(field.value)}</Text>
+          </Text>
         </View>
       ))}
 
