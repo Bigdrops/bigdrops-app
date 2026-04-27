@@ -308,6 +308,41 @@ export const styles = StyleSheet.create({
     height: 40,
     objectFit: 'contain',
   },
+  signatureLine: {
+    borderTopWidth: 1,
+    borderTopStyle: 'solid',
+    borderTopColor: '#cbc5bd',
+    width: 120,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  signerName: {
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 10,
+  },
+  signerRole: {
+    fontSize: 8,
+    color: '#8c8279',
+    marginTop: 2,
+  },
+  attachmentsWrap: {
+    marginTop: 4,
+  },
+  attachmentItem: {
+    fontSize: 9,
+    color: '#3a3a3a',
+    marginBottom: 2,
+  },
+  attachmentLink: {
+    fontSize: 9,
+    textDecoration: 'underline',
+    marginBottom: 2,
+  },
+  imageLink: {
+    fontSize: 7,
+    marginTop: 2,
+    textDecoration: 'underline',
+  },
   /* ---------- FIXED FOOTER ---------- */
   footerFixed: {
     position: 'absolute',

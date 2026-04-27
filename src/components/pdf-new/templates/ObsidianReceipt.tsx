@@ -1,5 +1,5 @@
 import React from 'react';
-import { Page, Text, View, Image } from '@react-pdf/renderer';
+import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import { styles, resolveAlignment } from './ObsidianReceiptStyles';
 import type { IndustryTemplateData } from '../industryAdapter';
 import { safeString } from './safeValue';
@@ -28,6 +28,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
     advanceSummary = null,
     notes = null,
     terms = null,
+    attachments = [],
     signature = null,
     footer = { documentNumber: '', companyName: '', extraText: '' },
     design = {},
@@ -287,7 +288,10 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
                   ) : null}
                 </View>
                 {isDescriptionCol && rowImageUrl && (
-                  <Image src={rowImageUrl} style={styles.itemImage} />
+                  <>
+                    <Image src={rowImageUrl} style={styles.itemImage} />
+                    <Link src={rowImageUrl} style={compactStyles(styles.imageLink, { color: accent })}>Open image</Link>
+                  </>
                 )}
               </View>
             </View>
@@ -362,11 +366,27 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
         </View>
       )}
 
+      {attachments && attachments.length > 0 ? (
+        <View style={compactStyles(styles.termsBlock, { borderTopColor: border, marginTop: 10 })}>
+          <Text style={compactStyles(styles.termsTitle, { color: text })}>Attachments</Text>
+          <View style={styles.attachmentsWrap}>
+            {attachments.map((item, idx) => {
+              if (typeof item === 'string') return <Text key={`attach-${idx}`} style={styles.attachmentItem}>- {safeString(item)}</Text>;
+              if (item?.url && item?.label) return <Link key={`attach-${idx}`} src={item.url} style={compactStyles(styles.attachmentLink, { color: accent })}>{safeString(item.label)}</Link>;
+              if (item?.label) return <Text key={`attach-${idx}`} style={styles.attachmentItem}>- {safeString(item.label)}</Text>;
+              if (item?.url) return <Link key={`attach-${idx}`} src={item.url} style={compactStyles(styles.attachmentLink, { color: accent })}>{safeString(item.url)}</Link>;
+              return null;
+            })}
+          </View>
+        </View>
+      ) : null}
+
       {signature && (signatureImageUrl || signature.name || signature.role) && (
         <View style={styles.signatureBlock}>
           {signatureImageUrl && <Image src={signatureImageUrl} style={styles.signatureImage} />}
-          <Text style={{ fontFamily: 'Helvetica-Bold', marginTop: 4 }}>{safeString(signature.name)}</Text>
-          <Text style={{ fontSize: 8, color: muted }}>{safeString(signature.role)}</Text>
+          <View style={styles.signatureLine} />
+          {signature.name ? <Text style={compactStyles(styles.signerName, { color: text })}>{safeString(signature.name)}</Text> : null}
+          {signature.role ? <Text style={styles.signerRole}>{safeString(signature.role)}</Text> : null}
         </View>
       )}
     </Page>
