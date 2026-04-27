@@ -196,7 +196,7 @@ export const styles = StyleSheet.create({
     width: 48, // Increased size
     height: 48,
     objectFit: 'cover',
-    marginRight: 12,
+    marginTop: 6,
     borderRadius: 6, // Subtle rounding
     backgroundColor: '#f6f3ef',
   },

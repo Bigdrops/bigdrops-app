@@ -15,6 +15,8 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
     issueDateLabel = '',
     dueDateOrValidityDate = null,
     dueDateOrValidityDateLabel = '',
+    poNumber = null,
+    poNumberLabel = '',
     customHeaderFields = [],
     showTagline = false,
     showBankDetails = false,
@@ -45,9 +47,14 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
 
   const columns = Array.isArray(table?.columns) ? table.columns.filter(Boolean) : [];
   const rows = Array.isArray(table?.rows) ? table.rows.filter(Boolean) : [];
-  const safeCustomHeaderFields = Array.isArray(customHeaderFields) 
+  const rawCustomHeaderFields = Array.isArray(customHeaderFields) 
     ? customHeaderFields.filter(f => f && f.label && f.value && !String(f.label).toLowerCase().includes('.md')) 
     : [];
+  
+  const safeCustomHeaderFields = [...rawCustomHeaderFields];
+  if (poNumber) {
+    safeCustomHeaderFields.unshift({ label: poNumberLabel || 'PO Number', value: poNumber });
+  }
     
   const companyLogoUrl = typeof company?.companyLogoUrl === 'string' && company.companyLogoUrl.trim()
     ? company.companyLogoUrl
@@ -66,7 +73,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
       <Image
         key="company-logo"
         src={companyLogoUrl}
-        style={{ width: 140, height: 50, objectFit: 'contain', marginBottom: 12 }}
+        style={{ width: 160, height: 60, objectFit: 'contain', marginBottom: 12 }}
       />,
     );
   }
@@ -126,8 +133,11 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
       <View key="custom-fields" style={styles.customFieldsContainer}>
         {safeCustomHeaderFields.map((field, idx) => (
           <View key={`custom-field-${idx}`} style={styles.customField}>
-            <Text style={compactStyles(styles.customFieldLabel, { color: muted })}>{safeString(field.label)}</Text>
-            <Text style={compactStyles(styles.customFieldValue, { color: text })}>{safeString(field.value)}</Text>
+            <Text>
+              <Text style={compactStyles(styles.customFieldLabel, { color: text })}>{safeString(field.label)}</Text>
+              <Text style={{ color: muted }}>{'  ─  '}</Text>
+              <Text style={compactStyles(styles.customFieldValue, { color: text })}>{safeString(field.value)}</Text>
+            </Text>
           </View>
         ))}
       </View>,
@@ -179,6 +189,13 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
         <Text style={compactStyles(styles.dateLabel, { color: muted })}>{safeString(dueDateOrValidityDateLabel)}</Text>
         <Text style={compactStyles(styles.dateValue, { color: text })}>{safeString(dueDateOrValidityDate)}</Text>
       </View>,
+    );
+  }
+  if (advanceSummary) {
+    metaRightChildren.push(
+      <Text key="advance-label" style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: text, marginBottom: 4, marginTop: 10, textTransform: 'uppercase' }}>
+        Advance Invoice
+      </Text>
     );
   }
   metaRightChildren.push(
@@ -260,11 +277,8 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
 
           return (
             <View key={`cell-${rowIdx}-${colIdx}`} style={compactStyles(flexStyle, styles.tableCell)}>
-              <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                {isDescriptionCol && rowImageUrl && (
-                  <Image src={rowImageUrl} style={styles.itemImage} />
-                )}
-                <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                <View style={{ width: '100%' }}>
                   <Text style={alignStyle}>{value}</Text>
                   {isDescriptionCol && subValue ? (
                     <Text style={compactStyles(styles.itemDescriptionSub, alignStyle)}>
@@ -272,6 +286,9 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
                     </Text>
                   ) : null}
                 </View>
+                {isDescriptionCol && rowImageUrl && (
+                  <Image src={rowImageUrl} style={styles.itemImage} />
+                )}
               </View>
             </View>
           );
