@@ -1,333 +1,348 @@
+import React from 'react';
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
-import { styles, resolveAlignment } from './Civicslatestyles';
 import type { IndustryTemplateData } from '../industryAdapter';
-import { isTightTokenColumn, keepPdfWordUnbroken, resolveTemplateTableColumnStyle } from '../templateTableLayout';
-import { safeString } from './safeValue';
+import { styles } from './CivicslateStyles';
 
-export default function Template({ data }: { data: IndustryTemplateData }) {
-  const accent = data.design.accentColor || '#2F3A44';
-  const text = data.design.textColor || '#1F2933';
-  const muted = data.design.mutedColor || '#7B8794';
-  const border = data.design.borderColor || '#E4DFD2';
-  const surface = data.design.surfaceColor || '#F3EFE6';
-
-  const metaRows = [
-    { label: data.documentNumberLabel, value: data.documentNumber },
-    data.issueDate ? { label: data.issueDateLabel, value: data.issueDate } : null,
-    data.dueDateOrValidityDate
-      ? { label: data.dueDateOrValidityDateLabel, value: data.dueDateOrValidityDate }
-      : null,
-    data.poNumber ? { label: data.poNumberLabel, value: data.poNumber } : null,
-    ...data.customHeaderFields.map(f => ({ label: safeString(f.label), value: safeString(f.value) })),
-  ].filter(Boolean) as Array<{ label: string; value: string }>;
-
-  const renderAddress = (
-    entity:
-      | IndustryTemplateData['company']
-      | IndustryTemplateData['client']
-      | null
-  ) => {
-    if (!entity) return null;
-
-    return (
-      <>
-        <Text style={[styles.partyName, { color: text }]}>{entity.name}</Text>
-        {!!entity.address && <Text style={[styles.mutedText, { color: muted }]}>{entity.address}</Text>}
-        {!!entity.cityState && <Text style={[styles.mutedText, { color: muted }]}>{entity.cityState}</Text>}
-        {!!entity.phone && <Text style={[styles.mutedText, { color: muted }]}>{entity.phone}</Text>}
-        {!!entity.email && <Text style={[styles.mutedText, { color: muted }]}>{entity.email}</Text>}
-      </>
+function safeText(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'object') {
+    const objectValue = value as Record<string, unknown>;
+    return safeText(
+      objectValue.label ??
+        objectValue.name ??
+        objectValue.text ??
+        objectValue.main ??
+        objectValue.value ??
+        ''
     );
-  };
+  }
+  return '';
+}
 
-  const renderCellValue = (value: any) => {
-    return safeString(value);
-  };
+export default function PremiumInvoice({ data }: { data: IndustryTemplateData }) {
+  // Safe default extraction
+  const company = data.company;
+  const client = data.client;
+  const table = data.table;
+  const totals = data.totals;
+  const advance = data.advanceSummary;
+  const payment = data.paymentDetails;
+  const notes = data.notes;
+  const terms = data.terms;
+  const footer = data.footer;
+  const isAdvanceInvoice = !!advance;
+
+  // Render Table Header dynamically while retaining fixed proportions if provided
+  const renderTableHeader = () => (
+    <View style={styles.tableHeaderRow} fixed>
+      {table.columns.map((col, idx) => {
+        const alignStyle = col.align === 'right' ? styles.textRight : col.align === 'center' ? styles.textCenter : styles.textLeft;
+        const widthStyle = col.width ? { width: `${col.width}%` } : { flex: col.flex || 1 };
+        return (
+          <Text key={col.key || idx} style={[styles.tableHeaderCell, alignStyle, widthStyle]}>
+            {safeText(col.label)}
+          </Text>
+        );
+      })}
+    </View>
+  );
 
   return (
-    <Page size="A4" style={[styles.page, { color: text }]}>
-      <View style={styles.hero}>
-        <View style={[styles.identity, { backgroundColor: accent }]}>
-          {data.company?.companyLogoUrl ? (
-            <Image src={data.company.companyLogoUrl} style={styles.logoImage} />
-          ) : (
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoText}>
-                {data.company?.name ? data.company.name.slice(0, 2).toUpperCase() : 'CO'}
+    <Page size="A4" style={styles.page}>
+      <View style={styles.invoiceContainer}>
+        {/* 1. HEADER */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.brandName}>{safeText(company?.name)}</Text>
+            {company?.address && (
+              <Text style={styles.brandContact}>
+                {safeText(company.address)}
+                {company.cityState ? `, ${safeText(company.cityState)}` : ''}
               </Text>
-            </View>
-          )}
-
-          <Text style={styles.title}>{data.title}</Text>
-
-          {!!data.customTitle && (
-            <Text style={styles.customTitle}>{data.customTitle}</Text>
-          )}
-
-          {data.advanceSummary && (
-            <View style={styles.labelRow}>
-              {!!data.advanceSummary.primaryLabel && (
-                <Text style={styles.primaryLabel}>{data.advanceSummary.primaryLabel}</Text>
-              )}
-              {!!data.advanceSummary.secondaryLabel && (
-                <Text style={styles.secondaryLabel}>{data.advanceSummary.secondaryLabel}</Text>
-              )}
-            </View>
-          )}
-
-          {data.showTagline && !!data.company?.tagline && (
-            <Text style={[styles.customTitle, { marginTop: 12 }]}>
-              {data.company.tagline}
-            </Text>
-          )}
-        </View>
-
-        <View style={[styles.metaCard, { borderColor: border }]}>
-          {metaRows.map((row, index) => (
-            <View
-              key={`${row.label}-${index}`}
-              style={[
-                styles.metaRow,
-                { borderBottomColor: border },
-                index === metaRows.length - 1 ? { borderBottomWidth: 0 } : null,
-              ]}
-            >
-              <Text style={[styles.metaLabel, { color: muted }]}>{row.label}</Text>
-              <Text style={[styles.metaValue, { color: text }]}>{row.value}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.parties}>
-        {data.company && (
-          <View style={[styles.panel, { borderColor: border }]}>
-            <Text style={[styles.panelTitle, { color: muted }]}>Company</Text>
-            {renderAddress(data.company)}
-            {data.company.customInfo.map((item, index) => (
-              <Text key={`${item.label}-${index}`} style={[styles.mutedText, { color: muted }]}>
-                {safeString(item.label)}: {safeString(item.value)}
+            )}
+            {(company?.phone || company?.email) && (
+              <Text style={styles.brandContact}>
+                {[safeText(company?.phone), safeText(company?.email)].filter(Boolean).join(' | ')}
               </Text>
-            ))}
+            )}
           </View>
-        )}
 
-        {data.client && (
-          <View style={[styles.panel, { borderColor: border }]}>
-            <Text style={[styles.panelTitle, { color: muted }]}>Client</Text>
-            {renderAddress(data.client)}
+          <View style={styles.headerCenter}>
+            {company?.companyLogoUrl ? (
+              <Image src={company.companyLogoUrl} style={styles.logoBox} />
+            ) : null}
           </View>
-        )}
-      </View>
 
-      <View style={[styles.tableWrap, { borderColor: border }]}>
-        <View style={[styles.tableHeader, { backgroundColor: surface, borderBottomColor: border }]} fixed>
-          {data.table.columns.map((column) => (
-            <Text
-              key={column.key}
-              style={[
-                styles.tableHeaderCell,
-                resolveTemplateTableColumnStyle(column),
-                { color: accent },
-                resolveAlignment(column.align),
-              ]}
-            >
-              {column.label}
+          <View style={styles.headerRight}>
+            <Text style={styles.docTitle}>
+              {safeText(data.customTitle || (isAdvanceInvoice ? 'Advance Invoice' : data.title))}
             </Text>
-          ))}
+            <Text style={styles.docMeta}>
+              {safeText(data.documentNumber)} • {safeText(data.issueDate)}
+            </Text>
+          </View>
         </View>
 
-        {data.table.rows.map((row, rowIndex) => {
-          if (row.isGroupHeader) {
+        {/* 2. ADDRESS & METADATA */}
+        <View style={styles.metaSection}>
+          <View style={styles.addressPanel}>
+            {client && (
+              <View style={styles.addressBlock}>
+                <Text style={styles.addressLabel}>Bill To</Text>
+                <Text style={styles.addressVal}>{safeText(client.name)}</Text>
+                {client.address && <Text style={styles.addressVal}>{safeText(client.address)}</Text>}
+                {client.cityState && <Text style={styles.addressVal}>{safeText(client.cityState)}</Text>}
+                {client.email && <Text style={styles.addressVal}>{safeText(client.email)}</Text>}
+                {client.phone && <Text style={styles.addressVal}>{safeText(client.phone)}</Text>}
+              </View>
+            )}
+          </View>
+
+          <View style={styles.customHeadersPanel}>
+            <View style={styles.customHeadersWrap}>
+              {data.poNumber && (
+                <View style={styles.customItem}>
+                  <Text style={styles.customKey}>{safeText(data.poNumberLabel)}</Text>
+                  <Text style={styles.customVal}>{safeText(data.poNumber)}</Text>
+                </View>
+              )}
+              {data.dueDateOrValidityDate && (
+                <View style={styles.customItem}>
+                  <Text style={styles.customKey}>{safeText(data.dueDateOrValidityDateLabel)}</Text>
+                  <Text style={styles.customVal}>{safeText(data.dueDateOrValidityDate)}</Text>
+                </View>
+              )}
+              {data.customHeaderFields?.map((field, idx) => (
+                <View key={idx} style={styles.customItem}>
+                  <Text style={styles.customKey}>{safeText(field.label)}</Text>
+                  <Text style={styles.customVal}>{safeText(field.value)}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </View>
+
+        {/* 3. TABLE SECTION */}
+        <View style={styles.tableSection}>
+          {renderTableHeader()}
+
+          {table.rows.map((row, rIndex) => {
+            if (row.rowType === 'group_header') {
+              return (
+                <View key={rIndex} style={styles.groupHeader} wrap={false}>
+                  <Text style={styles.groupHeaderText}>{safeText(row.groupLabel)}</Text>
+                </View>
+              );
+            }
+
+            if (row.rowType === 'group_footer') {
+              return (
+                <View key={rIndex} style={styles.groupSubtotalRow} wrap={false}>
+                  <View style={{ flex: 1 }} />
+                  <Text style={styles.groupSubtotalLabel}>Group Total:</Text>
+                  <Text style={styles.groupSubtotalVal}>{safeText(row.groupSubtotalValue)}</Text>
+                </View>
+              );
+            }
+
+            // Normal Item Row
+            const rowStyles = [styles.tableRow, row.isInGroup && styles.groupItemRow].filter(Boolean);
+            
             return (
-              <View key={`group-header-${rowIndex}`} style={[styles.groupHeader, { backgroundColor: accent }]}>
-                <Text style={styles.groupHeaderText}>{row.groupLabel || ''}</Text>
+              <View key={rIndex} style={rowStyles} wrap={false}>
+                {table.columns.map((col, cIndex) => {
+                  const alignStyle = col.align === 'right' ? styles.textRight : col.align === 'center' ? styles.textCenter : styles.textLeft;
+                  const widthStyle = col.width ? { width: `${col.width}%` } : { flex: col.flex || 1 };
+                  
+                  const rawVal = row.cells?.[col.key];
+                  const isDescriptionCol = cIndex === 1 || col.key === 'description'; // Infer main description column
+
+                  return (
+                    <View key={cIndex} style={[widthStyle, alignStyle]}>
+                      {isDescriptionCol ? (
+                        <>
+                          <Text style={styles.itemDesc}>
+                            {row.isInGroup ? '└ ' : ''}{safeText(rawVal)}
+                          </Text>
+                          {/* Render Sub-description if provided in payload format often used */}
+                          {row.cells?.subDescription && (
+                            <Text style={styles.itemSub}>{safeText(row.cells.subDescription)}</Text>
+                          )}
+                          
+                          {/* Thumbnail and Link integration */}
+                          {row.imageUrl && (
+                            <View style={styles.thumbnailContainer} wrap={false}>
+                              <Image src={row.imageUrl} style={styles.itemThumbnail} />
+                              <View>
+                                <Link src={row.imageUrl} style={styles.openImageLink}>
+                                  Open image
+                                </Link>
+                              </View>
+                            </View>
+                          )}
+                        </>
+                      ) : (
+                        <Text style={styles.tableCell}>{safeText(rawVal)}</Text>
+                      )}
+                    </View>
+                  );
+                })}
               </View>
             );
-          }
+          })}
+        </View>
 
-          if (row.isGroupFooter) {
-            if (!row.showSubtotal) return null;
-
-            return (
-              <View
-                key={`group-footer-${rowIndex}`}
-                style={[styles.groupFooter, { backgroundColor: surface, borderBottomColor: border }]}
-              >
-                <Text style={[styles.groupFooterText, { color: accent }]}>
-                  {row.groupLabel || 'Subtotal'} {row.groupSubtotalValue || ''}
-                </Text>
-              </View>
-            );
-          }
-
-          return (
-            <View
-              key={`row-${rowIndex}`}
-              wrap={false}
-              style={[
-                styles.tableRow,
-                { borderBottomColor: border },
-                row.isInGroup ? ([styles.nestedRow, { borderLeftColor: accent }] as any) : null,
-              ] as any}
-            >
-              {data.table.columns.map((column, columnIndex) => {
-                const value = renderCellValue(row.cells?.[column.key]);
-                const isDescription = column.key === 'description';
-                const isTightToken = isTightTokenColumn(column.key);
-
-                return (
-                  <View
-                    key={column.key}
-                    style={[
-                      styles.tableCell,
-                      resolveTemplateTableColumnStyle(column),
-                      { color: text },
-                      resolveAlignment(column.align),
-                    ]}
-                  >
-                    {isDescription && row.imageUrl ? (
-                      <View style={styles.descriptionCell}>
-                        <Image src={row.imageUrl} style={styles.itemImage} />
-                        <Text>{value}</Text>
+        {/* 4. BOTTOM SECTION */}
+        <View style={styles.bottomSection} wrap={false}>
+          <View style={styles.bottomGrid}>
+            <View style={styles.leftCol}>
+              {payment && data.showBankDetails && (
+                <View>
+                  <Text style={styles.sectionTitle}>Payment Information</Text>
+                  <View style={styles.bankDetails}>
+                    {payment.bankName && (
+                      <View style={styles.bankRow}>
+                        <Text style={styles.bankLabel}>Bank:</Text>
+                        <Text style={styles.bankVal}>{safeText(payment.bankName)}</Text>
                       </View>
-                    ) : (
-                      <Text
-                        wrap={isTightToken ? false : undefined}
-                        hyphenationCallback={isTightToken ? keepPdfWordUnbroken : undefined}
-                      >
-                        {value}
-                      </Text>
+                    )}
+                    {payment.accountName && (
+                      <View style={styles.bankRow}>
+                        <Text style={styles.bankLabel}>Account Name:</Text>
+                        <Text style={styles.bankVal}>{safeText(payment.accountName)}</Text>
+                      </View>
+                    )}
+                    {payment.accountNumber && (
+                      <View style={styles.bankRow}>
+                        <Text style={styles.bankLabel}>Account No:</Text>
+                        <Text style={styles.bankVal}>{safeText(payment.accountNumber)}</Text>
+                      </View>
+                    )}
+                    {payment.sortCode && (
+                      <View style={styles.bankRow}>
+                        <Text style={styles.bankLabel}>Sort Code:</Text>
+                        <Text style={styles.bankVal}>{safeText(payment.sortCode)}</Text>
+                      </View>
                     )}
                   </View>
-                );
-              })}
-            </View>
-          );
-        })}
-      </View>
+                </View>
+              )}
 
-      <View style={styles.lower}>
-        <View style={styles.stack}>
-          {data.notes && (
-            <View style={[styles.panel, { borderColor: border }]}>
-              <Text style={[styles.panelTitle, { color: muted }]}>{data.notes.title}</Text>
-              <Text>{data.notes.content}</Text>
-            </View>
-          )}
+              {notes?.content && (
+                <View>
+                  <Text style={styles.sectionTitle}>{safeText(notes.title)}</Text>
+                  <Text style={styles.textBlock}>{safeText(notes.content)}</Text>
+                </View>
+              )}
 
-          {data.showBankDetails && data.paymentDetails && (
-            <View style={[styles.panel, { borderColor: border }]}>
-              <Text style={[styles.panelTitle, { color: muted }]}>Bank Details</Text>
-              <Text>Bank: {data.paymentDetails.bankName}</Text>
-              <Text>Account Name: {data.paymentDetails.accountName}</Text>
-              <Text>Account Number: {data.paymentDetails.accountNumber}</Text>
-              {!!data.paymentDetails.sortCode && <Text>Sort Code: {data.paymentDetails.sortCode}</Text>}
-            </View>
-          )}
-
-          {data.attachments.length > 0 && (
-            <View style={[styles.panel, { borderColor: border }]}>
-              <Text style={[styles.panelTitle, { color: muted }]}>Attachments</Text>
-              {data.attachments.map((item, index) =>
-                item.url ? (
-                  <Link key={`${item.label}-${index}`} src={item.url}>
-                    {safeString(item.label)}
-                  </Link>
-                ) : (
-                  <Text key={`${item.label}-${index}`}>{safeString(item.label)}</Text>
-                )
+              {terms?.content && (
+                <View>
+                  <Text style={styles.sectionTitle}>{safeText(terms.title)}</Text>
+                  <Text style={styles.textBlock}>{safeText(terms.content)}</Text>
+                </View>
               )}
             </View>
-          )}
 
-          {data.additionalFields.length > 0 && (
-            <View style={[styles.panel, { borderColor: border }]}>
-              <Text style={[styles.panelTitle, { color: muted }]}>Additional Information</Text>
-              {data.additionalFields.map((field, index) => (
-                <Text key={`${field.label}-${index}`}>
-                  {safeString(field.label)}: {safeString(field.value)}
-                </Text>
+            <View style={styles.rightCol}>
+              <View style={styles.totalsPanel}>
+                {totals.lines.map((line, idx) => (
+                  <View key={idx} style={styles.totalLine}>
+                    <Text style={styles.totalLabel}>{safeText(line.label)}</Text>
+                    <Text style={styles.totalVal}>{safeText(line.value)}</Text>
+                  </View>
+                ))}
+                
+                {totals.mainLine && (
+                  <View style={styles.totalLineGrand}>
+                    <Text style={styles.totalLabelGrand}>{safeText(totals.mainLine.label)}</Text>
+                    <Text style={styles.totalValGrand}>{safeText(totals.mainLine.value)}</Text>
+                  </View>
+                )}
+
+                {!isAdvanceInvoice && totals.balanceDue && (
+                  <View style={styles.totalLineGrand}>
+                    <Text style={styles.totalLabelGrand}>{safeText(totals.balanceDue.label)}</Text>
+                    <Text style={styles.totalValGrand}>{safeText(totals.balanceDue.value)}</Text>
+                  </View>
+                )}
+                
+                {totals.amountInWords && (
+                  <Text style={styles.amountWords}>{safeText(totals.amountInWords)}</Text>
+                )}
+              </View>
+
+              {isAdvanceInvoice && advance && (
+                <View style={styles.advanceBlock}>
+                  <View style={styles.advanceDue}>
+                    <View><Text style={styles.advanceDueLbl}>{safeText(advance.primaryLabel)}</Text></View>
+                    <View><Text style={styles.advanceDueVal}>{safeText(advance.advanceAmount)}</Text></View>
+                  </View>
+                  <View style={styles.advanceBal}>
+                    <Text style={styles.advanceBalText}>{safeText(advance.secondaryLabel)}</Text>
+                    <Text style={styles.advanceBalText}>{safeText(advance.balanceRemaining)}</Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* 5. ADDITIONAL FIELDS (Bottom span) */}
+          {data.additionalFields && data.additionalFields.length > 0 && (
+            <View style={styles.additionalFieldsBar}>
+              {data.additionalFields.map((field, idx) => (
+                <View key={idx} style={styles.customItem}>
+                  <Text style={styles.customKey}>{safeText(field.label)}</Text>
+                  <Text style={styles.customVal}>{safeText(field.value)}</Text>
+                </View>
               ))}
             </View>
           )}
 
-          {data.terms && (
-            <View style={[styles.panel, { borderColor: border }]}>
-              <Text style={[styles.panelTitle, { color: muted }]}>{data.terms.title}</Text>
-              <Text>{data.terms.content}</Text>
+          {/* 6. SIGNATURES & ATTACHMENTS */}
+          <View style={styles.footerMetaGrid}>
+            <View style={styles.signatureBox}>
+              {data.signature ? (
+                <>
+                  {data.signature.imageUrl ? (
+                    <Image src={data.signature.imageUrl} style={styles.signatureImg} />
+                  ) : (
+                    <View style={styles.sigLineFallback} />
+                  )}
+                  {data.signature.name && <Text style={styles.sigName}>{safeText(data.signature.name)}</Text>}
+                  {data.signature.role && <Text style={styles.sigRole}>{safeText(data.signature.role)}</Text>}
+                </>
+              ) : null}
             </View>
-          )}
-        </View>
 
-        <View style={[styles.totals, { backgroundColor: accent }]}>
-          {data.totals.lines.map((line, index) => (
-            <View key={`${line.label}-${index}`} style={styles.totalRow}>
-              <Text style={styles.totalLabel}>{line.label}</Text>
-              <Text style={styles.totalValue}>{line.value}</Text>
-            </View>
-          ))}
-
-          {data.totals.mainLine && (
-            <View style={styles.totalRow}>
-              <Text style={styles.mainTotalLabel}>{data.totals.mainLine.label}</Text>
-              <Text style={styles.mainTotalValue}>{data.totals.mainLine.value}</Text>
-            </View>
-          )}
-
-          {!!data.totals.amountInWords && (
-            <Text style={styles.amountWords}>{data.totals.amountInWords}</Text>
-          )}
-
-          {data.totals.balanceDue && (
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>{data.totals.balanceDue.label}</Text>
-              <Text style={styles.totalValue}>{data.totals.balanceDue.value}</Text>
-            </View>
-          )}
-
-          {data.advanceSummary && (
-            <>
-              {!!data.advanceSummary.primaryLabel && !!data.advanceSummary.advanceAmount && (
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>{data.advanceSummary.primaryLabel}</Text>
-                  <Text style={styles.totalValue}>{data.advanceSummary.advanceAmount}</Text>
-                </View>
-              )}
-
-              {!!data.advanceSummary.secondaryLabel && !!data.advanceSummary.balanceRemaining && (
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>{data.advanceSummary.secondaryLabel}</Text>
-                  <Text style={styles.totalValue}>{data.advanceSummary.balanceRemaining}</Text>
-                </View>
-              )}
-            </>
-          )}
-        </View>
-      </View>
-
-      {data.signature && (
-        <View style={styles.signatureBlock}>
-          <Text style={[styles.mutedText, { color: muted }]}>
-            {data.footer.extraText}
-          </Text>
-
-          <View style={styles.signatureLine}>
-            {!!data.signature.imageUrl && (
-              <Image src={data.signature.imageUrl} style={styles.signatureImage} />
-            )}
-            {!!data.signature.name && <Text>{data.signature.name}</Text>}
-            {!!data.signature.role && (
-              <Text style={[styles.mutedText, { color: muted }]}>{data.signature.role}</Text>
+            {data.attachments && data.attachments.length > 0 && (
+              <View style={styles.attachmentsBox}>
+                <Text style={styles.sectionTitle}>Attachments</Text>
+                {data.attachments.map((att, idx) => (
+                  <View key={idx} style={styles.attachmentItem}>
+                    {att.url ? (
+                      <Link src={att.url} style={styles.attachmentLink}>
+                        {safeText(att.label)}
+                      </Link>
+                    ) : (
+                      <Text style={styles.attachmentLink}>{safeText(att.label)}</Text>
+                    )}
+                  </View>
+                ))}
+              </View>
             )}
           </View>
         </View>
-      )}
+      </View>
 
-      <View style={[styles.footer, { borderTopColor: border, color: muted }]} fixed>
-        <Text>{data.footer.companyName}</Text>
-        <Text>{data.footer.documentNumber || data.documentNumber}</Text>
-        <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
+      {/* 7. FIXED PAGE FOOTER */}
+      <View fixed style={styles.pageFooter}>
+        <Text style={styles.ftLeft}>{safeText(footer?.documentNumber)}</Text>
+        <Text style={styles.ftCenter} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
+        <Text style={styles.ftRight}>
+          {[safeText(footer?.companyName), safeText(footer?.extraText)].filter(Boolean).join(' • ')}
+        </Text>
       </View>
     </Page>
   );
