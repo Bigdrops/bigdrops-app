@@ -42,7 +42,7 @@ export interface InvoicePdfOutput {
   showDiscountPercentage: boolean
 }
 
-export const INVOICE_PDF_TEMPLATE_IDS = ['industry', 'civicslate', 'naijabiz', 'obsidian-receipt'] as const
+export const INVOICE_PDF_TEMPLATE_IDS = ['industry', 'ledger', 'naijabiz', 'obsidian-receipt'] as const
 
 export type InvoicePdfTemplateId = (typeof INVOICE_PDF_TEMPLATE_IDS)[number]
 

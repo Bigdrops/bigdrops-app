@@ -1,7 +1,7 @@
 import React from 'react';
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import type { IndustryTemplateData } from '../industryAdapter';
-import { styles } from './Civicslatestyles';
+import { styles } from './LedgerStyles';
 
 function safeText(value: unknown): string {
   if (value === null || value === undefined) return '';
@@ -27,7 +27,7 @@ function formatValidUrl(url: string | undefined): string {
   return `https://${url}`;
 }
 
-export default function Civicslate({ data }: { data: IndustryTemplateData }) {
+export default function Ledger({ data }: { data: IndustryTemplateData }) {
   const company = data.company;
   const client = data.client;
   const table = data.table;
@@ -43,9 +43,9 @@ export default function Civicslate({ data }: { data: IndustryTemplateData }) {
     <View style={styles.tableHeaderRow} fixed>
       {table.columns.map((col, idx) => {
         const alignStyle = col.align === 'right' ? styles.textRight : col.align === 'center' ? styles.textCenter : styles.textLeft;
-        const widthStyle = col.width ? { width: `${col.width}%` } : { flex: col.flex || 1 };
+        const widthStyle = col.width ? { width: col.width, flexGrow: 0, flexShrink: 0 } : { flex: col.flex || 1, flexBasis: 0 };
         return (
-          <Text key={col.key || idx} style={[styles.tableHeaderCell, alignStyle, widthStyle]}>
+          <Text key={col.key || idx} style={[styles.tableHeaderCell, alignStyle, widthStyle as any]}>
             {safeText(col.label)}
           </Text>
         );
@@ -81,21 +81,28 @@ export default function Civicslate({ data }: { data: IndustryTemplateData }) {
 
           <View style={styles.headerRight}>
             <Text style={styles.docTitle}>
-              {safeText(data.customTitle || (isAdvanceInvoice ? 'Advance Invoice' : data.title))}
+              {safeText(isAdvanceInvoice ? 'ADVANCE INVOICE' : data.title)}
             </Text>
-            <Text style={styles.docMeta}>
-              {safeText(data.documentNumberLabel)}: {safeText(data.documentNumber)}
-            </Text>
-            {data.issueDate && (
-              <Text style={styles.docMeta}>
-                {safeText(data.issueDateLabel)}: {safeText(data.issueDate)}
+            {data.customTitle ? (
+              <Text style={styles.customTitleText}>
+                {safeText(data.customTitle)}
               </Text>
-            )}
-            {data.dueDateOrValidityDate && (
+            ) : null}
+            <View style={styles.docMetaBlock}>
               <Text style={styles.docMeta}>
-                {safeText(data.dueDateOrValidityDateLabel)}: {safeText(data.dueDateOrValidityDate)}
+                {safeText(data.documentNumberLabel)}: {safeText(data.documentNumber)}
               </Text>
-            )}
+              {data.issueDate ? (
+                <Text style={styles.docMeta}>
+                  {safeText(data.issueDateLabel)}: {safeText(data.issueDate)}
+                </Text>
+              ) : null}
+              {data.dueDateOrValidityDate ? (
+                <Text style={styles.docMeta}>
+                  {safeText(data.dueDateOrValidityDateLabel)}: {safeText(data.dueDateOrValidityDate)}
+                </Text>
+              ) : null}
+            </View>
           </View>
         </View>
 
@@ -161,30 +168,30 @@ export default function Civicslate({ data }: { data: IndustryTemplateData }) {
               <View key={rIndex} style={rowStyles} wrap={false}>
                 {table.columns.map((col, cIndex) => {
                   const alignStyle = col.align === 'right' ? styles.textRight : col.align === 'center' ? styles.textCenter : styles.textLeft;
-                  const widthStyle = col.width ? { width: `${col.width}%` } : { flex: col.flex || 1 };
+                  const widthStyle = col.width ? { width: col.width, flexGrow: 0, flexShrink: 0 } : { flex: col.flex || 1, flexBasis: 0 };
                   
                   const rawVal = row.cells?.[col.key];
                   const isDescriptionCol = cIndex === 1 || col.key === 'description';
 
                   return (
-                    <View key={cIndex} style={[widthStyle, alignStyle]}>
+                    <View key={cIndex} style={[widthStyle as any, alignStyle]}>
                       {isDescriptionCol ? (
                         <>
                           <Text style={styles.itemDesc}>
                             {row.isInGroup ? '└ ' : ''}{safeText(rawVal)}
                           </Text>
-                          {row.cells?.subDescription && (
+                          {row.cells?.subDescription ? (
                             <Text style={styles.itemSub}>{safeText(row.cells.subDescription)}</Text>
-                          )}
+                          ) : null}
                           
-                          {row.imageUrl && (
+                          {row.imageUrl ? (
                             <View style={styles.thumbnailContainer} wrap={false}>
                               <Image src={row.imageUrl} style={styles.itemThumbnail} />
                               <Link src={formatValidUrl(row.imageUrl)} style={styles.openImageLink}>
                                 Open image
                               </Link>
                             </View>
-                          )}
+                          ) : null}
                         </>
                       ) : (
                         <Text style={styles.tableCell}>{safeText(rawVal)}</Text>

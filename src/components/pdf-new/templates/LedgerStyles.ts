@@ -76,12 +76,22 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'right',
   },
+  docMetaBlock: {
+    marginTop: 4,
+    alignItems: 'flex-end',
+  },
   docMeta: {
     fontSize: 8,
     fontWeight: 'bold',
     color: colors.accent,
     textTransform: 'uppercase',
     marginBottom: 3,
+  },
+  customTitleText: {
+    fontSize: 10,
+    color: colors.grayText,
+    marginBottom: 8,
+    textAlign: 'right',
   },
 
   // Meta Section

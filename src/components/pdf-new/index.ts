@@ -42,20 +42,20 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     { PdfRenderer },
     IndustryModule,
     ObsidianModule,
-    CivicslateModule,
+    LedgerModule,
     NaijabizModule,
   ] = await Promise.all([
     import('@react-pdf/renderer'),
     import('./renderers/PdfRenderer'),
     import('./templates/Industry'),
     import('./templates/ObsidianReceipt'),
-    import('./templates/Civicslate'),
+    import('./templates/Ledger'),
     import('./templates/Naijabiz'),
   ])
 
   const Industry = IndustryModule.default
   const ObsidianReceipt = ObsidianModule.default
-  const Civicslate = CivicslateModule.default
+  const Ledger = LedgerModule.default
   const Naijabiz = NaijabizModule.default
 
   registerPdfFonts()
@@ -73,8 +73,8 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
       Template = ObsidianReceipt
       templateData = adaptIndustryData(request.model)
       break
-    case 'civicslate':
-      Template = Civicslate
+    case 'ledger':
+      Template = Ledger
       templateData = adaptIndustryData(request.model)
       break
     case 'naijabiz':

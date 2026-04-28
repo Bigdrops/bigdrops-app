@@ -29,8 +29,8 @@ const INVOICE_PDF_TEMPLATE_OPTIONS = [
     columns: ['h-7 w-full rounded-md border border-slate-200 bg-white', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-5/6 rounded-full bg-slate-200'],
   },
   {
-    id: 'civicslate',
-    label: 'Civicslate',
+    id: 'ledger',
+    label: 'Ledger',
     eyebrow: 'Editorial',
     shell: 'bg-[#2F3A44] border border-[#24303A]',
     accents: ['h-2.5 w-12 rounded-full bg-[#D8C7A3]', 'h-1 w-4/5 rounded-full bg-white/70', 'h-1 w-3/5 rounded-full bg-white/40'],

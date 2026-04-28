@@ -27,7 +27,7 @@ const templatePreviewById: Record<string, TemplatePreview> = {
     shell: 'bg-white border border-slate-200',
     nodes: ['h-1.5 w-full rounded-full bg-slate-700', 'h-0.5 w-full rounded-full bg-slate-200', 'h-0.5 w-4/5 rounded-full bg-slate-200'],
   },
-  civicslate: {
+  ledger: {
     shell: 'bg-[#2F3A44] border border-[#24303A]',
     nodes: ['h-2.5 w-12 rounded-full bg-[#D8C7A3]', 'h-1 w-4/5 rounded-full bg-white/70', 'h-1 w-3/5 rounded-full bg-white/40'],
   },
