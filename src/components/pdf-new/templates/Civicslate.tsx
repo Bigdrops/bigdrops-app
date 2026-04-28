@@ -21,8 +21,14 @@ function safeText(value: unknown): string {
   return '';
 }
 
-export default function PremiumInvoice({ data }: { data: IndustryTemplateData }) {
-  // Safe default extraction
+// React-PDF will silently drop Links that do not explicitly start with http/https
+function formatValidUrl(url: string | undefined): string {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `https://${url}`;
+}
+
+export default function Civicslate({ data }: { data: IndustryTemplateData }) {
   const company = data.company;
   const client = data.client;
   const table = data.table;
@@ -34,7 +40,6 @@ export default function PremiumInvoice({ data }: { data: IndustryTemplateData })
   const footer = data.footer;
   const isAdvanceInvoice = !!advance;
 
-  // Render Table Header dynamically while retaining fixed proportions if provided
   const renderTableHeader = () => (
     <View style={styles.tableHeaderRow} fixed>
       {table.columns.map((col, idx) => {
@@ -147,7 +152,6 @@ export default function PremiumInvoice({ data }: { data: IndustryTemplateData })
               );
             }
 
-            // Normal Item Row
             const rowStyles = [styles.tableRow, row.isInGroup && styles.groupItemRow].filter(Boolean);
             
             return (
@@ -157,7 +161,7 @@ export default function PremiumInvoice({ data }: { data: IndustryTemplateData })
                   const widthStyle = col.width ? { width: `${col.width}%` } : { flex: col.flex || 1 };
                   
                   const rawVal = row.cells?.[col.key];
-                  const isDescriptionCol = cIndex === 1 || col.key === 'description'; // Infer main description column
+                  const isDescriptionCol = cIndex === 1 || col.key === 'description';
 
                   return (
                     <View key={cIndex} style={[widthStyle, alignStyle]}>
@@ -166,20 +170,16 @@ export default function PremiumInvoice({ data }: { data: IndustryTemplateData })
                           <Text style={styles.itemDesc}>
                             {row.isInGroup ? '└ ' : ''}{safeText(rawVal)}
                           </Text>
-                          {/* Render Sub-description if provided in payload format often used */}
                           {row.cells?.subDescription && (
                             <Text style={styles.itemSub}>{safeText(row.cells.subDescription)}</Text>
                           )}
                           
-                          {/* Thumbnail and Link integration */}
                           {row.imageUrl && (
                             <View style={styles.thumbnailContainer} wrap={false}>
                               <Image src={row.imageUrl} style={styles.itemThumbnail} />
-                              <View>
-                                <Link src={row.imageUrl} style={styles.openImageLink}>
-                                  Open image
-                                </Link>
-                              </View>
+                              <Link src={formatValidUrl(row.imageUrl)} style={styles.openImageLink}>
+                                Open image
+                              </Link>
                             </View>
                           )}
                         </>
@@ -276,8 +276,8 @@ export default function PremiumInvoice({ data }: { data: IndustryTemplateData })
               {isAdvanceInvoice && advance && (
                 <View style={styles.advanceBlock}>
                   <View style={styles.advanceDue}>
-                    <View><Text style={styles.advanceDueLbl}>{safeText(advance.primaryLabel)}</Text></View>
-                    <View><Text style={styles.advanceDueVal}>{safeText(advance.advanceAmount)}</Text></View>
+                    <Text style={styles.advanceDueLbl}>{safeText(advance.primaryLabel)}</Text>
+                    <Text style={styles.advanceDueVal}>{safeText(advance.advanceAmount)}</Text>
                   </View>
                   <View style={styles.advanceBal}>
                     <Text style={styles.advanceBalText}>{safeText(advance.secondaryLabel)}</Text>
@@ -288,7 +288,6 @@ export default function PremiumInvoice({ data }: { data: IndustryTemplateData })
             </View>
           </View>
 
-          {/* 5. ADDITIONAL FIELDS (Bottom span) */}
           {data.additionalFields && data.additionalFields.length > 0 && (
             <View style={styles.additionalFieldsBar}>
               {data.additionalFields.map((field, idx) => (
@@ -300,7 +299,6 @@ export default function PremiumInvoice({ data }: { data: IndustryTemplateData })
             </View>
           )}
 
-          {/* 6. SIGNATURES & ATTACHMENTS */}
           <View style={styles.footerMetaGrid}>
             <View style={styles.signatureBox}>
               {data.signature ? (
@@ -322,7 +320,7 @@ export default function PremiumInvoice({ data }: { data: IndustryTemplateData })
                 {data.attachments.map((att, idx) => (
                   <View key={idx} style={styles.attachmentItem}>
                     {att.url ? (
-                      <Link src={att.url} style={styles.attachmentLink}>
+                      <Link src={formatValidUrl(att.url)} style={styles.attachmentLink}>
                         {safeText(att.label)}
                       </Link>
                     ) : (
