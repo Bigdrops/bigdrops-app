@@ -1,338 +1,473 @@
 import { StyleSheet } from '@react-pdf/renderer';
 
+const colors = {
+  ink: '#2b2b2b',
+  paper: '#ffffff',
+  rule: '#cdc9c1',
+  lightRule: '#e7e3da',
+  bgPanel: '#f4f2ed',
+  accent: '#7b8b6f',
+  link: '#0056b3',
+  linkBg: '#f0f7ff',
+  grayText: '#6b6560',
+  lightGray: '#8a837b',
+  groupBg: '#fcfbf9',
+};
+
 export const styles = StyleSheet.create({
   page: {
-    padding: 30,
-    backgroundColor: '#FBFAF6',
+    backgroundColor: '#e8e4db',
     fontFamily: 'Helvetica',
-    color: '#1F2933',
-    fontSize: 9,
+    padding: 24,
+    paddingBottom: 60, // Space for fixed footer
   },
-
-  hero: {
-    flexDirection: 'row',
-    gap: 18,
-    marginBottom: 20,
-  },
-
-  identity: {
+  invoiceContainer: {
+    backgroundColor: colors.paper,
     flex: 1,
-    backgroundColor: '#2F3A44',
-    borderRadius: 18,
-    padding: 22,
-    minHeight: 150,
   },
-
-  logoCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#D8C7A3',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
+  
+  // Header
+  header: {
+    flexDirection: 'row',
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightRule,
+    alignItems: 'flex-start',
   },
-
-  logoText: {
-    fontSize: 14,
+  headerLeft: {
+    width: '33.33%',
+    flexDirection: 'column',
+  },
+  brandName: {
     fontWeight: 'bold',
-    color: '#2F3A44',
+    fontSize: 12,
+    color: colors.ink,
+    textTransform: 'uppercase',
+    marginBottom: 4,
   },
-
-  logoImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginBottom: 20,
+  brandContact: {
+    fontSize: 8,
+    color: colors.grayText,
+    lineHeight: 1.4,
+  },
+  headerCenter: {
+    width: '33.33%',
+    alignItems: 'center',
+  },
+  logoBox: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: colors.ink,
+    justifyContent: 'center',
+    alignItems: 'center',
     objectFit: 'contain',
   },
-
-  title: {
-    fontSize: 34,
+  headerRight: {
+    width: '33.33%',
+    alignItems: 'flex-end',
+  },
+  docTitle: {
+    fontSize: 24,
+    fontFamily: 'Times-Roman',
+    color: colors.ink,
+    marginBottom: 6,
+  },
+  docMeta: {
+    fontSize: 8,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    letterSpacing: -1,
+    color: colors.accent,
+    textTransform: 'uppercase',
   },
 
-  customTitle: {
-    marginTop: 5,
-    fontSize: 10,
-    color: '#D8C7A3',
-  },
-
-  labelRow: {
+  // Meta Section
+  metaSection: {
     flexDirection: 'row',
-    gap: 6,
-    marginTop: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightRule,
+  },
+  addressPanel: {
+    width: '50%',
+    padding: 24,
+    borderRightWidth: 1,
+    borderRightColor: colors.lightRule,
+  },
+  addressBlock: {
+    marginBottom: 16,
+  },
+  addressLabel: {
+    fontSize: 7,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    color: colors.lightGray,
+    marginBottom: 4,
+  },
+  addressVal: {
+    fontSize: 10,
+    color: colors.ink,
+    lineHeight: 1.4,
+  },
+  customHeadersPanel: {
+    width: '50%',
+    padding: 24,
+    backgroundColor: '#fdfcfb',
+  },
+  customHeadersWrap: {
+    flexDirection: 'row',
     flexWrap: 'wrap',
   },
-
-  primaryLabel: {
-    backgroundColor: '#FFFFFF',
-    color: '#2F3A44',
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    borderRadius: 20,
+  customItem: {
+    marginRight: 24,
+    marginBottom: 12,
+    flexDirection: 'column',
+  },
+  customKey: {
     fontSize: 7,
     fontWeight: 'bold',
+    color: colors.lightGray,
     textTransform: 'uppercase',
+    marginBottom: 3,
   },
-
-  secondaryLabel: {
-    backgroundColor: '#D8C7A3',
-    color: '#2F3A44',
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    borderRadius: 20,
-    fontSize: 7,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-  },
-
-  metaCard: {
-    width: 220,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E4DFD2',
-    borderRadius: 18,
-    padding: 16,
-  },
-
-  metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingVertical: 7,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E4DFD2',
-  },
-
-  metaLabel: {
-    fontSize: 7,
-    color: '#7B8794',
-    textTransform: 'uppercase',
-  },
-
-  metaValue: {
+  customVal: {
     fontSize: 9,
-    fontWeight: 'bold',
-    textAlign: 'right',
-    color: '#1F2933',
+    color: colors.ink,
   },
 
-  parties: {
+  // Table
+  tableSection: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    flexGrow: 1,
+  },
+  tableHeaderRow: {
     flexDirection: 'row',
-    gap: 14,
-    marginBottom: 18,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.ink,
+    paddingBottom: 8,
+    marginBottom: 8,
   },
-
-  panel: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E4DFD2',
-    borderRadius: 16,
-    padding: 14,
-  },
-
-  panelTitle: {
-    fontSize: 7,
-    textTransform: 'uppercase',
-    color: '#7B8794',
-    fontWeight: 'bold',
-    marginBottom: 7,
-  },
-
-  partyName: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#1F2933',
-  },
-
-  mutedText: {
-    color: '#7B8794',
-    lineHeight: 1.35,
-  },
-
-  tableWrap: {
-    borderWidth: 1,
-    borderColor: '#E4DFD2',
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 18,
-  },
-
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#F3EFE6',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E4DFD2',
-  },
-
   tableHeaderCell: {
-    padding: 8,
     fontSize: 7,
-    textTransform: 'uppercase',
     fontWeight: 'bold',
-    color: '#2F3A44',
+    textTransform: 'uppercase',
+    color: colors.lightGray,
   },
-
   tableRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#E4DFD2',
-    minHeight: 34,
+    borderBottomStyle: 'dashed',
+    borderBottomColor: colors.lightRule,
+    paddingVertical: 12,
   },
-
   tableCell: {
-    padding: 8,
-    fontSize: 8,
-    color: '#1F2933',
+    fontSize: 9,
+    color: colors.ink,
   },
-
-  groupHeader: {
-    backgroundColor: '#2F3A44',
-    paddingVertical: 7,
-    paddingHorizontal: 9,
-  },
-
-  groupHeaderText: {
-    color: '#FFFFFF',
-    fontSize: 8,
+  itemDesc: {
     fontWeight: 'bold',
+    marginBottom: 4,
+    lineHeight: 1.3,
   },
-
-  groupFooter: {
+  itemSub: {
+    fontSize: 8,
+    color: '#555555',
+    lineHeight: 1.4,
+  },
+  
+  // Thumbnails
+  thumbnailContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    backgroundColor: '#F3EFE6',
-    padding: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E4DFD2',
+    alignItems: 'flex-start',
+    marginTop: 8,
   },
-
-  groupFooterText: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: '#2F3A44',
-  },
-
-  nestedRow: {
-    borderLeftWidth: 3,
-    borderLeftColor: '#D8C7A3',
-  },
-
-  itemImage: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    marginRight: 7,
+  itemThumbnail: {
+    width: 48,
+    height: 48,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.rule,
+    backgroundColor: colors.bgPanel,
+    marginRight: 8,
     objectFit: 'cover',
   },
-
-  descriptionCell: {
-    flexDirection: 'row',
+  openImageLink: {
+    fontSize: 8,
+    color: colors.link,
+    backgroundColor: colors.linkBg,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    borderRadius: 4,
+    textDecoration: 'none',
+    marginTop: 2,
   },
 
-  lower: {
+  // Grouping
+  groupHeader: {
+    backgroundColor: colors.bgPanel,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.rule,
     flexDirection: 'row',
-    gap: 16,
-    alignItems: 'flex-start',
+  },
+  groupHeaderText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    color: colors.ink,
+  },
+  groupItemRow: {
+    backgroundColor: colors.groupBg,
+  },
+  groupSubtotalRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: colors.rule,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.ink,
+    paddingVertical: 12,
+    backgroundColor: colors.paper,
+  },
+  groupSubtotalLabel: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: colors.ink,
+    textAlign: 'right',
+    paddingRight: 8,
+  },
+  groupSubtotalVal: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: colors.ink,
+    textAlign: 'right',
   },
 
-  stack: {
+  // Bottom Section
+  bottomSection: {
+    padding: 24,
+  },
+  bottomGrid: {
+    flexDirection: 'row',
+  },
+  leftCol: {
     flex: 1,
-    gap: 12,
+    paddingRight: 32,
   },
-
-  totals: {
-    width: 220,
-    backgroundColor: '#2F3A44',
-    borderRadius: 16,
-    padding: 15,
+  sectionTitle: {
+    fontSize: 7,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    color: colors.lightGray,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightRule,
+    paddingBottom: 4,
+    marginBottom: 8,
   },
-
-  totalRow: {
+  bankDetails: {
+    backgroundColor: '#fdfcfb',
+    borderWidth: 1,
+    borderColor: colors.lightRule,
+    borderRadius: 4,
+    padding: 12,
+    marginBottom: 16,
+  },
+  bankRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.2)',
+    marginBottom: 4,
   },
-
-  totalLabel: {
-    color: '#FFFFFF',
+  bankLabel: {
     fontSize: 8,
+    color: colors.grayText,
   },
-
-  totalValue: {
-    color: '#FFFFFF',
+  bankVal: {
     fontSize: 8,
     fontWeight: 'bold',
-    textAlign: 'right',
+    color: colors.ink,
+  },
+  textBlock: {
+    fontSize: 8,
+    color: '#4a4a4a',
+    lineHeight: 1.5,
+    marginBottom: 16,
   },
 
-  mainTotalLabel: {
-    color: '#D8C7A3',
-    fontSize: 12,
-    fontWeight: 'bold',
+  rightCol: {
+    width: 220,
   },
-
-  mainTotalValue: {
-    color: '#D8C7A3',
-    fontSize: 12,
-    fontWeight: 'bold',
-    textAlign: 'right',
+  totalsPanel: {
+    backgroundColor: colors.bgPanel,
+    padding: 12,
+    borderRadius: 4,
   },
-
-  amountWords: {
-    marginTop: 10,
-    color: '#FFFFFF',
-    fontSize: 7,
-    lineHeight: 1.35,
-  },
-
-  signatureImage: {
-    width: 110,
-    height: 42,
-    objectFit: 'contain',
+  totalLine: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 6,
   },
-
-  signatureBlock: {
-    marginTop: 20,
+  totalLabel: {
+    fontSize: 9,
+    color: '#4a4a4a',
+  },
+  totalVal: {
+    fontSize: 9,
+    color: '#4a4a4a',
+    textAlign: 'right',
+  },
+  totalLineGrand: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-
-  signatureLine: {
-    width: 160,
     borderTopWidth: 1,
-    borderTopColor: '#1F2933',
+    borderTopColor: colors.rule,
     paddingTop: 6,
-    textAlign: 'center',
+    marginTop: 6,
+  },
+  totalLabelGrand: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: colors.ink,
+  },
+  totalValGrand: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: colors.ink,
+    textAlign: 'right',
+  },
+  amountWords: {
+    fontFamily: 'Times-Italic',
+    fontSize: 8,
+    color: colors.grayText,
+    textAlign: 'right',
+    marginTop: 10,
   },
 
-  footer: {
-    position: 'absolute',
-    left: 30,
-    right: 30,
-    bottom: 18,
+  advanceBlock: {
+    marginTop: 12,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    padding: 12,
+    backgroundColor: colors.paper,
+  },
+  advanceDue: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  advanceDueLbl: {
+    fontSize: 7,
+    textTransform: 'uppercase',
+    color: colors.ink,
+    fontWeight: 'bold',
+  },
+  advanceDueVal: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: colors.ink,
+  },
+  advanceBal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#E4DFD2',
+    borderTopColor: colors.rule,
+    borderTopStyle: 'dashed',
+  },
+  advanceBalText: {
+    fontSize: 8,
+    color: colors.grayText,
+  },
+
+  // Footer Meta
+  additionalFieldsBar: {
+    marginTop: 24,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.lightRule,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  footerMetaGrid: {
+    flexDirection: 'row',
+    marginTop: 24,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: colors.lightRule,
+  },
+  signatureBox: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  signatureImg: {
+    height: 40,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.rule,
+    paddingBottom: 4,
+    minWidth: 120,
+    objectFit: 'contain',
+  },
+  sigLineFallback: {
+    height: 30,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.rule,
+    marginBottom: 8,
+    width: 120,
+  },
+  sigName: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: colors.ink,
+  },
+  sigRole: {
+    fontSize: 8,
+    color: colors.grayText,
+    marginTop: 2,
+  },
+  attachmentsBox: {
+    flex: 1,
+  },
+  attachmentItem: {
+    marginBottom: 4,
+  },
+  attachmentLink: {
+    fontSize: 9,
+    color: colors.link,
+    textDecoration: 'none',
+  },
+
+  // Fixed Page Footer
+  pageFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 24,
+    right: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderTopWidth: 1,
+    borderTopColor: colors.rule,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    color: '#7B8794',
-    fontSize: 7,
+    backgroundColor: '#fdfcfb',
   },
-});
+  ftLeft: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: colors.ink,
+  },
+  ftCenter: {
+    fontSize: 8,
+    color: colors.grayText,
+  },
+  ftRight: {
+    fontSize: 8,
+    color: colors.grayText,
+    textTransform: 'uppercase',
+  },
 
-export function resolveAlignment(align?: string) {
-  if (align === 'right') return { textAlign: 'right' as const };
-  if (align === 'center') return { textAlign: 'center' as const };
-  return { textAlign: 'left' as const };
-}
+  // Utility Alignments
+  textLeft: { textAlign: 'left' },
+  textCenter: { textAlign: 'center' },
+  textRight: { textAlign: 'right' },
+});
