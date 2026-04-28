@@ -21,7 +21,6 @@ function safeText(value: unknown): string {
   return '';
 }
 
-// React-PDF will silently drop Links that do not explicitly start with http/https
 function formatValidUrl(url: string | undefined): string {
   if (!url) return '';
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -58,7 +57,7 @@ export default function Civicslate({ data }: { data: IndustryTemplateData }) {
     <Page size="A4" style={styles.page}>
       <View style={styles.invoiceContainer}>
         {/* 1. HEADER */}
-        <View style={styles.header}>
+        <View style={styles.header} wrap={false}>
           <View style={styles.headerLeft}>
             <Text style={styles.brandName}>{safeText(company?.name)}</Text>
             {company?.address && (
@@ -85,13 +84,23 @@ export default function Civicslate({ data }: { data: IndustryTemplateData }) {
               {safeText(data.customTitle || (isAdvanceInvoice ? 'Advance Invoice' : data.title))}
             </Text>
             <Text style={styles.docMeta}>
-              {safeText(data.documentNumber)} • {safeText(data.issueDate)}
+              {safeText(data.documentNumberLabel)}: {safeText(data.documentNumber)}
             </Text>
+            {data.issueDate && (
+              <Text style={styles.docMeta}>
+                {safeText(data.issueDateLabel)}: {safeText(data.issueDate)}
+              </Text>
+            )}
+            {data.dueDateOrValidityDate && (
+              <Text style={styles.docMeta}>
+                {safeText(data.dueDateOrValidityDateLabel)}: {safeText(data.dueDateOrValidityDate)}
+              </Text>
+            )}
           </View>
         </View>
 
         {/* 2. ADDRESS & METADATA */}
-        <View style={styles.metaSection}>
+        <View style={styles.metaSection} wrap={false}>
           <View style={styles.addressPanel}>
             {client && (
               <View style={styles.addressBlock}>
@@ -111,12 +120,6 @@ export default function Civicslate({ data }: { data: IndustryTemplateData }) {
                 <View style={styles.customItem}>
                   <Text style={styles.customKey}>{safeText(data.poNumberLabel)}</Text>
                   <Text style={styles.customVal}>{safeText(data.poNumber)}</Text>
-                </View>
-              )}
-              {data.dueDateOrValidityDate && (
-                <View style={styles.customItem}>
-                  <Text style={styles.customKey}>{safeText(data.dueDateOrValidityDateLabel)}</Text>
-                  <Text style={styles.customVal}>{safeText(data.dueDateOrValidityDate)}</Text>
                 </View>
               )}
               {data.customHeaderFields?.map((field, idx) => (
@@ -194,12 +197,12 @@ export default function Civicslate({ data }: { data: IndustryTemplateData }) {
           })}
         </View>
 
-        {/* 4. BOTTOM SECTION */}
-        <View style={styles.bottomSection} wrap={false}>
+        {/* 4. BOTTOM SECTION (Removed wrap={false} so it can break across pages) */}
+        <View style={styles.bottomSection}>
           <View style={styles.bottomGrid}>
             <View style={styles.leftCol}>
               {payment && data.showBankDetails && (
-                <View>
+                <View wrap={false}>
                   <Text style={styles.sectionTitle}>Payment Information</Text>
                   <View style={styles.bankDetails}>
                     {payment.bankName && (
@@ -231,21 +234,21 @@ export default function Civicslate({ data }: { data: IndustryTemplateData }) {
               )}
 
               {notes?.content && (
-                <View>
+                <View wrap={false}>
                   <Text style={styles.sectionTitle}>{safeText(notes.title)}</Text>
                   <Text style={styles.textBlock}>{safeText(notes.content)}</Text>
                 </View>
               )}
 
               {terms?.content && (
-                <View>
+                <View wrap={false}>
                   <Text style={styles.sectionTitle}>{safeText(terms.title)}</Text>
                   <Text style={styles.textBlock}>{safeText(terms.content)}</Text>
                 </View>
               )}
             </View>
 
-            <View style={styles.rightCol}>
+            <View style={styles.rightCol} wrap={false}>
               <View style={styles.totalsPanel}>
                 {totals.lines.map((line, idx) => (
                   <View key={idx} style={styles.totalLine}>
@@ -281,7 +284,7 @@ export default function Civicslate({ data }: { data: IndustryTemplateData }) {
                   </View>
                   <View style={styles.advanceBal}>
                     <Text style={styles.advanceBalText}>{safeText(advance.secondaryLabel)}</Text>
-                    <Text style={styles.advanceBalText}>{safeText(advance.balanceRemaining)}</Text>
+                    <Text style={styles.advanceBalTextVal}>{safeText(advance.balanceRemaining)}</Text>
                   </View>
                 </View>
               )}
@@ -289,7 +292,7 @@ export default function Civicslate({ data }: { data: IndustryTemplateData }) {
           </View>
 
           {data.additionalFields && data.additionalFields.length > 0 && (
-            <View style={styles.additionalFieldsBar}>
+            <View style={styles.additionalFieldsBar} wrap={false}>
               {data.additionalFields.map((field, idx) => (
                 <View key={idx} style={styles.customItem}>
                   <Text style={styles.customKey}>{safeText(field.label)}</Text>
@@ -299,7 +302,7 @@ export default function Civicslate({ data }: { data: IndustryTemplateData }) {
             </View>
           )}
 
-          <View style={styles.footerMetaGrid}>
+          <View style={styles.footerMetaGrid} wrap={false}>
             <View style={styles.signatureBox}>
               {data.signature ? (
                 <>
