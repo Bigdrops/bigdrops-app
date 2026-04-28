@@ -1,7 +1,7 @@
 import React from 'react';
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import type { IndustryTemplateData } from '../industryAdapter';
-import { styles } from './CivicslateStyles';
+import { styles } from './Civicslatestyles';
 
 function safeText(value: unknown): string {
   if (value === null || value === undefined) return '';
