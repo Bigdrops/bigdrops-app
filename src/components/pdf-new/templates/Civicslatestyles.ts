@@ -35,7 +35,7 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   headerLeft: {
-    width: '33.33%',
+    width: '35%',
     flexDirection: 'column',
   },
   brandName: {
@@ -51,20 +51,19 @@ export const styles = StyleSheet.create({
     lineHeight: 1.4,
   },
   headerCenter: {
-    width: '33.33%',
+    width: '30%',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   logoBox: {
     width: 60,
     height: 60,
     borderRadius: 8,
-    backgroundColor: colors.ink,
-    justifyContent: 'center',
-    alignItems: 'center',
+    // Removed background color so it is invisible if empty
     objectFit: 'contain',
   },
   headerRight: {
-    width: '33.33%',
+    width: '35%',
     alignItems: 'flex-end',
   },
   docTitle: {
@@ -115,9 +114,10 @@ export const styles = StyleSheet.create({
   customHeadersWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   customItem: {
-    marginRight: 24,
+    width: '45%', // Forces predictable wrap without overlapping
     marginBottom: 12,
     flexDirection: 'column',
   },
@@ -133,7 +133,7 @@ export const styles = StyleSheet.create({
     color: colors.ink,
   },
 
-  // Table
+  // Table (Rigid boundaries)
   tableSection: {
     paddingHorizontal: 24,
     paddingTop: 24,
@@ -151,6 +151,7 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     textTransform: 'uppercase',
     color: colors.lightGray,
+    paddingHorizontal: 2,
   },
   tableRow: {
     flexDirection: 'row',
@@ -162,43 +163,41 @@ export const styles = StyleSheet.create({
   tableCell: {
     fontSize: 9,
     color: colors.ink,
+    paddingHorizontal: 2,
   },
   itemDesc: {
     fontWeight: 'bold',
     marginBottom: 4,
     lineHeight: 1.3,
+    paddingHorizontal: 2,
   },
   itemSub: {
     fontSize: 8,
     color: '#555555',
     lineHeight: 1.4,
+    paddingHorizontal: 2,
   },
   
   // Thumbnails
   thumbnailContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginTop: 8,
+    paddingHorizontal: 2,
   },
   itemThumbnail: {
-    width: 48,
-    height: 48,
+    width: 32,
+    height: 32,
     borderRadius: 4,
     borderWidth: 1,
     borderColor: colors.rule,
-    backgroundColor: colors.bgPanel,
     marginRight: 8,
     objectFit: 'cover',
   },
   openImageLink: {
     fontSize: 8,
     color: colors.link,
-    backgroundColor: colors.linkBg,
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-    borderRadius: 4,
-    textDecoration: 'none',
-    marginTop: 2,
+    textDecoration: 'underline',
   },
 
   // Grouping
@@ -248,10 +247,11 @@ export const styles = StyleSheet.create({
   },
   bottomGrid: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   leftCol: {
-    flex: 1,
-    paddingRight: 32,
+    width: '55%',
+    paddingRight: 24,
   },
   sectionTitle: {
     fontSize: 7,
@@ -279,11 +279,14 @@ export const styles = StyleSheet.create({
   bankLabel: {
     fontSize: 8,
     color: colors.grayText,
+    width: '40%',
   },
   bankVal: {
     fontSize: 8,
     fontWeight: 'bold',
     color: colors.ink,
+    width: '60%',
+    textAlign: 'right',
   },
   textBlock: {
     fontSize: 8,
@@ -293,7 +296,7 @@ export const styles = StyleSheet.create({
   },
 
   rightCol: {
-    width: 220,
+    width: '40%', // Rigid width prevents crushing
   },
   totalsPanel: {
     backgroundColor: colors.bgPanel,
@@ -308,11 +311,13 @@ export const styles = StyleSheet.create({
   totalLabel: {
     fontSize: 9,
     color: '#4a4a4a',
+    width: '50%',
   },
   totalVal: {
     fontSize: 9,
     color: '#4a4a4a',
     textAlign: 'right',
+    width: '50%',
   },
   totalLineGrand: {
     flexDirection: 'row',
@@ -326,12 +331,14 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     color: colors.ink,
+    width: '40%',
   },
   totalValGrand: {
     fontSize: 12,
     fontWeight: 'bold',
     color: colors.ink,
     textAlign: 'right',
+    width: '60%',
   },
   amountWords: {
     fontFamily: 'Times-Italic',
@@ -358,11 +365,14 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.ink,
     fontWeight: 'bold',
+    width: '40%', // Prevents text smash
   },
   advanceDueVal: {
     fontSize: 11,
     fontWeight: 'bold',
     color: colors.ink,
+    width: '60%', // Prevents text smash
+    textAlign: 'right',
   },
   advanceBal: {
     flexDirection: 'row',
