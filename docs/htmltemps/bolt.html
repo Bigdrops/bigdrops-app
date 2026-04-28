@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse — Advance Invoice SASINV-B10-A</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0f172a;
+            --accent: #1a56db;
+            --accent-light: #eff6ff;
+            --accent-rule: #dbeafe;
+            --paper: #ffffff;
+            --rule: #cbd5e1;
+            --light-rule: #e2e8f0;
+            --panel: #f8fafc;
+            --link: #1e40af;
+            --link-bg: #eff6ff;
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --font-display: 'Manrope', 'Inter', sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #e2e8f0;
+            font-family: var(--font-sans);
+            color: var(--ink);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            padding: 2rem 1rem;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 210mm;
+            min-height: 297mm;
+            background: var(--paper);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .page-content { flex-grow: 1; display: flex; flex-direction: column; }
+
+        /* ---------- HUGE HEADER BANNER ---------- */
+        .header-banner {
+            background: var(--accent);
+            color: white;
+            padding: 1.8rem 2rem 1.4rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            position: relative;
+            overflow: hidden;
+        }
+        .header-banner::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+        }
+        .hb-left { display: flex; flex-direction: column; gap: 0.3rem; }
+        .hb-logo {
+            width: 48px; height: 48px;
+            background: white;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
+            border-radius: 8px;
+            margin-bottom: 0.4rem;
+        }
+        .hb-company {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: 0.02em;
+        }
+        .hb-contact { font-size: 0.55rem; opacity: 0.8; line-height: 1.4; }
+
+        .hb-right { text-align: right; }
+        .hb-label {
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            opacity: 0.8;
+            margin-bottom: 0.3rem;
+        }
+        .hb-title {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 2.4rem;
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+        .hb-meta-line {
+            margin-top: 0.6rem;
+            font-size: 0.6rem;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.9);
+            text-align: right;
+        }
+        .hb-meta-line span.meta-label {
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+        .hb-meta-line span.meta-value {
+            font-weight: 700;
+        }
+
+        /* ---------- ADDRESS BLOCK ---------- */
+        .address-block {
+            display: flex;
+            border-bottom: 1px solid var(--light-rule);
+        }
+        .addr-col {
+            flex: 1;
+            padding: 1.2rem 2rem;
+            border-right: 1px solid var(--light-rule);
+        }
+        .addr-col:last-child { border-right: none; }
+        .addr-label {
+            font-size: 0.5rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.12em; color: #64748b; margin-bottom: 0.3rem;
+        }
+        .addr-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.2rem; }
+        .addr-detail { font-size: 0.65rem; color: #475569; line-height: 1.4; }
+
+        /* ---------- CUSTOM FIELDS BAR ---------- */
+        .custom-bar {
+            display: flex; gap: 2.5rem;
+            padding: 0.6rem 2rem;
+            border-bottom: 1px solid var(--light-rule);
+            background: var(--panel);
+            font-size: 0.65rem;
+            flex-wrap: wrap;
+        }
+        .cf-item { line-height: 1.4; }
+        .cf-key { font-size: 0.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; }
+        .cf-val { font-weight: 600; }
+
+        /* ---------- TABLE ---------- */
+        .table-section { padding: 0 2rem; margin-top: 1rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left;
+            font-size: 0.55rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            color: #64748b; padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--ink);
+        }
+        th.right, td.right { text-align: right; }
+        th.center, td.center { text-align: center; }
+
+        th:nth-child(1) { width: 4%; }
+        th:nth-child(2) { width: 32%; }
+        th:nth-child(3) { width: 12%; }
+        th:nth-child(4) { width: 14%; }
+        th:nth-child(5) { width: 8%; }
+        th:nth-child(6) { width: 14%; }
+        th:nth-child(7) { width: 16%; }
+
+        td { padding: 0.7rem 0.2rem; font-size: 0.68rem; border-bottom: 1px solid var(--light-rule); vertical-align: top; }
+        .item-desc { font-weight: 700; margin-bottom: 0.15rem; color: var(--ink); }
+        .item-sub { font-size: 0.6rem; color: #475569; line-height: 1.35; }
+        .make-cell { color: #475569; font-size: 0.65rem; }
+        .model-cell { font-family: var(--font-mono); font-size: 0.62rem; color: #334155; }
+
+        /* Thumbnail */
+        .thumbnail-container { display: flex; align-items: flex-start; gap: 0.6rem; margin-top: 0.5rem; }
+        .item-thumbnail {
+            width: 54px; height: 38px; border-radius: 4px; object-fit: cover;
+            border: 1px solid var(--rule); background: var(--panel);
+        }
+        .open-image-link {
+            display: inline-flex; align-items: center; gap: 0.2rem;
+            font-size: 0.58rem; color: var(--accent); background: var(--accent-light);
+            padding: 0.3rem 0.6rem; border-radius: 4px; text-decoration: none; font-weight: 700;
+            transition: background 0.2s;
+        }
+        .open-image-link:hover { background: #dbeafe; }
+
+        /* Grouping */
+        .group-header td {
+            background: var(--accent-light);
+            font-weight: 700; font-size: 0.65rem; text-transform: uppercase;
+            letter-spacing: 0.06em; color: var(--accent);
+            padding: 0.5rem 0.6rem;
+            border-bottom: 1px solid var(--accent-rule);
+        }
+        .group-item td { background: #f9fafb; }
+        .group-item .item-desc { margin-left: 1rem; position: relative; }
+        .group-item .item-desc::before {
+            content: '└'; position: absolute; left: -1rem; top: 0;
+            color: var(--accent); font-weight: 700;
+        }
+        .group-subtotal td {
+            border-top: 1px solid var(--rule);
+            border-bottom: 2px solid var(--ink);
+            font-weight: 700;
+            padding: 0.6rem 0.2rem;
+            background: white;
+        }
+
+        /* ---------- BOTTOM PANEL (3 columns) ---------- */
+        .bottom-panel {
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem; padding: 1.2rem 2rem 0.8rem 2rem;
+            border-top: 1px solid var(--light-rule); margin-top: 1rem;
+        }
+        .bp-col { font-size: 0.65rem; }
+        .bp-title {
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+            color: var(--accent); font-size: 0.58rem; margin-bottom: 0.4rem;
+            padding-bottom: 0.2rem; border-bottom: 2px solid var(--accent-rule);
+        }
+        .bank-line { margin-bottom: 0.15rem; display: flex; justify-content: space-between; }
+        .bank-line strong { color: var(--ink); font-weight: 700; }
+        .text-block { font-size: 0.62rem; line-height: 1.5; color: #475569; }
+        .attach-item { margin-bottom: 0.3rem; }
+        .attach-item a {
+            color: var(--accent); text-decoration: none; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 0.3rem;
+        }
+        .attach-item a:hover { text-decoration: underline; }
+
+        /* ---------- TOTALS + SIGNATURE ROW ---------- */
+        .totals-signature-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 1rem 2rem 0.8rem 2rem;
+            gap: 2rem;
+            border-top: 2px solid var(--ink);
+            margin: 0 2rem;
+            margin-top: 0.6rem;
+        }
+        .ts-left { flex: 1; }
+        .totals-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.3rem 2rem;
+            font-size: 0.72rem;
+            max-width: 360px;
+        }
+        .totals-grid .tl-label { color: #475569; }
+        .totals-grid .tl-val { text-align: right; font-weight: 500; }
+        .totals-grid .tl-grand-label {
+            font-weight: 900; font-size: 0.9rem; color: var(--ink);
+            border-top: 1px solid var(--rule); padding-top: 0.4rem; margin-top: 0.3rem;
+        }
+        .totals-grid .tl-grand-val {
+            text-align: right; font-weight: 900; font-size: 0.9rem; color: var(--ink);
+            border-top: 1px solid var(--rule); padding-top: 0.4rem; margin-top: 0.3rem;
+        }
+        .amount-words {
+            font-style: italic; font-size: 0.6rem; color: #64748b;
+            grid-column: 1 / -1; margin-top: 0.2rem; text-align: right;
+        }
+        .advance-block {
+            margin-top: 0.8rem;
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 0.7rem 1rem;
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            font-size: 0.7rem;
+            border-radius: 4px;
+        }
+        .advance-block .adv-lbl {
+            font-size: 0.55rem; text-transform: uppercase;
+            letter-spacing: 0.06em; color: #475569; display: block;
+        }
+        .advance-block .adv-val { font-weight: 800; font-size: 0.85rem; color: var(--accent); }
+        .advance-block .adv-divider { width: 1px; background: var(--accent-rule); align-self: stretch; }
+
+        .ts-right {
+            width: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            align-items: flex-end;
+        }
+        .extra-fields-vert {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            font-size: 0.62rem;
+            width: 100%;
+            text-align: right;
+        }
+        .ef-item { display: flex; flex-direction: column; align-items: flex-end; }
+        .ef-key { font-size: 0.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; }
+        .ef-val { font-weight: 600; }
+        .signature-box { text-align: right; width: 100%; }
+        .sig-scribble {
+            font-family: 'Brush Script MT', cursive;
+            font-size: 1.5rem; color: var(--ink);
+            border-bottom: 1px solid var(--rule);
+            display: inline-block; min-width: 120px;
+            line-height: 1; margin-bottom: 0.2rem;
+        }
+        .sig-name { font-weight: 700; font-size: 0.7rem; }
+        .sig-role { font-size: 0.6rem; color: #64748b; }
+
+        /* ---------- PAGE FOOTER ---------- */
+        .page-footer {
+            padding: 0.5rem 2rem;
+            border-top: 1px solid var(--rule);
+            display: flex; justify-content: space-between;
+            font-size: 0.55rem; color: #64748b; background: var(--panel);
+            margin-top: auto;
+        }
+        .ft-left { font-weight: 700; color: var(--ink); }
+        .ft-center { font-weight: 500; }
+        .ft-right { font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+
+        @media print {
+            body { background: white; padding: 0; gap: 0; }
+            .page { box-shadow: none; max-width: 100%; border: none; page-break-after: always; }
+            .open-image-link { display: none; }
+            @page { margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PAGE 1 -->
+    <div class="page">
+        <div class="page-content">
+            <!-- Header Banner -->
+            <div class="header-banner">
+                <div class="hb-left">
+                    <div class="hb-logo">S&S</div>
+                    <div class="hb-company">Sun & Shield</div>
+                    <div class="hb-contact">
+                        43 Oshola Street, Ifako-Ijaiye, Lagos<br>
+                        +2348066190685 · Sunshieldpowersolutions@gmail.com
+                    </div>
+                </div>
+                <div class="hb-right">
+                    <div class="hb-label">Advance Invoice</div>
+                    <div class="hb-title">INVOICE</div>
+                    <div class="hb-meta-line">
+                        <div><span class="meta-label">Invoice Number</span><span class="meta-value">SASINV-B10-A</span></div>
+                        <div><span class="meta-label">Issue Date</span><span class="meta-value">23 Apr 2026</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Address Block -->
+            <div class="address-block">
+                <div class="addr-col">
+                    <div class="addr-label">Bill To</div>
+                    <div class="addr-name">Lorem Ipsum</div>
+                    <div class="addr-detail">—</div>
+                </div>
+                <div class="addr-col">
+                    <div class="addr-label">Our Reference</div>
+                    <div class="addr-name">Sun & Shield Power Solutions</div>
+                    <div class="addr-detail">VAT: NG-48291 · CAC: RC-729304</div>
+                </div>
+            </div>
+
+            <!-- Custom Fields -->
+            <div class="custom-bar">
+                <div class="cf-item"><span class="cf-key">PO Number</span><br><span class="cf-val">PO-MEP-78241</span></div>
+                <div class="cf-item"><span class="cf-key">BREAD</span><br><span class="cf-val">Beans</span></div>
+                <div class="cf-item"><span class="cf-key">BREAD</span><br><span class="cf-val">Butter</span></div>
+                <div class="cf-item"><span class="cf-key">JOLLOD</span><br><span class="cf-val">Right</span></div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-section">
+                <table>
+                    <thead><tr><th>#</th><th>Description</th><th>Make</th><th>Model No.</th><th class="center">Qty</th><th class="right">Unit Price</th><th class="right">Amount</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td><div class="item-desc">XLPE armored power cable</div><div class="item-sub">4 core 70 sqmm heavy duty cable</div></td><td class="make-cell">Nigerchin</td><td class="model-cell">XL-4C70</td><td class="center">1800m</td><td class="right">₦ 145.00</td><td class="right">₦ 261,000</td></tr>
+                        <tr><td>2</td><td><div class="item-desc">Copper grounding rod set</div><div class="item-sub">Complete earthing assembly</div></td><td class="make-cell">-</td><td class="model-cell">CGR-01-CU</td><td class="center">120 set</td><td class="right">₦ 980.00</td><td class="right">₦ 117,600</td></tr>
+
+                        <tr class="group-header"><td colspan="7">Lighting & Distribution Setup</td></tr>
+                        <tr class="group-item"><td>3</td><td><div class="item-desc">LED high bay light</div><div class="item-sub">200W industrial fitting</div></td><td class="make-cell">Philips</td><td class="model-cell">HB-200W-PH</td><td class="center">160 pcs</td><td class="right">₦ 1,250</td><td class="right">₦ 200,000</td></tr>
+                        <tr class="group-item"><td>4</td><td><div class="item-desc">Distribution board panel</div><div class="item-sub">Three phase panel with busbar</div><div class="thumbnail-container"><img src="https://placehold.co/120x90/e8e4db/8a837b?text=DB+Panel" class="item-thumbnail" alt="DB"><a href="#" class="open-image-link">Open</a></div></td><td class="make-cell">ABB</td><td class="model-cell">DB-3P-ABB</td><td class="center">24 pcs</td><td class="right">₦ 18,500</td><td class="right">₦ 444,000</td></tr>
+                        <tr class="group-item"><td>5</td><td><div class="item-desc">PVC electrical conduit</div><div class="item-sub">Heavy gauge 25 mm</div></td><td class="make-cell">Tower</td><td class="model-cell">PVC-25M-HG</td><td class="center">3500m</td><td class="right">₦ 18.00</td><td class="right">₦ 63,000</td></tr>
+                        <tr class="group-item"><td>6</td><td><div class="item-desc">Fire resistant cable tray</div><div class="item-sub">Perforated galvanized tray</div><div class="thumbnail-container"><img src="https://placehold.co/120x90/d4cfc7/6b6560?text=Cable+Tray" class="item-thumbnail" alt="Tray"><a href="#" class="open-image-link">Open</a></div></td><td class="make-cell">-</td><td class="model-cell">FCT-GALV-00</td><td class="center">950m</td><td class="right">₦ 210</td><td class="right">₦ 199,500</td></tr>
+                        <tr class="group-subtotal"><td colspan="5"></td><td class="right">Group Total:</td><td class="right">₦ 906,500</td></tr>
+
+                        <tr><td>7</td><td><div class="item-desc">PPR pipe</div><div class="item-sub">32 mm pressure-rated</div></td><td class="make-cell">Vesbo</td><td class="model-cell">PPR-32-VB</td><td class="center">2400m</td><td class="right">₦ 42.00</td><td class="right">₦ 100,800</td></tr>
+                        <tr><td>8</td><td><div class="item-desc">Gate valve</div><div class="item-sub">Brass 2 inch isolation valve</div><div class="thumbnail-container"><img src="https://placehold.co/120x90/e8e4db/8a837b?text=Gate+Valve" class="item-thumbnail" alt="Valve"><a href="#" class="open-image-link">Open</a></div></td><td class="make-cell">Pegler</td><td class="model-cell">GV-2IN-BR</td><td class="center">85 pcs</td><td class="right">₦ 1,650</td><td class="right">₦ 140,250</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="page-footer">
+            <span class="ft-left">SASINV-B10-A</span>
+            <span class="ft-center">Page 1 of 2</span>
+            <span class="ft-right">Sun & Shield Power Solutions</span>
+        </div>
+    </div>
+
+    <!-- PAGE 2 -->
+    <div class="page">
+        <div class="page-content">
+            <div class="table-section" style="margin-top:1.5rem;">
+                <table>
+                    <thead><tr><th>#</th><th>Description</th><th>Make</th><th>Model No.</th><th class="center">Qty</th><th class="right">Unit Price</th><th class="right">Amount</th></tr></thead>
+                    <tbody>
+                        <tr><td>9</td><td><div class="item-desc">Centrifugal water pump</div><div class="item-sub">5 HP booster pump</div><div class="thumbnail-container"><img src="https://placehold.co/120x90/e8e4db/8a837b?text=Pump" class="item-thumbnail" alt="Pump"><a href="#" class="open-image-link">Open</a></div></td><td class="make-cell">Grundfos</td><td class="model-cell">CR-5-HP</td><td class="center">12 pcs</td><td class="right">₦ 28,500</td><td class="right">₦ 342,000</td></tr>
+                        <tr><td>10</td><td><div class="item-desc">Sanitary floor drain</div><div class="item-sub">Stainless steel body</div></td><td class="make-cell">-</td><td class="model-cell">SFD-SS-304</td><td class="center">140 pcs</td><td class="right">₦ 780</td><td class="right">₦ 109,200</td></tr>
+                        <tr><td>11</td><td><div class="item-desc">Copper pipe coil</div><div class="item-sub">22 mm annealed copper</div></td><td class="make-cell">Mueller</td><td class="model-cell">CPC-22MM-A</td><td class="center">600m</td><td class="right">₦ 128</td><td class="right">₦ 76,800</td></tr>
+                        <tr><td>12</td><td><div class="item-desc">Weatherproof socket outlet</div><div class="item-sub">Double gang industrial outlet</div><div class="thumbnail-container"><img src="https://placehold.co/120x120/e8e4db/8a837b?text=Legrand+Socket" class="item-thumbnail" alt="Socket"><a href="#" class="open-image-link">Open</a></div></td><td class="make-cell">Legrand</td><td class="model-cell">WP-2G-IP66</td><td class="center">210 pcs</td><td class="right">₦ 460</td><td class="right">₦ 96,600</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Bottom panel (3 cols) -->
+            <div class="bottom-panel">
+                <div class="bp-col">
+                    <div class="bp-title">Payment</div>
+                    <div class="bank-line"><span>Bank</span><strong>U.B.A</strong></div>
+                    <div class="bank-line"><span>Account</span><strong>Sun and Shield</strong></div>
+                    <div class="bank-line"><span>No.</span><strong>1024829598</strong></div>
+                </div>
+                <div class="bp-col">
+                    <div class="bp-title">Notes</div>
+                    <div class="text-block">Supply for integrated electrical and plumbing works across commercial fit-out zones.</div>
+                    <div class="bp-title" style="margin-top:0.6rem;">Terms</div>
+                    <div class="text-block">Net 30. Phased delivery accepted. Subject to site inspection.</div>
+                </div>
+                <div class="bp-col">
+                    <div class="bp-title">Attachments</div>
+                    <div class="attach-item"><a href="https://nvidia.com">📎 Bring</a></div>
+                </div>
+            </div>
+
+            <!-- Totals + Signature Row -->
+            <div class="totals-signature-row">
+                <div class="ts-left">
+                    <div class="totals-grid">
+                        <span class="tl-label">Subtotal</span><span class="tl-val">₦ 2,337,950</span>
+                        <span class="tl-label">Delivery</span><span class="tl-val">₦ 18,500</span>
+                        <span class="tl-label">Handling</span><span class="tl-val">₦ 9,500</span>
+                        <span class="tl-label">Unloading</span><span class="tl-val">₦ 12,000</span>
+                        <span class="tl-label">VAT (7.5%)</span><span class="tl-val">₦ 178,346</span>
+                        <span class="tl-grand-label">Total Due</span><span class="tl-grand-val">₦ 2,450,284.35</span>
+                        <span class="amount-words">Two million four hundred fifty thousand two hundred eighty four naira thirty five kobo</span>
+                    </div>
+                    <div class="advance-block">
+                        <div><span class="adv-lbl">Advance (30%)</span><span class="adv-val">₦ 735,085.31</span></div>
+                        <div class="adv-divider"></div>
+                        <div><span class="adv-lbl">Balance (70%)</span><span class="adv-val">₦ 1,715,199.04</span></div>
+                    </div>
+                </div>
+                <div class="ts-right">
+                    <div class="extra-fields-vert">
+                        <div class="ef-item"><span class="ef-key">Engine</span><span class="ef-val">464ggsd</span></div>
+                        <div class="ef-item"><span class="ef-key">Serial Number</span><span class="ef-val">5734466</span></div>
+                    </div>
+                    <div class="signature-box">
+                        <div class="sig-scribble">Visdo</div>
+                        <div class="sig-name">Jaiyeola Wisdom</div>
+                        <div class="sig-role">Senior Man</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-footer">
+            <span class="ft-left">SASINV-B10-A</span>
+            <span class="ft-center">Page 2 of 2</span>
+            <span class="ft-right">Sun & Shield Power Solutions</span>
+        </div>
+    </div>
+
+</body>
+</html>
