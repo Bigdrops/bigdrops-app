@@ -1,7 +1,7 @@
 import React from 'react';
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import type { IndustryTemplateData } from '../industryAdapter';
-import { styles, resolveAlign } from './NaijabizStyles';
+import { styles, resolveAlign } from './Naijabizstyles';
 
 // ---- Safe text helper ----
 function safeText(value: unknown): string {
