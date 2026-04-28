@@ -1,9 +1,10 @@
+// Bolt.tsx
 import React from 'react';
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import type { IndustryTemplateData } from '../industryAdapter';
-import { styles, resolveAlign } from './Naijabizstyles';
+import { styles } from './Naijabizstyles';
 
-// ---- Safe text helper ----
+// ---- safe text ----
 function safeText(value: unknown): string {
   if (value === null || value === undefined) return '';
   if (typeof value === 'string') return value;
@@ -15,443 +16,427 @@ function safeText(value: unknown): string {
   return '';
 }
 
-// ---- Design palette defaults (Olive & Stone) ----
-const defaultAccent = '#7d8c6d';
-const defaultInk = '#2d2d2d';
-const defaultMuted = '#8c857b';
-const defaultBorder = '#c5bfb0';
+// accent token default
+const DEFAULT_ACCENT = '#1a56db';
 
-export default function Margin({ data }: { data: IndustryTemplateData }) {
+export default function Bolt({ data }: { data: IndustryTemplateData }) {
   if (!data) return null;
 
   const {
     title,
     customTitle,
     documentNumber,
-    documentNumberLabel: _documentNumberLabel,
+    documentNumberLabel: _docNumberLabel,
     issueDate,
     issueDateLabel: _issueDateLabel,
     dueDateOrValidityDate,
-    dueDateOrValidityDateLabel: _dueDateOrValidityDateLabel,
+    dueDateOrValidityDateLabel: _dueLabel,
     poNumber,
-    poNumberLabel: _poNumberLabel,
-    customHeaderFields,
+    poNumberLabel: _poLabel,
+    customHeaderFields = [],
     showBankDetails,
     company,
     client,
-    table,
-    paymentDetails,
-    totals,
-    advanceSummary,
-    notes,
-    terms,
-    attachments,
-    additionalFields,
-    signature,
-    footer,
-    design,
+    table = { columns: [], rows: [] },
+    paymentDetails = null,
+    totals = { lines: [], mainLine: null, amountInWords: '', balanceDue: null },
+    advanceSummary = null,
+    notes = null,
+    terms = null,
+    attachments = [],
+    additionalFields = [],
+    signature = null,
+    footer = { documentNumber: '', companyName: '', extraText: '' },
+    design = {},
   } = data;
 
-  const accent = design?.accentColor || defaultAccent;
-  const ink = design?.textColor || defaultInk;
-  const muted = design?.mutedColor || defaultMuted;
-  const border = design?.borderColor || defaultBorder;
+  // colors from design, fallback to defaults
+  const accent = design.accentColor || DEFAULT_ACCENT;
+  const ink = design.textColor || '#0f172a';
+  const muted = design.mutedColor || '#64748b';
+  const surface = design.surfaceColor || '#f8fafc';
 
-  const columns = table?.columns || [];
-  const rows = table?.rows || [];
+  // dynamic color helpers for inline styles
+  const headerBg = { backgroundColor: accent };
+  const accentText = { color: accent };
+  const accentBorder = { borderColor: accent };
+  const accentBackground = { backgroundColor: accent };
+  const surfaceBg = { backgroundColor: surface };
 
-  // Guard totals
-  const totalLines = totals?.lines || [];
-  const mainLine = totals?.mainLine || null;
-  const amountInWords = totals?.amountInWords || '';
-  const balanceDue = totals?.balanceDue || null;
+  // Show advance invoice label if advanceSummary exists
+  const isAdvance = advanceSummary !== null;
+  const docLabel = isAdvance ? 'Advance Invoice' : (customTitle || title || 'Invoice');
+  const docTitle = title || 'INVOICE';
 
-  // ---- Sidebar content helpers ----
-  const hasCompany = company !== null;
-  const hasClient = client !== null;
-  const hasCustomFields = customHeaderFields && customHeaderFields.length > 0;
-  const hasBank = showBankDetails && paymentDetails !== null;
-  const hasSignature = signature !== null && (signature.name || signature.imageUrl);
-  const hasAdvance = advanceSummary !== null;
+  // totals
+  const totalLines = totals.lines || [];
+  const mainLine = totals.mainLine || null;
+  const amountInWords = totals.amountInWords || '';
+  const balanceDue = totals.balanceDue || null;
+
+  // table
+  const columns = table.columns || [];
+  const rows = table.rows || [];
 
   return (
-    <Page size="A4" style={[styles.page, { color: ink }]}>
-      {/* ---- FIXED FOOTER ---- */}
+    <Page size="A4" style={styles.page}>
+
+      {/* ====== FIXED FOOTER ====== */}
       <View fixed style={styles.footer}>
-        <Text style={styles.footerLeft}>{footer?.documentNumber || documentNumber}</Text>
+        <Text style={styles.footerLeft}>{footer.documentNumber || documentNumber}</Text>
         <Text
           style={styles.footerCenter}
           render={({ pageNumber, totalPages }) =>
-            `Page ${pageNumber} of ${totalPages}`
+            `${pageNumber} / ${totalPages}`
           }
         />
-        <Text style={styles.footerRight}>{footer?.companyName || company?.name || ''}</Text>
+        <Text style={styles.footerRight}>{footer.companyName || company?.name || ''}</Text>
       </View>
 
-      {/* ======================================== */}
-      {/* SIDEBAR                                    */}
-      {/* ======================================== */}
-      <View style={styles.sidebar}>
-        {/* Company */}
-        {hasCompany && (
-          <View>
-            <Text style={styles.sbLogo}>{company.name}</Text>
-            <Text style={styles.sbCompanyDetail}>
-              {company.address ? `${company.address}\n` : ''}
-              {company.cityState ? `${company.cityState}\n` : ''}
-              {company.phone ? `${company.phone}\n` : ''}
-              {company.email || ''}
-            </Text>
-          </View>
-        )}
-
-        {hasCompany && <View style={styles.sbDivider} />}
-
-        {/* Client */}
-        {hasClient && (
-          <View style={styles.sbSection}>
-            <Text style={styles.sbLabel}>Bill To</Text>
-            <Text style={styles.sbValue}>{client.name}</Text>
-            {client.address ? <Text style={styles.sbValueSm}>{client.address}</Text> : null}
-            {client.cityState ? <Text style={styles.sbValueSm}>{client.cityState}</Text> : null}
-            {client.phone ? <Text style={styles.sbValueSm}>{client.phone}</Text> : null}
-            {client.email ? <Text style={styles.sbValueSm}>{client.email}</Text> : null}
-          </View>
-        )}
-
-        {/* Custom header fields */}
-        {hasCustomFields &&
-          customHeaderFields.map((field, idx) => (
-            <View style={styles.sbSection} key={`cf-${idx}`}>
-              <Text style={styles.sbLabel}>{field.label}</Text>
-              <Text style={styles.sbValueSm}>{field.value}</Text>
-            </View>
-          ))}
-
-        {/* PO Number (from direct prop, if not in custom fields) */}
-        {poNumber && (
-          <View style={styles.sbSection}>
-            <Text style={styles.sbLabel}>{_poNumberLabel || 'PO Number'}</Text>
-            <Text style={styles.sbValueSm}>{poNumber}</Text>
-          </View>
-        )}
-
-        <View style={styles.sbDivider} />
-
-        {/* Totals */}
-        <View style={styles.sbTotals}>
-          {totalLines.map((line, idx) => (
-            <View style={styles.sbTotalLine} key={`t-${idx}`}>
-              <Text>{line.label}</Text>
-              <Text>{line.value}</Text>
-            </View>
-          ))}
-          {mainLine && (
-            <View style={styles.sbTotalLineGrand}>
-              <Text>{mainLine.label}</Text>
-              <Text>{mainLine.value}</Text>
-            </View>
-          )}
-          {amountInWords ? (
-            <Text style={styles.sbAmountWords}>{amountInWords}</Text>
-          ) : null}
-          {balanceDue && (
-            <View style={[styles.sbTotalLine, { marginTop: 4 }]}>
-              <Text>{balanceDue.label}</Text>
-              <Text>{balanceDue.value}</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Advance summary */}
-        {hasAdvance && (
-          <View style={styles.sbAdvance}>
-            {advanceSummary.primaryLabel && advanceSummary.advanceAmount && (
-              <View style={styles.sbAdvanceLine}>
-                <Text>{advanceSummary.primaryLabel}</Text>
-                <Text style={{ fontFamily: 'Helvetica-Bold' }}>
-                  {advanceSummary.advanceAmount}
-                </Text>
-              </View>
-            )}
-            {advanceSummary.secondaryLabel && advanceSummary.balanceRemaining && (
-              <View style={styles.sbAdvanceLineLast}>
-                <Text>{advanceSummary.secondaryLabel}</Text>
-                <Text style={{ fontFamily: 'Helvetica-Bold' }}>
-                  {advanceSummary.balanceRemaining}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        <View style={styles.sbDivider} />
-
-        {/* Bank details */}
-        {hasBank && (
-          <View style={styles.sbBank}>
-            <Text style={[styles.sbLabel, { marginBottom: 2 }]}>Payment Info</Text>
-            <Text>
-              Bank: <Text style={styles.sbBankStrong}>{paymentDetails.bankName}</Text>
-            </Text>
-            <Text>
-              Account:{' '}
-              <Text style={styles.sbBankStrong}>{paymentDetails.accountName}</Text>
-            </Text>
-            <Text>
-              No: <Text style={styles.sbBankStrong}>{paymentDetails.accountNumber}</Text>
-            </Text>
-            {paymentDetails.sortCode ? (
-              <Text>
-                Sort: <Text style={styles.sbBankStrong}>{paymentDetails.sortCode}</Text>
+      {/* ====== HEADER BANNER ====== */}
+      <View style={[styles.headerBanner, headerBg]}>
+        {/* subtle bottom line */}
+        <View style={styles.headerBannerBottomLine} />
+        <View style={styles.headerLeft}>
+          {/* Logo placeholder or real logo */}
+          {company?.companyLogoUrl ? (
+            <Image src={company.companyLogoUrl} style={{ width: 48, height: 48, marginBottom: 6 }} />
+          ) : (
+            <View style={[styles.logoPlaceholder, { backgroundColor: '#FFFFFF' }]}>
+              <Text style={[styles.logoText, { color: accent }]}>
+                {company?.name ? company.name.charAt(0) + (company.name.split(' ')[1]?.charAt(0) || '') : 'S&S'}
               </Text>
-            ) : null}
-          </View>
-        )}
-
-        {/* Signature */}
-        {hasSignature && (
-          <View style={styles.sbSignature}>
-            {signature.imageUrl ? (
-              <Image
-                src={signature.imageUrl}
-                style={{ width: 100, height: 30, marginBottom: 4 }}
-              />
-            ) : signature.name ? (
-              <Text style={styles.sbSigScribble}>{signature.name}</Text>
-            ) : null}
-            {signature.name && (
-              <Text style={styles.sbSigName}>{signature.name}</Text>
+            </View>
+          )}
+          <Text style={styles.companyName}>
+            {company?.name || 'Company Name'}
+          </Text>
+          <Text style={styles.companyContact}>
+            {company?.address ? `${company.address}` : ''}
+            {company?.cityState ? `\n${company.cityState}` : ''}
+            {(company?.phone || company?.email) ? `\n` : ''}
+            {company?.phone || ''}
+            {company?.phone && company?.email ? ' · ' : ''}
+            {company?.email || ''}
+          </Text>
+        </View>
+        <View style={styles.headerRight}>
+          <Text style={styles.documentLabel}>{docLabel}</Text>
+          <Text style={styles.documentTitle}>{docTitle}</Text>
+          <View style={styles.metaLine}>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+              <Text style={styles.metaLabel}>Invoice Number</Text>
+              <Text style={styles.metaValue}>{documentNumber}</Text>
+            </View>
+            {issueDate && (
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 2 }}>
+                <Text style={styles.metaLabel}>Issue Date</Text>
+                <Text style={styles.metaValue}>{issueDate}</Text>
+              </View>
             )}
-            {signature.role && (
-              <Text style={styles.sbSigRole}>{signature.role}</Text>
-            )}
           </View>
-        )}
+        </View>
       </View>
 
-      {/* ======================================== */}
-      {/* MAIN AREA                                 */}
-      {/* ======================================== */}
-      <View style={styles.mainArea}>
-        {/* Document title */}
-        <Text style={styles.mainTitle}>
-          {customTitle || title || 'Invoice'}
-        </Text>
-        <Text style={styles.mainMeta}>
-          {documentNumber}
-          {issueDate ? ` · ${issueDate}` : ''}
-        </Text>
-
-        {/* ---- TABLE ---- */}
-        <View style={styles.table}>
-          {/* Header */}
-          <View style={styles.tableHeaderRow}>
-            <Text style={[styles.th, styles.colNum]}>#</Text>
-            {columns.map((col, ci) => {
-              const align = resolveAlign(col.align);
-              const widthStyle = col.width
-                ? { width: col.width }
-                : col.flex
-                  ? { flex: col.flex }
-                  : {};
-              return (
-                <Text
-                  key={ci}
-                  style={[
-                    styles.th,
-                    widthStyle as any,
-                    { ...align },
-                  ]}
-                >
-                  {col.label}
-                </Text>
-              );
-            })}
+      {/* ====== ADDRESS ROW ====== */}
+      <View style={styles.addressRow}>
+        {client ? (
+          <View style={styles.addressColumn}>
+            <Text style={styles.addressLabel}>Bill To</Text>
+            <Text style={styles.addressName}>{client.name}</Text>
+            <Text style={styles.addressDetail}>
+              {client.address ? `${client.address}\n` : ''}
+              {client.cityState ? `${client.cityState}\n` : ''}
+              {client.phone || ''}
+              {client.phone && client.email ? ' · ' : ''}
+              {client.email || ''}
+            </Text>
           </View>
+        ) : (
+          <View style={styles.addressColumn} />
+        )}
+        <View style={styles.addressColumnLast}>
+          <Text style={styles.addressLabel}>Our Reference</Text>
+          {company && (
+            <Text style={styles.addressName}>{company.name}</Text>
+          )}
+          <Text style={styles.addressDetail}>
+            {company?.customInfo && company.customInfo.length > 0
+              ? company.customInfo.map((ci, i) => (
+                  `${ci.label}: ${ci.value}${i < company.customInfo.length - 1 ? ' · ' : ''}`
+                )).join('')
+              : 'VAT: NG-48291 · CAC: RC-729304'}
+          </Text>
+        </View>
+      </View>
 
-          {/* Rows */}
-          {rows.map((row, rowIdx) => {
-            // Group header
-            if (row.isGroupHeader) {
-              return (
-                <View key={`gh-${rowIdx}`} style={styles.groupHeaderRow}>
-                  <Text style={styles.groupHeaderText}>
-                    {row.groupLabel || ''}
-                  </Text>
-                </View>
-              );
-            }
+      {/* ====== CUSTOM HEADER FIELDS ====== */}
+      {customHeaderFields.length > 0 && (
+        <View style={[styles.customStrip, surfaceBg]}>
+          {customHeaderFields.map((field, idx) => (
+            <View key={`cf-${idx}`} style={styles.customFieldItem}>
+              <Text style={styles.customFieldKey}>{field.label}</Text>
+              <Text style={styles.customFieldValue}>{field.value}</Text>
+            </View>
+          ))}
+        </View>
+      )}
 
-            // Group footer (subtotal)
-            if (row.isGroupFooter && row.showSubtotal) {
-              return (
-                <View key={`gf-${rowIdx}`} style={styles.groupSubtotalRow}>
-                  {/* Empty cells up to the subtotal */}
-                  {columns.map((_col, ci) => {
-                    if (ci < columns.length - 2) {
-                      return <View key={ci} style={{ flex: 1 }} />;
-                    }
-                    if (ci === columns.length - 2) {
-                      return (
-                        <Text
-                          key={ci}
-                          style={[
-                            styles.groupSubtotalLabel,
-                            { width: 50, marginRight: 4 },
-                          ]}
-                        >
-                          Subtotal
-                        </Text>
-                      );
-                    }
-                    return (
-                      <Text
-                        key={ci}
-                        style={[styles.groupSubtotalValue, { width: 54 }]}
-                      >
-                        {row.groupSubtotalValue || ''}
-                      </Text>
-                    );
-                  })}
-                </View>
-              );
-            }
-
-            // Normal row
-            const cells = row.cells || {};
-            const imageUrl = row.imageUrl || null;
-            const isInGroup = row.isInGroup || false;
-
+      {/* ====== TABLE ====== */}
+      <View style={styles.tableSection}>
+        {/* Header */}
+        <View style={styles.tableHeader}>
+          <Text style={[styles.tableHeaderCell, styles.colNum]}>#</Text>
+          {columns.map((col, ci) => {
+            const align = col.align === 'right' ? { textAlign: 'right' as const } : col.align === 'center' ? { textAlign: 'center' as const } : {};
+            const width = col.width ? { width: col.width } : col.flex ? { flex: col.flex } : {};
             return (
-              <View
-                key={`r-${rowIdx}`}
-                style={styles.tableRow}
-                wrap={false}
+              <Text
+                key={ci}
+                style={[styles.tableHeaderCell, width as any, align]}
               >
-                {/* Row number */}
-                <Text style={[styles.td, styles.tdNum, styles.colNum]}>
-                  {rowIdx + 1}
-                </Text>
-
-                {/* Data columns */}
-                {columns.map((col, ci) => {
-                  const value = cells[col.key];
-                  const display = safeText(value);
-                  const align = resolveAlign(col.align);
-                  const widthStyle = col.width
-                    ? { width: col.width }
-                    : col.flex
-                      ? { flex: col.flex }
-                      : { flex: 1 };
-                  const isFirstDataCol = ci === 0;
-
-                  return (
-                    <View
-                      key={ci}
-                      style={[
-                        styles.td,
-                        widthStyle as any,
-                        isInGroup && isFirstDataCol
-                          ? styles.groupItemIndent
-                          : {},
-                      ]}
-                    >
-                      {/* Description column: title + sub + optional thumbnail */}
-                      {isFirstDataCol ? (
-                        <View style={{ position: 'relative' }}>
-                          {isInGroup && (
-                            <Text style={styles.groupItemPrefix}>└</Text>
-                          )}
-                          <Text style={styles.itemTitle}>{display}</Text>
-                          {/* Sub-description from second column if available */}
-                          {columns.length > 1 &&
-                          columns[1] &&
-                          cells[columns[1].key] ? (
-                            <Text style={styles.itemSub}>
-                              {safeText(cells[columns[1].key])}
-                            </Text>
-                          ) : null}
-                          {/* Thumbnail */}
-                          {imageUrl ? (
-                            <View style={styles.thumbnailRow}>
-                              <Image src={imageUrl} style={styles.thumbnailImg} />
-                              <Link
-                                src={imageUrl}
-                                style={styles.openImageLink}
-                              >
-                                Open image
-                              </Link>
-                            </View>
-                          ) : null}
-                        </View>
-                      ) : ci === 1 ? (
-                        /* Skip — already rendered as sub-description above */
-                        <Text />
-                      ) : (
-                        <Text style={[{ ...align }]}>{display}</Text>
-                      )}
-                    </View>
-                  );
-                })}
-              </View>
+                {col.label}
+              </Text>
             );
           })}
         </View>
 
-        {/* ---- BOTTOM NOTES (after table) ---- */}
-        {(notes || terms || additionalFields?.length > 0 || attachments?.length > 0) && (
-          <View style={styles.bottomNotes}>
-            {notes && (
-              <View>
-                <Text style={styles.sectionTitle}>{notes.title}</Text>
-                <Text style={styles.textBlock}>{notes.content}</Text>
+        {/* Rows */}
+        {rows.map((row, rowIdx) => {
+          // group header
+          if (row.isGroupHeader) {
+            return (
+              <View key={`gh-${rowIdx}`} style={[styles.groupHeaderRow, { backgroundColor: '#eff6ff', borderBottomColor: '#dbeafe' }]}>
+                <Text style={[styles.groupHeaderText, { color: accent }]}>{row.groupLabel || ''}</Text>
               </View>
-            )}
-            {terms && (
-              <View>
-                <Text style={styles.sectionTitle}>{terms.title}</Text>
-                <Text style={styles.textBlock}>{terms.content}</Text>
-              </View>
-            )}
-            {additionalFields && additionalFields.length > 0 && (
-              <View style={styles.extraFieldsRow}>
-                {additionalFields.map((field, idx) => (
-                  <View key={`af-${idx}`} style={styles.extraFieldItem}>
-                    <Text style={styles.sectionTitle}>{field.label}</Text>
-                    <Text style={{ fontSize: 6.5 }}>{field.value}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-            {attachments && attachments.length > 0 && (
-              <View style={{ marginTop: 6 }}>
-                <Text style={styles.sectionTitle}>Attachments</Text>
-                {attachments.map((att, idx) =>
-                  att.url ? (
-                    <Link
-                      key={`att-${idx}`}
-                      src={att.url}
-                      style={{
-                        fontSize: 6.5,
-                        color: '#2b4a3b',
-                        textDecoration: 'none',
-                        marginBottom: 2,
-                      }}
-                    >
-                      {att.label}
-                    </Link>
-                  ) : (
-                    <Text key={`att-${idx}`} style={{ fontSize: 6.5, marginBottom: 2 }}>
-                      {att.label}
+            );
+          }
+          // group subtotal
+          if (row.isGroupFooter && row.showSubtotal) {
+            return (
+              <View key={`gf-${rowIdx}`} style={styles.groupSubtotalRow}>
+                {/* empty cells before subtotal */}
+                {columns.map((_col, ci) => {
+                  if (ci < columns.length - 2) {
+                    return <View key={ci} style={{ flex: 1 }} />;
+                  }
+                  if (ci === columns.length - 2) {
+                    return (
+                      <Text key={ci} style={[styles.groupSubtotalLabel, { marginRight: 4 }]}>
+                        Subtotal
+                      </Text>
+                    );
+                  }
+                  return (
+                    <Text key={ci} style={[styles.groupSubtotalValue, { color: ink }]}>
+                      {row.groupSubtotalValue || ''}
                     </Text>
-                  )
-                )}
+                  );
+                })}
+              </View>
+            );
+          }
+
+          // normal row
+          const cells = row.cells || {};
+          const imageUrl = row.imageUrl || null;
+          const isGroupItem = row.isInGroup || false;
+
+          return (
+            <View key={`r-${rowIdx}`} style={styles.tableRow} wrap={false}>
+              {/* row number */}
+              <Text style={[styles.tableCellBase, styles.colNum, { textAlign: 'center' }]}>
+                {rowIdx + 1}
+              </Text>
+
+              {columns.map((col, ci) => {
+                const value = cells[col.key];
+                const display = safeText(value);
+                const align = col.align === 'right' ? { textAlign: 'right' as const } : col.align === 'center' ? { textAlign: 'center' as const } : {};
+                const width = col.width ? { width: col.width } : col.flex ? { flex: col.flex } : { flex: 1 };
+                const isFirstCol = ci === 0;
+
+                return (
+                  <View
+                    key={ci}
+                    style={[
+                      styles.tableCellBase,
+                      width as any,
+                      isGroupItem && isFirstCol ? styles.groupItemIndent : {},
+                    ]}
+                  >
+                    {isFirstCol ? (
+                      /* Description cell: title + sub + optional thumbnail */
+                      <View style={{ position: 'relative' }}>
+                        {isGroupItem && (
+                          <Text style={[styles.groupItemPrefix, { color: accent }]}>└</Text>
+                        )}
+                        <Text style={styles.itemTitle}>{display}</Text>
+                        {/* sub-description from second column */}
+                        {columns.length > 1 && cells[columns[1].key] && (
+                          <Text style={styles.itemSub}>{safeText(cells[columns[1].key])}</Text>
+                        )}
+                        {imageUrl && (
+                          <View style={styles.thumbnailRow}>
+                            <Image src={imageUrl} style={styles.thumbnailImg} />
+                            <Link src={imageUrl} style={[styles.openImageLink, { color: accent, backgroundColor: '#eff6ff' }]}>
+                              Open image
+                            </Link>
+                          </View>
+                        )}
+                      </View>
+                    ) : ci === 1 ? (
+                      /* second column already rendered as sub, skip */
+                      <Text></Text>
+                    ) : (
+                      <Text style={[{ ...align }, col.key === 'make' ? styles.makeCell : null, col.key === 'model' ? styles.modelCell : null, col.key === 'qty' ? styles.qtyCell : null, col.key === 'unitPrice' ? styles.priceCell : null, col.key === 'amount' ? styles.amountCell : null]}>
+                        {display}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          );
+        })}
+      </View>
+
+      {/* ====== BOTTOM PANEL (3 columns) ====== */}
+      <View style={styles.bottomPanel}>
+        {/* Payment info */}
+        {showBankDetails && paymentDetails ? (
+          <View style={styles.bottomColumn}>
+            <Text style={[styles.sectionTitle, { color: accent }]}>Payment</Text>
+            <View style={styles.bankLine}>
+              <Text style={styles.bankLabel}>Bank</Text>
+              <Text style={styles.bankValue}>{paymentDetails.bankName}</Text>
+            </View>
+            <View style={styles.bankLine}>
+              <Text style={styles.bankLabel}>Account</Text>
+              <Text style={styles.bankValue}>{paymentDetails.accountName}</Text>
+            </View>
+            <View style={styles.bankLine}>
+              <Text style={styles.bankLabel}>No.</Text>
+              <Text style={styles.bankValue}>{paymentDetails.accountNumber}</Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.bottomColumn} />
+        )}
+
+        {/* Notes & Terms */}
+        <View style={styles.bottomColumn}>
+          {notes && (
+            <>
+              <Text style={[styles.sectionTitle, { color: accent }]}>Notes</Text>
+              <Text style={styles.textBlock}>{notes.content}</Text>
+            </>
+          )}
+          {terms && (
+            <>
+              <Text style={[styles.sectionTitle, { color: accent, marginTop: notes ? 8 : 0 }]}>Terms</Text>
+              <Text style={styles.textBlock}>{terms.content}</Text>
+            </>
+          )}
+        </View>
+
+        {/* Attachments */}
+        <View style={styles.bottomColumnLast}>
+          {attachments.length > 0 && (
+            <>
+              <Text style={[styles.sectionTitle, { color: accent }]}>Attachments</Text>
+              {attachments.map((att, idx) =>
+                att.url ? (
+                  <Link key={`att-${idx}`} src={att.url} style={[styles.attachmentLink, { color: accent }]}>
+                    {att.label}
+                  </Link>
+                ) : (
+                  <Text key={`att-${idx}`} style={{ fontSize: 8 }}>{att.label}</Text>
+                )
+              )}
+            </>
+          )}
+        </View>
+      </View>
+
+      {/* ====== TOTALS + SIGNATURE ROW ====== */}
+      <View style={styles.totalsSignatureRow}>
+        {/* Left: totals */}
+        <View style={styles.leftSection}>
+          <View style={styles.totalsGrid}>
+            {totalLines.map((line, idx) => (
+              <View key={`tl-${idx}`} style={styles.totalsLine}>
+                <Text style={styles.totalsLabel}>{line.label}</Text>
+                <Text style={styles.totalsValue}>{line.value}</Text>
+              </View>
+            ))}
+            {mainLine && (
+              <View style={styles.totalsGrandLine}>
+                <Text style={styles.totalsGrandLabel}>{mainLine.label}</Text>
+                <Text style={styles.totalsGrandValue}>{mainLine.value}</Text>
+              </View>
+            )}
+            {amountInWords ? (
+              <Text style={styles.amountWords}>{amountInWords}</Text>
+            ) : null}
+            {balanceDue && (
+              <View style={[styles.totalsLine, { marginTop: 8 }]}>
+                <Text style={styles.totalsLabel}>{balanceDue.label}</Text>
+                <Text style={styles.totalsValue}>{balanceDue.value}</Text>
               </View>
             )}
           </View>
-        )}
+
+          {/* Advance block */}
+          {isAdvance && advanceSummary && (
+            <View style={[styles.advanceBlock, { borderLeftColor: accent }]}>
+              <View style={styles.advanceColumn}>
+                <Text style={styles.advanceLabel}>{advanceSummary.primaryLabel || 'Advance'}</Text>
+                <Text style={[styles.advanceValue, { color: accent }]}>{advanceSummary.advanceAmount}</Text>
+              </View>
+              {advanceSummary.secondaryLabel && advanceSummary.balanceRemaining && (
+                <>
+                  <View style={styles.advanceDivider} />
+                  <View style={styles.advanceColumn}>
+                    <Text style={styles.advanceLabel}>{advanceSummary.secondaryLabel}</Text>
+                    <Text style={[styles.advanceValue, { color: accent }]}>{advanceSummary.balanceRemaining}</Text>
+                  </View>
+                </>
+              )}
+            </View>
+          )}
+        </View>
+
+        {/* Right: extra fields + signature */}
+        <View style={styles.rightSection}>
+          {additionalFields.length > 0 && (
+            <View style={styles.extraFieldsVertical}>
+              {additionalFields.map((field, idx) => (
+                <View key={`ef-${idx}`} style={styles.extraFieldItem}>
+                  <Text style={styles.extraFieldKey}>{field.label}</Text>
+                  <Text style={styles.extraFieldValue}>{field.value}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+          {signature && (signature.name || signature.imageUrl) && (
+            <View style={styles.signatureBox}>
+              {signature.imageUrl ? (
+                <Image src={signature.imageUrl} style={{ width: 130, height: 40, marginBottom: 4 }} />
+              ) : (
+                <Text style={styles.signatureScribble}>{signature.name || ''}</Text>
+              )}
+              {signature.name && (
+                <Text style={styles.signatureName}>{signature.name}</Text>
+              )}
+              {signature.role && (
+                <Text style={styles.signatureRole}>{signature.role}</Text>
+              )}
+            </View>
+          )}
+        </View>
       </View>
+
     </Page>
   );
 }
