@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const previewModelPath = path.resolve('src/domain/invoice/previewModel.ts')
-const documentMediaPath = path.resolve('src/domain/documentMedia.js')
+const documentMediaPath = path.resolve('src/domain/documentMedia.ts')
 const industryStylesPath = path.resolve('src/components/pdf-new/templates/industryStyles.ts')
 const industryTemplatePath = path.resolve('src/components/pdf-new/templates/Industry.tsx')
 const industryAdapterPath = path.resolve('src/components/pdf-new/industryAdapter.ts')
@@ -119,8 +119,8 @@ test('view invoice page exposes bank controls and document options below the pre
 test('view invoice saves and reuses the selected pdf template id', () => {
   const source = fs.readFileSync(viewInvoicePath, 'utf8')
 
-  assert.match(source, /isInvoicePdfTemplateId\(customFields\?\.pdfTemplateId\) \? customFields\.pdfTemplateId : 'industry'/)
-  assert.match(source, /pdfTemplateId: nextTemplateId/)
+  assert.match(source, /normalizeInvoicePdfTemplateId\(customFields\?\.pdfTemplateId\) \|\| 'industry'/)
+  assert.match(source, /pdfTemplateId: (?:nextTemplateId \|\| pdfTemplateId|targetTemplateId)/)
   assert.match(source, /templateId=\{pdfTemplateId\}/)
   assert.match(source, /templateId: targetTemplateId/)
 })

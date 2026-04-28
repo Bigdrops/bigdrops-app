@@ -450,7 +450,7 @@ export default function ViewInvoice() {
   const handleSaveCustomization = useCallback(async (
     nextPdfOutput: PdfOutputSettingsValue,
     _nextPreset?: unknown,
-    nextTemplateId: InvoicePdfTemplateId = 'industry',
+    nextTemplateId?: InvoicePdfTemplateId,
   ) => {
     if (!invoice?.id) return
     const previousPdfOutput = pdfOutput
@@ -459,7 +459,7 @@ export default function ViewInvoice() {
       const nextCustomFields = {
         ...(customFields || {}),
         pdfOutput: nextPdfOutput,
-        pdfTemplateId: nextTemplateId,
+        pdfTemplateId: nextTemplateId || pdfTemplateId,
       }
       const { error } = await supabase.from('invoices').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', invoice.id)
       if (error) throw error
@@ -470,7 +470,7 @@ export default function ViewInvoice() {
       setPdfOutput(previousPdfOutput)
       showToast('Save failed', err instanceof Error ? err.message : 'Could not save customize settings')
     }
-  }, [customFields, invoice?.id, pdfOutput, refresh])
+  }, [customFields, invoice?.id, pdfOutput, pdfTemplateId, refresh])
 
   const handleInlinePdfOutputChange = useCallback((nextPdfOutput: PdfOutputSettingsValue) => {
     void handleSaveCustomization(nextPdfOutput)

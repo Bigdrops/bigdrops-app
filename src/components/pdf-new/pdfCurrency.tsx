@@ -17,13 +17,9 @@ export function PdfCurrencyText({ value, style }: PdfCurrencyTextProps) {
     return <Text style={style}>{text}</Text>
   }
 
-  const trimmed = text.trimStart()
-  const amount = trimmed.slice(PDF_CURRENCY_SYMBOL.length).trimStart()
-
   return (
-    <Text style={style}>
-      <Text style={{ fontFamily: PDF_CURRENCY_FONT_FAMILY }}>{PDF_CURRENCY_SYMBOL}</Text>
-      {amount ? ` ${amount}` : ''}
+    <Text style={[style, { fontFamily: PDF_CURRENCY_FONT_FAMILY }]}>
+      {text}
     </Text>
   )
 }

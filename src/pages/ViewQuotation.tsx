@@ -160,13 +160,17 @@ export default function ViewQuotation() {
   const handleSaveCustomization = async (
     nextPdfOutput: PdfOutputSettingsValue,
     _nextPreset?: unknown,
-    nextTemplateId: InvoicePdfTemplateId = 'industry',
+    nextTemplateId?: InvoicePdfTemplateId,
   ) => {
     if (!quotation || !id) return
+
+    const currentTemplateId = normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || 'industry'
+    const targetTemplateId = nextTemplateId || currentTemplateId
+
     const nextCustomFields = {
       ...customFields,
       pdfOutput: nextPdfOutput,
-      pdfTemplateId: nextTemplateId,
+      pdfTemplateId: targetTemplateId,
     }
     const { error } = await supabase.from('quotations').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', id)
     if (error) throw error
