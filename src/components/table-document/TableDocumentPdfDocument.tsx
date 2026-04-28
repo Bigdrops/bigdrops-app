@@ -1,5 +1,6 @@
 import React from 'react'
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { PdfCurrencyText } from '@/components/pdf-new/pdfCurrency'
 
 import type { TableDocumentColumn, TableDocumentRow, TableDocumentType, TableTemplateId } from '@/domain/table-document/types'
 
@@ -106,9 +107,11 @@ export function TableDocumentPdfDocument({ documentType, templateId, document, r
               <View key={row.id || row._uiKey || `row-${index}`} style={styles.row}>
                 <Text style={[styles.cell, { width: `${widthsByKey.s_no}%`, borderColor }]}>{index + 1}</Text>
                 {visibleColumns.map((column) => (
-                  <Text key={column.key} style={[styles.cell, { width: `${widthsByKey[column.key] || 12}%`, borderColor }]}>
-                    {String((row[column.key] as string | number) || '-')}
-                  </Text>
+                  <PdfCurrencyText
+                    key={column.key}
+                    value={String((row[column.key] as string | number) || '-')}
+                    style={[styles.cell, { width: `${widthsByKey[column.key] || 12}%`, borderColor }]}
+                  />
                 ))}
               </View>
             )

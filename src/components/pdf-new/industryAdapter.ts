@@ -1,4 +1,4 @@
-import { formatCurrency } from '../../lib/formatters/money'
+import { formatPdfCurrencyString } from '../../lib/formatters/pdfCurrency'
 import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { richTextToPlainText } from '../../lib/richTextPlain'
 import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '../../domain/documentMedia'
@@ -158,18 +158,14 @@ function normalizePdfTextSection(section: PdfDocumentModel['notes']) {
 
 export function formatPdfMoney(value: unknown, options: { withSymbol?: boolean } = { withSymbol: true }) {
   if (!hasDisplayValue(value)) return ''
-
-  return formatCurrency(value as any, {
-    currencySymbol: options.withSymbol ? 'NGN ' : '',
-    locale: 'en-NG',
-    preserveFraction: true,
-  })
+  const formatted = formatPdfCurrencyString(value as any)
+  return options.withSymbol === false ? formatted.replace(/^₦\s*/, '') : formatted
 }
 
 function formatPreparedCell(column: PdfColumnDefinition | undefined, cell: unknown) {
   if (!column || !hasDisplayValue(cell)) return cell
   if (!PDF_MONEY_KEYS.has(column.key)) return cell
-  return formatPdfMoney(cell, { withSymbol: false })
+  return formatPdfMoney(cell)
 }
 
 function resolveLineAmount(item: PdfDocumentModel['items'][number]) {
@@ -364,13 +360,9 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
       : null,
     table: {
       columns: columns.map((column) => {
-        let label = column.label
-        if (PDF_MONEY_KEYS.has(column.key)) {
-          label = `${label} (NGN)`
-        }
         return {
           key: column.key,
-          label,
+          label: column.label,
           align: column.align,
           width: column.pdfWidth || undefined,
           flex: column.pdfFlex || undefined,

@@ -2,6 +2,7 @@ import React from 'react';
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import { styles, resolveAlignment } from './ObsidianReceiptStyles';
 import type { IndustryTemplateData } from '../industryAdapter';
+import { PdfCurrencyText } from '../pdfCurrency';
 import { safeString } from './safeValue';
 
 export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }) {
@@ -148,14 +149,14 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
   const totalsLines = lines.map((line, idx) => (
     <View key={`total-line-${idx}`} style={styles.totalLine}>
       <Text>{safeString(line.label)}</Text>
-      <Text>{safeString(line.value)}</Text>
+      <PdfCurrencyText value={safeString(line.value)} />
     </View>
   ));
   if (mainLine) {
     totalsLines.push(
       <View key="main-total" style={compactStyles(styles.totalLine, styles.dueLine, { borderTopColor: border })}>
         <Text>{safeString(mainLine.label)}</Text>
-        <Text>{safeString(mainLine.value)}</Text>
+        <PdfCurrencyText value={safeString(mainLine.value)} />
       </View>,
     );
   }
@@ -170,7 +171,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
     totalsLines.push(
       <View key="balance-due" style={compactStyles(styles.totalLine, { marginTop: 4 })}>
         <Text>{safeString(balanceDue.label)}</Text>
-        <Text>{safeString(balanceDue.value)}</Text>
+        <PdfCurrencyText value={safeString(balanceDue.value)} />
       </View>,
     );
   }
@@ -241,9 +242,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
         tableChildren.push(
           <View key={`group-footer-${rowIdx}`} style={styles.groupFooterRow}>
             <Text style={compactStyles(styles.groupSubtotalLabel, { color: muted })}>Subtotal</Text>
-            <Text style={compactStyles(styles.groupSubtotalValue, { color: text })}>
-              {safeString(row.groupSubtotalValue)}
-            </Text>
+            <PdfCurrencyText value={safeString(row.groupSubtotalValue)} style={compactStyles(styles.groupSubtotalValue, { color: text })} />
           </View>,
         );
       }
@@ -280,7 +279,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
             <View key={`cell-${rowIdx}-${colIdx}`} style={compactStyles(flexStyle, styles.tableCell)}>
               <View style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
                 <View style={{ width: '100%' }}>
-                  <Text style={alignStyle}>{value}</Text>
+                  <PdfCurrencyText value={value} style={alignStyle} />
                   {isDescriptionCol && subValue ? (
                     <Text style={compactStyles(styles.itemDescriptionSub, alignStyle)}>
                       {subValue}
@@ -330,12 +329,12 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
         <View style={[styles.advanceSummaryContainer, { borderColor: border, backgroundColor: surface }]}>
           <View style={styles.advanceSummaryRow}>
             <Text style={styles.advanceSummaryLabel}>{safeString(advanceSummary.primaryLabel)}</Text>
-            <Text style={[styles.advanceSummaryValue, { color: accent }]}>{safeString(advanceSummary.advanceAmount)}</Text>
+            <PdfCurrencyText value={safeString(advanceSummary.advanceAmount)} style={[styles.advanceSummaryValue, { color: accent }]} />
           </View>
           {advanceSummary.secondaryLabel && advanceSummary.balanceRemaining && (
             <View style={[styles.advanceSummaryRow, { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: border }]}>
               <Text style={styles.advanceSummaryLabel}>{safeString(advanceSummary.secondaryLabel)}</Text>
-              <Text style={styles.advanceSummaryValue}>{safeString(advanceSummary.balanceRemaining)}</Text>
+              <PdfCurrencyText value={safeString(advanceSummary.balanceRemaining)} style={styles.advanceSummaryValue} />
             </View>
           )}
         </View>

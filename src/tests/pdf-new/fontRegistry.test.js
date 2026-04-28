@@ -14,6 +14,13 @@ test('PDF shared font registry uses a static Inter source instead of the broken 
   assert.doesNotMatch(source, /\.woff2/)
 })
 
+test('PDF shared font registry includes a dedicated Noto Sans entry for locked currency rendering', () => {
+  const source = fs.readFileSync(sharedFontsPath, 'utf8')
+
+  assert.match(source, /@fontsource\/noto-sans/)
+  assert.match(source, /Noto Sans/)
+})
+
 test('PDF design preset continues exposing the expected shared font choices for header and body selection', () => {
   const source = fs.readFileSync(designPresetPath, 'utf8')
 

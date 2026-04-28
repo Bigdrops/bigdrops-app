@@ -3,7 +3,7 @@ import {
   REGISTERED_FILLABLE_FONTS,
   type RegisteredFillableFontFamily,
 } from '@/lib/pdfFillableFonts'
-import { REGISTERED_SHARED_FONTS } from '@/lib/pdfSharedFonts'
+import { REGISTERED_LOCKED_SHARED_FONTS, REGISTERED_SHARED_FONTS } from '@/lib/pdfSharedFonts'
 
 let pdfFontsRegistered = false
 
@@ -57,6 +57,7 @@ export function registerPdfFonts() {
 
   Object.values(REGISTERED_FILLABLE_FONTS).forEach(registerFillableFontConfig)
   Object.values(REGISTERED_SHARED_FONTS).forEach(registerSharedFontConfig)
+  Object.values(REGISTERED_LOCKED_SHARED_FONTS).forEach(registerSharedFontConfig)
 
   // Prevent hyphenation for qty/unit tokens and disable default hyphenation dashes
   Font.registerHyphenationCallback(word => {

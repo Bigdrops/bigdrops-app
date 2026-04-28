@@ -1,4 +1,5 @@
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { PdfCurrencyText } from '@/components/pdf-new/pdfCurrency'
 
 import {
   formatProjectDocumentDate,
@@ -208,7 +209,7 @@ export default function ProjectDocumentPDF({ document, projectName, settings = n
                 <View key={`${field.label}-${field.value}`} style={styles.keyCard}>
                   <View style={styles.keyCardInner}>
                     <Text style={styles.keyLabel}>{field.label}</Text>
-                    <Text style={styles.keyValue}>{field.value}</Text>
+                    <PdfCurrencyText value={field.value} style={styles.keyValue} />
                   </View>
                 </View>
               ))}
@@ -237,15 +238,14 @@ export default function ProjectDocumentPDF({ document, projectName, settings = n
             {itemsTable.rows.map((row, rowIndex) => (
               <View key={`row-${rowIndex}`} style={styles.tableRow}>
                 {itemsTable.columns.map((column) => (
-                  <Text
+                  <PdfCurrencyText
                     key={`${rowIndex}-${column}`}
+                    value={row[column] || ''}
                     style={[
                       styles.tableCell,
                       { width: `${getColumnWidth(itemsTable.columns.length)}%` },
                     ]}
-                  >
-                    {row[column] || ''}
-                  </Text>
+                  />
                 ))}
               </View>
             ))}

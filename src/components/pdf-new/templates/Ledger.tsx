@@ -1,6 +1,7 @@
 import React from 'react';
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import type { IndustryTemplateData } from '../industryAdapter';
+import { PdfCurrencyText } from '../pdfCurrency';
 import { styles } from './LedgerStyles';
 
 function safeText(value: unknown): string {
@@ -157,7 +158,7 @@ export default function Ledger({ data }: { data: IndustryTemplateData }) {
                 <View key={rIndex} style={styles.groupSubtotalRow} wrap={false}>
                   <View style={{ flex: 1 }} />
                   <Text style={styles.groupSubtotalLabel}>Group Total:</Text>
-                  <Text style={styles.groupSubtotalVal}>{safeText(row.groupSubtotalValue)}</Text>
+                  <PdfCurrencyText value={safeText(row.groupSubtotalValue)} style={styles.groupSubtotalVal} />
                 </View>
               );
             }
@@ -194,7 +195,7 @@ export default function Ledger({ data }: { data: IndustryTemplateData }) {
                           ) : null}
                         </>
                       ) : (
-                        <Text style={styles.tableCell}>{safeText(rawVal)}</Text>
+                        <PdfCurrencyText value={safeText(rawVal)} style={styles.tableCell} />
                       )}
                     </View>
                   );
@@ -248,21 +249,21 @@ export default function Ledger({ data }: { data: IndustryTemplateData }) {
                   {totals.lines.map((line, idx) => (
                     <View key={idx} style={styles.totalLine}>
                       <Text style={styles.totalLabel}>{safeText(line.label)}</Text>
-                      <Text style={styles.totalVal}>{safeText(line.value)}</Text>
+                      <PdfCurrencyText value={safeText(line.value)} style={styles.totalVal} />
                     </View>
                   ))}
                   
                   {totals.mainLine && (
                     <View style={styles.totalLineGrand}>
                       <Text style={styles.totalLabelGrand}>{safeText(totals.mainLine.label)}</Text>
-                      <Text style={styles.totalValGrand}>{safeText(totals.mainLine.value)}</Text>
+                      <PdfCurrencyText value={safeText(totals.mainLine.value)} style={styles.totalValGrand} />
                     </View>
                   )}
 
                   {!isAdvanceInvoice && totals.balanceDue && (
                     <View style={styles.totalLineGrand}>
                       <Text style={styles.totalLabelGrand}>{safeText(totals.balanceDue.label)}</Text>
-                      <Text style={styles.totalValGrand}>{safeText(totals.balanceDue.value)}</Text>
+                      <PdfCurrencyText value={safeText(totals.balanceDue.value)} style={styles.totalValGrand} />
                     </View>
                   )}
                   
@@ -275,11 +276,11 @@ export default function Ledger({ data }: { data: IndustryTemplateData }) {
                   <View style={styles.advanceBlock}>
                     <View style={styles.advanceDue}>
                       <Text style={styles.advanceDueLbl}>{safeText(advance.primaryLabel)}</Text>
-                      <Text style={styles.advanceDueVal}>{safeText(advance.advanceAmount)}</Text>
+                      <PdfCurrencyText value={safeText(advance.advanceAmount)} style={styles.advanceDueVal} />
                     </View>
                     <View style={styles.advanceBal}>
                       <Text style={styles.advanceBalText}>{safeText(advance.secondaryLabel)}</Text>
-                      <Text style={styles.advanceBalTextVal}>{safeText(advance.balanceRemaining)}</Text>
+                      <PdfCurrencyText value={safeText(advance.balanceRemaining)} style={styles.advanceBalTextVal} />
                     </View>
                   </View>
                 )}

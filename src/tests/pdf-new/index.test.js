@@ -120,8 +120,10 @@ test('adaptIndustryData formats pdf money values through the shared safe formatt
   assert.equal(data.table.rows[0].cells.num, '1')
   assert.equal(data.table.rows[0].cells.unit_price, '150,000')
   assert.equal(data.table.rows[0].cells.amount, '300,000')
-  assert.equal(data.totals.lines[0].value, 'NGN 300,000')
-  assert.equal(data.totals.mainLine.value, 'NGN 300,000')
+  assert.equal(data.table.columns.find((column) => column.key === 'unit_price')?.label, 'Unit Price')
+  assert.equal(data.table.columns.find((column) => column.key === 'amount')?.label, 'Amount')
+  assert.equal(data.totals.lines[0].value, '₦ 300,000')
+  assert.equal(data.totals.mainLine.value, '₦ 300,000')
 })
 
 test('adaptIndustryData preserves grouped subtotal presentation when a group header enables it', () => {
@@ -172,7 +174,7 @@ test('adaptIndustryData preserves grouped subtotal presentation when a group hea
   assert.equal(data.table.rows[0].isGroupHeader, true)
   assert.equal(data.table.rows[0].showSubtotal, true)
   assert.equal(data.table.rows[0].groupSubtotalLabel, null)
-  assert.equal(data.table.rows[0].groupSubtotalValue, 'NGN 200,000')
+  assert.equal(data.table.rows[0].groupSubtotalValue, '₦ 200,000')
 })
 
 test('adaptIndustryData strips html markup from notes and terms before the PDF template renders them', () => {

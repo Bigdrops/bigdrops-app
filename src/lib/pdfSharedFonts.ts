@@ -28,16 +28,20 @@ import sourceSansProItalic from '@fontsource/source-sans-pro/files/source-sans-p
 import robotoCondensedRegular from '@fontsource/roboto-condensed/files/roboto-condensed-latin-400-normal.woff'
 import robotoCondensedBold from '@fontsource/roboto-condensed/files/roboto-condensed-latin-700-normal.woff'
 import robotoCondensedItalic from '@fontsource/roboto-condensed/files/roboto-condensed-latin-400-italic.woff'
+import notoSansRegular from '@fontsource/noto-sans/files/noto-sans-latin-400-normal.woff'
+import notoSansBold from '@fontsource/noto-sans/files/noto-sans-latin-700-normal.woff'
 import type { PdfFontChoice } from '@/lib/pdfDesignPreset'
 
 export type RegisteredSharedFontConfig = {
-  family: PdfFontChoice
+  family: string
   webFamily: string
   regularSrc: string
   boldSrc?: string
   italicSrc?: string
   boldItalicSrc?: string
 }
+
+export const PDF_CURRENCY_FONT_FAMILY = 'Noto Sans'
 
 export const REGISTERED_SHARED_FONTS: Record<PdfFontChoice, RegisteredSharedFontConfig> = {
   Inter: {
@@ -119,6 +123,17 @@ export const REGISTERED_SHARED_FONTS: Record<PdfFontChoice, RegisteredSharedFont
     boldSrc: robotoCondensedBold,
     italicSrc: robotoCondensedItalic,
     boldItalicSrc: robotoCondensedBold,
+  },
+}
+
+export const REGISTERED_LOCKED_SHARED_FONTS: Record<string, RegisteredSharedFontConfig> = {
+  [PDF_CURRENCY_FONT_FAMILY]: {
+    family: PDF_CURRENCY_FONT_FAMILY,
+    webFamily: PDF_CURRENCY_FONT_FAMILY,
+    regularSrc: notoSansRegular,
+    boldSrc: notoSansBold,
+    italicSrc: notoSansRegular,
+    boldItalicSrc: notoSansBold,
   },
 }
 

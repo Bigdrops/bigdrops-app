@@ -1,5 +1,6 @@
 import { Image, Link, Page, Text, View } from '@react-pdf/renderer'
 import type { IndustryTemplateData } from '../industryAdapter'
+import { PdfCurrencyText } from '../pdfCurrency'
 import { lightenHex } from '@/lib/pdfDesignPreset'
 import {
   getCellText,
@@ -311,7 +312,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                           {getCellText(cell)}
                         </Text>
                       ) : (
-                        <Text style={alignStyle}>{getCellText(cell)}</Text>
+                        <PdfCurrencyText value={getCellText(cell)} style={alignStyle} />
                       )}
                     </View>
                   )
@@ -387,15 +388,14 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                 >
                   {line.label}
                 </Text>
-                <Text
+                <PdfCurrencyText
+                  value={line.value}
                   style={[
                     styles.totalValue,
                     textColor ? { color: textColor } : null,
                     bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
                   ]}
-                >
-                  {line.value}
-                </Text>
+                />
               </View>
             ))}
 
@@ -415,15 +415,14 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                 >
                   {data.totals.mainLine.label}
                 </Text>
-                <Text
+                <PdfCurrencyText
+                  value={data.totals.mainLine.value}
                   style={[
                     styles.totalFinalValue,
                     textColor ? { color: textColor } : null,
                     headerFontFamily ? { fontFamily: headerFontFamily } : null,
                   ]}
-                >
-                  {data.totals.mainLine.value}
-                </Text>
+                />
               </View>
             ) : null}
 
@@ -456,14 +455,13 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                 >
                   {data.totals.balanceDue.label}
                 </Text>
-                <Text
+                <PdfCurrencyText
+                  value={data.totals.balanceDue.value}
                   style={[
                     styles.balanceDueValue,
                     bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
                   ]}
-                >
-                  {data.totals.balanceDue.value}
-                </Text>
+                />
               </View>
             ) : null}
 
@@ -486,15 +484,14 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                     >
                       {data.advanceSummary.primaryLabel}
                     </Text>
-                    <Text
+                    <PdfCurrencyText
+                      value={data.advanceSummary.advanceAmount}
                       style={[
                         styles.advanceProminentValue,
                         accentColor ? { color: accentColor } : null,
                         bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
                       ]}
-                    >
-                      {data.advanceSummary.advanceAmount}
-                    </Text>
+                    />
                   </View>
                 ) : null}
 
@@ -509,15 +506,14 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                     >
                       {data.advanceSummary.secondaryLabel}
                     </Text>
-                    <Text
+                    <PdfCurrencyText
+                      value={data.advanceSummary.balanceRemaining}
                       style={[
                         styles.advanceValue,
                         textColor ? { color: textColor } : null,
                         bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
                       ]}
-                    >
-                      {data.advanceSummary.balanceRemaining}
-                    </Text>
+                    />
                   </View>
                 ) : null}
               </View>

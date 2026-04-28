@@ -56,7 +56,7 @@ export function getPdfColumns(columns: ColumnConfig[] = []): PdfColumnDefinition
       ? { key: 'unit', label: getColumn('unit')?.label || 'Unit', kind: 'builtin', align: 'center', pdfWidth: 34, pdfFlex: 0.85 }
       : null,
     { key: 'unit_price', label: 'Unit Price', kind: 'builtin', align: 'right', pdfWidth: 54, pdfFlex: 1.2 },
-    { key: 'amount', label: 'Amount (NGN)', kind: 'builtin', align: 'right', pdfWidth: 62, pdfFlex: 1.35 },
+    { key: 'amount', label: 'Amount', kind: 'builtin', align: 'right', pdfWidth: 62, pdfFlex: 1.35 },
     getColumn('install_rate')
       ? { key: 'install_rate', label: getColumn('install_rate')?.label || 'Install Rate', kind: 'builtin', align: 'right', pdfWidth: 54, pdfFlex: 1.15 }
       : null,

@@ -39,6 +39,8 @@ export type ProjectDocumentItemsTable = {
   rows: Array<Record<string, string>>
 }
 
+import { formatPdfCurrencyString } from '@/lib/formatters/pdfCurrency'
+
 const TYPE_META: Record<ProjectDocumentType, { label: string; shortLabel: string }> = {
   purchase_order: { label: 'Purchase Order', shortLabel: 'PO' },
   receipt: { label: 'Receipt', shortLabel: 'Receipt' },
@@ -104,12 +106,7 @@ export function formatProjectDocumentDate(value: unknown) {
 }
 
 export function formatProjectDocumentCurrency(value: unknown) {
-  const amount = toNumber(value)
-  const hasFraction = Math.abs(amount % 1) > 0.000001
-  return `₦${amount.toLocaleString('en-NG', {
-    minimumFractionDigits: hasFraction ? 2 : 0,
-    maximumFractionDigits: hasFraction ? 2 : 0,
-  })}`
+  return formatPdfCurrencyString(toNumber(value))
 }
 
 export function getProjectDocumentTitle(document: ProjectDocumentRecord) {

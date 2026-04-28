@@ -2,6 +2,7 @@
 import React from 'react';
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import type { IndustryTemplateData } from '../industryAdapter';
+import { PdfCurrencyText } from '../pdfCurrency';
 import { styles } from './Naijabizstyles';
 
 // ---- safe text ----
@@ -228,9 +229,7 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
                     );
                   }
                   return (
-                    <Text key={ci} style={[styles.groupSubtotalValue, { color: ink }]}>
-                      {row.groupSubtotalValue || ''}
-                    </Text>
+                    <PdfCurrencyText key={ci} value={row.groupSubtotalValue || ''} style={[styles.groupSubtotalValue, { color: ink }]} />
                   );
                 })}
               </View>
@@ -289,9 +288,7 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
                       /* second column already rendered as sub, skip */
                       <Text></Text>
                     ) : (
-                      <Text style={[{ ...align }, col.key === 'make' ? styles.makeCell : null, col.key === 'model' ? styles.modelCell : null, col.key === 'qty' ? styles.qtyCell : null, col.key === 'unitPrice' ? styles.priceCell : null, col.key === 'amount' ? styles.amountCell : null]}>
-                        {display}
-                      </Text>
+                      <PdfCurrencyText value={display} style={[{ ...align }, col.key === 'make' ? styles.makeCell : null, col.key === 'model' ? styles.modelCell : null, col.key === 'qty' ? styles.qtyCell : null, col.key === 'unitPrice' ? styles.priceCell : null, col.key === 'amount' ? styles.amountCell : null]} />
                     )}
                   </View>
                 );
@@ -367,13 +364,13 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
             {totalLines.map((line, idx) => (
               <View key={`tl-${idx}`} style={styles.totalsLine}>
                 <Text style={styles.totalsLabel}>{line.label}</Text>
-                <Text style={styles.totalsValue}>{line.value}</Text>
+                <PdfCurrencyText value={line.value} style={styles.totalsValue} />
               </View>
             ))}
             {mainLine && (
               <View style={styles.totalsGrandLine}>
                 <Text style={styles.totalsGrandLabel}>{mainLine.label}</Text>
-                <Text style={styles.totalsGrandValue}>{mainLine.value}</Text>
+                <PdfCurrencyText value={mainLine.value} style={styles.totalsGrandValue} />
               </View>
             )}
             {amountInWords ? (
@@ -382,7 +379,7 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
             {balanceDue && (
               <View style={[styles.totalsLine, { marginTop: 8 }]}>
                 <Text style={styles.totalsLabel}>{balanceDue.label}</Text>
-                <Text style={styles.totalsValue}>{balanceDue.value}</Text>
+                <PdfCurrencyText value={balanceDue.value} style={styles.totalsValue} />
               </View>
             )}
           </View>
@@ -392,14 +389,14 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
             <View style={[styles.advanceBlock, { borderLeftColor: accent }]}>
               <View style={styles.advanceColumn}>
                 <Text style={styles.advanceLabel}>{advanceSummary.primaryLabel || 'Advance'}</Text>
-                <Text style={[styles.advanceValue, { color: accent }]}>{advanceSummary.advanceAmount}</Text>
+                <PdfCurrencyText value={advanceSummary.advanceAmount} style={[styles.advanceValue, { color: accent }]} />
               </View>
               {advanceSummary.secondaryLabel && advanceSummary.balanceRemaining && (
                 <>
                   <View style={styles.advanceDivider} />
                   <View style={styles.advanceColumn}>
                     <Text style={styles.advanceLabel}>{advanceSummary.secondaryLabel}</Text>
-                    <Text style={[styles.advanceValue, { color: accent }]}>{advanceSummary.balanceRemaining}</Text>
+                    <PdfCurrencyText value={advanceSummary.balanceRemaining} style={[styles.advanceValue, { color: accent }]} />
                   </View>
                 </>
               )}

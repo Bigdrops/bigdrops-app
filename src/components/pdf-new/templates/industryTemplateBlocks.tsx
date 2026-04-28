@@ -1,5 +1,6 @@
 import { Link, Text, View } from '@react-pdf/renderer'
 import type { IndustryTemplateData } from '../industryAdapter'
+import { PdfCurrencyText } from '../pdfCurrency'
 import { styles } from './industryStyles'
 
 type PartyCardProps = {
@@ -142,15 +143,14 @@ export function IndustryGroupFooterRow({
     >
       {row.showSubtotal ? (
         <View style={styles.groupSubtotalRow}>
-          <Text
+          <PdfCurrencyText
+            value={row.groupSubtotalValue}
             style={[
               styles.groupSubtotalValue,
               textColor ? { color: textColor } : null,
               bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
             ]}
-          >
-            {row.groupSubtotalValue}
-          </Text>
+          />
         </View>
       ) : null}
     </View>
