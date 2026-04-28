@@ -204,10 +204,10 @@ export default function Ledger({ data }: { data: IndustryTemplateData }) {
           })}
         </View>
 
-        {/* 4. BOTTOM SECTION (Removed wrap={false} so it can break across pages) */}
+        {/* 4. BOTTOM SECTION */}
         <View style={styles.bottomSection}>
-          <View style={styles.bottomGrid}>
-            <View style={styles.leftCol}>
+          <View style={styles.bottomPrimaryRow} wrap={false}>
+            <View style={styles.paymentCol}>
               {payment && data.showBankDetails && (
                 <View wrap={false}>
                   <Text style={styles.sectionTitle}>Payment Information</Text>
@@ -240,63 +240,70 @@ export default function Ledger({ data }: { data: IndustryTemplateData }) {
                 </View>
               )}
 
+            </View>
+
+            <View style={styles.totalsWrap} wrap={false}>
+              <View style={styles.rightCol}>
+                <View style={styles.totalsPanel}>
+                  {totals.lines.map((line, idx) => (
+                    <View key={idx} style={styles.totalLine}>
+                      <Text style={styles.totalLabel}>{safeText(line.label)}</Text>
+                      <Text style={styles.totalVal}>{safeText(line.value)}</Text>
+                    </View>
+                  ))}
+                  
+                  {totals.mainLine && (
+                    <View style={styles.totalLineGrand}>
+                      <Text style={styles.totalLabelGrand}>{safeText(totals.mainLine.label)}</Text>
+                      <Text style={styles.totalValGrand}>{safeText(totals.mainLine.value)}</Text>
+                    </View>
+                  )}
+
+                  {!isAdvanceInvoice && totals.balanceDue && (
+                    <View style={styles.totalLineGrand}>
+                      <Text style={styles.totalLabelGrand}>{safeText(totals.balanceDue.label)}</Text>
+                      <Text style={styles.totalValGrand}>{safeText(totals.balanceDue.value)}</Text>
+                    </View>
+                  )}
+                  
+                  {totals.amountInWords && (
+                    <Text style={styles.amountWords}>{safeText(totals.amountInWords)}</Text>
+                  )}
+                </View>
+
+                {isAdvanceInvoice && advance && (
+                  <View style={styles.advanceBlock}>
+                    <View style={styles.advanceDue}>
+                      <Text style={styles.advanceDueLbl}>{safeText(advance.primaryLabel)}</Text>
+                      <Text style={styles.advanceDueVal}>{safeText(advance.advanceAmount)}</Text>
+                    </View>
+                    <View style={styles.advanceBal}>
+                      <Text style={styles.advanceBalText}>{safeText(advance.secondaryLabel)}</Text>
+                      <Text style={styles.advanceBalTextVal}>{safeText(advance.balanceRemaining)}</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {(notes?.content || terms?.content) && (
+            <View style={styles.leftFlowCol}>
               {notes?.content && (
-                <View wrap={false}>
+                <View>
                   <Text style={styles.sectionTitle}>{safeText(notes.title)}</Text>
                   <Text style={styles.textBlock}>{safeText(notes.content)}</Text>
                 </View>
               )}
 
               {terms?.content && (
-                <View wrap={false}>
+                <View>
                   <Text style={styles.sectionTitle}>{safeText(terms.title)}</Text>
                   <Text style={styles.textBlock}>{safeText(terms.content)}</Text>
                 </View>
               )}
             </View>
-
-            <View style={styles.rightCol} wrap={false}>
-              <View style={styles.totalsPanel}>
-                {totals.lines.map((line, idx) => (
-                  <View key={idx} style={styles.totalLine}>
-                    <Text style={styles.totalLabel}>{safeText(line.label)}</Text>
-                    <Text style={styles.totalVal}>{safeText(line.value)}</Text>
-                  </View>
-                ))}
-                
-                {totals.mainLine && (
-                  <View style={styles.totalLineGrand}>
-                    <Text style={styles.totalLabelGrand}>{safeText(totals.mainLine.label)}</Text>
-                    <Text style={styles.totalValGrand}>{safeText(totals.mainLine.value)}</Text>
-                  </View>
-                )}
-
-                {!isAdvanceInvoice && totals.balanceDue && (
-                  <View style={styles.totalLineGrand}>
-                    <Text style={styles.totalLabelGrand}>{safeText(totals.balanceDue.label)}</Text>
-                    <Text style={styles.totalValGrand}>{safeText(totals.balanceDue.value)}</Text>
-                  </View>
-                )}
-                
-                {totals.amountInWords && (
-                  <Text style={styles.amountWords}>{safeText(totals.amountInWords)}</Text>
-                )}
-              </View>
-
-              {isAdvanceInvoice && advance && (
-                <View style={styles.advanceBlock}>
-                  <View style={styles.advanceDue}>
-                    <Text style={styles.advanceDueLbl}>{safeText(advance.primaryLabel)}</Text>
-                    <Text style={styles.advanceDueVal}>{safeText(advance.advanceAmount)}</Text>
-                  </View>
-                  <View style={styles.advanceBal}>
-                    <Text style={styles.advanceBalText}>{safeText(advance.secondaryLabel)}</Text>
-                    <Text style={styles.advanceBalTextVal}>{safeText(advance.balanceRemaining)}</Text>
-                  </View>
-                </View>
-              )}
-            </View>
-          </View>
+          )}
 
           {data.additionalFields && data.additionalFields.length > 0 && (
             <View style={styles.additionalFieldsBar} wrap={false}>
@@ -309,7 +316,7 @@ export default function Ledger({ data }: { data: IndustryTemplateData }) {
             </View>
           )}
 
-          <View style={styles.footerMetaGrid} wrap={false}>
+          <View style={styles.footerMetaGrid}>
             <View style={styles.signatureBox}>
               {data.signature ? (
                 <>

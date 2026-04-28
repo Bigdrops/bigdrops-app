@@ -16,14 +16,14 @@ const colors = {
 
 export const styles = StyleSheet.create({
   page: {
-    backgroundColor: '#e8e4db',
+    backgroundColor: colors.paper,
     fontFamily: 'Helvetica',
-    padding: 24,
-    paddingBottom: 60, // Space for fixed footer
+    padding: 0,
   },
   invoiceContainer: {
-    backgroundColor: colors.paper,
     flex: 1,
+    backgroundColor: colors.paper,
+    paddingBottom: 60,
   },
   
   // Header (Fixed Flex Layout)
@@ -99,6 +99,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: colors.lightRule,
+    marginBottom: 24,
   },
   addressPanel: {
     width: '50%',
@@ -151,8 +152,7 @@ export const styles = StyleSheet.create({
   // Table
   tableSection: {
     paddingHorizontal: 24,
-    paddingTop: 24,
-    flexGrow: 1,
+    paddingTop: 0,
   },
   tableHeaderRow: {
     flexDirection: 'row',
@@ -260,15 +260,23 @@ export const styles = StyleSheet.create({
 
   // Bottom Section
   bottomSection: {
-    padding: 24,
+    paddingTop: 12,
+    paddingRight: 24,
+    paddingBottom: 24,
+    paddingLeft: 24,
   },
-  bottomGrid: {
+  bottomPrimaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  leftCol: {
+  paymentCol: {
     width: '55%',
     paddingRight: 24,
+  },
+  leftFlowCol: {
+    width: '55%',
+    paddingRight: 24,
+    paddingTop: 16,
   },
   sectionTitle: {
     fontSize: 7,
@@ -314,6 +322,9 @@ export const styles = StyleSheet.create({
 
   rightCol: {
     width: '40%', 
+  },
+  totalsWrap: {
+    width: '40%',
   },
   totalsPanel: {
     backgroundColor: colors.bgPanel,
@@ -427,6 +438,7 @@ export const styles = StyleSheet.create({
     paddingTop: 24,
     borderTopWidth: 1,
     borderTopColor: colors.lightRule,
+    flexWrap: 'wrap',
   },
   signatureBox: {
     flex: 1,
