@@ -42,12 +42,17 @@ export interface InvoicePdfOutput {
   showDiscountPercentage: boolean
 }
 
-export const INVOICE_PDF_TEMPLATE_IDS = ['industry', 'ledger', 'naijabiz', 'obsidian-receipt'] as const
+export const INVOICE_PDF_TEMPLATE_IDS = ['industry', 'ledger', 'apex', 'bolt', 'obsidian-receipt'] as const
 
 export type InvoicePdfTemplateId = (typeof INVOICE_PDF_TEMPLATE_IDS)[number]
 
 export function isInvoicePdfTemplateId(value: unknown): value is InvoicePdfTemplateId {
   return typeof value === 'string' && (INVOICE_PDF_TEMPLATE_IDS as readonly string[]).includes(value)
+}
+
+export function normalizeInvoicePdfTemplateId(value: unknown): InvoicePdfTemplateId | null {
+  if (value === 'naijabiz') return 'apex'
+  return isInvoicePdfTemplateId(value) ? value : null
 }
 
 export interface Payment {

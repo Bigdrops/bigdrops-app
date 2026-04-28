@@ -1,5 +1,5 @@
 import React from 'react'
-import { isInvoicePdfTemplateId } from '@/domain/invoice/types'
+import { normalizeInvoicePdfTemplateId } from '@/domain/invoice/types'
 import { registerPdfFonts } from '@/lib/pdfFontRegistry'
 import { adaptIndustryData } from './industryAdapter'
 import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings } from './table'
@@ -41,29 +41,29 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     { pdf },
     { PdfRenderer },
     IndustryModule,
+    ApexModule,
+    BoltModule,
     ObsidianModule,
     LedgerModule,
-    NaijabizModule,
   ] = await Promise.all([
     import('@react-pdf/renderer'),
     import('./renderers/PdfRenderer'),
     import('./templates/Industry'),
+    import('./templates/Apex'),
+    import('./templates/Bolt'),
     import('./templates/ObsidianReceipt'),
     import('./templates/Ledger'),
-    import('./templates/Naijabiz'),
   ])
 
   const Industry = IndustryModule.default
+  const Apex = ApexModule.default
+  const Bolt = BoltModule.default
   const ObsidianReceipt = ObsidianModule.default
   const Ledger = LedgerModule.default
-  const Naijabiz = NaijabizModule.default
 
   registerPdfFonts()
 
-  const activeTemplateId =
-    request.templateId === 'obsidian-receipt' || isInvoicePdfTemplateId(request.templateId)
-      ? request.templateId
-      : 'industry'
+  const activeTemplateId = normalizeInvoicePdfTemplateId(request.templateId) || 'industry'
 
   let Template: React.ComponentType<any> = Industry as React.ComponentType<any>
   let templateData: unknown = adaptIndustryData(request.model)
@@ -77,8 +77,12 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
       Template = Ledger
       templateData = adaptIndustryData(request.model)
       break
-    case 'naijabiz':
-      Template = Naijabiz
+    case 'apex':
+      Template = Apex
+      templateData = adaptIndustryData(request.model)
+      break
+    case 'bolt':
+      Template = Bolt
       templateData = adaptIndustryData(request.model)
       break
     case 'industry':

@@ -1,62 +1,65 @@
-// BoltStyles.ts
-import { StyleSheet } from '@react-pdf/renderer';
+import { StyleSheet } from '@react-pdf/renderer'
 
-// static styles that don’t depend on dynamic colors
 export const styles = StyleSheet.create({
   page: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#ffffff',
     fontFamily: 'Helvetica',
-    paddingBottom: 42, // space for fixed footer
+    paddingBottom: 44,
   },
-
-  /* ----- HEADER BANNER ----- */
   headerBanner: {
-    padding: 24,
+    paddingTop: 26,
+    paddingRight: 28,
+    paddingBottom: 20,
+    paddingLeft: 28,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     position: 'relative',
-    paddingBottom: 18,
   },
   headerBannerBottomLine: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
+    bottom: 0,
     height: 4,
-    backgroundColor: 'rgba(255,255,255,0.3)', // subtle white strip
+    backgroundColor: 'rgba(255,255,255,0.3)',
   },
   headerLeft: {
     flexDirection: 'column',
+    maxWidth: 220,
+  },
+  logoImage: {
+    width: 48,
+    height: 48,
+    marginBottom: 8,
   },
   logoPlaceholder: {
     width: 48,
     height: 48,
-    backgroundColor: '#FFFFFF',
     borderRadius: 8,
+    backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   logoText: {
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: 'bold',
-    color: '#1a56db', // will be overridden with accent
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   companyName: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: 'Helvetica-Bold',
-    letterSpacing: 0.2,
-    color: '#FFFFFF',
-    marginBottom: 2,
+    color: '#ffffff',
+    marginBottom: 3,
   },
   companyContact: {
     fontSize: 7,
-    color: 'rgba(255,255,255,0.8)',
-    lineHeight: 1.4,
+    lineHeight: 1.45,
+    color: 'rgba(255,255,255,0.84)',
   },
   headerRight: {
+    width: 205,
     alignItems: 'flex-end',
   },
   documentLabel: {
@@ -64,206 +67,150 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
-    color: 'rgba(255,255,255,0.8)',
+    color: 'rgba(255,255,255,0.84)',
     marginBottom: 4,
+    textAlign: 'right',
   },
   documentTitle: {
-    fontSize: 30,
-    fontFamily: 'Helvetica-Bold',
-    letterSpacing: -0.5,
+    fontSize: 31,
     lineHeight: 1,
-    color: '#FFFFFF',
+    fontFamily: 'Helvetica-Bold',
+    color: '#ffffff',
+    textAlign: 'right',
+  },
+  metaStack: {
+    marginTop: 10,
+    width: '100%',
   },
   metaLine: {
-    marginTop: 10,
-    fontSize: 8,
-    lineHeight: 1.6,
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  metaLineGap: {
+    marginTop: 2,
   },
   metaLabel: {
-    opacity: 0.7,
+    fontSize: 7,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: 'normal',
+    letterSpacing: 0.6,
+    color: 'rgba(255,255,255,0.74)',
     marginRight: 8,
-    color: '#FFFFFF',
   },
   metaValue: {
+    fontSize: 7,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#ffffff',
+    textAlign: 'right',
   },
-
-  /* ----- ADDRESS BLOCK ----- */
   addressRow: {
     flexDirection: 'row',
     borderBottom: '1px solid #e2e8f0',
   },
   addressColumn: {
     flex: 1,
-    padding: 16,
+    paddingVertical: 17,
+    paddingHorizontal: 28,
     borderRight: '1px solid #e2e8f0',
   },
   addressColumnLast: {
     flex: 1,
-    padding: 16,
+    paddingVertical: 17,
+    paddingHorizontal: 28,
   },
   addressLabel: {
     fontSize: 6,
     fontWeight: 'bold',
     textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    color: '#64748b',
+    letterSpacing: 1.1,
     marginBottom: 4,
   },
   addressName: {
-    fontWeight: 'bold',
     fontSize: 10,
+    fontWeight: 'bold',
     marginBottom: 2,
   },
   addressDetail: {
     fontSize: 8,
-    color: '#475569',
     lineHeight: 1.4,
   },
-
-  /* ----- CUSTOM FIELDS STRIP ----- */
   customStrip: {
     flexDirection: 'row',
-    padding: 10,
-    borderBottom: '1px solid #e2e8f0',
-    backgroundColor: '#f8fafc',
     flexWrap: 'wrap',
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    borderBottom: '1px solid #e2e8f0',
   },
   customFieldItem: {
-    marginRight: 24,
-    lineHeight: 1.4,
+    marginRight: 26,
+    marginBottom: 4,
   },
   customFieldKey: {
     fontSize: 6,
     fontWeight: 'bold',
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    color: '#64748b',
+    letterSpacing: 0.9,
+    marginBottom: 2,
   },
   customFieldValue: {
-    fontWeight: 'bold',
     fontSize: 8,
+    fontWeight: 'bold',
   },
-
-  /* ----- TABLE ----- */
   tableSection: {
-    marginTop: 12,
-    paddingHorizontal: 24,
-    paddingBottom: 12,
+    paddingHorizontal: 28,
+    paddingTop: 14,
   },
   tableHeader: {
     flexDirection: 'row',
     borderBottom: '2px solid #0f172a',
     paddingBottom: 6,
-    marginBottom: 6,
+    marginBottom: 2,
   },
   tableHeaderCell: {
-    fontSize: 6.5,
+    fontSize: 6.2,
     fontWeight: 'bold',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     color: '#64748b',
   },
-  /* column widths – fixed */
-  colNum: { width: 14, textAlign: 'center' },
-  colDesc: { width: 106 },
-  colMake: { width: 44 },
-  colModel: { width: 50 },
-  colQty: { width: 30, textAlign: 'center' },
-  colUnitPrice: { width: 50, textAlign: 'right' },
-  colAmount: { width: 54, textAlign: 'right' },
-
+  colNum: {
+    width: 18,
+  },
   tableRow: {
     flexDirection: 'row',
     borderBottom: '1px solid #e2e8f0',
-    paddingVertical: 8,
+    paddingTop: 8,
+    paddingBottom: 8,
     alignItems: 'flex-start',
+  },
+  groupItemRow: {
+    backgroundColor: '#f9fafb',
   },
   tableCellBase: {
     fontSize: 8,
-    paddingHorizontal: 1,
+    paddingRight: 4,
+  },
+  tableCellText: {
+    fontSize: 8,
+  },
+  alignRight: {
+    textAlign: 'right',
+  },
+  alignCenter: {
+    textAlign: 'center',
   },
   itemTitle: {
-    fontWeight: 'bold',
     fontSize: 8,
+    fontWeight: 'bold',
+    lineHeight: 1.24,
     marginBottom: 2,
-    lineHeight: 1.2,
   },
   itemSub: {
     fontSize: 7,
-    color: '#475569',
-    lineHeight: 1.3,
+    lineHeight: 1.35,
   },
-  makeCell: {
-    color: '#475569',
-    fontSize: 7.5,
-    marginLeft: 4,
-  },
-  modelCell: {
-    fontSize: 7,
-    color: '#334155',
-    fontFamily: 'Courier',
-  },
-  qtyCell: {
-    fontSize: 8,
-    textAlign: 'center',
-  },
-  priceCell: {
-    fontSize: 8,
-    textAlign: 'right',
-  },
-  amountCell: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    textAlign: 'right',
-  },
-  /* Thumbnail */
-  thumbnailRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginTop: 6,
-  },
-  thumbnailImg: {
-    width: 50,
-    height: 36,
-    border: '1px solid #cbd5e1',
-    backgroundColor: '#f8fafc',
-    marginRight: 8,
-  },
-  openImageLink: {
-    fontSize: 6.5,
-    fontWeight: 'bold',
-    color: '#1e40af', // will be overridden
-    backgroundColor: '#eff6ff',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    textDecoration: 'none',
-    borderRadius: 4,
-  },
-  /* Group header */
-  groupHeaderRow: {
-    flexDirection: 'row',
-    backgroundColor: '#eff6ff',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderBottom: '1px solid #dbeafe',
-    marginTop: 4,
-  },
-  groupHeaderText: {
-    fontWeight: 'bold',
-    fontSize: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    color: '#1a56db', // token
-  },
-  /* Group item indent */
-  groupItemIndent: {
-    marginLeft: 14,
+  groupDescriptionCell: {
+    paddingLeft: 12,
+    position: 'relative',
   },
   groupItemPrefix: {
     position: 'absolute',
@@ -271,208 +218,260 @@ export const styles = StyleSheet.create({
     top: 0,
     fontSize: 8,
     fontWeight: 'bold',
-    color: '#1a56db',
   },
-  /* Group subtotal */
+  makeCell: {
+    fontSize: 7.3,
+  },
+  modelCell: {
+    fontSize: 7,
+    fontFamily: 'Courier',
+  },
+  qtyCell: {
+    fontSize: 8,
+  },
+  priceCell: {
+    fontSize: 8,
+  },
+  amountCell: {
+    fontSize: 8,
+    fontWeight: 'bold',
+  },
+  thumbnailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  thumbnailImg: {
+    width: 54,
+    height: 38,
+    borderRadius: 4,
+    border: '1px solid #cbd5e1',
+    backgroundColor: '#f8fafc',
+    marginRight: 8,
+  },
+  openImageLink: {
+    fontSize: 6.5,
+    fontWeight: 'bold',
+    borderRadius: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    textDecoration: 'none',
+  },
+  groupHeaderRow: {
+    paddingVertical: 6,
+    paddingHorizontal: 9,
+    borderBottom: '1px solid #dbeafe',
+    marginTop: 4,
+  },
+  groupHeaderText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
   groupSubtotalRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     borderTop: '1px solid #cbd5e1',
     borderBottom: '2px solid #0f172a',
-    paddingVertical: 6,
-    backgroundColor: '#FFFFFF',
+    paddingVertical: 7,
+  },
+  groupSubtotalSpacer: {
+    flex: 1,
   },
   groupSubtotalLabel: {
-    fontWeight: 'bold',
     fontSize: 8,
-    textAlign: 'right',
-    marginRight: 4,
+    fontWeight: 'bold',
+    marginRight: 8,
   },
   groupSubtotalValue: {
-    fontWeight: 'bold',
     fontSize: 8,
+    fontWeight: 'bold',
     textAlign: 'right',
+    minWidth: 88,
   },
-
-  /* ----- BOTTOM PANEL (3 columns) ----- */
   bottomPanel: {
     flexDirection: 'row',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingRight: 28,
+    paddingBottom: 10,
+    paddingLeft: 28,
     borderTop: '1px solid #e2e8f0',
-    marginTop: 14,
+    marginTop: 10,
   },
   bottomColumn: {
     flex: 1,
-    marginRight: 24,
+    marginRight: 22,
   },
   bottomColumnLast: {
     flex: 1,
   },
   sectionTitle: {
+    fontSize: 7,
     fontWeight: 'bold',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
-    fontSize: 7,
-    color: '#1a56db', // token
-    marginBottom: 6,
     borderBottom: '2px solid #dbeafe',
     paddingBottom: 3,
+    marginBottom: 6,
+  },
+  sectionTitleGap: {
+    marginTop: 10,
   },
   bankLine: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
-    fontSize: 8,
+    marginBottom: 3,
   },
   bankLabel: {
-    color: '#475569',
+    fontSize: 8,
   },
   bankValue: {
+    fontSize: 8,
     fontWeight: 'bold',
-    color: '#0f172a',
   },
   textBlock: {
-    fontSize: 7.5,
+    fontSize: 7.4,
     lineHeight: 1.5,
-    color: '#475569',
   },
   attachmentLink: {
     fontSize: 8,
     fontWeight: 'bold',
-    color: '#1e40af', // token
     textDecoration: 'none',
     marginBottom: 4,
   },
-
-  /* ----- TOTALS + SIGNATURE ROW ----- */
   totalsSignatureRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    marginTop: 6,
+    marginHorizontal: 28,
+    paddingTop: 12,
+    paddingBottom: 10,
     borderTop: '2px solid #0f172a',
   },
   leftSection: {
     flex: 1,
+    paddingRight: 18,
+  },
+  rightSection: {
+    width: 178,
+    alignItems: 'flex-end',
   },
   totalsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    width: 300,
-  },
-  totalsLine: {
-    width: '50%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
+    maxWidth: 330,
   },
   totalsLabel: {
     fontSize: 8.5,
-    color: '#475569',
+    width: '50%',
   },
   totalsValue: {
     fontSize: 8.5,
-    fontWeight: '500',
     textAlign: 'right',
-  },
-  totalsGrandLine: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 6,
-    paddingTop: 6,
-    borderTop: '1px solid #cbd5e1',
+    width: '50%',
   },
   totalsGrandLabel: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#0f172a',
+    borderTop: '1px solid #cbd5e1',
+    paddingTop: 6,
+    marginTop: 2,
+    width: '50%',
   },
   totalsGrandValue: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#0f172a',
     textAlign: 'right',
+    borderTop: '1px solid #cbd5e1',
+    paddingTop: 6,
+    marginTop: 2,
+    width: '50%',
   },
   amountWords: {
-    width: '100%',
     fontSize: 7,
     fontStyle: 'italic',
-    color: '#64748b',
+    textAlign: 'right',
+    marginTop: 2,
+    width: '100%',
+  },
+  balanceDueLabel: {
+    fontSize: 8.5,
+    marginTop: 4,
+    width: '50%',
+  },
+  balanceDueValue: {
+    fontSize: 8.5,
     textAlign: 'right',
     marginTop: 4,
+    width: '50%',
   },
   advanceBlock: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginTop: 12,
-    backgroundColor: '#eff6ff',
-    borderLeft: '4 solid #1a56db', // token
-    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    borderLeftWidth: 4,
+    borderLeftColor: '#1a56db',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderRadius: 4,
   },
   advanceColumn: {
     flex: 1,
-    marginRight: 16,
   },
   advanceLabel: {
-    fontSize: 6.5,
+    fontSize: 6.4,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
-    color: '#475569',
     marginBottom: 2,
   },
   advanceValue: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#1a56db', // token
   },
   advanceDivider: {
     width: 1,
-    backgroundColor: '#dbeafe',
     alignSelf: 'stretch',
-    marginRight: 16,
-  },
-
-  rightSection: {
-    width: 220,
-    alignItems: 'flex-end',
+    marginHorizontal: 14,
   },
   extraFieldsVertical: {
-    marginBottom: 14,
     width: '100%',
+    marginBottom: 16,
   },
   extraFieldItem: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 8,
     width: '100%',
+    marginBottom: 8,
+    alignItems: 'flex-end',
   },
   extraFieldKey: {
     fontSize: 6,
     fontWeight: 'bold',
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    color: '#64748b',
-    marginRight: 12,
+    letterSpacing: 0.9,
+    marginBottom: 1,
   },
   extraFieldValue: {
     fontSize: 8,
-    fontWeight: '500',
+    fontWeight: 'bold',
+    textAlign: 'right',
   },
   signatureBox: {
     width: '100%',
     alignItems: 'flex-end',
   },
+  signatureImage: {
+    width: 130,
+    height: 40,
+    marginBottom: 4,
+  },
   signatureScribble: {
     fontFamily: 'Times-Italic',
     fontSize: 20,
-    color: '#0f172a',
+    minWidth: 120,
+    textAlign: 'right',
     borderBottom: '1px solid #cbd5e1',
     paddingBottom: 4,
     marginBottom: 4,
-    minWidth: 130,
-    textAlign: 'right',
   },
   signatureName: {
     fontSize: 9,
@@ -480,41 +479,31 @@ export const styles = StyleSheet.create({
     marginBottom: 2,
   },
   signatureRole: {
-    fontSize: 7.5,
-    color: '#64748b',
+    fontSize: 7.4,
   },
-
-  /* ----- FIXED FOOTER ----- */
   footer: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
+    bottom: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
+    paddingHorizontal: 28,
     paddingVertical: 8,
     borderTop: '1px solid #cbd5e1',
-    backgroundColor: '#f8fafc',
+  },
+  footerLeft: {
+    fontSize: 7,
+    fontWeight: 'bold',
+  },
+  footerCenter: {
     fontSize: 7,
     color: '#64748b',
   },
-  footerLeft: {
-    fontWeight: 'bold',
-    color: '#0f172a',
-  },
-  footerCenter: {
-    fontWeight: 'normal',
-  },
   footerRight: {
+    fontSize: 7,
+    color: '#64748b',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
-
-  // Utility
-  collapse: {
-    margin: 0,
-    padding: 0,
-    border: 'none',
-  },
-});
+})

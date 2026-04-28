@@ -31,9 +31,13 @@ const templatePreviewById: Record<string, TemplatePreview> = {
     shell: 'bg-[#2F3A44] border border-[#24303A]',
     nodes: ['h-2.5 w-12 rounded-full bg-[#D8C7A3]', 'h-1 w-4/5 rounded-full bg-white/70', 'h-1 w-3/5 rounded-full bg-white/40'],
   },
-  naijabiz: {
+  apex: {
     shell: 'bg-white border border-slate-200',
-    nodes: ['h-1.5 w-full rounded-full bg-slate-900', 'h-1 w-2/5 rounded-full bg-amber-500', 'h-1 w-4/5 rounded-full bg-slate-300'],
+    nodes: ['h-1.5 w-full rounded-full bg-slate-900', 'h-1 w-2/5 rounded-full bg-slate-300', 'h-1 w-4/5 rounded-full bg-slate-200'],
+  },
+  bolt: {
+    shell: 'bg-white border border-slate-200',
+    nodes: ['h-4 w-full rounded-[10px] bg-[#1a56db]', 'h-1 w-2/5 rounded-full bg-[#93c5fd]', 'h-1 w-4/5 rounded-full bg-slate-200'],
   },
   'obsidian-receipt': {
     shell: 'bg-white border border-slate-200',

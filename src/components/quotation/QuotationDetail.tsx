@@ -16,7 +16,7 @@ import {
 } from '@/components/document/DocumentViewShell'
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { supabase } from '@/supabase'
-import { calcTotals, buildSummaryRows } from '@/domain/invoice'
+import { calcTotals, buildSummaryRows, normalizeInvoicePdfTemplateId } from '@/domain/invoice'
 import { buildPdfRowCells, generateQuotationPdf, interpretPdfTableSettings } from '@/components/pdf-new'
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { formatMergedQtyUnit, resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '@/domain/documentMedia.js'
@@ -140,6 +140,21 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       id: 'industry',
       label: 'Industry',
       description: 'Structured professional layout',
+    },
+    {
+      id: 'ledger',
+      label: 'Ledger',
+      description: 'Editorial premium layout',
+    },
+    {
+      id: 'apex',
+      label: 'Apex',
+      description: 'Placeholder shell while Apex is in progress',
+    },
+    {
+      id: 'bolt',
+      label: 'Bolt',
+      description: 'Blue banner commercial layout',
     },
     {
       id: 'obsidian-receipt',
@@ -413,7 +428,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
             },
           },
         },
-        templateId,
+        templateId: normalizeInvoicePdfTemplateId(templateId) || 'industry',
       })
       toast({ title: 'PDF ready', description: 'Quotation PDF downloaded.' })
     } catch (error) {

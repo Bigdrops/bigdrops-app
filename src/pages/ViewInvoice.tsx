@@ -36,7 +36,7 @@ import {
   BUILTIN_COLUMNS,
   DEFAULT_INVOICE_PDF_OUTPUT,
   getInvoicePdfOutput,
-  isInvoicePdfTemplateId,
+  normalizeInvoicePdfTemplateId,
   parseCustomFields,
 } from '@/domain/invoice'
 import type { InvoicePdfTemplateId } from '@/domain/invoice/types'
@@ -115,7 +115,7 @@ export default function ViewInvoice() {
   const settingsData: any = settings || {}
 
   const customFields = useMemo(() => parseCustomFields(invoice?.custom_fields), [invoice?.custom_fields])
-  const pdfTemplateId: InvoicePdfTemplateId = isInvoicePdfTemplateId(customFields?.pdfTemplateId) ? customFields.pdfTemplateId : 'industry'
+  const pdfTemplateId: InvoicePdfTemplateId = normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || 'industry'
   const sourceDocument = useMemo(() => getInvoiceSourceDocument(invoice), [invoice])
   const contractValue = Math.max(0, Number(invoice?.total || 0))
 
@@ -290,9 +290,7 @@ export default function ViewInvoice() {
   }) => {
     const { buildPdfRowCells, generateInvoicePdf, interpretPdfTableSettings } = await import('@/components/pdf-new')
     const targetCustomFields = parseCustomFields(targetInvoice?.custom_fields)
-    const targetTemplateId: InvoicePdfTemplateId = isInvoicePdfTemplateId(targetCustomFields?.pdfTemplateId)
-      ? targetCustomFields.pdfTemplateId
-      : pdfTemplateId
+    const targetTemplateId: InvoicePdfTemplateId = normalizeInvoicePdfTemplateId(targetCustomFields?.pdfTemplateId) || pdfTemplateId
     const savedColumns = Array.isArray(targetCustomFields?.columnConfig) ? targetCustomFields.columnConfig : BUILTIN_COLUMNS
     const totals = computeDocument({
       items: Array.isArray(targetItems) ? targetItems : [],

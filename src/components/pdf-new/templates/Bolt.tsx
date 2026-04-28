@@ -1,439 +1,421 @@
-// Bolt.tsx
-import React from 'react';
-import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
-import type { IndustryTemplateData } from '../industryAdapter';
-import { PdfCurrencyText } from '../pdfCurrency';
-import { styles } from './BoltStyles';
+import React from 'react'
+import { Image, Link, Page, Text, View } from '@react-pdf/renderer'
+import { darkenHex, lightenHex } from '@/lib/pdfDesignPreset'
+import type { IndustryTemplateData } from '../industryAdapter'
+import { PdfCurrencyText } from '../pdfCurrency'
+import { styles } from './BoltStyles'
 
-// ---- safe text ----
+const DEFAULT_ACCENT = '#1a56db'
+
 function safeText(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
   if (typeof value === 'object') {
-    const obj = value as Record<string, unknown>;
-    return safeText(obj.label ?? obj.name ?? obj.text ?? obj.main ?? obj.value ?? '');
+    const obj = value as Record<string, unknown>
+    return safeText(obj.label ?? obj.name ?? obj.text ?? obj.main ?? obj.value ?? '')
   }
-  return '';
+  return ''
 }
 
-// accent token default
-const DEFAULT_ACCENT = '#1a56db';
+function getDescriptionParts(value: unknown) {
+  if (value && typeof value === 'object') {
+    const cell = value as Record<string, unknown>
+    return {
+      main: safeText(cell.main ?? cell.label ?? cell.name ?? cell.text ?? cell.value ?? ''),
+      sub: safeText(cell.sub ?? ''),
+    }
+  }
+
+  return {
+    main: safeText(value),
+    sub: '',
+  }
+}
 
 export default function Bolt({ data }: { data: IndustryTemplateData }) {
-  if (!data) return null;
+  const design = data.design
+  const accent = design.accentColor || DEFAULT_ACCENT
+  const ink = design.textColor || '#0f172a'
+  const muted = design.mutedColor || '#64748b'
+  const surface = design.surfaceColor || '#f8fafc'
+  const accentTint = lightenHex(accent, 90)
+  const accentRule = lightenHex(accent, 78)
+  const accentLink = darkenHex(accent, 12)
 
-  const {
-    title,
-    customTitle,
-    documentNumber,
-    documentNumberLabel: _docNumberLabel,
-    issueDate,
-    issueDateLabel: _issueDateLabel,
-    dueDateOrValidityDate,
-    dueDateOrValidityDateLabel: _dueLabel,
-    poNumber,
-    poNumberLabel: _poLabel,
-    customHeaderFields = [],
-    showBankDetails,
-    company,
-    client,
-    table = { columns: [], rows: [] },
-    paymentDetails = null,
-    totals = { lines: [], mainLine: null, amountInWords: '', balanceDue: null },
-    advanceSummary = null,
-    notes = null,
-    terms = null,
-    attachments = [],
-    additionalFields = [],
-    signature = null,
-    footer = { documentNumber: '', companyName: '', extraText: '' },
-    design = {},
-  } = data;
-
-  // colors from design, fallback to defaults
-  const accent = design.accentColor || DEFAULT_ACCENT;
-  const ink = design.textColor || '#0f172a';
-  const muted = design.mutedColor || '#64748b';
-  const surface = design.surfaceColor || '#f8fafc';
-
-  // dynamic color helpers for inline styles
-  const headerBg = { backgroundColor: accent };
-  const accentText = { color: accent };
-  const accentBorder = { borderColor: accent };
-  const accentBackground = { backgroundColor: accent };
-  const surfaceBg = { backgroundColor: surface };
-
-  // Show advance invoice label if advanceSummary exists
-  const isAdvance = advanceSummary !== null;
-  const docLabel = isAdvance ? 'Advance Invoice' : (customTitle || title || 'Invoice');
-  const docTitle = title || 'INVOICE';
-
-  // totals
-  const totalLines = totals.lines || [];
-  const mainLine = totals.mainLine || null;
-  const amountInWords = totals.amountInWords || '';
-  const balanceDue = totals.balanceDue || null;
-
-  // table
-  const columns = table.columns || [];
-  const rows = table.rows || [];
+  const isAdvance = Boolean(data.advanceSummary)
+  const documentLabel = isAdvance ? 'Advance Invoice' : data.customTitle || data.title || 'Invoice'
+  const documentTitle = data.title || 'INVOICE'
+  const displayColumns = (data.table.columns || []).filter((column) => column.key !== 'num')
+  const rows = data.table.rows || []
+  const headerFields = [
+    data.poNumber ? { label: data.poNumberLabel || 'PO Number', value: data.poNumber } : null,
+    ...data.customHeaderFields,
+  ].filter((field): field is { label: string; value: string | null | undefined } => Boolean(field?.value))
 
   return (
     <Page size="A4" style={styles.page}>
-
-      {/* ====== FIXED FOOTER ====== */}
-      <View fixed style={styles.footer}>
-        <Text style={styles.footerLeft}>{footer.documentNumber || documentNumber}</Text>
+      <View fixed style={[styles.footer, { backgroundColor: surface }]}>
+        <Text style={[styles.footerLeft, { color: ink }]}>{data.footer.documentNumber || data.documentNumber}</Text>
         <Text
           style={styles.footerCenter}
-          render={({ pageNumber, totalPages }) =>
-            `${pageNumber} / ${totalPages}`
-          }
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
         />
-        <Text style={styles.footerRight}>{footer.companyName || company?.name || ''}</Text>
+        <Text style={styles.footerRight}>{data.footer.companyName || data.company?.name || ''}</Text>
       </View>
 
-      {/* ====== HEADER BANNER ====== */}
-      <View style={[styles.headerBanner, headerBg]}>
-        {/* subtle bottom line */}
+      <View style={[styles.headerBanner, { backgroundColor: accent }]}>
         <View style={styles.headerBannerBottomLine} />
+
         <View style={styles.headerLeft}>
-          {/* Logo placeholder or real logo */}
-          {company?.companyLogoUrl ? (
-            <Image src={company.companyLogoUrl} style={{ width: 48, height: 48, marginBottom: 6 }} />
+          {data.company?.companyLogoUrl ? (
+            <Image src={data.company.companyLogoUrl} style={styles.logoImage} />
           ) : (
-            <View style={[styles.logoPlaceholder, { backgroundColor: '#FFFFFF' }]}>
+            <View style={styles.logoPlaceholder}>
               <Text style={[styles.logoText, { color: accent }]}>
-                {company?.name ? company.name.charAt(0) + (company.name.split(' ')[1]?.charAt(0) || '') : 'S&S'}
+                {data.company?.name
+                  ? `${data.company.name.charAt(0)}${data.company.name.split(' ')[1]?.charAt(0) || ''}`
+                  : 'BD'}
               </Text>
             </View>
           )}
-          <Text style={styles.companyName}>
-            {company?.name || 'Company Name'}
-          </Text>
+
+          <Text style={styles.companyName}>{data.company?.name || 'Company Name'}</Text>
           <Text style={styles.companyContact}>
-            {company?.address ? `${company.address}` : ''}
-            {company?.cityState ? `\n${company.cityState}` : ''}
-            {(company?.phone || company?.email) ? `\n` : ''}
-            {company?.phone || ''}
-            {company?.phone && company?.email ? ' · ' : ''}
-            {company?.email || ''}
+            {data.company?.address || ''}
+            {data.company?.cityState ? `\n${data.company.cityState}` : ''}
+            {(data.company?.phone || data.company?.email) ? '\n' : ''}
+            {data.company?.phone || ''}
+            {data.company?.phone && data.company?.email ? ' · ' : ''}
+            {data.company?.email || ''}
           </Text>
         </View>
+
         <View style={styles.headerRight}>
-          <Text style={styles.documentLabel}>{docLabel}</Text>
-          <Text style={styles.documentTitle}>{docTitle}</Text>
-          <View style={styles.metaLine}>
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-              <Text style={styles.metaLabel}>Invoice Number</Text>
-              <Text style={styles.metaValue}>{documentNumber}</Text>
+          <Text style={styles.documentLabel}>{documentLabel}</Text>
+          <Text style={styles.documentTitle}>{documentTitle}</Text>
+
+          <View style={styles.metaStack}>
+            <View style={styles.metaLine}>
+              <Text style={styles.metaLabel}>{data.documentNumberLabel}</Text>
+              <Text style={styles.metaValue}>{data.documentNumber}</Text>
             </View>
-            {issueDate && (
-              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 2 }}>
-                <Text style={styles.metaLabel}>Issue Date</Text>
-                <Text style={styles.metaValue}>{issueDate}</Text>
+            {data.issueDate ? (
+              <View style={[styles.metaLine, styles.metaLineGap]}>
+                <Text style={styles.metaLabel}>{data.issueDateLabel}</Text>
+                <Text style={styles.metaValue}>{data.issueDate}</Text>
               </View>
-            )}
+            ) : null}
+            {data.dueDateOrValidityDate ? (
+              <View style={[styles.metaLine, styles.metaLineGap]}>
+                <Text style={styles.metaLabel}>{data.dueDateOrValidityDateLabel}</Text>
+                <Text style={styles.metaValue}>{data.dueDateOrValidityDate}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
       </View>
 
-      {/* ====== ADDRESS ROW ====== */}
       <View style={styles.addressRow}>
-        {client ? (
-          <View style={styles.addressColumn}>
-            <Text style={styles.addressLabel}>Bill To</Text>
-            <Text style={styles.addressName}>{client.name}</Text>
-            <Text style={styles.addressDetail}>
-              {client.address ? `${client.address}\n` : ''}
-              {client.cityState ? `${client.cityState}\n` : ''}
-              {client.phone || ''}
-              {client.phone && client.email ? ' · ' : ''}
-              {client.email || ''}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.addressColumn} />
-        )}
+        <View style={styles.addressColumn}>
+          <Text style={[styles.addressLabel, { color: muted }]}>Bill To</Text>
+          <Text style={[styles.addressName, { color: ink }]}>{data.client?.name || '—'}</Text>
+          <Text style={[styles.addressDetail, { color: darkenHex(muted, 4) }]}>
+            {data.client?.address || '—'}
+            {data.client?.cityState ? `\n${data.client.cityState}` : ''}
+            {data.client?.phone ? `\n${data.client.phone}` : ''}
+            {data.client?.email ? `${data.client?.phone ? ' · ' : '\n'}${data.client.email}` : ''}
+          </Text>
+        </View>
+
         <View style={styles.addressColumnLast}>
-          <Text style={styles.addressLabel}>Our Reference</Text>
-          {company && (
-            <Text style={styles.addressName}>{company.name}</Text>
-          )}
-          <Text style={styles.addressDetail}>
-            {company?.customInfo && company.customInfo.length > 0
-              ? company.customInfo.map((ci, i) => (
-                  `${ci.label}: ${ci.value}${i < company.customInfo.length - 1 ? ' · ' : ''}`
-                )).join('')
-              : 'VAT: NG-48291 · CAC: RC-729304'}
+          <Text style={[styles.addressLabel, { color: muted }]}>Our Reference</Text>
+          <Text style={[styles.addressName, { color: ink }]}>{data.company?.name || '—'}</Text>
+          <Text style={[styles.addressDetail, { color: darkenHex(muted, 4) }]}>
+            {data.company?.customInfo?.length
+              ? data.company.customInfo.map((entry) => `${entry.label}: ${entry.value}`).join(' · ')
+              : '—'}
           </Text>
         </View>
       </View>
 
-      {/* ====== CUSTOM HEADER FIELDS ====== */}
-      {customHeaderFields.length > 0 && (
-        <View style={[styles.customStrip, surfaceBg]}>
-          {customHeaderFields.map((field, idx) => (
-            <View key={`cf-${idx}`} style={styles.customFieldItem}>
-              <Text style={styles.customFieldKey}>{field.label}</Text>
-              <Text style={styles.customFieldValue}>{field.value}</Text>
+      {headerFields.length > 0 ? (
+        <View style={[styles.customStrip, { backgroundColor: surface }]}>
+          {headerFields.map((field, index) => (
+            <View key={`${field.label}-${index}`} style={styles.customFieldItem}>
+              <Text style={[styles.customFieldKey, { color: muted }]}>{field.label}</Text>
+              <Text style={[styles.customFieldValue, { color: ink }]}>{field.value}</Text>
             </View>
           ))}
         </View>
-      )}
+      ) : null}
 
-      {/* ====== TABLE ====== */}
       <View style={styles.tableSection}>
-        {/* Header */}
         <View style={styles.tableHeader}>
           <Text style={[styles.tableHeaderCell, styles.colNum]}>#</Text>
-          {columns.map((col, ci) => {
-            const align = col.align === 'right' ? { textAlign: 'right' as const } : col.align === 'center' ? { textAlign: 'center' as const } : {};
-            const width = col.width ? { width: col.width } : col.flex ? { flex: col.flex } : {};
+          {displayColumns.map((column) => {
+            const alignStyle =
+              column.align === 'right'
+                ? styles.alignRight
+                : column.align === 'center'
+                  ? styles.alignCenter
+                  : null
+            const widthStyle = column.width ? { width: column.width } : column.flex ? { flex: column.flex } : { flex: 1 }
+
             return (
-              <Text
-                key={ci}
-                style={[styles.tableHeaderCell, width as any, align]}
-              >
-                {col.label}
+              <Text key={column.key} style={[styles.tableHeaderCell, widthStyle, alignStyle]}>
+                {column.label}
               </Text>
-            );
+            )
           })}
         </View>
 
-        {/* Rows */}
-        {rows.map((row, rowIdx) => {
-          // group header
+        {rows.map((row, rowIndex) => {
           if (row.isGroupHeader) {
             return (
-              <View key={`gh-${rowIdx}`} style={[styles.groupHeaderRow, { backgroundColor: '#eff6ff', borderBottomColor: '#dbeafe' }]}>
+              <View
+                key={`group-header-${rowIndex}`}
+                style={[styles.groupHeaderRow, { backgroundColor: accentTint, borderBottomColor: accentRule }]}
+              >
                 <Text style={[styles.groupHeaderText, { color: accent }]}>{row.groupLabel || ''}</Text>
               </View>
-            );
+            )
           }
-          // group subtotal
+
           if (row.isGroupFooter && row.showSubtotal) {
             return (
-              <View key={`gf-${rowIdx}`} style={styles.groupSubtotalRow}>
-                {/* empty cells before subtotal */}
-                {columns.map((_col, ci) => {
-                  if (ci < columns.length - 2) {
-                    return <View key={ci} style={{ flex: 1 }} />;
-                  }
-                  if (ci === columns.length - 2) {
-                    return (
-                      <Text key={ci} style={[styles.groupSubtotalLabel, { marginRight: 4 }]}>
-                        Subtotal
-                      </Text>
-                    );
-                  }
-                  return (
-                    <PdfCurrencyText key={ci} value={row.groupSubtotalValue || ''} style={[styles.groupSubtotalValue, { color: ink }]} />
-                  );
-                })}
+              <View key={`group-footer-${rowIndex}`} style={styles.groupSubtotalRow}>
+                <View style={styles.groupSubtotalSpacer} />
+                <Text style={[styles.groupSubtotalLabel, { color: ink }]}>Group Total:</Text>
+                <PdfCurrencyText value={row.groupSubtotalValue || ''} style={[styles.groupSubtotalValue, { color: ink }]} />
               </View>
-            );
+            )
           }
 
-          // normal row
-          const cells = row.cells || {};
-          const imageUrl = row.imageUrl || null;
-          const isGroupItem = row.isInGroup || false;
+          const cells = row.cells || {}
+          const description = getDescriptionParts(cells.description)
+          const rowNumber = safeText(cells.num)
 
           return (
-            <View key={`r-${rowIdx}`} style={styles.tableRow} wrap={false}>
-              {/* row number */}
-              <Text style={[styles.tableCellBase, styles.colNum, { textAlign: 'center' }]}>
-                {rowIdx + 1}
-              </Text>
+            <View key={`row-${rowIndex}`} style={[styles.tableRow, row.isInGroup ? styles.groupItemRow : null]} wrap={false}>
+              <Text style={[styles.tableCellBase, styles.colNum, styles.alignCenter]}>{rowNumber}</Text>
 
-              {columns.map((col, ci) => {
-                const value = cells[col.key];
-                const display = safeText(value);
-                const align = col.align === 'right' ? { textAlign: 'right' as const } : col.align === 'center' ? { textAlign: 'center' as const } : {};
-                const width = col.width ? { width: col.width } : col.flex ? { flex: col.flex } : { flex: 1 };
-                const isFirstCol = ci === 0;
+              {displayColumns.map((column) => {
+                const rawValue = cells[column.key]
+                const widthStyle = column.width ? { width: column.width } : column.flex ? { flex: column.flex } : { flex: 1 }
+                const alignStyle =
+                  column.align === 'right'
+                    ? styles.alignRight
+                    : column.align === 'center'
+                      ? styles.alignCenter
+                      : null
+
+                if (column.key === 'description') {
+                  return (
+                    <View
+                      key={column.key}
+                      style={[
+                        styles.tableCellBase,
+                        widthStyle,
+                        row.isInGroup ? styles.groupDescriptionCell : null,
+                      ]}
+                    >
+                      {row.isInGroup ? (
+                        <Text style={[styles.groupItemPrefix, { color: accent }]}>└</Text>
+                      ) : null}
+                      <Text style={[styles.itemTitle, { color: ink }]}>{description.main}</Text>
+                      {description.sub ? (
+                        <Text style={[styles.itemSub, { color: darkenHex(muted, 4) }]}>{description.sub}</Text>
+                      ) : null}
+                      {row.imageUrl ? (
+                        <View style={styles.thumbnailRow}>
+                          <Image src={row.imageUrl} style={styles.thumbnailImg} />
+                          <Link
+                            src={row.imageUrl}
+                            style={[
+                              styles.openImageLink,
+                              { color: accentLink, backgroundColor: accentTint },
+                            ]}
+                          >
+                            Open image
+                          </Link>
+                        </View>
+                      ) : null}
+                    </View>
+                  )
+                }
+
+                const textStyle =
+                  column.key === 'make'
+                    ? styles.makeCell
+                    : column.key === 'model'
+                      ? styles.modelCell
+                      : column.key === 'qty'
+                        ? styles.qtyCell
+                        : column.key === 'unit_price'
+                          ? styles.priceCell
+                          : column.key === 'amount'
+                            ? styles.amountCell
+                            : styles.tableCellText
 
                 return (
-                  <View
-                    key={ci}
-                    style={[
-                      styles.tableCellBase,
-                      width as any,
-                      isGroupItem && isFirstCol ? styles.groupItemIndent : {},
-                    ]}
-                  >
-                    {isFirstCol ? (
-                      /* Description cell: title + sub + optional thumbnail */
-                      <View style={{ position: 'relative' }}>
-                        {isGroupItem && (
-                          <Text style={[styles.groupItemPrefix, { color: accent }]}>└</Text>
-                        )}
-                        <Text style={styles.itemTitle}>{display}</Text>
-                        {/* sub-description from second column */}
-                        {columns.length > 1 && cells[columns[1].key] && (
-                          <Text style={styles.itemSub}>{safeText(cells[columns[1].key])}</Text>
-                        )}
-                        {imageUrl && (
-                          <View style={styles.thumbnailRow}>
-                            <Image src={imageUrl} style={styles.thumbnailImg} />
-                            <Link src={imageUrl} style={[styles.openImageLink, { color: accent, backgroundColor: '#eff6ff' }]}>
-                              Open image
-                            </Link>
-                          </View>
-                        )}
-                      </View>
-                    ) : ci === 1 ? (
-                      /* second column already rendered as sub, skip */
-                      <Text></Text>
-                    ) : (
-                      <PdfCurrencyText value={display} style={[{ ...align }, col.key === 'make' ? styles.makeCell : null, col.key === 'model' ? styles.modelCell : null, col.key === 'qty' ? styles.qtyCell : null, col.key === 'unitPrice' ? styles.priceCell : null, col.key === 'amount' ? styles.amountCell : null]} />
-                    )}
+                  <View key={column.key} style={[styles.tableCellBase, widthStyle]}>
+                    <PdfCurrencyText value={safeText(rawValue)} style={[textStyle, alignStyle, { color: ink }]} />
                   </View>
-                );
+                )
               })}
             </View>
-          );
+          )
         })}
       </View>
 
-      {/* ====== BOTTOM PANEL (3 columns) ====== */}
-      <View style={styles.bottomPanel}>
-        {/* Payment info */}
-        {showBankDetails && paymentDetails ? (
-          <View style={styles.bottomColumn}>
-            <Text style={[styles.sectionTitle, { color: accent }]}>Payment</Text>
-            <View style={styles.bankLine}>
-              <Text style={styles.bankLabel}>Bank</Text>
-              <Text style={styles.bankValue}>{paymentDetails.bankName}</Text>
-            </View>
-            <View style={styles.bankLine}>
-              <Text style={styles.bankLabel}>Account</Text>
-              <Text style={styles.bankValue}>{paymentDetails.accountName}</Text>
-            </View>
-            <View style={styles.bankLine}>
-              <Text style={styles.bankLabel}>No.</Text>
-              <Text style={styles.bankValue}>{paymentDetails.accountNumber}</Text>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.bottomColumn} />
-        )}
-
-        {/* Notes & Terms */}
+      <View style={[styles.bottomPanel, { borderTopColor: '#e2e8f0' }]}>
         <View style={styles.bottomColumn}>
-          {notes && (
+          {data.showBankDetails && data.paymentDetails ? (
             <>
-              <Text style={[styles.sectionTitle, { color: accent }]}>Notes</Text>
-              <Text style={styles.textBlock}>{notes.content}</Text>
+              <Text style={[styles.sectionTitle, { color: accent, borderBottomColor: accentRule }]}>Payment</Text>
+              <View style={styles.bankLine}>
+                <Text style={[styles.bankLabel, { color: darkenHex(muted, 4) }]}>Bank</Text>
+                <Text style={[styles.bankValue, { color: ink }]}>{data.paymentDetails.bankName}</Text>
+              </View>
+              <View style={styles.bankLine}>
+                <Text style={[styles.bankLabel, { color: darkenHex(muted, 4) }]}>Account</Text>
+                <Text style={[styles.bankValue, { color: ink }]}>{data.paymentDetails.accountName}</Text>
+              </View>
+              <View style={styles.bankLine}>
+                <Text style={[styles.bankLabel, { color: darkenHex(muted, 4) }]}>No.</Text>
+                <Text style={[styles.bankValue, { color: ink }]}>{data.paymentDetails.accountNumber}</Text>
+              </View>
             </>
-          )}
-          {terms && (
-            <>
-              <Text style={[styles.sectionTitle, { color: accent, marginTop: notes ? 8 : 0 }]}>Terms</Text>
-              <Text style={styles.textBlock}>{terms.content}</Text>
-            </>
-          )}
+          ) : null}
         </View>
 
-        {/* Attachments */}
-        <View style={styles.bottomColumnLast}>
-          {attachments.length > 0 && (
+        <View style={styles.bottomColumn}>
+          {data.notes ? (
             <>
-              <Text style={[styles.sectionTitle, { color: accent }]}>Attachments</Text>
-              {attachments.map((att, idx) =>
-                att.url ? (
-                  <Link key={`att-${idx}`} src={att.url} style={[styles.attachmentLink, { color: accent }]}>
-                    {att.label}
+              <Text style={[styles.sectionTitle, { color: accent, borderBottomColor: accentRule }]}>
+                {data.notes.title || 'Notes'}
+              </Text>
+              <Text style={[styles.textBlock, { color: darkenHex(muted, 4) }]}>{data.notes.content}</Text>
+            </>
+          ) : null}
+          {data.terms ? (
+            <>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  styles.sectionTitleGap,
+                  { color: accent, borderBottomColor: accentRule },
+                ]}
+              >
+                {data.terms.title || 'Terms'}
+              </Text>
+              <Text style={[styles.textBlock, { color: darkenHex(muted, 4) }]}>{data.terms.content}</Text>
+            </>
+          ) : null}
+        </View>
+
+        <View style={styles.bottomColumnLast}>
+          {data.attachments.length > 0 ? (
+            <>
+              <Text style={[styles.sectionTitle, { color: accent, borderBottomColor: accentRule }]}>Attachments</Text>
+              {data.attachments.map((attachment, index) =>
+                attachment.url ? (
+                  <Link
+                    key={`${attachment.label || 'attachment'}-${index}`}
+                    src={attachment.url}
+                    style={[styles.attachmentLink, { color: accentLink }]}
+                  >
+                    {attachment.label || attachment.url}
                   </Link>
                 ) : (
-                  <Text key={`att-${idx}`} style={{ fontSize: 8 }}>{att.label}</Text>
-                )
+                  <Text key={`${attachment.label || 'attachment'}-${index}`} style={[styles.textBlock, { color: darkenHex(muted, 4) }]}>
+                    {attachment.label}
+                  </Text>
+                ),
               )}
             </>
-          )}
+          ) : null}
         </View>
       </View>
 
-      {/* ====== TOTALS + SIGNATURE ROW ====== */}
-      <View style={styles.totalsSignatureRow}>
-        {/* Left: totals */}
+      <View style={styles.totalsSignatureRow} wrap={false}>
         <View style={styles.leftSection}>
           <View style={styles.totalsGrid}>
-            {totalLines.map((line, idx) => (
-              <View key={`tl-${idx}`} style={styles.totalsLine}>
-                <Text style={styles.totalsLabel}>{line.label}</Text>
-                <PdfCurrencyText value={line.value} style={styles.totalsValue} />
-              </View>
+            {data.totals.lines.map((line) => (
+              <React.Fragment key={line.label}>
+                <Text style={[styles.totalsLabel, { color: darkenHex(muted, 4) }]}>{line.label}</Text>
+                <PdfCurrencyText value={line.value} style={[styles.totalsValue, { color: ink }]} />
+              </React.Fragment>
             ))}
-            {mainLine && (
-              <View style={styles.totalsGrandLine}>
-                <Text style={styles.totalsGrandLabel}>{mainLine.label}</Text>
-                <PdfCurrencyText value={mainLine.value} style={styles.totalsGrandValue} />
-              </View>
-            )}
-            {amountInWords ? (
-              <Text style={styles.amountWords}>{amountInWords}</Text>
+
+            {data.totals.mainLine ? (
+              <>
+                <Text style={[styles.totalsGrandLabel, { color: ink }]}>{data.totals.mainLine.label}</Text>
+                <PdfCurrencyText value={data.totals.mainLine.value} style={[styles.totalsGrandValue, { color: ink }]} />
+              </>
             ) : null}
-            {balanceDue && (
-              <View style={[styles.totalsLine, { marginTop: 8 }]}>
-                <Text style={styles.totalsLabel}>{balanceDue.label}</Text>
-                <PdfCurrencyText value={balanceDue.value} style={styles.totalsValue} />
-              </View>
-            )}
+
+            {data.totals.amountInWords ? (
+              <Text style={[styles.amountWords, { color: muted }]}>{data.totals.amountInWords}</Text>
+            ) : null}
+
+            {data.totals.balanceDue ? (
+              <>
+                <Text style={[styles.balanceDueLabel, { color: darkenHex(muted, 4) }]}>{data.totals.balanceDue.label}</Text>
+                <PdfCurrencyText value={data.totals.balanceDue.value} style={[styles.balanceDueValue, { color: ink }]} />
+              </>
+            ) : null}
           </View>
 
-          {/* Advance block */}
-          {isAdvance && advanceSummary && (
-            <View style={[styles.advanceBlock, { borderLeftColor: accent }]}>
+          {data.advanceSummary ? (
+            <View style={[styles.advanceBlock, { backgroundColor: accentTint, borderLeftColor: accent }]}>
               <View style={styles.advanceColumn}>
-                <Text style={styles.advanceLabel}>{advanceSummary.primaryLabel || 'Advance'}</Text>
-                <PdfCurrencyText value={advanceSummary.advanceAmount} style={[styles.advanceValue, { color: accent }]} />
+                <Text style={[styles.advanceLabel, { color: darkenHex(muted, 4) }]}>
+                  {data.advanceSummary.primaryLabel || 'Advance'}
+                </Text>
+                <PdfCurrencyText value={data.advanceSummary.advanceAmount || ''} style={[styles.advanceValue, { color: accent }]} />
               </View>
-              {advanceSummary.secondaryLabel && advanceSummary.balanceRemaining && (
+              {data.advanceSummary.secondaryLabel && data.advanceSummary.balanceRemaining ? (
                 <>
-                  <View style={styles.advanceDivider} />
+                  <View style={[styles.advanceDivider, { backgroundColor: accentRule }]} />
                   <View style={styles.advanceColumn}>
-                    <Text style={styles.advanceLabel}>{advanceSummary.secondaryLabel}</Text>
-                    <PdfCurrencyText value={advanceSummary.balanceRemaining} style={[styles.advanceValue, { color: accent }]} />
+                    <Text style={[styles.advanceLabel, { color: darkenHex(muted, 4) }]}>
+                      {data.advanceSummary.secondaryLabel}
+                    </Text>
+                    <PdfCurrencyText value={data.advanceSummary.balanceRemaining} style={[styles.advanceValue, { color: accent }]} />
                   </View>
                 </>
-              )}
+              ) : null}
             </View>
-          )}
+          ) : null}
         </View>
 
-        {/* Right: extra fields + signature */}
         <View style={styles.rightSection}>
-          {additionalFields.length > 0 && (
+          {data.additionalFields.length > 0 ? (
             <View style={styles.extraFieldsVertical}>
-              {additionalFields.map((field, idx) => (
-                <View key={`ef-${idx}`} style={styles.extraFieldItem}>
-                  <Text style={styles.extraFieldKey}>{field.label}</Text>
-                  <Text style={styles.extraFieldValue}>{field.value}</Text>
+              {data.additionalFields.map((field, index) => (
+                <View key={`${field.label}-${index}`} style={styles.extraFieldItem}>
+                  <Text style={[styles.extraFieldKey, { color: muted }]}>{field.label}</Text>
+                  <Text style={[styles.extraFieldValue, { color: ink }]}>{field.value}</Text>
                 </View>
               ))}
             </View>
-          )}
-          {signature && (signature.name || signature.imageUrl) && (
+          ) : null}
+
+          {data.signature?.name || data.signature?.imageUrl ? (
             <View style={styles.signatureBox}>
-              {signature.imageUrl ? (
-                <Image src={signature.imageUrl} style={{ width: 130, height: 40, marginBottom: 4 }} />
+              {data.signature?.imageUrl ? (
+                <Image src={data.signature.imageUrl} style={styles.signatureImage} />
               ) : (
-                <Text style={styles.signatureScribble}>{signature.name || ''}</Text>
+                <Text style={[styles.signatureScribble, { color: ink }]}>{data.signature?.name || ''}</Text>
               )}
-              {signature.name && (
-                <Text style={styles.signatureName}>{signature.name}</Text>
-              )}
-              {signature.role && (
-                <Text style={styles.signatureRole}>{signature.role}</Text>
-              )}
+              {data.signature?.name ? <Text style={[styles.signatureName, { color: ink }]}>{data.signature.name}</Text> : null}
+              {data.signature?.role ? <Text style={[styles.signatureRole, { color: muted }]}>{data.signature.role}</Text> : null}
             </View>
-          )}
+          ) : null}
         </View>
       </View>
-
     </Page>
-  );
+  )
 }

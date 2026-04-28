@@ -21,7 +21,7 @@ import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { formatMergedQtyUnit, resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '@/domain/documentMedia'
-import { BUILTIN_COLUMNS, buildSummaryRows, isInvoicePdfTemplateId } from '@/domain/invoice'
+import { BUILTIN_COLUMNS, buildSummaryRows, normalizeInvoicePdfTemplateId } from '@/domain/invoice'
 import type { InvoicePdfTemplateId } from '@/domain/invoice/types'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { formatNaira } from '@/lib/formatters/money'
@@ -392,7 +392,7 @@ export default function ViewQuotation() {
           metaFooter: { companyName: String(settings?.company_name || '') },
           template: { designPreset: pdfDesignPreset },
         },
-        templateId: isInvoicePdfTemplateId(customFields?.pdfTemplateId) ? customFields.pdfTemplateId : 'industry',
+        templateId: normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || 'industry',
       })
       showToast('Download ready', 'Quotation PDF downloaded.', 'success')
     } catch (error) {
@@ -528,7 +528,7 @@ export default function ViewQuotation() {
               bankAccounts={previewBankAccounts}
               companyTagline={String(settings?.company_tagline || '')}
               footerText={String(settings?.footer_text || '')}
-              templateId={isInvoicePdfTemplateId(customFields?.pdfTemplateId) ? customFields.pdfTemplateId : 'industry'}
+              templateId={normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || 'industry'}
               onSave={(nextValue, nextPreset, nextTemplateId) => handleSaveCustomization(nextValue, nextPreset, nextTemplateId)}
             />
 
