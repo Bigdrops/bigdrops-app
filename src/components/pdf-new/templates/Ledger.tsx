@@ -180,8 +180,8 @@ export default function Ledger({ data }: { data: IndustryTemplateData }) {
                           <Text style={styles.itemDesc}>
                             {row.isInGroup ? '└ ' : ''}{safeText(rawVal)}
                           </Text>
-                          {row.cells?.subDescription ? (
-                            <Text style={styles.itemSub}>{safeText(row.cells.subDescription)}</Text>
+                          {row.cells?.description && typeof row.cells.description === 'object' && (row.cells.description as any).sub ? (
+                            <Text style={styles.itemSub}>{safeText((row.cells.description as any).sub)}</Text>
                           ) : null}
                           
                           {row.imageUrl ? (
