@@ -26,7 +26,7 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   
-  // Header
+  // Header (Fixed Flex Layout)
   header: {
     flexDirection: 'row',
     padding: 24,
@@ -35,8 +35,9 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   headerLeft: {
-    width: '35%',
+    flex: 1, // Allows it to take all available space left of logo
     flexDirection: 'column',
+    paddingRight: 12,
   },
   brandName: {
     fontWeight: 'bold',
@@ -51,32 +52,36 @@ export const styles = StyleSheet.create({
     lineHeight: 1.4,
   },
   headerCenter: {
-    width: '30%',
+    width: 70, // Fixed width so it never shrinks or grows
     alignItems: 'center',
     justifyContent: 'center',
   },
   logoBox: {
     width: 60,
     height: 60,
+    minWidth: 60, // Prevents compression
+    minHeight: 60, // Prevents compression
     borderRadius: 8,
-    // Removed background color so it is invisible if empty
     objectFit: 'contain',
   },
   headerRight: {
-    width: '35%',
+    flex: 1, // Allows it to take all available space right of logo
     alignItems: 'flex-end',
+    paddingLeft: 12,
   },
   docTitle: {
-    fontSize: 24,
+    fontSize: 20, // Slightly reduced to prevent wrap on long titles
     fontFamily: 'Times-Roman',
     color: colors.ink,
-    marginBottom: 6,
+    marginBottom: 8,
+    textAlign: 'right',
   },
   docMeta: {
     fontSize: 8,
     fontWeight: 'bold',
     color: colors.accent,
     textTransform: 'uppercase',
+    marginBottom: 3,
   },
 
   // Meta Section
@@ -117,7 +122,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   customItem: {
-    width: '45%', // Forces predictable wrap without overlapping
+    width: '45%', 
     marginBottom: 12,
     flexDirection: 'column',
   },
@@ -133,7 +138,7 @@ export const styles = StyleSheet.create({
     color: colors.ink,
   },
 
-  // Table (Rigid boundaries)
+  // Table
   tableSection: {
     paddingHorizontal: 24,
     paddingTop: 24,
@@ -296,7 +301,7 @@ export const styles = StyleSheet.create({
   },
 
   rightCol: {
-    width: '40%', // Rigid width prevents crushing
+    width: '40%', 
   },
   totalsPanel: {
     backgroundColor: colors.bgPanel,
@@ -311,13 +316,13 @@ export const styles = StyleSheet.create({
   totalLabel: {
     fontSize: 9,
     color: '#4a4a4a',
-    width: '50%',
+    flex: 1,
+    paddingRight: 8,
   },
   totalVal: {
     fontSize: 9,
     color: '#4a4a4a',
     textAlign: 'right',
-    width: '50%',
   },
   totalLineGrand: {
     flexDirection: 'row',
@@ -331,14 +336,14 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     color: colors.ink,
-    width: '40%',
+    flex: 1,
+    paddingRight: 8,
   },
   totalValGrand: {
     fontSize: 12,
     fontWeight: 'bold',
     color: colors.ink,
     textAlign: 'right',
-    width: '60%',
   },
   amountWords: {
     fontFamily: 'Times-Italic',
@@ -365,13 +370,13 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.ink,
     fontWeight: 'bold',
-    width: '40%', // Prevents text smash
+    flex: 1,
+    paddingRight: 8,
   },
   advanceDueVal: {
     fontSize: 11,
     fontWeight: 'bold',
     color: colors.ink,
-    width: '60%', // Prevents text smash
     textAlign: 'right',
   },
   advanceBal: {
@@ -386,9 +391,16 @@ export const styles = StyleSheet.create({
   advanceBalText: {
     fontSize: 8,
     color: colors.grayText,
+    flex: 1,
+    paddingRight: 8,
+  },
+  advanceBalTextVal: {
+    fontSize: 8,
+    color: colors.grayText,
+    textAlign: 'right',
   },
 
-  // Footer Meta
+  // Footer Meta (Fields & Signatures)
   additionalFieldsBar: {
     marginTop: 24,
     paddingTop: 16,
@@ -408,6 +420,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     alignItems: 'flex-start',
+    paddingRight: 24,
   },
   signatureImg: {
     height: 40,
