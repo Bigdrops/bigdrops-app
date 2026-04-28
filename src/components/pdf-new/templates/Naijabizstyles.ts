@@ -1,318 +1,383 @@
 import { StyleSheet } from '@react-pdf/renderer';
 
+// Olive & Stone palette
+const palette = {
+  ink: '#2d2d2d',
+  accent: '#7d8c6d',
+  sidebarBg: '#f4f1ea',
+  paper: '#fefcf7',
+  rule: '#c5bfb0',
+  lightRule: '#e3ddd0',
+  panel: '#ede8dd',
+  link: '#2b4a3b',
+  linkBg: '#e9f0e6',
+  muted: '#8c857b',
+};
+
 export const styles = StyleSheet.create({
+  /* ---- PAGE ---- */
   page: {
-    padding: 30,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: palette.paper,
     fontFamily: 'Helvetica',
-    fontSize: 10,
-    color: '#334155',
-  },
-  // Header
-  header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    marginBottom: 20,
+    paddingBottom: 42, // space for fixed footer
   },
-  brand: {
-    flexDirection: 'column',
+
+  /* ---- SIDEBAR ---- */
+  sidebar: {
+    width: 215,
+    backgroundColor: palette.sidebarBg,
+    borderRight: `1px solid ${palette.rule}`,
+    padding: 24,
+    flexShrink: 0,
   },
-  brandName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0f172a',
+  sbLogo: {
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 10,
     textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  brandAccent: {
-    color: '#f59e0b',
-  },
-  brandMeta: {
-    fontSize: 8,
-    color: '#64748b',
-    marginTop: 4,
-  },
-  invoiceMeta: {
-    textAlign: 'right',
-  },
-  metaLabel: {
-    fontSize: 9,
-    color: '#64748b',
-    textTransform: 'uppercase',
-    marginBottom: 2,
-  },
-  metaValue: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#0f172a',
-    marginBottom: 6,
-  },
-  // Addresses
-  addresses: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 25,
-  },
-  addressBox: {
-    width: '48%',
-  },
-  addressLabel: {
-    fontSize: 9,
-    textTransform: 'uppercase',
-    color: '#64748b',
-    marginBottom: 8,
-    fontWeight: 'bold',
-  },
-  addressText: {
-    fontSize: 10,
-    lineHeight: 1.5,
-  },
-  // Table
-  table: {
-    marginBottom: 20,
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#0f172a',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-  },
-  tableHeaderCell: {
-    color: '#ffffff',
-    fontSize: 9,
-    textTransform: 'uppercase',
-    fontWeight: 'bold',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  tableRowLast: {
-    borderBottomWidth: 0,
-  },
-  tableCell: {
-    fontSize: 10,
-    color: '#334155',
-  },
-  tableCellBold: {
-    fontWeight: 'bold',
-  },
-  tableCellSub: {
-    fontSize: 9,
-    color: '#64748b',
-    marginTop: 2,
-  },
-  tableCellImage: {
-    width: 40,
-    height: 40,
-    marginRight: 10,
-    borderRadius: 4,
-  },
-  // Group rows
-  groupHeader: {
-    backgroundColor: '#f8fafc',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: '#f59e0b',
-    marginBottom: 8,
-  },
-  groupHeaderLabel: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#0f172a',
-  },
-  groupFooter: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    backgroundColor: '#f8fafc',
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  groupSubtotalLabel: {
-    fontSize: 10,
-    color: '#64748b',
-    marginRight: 20,
-  },
-  groupSubtotalValue: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#0f172a',
-  },
-  // Totals
-  totalsSection: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 25,
-  },
-  totalsBox: {
-    width: 280,
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-    fontSize: 10,
-  },
-  totalRowFinal: {
-    borderTopWidth: 2,
-    borderTopColor: '#0f172a',
-    paddingTop: 12,
-    marginTop: 8,
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: '#0f172a',
-  },
-  // Advance summary
-  advanceSummary: {
-    backgroundColor: '#ecfdf5',
-    borderLeftWidth: 4,
-    borderLeftColor: '#10b981',
-    padding: 15,
-    marginBottom: 20,
-    borderRadius: 4,
-  },
-  advanceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  advanceRowLast: {
-    marginBottom: 0,
-  },
-  advanceLabel: {
-    fontSize: 10,
-    color: '#065f46',
-    fontWeight: 'bold',
-  },
-  advanceValue: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#065f46',
-  },
-  // Bank details
-  bankSection: {
-    backgroundColor: '#f8fafc',
-    padding: 15,
-    borderRadius: 6,
-    borderLeftWidth: 4,
-    borderLeftColor: '#f59e0b',
-    marginBottom: 20,
-  },
-  bankTitle: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#0f172a',
-    marginBottom: 8,
-  },
-  bankRow: {
-    flexDirection: 'row',
+    letterSpacing: 0.6,
+    color: palette.ink,
+    borderBottom: `2px solid ${palette.accent}`,
+    paddingBottom: 5,
     marginBottom: 4,
   },
-  bankLabel: {
-    fontSize: 9,
-    color: '#64748b',
-    width: 100,
+  sbCompanyDetail: {
+    fontSize: 6,
+    color: '#5a5a5a',
+    lineHeight: 1.5,
+    marginBottom: 10,
   },
-  bankValue: {
-    fontSize: 10,
-    fontWeight: '500',
-    color: '#334155',
+  sbDivider: {
+    borderTop: `1px dashed ${palette.rule}`,
+    marginVertical: 8,
+    height: 0,
   },
-  // Notes & Terms
-  notesSection: {
-    marginBottom: 15,
-  },
-  notesTitle: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#0f172a',
+  sbSection: {
     marginBottom: 6,
   },
-  notesContent: {
-    fontSize: 9,
-    color: '#64748b',
-    lineHeight: 1.5,
+  sbLabel: {
+    fontSize: 5.5,
+    fontFamily: 'Helvetica-Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    color: palette.muted,
+    marginBottom: 1,
   },
-  // Signature
-  signatureSection: {
-    marginTop: 30,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+  sbValue: {
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 7.5,
+    lineHeight: 1.3,
   },
-  signatureImage: {
-    width: 120,
-    height: 60,
-    marginBottom: 8,
+  sbValueSm: {
+    fontSize: 6.5,
+    color: '#4a4a4a',
   },
-  signatureName: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#0f172a',
+  /* Totals inside sidebar */
+  sbTotals: {
+    marginTop: 2,
   },
-  signatureRole: {
-    fontSize: 9,
-    color: '#64748b',
-  },
-  // Footer
-  footer: {
-    position: 'absolute',
-    bottom: 30,
-    left: 30,
-    right: 30,
+  sbTotalLine: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    fontSize: 6.5,
+    marginBottom: 2,
+  },
+  sbTotalLineGrand: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    fontFamily: 'Helvetica-Bold',
     fontSize: 8,
-    color: '#64748b',
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    paddingTop: 12,
+    borderTop: `1px solid ${palette.rule}`,
+    paddingTop: 4,
+    marginTop: 4,
   },
-  footerLeft: {
+  sbAmountWords: {
+    fontFamily: 'Times-Italic',
+    fontSize: 5.5,
+    color: '#6b6560',
+    lineHeight: 1.3,
+    marginTop: 3,
+  },
+  /* Advance inside sidebar */
+  sbAdvance: {
+    backgroundColor: '#ffffff',
+    border: `1px solid ${palette.rule}`,
+    padding: 8,
+    marginTop: 6,
+  },
+  sbAdvanceLine: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    fontSize: 6.5,
+    marginBottom: 3,
+  },
+  sbAdvanceLineLast: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    fontSize: 6.5,
+    marginBottom: 0,
+  },
+  /* Bank inside sidebar */
+  sbBank: {
+    fontSize: 6,
+    lineHeight: 1.6,
+    color: '#4a4a4a',
+    marginTop: 2,
+  },
+  sbBankStrong: {
+    fontFamily: 'Helvetica-Bold',
+    color: palette.ink,
+  },
+  /* Signature inside sidebar */
+  sbSignature: {
+    marginTop: 'auto',
+    paddingTop: 10,
+  },
+  sbSigScribble: {
+    fontFamily: 'Times-Italic',
+    fontSize: 18,
+    color: palette.ink,
+    borderBottom: `1px solid ${palette.rule}`,
+    paddingBottom: 3,
+    marginBottom: 3,
+  },
+  sbSigName: {
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 7.5,
+  },
+  sbSigRole: {
+    fontSize: 6,
+    color: '#6b6560',
+  },
+
+  /* ---- MAIN AREA ---- */
+  mainArea: {
     flex: 1,
+    padding: 24,
+    paddingRight: 28,
   },
-  footerRight: {
+  mainTitle: {
+    fontFamily: 'Times-Bold',
+    fontSize: 22,
+    color: palette.ink,
+    lineHeight: 1,
+    marginBottom: 3,
+  },
+  mainMeta: {
+    fontSize: 7,
+    fontFamily: 'Helvetica-Bold',
+    color: palette.accent,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 14,
+  },
+
+  /* ---- TABLE ---- */
+  table: {
+    width: '100%',
+  },
+  /* Header */
+  tableHeaderRow: {
+    flexDirection: 'row',
+    borderBottom: `2px solid ${palette.ink}`,
+    paddingBottom: 6,
+    marginBottom: 4,
+  },
+  th: {
+    fontSize: 6,
+    fontFamily: 'Helvetica-Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+    color: palette.muted,
+  },
+  /* Column widths */
+  colNum: { width: 14, textAlign: 'center' },
+  colDesc: { width: 106 },
+  colMake: { width: 44 },
+  colModel: { width: 50 },
+  colQty: { width: 30, textAlign: 'center' },
+  colUnitPrice: { width: 50, textAlign: 'right' },
+  colAmount: { width: 54, textAlign: 'right' },
+
+  /* Data row */
+  tableRow: {
+    flexDirection: 'row',
+    borderBottom: `1px solid ${palette.lightRule}`,
+    paddingVertical: 7,
+    alignItems: 'flex-start',
+  },
+  td: {
+    fontSize: 7,
+    paddingHorizontal: 1,
+  },
+  tdNum: {
+    fontSize: 6.5,
+    color: palette.muted,
+    textAlign: 'center',
+  },
+  itemTitle: {
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 7,
+    marginBottom: 2,
+    lineHeight: 1.2,
+  },
+  itemSub: {
+    fontSize: 6,
+    color: '#555555',
+    lineHeight: 1.3,
+  },
+  makeCell: {
+    fontSize: 6.5,
+    color: '#5a5a5a',
+  },
+  modelCell: {
+    fontSize: 6,
+    color: '#3d3d3d',
+  },
+  qtyCell: {
+    fontSize: 7,
+    textAlign: 'center',
+  },
+  priceCell: {
+    fontSize: 7,
     textAlign: 'right',
   },
-  // Utilities
-  flexRow: {
+  amountCell: {
+    fontSize: 7,
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'right',
+  },
+
+  /* Thumbnail */
+  thumbnailRow: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 5,
   },
-  flexCol: {
-    flexDirection: 'column',
+  thumbnailImg: {
+    width: 50,
+    height: 36,
+    border: `1px solid ${palette.rule}`,
+    backgroundColor: palette.panel,
+    marginRight: 6,
   },
-  justifyBetween: {
+  openImageLink: {
+    fontSize: 5.5,
+    color: palette.link,
+    backgroundColor: palette.linkBg,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    fontFamily: 'Helvetica-Bold',
+    textDecoration: 'none',
+  },
+
+  /* Group header */
+  groupHeaderRow: {
+    flexDirection: 'row',
+    backgroundColor: '#ece7dc',
+    paddingVertical: 6,
+    paddingHorizontal: 5,
+    borderBottom: `1px solid ${palette.rule}`,
+    marginTop: 2,
+  },
+  groupHeaderText: {
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 7,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    color: palette.ink,
+  },
+
+  /* Group item indent */
+  groupItemIndent: {
+    marginLeft: 12,
+  },
+  groupItemPrefix: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    fontSize: 7,
+    color: palette.accent,
+    fontFamily: 'Helvetica-Bold',
+  },
+
+  /* Group subtotal */
+  groupSubtotalRow: {
+    flexDirection: 'row',
+    borderTop: `1px solid ${palette.rule}`,
+    borderBottom: `2px solid ${palette.ink}`,
+    paddingVertical: 6,
+    backgroundColor: '#ffffff',
+  },
+  groupSubtotalLabel: {
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 7,
+    textAlign: 'right',
+  },
+  groupSubtotalValue: {
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 7,
+    textAlign: 'right',
+  },
+
+  /* ---- BOTTOM NOTES (page 2) ---- */
+  bottomNotes: {
+    marginTop: 14,
+    borderTop: `1px solid ${palette.lightRule}`,
+    paddingTop: 8,
+  },
+  sectionTitle: {
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 6.5,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    color: palette.muted,
+    marginBottom: 3,
+  },
+  textBlock: {
+    fontSize: 6.5,
+    lineHeight: 1.5,
+    color: '#4a4a4a',
+    marginBottom: 8,
+  },
+  extraFieldsRow: {
+    flexDirection: 'row',
+    marginTop: 6,
+  },
+  extraFieldItem: {
+    marginRight: 24,
+  },
+
+  /* ---- FIXED FOOTER ---- */
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+    borderTop: `1px solid ${palette.rule}`,
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    backgroundColor: palette.paper,
+    fontSize: 5.5,
+    color: '#7a736c',
   },
-  itemsCenter: {
-    alignItems: 'center',
+  footerLeft: {
+    fontFamily: 'Helvetica-Bold',
+    color: palette.ink,
   },
-  mb4: { marginBottom: 4 },
-  mb8: { marginBottom: 8 },
-  mb12: { marginBottom: 12 },
-  mb20: { marginBottom: 20 },
-  mt8: { marginTop: 8 },
-  mt12: { marginTop: 12 },
-  textRight: { textAlign: 'right' },
-  textCenter: { textAlign: 'center' },
-  textLeft: { textAlign: 'left' },
-  fontBold: { fontWeight: 'bold' },
-  textUppercase: { textTransform: 'uppercase' },
-  textMuted: { color: '#64748b' },
+  footerCenter: {
+    fontWeight: 'normal',
+  },
+  footerRight: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
 });
 
-export function resolveAlignment(align?: string) {
-  if (align === 'right') return { textAlign: 'right' } as const;
-  if (align === 'center') return { textAlign: 'center' } as const;
-  return { textAlign: 'left' } as const;
+export function resolveAlign(align?: string) {
+  if (align === 'right') return { textAlign: 'right' as const };
+  if (align === 'center') return { textAlign: 'center' as const };
+  return { textAlign: 'left' as const };
 }
