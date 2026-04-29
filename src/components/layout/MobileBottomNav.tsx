@@ -18,7 +18,7 @@ export default function MobileBottomNav({
 }) {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-xl"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-layout-nav)/0.95)] backdrop-blur-xl"
       style={{ paddingBottom: 'var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="grid h-[76px] w-full grid-cols-5 gap-1 px-2.5 pt-2.5 shadow-lg">
@@ -31,17 +31,20 @@ export default function MobileBottomNav({
               key={item.key}
               type="button"
               onClick={() => onSelect(item.key)}
-              className="flex flex-col items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
+              className={cn(
+                "flex flex-col items-center gap-1.5 text-[11px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-focus-ring))]",
+                isActive ? "text-[hsl(var(--bd-text))]" : "text-[hsl(var(--bd-text-muted))]"
+              )}
             >
               <span
                 className={cn(
-                  'grid h-[42px] w-[42px] place-items-center rounded-[14px] border border-transparent',
-                  isActive && 'border-transparent surface-strong',
+                  'grid h-[42px] w-[42px] place-items-center rounded-[var(--bd-radius-md)] border border-transparent transition-all',
+                  isActive && 'border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] shadow-sm',
                 )}
               >
                 <Icon className="h-[18px] w-[18px]" />
               </span>
-              <span className={cn(isActive && 'font-bold text-foreground')}>{item.label}</span>
+              <span className={cn(isActive && 'font-bold')}>{item.label}</span>
             </button>
           )
         })}

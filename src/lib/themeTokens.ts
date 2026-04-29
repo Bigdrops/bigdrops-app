@@ -30,9 +30,45 @@ export const THEME_COLOR_TOKENS = [
   "border",
   "input",
   "ring",
+  // BigDrops Component/Form Tokens
+  "bd-app-bg",
+  "bd-surface",
+  "bd-surface-muted",
+  "bd-border",
+  "bd-border-strong",
+  "bd-text",
+  "bd-text-muted",
+  "bd-text-soft",
+  "bd-input-bg",
+  "bd-input-border",
+  "bd-input-focus",
+  "bd-input-error",
+  "bd-card-bg",
+  "bd-card-border",
+  "bd-button-primary-bg",
+  "bd-button-primary-text",
+  "bd-button-primary-hover-bg",
+  "bd-feedback-success-bg",
+  "bd-feedback-error-bg",
+  "bd-feedback-success",
+  "bd-feedback-error",
+  "bd-feedback-warning",
+  "bd-feedback-info",
+  "bd-feedback-save",
+  "bd-layout-nav",
+  "bd-layout-sidebar",
+  "bd-focus-ring",
 ] as const
 
-export const THEME_NON_COLOR_TOKENS = ["radius"] as const
+export const THEME_NON_COLOR_TOKENS = [
+  "radius",
+  "bd-radius-sm",
+  "bd-radius-md",
+  "bd-radius-lg",
+  "bd-layout-density",
+  "bd-layout-padding",
+  "bd-layout-content-max",
+] as const
 
 export const THEME_TOKENS = [...THEME_COLOR_TOKENS, ...THEME_NON_COLOR_TOKENS] as const
 
@@ -59,9 +95,13 @@ export function normalizeThemeTokenValue(
   const raw = value.trim()
   if (!raw) return null
 
-  if (token === "radius") {
-    if (options.allowRadius === false) return null
+  if (token === "radius" || token === "bd-radius-sm" || token === "bd-radius-md" || token === "bd-radius-lg" || token === "bd-layout-padding" || token === "bd-layout-content-max") {
+    if (options.allowRadius === false && token.includes("radius")) return null
     return CSS_LENGTH_RE.test(raw) ? raw : null
+  }
+
+  if (token === "bd-layout-density") {
+    return ["compact", "standard", "comfortable"].includes(raw) ? raw : null
   }
 
   // Color token: allow "#RRGGBB" (stored in settings today) and "H S% L%" (CSS var format).

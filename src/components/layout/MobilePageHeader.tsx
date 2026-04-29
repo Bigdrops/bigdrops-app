@@ -32,7 +32,7 @@ export default function MobilePageHeader({
   return (
     <div
       className={cn(
-        'rounded-[20px] border border-border/80 bg-background/95 px-3.5 py-2.5 shadow-sm',
+        'rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))/0.8] bg-[hsl(var(--bd-surface)/0.95)] px-3.5 py-2.5 shadow-sm',
         className,
       )}
     >
@@ -42,7 +42,7 @@ export default function MobilePageHeader({
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
-          className="mt-0.5 h-9 w-9 shrink-0 rounded-xl bg-muted/45 text-foreground/80 hover:bg-muted active:scale-95"
+          className="mt-0.5 h-9 w-9 shrink-0 rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))/0.45] text-[hsl(var(--bd-text))/0.8] hover:bg-[hsl(var(--bd-surface-muted))] active:scale-95 focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-focus-ring))]"
           aria-label="Open navigation menu"
         >
           <Menu className="h-4.5 w-4.5" />
@@ -52,7 +52,7 @@ export default function MobilePageHeader({
           {eyebrow ? (
             <div className={cn(
               "mb-0.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]",
-              eyebrowClassName || "text-muted-foreground"
+              eyebrowClassName || "text-[hsl(var(--bd-text-muted))]"
             )}>
               <span className={cn('h-1.5 w-1.5 rounded-full', accentClassName)} aria-hidden="true" />
               <span className="truncate">{eyebrow}</span>
@@ -61,11 +61,11 @@ export default function MobilePageHeader({
 
           <div className="flex items-start justify-between gap-2.5">
             <div className="min-w-0">
-              <div className="truncate text-[16px] font-semibold leading-tight text-foreground">
+              <div className="truncate text-[16px] font-semibold leading-tight text-[hsl(var(--bd-text))]">
                 {title}
               </div>
               {subtitle ? (
-                <div className="mt-px truncate text-[11px] text-muted-foreground">{subtitle}</div>
+                <div className="mt-px truncate text-[11px] text-[hsl(var(--bd-text-muted))]">{subtitle}</div>
               ) : null}
             </div>
             <div className="flex shrink-0 items-center gap-1">

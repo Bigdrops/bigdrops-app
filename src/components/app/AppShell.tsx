@@ -109,10 +109,28 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
       }
     }
 
+    // Resolve Density & Padding
+    const density = bundleToApply['bd-layout-density'] || 'standard'
+    if (!bundleToApply['bd-layout-padding']) {
+      const paddingMap = {
+        compact: '0.5rem',
+        standard: '1rem',
+        comfortable: '1.5rem',
+      }
+      bundleToApply['bd-layout-padding'] = paddingMap[density as keyof typeof paddingMap] || '1rem'
+    }
+
     const applied = applyThemeTokenBundle(bundleToApply)
+
+    // Apply visibility classes
+    const showSidebar = bundleToApply['bd-layout-sidebar'] !== 'hidden'
+    const showBottomNav = bundleToApply['bd-layout-nav'] !== 'hidden'
+    document.documentElement.classList.toggle('bd-sidebar-hidden', !showSidebar)
+    document.documentElement.classList.toggle('bd-nav-hidden', !showBottomNav)
 
     return () => {
       clearThemeTokenBundle(applied)
+      document.documentElement.classList.remove('bd-sidebar-hidden', 'bd-nav-hidden')
     }
   }, [
     settings?.app_background_color,

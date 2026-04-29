@@ -14,18 +14,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 export const pageCardCls =
   'border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] shadow-none'
 export const fieldCls =
-  'h-11 rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 text-[14px] text-[var(--bd-text)] shadow-none transition focus:border-[var(--bd-indigo)] focus:bg-[var(--bd-surface)] focus:ring-0 focus-visible:ring-0'
-export const labelCls = 'mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text2)]'
+  'h-11 rounded-[var(--bd-radius-md)] border border-[var(--bd-input-border)] bg-[var(--bd-input-bg)] px-3 text-[14px] text-[var(--bd-text)] shadow-none transition focus:border-[var(--bd-input-focus)] focus:bg-[var(--bd-surface)] focus:ring-0 focus-visible:ring-0'
+export const labelCls = 'mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text-muted)]'
 
 export function getSectionDotClass(color?: string) {
   return {
     '#0f172a': 'bg-[var(--bd-text)]',
     '#7c3aed': 'bg-[var(--bd-violet)]',
-    '#475569': 'bg-[var(--bd-text2)]',
+    '#475569': 'bg-[var(--bd-text-muted)]',
     '#059669': 'bg-[var(--bd-emerald)]',
     '#d97706': 'bg-[var(--bd-amber)]',
     '#2563eb': 'bg-[var(--bd-indigo)]',
-  }[color || ''] || 'bg-[var(--bd-text3)]'
+  }[color || ''] || 'bg-[var(--bd-text-soft)]'
 }
 
 interface IconTone {
@@ -39,7 +39,7 @@ function getIconToneClass(iconTone?: IconTone) {
     '#f5f3ff|#7c3aed': 'bg-[var(--bd-violet-bg)] text-[var(--bd-violet)]',
     '#eff6ff|#2563eb': 'bg-[var(--bd-indigo-bg)] text-[var(--bd-indigo)]',
     '#f0fdf4|#059669': 'bg-[var(--bd-emerald-bg)] text-[var(--bd-emerald)]',
-  }[key] || 'bg-[var(--bd-bg2)] text-[var(--bd-text2)]'
+  }[key] || 'bg-[var(--bd-surface-muted)] text-[var(--bd-text-muted)]'
 }
 
 export function formatCurrency(value: number | string | null | undefined) {
@@ -76,8 +76,8 @@ export function ChipButton({ active = false, className = '', children, ...props 
       type="button"
       className={`inline-flex h-8 items-center gap-2 rounded-full border-[1.5px] px-[13px] text-[12px] font-bold transition ${
         active
-          ? 'border-[#0f172a] bg-[#0f172a] text-white'
-          : 'border-[#e2e8f0] bg-white text-[#334155]'
+          ? 'border-[var(--bd-text)] bg-[var(--bd-text)] text-[var(--bd-app-bg)]'
+          : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text-muted)]'
       } ${className}`}
       {...props}
     >
@@ -90,10 +90,10 @@ export function ToolbarButton({ active = false, className = '', children, ...pro
   return (
     <button
       type="button"
-      className={`inline-flex h-9 items-center justify-center gap-2 rounded-[8px] border px-3 text-[12px] font-semibold transition ${
+      className={`inline-flex h-9 items-center justify-center gap-2 rounded-[var(--bd-radius-md)] border px-3 text-[12px] font-semibold transition ${
         active
-          ? 'border-[var(--bd-text)] bg-[var(--bd-text)] text-white'
-          : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text2)]'
+          ? 'border-[var(--bd-text)] bg-[var(--bd-text)] text-[var(--bd-app-bg)]'
+          : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text-muted)]'
       } ${className}`}
       {...props}
     >
@@ -115,7 +115,7 @@ interface SegmentedControlProps {
 
 export function SegmentedControl({ value, onChange, options }: SegmentedControlProps) {
   return (
-    <div className="flex gap-[3px] rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-bg2)] p-[3px]">
+    <div className="flex gap-[3px] rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface-muted)] p-[3px]">
       {options.map((option) => {
         const active = value === option.value
         return (
@@ -123,8 +123,8 @@ export function SegmentedControl({ value, onChange, options }: SegmentedControlP
             key={option.value}
             type="button"
             onClick={() => onChange(option.value)}
-            className={`h-8 flex-1 rounded-[7px] text-[12px] font-bold transition ${
-              active ? 'bg-[var(--bd-surface)] text-[var(--bd-text)] shadow-[0_1px_3px_rgba(0,0,0,0.06)]' : 'text-[var(--bd-text2)]'
+            className={`h-8 flex-1 rounded-[var(--bd-radius-sm)] text-[12px] font-bold transition ${
+              active ? 'bg-[var(--bd-surface)] text-[var(--bd-text)] shadow-sm' : 'text-[var(--bd-text-muted)]'
             }`}
           >
             {option.label}
@@ -191,7 +191,7 @@ export function CollapseCard({ icon: Icon, iconTone, title, subtitle, open, onTo
         </div>
         <div className="flex items-center gap-2">
           {sectionColor ? <span className={`h-2 w-2 rounded-full ${getSectionDotClass(sectionColor)}`} /> : null}
-          {open ? <ChevronUp className="h-4 w-4 text-[var(--bd-text4)]" /> : <ChevronRight className="h-4 w-4 text-[var(--bd-text4)]" />}
+          {open ? <ChevronUp className="h-4 w-4 text-[var(--bd-text-soft)]" /> : <ChevronRight className="h-4 w-4 text-[var(--bd-text-soft)]" />}
         </div>
       </button>
       {open ? <div className="pb-4 pt-1">{children}</div> : null}

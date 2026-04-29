@@ -1,15 +1,63 @@
 :root {
-  --bd-bg: #faf9f7;
-  --bd-bg2: #f4f2ee;
-  --bd-bg3: #edeae4;
-  --bd-surface: #ffffff;
-  --bd-border: #e4e0d8;
-  --bd-border-soft: #ede9e1;
-  --bd-text: #1a1814;
-  --bd-text2: #57534a;
-  --bd-text3: #9c9589;
-  --bd-text4: #c4bfb5;
+  /* Batch 1: Unified Theme Bridge */
+  /* These variables are backed by triplets that can be overridden by the theme system */
+  
+  /* Base Triplets (Defaults to shadcn) */
+  --bd-app-bg: var(--background);
+  --bd-surface: var(--card);
+  --bd-surface-muted: var(--muted);
+  --bd-border: var(--border);
+  --bd-border-strong: var(--border);
+  --bd-text: var(--foreground);
+  --bd-text-muted: var(--muted-foreground);
+  --bd-text-soft: var(--muted-foreground);
+  --bd-input-bg: var(--background);
+  --bd-input-border: var(--input);
+  --bd-input-focus: var(--ring);
+  --bd-input-error: var(--destructive);
+  --bd-card-bg: var(--card);
+  --bd-card-border: var(--border);
+  --bd-button-primary-bg: var(--primary);
+  --bd-button-primary-text: var(--primary-foreground);
+  --bd-button-primary-hover-bg: var(--primary); /* Fallback to primary, can be overridden */
+  --bd-feedback-success-bg: 142 71% 45%; /* Semantic emerald/green */
+  --bd-feedback-error-bg: 0 84% 60%; /* Semantic rose/red */
+  --bd-feedback-success: var(--bd-feedback-success-bg);
+  --bd-feedback-error: var(--bd-feedback-error-bg);
+  --bd-feedback-warning: 38 92% 50%;
+  --bd-feedback-info: 217 91% 60%;
+  --bd-feedback-save: var(--primary);
+  --bd-layout-nav: var(--bd-surface);
+  --bd-layout-sidebar: var(--bd-surface);
+  --bd-focus-ring: var(--ring);
 
+  /* Layout Non-Color Defaults */
+  --bd-layout-density: standard;
+  --bd-layout-padding: 1rem;
+  --bd-layout-content-max: 1200px;
+
+  /* Backward Compatibility Mappings (Final Colors) */
+  --bd-bg: hsl(var(--bd-app-bg));
+  --bd-bg2: hsl(var(--muted));
+  --bd-bg3: color-mix(in oklab, hsl(var(--muted)) 80%, hsl(var(--background)));
+  --bd-surface-color: hsl(var(--bd-surface)); /* Internal use to avoid name collision if needed */
+  
+  /* Legacy names mapping to new tokens */
+  --bd-border-color: hsl(var(--bd-border));
+  --bd-border-soft: color-mix(in oklab, hsl(var(--bd-border)) 60%, transparent);
+  --bd-text-color: hsl(var(--bd-text));
+  --bd-text2: hsl(var(--bd-text-muted));
+  --bd-text3: color-mix(in oklab, hsl(var(--bd-text-muted)) 80%, transparent);
+  --bd-text4: color-mix(in oklab, hsl(var(--bd-text-muted)) 60%, transparent);
+
+  /* Radius (Mappings from shadcn) */
+  --bd-radius: var(--radius);
+  --bd-radius-sm: calc(var(--radius) - 4px);
+  --bd-radius-md: calc(var(--radius) - 2px);
+  --bd-radius-lg: var(--radius);
+  --bd-radius-xl: calc(var(--radius) + 4px);
+
+  /* Hardcoded Tones (Can be tokenized in later batches) */
   --bd-amber: #d97706;
   --bd-amber-bg: #fef3c7;
   --bd-amber-border: #fcd34d;
@@ -31,10 +79,22 @@
   --bd-violet: #7c3aed;
   --bd-violet-bg: #f5f3ff;
   --bd-violet-border: #ddd6fe;
+}
 
-  --bd-radius: 10px;
-  --bd-radius-lg: 14px;
-  --bd-radius-xl: 18px;
+/* Layout Token Overrides */
+.bd-sidebar-hidden aside { display: none !important; }
+.bd-nav-hidden nav { display: none !important; }
+
+/* Apply Density-based Padding to Main Layout */
+.max-w-5xl {
+  max-width: var(--bd-layout-content-max) !important;
+}
+
+/* Target Layout Content Padding */
+.mx-auto.w-full.max-w-5xl.px-6.py-6,
+.w-full.px-4.pt-3 {
+  padding-left: var(--bd-layout-padding) !important;
+  padding-right: var(--bd-layout-padding) !important;
 }
 
 .bd-form-shell {
