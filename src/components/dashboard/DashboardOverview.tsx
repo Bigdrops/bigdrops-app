@@ -14,6 +14,7 @@ import type { ComponentType } from 'react'
 
 import { MobileChromeContext } from '@/components/Layout'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
+import NotificationBell from '@/components/notifications/NotificationBell'
 import type { PriorityItem, RecentDoc } from '@/hooks/useDashboardData'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
@@ -222,9 +223,10 @@ export function DashboardOverview({
             </div>
           </div>
 
-          <div className="shrink-0">
+          <div className="flex shrink-0 items-center gap-1.5">
+            <NotificationBell className="h-9 w-9" />
             <div className="sr-only">Search</div>
-            <div className="[&>button]:grid [&>button]:h-9 [&>button]:w-9 [&>button]:place-items-center [&>button]:rounded-[11px] [&>button]:bg-muted [&>button]:text-foreground [&_svg]:h-[15px] [&_svg]:w-[15px]">
+            <div className="[&>button]:grid [&>button]:h-9 [&>button]:w-9 [&>button]:place-items-center [&>button]:rounded-[var(--notification-radius,var(--radius))] [&>button]:bg-[var(--notification-bg,hsl(var(--muted)))] [&>button]:text-foreground [&_svg]:h-[15px] [&_svg]:w-[15px]">
               <GlobalSearch />
             </div>
           </div>
