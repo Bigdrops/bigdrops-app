@@ -6,17 +6,25 @@ export type NotificationSeverity = 'info' | 'warning' | 'critical' | 'success' |
 export type AppNotification = {
   id: string
   user_id?: string | null
+  domain?: string | null
+  source?: string | null
+  generator_key?: string | null
+  fingerprint?: string | null
   title: string
   message?: string | null
-  type: string
-  severity: NotificationSeverity
+  route?: string | null
   entity_type?: string | null
   entity_id?: string | null
-  dedupe_key?: string | null
-  is_read: boolean
+  severity: NotificationSeverity
+  state: string
   read_at?: string | null
+  dismissed_at?: string | null
+  resolved_at?: string | null
+  metadata?: Record<string, unknown> | null
   created_at: string
   updated_at?: string | null
+  scope_type?: string | null
+  scope_id?: string | null
 }
 
 type UseNotificationsResult = {
@@ -30,7 +38,7 @@ type UseNotificationsResult = {
 }
 
 const NOTIFICATION_COLUMNS =
-  'id,user_id,title,message,type,severity,entity_type,entity_id,dedupe_key,is_read,read_at,created_at,updated_at'
+  'id,user_id,domain,source,generator_key,fingerprint,title,message,route,entity_type,entity_id,severity,state,read_at,dismissed_at,resolved_at,metadata,created_at,updated_at,scope_type,scope_id'
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Notification request failed'
@@ -68,41 +76,46 @@ export function useNotifications(limit = 30): UseNotificationsResult {
   }, [refresh])
 
   const markRead = React.useCallback(async (id: string) => {
+    const now = new Date().toISOString()
+
+    // Optimistic local update
     setNotifications((current) =>
       current.map((item) =>
-        item.id === id
-          ? { ...item, is_read: true, read_at: item.read_at || new Date().toISOString() }
-          : item,
+        item.id === id ? { ...item, read_at: item.read_at || now } : item,
       ),
     )
 
     const { error: updateError } = await supabase
       .from('notifications')
-      .update({ is_read: true, read_at: new Date().toISOString() })
+      .update({ read_at: now })
       .eq('id', id)
 
     if (updateError) {
       console.error('[notifications] mark read failed', updateError)
-      await refresh()
+      await refresh() // rollback on failure
       throw updateError
     }
   }, [refresh])
 
   const markAllRead = React.useCallback(async () => {
-    const unreadIds = notifications.filter((item) => !item.is_read).map((item) => item.id)
+    const unreadIds = notifications
+      .filter((item) => !item.read_at && !item.dismissed_at && item.state !== 'resolved')
+      .map((item) => item.id)
+
     if (unreadIds.length === 0) return
 
-    const readAt = new Date().toISOString()
+    const now = new Date().toISOString()
 
+    // Optimistic local update
     setNotifications((current) =>
       current.map((item) =>
-        unreadIds.includes(item.id) ? { ...item, is_read: true, read_at: item.read_at || readAt } : item,
+        unreadIds.includes(item.id) ? { ...item, read_at: item.read_at || now } : item,
       ),
     )
 
     const { error: updateError } = await supabase
       .from('notifications')
-      .update({ is_read: true, read_at: readAt })
+      .update({ read_at: now })
       .in('id', unreadIds)
 
     if (updateError) {
@@ -113,7 +126,10 @@ export function useNotifications(limit = 30): UseNotificationsResult {
   }, [notifications, refresh])
 
   const unreadCount = React.useMemo(
-    () => notifications.filter((item) => !item.is_read).length,
+    () =>
+      notifications.filter(
+        (item) => !item.read_at && !item.dismissed_at && item.state !== 'resolved',
+      ).length,
     [notifications],
   )
 
