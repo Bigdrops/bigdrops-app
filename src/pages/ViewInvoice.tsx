@@ -10,6 +10,7 @@ import InvoiceMoreSheet from '@/components/document-view/invoice/InvoiceMoreShee
 import InvoiceRecordPaymentSheet from '@/components/document-view/invoice/InvoiceRecordPaymentSheet'
 import InvoiceAdvanceSheet from '@/components/invoice/view/InvoiceAdvanceSheet'
 import InvoiceViewPage from '@/components/document-view/invoice/InvoiceViewPage'
+import AuditTrailPanel from '@/components/audit/AuditTrailPanel'
 import PdfOutputCustomizeSheet from '@/components/document-view/shared/PdfOutputCustomizeSheet'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
 import { useToastStack } from '@/components/document-view/hooks/useToastStack'
@@ -1003,6 +1004,13 @@ export default function ViewInvoice() {
             }
           })}
           relatedDocuments={relatedDocuments}
+          activityHistory={
+            <AuditTrailPanel
+              entityType="invoice"
+              entityId={invoice?.id ? String(invoice.id) : null}
+              defaultOpen={false}
+            />
+          }
           attachments={attachments}
           onRecordPayment={() => ui.openSheet(SHEET_RECORD_PAYMENT)}
           onEdit={() => navigate(`/invoices/edit/${id}`)}

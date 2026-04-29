@@ -32,6 +32,7 @@ function SupportingSection({ title, action, children }: SupportingSectionProps) 
 interface InvoiceViewPageProps {
   documentPreview: ReactNode
   previewControls?: ReactNode
+  activityHistory?: ReactNode
   paymentSummary: Array<{ label: string; value: string; tone?: 'green' | 'amber' }>
   paymentProgressLabel: string
   paymentProgressWidth: string
@@ -70,6 +71,7 @@ interface InvoiceViewPageProps {
 export default function InvoiceViewPage({
   documentPreview,
   previewControls,
+  activityHistory,
   paymentSummary,
   paymentProgressLabel,
   paymentProgressWidth,
@@ -161,6 +163,8 @@ export default function InvoiceViewPage({
         <InvoiceAdvanceInvoicesSection items={gAdvanceInvoices} />
 
         <DocumentRelatedDocsSection items={relatedDocuments} />
+
+        {activityHistory}
 
         {gAttachments.length > 0 && (
           <SupportingSection title="Attachments">
