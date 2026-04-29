@@ -1,12 +1,14 @@
 import { buildFlaggedCleanupExportPayload } from '../domain/itemCleanupExchange'
 import { detectDuplicateGroups } from '../domain/duplicateDetection'
+import { findExactItemSuggestionMatch } from '../domain/invoiceSuggestionSelection'
 import { normalizeSuggestionQuery, rankItemSuggestions } from '../domain/suggestionRanking'
-import { getItemAliases, getItemHistoryDetail, getItemSuggestions, getItemSummaryList, mergeItems } from '../repositories'
+import { getItemAliases, getItemHistoryDetail, getItemPriceContext, getItemSuggestions, getItemSummaryList, mergeItems } from '../repositories'
 import type {
   FlaggedCleanupExportPayload,
   ItemAlias,
   ItemCatalogItem,
   ItemHistoryRow,
+  ItemPriceContext,
   ItemLibraryMergeRequest,
   ItemLibraryMergeResult,
   ItemSuggestion,
@@ -20,6 +22,22 @@ export async function loadSuggestions(
   const normalizedSearch = normalizeSuggestionQuery(searchText)
   if (!normalizedSearch) return []
   return rankItemSuggestions(await getItemSuggestions(normalizedSearch, resultLimit, clientId))
+}
+
+export async function resolveExactItemMatch(
+  description: string,
+  clientId?: string | null,
+): Promise<ItemSuggestion | null> {
+  const normalizedDescription = normalizeSuggestionQuery(description)
+  if (normalizedDescription.length < 2) return null
+
+  const suggestions = await loadSuggestions(normalizedDescription, 10, clientId)
+  return findExactItemSuggestionMatch(normalizedDescription, suggestions)
+}
+
+export async function loadItemPriceContext(itemId: string, clientId?: string | null): Promise<ItemPriceContext | null> {
+  if (!String(itemId || '').trim()) return null
+  return getItemPriceContext(itemId, clientId)
 }
 
 export async function loadSummaryList(limit = 100): Promise<ItemCatalogItem[]> {

@@ -28,3 +28,13 @@ test('mobile item card clears linked item context on manual description edits an
   assert.match(source, /item\.item_id && selectedSuggestionContextText \? \(/)
   assert.match(source, />\s*\{selectedSuggestionContextText\}\s*<\/div>/)
 })
+
+test('mobile item card uses service-layer exact matching and reloads price context when client changes', () => {
+  const source = fs.readFileSync(mobileItemCardPath, 'utf8')
+
+  assert.match(source, /resolveExactItemMatch/)
+  assert.match(source, /loadItemPriceContext/)
+  assert.match(source, /\[item\.item_id,\s*invoice\?\.client_id\]/)
+  assert.match(source, /onUpdate\(index, 'item_id', exactMatch\.item_id\)/)
+  assert.doesNotMatch(source, /onUpdate\(index, 'unit_price', exactMatch/)
+})

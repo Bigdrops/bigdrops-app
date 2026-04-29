@@ -1,4 +1,8 @@
-import type { ItemSuggestion } from '../types'
+import type { ItemSuggestion } from '../types/index.ts'
+
+function normalizeExactMatchText(value: unknown): string {
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ')
+}
 
 export interface InvoiceSuggestionSelection {
   description: string
@@ -19,4 +23,29 @@ export function getInvoiceSuggestionSelection(
     item_id: suggestion?.item_id ? String(suggestion.item_id) : null,
     unit_price: Number(suggestion?.standard_price ?? 0),
   }
+}
+
+export function findExactItemSuggestionMatch(
+  description: string | null | undefined,
+  suggestions: ItemSuggestion[] | null | undefined,
+): ItemSuggestion | null {
+  const normalizedDescription = normalizeExactMatchText(description)
+  if (normalizedDescription.length < 2) return null
+
+  const exactMatches = (Array.isArray(suggestions) ? suggestions : []).filter((suggestion) => {
+    const normalizedName = normalizeExactMatchText(suggestion?.name)
+    const normalizedMatchedText = normalizeExactMatchText(suggestion?.matched_text)
+    return normalizedDescription === normalizedName || normalizedDescription === normalizedMatchedText
+  })
+
+  if (exactMatches.length === 0) return null
+
+  const exactMatchByItemId = new Map(
+    exactMatches
+      .filter((suggestion) => suggestion?.item_id)
+      .map((suggestion) => [String(suggestion.item_id), suggestion]),
+  )
+
+  if (exactMatchByItemId.size !== 1) return null
+  return [...exactMatchByItemId.values()][0] || null
 }

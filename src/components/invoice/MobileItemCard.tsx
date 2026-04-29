@@ -17,6 +17,7 @@ import UnitInput from '@/components/UnitInput'
 import { useItemSuggestions } from '@/modules/item-library/hooks'
 import { getInvoiceSuggestionSelection } from '@/modules/item-library/domain/invoiceSuggestionSelection'
 import { getInvoiceSuggestionPriceContextText } from '@/modules/item-library/domain/invoiceSuggestionPriceContext'
+import { loadItemPriceContext, resolveExactItemMatch } from '@/modules/item-library/services'
 import { fieldCls, labelCls } from '@/components/invoice/mobile/mobileFormPrimitives'
 import type { InvoiceItem } from '@/domain/invoice/types'
 import type { ItemSuggestion } from '@/modules/item-library/types'
@@ -106,6 +107,48 @@ export default function MobileItemCard({
     }
   }, [item.item_id])
 
+  useEffect(() => {
+    if (!enableItemSuggestions) return undefined
+    if (item.row_type && item.row_type !== 'standard') return undefined
+    if (item.item_id) return undefined
+
+    const trimmedDescription = String(debouncedDescription || '').trim()
+    if (trimmedDescription.length < 2) return undefined
+    if (trimmedDescription !== String(item.description || '').trim()) return undefined
+
+    let cancelled = false
+
+    const run = async () => {
+      const exactMatch = await resolveExactItemMatch(trimmedDescription, invoice?.client_id)
+      if (cancelled || !exactMatch?.item_id) return
+      if (item.item_id) return
+      if (trimmedDescription !== String(item.description || '').trim()) return
+      onUpdate(index, 'item_id', exactMatch.item_id)
+    }
+
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [debouncedDescription, enableItemSuggestions, index, invoice?.client_id, item.description, item.item_id, item.row_type, onUpdate])
+
+  useEffect(() => {
+    if (!item.item_id) return undefined
+
+    let cancelled = false
+
+    const run = async () => {
+      const priceContext = await loadItemPriceContext(item.item_id || '', invoice?.client_id)
+      if (cancelled) return
+      setSelectedSuggestionContextText(getInvoiceSuggestionPriceContextText(priceContext))
+    }
+
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [item.item_id, invoice?.client_id])
+
   const autoInstall = (() => {
     const col = getColumn('install_rate')
     return col?.formula
@@ -153,9 +196,7 @@ export default function MobileItemCard({
     onUpdate(index, 'description', selection.description)
     onUpdate(index, 'item_id', selection.item_id)
     onUpdate(index, 'unit_price', selection.unit_price)
-    setSelectedSuggestionContextText(
-      selection.item_id ? getInvoiceSuggestionPriceContextText(suggestion) : null,
-    )
+    setSelectedSuggestionContextText(selection.item_id ? getInvoiceSuggestionPriceContextText(suggestion) : null)
     setDescriptionFocused(false)
   }
 

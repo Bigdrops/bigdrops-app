@@ -3,6 +3,7 @@ import type {
   ItemAlias,
   ItemCatalogItem,
   ItemHistoryRow,
+  ItemPriceContext,
   ItemLibraryMergeRequest,
   ItemLibraryMergeResult,
   ItemSuggestion,
@@ -49,9 +50,93 @@ function normalizeSuggestionRow(row: Record<string, unknown>): ItemSuggestion {
     last_used_at: row.last_used_at ? String(row.last_used_at) : null,
     last_source_type: row.last_source_type ? String(row.last_source_type) : null,
     last_price_for_client: toNumber(row.last_price_for_client),
+    last_price_for_client_used_at: row.last_price_for_client_used_at ? String(row.last_price_for_client_used_at) : null,
+    last_price_for_client_document_number: row.last_price_for_client_document_number
+      ? String(row.last_price_for_client_document_number)
+      : null,
     last_price_global: toNumber(row.last_price_global ?? row.last_sold_price),
+    last_price_global_used_at: row.last_price_global_used_at ? String(row.last_price_global_used_at) : null,
+    last_price_global_document_number: row.last_price_global_document_number
+      ? String(row.last_price_global_document_number)
+      : null,
     last_source_document_number: row.last_source_document_number ? String(row.last_source_document_number) : null,
     is_active: typeof row.is_active === 'boolean' ? row.is_active : true,
+  }
+}
+
+type SuggestionHistoryRow = {
+  item_id: string
+  unit_price: number | null
+  used_at: string | null
+  doc_number: string | null
+  client_id: string | null
+}
+
+async function loadSuggestionHistoryRows(itemIds: string[]): Promise<SuggestionHistoryRow[]> {
+  const stableItemIds = [...new Set(itemIds.filter(Boolean))]
+  if (stableItemIds.length === 0) return []
+
+  const [invoiceHistory, quotationHistory] = await Promise.all([
+    supabase
+      .from('invoice_items')
+      .select('item_id, unit_price, updated_at, invoices(invoice_number, client_id, issue_date)')
+      .in('item_id', stableItemIds)
+      .order('updated_at', { ascending: false }),
+    supabase
+      .from('quotation_items')
+      .select('item_id, unit_price, updated_at, quotations(quotation_number, client_id, issue_date)')
+      .in('item_id', stableItemIds)
+      .order('updated_at', { ascending: false }),
+  ])
+
+  const historyRows: SuggestionHistoryRow[] = []
+
+  if (invoiceHistory.data) {
+    invoiceHistory.data.forEach((row: any) => {
+      historyRows.push({
+        item_id: String(row.item_id || ''),
+        unit_price: toNumber(row.unit_price),
+        used_at: row.invoices?.issue_date || row.updated_at || null,
+        doc_number: row.invoices?.invoice_number ? String(row.invoices.invoice_number) : null,
+        client_id: row.invoices?.client_id ? String(row.invoices.client_id) : null,
+      })
+    })
+  }
+
+  if (quotationHistory.data) {
+    quotationHistory.data.forEach((row: any) => {
+      historyRows.push({
+        item_id: String(row.item_id || ''),
+        unit_price: toNumber(row.unit_price),
+        used_at: row.quotations?.issue_date || row.updated_at || null,
+        doc_number: row.quotations?.quotation_number ? String(row.quotations.quotation_number) : null,
+        client_id: row.quotations?.client_id ? String(row.quotations.client_id) : null,
+      })
+    })
+  }
+
+  historyRows.sort((left, right) => (new Date(right.used_at || 0).getTime() || 0) - (new Date(left.used_at || 0).getTime() || 0))
+  return historyRows
+}
+
+function buildItemPriceContext(
+  itemId: string,
+  historyRows: SuggestionHistoryRow[],
+  clientId?: string | null,
+  fallback?: Partial<ItemSuggestion>,
+): ItemPriceContext {
+  const itemHistory = historyRows.filter((row) => row.item_id === itemId)
+  const latestGlobal = itemHistory[0] || null
+  const latestClient = clientId ? itemHistory.find((row) => row.client_id === clientId) || null : null
+
+  return {
+    item_id: itemId,
+    last_price_for_client: latestClient?.unit_price ?? null,
+    last_price_for_client_used_at: latestClient?.used_at ?? null,
+    last_price_for_client_document_number: latestClient?.doc_number ?? null,
+    last_price_global: latestGlobal?.unit_price ?? fallback?.last_sold_price ?? null,
+    last_price_global_used_at: latestGlobal?.used_at ?? fallback?.last_used_at ?? null,
+    last_price_global_document_number: latestGlobal?.doc_number ?? fallback?.last_source_document_number ?? null,
   }
 }
 
@@ -166,62 +251,27 @@ export async function getItemSuggestions(
 
   if (suggestions.length === 0) return []
 
-  // 2. Enrich with document numbers and client prices
   const itemIds = suggestions.map((s) => s.item_id).filter(Boolean)
-  
-  const [invoiceHistory, quotationHistory] = await Promise.all([
-    supabase
-      .from('invoice_items')
-      .select('item_id, unit_price, updated_at, invoices(invoice_number, client_id)')
-      .in('item_id', itemIds)
-      .order('updated_at', { ascending: false }),
-    supabase
-      .from('quotation_items')
-      .select('item_id, unit_price, updated_at, quotations(quotation_number, client_id)')
-      .in('item_id', itemIds)
-      .order('updated_at', { ascending: false }),
-  ])
-
-  const historyRows: any[] = []
-  if (invoiceHistory.data) {
-    invoiceHistory.data.forEach((row: any) => {
-      historyRows.push({
-        item_id: row.item_id,
-        unit_price: row.unit_price,
-        updated_at: row.updated_at,
-        doc_number: row.invoices?.invoice_number,
-        client_id: row.invoices?.client_id,
-      })
-    })
-  }
-  if (quotationHistory.data) {
-    quotationHistory.data.forEach((row: any) => {
-      historyRows.push({
-        item_id: row.item_id,
-        unit_price: row.unit_price,
-        updated_at: row.updated_at,
-        doc_number: row.quotations?.quotation_number,
-        client_id: row.quotations?.client_id,
-      })
-    })
-  }
-
-  // Sort history rows by date desc
-  historyRows.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+  const historyRows = await loadSuggestionHistoryRows(itemIds)
 
   return suggestions.map((s) => {
-    const itemHistory = historyRows.filter((h) => h.item_id === s.item_id)
-    const latestGlobal = itemHistory[0]
-    const latestClient = clientId ? itemHistory.find((h) => h.client_id === clientId) : null
-
+    const priceContext = buildItemPriceContext(s.item_id, historyRows, clientId, s)
     return {
       ...s,
-      last_price_global: latestGlobal ? latestGlobal.unit_price : s.last_sold_price,
-      last_used_at: latestGlobal ? latestGlobal.updated_at : s.last_used_at,
-      last_source_document_number: latestGlobal ? latestGlobal.doc_number : null,
-      last_price_for_client: latestClient ? latestClient.unit_price : null,
+      ...priceContext,
+      last_used_at: priceContext.last_price_global_used_at ?? s.last_used_at,
+      last_source_document_number:
+        priceContext.last_price_global_document_number ?? s.last_source_document_number ?? null,
     }
   })
+}
+
+export async function getItemPriceContext(itemId: string, clientId?: string | null): Promise<ItemPriceContext | null> {
+  const stableItemId = String(itemId || '').trim()
+  if (!stableItemId) return null
+
+  const historyRows = await loadSuggestionHistoryRows([stableItemId])
+  return buildItemPriceContext(stableItemId, historyRows, clientId)
 }
 
 export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]> {

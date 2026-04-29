@@ -44,8 +44,22 @@ export interface ItemSuggestion {
   last_source_type?: ItemSourceType | string | null
   is_active?: boolean
   last_price_for_client?: number | null
+  last_price_for_client_used_at?: string | null
+  last_price_for_client_document_number?: string | null
   last_price_global?: number | null
+  last_price_global_used_at?: string | null
+  last_price_global_document_number?: string | null
   last_source_document_number?: string | null
+}
+
+export interface ItemPriceContext {
+  item_id: string
+  last_price_for_client?: number | null
+  last_price_for_client_used_at?: string | null
+  last_price_for_client_document_number?: string | null
+  last_price_global?: number | null
+  last_price_global_used_at?: string | null
+  last_price_global_document_number?: string | null
 }
 
 export interface ItemHistoryRow {
