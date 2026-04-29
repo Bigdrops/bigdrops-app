@@ -1,6 +1,7 @@
 import { BadgeCheck, AlertCircle, ChevronDown, ChevronRight, ClipboardCheck, Clock, FileSignature, FileText, FolderOpen, Truck } from 'lucide-react'
 import type { ComponentType } from 'react'
 
+import NotificationBell from '@/components/notifications/NotificationBell'
 import type { RecentDoc, RecentProject, SummaryStats } from '@/hooks/useDashboardData'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
@@ -81,6 +82,10 @@ export function DashboardDesktopView({
               <div className="truncate text-base font-black text-foreground">
                 {headline}
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <NotificationBell className="h-9 w-9" />
+              {/* existing search / actions */}
             </div>
           </div>
         </Card>
