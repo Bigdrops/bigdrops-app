@@ -11,6 +11,7 @@ import OfflineAccessBlocked from '@/components/app/OfflineAccessBlocked'
 import SplashOverlay from '@/components/app/SplashOverlay'
 import { useSyncBootstrap } from '@/app/useSyncBootstrap'
 import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { isInvalidSessionError } from '@/auth/sessionErrors'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import AndroidBackHandler from '@/components/app/AndroidBackHandler'
@@ -571,6 +572,8 @@ function App() {
     }
     inspectDB()
   }, [])
+
+  usePushNotifications(profile?.id)
 
   return (
     <>
