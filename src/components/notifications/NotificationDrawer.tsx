@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button'
 import NotificationItem from '@/components/notifications/NotificationItem'
 import { getNotificationRoute } from '@/domain/notifications/notificationRoutes'
-import type { AppNotification } from '@/hooks/useNotifications'
+import { isNotificationUnread, type AppNotification } from '@/hooks/useNotifications'
 
 type NotificationDrawerProps = {
   open: boolean
@@ -37,7 +37,7 @@ export default function NotificationDrawer({
   const navigate = useNavigate()
 
   const handleSelect = async (notification: AppNotification) => {
-    if (!notification.is_read) {
+    if (isNotificationUnread(notification)) {
       await onMarkRead(notification.id)
     }
 

@@ -1,5 +1,5 @@
 import { AlertTriangle, Bell, CheckCircle2, Info, ReceiptText } from 'lucide-react'
-import type { AppNotification } from '@/hooks/useNotifications'
+import { isNotificationUnread, type AppNotification } from '@/hooks/useNotifications'
 import { cn } from '@/lib/utils'
 
 type NotificationItemProps = {
@@ -9,12 +9,12 @@ type NotificationItemProps = {
 
 function getIcon(notification: AppNotification) {
   const severity = String(notification.severity || '').toLowerCase()
-  const type = String(notification.type || '').toLowerCase()
+  const domain = String(notification.domain || '').toLowerCase()
 
   if (severity === 'critical') return AlertTriangle
   if (severity === 'warning') return AlertTriangle
   if (severity === 'success') return CheckCircle2
-  if (type.includes('invoice') || type.includes('payment')) return ReceiptText
+  if (domain.includes('invoice') || domain.includes('payment')) return ReceiptText
   if (severity === 'info') return Info
 
   return Bell
@@ -34,6 +34,7 @@ function formatTime(value: string) {
 
 export default function NotificationItem({ notification, onSelect }: NotificationItemProps) {
   const Icon = getIcon(notification)
+  const unread = isNotificationUnread(notification)
 
   return (
     <button
@@ -47,12 +48,12 @@ export default function NotificationItem({ notification, onSelect }: Notificatio
         'rounded-[var(--notification-radius,var(--radius))]',
         'shadow-[var(--notification-shadow,none)]',
         'hover:bg-[var(--notification-itemHover,hsl(var(--muted)/0.55))]',
-        notification.is_read ? 'opacity-75' : 'opacity-100',
+        unread ? 'opacity-100' : 'opacity-75',
       )}
     >
       <span className="relative mt-3 ml-3 grid size-9 shrink-0 place-items-center rounded-[var(--notification-radius,var(--radius))] bg-[var(--notification-info,hsl(var(--muted)))]">
         <Icon className="size-4" />
-        {!notification.is_read && (
+        {unread && (
           <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-[var(--notification-unreadIndicator,hsl(var(--primary)))]" />
         )}
       </span>

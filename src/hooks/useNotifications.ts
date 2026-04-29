@@ -44,6 +44,10 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Notification request failed'
 }
 
+export function isNotificationUnread(notification: Pick<AppNotification, 'read_at' | 'dismissed_at' | 'state'>) {
+  return !notification.read_at && !notification.dismissed_at && notification.state !== 'resolved'
+}
+
 export function useNotifications(limit = 30): UseNotificationsResult {
   const [notifications, setNotifications] = React.useState<AppNotification[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -99,7 +103,7 @@ export function useNotifications(limit = 30): UseNotificationsResult {
 
   const markAllRead = React.useCallback(async () => {
     const unreadIds = notifications
-      .filter((item) => !item.read_at && !item.dismissed_at && item.state !== 'resolved')
+      .filter((item) => isNotificationUnread(item))
       .map((item) => item.id)
 
     if (unreadIds.length === 0) return
@@ -126,10 +130,7 @@ export function useNotifications(limit = 30): UseNotificationsResult {
   }, [notifications, refresh])
 
   const unreadCount = React.useMemo(
-    () =>
-      notifications.filter(
-        (item) => !item.read_at && !item.dismissed_at && item.state !== 'resolved',
-      ).length,
+    () => notifications.filter((item) => isNotificationUnread(item)).length,
     [notifications],
   )
 
