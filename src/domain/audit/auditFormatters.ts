@@ -117,17 +117,15 @@ export function getAuditActionLabel(entityType: AuditEntityType | string, action
 }
 
 export function buildAuditTrailChanges(row: AuditLogRecord): AuditTrailChange[] {
-  const oldData = row.old_data || {}
-  const newData = row.new_data || {}
-  const fieldNames = Array.from(new Set([...Object.keys(oldData), ...Object.keys(newData)]))
+  const changes = row.changes || []
 
-  return fieldNames
-    .filter((field) => isMeaningfulAuditChange(oldData[field], newData[field]))
-    .map((field) => ({
-      field,
-      label: getAuditFieldLabel(field),
-      oldValue: formatAuditValue(field, oldData[field]),
-      newValue: formatAuditValue(field, newData[field]),
+  return changes
+    .filter((c) => isMeaningfulAuditChange(c.old, c.new))
+    .map((c) => ({
+      field: c.field,
+      label: getAuditFieldLabel(c.field),
+      oldValue: formatAuditValue(c.field, c.old),
+      newValue: formatAuditValue(c.field, c.new),
     }))
 }
 

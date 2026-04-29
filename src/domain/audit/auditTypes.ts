@@ -18,10 +18,11 @@ export interface AuditLogRecord {
   action: AuditAction
   actor_id?: string | null
   actor_label?: string | null
-  old_data?: Record<string, unknown> | null
-  new_data?: Record<string, unknown> | null
-  reason?: string | null
+  source?: string | null
+  scope_type?: string | null
   created_at?: string | null
+  changes?: Array<{ field: string; old: unknown; new: unknown }> | null
+  reason?: string | null
 }
 
 export interface AuditTrailChange {

@@ -17,7 +17,7 @@ interface UseAuditTrailResult {
 }
 
 const AUDIT_LOG_SELECT =
-  'id, entity_type, entity_id, entity_label, action, actor_id, actor_label, old_data, new_data, reason, created_at'
+  'id, entity_type, entity_id, entity_label, action, actor_id, actor_label, source, scope_type, created_at, changes, reason'
 
 export function useAuditTrail({
   entityType,
