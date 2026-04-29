@@ -5,6 +5,8 @@ import type { IndustryTemplateData } from '../industryAdapter';
 import { PdfCurrencyText } from '../pdfCurrency';
 import { safeString } from './safeValue';
 
+const OBSIDIAN_HEADER_ACCENT = '#2f7f7c';
+
 export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }) {
   const safeData = data ?? ({} as IndustryTemplateData);
   const {
@@ -36,7 +38,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
   } = safeData;
 
   const safeDesign = (design || {}) as NonNullable<IndustryTemplateData['design']>;
-  const accent = safeDesign.accentColor || '#2f7f7c';
+  const accent = safeDesign.accentColor || OBSIDIAN_HEADER_ACCENT;
   const text = safeDesign.textColor || '#1a1a1a';
   const muted = safeDesign.mutedColor || '#8c8279';
   const border = safeDesign.borderColor || '#cbc5bd';
@@ -93,7 +95,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
   }
 
   const headerRightChildren = [
-    <Text key="title" style={compactStyles(styles.invoiceTitle, { color: accent })}>
+    <Text key="title" style={compactStyles(styles.invoiceTitle, { color: OBSIDIAN_HEADER_ACCENT })}>
       {safeString(title)}
     </Text>,
   ];
@@ -312,7 +314,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
         <Text style={styles.footerRight}>{safeString(footer?.companyName)}</Text>
       </View>
 
-      <View style={[styles.header, { borderBottomColor: accent }]}>
+      <View style={[styles.header, { borderBottomColor: OBSIDIAN_HEADER_ACCENT }]}>
         <View style={styles.headerLeft}>{headerLeftChildren}</View>
         <View style={styles.headerRight}>{headerRightChildren}</View>
       </View>

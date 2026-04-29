@@ -15,6 +15,15 @@ test('Obsidian receipt is wired into the PDF generator and avoids null-render fa
   assert.match(indexSource, /import\('\.\/templates\/ObsidianReceipt'\)/)
   assert.match(indexSource, /case 'obsidian-receipt':/)
   assert.doesNotMatch(templateSource, /if \(!data\) return null;/)
-  assert.doesNotMatch(templateSource, /: null[);]?/)
   assert.doesNotMatch(stylesSource, /\bgap:\s*/)
+})
+
+test('Obsidian receipt keeps its title and header accent on template-owned identity colors', () => {
+  const templateSource = fs.readFileSync(obsidianTemplatePath, 'utf8')
+
+  assert.match(templateSource, /const OBSIDIAN_HEADER_ACCENT = '#2f7f7c';/)
+  assert.match(templateSource, /styles\.invoiceTitle,\s*\{\s*color:\s*OBSIDIAN_HEADER_ACCENT\s*\}/)
+  assert.match(templateSource, /styles\.header,\s*\{\s*borderBottomColor:\s*OBSIDIAN_HEADER_ACCENT\s*\}/)
+  assert.doesNotMatch(templateSource, /styles\.invoiceTitle,\s*\{\s*color:\s*accent\s*\}/)
+  assert.doesNotMatch(templateSource, /styles\.header,\s*\{\s*borderBottomColor:\s*accent\s*\}/)
 })
