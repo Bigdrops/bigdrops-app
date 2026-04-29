@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronLeft, LockKeyhole, X } from 'lucide-react'
 import { supabase } from '@/supabase'
+import { NotificationSettingsPanel } from '@/components/notifications/settings/NotificationSettingsPanel'
 import { SettingsField, SettingsSummaryField } from './SettingsFormPrimitives'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import type { SettingsSession, SettingsToastFn } from './settings-types'
@@ -166,6 +167,8 @@ export function UserSettingsSection({
           </button>
         </div>
       </div>
+
+      <NotificationSettingsPanel userId={session?.user?.id} onToast={onToast} />
 
       {canUseAndroidNativeSqlite() ? (
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
