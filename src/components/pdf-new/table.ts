@@ -1,4 +1,12 @@
-import { getPdfCellValue, resolveInstallRate } from '../../domain/invoice/columns'
+import {
+  getPdfCellValue,
+  normalizeColumnConfig,
+  normalizeVisibilityMode,
+  resolveColumnBehavior,
+  resolveInstallRate,
+  shouldIncludeColumnInTotals,
+} from '../../domain/invoice/columns'
+import { normalizeQuantity } from '../../domain/invoice/normalize'
 import type { ColumnConfig, InvoiceItem } from '../../domain/invoice/types'
 import { formatMergedQtyUnit } from '../../domain/documentMedia.js'
 import type {
@@ -13,11 +21,13 @@ type SavedColumnConfig = {
   label?: string
   type?: string
   visible?: boolean
+  visibilityMode?: 'show' | 'hide_display' | 'hide_full'
   formula?: string
 }
 
 type InterpretPdfTableSettingsOptions = {
   mergeQtyUnit?: boolean
+  items?: InvoiceItem[]
 }
 
 type BuildPdfRowCellsOptions = {
@@ -27,11 +37,15 @@ type BuildPdfRowCellsOptions = {
 }
 
 const CONFIGURABLE_DEFAULT_COLUMNS: SavedColumnConfig[] = [
-  { key: 'make', label: 'Make', visible: true },
-  { key: 'unit', label: 'Unit', visible: true },
-  { key: 'install_rate', label: 'Install Rate', type: 'install_rate', visible: false, formula: '' },
-  { key: 'vat_rate', label: 'VAT Rate', type: 'vat_rate', visible: false },
-  { key: 'discount_rate', label: 'Discount Rate', type: 'discount_rate', visible: false },
+  { key: 'description', label: 'Description', visible: true, visibilityMode: 'show' },
+  { key: 'quantity', label: 'Quantity', visible: true, visibilityMode: 'show' },
+  { key: 'unit_price', label: 'Unit Price', visible: true, visibilityMode: 'show' },
+  { key: 'amount', label: 'Amount', visible: true, visibilityMode: 'show' },
+  { key: 'make', label: 'Make', visible: true, visibilityMode: 'show' },
+  { key: 'unit', label: 'Unit', visible: true, visibilityMode: 'show' },
+  { key: 'install_rate', label: 'Install Rate', type: 'install_rate', visible: false, visibilityMode: 'hide_display', formula: '' },
+  { key: 'vat_rate', label: 'VAT Rate', type: 'vat_rate', visible: false, visibilityMode: 'hide_display' },
+  { key: 'discount_rate', label: 'Discount Rate', type: 'discount_rate', visible: false, visibilityMode: 'hide_display' },
 ]
 
 const FIXED_PDF_COLUMNS: PdfColumnDefinition[] = [
@@ -43,7 +57,11 @@ const FIXED_PDF_COLUMNS: PdfColumnDefinition[] = [
 ]
 
 function normalizeSavedColumns(columns: SavedColumnConfig[] = []) {
-  if (Array.isArray(columns) && columns.length > 0) return columns
+  if (Array.isArray(columns) && columns.length > 0) return columns.map((column) => ({
+    ...column,
+    visible: normalizeVisibilityMode(column) === 'show',
+    visibilityMode: normalizeVisibilityMode(column),
+  }))
   return CONFIGURABLE_DEFAULT_COLUMNS
 }
 
@@ -60,13 +78,14 @@ function normalizeColumnAlign(key: string, type?: string) {
 }
 
 function toColumnConfig(column: SavedColumnConfig): ColumnConfig {
-  return {
+  return normalizeColumnConfig({
     key: String(column.key || '').trim(),
     label: String(column.label || column.key || '').trim(),
     type: column.type as ColumnConfig['type'],
     visible: column.visible !== false,
+    visibilityMode: normalizeVisibilityMode(column),
     formula: typeof column.formula === 'string' ? column.formula : '',
-  }
+  })
 }
 
 function createPdfColumnDefinition(
@@ -104,19 +123,20 @@ export function interpretPdfTableSettings(
   options: InterpretPdfTableSettingsOptions = {},
 ): PdfResolvedTableSettings {
   const mergeQtyUnit = options.mergeQtyUnit === true
-  const CONFIGURABLE_KEYS = new Set(['make', 'unit', 'install_rate', 'vat_rate', 'discount_rate'])
-  
   const configuredColumns = normalizeSavedColumns(savedColumns)
-  const mandatoryKeys = ['num', 'description', 'quantity', 'unit_price', 'amount']
+  const resolvedColumns = resolveColumnBehavior(
+    configuredColumns.map(toColumnConfig),
+    options.items || [],
+    'pdf',
+  )
+  const resolvedKeys = new Set(resolvedColumns.map((column) => column.key))
   const resultColumns: PdfColumnDefinition[] = []
-  
+
   configuredColumns.forEach(col => {
     const key = col.key
-    const isMandatory = mandatoryKeys.includes(key)
-    const isConfigurable = CONFIGURABLE_KEYS.has(key)
     const isCustom = key.startsWith('custom_')
 
-    if (col.visible === false && !isMandatory) return
+    if (!resolvedKeys.has(key)) return
 
     const fixedBase = FIXED_PDF_COLUMNS.find(f => f.key === key)
     if (fixedBase) {
@@ -129,7 +149,7 @@ export function interpretPdfTableSettings(
           pdfFlex: 0,
         } : {})
       })
-    } else if (isConfigurable) {
+    } else if (!isCustom) {
       let overrides: Partial<PdfColumnDefinition> = {}
       if (key === 'make') overrides = { pdfWidth: 58, pdfFlex: 1.1 }
       if (key === 'unit' && !mergeQtyUnit) overrides = { pdfWidth: 42, pdfFlex: 0 }
@@ -137,33 +157,26 @@ export function interpretPdfTableSettings(
       if (key === 'vat_rate') overrides = { dataType: 'vat_rate', pdfWidth: 32, pdfFlex: 0.8 }
       if (key === 'discount_rate') overrides = { dataType: 'discount_rate', pdfWidth: 40, pdfFlex: 0.95 }
       
-      if (Object.keys(overrides).length > 0 || (key === 'unit' && !mergeQtyUnit)) {
-        resultColumns.push(createPdfColumnDefinition(col, overrides))
-      }
+      resultColumns.push(createPdfColumnDefinition(col, overrides))
     } else if (isCustom) {
       resultColumns.push(createPdfColumnDefinition(col))
     }
   })
 
-  mandatoryKeys.forEach((key, idx) => {
-    if (!resultColumns.some(c => c.key === key)) {
-      const fixedBase = FIXED_PDF_COLUMNS.find(f => f.key === key)
-      if (fixedBase) {
-        if (key === 'num' || key === 'description') {
-           resultColumns.splice(idx === 0 ? 0 : 1, 0, fixedBase)
-        } else {
-           resultColumns.push(fixedBase)
-        }
-      }
-    }
-  })
+  if (!resultColumns.some((column) => column.key === 'description')) {
+    const descriptionColumn = FIXED_PDF_COLUMNS.find((column) => column.key === 'description')
+    if (descriptionColumn) resultColumns.splice(1, 0, descriptionColumn)
+  }
+  if (!resultColumns.some((column) => column.key === 'num')) {
+    resultColumns.unshift(FIXED_PDF_COLUMNS[0])
+  }
 
   return {
     mergeQtyUnit,
     configuredColumns,
-    activeColumns: configuredColumns.filter(c => c.visible !== false).map(c => createPdfColumnDefinition(c)),
+    activeColumns: resolvedColumns.map((column) => createPdfColumnDefinition(column)),
     columns: resultColumns,
-    customColumns: configuredColumns.filter(c => c.key.startsWith('custom_')).map(c => createPdfColumnDefinition(c)),
+    customColumns: resolvedColumns.filter(c => c.key.startsWith('custom_')).map(c => createPdfColumnDefinition(c)),
   }
 }
 
@@ -176,12 +189,15 @@ export function buildPdfRowCells(
   const configuredColumns = normalizeSavedColumns(options.configuredColumns)
   const installColumn = columns.find((column) => column.key === 'install_rate')
   const configuredInstallColumn = configuredColumns.find((column) => column.key === 'install_rate')
-  const installValue = installColumn ? resolveInstallRate(item, configuredInstallColumn ? toColumnConfig(configuredInstallColumn) : undefined) : undefined
-  const amount = item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0)
+  const resolvedInstallColumn = configuredInstallColumn ? toColumnConfig(configuredInstallColumn) : undefined
+  const installValue = installColumn && shouldIncludeColumnInTotals(resolvedInstallColumn)
+    ? resolveInstallRate(item, resolvedInstallColumn)
+    : undefined
+  const amount = item.amount ?? normalizeQuantity(item.quantity, 1) * Number(item.unit_price || 0)
 
   return Object.fromEntries(columns.map((column) => {
     if (mergeQtyUnit && column.key === 'quantity') {
-      return [column.key, formatMergedQtyUnit(item.quantity ?? '', item.unit || '')]
+      return [column.key, formatMergedQtyUnit(normalizeQuantity(item.quantity, 1), item.unit || '')]
     }
 
     if (column.key === 'num') {
@@ -201,7 +217,7 @@ export function buildPdfRowCells(
           type: (column.dataType || undefined) as ColumnConfig['type'],
         },
         item,
-        { amount, installColumn: configuredInstallColumn ? toColumnConfig(configuredInstallColumn) : undefined, installValue },
+        { amount, installColumn: resolvedInstallColumn, installValue },
       ),
     ]
   }))

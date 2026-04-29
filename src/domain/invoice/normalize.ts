@@ -13,7 +13,7 @@ import { normalizeExtraCharges } from './factories'
 import { safeParseJson } from '@/lib/json/safeParseJson'
 
 export const DEFAULT_INVOICE_PDF_OUTPUT: InvoicePdfOutput = {
-  showBankDetails: false,
+  showBankDetails: true,
   bankAccountId: null,
   showFooter: true,
   showTagline: true,
@@ -28,6 +28,11 @@ export function toNumber(value: unknown, fallback = 0): number {
   if (value === null || value === undefined || value === '') return fallback
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : fallback
+}
+
+export function normalizeQuantity(value: unknown, fallback = 1): number {
+  const parsed = toNumber(value, fallback)
+  return parsed > 0 ? parsed : fallback
 }
 
 export function toNullableDate(value: unknown): string | null {
@@ -183,7 +188,7 @@ export function mapDbInvoiceItem(row: DbInvoiceItem): InvoiceItem {
     description: row.description || '',
     sub_description: row.sub_description || '',
     make: row.make || '',
-    quantity: toNumber(row.quantity, 1),
+    quantity: normalizeQuantity(row.quantity, 1),
     unit: row.unit || '',
     unit_price: toNumber(row.unit_price),
     amount: toNumber(row.amount),

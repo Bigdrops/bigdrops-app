@@ -1,5 +1,8 @@
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { formatMergedQtyUnit, resolveCanonicalItemImageUrl } from '@/domain/documentMedia.js'
+import { normalizeQuantity } from '@/domain/invoice/normalize'
+import { resolveColumnBehavior } from '@/domain/invoice/columns'
+import type { ColumnConfig } from '@/domain/invoice/types'
 import { getAdditionalFields } from './additionalFields'
 import { buildSummaryRows } from './calculations'
 import type { InvoiceCustomFields } from './types'
@@ -109,7 +112,7 @@ type CustomFieldObjectLike = {
   additionalFields?: Array<{ label?: string | null; value?: string | null }>
   bottom?: Array<{ text?: string | null }>
   attachments?: Array<{ url?: string | null; label?: string | null; name?: string | null }>
-  columnConfig?: Array<{ visible?: boolean | null; key?: string | null; label?: string | null }>
+  columnConfig?: Array<ColumnConfig>
   notesTitle?: string | null
   termsTitle?: string | null
 } & InvoiceCustomFields
@@ -126,7 +129,7 @@ type PdfOutputLike = {
 function resolveLineAmount(item: InvoiceItemLike) {
   const explicitAmount = Number(item.amount)
   if (Number.isFinite(explicitAmount) && explicitAmount !== 0) return explicitAmount
-  return Number(item.quantity || 0) * Number(item.unit_price || 0)
+  return normalizeQuantity(item.quantity, 1) * Number(item.unit_price || 0)
 }
 
 function resolvePreviewGroupSubtotal(items: InvoiceItemLike[], groupId: string | null | undefined) {
@@ -227,9 +230,13 @@ export function buildInvoicePreviewModel({
         .filter((entry) => entry.url)
     : []
 
-  const previewCustomColumns = Array.isArray(customFieldObject?.columnConfig)
-    ? customFieldObject.columnConfig.filter((column) => column?.visible && String(column?.key || '').startsWith('custom_'))
-    : []
+  const resolvedColumns = resolveColumnBehavior(
+    Array.isArray(customFieldObject?.columnConfig) ? customFieldObject.columnConfig : [],
+    items as never[],
+    'view',
+  )
+  const visibleColumnKeys = new Set(resolvedColumns.map((column) => column.key))
+  const previewCustomColumns = resolvedColumns.filter((column) => String(column?.key || '').startsWith('custom_'))
 
   const previewDetailRows: PreviewDetailRow[] = [
     { label: 'PO Number', value: poNumber || '' },
@@ -269,14 +276,18 @@ export function buildInvoicePreviewModel({
       label: item.description || 'Untitled item',
       detail: item.sub_description || '',
       imageUrl: resolveCanonicalItemImageUrl(item),
-      value: formatMoney(Number(item.amount || (Number(item.quantity || 0) * Number(item.unit_price || 0)) || 0)),
+      value: visibleColumnKeys.has('amount')
+        ? formatMoney(Number(item.amount || (normalizeQuantity(item.quantity, 1) * Number(item.unit_price || 0)) || 0))
+        : '',
       facts: [
-        item.quantity ? `Qty: ${formatMergedQtyUnit(item.quantity, item.unit)}` : null,
-        `Rate: ${formatMoney(Number(item.unit_price || 0))}`,
-        item.make ? `Make: ${item.make}` : null,
-        item.install_rate !== null && item.install_rate !== undefined ? `Install: ${item.install_rate}` : null,
-        item.vat_rate !== null && item.vat_rate !== undefined ? `VAT: ${item.vat_rate}%` : null,
-        item.discount_rate !== null && item.discount_rate !== undefined ? `Discount: ${item.discount_rate}%` : null,
+        visibleColumnKeys.has('quantity')
+          ? `Qty: ${formatMergedQtyUnit(normalizeQuantity(item.quantity, 1), visibleColumnKeys.has('unit') ? item.unit : '')}`
+          : null,
+        visibleColumnKeys.has('unit_price') ? `Rate: ${formatMoney(Number(item.unit_price || 0))}` : null,
+        visibleColumnKeys.has('make') && item.make ? `Make: ${item.make}` : null,
+        visibleColumnKeys.has('install_rate') && item.install_rate !== null && item.install_rate !== undefined ? `Install: ${item.install_rate}` : null,
+        visibleColumnKeys.has('vat_rate') && item.vat_rate !== null && item.vat_rate !== undefined ? `VAT: ${item.vat_rate}%` : null,
+        visibleColumnKeys.has('discount_rate') && item.discount_rate !== null && item.discount_rate !== undefined ? `Discount: ${item.discount_rate}%` : null,
         ...customFacts,
       ].filter(Boolean) as string[],
     }]

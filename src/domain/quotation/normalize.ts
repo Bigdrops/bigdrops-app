@@ -2,6 +2,9 @@ import {
   BUILTIN_COLUMNS,
   ensureUiKey,
   inferLegacyCalculationState,
+  mergeColumnConfigs,
+  normalizeColumnConfig,
+  normalizeQuantity,
   normalizeAdditionalFieldEntries,
   normalizeFieldEntries,
   parseCustomFields,
@@ -93,7 +96,7 @@ export function mapDbQuotationItem(row: DbQuotationItem): InvoiceItem {
     description: row.description || '',
     sub_description: row.sub_description || '',
     make: row.make || '',
-    quantity: toNumber(row.quantity, 1),
+    quantity: normalizeQuantity(row.quantity, 1),
     unit: row.unit || '',
     unit_price: toNumber(row.unit_price),
     amount: toNumber(row.amount),
@@ -139,12 +142,7 @@ export function buildQuotationFormState(
       })
     : [ensureUiKey({ description: '', quantity: 1, unit_price: 0, row_type: 'standard', custom_data: {} })]
 
-  const columns = Array.isArray(customFields.columnConfig)
-    ? customFields.columnConfig.map((saved) => {
-        const base = BUILTIN_COLUMNS.find((column) => column.key === saved.key)
-        return base ? { ...base, ...saved } : saved
-      })
-    : BUILTIN_COLUMNS.map((column) => ({ ...column }))
+  const columns = mergeColumnConfigs(Array.isArray(customFields.columnConfig) ? customFields.columnConfig : [])
 
   const legacyCalculationState = inferLegacyCalculationState({
     invoice: quotationRow,
@@ -169,7 +167,7 @@ export function buildQuotationFormState(
     whtType: calculationInputs.whtType,
     notesTitle: String(customFields.notesTitle || 'Notes'),
     termsTitle: String(customFields.termsTitle || 'Terms and Conditions'),
-    mergeQtyUnit: Boolean(customFields.mergeQtyUnit),
+    mergeQtyUnit: customFields.mergeQtyUnit !== false,
     showItemImages: Boolean(customFields.showItemImages),
   }
 }

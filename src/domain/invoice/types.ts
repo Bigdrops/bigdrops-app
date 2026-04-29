@@ -1,5 +1,6 @@
 export type InvoiceColumnKind = 'builtin' | 'custom'
 export type ColumnDataType = 'text' | 'number' | 'install_rate' | 'vat_rate' | 'discount_rate'
+export type ColumnVisibilityMode = 'show' | 'hide_display' | 'hide_full'
 export type DiscountType = 'fixed' | 'percent'
 export type DiscountTiming = 'before' | 'after'
 export type WhtType = 'fixed' | 'percent'
@@ -233,6 +234,7 @@ export interface ColumnConfig {
   label: string
   type?: ColumnDataType
   visible?: boolean
+  visibilityMode?: ColumnVisibilityMode
   removable?: boolean
   includeInTotal?: boolean
   formula?: string

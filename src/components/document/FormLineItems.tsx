@@ -6,6 +6,7 @@ import {
 import MobileItemCard from '@/components/invoice/MobileItemCard'
 import MobileGroupCard from '@/components/invoice/MobileGroupCard'
 import { useMemo } from 'react'
+import { normalizeQuantity } from '@/domain/invoice'
 
 interface FormLineItemsProps {
   items: any[]
@@ -77,7 +78,7 @@ export function FormLineItems({
     items.slice(0, index + 1).filter((item) => item.row_type === 'standard').length
 
   const getComputedAmount = (item: any) =>
-    computedAmountMap.get(item._uiKey || item.id) ?? Number(item.quantity || 0) * Number(item.unit_price || 0)
+    computedAmountMap.get(item._uiKey || item.id) ?? normalizeQuantity(item.quantity, 1) * Number(item.unit_price || 0)
 
   const lineItemRows = useMemo(() => {
     const rows = []

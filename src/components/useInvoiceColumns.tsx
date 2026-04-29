@@ -9,8 +9,10 @@ export {
   makeFieldEntry,
   makeExtraCharge,
   ensureUiKey,
+  mergeColumnConfigs,
   normalizeFieldEntries,
   normalizeExtraCharges,
+  normalizeQuantity,
   toDbItem,
   buildCalculationInputs,
   extractCalculationInputs,
@@ -20,6 +22,10 @@ export {
   getActiveColumns,
   getPdfColumns,
   getPdfCellValue,
+  normalizeColumnConfig,
+  normalizeVisibilityMode,
+  resolveColumnBehavior,
+  shouldIncludeColumnInTotals,
   inferLegacyCalculationInputs,
   inferLegacyCalculationState,
   resolveRowVat,
@@ -28,6 +34,7 @@ export {
 
 import {
   BUILTIN_COLUMNS,
+  normalizeColumnConfig,
 } from '../domain/invoice'
 
 export interface InvoiceColumn extends ColumnConfig {
@@ -36,24 +43,31 @@ export interface InvoiceColumn extends ColumnConfig {
 }
 
 export function useInvoiceColumns(initial?: InvoiceColumn[]) {
-  const [columns, setColumns] = useState<InvoiceColumn[]>(initial || BUILTIN_COLUMNS.map(c => ({ ...c } as InvoiceColumn)))
+  const [columns, setColumns] = useState<InvoiceColumn[]>(
+    (initial || BUILTIN_COLUMNS).map((column) => normalizeColumnConfig({ ...column }) as InvoiceColumn),
+  )
   
   const getColumn = (key: string) => columns.find(c => c.key === key)
   
   const isVisible = (key: string) => {
     const column = getColumn(key)
-    return column ? column.visible !== false : false
+    return column ? (column.visibilityMode || 'show') === 'show' : false
   }
   
   const toggleVisible = (key: string) =>
     setColumns((cols) =>
       cols.map((column) =>
-        column.key === key ? { ...column, visible: column.visible === false ? true : false } : column,
+        column.key === key
+          ? normalizeColumnConfig({
+              ...column,
+              visibilityMode: column.visibilityMode === 'show' ? 'hide_display' : 'show',
+            }) as InvoiceColumn
+          : column,
       ),
     )
     
   const updateColumn = (key: string, field: string, value: any) => 
-    setColumns(cols => cols.map(c => c.key === key ? { ...c, [field]: value } : c))
+    setColumns(cols => cols.map(c => c.key === key ? normalizeColumnConfig({ ...c, [field]: value }) as InvoiceColumn : c))
     
   const addCustomColumn = () => 
     setColumns(cols => [...cols, { 
@@ -61,6 +75,7 @@ export function useInvoiceColumns(initial?: InvoiceColumn[]) {
       label: 'New Column', 
       type: 'text', 
       visible: true, 
+      visibilityMode: 'show',
       removable: true, 
       includeInTotal: false 
     } as InvoiceColumn])
@@ -69,7 +84,7 @@ export function useInvoiceColumns(initial?: InvoiceColumn[]) {
     setColumns(cols => cols.filter(c => c.key !== key))
     
   const resetColumns = () => 
-    setColumns(BUILTIN_COLUMNS.map(c => ({ ...c } as InvoiceColumn)))
+    setColumns(BUILTIN_COLUMNS.map(c => normalizeColumnConfig({ ...c }) as InvoiceColumn))
     
   const moveColumn = (key: string, dir: number) => setColumns(cols => {
     const idx = cols.findIndex(c => c.key === key)

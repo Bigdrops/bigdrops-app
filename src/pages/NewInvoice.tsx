@@ -29,6 +29,7 @@ import {
   makeEmptyItem,
   makeExtraCharge,
   makeFieldEntry,
+  normalizeQuantity,
   toDbItem,
   useInvoiceColumns,
   buildCalculationInputs,
@@ -115,7 +116,7 @@ export default function NewInvoice() {
   })
   const [notesTitle, setNotesTitle] = useState('Notes')
   const [termsTitle, setTermsTitle] = useState('Terms and Conditions')
-  const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
+  const [mergeQtyUnit, setMergeQtyUnit] = useState(true)
   const [invoiceTitle, setInvoiceTitle] = useState(prefill?.invoice_title || '')
 
   const {
@@ -164,6 +165,7 @@ export default function NewInvoice() {
     prefillItems
       ? prefillItems.map((item: any) => ({
           ...ensureUiKey(item),
+          quantity: normalizeQuantity(item.quantity, 1),
           row_type: item.row_type || 'standard',
           group_id: item.group_id || null,
           group_name: item.group_name || '',
@@ -237,7 +239,7 @@ export default function NewInvoice() {
         if (field === '__install_rate_override' && value && typeof value === 'object') {
           return { ...item, ...value }
         }
-        return { ...item, [field]: value }
+        return { ...item, [field]: field === 'quantity' ? normalizeQuantity(value, 1) : value }
       }),
     )
 

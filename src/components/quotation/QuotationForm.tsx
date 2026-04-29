@@ -17,6 +17,7 @@ import {
 } from '@/components/useInvoiceColumns.jsx'
 import { toDbItem } from '@/domain/invoice'
 import type { ColumnConfig, ExtraCharge, InvoiceFieldEntry, InvoiceItem } from '@/domain/invoice'
+import { normalizeQuantity } from '@/domain/invoice'
 import {
   buildQuotationFormState,
   type DbQuotation,
@@ -267,7 +268,7 @@ type RfqConversionPrefillState = ProjectPrefillState & {
 }
 
 const defaultPdfOutput: PdfOutputState = {
-  showBankDetails: false,
+  showBankDetails: true,
   bankAccountId: null,
   showFooter: true,
   showTagline: true,
@@ -322,7 +323,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const [bankAccounts, setBankAccounts] = useState<BankAccountRow[]>([])
   const [settingsData, setSettingsData] = useState<{ company_tagline?: string | null; footer_text?: string | null } | null>(null)
   const [pdfOutput, setPdfOutput] = useState<PdfOutputState>(defaultPdfOutput)
-  const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
+  const [mergeQtyUnit, setMergeQtyUnit] = useState(true)
   const [showItemImages, setShowItemImages] = useState(false)
   const [groups, setGroups] = useState<QuotationGroupState[]>([])
   const [initialQuotationSnapshot, setInitialQuotationSnapshot] = useState<Record<string, unknown> | null>(null)
@@ -383,7 +384,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
               ...makeEmptyItem(),
               id: null,
               description: String(item?.description || ''),
-              quantity: Number(item?.quantity || 0),
+              quantity: normalizeQuantity(item?.quantity, 1),
               unit: String(item?.unit || ''),
               sub_description: String(item?.specification || ''),
               row_type: 'standard',
@@ -539,7 +540,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       current.map((item, itemIndex) => {
         if (itemIndex !== index) return item
         if (field === 'custom_data') return { ...item, custom_data: value as InvoiceItem['custom_data'] }
-        return { ...item, [field]: value }
+        return { ...item, [field]: field === 'quantity' ? normalizeQuantity(value, 1) : value }
       }),
     )
 

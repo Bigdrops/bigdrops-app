@@ -143,3 +143,20 @@ test('resolvePdfPageLayout keeps narrow tables portrait and promotes wide tables
   assert.deepEqual(portraitLayout, { size: 'A4', orientation: 'portrait' })
   assert.deepEqual(landscapeLayout, { size: 'A4', orientation: 'landscape' })
 })
+
+test('interpretPdfTableSettings auto-hides empty optional columns for output contexts', () => {
+  const resolved = interpretPdfTableSettings(
+    [
+      { key: 'make', label: 'Make', visibilityMode: 'show' },
+      { key: 'quantity', label: 'Quantity', visibilityMode: 'show' },
+      { key: 'unit_price', label: 'Unit Price', visibilityMode: 'show' },
+    ],
+    {
+      items: [{ description: 'Cable tray', quantity: 1, unit_price: 2500, make: '', custom_data: {} }],
+    },
+  )
+
+  assert.equal(resolved.columns.some((column) => column.key === 'make'), false)
+  assert.equal(resolved.columns.some((column) => column.key === 'quantity'), true)
+  assert.equal(resolved.columns.some((column) => column.key === 'unit_price'), true)
+})

@@ -38,7 +38,7 @@ const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
 
 const defaultPdfOutput: PdfOutputSettingsValue = {
-  showBankDetails: false,
+  showBankDetails: true,
   bankAccountId: null,
   showFooter: true,
   showTagline: true,
@@ -318,6 +318,7 @@ export default function ViewQuotation() {
       const pdfDesignPreset = getPdfDesignPreset('quotation')
       const resolvedTable = interpretPdfTableSettings(BUILTIN_COLUMNS as any, {
         mergeQtyUnit: customFields?.mergeQtyUnit === true,
+        items: Array.isArray(items) ? items : [],
       })
       const referenceLinks = Array.isArray(customFields.attachments)
         ? customFields.attachments.filter((entry: any) => entry?.url).map((entry: any, index: number) => ({

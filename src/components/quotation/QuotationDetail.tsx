@@ -73,7 +73,7 @@ type PdfOutputState = {
 }
 
 const defaultPdfOutput: PdfOutputState = {
-  showBankDetails: false,
+  showBankDetails: true,
   bankAccountId: null,
   showFooter: true,
   showTagline: true,
@@ -331,6 +331,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
 
       const resolvedTable = interpretPdfTableSettings(columns as any, {
         mergeQtyUnit: customFields.mergeQtyUnit === true,
+        items,
       })
 
       await generateQuotationPdf({

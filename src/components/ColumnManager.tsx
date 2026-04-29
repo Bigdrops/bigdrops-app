@@ -20,9 +20,6 @@ import type { ColumnConfig, InvoiceItem } from '@/domain/invoice/types'
 
 const FIXED_PDF_COLUMNS: Array<{ key: string; label: string }> = [
   { key: 'description', label: 'Description' },
-  { key: 'quantity', label: 'Quantity' },
-  { key: 'unit_price', label: 'Unit Price' },
-  { key: 'amount', label: 'Amount' },
 ]
 
 type ColumnUpdateValue = string | boolean
@@ -89,11 +86,13 @@ function BuiltInColumnRow({
   disableMoveDown,
   typeLabel,
 }: BuiltInColumnRowProps) {
+  const isShown = (col.visibilityMode || 'show') === 'show'
+
   return (
     <div
       className={cn(
         'rounded-[18px] border px-3 py-3 transition',
-        col.visible
+        isShown
           ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] shadow-[0_1px_3px_rgba(15,23,42,0.04)]'
           : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] opacity-80',
       )}
@@ -118,14 +117,14 @@ function BuiltInColumnRow({
             onClick={() => onToggle(col.key)}
             className={cn(
               'flex h-7 w-7 items-center justify-center rounded-[9px] border transition',
-              col.visible
+              isShown
                 ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text)]'
                 : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]',
             )}
-            aria-label={col.visible ? `Hide ${col.label}` : `Show ${col.label}`}
-            title={col.visible ? 'Hide column' : 'Show column'}
+            aria-label={isShown ? `Hide ${col.label}` : `Show ${col.label}`}
+            title={isShown ? 'Hide column' : 'Show column'}
           >
-            {col.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            {isShown ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
           </button>
         </div>
 
@@ -159,12 +158,12 @@ function BuiltInColumnRow({
             <div
               className={cn(
                 'inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em]',
-                col.visible
+                isShown
                   ? 'border-[var(--bd-emerald-border)] bg-[var(--bd-emerald-bg)] text-[var(--bd-emerald)]'
                   : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text3)]',
               )}
             >
-              {col.visible ? 'Visible' : 'Hidden'}
+              {isShown ? 'Visible' : 'Hidden'}
             </div>
           </div>
         </div>
@@ -207,11 +206,13 @@ function CustomColumnCard({
   onUpdate,
   onRemoveCustom,
 }: CustomColumnCardProps) {
+  const isShown = (col.visibilityMode || 'show') === 'show'
+
   return (
     <div
       className={cn(
         'rounded-[20px] border p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] transition',
-        col.visible
+        isShown
           ? 'border-[var(--bd-border)] bg-[var(--bd-surface)]'
           : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] opacity-80',
       )}
@@ -222,14 +223,14 @@ function CustomColumnCard({
           onClick={() => onToggle(col.key)}
           className={cn(
             'mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border transition',
-            col.visible
+            isShown
               ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text)]'
               : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]',
           )}
-          aria-label={col.visible ? `Hide ${col.label}` : `Show ${col.label}`}
-          title={col.visible ? 'Hide column' : 'Show column'}
+          aria-label={isShown ? `Hide ${col.label}` : `Show ${col.label}`}
+          title={isShown ? 'Hide column' : 'Show column'}
         >
-          {col.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+          {isShown ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
         </button>
 
         <div className="min-w-0 flex-1">
@@ -403,7 +404,8 @@ export default function ColumnManager({
 }: ColumnManagerProps) {
   const [confirmReset, setConfirmReset] = useState<boolean>(false)
 
-  const builtinCols = columns.filter((c) => !c.key.startsWith('custom_'))
+  const fixedColumnKeys = new Set(FIXED_PDF_COLUMNS.map((column) => column.key))
+  const builtinCols = columns.filter((c) => !c.key.startsWith('custom_') && !fixedColumnKeys.has(c.key))
   const customCols = columns.filter((c) => c.key.startsWith('custom_'))
 
   const standardItems = items.filter((i) => i.row_type === 'standard')

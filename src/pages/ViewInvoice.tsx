@@ -327,6 +327,7 @@ export default function ViewInvoice() {
     const targetAdvanceSummary = getAdvanceSummaryValues(targetInvoice)
     const resolvedTable = interpretPdfTableSettings(savedColumns as any, {
       mergeQtyUnit: targetCustomFields?.mergeQtyUnit === true,
+      items: Array.isArray(targetItems) ? targetItems : [],
     })
     const referenceLinks = Array.isArray(targetCustomFields?.attachments)
       ? targetCustomFields.attachments

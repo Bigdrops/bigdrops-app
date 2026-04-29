@@ -60,6 +60,7 @@ export type PdfResolvedTableSettings = {
     label?: string
     type?: string
     visible?: boolean
+    visibilityMode?: 'show' | 'hide_display' | 'hide_full'
     formula?: string
   }>
   activeColumns: PdfColumnDefinition[]

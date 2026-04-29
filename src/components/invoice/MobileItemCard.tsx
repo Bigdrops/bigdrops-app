@@ -19,6 +19,7 @@ import { getInvoiceSuggestionSelection } from '@/modules/item-library/domain/inv
 import { getInvoiceSuggestionPriceContextText } from '@/modules/item-library/domain/invoiceSuggestionPriceContext'
 import { loadItemPriceContext, resolveExactItemMatch } from '@/modules/item-library/services'
 import { fieldCls, labelCls } from '@/components/invoice/mobile/mobileFormPrimitives'
+import { normalizeQuantity } from '@/domain/invoice'
 import type { InvoiceItem } from '@/domain/invoice/types'
 import type { ItemSuggestion } from '@/modules/item-library/types'
 
@@ -152,7 +153,7 @@ export default function MobileItemCard({
   const autoInstall = (() => {
     const col = getColumn('install_rate')
     return col?.formula
-      ? parseFloat(col.formula) * Number(item.quantity || 1) * Number(item.unit_price || 0)
+      ? parseFloat(col.formula) * normalizeQuantity(item.quantity, 1) * Number(item.unit_price || 0)
       : null
   })()
 
@@ -318,20 +319,24 @@ export default function MobileItemCard({
                 <Input value={(item.make as string) || ''} onChange={(e) => onUpdate(index, 'make', e.target.value)} className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]" />
               </div>
             )}
+            {isVisible('quantity') && (
             <div className="min-w-0">
               <label className={labelCls}>Qty</label>
-              <Input type="number" value={(item.quantity as number) ?? 1} onChange={(e) => onUpdate(index, 'quantity', Number(e.target.value))} className="h-9 px-2 text-center text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
+              <Input type="number" min="1" value={(item.quantity as number) ?? 1} onChange={(e) => onUpdate(index, 'quantity', normalizeQuantity(e.target.value, 1))} className="h-9 px-2 text-center text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
             </div>
+            )}
             {isVisible('unit') && (
               <div className="min-w-0">
                 <label className={labelCls}>Unit</label>
                 <UnitInput value={(item.unit as string) || ''} onChange={(val: string) => onUpdate(index, 'unit', val)} />
               </div>
             )}
+            {isVisible('unit_price') && (
             <div className="min-w-0">
               <label className={labelCls}>Rate</label>
               <Input type="number" value={(item.unit_price as number) ?? 0} onChange={(e) => onUpdate(index, 'unit_price', Number(e.target.value))} className="h-9 px-2.5 text-right font-mono text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
             </div>
+            )}
 
             {isVisible('install_rate') && (
               <div className="min-w-0">
@@ -350,6 +355,7 @@ export default function MobileItemCard({
             )}
           </div>
 
+          {isVisible('amount') && (
           <div className="flex items-end justify-between gap-3 rounded-[12px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-3 py-2.5">
             <div className="min-w-0">
               <div className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-[var(--bd-text3)]">Subtotal</div>
@@ -360,6 +366,7 @@ export default function MobileItemCard({
               </div>
             </div>
           </div>
+          )}
         </div>
 
         {/* Vertical Actions */}

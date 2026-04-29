@@ -1,4 +1,5 @@
-import { resolveInstallRate } from './columns'
+import { normalizeQuantity } from './normalize'
+import { normalizeVisibilityMode, resolveColumnBehavior, resolveInstallRate, shouldIncludeColumnInTotals } from './columns'
 import { normalizeExtraCharges } from './factories'
 import type {
   CalculationInputs,
@@ -205,21 +206,27 @@ export function calcTotals({
   whtType: CalculationInputs['whtType']
 }): CalculationResult {
   const installCol = columns.find((column) => column.key === 'install_rate')
-  const globalVatPct = Number(invoice.vat || 0)
-  const globalDiscountInput = Number(invoice.discount || 0)
+  const hideVatFully = normalizeVisibilityMode(columns.find((column) => column.key === 'vat_rate')) === 'hide_full'
+  const hideDiscountFully = normalizeVisibilityMode(columns.find((column) => column.key === 'discount_rate')) === 'hide_full'
+  const visibleColumns = resolveColumnBehavior(columns, items, 'form')
+  const visibleCustomColumnKeys = new Set(visibleColumns.filter((column) => column.key.startsWith('custom_')).map((column) => column.key))
+  const globalVatPct = hideVatFully ? 0 : Number(invoice.vat || 0)
+  const globalDiscountInput = hideDiscountFully ? 0 : Number(invoice.discount || 0)
   const standardItems = items.filter((item) => item.row_type === 'standard')
   const rawSubtotal = standardItems.reduce(
-    (sum, item) => sum + Number(item.quantity || 1) * Number(item.unit_price || 0),
+    (sum, item) => sum + normalizeQuantity(item.quantity, 1) * Number(item.unit_price || 0),
     0,
   )
 
   const rowCalcs = standardItems.map((item) => {
-    const rowAmount = Number(item.quantity || 1) * Number(item.unit_price || 0)
+    const rowAmount = normalizeQuantity(item.quantity, 1) * Number(item.unit_price || 0)
     const installRate = resolveInstallRate(item, installCol)
-    const rowVatPct = resolveRowVat(item, globalVatPct)
+    const rowVatPct = hideVatFully ? 0 : resolveRowVat(item, globalVatPct)
 
     let rowDiscountPct
-    if (item.discount_rate === null || item.discount_rate === undefined) {
+    if (hideDiscountFully) {
+      rowDiscountPct = 0
+    } else if (item.discount_rate === null || item.discount_rate === undefined) {
       rowDiscountPct = discountType === 'percent' ? globalDiscountInput : 0
     } else if (item.discount_rate === 0) {
       rowDiscountPct = 0
@@ -244,12 +251,12 @@ export function calcTotals({
     return { rowAmount, installRate, rowVat, rowDiscount }
   })
 
-  const installRateTotal = installCol?.visible
+  const installRateTotal = shouldIncludeColumnInTotals(installCol)
     ? rowCalcs.reduce((sum, row) => sum + row.installRate, 0)
     : 0
 
   const customColTotal = columns
-    .filter((column) => column.key.startsWith('custom_') && column.includeInTotal && column.type === 'number')
+    .filter((column) => visibleCustomColumnKeys.has(column.key) && column.includeInTotal && column.type === 'number' && shouldIncludeColumnInTotals(column))
     .reduce(
       (columnSum, column) =>
         columnSum + standardItems.reduce((sum, item) => sum + Number((item.custom_data || {})[column.key] || 0), 0),

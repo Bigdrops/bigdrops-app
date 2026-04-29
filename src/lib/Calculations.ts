@@ -32,6 +32,8 @@
  */
 
 import Decimal from 'decimal.js'
+import { normalizeQuantity } from '@/domain/invoice/normalize'
+import { normalizeVisibilityMode } from '@/domain/invoice/columns'
 
 Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP })
 
@@ -524,7 +526,7 @@ export interface RawDocumentInput {
   items?:    any[]
   document?: Record<string, any>
   cf?:       Record<string, any>
-  columns?:  Array<{ key?: string; visible?: boolean }>
+  columns?:  Array<{ key?: string; visible?: boolean; visibilityMode?: 'show' | 'hide_display' | 'hide_full' }>
 }
 
 function getVisibleRowEffects(
@@ -538,7 +540,7 @@ function getVisibleRowEffects(
       : []
 
   const isVisible = (key: string) =>
-    sourceColumns.some((column) => column?.key === key && column.visible !== false)
+    sourceColumns.some((column) => column?.key === key && normalizeVisibilityMode(column) === 'show')
 
   return {
     install: isVisible('install_rate'),
@@ -550,10 +552,21 @@ function getVisibleRowEffects(
 export function normalizeDocumentInput(raw: RawDocumentInput): DocumentInput {
   const { items = [], document = {}, cf = {}, columns = [] } = raw
   const ci: Record<string, any> = cf.calculationInputs ?? {}
+  const sourceColumns = Array.isArray(columns) && columns.length
+    ? columns
+    : Array.isArray(cf.columnConfig)
+      ? cf.columnConfig
+      : []
+  const getVisibilityMode = (key: string) =>
+    normalizeVisibilityMode(sourceColumns.find((column) => column?.key === key))
+  const hideInstallFully = getVisibilityMode('install_rate') === 'hide_full'
+  const hideVatFully = getVisibilityMode('vat_rate') === 'hide_full'
+  const hideDiscountFully = getVisibilityMode('discount_rate') === 'hide_full'
 
   // ── VAT rate ──────────────────────────────────────────────────────────────
   // NEVER read from document.vat (computed total)
   const globalVatPercent: number =
+    hideVatFully ? 0 :
     ci.vatPercent != null ? Number(ci.vatPercent) :
     ci.vatRate != null ? Number(ci.vatRate) :
     cf.vatPercent != null ? Number(cf.vatPercent) :
@@ -570,6 +583,7 @@ export function normalizeDocumentInput(raw: RawDocumentInput): DocumentInput {
   })()
 
   const discountValue: number =
+    hideDiscountFully ? 0 :
     ci.discountValue != null ? Number(ci.discountValue) :
     cf.discountValue != null ? Number(cf.discountValue) :
     _legacyDiscountValue(document, cf, discountType)
@@ -622,15 +636,15 @@ export function normalizeDocumentInput(raw: RawDocumentInput): DocumentInput {
     }
 
     const install_rate: number | null =
-      item.install_rate === null || item.install_rate === undefined
+      hideInstallFully || item.install_rate === null || item.install_rate === undefined
         ? null : Number(item.install_rate)
 
     const vat_rate: number | null =
-      item.vat_rate === null || item.vat_rate === undefined
+      hideVatFully || item.vat_rate === null || item.vat_rate === undefined
         ? null : Number(item.vat_rate)
 
     const discount_rate: number | null =
-      item.discount_rate === null || item.discount_rate === undefined
+      hideDiscountFully || item.discount_rate === null || item.discount_rate === undefined
         ? null : Number(item.discount_rate)
 
     return {
@@ -639,10 +653,10 @@ export function normalizeDocumentInput(raw: RawDocumentInput): DocumentInput {
       group_id:             item.group_id   ?? null,
       group_name:           item.group_name ?? null,
       description:          item.description ?? '',
-      quantity:             Number(item.quantity   || 0),
+      quantity:             normalizeQuantity(item.quantity, 1),
       unit_price:           Number(item.unit_price || 0),
       install_rate,
-      install_rate_taxable: item.install_rate_taxable ?? false,
+      install_rate_taxable: hideInstallFully ? false : item.install_rate_taxable ?? false,
       vat_rate,
       discount_rate,
     }

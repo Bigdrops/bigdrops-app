@@ -28,14 +28,15 @@ import type {
 import {
   BUILTIN_COLUMNS,
   buildCalculationInputs,
-  ensureUiKey,
   inferLegacyCalculationState,
+  mergeColumnConfigs,
   makeEmptyGroup,
   makeEmptyItem,
   makeExtraCharge,
   makeFieldEntry,
   normalizeExtraCharges,
   normalizeFieldEntries,
+  normalizeQuantity,
   toDbItem,
   useInvoiceColumns,
 } from '../components/useInvoiceColumns'
@@ -103,7 +104,7 @@ export default function EditInvoice() {
   })
   const [notesTitle, setNotesTitle] = useState('Notes')
   const [termsTitle, setTermsTitle] = useState('Terms and Conditions')
-  const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
+  const [mergeQtyUnit, setMergeQtyUnit] = useState(true)
   const [invoiceTitle, setInvoiceTitle] = useState('')
   const [invoice, setInvoice] = useState<InvoiceFormFields | null>(null)
   const [initialInvoiceSnapshot, setInitialInvoiceSnapshot] = useState<any>(null)
@@ -156,17 +157,11 @@ export default function EditInvoice() {
           setAdditionalFields(normalizeAdditionalFieldEntries(parsed.additionalFields, parsed.bottom))
           setExtraCharges(normalizeExtraCharges(parsed.extraCharges))
           if (parsed.chargeLabels) setChargeLabels(parsed.chargeLabels as any)
-          if (parsed.columnConfig) {
-            const merged = (parsed.columnConfig as any[]).map((saved) => {
-              const base = BUILTIN_COLUMNS.find((column) => column.key === saved.key)
-              return base ? { ...base, ...saved } : saved
-            })
-            setColumns(merged)
-          }
+          if (parsed.columnConfig) setColumns(mergeColumnConfigs(parsed.columnConfig as any[]))
           if (parsed.notesTitle) setNotesTitle(parsed.notesTitle as any)
           if (parsed.termsTitle) setTermsTitle(parsed.termsTitle as any)
           if (parsed.attachments) setAttachments(parsed.attachments as any)
-          if (parsed.mergeQtyUnit) setMergeQtyUnit(parsed.mergeQtyUnit as any)
+        if (typeof parsed.mergeQtyUnit === 'boolean') setMergeQtyUnit(parsed.mergeQtyUnit as any)
           if (parsed.discountType) setDiscountType(parsed.discountType)
           if (parsed.discountTiming) setDiscountTiming(parsed.discountTiming)
           if (parsed.whtType) setWhtType(parsed.whtType)
@@ -233,7 +228,7 @@ export default function EditInvoice() {
         if (field === '__install_rate_override' && value && typeof value === 'object') {
           return { ...item, ...value }
         }
-        return { ...item, [field]: value }
+        return { ...item, [field]: field === 'quantity' ? normalizeQuantity(value, 1) : value }
       }),
     )
 
