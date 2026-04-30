@@ -449,7 +449,7 @@ export default function Waybills() {
       />
       <AttachExistingDocumentSheet
         open={showAttachInvoice}
-        onOpenChange={setShowAttachSheet}
+        onOpenChange={setShowAttachInvoice}
         title="Attach to Invoice"
         description={activeWaybill?.waybill_number || 'Waybill'}
         table="invoices"

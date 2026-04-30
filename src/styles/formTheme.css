@@ -76,6 +76,11 @@
   --bd-layout-padding: 1rem;
   --bd-layout-content-max: 1200px;
 
+  /* Typography Defaults */
+  --bd-font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --bd-font-body-size: 0.875rem;
+  --bd-label-letter-spacing: 0.05em;
+
   /* Backward Compatibility Mappings (Final Colors) */
   --bd-bg: hsl(var(--bd-app-bg));
   --bd-bg2: hsl(var(--muted));
@@ -167,4 +172,14 @@
 .bd-custom-scrollbar::-webkit-scrollbar-thumb {
   background: var(--bd-border);
   border-radius: 2px;
+}
+
+/* Global Typography Application */
+body {
+  font-family: var(--bd-font-family) !important;
+  font-size: var(--bd-font-body-size) !important;
+}
+
+label, .bd-label {
+  letter-spacing: var(--bd-label-letter-spacing);
 }

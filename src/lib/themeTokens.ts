@@ -100,6 +100,9 @@ export const THEME_NON_COLOR_TOKENS = [
   "bd-layout-density",
   "bd-layout-padding",
   "bd-layout-content-max",
+  "bd-font-family",
+  "bd-font-body-size",
+  "bd-label-letter-spacing",
 ] as const
 
 export const THEME_TOKENS = [...THEME_COLOR_TOKENS, ...THEME_NON_COLOR_TOKENS] as const
@@ -127,9 +130,17 @@ export function normalizeThemeTokenValue(
   const raw = value.trim()
   if (!raw) return null
 
-  if (token === "radius" || token === "bd-radius-sm" || token === "bd-radius-md" || token === "bd-radius-lg" || token === "bd-layout-padding" || token === "bd-layout-content-max") {
+  if (token === "radius" || token === "bd-radius-sm" || token === "bd-radius-md" || token === "bd-radius-lg" || token === "bd-layout-padding" || token === "bd-layout-content-max" || token === "bd-font-body-size") {
     if (options.allowRadius === false && token.includes("radius")) return null
     return CSS_LENGTH_RE.test(raw) ? raw : null
+  }
+
+  if (token === "bd-label-letter-spacing") {
+    return /^\s*-?\d+(\.\d+)?(em|px|rem)\s*$/.test(raw) ? raw : null
+  }
+
+  if (token === "bd-font-family") {
+    return raw.length > 0 ? raw : null
   }
 
   if (token === "bd-layout-density") {

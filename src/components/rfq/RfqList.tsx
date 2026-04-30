@@ -1,15 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, FileText, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { Rfq } from '@/domain/rfq/types'
 import { normalizeDbRfq } from '@/domain/rfq/normalize'
-import MobileListPageShell from '@/components/layout/MobileListPageShell'
 import MobileFab from '@/components/layout/MobileFab'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
 import { toast } from '@/hooks/use-toast'
 import { SkeletonRow } from '@/components/loading/AppLoadingStates'
+import ModuleShell from '@/components/layout/ModuleShell'
+import ModuleRowCard from '@/components/layout/ModuleRowCard'
 
 const formatCompactDate = (value?: string) => {
   if (!value) return null
@@ -116,7 +117,7 @@ export const RfqList: React.FC = () => {
   }, [rfqs, search]);
 
   return (
-    <MobileListPageShell
+    <ModuleShell
       eyebrow="Inventory"
       title="Request for Quotes"
       summary={`${rfqs.length} documents`}
@@ -125,80 +126,31 @@ export const RfqList: React.FC = () => {
       searchValue={search}
       onSearchChange={setSearch}
       searchPlaceholder="Search RFQs..."
+      records={loading ? [] : filteredRfqs}
+      renderRow={(rfq) => {
+        const statusMeta = getRfqStatusMeta(rfq.expiry_date)
+        const expiryDate = formatCompactDate(rfq.expiry_date)
+        
+        return (
+          <ModuleRowCard
+            key={rfq.id}
+            title={rfq.title || 'Untitled RFQ'}
+            subtitle={rfq.rfq_number}
+            tertiary={rfq.vendor_name || 'Guest vendor'}
+            statusLabel={statusMeta.label}
+            statusClassName={statusMeta.className}
+            amount={expiryDate ? `Due ${expiryDate}` : undefined}
+            onClick={() => navigate(`/rfqs/${rfq.id}`)}
+            onActionClick={() => setActiveRfq(rfq)}
+          />
+        )
+      }}
     >
-      <div className="px-1">
-        {loading && rfqs.length === 0 ? (
-          <div className="grid gap-3">
-            {Array.from({ length: 5 }).map((_, idx) => (
-              <SkeletonRow key={idx} />
-            ))}
-          </div>
-        ) : filteredRfqs.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-zinc-300 bg-white px-6 py-12 text-center text-sm text-muted-foreground">
-            {search ? 'No matches found' : 'No RFQs yet. Create one to request prices from vendors.'}
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-[24px] border border-border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
-            {filteredRfqs.map((rfq, index) => {
-              const statusMeta = getRfqStatusMeta(rfq.expiry_date)
-              const issueDate = formatCompactDate(rfq.issue_date)
-              const expiryDate = formatCompactDate(rfq.expiry_date)
-
-              return (
-                <div
-                  key={rfq.id}
-                  onClick={() => navigate(`/rfqs/${rfq.id}`)}
-                  className={`cursor-pointer px-4 py-4 transition hover:bg-muted/20 ${index === 0 ? '' : 'border-t border-border/80'}`}
-                >
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-                    <div className="flex min-w-0 gap-3">
-                      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300">
-                        <FileText className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">RFQ</div>
-                        <div className="mt-1 truncate text-[15px] font-extrabold leading-5 tracking-[-0.02em] text-foreground">
-                          {rfq.title || 'Untitled RFQ'}
-                        </div>
-                        <div className="mt-1 truncate text-[13px] leading-5 text-muted-foreground">
-                          {rfq.vendor_name || 'Guest vendor'}
-                        </div>
-                        <div className="mt-1 truncate text-[12px] leading-5 text-muted-foreground">
-                          {rfq.rfq_number}
-                          {issueDate ? ` · Issued ${issueDate}` : ''}
-                          {expiryDate ? ` · Due ${expiryDate}` : ''}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                      <div className="min-w-[86px] text-right">
-                        <div className={`inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-bold ${statusMeta.className}`}>
-                          {statusMeta.label}
-                        </div>
-                        <div className="mt-2 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                          {expiryDate ? `Due ${expiryDate}` : 'Draft'}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setActiveRfq(rfq);
-                        }}
-                        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-background text-foreground shadow-sm"
-                        aria-label={`Open actions for ${rfq.rfq_number || 'RFQ'}`}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
+      {loading && (
+        <div className="grid gap-3">
+          {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
+        </div>
+      )}
 
       <MobileFab onClick={() => navigate('/rfqs/new')} ariaLabel="Create RFQ" />
 
@@ -242,6 +194,6 @@ export const RfqList: React.FC = () => {
         confirmLabel="Delete RFQ"
         onConfirm={() => deleteId && handleDelete(deleteId)}
       />
-    </MobileListPageShell>
+    </ModuleShell>
   );
 };
