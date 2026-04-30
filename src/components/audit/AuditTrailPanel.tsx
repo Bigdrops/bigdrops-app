@@ -11,6 +11,7 @@ import useAuditTrail from '@/hooks/useAuditTrail'
 interface AuditTrailPanelProps {
   entityType: AuditEntityType
   entityId?: string | null
+  entityLabel?: string | null
   defaultOpen?: boolean
   className?: string
 }
@@ -18,9 +19,14 @@ interface AuditTrailPanelProps {
 export default function AuditTrailPanel({
   entityType,
   entityId,
+  entityLabel,
   defaultOpen = false,
   className,
 }: AuditTrailPanelProps) {
+  if (process.env.NODE_ENV === 'development' && entityId) {
+    console.debug(`[AuditTrailPanel] Mounting for ${entityType}:${entityLabel || 'unknown'} with ID: ${entityId}`)
+  }
+
   const [open, setOpen] = useState(defaultOpen)
   const { entries, loading, error } = useAuditTrail({
     entityType,

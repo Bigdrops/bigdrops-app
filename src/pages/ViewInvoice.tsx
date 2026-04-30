@@ -1008,7 +1008,8 @@ export default function ViewInvoice() {
           activityHistory={
             <AuditTrailPanel
               entityType="invoice"
-              entityId={invoice?.id ? String(invoice.id) : null}
+              entityId={invoice.id}
+              entityLabel={invoice.invoice_number}
               defaultOpen={false}
             />
           }
