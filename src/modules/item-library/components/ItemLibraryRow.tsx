@@ -9,14 +9,23 @@ import {
 type ItemLibraryRowProps = {
   item: ItemCatalogItem
   isSelected: boolean
+  isFlagged?: boolean
   onSelect: (itemId: string) => void
 }
 
-function FlagDot() {
-  return <span className="inline-block h-[6px] w-[6px] flex-shrink-0 rounded-full bg-[#8c6a45]" aria-hidden="true" />
+function FlagDot({ active }: { active?: boolean }) {
+  return (
+    <span
+      className={[
+        'inline-block h-[6px] w-[6px] flex-shrink-0 rounded-full',
+        active ? 'bg-[#a06d2b] shadow-[0_0_8px_rgba(160,109,43,0.4)]' : 'bg-[#8c6a45]',
+      ].join(' ')}
+      aria-hidden="true"
+    />
+  )
 }
 
-export function ItemLibraryRow({ item, isSelected, onSelect }: ItemLibraryRowProps) {
+export function ItemLibraryRow({ item, isSelected, isFlagged, onSelect }: ItemLibraryRowProps) {
   const diff = getPriceDelta(item.standard_price, item.last_sold_price)
 
   return (
@@ -32,9 +41,16 @@ export function ItemLibraryRow({ item, isSelected, onSelect }: ItemLibraryRowPro
           : 'border-l-[3px] border-l-transparent bg-[rgba(255,250,243,0.48)] hover:bg-[#f8efe3]',
       ].join(' ')}
     >
-      <div className="mb-[5px] flex items-center gap-[6px] leading-snug">
-        <FlagDot />
-        <span className="truncate text-[13px] font-bold leading-tight text-[#2c2218]">{item.name}</span>
+      <div className="mb-[5px] flex items-center justify-between gap-3 leading-snug">
+        <div className="flex min-w-0 items-center gap-[6px]">
+          <FlagDot active={isFlagged} />
+          <span className="truncate text-[13px] font-bold leading-tight text-[#2c2218]">{item.name}</span>
+        </div>
+        {isFlagged && (
+          <span className="flex-shrink-0 rounded-[4px] bg-[#fdf2e2] px-[5px] py-[1px] text-[9px] font-bold uppercase tracking-wider text-[#a06d2b] border border-[#f5e4cd]">
+            Needs cleanup
+          </span>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-1">

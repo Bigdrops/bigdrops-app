@@ -23,6 +23,7 @@ type ItemLibraryListPanelProps = {
   onSelectItem: (itemId: string) => void
   onSelectDuplicateGroup: (groupId: string) => void
   onInspectDuplicateItem: (groupId: string, itemId: string) => void
+  flaggedItemIds?: Set<string>
 }
 
 function SkeletonRow({ wide }: { wide?: boolean }) {
@@ -73,6 +74,7 @@ export function ItemLibraryListPanel({
   onSelectItem,
   onSelectDuplicateGroup,
   onInspectDuplicateItem,
+  flaggedItemIds,
 }: ItemLibraryListPanelProps) {
   return (
     <div className="flex h-full flex-col overflow-hidden border-r border-[#d5c4af] bg-[linear-gradient(180deg,_#f6ede1_0%,_#f0e5d6_100%)] shadow-[inset_-1px_0_0_rgba(255,255,255,0.35)]">
@@ -87,8 +89,8 @@ export function ItemLibraryListPanel({
         <ItemSearchBar value={searchText} onChange={onSearchTextChange} placeholder="Search items..." />
       </div>
 
-      <div className="flex flex-shrink-0 gap-2 border-b border-[#e3d5c5]/80 px-4 py-[10px]">
-        <FilterChip label="Catalog" active={viewMode === 'catalog'} onClick={() => onViewModeChange('catalog')} />
+      <div className="flex flex-shrink-0 gap-2 overflow-x-auto border-b border-[#e3d5c5]/80 px-4 py-[10px]">
+        <FilterChip label="Items" active={viewMode === 'catalog'} onClick={() => onViewModeChange('catalog')} />
         <FilterChip
           label={`Possible Duplicates${duplicateGroups.length ? ` (${duplicateGroups.length})` : ''}`}
           active={viewMode === 'duplicates'}
@@ -99,10 +101,20 @@ export function ItemLibraryListPanel({
           active={viewMode === 'advanced_cleanup'}
           onClick={() => onViewModeChange('advanced_cleanup')}
         />
+        <FilterChip
+          label="Merge History"
+          active={viewMode === 'merge_history'}
+          onClick={() => onViewModeChange('merge_history')}
+        />
       </div>
 
       <div className="flex flex-shrink-0 gap-[6px] overflow-x-auto border-b border-[#e3d5c5]/80 px-4 pb-[10px] pt-[10px]">
         <FilterChip label="All" active={activeFilter === 'all'} onClick={() => onFilterChange('all')} />
+        <FilterChip
+          label="Needs cleanup"
+          active={activeFilter === 'needs_cleanup'}
+          onClick={() => onFilterChange('needs_cleanup')}
+        />
         <FilterChip label="Invoice" active={activeFilter === 'invoice'} onClick={() => onFilterChange('invoice')} />
         <FilterChip
           label="Quotation"
@@ -160,6 +172,7 @@ export function ItemLibraryListPanel({
               key={item.item_id}
               item={item}
               isSelected={item.item_id === selectedItemId}
+              isFlagged={flaggedItemIds?.has(item.item_id)}
               onSelect={onSelectItem}
             />
           ))

@@ -142,26 +142,39 @@ export function ItemLibraryDuplicateMergeCard({
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleWinnerChange(member.item_id)}
-                      className={[
-                        'rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] transition-colors',
-                        isWinner
-                          ? 'border-[#b78c5e] bg-[#e6cfb0] text-[#593f29]'
-                          : 'border-[#d7c4ab] bg-[#f7efe3] text-[#907b64] hover:bg-[#efe1cf]',
-                      ].join(' ')}
-                    >
-                      {isWinner ? 'Primary item' : 'Set as primary'}
-                    </button>
-                    <div className="truncate text-[13px] font-bold text-[#302519]">{member.name}</div>
-                  </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleWinnerChange(member.item_id)}
+                        className={[
+                          'relative rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] transition-all duration-200',
+                          isWinner
+                            ? 'border-[#8b6845] bg-[#8b6845] text-[#fffcf9] shadow-[0_4px_12px_rgba(139,104,69,0.3)]'
+                            : 'border-[#d7c4ab] bg-[#f7efe3] text-[#907b64] hover:bg-[#efe1cf]',
+                        ].join(' ')}
+                      >
+                        {isWinner ? (
+                          <span className="flex items-center gap-1">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20 6 9 17l-5-5" />
+                            </svg>
+                            Winner
+                          </span>
+                        ) : (
+                          'Set as primary'
+                        )}
+                      </button>
+                      <div className={[
+                        "truncate text-[13px] font-bold transition-colors",
+                        isWinner ? "text-[#2f2419]" : "text-[#5e4a36]"
+                      ].join(' ')}>{member.name}</div>
+                    </div>
 
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-[#8d7a65]">
-                    <PreviewPill>{formatCompactUsageCount(member.usage_count)}</PreviewPill>
-                    <PreviewPill>{formatItemPrice(member.last_sold_price, 'No sales yet')}</PreviewPill>
-                    <span>{formatLastUsedDate(member.last_used_at)}</span>
-                    <span className="font-['JetBrains_Mono'] text-[#a08c76]">{member.item_id}</span>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-[#8d7a65]">
+                      <PreviewPill>{formatCompactUsageCount(member.usage_count)} uses</PreviewPill>
+                      <PreviewPill>{formatItemPrice(member.last_sold_price, 'No sales')}</PreviewPill>
+                      <span className="opacity-60">{formatLastUsedDate(member.last_used_at)}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -196,12 +209,17 @@ export function ItemLibraryDuplicateMergeCard({
         })}
       </div>
 
-      <div className="mt-4 rounded-[14px] border border-[#dbc8ae] bg-[#fcf7ef] p-4">
-        <div className="flex items-center justify-between gap-3">
+      <div className="mt-4 rounded-[14px] border border-[#dbc8ae] bg-[#fcf7ef] p-4 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#947f67]">Review merge</div>
-            <div className="mt-1 text-[14px] font-bold text-[#2f2419]">
-              {preview?.winner.name || 'Choose a primary item to continue'}
+            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#947f67]">Consolidation Plan</div>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="text-[14px] font-bold text-[#2f2419]">
+                {preview?.winner.name || 'Choose a primary item'}
+              </span>
+              {preview && (
+                 <span className="rounded-full bg-[#8b6845] px-2 py-0.5 text-[9px] font-bold text-white">PRIMARY</span>
+              )}
             </div>
           </div>
 
@@ -209,7 +227,7 @@ export function ItemLibraryDuplicateMergeCard({
             type="button"
             disabled={disableMerge}
             onClick={() => setConfirmOpen(true)}
-            className="rounded-[10px] border border-[#c5a074] bg-[#e7d2b3] px-4 py-2 text-[12px] font-bold text-[#523b25] shadow-[0_10px_18px_rgba(92,68,41,0.10),inset_0_1px_0_rgba(255,255,255,0.5)] transition-all duration-150 hover:bg-[#dcc39f] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-[10px] border border-[#c5a074] bg-[#e7d2b3] px-5 py-2.5 text-[12px] font-bold text-[#523b25] shadow-[0_12px_22px_rgba(92,68,41,0.12),inset_0_1px_0_rgba(255,255,255,0.5)] transition-all duration-200 hover:bg-[#dcc39f] hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Confirm merge
           </button>

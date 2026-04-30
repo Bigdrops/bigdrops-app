@@ -1,7 +1,7 @@
 export type ItemSourceType = 'invoice' | 'quotation'
 
-export type ItemLibraryFilterType = 'all' | ItemSourceType
-export type ItemLibraryViewMode = 'catalog' | 'duplicates' | 'advanced_cleanup'
+export type ItemLibraryFilterType = 'all' | 'needs_cleanup' | ItemSourceType
+export type ItemLibraryViewMode = 'catalog' | 'duplicates' | 'advanced_cleanup' | 'merge_history'
 
 export interface ItemCatalogItem {
   item_id: string
@@ -192,4 +192,14 @@ export interface CleanupApplyResult {
   canonical_name: string
   status: 'applied' | 'stale' | 'failed'
   message: string
+}
+export interface ItemMergeLogRow {
+  id: string
+  from_item_id: string | null
+  to_item_id: string | null
+  from_item_name?: string | null
+  to_item_name?: string | null
+  action: 'merge' | 'alias_added' | 'alias_retired' | 'standard_price_updated' | 'relinked_rows'
+  details: any
+  created_at: string
 }

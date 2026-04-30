@@ -6,6 +6,7 @@ import type {
   ItemPriceContext,
   ItemLibraryMergeRequest,
   ItemLibraryMergeResult,
+  ItemMergeLogRow,
   ItemSuggestion,
 } from '../types'
 import {
@@ -462,4 +463,46 @@ export async function getItemHistoryDetail(itemId: string, limit = 50): Promise<
     quotationNumbers,
     limit,
   })
+}
+export async function getItemMergeHistory(limit = 50): Promise<ItemMergeLogRow[]> {
+  const { data, error } = await supabase
+    .from('item_merge_log')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) throw error
+
+  const rows = (Array.isArray(data) ? data : []) as ItemMergeLogRow[]
+  const itemIds = [
+    ...new Set(
+      rows.flatMap((r) => [r.from_item_id, r.to_item_id]).filter((id): id is string => Boolean(id))
+    ),
+  ]
+
+  if (itemIds.length === 0) return rows
+
+  const { data: itemData, error: itemError } = await supabase
+    .from('item_catalog')
+    .select('id, name')
+    .in('id', itemIds)
+
+  if (itemError) throw itemError
+
+  const nameMap = new Map((itemData || []).map((row: any) => [String(row.id), String(row.name)]))
+
+  return rows.map((row) => ({
+    ...row,
+    from_item_name: row.from_item_id ? nameMap.get(row.from_item_id) : null,
+    to_item_name: row.to_item_id ? nameMap.get(row.to_item_id) : null,
+  }))
+}
+
+export async function getItemMergeHistoryCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from('item_merge_log')
+    .select('*', { count: 'exact', head: true })
+
+  if (error) throw error
+  return count || 0
 }

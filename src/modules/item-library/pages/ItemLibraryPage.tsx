@@ -6,9 +6,17 @@ import { ItemLibraryAdvancedCleanupPanel } from '../components/ItemLibraryAdvanc
 import { ItemLibraryDetailPanel } from '../components/ItemLibraryDetailPanel'
 import { ItemLibraryDuplicateReviewPanel } from '../components/ItemLibraryDuplicateReviewPanel'
 import { ItemLibraryListPanel } from '../components/ItemLibraryListPanel'
+import { ItemLibraryMergeHistoryPanel } from '../components/ItemLibraryMergeHistoryPanel'
+import { ItemLibraryStatusStrip } from '../components/ItemLibraryStatusStrip'
 import { detectDuplicateGroups } from '../domain/duplicateDetection'
 import { buildFlaggedCleanupExportPayload, isCleanupProposalStale } from '../domain/itemCleanupExchange'
-import { useItemAliases, useItemHistoryDetail, useItemHistoryList, useItemMerge } from '../hooks'
+import {
+  useItemAliases,
+  useItemHistoryDetail,
+  useItemHistoryList,
+  useItemMerge,
+  useItemMergeHistory,
+} from '../hooks'
 import { loadFlaggedCleanupExport } from '../services'
 import type { CleanupApplyProposal, CleanupApplyResult, ItemLibraryMergeRequest } from '../types'
 import type { ItemLibraryFilterType, ItemLibraryViewMode } from '../types'
@@ -67,20 +75,35 @@ export default function ItemLibraryPage() {
     reload: reloadSummaryItems,
   } = useItemHistoryList(200)
 
+  const {
+    data: mergeHistory,
+    count: mergeHistoryCount,
+    loading: mergeHistoryLoading,
+    reload: reloadMergeHistory,
+  } = useItemMergeHistory()
+
+  const allDuplicateGroups = useMemo(() => detectDuplicateGroups(summaryItems), [summaryItems])
+  const allDuplicateItemIdsSet = useMemo(
+    () => new Set(allDuplicateGroups.flatMap((group) => group.members.map((member) => member.item_id))),
+    [allDuplicateGroups],
+  )
+
   const filteredItems = useMemo(() => {
     const normalizedSearch = searchText.trim().toLowerCase()
 
     return summaryItems.filter((item) => {
       const matchesSearch = normalizedSearch ? item.name.toLowerCase().includes(normalizedSearch) : true
-      const matchesFilter =
-        activeFilter === 'all'
-          ? true
-          : activeFilter === 'invoice'
-            ? item.appears_in_invoice === true
-            : item.appears_in_quotation === true
+      let matchesFilter = true
+      if (activeFilter === 'invoice') {
+        matchesFilter = item.appears_in_invoice === true
+      } else if (activeFilter === 'quotation') {
+        matchesFilter = item.appears_in_quotation === true
+      } else if (activeFilter === 'needs_cleanup') {
+        matchesFilter = allDuplicateItemIdsSet.has(item.item_id)
+      }
       return matchesSearch && matchesFilter
     })
-  }, [activeFilter, searchText, summaryItems])
+  }, [activeFilter, searchText, summaryItems, allDuplicateItemIdsSet])
 
   const duplicateGroups = useMemo(() => detectDuplicateGroups(filteredItems), [filteredItems])
 
@@ -131,7 +154,7 @@ export default function ItemLibraryPage() {
     () => duplicateGroups.find((group) => group.group_id === selectedDuplicateGroupId) || null,
     [duplicateGroups, selectedDuplicateGroupId],
   )
-  const allDuplicateItemIds = useMemo(
+  const duplicateItemIdsArray = useMemo(
     () => duplicateGroups.flatMap((group) => group.members.map((member) => member.item_id)),
     [duplicateGroups],
   )
@@ -139,7 +162,7 @@ export default function ItemLibraryPage() {
     data: duplicateAliases,
     loading: aliasesLoading,
     error: aliasesError,
-  } = useItemAliases(allDuplicateItemIds)
+  } = useItemAliases(duplicateItemIdsArray)
   const selectedGroupAliases = useMemo(
     () =>
       selectedDuplicateGroup
@@ -179,6 +202,7 @@ export default function ItemLibraryPage() {
     if (window.innerWidth < 768) setMobileDetailOpen(true)
 
     reloadSummaryItems()
+    reloadMergeHistory()
 
     toast({
       title: 'Merge complete',
@@ -237,6 +261,7 @@ export default function ItemLibraryPage() {
     }
 
     reloadSummaryItems()
+    reloadMergeHistory()
     reloadHistoryRows()
 
     const appliedCount = results.filter((result) => result.status === 'applied').length
@@ -286,6 +311,13 @@ export default function ItemLibraryPage() {
             <span className="hidden sm:inline">Advanced export in panel</span>
           </div>
         </header>
+        <ItemLibraryStatusStrip
+          totalItems={summaryItems.length}
+          duplicateGroups={allDuplicateGroups}
+          flaggedCleanupExport={flaggedCleanupExport}
+          mergeHistoryCount={mergeHistoryCount}
+          loading={summaryLoading}
+        />
 
         {summaryError ? (
           <div className="border-b border-[#e0b7b1] bg-[#fff4f1] px-5 py-3 text-[12px] text-[#a0362b]">
@@ -324,6 +356,7 @@ export default function ItemLibraryPage() {
                 setSelectedItemId(itemId)
                 if (window.innerWidth < 768) setMobileDetailOpen(true)
               }}
+              flaggedItemIds={allDuplicateItemIdsSet}
             />
           </div>
 
@@ -359,6 +392,12 @@ export default function ItemLibraryPage() {
                   applyLoading={mergeLoading}
                   exportPayload={flaggedCleanupExport}
                   onApplyProposals={handleApplyCleanupProposals}
+                />
+              ) : viewMode === 'merge_history' ? (
+                <ItemLibraryMergeHistoryPanel
+                  data={mergeHistory}
+                  loading={mergeHistoryLoading}
+                  error={null}
                 />
               ) : (
                 <ItemLibraryDetailPanel
