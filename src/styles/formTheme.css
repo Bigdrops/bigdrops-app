@@ -83,18 +83,18 @@
 
 /* Layout Token Overrides */
 .bd-sidebar-hidden aside { display: none !important; }
-.bd-nav-hidden nav { display: none !important; }
-
-/* Apply Density-based Padding to Main Layout */
-.max-w-5xl {
-  max-width: var(--bd-layout-content-max) !important;
+.bd-nav-hidden [data-bd-layout="bottom-nav"] {
+  display: none !important;
 }
 
-/* Target Layout Content Padding */
-.mx-auto.w-full.max-w-5xl.px-6.py-6,
-.w-full.px-4.pt-3 {
-  padding-left: var(--bd-layout-padding) !important;
-  padding-right: var(--bd-layout-padding) !important;
+/* Scoped Layout Content Anchor */
+[data-bd-layout="content"] {
+  padding-left: var(--bd-layout-padding);
+  padding-right: var(--bd-layout-padding);
+  max-width: var(--bd-layout-content-max);
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
 }
 
 .bd-form-shell {

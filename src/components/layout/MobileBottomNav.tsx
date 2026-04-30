@@ -18,6 +18,7 @@ export default function MobileBottomNav({
 }) {
   return (
     <nav
+      data-bd-layout="bottom-nav"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-layout-nav)/0.95)] backdrop-blur-xl"
       style={{ paddingBottom: 'var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))' }}
     >
