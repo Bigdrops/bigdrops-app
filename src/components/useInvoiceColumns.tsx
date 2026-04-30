@@ -65,6 +65,22 @@ export function useInvoiceColumns(initial?: InvoiceColumn[]) {
           : column,
       ),
     )
+
+  const toggleDisabled = (key: string) =>
+    setColumns((cols) => {
+      const col = cols.find((c) => c.key === key)
+      if (col?.key.startsWith('custom_')) {
+        return cols.filter((c) => c.key !== key)
+      }
+      return cols.map((column) =>
+        column.key === key
+          ? (normalizeColumnConfig({
+              ...column,
+              visibilityMode: column.visibilityMode === 'hide_full' ? 'show' : 'hide_full',
+            }) as InvoiceColumn)
+          : column,
+      )
+    })
     
   const updateColumn = (key: string, field: string, value: any) => 
     setColumns(cols => cols.map(c => c.key === key ? normalizeColumnConfig({ ...c, [field]: value }) as InvoiceColumn : c))
@@ -114,6 +130,7 @@ export function useInvoiceColumns(initial?: InvoiceColumn[]) {
     isVisible, 
     getColumn, 
     toggleVisible, 
+    toggleDisabled,
     updateColumn, 
     addCustomColumn, 
     removeCustomColumn, 

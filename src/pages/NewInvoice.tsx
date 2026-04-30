@@ -125,6 +125,7 @@ export default function NewInvoice() {
     isVisible,
     getColumn,
     toggleVisible,
+    toggleDisabled,
     updateColumn,
     addCustomColumn,
     removeCustomColumn,
@@ -548,6 +549,7 @@ export default function NewInvoice() {
           isVisible={isVisible}
           getColumn={getColumn}
           toggleVisible={toggleVisible}
+          toggleDisabled={toggleDisabled}
           updateColumn={updateColumn}
           addCustomColumn={addCustomColumn}
           removeCustomColumn={removeCustomColumn}

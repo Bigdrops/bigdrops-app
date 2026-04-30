@@ -50,6 +50,7 @@ export default function SharedDocumentForm(props: any) {
     isVisible,
     getColumn,
     toggleVisible,
+    toggleDisabled,
     updateColumn,
     addCustomColumn,
     removeCustomColumn,
@@ -334,6 +335,7 @@ export default function SharedDocumentForm(props: any) {
             items={items}
             onUpdate={updateColumn}
             onToggle={toggleVisible}
+            onToggleFull={toggleDisabled}
             onAddCustom={addCustomColumn}
             onRemoveCustom={removeCustomColumn}
             onReset={resetColumns}

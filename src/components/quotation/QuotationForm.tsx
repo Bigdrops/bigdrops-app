@@ -338,6 +338,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     isVisible,
     getColumn,
     toggleVisible,
+    toggleDisabled,
     updateColumn,
     addCustomColumn,
     removeCustomColumn,
@@ -1049,6 +1050,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         isVisible={isVisible}
         getColumn={getColumn}
         toggleVisible={toggleVisible}
+        toggleDisabled={toggleDisabled}
         updateColumn={updateColumn}
         addCustomColumn={addCustomColumn}
         removeCustomColumn={removeCustomColumn}

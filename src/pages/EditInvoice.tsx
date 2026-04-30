@@ -117,6 +117,7 @@ export default function EditInvoice() {
     isVisible,
     getColumn,
     toggleVisible,
+    toggleDisabled,
     updateColumn,
     addCustomColumn,
     removeCustomColumn,
@@ -554,6 +555,7 @@ export default function EditInvoice() {
           isVisible={isVisible}
           getColumn={getColumn}
           toggleVisible={toggleVisible}
+          toggleDisabled={toggleDisabled}
           updateColumn={updateColumn}
           addCustomColumn={addCustomColumn}
           removeCustomColumn={removeCustomColumn}

@@ -8,6 +8,7 @@ import {
   RotateCcw,
   Trash2,
   X,
+  Slash,
 } from 'lucide-react'
 
 import { Button } from '../components/ui/button'
@@ -34,6 +35,7 @@ export interface ColumnManagerProps {
   columns: ColumnConfig[]
   onUpdate: (key: string, field: string, value: ColumnUpdateValue) => void
   onToggle: (key: string) => void
+  onToggleFull: (key: string) => void
   onAddCustom: () => void
   onRemoveCustom: (key: string) => void
   onReset: () => void
@@ -62,6 +64,7 @@ function SectionTitle({ children, action }: SectionTitleProps) {
 type BuiltInColumnRowProps = {
   col: ColumnConfig
   onToggle: (key: string) => void
+  onToggleFull: (key: string) => void
   onUpdate: (key: string, field: string, value: ColumnUpdateValue) => void
   onDragStart: (e: DragEvent<HTMLElement>, key: string) => void
   onDragOver: (e: DragEvent<HTMLElement>) => void
@@ -76,6 +79,7 @@ type BuiltInColumnRowProps = {
 function BuiltInColumnRow({
   col,
   onToggle,
+  onToggleFull,
   onUpdate,
   onDragStart,
   onDragOver,
@@ -86,7 +90,14 @@ function BuiltInColumnRow({
   disableMoveDown,
   typeLabel,
 }: BuiltInColumnRowProps) {
-  const isShown = (col.visibilityMode || 'show') === 'show'
+  const mode = col.visibilityMode || 'show'
+  const isShown = mode === 'show'
+  const isFullHidden = mode === 'hide_full'
+  const isDisplayHidden = mode === 'hide_display'
+
+  const PROTECTED_COLUMNS = ['description', 'quantity', 'unit_price', 'amount']
+  const isProtected = PROTECTED_COLUMNS.includes(col.key)
+  const isDescription = col.key === 'description'
 
   return (
     <div
@@ -94,14 +105,16 @@ function BuiltInColumnRow({
         'rounded-[18px] border px-3 py-3 transition',
         isShown
           ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] shadow-[0_1px_3px_rgba(15,23,42,0.04)]'
-          : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] opacity-80',
+          : isFullHidden
+            ? 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] opacity-50 grayscale-[0.5]'
+            : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] opacity-85',
       )}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex shrink-0 flex-col gap-1 pt-1">
+      <div className={cn("flex items-start gap-3", isFullHidden && "pointer-events-none opacity-60")}>
+        <div className="flex shrink-0 flex-col gap-1 pt-1 pointer-events-auto">
           <button
             type="button"
-            draggable
+            draggable={!isFullHidden}
             onDragStart={(e) => onDragStart(e, col.key)}
             onDragOver={onDragOver}
             onDrop={(e) => onDrop(e, col.key)}
@@ -114,18 +127,37 @@ function BuiltInColumnRow({
 
           <button
             type="button"
-            onClick={() => onToggle(col.key)}
+            onClick={() => !isDescription && onToggle(col.key)}
+            disabled={isDescription || isFullHidden}
             className={cn(
               'flex h-7 w-7 items-center justify-center rounded-[9px] border transition',
               isShown
                 ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text)]'
                 : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]',
+              (isDescription || isFullHidden) && 'opacity-30'
             )}
             aria-label={isShown ? `Hide ${col.label}` : `Show ${col.label}`}
-            title={isShown ? 'Hide column' : 'Show column'}
+            title={isDescription ? 'Description cannot be hidden' : isShown ? 'Hide from display' : 'Show on display'}
           >
             {isShown ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
           </button>
+
+          {!isProtected && (
+            <button
+              type="button"
+              onClick={() => onToggleFull(col.key)}
+              className={cn(
+                'flex h-7 w-7 items-center justify-center rounded-[9px] border transition',
+                isFullHidden
+                  ? 'border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)]'
+                  : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]'
+              )}
+              aria-label={isFullHidden ? `Enable ${col.label}` : `Disable ${col.label}`}
+              title={isFullHidden ? 'Enable column' : 'Remove column from document'}
+            >
+              <Slash className="h-3 w-3" />
+            </button>
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
@@ -160,10 +192,12 @@ function BuiltInColumnRow({
                 'inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em]',
                 isShown
                   ? 'border-[var(--bd-emerald-border)] bg-[var(--bd-emerald-bg)] text-[var(--bd-emerald)]'
-                  : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text3)]',
+                  : isFullHidden
+                    ? 'border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)]'
+                    : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text3)]',
               )}
             >
-              {isShown ? 'Visible' : 'Hidden'}
+              {isShown ? 'Visible' : isFullHidden ? 'Disabled' : 'Hidden'}
             </div>
           </div>
         </div>
@@ -196,6 +230,7 @@ function BuiltInColumnRow({
 type CustomColumnCardProps = {
   col: ColumnConfig
   onToggle: (key: string) => void
+  onToggleFull: (key: string) => void
   onUpdate: (key: string, field: string, value: ColumnUpdateValue) => void
   onRemoveCustom: (key: string) => void
 }
@@ -203,6 +238,7 @@ type CustomColumnCardProps = {
 function CustomColumnCard({
   col,
   onToggle,
+  onToggleFull,
   onUpdate,
   onRemoveCustom,
 }: CustomColumnCardProps) {
@@ -282,11 +318,12 @@ function CustomColumnCard({
 
         <button
           type="button"
-          onClick={() => onRemoveCustom(col.key)}
+          onClick={() => onToggleFull(col.key)}
           className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)] transition hover:brightness-95"
           aria-label={`Delete ${col.label}`}
+          title="Delete custom column"
         >
-          <Trash2 className="h-4 w-4" />
+          <X className="h-4 w-4" />
         </button>
       </div>
     </div>
@@ -394,6 +431,7 @@ export default function ColumnManager({
   columns,
   onUpdate,
   onToggle,
+  onToggleFull,
   onAddCustom,
   onRemoveCustom,
   onReset,
@@ -493,6 +531,7 @@ export default function ColumnManager({
                       key={col.key}
                       col={col}
                       onToggle={onToggle}
+                      onToggleFull={onToggleFull}
                       onUpdate={onUpdate}
                       onDragStart={handleDragStart}
                       onDragOver={handleDragOver}
@@ -541,6 +580,7 @@ export default function ColumnManager({
                         key={col.key}
                         col={col}
                         onToggle={onToggle}
+                        onToggleFull={onToggleFull}
                         onUpdate={onUpdate}
                         onRemoveCustom={onRemoveCustom}
                       />
