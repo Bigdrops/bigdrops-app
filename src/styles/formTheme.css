@@ -71,6 +71,23 @@
   --bd-fab-bg: var(--primary);
   --bd-fab-text: var(--primary-foreground);
 
+  /* Overlay Tokens */
+  --bd-overlay-bg: var(--bd-surface);
+  --bd-overlay-text: var(--bd-text);
+  --bd-overlay-muted: var(--bd-text-muted);
+  --bd-overlay-border: var(--bd-border);
+  --bd-overlay-radius: 28px;
+  --bd-overlay-handle-bg: var(--bd-border);
+  --bd-overlay-scrim: 222 47% 11% / 0.4;
+  --bd-overlay-close-bg: var(--bd-surface-muted);
+  --bd-overlay-close-text: var(--bd-text);
+  --bd-overlay-section-bg: var(--bd-surface);
+  --bd-overlay-section-border: var(--bd-border);
+  --bd-overlay-input-bg: var(--bd-input-bg);
+  --bd-overlay-footer-bg: var(--bd-surface);
+  --bd-overlay-disabled-bg: var(--bd-surface-muted);
+  --bd-overlay-disabled-text: var(--bd-text-muted);
+
   /* Layout Non-Color Defaults */
   --bd-layout-density: standard;
   --bd-layout-padding: 1rem;

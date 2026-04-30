@@ -72,19 +72,19 @@ export default function InvoiceListActionSheet({
       <SheetContent
         side="bottom"
         showCloseButton={false}
-        className="h-[min(640px,84vh)] overflow-hidden rounded-t-[26px] border-x-0 border-b-0 border-t border-border bg-background p-0 shadow-2xl"
+        className="h-[min(640px,84vh)] overflow-hidden rounded-t-[var(--bd-overlay-radius)] border-x-0 border-b-0 border-t border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-bg))] p-0 shadow-2xl"
       >
         <div className="flex h-full flex-col">
-          <div className="shrink-0 border-b border-border/80 px-5 pb-4 pt-3">
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
-            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+          <div className="shrink-0 border-b border-[hsl(var(--bd-overlay-border))] px-5 pb-4 pt-3">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[hsl(var(--bd-overlay-handle-bg))]" />
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[hsl(var(--bd-overlay-muted))]">
               {eyebrow}
             </div>
-            <div className="mt-1 text-[20px] font-extrabold leading-[1.15] tracking-[-0.03em] text-foreground">
+            <div className="mt-1 text-[20px] font-extrabold leading-[1.15] tracking-[-0.03em] text-[hsl(var(--bd-overlay-text))]">
               {title}
             </div>
             {subtitle ? (
-              <div className="mt-1.5 text-[13px] leading-5 text-muted-foreground">
+              <div className="mt-1.5 text-[13px] leading-5 text-[hsl(var(--bd-overlay-muted))]">
                 {subtitle}
               </div>
             ) : null}
@@ -97,7 +97,7 @@ export default function InvoiceListActionSheet({
                   key={action.key}
                   type="button"
                   onClick={() => runAction(action)}
-                  className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-[16px] border border-border bg-muted/20 px-2 py-3 text-center transition hover:bg-muted/40"
+                  className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] px-2 py-3 text-center transition hover:bg-[hsl(var(--bd-surface-action-hover))]"
                 >
                   <div
                     className={cn(
@@ -108,7 +108,7 @@ export default function InvoiceListActionSheet({
                   >
                     {action.icon}
                   </div>
-                  <div className="text-[11px] font-bold leading-[1.2] text-foreground">
+                  <div className="text-[11px] font-bold leading-[1.2] text-[hsl(var(--bd-surface-action-text))]">
                     {action.label}
                   </div>
                 </button>
@@ -119,11 +119,11 @@ export default function InvoiceListActionSheet({
               <button
                 type="button"
                 onClick={() => runAction(deleteAction)}
-                className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-[15px] border border-destructive/20 bg-destructive/10 px-4 text-sm font-extrabold text-destructive transition hover:bg-destructive/15"
+                className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-4 text-sm font-extrabold text-[hsl(var(--bd-status-danger-text))] transition hover:brightness-95"
               >
                 <span className="[&_svg]:h-[17px] [&_svg]:w-[17px]">{deleteAction.icon}</span>
                 <span>{deleteAction.label}</span>
-                <ChevronRight className="h-4 w-4 text-destructive" />
+                <ChevronRight className="h-4 w-4" />
               </button>
             ) : null}
           </div>
