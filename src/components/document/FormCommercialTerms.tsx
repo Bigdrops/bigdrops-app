@@ -51,7 +51,7 @@ export function FormCommercialTerms({
   onRemoveAdditionalField,
 }: CommercialTermsSectionProps) {
   const [openSections, setOpenSections] = useState({
-    discount: true,
+    discount: false,
     vat: false,
     wht: false,
     charges: false,

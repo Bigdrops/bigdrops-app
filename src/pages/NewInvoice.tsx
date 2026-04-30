@@ -362,7 +362,10 @@ export default function NewInvoice() {
       result,
       setColumns,
       setItems,
-      updateTopLevelField: (field: string, value: any) => updateInvoice(field, value),
+      updateTopLevelField: (field: string, value: any) => {
+        if (field === 'title') setInvoiceTitle(value)
+        else updateInvoice(field, value)
+      },
       setExtraCharges,
     })
   }

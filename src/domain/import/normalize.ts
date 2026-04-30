@@ -106,6 +106,7 @@ export function normalizeImportData(
     })
   }
 
+  const title = normalizeText((input as any).title)
   const poNumber = normalizeText(input.po_number)
   const notes = normalizeText(input.notes)
   const terms = normalizeText(input.terms)
@@ -114,6 +115,7 @@ export function normalizeImportData(
     ok: true,
     data: {
       topLevel: {
+        title: mode === 'Update' && !title ? undefined : title,
         po_number: mode === 'Update' && !poNumber ? undefined : poNumber,
         notes: mode === 'Update' && !notes ? undefined : notes,
         terms: mode === 'Update' && !terms ? undefined : terms,

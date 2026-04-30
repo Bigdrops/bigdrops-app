@@ -654,7 +654,10 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       result,
       setColumns,
       setItems: (nextItems) => commitGrouping(nextItems),
-      updateTopLevelField: (field, value) => updateQuotation(field, value),
+      updateTopLevelField: (field, value) => {
+        if (field === 'title') updateQuotation('quotation_title', value)
+        else updateQuotation(field as any, value)
+      },
       setExtraCharges: (charges) => setExtraCharges(charges),
     })
   }

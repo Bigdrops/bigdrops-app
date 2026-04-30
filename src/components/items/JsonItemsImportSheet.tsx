@@ -18,8 +18,9 @@ import { cn } from '@/lib/utils'
 
 type ImportAdapter = {
   documentType: 'invoice' | 'quotation'
-  prompts: Record<ImportMode, string>
+  prompts: Record<ImportMode, string> | ((columns: ColumnConfig[], mode: ImportMode) => string)
   createItem: () => InvoiceItem
+  applyResult: (args: any) => void
 }
 
 type JsonItemsImportSheetProps = {
@@ -164,7 +165,10 @@ export default function JsonItemsImportSheet({
 
   const handleCopyPrompt = async () => {
     try {
-      await navigator.clipboard.writeText(adapter.prompts[mode])
+      const prompt = typeof adapter.prompts === 'function'
+        ? adapter.prompts(columns, mode)
+        : adapter.prompts[mode]
+      await navigator.clipboard.writeText(prompt)
       setCopied(true)
       window.setTimeout(() => setCopied(false), 1200)
     } catch {

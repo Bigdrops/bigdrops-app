@@ -10,7 +10,7 @@ export type ImportFieldKey =
   | 'unit_price'
   | 'row_number'
 
-export type AcceptedTopLevelKey = 'po_number' | 'notes' | 'terms' | 'extra_charges' | 'items'
+export type AcceptedTopLevelKey = 'title' | 'po_number' | 'notes' | 'terms' | 'extra_charges' | 'items'
 
 export type CustomColumnDecision =
   | { action: 'create'; label?: string }
@@ -38,6 +38,7 @@ export type ParsedImportRoot = {
 }
 
 export type ImportTopLevelData = {
+  title?: string
   po_number?: string
   notes?: string
   terms?: string

@@ -9,6 +9,7 @@ import {
   Trash2,
   X,
   Slash,
+  Power,
 } from 'lucide-react'
 
 import { Button } from '../components/ui/button'
@@ -155,7 +156,7 @@ function BuiltInColumnRow({
               aria-label={isFullHidden ? `Enable ${col.label}` : `Disable ${col.label}`}
               title={isFullHidden ? 'Enable column' : 'Remove column from document'}
             >
-              <Slash className="h-3 w-3" />
+              <Power className="h-3 w-3" />
             </button>
           )}
         </div>
