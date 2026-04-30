@@ -110,12 +110,26 @@
 
 /* Scoped Layout Content Anchor */
 [data-bd-layout="content"] {
-  padding-left: var(--bd-layout-padding);
-  padding-right: var(--bd-layout-padding);
-  max-width: var(--bd-layout-content-max);
-  margin-left: auto;
-  margin-right: auto;
   width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+@media (min-width: 672px) {
+  [data-bd-layout="content"] {
+    padding-left: var(--bd-layout-padding);
+    padding-right: var(--bd-layout-padding);
+  }
+}
+
+@media (min-width: 1056px) {
+  [data-bd-layout="content"] {
+    max-width: var(--bd-layout-content-max);
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 .bd-form-shell {
