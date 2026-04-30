@@ -74,6 +74,22 @@ export const THEME_COLOR_TOKENS = [
   "bd-status-neutral-bg",
   "bd-status-neutral-text",
   "bd-status-neutral-border",
+  // Navigation Tokens
+  "bd-nav-active-bg",
+  "bd-nav-active-text",
+  "bd-nav-active-icon",
+  "bd-nav-hover-bg",
+  // Action Surface Tokens
+  "bd-surface-action",
+  "bd-surface-action-hover",
+  "bd-surface-action-border",
+  "bd-surface-action-text",
+  "bd-surface-action-muted",
+  "bd-action-icon-bg",
+  "bd-action-icon-text",
+  // Feedback & Global Action Tokens
+  "bd-fab-bg",
+  "bd-fab-text",
 ] as const
 
 export const THEME_NON_COLOR_TOKENS = [

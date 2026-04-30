@@ -5,9 +5,9 @@ import { Sheet, SheetContent } from "@/components/ui/sheet"
 function getActionTone(key: string, label: string, danger = false) {
   if (danger) {
     return {
-      tile: "bg-red-600 text-white",
-      chevron: "text-red-300",
-      row: "border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/15",
+      tile: "bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))] border border-[hsl(var(--bd-status-danger-border))]",
+      chevron: "text-[hsl(var(--bd-status-danger-text))/0.5]",
+      row: "border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))] hover:brightness-[0.98]",
     }
   }
 
@@ -15,44 +15,30 @@ function getActionTone(key: string, label: string, danger = false) {
 
   if (value.includes("view") || value.includes("open")) {
     return {
-      tile: "bg-sky-600 text-white",
-      chevron: "text-sky-300",
-      row: "border-border bg-background text-foreground hover:bg-sky-50/60",
+      tile: "bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))] border border-[hsl(var(--bd-status-info-border))]",
+      chevron: "text-[hsl(var(--bd-status-info-text))/0.5]",
+      row: "border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] text-[hsl(var(--bd-surface-action-text))] hover:bg-[hsl(var(--bd-surface-action-hover))]",
     }
   }
   if (value.includes("edit")) {
     return {
-      tile: "bg-violet-600 text-white",
-      chevron: "text-violet-300",
-      row: "border-border bg-background text-foreground hover:bg-violet-50/60",
+      tile: "bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))] border border-[hsl(var(--bd-status-info-border))]",
+      chevron: "text-[hsl(var(--bd-status-info-text))/0.5]",
+      row: "border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] text-[hsl(var(--bd-surface-action-text))] hover:bg-[hsl(var(--bd-surface-action-hover))]",
     }
   }
   if (value.includes("project")) {
     return {
-      tile: "bg-emerald-600 text-white",
-      chevron: "text-emerald-300",
-      row: "border-border bg-background text-foreground hover:bg-emerald-50/60",
+      tile: "bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))] border border-[hsl(var(--bd-status-info-border))]",
+      chevron: "text-[hsl(var(--bd-status-info-text))/0.5]",
+      row: "border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] text-[hsl(var(--bd-surface-action-text))] hover:bg-[hsl(var(--bd-surface-action-hover))]",
     }
   }
-  if (value.includes("document") || value.includes("link")) {
-    return {
-      tile: "bg-cyan-700 text-white",
-      chevron: "text-cyan-300",
-      row: "border-border bg-background text-foreground hover:bg-cyan-50/60",
-    }
-  }
-  if (value.includes("archive")) {
-    return {
-      tile: "bg-amber-500 text-slate-950",
-      chevron: "text-amber-300",
-      row: "border-border bg-background text-foreground hover:bg-amber-50/60",
-    }
-  }
-
+  
   return {
-    tile: "bg-[hsl(var(--primary))] text-primary-foreground",
-    chevron: "text-primary/35",
-    row: "border-border bg-background text-foreground hover:bg-primary/5",
+    tile: "bg-[hsl(var(--bd-action-icon-bg))] text-[hsl(var(--bd-action-icon-text))]",
+    chevron: "text-[hsl(var(--bd-text-muted))]",
+    row: "border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] text-[hsl(var(--bd-surface-action-text))] hover:bg-[hsl(var(--bd-surface-action-hover))]",
   }
 }
 

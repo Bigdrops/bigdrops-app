@@ -326,16 +326,16 @@ export default function Layout({
                         key={item.key}
                         type="button"
                         onClick={() => handleSalesPick(item.key)}
-                        className="grid w-full grid-cols-[52px,1fr,auto] items-center gap-3 rounded-[20px] border border-black/10 bg-[#fafcff] px-3.5 py-3.5 text-left transition hover:bg-[#f4f7fb]"
+                        className="grid w-full grid-cols-[52px,1fr,auto] items-center gap-3 rounded-[20px] border border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] px-3.5 py-3.5 text-left transition hover:bg-[hsl(var(--bd-surface-action-hover))]"
                       >
                         <span className={cn('grid h-[52px] w-[52px] place-items-center rounded-[16px] shadow-sm', item.iconBg)}>
                           <Icon className="h-6 w-6" />
                         </span>
                         <div className="min-w-0">
-                          <div className="text-[15px] font-bold text-[#111111]">{item.label}</div>
-                          <div className="text-[13px] text-[#738096]">{item.description}</div>
+                          <div className="text-[15px] font-bold text-[hsl(var(--bd-surface-action-text))]">{item.label}</div>
+                          <div className="text-[13px] text-[hsl(var(--bd-surface-action-muted))]">{item.description}</div>
                         </div>
-                        <ChevronRight className="h-[18px] w-[18px] shrink-0 text-[#64748b]" />
+                        <ChevronRight className="h-[18px] w-[18px] shrink-0 text-[hsl(var(--bd-surface-action-muted))]" />
                       </button>
                     )
                   })}

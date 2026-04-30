@@ -176,11 +176,11 @@ export const mobileDrawerUtilityNav: NavItem[] = [
   { key: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
 ]
 
-export const activeNavItemClassName = 'surface-strong shadow-sm'
-export const activeNavIconClassName = 'surface-strong-soft'
-export const inactiveNavItemClassName = 'text-foreground/80 hover:bg-muted/50'
-export const inactiveNavIconClassName = 'bg-muted'
-export const inactiveNavIconColorClassName = 'text-foreground/80'
+export const activeNavItemClassName = 'bg-[hsl(var(--bd-nav-active-bg))] text-[hsl(var(--bd-nav-active-text))] shadow-sm'
+export const activeNavIconClassName = 'bg-[hsl(var(--bd-nav-active-icon)/0.15)] text-[hsl(var(--bd-nav-active-icon))]'
+export const inactiveNavItemClassName = 'text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-nav-hover-bg))]'
+export const inactiveNavIconClassName = 'bg-[hsl(var(--bd-surface-muted))]'
+export const inactiveNavIconColorClassName = 'text-[hsl(var(--bd-text-muted))]'
 
 export function getSalesPath(key: string): string {
   const pathByKey: Record<string, string> = {

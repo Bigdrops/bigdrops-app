@@ -84,7 +84,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
           <SheetTrigger asChild>
             <button
               type="button"
-              className="fixed bottom-24 right-5 z-50 grid h-[52px] w-[52px] place-items-center rounded-[16px] bg-foreground text-background shadow-2xl shadow-black/20 transition active:scale-90 md:hidden"
+              className="fixed bottom-24 right-5 z-50 grid h-[52px] w-[52px] place-items-center rounded-[16px] bg-[hsl(var(--bd-fab-bg))] text-[hsl(var(--bd-fab-text))] shadow-2xl shadow-black/20 transition active:scale-90 md:hidden"
               aria-label="Create new record"
             >
               <Plus className="h-5 w-5" />

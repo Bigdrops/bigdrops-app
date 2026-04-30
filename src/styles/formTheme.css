@@ -52,6 +52,25 @@
   --bd-status-neutral-text: 215 16% 47%;
   --bd-status-neutral-border: 215 16% 47% / 0.2;
 
+  /* Navigation Tokens */
+  --bd-nav-active-bg: var(--bd-surface-muted);
+  --bd-nav-active-text: var(--bd-text);
+  --bd-nav-active-icon: var(--primary);
+  --bd-nav-hover-bg: var(--bd-surface-muted);
+
+  /* Action Surface Tokens */
+  --bd-surface-action: var(--bd-surface);
+  --bd-surface-action-hover: var(--bd-surface-muted);
+  --bd-surface-action-border: var(--bd-border);
+  --bd-surface-action-text: var(--bd-text);
+  --bd-surface-action-muted: var(--bd-text-muted);
+  --bd-action-icon-bg: var(--primary);
+  --bd-action-icon-text: var(--primary-foreground);
+
+  /* FAB Tokens */
+  --bd-fab-bg: var(--primary);
+  --bd-fab-text: var(--primary-foreground);
+
   /* Layout Non-Color Defaults */
   --bd-layout-density: standard;
   --bd-layout-padding: 1rem;
