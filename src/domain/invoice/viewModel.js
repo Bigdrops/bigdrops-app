@@ -1,4 +1,5 @@
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
+import { getStatusTone, getStatusClasses } from '@/lib/statusTheme'
 
 function toNumber(value) {
   const parsed = Number(value || 0)
@@ -57,15 +58,9 @@ export function buildInvoiceViewModel({
   const relatedDocuments = [...safeRelatedCsrs, ...safeRelatedWaybills]
   const projectState = getProjectActionState({ projectId: safeInvoice.project_id, project })
   const documentState = getDocumentActionState({ sourceDocument, relatedDocuments })
-
-  const statusBadgeClass =
-    computedStatus === 'paid'
-      ? 'bg-emerald-50 text-emerald-700'
-      : computedStatus === 'partially_paid'
-        ? 'bg-amber-50 text-amber-700'
-        : computedStatus === 'unpaid'
-          ? 'bg-blue-50 text-blue-700'
-          : 'bg-slate-100 text-slate-700'
+  
+  const statusTone = getStatusTone(computedStatus)
+  const statusBadgeClass = getStatusClasses(statusTone)
 
   const canRecordPayment = computedStatus !== 'paid'
 

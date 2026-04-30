@@ -58,6 +58,22 @@ export const THEME_COLOR_TOKENS = [
   "bd-layout-nav",
   "bd-layout-sidebar",
   "bd-focus-ring",
+  // Status Tokens
+  "bd-status-success-bg",
+  "bd-status-success-text",
+  "bd-status-success-border",
+  "bd-status-warning-bg",
+  "bd-status-warning-text",
+  "bd-status-warning-border",
+  "bd-status-danger-bg",
+  "bd-status-danger-text",
+  "bd-status-danger-border",
+  "bd-status-info-bg",
+  "bd-status-info-text",
+  "bd-status-info-border",
+  "bd-status-neutral-bg",
+  "bd-status-neutral-text",
+  "bd-status-neutral-border",
 ] as const
 
 export const THEME_NON_COLOR_TOKENS = [

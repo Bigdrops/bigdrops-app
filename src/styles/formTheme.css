@@ -31,6 +31,27 @@
   --bd-layout-sidebar: var(--bd-surface);
   --bd-focus-ring: var(--ring);
 
+  /* Status Tokens - Semantic Bridge */
+  --bd-status-success-bg: 142 71% 45% / 0.1;
+  --bd-status-success-text: 142 71% 45%;
+  --bd-status-success-border: 142 71% 45% / 0.2;
+
+  --bd-status-warning-bg: 38 92% 50% / 0.1;
+  --bd-status-warning-text: 38 92% 50%;
+  --bd-status-warning-border: 38 92% 50% / 0.2;
+
+  --bd-status-danger-bg: 0 84% 60% / 0.1;
+  --bd-status-danger-text: 0 84% 60%;
+  --bd-status-danger-border: 0 84% 60% / 0.2;
+
+  --bd-status-info-bg: 217 91% 60% / 0.1;
+  --bd-status-info-text: 217 91% 60%;
+  --bd-status-info-border: 217 91% 60% / 0.2;
+
+  --bd-status-neutral-bg: 215 16% 47% / 0.1;
+  --bd-status-neutral-text: 215 16% 47%;
+  --bd-status-neutral-border: 215 16% 47% / 0.2;
+
   /* Layout Non-Color Defaults */
   --bd-layout-density: standard;
   --bd-layout-padding: 1rem;

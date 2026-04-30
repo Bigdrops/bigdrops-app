@@ -2,6 +2,7 @@ import { FileText, Wrench, ClipboardList, Truck, LucideIcon } from 'lucide-react
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
+import { getStatusTone, getStatusClasses } from '@/lib/statusTheme'
 
 export interface ProjectStatusConfig {
   label: string
@@ -9,19 +10,19 @@ export interface ProjectStatusConfig {
 }
 
 export const PROJECT_STATUS_CONFIG: Record<string, ProjectStatusConfig> = {
-  active: { label: 'Active', className: 'bg-blue-500 text-white' },
-  completed: { label: 'Completed', className: 'bg-slate-500 text-white' },
-  on_hold: { label: 'On Hold', className: 'bg-amber-500 text-white' },
-  cancelled: { label: 'Cancelled', className: 'bg-red-500 text-white' },
+  active: { label: 'Active', className: getStatusClasses(getStatusTone('active')) },
+  completed: { label: 'Completed', className: getStatusClasses(getStatusTone('completed')) },
+  on_hold: { label: 'On Hold', className: getStatusClasses(getStatusTone('on_hold')) },
+  cancelled: { label: 'Cancelled', className: getStatusClasses(getStatusTone('cancelled')) },
 }
 
 export const PAYMENT_STATUS_CONFIG: Record<string, ProjectStatusConfig> = {
-  paid: { label: 'Paid', className: 'bg-emerald-500 text-white' },
-  overdue: { label: 'Past Due', className: 'bg-red-500 text-white' },
-  partially_paid: { label: 'Partially Paid', className: 'bg-amber-500 text-white' },
-  unpaid: { label: 'Unpaid', className: 'bg-blue-500 text-white' },
-  active: { label: 'Active', className: 'bg-blue-500 text-white' },
-  completed: { label: 'Completed', className: 'bg-slate-500 text-white' },
+  paid: { label: 'Paid', className: getStatusClasses(getStatusTone('paid')) },
+  overdue: { label: 'Past Due', className: getStatusClasses(getStatusTone('overdue')) },
+  partially_paid: { label: 'Partially Paid', className: getStatusClasses(getStatusTone('partially_paid')) },
+  unpaid: { label: 'Unpaid', className: getStatusClasses(getStatusTone('unpaid')) },
+  active: { label: 'Active', className: getStatusClasses(getStatusTone('active')) },
+  completed: { label: 'Completed', className: getStatusClasses(getStatusTone('completed')) },
 }
 
 export interface DocTypeConfig {
@@ -75,7 +76,7 @@ export const formatDate = (value: string | number | Date | null | undefined): st
 export function getPaymentStatusConfig(status: string | null | undefined): ProjectStatusConfig {
   return PAYMENT_STATUS_CONFIG[status as string] || {
     label: status ? formatStatusLabel(status) : 'Open',
-    className: 'bg-slate-500 text-white',
+    className: getStatusClasses(getStatusTone(status)),
   }
 }
 
