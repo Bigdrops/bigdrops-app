@@ -8,6 +8,7 @@ export type ImportFieldKey =
   | 'quantity'
   | 'unit'
   | 'unit_price'
+  | 'make'
   | 'row_number'
 
 export type AcceptedTopLevelKey = 'title' | 'po_number' | 'notes' | 'terms' | 'extra_charges' | 'items'

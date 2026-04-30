@@ -8,11 +8,20 @@ export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, 
     !['amount', 'vat_rate', 'discount_rate', 'install_rate'].includes(col.key)
   )
 
-  const itemSchema: Record<string, string> = {}
+  const itemSchema: Record<string, any> = {}
+  const customSchema: Record<string, string> = {}
+  
   visibleColumns.forEach(col => {
-    // For custom columns, we keep the stable key but use the label for AI guidance
-    itemSchema[col.key] = col.label || col.key
+    if (col.key.startsWith('custom_')) {
+      customSchema[col.label || col.key] = "Value"
+    } else {
+      itemSchema[col.key] = col.label || col.key
+    }
   })
+
+  if (Object.keys(customSchema).length > 0) {
+    itemSchema.custom_fields = customSchema
+  }
 
   // Ensure sub_description is available as it's a common requirement for detail extraction
   if (!itemSchema.sub_description) {
@@ -28,7 +37,7 @@ export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, 
       { label: "Delivery", value: 5000 }
     ],
     items: mode === 'Update' 
-      ? [ { row_number: 1, description: "Only fields to change..." } ] 
+      ? [ { row_number: 1, ...itemSchema } ] 
       : [ itemSchema ]
   }
 
@@ -55,6 +64,7 @@ ${JSON.stringify(jsonStructure, null, 2)}
 Rules:
 ${rules.map(r => `- ${r}`).join('\n')}
 - Use exactly these keys for item fields: ${Object.keys(itemSchema).join(', ')}
+${Object.keys(customSchema).length > 0 ? `- Use these keys inside "custom_fields": ${Object.keys(customSchema).join(', ')}` : ''}
 - Do not guess missing values
 - Do not add top-level fields outside this structure`
 }

@@ -9,7 +9,7 @@ import {
   toSnakeCase,
 } from './utils'
 
-const BASE_FIELDS = new Set(['description', 'sub_description', 'quantity', 'unit', 'unit_price', 'row_number'])
+const BASE_FIELDS = new Set(['description', 'sub_description', 'quantity', 'unit', 'unit_price', 'make', 'row_number'])
 
 function detectCollisions(record: Record<string, unknown>, contextLabel: string) {
   const seen = new Map<string, string>()
@@ -60,7 +60,7 @@ export function normalizeImportData(
     const baseFields: NormalizedImportItem['baseFields'] = {}
     const extraFields: Record<string, unknown> = {}
 
-    Object.entries(item).forEach(([rawKey, rawValue]) => {
+    const processEntry = (rawKey: string, rawValue: unknown) => {
       if (isDangerousKey(rawKey)) return
       const key = toSnakeCase(rawKey)
       if (!key) return
@@ -85,6 +85,20 @@ export function normalizeImportData(
         return
       }
 
+      if (key === 'make') {
+        const value = normalizeText(rawValue)
+        if (mode === 'Update' && !value) return
+        if (value !== undefined) baseFields.make = value
+        return
+      }
+
+      if (key === 'custom_fields' && typeof rawValue === 'object' && rawValue !== null) {
+        Object.entries(rawValue as Record<string, unknown>).forEach(([subKey, subValue]) => {
+          processEntry(subKey, subValue)
+        })
+        return
+      }
+
       if (!BASE_FIELDS.has(key)) {
         const normalizedValue = normalizeScalar(rawValue)
         if (mode === 'Update' && (normalizedValue === undefined || normalizedValue === '')) return
@@ -96,6 +110,10 @@ export function normalizeImportData(
         current.values.push(normalizedValue)
         candidateMap.set(key, current)
       }
+    }
+
+    Object.entries(item).forEach(([rawKey, rawValue]) => {
+      processEntry(rawKey, rawValue)
     })
 
     items.push({

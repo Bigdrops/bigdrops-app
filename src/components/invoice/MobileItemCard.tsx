@@ -309,9 +309,7 @@ export default function MobileItemCard({
               Photo
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-          </div>
-
-          {/* Compact Inputs Row */}
+          </div>          {/* Compact Inputs Row */}
           <div className="grid grid-cols-2 gap-x-3 gap-y-2 pt-1 sm:grid-cols-5">
             {isVisible('make') && (
               <div className="min-w-0">
@@ -340,11 +338,11 @@ export default function MobileItemCard({
 
             {isVisible('install_rate') && (
               <div className="min-w-0">
-                <label className={labelCls}>Install Rate</label>
+                <label className={labelCls}>{getColumn('install_rate')?.label || 'Install'}</label>
                 <Input
                   type="number"
                   value={item.install_rate_override ? (item.install_rate as number) ?? '' : ''}
-                  placeholder={autoInstall !== null ? String(Number(autoInstall.toFixed(2))) : 'Auto formula'}
+                  placeholder={autoInstall !== null ? String(Number(autoInstall.toFixed(2))) : 'Auto'}
                   onChange={(e) => {
                     const val = e.target.value
                     onUpdate(index, '__install_rate_override', val === '' ? { install_rate_override: false, install_rate: null } : { install_rate_override: true, install_rate: Number(val) })
@@ -353,6 +351,52 @@ export default function MobileItemCard({
                 />
               </div>
             )}
+
+            {isVisible('vat_rate') && (
+              <div className="min-w-0">
+                <label className={labelCls}>{getColumn('vat_rate')?.label || 'VAT %'}</label>
+                <Input
+                  type="number"
+                  value={(item.vat_rate as number) ?? ''}
+                  placeholder="0"
+                  onChange={(e) => onUpdate(index, 'vat_rate', e.target.value === '' ? null : Number(e.target.value))}
+                  className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
+                />
+              </div>
+            )}
+
+            {isVisible('discount_rate') && (
+              <div className="min-w-0">
+                <label className={labelCls}>{getColumn('discount_rate')?.label || 'Disc %'}</label>
+                <Input
+                  type="number"
+                  value={(item.discount_rate as number) ?? ''}
+                  placeholder="0"
+                  onChange={(e) => onUpdate(index, 'discount_rate', e.target.value === '' ? null : Number(e.target.value))}
+                  className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
+                />
+              </div>
+            )}
+
+            {/* Custom Columns */}
+            {customColumns?.map((col: any) => {
+              if (!isVisible(col.key)) return null
+              const val = (item.custom_data || {})[col.key] ?? ''
+              return (
+                <div key={col.key} className="min-w-0">
+                  <label className={labelCls}>{col.label}</label>
+                  <Input
+                    type={col.type === 'number' ? 'number' : 'text'}
+                    value={val}
+                    onChange={(e) => {
+                      const nextVal = col.type === 'number' ? (e.target.value === '' ? null : Number(e.target.value)) : e.target.value
+                      onUpdate(index, 'custom_data', { ...(item.custom_data || {}), [col.key]: nextVal })
+                    }}
+                    className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
+                  />
+                </div>
+              )
+            })}
           </div>
 
           {isVisible('amount') && (

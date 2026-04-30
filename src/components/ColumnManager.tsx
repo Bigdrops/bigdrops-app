@@ -442,10 +442,31 @@ export default function ColumnManager({
   onResetItemOverrides,
 }: ColumnManagerProps) {
   const [confirmReset, setConfirmReset] = useState<boolean>(false)
+  const [duplicateTitleError, setDuplicateTitleError] = useState<string | null>(null)
 
   const fixedColumnKeys = new Set(FIXED_PDF_COLUMNS.map((column) => column.key))
   const builtinCols = columns.filter((c) => !c.key.startsWith('custom_') && !fixedColumnKeys.has(c.key))
   const customCols = columns.filter((c) => c.key.startsWith('custom_'))
+
+  const handleUpdateLabel = (key: string, newLabel: string) => {
+    const trimmed = newLabel.trim().toLowerCase()
+    if (trimmed) {
+      const duplicate = columns.find(c => 
+        c.key !== key && 
+        (c.visibilityMode || 'show') !== 'hide_full' && 
+        (c.label || '').trim().toLowerCase() === trimmed
+      )
+      
+      if (duplicate) {
+        setDuplicateTitleError(`"${newLabel.trim()}" is already used by ${duplicate.label || duplicate.key}. Choose a unique column title.`)
+        // Still allow typing but set error
+        onUpdate(key, 'label', newLabel)
+        return
+      }
+    }
+    setDuplicateTitleError(null)
+    onUpdate(key, 'label', newLabel)
+  }
 
   const standardItems = items.filter((i) => i.row_type === 'standard')
   const vatOverrideCount = standardItems.filter((i) => i.vat_rate != null).length
@@ -533,7 +554,10 @@ export default function ColumnManager({
                       col={col}
                       onToggle={onToggle}
                       onToggleFull={onToggleFull}
-                      onUpdate={onUpdate}
+                      onUpdate={(key, field, val) => {
+                        if (field === 'label') handleUpdateLabel(key, val as string)
+                        else onUpdate(key, field, val)
+                      }}
                       onDragStart={handleDragStart}
                       onDragOver={handleDragOver}
                       onDrop={handleDrop}
@@ -582,7 +606,10 @@ export default function ColumnManager({
                         col={col}
                         onToggle={onToggle}
                         onToggleFull={onToggleFull}
-                        onUpdate={onUpdate}
+                        onUpdate={(key, field, val) => {
+                          if (field === 'label') handleUpdateLabel(key, val as string)
+                          else onUpdate(key, field, val)
+                        }}
                         onRemoveCustom={onRemoveCustom}
                       />
                     ))}
@@ -657,10 +684,16 @@ export default function ColumnManager({
             </div>
 
             <div className="border-t border-[var(--bd-border-soft)] px-6 py-4">
+              {duplicateTitleError && (
+                <div className="mb-3 rounded-[12px] border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] px-4 py-2.5 text-xs font-bold text-[var(--bd-rose)]">
+                  {duplicateTitleError}
+                </div>
+              )}
               <Button
                 type="button"
                 onClick={onClose}
-                className="h-[54px] w-full rounded-[18px] bg-[var(--bd-text)] text-[18px] font-bold text-white hover:brightness-95"
+                disabled={!!duplicateTitleError}
+                className="h-[54px] w-full rounded-[18px] bg-[var(--bd-text)] text-[18px] font-bold text-white hover:brightness-95 disabled:opacity-50"
               >
                 Done
               </Button>

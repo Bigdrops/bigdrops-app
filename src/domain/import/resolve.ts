@@ -43,6 +43,7 @@ export function resolveImportColumns({
       quantity: item.baseFields.quantity,
       unit: item.baseFields.unit,
       unit_price: item.baseFields.unit_price,
+      make: item.baseFields.make,
     },
     customFields: {},
   }))
