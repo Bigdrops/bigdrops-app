@@ -11,6 +11,7 @@ type ItemLibraryRowProps = {
   isSelected: boolean
   isFlagged?: boolean
   onSelect: (itemId: string) => void
+  onNeedsCleanup?: (itemId: string) => void
 }
 
 function FlagDot({ active }: { active?: boolean }) {
@@ -25,7 +26,7 @@ function FlagDot({ active }: { active?: boolean }) {
   )
 }
 
-export function ItemLibraryRow({ item, isSelected, isFlagged, onSelect }: ItemLibraryRowProps) {
+export function ItemLibraryRow({ item, isSelected, isFlagged, onSelect, onNeedsCleanup }: ItemLibraryRowProps) {
   const diff = getPriceDelta(item.standard_price, item.last_sold_price)
 
   return (
@@ -41,58 +42,55 @@ export function ItemLibraryRow({ item, isSelected, isFlagged, onSelect }: ItemLi
           : 'border-l-[3px] border-l-transparent bg-[rgba(255,250,243,0.48)] hover:bg-[#f8efe3]',
       ].join(' ')}
     >
-      <div className="mb-[5px] flex items-center justify-between gap-3 leading-snug">
-        <div className="flex min-w-0 items-center gap-[6px]">
-          <FlagDot active={isFlagged} />
-          <span className="truncate text-[13px] font-bold leading-tight text-[#2c2218]">{item.name}</span>
+      <div className="flex items-start justify-between gap-3 leading-snug">
+        <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex items-center gap-[6px]">
+            <FlagDot active={isFlagged} />
+            <span className="truncate text-[13px] font-bold leading-tight text-[#2c2218]">{item.name}</span>
+          </div>
+          
+          <div className="flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] text-[#8a8277]">
+            <span className="font-['JetBrains_Mono'] text-[#6f6458]">
+              {formatItemPrice(item.last_sold_price, 'No sales')}
+            </span>
+
+            {diff && diff.direction !== 'flat' && (
+              <span className="font-['JetBrains_Mono'] text-[10px]">
+                {diff.direction === 'up' ? '↑' : '↓'}{Math.abs(diff.pct)}%
+              </span>
+            )}
+
+            <span className="text-[#c8b59f]">·</span>
+            
+            <span className="flex-shrink-0">
+              {formatCompactUsageCount(item.usage_count)}
+            </span>
+            
+            <span className="text-[#c8b59f]">·</span>
+
+            <span className="flex-shrink-0">
+              {formatLastUsedDate(item.last_used_at)}
+            </span>
+          </div>
         </div>
-        {isFlagged && (
-          <span className="flex-shrink-0 rounded-[4px] bg-[#fdf2e2] px-[5px] py-[1px] text-[9px] font-bold uppercase tracking-wider text-[#a06d2b] border border-[#f5e4cd]">
-            Needs cleanup
+
+        <div className="flex flex-col items-end gap-1.5">
+          <span className="font-['JetBrains_Mono'] text-[13px] font-bold text-[#2c2218]">
+            {formatItemPrice(item.standard_price)}
           </span>
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="font-['JetBrains_Mono'] text-[11px] font-semibold text-[#5e4a36]">
-          {formatItemPrice(item.standard_price)}
-        </span>
-
-        <span className="px-[2px] text-[10px] text-[#c8b59f]">.</span>
-
-        <span className="text-[11px] text-[#87735d]">Last</span>
-        <span className="font-['JetBrains_Mono'] text-[11px] font-semibold text-[#4f3d2d]">
-          {formatItemPrice(item.last_sold_price, 'No sales yet')}
-        </span>
-
-        {diff && diff.direction !== 'flat' ? (
-          <span
-            className={[
-              'rounded-[5px] border px-[5px] py-[1px] font-["JetBrains_Mono"] text-[10px] font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]',
-              diff.direction === 'up'
-                ? 'border-[#b8cfb1] bg-[#dde9d7] text-[#47624a]'
-                : 'border-[#e1c3bf] bg-[#f0dbd6] text-[#8b4d47]',
-            ].join(' ')}
-          >
-            {diff.direction === 'up' ? '▲' : '▼'}
-            {Math.abs(diff.pct)}%
-          </span>
-        ) : null}
-
-        <span className="px-[2px] text-[10px] text-[#c8b59f]">.</span>
-
-        <span
-          className={[
-            'rounded-[999px] border px-[7px] py-[1px] font-["JetBrains_Mono"] text-[10px] font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]',
-            isSelected
-              ? 'border-[#b99874] bg-[#e7d4bb] text-[#654b34]'
-              : 'border-[#d9c8b4] bg-[#efe4d6] text-[#89745f]',
-          ].join(' ')}
-        >
-          {formatCompactUsageCount(item.usage_count)}
-        </span>
-
-        <span className="text-[11px] text-[#aa9882]">{formatLastUsedDate(item.last_used_at)}</span>
+          {isFlagged && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNeedsCleanup?.(item.item_id);
+              }}
+              className="flex-shrink-0 rounded-[4px] bg-[#fdf2e2] px-[5px] py-[1.5px] text-[9px] font-bold uppercase tracking-wider text-[#a06d2b] border border-[#f5e4cd] transition-colors hover:bg-[#f5e4cd]"
+            >
+              Review
+            </button>
+          )}
+        </div>
       </div>
     </button>
   )

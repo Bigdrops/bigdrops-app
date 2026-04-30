@@ -62,6 +62,7 @@ function BackArrow() {
 
 export default function ItemLibraryPage() {
   const [searchText, setSearchText] = useState('')
+  const [workflowMode, setWorkflowMode] = useState<'library' | 'cleanup'>('library')
   const [viewMode, setViewMode] = useState<ItemLibraryViewMode>('catalog')
   const [activeFilter, setActiveFilter] = useState<ItemLibraryFilterType>('all')
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
@@ -87,6 +88,8 @@ export default function ItemLibraryPage() {
     () => new Set(allDuplicateGroups.flatMap((group) => group.members.map((member) => member.item_id))),
     [allDuplicateGroups],
   )
+
+  const totalUnresolvedIssues = allDuplicateGroups.length
 
   const filteredItems = useMemo(() => {
     const normalizedSearch = searchText.trim().toLowerCase()
@@ -121,6 +124,7 @@ export default function ItemLibraryPage() {
   }, [filteredItems])
 
   useEffect(() => {
+    if (workflowMode !== 'cleanup') return
     if (viewMode !== 'duplicates' && viewMode !== 'advanced_cleanup') return
     if (!duplicateGroups.length) {
       setSelectedDuplicateGroupId(null)
@@ -131,9 +135,10 @@ export default function ItemLibraryPage() {
       if (current && duplicateGroups.some((group) => group.group_id === current)) return current
       return duplicateGroups[0].group_id
     })
-  }, [duplicateGroups, viewMode])
+  }, [duplicateGroups, viewMode, workflowMode])
 
   useEffect(() => {
+    if (workflowMode !== 'cleanup') return
     if ((viewMode !== 'duplicates' && viewMode !== 'advanced_cleanup') || !selectedDuplicateGroupId) return
 
     const activeGroup = duplicateGroups.find((group) => group.group_id === selectedDuplicateGroupId)
@@ -143,7 +148,7 @@ export default function ItemLibraryPage() {
       if (current && activeGroup.members.some((member) => member.item_id === current)) return current
       return activeGroup.members[0].item_id
     })
-  }, [duplicateGroups, selectedDuplicateGroupId, viewMode])
+  }, [duplicateGroups, selectedDuplicateGroupId, viewMode, workflowMode])
 
   const selectedItem = useMemo(
     () => filteredItems.find((item) => item.item_id === selectedItemId) || null,
@@ -195,6 +200,7 @@ export default function ItemLibraryPage() {
     const result = await mergeItems(request)
     const relinkedTotal = result.relinked_invoice_rows + result.relinked_quotation_rows
 
+    setWorkflowMode('library')
     setViewMode('catalog')
     setSelectedDuplicateGroupId(null)
     setSelectedItemId(result.winner_item_id)
@@ -276,6 +282,25 @@ export default function ItemLibraryPage() {
     return results
   }
 
+  const handleNeedsCleanupDeepLink = (itemId: string) => {
+    const group = allDuplicateGroups.find(g => g.members.some(m => m.item_id === itemId))
+    
+    if (group) {
+      setWorkflowMode('cleanup')
+      setViewMode('duplicates')
+      setSelectedDuplicateGroupId(group.group_id)
+      setSelectedItemId(itemId)
+      if (window.innerWidth < 768) setMobileDetailOpen(true)
+    } else {
+      setWorkflowMode('cleanup')
+      setViewMode('duplicates')
+      toast({
+        title: 'Cleanup group not found',
+        description: 'The item might have already been resolved or the group is no longer valid.',
+      })
+    }
+  }
+
   const totalCount = filteredItems.length
 
   return (
@@ -286,38 +311,68 @@ export default function ItemLibraryPage() {
       contentClassName="mx-auto w-full max-w-6xl px-0 py-0 md:px-6 md:py-6"
     >
       <div className="overflow-hidden bg-[radial-gradient(circle_at_top,_#f8f1e6_0%,_#eee4d6_36%,_#e5dac9_100%)] md:rounded-[28px] md:border md:border-[#d6c6b0] md:shadow-[0_24px_60px_rgba(88,67,41,0.12)]">
-        <header className="flex h-[54px] items-center gap-0 border-b border-[#d7c7b3] bg-[#f3eadf]/95 px-5 backdrop-blur-sm">
+        <header className="flex h-[54px] items-center gap-4 border-b border-[#d7c7b3] bg-[#f3eadf]/95 px-5 backdrop-blur-sm">
           <button
             type="button"
             onClick={() => window.history.back()}
             aria-label="Go back"
-            className="mr-0 hidden items-center gap-[6px] rounded-[8px] border-none bg-transparent px-[10px] py-[6px] text-[13px] font-semibold text-[#7c6954] transition-all duration-150 hover:bg-[#e6dacb] hover:text-[#2a2118] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c6a45] md:flex"
+            className="hidden items-center gap-[6px] rounded-[8px] border-none bg-transparent px-[10px] py-[6px] text-[13px] font-semibold text-[#7c6954] transition-all duration-150 hover:bg-[#e6dacb] hover:text-[#2a2118] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c6a45] md:flex"
           >
             <BackArrow />
-            Back
           </button>
 
-          <div className="pointer-events-none flex flex-1 items-center justify-center gap-2">
-            <h1 className="text-[14px] font-extrabold tracking-[-0.01em] text-[#2c2218]">Item Library</h1>
-            {!summaryLoading ? (
-              <span className="rounded-full border border-[#d3c0a8] bg-[#e9dccb] px-[9px] py-[2px] font-['JetBrains_Mono'] text-[10px] font-bold text-[#78644e] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
-                {totalCount} {totalCount === 1 ? 'item' : 'items'}
-              </span>
-            ) : null}
+          <div className="flex flex-1 items-center justify-center">
+            <div className="flex items-center gap-1 rounded-[12px] border border-[#ccb79b] bg-[#fffaf1]/50 p-[3px] shadow-[inset_0_1px_2px_rgba(94,72,46,0.05)]">
+              <button
+                type="button"
+                onClick={() => {
+                  setWorkflowMode('library')
+                  setViewMode('catalog')
+                }}
+                className={[
+                  "rounded-[9px] px-4 py-1.5 text-[12px] font-bold transition-all duration-200",
+                  workflowMode === 'library'
+                    ? "bg-[#8c6a45] text-white shadow-[0_2px_4px_rgba(88,67,41,0.2)]"
+                    : "text-[#7b644c] hover:bg-[#efe4d4]"
+                ].join(' ')}
+              >
+                Library
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setWorkflowMode('cleanup')
+                  setViewMode('catalog')
+                }}
+                className={[
+                  "relative rounded-[9px] px-4 py-1.5 text-[12px] font-bold transition-all duration-200",
+                  workflowMode === 'cleanup'
+                    ? "bg-[#8c6a45] text-white shadow-[0_2px_4px_rgba(88,67,41,0.2)]"
+                    : "text-[#7b644c] hover:bg-[#efe4d4]"
+                ].join(' ')}
+              >
+                Cleanup Hub
+                {totalUnresolvedIssues > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#a06d2b] px-1 text-[9px] font-bold text-white ring-2 ring-[#f3eadf]">
+                    {totalUnresolvedIssues}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-[6px] rounded-[10px] border border-[#ccb79b] bg-[#fffaf1] px-3 py-[7px] text-[11px] font-bold text-[#7b644c] shadow-[0_10px_18px_rgba(94,72,46,0.09),inset_0_1px_0_rgba(255,255,255,0.65)]">
-            <DownloadIcon />
-            <span className="hidden sm:inline">Advanced export in panel</span>
-          </div>
+          <div className="w-[44px] hidden md:block" />
         </header>
-        <ItemLibraryStatusStrip
-          totalItems={summaryItems.length}
-          duplicateGroups={allDuplicateGroups}
-          flaggedCleanupExport={flaggedCleanupExport}
-          mergeHistoryCount={mergeHistoryCount}
-          loading={summaryLoading}
-        />
+
+        {workflowMode === 'cleanup' && viewMode === 'catalog' && (
+          <ItemLibraryStatusStrip
+            totalItems={summaryItems.length}
+            duplicateGroups={allDuplicateGroups}
+            flaggedCleanupExport={flaggedCleanupExport}
+            mergeHistoryCount={mergeHistoryCount}
+            loading={summaryLoading}
+          />
+        )}
 
         {summaryError ? (
           <div className="border-b border-[#e0b7b1] bg-[#fff4f1] px-5 py-3 text-[12px] text-[#a0362b]">
@@ -330,6 +385,7 @@ export default function ItemLibraryPage() {
             <ItemLibraryListPanel
               items={filteredItems}
               duplicateGroups={duplicateGroups}
+              workflowMode={workflowMode}
               viewMode={viewMode}
               selectedItemId={selectedItemId}
               selectedDuplicateGroupId={selectedDuplicateGroupId}
@@ -356,7 +412,9 @@ export default function ItemLibraryPage() {
                 setSelectedItemId(itemId)
                 if (window.innerWidth < 768) setMobileDetailOpen(true)
               }}
+              onNeedsCleanup={handleNeedsCleanupDeepLink}
               flaggedItemIds={allDuplicateItemIdsSet}
+              totalUnresolvedIssues={totalUnresolvedIssues}
             />
           </div>
 
@@ -368,12 +426,12 @@ export default function ItemLibraryPage() {
                 className="flex items-center gap-[6px] border-none bg-transparent px-4 py-3 text-[13px] font-semibold text-[#8a8277] transition-colors hover:text-[#1a1814]"
               >
                 <BackArrow />
-                All Items
+                {workflowMode === 'library' ? 'Library' : 'Cleanup'}
               </button>
             </div>
 
             <div className="flex-1 overflow-hidden">
-              {viewMode === 'duplicates' ? (
+              {workflowMode === 'cleanup' && viewMode === 'duplicates' ? (
                 <ItemLibraryDuplicateReviewPanel
                   aliases={selectedGroupAliases}
                   aliasesError={aliasesError}
@@ -387,18 +445,56 @@ export default function ItemLibraryPage() {
                   onInspectItem={(itemId) => setSelectedItemId(itemId)}
                   onMerge={handleMerge}
                 />
-              ) : viewMode === 'advanced_cleanup' ? (
+              ) : workflowMode === 'cleanup' && viewMode === 'advanced_cleanup' ? (
                 <ItemLibraryAdvancedCleanupPanel
                   applyLoading={mergeLoading}
                   exportPayload={flaggedCleanupExport}
                   onApplyProposals={handleApplyCleanupProposals}
                 />
-              ) : viewMode === 'merge_history' ? (
+              ) : workflowMode === 'cleanup' && viewMode === 'merge_history' ? (
                 <ItemLibraryMergeHistoryPanel
                   data={mergeHistory}
                   loading={mergeHistoryLoading}
                   error={null}
                 />
+              ) : workflowMode === 'cleanup' && viewMode === 'catalog' ? (
+                <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-[#faf9f7]">
+                   <div className="max-w-md space-y-6">
+                      <div className="space-y-2">
+                        <h2 className="text-3xl font-extrabold tracking-tight text-[#2c2218]">Cleanup Hub</h2>
+                        <p className="text-[#7c6954] text-[13px] leading-relaxed">Maintain your catalog health, resolve duplicates, and run AI-powered cleanup flows to keep your data pristine.</p>
+                      </div>
+
+                      <div className="grid gap-3">
+                        <button 
+                          onClick={() => setViewMode('duplicates')}
+                          className="flex flex-col items-start gap-1 rounded-2xl border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                        >
+                          <div className="flex w-full items-center justify-between">
+                            <span className="text-sm font-bold text-[#2c2218]">Duplicate Groups</span>
+                            <span className="rounded-full bg-[#e8d5bc] px-2.5 py-0.5 text-[10px] font-bold text-[#634a31] group-hover:bg-[#8c6a45] group-hover:text-white transition-colors">{totalUnresolvedIssues} groups</span>
+                          </div>
+                          <span className="text-[11px] text-[#8a8277]">Review similar items and merge them manually into a single canonical entry.</span>
+                        </button>
+
+                        <button 
+                          onClick={() => setViewMode('advanced_cleanup')}
+                          className="flex flex-col items-start gap-1 rounded-2xl border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                        >
+                          <span className="text-sm font-bold text-[#2c2218]">Advanced AI Cleanup</span>
+                          <span className="text-[11px] text-[#8a8277]">Export flagged data for AI processing and bulk-apply cleaning proposals.</span>
+                        </button>
+
+                        <button 
+                          onClick={() => setViewMode('merge_history')}
+                          className="flex flex-col items-start gap-1 rounded-2xl border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                        >
+                          <span className="text-sm font-bold text-[#2c2218]">Merge History</span>
+                          <span className="text-[11px] text-[#8a8277]">Audit previous merges and review the history of catalog maintenance.</span>
+                        </button>
+                      </div>
+                   </div>
+                </div>
               ) : (
                 <ItemLibraryDetailPanel
                   item={selectedItem}

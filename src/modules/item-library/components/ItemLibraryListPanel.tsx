@@ -11,6 +11,7 @@ import { ItemSearchBar } from './ItemSearchBar'
 type ItemLibraryListPanelProps = {
   items: ItemCatalogItem[]
   duplicateGroups: DuplicateCandidateGroup[]
+  workflowMode: 'library' | 'cleanup'
   viewMode: ItemLibraryViewMode
   selectedItemId: string | null
   selectedDuplicateGroupId: string | null
@@ -23,7 +24,9 @@ type ItemLibraryListPanelProps = {
   onSelectItem: (itemId: string) => void
   onSelectDuplicateGroup: (groupId: string) => void
   onInspectDuplicateItem: (groupId: string, itemId: string) => void
+  onNeedsCleanup?: (itemId: string) => void
   flaggedItemIds?: Set<string>
+  totalUnresolvedIssues?: number
 }
 
 function SkeletonRow({ wide }: { wide?: boolean }) {
@@ -62,6 +65,7 @@ function FilterChip({ label, active, onClick }: FilterChipProps) {
 export function ItemLibraryListPanel({
   items,
   duplicateGroups,
+  workflowMode,
   viewMode,
   selectedItemId,
   selectedDuplicateGroupId,
@@ -74,54 +78,75 @@ export function ItemLibraryListPanel({
   onSelectItem,
   onSelectDuplicateGroup,
   onInspectDuplicateItem,
+  onNeedsCleanup,
   flaggedItemIds,
+  totalUnresolvedIssues = 0,
 }: ItemLibraryListPanelProps) {
+  const isLibrary = workflowMode === 'library'
+
   return (
     <div className="flex h-full flex-col overflow-hidden border-r border-[#d5c4af] bg-[linear-gradient(180deg,_#f6ede1_0%,_#f0e5d6_100%)] shadow-[inset_-1px_0_0_rgba(255,255,255,0.35)]">
       <div className="flex-shrink-0 border-b border-[#ddd0bf] px-4 pb-3 pt-4">
         <div className="mb-[10px] flex items-center justify-between">
-          <span className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#8a745f]">Catalog</span>
-          <span className="font-['JetBrains_Mono'] text-[11px] text-[#aa9984]">
-            {loading ? '-' : `${items.length} item${items.length !== 1 ? 's' : ''}`}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#8a745f]">
+              {isLibrary ? 'Library' : 'Cleanup Hub'}
+            </span>
+            <span className="text-[10px] font-medium text-[#aa9984]">
+              {loading ? '...' : (
+                <>
+                  {items.length} items
+                  {totalUnresolvedIssues > 0 && (
+                    <>
+                      <span className="mx-1">·</span>
+                      <span className="text-[#a06d2b]">{totalUnresolvedIssues} issues</span>
+                    </>
+                  )}
+                </>
+              )}
+            </span>
+          </div>
         </div>
 
-        <ItemSearchBar value={searchText} onChange={onSearchTextChange} placeholder="Search items..." />
+        {isLibrary && (
+          <ItemSearchBar value={searchText} onChange={onSearchTextChange} placeholder="Search items..." />
+        )}
       </div>
 
-      <div className="flex flex-shrink-0 gap-2 overflow-x-auto border-b border-[#e3d5c5]/80 px-4 py-[10px]">
-        <FilterChip label="Items" active={viewMode === 'catalog'} onClick={() => onViewModeChange('catalog')} />
-        <FilterChip
-          label={`Possible Duplicates${duplicateGroups.length ? ` (${duplicateGroups.length})` : ''}`}
-          active={viewMode === 'duplicates'}
-          onClick={() => onViewModeChange('duplicates')}
-        />
-        <FilterChip
-          label="Advanced Cleanup"
-          active={viewMode === 'advanced_cleanup'}
-          onClick={() => onViewModeChange('advanced_cleanup')}
-        />
-        <FilterChip
-          label="Merge History"
-          active={viewMode === 'merge_history'}
-          onClick={() => onViewModeChange('merge_history')}
-        />
-      </div>
-
-      <div className="flex flex-shrink-0 gap-[6px] overflow-x-auto border-b border-[#e3d5c5]/80 px-4 pb-[10px] pt-[10px]">
-        <FilterChip label="All" active={activeFilter === 'all'} onClick={() => onFilterChange('all')} />
-        <FilterChip
-          label="Needs cleanup"
-          active={activeFilter === 'needs_cleanup'}
-          onClick={() => onFilterChange('needs_cleanup')}
-        />
-        <FilterChip label="Invoice" active={activeFilter === 'invoice'} onClick={() => onFilterChange('invoice')} />
-        <FilterChip
-          label="Quotation"
-          active={activeFilter === 'quotation'}
-          onClick={() => onFilterChange('quotation')}
-        />
-      </div>
+      {isLibrary ? (
+        <div className="flex flex-shrink-0 gap-[6px] overflow-x-auto border-b border-[#e3d5c5]/80 px-4 pb-[10px] pt-[10px]">
+          <FilterChip label="All" active={activeFilter === 'all'} onClick={() => onFilterChange('all')} />
+          <FilterChip
+            label="Flagged"
+            active={activeFilter === 'needs_cleanup'}
+            onClick={() => onFilterChange('needs_cleanup')}
+          />
+          <FilterChip label="Invoice" active={activeFilter === 'invoice'} onClick={() => onFilterChange('invoice')} />
+          <FilterChip
+            label="Quotation"
+            active={activeFilter === 'quotation'}
+            onClick={() => onFilterChange('quotation')}
+          />
+        </div>
+      ) : (
+        <div className="flex flex-shrink-0 gap-2 overflow-x-auto border-b border-[#e3d5c5]/80 px-4 py-[10px]">
+          <FilterChip
+            label={`Duplicate Groups${duplicateGroups.length ? ` (${duplicateGroups.length})` : ''}`}
+            active={viewMode === 'duplicates'}
+            onClick={() => onViewModeChange('duplicates')}
+          />
+          <FilterChip
+            label="Advanced Cleanup"
+            active={viewMode === 'advanced_cleanup'}
+            onClick={() => onViewModeChange('advanced_cleanup')}
+          />
+          <FilterChip
+            label="Merge History"
+            active={viewMode === 'merge_history'}
+            onClick={() => onViewModeChange('merge_history')}
+          />
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto" role="listbox" aria-label="Item catalog">
         {loading ? (
@@ -133,7 +158,7 @@ export function ItemLibraryListPanel({
             <SkeletonRow wide />
             <SkeletonRow />
           </>
-        ) : viewMode === 'duplicates' || viewMode === 'advanced_cleanup' ? (
+        ) : !isLibrary && (viewMode === 'duplicates' || viewMode === 'advanced_cleanup') ? (
           duplicateGroups.length === 0 ? (
             <div className="px-4 py-10 text-center">
               <p className="text-[13px] font-semibold text-[#75624f]">No duplicate candidates found</p>
@@ -174,6 +199,7 @@ export function ItemLibraryListPanel({
               isSelected={item.item_id === selectedItemId}
               isFlagged={flaggedItemIds?.has(item.item_id)}
               onSelect={onSelectItem}
+              onNeedsCleanup={onNeedsCleanup}
             />
           ))
         )}
