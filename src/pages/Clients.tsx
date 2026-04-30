@@ -5,12 +5,13 @@ import Layout from "../components/Layout"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"
 import { toast } from "../hooks/use-toast"
 
-import { Button } from "../components/ui/button"
 import MobileFab from "../components/layout/MobileFab"
-import MobileListPageShell from "../components/layout/MobileListPageShell"
+import ModuleShell from "@/components/layout/ModuleShell"
+import ModuleRowCard from "@/components/layout/ModuleRowCard"
+import { SkeletonRow } from "@/components/loading/AppLoadingStates"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 
-import { Archive, Eye, MoreHorizontal, Pencil, Trash2, Users } from "lucide-react"
+import { Archive, Eye, Pencil, Trash2, Users } from "lucide-react"
 
 type Client = {
   id: string | number
@@ -44,50 +45,11 @@ function getClientCategoryLabel(cat?: string | null) {
   return `${normalized} client`
 }
 
-const ACCENT_VARIANTS = [
-  {
-    rail: "bg-violet-500",
-    tile: "bg-violet-100 text-violet-700 ring-1 ring-violet-200",
-    eyebrow: "text-violet-700",
-    meta: "text-violet-700/80",
-    chip: "border border-violet-200 bg-violet-50 text-violet-700",
-  },
-  {
-    rail: "bg-violet-600",
-    tile: "bg-violet-200 text-violet-800 ring-1 ring-violet-300",
-    eyebrow: "text-violet-800",
-    meta: "text-violet-800/80",
-    chip: "border border-violet-300 bg-violet-100 text-violet-800",
-  },
-  {
-    rail: "bg-purple-500",
-    tile: "bg-purple-100 text-purple-700 ring-1 ring-purple-200",
-    eyebrow: "text-purple-700",
-    meta: "text-purple-700/80",
-    chip: "border border-purple-200 bg-purple-50 text-purple-700",
-  },
-  {
-    rail: "bg-purple-600",
-    tile: "bg-purple-200 text-purple-800 ring-1 ring-purple-300",
-    eyebrow: "text-purple-800",
-    meta: "text-purple-800/80",
-    chip: "border border-purple-300 bg-purple-100 text-purple-800",
-  },
-  {
-    rail: "bg-violet-700",
-    tile: "bg-violet-200 text-violet-900 ring-1 ring-violet-300",
-    eyebrow: "text-violet-900",
-    meta: "text-violet-900/80",
-    chip: "border border-violet-300 bg-violet-100 text-violet-900",
-  },
-]
-
 export default function Clients() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [query, setQuery] = useState<string>("")
   const [category, setCategory] = useState<string>("All")
-  const [showFilters, setShowFilters] = useState(false)
   const [clientToDelete, setClientToDelete] = useState<string | number | null>(null)
   const [activeClient, setActiveClient] = useState<Client | null>(null)
 
@@ -150,112 +112,65 @@ export default function Clients() {
     await reload()
   }
 
+  const filterOptions = [
+    {
+      label: "Category",
+      value: category,
+      options: categories,
+      onChange: (v: string) => setCategory(v),
+    },
+  ]
+
   return (
     <Layout title="Clients" session={null} hidePageHeader>
-      <MobileListPageShell
-          eyebrow="Clients"
-          title="Clients"
-          summary={loading ? "Loading clients..." : `${clients.length} clients total`}
-          tone="violet"
-          onPrimaryAction={() => navigate("/clients/new")}
-          searchValue={query}
-          onSearchChange={setQuery}
-          searchPlaceholder="Search clients..."
-          onFilterClick={() => setShowFilters((prev) => !prev)}
-          filterPanel={showFilters ? (
-            <div className="flex flex-wrap gap-2">
-              {categories.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => setCategory(option)}
-                  className={option === category
-                    ? "rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white"
-                    : "rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground"}
-                >
-                  {option}
-                </button>
-              ))}
-              <Button variant="ghost" className="h-8 rounded-full px-3 text-xs font-semibold" onClick={reload}>
-                Refresh
-              </Button>
+      <ModuleShell
+        eyebrow="Directory"
+        title="Clients"
+        summary={loading ? "Loading clients..." : `${filtered.length} clients total`}
+        tone="violet"
+        onPrimaryAction={() => navigate("/clients/new")}
+        searchValue={query}
+        onSearchChange={setQuery}
+        searchPlaceholder="Search by name, city, or phone..."
+        filters={filterOptions}
+        hasActiveFilters={category !== "All"}
+        onResetFilters={() => setCategory("All")}
+        records={loading ? [] : filtered}
+        renderRow={(client) => (
+          <ModuleRowCard
+            key={client.id}
+            title={client.name}
+            subtitle={client.phone || "No phone number"}
+            tertiary={formatLocation(client.city, client.state)}
+            statusLabel={getClientCategoryLabel(client.category)}
+            statusClassName="bg-violet-100 text-violet-700"
+            onClick={() => navigate(`/clients/${client.id}`)}
+            onActionClick={() => setActiveClient(client)}
+          />
+        )}
+        emptyState={
+          <div className="flex flex-col items-center justify-center gap-4 rounded-[26px] border border-dashed border-border bg-card/50 py-16 text-center shadow-inner">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
+              <Users className="h-7 w-7" />
             </div>
-          ) : null}
-      >
-
-        {loading ? (
-          <div className="grid gap-3">
-            {Array.from({ length: 5 }).map((_, index) => (
-              <div key={index} className="rounded-[22px] border border-border bg-card p-4 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
-                <div className="h-20 animate-pulse rounded-[16px] bg-muted" />
+            <div>
+              <div className="text-sm font-semibold text-foreground">No clients found</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {query ? "Try a different search term" : "Add your first client to get started"}
               </div>
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-border bg-card p-10 text-center shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)]">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] bg-muted/60">
-              <Users className="h-5 w-5 text-muted-foreground" />
             </div>
-            <h3 className="mt-4 text-base font-semibold text-foreground">No clients found</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Try a different search or add your first client.
-            </p>
           </div>
-        ) : (
+        }
+      >
+        {loading && (
           <div className="grid gap-3">
-            {filtered.map((client, index) => {
-              const accent = ACCENT_VARIANTS[index % ACCENT_VARIANTS.length]
-              const cat = normalizeCategory(client.category)
-              const location = formatLocation(client.city, client.state)
-              return (
-                <div
-                  key={client.id}
-                  onClick={() => navigate(`/clients/${client.id}`)}
-                  className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-                >
-                  <div className={`absolute inset-y-0 left-0 w-1 rounded-l-[22px] ${accent.rail}`} />
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                    <div className={`grid h-12 w-12 place-items-center rounded-2xl text-sm font-extrabold ${accent.tile}`}>
-                      {initials(client.name)}
-                    </div>
-                    <div className="min-w-0">
-                      <div className={`text-[11px] font-bold uppercase tracking-[0.16em] ${accent.eyebrow}`}>
-                        {getClientCategoryLabel(client.category)}
-                      </div>
-                      <div className="text-lg font-bold tracking-[-0.03em] text-foreground">{client.name}</div>
-                      <div className="mt-1 text-sm text-muted-foreground">{location}</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setActiveClient(client)
-                      }}
-                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-                      aria-label={`Open actions for ${client.name}`}
-                    >
-                      <MoreHorizontal className="h-5 w-5" />
-                    </button>
-                  </div>
-                  <div className={`mt-3 text-[13px] leading-[1.5] ${accent.meta}`}>
-                    {client.phone ?? "No phone number saved"}
-                  </div>
-                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/80 pt-4">
-                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${accent.chip}`}>
-                      {cat}
-                    </span>
-                    <div className="text-[12px] font-medium text-muted-foreground">
-                      {location}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+            {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
           </div>
         )}
+      </ModuleShell>
 
-        <MobileFab onClick={() => navigate("/clients/new")} ariaLabel="Create client" />
-      </MobileListPageShell>
+      <MobileFab onClick={() => navigate("/clients/new")} ariaLabel="Create client" />
+
       <ConfirmActionDialog
         open={clientToDelete !== null}
         onOpenChange={(open) => {

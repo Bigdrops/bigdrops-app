@@ -4,13 +4,15 @@ import { Archive, Eye, FolderKanban, MoreHorizontal, Pencil, Trash2 } from 'luci
 
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
 import MobileFab from '@/components/layout/MobileFab'
-import MobileListPageShell from '@/components/layout/MobileListPageShell'
+import ModuleShell from '@/components/layout/ModuleShell'
+import ModuleRowCard from '@/components/layout/ModuleRowCard'
 import { SkeletonRow } from '@/components/loading/AppLoadingStates'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { ProjectRecord } from '@/domain/clientWorkspace'
 import ConfirmActionDialog from '../components/ConfirmActionDialog'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
+import { cn } from '@/lib/utils'
 
 type StatusKey = keyof typeof STATUS_CONFIG
 type StatusFilterOption = 'All' | 'Active' | 'Completed' | 'On Hold' | 'Cancelled'
@@ -215,9 +217,36 @@ export default function Projects() {
     return '₦' + amount.toLocaleString()
   }
 
+  const filterOptions = [
+    {
+      label: 'Client',
+      value: clientFilter,
+      options: ['All', ...clientOptions],
+      onChange: setClientFilter,
+    },
+    {
+      label: 'Status',
+      value: statusFilter,
+      options: ['All', 'Active', 'Completed', 'On Hold', 'Cancelled'],
+      onChange: (v: string) => setStatusFilter(v as StatusFilterOption),
+    },
+    {
+      label: 'Period',
+      value: dateFilter,
+      options: ['All Time', 'This Month', 'Last Month', 'This Year'],
+      onChange: (v: string) => setDateFilter(v as DateFilterOption),
+    },
+    {
+      label: 'Sort',
+      value: sortBy,
+      options: ['Newest', 'Oldest', 'Highest Value', 'Lowest Value'],
+      onChange: (v: string) => setSortBy(v as SortOption),
+    },
+  ]
+
   return (
     <Layout title="Projects" session={null} hidePageHeader>
-      <MobileListPageShell
+      <ModuleShell
         eyebrow="Projects"
         title="Projects"
         summary={`${projects.length} projects total`}
@@ -226,144 +255,73 @@ export default function Projects() {
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Search projects..."
-        onFilterClick={() => setShowFilters((previous) => !previous)}
-        filterPanel={showFilters ? (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-2">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Client</div>
-              <Select value={clientFilter} onValueChange={setClientFilter}>
-                <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All</SelectItem>
-                  {clientOptions.map((client) => <SelectItem key={client} value={client}>{client}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Status</div>
-              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilterOption)}>
-                <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {['All', 'Active', 'Completed', 'On Hold', 'Cancelled'].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Period</div>
-              <Select value={dateFilter} onValueChange={(value) => setDateFilter(value as DateFilterOption)}>
-                <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {['All Time', 'This Month', 'Last Month', 'This Year'].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Sort</div>
-              <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-                <SelectTrigger className="h-10 rounded-xl bg-background"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {['Newest', 'Oldest', 'Highest Value', 'Lowest Value'].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            {hasActiveFilters ? (
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="h-10 rounded-xl border border-border px-4 text-xs font-bold uppercase text-muted-foreground transition hover:bg-muted/50 sm:col-span-2"
-              >
-                Clear
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-      >
-        {loading ? (
-          <div className="grid gap-3">
-            {Array.from({ length: 5 }).map((_, index) => (
-              <SkeletonRow key={index} />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-border bg-card px-6 py-16 text-center">
-            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
-              <FolderKanban className="h-7 w-7" />
-            </div>
-            <div className="text-base font-semibold text-foreground">{hasActiveFilters ? 'No matches found' : 'No projects yet'}</div>
-            <div className="mt-1 text-sm text-muted-foreground">{hasActiveFilters ? 'Try adjusting your filters' : 'Create your first project to get started'}</div>
-          </div>
-        ) : (
-          <div className="grid gap-3">
-            {filtered.map((project, index) => {
-              const accent = ACCENT_VARIANTS[index % ACCENT_VARIANTS.length]
-              const count = docCounts[project.id] || 0
-              const formattedValue = formatProjectValue(project.project_value)
-              const startedText = project.start_date
-                ? new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-                : null
-              const statusKey = (project.status in STATUS_CONFIG ? project.status : 'active') as StatusKey
-              const statusLabel = STATUS_CONFIG[statusKey].label
-              const statusTone =
-                project.status === 'completed'
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
-                  : project.status === 'on_hold'
-                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
-                    : project.status === 'cancelled'
-                      ? 'bg-destructive/10 text-destructive'
-                      : 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300'
+        filters={filterOptions}
+        hasActiveFilters={hasActiveFilters}
+        onResetFilters={resetFilters}
+        records={loading ? [] : filtered}
+        renderRow={(project) => {
+          const count = docCounts[project.id] || 0
+          const formattedValue = formatProjectValue(project.project_value)
+          const startedText = project.start_date
+            ? new Date(project.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+            : null
+          const statusKey = (project.status in STATUS_CONFIG ? project.status : 'active') as StatusKey
+          const statusLabel = STATUS_CONFIG[statusKey].label
+          const statusTone =
+            project.status === 'completed'
+              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+              : project.status === 'on_hold'
+                ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
+                : project.status === 'cancelled'
+                  ? 'bg-destructive/10 text-destructive'
+                  : 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300'
 
-              return (
-                <div
-                  key={project.id}
-                  onClick={() => navigate(`/projects/${project.id}`)}
-                  className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-                >
-                  <div className={`absolute inset-y-0 left-0 w-1 rounded-l-[22px] ${accent.rail}`} />
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                    <div className={`grid h-12 w-12 place-items-center rounded-2xl ${accent.tile}`}>
-                      <FolderKanban className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className={`text-[11px] font-bold uppercase tracking-[0.16em] ${accent.eyebrow}`}>Project</div>
-                      <div className="mt-1 text-[17px] font-bold leading-[1.22] tracking-[-0.03em] text-foreground">
-                        {project.project_code ? `${project.project_code} · ` : ''}{project.name}
-                      </div>
-                      <div className="mt-1 text-sm text-muted-foreground">{project.client_name || 'No client'}</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setActiveProject(project)
-                      }}
-                      className="grid h-10 w-10 place-items-center rounded-[14px] border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-                      aria-label={`Open actions for ${project.name}`}
-                    >
-                      <MoreHorizontal className="h-5 w-5" />
-                    </button>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] leading-[1.5]">
-                    <span className={`inline-flex min-h-7 items-center rounded-full px-2.5 text-xs font-semibold ${accent.chip}`}>
-                      {count} linked document{count !== 1 ? 's' : ''}
-                    </span>
-                    {startedText ? (
-                      <span className={accent.meta}>Started {startedText}</span>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/80 pt-4">
-                    <span className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs font-semibold ${statusTone}`}>
-                      {statusLabel}
-                    </span>
-                    <div className={`text-base font-extrabold tracking-[-0.03em] ${accent.value}`}>{formattedValue}</div>
+          return (
+            <ModuleRowCard
+              key={project.id}
+              title={project.name || 'Untitled project'}
+              subtitle={
+                <div className="flex flex-col gap-0.5">
+                  <div className="font-bold">{project.project_code || 'No code'}</div>
+                  <div>{project.client_name || 'No client'}</div>
+                </div>
+              }
+              tertiary={
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-primary">{count} documents</span>
+                    {startedText && <span>· Started {startedText}</span>}
                   </div>
                 </div>
-              )
-            })}
+              }
+              amount={formattedValue}
+              statusLabel={statusLabel}
+              statusClassName={statusTone}
+              onClick={() => navigate(`/projects/${project.id}`)}
+              onActionClick={() => setActiveProject(project)}
+            />
+          )
+        }}
+        emptyState={
+          <div className="flex flex-col items-center justify-center gap-4 rounded-[26px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">
+            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+              <FolderKanban className="h-7 w-7" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-[hsl(var(--bd-text))]">{hasActiveFilters ? 'No matches found' : 'No projects yet'}</div>
+              <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
+                {hasActiveFilters ? 'Try adjusting your filters' : 'Create your first project to get started'}
+              </div>
+            </div>
           </div>
+        }
+      >
+        {loading && (
+           <div className="grid gap-3">
+              {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
+           </div>
         )}
-      </MobileListPageShell>
+      </ModuleShell>
 
       <MobileFab onClick={() => navigate('/projects/new')} ariaLabel="Create project" />
       <ConfirmActionDialog

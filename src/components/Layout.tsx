@@ -42,6 +42,9 @@ import {
 } from './layout/navData'
 import { BusinessSwitcher } from './layout/BusinessSwitcher'
 import { MobileSidebar } from './layout/MobileSidebar'
+import { DesktopSidebar } from './layout/DesktopSidebar'
+import { MobileSalesSheet } from './layout/MobileSalesSheet'
+import { MobileMoreSheet } from './layout/MobileMoreSheet'
 
 export interface MobileChromeContextValue {
   openSidebar: () => void
@@ -147,150 +150,70 @@ export default function Layout({
   }, [openSidebar])
 
   return (
-    <div className="app-ambient min-h-dvh bg-background text-foreground">
-      <div className="hidden md:flex">
-        <aside className="w-72 border-r border-border bg-background">
-          <div className="px-5 py-5">
-            <div className="text-sm font-black tracking-tight text-foreground">{APP_NAME}</div>
-            <div className="text-xs text-muted-foreground">Invoicing and Projects</div>
-            {session?.user?.email ? (
-              <div className="mt-2 truncate text-xs text-muted-foreground">{session.user.email}</div>
-            ) : null}
-          </div>
+    <div className="app-ambient flex min-h-dvh flex-col bg-background text-foreground md:flex-row">
+      {/* Desktop Navigation */}
+      <DesktopSidebar
+        session={session}
+        activeTab={activeTab}
+        onTabClick={onTabClick}
+        handleSalesPick={handleSalesPick}
+        handleMorePick={handleMorePick}
+      />
 
-          <div className="space-y-4 px-4 pb-6">
-            <div>
-              <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Navigation
-              </div>
-              <div className="space-y-2">
-                {desktopNav.map((item) => {
-                  const Icon = item.icon
-                  const isActive = activeTab === item.key
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => onTabClick(item.key)}
-                      className={cn(
-                        'flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition',
-                        isActive ? activeNavItemClassName : inactiveNavItemClassName
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'grid h-9 w-9 place-items-center rounded-xl',
-                          isActive ? activeNavIconClassName : inactiveNavIconClassName
-                        )}
-                      >
-                        <Icon className={cn('h-5 w-5', isActive ? '' : inactiveNavIconColorClassName)} />
-                      </span>
-                      <span className="font-semibold">{item.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div>
-              <Separator className="my-3" />
-              <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Sales
-              </div>
-              <div className="space-y-2">
-                {salesPicker.map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => handleSalesPick(item.key)}
-                      className={cn(
-                        'flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left shadow-sm transition hover:brightness-[0.99]',
-                        item.tint
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={cn('grid h-9 w-9 place-items-center rounded-xl', item.iconBg)}>
-                          <Icon className="h-5 w-5" />
-                        </span>
-                        <span className="font-semibold text-foreground">{item.label}</span>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {moreGroups.map((group) => (
-              <div key={group.group}>
-                <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {group.group}
-                </div>
-                <div className="space-y-2">
-                  {group.items.map((item) => {
-                    const Icon = item.icon
-                    return (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => handleMorePick(item.key)}
-                        className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-3 py-2 text-sm shadow-sm transition hover:bg-muted/50"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="grid h-9 w-9 place-items-center rounded-xl bg-muted">
-                            <Icon className="h-5 w-5 text-foreground/80" />
-                          </span>
-                          <span className="font-semibold text-foreground">{item.label}</span>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        <main className="flex-1">
-          {!isHome && !hidePageHeader ? (
-            <div className="mx-auto w-full max-w-5xl px-6 pt-6">
-              <div className="rounded-2xl border border-border border-l-4 border-l-[var(--tone-info)] bg-card px-5 py-4 shadow-sm">
-                <div className="text-lg font-bold text-foreground">{title}</div>
-              </div>
+      {/* Main Content Area */}
+      <div className="flex flex-1 flex-col">
+        {/* Mobile Header (Home) */}
+        <div className="md:hidden">
+          {isHome && !hideMobileHomeHeader ? (
+            <div className="w-full px-4 pt-3">
+              <MobilePageHeader
+                title={APP_NAME}
+                subtitle={settings?.company_name || 'Invoicing and Projects'}
+                accentClassName="tone-info-accent"
+                onMenuClick={openSidebar}
+              />
             </div>
           ) : null}
-          <div className={desktopContentClassName}>{children}</div>
-        </main>
+
+          {/* Mobile Header (Page) */}
+          {!isHome && !hidePageHeader ? (
+            <div className="w-full px-4 pt-3">
+              <MobilePageHeader
+                title={title}
+                onMenuClick={openSidebar}
+              />
+            </div>
+          ) : null}
+        </div>
+
+        {/* Desktop Header (Page) */}
+        <div className="hidden md:block">
+          {!isHome && !hidePageHeader ? (
+            <header className="mx-auto w-full max-w-[var(--bd-layout-content-max,1200px)] px-[var(--bd-layout-padding,1.5rem)] pt-6">
+              <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] border-l-4 border-l-[hsl(var(--bd-status-info-text))] bg-[hsl(var(--bd-surface))] px-5 py-4 shadow-sm">
+                <h1 className="text-lg font-bold text-[hsl(var(--bd-text))]">{title}</h1>
+              </div>
+            </header>
+          ) : null}
+        </div>
+
+        {/* Content Body */}
+        <MobileChromeContext.Provider value={mobileChromeValue}>
+          <div 
+            className={cn(
+              "flex-1",
+              "md:mx-auto md:w-full md:max-w-[var(--bd-layout-content-max,1200px)] md:px-[var(--bd-layout-padding,1.5rem)] md:py-6",
+              "px-0 pb-24 pt-0", // Mobile overrides
+              contentClassName
+            )}
+          >
+            {children}
+          </div>
+        </MobileChromeContext.Provider>
       </div>
 
+      {/* Mobile Navigation & Overlays */}
       <div className="md:hidden">
-        {isHome && !hideMobileHomeHeader ? (
-          <div className="w-full px-4 pt-3">
-            <MobilePageHeader
-              title={APP_NAME}
-              subtitle={settings?.company_name || 'Invoicing and Projects'}
-              accentClassName="tone-info-accent"
-              onMenuClick={() => setSidebarOpen(true)}
-            />
-          </div>
-        ) : null}
-
-        {!isHome && !hidePageHeader ? (
-          <div className="w-full px-4 pt-3">
-            <MobilePageHeader
-              title={title}
-              onMenuClick={() => setSidebarOpen(true)}
-            />
-          </div>
-        ) : null}
-
-        <MobileChromeContext.Provider value={mobileChromeValue}>
-          <main className={cn('overflow-x-hidden', mobileContentClassName)}>{children}</main>
-        </MobileChromeContext.Provider>
-
         <MobileBottomNav active={activeTab} onSelect={onTabClick} />
         
         <MobileSidebar
@@ -306,99 +229,17 @@ export default function Layout({
           handleMorePick={handleMorePick}
         />
 
-        <Sheet open={salesOpen} onOpenChange={setSalesOpen}>
-          <SheetContent
-            side="bottom"
-            showCloseButton={false}
-            className="h-[min(640px,84vh)] max-h-[84vh] overflow-hidden rounded-t-[26px] border-x-0 border-b-0 border-t border-border bg-background p-0 shadow-2xl"
-          >
-            <div className="flex h-full flex-col">
-              <div className="shrink-0 px-5 pb-2 pt-3">
-                <div className="mx-auto h-1 w-10 rounded-full bg-border" />
-              </div>
+        <MobileSalesSheet
+          open={salesOpen}
+          onOpenChange={setSalesOpen}
+          handleSalesPick={handleSalesPick}
+        />
 
-              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2">
-                <div className="space-y-[10px]">
-                  {salesPicker.map((item) => {
-                    const Icon = item.icon
-                    return (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => handleSalesPick(item.key)}
-                        className="grid w-full grid-cols-[52px,1fr,auto] items-center gap-3 rounded-[20px] border border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] px-3.5 py-3.5 text-left transition hover:bg-[hsl(var(--bd-surface-action-hover))]"
-                      >
-                        <span className={cn('grid h-[52px] w-[52px] place-items-center rounded-[16px] shadow-sm', item.iconBg)}>
-                          <Icon className="h-6 w-6" />
-                        </span>
-                        <div className="min-w-0">
-                          <div className="text-[15px] font-bold text-[hsl(var(--bd-surface-action-text))]">{item.label}</div>
-                          <div className="text-[13px] text-[hsl(var(--bd-surface-action-muted))]">{item.description}</div>
-                        </div>
-                        <ChevronRight className="h-[18px] w-[18px] shrink-0 text-[hsl(var(--bd-surface-action-muted))]" />
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-          <SheetContent
-            side="bottom"
-            showCloseButton={false}
-            className="h-[min(640px,84vh)] overflow-hidden rounded-t-[26px] border-x-0 border-b-0 border-t border-border bg-background p-0 shadow-2xl"
-          >
-            <div className="flex h-full flex-col">
-              <div className="shrink-0 border-b border-border/80 px-5 pb-4 pt-3">
-                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
-                <SheetHeader className="space-y-0 p-0 text-left">
-                  <SheetTitle className="text-[20px] font-extrabold leading-[1.15] tracking-[-0.03em] text-foreground">
-                    More
-                  </SheetTitle>
-                </SheetHeader>
-                <div className="mt-1.5 text-[13px] leading-5 text-muted-foreground">
-                  Admin, reporting, and workspace utilities
-                </div>
-              </div>
-
-              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-3">
-                {moreGroups.map((group, index) => (
-                  <div key={group.group} className={index === 0 ? '' : 'mt-4'}>
-                    <div className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                      {group.sheetLabel || group.group}
-                    </div>
-                    <div className="space-y-2">
-                      {group.items.map((item) => {
-                        const Icon = item.icon
-                        return (
-                          <button
-                            key={item.key}
-                            type="button"
-                            onClick={() => handleMorePick(item.key)}
-                            className="flex w-full items-center justify-between rounded-[18px] border border-border bg-background px-4 py-3 text-left transition hover:bg-muted/35"
-                          >
-                            <div className="flex min-w-0 items-center gap-3">
-                              <span className={cn('grid h-11 w-11 shrink-0 place-items-center rounded-2xl shadow-sm', item.iconBg)}>
-                                <Icon className="h-5 w-5" />
-                              </span>
-                              <div className="min-w-0">
-                                <div className="text-sm font-bold text-foreground">{item.label}</div>
-                              </div>
-                            </div>
-                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
+        <MobileMoreSheet
+          open={moreOpen}
+          onOpenChange={setMoreOpen}
+          handleMorePick={handleMorePick}
+        />
       </div>
     </div>
   )

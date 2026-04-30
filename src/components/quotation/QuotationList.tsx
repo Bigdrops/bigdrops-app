@@ -34,7 +34,8 @@ import {
 import { formatNaira } from '@/lib/formatters/money'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
-import InvoiceListPageSection from '@/components/invoice/InvoiceListPageSection'
+import ModuleShell from '@/components/layout/ModuleShell'
+import ModuleRowCard from '@/components/layout/ModuleRowCard'
 
 const formatMoney = (value: number | string | null | undefined) => formatNaira(value)
 
@@ -455,10 +456,11 @@ export default function QuotationList() {
 
   return (
     <>
-      <InvoiceListPageSection
+      <ModuleShell
         eyebrow="Sales"
         title="Quotations"
         summary={`${quotations.length} quotations total`}
+        tone="blue"
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Search quotations..."
@@ -470,17 +472,27 @@ export default function QuotationList() {
           setSearch('')
         }}
         records={mappedQuotations}
-        onRowClick={(quotation) => navigate(`/quotations/${quotation.id}`)}
-        onRowActionClick={(quotation) => setActiveQuotation(quotation)}
-        renderAmount={(value) => formatMoney(value || 0)}
-        renderStatusLabel={formatQuotationStatus}
-        renderDocumentNumber={(quotation) => renderQuotationRowMeta(quotation)}
-        renderDocumentDate={(quotation) => renderQuotationRowDate(quotation)}
-        renderStatusClassName={getQuotationStatusClassName}
+        renderRow={(quotation) => (
+          <ModuleRowCard
+            key={quotation.id}
+            title={quotation.client_name || 'No client'}
+            subtitle={quotation.quotation_number || 'Quotation'}
+            tertiary={renderQuotationRowDate(quotation)}
+            amount={formatMoney(quotation.total || 0)}
+            statusLabel={formatQuotationStatus(quotation.status)}
+            statusClassName={getQuotationStatusClassName(quotation.status)}
+            onClick={() => navigate(`/quotations/${quotation.id}`)}
+            onActionClick={() => setActiveQuotation(quotation)}
+          />
+        )}
         beforeListContent={syncRecoveryBanner}
         emptyState={(
-          <div className="rounded-[22px] border border-dashed border-zinc-300 bg-white px-6 py-12 text-center text-sm text-muted-foreground">
-            No quotations yet. Create the first one when you are ready to send a quote.
+          <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+               <ClipboardList className="h-6 w-6" />
+            </div>
+            <div className="mt-4 text-sm font-bold text-[hsl(var(--bd-text))]">No quotations yet</div>
+            <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">Create the first one when you are ready to send a quote.</div>
           </div>
         )}
         hasMore={false}

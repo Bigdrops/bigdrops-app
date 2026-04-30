@@ -10,6 +10,8 @@ import {
 } from "@/lib/native/invoiceCache"
 import Layout from "../components/Layout"
 import MobileFab from "../components/layout/MobileFab"
+import ModuleShell from "@/components/layout/ModuleShell"
+import ModuleRowCard from "@/components/layout/ModuleRowCard"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"
 import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
 import AttachExistingDocumentSheet from "@/components/document/AttachExistingDocumentSheet"
@@ -28,7 +30,7 @@ import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
 import { formatStatusLabel } from "@/lib/formatters/status"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
-import InvoiceListPageSection from "@/components/invoice/InvoiceListPageSection"
+import { Receipt } from "lucide-react"
 
 const PAGE_SIZE = 25
 
@@ -548,10 +550,11 @@ export default function Invoices() {
 
   return (
     <Layout title="Invoices" hidePageHeader>
-      <InvoiceListPageSection
+      <ModuleShell
         eyebrow="Sales"
         title="Invoices"
         summary={`${totalCount} invoices total`}
+        tone="blue"
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Search by invoice number or client..."
@@ -559,17 +562,27 @@ export default function Invoices() {
         hasActiveFilters={hasActiveFilters}
         onResetFilters={resetFilters}
         records={invoices}
-        onRowClick={(invoice: InvoiceRow) => navigate(`/invoices/${invoice.id}`)}
-        onRowActionClick={(invoice: InvoiceRow) => setActiveInvoice(invoice)}
-        renderAmount={(val: any) => formatNaira(val)}
-        renderStatusLabel={(status: any) => formatInvoiceStatusLabel(status)}
-        renderDocumentNumber={renderInvoiceRowNumber}
-        renderDocumentDate={renderInvoiceRowDate}
-        renderStatusClassName={(status: any) => getInvoiceStatusClassName(status)}
+        renderRow={(invoice: InvoiceRow) => (
+          <ModuleRowCard
+            key={invoice.id}
+            title={invoice.client_name || "No client"}
+            subtitle={invoice.invoice_number || "Invoice"}
+            tertiary={formatInvoiceDate(invoice.issue_date) || "No date"}
+            amount={formatNaira(invoice.total)}
+            statusLabel={formatInvoiceStatusLabel(invoice.status)}
+            statusClassName={getInvoiceStatusClassName(invoice.status)}
+            onClick={() => navigate(`/invoices/${invoice.id}`)}
+            onActionClick={() => setActiveInvoice(invoice)}
+          />
+        )}
         loadMoreLabel="Load more invoices"
         emptyState={(
-          <div className="rounded-[20px] border border-dashed border-border bg-card px-6 py-16 text-center text-sm text-muted-foreground shadow-sm">
-            No invoices match the current filters
+          <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+               <Receipt className="h-6 w-6" />
+            </div>
+            <div className="mt-4 text-sm font-bold text-[hsl(var(--bd-text))]">No invoices found</div>
+            <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">No invoices match the current filters</div>
           </div>
         )}
         hasMore={hasMore}

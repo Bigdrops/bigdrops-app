@@ -2,17 +2,19 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { ClipboardList, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, MoreHorizontal, Pencil, RefreshCw, Trash2, Workflow } from "lucide-react"
 
-import ConfirmActionDialog from "@/components/ConfirmActionDialog"
-import { supabase } from "../supabase"
+import Layout from '../components/Layout'
+import MobileFab from '../components/layout/MobileFab'
+import ModuleShell from '@/components/layout/ModuleShell'
+import ModuleRowCard from '@/components/layout/ModuleRowCard'
+import { SkeletonRow } from '@/components/loading/AppLoadingStates'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import ConfirmActionDialog from '../components/ConfirmActionDialog'
+import { supabase } from '../supabase'
 import { toast } from "@/hooks/use-toast"
-import Layout from "../components/Layout"
-import MobileFab from "../components/layout/MobileFab"
 import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
 import AttachExistingDocumentSheet from "@/components/document/AttachExistingDocumentSheet"
 import ProjectLinkDialog from "@/components/document/ProjectLinkDialog"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
-import MobileListPageShell from "../components/layout/MobileListPageShell"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 import { getDocumentActionState, getProjectActionState } from "@/domain/document/documentActionState"
 import { fetchInvoiceSummary, fetchProjectSummary } from "@/domain/documentRelationships"
@@ -57,7 +59,6 @@ export default function CSR() {
   const [statusFilter, setStatusFilter] = useState("All")
   const [dateFilter, setDateFilter] = useState("All Time")
   const [sortBy, setSortBy] = useState("Newest")
-  const [showFilters, setShowFilters] = useState(false)
   const [csrToDelete, setCsrToDelete] = useState<CsrRow | null>(null)
   const [activeCsr, setActiveCsr] = useState<CsrRow | null>(null)
   const [showAttachInvoice, setShowAttachInvoice] = useState(false)
@@ -150,10 +151,6 @@ export default function CSR() {
       year: "numeric",
     },
   })
-
-  const clientOptions = useMemo(() => {
-    return Array.from(new Set(csrs.map((csr) => csr.client_name).filter(Boolean))).sort((a, b) => (a as string).localeCompare(b as string))
-  }, [csrs])
 
   const csrProjectState = getProjectActionState({ projectId: activeCsr?.project_id, project: activeCsrProject })
   const csrDocumentState = getDocumentActionState({
@@ -299,70 +296,60 @@ export default function CSR() {
     setRetryingQueueItemId(null)
   }
 
-  const filterSelectClass = "h-10 rounded-[14px] border border-border bg-background px-3 text-xs font-bold text-foreground outline-none"
   const hasActiveFilters =
     !!search || clientFilter !== "All" || statusFilter !== "All" || dateFilter !== "All Time"
 
   return (
-    <Layout title="Customer Service Reports" hidePageHeader>
-      <MobileListPageShell
-          eyebrow="Service"
-          title="Customer Service Reports"
-          summary={`${csrs.length} reports total`}
-          tone="amber"
-          onPrimaryAction={() => navigate("/csr/new")}
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search reports..."
-          onFilterClick={() => setShowFilters((prev) => !prev)}
-          filterPanel={showFilters ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Client</div>
-                <Select value={clientFilter} onValueChange={setClientFilter}>
-                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All</SelectItem>
-                    {clientOptions.map((client) => <SelectItem key={client as string} value={client as string}>{client as React.ReactNode}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Status</div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["All", "Draft", "Completed", "Pending", "Cancelled"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Date</div>
-                <Select value={dateFilter} onValueChange={setDateFilter}>
-                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["All Time", "This Month", "Last Month", "This Year"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Sort</div>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className={filterSelectClass}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["Newest", "Oldest"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="h-10 rounded-[14px] border border-border px-4 text-xs font-bold uppercase text-muted-foreground transition hover:bg-muted/50 sm:col-span-2"
-              >
-                Clear
-              </button>
+    <Layout title="Customer Service Reports" session={null} hidePageHeader>
+      <ModuleShell
+        eyebrow="Service"
+        title="Customer Service Reports"
+        summary={`${csrs.length} reports total`}
+        tone="blue"
+        onPrimaryAction={() => navigate("/csr/new")}
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search reports..."
+        records={loading ? [] : filteredCsrs}
+        hasActiveFilters={hasActiveFilters}
+        onResetFilters={resetFilters}
+        renderRow={(csr) => {
+          const statusKey = getCsrStatusKey(csr.status)
+          const statusClasses =
+            statusKey === "completed"
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+              : statusKey === "cancelled"
+                ? "bg-destructive/10 text-destructive"
+                : statusKey === "pending"
+                  ? "bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300"
+                  : "bg-muted text-muted-foreground"
+
+          return (
+            <ModuleRowCard
+              key={csr.id}
+              title={csr.csr_number || "-"}
+              subtitle={csr.client_name || "No client name"}
+              tertiary={formatCardDate(csr.date)}
+              statusLabel={formatCsrStatusLabel(csr.status)}
+              statusClassName={statusClasses}
+              onClick={() => navigate("/csr/" + csr.id)}
+              onActionClick={() => setActiveCsr(csr)}
+            />
+          )
+        }}
+        emptyState={
+          <div className="rounded-[22px] border border-dashed border-border bg-card p-5 text-center">
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-[16px] bg-foreground text-background">
+              <ClipboardList className="h-5 w-5" />
             </div>
-          ) : null}
+            <div className="text-base font-semibold text-foreground">
+              {hasActiveFilters ? "No service reports found" : "No service reports yet"}
+            </div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              {hasActiveFilters ? "Try a different search or filter." : "Create your first CSR to start tracking service activity."}
+            </div>
+          </div>
+        }
       >
         {showCsrSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
           <div className="mb-4 rounded-[22px] border border-accent/30 bg-accent/10 p-4 shadow-sm">
@@ -454,90 +441,15 @@ export default function CSR() {
           </div>
         ) : null}
 
-
-        {loading ? (
-          <div className="rounded-[22px] border border-border bg-card px-5 py-16 text-center text-sm text-muted-foreground">
-            Loading service reports...
-          </div>
-        ) : filteredCsrs.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-border bg-card p-5 text-center">
-            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-[16px] bg-foreground text-background">
-              <ClipboardList className="h-5 w-5" />
-            </div>
-            <div className="text-base font-semibold text-foreground">
-              {hasActiveFilters ? "No service reports found" : "No service reports yet"}
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              {hasActiveFilters ? "Try a different search or filter." : "Create your first CSR to start tracking service activity."}
-            </div>
-          </div>
-        ) : (
+        {loading && (
           <div className="grid gap-3">
-            {filteredCsrs.map((csr, index) => {
-              const statusKey = (csr.status || "pending").toLowerCase()
-              const statusClasses =
-                statusKey === "completed"
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                  : statusKey === "cancelled"
-                    ? "bg-destructive/10 text-destructive"
-                    : statusKey === "pending"
-                      ? "bg-accent/15 text-accent-foreground"
-                      : "bg-muted text-muted-foreground"
-              const secondaryLabel = csr.make || csr.equipment_type
-
-              return (
-                <div
-                  key={csr.id}
-                  onClick={() => navigate("/csr/" + csr.id)}
-                  className="relative cursor-pointer overflow-hidden rounded-[22px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-                >
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-                    <div className="flex min-w-0 gap-3">
-                      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
-                        <ClipboardList className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">CSR</div>
-                        <div className="mt-1 truncate text-[15px] font-extrabold leading-5 tracking-[-0.02em] text-foreground">
-                          {csr.csr_number || "-"}
-                        </div>
-                        <div className="mt-1 truncate text-[13px] leading-5 text-muted-foreground">
-                          {csr.client_name || "No client name"}
-                        </div>
-                        <div className="mt-1 truncate text-[12px] leading-5 text-muted-foreground">
-                          {formatCardDate(csr.date)}
-                          {secondaryLabel ? ` · ${secondaryLabel}` : ""}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                      <div className="min-w-[92px] text-right">
-                        <div className={`inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold ${statusClasses}`}>
-                          {formatCsrStatusLabel(csr.status)}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          setActiveCsr(csr)
-                        }}
-                        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
-                        aria-label={`Open actions for ${csr.csr_number || "CSR"}`}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+            {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
           </div>
         )}
+      </ModuleShell>
 
-        <MobileFab onClick={() => navigate("/csr/new")} ariaLabel="Create CSR" />
-      </MobileListPageShell>
+      <MobileFab onClick={() => navigate("/csr/new")} ariaLabel="Create CSR" />
+
       <ConfirmActionDialog
         open={Boolean(csrToDelete)}
         onOpenChange={(open) => {
