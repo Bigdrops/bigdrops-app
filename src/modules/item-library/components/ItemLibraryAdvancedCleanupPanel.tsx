@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import { Info } from 'lucide-react'
 
 import {
   buildFlaggedCleanupPrompt,
@@ -122,6 +123,7 @@ export function ItemLibraryAdvancedCleanupPanel({
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [applyResults, setApplyResults] = useState<CleanupApplyResult[]>([])
   const [applyError, setApplyError] = useState<string | null>(null)
+  const [showTutorial, setShowTutorial] = useState(false)
 
   const exportJson = useMemo(() => JSON.stringify(exportPayload, null, 2), [exportPayload])
   const aiPrompt = useMemo(() => buildFlaggedCleanupPrompt(exportPayload), [exportPayload])
@@ -303,6 +305,60 @@ export function ItemLibraryAdvancedCleanupPanel({
             title="Import preview only"
             description="Paste the AI JSON response below. The app validates the schema, checks group and item references against the current flagged export scope, and previews only accepted proposals."
           />
+
+          <div className="mt-4 space-y-3">
+             <button
+                type="button"
+                onClick={() => setShowTutorial(!showTutorial)}
+                className="flex w-full items-center justify-between rounded-xl border border-[#dbc9b2] bg-[#fcf7ef] p-3 text-left transition-colors hover:bg-[#f5ead9]"
+             >
+                <div className="flex items-center gap-2">
+                   <Info className="h-4 w-4 text-[#7f6b56]" />
+                   <span className="text-xs font-bold text-[#7f6b56]">How advanced cleanup works</span>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#7f6b56] opacity-60">
+                   {showTutorial ? 'Hide Guide' : 'How it works'}
+                </span>
+             </button>
+
+             {showTutorial && (
+                <div className="space-y-4 rounded-xl border border-[#d8c5ad] bg-[#fffaf2] p-4 shadow-inner animate-in fade-in slide-in-from-top-2 duration-200">
+                   <div className="space-y-1">
+                      <p className="text-xs font-medium text-[#5f4b37] leading-relaxed">
+                         Perform a safe bulk cleanup by exchanging data with an external AI. No items are deleted until you explicitly approve the merge proposals.
+                      </p>
+                   </div>
+
+                   <div className="space-y-2">
+                      {[
+                        'Download or copy the flagged items JSON (Section 1)',
+                        'Copy the structured AI prompt (Section 2)',
+                        'Run the prompt + JSON in ChatGPT or Claude',
+                        'Paste the resulting JSON below to preview proposals',
+                        'Select valid proposals and apply the cleanup'
+                      ].map((step, idx) => (
+                        <div key={idx} className="flex gap-3">
+                           <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e7d2b4] text-[9px] font-black text-[#523b25]">
+                              {idx + 1}
+                           </div>
+                           <p className="text-[11px] font-medium text-[#8d7963] leading-snug pt-0.5">
+                              {step}
+                           </p>
+                        </div>
+                      ))}
+                   </div>
+                   
+                   <div className="overflow-hidden rounded-xl border border-[#d8c5ad] bg-black aspect-video shadow-inner">
+                      <iframe
+                         src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                         className="h-full w-full"
+                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                         allowFullScreen
+                      />
+                   </div>
+                </div>
+             )}
+          </div>
 
           <textarea
             value={importText}

@@ -16,6 +16,7 @@ import { useSettings } from '@/hooks/useSettings'
 import { useDashboardData, type PriorityItem, type RecentDoc } from '@/hooks/useDashboardData'
 import { cn } from '@/lib/utils'
 import { getCreateActions, getQuickTiles, loadStoredQuickTiles } from '@/config/quickTiles'
+import { UnifiedActionSheet } from '@/components/actions/UnifiedActionSheet'
 
 export default function DashboardRedesign({ session }: { session: Session }) {
   const navigate = useNavigate()
@@ -79,73 +80,31 @@ export default function DashboardRedesign({ session }: { session: Session }) {
         onViewAllActivity={() => navigate('/invoices')}
       />
 
+      <button
+        type="button"
+        onClick={() => setCreateOpen(true)}
+        className="fixed bottom-24 right-5 z-50 grid h-[52px] w-[52px] place-items-center rounded-[var(--bd-overlay-radius)] bg-[hsl(var(--bd-fab-bg))] text-[hsl(var(--bd-fab-text))] shadow-2xl shadow-black/20 transition active:scale-90 md:hidden"
+        aria-label="Create new record"
+      >
+        <Plus className="h-5 w-5" />
+      </button>
+
       {createActions.length > 0 ? (
-        <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-          <SheetTrigger asChild>
-            <button
-              type="button"
-              className="fixed bottom-24 right-5 z-50 grid h-[52px] w-[52px] place-items-center rounded-[16px] bg-[hsl(var(--bd-fab-bg))] text-[hsl(var(--bd-fab-text))] shadow-2xl shadow-black/20 transition active:scale-90 md:hidden"
-              aria-label="Create new record"
-            >
-              <Plus className="h-5 w-5" />
-            </button>
-          </SheetTrigger>
-
-          <SheetContent
-            side="bottom"
-            className="h-[50vh] max-h-[50vh] overflow-hidden rounded-t-[30px] border-x-0 border-b-0 border-t border-border/80 p-0 outline-none"
-          >
-            <div className="flex h-full flex-col bg-card">
-              <div className="px-5 pb-3 pt-3">
-                <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-border" />
-                <SheetHeader className="space-y-0.5 px-0 pb-0 pt-0 text-left">
-                  <SheetTitle className="text-[22px] font-black tracking-[-0.04em] text-foreground">
-                    Create
-                  </SheetTitle>
-                </SheetHeader>
-              </div>
-
-              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8">
-                <div className="grid gap-2.5">
-                  {createActions.map((action) => {
-                    const Icon = action.icon
-
-                    return (
-                      <button
-                        key={action.id}
-                        type="button"
-                        onClick={() => {
-                          navigate(action.path)
-                          setCreateOpen(false)
-                        }}
-                        className="grid w-full grid-cols-[48px,minmax(0,1fr),auto] items-center gap-3 rounded-[20px] border border-border bg-background px-3.5 py-3.5 text-left shadow-sm transition active:scale-[0.99]"
-                      >
-                        <div
-                          className={cn(
-                            'grid h-12 w-12 place-items-center rounded-[16px] shadow-sm ring-1 ring-black/5',
-                            action.iconBg,
-                          )}
-                        >
-                          <Icon className="h-5 w-5" />
-                        </div>
-
-                        <div className="min-w-0">
-                          <div className="truncate text-[14px] font-bold tracking-[-0.02em] text-foreground">
-                            {action.label}
-                          </div>
-                        </div>
-
-                        <span className="grid h-8 w-8 place-items-center rounded-full bg-muted text-muted-foreground">
-                          <ChevronRight className="h-4 w-4" />
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
+        <UnifiedActionSheet
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          title="Create"
+          actions={createActions.map(action => ({
+            key: action.id,
+            label: action.label,
+            icon: <action.icon />,
+            onClick: () => {
+              navigate(action.path)
+              setCreateOpen(false)
+            }
+          }))}
+          layout="list"
+        />
       ) : null}
     </Layout>
   )
