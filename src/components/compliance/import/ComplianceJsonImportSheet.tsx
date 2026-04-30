@@ -220,6 +220,16 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
           Clear and Start Over
         </Button>
       }
+      tutorial={{
+        title: 'How Compliance JSON import works',
+        description: 'Update compliance and tax records by pasting extracted JSON from official documents.',
+        steps: [
+          'Copy the Compliance AI Prompt for your record type',
+          'Extract required fields (VAT, WHT, etc.) from your document into JSON',
+          'Paste the resulting JSON here to review and save'
+        ],
+        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+      }}
     />
   )
 }

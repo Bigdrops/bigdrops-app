@@ -321,7 +321,7 @@ export default function SharedDocumentForm(props: any) {
             items={items}
             columns={columns}
             adapter={importAdapter}
-            title="Import Excel/JSON"
+            title="Import JSON"
             side="bottom"
             contentClassName="sm:mx-auto sm:max-w-2xl"
           />

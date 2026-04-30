@@ -34,7 +34,7 @@ export function getImportHelpSteps() {
     {
       title: 'Add vs Update',
       description:
-        'Add appends new rows to the bottom of your item list. Use this when importing from a quote or spreadsheet.\n\nUpdate patches existing rows using row_number. Use this to batch-edit prices or quantities.',
+        'Add appends new rows to the bottom of your item list. Use this when importing from a quote or external document.\n\nUpdate patches existing rows using row_number. Use this to batch-edit prices or quantities.',
     },
     {
       title: 'Using Import',

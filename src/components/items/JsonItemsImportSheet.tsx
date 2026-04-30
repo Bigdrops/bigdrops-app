@@ -138,7 +138,7 @@ export default function JsonItemsImportSheet({
   items,
   columns,
   adapter,
-  title = 'Import Items',
+  title = 'Import JSON Items',
   side = 'bottom',
   contentClassName = '',
 }: JsonItemsImportSheetProps) {
