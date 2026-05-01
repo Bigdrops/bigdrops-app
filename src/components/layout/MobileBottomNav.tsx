@@ -22,7 +22,7 @@ export default function MobileBottomNav({
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-layout-nav)/0.95)] backdrop-blur-xl"
       style={{ paddingBottom: 'var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))' }}
     >
-      <div className="grid h-[76px] w-full grid-cols-5 gap-1 px-2.5 pt-2.5 shadow-lg">
+      <div className="grid h-[64px] w-full grid-cols-5 gap-1 px-2 pt-1.5">
         {items.map((item) => {
           const Icon = item.icon
           const isActive = active === item.key
@@ -33,19 +33,16 @@ export default function MobileBottomNav({
               type="button"
               onClick={() => onSelect(item.key)}
               className={cn(
-                "flex flex-col items-center gap-1.5 text-[11px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-focus-ring))]",
-                isActive ? "text-[hsl(var(--bd-text))]" : "text-[hsl(var(--bd-text-muted))]"
+                "flex flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 transition-all outline-none",
+                isActive 
+                  ? "bg-[hsl(var(--bd-text))] text-[hsl(var(--bd-surface))] shadow-sm" 
+                  : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))/0.5]"
               )}
             >
-              <span
-                className={cn(
-                  'grid h-[42px] w-[42px] place-items-center rounded-[var(--bd-radius-md)] border border-transparent transition-all',
-                  isActive && 'border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] shadow-sm',
-                )}
-              >
-                <Icon className="h-[18px] w-[18px]" />
+              <Icon className={cn("h-[18px] w-[18px]", isActive ? "stroke-[2.5px]" : "stroke-[2px]")} />
+              <span className={cn("text-[10px] font-bold tracking-tight", isActive ? "opacity-100" : "opacity-80")}>
+                {item.label}
               </span>
-              <span className={cn(isActive && 'font-bold')}>{item.label}</span>
             </button>
           )
         })}

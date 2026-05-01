@@ -25,7 +25,7 @@ type QuickTile = {
   id: string
   label: string
   path: string
-  icon: ComponentType<{ className?: string }>
+  icon: ComponentType<{ className?: string; size?: number; strokeWidth?: number }>
   description: string
   iconBg: string
 }
@@ -54,30 +54,6 @@ type DashboardOverviewProps = {
   onViewAllActivity: () => void
 }
 
-const dashboardMetricCards = [
-  {
-    key: 'collections',
-    label: 'Collections',
-    helper: 'Month to date',
-    Icon: TrendingUp,
-    iconClassName: 'bg-[var(--tone-success-soft)] text-[var(--tone-success)] dark:bg-[var(--tone-success)]/10',
-    value: (heroStats: DashboardOverviewProps['heroStats']) =>
-      formatNaira(heroStats.collections, { round: true }),
-  },
-  {
-    key: 'openWork',
-    label: 'Open Work',
-    helper: (summary: DashboardOverviewProps['summary']) => {
-      const pendingFollowUp = Number(summary.pendingFollowUp || 0)
-      return pendingFollowUp > 0
-        ? `${pendingFollowUp} need attention`
-        : 'Nothing urgent right now'
-    },
-    Icon: AlertCircle,
-    iconClassName: 'bg-[var(--tone-warning-soft)] text-[var(--tone-warning)] dark:bg-[var(--tone-warning)]/10',
-    value: (heroStats: DashboardOverviewProps['heroStats']) => String(heroStats.openWork),
-  },
-] as const
 
 const recentRecordMeta = {
   Invoice: {
@@ -233,41 +209,8 @@ export function DashboardOverview({
         </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-[var(--bd-space-sm)] px-[var(--bd-space-md)] pt-[var(--bd-space-sm)] md:px-[var(--bd-space-lg)]">
-        {dashboardMetricCards.map((metric) => {
-          const Icon = metric.Icon
 
-          return (
-            <article
-              key={metric.key}
-              className="rounded-[var(--bd-radius-xl)] border border-border bg-card p-[var(--bd-card-padding)] shadow-sm"
-            >
-              <div className="flex items-center gap-[var(--bd-space-sm)]">
-                <div
-                  className={cn(
-                    'grid h-7 w-7 place-items-center rounded-[var(--bd-radius-sm)]',
-                    metric.iconClassName,
-                  )}
-                >
-                  <Icon className="h-[13px] w-[13px]" />
-                </div>
-                <div className="text-[9px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-muted-foreground">
-                  {metric.label}
-                </div>
-              </div>
-
-              <div className="mt-[var(--bd-space-sm)] text-[24px] font-extrabold tracking-[-0.05em] text-foreground">
-                {metric.value(heroStats)}
-              </div>
-              <div className="mt-[2px] text-[11px] text-muted-foreground">
-                {typeof metric.helper === 'function' ? metric.helper(summary) : metric.helper}
-              </div>
-            </article>
-          )
-        })}
-      </section>
-
-      <section className="mt-[var(--bd-section-gap)] px-[var(--bd-space-md)] md:px-[var(--bd-space-lg)]">
+      <section className="mt-[var(--bd-space-md)] md:mt-[var(--bd-section-gap)] px-[var(--bd-space-md)] md:px-[var(--bd-space-lg)]">
         <div className="mb-[var(--bd-space-sm)] flex items-center justify-between">
           <div className="text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-muted-foreground">
             Quick Actions
@@ -287,11 +230,11 @@ export function DashboardOverview({
               >
                 <div
                   className={cn(
-                    'grid h-[38px] w-[38px] place-items-center rounded-[var(--bd-radius-lg)] shadow-sm',
+                    'grid h-10 w-10 place-items-center rounded-[var(--bd-icon-container-radius)] bg-[var(--bd-icon-container-bg)] text-[var(--bd-icon-container-text)] shadow-sm',
                     tile.iconBg,
                   )}
                 >
-                  <Icon className="h-[17px] w-[17px]" />
+                  <Icon size={18} strokeWidth={2} />
                 </div>
 
                 <div className="mt-[11px] text-[13px] font-bold tracking-[-0.02em] text-foreground">
@@ -306,7 +249,7 @@ export function DashboardOverview({
         </div>
       </section>
 
-      <section className="mt-[var(--bd-section-gap)] px-[var(--bd-space-md)] md:px-[var(--bd-space-lg)]">
+      <section className="mt-[var(--bd-space-lg)] md:mt-[var(--bd-section-gap)] px-[var(--bd-space-md)] md:px-[var(--bd-space-lg)]">
         <div className="mb-[var(--bd-space-sm)] flex items-center justify-between gap-3">
           <div className="text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-muted-foreground">
             Follow Up Required
@@ -365,7 +308,7 @@ export function DashboardOverview({
         </div>
       </section>
 
-      <section className="mt-[var(--bd-section-gap)] px-[var(--bd-space-md)] md:px-[var(--bd-space-lg)]">
+      <section className="mt-[var(--bd-space-lg)] md:mt-[var(--bd-section-gap)] px-[var(--bd-space-md)] md:px-[var(--bd-space-lg)]">
         <div className="mb-[var(--bd-space-sm)] flex items-center justify-between">
           <div className="text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-muted-foreground">
             Recent Records
@@ -405,11 +348,11 @@ export function DashboardOverview({
                   >
                     <div
                       className={cn(
-                        'grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[12px] border border-border',
+                        'grid h-10 w-10 shrink-0 place-items-center rounded-[var(--bd-icon-container-radius)] bg-[var(--bd-icon-container-bg)] text-[var(--bd-icon-container-text)] border border-border',
                         meta.iconClassName,
                       )}
                     >
-                      <Icon className="h-[15px] w-[15px]" />
+                      <Icon size={18} strokeWidth={2} />
                     </div>
 
                     <div className="min-w-0 flex-1">

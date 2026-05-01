@@ -157,6 +157,15 @@
   --bd-violet: #7c3aed;
   --bd-violet-bg: #f5f3ff;
   --bd-violet-border: #ddd6fe;
+
+  /* Icon Tokens */
+  --bd-icon-size-sm: 14px;
+  --bd-icon-size-md: 18px;
+  --bd-icon-size-lg: 22px;
+  --bd-icon-stroke: 2px;
+  --bd-icon-container-bg: var(--bd-surface-muted);
+  --bd-icon-container-text: var(--primary);
+  --bd-icon-container-radius: var(--bd-radius-md);
 }
 
 /* Layout Token Overrides */

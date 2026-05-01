@@ -33,7 +33,7 @@ export function DesktopSidebar({
 }: DesktopSidebarProps) {
   return (
     <aside 
-      className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-layout-sidebar))] md:flex"
+      className="sticky top-0 z-30 hidden h-dvh w-72 shrink-0 flex-col border-r border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-layout-sidebar))] md:flex"
     >
       <div className="flex flex-col h-full overflow-y-auto bd-custom-scrollbar">
         <div className="px-6 py-7">
@@ -71,11 +71,11 @@ export function DesktopSidebar({
                   >
                     <span
                       className={cn(
-                        'grid h-9 w-9 place-items-center rounded-[var(--bd-radius-md)] transition-colors',
-                        isActive ? activeNavIconClassName : inactiveNavIconClassName
+                        'grid h-9 w-9 place-items-center rounded-[var(--bd-icon-container-radius)] transition-colors',
+                        isActive ? activeNavIconClassName : 'bg-[var(--bd-icon-container-bg)]'
                       )}
                     >
-                      <Icon className={cn('h-5 w-5', isActive ? '' : inactiveNavIconColorClassName)} />
+                      <Icon className={cn('h-[var(--bd-icon-size-md)] w-[var(--bd-icon-size-md)]', isActive ? '' : 'text-[var(--bd-icon-container-text)]')} strokeWidth={2} />
                     </span>
                     <span className="font-semibold">{item.label}</span>
                   </button>

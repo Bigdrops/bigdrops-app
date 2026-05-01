@@ -105,6 +105,8 @@ export const THEME_COLOR_TOKENS = [
   "bd-overlay-footer-bg",
   "bd-overlay-disabled-bg",
   "bd-overlay-disabled-text",
+  "bd-icon-container-bg",
+  "bd-icon-container-text",
 ] as const
 
 export const THEME_NON_COLOR_TOKENS = [
@@ -131,6 +133,11 @@ export const THEME_NON_COLOR_TOKENS = [
   "bd-sheet-padding",
   "bd-button-padding-x",
   "bd-button-padding-y",
+  "bd-icon-size-sm",
+  "bd-icon-size-md",
+  "bd-icon-size-lg",
+  "bd-icon-stroke",
+  "bd-icon-container-radius",
 ] as const
 
 export const THEME_TOKENS = [...THEME_COLOR_TOKENS, ...THEME_NON_COLOR_TOKENS] as const
