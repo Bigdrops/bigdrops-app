@@ -8,7 +8,7 @@ export function Toaster() {
 
   return (
     <GoeyToaster
-      position="bottom-right"
+      position="top-center"
       theme={theme === 'dark' ? 'dark' : 'light'}
       offset="24px"
       gap={12}
@@ -16,7 +16,9 @@ export function Toaster() {
       visibleToasts={3}
       maxQueue={6}
       queueOverflow="drop-oldest"
-      showProgress
+      showProgress={false}
+      preset="smooth"
+      bounce={0.22}
       toastOptions={{
         classNames: {
           toast: 'bd-goey-toast-host',

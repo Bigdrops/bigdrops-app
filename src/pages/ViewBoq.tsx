@@ -10,15 +10,14 @@ import { useDocumentUIState } from '@/components/document-view/hooks/useDocument
 import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
 import DocumentPage from '@/components/document-view/shared/DocumentPage'
 import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
-import DocumentToastViewport from '@/components/document-view/shared/DocumentToastViewport'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import DocumentHero from '@/components/document-view/shared/DocumentHero'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
-import { useToastStack } from '@/components/document-view/hooks/useToastStack'
 import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
+import { feedback } from '@/lib/feedback'
 import { supabase } from '@/supabase'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
@@ -36,7 +35,6 @@ export default function ViewBoq() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const ui = useDocumentUIState()
-  const toastStack = useToastStack()
 
   const [loading, setLoading] = useState(true)
   const [boq, setBoq] = useState<any>(null)
@@ -73,7 +71,14 @@ export default function ViewBoq() {
   }, [id, navigate])
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
-    toastStack.showToast({ title, description, tone })
+    const options = { description }
+
+    if (tone === 'success') {
+      feedback.success(title, options)
+      return
+    }
+
+    feedback.info(title, options)
   }
 
   const handleCopyNumber = async () => {
@@ -324,7 +329,6 @@ export default function ViewBoq() {
         />
       </DocumentPage>
 
-      <DocumentToastViewport toasts={toastStack.toasts} onDismiss={toastStack.dismissToast} />
     </>
   )
 }

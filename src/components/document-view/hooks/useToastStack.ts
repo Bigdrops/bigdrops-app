@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
+import { feedback, type FeedbackOptions } from '@/lib/feedback'
 
 export interface ToastStackItem {
   id: string
@@ -15,39 +16,56 @@ export interface ShowToastInput {
   durationMs?: number
 }
 
-const createToastId = () =>
-  `toast-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+function createOptions(input: ShowToastInput): FeedbackOptions | undefined {
+  const options: FeedbackOptions = {}
 
-export function useToastStack(initialToasts: ToastStackItem[] = []) {
-  const [toasts, setToasts] = useState<ToastStackItem[]>(initialToasts)
+  if (input.description) {
+    options.description = input.description
+  }
 
+  if (typeof input.durationMs === 'number') {
+    options.duration = input.durationMs
+  }
+
+  return Object.keys(options).length ? options : undefined
+}
+
+// Deprecated document-view shim. The app now renders feedback through the
+// single global goey toaster.
+export function useToastStack(_: ToastStackItem[] = []) {
   const dismissToast = useCallback((toastId: string) => {
-    setToasts((current) => current.filter((toast) => toast.id !== toastId))
+    feedback.dismiss(toastId)
   }, [])
 
   const showToast = useCallback((input: ShowToastInput) => {
-    const nextToast: ToastStackItem = {
-      id: createToastId(),
-      tone: 'info',
-      durationMs: 3200,
-      ...input,
+    const options = createOptions(input)
+
+    if (input.tone === 'success') {
+      return feedback.success(input.title, options)
     }
 
-    setToasts((current) => [...current, nextToast])
-    return nextToast.id
+    if (input.tone === 'warning') {
+      return feedback.warning(input.title, options)
+    }
+
+    if (input.tone === 'danger') {
+      return feedback.error(input.title, options)
+    }
+
+    return feedback.info(input.title, options)
   }, [])
 
   const clearToasts = useCallback(() => {
-    setToasts([])
+    feedback.dismiss()
   }, [])
 
   return useMemo(
     () => ({
-      toasts,
+      toasts: [] as ToastStackItem[],
       showToast,
       dismissToast,
       clearToasts,
     }),
-    [clearToasts, dismissToast, showToast, toasts],
+    [clearToasts, dismissToast, showToast],
   )
 }

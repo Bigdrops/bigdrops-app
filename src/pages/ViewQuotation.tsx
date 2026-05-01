@@ -5,14 +5,12 @@ import { PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
 import { DocumentLivePreviewCard } from '@/components/document/DocumentViewShell'
 import PdfOutputCustomizeSheet from '@/components/document-view/shared/PdfOutputCustomizeSheet'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
-import { useToastStack } from '@/components/document-view/hooks/useToastStack'
 import QuotationHeroMeta from '@/components/document-view/quotation/QuotationHeroMeta'
 import QuotationMoreSheet from '@/components/document-view/quotation/QuotationMoreSheet'
 import QuotationViewPage from '@/components/document-view/quotation/QuotationViewPage'
 import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
 import DocumentHero from '@/components/document-view/shared/DocumentHero'
 import DocumentPage from '@/components/document-view/shared/DocumentPage'
-import DocumentToastViewport from '@/components/document-view/shared/DocumentToastViewport'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 
@@ -24,6 +22,7 @@ import { formatMergedQtyUnit, resolveCanonicalItemImageUrl, resolveCanonicalLogo
 import { BUILTIN_COLUMNS, buildSummaryRows, normalizeInvoicePdfTemplateId } from '@/domain/invoice'
 import type { InvoicePdfTemplateId } from '@/domain/invoice/types'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
+import { feedback } from '@/lib/feedback'
 import { formatNaira } from '@/lib/formatters/money'
 import { getPdfDesignPreset, resolvePdfWebFontFamily } from '@/lib/pdfDesignPreset'
 import { renderRichTextContent } from '@/lib/richText'
@@ -70,7 +69,6 @@ export default function ViewQuotation() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const ui = useDocumentUIState()
-  const toastStack = useToastStack()
 
   const [loading, setLoading] = useState(true)
   const [quotation, setQuotation] = useState<any>(null)
@@ -132,7 +130,14 @@ export default function ViewQuotation() {
   }
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
-    toastStack.showToast({ title, description, tone })
+    const options = { description }
+
+    if (tone === 'success') {
+      feedback.success(title, options)
+      return
+    }
+
+    feedback.info(title, options)
   }
 
   const handleCopyNumber = async () => {
@@ -631,7 +636,6 @@ export default function ViewQuotation() {
         />
       </DocumentPage>
 
-      <DocumentToastViewport toasts={toastStack.toasts} onDismiss={toastStack.dismissToast} />
     </>
   )
 }

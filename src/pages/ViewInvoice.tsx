@@ -13,10 +13,8 @@ import InvoiceViewPage from '@/components/document-view/invoice/InvoiceViewPage'
 import AuditTrailPanel from '@/components/audit/AuditTrailPanel'
 import PdfOutputCustomizeSheet from '@/components/document-view/shared/PdfOutputCustomizeSheet'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
-import { useToastStack } from '@/components/document-view/hooks/useToastStack'
 import DocumentPage from '@/components/document-view/shared/DocumentPage'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
-import DocumentToastViewport from '@/components/document-view/shared/DocumentToastViewport'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
@@ -46,6 +44,7 @@ import { buildInvoiceViewModel } from '@/domain/invoice/viewModel'
 import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
+import { feedback } from '@/lib/feedback'
 import { getPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { computeDocument } from '@/lib/Calculations'
 import { supabase } from '@/supabase'
@@ -81,7 +80,6 @@ export default function ViewInvoice() {
   const location = useLocation()
   const { id } = useParams<{ id: string }>()
   const ui = useDocumentUIState()
-  const toastStack = useToastStack()
 
   const {
     invoice,
@@ -277,7 +275,14 @@ export default function ViewInvoice() {
   )
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
-    toastStack.showToast({ title, description, tone })
+    const options = { description }
+
+    if (tone === 'success') {
+      feedback.success(title, options)
+      return
+    }
+
+    feedback.info(title, options)
   }
 
   const downloadInvoicePdfDocument = useCallback(async ({
@@ -1021,7 +1026,6 @@ export default function ViewInvoice() {
         />
       </DocumentPage>
 
-      <DocumentToastViewport toasts={toastStack.toasts} onDismiss={toastStack.dismissToast} />
     </>
   )
 }

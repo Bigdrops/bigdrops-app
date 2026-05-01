@@ -70,8 +70,15 @@ function toToastId(prefix: string, message: string) {
 
 function createOptions(tone: FeedbackTone, options?: FeedbackOptions): GoeyToastOptions {
   const { classNames, ...restOptions } = options ?? {}
+  const behavior =
+    tone === 'success'
+      ? { showProgress: true, showTimestamp: false }
+      : tone === 'info'
+        ? { showProgress: false, showTimestamp: false }
+        : { showProgress: false, showTimestamp: false }
 
   return {
+    ...behavior,
     ...restOptions,
     ...toneTokens[tone],
     classNames: {
@@ -106,8 +113,10 @@ export const feedback = {
     return goeyToast.success(
       message,
       createOptions('success', {
-        duration: 2000,
+        duration: 2400,
         id: toToastId('success', message),
+        preset: 'smooth',
+        bounce: 0.18,
         ...options,
       }),
     )
@@ -119,8 +128,10 @@ export const feedback = {
     return goeyToast.error(
       errorMessage,
       createOptions('error', {
-        duration: 4000,
+        duration: 5600,
         id: toToastId('error', errorMessage),
+        preset: 'smooth',
+        bounce: 0.14,
         ...options,
       }),
     )
@@ -131,6 +142,8 @@ export const feedback = {
       message,
       createOptions('info', {
         duration: 3000,
+        preset: 'smooth',
+        bounce: 0.16,
         ...options,
       }),
     )
@@ -140,8 +153,10 @@ export const feedback = {
     return goeyToast.warning(
       message,
       createOptions('warning', {
-        duration: 3500,
+        duration: 4800,
         id: toToastId('warning', message),
+        preset: 'smooth',
+        bounce: 0.14,
         ...options,
       }),
     )
@@ -157,17 +172,88 @@ export const feedback = {
           'aria-hidden': true,
         }),
         showTimestamp: false,
+        showProgress: false,
+        bounce: 0.12,
+        preset: 'smooth',
         ...options,
       }),
     )
   },
 
   promise<T>(promise: Promise<T>, messages: FeedbackPromiseMessages<T>) {
-    return goeyToast.promise(promise, {
-      ...createPromiseMessages(messages),
-      fillColor: 'hsl(var(--bd-goey-toast-fill))',
-      borderColor: 'hsl(var(--bd-goey-toast-border))',
-    })
+    const loadingId = toToastId('promise', messages.loading)
+    const normalizedMessages = createPromiseMessages(messages)
+    const loadingDescription = normalizedMessages.description?.loading
+
+    goeyToast(
+      normalizedMessages.loading,
+      createOptions('info', {
+        id: loadingId,
+        duration: Number.POSITIVE_INFINITY,
+        description: loadingDescription,
+        icon: createElement(LoaderCircle, {
+          className: 'bd-goey-toast__spinner',
+          'aria-hidden': true,
+        }),
+        showTimestamp: false,
+        showProgress: false,
+        bounce: 0.12,
+        preset: 'smooth',
+        classNames: normalizedMessages.classNames,
+      }),
+    )
+
+    return promise
+      .then((data) => {
+        const successTitle =
+          typeof normalizedMessages.success === 'function'
+            ? normalizedMessages.success(data)
+            : normalizedMessages.success
+        const successDescription =
+          typeof normalizedMessages.description?.success === 'function'
+            ? normalizedMessages.description.success(data)
+            : normalizedMessages.description?.success
+
+        goeyToast.success(
+          successTitle,
+          createOptions('success', {
+            id: loadingId,
+            duration: 2400,
+            description: successDescription,
+            action: normalizedMessages.action?.success,
+            preset: 'smooth',
+            bounce: 0.18,
+            classNames: normalizedMessages.classNames,
+          }),
+        )
+
+        return data
+      })
+      .catch((error) => {
+        const errorTitle =
+          typeof normalizedMessages.error === 'function'
+            ? normalizedMessages.error(error)
+            : normalizedMessages.error
+        const errorDescription =
+          typeof normalizedMessages.description?.error === 'function'
+            ? normalizedMessages.description.error(error)
+            : normalizedMessages.description?.error
+
+        goeyToast.error(
+          errorTitle,
+          createOptions('error', {
+            id: loadingId,
+            duration: 5600,
+            description: errorDescription,
+            action: normalizedMessages.action?.error,
+            preset: 'smooth',
+            bounce: 0.14,
+            classNames: normalizedMessages.classNames,
+          }),
+        )
+
+        throw error
+      })
   },
 
   dismiss(id?: string | number) {

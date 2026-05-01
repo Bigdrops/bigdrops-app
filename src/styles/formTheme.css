@@ -269,6 +269,10 @@ label, .bd-label {
   min-width: 280px;
 }
 
+.bd-goey-toast-host {
+  z-index: 120;
+}
+
 .bd-goey-toast__header {
   gap: 10px;
 }
@@ -295,12 +299,25 @@ label, .bd-label {
   margin-top: 14px;
 }
 
+.bd-goey-toast .gooey-timestamp {
+  display: none;
+}
+
 .bd-goey-toast .gooey-progressWrapper {
   background: color-mix(in oklab, currentColor 12%, transparent);
 }
 
 .bd-goey-toast .gooey-progressBar {
   background: currentColor;
+}
+
+.bd-goey-toast--error .gooey-progressWrapper,
+.bd-goey-toast--warning .gooey-progressWrapper,
+.bd-goey-toast--error .gooey-progressBar,
+.bd-goey-toast--warning .gooey-progressBar,
+.bd-goey-toast--promise .gooey-progressWrapper,
+.bd-goey-toast--promise .gooey-progressBar {
+  display: none;
 }
 
 .bd-goey-toast__action-button,
@@ -341,6 +358,11 @@ label, .bd-label {
   --bd-goey-toast-fill: var(--bd-feedback-warning-bg);
   --bd-goey-toast-border: var(--bd-feedback-warning-border);
   color: hsl(var(--bd-feedback-warning-text));
+}
+
+.bd-goey-toast--error,
+.bd-goey-toast--warning {
+  box-shadow: 0 18px 42px color-mix(in oklab, hsl(var(--bd-text)) 10%, transparent);
 }
 
 .bd-goey-toast--info,

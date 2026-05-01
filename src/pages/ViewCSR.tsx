@@ -6,12 +6,10 @@ import CsrHeroMeta from '@/components/document-view/csr/CsrHeroMeta'
 import CsrViewPage from '@/components/document-view/csr/CsrViewPage'
 import CsrMoreSheet from '@/components/document-view/csr/CsrMoreSheet'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
-import { useToastStack } from '@/components/document-view/hooks/useToastStack'
 import DocumentPage from '@/components/document-view/shared/DocumentPage'
 import '@/components/document-view/shared/documentViewTheme.css'
 import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
 import DocumentHero from '@/components/document-view/shared/DocumentHero'
-import DocumentToastViewport from '@/components/document-view/shared/DocumentToastViewport'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
@@ -19,6 +17,7 @@ import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { supabase } from '@/supabase'
 import CSRPreviewPanel from '@/components/csr/CSRPreviewPanel'
 import { buildCsrPreviewData, getCsrBranding, getCsrPdfDocument } from '@/components/csr/csrUtils'
+import { feedback } from '@/lib/feedback'
 import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
@@ -43,7 +42,6 @@ export default function ViewCSR() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const ui = useDocumentUIState()
-  const toastStack = useToastStack()
   const { settings } = useSettings()
 
   const [loading, setLoading] = useState(true)
@@ -77,7 +75,14 @@ export default function ViewCSR() {
   }, [id, navigate])
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
-    toastStack.showToast({ title, description, tone })
+    const options = { description }
+
+    if (tone === 'success') {
+      feedback.success(title, options)
+      return
+    }
+
+    feedback.info(title, options)
   }
 
   const handleCopyNumber = async () => {
@@ -339,7 +344,6 @@ export default function ViewCSR() {
         />
       </DocumentPage>
 
-      <DocumentToastViewport toasts={toastStack.toasts} onDismiss={toastStack.dismissToast} />
     </>
   )
 }
