@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ClipboardCheck, Copy, Download, FileJson, LockKeyhole, Sparkles } from 'lucide-react'
+import { Check, ClipboardCheck, Copy, Download, FileJson, LockKeyhole, Sparkles } from 'lucide-react'
 
 import {
   buildCatalogCleanupBatchExportPayload,
@@ -151,6 +151,19 @@ export function ItemLibraryAdvancedCleanupPanel({
   const [applyError, setApplyError] = useState<string | null>(null)
 
   const resolvedBatchSize = getBatchSize(batchSizeOption, customBatchSize)
+  const customBatchTouched = batchSizeOption === 'custom' && customBatchSize.trim().length > 0
+  const customBatchInvalid = batchSizeOption === 'custom' && customBatchTouched && !resolvedBatchSize
+  const sessionEstimate = useMemo(() => {
+    if (!resolvedBatchSize) return null
+    return createCatalogCleanupSession({
+      items,
+      aliases,
+      duplicateGroups,
+      batchSize: resolvedBatchSize,
+      sessionId: 'preview-session',
+      generatedAt: 'preview',
+    })
+  }, [aliases, duplicateGroups, items, resolvedBatchSize])
   const currentBatch = lockedSession?.batches[currentBatchIndex] || null
   const currentBatchState = currentBatch ? batchStates[currentBatch.batch_id] : null
   const currentExportPayload = useMemo(() => {
@@ -293,75 +306,95 @@ export function ItemLibraryAdvancedCleanupPanel({
   if (!lockedSession) {
     return (
       <div className="h-full overflow-y-auto bg-[linear-gradient(180deg,_#efe5d7_0%,_#e8dccb_100%)]">
-        <div className="mx-auto max-w-4xl space-y-6 p-6">
-          <section className="rounded-[18px] border border-[#d6c2a8] bg-[linear-gradient(180deg,_#fff9f1_0%,_#f7ecde_100%)] p-6 shadow-[0_20px_36px_rgba(93,68,42,0.10)]">
+        <div className="mx-auto max-w-3xl space-y-5 p-5 pb-28 md:p-6">
+          <section className="rounded-[22px] border border-[#d6c2a8] bg-[linear-gradient(180deg,_#fffaf4_0%,_#f7ecde_100%)] p-5 shadow-[0_20px_36px_rgba(93,68,42,0.10)] md:p-6">
             <SectionTitle
-              eyebrow="Clean & Standardize Catalog"
-              title="Lock a full-catalog cleanup session"
-              description="Choose how many active items you want to review at once. Once locked, the session keeps deterministic numeric batches and you work through one batch at a time."
+              eyebrow="Cleanup Setup"
+              title="Clean & Standardize Catalog"
+              description="Pick how many items you want to clean at once."
             />
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {['25', '50', '100', 'custom'].map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => setBatchSizeOption(option as '25' | '50' | '100' | 'custom')}
-                  className={[
-                    'rounded-[16px] border p-4 text-left transition-all',
-                    batchSizeOption === option
-                      ? 'border-[#8c6a45] bg-[#fff7ec] shadow-[0_12px_24px_rgba(88,67,41,0.08)]'
-                      : 'border-[#d6c2a8] bg-[#fffaf5] hover:border-[#b89267]',
-                  ].join(' ')}
-                >
-                  <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9a7c5e]">
-                    {option === 'custom' ? 'Custom' : 'Batch size'}
-                  </div>
-                  <div className="mt-2 text-[18px] font-extrabold text-[#2f2419]">
-                    {option === 'custom' ? 'Set your own' : option}
-                  </div>
-                  <p className="mt-1 text-[11px] leading-relaxed text-[#8d7963]">
-                    {option === 'custom'
-                      ? 'Use a specific number for this cleanup session.'
-                      : `Review about ${option} items per numeric batch.`}
-                  </p>
-                </button>
-              ))}
+            <div className="mt-5">
+              <div className="inline-flex w-full flex-wrap gap-2 rounded-[18px] border border-[#dbc8ae] bg-[#f3e7d8] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
+                {['25', '50', '100', 'custom'].map((option) => {
+                  const isSelected = batchSizeOption === option
+
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setBatchSizeOption(option as '25' | '50' | '100' | 'custom')}
+                      className={[
+                        'flex min-w-[72px] flex-1 items-center justify-center gap-2 rounded-[14px] border px-4 py-3 text-[13px] font-bold transition-all duration-150',
+                        isSelected
+                          ? 'border-[#8c6a45] bg-[#fffaf2] text-[#4f3824] shadow-[0_10px_18px_rgba(88,67,41,0.12)]'
+                          : 'border-transparent bg-transparent text-[#7d654d] hover:border-[#ccb79b] hover:bg-[#f9f1e6]',
+                      ].join(' ')}
+                    >
+                      {isSelected ? <Check className="h-4 w-4" /> : null}
+                      <span>{option === 'custom' ? 'Custom' : option}</span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
 
             {batchSizeOption === 'custom' ? (
-              <div className="mt-4">
+              <div className="mt-4 rounded-[16px] border border-[#dbc8ae] bg-[#fff8ef] p-4">
                 <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9a7c5e]">
                   Custom batch size
                 </label>
                 <input
                   value={customBatchSize}
-                  onChange={(event) => setCustomBatchSize(event.target.value)}
+                  onChange={(event) => setCustomBatchSize(event.target.value.replace(/[^\d]/g, ''))}
                   inputMode="numeric"
-                  placeholder="Enter batch size"
-                  className="mt-2 w-full rounded-[12px] border border-[#d4c2ad] bg-[#fbf5ec] px-4 py-3 text-[13px] text-[#2c2218] outline-none focus:border-[#a07a52]"
+                  placeholder="Enter a positive number"
+                  aria-invalid={customBatchInvalid}
+                  className={[
+                    'mt-2 w-full rounded-[12px] border bg-[#fffdf8] px-4 py-3 text-[14px] font-semibold text-[#2c2218] outline-none transition-colors',
+                    customBatchInvalid
+                      ? 'border-[#cf7c6f] focus:border-[#b8594a]'
+                      : 'border-[#d4c2ad] focus:border-[#a07a52]',
+                  ].join(' ')}
                 />
+                {customBatchInvalid ? (
+                  <p className="mt-2 text-[11px] font-medium text-[#b8594a]">Enter a valid positive whole number.</p>
+                ) : null}
               </div>
             ) : null}
 
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#decdb7] bg-[#fffaf1] px-4 py-3">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Session preview</div>
-                <div className="mt-1 text-[12px] text-[#6f5b46]">
-                  {items.length.toLocaleString()} active items will be arranged into numeric batches without splitting duplicate groups.
+            {resolvedBatchSize && sessionEstimate ? (
+              <div className="mt-4 rounded-[16px] border border-[#d3bb9f] bg-[#fff4df] px-4 py-4 shadow-[0_12px_24px_rgba(88,67,41,0.06)]">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#8c6a45] text-white">
+                    <Check className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-[15px] font-extrabold text-[#2f2419]">
+                      {resolvedBatchSize.toLocaleString()} items per batch selected
+                    </div>
+                    <p className="mt-1 text-[12px] leading-relaxed text-[#6f5b46]">
+                      You&apos;ll review about {sessionEstimate.batch_count.toLocaleString()} batch{sessionEstimate.batch_count === 1 ? '' : 'es'}. Duplicate groups will stay together.
+                    </p>
+                  </div>
                 </div>
               </div>
+            ) : null}
+          </section>
+
+          <div className="sticky bottom-3 z-10">
+            <div className="rounded-[20px] border border-[#d6c2a8] bg-[#fffaf2]/95 p-3 shadow-[0_18px_34px_rgba(88,67,41,0.14)] backdrop-blur-md">
               <button
                 type="button"
                 onClick={handleLockSession}
                 disabled={!resolvedBatchSize}
-                className="inline-flex items-center gap-2 rounded-[12px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2.5 text-[12px] font-bold text-[#523b25] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-[14px] border border-[#9a6f3e] bg-[#8c6a45] px-4 py-3.5 text-[13px] font-bold text-white shadow-[0_10px_18px_rgba(88,67,41,0.18)] transition-colors hover:bg-[#775636] disabled:cursor-not-allowed disabled:border-[#ccb79b] disabled:bg-[#d9c8b2] disabled:text-[#7f6a55]"
               >
                 <LockKeyhole className="h-4 w-4" />
-                Lock cleanup session
+                Start Cleanup Session
               </button>
             </div>
-          </section>
+          </div>
         </div>
       </div>
     )
