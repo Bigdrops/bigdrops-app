@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ChevronRight } from 'lucide-react'
+import { Icons } from '@/lib/iconRegistry'
 import type { Session } from '@supabase/supabase-js'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
@@ -107,7 +107,7 @@ export function DesktopSidebar({
                       </span>
                       <span className="font-semibold text-[hsl(var(--bd-text))]">{item.label}</span>
                     </div>
-                    <ChevronRight className="h-4.5 w-4.5 text-[hsl(var(--bd-text-muted))]" />
+                    <Icons.chevronRight className="h-4.5 w-4.5 text-[hsl(var(--bd-text-muted))]" />
                   </button>
                 )
               })}
@@ -135,7 +135,7 @@ export function DesktopSidebar({
                         </span>
                         <span className="font-semibold text-[hsl(var(--bd-text))]">{item.label}</span>
                       </div>
-                      <ChevronRight className="h-4.5 w-4.5 text-[hsl(var(--bd-text-muted))]" />
+                      <Icons.chevronRight className="h-4.5 w-4.5 text-[hsl(var(--bd-text-muted))]" />
                     </button>
                   )
                 })}

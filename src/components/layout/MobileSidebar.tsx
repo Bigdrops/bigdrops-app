@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { X, ChevronDown, Receipt, ClipboardList, LogOut, ChevronRight } from 'lucide-react'
+import { Icons } from '@/lib/iconRegistry'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
@@ -54,7 +54,7 @@ export function MobileSidebar({
           className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-muted text-muted-foreground"
           aria-label="Close navigation menu"
         >
-          <X className="h-5 w-5" />
+          <Icons.close className="h-5 w-5" />
         </button>
 
         <div className="px-5 pb-5 pt-6">
@@ -117,11 +117,11 @@ export function MobileSidebar({
                     salesRouteActive ? activeNavIconClassName : inactiveNavIconClassName
                   )}
                 >
-                  <Receipt className={cn('h-5 w-5', salesRouteActive ? '' : inactiveNavIconColorClassName)} />
+                  <Icons.sales className={cn('h-5 w-5', salesRouteActive ? '' : inactiveNavIconColorClassName)} />
                 </span>
                 <span className="font-semibold">Sales</span>
               </div>
-              <ChevronDown className={cn('h-5 w-5 transition-transform', drawerSalesOpen ? 'rotate-180' : '')} />
+              <Icons.chevronDown className={cn('h-5 w-5 transition-transform', drawerSalesOpen ? 'rotate-180' : '')} />
             </button>
 
             {drawerSalesOpen ? (
@@ -169,7 +169,7 @@ export function MobileSidebar({
                     presalesRouteActive ? activeNavIconClassName : inactiveNavIconClassName
                   )}
                 >
-                  <ClipboardList className={cn('h-5 w-5', presalesRouteActive ? '' : inactiveNavIconColorClassName)} />
+                  <Icons.boq className={cn('h-5 w-5', presalesRouteActive ? '' : inactiveNavIconColorClassName)} />
                 </span>
                 <span className="font-semibold">Pre-Sales</span>
               </div>
@@ -243,11 +243,11 @@ export function MobileSidebar({
           >
             <div className="flex items-center gap-3">
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-muted">
-                <LogOut className="h-5 w-5 text-foreground/80" />
+                <Icons.signout className="h-5 w-5 text-foreground/80" />
               </span>
               <span className="font-semibold text-foreground">Sign Out</span>
             </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            <Icons.chevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
         </div>
       </SheetContent>

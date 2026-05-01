@@ -1,12 +1,12 @@
-import { FolderKanban, Home, MoreHorizontal, Receipt, UserRound } from 'lucide-react'
+import { Icons } from '@/lib/iconRegistry'
 import { cn } from '@/lib/utils'
 
 const items = [
-  { key: 'home', label: 'Home', icon: Home },
-  { key: 'projects', label: 'Projects', icon: FolderKanban },
-  { key: 'sales', label: 'Sales', icon: Receipt },
-  { key: 'clients', label: 'Clients', icon: UserRound },
-  { key: 'more', label: 'More', icon: MoreHorizontal },
+  { key: 'home', label: 'Home', icon: Icons.home },
+  { key: 'projects', label: 'Projects', icon: Icons.projects },
+  { key: 'sales', label: 'Sales', icon: Icons.sales },
+  { key: 'clients', label: 'Clients', icon: Icons.clients },
+  { key: 'more', label: 'More', icon: Icons.more },
 ]
 
 export default function MobileBottomNav({

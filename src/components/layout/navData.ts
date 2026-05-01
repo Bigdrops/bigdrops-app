@@ -1,19 +1,6 @@
-import {
-  Home,
-  FolderKanban,
-  Users,
-  MoreHorizontal,
-  Receipt,
-  ClipboardCheck,
-  BarChart3,
-  Settings,
-  LogOut,
-  LayoutDashboard,
-  ClipboardList,
-  Package,
-  type LucideIcon,
-} from 'lucide-react'
+import { Icons } from '@/lib/iconRegistry'
 import { QUICK_TILE_REGISTRY } from '@/config/quickTiles'
+import type { LucideIcon } from 'lucide-react'
 
 export const APP_NAME = 'BIGDROPS'
 
@@ -41,11 +28,11 @@ export interface NavGroup {
 }
 
 export const tabs: NavItem[] = [
-  { key: 'home', label: 'Home', icon: Home },
-  { key: 'projects', label: 'Projects', icon: FolderKanban },
-  { key: 'sales', label: 'Sales', icon: Receipt },
-  { key: 'clients', label: 'Clients', icon: Users },
-  { key: 'more', label: 'More', icon: MoreHorizontal },
+  { key: 'home', label: 'Home', icon: Icons.home as LucideIcon },
+  { key: 'projects', label: 'Projects', icon: Icons.projects as LucideIcon },
+  { key: 'sales', label: 'Sales', icon: Icons.sales as LucideIcon },
+  { key: 'clients', label: 'Clients', icon: Icons.clients as LucideIcon },
+  { key: 'more', label: 'More', icon: Icons.more as LucideIcon },
 ]
 
 export const salesPicker: PickerItem[] = [
@@ -100,7 +87,7 @@ export const presalesPicker: PickerItem[] = [
     key: 'boqs',
     label: 'BOQ',
     subtitle: 'Build and review pre-sales bills of quantities.',
-    icon: ClipboardList,
+    icon: Icons.boq as LucideIcon,
     tint: 'bg-slate-50 border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/30',
     iconBg: 'bg-slate-700 text-white dark:bg-slate-500 dark:text-white',
   },
@@ -115,21 +102,21 @@ export const moreGroups: NavGroup[] = [
         key: 'reports',
         label: 'Reports',
         subtitle: 'Revenue, collections, workload, and trends.',
-        icon: BarChart3,
+        icon: Icons.report as LucideIcon,
         iconBg: 'bg-muted text-foreground',
       },
       {
         key: 'compliance',
         label: 'Compliance Hub',
         subtitle: 'Approvals, policy logs, and audit trail.',
-        icon: ClipboardCheck,
+        icon: Icons.compliance as LucideIcon,
         iconBg: 'bg-muted text-foreground',
       },
       {
         key: 'item-library',
         label: 'Item Library',
         subtitle: 'Review price history and master item usage.',
-        icon: Package,
+        icon: Icons.itemLibrary as LucideIcon,
         iconBg: 'bg-muted text-foreground',
       },
     ],
@@ -142,14 +129,14 @@ export const moreGroups: NavGroup[] = [
         key: 'settings',
         label: 'Settings',
         subtitle: 'Roles, preferences, notifications, and workspace controls.',
-        icon: Settings,
+        icon: Icons.settings as LucideIcon,
         iconBg: 'bg-muted text-foreground',
       },
       {
         key: 'signout',
         label: 'Sign Out',
         subtitle: 'Exit this workspace securely.',
-        icon: LogOut,
+        icon: Icons.signout as LucideIcon,
         iconBg: 'bg-destructive/10 text-destructive',
       },
     ],
@@ -157,23 +144,23 @@ export const moreGroups: NavGroup[] = [
 ]
 
 export const desktopNav: NavItem[] = [
-  { key: 'home', label: 'Dashboard', icon: LayoutDashboard },
-  { key: 'projects', label: 'Projects', icon: FolderKanban },
-  { key: 'clients', label: 'Clients', icon: Users },
-  { key: 'item-library', label: 'Item Library', icon: Package },
+  { key: 'home', label: 'Dashboard', icon: Icons.dashboard as LucideIcon },
+  { key: 'projects', label: 'Projects', icon: Icons.projects as LucideIcon },
+  { key: 'clients', label: 'Clients', icon: Icons.clients as LucideIcon },
+  { key: 'item-library', label: 'Item Library', icon: Icons.itemLibrary as LucideIcon },
 ]
 
 export const mobileDrawerPrimaryNav: NavItem[] = [
-  { key: 'home', label: 'Dashboard', icon: LayoutDashboard, path: '/' },
-  { key: 'projects', label: 'Projects', icon: FolderKanban, path: '/projects' },
-  { key: 'clients', label: 'Clients', icon: Users, path: '/clients' },
+  { key: 'home', label: 'Dashboard', icon: Icons.dashboard as LucideIcon, path: '/' },
+  { key: 'projects', label: 'Projects', icon: Icons.projects as LucideIcon, path: '/projects' },
+  { key: 'clients', label: 'Clients', icon: Icons.clients as LucideIcon, path: '/clients' },
 ]
 
 export const mobileDrawerUtilityNav: NavItem[] = [
-  { key: 'reports', label: 'Reports', icon: BarChart3, path: '/reports' },
-  { key: 'compliance', label: 'Compliance Hub', icon: ClipboardCheck, path: '/compliance' },
-  { key: 'item-library', label: 'Item Library', icon: Package, path: '/item-library' },
-  { key: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
+  { key: 'reports', label: 'Reports', icon: Icons.report as LucideIcon, path: '/reports' },
+  { key: 'compliance', label: 'Compliance Hub', icon: Icons.compliance as LucideIcon, path: '/compliance' },
+  { key: 'item-library', label: 'Item Library', icon: Icons.itemLibrary as LucideIcon, path: '/item-library' },
+  { key: 'settings', label: 'Settings', icon: Icons.settings as LucideIcon, path: '/settings' },
 ]
 
 export const activeNavItemClassName = 'bg-[hsl(var(--bd-nav-active-bg))] text-[hsl(var(--bd-nav-active-text))] shadow-sm'
