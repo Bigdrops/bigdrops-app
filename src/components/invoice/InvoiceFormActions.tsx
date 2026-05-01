@@ -30,7 +30,7 @@ export default function InvoiceFormActions({
           type="button"
           onClick={onSaveDraft}
           variant="secondary"
-          className="h-11 bg-[hsl(var(--bd-surface-muted))] px-6 text-[14px] font-medium text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-border)/0.2)]"
+          className="h-11 px-6 text-[14px] font-medium"
           loading={saving}
         >
           Save as Draft
@@ -38,8 +38,8 @@ export default function InvoiceFormActions({
         <Button
           type="button"
           onClick={onCancel}
-          variant="outline"
-          className="h-11 px-6 text-[14px] font-medium text-[hsl(var(--bd-text-muted))]"
+          variant="ghost"
+          className="h-11 border border-[hsl(var(--bd-border))] px-6 text-[14px] font-medium text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
         >
           Cancel
         </Button>

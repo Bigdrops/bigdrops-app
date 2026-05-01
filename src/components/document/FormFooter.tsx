@@ -28,7 +28,7 @@ export function FormFooter({
                 type="button"
                 onClick={onCancel}
                 disabled={saving}
-                className="h-11 rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[13px] font-bold text-[var(--bd-text2)] disabled:opacity-60"
+                className="h-11 rounded-[var(--bd-radius)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[13px] font-bold text-[hsl(var(--bd-text-muted))] disabled:opacity-40 disabled:bg-[hsl(var(--bd-surface-muted))]"
               >
                 Cancel
               </button>
@@ -36,7 +36,7 @@ export function FormFooter({
                 type="button"
                 onClick={onSaveDraft}
                 disabled={saving}
-                className="h-11 rounded-[var(--bd-radius)] border border-[var(--bd-border)] bg-[var(--bd-bg2)] text-[13px] font-bold text-[var(--bd-text2)] disabled:opacity-60"
+                className="h-11 rounded-[var(--bd-radius)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[13px] font-bold text-[hsl(var(--bd-text))] disabled:opacity-40"
               >
                 Draft
               </button>
@@ -44,7 +44,7 @@ export function FormFooter({
                 type="button"
                 onClick={onSaveSent}
                 disabled={saving}
-                className="h-11 rounded-[var(--bd-radius)] border-0 bg-[var(--bd-text)] text-[14px] font-black text-white disabled:opacity-60"
+                className="h-11 rounded-[var(--bd-radius)] border-0 bg-[hsl(var(--bd-button-primary-bg))] text-[14px] font-black text-[hsl(var(--bd-button-primary-text))] shadow-sm transition-all active:scale-[0.98] disabled:bg-[hsl(var(--bd-surface-muted))] disabled:text-[hsl(var(--bd-text-soft))] disabled:opacity-100"
               >
                 {saving ? 'Saving…' : primaryLabel}
               </button>
@@ -57,7 +57,7 @@ export function FormFooter({
         type="button"
         onClick={onFloatingSave}
         disabled={saving}
-        className="fixed bottom-[98px] right-4 z-[60] flex h-[48px] w-[48px] items-center justify-center rounded-[var(--bd-radius)] bg-[var(--bd-text)] text-white shadow-lg animate-in fade-in slide-in-from-bottom-4 sm:right-8"
+        className="fixed bottom-[98px] right-4 z-[60] flex h-[48px] w-[48px] items-center justify-center rounded-[var(--bd-radius)] bg-[hsl(var(--bd-fab-bg))] text-[hsl(var(--bd-fab-text))] shadow-lg animate-in fade-in slide-in-from-bottom-4 sm:right-8 disabled:bg-[hsl(var(--bd-surface-muted))] disabled:text-[hsl(var(--bd-text-soft))] disabled:opacity-100"
       >
         <Save className="h-5 w-5" />
       </button>

@@ -328,30 +328,32 @@ export default function ClientSelector({
           </div>
         )}
 
-        {!hideTrigger && (
-          isMobile ? (
-            <Sheet open={open} onOpenChange={setOpen}>
+        {isMobile ? (
+          <Sheet open={open} onOpenChange={setOpen}>
+            {!hideTrigger && (
               <SheetTrigger asChild>
                 <button type="button" className="w-full">{triggerContent}</button>
               </SheetTrigger>
-              <SheetContent side="bottom" className="rounded-t-[28px] px-5 pb-10 pt-2">
-                <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-muted" />
-                <SheetHeader className="mb-6 text-left">
-                  <SheetTitle className="text-xl font-bold">Select Client</SheetTitle>
-                </SheetHeader>
-                {pickerContent}
-              </SheetContent>
-            </Sheet>
-          ) : (
-            <Popover open={open} onOpenChange={setOpen}>
+            )}
+            <SheetContent side="bottom" className="rounded-t-[28px] px-5 pb-10 pt-2">
+              <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-muted" />
+              <SheetHeader className="mb-6 text-left">
+                <SheetTitle className="text-xl font-bold">Select Client</SheetTitle>
+              </SheetHeader>
+              {pickerContent}
+            </SheetContent>
+          </Sheet>
+        ) : (
+          <Popover open={open} onOpenChange={setOpen}>
+            {!hideTrigger && (
               <PopoverTrigger asChild>
                 <button type="button" className="w-full">{triggerContent}</button>
               </PopoverTrigger>
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-4" align="start">
-                {pickerContent}
-              </PopoverContent>
-            </Popover>
-          )
+            )}
+            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-4" align="start">
+              {pickerContent}
+            </PopoverContent>
+          </Popover>
         )}
 
         {!compact && selectedClient && (

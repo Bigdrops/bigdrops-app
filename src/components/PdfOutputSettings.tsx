@@ -110,7 +110,7 @@ function OutputToggle({ checked, onToggle }: { checked: boolean; onToggle: () =>
       }`}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-card shadow-md transition-transform duration-200 ${
+        className={`inline-block h-4 w-4 transform rounded-full bg-[hsl(var(--bd-surface))] shadow-md transition-transform duration-200 ${
           checked ? 'translate-x-6' : 'translate-x-1'
         }`}
       />
@@ -420,7 +420,7 @@ function BankAccountPickerSheet({
                     {active ? (
                       <ChevronUp className="h-4 w-4 opacity-90" />
                     ) : (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      <ChevronDown className="h-4 w-4 text-[hsl(var(--bd-text-muted))]" />
                     )}
                   </div>
                 </div>
