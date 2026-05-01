@@ -8,6 +8,7 @@ import {
   validateCatalogCleanupBatchImport,
   createCleanupBatches,
   buildFlaggedCleanupBatchExportPayload,
+  buildFlaggedCleanupExportPayload,
   buildFlaggedCleanupPrompt,
   validateFlaggedCleanupImport,
 } from '../domain/itemCleanupExchange'
@@ -22,6 +23,7 @@ import type {
   ItemCatalogItem,
   FlaggedCleanupBatch,
   FlaggedCleanupBatchExportPayload,
+  FlaggedCleanupExportPayload,
   CleanupImportPreview,
 } from '../types'
 
@@ -114,7 +116,8 @@ function ValidationBanner({ errors }: { errors: string[] }) {
   )
 }
 
-function getBatchSize(option: string, customValue: string) {
+function getBatchSize(option: string, customValue: string, totalCount: number) {
+  if (option === 'all') return totalCount
   if (option === 'custom') {
     const parsed = Number.parseInt(customValue, 10)
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null
@@ -151,10 +154,9 @@ export function ItemLibraryAdvancedCleanupPanel({
   duplicateGroups,
   onApplyProposals,
 }: ItemLibraryAdvancedCleanupPanelProps) {
-  const [batchSizeOption, setBatchSizeOption] = useState<'25' | '50' | '100' | 'custom'>('50')
+  const [batchSizeOption, setBatchSizeOption] = useState<'25' | '50' | '100' | 'all' | 'custom'>('50')
   const [customBatchSize, setCustomBatchSize] = useState('')
   const [lockedSession, setLockedSession] = useState<ReturnType<typeof createCatalogCleanupSession> | null>(null)
-  const [duplicateBatches, setDuplicateBatches] = useState<FlaggedCleanupBatch[]>([])
   const [currentBatchIndex, setCurrentBatchIndex] = useState(0)
   const [batchStates, setBatchStates] = useState<Record<string, BatchState>>({})
   const [copyState, setCopyState] = useState<'idle' | 'json' | 'prompt'>('idle')
@@ -162,67 +164,64 @@ export function ItemLibraryAdvancedCleanupPanel({
 
   const isDuplicates = workflow === 'duplicates'
 
-  useEffect(() => {
-    if (isDuplicates && duplicateGroups.length > 0 && duplicateBatches.length === 0) {
-      const batches = createCleanupBatches(duplicateGroups as any)
-      setDuplicateBatches(batches)
-      setBatchStates(
-        Object.fromEntries(
-          batches.map((batch) => [
-            batch.batch_id,
-            {
-              status: 'not_started',
-              importText: '',
-              applyResults: [],
-              preview: null,
-            },
-          ]),
-        ),
-      )
-    }
-  }, [isDuplicates, duplicateGroups, duplicateBatches.length])
+  // Flagged cleanup payload for 'duplicates' mode (entire set, no batching)
+  const flaggedExportPayload = useMemo(() => {
+    if (!isDuplicates) return null
+    return buildFlaggedCleanupExportPayload({ 
+      duplicateGroups: (duplicateGroups ?? []) as any, 
+      aliases: (aliases ?? []) as any 
+    })
+  }, [isDuplicates, duplicateGroups, aliases])
 
-  const resolvedBatchSize = getBatchSize(batchSizeOption, customBatchSize)
-  const currentBatch = isDuplicates ? duplicateBatches[currentBatchIndex] : (lockedSession?.batches[currentBatchIndex] || null)
+  const resolvedBatchSize = getBatchSize(batchSizeOption, customBatchSize, (items ?? []).length)
+  
+  const currentBatch = isDuplicates 
+    ? (flaggedExportPayload ? { batch_id: 'flagged-outsource', title: 'Flagged Duplicates', item_count: flaggedExportPayload.scope.item_count } : null)
+    : (lockedSession?.batches?.[currentBatchIndex] || null)
+
   const currentBatchState = currentBatch ? batchStates[currentBatch.batch_id] : null
 
   const currentExportPayload = useMemo(() => {
-    if (isDuplicates) {
-      if (!currentBatch) return null
-      return buildFlaggedCleanupBatchExportPayload(currentBatch as FlaggedCleanupBatch)
-    }
+    if (isDuplicates) return flaggedExportPayload
     if (!lockedSession || !currentBatch) return null
     return buildCatalogCleanupBatchExportPayload({
       session: lockedSession,
       batch: currentBatch as any,
       batchIndex: currentBatchIndex,
     })
-  }, [isDuplicates, currentBatch, currentBatchIndex, lockedSession])
+  }, [isDuplicates, flaggedExportPayload, currentBatch, currentBatchIndex, lockedSession])
 
   const importText = currentBatchState?.importText || ''
   const validation = useMemo(() => {
     if (!currentExportPayload) return null
     if (isDuplicates) {
-      return validateFlaggedCleanupImport(importText, currentExportPayload as FlaggedCleanupBatchExportPayload)
+      return validateFlaggedCleanupImport(importText, currentExportPayload as FlaggedCleanupExportPayload | FlaggedCleanupBatchExportPayload)
     }
     return validateCatalogCleanupBatchImport(importText, currentExportPayload as CatalogCleanupBatchExportPayload)
   }, [isDuplicates, currentExportPayload, importText])
 
   useEffect(() => {
     if (!currentBatch || !validation) return
-    setBatchStates((previous) => ({
-      ...previous,
-      [currentBatch.batch_id]: {
-        status: validation.preview
-          ? previous[currentBatch.batch_id]?.status === 'applied'
-            ? 'applied'
-            : 'review_imported'
-          : previous[currentBatch.batch_id]?.status || 'not_started',
-        importText,
-        applyResults: previous[currentBatch.batch_id]?.applyResults || [],
-        preview: validation.preview,
-      },
-    }))
+    setBatchStates((previous) => {
+      const existing = previous[currentBatch.batch_id]
+      if (existing?.importText === importText && existing?.status === (validation.preview ? (existing.status === 'applied' ? 'applied' : 'review_imported') : existing.status)) {
+        return previous
+      }
+
+      return {
+        ...previous,
+        [currentBatch.batch_id]: {
+          status: validation.preview
+            ? existing?.status === 'applied'
+              ? 'applied'
+              : 'review_imported'
+            : existing?.status || 'not_started',
+          importText,
+          applyResults: existing?.applyResults || [],
+          preview: validation.preview,
+        },
+      }
+    })
   }, [currentBatch, importText, validation])
 
   const exportJson = useMemo(
@@ -231,7 +230,7 @@ export function ItemLibraryAdvancedCleanupPanel({
   )
   const aiPrompt = useMemo(() => {
     if (!currentExportPayload) return ''
-    if (isDuplicates) return buildFlaggedCleanupPrompt(currentExportPayload as FlaggedCleanupBatchExportPayload)
+    if (isDuplicates) return buildFlaggedCleanupPrompt(currentExportPayload as FlaggedCleanupExportPayload | FlaggedCleanupBatchExportPayload)
     return buildCatalogCleanupPrompt(currentExportPayload as CatalogCleanupBatchExportPayload)
   }, [isDuplicates, currentExportPayload])
   const preview = validation?.preview as (CatalogCleanupImportPreview | CleanupImportPreview | null)
@@ -279,9 +278,9 @@ export function ItemLibraryAdvancedCleanupPanel({
     if (!resolvedBatchSize) return
 
     const nextSession = createCatalogCleanupSession({
-      items,
-      aliases,
-      duplicateGroups,
+      items: items ?? [],
+      aliases: aliases ?? [],
+      duplicateGroups: duplicateGroups ?? [],
       batchSize: resolvedBatchSize,
       sessionId: `catalog-cleanup-${Date.now()}`,
       generatedAt: new Date().toISOString(),
@@ -291,7 +290,7 @@ export function ItemLibraryAdvancedCleanupPanel({
     setCurrentBatchIndex(0)
     setBatchStates(
       Object.fromEntries(
-        nextSession.batches.map((batch) => [
+        (nextSession.batches ?? []).map((batch) => [
           batch.batch_id,
           {
             status: 'not_started',
@@ -311,7 +310,7 @@ export function ItemLibraryAdvancedCleanupPanel({
     try {
       setApplyError(null)
       const results = await onApplyProposals(
-        currentExportPayload,
+        currentExportPayload as CatalogCleanupBatchExportPayload | FlaggedCleanupBatchExportPayload,
         isDuplicates
           ? (applyableMerges as any[]).map((merge) => ({
               group_id: merge.group.group_id,
@@ -372,14 +371,14 @@ export function ItemLibraryAdvancedCleanupPanel({
 
             <div className="mt-5">
               <div className="inline-flex w-full flex-wrap gap-2 rounded-[18px] border border-[#dbc8ae] bg-[#f3e7d8] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
-                {['25', '50', '100', 'custom'].map((option) => {
+                {['25', '50', '100', 'all', 'custom'].map((option) => {
                   const isSelected = batchSizeOption === option
 
                   return (
                     <button
                       key={option}
                       type="button"
-                      onClick={() => setBatchSizeOption(option as '25' | '50' | '100' | 'custom')}
+                      onClick={() => setBatchSizeOption(option as '25' | '50' | '100' | 'all' | 'custom')}
                       className={[
                         'flex min-w-[72px] flex-1 items-center justify-center gap-2 rounded-[14px] border px-4 py-3 text-[13px] font-bold transition-all duration-150',
                         isSelected
@@ -388,7 +387,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                       ].join(' ')}
                     >
                       {isSelected ? <Check className="h-4 w-4" /> : null}
-                      <span>{option === 'custom' ? 'Custom' : option}</span>
+                      <span className="capitalize">{option === 'custom' ? 'Custom' : option}</span>
                     </button>
                   )
                 })}
@@ -459,60 +458,68 @@ export function ItemLibraryAdvancedCleanupPanel({
   if (!currentBatch || !currentExportPayload || !validation) {
     return null
   }
-
   const currentStatus = currentBatchState?.status || 'not_started'
   const canAdvance = currentStatus === 'review_imported' || currentStatus === 'applied'
-  const hasNextBatch = currentBatchIndex < lockedSession.batch_count - 1
+  const batchCount = isDuplicates ? 1 : (lockedSession?.batch_count ?? 0)
+  const hasNextBatch = !isDuplicates && currentBatchIndex < batchCount - 1
 
   return (
     <div className="h-full overflow-y-auto bg-[linear-gradient(180deg,_#efe5d7_0%,_#e8dccb_100%)]">
       <div className="space-y-4 p-5 pb-20">
         <section className="rounded-[18px] border border-[#d6c2a8] bg-[linear-gradient(180deg,_#fff9f1_0%,_#f7ecde_100%)] p-5 shadow-[0_20px_36px_rgba(93,68,42,0.10)]">
           <SectionTitle
-            eyebrow="Locked Session"
-            title={isDuplicates ? currentBatch.title : `Batch ${currentBatchIndex + 1} of ${lockedSession.batch_count}`}
+            eyebrow="Cleanup Hub"
+            title={isDuplicates ? 'Outsource Duplicate Review' : `Batch ${currentBatchIndex + 1} of ${batchCount}`}
             description={isDuplicates 
-              ? "This batch contains categorized duplicate groups. Review the AI output and apply merges before proceeding."
+              ? "Reviewing all flagged duplicate groups together. Export the JSON, review the AI output, and apply suggested merges."
               : "This session is locked to a fixed batch size. Export only the current batch, review the AI output, and apply supported merge decisions before moving forward."}
           />
 
           <div className="mt-4 grid gap-3 md:grid-cols-4">
-            <StatCard label="Batch Size" value={lockedSession.batch_size.toLocaleString()} meta="Locked for this session." />
-            <StatCard label="Current Batch" value={currentBatch.item_count.toLocaleString()} meta={currentBatch.batch_id} />
-            <StatCard label="Status" value={currentStatus.replace('_', ' ')} meta="Tracked in component state." />
+            <StatCard 
+              label={isDuplicates ? "Groups" : "Batch Size"} 
+              value={isDuplicates ? (duplicateGroups ?? []).length.toLocaleString() : (lockedSession?.batch_size ?? 0).toLocaleString()} 
+              meta={isDuplicates ? "Total flagged." : "Locked for this session."} 
+            />
+            <StatCard label="Current Count" value={(currentBatch?.item_count ?? 0).toLocaleString()} meta={currentBatch?.batch_id ?? '...'} />
+            <StatCard label="Status" value={currentStatus.replace('_', ' ')} meta="Tracked in state." />
             <StatCard
               label="Progress"
-              value={`${currentBatchIndex + 1}/${isDuplicates ? duplicateBatches.length : lockedSession.batch_count}`}
-              meta={isDuplicates ? "Categorized batches." : "One numeric batch at a time."}
+              value={`${currentBatchIndex + 1}/${batchCount}`}
+              meta={isDuplicates ? "Single payload." : "One numeric batch at a time."}
             />
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            {(isDuplicates ? duplicateBatches : lockedSession.batches).map((batch, index) => {
-              const status = batchStates[batch.batch_id]?.status || 'not_started'
-              return (
-                <span
-                  key={batch.batch_id}
-                  className={[
-                    'rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em]',
-                    index === currentBatchIndex
-                      ? 'border-[#8c6a45] bg-[#f5e7d3] text-[#6e4f2d]'
-                      : 'border-[#d7c3aa] bg-[#fffaf5] text-[#947d63]',
-                  ].join(' ')}
-                >
-                  {batch.title}: {status.replace('_', ' ')}
-                </span>
-              )
-            })}
-          </div>
+          {!isDuplicates && (
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {(lockedSession?.batches ?? []).map((batch, index) => {
+                const status = batchStates[batch.batch_id]?.status || 'not_started'
+                return (
+                  <span
+                    key={batch.batch_id}
+                    className={[
+                      'rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em]',
+                      index === currentBatchIndex
+                        ? 'border-[#8c6a45] bg-[#f5e7d3] text-[#6e4f2d]'
+                        : 'border-[#d7c3aa] bg-[#fffaf5] text-[#947d63]',
+                    ].join(' ')}
+                  >
+                    {batch.title}: {status.replace('_', ' ')}
+                  </span>
+                )
+              })}
+            </div>
+          )}
         </section>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <section className="rounded-[16px] border border-[#d8c5ad] bg-[#fff8ef] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.08)]">
             <SectionTitle
               eyebrow="1. Export"
-              title="Release only this batch"
-              description="The export contains the current batch only, with session and batch identifiers for strict import validation."
+              title={isDuplicates ? "Export All Duplicates" : "Release only this batch"}
+              description={isDuplicates
+                ? "The export contains all detected duplicate groups for this business."
+                : "The export contains the current batch only, with session and batch identifiers for strict import validation."}
             />
 
             <div className="mt-4 grid gap-2">
@@ -718,14 +725,14 @@ export function ItemLibraryAdvancedCleanupPanel({
 
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#dac8b1] bg-[#fcf7ef] px-4 py-3">
                   <div className="text-[11px] text-[#6f5b46]">
-                    Move on after reviewing this batch. Supported merge applies refresh the library data first.
+                    {isDuplicates ? "Finalize review and apply merges. All proposals must come from the exported groups." : "Move on after reviewing this batch. Supported merge applies refresh the library data first."}
                   </div>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => {
                         if (isDuplicates) {
-                          setDuplicateBatches([])
+                          // No-op for now, or reset view mode in parent
                         } else {
                           setLockedSession(null)
                         }
@@ -735,15 +742,15 @@ export function ItemLibraryAdvancedCleanupPanel({
                       }}
                       className="rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-3 py-2 text-[11px] font-semibold text-[#6d543a]"
                     >
-                      {isDuplicates ? 'Restart batches' : 'Start new session'}
+                      {isDuplicates ? 'Reset Flow' : 'Start new session'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setCurrentBatchIndex((value) => value + 1)}
-                      disabled={!((isDuplicates ? currentBatchIndex < duplicateBatches.length - 1 : hasNextBatch)) || !canAdvance}
-                      className="rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2 text-[11px] font-bold text-[#523b25] disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={!hasNextBatch || !canAdvance}
+                      className="rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2.5 text-[11px] font-bold text-[#523b25] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {(isDuplicates ? currentBatchIndex < duplicateBatches.length - 1 : hasNextBatch) ? 'Next batch' : 'Last batch'}
+                      {hasNextBatch ? 'Next batch' : 'Last batch'}
                     </button>
                   </div>
                 </div>
