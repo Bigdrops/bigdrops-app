@@ -31,6 +31,7 @@ import { formatNaira } from "@/lib/formatters/money"
 import { formatStatusLabel } from "@/lib/formatters/status"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 import { Receipt } from "lucide-react"
+import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
 
 const PAGE_SIZE = 25
 
@@ -492,15 +493,47 @@ export default function Invoices() {
     },
   })
 
-  const getInvoiceStatusClassName = (status: string | null | undefined) => {
-    const normalized = (status || "unpaid").toLowerCase()
-    if (normalized === "unpaid") return "border border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-300"
-    if (normalized === "paid") return "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300"
-    if (normalized === "partially_paid") return "border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300"
-    return "border border-border bg-muted text-muted-foreground"
+  const formatInvoiceStatusLabel = (status: string | null | undefined) => formatStatusLabel(status, { fallback: "unpaid", lowercase: true })
+
+  const renderInvoiceRow = (invoice: InvoiceRow) => {
+    const tone = getStatusTone(invoice.status || 'unpaid')
+    const statusClasses = getStatusClasses(tone)
+    
+    return (
+      <ModuleRowCard
+        key={invoice.id}
+        title={invoice.client_name || "No client"}
+        subtitle={invoice.invoice_number || "Invoice"}
+        tertiary={formatInvoiceDate(invoice.issue_date) || "No date"}
+        amount={formatNaira(invoice.total)}
+        statusLabel={formatInvoiceStatusLabel(invoice.status)}
+        statusClassName={statusClasses}
+        onClick={() => navigate(`/invoices/${invoice.id}`)}
+        onActionClick={() => setActiveInvoice(invoice)}
+      />
+    )
   }
 
   const formatInvoiceStatusLabel = (status: string | null | undefined) => formatStatusLabel(status, { fallback: "unpaid", lowercase: true })
+
+  const renderInvoiceRow = (invoice: InvoiceRow) => {
+    const tone = getStatusTone(invoice.status || 'unpaid')
+    const statusClasses = getStatusClasses(tone)
+    
+    return (
+      <ModuleRowCard
+        key={invoice.id}
+        title={invoice.client_name || "No client"}
+        subtitle={invoice.invoice_number || "Invoice"}
+        tertiary={formatInvoiceDate(invoice.issue_date) || "No date"}
+        amount={formatNaira(invoice.total)}
+        statusLabel={formatInvoiceStatusLabel(invoice.status)}
+        statusClassName={statusClasses}
+        onClick={() => navigate(`/invoices/${invoice.id}`)}
+        onActionClick={() => setActiveInvoice(invoice)}
+      />
+    )
+  }
 
   const resetFilters = () => {
     setSearch("")
@@ -562,19 +595,7 @@ export default function Invoices() {
         hasActiveFilters={hasActiveFilters}
         onResetFilters={resetFilters}
         records={invoices}
-        renderRow={(invoice: InvoiceRow) => (
-          <ModuleRowCard
-            key={invoice.id}
-            title={invoice.client_name || "No client"}
-            subtitle={invoice.invoice_number || "Invoice"}
-            tertiary={formatInvoiceDate(invoice.issue_date) || "No date"}
-            amount={formatNaira(invoice.total)}
-            statusLabel={formatInvoiceStatusLabel(invoice.status)}
-            statusClassName={getInvoiceStatusClassName(invoice.status)}
-            onClick={() => navigate(`/invoices/${invoice.id}`)}
-            onActionClick={() => setActiveInvoice(invoice)}
-          />
-        )}
+        renderRow={renderInvoiceRow}
         loadMoreLabel="Load more invoices"
         emptyState={(
           <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">

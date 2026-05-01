@@ -149,8 +149,8 @@ export default function Clients() {
           />
         )}
         emptyState={
-          <div className="flex flex-col items-center justify-center gap-4 rounded-[26px] border border-dashed border-border bg-card/50 py-16 text-center shadow-inner">
-            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
+          <div className="flex flex-col items-center justify-center gap-4 rounded-[var(--bd-overlay-radius)] border border-dashed border-border bg-card/50 py-16 text-center shadow-inner">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-[var(--bd-radius-lg)] bg-muted text-muted-foreground">
               <Users className="h-7 w-7" />
             </div>
             <div>

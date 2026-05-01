@@ -155,7 +155,7 @@ export function PdfBankControls({
 
   return (
     <>
-      <Card className="rounded-[24px] border-border shadow-sm">
+      <Card className="rounded-[var(--bd-overlay-radius)] border-border shadow-sm">
         <CardContent className="space-y-4 p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-extrabold tracking-[-0.02em] text-foreground">Bank Details</div>
@@ -172,7 +172,7 @@ export function PdfBankControls({
 
           {state.showBankDetails && selectedBank ? (
             <div className="space-y-3">
-              <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
+              <div className="rounded-[var(--bd-radius-xl)] border border-slate-200 bg-slate-50 p-4">
                 <div className="mb-3 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
                   <Landmark className="h-4 w-4" />
                   Selected Account
@@ -243,7 +243,7 @@ export function PdfDocumentOptionsCard({
   }
 
   return (
-    <Card className="rounded-[24px] border-border shadow-sm">
+    <Card className="rounded-[var(--bd-overlay-radius)] border-border shadow-sm">
       <CardContent className="p-0">
         <button
           type="button"
@@ -268,7 +268,7 @@ export function PdfDocumentOptionsCard({
               control={<OutputToggle checked={state.showTagline} onToggle={() => update({ showTagline: !state.showTagline })} />}
             >
               {state.showTagline ? (
-                <div className="rounded-[16px] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+                <div className="rounded-[var(--bd-radius-xl)] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
                   {companyTagline || 'No tagline'}
                 </div>
               ) : null}
@@ -279,7 +279,7 @@ export function PdfDocumentOptionsCard({
               control={<OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />}
             >
               {state.showFooter ? (
-                <div className="rounded-[16px] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+                <div className="rounded-[var(--bd-radius-xl)] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
                   {footerText || 'No footer text'}
                 </div>
               ) : null}
@@ -366,7 +366,7 @@ function BankAccountPickerSheet({
 }: BankAccountPickerSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-2xl">
+      <SheetContent side="bottom" className="rounded-t-[var(--bd-overlay-radius)]">
         <SheetHeader className="text-left">
           <SheetTitle>Select Bank Account</SheetTitle>
           <SheetDescription>
@@ -384,7 +384,7 @@ function BankAccountPickerSheet({
                 type="button"
                 onClick={() => onSelect(bank.id)}
                 className={[
-                  "w-full rounded-xl border p-3 text-left transition",
+                  "w-full rounded-[var(--bd-radius-lg)] border p-3 text-left transition",
                   active
                     ? "border-slate-900 bg-slate-900 text-white"
                     : "border-border bg-card text-foreground hover:bg-muted/50",

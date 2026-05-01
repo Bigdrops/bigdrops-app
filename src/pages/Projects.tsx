@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Archive, Eye, FolderKanban, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Archive, Eye, FolderKanban, FolderOpen, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { toast } from '@/hooks/use-toast'
+import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
 
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
+import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import MobileFab from '@/components/layout/MobileFab'
 import ModuleShell from '@/components/layout/ModuleShell'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
@@ -25,15 +28,6 @@ type ProjectRow = ProjectRecord & {
   archived_at?: string | null
 }
 
-type AccentVariant = {
-  rail: string
-  tile: string
-  eyebrow: string
-  meta: string
-  chip: string
-  value: string
-}
-
 type ProjectIdRow = {
   project_id?: string | null
 }
@@ -44,49 +38,6 @@ const STATUS_CONFIG = {
   on_hold: { label: 'On Hold' },
   cancelled: { label: 'Cancelled' },
 } as const
-
-const ACCENT_VARIANTS: AccentVariant[] = [
-  {
-    rail: 'bg-emerald-500',
-    tile: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200',
-    eyebrow: 'text-emerald-700',
-    meta: 'text-emerald-700/80',
-    chip: 'border border-emerald-200 bg-emerald-50 text-emerald-700',
-    value: 'text-emerald-700',
-  },
-  {
-    rail: 'bg-emerald-600',
-    tile: 'bg-emerald-200 text-emerald-800 ring-1 ring-emerald-300',
-    eyebrow: 'text-emerald-800',
-    meta: 'text-emerald-800/80',
-    chip: 'border border-emerald-300 bg-emerald-100 text-emerald-800',
-    value: 'text-emerald-800',
-  },
-  {
-    rail: 'bg-green-500',
-    tile: 'bg-green-100 text-green-700 ring-1 ring-green-200',
-    eyebrow: 'text-green-700',
-    meta: 'text-green-700/80',
-    chip: 'border border-green-200 bg-green-50 text-green-700',
-    value: 'text-green-700',
-  },
-  {
-    rail: 'bg-green-600',
-    tile: 'bg-green-200 text-green-800 ring-1 ring-green-300',
-    eyebrow: 'text-green-800',
-    meta: 'text-green-800/80',
-    chip: 'border border-green-300 bg-green-100 text-green-800',
-    value: 'text-green-800',
-  },
-  {
-    rail: 'bg-emerald-700',
-    tile: 'bg-emerald-200 text-emerald-900 ring-1 ring-emerald-300',
-    eyebrow: 'text-emerald-900',
-    meta: 'text-emerald-900/80',
-    chip: 'border border-emerald-300 bg-emerald-100 text-emerald-900',
-    value: 'text-emerald-900',
-  },
-]
 
 export default function Projects() {
   const navigate = useNavigate()
@@ -267,14 +218,8 @@ export default function Projects() {
             : null
           const statusKey = (project.status in STATUS_CONFIG ? project.status : 'active') as StatusKey
           const statusLabel = STATUS_CONFIG[statusKey].label
-          const statusTone =
-            project.status === 'completed'
-              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
-              : project.status === 'on_hold'
-                ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
-                : project.status === 'cancelled'
-                  ? 'bg-destructive/10 text-destructive'
-                  : 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300'
+          const tone = getStatusTone(project.status)
+          const statusClasses = getStatusClasses(tone)
 
           return (
             <ModuleRowCard
@@ -296,22 +241,22 @@ export default function Projects() {
               }
               amount={formattedValue}
               statusLabel={statusLabel}
-              statusClassName={statusTone}
+              statusClassName={statusClasses}
               onClick={() => navigate(`/projects/${project.id}`)}
               onActionClick={() => setActiveProject(project)}
             />
           )
         }}
         emptyState={
-          <div className="flex flex-col items-center justify-center gap-4 rounded-[26px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">
-            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
-              <FolderKanban className="h-7 w-7" />
+          <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-border bg-card p-16 text-center shadow-inner">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+              <FolderOpen className="h-7 w-7" />
             </div>
-            <div>
-              <div className="text-sm font-semibold text-[hsl(var(--bd-text))]">{hasActiveFilters ? 'No matches found' : 'No projects yet'}</div>
-              <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
-                {hasActiveFilters ? 'Try adjusting your filters' : 'Create your first project to get started'}
-              </div>
+            <div className="text-base font-bold text-[hsl(var(--bd-text))]">
+              {hasActiveFilters ? 'No projects found' : 'No projects yet'}
+            </div>
+            <div className="mt-1 text-sm text-[hsl(var(--bd-text-muted))]">
+              {hasActiveFilters ? 'Try a different search or filter.' : 'Create your first project to start organizing activity.'}
             </div>
           </div>
         }

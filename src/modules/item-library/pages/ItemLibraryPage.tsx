@@ -468,7 +468,7 @@ export default function ItemLibraryPage() {
                       <div className="grid gap-3">
                         <button 
                           onClick={() => setViewMode('duplicates')}
-                          className="flex flex-col items-start gap-1 rounded-2xl border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                          className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
                         >
                           <div className="flex w-full items-center justify-between">
                             <span className="text-sm font-bold text-[#2c2218]">Duplicate Groups</span>
@@ -479,7 +479,7 @@ export default function ItemLibraryPage() {
 
                         <button 
                           onClick={() => setViewMode('advanced_cleanup')}
-                          className="flex flex-col items-start gap-1 rounded-2xl border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                          className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
                         >
                           <span className="text-sm font-bold text-[#2c2218]">Advanced AI Cleanup</span>
                           <span className="text-[11px] text-[#8a8277]">Export flagged data for AI processing and bulk-apply cleaning proposals.</span>
@@ -487,7 +487,7 @@ export default function ItemLibraryPage() {
 
                         <button 
                           onClick={() => setViewMode('merge_history')}
-                          className="flex flex-col items-start gap-1 rounded-2xl border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                          className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
                         >
                           <span className="text-sm font-bold text-[#2c2218]">Merge History</span>
                           <span className="text-[11px] text-[#8a8277]">Audit previous merges and review the history of catalog maintenance.</span>

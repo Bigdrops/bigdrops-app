@@ -23,6 +23,7 @@ import { getNextQuotationNumber, mapDbQuotation } from '@/domain/quotation'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 import { fetchProjectSummary, getQuotationDocumentRelations } from '@/domain/documentRelationships'
 import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
+import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
 import MobileFab from '@/components/layout/MobileFab'
 import { Button } from '@/components/ui/button'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
@@ -350,18 +351,26 @@ export default function QuotationList() {
       },
     })
 
-  const getQuotationStatusClassName = (status: string | null | undefined) => {
-    const tone = quotationStatusTone(status)
-    if (tone.includes('emerald')) {
-      return 'border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300'
-    }
-    if (tone.includes('rose')) {
-      return 'border border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-300'
-    }
-    if (tone.includes('blue')) {
-      return 'border border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-300'
-    }
-    return 'border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300'
+  const renderQuotationRow = (quotation: any) => {
+    const tone = getStatusTone(quotation.status)
+    const statusClasses = getStatusClasses(tone)
+    
+    return (
+      <ModuleRowCard
+        key={quotation.id}
+        title={quotation.client_name || 'No client'}
+        subtitle={quotation.quotation_number || 'Quotation'}
+        tertiary={formatDisplayDate(quotation.issue_date, {
+          fallback: 'No date',
+          dateOptions: { day: '2-digit', month: 'short', year: 'numeric' },
+        })}
+        amount={formatNaira(quotation.total)}
+        statusLabel={formatQuotationStatus(quotation.status)}
+        statusClassName={statusClasses}
+        onClick={() => navigate(`/quotations/${quotation.id}`)}
+        onActionClick={() => setActiveQuotation(quotation)}
+      />
+    )
   }
 
   const syncRecoveryBanner = showQuotationSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
@@ -472,19 +481,7 @@ export default function QuotationList() {
           setSearch('')
         }}
         records={mappedQuotations}
-        renderRow={(quotation) => (
-          <ModuleRowCard
-            key={quotation.id}
-            title={quotation.client_name || 'No client'}
-            subtitle={quotation.quotation_number || 'Quotation'}
-            tertiary={renderQuotationRowDate(quotation)}
-            amount={formatMoney(quotation.total || 0)}
-            statusLabel={formatQuotationStatus(quotation.status)}
-            statusClassName={getQuotationStatusClassName(quotation.status)}
-            onClick={() => navigate(`/quotations/${quotation.id}`)}
-            onActionClick={() => setActiveQuotation(quotation)}
-          />
-        )}
+        renderRow={renderQuotationRow}
         beforeListContent={syncRecoveryBanner}
         emptyState={(
           <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">

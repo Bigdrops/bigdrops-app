@@ -40,7 +40,7 @@ export default function ModuleRowCard({
       role="button"
       tabIndex={0}
       className={cn(
-        "group relative flex w-full cursor-pointer items-center gap-4 rounded-[22px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.99] shadow-sm",
+        "group relative flex w-full cursor-pointer items-center gap-4 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.99] shadow-sm",
         className
       )}
     >
@@ -87,7 +87,7 @@ export default function ModuleRowCard({
             e.stopPropagation()
             onActionClick()
           }}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-[14px] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] transition-colors hover:bg-[hsl(var(--bd-surface-action-hover))] hover:text-[hsl(var(--bd-text))]"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] transition-colors hover:bg-[hsl(var(--bd-surface-action-hover))] hover:text-[hsl(var(--bd-text))]"
           aria-label={actionAriaLabel}
         >
           <MoreHorizontal className="h-5 w-5" />

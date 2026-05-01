@@ -165,7 +165,7 @@ export default function ModuleShell<T>({
                 variant={searchOpen || searchValue ? 'outline' : 'ghost'}
                 size="icon"
                 onClick={toggleSearch}
-                className="h-9 w-9 rounded-xl border-border text-foreground"
+                className="h-9 w-9 rounded-[var(--bd-radius-md)] border-border text-foreground"
                 aria-label={searchOpen ? 'Hide search' : 'Show search'}
               >
                 {searchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
@@ -177,7 +177,7 @@ export default function ModuleShell<T>({
                   size="icon"
                   onClick={toggleFilters}
                   className={cn(
-                    "h-9 w-9 rounded-xl border-border text-foreground",
+                    "h-9 w-9 rounded-[var(--bd-radius-md)] border-border text-foreground",
                     hasActiveFilters && "bg-primary/5 border-primary/20"
                   )}
                   aria-label="Toggle filters"
@@ -192,7 +192,7 @@ export default function ModuleShell<T>({
         {/* Mobile Search Input */}
         {searchOpen && (
           <div className="mt-3 px-4">
-            <div className="relative flex items-center rounded-[18px] border border-[hsl(var(--bd-border))]/80 bg-[hsl(var(--bd-surface))]/95 p-1.5 shadow-sm">
+            <div className="relative flex items-center rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))]/80 bg-[hsl(var(--bd-surface))]/95 p-1.5 shadow-sm">
               <Search className="ml-2.5 h-4 w-4 text-[hsl(var(--bd-text-muted))]" />
               <Input
                 value={searchValue}
@@ -276,11 +276,11 @@ export default function ModuleShell<T>({
       {filtersOpen && (
          <div className="md:hidden mt-2.5 px-4">
             {filterPanel ? (
-               <div className="rounded-[20px] border border-[hsl(var(--bd-border))]/80 bg-[hsl(var(--bd-surface))]/95 p-4 shadow-sm">
+               <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))]/80 bg-[hsl(var(--bd-surface))]/95 p-4 shadow-sm">
                   {filterPanel}
                </div>
             ) : filters ? (
-               <div className="rounded-[20px] border border-[hsl(var(--bd-border))]/80 bg-[hsl(var(--bd-surface))]/95 p-4 shadow-sm space-y-4">
+               <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))]/80 bg-[hsl(var(--bd-surface))]/95 p-4 shadow-sm space-y-4">
                   {filters.map(f => (
                     <div key={f.label}>
                        <div className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">{f.label}</div>
@@ -322,8 +322,8 @@ export default function ModuleShell<T>({
               records.map(renderRow)
             ) : (
               emptyState || (
-                <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-20 text-center shadow-inner">
-                  <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+                <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-20 text-center shadow-inner">
+                  <div className="mx-auto grid h-14 w-14 place-items-center rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
                     <Search className="h-6 w-6" />
                   </div>
                   <div className="mt-4 text-sm font-bold text-[hsl(var(--bd-text))]">No records found</div>

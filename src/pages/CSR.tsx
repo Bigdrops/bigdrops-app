@@ -31,6 +31,7 @@ import {
 } from "@/components/document/linkedDocumentSections"
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatStatusLabel } from "@/lib/formatters/status"
+import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
 
 export type CsrRow = {
   id: string
@@ -314,15 +315,8 @@ export default function CSR() {
         hasActiveFilters={hasActiveFilters}
         onResetFilters={resetFilters}
         renderRow={(csr) => {
-          const statusKey = getCsrStatusKey(csr.status)
-          const statusClasses =
-            statusKey === "completed"
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-              : statusKey === "cancelled"
-                ? "bg-destructive/10 text-destructive"
-                : statusKey === "pending"
-                  ? "bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300"
-                  : "bg-muted text-muted-foreground"
+          const tone = getStatusTone(csr.status || 'draft')
+          const statusClasses = getStatusClasses(tone)
 
           return (
             <ModuleRowCard
@@ -338,8 +332,8 @@ export default function CSR() {
           )
         }}
         emptyState={
-          <div className="rounded-[22px] border border-dashed border-border bg-card p-5 text-center">
-            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-[16px] bg-foreground text-background">
+          <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-border bg-card p-5 text-center shadow-inner">
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-[var(--bd-radius-lg)] bg-foreground text-background">
               <ClipboardList className="h-5 w-5" />
             </div>
             <div className="text-base font-semibold text-foreground">

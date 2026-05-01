@@ -19,6 +19,8 @@ import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
 import { Button } from '@/components/ui/button'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 import { fetchInvoiceSummary, fetchProjectSummary } from '@/domain/documentRelationships'
+import { formatStatusLabel } from '@/lib/formatters/status'
+import { getStatusTone, getStatusClasses } from '@/lib/statusTheme'
 import { useToast } from '@/hooks/use-toast'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
 import {
@@ -120,6 +122,8 @@ export default function Waybills() {
     }
     return list
   }, [waybills, tab, search])
+
+  const hasActiveFilters = tab !== 'all' || search.trim() !== ''
 
   const tabs: { key: FilterTab; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -336,14 +340,8 @@ export default function Waybills() {
           }
           records={loading ? [] : filtered}
           renderRow={(w) => {
-            const statusMeta = getStatusMeta(w.status)
-            const typeMeta = getTypeMeta(w.type)
-            const statusClassName =
-              statusMeta.label.toLowerCase() === 'delivered'
-                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
-                : statusMeta.label.toLowerCase() === 'in transit'
-                  ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300'
-                  : 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]'
+            const tone = getStatusTone(w.status)
+            const statusClasses = getStatusClasses(tone)
             
             return (
               <ModuleRowCard
@@ -356,28 +354,28 @@ export default function Waybills() {
                     {!w.project_id && <div className="font-bold text-primary">Project link pending</div>}
                   </div>
                 }
-                statusLabel={statusMeta.label}
-                statusClassName={statusClassName}
+                statusLabel={formatStatusLabel(w.status, { fallback: 'open' })}
+                statusClassName={statusClasses}
                 onClick={() => navigate(`/waybills/${w.id}`)}
                 onActionClick={() => setActiveWaybill(w)}
               />
             )
           }}
           emptyState={
-            <div className="flex flex-col items-center justify-center gap-4 rounded-[26px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">
-              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+            <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-border bg-card p-16 text-center shadow-inner">
+              <div className="mx-auto grid h-14 w-14 place-items-center rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
                 <Truck className="h-7 w-7" />
               </div>
-              <div>
-                <div className="text-sm font-semibold text-[hsl(var(--bd-text))]">No waybills found</div>
-                <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
-                  {search ? 'Try a different search term' : 'Create your first waybill to get started'}
-                </div>
+              <div className="mt-4 text-base font-bold text-[hsl(var(--bd-text))]">
+                {hasActiveFilters ? 'No waybills found' : 'No waybills yet'}
               </div>
-              {!search && (
+              <div className="mt-1 text-sm text-[hsl(var(--bd-text-muted))]">
+                {hasActiveFilters ? 'Try a different search or filter.' : 'Create your first waybill to start tracking logistics.'}
+              </div>
+              {!hasActiveFilters && (
                 <Button
                   onClick={() => navigate('/waybills/new')}
-                  className="rounded-xl px-6"
+                  className="mt-6 rounded-xl px-6"
                 >
                   New Waybill
                 </Button>

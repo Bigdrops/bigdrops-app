@@ -223,7 +223,7 @@ export default function RecordPaymentModal({
 
   return (
     <Dialog open={controlledOpen} onOpenChange={(next) => (next ? onOpenChange?.(next) : close())}>
-      <DialogContent className="max-h-[85vh] max-w-[440px] overflow-y-auto rounded-2xl bg-card p-0 sm:max-w-[440px]">
+      <DialogContent className="max-h-[85vh] max-w-[440px] overflow-y-auto rounded-[var(--bd-radius-xl)] bg-card p-0 sm:max-w-[440px]">
         <DialogHeader className="border-b border-border px-5 py-4">
           <DialogTitle className="border-l-4 border-emerald-500 pl-3 text-[17px] text-foreground">Record Payment</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
@@ -233,7 +233,7 @@ export default function RecordPaymentModal({
 
         <div className="space-y-4 px-5 py-4">
           <div
-            className="flex items-center justify-between gap-3 rounded-[10px] border-l-4 border-emerald-600 bg-emerald-50 px-4 py-3"
+            className="flex items-center justify-between gap-3 rounded-[var(--bd-radius-md)] border-l-4 border-emerald-600 bg-emerald-50 px-4 py-3"
           >
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Invoice Total</div>
@@ -243,7 +243,7 @@ export default function RecordPaymentModal({
           </div>
 
           <div
-            className="flex items-center justify-between gap-3 rounded-[10px] border-l-4 border-blue-600 bg-blue-50 px-4 py-3"
+            className="flex items-center justify-between gap-3 rounded-[var(--bd-radius-md)] border-l-4 border-blue-600 bg-blue-50 px-4 py-3"
           >
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Current Balance</div>
             <div className="flex items-center gap-2 text-sm font-bold text-red-600">
@@ -254,7 +254,7 @@ export default function RecordPaymentModal({
 
           <div>
             <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Payment Type</div>
-            <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-border">
+            <div className="grid grid-cols-2 overflow-hidden rounded-[var(--bd-radius-lg)] border border-border">
               {(["full", "partial"] as PaymentType[]).map((type) => {
                 const active = form.type === type
                 return (
@@ -309,7 +309,7 @@ export default function RecordPaymentModal({
           </div>
 
           {form.method === "Transfer" ? (
-            <div className="space-y-1.5 rounded-lg border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3">
+            <div className="space-y-1.5 rounded-[var(--bd-radius-lg)] border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3">
               <label className="text-sm font-medium text-slate-700">Received Into Account</label>
               <Select value={selectedBankId} onValueChange={setSelectedBankId}>
                 <SelectTrigger className="w-full border-emerald-200 bg-background">
@@ -341,7 +341,7 @@ export default function RecordPaymentModal({
             />
           </div>
 
-          <div className="rounded-lg border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3">
+          <div className="rounded-[var(--bd-radius-lg)] border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3">
             <div className="flex items-center justify-between gap-2 text-sm">
               <span className="font-medium text-muted-foreground">Settlement</span>
               <span className="font-bold text-foreground">{formatMoney(amountPaid)}</span>
@@ -355,7 +355,7 @@ export default function RecordPaymentModal({
           </div>
 
           {error ? (
-            <div className="rounded-xl bg-red-600 px-3 py-2 text-xs text-white">
+            <div className="rounded-[var(--bd-radius-lg)] bg-red-600 px-3 py-2 text-xs text-white">
               {error}
             </div>
           ) : null}

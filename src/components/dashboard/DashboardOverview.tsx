@@ -168,13 +168,13 @@ function formatRecentRecordValue(doc: RecentDoc) {
 
 function RecentActivitySkeleton() {
   return (
-    <div className="rounded-[18px] border border-border bg-card shadow-sm">
+    <div className="rounded-[var(--bd-radius-xl)] border border-border bg-card shadow-sm">
       {Array.from({ length: 3 }).map((_, index) => (
         <div
           key={index}
           className="flex items-center gap-[10px] border-t border-border px-[14px] py-[11px] first:border-t-0"
         >
-          <div className="grid h-[38px] w-[38px] place-items-center rounded-[12px] bg-muted/80" />
+          <div className="grid h-[38px] w-[38px] place-items-center rounded-[var(--bd-radius-lg)] bg-muted/80" />
           <div className="min-w-0 flex-1">
             <div className="h-3.5 w-28 rounded bg-muted/80" />
             <div className="mt-2 h-3 w-40 rounded bg-muted/60" />
@@ -210,7 +210,7 @@ export function DashboardOverview({
             <button
               type="button"
               onClick={mobileChrome.openSidebar}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-[11px] bg-muted text-foreground"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--bd-radius-md)] bg-muted text-foreground"
               aria-label="Open navigation menu"
             >
               <Menu className="h-[15px] w-[15px]" />
@@ -240,12 +240,12 @@ export function DashboardOverview({
           return (
             <article
               key={metric.key}
-              className="rounded-[18px] border border-border bg-card p-[14px] shadow-sm"
+              className="rounded-[var(--bd-radius-xl)] border border-border bg-card p-[14px] shadow-sm"
             >
               <div className="flex items-center gap-[8px]">
                 <div
                   className={cn(
-                    'grid h-7 w-7 place-items-center rounded-[9px]',
+                    'grid h-7 w-7 place-items-center rounded-[var(--bd-radius-sm)]',
                     metric.iconClassName,
                   )}
                 >
@@ -283,11 +283,11 @@ export function DashboardOverview({
                 key={tile.id}
                 type="button"
                 onClick={() => onQuickAction(tile.path)}
-                className="rounded-[18px] border border-border bg-card p-[15px] text-left shadow-sm"
+                className="rounded-[var(--bd-radius-xl)] border border-border bg-card p-[15px] text-left shadow-sm"
               >
                 <div
                   className={cn(
-                    'grid h-[38px] w-[38px] place-items-center rounded-[12px] shadow-sm',
+                    'grid h-[38px] w-[38px] place-items-center rounded-[var(--bd-radius-lg)] shadow-sm',
                     tile.iconBg,
                   )}
                 >

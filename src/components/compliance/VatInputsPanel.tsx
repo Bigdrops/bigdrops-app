@@ -103,7 +103,7 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
         </CardHeader>
         <CardContent className="p-0">
           {taxInputs.length === 0 ? (
-            <div className="text-center py-12 px-4 rounded-b-xl bg-slate-50 border-t border-dashed border-slate-200">
+            <div className="text-center py-12 px-4 rounded-b-[var(--bd-radius-xl)] bg-slate-50 border-t border-dashed border-slate-200">
               <Wallet className="h-10 w-10 text-slate-300 mx-auto mb-3" />
               <div className="text-sm font-bold text-slate-800">No VAT Inputs Recorded</div>
               <div className="text-xs text-muted-foreground mt-1 max-w-[280px] mx-auto">
@@ -196,7 +196,7 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50">
+            <div className="flex items-center justify-between p-4 rounded-[var(--bd-radius-lg)] border border-slate-200 bg-slate-50">
               <div className="space-y-0.5">
                 <Label className="text-sm font-bold">Recoverable VAT</Label>
                 <div className="text-xs text-muted-foreground">Can be deducted from output VAT</div>
@@ -218,7 +218,7 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
         </SheetContent>
       </Sheet>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm mt-6">
+      <div className="rounded-[var(--bd-radius-xl)] border border-slate-200 bg-white p-5 shadow-sm mt-6">
         <div className="flex items-start gap-3">
           <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
           <div>

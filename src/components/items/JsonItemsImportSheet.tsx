@@ -180,7 +180,7 @@ export default function JsonItemsImportSheet({
         <div className="space-y-4">
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-overlay-muted))]">Import Strategy</span>
-            <div className="flex gap-1 rounded-[16px] bg-[hsl(var(--bd-overlay-section-bg))] border border-[hsl(var(--bd-overlay-border))] p-1.5 shadow-sm">
+            <div className="flex gap-1 rounded-[var(--bd-radius-xl)] bg-[hsl(var(--bd-overlay-section-bg))] border border-[hsl(var(--bd-overlay-border))] p-1.5 shadow-sm">
               {(['Add', 'Update'] as ImportMode[]).map((entry) => {
                 const selected = mode === entry
                 const unavailable = entry === 'Update' && !updateEnabled
@@ -195,7 +195,7 @@ export default function JsonItemsImportSheet({
                       setErrorMessage(null)
                     }}
                     className={cn(
-                      'flex-1 rounded-[10px] py-2 text-[13px] font-bold transition-all',
+                      'flex-1 rounded-[var(--bd-radius-md)] py-2 text-[13px] font-bold transition-all',
                       selected
                         ? 'bg-[hsl(var(--bd-bg))] text-[hsl(var(--bd-overlay-text))] shadow-sm border border-[hsl(var(--bd-overlay-border))]'
                         : 'text-[hsl(var(--bd-overlay-muted))] hover:text-[hsl(var(--bd-overlay-text))]',
