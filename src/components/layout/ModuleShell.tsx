@@ -214,7 +214,7 @@ export default function ModuleShell<T>({
       </div>
 
       {/* Desktop Toolbar (Hidden on mobile) */}
-      <div className="hidden md:flex flex-col gap-[var(--bd-space-lg)] mb-[var(--bd-section-gap)]">
+      <div className="hidden md:flex flex-col gap-[var(--bd-space-md)] mb-[var(--bd-space-lg)]">
         <div className="flex items-center justify-between gap-[var(--bd-space-md)]">
           <div className="flex-1 max-w-2xl relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-[hsl(var(--bd-text-muted))]" />
@@ -316,7 +316,7 @@ export default function ModuleShell<T>({
       <div className="flex-1 mt-[var(--bd-row-gap)] px-[var(--bd-space-md)] md:px-0 md:mt-0">
         {beforeListContent}
         
-        <div className="space-y-[var(--bd-row-gap)] md:space-y-1.5">
+        <div className="space-y-[var(--bd-row-gap)] md:space-y-1">
           {records && renderRow ? (
             records.length > 0 ? (
               records.map(renderRow)

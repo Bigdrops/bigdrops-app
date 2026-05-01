@@ -188,8 +188,8 @@ export default function Layout({
         {/* Desktop Header (Page) */}
         <div className="hidden md:block">
           {!isHome && !hidePageHeader ? (
-            <header className="mx-auto w-full max-w-[var(--bd-layout-content-max,1200px)] px-[var(--bd-layout-padding,1.5rem)] pt-6">
-              <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] border-l-4 border-l-[hsl(var(--bd-status-info-text))] bg-[hsl(var(--bd-surface))] px-5 py-4 shadow-sm">
+            <header className="mx-auto w-full max-w-[var(--bd-layout-content-max,1200px)] px-[var(--bd-layout-padding,1.5rem)] pt-[var(--bd-space-md)]">
+              <div className="rounded-[var(--bd-radius-md)] border border-[hsl(var(--bd-border))] border-l-4 border-l-[hsl(var(--bd-status-info-text))] bg-[hsl(var(--bd-surface))] px-5 py-3 shadow-none">
                 <h1 className="text-lg font-bold text-[hsl(var(--bd-text))]">{title}</h1>
               </div>
             </header>
@@ -200,10 +200,10 @@ export default function Layout({
         <MobileChromeContext.Provider value={mobileChromeValue}>
           <div 
             {...props}
+            data-bd-layout="content"
             className={cn(
-              "flex-1",
-              !isHome && "md:mx-auto md:w-full md:max-w-[var(--bd-layout-content-max,1200px)] md:px-[var(--bd-layout-padding,1.5rem)] md:py-[var(--bd-space-lg)]",
-              isHome && "w-full", // Dashboard takes full width of flex-1, it handles its own internal centering
+              "flex-1 w-full",
+              !isHome && "md:px-[var(--bd-layout-padding,1.5rem)] md:py-[var(--bd-space-md)]",
               "px-0 pb-24 pt-0", // Mobile defaults
               contentClassName
             )}

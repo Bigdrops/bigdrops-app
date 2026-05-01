@@ -40,7 +40,7 @@ export default function ModuleRowCard({
       role="button"
       tabIndex={0}
       className={cn(
-        "group relative flex w-full cursor-pointer items-center gap-[var(--bd-row-gap)] rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-[var(--bd-card-padding)] md:p-3.5 text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.985] shadow-sm",
+        "group relative flex w-full cursor-pointer items-center gap-[var(--bd-row-gap)] rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-[var(--bd-card-padding)] md:p-2.5 text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.985] shadow-sm md:shadow-none md:rounded-[var(--bd-radius-md)] md:border-x-0 md:border-t-0",
         className
       )}
     >

@@ -158,7 +158,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
         </Suspense>
       )}
       <Suspense fallback={<PageLoader />}>
-        <main data-bd-layout="content">
+        <main className="flex-1 w-full">
           <Routes>
             <Route path="/" element={withBoundary(<Dashboard session={session} />)} />
             <Route path="/invoices" element={withBoundary(<Invoices />)} />
