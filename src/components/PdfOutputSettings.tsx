@@ -106,7 +106,7 @@ function OutputToggle({ checked, onToggle }: { checked: boolean; onToggle: () =>
       type="button"
       onClick={onToggle}
       className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
-        checked ? 'bg-emerald-500' : 'bg-slate-300'
+        checked ? 'bg-[hsl(var(--bd-feedback-success))]' : 'bg-[hsl(var(--bd-border))]'
       }`}
     >
       <span
@@ -130,7 +130,7 @@ function SettingsRow({
   return (
     <div className="border-b border-border/80 py-2.5 last:border-b-0">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-medium text-slate-700">{label}</span>
+        <span className="text-sm font-medium text-[hsl(var(--bd-text))]">{label}</span>
         {control}
       </div>
       {children ? <div className="pt-2">{children}</div> : null}
@@ -172,27 +172,27 @@ export function PdfBankControls({
 
           {state.showBankDetails && selectedBank ? (
             <div className="space-y-3">
-              <div className="rounded-[var(--bd-radius-xl)] border border-slate-200 bg-slate-50 p-4">
-                <div className="mb-3 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+              <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface-muted))] p-4">
+                <div className="mb-3 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">
                   <Landmark className="h-4 w-4" />
                   Selected Account
                 </div>
                 <div className="grid gap-2 text-sm sm:grid-cols-2">
                   <div>
-                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Account Name</div>
-                    <div className="mt-1 font-semibold text-foreground">{selectedBank.accountName}</div>
+                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted)/0.7)]">Account Name</div>
+                    <div className="mt-1 font-semibold text-[hsl(var(--bd-text))]">{selectedBank.accountName}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Account Number</div>
-                    <div className="mt-1 font-mono font-semibold text-foreground">{selectedBank.accountNumber}</div>
+                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted)/0.7)]">Account Number</div>
+                    <div className="mt-1 font-mono font-semibold text-[hsl(var(--bd-text))]">{selectedBank.accountNumber}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Bank</div>
-                    <div className="mt-1 font-semibold text-foreground">{selectedBank.bankName}</div>
+                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted)/0.7)]">Bank</div>
+                    <div className="mt-1 font-semibold text-[hsl(var(--bd-text))]">{selectedBank.bankName}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Sort Code</div>
-                    <div className="mt-1 font-mono font-semibold text-foreground">{selectedBank.sortCode}</div>
+                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted)/0.7)]">Sort Code</div>
+                    <div className="mt-1 font-mono font-semibold text-[hsl(var(--bd-text))]">{selectedBank.sortCode}</div>
                   </div>
                 </div>
               </div>
@@ -254,9 +254,9 @@ export function PdfDocumentOptionsCard({
             <div className="text-sm font-extrabold tracking-[-0.02em] text-foreground">Document options</div>
           </div>
           {open ? (
-            <ChevronUp className="h-4 w-4 shrink-0 text-slate-400" />
+            <ChevronUp className="h-4 w-4 shrink-0 text-[hsl(var(--bd-text-muted))]" />
           ) : (
-            <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+            <ChevronDown className="h-4 w-4 shrink-0 text-[hsl(var(--bd-text-muted))]" />
           )}
         </button>
 
@@ -267,7 +267,7 @@ export function PdfDocumentOptionsCard({
               control={<OutputToggle checked={state.showTagline} onToggle={() => update({ showTagline: !state.showTagline })} />}
             >
               {state.showTagline ? (
-                <div className="rounded-[var(--bd-radius-xl)] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+                <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface-muted))] px-3 py-3 text-sm text-[hsl(var(--bd-text))]">
                   {companyTagline || 'No tagline'}
                 </div>
               ) : null}
@@ -278,7 +278,7 @@ export function PdfDocumentOptionsCard({
               control={<OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />}
             >
               {state.showFooter ? (
-                <div className="rounded-[var(--bd-radius-xl)] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+                <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface-muted))] px-3 py-3 text-sm text-[hsl(var(--bd-text))]">
                   {footerText || 'No footer text'}
                 </div>
               ) : null}
@@ -382,8 +382,8 @@ function BankAccountPickerSheet({
                 className={[
                   "w-full rounded-[var(--bd-radius-lg)] border p-3 text-left transition",
                   active
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-border bg-card text-foreground hover:bg-muted/50",
+                    ? "border-[hsl(var(--bd-border-strong))] bg-[hsl(var(--bd-border-strong))] text-[hsl(var(--bd-surface))]"
+                    : "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]",
                 ].join(" ")}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -395,8 +395,8 @@ function BankAccountPickerSheet({
                           className={[
                             "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium",
                             active
-                              ? "border-slate-700 bg-slate-800 text-slate-200"
-                              : "border-green-200 bg-green-50 text-green-700",
+                              ? "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-border-strong)/0.1)] text-[hsl(var(--bd-surface))]"
+                              : "border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]",
                           ].join(" ")}
                         >
                           DEFAULT
@@ -407,7 +407,7 @@ function BankAccountPickerSheet({
                     <div
                       className={[
                         "mt-2 space-y-1 text-sm",
-                        active ? "text-slate-200" : "text-muted-foreground",
+                        active ? "text-[hsl(var(--bd-surface)/0.8)]" : "text-[hsl(var(--bd-text-muted))]",
                       ].join(" ")}
                     >
                       <p>{bank.accountName}</p>

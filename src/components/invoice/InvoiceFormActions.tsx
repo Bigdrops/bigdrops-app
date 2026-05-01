@@ -21,7 +21,7 @@ export default function InvoiceFormActions({
         <Button
           type="button"
           onClick={onSaveSent}
-          className="h-12 rounded-none bg-[#0f62fe] px-6 text-[15px] font-bold hover:bg-[#0353e9]"
+          className="h-11 px-6 text-[14px] font-bold"
           loading={saving}
         >
           {primaryLabel}
@@ -30,7 +30,7 @@ export default function InvoiceFormActions({
           type="button"
           onClick={onSaveDraft}
           variant="secondary"
-          className="h-11 rounded-none bg-muted px-6 text-[14px] text-foreground hover:bg-slate-200"
+          className="h-11 bg-[hsl(var(--bd-surface-muted))] px-6 text-[14px] font-medium text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-border)/0.2)]"
           loading={saving}
         >
           Save as Draft
@@ -39,7 +39,7 @@ export default function InvoiceFormActions({
           type="button"
           onClick={onCancel}
           variant="outline"
-          className="h-11 rounded-none border-border px-6 text-[14px] text-muted-foreground"
+          className="h-11 px-6 text-[14px] font-medium text-[hsl(var(--bd-text-muted))]"
         >
           Cancel
         </Button>
