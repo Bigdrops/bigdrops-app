@@ -54,7 +54,7 @@ export const MobileChromeContext = React.createContext<MobileChromeContextValue>
   openSidebar: () => {} 
 })
 
-interface LayoutProps {
+interface LayoutProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string
   children: React.ReactNode
   session?: Session | null
@@ -70,6 +70,7 @@ export default function Layout({
   hidePageHeader = false,
   hideMobileHomeHeader = false,
   contentClassName = '',
+  ...props
 }: LayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -80,7 +81,7 @@ export default function Layout({
   const [drawerSalesOpen, setDrawerSalesOpen] = React.useState(false)
   
   const activeTab = getActiveTab(location.pathname)
-  const isHome = location.pathname === '/'
+  const isHome = location.pathname === '/' || props['data-bd-page'] === 'dashboard'
   const salesRouteActive = activeTab === 'sales'
   const presalesRouteActive = isPathActive(location.pathname, '/rfqs') || isPathActive(location.pathname, '/boqs')
   
@@ -133,9 +134,6 @@ export default function Layout({
     }
   }, [salesRouteActive])
 
-  const desktopContentClassName = contentClassName || 'mx-auto w-full max-w-5xl px-6 py-6'
-  const mobileContentClassName = contentClassName || 'w-full overflow-x-hidden px-0 pb-24 pt-0'
-  
   const mobileChromeValue = React.useMemo(
     () => ({
       openSidebar,
@@ -162,15 +160,16 @@ export default function Layout({
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col">
-        {/* Mobile Header (Home) */}
+        {/* Mobile Header (Home/Dashboard) */}
         <div className="md:hidden">
           {isHome && !hideMobileHomeHeader ? (
-            <div className="w-full px-4 pt-3">
+            <div className="w-full">
               <MobilePageHeader
                 title={APP_NAME}
                 subtitle={settings?.company_name || 'Invoicing and Projects'}
                 accentClassName="tone-info-accent"
                 onMenuClick={openSidebar}
+                className="rounded-none border-x-0 border-t-0 shadow-none"
               />
             </div>
           ) : null}
@@ -200,10 +199,12 @@ export default function Layout({
         {/* Content Body */}
         <MobileChromeContext.Provider value={mobileChromeValue}>
           <div 
+            {...props}
             className={cn(
               "flex-1",
-              "md:mx-auto md:w-full md:max-w-[var(--bd-layout-content-max,1200px)] md:px-[var(--bd-layout-padding,1.5rem)] md:py-6",
-              "px-0 pb-24 pt-0", // Mobile overrides
+              !isHome && "md:mx-auto md:w-full md:max-w-[var(--bd-layout-content-max,1200px)] md:px-[var(--bd-layout-padding,1.5rem)] md:py-[var(--bd-space-lg)]",
+              isHome && "w-full", // Dashboard takes full width of flex-1, it handles its own internal centering
+              "px-0 pb-24 pt-0", // Mobile defaults
               contentClassName
             )}
           >

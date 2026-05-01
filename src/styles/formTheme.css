@@ -105,11 +105,11 @@
   --bd-space-lg: 32px;
   --bd-space-xl: 48px;
 
-  --bd-card-padding: var(--bd-space-md);
-  --bd-section-gap: var(--bd-space-lg);
-  --bd-row-gap: var(--bd-space-md);
-  --bd-field-gap: var(--bd-space-sm);
-  --bd-sheet-padding: var(--bd-space-md);
+  --bd-card-padding: var(--bd-space-md);   /* 16px */
+  --bd-section-gap: var(--bd-space-lg);    /* 32px (2x padding) */
+  --bd-row-gap: var(--bd-space-sm);        /* 8px (0.5x padding) */
+  --bd-field-gap: var(--bd-space-sm);      /* 8px */
+  --bd-sheet-padding: var(--bd-space-md);  /* 16px */
 
   --bd-button-padding-x: var(--bd-space-md);
   --bd-button-padding-y: var(--bd-space-sm);
@@ -176,8 +176,7 @@
 
 @media (min-width: 672px) {
   [data-bd-layout="content"] {
-    padding-left: var(--bd-layout-padding);
-    padding-right: var(--bd-layout-padding);
+    width: 100%;
   }
 }
 

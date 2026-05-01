@@ -37,7 +37,7 @@ export function DesktopSidebar({
     >
       <div className="flex flex-col h-full overflow-y-auto bd-custom-scrollbar">
         <div className="px-6 py-7">
-          <div className="text-sm font-black tracking-tight text-[hsl(var(--bd-text))]">
+          <div className="text-sm font-black tracking-[-0.03em] text-[hsl(var(--bd-text))]">
             {APP_NAME}
           </div>
           <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">
@@ -50,7 +50,7 @@ export function DesktopSidebar({
           ) : null}
         </div>
 
-        <div className="flex-1 space-y-6 px-4 pb-10">
+        <div className="flex-1 space-y-[var(--bd-section-gap)] px-4 pb-10">
           <div>
             <div className="mb-2.5 px-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[hsl(var(--bd-text-muted))]">
               Navigation
@@ -65,7 +65,7 @@ export function DesktopSidebar({
                     type="button"
                     onClick={() => onTabClick(item.key)}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-[var(--bd-radius-lg)] px-3 py-2 text-sm transition-all active:scale-[0.98]',
+                      'flex w-full items-center gap-3 rounded-[var(--bd-radius-lg)] px-3 py-2 text-sm transition-all active:scale-[0.985]',
                       isActive ? activeNavItemClassName : inactiveNavItemClassName
                     )}
                   >
@@ -98,7 +98,7 @@ export function DesktopSidebar({
                     type="button"
                     onClick={() => handleSalesPick(item.key)}
                     className={cn(
-                      'flex w-full items-center justify-between rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] px-3 py-2.5 text-left shadow-sm transition-all hover:bg-[hsl(var(--bd-surface-action-hover))] active:scale-[0.98]',
+                      'flex w-full items-center justify-between rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] px-3 py-2.5 text-left shadow-sm transition-all hover:bg-[hsl(var(--bd-surface-action-hover))] active:scale-[0.985]',
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ export function DesktopSidebar({
                       key={item.key}
                       type="button"
                       onClick={() => handleMorePick(item.key)}
-                      className="flex w-full items-center justify-between rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 py-2 text-sm shadow-sm transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.98]"
+                      className="flex w-full items-center justify-between gap-[var(--bd-space-md)] rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 py-2 text-sm shadow-sm transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.985]"
                     >
                       <div className="flex items-center gap-3">
                         <span className="grid h-9 w-9 place-items-center rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))]">
@@ -145,7 +145,7 @@ export function DesktopSidebar({
 
           <div className="mt-auto pt-4">
              <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))/0.5] px-3 py-3 shadow-sm">
-                <div className="mb-2.5 px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">
+                <div className="mb-[var(--bd-space-sm)] px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">
                   Business Context
                 </div>
                 <BusinessSwitcher />

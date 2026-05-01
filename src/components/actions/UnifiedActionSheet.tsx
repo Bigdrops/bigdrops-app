@@ -91,7 +91,7 @@ export function UnifiedActionSheet({
           key={action.key || idx}
           type="button"
           onClick={() => handleActionClick(action)}
-          className="flex min-h-[92px] flex-col items-center justify-center gap-[var(--bd-space-sm)] rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] px-[var(--bd-space-xs)] py-[var(--bd-space-sm)] text-center transition hover:bg-[hsl(var(--bd-surface-action-hover))] active:scale-[0.98]"
+          className="flex min-h-[92px] flex-col items-center justify-center gap-[var(--bd-space-sm)] rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] px-[var(--bd-space-xs)] py-[var(--bd-space-sm)] text-center transition hover:bg-[hsl(var(--bd-surface-action-hover))] active:scale-[0.97]"
         >
           <div
             className={cn(
@@ -115,7 +115,7 @@ export function UnifiedActionSheet({
         type="button"
         onClick={() => handleActionClick(action)}
         className={cn(
-          "grid w-full grid-cols-[44px,minmax(0,1fr),auto] items-center gap-[var(--bd-space-md)] rounded-[var(--bd-overlay-radius)] border px-[var(--bd-space-md)] py-[var(--bd-space-md)] text-left transition-all active:scale-[0.99]",
+          "grid w-full grid-cols-[44px,minmax(0,1fr),auto] items-center gap-[var(--bd-row-gap)] rounded-[var(--bd-overlay-radius)] border px-[var(--bd-space-md)] py-[var(--bd-space-md)] text-left transition-all active:scale-[0.985]",
           tone.row
         )}
       >
@@ -123,7 +123,7 @@ export function UnifiedActionSheet({
           {action.icon}
         </div>
         <div className="min-w-0">
-          <div className={cn("text-[14px] font-bold tracking-tight", tone.text)}>
+          <div className={cn("text-[14px] font-bold tracking-[-0.03em]", tone.text)}>
             {action.label}
           </div>
           {action.description && (
@@ -180,7 +180,7 @@ export function UnifiedActionSheet({
           {/* Content */}
           <div className="min-h-0 flex-1 overflow-y-auto px-[var(--bd-sheet-padding)] pb-[calc(var(--bd-space-lg)+env(safe-area-inset-bottom))] pt-[var(--bd-space-md)] bd-custom-scrollbar">
             {groups ? (
-              <div className="space-y-6">
+              <div className="space-y-[var(--bd-section-gap)]">
                 {groups.map((group, gIdx) => (
                   <div key={group.label || gIdx}>
                     {group.label && (

@@ -214,15 +214,15 @@ export default function ModuleShell<T>({
       </div>
 
       {/* Desktop Toolbar (Hidden on mobile) */}
-      <div className="hidden md:flex flex-col gap-[var(--bd-space-md)] mb-[var(--bd-space-md)]">
-        <div className="flex items-center justify-between gap-[var(--bd-row-gap)]">
+      <div className="hidden md:flex flex-col gap-[var(--bd-section-gap)] mb-[var(--bd-section-gap)]">
+        <div className="flex items-center justify-between gap-[var(--bd-space-md)]">
           <div className="flex-1 max-w-md relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-[hsl(var(--bd-text-muted))]" />
             <Input
               value={searchValue}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={searchPlaceholder}
-              className="h-11 pl-11 pr-4 rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] shadow-sm focus:ring-2 focus:ring-primary/20"
+              className="h-11 pl-11 pr-4 rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] shadow-sm focus:ring-2 focus:ring-primary/20 transition-all active:scale-[0.99]"
             />
           </div>
           <div className="flex items-center gap-[var(--bd-space-sm)]">
@@ -237,7 +237,7 @@ export default function ModuleShell<T>({
                 </Button>
              )}
              {onPrimaryAction && (
-                <Button onClick={onPrimaryAction} className="h-11 px-6 rounded-[var(--bd-radius-lg)] shadow-md">
+                 <Button onClick={onPrimaryAction} className="h-11 px-6 rounded-[var(--bd-radius-lg)] shadow-md transition-all active:scale-[0.985]">
                    {primaryActionLabel}
                 </Button>
              )}
@@ -313,7 +313,7 @@ export default function ModuleShell<T>({
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 mt-[var(--bd-space-sm)] px-[var(--bd-space-md)] md:px-0">
+      <div className="flex-1 mt-[var(--bd-row-gap)] px-[var(--bd-space-md)] md:px-0">
         {beforeListContent}
         
         <div className="space-y-[var(--bd-row-gap)]">

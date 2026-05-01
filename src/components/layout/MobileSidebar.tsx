@@ -58,7 +58,7 @@ export function MobileSidebar({
         </button>
 
         <div className="px-5 pb-5 pt-6">
-          <div className="text-sm font-black tracking-tight text-foreground">{APP_NAME}</div>
+          <div className="text-sm font-black tracking-[-0.03em] text-foreground">{APP_NAME}</div>
           <div className="mt-1 text-xs text-muted-foreground">Navigation</div>
         </div>
 
@@ -82,7 +82,7 @@ export function MobileSidebar({
                   onOpenChange(false)
                 }}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition',
+                  'flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition active:scale-[0.985]',
                   isActive ? activeNavItemClassName : inactiveNavItemClassName
                 )}
               >
@@ -106,7 +106,7 @@ export function MobileSidebar({
               type="button"
               onClick={() => setDrawerSalesOpen((prev) => !prev)}
               className={cn(
-                'flex w-full items-center justify-between rounded-[18px] px-2 py-2 text-sm transition',
+                'flex w-full items-center justify-between rounded-[18px] px-2 py-2 text-sm transition active:scale-[0.985]',
                 salesRouteActive ? activeNavItemClassName : inactiveNavItemClassName
               )}
             >
@@ -135,7 +135,7 @@ export function MobileSidebar({
                       type="button"
                       onClick={() => handleSalesPick(item.key)}
                       className={cn(
-                        'flex w-full items-center gap-3 rounded-2xl px-4 py-2 text-left text-sm transition',
+                        'flex w-full items-center gap-3 rounded-2xl px-4 py-2 text-left text-sm transition active:scale-[0.985]',
                         isActive ? activeNavItemClassName : inactiveNavItemClassName
                       )}
                     >
@@ -219,7 +219,7 @@ export function MobileSidebar({
                   onOpenChange(false)
                 }}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition',
+                  'flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition active:scale-[0.985]',
                   isActive ? activeNavItemClassName : inactiveNavItemClassName
                 )}
               >

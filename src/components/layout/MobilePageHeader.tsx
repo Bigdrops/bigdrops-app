@@ -36,7 +36,7 @@ export default function MobilePageHeader({
         className,
       )}
     >
-      <div className="flex items-start gap-[var(--bd-space-sm)]">
+      <div className="flex items-start gap-[var(--bd-row-gap)]">
         <Button
           type="button"
           variant="ghost"
@@ -59,9 +59,9 @@ export default function MobilePageHeader({
             </div>
           ) : null}
 
-          <div className="flex items-start justify-between gap-[var(--bd-space-sm)]">
+          <div className="flex items-start justify-between gap-[var(--bd-row-gap)]">
             <div className="min-w-0">
-              <div className="truncate text-[16px] font-semibold leading-tight text-[hsl(var(--bd-text))]">
+              <div className="truncate text-[16px] font-semibold leading-tight tracking-[-0.03em] text-[hsl(var(--bd-text))]">
                 {title}
               </div>
               {subtitle ? (

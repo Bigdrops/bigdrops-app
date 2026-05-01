@@ -95,7 +95,7 @@ export function JsonImportUI({
       <div className="sticky top-0 z-30 border-b border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-section-bg))] shadow-sm shrink-0">
         <div className="flex flex-row items-center justify-between p-[var(--bd-sheet-padding)] text-left">
           <div className="space-y-0.5">
-            <h3 className="text-base font-black text-[hsl(var(--bd-overlay-text))] flex items-center gap-1.5 leading-tight">
+            <h3 className="text-[20px] font-black tracking-[-0.03em] text-[hsl(var(--bd-overlay-text))] flex items-center gap-1.5 leading-tight">
               <Wand2 className="h-4 w-4 text-[hsl(var(--bd-feedback-success))]" />
               {title}
             </h3>
@@ -103,7 +103,7 @@ export function JsonImportUI({
               {description}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-[var(--bd-row-gap)]">
             <Button
               variant="ghost"
               size="sm"
@@ -118,7 +118,7 @@ export function JsonImportUI({
                 onClick={onSave}
                 disabled={isSaving}
                 size="sm"
-                className="h-10 bg-[hsl(var(--bd-button-primary-bg))] hover:brightness-95 text-[hsl(var(--bd-button-primary-text))] font-black text-xs uppercase tracking-[var(--bd-label-letter-spacing)] rounded-xl shadow-lg transition-all active:scale-[0.98] px-[var(--bd-space-lg)]"
+                className="h-10 bg-[hsl(var(--bd-button-primary-bg))] hover:brightness-95 text-[hsl(var(--bd-button-primary-text))] font-black text-xs uppercase tracking-[var(--bd-label-letter-spacing)] rounded-xl shadow-lg transition-all active:scale-[0.985] px-[var(--bd-space-lg)]"
               >
                 {isSaving ? 'Saving...' : saveLabel}
               </Button>
@@ -148,7 +148,7 @@ export function JsonImportUI({
         ) : null}
       </div>
 
-      <div className="p-[var(--bd-sheet-padding)] space-y-[var(--bd-space-md)] overflow-y-auto">
+      <div className="p-[var(--bd-sheet-padding)] space-y-[var(--bd-section-gap)] overflow-y-auto">
         {/* Tutorial / Help Section */}
         <div className="space-y-[var(--bd-space-sm)]">
           <button
@@ -223,7 +223,7 @@ export function JsonImportUI({
             <Button
               onClick={onPreview}
               disabled={!rawInput.trim()}
-              className="w-full h-11 bg-[hsl(var(--bd-text))] hover:brightness-90 text-[hsl(var(--bd-app-bg))] font-bold rounded-xl shadow-md transition-all active:scale-[0.98]"
+              className="w-full h-11 bg-[hsl(var(--bd-text))] hover:brightness-90 text-[hsl(var(--bd-app-bg))] font-bold rounded-xl shadow-md transition-all active:scale-[0.985]"
             >
               Preview Extraction
             </Button>

@@ -203,7 +203,7 @@ export function DashboardOverview({
   const mobileChrome = React.useContext(MobileChromeContext)
 
   return (
-    <div className="mx-auto flex w-full max-w-[760px] flex-col pb-32 pt-[34px] md:pb-16">
+    <div className="mx-auto flex w-full max-w-[var(--bd-layout-content-max,1200px)] flex-col pb-32 md:pb-16">
       <section className="sticky top-0 z-30 border-b border-border bg-background/95 px-[var(--bd-space-md)] pb-[var(--bd-space-sm)] pt-[var(--bd-space-sm)] backdrop-blur-[18px] md:px-[var(--bd-space-lg)]">
         <div className="flex items-center justify-between gap-[var(--bd-space-sm)]">
           <div className="flex min-w-0 items-center gap-[var(--bd-space-sm)]">
@@ -335,7 +335,9 @@ export function DashboardOverview({
                 key={item.key}
                 type="button"
                 onClick={() => onPrioritySelect(item)}
-                className="flex w-full items-center gap-[var(--bd-space-sm)] rounded-[var(--bd-radius-lg)] border border-border bg-card px-[var(--bd-space-md)] py-[var(--bd-space-sm)] text-left shadow-sm"
+                className={cn(
+                  "group relative flex w-full cursor-pointer items-center gap-[var(--bd-row-gap)] rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-[var(--bd-card-padding)] text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.985] shadow-sm",
+                )}
               >
                 <span
                   className={cn(
@@ -384,7 +386,7 @@ export function DashboardOverview({
         ) : (
           <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
             {recentDocs.length === 0 ? (
-              <div className="px-[14px] py-10 text-center text-sm text-muted-foreground">
+              <div className="px-[var(--bd-space-md)] py-[var(--bd-space-xl)] text-center text-sm text-muted-foreground">
                 No recent records yet.
               </div>
             ) : (
@@ -411,7 +413,7 @@ export function DashboardOverview({
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[13px] font-bold tracking-[-0.02em] text-foreground">
+                      <div className="truncate text-[16px] font-bold tracking-[-0.03em] text-[hsl(var(--bd-text))]">
                         {doc.number}
                       </div>
                       <div className="mt-[3px] truncate text-[11px] text-muted-foreground">

@@ -40,12 +40,12 @@ export default function ModuleRowCard({
       role="button"
       tabIndex={0}
       className={cn(
-        "group relative flex w-full cursor-pointer items-center gap-[var(--bd-row-gap)] rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-[var(--bd-card-padding)] text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.99] shadow-sm",
+        "group relative flex w-full cursor-pointer items-center gap-[var(--bd-row-gap)] rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-[var(--bd-card-padding)] text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.985] shadow-sm",
         className
       )}
     >
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[16px] font-bold tracking-tight text-[hsl(var(--bd-text))]">
+        <div className="truncate text-[16px] font-bold tracking-[-0.03em] text-[hsl(var(--bd-text))]">
           {title}
         </div>
         {subtitle && (
