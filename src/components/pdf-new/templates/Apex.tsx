@@ -2,6 +2,7 @@ import React from 'react'
 import { Page, Text, View } from '@react-pdf/renderer'
 import type { IndustryTemplateData } from '../industryAdapter'
 import { styles } from './ApexStyles'
+import { safeText } from '../core/safeText'
 
 export default function Apex({ data }: { data: IndustryTemplateData }) {
   const accent = data.design.accentColor || '#111827'
@@ -15,15 +16,15 @@ export default function Apex({ data }: { data: IndustryTemplateData }) {
 
       <View style={styles.content}>
         <Text style={styles.eyebrow}>Apex</Text>
-        <Text style={styles.title}>{documentLabel}</Text>
-        <Text style={styles.meta}>{data.documentNumberLabel}: {data.documentNumber}</Text>
-        {data.issueDate ? <Text style={styles.meta}>{data.issueDateLabel}: {data.issueDate}</Text> : null}
-        <Text style={styles.message}>{message}</Text>
+        <Text style={styles.title}>{safeText(documentLabel)}</Text>
+        <Text style={styles.meta}>{safeText(data.documentNumberLabel)}: {safeText(data.documentNumber)}</Text>
+        {data.issueDate ? <Text style={styles.meta}>{safeText(data.issueDateLabel)}: {safeText(data.issueDate)}</Text> : null}
+        <Text style={styles.message}>{safeText(message)}</Text>
       </View>
 
       <View fixed style={styles.footer}>
-        <Text style={styles.footerText}>{data.footer.documentNumber || data.documentNumber}</Text>
-        <Text style={styles.footerText}>{data.footer.companyName || data.company?.name || ''}</Text>
+        <Text style={styles.footerText}>{safeText(data.footer.documentNumber || data.documentNumber)}</Text>
+        <Text style={styles.footerText}>{safeText(data.footer.companyName || data.company?.name || '')}</Text>
       </View>
     </Page>
   )

@@ -1,4 +1,8 @@
 import { StyleSheet } from '@react-pdf/renderer'
+import { safeText } from '../core/safeText'
+import { getDescriptionMain, getDescriptionSub } from '../core/description'
+
+export { safeText as getCellText, getDescriptionMain, getDescriptionSub }
 
 type IndustryColumn = {
   key: string
@@ -560,32 +564,4 @@ export function resolveTextAlignmentStyle(column: IndustryColumn) {
   if (column.align === 'right') return styles.textRight
   if (column.align === 'center') return styles.textCenter
   return null
-}
-
-export function getCellText(cell: unknown): string {
-  if (cell === null || cell === undefined) return ''
-  if (typeof cell === 'string' || typeof cell === 'number') return String(cell)
-  if (typeof cell === 'object') {
-    const value = cell as { value?: unknown; text?: unknown; main?: unknown }
-    if (value.value !== undefined && value.value !== null) return String(value.value)
-    if (value.text !== undefined && value.text !== null) return String(value.text)
-    if (value.main !== undefined && value.main !== null) return String(value.main)
-  }
-  return ''
-}
-
-export function getDescriptionMain(cell: unknown): string {
-  if (!cell) return ''
-  if (typeof cell === 'object' && cell !== null && 'main' in cell && (cell as { main?: unknown }).main) {
-    return String((cell as { main?: unknown }).main)
-  }
-  return getCellText(cell)
-}
-
-export function getDescriptionSub(cell: unknown): string {
-  if (!cell || typeof cell !== 'object') return ''
-  const value = cell as { sub?: unknown; subDescription?: unknown }
-  if (value.sub !== undefined && value.sub !== null) return String(value.sub)
-  if (value.subDescription !== undefined && value.subDescription !== null) return String(value.subDescription)
-  return ''
 }

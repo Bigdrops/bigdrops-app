@@ -4,34 +4,10 @@ import { darkenHex, lightenHex } from '@/lib/pdfDesignPreset'
 import type { IndustryTemplateData } from '../industryAdapter'
 import { PdfCurrencyText } from '../pdfCurrency'
 import { styles } from './BoltStyles'
+import { safeText } from '../core/safeText'
+import { getDescriptionMain, getDescriptionSub } from '../core/description'
 
 const DEFAULT_ACCENT = '#1a56db'
-
-function safeText(value: unknown): string {
-  if (value === null || value === undefined) return ''
-  if (typeof value === 'string') return value
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
-  if (typeof value === 'object') {
-    const obj = value as Record<string, unknown>
-    return safeText(obj.label ?? obj.name ?? obj.text ?? obj.main ?? obj.value ?? '')
-  }
-  return ''
-}
-
-function getDescriptionParts(value: unknown) {
-  if (value && typeof value === 'object') {
-    const cell = value as Record<string, unknown>
-    return {
-      main: safeText(cell.main ?? cell.label ?? cell.name ?? cell.text ?? cell.value ?? ''),
-      sub: safeText(cell.sub ?? ''),
-    }
-  }
-
-  return {
-    main: safeText(value),
-    sub: '',
-  }
-}
 
 export default function Bolt({ data }: { data: IndustryTemplateData }) {
   const design = data.design
@@ -56,12 +32,12 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
   return (
     <Page size="A4" style={styles.page}>
       <View fixed style={[styles.footer, { backgroundColor: surface }]}>
-        <Text style={[styles.footerLeft, { color: ink }]}>{data.footer.documentNumber || data.documentNumber}</Text>
+        <Text style={[styles.footerLeft, { color: ink }]}>{safeText(data.footer.documentNumber || data.documentNumber)}</Text>
         <Text
           style={styles.footerCenter}
           render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
         />
-        <Text style={styles.footerRight}>{data.footer.companyName || data.company?.name || ''}</Text>
+        <Text style={styles.footerRight}>{safeText(data.footer.companyName || data.company?.name || '')}</Text>
       </View>
 
       <View style={[styles.headerBanner, { backgroundColor: accent }]}>
@@ -80,36 +56,36 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
             </View>
           )}
 
-          <Text style={styles.companyName}>{data.company?.name || 'Company Name'}</Text>
+          <Text style={styles.companyName}>{safeText(data.company?.name || 'Company Name')}</Text>
           <Text style={styles.companyContact}>
-            {data.company?.address || ''}
-            {data.company?.cityState ? `\n${data.company.cityState}` : ''}
+            {safeText(data.company?.address || '')}
+            {data.company?.cityState ? `\n${safeText(data.company.cityState)}` : ''}
             {(data.company?.phone || data.company?.email) ? '\n' : ''}
-            {data.company?.phone || ''}
+            {safeText(data.company?.phone || '')}
             {data.company?.phone && data.company?.email ? ' · ' : ''}
-            {data.company?.email || ''}
+            {safeText(data.company?.email || '')}
           </Text>
         </View>
 
         <View style={styles.headerRight}>
-          <Text style={styles.documentLabel}>{documentLabel}</Text>
-          <Text style={styles.documentTitle}>{documentTitle}</Text>
+          <Text style={styles.documentLabel}>{safeText(documentLabel)}</Text>
+          <Text style={styles.documentTitle}>{safeText(documentTitle)}</Text>
 
           <View style={styles.metaStack}>
             <View style={styles.metaLine}>
-              <Text style={styles.metaLabel}>{data.documentNumberLabel}</Text>
-              <Text style={styles.metaValue}>{data.documentNumber}</Text>
+              <Text style={styles.metaLabel}>{safeText(data.documentNumberLabel)}</Text>
+              <Text style={styles.metaValue}>{safeText(data.documentNumber)}</Text>
             </View>
             {data.issueDate ? (
               <View style={[styles.metaLine, styles.metaLineGap]}>
-                <Text style={styles.metaLabel}>{data.issueDateLabel}</Text>
-                <Text style={styles.metaValue}>{data.issueDate}</Text>
+                <Text style={styles.metaLabel}>{safeText(data.issueDateLabel)}</Text>
+                <Text style={styles.metaValue}>{safeText(data.issueDate)}</Text>
               </View>
             ) : null}
             {data.dueDateOrValidityDate ? (
               <View style={[styles.metaLine, styles.metaLineGap]}>
-                <Text style={styles.metaLabel}>{data.dueDateOrValidityDateLabel}</Text>
-                <Text style={styles.metaValue}>{data.dueDateOrValidityDate}</Text>
+                <Text style={styles.metaLabel}>{safeText(data.dueDateOrValidityDateLabel)}</Text>
+                <Text style={styles.metaValue}>{safeText(data.dueDateOrValidityDate)}</Text>
               </View>
             ) : null}
           </View>
@@ -119,21 +95,21 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
       <View style={styles.addressRow}>
         <View style={styles.addressColumn}>
           <Text style={[styles.addressLabel, { color: muted }]}>Bill To</Text>
-          <Text style={[styles.addressName, { color: ink }]}>{data.client?.name || '—'}</Text>
+          <Text style={[styles.addressName, { color: ink }]}>{safeText(data.client?.name || '—')}</Text>
           <Text style={[styles.addressDetail, { color: darkenHex(muted, 4) }]}>
-            {data.client?.address || '—'}
-            {data.client?.cityState ? `\n${data.client.cityState}` : ''}
-            {data.client?.phone ? `\n${data.client.phone}` : ''}
-            {data.client?.email ? `${data.client?.phone ? ' · ' : '\n'}${data.client.email}` : ''}
+            {safeText(data.client?.address || '—')}
+            {data.client?.cityState ? `\n${safeText(data.client.cityState)}` : ''}
+            {data.client?.phone ? `\n${safeText(data.client.phone)}` : ''}
+            {data.client?.email ? `${data.client?.phone ? ' · ' : '\n'}${safeText(data.client.email)}` : ''}
           </Text>
         </View>
 
         <View style={styles.addressColumnLast}>
           <Text style={[styles.addressLabel, { color: muted }]}>Our Reference</Text>
-          <Text style={[styles.addressName, { color: ink }]}>{data.company?.name || '—'}</Text>
+          <Text style={[styles.addressName, { color: ink }]}>{safeText(data.company?.name || '—')}</Text>
           <Text style={[styles.addressDetail, { color: darkenHex(muted, 4) }]}>
             {data.company?.customInfo?.length
-              ? data.company.customInfo.map((entry) => `${entry.label}: ${entry.value}`).join(' · ')
+              ? data.company.customInfo.map((entry) => `${safeText(entry.label)}: ${safeText(entry.value)}`).join(' · ')
               : '—'}
           </Text>
         </View>
@@ -143,8 +119,8 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
         <View style={[styles.customStrip, { backgroundColor: surface }]}>
           {headerFields.map((field, index) => (
             <View key={`${field.label}-${index}`} style={styles.customFieldItem}>
-              <Text style={[styles.customFieldKey, { color: muted }]}>{field.label}</Text>
-              <Text style={[styles.customFieldValue, { color: ink }]}>{field.value}</Text>
+              <Text style={[styles.customFieldKey, { color: muted }]}>{safeText(field.label)}</Text>
+              <Text style={[styles.customFieldValue, { color: ink }]}>{safeText(field.value)}</Text>
             </View>
           ))}
         </View>
@@ -164,7 +140,7 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
 
             return (
               <Text key={column.key} style={[styles.tableHeaderCell, widthStyle, alignStyle]}>
-                {column.label}
+                {safeText(column.label)}
               </Text>
             )
           })}
@@ -177,7 +153,7 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
                 key={`group-header-${rowIndex}`}
                 style={[styles.groupHeaderRow, { backgroundColor: accentTint, borderBottomColor: accentRule }]}
               >
-                <Text style={[styles.groupHeaderText, { color: accent }]}>{row.groupLabel || ''}</Text>
+                <Text style={[styles.groupHeaderText, { color: accent }]}>{safeText(row.groupLabel || '')}</Text>
               </View>
             )
           }
@@ -187,18 +163,16 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
               <View key={`group-footer-${rowIndex}`} style={styles.groupSubtotalRow}>
                 <View style={styles.groupSubtotalSpacer} />
                 <Text style={[styles.groupSubtotalLabel, { color: ink }]}>Group Total:</Text>
-                <PdfCurrencyText value={row.groupSubtotalValue || ''} style={[styles.groupSubtotalValue, { color: ink }]} />
+                <PdfCurrencyText value={safeText(row.groupSubtotalValue || '')} style={[styles.groupSubtotalValue, { color: ink }]} />
               </View>
             )
           }
 
           const cells = row.cells || {}
-          const description = getDescriptionParts(cells.description)
-          const rowNumber = safeText(cells.num)
 
           return (
             <View key={`row-${rowIndex}`} style={[styles.tableRow, row.isInGroup ? styles.groupItemRow : null]} wrap={false}>
-              <Text style={[styles.tableCellBase, styles.colNum, styles.alignCenter]}>{rowNumber}</Text>
+              <Text style={[styles.tableCellBase, styles.colNum, styles.alignCenter]}>{safeText(cells.num)}</Text>
 
               {displayColumns.map((column) => {
                 const rawValue = cells[column.key]
@@ -223,9 +197,9 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
                       {row.isInGroup ? (
                         <Text style={[styles.groupItemPrefix, { color: accent }]}>└</Text>
                       ) : null}
-                      <Text style={[styles.itemTitle, { color: ink }]}>{description.main}</Text>
-                      {description.sub ? (
-                        <Text style={[styles.itemSub, { color: darkenHex(muted, 4) }]}>{description.sub}</Text>
+                      <Text style={[styles.itemTitle, { color: ink }]}>{getDescriptionMain(cells)}</Text>
+                      {getDescriptionSub(cells) ? (
+                        <Text style={[styles.itemSub, { color: darkenHex(muted, 4) }]}>{getDescriptionSub(cells)}</Text>
                       ) : null}
                       {row.imageUrl ? (
                         <View style={styles.thumbnailRow}>
@@ -276,15 +250,15 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
               <Text style={[styles.sectionTitle, { color: accent, borderBottomColor: accentRule }]}>Payment</Text>
               <View style={styles.bankLine}>
                 <Text style={[styles.bankLabel, { color: darkenHex(muted, 4) }]}>Bank</Text>
-                <Text style={[styles.bankValue, { color: ink }]}>{data.paymentDetails.bankName}</Text>
+                <Text style={[styles.bankValue, { color: ink }]}>{safeText(data.paymentDetails.bankName)}</Text>
               </View>
               <View style={styles.bankLine}>
                 <Text style={[styles.bankLabel, { color: darkenHex(muted, 4) }]}>Account</Text>
-                <Text style={[styles.bankValue, { color: ink }]}>{data.paymentDetails.accountName}</Text>
+                <Text style={[styles.bankValue, { color: ink }]}>{safeText(data.paymentDetails.accountName)}</Text>
               </View>
               <View style={styles.bankLine}>
                 <Text style={[styles.bankLabel, { color: darkenHex(muted, 4) }]}>No.</Text>
-                <Text style={[styles.bankValue, { color: ink }]}>{data.paymentDetails.accountNumber}</Text>
+                <Text style={[styles.bankValue, { color: ink }]}>{safeText(data.paymentDetails.accountNumber)}</Text>
               </View>
             </>
           ) : null}
@@ -294,9 +268,9 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
           {data.notes ? (
             <>
               <Text style={[styles.sectionTitle, { color: accent, borderBottomColor: accentRule }]}>
-                {data.notes.title || 'Notes'}
+                {safeText(data.notes.title || 'Notes')}
               </Text>
-              <Text style={[styles.textBlock, { color: darkenHex(muted, 4) }]}>{data.notes.content}</Text>
+              <Text style={[styles.textBlock, { color: darkenHex(muted, 4) }]}>{safeText(data.notes.content)}</Text>
             </>
           ) : null}
           {data.terms ? (
@@ -308,9 +282,9 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
                   { color: accent, borderBottomColor: accentRule },
                 ]}
               >
-                {data.terms.title || 'Terms'}
+                {safeText(data.terms.title || 'Terms')}
               </Text>
-              <Text style={[styles.textBlock, { color: darkenHex(muted, 4) }]}>{data.terms.content}</Text>
+              <Text style={[styles.textBlock, { color: darkenHex(muted, 4) }]}>{safeText(data.terms.content)}</Text>
             </>
           ) : null}
         </View>
@@ -326,11 +300,11 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
                     src={attachment.url}
                     style={[styles.attachmentLink, { color: accentLink }]}
                   >
-                    {attachment.label || attachment.url}
+                    {safeText(attachment.label || attachment.url)}
                   </Link>
                 ) : (
                   <Text key={`${attachment.label || 'attachment'}-${index}`} style={[styles.textBlock, { color: darkenHex(muted, 4) }]}>
-                    {attachment.label}
+                    {safeText(attachment.label)}
                   </Text>
                 ),
               )}
@@ -344,26 +318,26 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
           <View style={styles.totalsGrid}>
             {data.totals.lines.map((line) => (
               <React.Fragment key={line.label}>
-                <Text style={[styles.totalsLabel, { color: darkenHex(muted, 4) }]}>{line.label}</Text>
-                <PdfCurrencyText value={line.value} style={[styles.totalsValue, { color: ink }]} />
+                <Text style={[styles.totalsLabel, { color: darkenHex(muted, 4) }]}>{safeText(line.label)}</Text>
+                <PdfCurrencyText value={safeText(line.value)} style={[styles.totalsValue, { color: ink }]} />
               </React.Fragment>
             ))}
 
             {data.totals.mainLine ? (
               <>
-                <Text style={[styles.totalsGrandLabel, { color: ink }]}>{data.totals.mainLine.label}</Text>
-                <PdfCurrencyText value={data.totals.mainLine.value} style={[styles.totalsGrandValue, { color: ink }]} />
+                <Text style={[styles.totalsGrandLabel, { color: ink }]}>{safeText(data.totals.mainLine.label)}</Text>
+                <PdfCurrencyText value={safeText(data.totals.mainLine.value)} style={[styles.totalsGrandValue, { color: ink }]} />
               </>
             ) : null}
 
             {data.totals.amountInWords ? (
-              <Text style={[styles.amountWords, { color: muted }]}>{data.totals.amountInWords}</Text>
+              <Text style={[styles.amountWords, { color: muted }]}>{safeText(data.totals.amountInWords)}</Text>
             ) : null}
 
             {data.totals.balanceDue ? (
               <>
-                <Text style={[styles.balanceDueLabel, { color: darkenHex(muted, 4) }]}>{data.totals.balanceDue.label}</Text>
-                <PdfCurrencyText value={data.totals.balanceDue.value} style={[styles.balanceDueValue, { color: ink }]} />
+                <Text style={[styles.balanceDueLabel, { color: darkenHex(muted, 4) }]}>{safeText(data.totals.balanceDue.label)}</Text>
+                <PdfCurrencyText value={safeText(data.totals.balanceDue.value)} style={[styles.balanceDueValue, { color: ink }]} />
               </>
             ) : null}
           </View>
@@ -372,18 +346,18 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
             <View style={[styles.advanceBlock, { backgroundColor: accentTint, borderLeftColor: accent }]}>
               <View style={styles.advanceColumn}>
                 <Text style={[styles.advanceLabel, { color: darkenHex(muted, 4) }]}>
-                  {data.advanceSummary.primaryLabel || 'Advance'}
+                  {safeText(data.advanceSummary.primaryLabel || 'Advance')}
                 </Text>
-                <PdfCurrencyText value={data.advanceSummary.advanceAmount || ''} style={[styles.advanceValue, { color: accent }]} />
+                <PdfCurrencyText value={safeText(data.advanceSummary.advanceAmount || '')} style={[styles.advanceValue, { color: accent }]} />
               </View>
               {data.advanceSummary.secondaryLabel && data.advanceSummary.balanceRemaining ? (
                 <>
                   <View style={[styles.advanceDivider, { backgroundColor: accentRule }]} />
                   <View style={styles.advanceColumn}>
                     <Text style={[styles.advanceLabel, { color: darkenHex(muted, 4) }]}>
-                      {data.advanceSummary.secondaryLabel}
+                      {safeText(data.advanceSummary.secondaryLabel)}
                     </Text>
-                    <PdfCurrencyText value={data.advanceSummary.balanceRemaining} style={[styles.advanceValue, { color: accent }]} />
+                    <PdfCurrencyText value={safeText(data.advanceSummary.balanceRemaining)} style={[styles.advanceValue, { color: accent }]} />
                   </View>
                 </>
               ) : null}
@@ -396,8 +370,8 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
             <View style={styles.extraFieldsVertical}>
               {data.additionalFields.map((field, index) => (
                 <View key={`${field.label}-${index}`} style={styles.extraFieldItem}>
-                  <Text style={[styles.extraFieldKey, { color: muted }]}>{field.label}</Text>
-                  <Text style={[styles.extraFieldValue, { color: ink }]}>{field.value}</Text>
+                  <Text style={[styles.extraFieldKey, { color: muted }]}>{safeText(field.label)}</Text>
+                  <Text style={[styles.extraFieldValue, { color: ink }]}>{safeText(field.value)}</Text>
                 </View>
               ))}
             </View>
@@ -408,10 +382,10 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
               {data.signature?.imageUrl ? (
                 <Image src={data.signature.imageUrl} style={styles.signatureImage} />
               ) : (
-                <Text style={[styles.signatureScribble, { color: ink }]}>{data.signature?.name || ''}</Text>
+                <Text style={[styles.signatureScribble, { color: ink }]}>{safeText(data.signature?.name || '')}</Text>
               )}
-              {data.signature?.name ? <Text style={[styles.signatureName, { color: ink }]}>{data.signature.name}</Text> : null}
-              {data.signature?.role ? <Text style={[styles.signatureRole, { color: muted }]}>{data.signature.role}</Text> : null}
+              {data.signature?.name ? <Text style={[styles.signatureName, { color: ink }]}>{safeText(data.signature.name)}</Text> : null}
+              {data.signature?.role ? <Text style={[styles.signatureRole, { color: muted }]}>{safeText(data.signature.role)}</Text> : null}
             </View>
           ) : null}
         </View>

@@ -3,24 +3,8 @@ import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import type { IndustryTemplateData } from '../industryAdapter';
 import { PdfCurrencyText } from '../pdfCurrency';
 import { styles } from './LedgerStyles';
-
-function safeText(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  if (typeof value === 'object') {
-    const objectValue = value as Record<string, unknown>;
-    return safeText(
-      objectValue.label ??
-        objectValue.name ??
-        objectValue.text ??
-        objectValue.main ??
-        objectValue.value ??
-        ''
-    );
-  }
-  return '';
-}
+import { safeText } from '../core/safeText';
+import { getDescriptionMain, getDescriptionSub } from '../core/description';
 
 function formatValidUrl(url: string | undefined): string {
   if (!url) return '';
@@ -171,18 +155,17 @@ export default function Ledger({ data }: { data: IndustryTemplateData }) {
                   const alignStyle = col.align === 'right' ? styles.textRight : col.align === 'center' ? styles.textCenter : styles.textLeft;
                   const widthStyle = col.width ? { width: col.width, flexGrow: 0, flexShrink: 0 } : { flex: col.flex || 1, flexBasis: 0 };
                   
-                  const rawVal = row.cells?.[col.key];
-                  const isDescriptionCol = cIndex === 1 || col.key === 'description';
+                  const isDescriptionCol = col.key === 'description';
 
                   return (
                     <View key={cIndex} style={[widthStyle as any, alignStyle]}>
                       {isDescriptionCol ? (
                         <>
                           <Text style={styles.itemDesc}>
-                            {row.isInGroup ? '└ ' : ''}{safeText(rawVal)}
+                            {row.isInGroup ? '└ ' : ''}{getDescriptionMain(row.cells)}
                           </Text>
-                          {row.cells?.description && typeof row.cells.description === 'object' && (row.cells.description as any).sub ? (
-                            <Text style={styles.itemSub}>{safeText((row.cells.description as any).sub)}</Text>
+                          {getDescriptionSub(row.cells) ? (
+                            <Text style={styles.itemSub}>{getDescriptionSub(row.cells)}</Text>
                           ) : null}
                           
                           {row.imageUrl ? (
@@ -195,7 +178,7 @@ export default function Ledger({ data }: { data: IndustryTemplateData }) {
                           ) : null}
                         </>
                       ) : (
-                        <PdfCurrencyText value={safeText(rawVal)} style={styles.tableCell} />
+                        <PdfCurrencyText value={safeText(row.cells?.[col.key])} style={styles.tableCell} />
                       )}
                     </View>
                   );
