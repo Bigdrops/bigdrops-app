@@ -15,7 +15,7 @@ import {
 import { Combobox } from '@/components/ui/combobox'
 import { Bell, PlusCircle, Edit, Trash2, Loader2, CheckCircle2, Calendar, Link as LinkIcon, AlertCircle } from 'lucide-react'
 import { supabase } from '@/supabase'
-import { toast } from 'sonner'
+import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { TaxReminder, TaxReminderStatus, TaxFilingTaxType, TaxFiling } from '@/domain/compliance/types'
 import { formatDisplayDate } from '@/lib/formatters/date'
@@ -58,7 +58,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
 
   const handleSave = async () => {
     if (!editingReminder?.tax_type || !editingReminder.due_date) {
-      toast.error('Tax type and due date are required')
+      feedback.error('Tax type and due date are required')
       return
     }
 
@@ -82,20 +82,20 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
           .from('tax_reminders')
           .insert([{ ...record, created_at: new Date().toISOString() }])
         if (error) throw error
-        toast.success('Reminder added')
+        feedback.success('Reminder added')
       } else {
         const { error } = await supabase
           .from('tax_reminders')
           .update(record)
           .eq('id', editingReminder.id!)
         if (error) throw error
-        toast.success('Reminder updated')
+        feedback.success('Reminder updated')
       }
 
       setEditingReminder(null)
       onRemindersChanged()
     } catch (e: any) {
-      toast.error(getUserFacingMutationMessage(e, { action: 'save' }))
+      feedback.error(getUserFacingMutationMessage(e, { action: 'save' }))
     } finally {
       setSaving(false)
     }
@@ -107,10 +107,10 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
       setIsDeleting(id)
       const { error } = await supabase.from('tax_reminders').delete().eq('id', id)
       if (error) throw error
-      toast.success('Reminder removed')
+      feedback.success('Reminder removed')
       onRemindersChanged()
     } catch (e: any) {
-      toast.error(e.message || 'Failed to delete reminder')
+      feedback.error(e.message || 'Failed to delete reminder')
     } finally {
       setIsDeleting(null)
     }
@@ -123,10 +123,10 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
         .update({ status: 'resolved', updated_at: new Date().toISOString() })
         .eq('id', id)
       if (error) throw error
-      toast.success('Obligation resolved')
+      feedback.success('Obligation resolved')
       onRemindersChanged()
     } catch (e: any) {
-      toast.error('Could not update status')
+      feedback.error('Could not update status')
     }
   }
 
@@ -214,12 +214,10 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-red-100 hover:text-red-500 hover:bg-red-50 transition-colors"
-                        disabled={isDeleting === reminder.id}
                         onClick={() => handleDelete(reminder.id)}
+                        loading={isDeleting === reminder.id}
                       >
-                        {isDeleting === reminder.id
-                          ? <Loader2 className="h-4 w-4 animate-spin" />
-                          : <Trash2 className="h-4 w-4" />}
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -333,10 +331,9 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
             <div className="pt-2">
               <Button
                 onClick={handleSave}
-                disabled={saving}
+                loading={saving}
                 className="w-full h-12 bg-slate-900 text-white font-bold rounded-2xl shadow-lg border-slate-800 transition-all hover:scale-[1.01] active:scale-100"
               >
-                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 {editingReminder?.id ? 'Update Reminder' : 'Save Reminder'}
               </Button>
             </div>

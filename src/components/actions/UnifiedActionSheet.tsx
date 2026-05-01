@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, Loader2 } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 
@@ -13,6 +13,7 @@ export type ActionItem = {
   closeOnClick?: boolean
   description?: string
   key?: string
+  isLoading?: boolean
 }
 
 export type ActionGroup = {
@@ -80,8 +81,9 @@ export function UnifiedActionSheet({
   className,
 }: UnifiedActionSheetProps) {
   const handleActionClick = (action: ActionItem) => {
+    if (action.isLoading) return
     action.onClick()
-    if (action.closeOnClick !== false) {
+    if (action.closeOnClick !== false && !action.isLoading) {
       onOpenChange(false)
     }
   }
@@ -95,10 +97,12 @@ export function UnifiedActionSheet({
         <button
           key={action.key || idx}
           type="button"
+          disabled={action.isLoading}
           onClick={() => handleActionClick(action)}
           className={cn(
             "flex flex-col items-center justify-center rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] transition hover:bg-[hsl(var(--bd-surface-action-hover))] active:scale-[0.97]",
-            layout === "grid-scroll" ? "min-w-[calc((100vw-3rem)/4)] h-[76px] flex-col justify-center text-center p-1" : "min-h-[84px] gap-1.5 px-2 py-2"
+            layout === "grid-scroll" ? "min-w-[calc((100vw-3rem)/4)] h-[76px] flex-col justify-center text-center p-1" : "min-h-[84px] gap-1.5 px-2 py-2",
+            action.isLoading && "opacity-70 cursor-not-allowed"
           )}
         >
           {!hideIcons && action.icon && (
@@ -106,14 +110,15 @@ export function UnifiedActionSheet({
               className={cn(
                 "flex items-center justify-center rounded-[10px] shadow-sm",
                 tone.iconBg,
-                "h-[26px] w-[26px] [&_svg]:h-[13px] [&_svg]:w-[13px]"
+                "h-[26px] w-[26px] [&_svg]:h-[13px] [&_svg]:w-[13px]",
+                action.isLoading && "animate-pulse"
               )}
             >
-              {action.icon}
+              {action.isLoading ? <Loader2 className="animate-spin" /> : action.icon}
             </div>
           )}
           <div className={cn("font-bold leading-tight text-[10px] truncate w-full px-1", tone.text)}>
-            {action.label}
+            {action.isLoading ? "Working..." : action.label}
           </div>
         </button>
       )
@@ -123,13 +128,15 @@ export function UnifiedActionSheet({
       <button
         key={action.key || idx}
         type="button"
+        disabled={action.isLoading}
         onClick={() => handleActionClick(action)}
         className={cn(
           "grid w-full items-center gap-3 rounded-[var(--bd-overlay-radius)] border text-left transition-all active:scale-[0.99]",
           isCompact 
             ? "grid-cols-[28px,minmax(0,1fr),auto] px-3 py-2" 
             : "grid-cols-[36px,minmax(0,1fr),auto] px-4 py-2.5",
-          tone.row
+          tone.row,
+          action.isLoading && "opacity-70 cursor-not-allowed"
         )}
       >
         {!hideIcons && action.icon && (
@@ -138,15 +145,15 @@ export function UnifiedActionSheet({
             tone.iconBg,
             isCompact ? "h-7 w-7 rounded-[8px] [&_svg]:h-3.5 [&_svg]:w-3.5" : "h-9 w-9 rounded-[10px] [&_svg]:h-4.5 [&_svg]:w-4.5"
           )}>
-            {action.icon}
+            {action.isLoading ? <Loader2 className="animate-spin" /> : action.icon}
           </div>
         )}
         {hideIcons && <div />}
         <div className="min-w-0">
           <div className={cn("font-bold tracking-tight", isCompact ? "text-[12px]" : "text-[13px]", tone.text)}>
-            {action.label}
+            {action.isLoading ? "Processing..." : action.label}
           </div>
-          {showDescriptions && action.description && (
+          {showDescriptions && action.description && !action.isLoading && (
             <div className="truncate text-[10px] text-[hsl(var(--bd-overlay-muted))] font-medium mt-0.5 opacity-70">
               {action.description}
             </div>

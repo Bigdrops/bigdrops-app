@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom"
 import { supabase } from "../supabase"
 import Layout from "../components/Layout"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"
-import { toast } from "../hooks/use-toast"
+import { feedback } from "../lib/feedback"
+import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
 
 import MobileFab from "../components/layout/MobileFab"
 import ModuleShell from "@/components/layout/ModuleShell"
@@ -52,6 +53,7 @@ export default function Clients() {
   const [category, setCategory] = useState<string>("All")
   const [clientToDelete, setClientToDelete] = useState<string | number | null>(null)
   const [activeClient, setActiveClient] = useState<Client | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const navigate = useNavigate()
 
@@ -107,9 +109,18 @@ export default function Clients() {
   }
 
   const handleDelete = async (clientId: string | number): Promise<void> => {
-    await supabase.from("clients").delete().eq("id", clientId)
-    setClientToDelete(null)
-    await reload()
+    try {
+      setIsDeleting(true)
+      const { error } = await supabase.from("clients").delete().eq("id", clientId)
+      if (error) throw error
+      feedback.success('Client deleted')
+      setClientToDelete(null)
+      await reload()
+    } catch (err: any) {
+      feedback.error(getUserFacingMutationMessage(err, { action: 'save' }))
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const filterOptions = [
@@ -182,6 +193,7 @@ export default function Clients() {
         onConfirm={() => {
           if (clientToDelete !== null) void handleDelete(clientToDelete)
         }}
+        loading={isDeleting}
       />
       <InvoiceListActionSheet
         open={Boolean(activeClient)}
@@ -212,13 +224,13 @@ export default function Clients() {
             key: "archive",
             label: "Archive",
             icon: <Archive className="h-6 w-6" />,
-            onClick: () => toast({ title: "Unavailable", description: "Archiving is not available in this version." }),
+            onClick: () => feedback.info("Archiving is not available in this version."),
           },
           {
             key: "merge",
             label: "Merge",
             icon: <Users className="h-6 w-6" />,
-            onClick: () => toast({ title: "Unavailable", description: "Merging clients is not available in this version." }),
+            onClick: () => feedback.info("Merging clients is not available in this version."),
           },
         ] : []}
         deleteAction={activeClient ? {

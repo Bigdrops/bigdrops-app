@@ -15,7 +15,7 @@ import {
 import { ClipboardList, PlusCircle, Edit, Trash2, Loader2, FileJson } from 'lucide-react'
 import ComplianceJsonImportSheet from './import/ComplianceJsonImportSheet'
 import { supabase } from '@/supabase'
-import { toast } from 'sonner'
+import { feedback } from '@/lib/feedback'
 import { TaxFiling, TaxFilingStatus, TaxFilingTaxType } from '@/domain/compliance/types'
 import { formatNaira } from '@/lib/formatters/money'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
@@ -60,7 +60,7 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
 
   const handleSave = async () => {
     if (!editingFiling?.tax_type || !editingFiling.period_start || !editingFiling.period_end) {
-      toast.error('Tax type, period start and period end are required')
+      feedback.error('Tax type, period start and period end are required')
       return
     }
     try {
@@ -86,20 +86,20 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
           .from('tax_filings')
           .insert([{ ...record, created_at: new Date().toISOString() }])
         if (error) throw error
-        toast.success('Filing record created')
+        feedback.success('Filing record created')
       } else {
         const { error } = await supabase
           .from('tax_filings')
           .update(record)
           .eq('id', editingFiling.id!)
         if (error) throw error
-        toast.success('Filing record updated')
+        feedback.success('Filing record updated')
       }
 
       setEditingFiling(null)
       onFilingsChanged()
     } catch (e: any) {
-      toast.error(getUserFacingMutationMessage(e, { action: 'save' }))
+      feedback.error(getUserFacingMutationMessage(e, { action: 'save' }))
     } finally {
       setSaving(false)
     }
@@ -111,10 +111,10 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
       setIsDeleting(id)
       const { error } = await supabase.from('tax_filings').delete().eq('id', id)
       if (error) throw error
-      toast.success('Filing deleted')
+      feedback.success('Filing deleted')
       onFilingsChanged()
     } catch (e: any) {
-      toast.error(e.message || 'Failed to delete filing')
+      feedback.error(e.message || 'Failed to delete filing')
     } finally {
       setIsDeleting(null)
     }
@@ -205,12 +205,10 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-red-300 hover:text-red-600 hover:bg-red-50"
-                        disabled={isDeleting === filing.id}
                         onClick={() => handleDelete(filing.id)}
+                        loading={isDeleting === filing.id}
                       >
-                        {isDeleting === filing.id
-                          ? <Loader2 className="h-4 w-4 animate-spin" />
-                          : <Trash2 className="h-4 w-4" />}
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -359,10 +357,10 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
             <div className="pt-3">
               <Button
                 onClick={handleSave}
-                disabled={saving}
+                loading={saving}
                 className="w-full h-10 bg-slate-900 text-white text-xs font-black uppercase tracking-widest rounded-lg shadow border-slate-800"
               >
-                {saving ? 'Saving...' : 'Save Filing'}
+                Save Filing
               </Button>
             </div>
           </div>

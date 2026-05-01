@@ -12,9 +12,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import type { ClientRecord } from '@/domain/clientWorkspace'
-import { toast } from '@/hooks/use-toast'
-import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { cn } from '@/lib/utils'
+import { feedback } from '@/lib/feedback'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { supabase } from '../supabase'
 
 type ClientDraft = {
@@ -130,7 +130,7 @@ export default function ClientSelector({
 
   const handleSaveNewClient = async (): Promise<void> => {
     if (!newClient.name.trim()) {
-      toast({ title: 'Client name required', description: 'Client name is required', variant: 'destructive' })
+      feedback.error('Client name is required')
       return
     }
 
@@ -155,11 +155,7 @@ export default function ClientSelector({
       .single()
 
     if (error) {
-      toast({
-        title: 'Save failed',
-        description: getUserFacingMutationMessage(error, { action: 'create' }),
-        variant: 'destructive',
-      })
+      feedback.error(getUserFacingMutationMessage(error, { action: 'create' }))
       setSaving(false)
       return
     }
@@ -172,6 +168,7 @@ export default function ClientSelector({
     setShowAddModal(false)
     setOpen(false)
     setSaving(false)
+    feedback.success('Client created and selected')
   }
 
   const selectedSummary = selectedClient || (clientId ? { name: clientName } : null)
@@ -313,8 +310,8 @@ export default function ClientSelector({
                 <Button type="button" variant="outline" className="flex-1" onClick={() => setShowAddModal(false)}>
                   Cancel
                 </Button>
-                <Button type="button" className="flex-[1.3]" onClick={handleSaveNewClient} disabled={saving}>
-                  {saving ? 'Saving...' : 'Save Client'}
+                <Button type="button" className="flex-[1.3]" onClick={handleSaveNewClient} loading={saving}>
+                  Save Client
                 </Button>
               </div>
             </div>

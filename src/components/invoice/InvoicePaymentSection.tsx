@@ -133,10 +133,10 @@ export default function InvoicePaymentSection({
                               type="button"
                               variant="outline"
                               size="sm"
-                              disabled={voidingPaymentId === payment.id}
                               onClick={() => onVoidPayment(payment.id)}
+                              loading={voidingPaymentId === payment.id}
                             >
-                              {voidingPaymentId === payment.id ? 'Voiding...' : 'Void'}
+                              Void
                             </Button>
                           ) : null}
                         </TableCell>
@@ -175,8 +175,8 @@ export default function InvoicePaymentSection({
                     {formatMoney(payment.runningBalance)}
                   </div>
                   {isAdmin && !payment.voided_at ? (
-                    <Button type="button" variant="outline" size="sm" disabled={voidingPaymentId === payment.id} onClick={() => onVoidPayment(payment.id)}>
-                      {voidingPaymentId === payment.id ? 'Voiding...' : 'Void'}
+                    <Button type="button" variant="outline" size="sm" onClick={() => onVoidPayment(payment.id)} loading={voidingPaymentId === payment.id}>
+                      Void
                     </Button>
                   ) : null}
                 </div>

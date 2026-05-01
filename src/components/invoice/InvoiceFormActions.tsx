@@ -22,16 +22,18 @@ export default function InvoiceFormActions({
           type="button"
           onClick={onSaveSent}
           className="h-12 rounded-none bg-[#0f62fe] px-6 text-[15px] font-bold hover:bg-[#0353e9]"
+          loading={saving}
         >
-          {saving ? 'Saving...' : primaryLabel}
+          {primaryLabel}
         </Button>
         <Button
           type="button"
           onClick={onSaveDraft}
           variant="secondary"
           className="h-11 rounded-none bg-muted px-6 text-[14px] text-foreground hover:bg-slate-200"
+          loading={saving}
         >
-          {saving ? 'Saving...' : 'Save as Draft'}
+          Save as Draft
         </Button>
         <Button
           type="button"

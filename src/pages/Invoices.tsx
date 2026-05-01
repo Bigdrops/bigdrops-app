@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Trash2, Truck, Wrench, Workflow } from "lucide-react"
 import { supabase } from "../supabase"
-import { toast } from "@/hooks/use-toast"
+import { feedback } from "@/lib/feedback"
+import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
 import { canUseNativeSqlite } from "@/lib/native/capacitor"
 import {
   cacheInvoiceList,
@@ -65,6 +66,8 @@ export default function Invoices() {
   const [sortBy, setSortBy]               = useState("Newest")
   const [showArchiveWarn, setShowArchiveWarn] = useState(false)
   const [showDeleteWarn,  setShowDeleteWarn]  = useState(false)
+  const [isArchiving, setIsArchiving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [attachKind, setAttachKind]       = useState<"csr" | "waybill" | null>(null)
   const [showAttachSheet, setShowAttachSheet] = useState(false)
   const [clientOptions, setClientOptions] = useState<string[]>([])
@@ -374,27 +377,45 @@ export default function Invoices() {
         }
       })
     } catch (err: any) {
-      toast({ title: "Clone failed", description: err.message, variant: "destructive" })
+      feedback.error(getUserFacingMutationMessage(err, { action: 'create' }))
     }
   }
 
   const handleArchive = async () => {
     const inv = activeInvoice
-    setShowArchiveWarn(false)
     if (!inv) return;
-    await supabase.from("invoices").update({ archived_at: new Date().toISOString() }).eq("id", inv.id)
-    closeSheet()
-    await fetchInvoices(0, true)
+    try {
+      setIsArchiving(true)
+      const { error } = await supabase.from("invoices").update({ archived_at: new Date().toISOString() }).eq("id", inv.id)
+      if (error) throw error
+      feedback.success('Invoice archived')
+      closeSheet()
+      await fetchInvoices(0, true)
+    } catch (err: any) {
+      feedback.error(getUserFacingMutationMessage(err, { action: 'save' }))
+    } finally {
+      setIsArchiving(false)
+      setShowArchiveWarn(false)
+    }
   }
 
   const handleDelete = async () => {
     const inv = activeInvoice
-    setShowDeleteWarn(false)
     if (!inv) return;
-    await supabase.from("invoice_items").delete().eq("invoice_id", inv.id)
-    await supabase.from("invoices").delete().eq("id", inv.id)
-    closeSheet()
-    await fetchInvoices(0, true)
+    try {
+      setIsDeleting(true)
+      await supabase.from("invoice_items").delete().eq("invoice_id", inv.id)
+      const { error } = await supabase.from("invoices").delete().eq("id", inv.id)
+      if (error) throw error
+      feedback.success('Invoice deleted permanentely')
+      closeSheet()
+      await fetchInvoices(0, true)
+    } catch (err: any) {
+      feedback.error(getUserFacingMutationMessage(err, { action: 'save' }))
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteWarn(false)
+    }
   }
 
   const activeInvoiceSource = activeInvoice ? getInvoiceSourceDocument({ custom_fields: activeInvoiceCustomFields }) : null
@@ -582,8 +603,10 @@ export default function Invoices() {
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
                <Receipt className="h-6 w-6" />
             </div>
-            <div className="mt-4 text-sm font-bold text-[hsl(var(--bd-text))]">No invoices found</div>
-            <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">No invoices match the current filters</div>
+            <div className="mt-4 text-sm font-bold text-[hsl(var(--bd-text))]">No Invoices Found</div>
+            <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))] max-w-[280px] mx-auto">
+              Create your first invoice to start tracking sales, or adjust your filters to find existing records.
+            </div>
           </div>
         )}
         onPrimaryAction={() => navigate("/invoices/new")}
@@ -639,8 +662,8 @@ export default function Invoices() {
             clone: handleClone,
             advance: handleAdvance,
             quote: handleRevertToQuote,
-            csr: () => { closeSheet(); toast({ title: "Unavailable", description: "Service reports are not available in this version." }) },
-            waybill: () => { closeSheet(); toast({ title: "Unavailable", description: "Waybills are not available in this version." }) },
+            csr: () => { closeSheet(); feedback.info("Service reports are not available in this version.") },
+            waybill: () => { closeSheet(); feedback.info("Waybills are not available in this version.") },
             archive: () => setShowArchiveWarn(true),
           }
 
@@ -670,6 +693,7 @@ export default function Invoices() {
         description="This invoice will be hidden from the active list until it is restored from archives."
         confirmLabel="Archive"
         onConfirm={() => { void handleArchive() }}
+        loading={isArchiving}
       />
       <ConfirmActionDialog
         open={showDeleteWarn}
@@ -678,6 +702,7 @@ export default function Invoices() {
         description="Deleting is permanent and cannot be undone."
         confirmLabel="Delete Forever"
         onConfirm={() => { void handleDelete() }}
+        loading={isDeleting}
       />
       <LinkedDocumentsSheet
         open={showLinkedDocuments}

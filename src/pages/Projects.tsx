@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Archive, Eye, FolderKanban, FolderOpen, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
+import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
 
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
@@ -52,6 +53,8 @@ export default function Projects() {
   const [docCounts, setDocCounts] = useState<Record<string, number>>({})
   const [projectToDelete, setProjectToDelete] = useState<ProjectRow | null>(null)
   const [activeProject, setActiveProject] = useState<ProjectRow | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isArchiving, setIsArchiving] = useState(false)
 
   useEffect(() => {
     void fetchProjects()
@@ -147,16 +150,34 @@ export default function Projects() {
   }
 
   const handleDelete = async (project: ProjectRow): Promise<void> => {
-    await supabase.from('projects').delete().eq('id', project.id)
-    setProjectToDelete(null)
-    setActiveProject(null)
-    await fetchProjects()
+    try {
+      setIsDeleting(true)
+      const { error } = await supabase.from('projects').delete().eq('id', project.id)
+      if (error) throw error
+      feedback.success('Project deleted')
+      setProjectToDelete(null)
+      setActiveProject(null)
+      await fetchProjects()
+    } catch (err: any) {
+      feedback.error(getUserFacingMutationMessage(err, { action: 'save' }))
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const handleArchive = async (project: ProjectRow): Promise<void> => {
-    await supabase.from('projects').update({ archived_at: new Date().toISOString() }).eq('id', project.id)
-    setActiveProject(null)
-    await fetchProjects()
+    try {
+      setIsArchiving(true)
+      const { error } = await supabase.from('projects').update({ archived_at: new Date().toISOString() }).eq('id', project.id)
+      if (error) throw error
+      feedback.success('Project archived')
+      setActiveProject(null)
+      await fetchProjects()
+    } catch (err: any) {
+      feedback.error(getUserFacingMutationMessage(err, { action: 'save' }))
+    } finally {
+      setIsArchiving(false)
+    }
   }
 
   const hasActiveFilters = !!search || clientFilter !== 'All' || statusFilter !== 'All' || dateFilter !== 'All Time' || sortBy !== 'Newest'
@@ -280,6 +301,7 @@ export default function Projects() {
         onConfirm={() => {
           if (projectToDelete) void handleDelete(projectToDelete)
         }}
+        loading={isDeleting}
       />
       <InvoiceListActionSheet
         open={Boolean(activeProject)}

@@ -19,6 +19,7 @@ interface ConfirmActionDialogProps {
   cancelLabel?: string
   onConfirm: () => void
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+  loading?: boolean
 }
 
 export default function ConfirmActionDialog({
@@ -30,6 +31,7 @@ export default function ConfirmActionDialog({
   cancelLabel = 'Cancel',
   onConfirm,
   variant = 'destructive',
+  loading = false,
 }: ConfirmActionDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -39,8 +41,8 @@ export default function ConfirmActionDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
-          <AlertDialogAction variant={variant as any} onClick={onConfirm}>
+          <AlertDialogCancel disabled={loading}>{cancelLabel}</AlertDialogCancel>
+          <AlertDialogAction variant={variant as any} onClick={onConfirm} loading={loading}>
             {confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>

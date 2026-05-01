@@ -341,8 +341,8 @@ export default function ModuleShell<T>({
                   <div className="mx-auto grid h-10 w-10 place-items-center rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
                     <Search className="h-4 w-4" />
                   </div>
-                  <div className="mt-3 text-sm font-bold text-[hsl(var(--bd-text))]">No records found</div>
-                  <div className="mt-1 text-[11px] text-[hsl(var(--bd-text-muted))]">Try adjusting your search or filters</div>
+                  <div className="mt-3 text-sm font-bold text-[hsl(var(--bd-text))]">No {title.toLowerCase()} found</div>
+                  <div className="mt-1 text-[11px] text-[hsl(var(--bd-text-muted))]">Try adjusting your search or create a new one to get started.</div>
                 </div>
               )
             )
