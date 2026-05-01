@@ -9,7 +9,7 @@ import { ItemLibraryListPanel } from '../components/ItemLibraryListPanel'
 import { ItemLibraryMergeHistoryPanel } from '../components/ItemLibraryMergeHistoryPanel'
 import { ItemLibraryStatusStrip } from '../components/ItemLibraryStatusStrip'
 import { detectDuplicateGroups } from '../domain/duplicateDetection'
-import { buildFlaggedCleanupExportPayload, isCleanupProposalStale } from '../domain/itemCleanupExchange'
+import { buildFlaggedCleanupExportPayload } from '../domain/itemCleanupExchange'
 import {
   useItemAliases,
   useItemHistoryDetail,
@@ -17,8 +17,7 @@ import {
   useItemMerge,
   useItemMergeHistory,
 } from '../hooks'
-import { loadFlaggedCleanupExport } from '../services'
-import type { CleanupApplyProposal, CleanupApplyResult, ItemLibraryMergeRequest } from '../types'
+import type { CatalogCleanupBatchExportPayload, CleanupApplyProposal, CleanupApplyResult, ItemLibraryMergeRequest } from '../types'
 import type { ItemLibraryFilterType, ItemLibraryViewMode } from '../types'
 
 function DownloadIcon() {
@@ -109,6 +108,7 @@ export default function ItemLibraryPage() {
   }, [activeFilter, searchText, summaryItems, allDuplicateItemIdsSet])
 
   const duplicateGroups = useMemo(() => detectDuplicateGroups(filteredItems), [filteredItems])
+  const cleanupDuplicateGroups = workflowMode === 'cleanup' ? allDuplicateGroups : duplicateGroups
 
   useEffect(() => {
     if (!filteredItems.length) {
@@ -126,29 +126,29 @@ export default function ItemLibraryPage() {
   useEffect(() => {
     if (workflowMode !== 'cleanup') return
     if (viewMode !== 'duplicates' && viewMode !== 'advanced_cleanup') return
-    if (!duplicateGroups.length) {
+    if (!cleanupDuplicateGroups.length) {
       setSelectedDuplicateGroupId(null)
       return
     }
 
     setSelectedDuplicateGroupId((current) => {
-      if (current && duplicateGroups.some((group) => group.group_id === current)) return current
-      return duplicateGroups[0].group_id
+      if (current && cleanupDuplicateGroups.some((group) => group.group_id === current)) return current
+      return cleanupDuplicateGroups[0].group_id
     })
-  }, [duplicateGroups, viewMode, workflowMode])
+  }, [cleanupDuplicateGroups, viewMode, workflowMode])
 
   useEffect(() => {
     if (workflowMode !== 'cleanup') return
     if ((viewMode !== 'duplicates' && viewMode !== 'advanced_cleanup') || !selectedDuplicateGroupId) return
 
-    const activeGroup = duplicateGroups.find((group) => group.group_id === selectedDuplicateGroupId)
+    const activeGroup = cleanupDuplicateGroups.find((group) => group.group_id === selectedDuplicateGroupId)
     if (!activeGroup || !activeGroup.members.length) return
 
     setSelectedItemId((current) => {
       if (current && activeGroup.members.some((member) => member.item_id === current)) return current
       return activeGroup.members[0].item_id
     })
-  }, [duplicateGroups, selectedDuplicateGroupId, viewMode, workflowMode])
+  }, [cleanupDuplicateGroups, selectedDuplicateGroupId, viewMode, workflowMode])
 
   const selectedItem = useMemo(
     () => filteredItems.find((item) => item.item_id === selectedItemId) || null,
@@ -156,12 +156,12 @@ export default function ItemLibraryPage() {
   )
 
   const selectedDuplicateGroup = useMemo(
-    () => duplicateGroups.find((group) => group.group_id === selectedDuplicateGroupId) || null,
-    [duplicateGroups, selectedDuplicateGroupId],
+    () => cleanupDuplicateGroups.find((group) => group.group_id === selectedDuplicateGroupId) || null,
+    [cleanupDuplicateGroups, selectedDuplicateGroupId],
   )
   const duplicateItemIdsArray = useMemo(
-    () => duplicateGroups.flatMap((group) => group.members.map((member) => member.item_id)),
-    [duplicateGroups],
+    () => cleanupDuplicateGroups.flatMap((group) => group.members.map((member) => member.item_id)),
+    [cleanupDuplicateGroups],
   )
   const {
     data: duplicateAliases,
@@ -178,9 +178,11 @@ export default function ItemLibraryPage() {
     [duplicateAliases, selectedDuplicateGroup],
   )
   const flaggedCleanupExport = useMemo(
-    () => buildFlaggedCleanupExportPayload({ duplicateGroups, aliases: duplicateAliases }),
-    [duplicateAliases, duplicateGroups],
+    () => buildFlaggedCleanupExportPayload({ duplicateGroups: allDuplicateGroups, aliases: duplicateAliases }),
+    [allDuplicateGroups, duplicateAliases],
   )
+  const summaryItemIds = useMemo(() => summaryItems.map((item) => item.item_id), [summaryItems])
+  const { data: allItemAliases } = useItemAliases(summaryItemIds)
   const { mergeItems, loading: mergeLoading } = useItemMerge()
 
   const {
@@ -216,30 +218,22 @@ export default function ItemLibraryPage() {
     })
   }
 
-  const handleApplyCleanupProposals = async (proposals: CleanupApplyProposal[]): Promise<CleanupApplyResult[]> => {
+  const handleApplyCleanupProposals = async (
+    exportPayload: CatalogCleanupBatchExportPayload,
+    proposals: CleanupApplyProposal[],
+  ): Promise<CleanupApplyResult[]> => {
     const results: CleanupApplyResult[] = []
+    const validItemIds = new Set(exportPayload.items.map((item) => item.item_id))
 
     for (const proposal of proposals) {
-      let currentExport
-      try {
-        currentExport = await loadFlaggedCleanupExport(200)
-      } catch (error) {
-        results.push({
-          group_id: proposal.group_id,
-          canonical_name: proposal.canonical_name,
-          status: 'failed',
-          message: error instanceof Error ? error.message : 'Could not refresh the current flagged cleanup scope.',
-        })
-        continue
-      }
-
-      const staleState = isCleanupProposalStale(proposal, currentExport)
-      if (staleState.stale) {
+      const winnerInBatch = validItemIds.has(proposal.winner_item_id)
+      const mergedIdsInBatch = proposal.merged_item_ids.every((itemId) => validItemIds.has(itemId))
+      if (!winnerInBatch || !mergedIdsInBatch) {
         results.push({
           group_id: proposal.group_id,
           canonical_name: proposal.canonical_name,
           status: 'stale',
-          message: staleState.reason,
+          message: 'This merge proposal no longer matches the locked current batch.',
         })
         continue
       }
@@ -302,6 +296,15 @@ export default function ItemLibraryPage() {
   }
 
   const totalCount = filteredItems.length
+  const showCleanupLauncher = workflowMode === 'cleanup' && viewMode === 'catalog'
+  const showCleanupSideList = workflowMode === 'cleanup' && viewMode === 'duplicates'
+  const showLeftPanel = workflowMode === 'library' || showCleanupSideList
+
+  useEffect(() => {
+    if (viewMode === 'merge_history' && mergeHistoryCount === 0) {
+      setViewMode('catalog')
+    }
+  }, [mergeHistoryCount, viewMode])
 
   return (
     <Layout
@@ -381,44 +384,46 @@ export default function ItemLibraryPage() {
         ) : null}
 
         <main className="flex min-h-[calc(100dvh-14rem)] overflow-hidden">
-          <div className={mobileDetailOpen ? 'hidden md:flex md:w-[38%] md:flex-shrink-0 md:flex-col md:overflow-hidden' : 'flex w-full flex-col overflow-hidden md:w-[38%] md:flex-shrink-0'}>
-            <ItemLibraryListPanel
-              items={filteredItems}
-              duplicateGroups={duplicateGroups}
-              workflowMode={workflowMode}
-              viewMode={viewMode}
-              selectedItemId={selectedItemId}
-              selectedDuplicateGroupId={selectedDuplicateGroupId}
-              loading={summaryLoading}
-              searchText={searchText}
-              activeFilter={activeFilter}
-              onViewModeChange={setViewMode}
-              onSearchTextChange={setSearchText}
-              onFilterChange={setActiveFilter}
-              onSelectItem={(itemId) => {
-                setSelectedItemId(itemId)
-                if (window.innerWidth < 768) setMobileDetailOpen(true)
-              }}
-              onSelectDuplicateGroup={(groupId) => {
-                const nextGroup = duplicateGroups.find((group) => group.group_id === groupId)
-                setSelectedDuplicateGroupId(groupId)
-                if (nextGroup?.members[0]) {
-                  setSelectedItemId(nextGroup.members[0].item_id)
-                }
-                if (window.innerWidth < 768) setMobileDetailOpen(true)
-              }}
-              onInspectDuplicateItem={(groupId, itemId) => {
-                setSelectedDuplicateGroupId(groupId)
-                setSelectedItemId(itemId)
-                if (window.innerWidth < 768) setMobileDetailOpen(true)
-              }}
-              onNeedsCleanup={handleNeedsCleanupDeepLink}
-              flaggedItemIds={allDuplicateItemIdsSet}
-              totalUnresolvedIssues={totalUnresolvedIssues}
-            />
-          </div>
+          {showLeftPanel ? (
+            <div className={mobileDetailOpen ? 'hidden md:flex md:w-[38%] md:flex-shrink-0 md:flex-col md:overflow-hidden' : 'flex w-full flex-col overflow-hidden md:w-[38%] md:flex-shrink-0'}>
+              <ItemLibraryListPanel
+                items={filteredItems}
+                duplicateGroups={cleanupDuplicateGroups}
+                workflowMode={workflowMode}
+                viewMode={viewMode}
+                selectedItemId={selectedItemId}
+                selectedDuplicateGroupId={selectedDuplicateGroupId}
+                loading={summaryLoading}
+                searchText={searchText}
+                activeFilter={activeFilter}
+                onViewModeChange={setViewMode}
+                onSearchTextChange={setSearchText}
+                onFilterChange={setActiveFilter}
+                onSelectItem={(itemId) => {
+                  setSelectedItemId(itemId)
+                  if (window.innerWidth < 768) setMobileDetailOpen(true)
+                }}
+                onSelectDuplicateGroup={(groupId) => {
+                  const nextGroup = cleanupDuplicateGroups.find((group) => group.group_id === groupId)
+                  setSelectedDuplicateGroupId(groupId)
+                  if (nextGroup?.members[0]) {
+                    setSelectedItemId(nextGroup.members[0].item_id)
+                  }
+                  if (window.innerWidth < 768) setMobileDetailOpen(true)
+                }}
+                onInspectDuplicateItem={(groupId, itemId) => {
+                  setSelectedDuplicateGroupId(groupId)
+                  setSelectedItemId(itemId)
+                  if (window.innerWidth < 768) setMobileDetailOpen(true)
+                }}
+                onNeedsCleanup={handleNeedsCleanupDeepLink}
+                flaggedItemIds={allDuplicateItemIdsSet}
+                totalUnresolvedIssues={totalUnresolvedIssues}
+              />
+            </div>
+          ) : null}
 
-          <div className={mobileDetailOpen ? 'flex w-full flex-col overflow-hidden md:flex-1' : 'hidden md:flex md:flex-1 md:flex-col md:overflow-hidden'}>
+          <div className={showLeftPanel ? (mobileDetailOpen ? 'flex w-full flex-col overflow-hidden md:flex-1' : 'hidden md:flex md:flex-1 md:flex-col md:overflow-hidden') : 'flex w-full flex-col overflow-hidden'}>
             <div className="flex-shrink-0 border-b border-[#e8e4dc] bg-[#faf9f7] md:hidden">
               <button
                 type="button"
@@ -431,6 +436,25 @@ export default function ItemLibraryPage() {
             </div>
 
             <div className="flex-1 overflow-hidden">
+              {workflowMode === 'cleanup' && viewMode !== 'catalog' ? (
+                <div className="flex items-center justify-between border-b border-[#ddd0bf] bg-[#f8f1e6]/80 px-4 py-3">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('catalog')}
+                    className="text-[12px] font-bold text-[#8c6a45] transition-colors hover:text-[#5d432b]"
+                  >
+                    Back to Cleanup Hub
+                  </button>
+                  <div className="text-[11px] font-semibold text-[#8a745f]">
+                    {viewMode === 'duplicates'
+                      ? 'Fix Duplicate Items'
+                      : viewMode === 'advanced_cleanup'
+                        ? 'Clean & Standardize Catalog'
+                        : 'Review Past Changes'}
+                  </div>
+                </div>
+              ) : null}
+
               {workflowMode === 'cleanup' && viewMode === 'duplicates' ? (
                 <ItemLibraryDuplicateReviewPanel
                   aliases={selectedGroupAliases}
@@ -448,7 +472,9 @@ export default function ItemLibraryPage() {
               ) : workflowMode === 'cleanup' && viewMode === 'advanced_cleanup' ? (
                 <ItemLibraryAdvancedCleanupPanel
                   applyLoading={mergeLoading}
-                  exportPayload={flaggedCleanupExport}
+                  items={summaryItems}
+                  aliases={allItemAliases}
+                  duplicateGroups={allDuplicateGroups}
                   onApplyProposals={handleApplyCleanupProposals}
                 />
               ) : workflowMode === 'cleanup' && viewMode === 'merge_history' ? (
@@ -457,41 +483,43 @@ export default function ItemLibraryPage() {
                   loading={mergeHistoryLoading}
                   error={null}
                 />
-              ) : workflowMode === 'cleanup' && viewMode === 'catalog' ? (
+              ) : showCleanupLauncher ? (
                 <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-[#faf9f7]">
-                   <div className="max-w-md space-y-6">
+                   <div className="max-w-3xl space-y-6">
                       <div className="space-y-2">
                         <h2 className="text-3xl font-extrabold tracking-tight text-[#2c2218]">Cleanup Hub</h2>
-                        <p className="text-[#7c6954] text-[13px] leading-relaxed">Maintain your catalog health, resolve duplicates, and run AI-powered cleanup flows to keep your data pristine.</p>
+                        <p className="text-[#7c6954] text-[13px] leading-relaxed">Choose the cleanup job you want to run. No lists are opened until you choose a workflow.</p>
                       </div>
 
-                      <div className="grid gap-3">
+                      <div className="grid gap-3 md:grid-cols-3">
                         <button 
                           onClick={() => setViewMode('duplicates')}
                           className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
                         >
                           <div className="flex w-full items-center justify-between">
-                            <span className="text-sm font-bold text-[#2c2218]">Duplicate Groups</span>
+                            <span className="text-sm font-bold text-[#2c2218]">Fix Duplicate Items</span>
                             <span className="rounded-full bg-[#e8d5bc] px-2.5 py-0.5 text-[10px] font-bold text-[#634a31] group-hover:bg-[#8c6a45] group-hover:text-white transition-colors">{totalUnresolvedIssues} groups</span>
                           </div>
-                          <span className="text-[11px] text-[#8a8277]">Review similar items and merge them manually into a single canonical entry.</span>
+                          <span className="text-[11px] text-[#8a8277]">Review detected duplicate groups, inspect history, and merge manually with the existing duplicate review flow.</span>
                         </button>
 
                         <button 
                           onClick={() => setViewMode('advanced_cleanup')}
                           className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
                         >
-                          <span className="text-sm font-bold text-[#2c2218]">Advanced AI Cleanup</span>
-                          <span className="text-[11px] text-[#8a8277]">Export flagged data for AI processing and bulk-apply cleaning proposals.</span>
+                          <span className="text-sm font-bold text-[#2c2218]">Clean &amp; Standardize Catalog</span>
+                          <span className="text-[11px] text-[#8a8277]">Run a locked full-catalog cleanup session with numeric batches, AI review, and safe merge apply support.</span>
                         </button>
 
-                        <button 
-                          onClick={() => setViewMode('merge_history')}
-                          className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
-                        >
-                          <span className="text-sm font-bold text-[#2c2218]">Merge History</span>
-                          <span className="text-[11px] text-[#8a8277]">Audit previous merges and review the history of catalog maintenance.</span>
-                        </button>
+                        {mergeHistoryCount > 0 ? (
+                          <button 
+                            onClick={() => setViewMode('merge_history')}
+                            className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                          >
+                            <span className="text-sm font-bold text-[#2c2218]">Review Past Changes</span>
+                            <span className="text-[11px] text-[#8a8277]">Open merge history and audit the catalog cleanup trail.</span>
+                          </button>
+                        ) : null}
                       </div>
                    </div>
                 </div>

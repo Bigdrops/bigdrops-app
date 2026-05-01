@@ -1,36 +1,39 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
-import { Info } from 'lucide-react'
+import { ClipboardCheck, Copy, Download, FileJson, LockKeyhole, Sparkles } from 'lucide-react'
 
 import {
-  buildFlaggedCleanupPrompt,
-  createCleanupApplyProposal,
-  isCleanupProposalStale,
-  summarizeCleanupApplyResults,
-  validateFlaggedCleanupImport,
+  buildCatalogCleanupBatchExportPayload,
+  buildCatalogCleanupPrompt,
+  createCatalogCleanupSession,
+  validateCatalogCleanupBatchImport,
 } from '../domain/itemCleanupExchange'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
 import type {
+  CatalogCleanupBatchExportPayload,
+  CatalogCleanupBatchStatus,
+  CatalogCleanupImportPreview,
   CleanupApplyProposal,
   CleanupApplyResult,
-  CleanupImportValidationResult,
-  FlaggedCleanupExportPayload,
+  DuplicateCandidateGroup,
+  ItemAlias,
+  ItemCatalogItem,
 } from '../types'
-import { formatItemPrice } from './itemLibraryFormatters'
 
 type ItemLibraryAdvancedCleanupPanelProps = {
   applyLoading: boolean
-  exportPayload: FlaggedCleanupExportPayload
-  onApplyProposals: (proposals: CleanupApplyProposal[]) => Promise<CleanupApplyResult[]>
+  items: ItemCatalogItem[]
+  aliases: ItemAlias[]
+  duplicateGroups: DuplicateCandidateGroup[]
+  onApplyProposals: (
+    exportPayload: CatalogCleanupBatchExportPayload,
+    proposals: CleanupApplyProposal[],
+  ) => Promise<CleanupApplyResult[]>
+}
+
+type BatchState = {
+  status: CatalogCleanupBatchStatus
+  importText: string
+  applyResults: CleanupApplyResult[]
+  preview: CatalogCleanupImportPreview | null
 }
 
 function copyText(value: string) {
@@ -73,7 +76,7 @@ function SectionTitle({
     <div>
       <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#947d63]">{eyebrow}</div>
       <h2 className="mt-1 text-[18px] font-extrabold text-[#2f2419]">{title}</h2>
-      <p className="mt-2 max-w-2xl text-[12px] leading-relaxed text-[#8b7863]">{description}</p>
+      <p className="mt-2 max-w-3xl text-[12px] leading-relaxed text-[#8b7863]">{description}</p>
     </div>
   )
 }
@@ -88,22 +91,14 @@ function StatCard({ label, value, meta }: { label: string; value: string; meta: 
   )
 }
 
-function PreviewPill({ children }: { children: ReactNode }) {
-  return (
-    <span className="rounded-full border border-[#d7c3a8] bg-[#f2e3cf] px-2.5 py-1 text-[10px] font-semibold text-[#684f37] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
-      {children}
-    </span>
-  )
-}
-
-function ValidationBanner({ result }: { result: CleanupImportValidationResult }) {
-  if (!result.errors.length) return null
+function ValidationBanner({ errors }: { errors: string[] }) {
+  if (!errors.length) return null
 
   return (
     <div className="rounded-[14px] border border-[#e4c3ba] bg-[#fff2ee] px-4 py-3">
       <div className="text-[12px] font-bold text-[#8f3f35]">Import result needs correction</div>
       <ul className="mt-2 space-y-1 text-[11px] leading-relaxed text-[#9a4a3f]">
-        {result.errors.map((error) => (
+        {errors.map((error) => (
           <li key={error}>• {error}</li>
         ))}
       </ul>
@@ -111,531 +106,538 @@ function ValidationBanner({ result }: { result: CleanupImportValidationResult })
   )
 }
 
+function getBatchSize(option: string, customValue: string) {
+  if (option === 'custom') {
+    const parsed = Number.parseInt(customValue, 10)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+  }
+
+  const parsed = Number.parseInt(option, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
+
+function createMergeProposal(
+  exportPayload: CatalogCleanupBatchExportPayload,
+  winnerItemId: string,
+  mergedItemIds: string[],
+  canonicalName: string,
+): CleanupApplyProposal {
+  const itemMap = new Map(exportPayload.items.map((item) => [item.item_id, item]))
+  const winner = itemMap.get(winnerItemId)
+
+  return {
+    group_id: winner?.duplicate_group_id || winnerItemId,
+    canonical_name: canonicalName,
+    winner_item_id: winnerItemId,
+    merged_item_ids: mergedItemIds,
+    aliases_to_keep: [],
+    aliases_to_retire: [],
+  }
+}
+
 export function ItemLibraryAdvancedCleanupPanel({
   applyLoading,
-  exportPayload,
+  items,
+  aliases,
+  duplicateGroups,
   onApplyProposals,
 }: ItemLibraryAdvancedCleanupPanelProps) {
-  const [showPrompt, setShowPrompt] = useState(false)
-  const [importText, setImportText] = useState('')
+  const [batchSizeOption, setBatchSizeOption] = useState<'25' | '50' | '100' | 'custom'>('50')
+  const [customBatchSize, setCustomBatchSize] = useState('')
+  const [lockedSession, setLockedSession] = useState<ReturnType<typeof createCatalogCleanupSession> | null>(null)
+  const [currentBatchIndex, setCurrentBatchIndex] = useState(0)
+  const [batchStates, setBatchStates] = useState<Record<string, BatchState>>({})
   const [copyState, setCopyState] = useState<'idle' | 'json' | 'prompt'>('idle')
-  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([])
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [applyResults, setApplyResults] = useState<CleanupApplyResult[]>([])
   const [applyError, setApplyError] = useState<string | null>(null)
-  const [showTutorial, setShowTutorial] = useState(false)
 
-  const exportJson = useMemo(() => JSON.stringify(exportPayload, null, 2), [exportPayload])
-  const aiPrompt = useMemo(() => buildFlaggedCleanupPrompt(exportPayload), [exportPayload])
-  const validation = useMemo(
-    () => validateFlaggedCleanupImport(importText, exportPayload),
-    [exportPayload, importText],
-  )
-  const validPreviewGroups = validation.preview?.merge_groups || []
-  const validPreviewGroupIds = useMemo(
-    () => validPreviewGroups.map((group) => group.group_id),
-    [validPreviewGroups],
-  )
-  const selectedPreviewGroups = useMemo(
-    () => validPreviewGroups.filter((group) => selectedGroupIds.includes(group.group_id)),
-    [selectedGroupIds, validPreviewGroups],
-  )
-  const selectionSummary = useMemo(
-    () =>
-      selectedPreviewGroups.reduce(
-        (summary, group) => {
-          summary.groupCount += 1
-          summary.mergedItemCount += group.merged_items.length
-          summary.aliasKeepCount += group.aliases_to_keep.length
-          summary.aliasRetireCount += group.aliases_to_retire.length
-          return summary
-        },
-        { groupCount: 0, mergedItemCount: 0, aliasKeepCount: 0, aliasRetireCount: 0 },
-      ),
-    [selectedPreviewGroups],
-  )
-  const resultSummary = useMemo(() => summarizeCleanupApplyResults(applyResults), [applyResults])
+  const resolvedBatchSize = getBatchSize(batchSizeOption, customBatchSize)
+  const currentBatch = lockedSession?.batches[currentBatchIndex] || null
+  const currentBatchState = currentBatch ? batchStates[currentBatch.batch_id] : null
+  const currentExportPayload = useMemo(() => {
+    if (!lockedSession || !currentBatch) return null
+    return buildCatalogCleanupBatchExportPayload({
+      session: lockedSession,
+      batch: currentBatch,
+      batchIndex: currentBatchIndex,
+    })
+  }, [currentBatch, currentBatchIndex, lockedSession])
+
+  const importText = currentBatchState?.importText || ''
+  const validation = useMemo(() => {
+    if (!currentExportPayload) return null
+    return validateCatalogCleanupBatchImport(importText, currentExportPayload)
+  }, [currentExportPayload, importText])
 
   useEffect(() => {
-    setSelectedGroupIds((current) => current.filter((groupId) => validPreviewGroupIds.includes(groupId)))
-  }, [validPreviewGroupIds])
+    if (!currentBatch || !validation) return
+    setBatchStates((previous) => ({
+      ...previous,
+      [currentBatch.batch_id]: {
+        status: validation.preview
+          ? previous[currentBatch.batch_id]?.status === 'applied'
+            ? 'applied'
+            : 'review_imported'
+          : previous[currentBatch.batch_id]?.status || 'not_started',
+        importText,
+        applyResults: previous[currentBatch.batch_id]?.applyResults || [],
+        preview: validation.preview,
+      },
+    }))
+  }, [currentBatch, importText, validation])
 
-  useEffect(() => {
-    setApplyResults([])
-    setApplyError(null)
-    setConfirmOpen(false)
-  }, [importText])
+  const exportJson = useMemo(
+    () => (currentExportPayload ? JSON.stringify(currentExportPayload, null, 2) : ''),
+    [currentExportPayload],
+  )
+  const aiPrompt = useMemo(() => buildCatalogCleanupPrompt(currentExportPayload), [currentExportPayload])
+  const applyableMerges = validation?.preview?.merge_suggestions || []
+  const renameSuggestions = validation?.preview?.rename_suggestions || []
+  const aliasSuggestions = validation?.preview?.alias_suggestions || []
+  const ignoredItems = validation?.preview?.ignored_items || []
+  const reviewRequiredItems = validation?.preview?.review_required_items || []
+
+  const markBatchStatus = (status: CatalogCleanupBatchStatus) => {
+    if (!currentBatch) return
+    setBatchStates((previous) => ({
+      ...previous,
+      [currentBatch.batch_id]: {
+        status,
+        importText: previous[currentBatch.batch_id]?.importText || '',
+        applyResults: previous[currentBatch.batch_id]?.applyResults || [],
+        preview: previous[currentBatch.batch_id]?.preview || null,
+      },
+    }))
+  }
 
   const handleCopy = async (value: string, nextState: 'json' | 'prompt') => {
     await copyText(value)
+    if (currentBatchState?.status === 'not_started') {
+      markBatchStatus('exported')
+    }
     setCopyState(nextState)
     window.setTimeout(() => setCopyState('idle'), 1800)
   }
 
-  const toggleGroupSelection = (groupId: string) => {
-    setSelectedGroupIds((current) =>
-      current.includes(groupId) ? current.filter((value) => value !== groupId) : [...current, groupId],
+  const handleDownload = () => {
+    if (!currentBatch || !currentExportPayload) return
+    downloadJson(
+      `bigdrops-catalog-cleanup-${currentBatch.batch_id}-${new Date().toISOString().slice(0, 10)}.json`,
+      exportJson,
     )
-  }
-
-  const handleSelectAll = () => {
-    setSelectedGroupIds(validPreviewGroupIds)
-  }
-
-  const handleClearSelection = () => {
-    setSelectedGroupIds([])
-  }
-
-  const handleApplySelected = async () => {
-    if (!selectedPreviewGroups.length) return
-
-    try {
-      setApplyError(null)
-      const nextResults = await onApplyProposals(
-        selectedPreviewGroups.map((group) => createCleanupApplyProposal(group)),
-      )
-      setApplyResults(nextResults)
-      setConfirmOpen(false)
-    } catch (error) {
-      setApplyError(error instanceof Error ? error.message : 'Could not apply the selected cleanup proposals.')
+    if ((currentBatchState?.status || 'not_started') === 'not_started') {
+      markBatchStatus('exported')
     }
   }
 
+  const handleLockSession = () => {
+    if (!resolvedBatchSize) return
+
+    const nextSession = createCatalogCleanupSession({
+      items,
+      aliases,
+      duplicateGroups,
+      batchSize: resolvedBatchSize,
+      sessionId: `catalog-cleanup-${Date.now()}`,
+      generatedAt: new Date().toISOString(),
+    })
+
+    setLockedSession(nextSession)
+    setCurrentBatchIndex(0)
+    setBatchStates(
+      Object.fromEntries(
+        nextSession.batches.map((batch) => [
+          batch.batch_id,
+          {
+            status: 'not_started',
+            importText: '',
+            applyResults: [],
+            preview: null,
+          },
+        ]),
+      ),
+    )
+    setApplyError(null)
+  }
+
+  const handleApplySupportedDecisions = async () => {
+    if (!currentExportPayload || !currentBatch || !applyableMerges.length) return
+
+    try {
+      setApplyError(null)
+      const results = await onApplyProposals(
+        currentExportPayload,
+        applyableMerges.map((merge) =>
+          createMergeProposal(
+            currentExportPayload,
+            merge.winner.item_id,
+            merge.merged_items.map((item) => item.item_id),
+            merge.canonical_name,
+          ),
+        ),
+      )
+
+      setBatchStates((previous) => ({
+        ...previous,
+        [currentBatch.batch_id]: {
+          status: 'applied',
+          importText: previous[currentBatch.batch_id]?.importText || '',
+          applyResults: results,
+          preview: previous[currentBatch.batch_id]?.preview || null,
+        },
+      }))
+    } catch (error) {
+      setApplyError(error instanceof Error ? error.message : 'Could not apply the supported merge suggestions.')
+    }
+  }
+
+  if (!lockedSession) {
+    return (
+      <div className="h-full overflow-y-auto bg-[linear-gradient(180deg,_#efe5d7_0%,_#e8dccb_100%)]">
+        <div className="mx-auto max-w-4xl space-y-6 p-6">
+          <section className="rounded-[18px] border border-[#d6c2a8] bg-[linear-gradient(180deg,_#fff9f1_0%,_#f7ecde_100%)] p-6 shadow-[0_20px_36px_rgba(93,68,42,0.10)]">
+            <SectionTitle
+              eyebrow="Clean & Standardize Catalog"
+              title="Lock a full-catalog cleanup session"
+              description="Choose how many active items you want to review at once. Once locked, the session keeps deterministic numeric batches and you work through one batch at a time."
+            />
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {['25', '50', '100', 'custom'].map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setBatchSizeOption(option as '25' | '50' | '100' | 'custom')}
+                  className={[
+                    'rounded-[16px] border p-4 text-left transition-all',
+                    batchSizeOption === option
+                      ? 'border-[#8c6a45] bg-[#fff7ec] shadow-[0_12px_24px_rgba(88,67,41,0.08)]'
+                      : 'border-[#d6c2a8] bg-[#fffaf5] hover:border-[#b89267]',
+                  ].join(' ')}
+                >
+                  <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9a7c5e]">
+                    {option === 'custom' ? 'Custom' : 'Batch size'}
+                  </div>
+                  <div className="mt-2 text-[18px] font-extrabold text-[#2f2419]">
+                    {option === 'custom' ? 'Set your own' : option}
+                  </div>
+                  <p className="mt-1 text-[11px] leading-relaxed text-[#8d7963]">
+                    {option === 'custom'
+                      ? 'Use a specific number for this cleanup session.'
+                      : `Review about ${option} items per numeric batch.`}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            {batchSizeOption === 'custom' ? (
+              <div className="mt-4">
+                <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9a7c5e]">
+                  Custom batch size
+                </label>
+                <input
+                  value={customBatchSize}
+                  onChange={(event) => setCustomBatchSize(event.target.value)}
+                  inputMode="numeric"
+                  placeholder="Enter batch size"
+                  className="mt-2 w-full rounded-[12px] border border-[#d4c2ad] bg-[#fbf5ec] px-4 py-3 text-[13px] text-[#2c2218] outline-none focus:border-[#a07a52]"
+                />
+              </div>
+            ) : null}
+
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#decdb7] bg-[#fffaf1] px-4 py-3">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Session preview</div>
+                <div className="mt-1 text-[12px] text-[#6f5b46]">
+                  {items.length.toLocaleString()} active items will be arranged into numeric batches without splitting duplicate groups.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleLockSession}
+                disabled={!resolvedBatchSize}
+                className="inline-flex items-center gap-2 rounded-[12px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2.5 text-[12px] font-bold text-[#523b25] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <LockKeyhole className="h-4 w-4" />
+                Lock cleanup session
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
+    )
+  }
+
+  if (!currentBatch || !currentExportPayload || !validation) {
+    return null
+  }
+
+  const currentStatus = currentBatchState?.status || 'not_started'
+  const canAdvance = currentStatus === 'review_imported' || currentStatus === 'applied'
+  const hasNextBatch = currentBatchIndex < lockedSession.batch_count - 1
+
   return (
     <div className="h-full overflow-y-auto bg-[linear-gradient(180deg,_#efe5d7_0%,_#e8dccb_100%)]">
-      <div className="space-y-4 p-5">
-        <section className="rounded-[18px] border border-[#d6c2a8] bg-[linear-gradient(180deg,_#fff9f1_0%,_#f7ecde_100%)] p-5 shadow-[0_20px_36px_rgba(93,68,42,0.10),inset_0_1px_0_rgba(255,255,255,0.55)]">
+      <div className="space-y-4 p-5 pb-20">
+        <section className="rounded-[18px] border border-[#d6c2a8] bg-[linear-gradient(180deg,_#fff9f1_0%,_#f7ecde_100%)] p-5 shadow-[0_20px_36px_rgba(93,68,42,0.10)]">
           <SectionTitle
-            eyebrow="Advanced Cleanup"
-            title="Flagged export and AI preview"
-            description="Export only the flagged duplicate groups, copy the structured AI prompt, paste the AI JSON response back here, and review the proposed cleanup safely before any future apply step."
+            eyebrow="Locked Session"
+            title={`Batch ${currentBatchIndex + 1} of ${lockedSession.batch_count}`}
+            description="This session is locked to a fixed batch size. Export only the current batch, review the AI output, and apply supported merge decisions before moving forward."
           />
 
-          <div className="mt-4 rounded-[14px] border border-[#d9c7b0] bg-[#fcf7ef] px-4 py-3 text-[12px] font-semibold text-[#5f4b37]">
-            No changes will be applied in this step.
-          </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="mt-4 grid gap-3 md:grid-cols-4">
+            <StatCard label="Batch Size" value={lockedSession.batch_size.toLocaleString()} meta="Locked for this session." />
+            <StatCard label="Current Batch" value={currentBatch.item_count.toLocaleString()} meta={currentBatch.batch_id} />
+            <StatCard label="Status" value={currentStatus.replace('_', ' ')} meta="Tracked in component state." />
             <StatCard
-              label="Flagged groups"
-              value={exportPayload.scope.group_count.toLocaleString()}
-              meta="Only duplicate/problem groups are included."
-            />
-            <StatCard
-              label="Flagged items"
-              value={exportPayload.scope.item_count.toLocaleString()}
-              meta="No full catalog dump is exported in this phase."
-            />
-            <StatCard
-              label="Schema"
-              value={`v${exportPayload.schema_version}`}
-              meta="Stable contract for export, prompt, and preview."
+              label="Progress"
+              value={`${currentBatchIndex + 1}/${lockedSession.batch_count}`}
+              meta="One numeric batch at a time."
             />
           </div>
-        </section>
 
-        <section className="rounded-[16px] border border-[#d8c5ad] bg-[#fff8ef] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.08)]">
-          <SectionTitle
-            eyebrow="1. Export Flagged Data"
-            title="Export flagged groups"
-            description="This payload includes only the current flagged duplicate groups, their item ids, summary pricing, and known aliases."
-          />
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => downloadJson(`item-library-flagged-cleanup-${new Date().toISOString().slice(0, 10)}.json`, exportJson)}
-              className="rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2 text-[12px] font-bold text-[#523b25] shadow-[0_10px_18px_rgba(92,68,41,0.10),inset_0_1px_0_rgba(255,255,255,0.5)] transition-colors hover:bg-[#dcc39f]"
-            >
-              Download flagged JSON
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleCopy(exportJson, 'json')}
-              className="rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-4 py-2 text-[12px] font-semibold text-[#6d543a] transition-colors hover:bg-[#f2e5d2]"
-            >
-              {copyState === 'json' ? 'Flagged JSON copied' : 'Copy flagged JSON'}
-            </button>
-          </div>
-
-          <div className="mt-4 rounded-[12px] border border-[#ddd0be] bg-[#f9f2e7] p-3">
-            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#9a866f]">Export shape</div>
-            <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words font-['JetBrains_Mono'] text-[10px] leading-relaxed text-[#5f4a36]">
-              {exportJson}
-            </pre>
-          </div>
-        </section>
-
-        <section className="rounded-[16px] border border-[#d8c5ad] bg-[#fff8ef] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.08)]">
-          <SectionTitle
-            eyebrow="2. Copy AI Prompt"
-            title="Copy structured prompt"
-            description="Use this prompt with the exported flagged JSON outside the app. The prompt tells AI to stay strict, not invent items, and return JSON only."
-          />
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => void handleCopy(aiPrompt, 'prompt')}
-              className="rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2 text-[12px] font-bold text-[#523b25] shadow-[0_10px_18px_rgba(92,68,41,0.10),inset_0_1px_0_rgba(255,255,255,0.5)] transition-colors hover:bg-[#dcc39f]"
-            >
-              {copyState === 'prompt' ? 'AI prompt copied' : 'Copy AI prompt'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowPrompt((value) => !value)}
-              className="rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-4 py-2 text-[12px] font-semibold text-[#6d543a] transition-colors hover:bg-[#f2e5d2]"
-            >
-              {showPrompt ? 'Hide prompt' : 'Show prompt'}
-            </button>
-          </div>
-
-          {showPrompt ? (
-            <div className="mt-4 rounded-[12px] border border-[#ddd0be] bg-[#f9f2e7] p-3">
-              <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words font-['JetBrains_Mono'] text-[10px] leading-relaxed text-[#5f4a36]">
-                {aiPrompt}
-              </pre>
-            </div>
-          ) : null}
-        </section>
-
-        <section className="rounded-[16px] border border-[#d8c5ad] bg-[#fff8ef] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.08)]">
-          <SectionTitle
-            eyebrow="3. Paste AI Result"
-            title="Import preview only"
-            description="Paste the AI JSON response below. The app validates the schema, checks group and item references against the current flagged export scope, and previews only accepted proposals."
-          />
-
-          <div className="mt-4 space-y-3">
-             <button
-                type="button"
-                onClick={() => setShowTutorial(!showTutorial)}
-                className="flex w-full items-center justify-between rounded-xl border border-[#dbc9b2] bg-[#fcf7ef] p-3 text-left transition-colors hover:bg-[#f5ead9]"
-             >
-                <div className="flex items-center gap-2">
-                   <Info className="h-4 w-4 text-[#7f6b56]" />
-                   <span className="text-xs font-bold text-[#7f6b56]">How advanced cleanup works</span>
-                </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#7f6b56] opacity-60">
-                   {showTutorial ? 'Hide Guide' : 'How it works'}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {lockedSession.batches.map((batch, index) => {
+              const status = batchStates[batch.batch_id]?.status || 'not_started'
+              return (
+                <span
+                  key={batch.batch_id}
+                  className={[
+                    'rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em]',
+                    index === currentBatchIndex
+                      ? 'border-[#8c6a45] bg-[#f5e7d3] text-[#6e4f2d]'
+                      : 'border-[#d7c3aa] bg-[#fffaf5] text-[#947d63]',
+                  ].join(' ')}
+                >
+                  {batch.title}: {status.replace('_', ' ')}
                 </span>
-             </button>
-
-             {showTutorial && (
-                <div className="space-y-4 rounded-xl border border-[#d8c5ad] bg-[#fffaf2] p-4 shadow-inner animate-in fade-in slide-in-from-top-2 duration-200">
-                   <div className="space-y-1">
-                      <p className="text-xs font-medium text-[#5f4b37] leading-relaxed">
-                         Perform a safe bulk cleanup by exchanging data with an external AI. No items are deleted until you explicitly approve the merge proposals.
-                      </p>
-                   </div>
-
-                   <div className="space-y-2">
-                      {[
-                        'Download or copy the flagged items JSON (Section 1)',
-                        'Copy the structured AI prompt (Section 2)',
-                        'Run the prompt + JSON in ChatGPT or Claude',
-                        'Paste the resulting JSON below to preview proposals',
-                        'Select valid proposals and apply the cleanup'
-                      ].map((step, idx) => (
-                        <div key={idx} className="flex gap-3">
-                           <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e7d2b4] text-[9px] font-black text-[#523b25]">
-                              {idx + 1}
-                           </div>
-                           <p className="text-[11px] font-medium text-[#8d7963] leading-snug pt-0.5">
-                              {step}
-                           </p>
-                        </div>
-                      ))}
-                   </div>
-                   
-                   <div className="overflow-hidden rounded-xl border border-[#d8c5ad] bg-black aspect-video shadow-inner">
-                      <iframe
-                         src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-                         className="h-full w-full"
-                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                         allowFullScreen
-                      />
-                   </div>
-                </div>
-             )}
-          </div>
-
-          <textarea
-            value={importText}
-            onChange={(event) => setImportText(event.target.value)}
-            placeholder="Paste flagged_cleanup_result JSON here..."
-            spellCheck={false}
-            className="mt-4 min-h-[180px] w-full rounded-[14px] border border-[#d4c2ad] bg-[#fbf5ec] px-4 py-3 font-['JetBrains_Mono'] text-[11px] text-[#2c2218] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] outline-none transition-all duration-150 placeholder:text-[#ad9984] focus:border-[#a07a52] focus:bg-[#fffaf2] focus:ring-[3px] focus:ring-[#b79269]/15"
-          />
-
-          <div className="mt-3 rounded-[12px] border border-[#dbc9b2] bg-[#fcf7ef] px-4 py-3 text-[11px] leading-relaxed text-[#7f6b56]">
-            Validation checks include JSON shape, schema version, response type, source export type, group ids, winner
-            ids, and merged item ids. Bad rows are rejected visibly rather than coerced.
+              )
+            })}
           </div>
         </section>
 
+        <div className="grid gap-4 lg:grid-cols-2">
+          <section className="rounded-[16px] border border-[#d8c5ad] bg-[#fff8ef] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.08)]">
+            <SectionTitle
+              eyebrow="1. Export"
+              title="Release only this batch"
+              description="The export contains the current batch only, with session and batch identifiers for strict import validation."
+            />
+
+            <div className="mt-4 grid gap-2">
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="flex w-full items-center justify-between rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2.5 text-[12px] font-bold text-[#523b25]"
+              >
+                <div className="flex items-center gap-2">
+                  <Download className="h-4 w-4" />
+                  Export batch JSON
+                </div>
+                <FileJson className="h-4 w-4 opacity-40" />
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleCopy(aiPrompt, 'prompt')}
+                className="flex w-full items-center justify-between rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-4 py-2.5 text-[12px] font-semibold text-[#6d543a]"
+              >
+                <div className="flex items-center gap-2">
+                  {copyState === 'prompt' ? <ClipboardCheck className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  {copyState === 'prompt' ? 'AI prompt copied' : 'Copy AI prompt'}
+                </div>
+                <Sparkles className="h-4 w-4 opacity-40" />
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleCopy(exportJson, 'json')}
+                className="flex w-full items-center justify-between rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-4 py-2.5 text-[12px] font-semibold text-[#6d543a]"
+              >
+                <div className="flex items-center gap-2">
+                  {copyState === 'json' ? <ClipboardCheck className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  {copyState === 'json' ? 'Batch JSON copied' : 'Copy batch JSON'}
+                </div>
+                <FileJson className="h-4 w-4 opacity-40" />
+              </button>
+            </div>
+          </section>
+
+          <section className="rounded-[16px] border border-[#d8c5ad] bg-[#fff8ef] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.08)]">
+            <SectionTitle
+              eyebrow="2. Import Review"
+              title="Paste AI result"
+              description="The result is validated against the locked current batch. Wrong session ids, batch ids, or out-of-batch item ids are rejected."
+            />
+
+            <textarea
+              value={importText}
+              onChange={(event) => {
+                const nextText = event.target.value
+                setBatchStates((previous) => ({
+                  ...previous,
+                  [currentBatch.batch_id]: {
+                    status: previous[currentBatch.batch_id]?.status === 'applied' ? 'applied' : previous[currentBatch.batch_id]?.status || 'not_started',
+                    importText: nextText,
+                    applyResults: previous[currentBatch.batch_id]?.applyResults || [],
+                    preview: previous[currentBatch.batch_id]?.preview || null,
+                  },
+                }))
+              }}
+              placeholder="Paste AI result JSON here..."
+              spellCheck={false}
+              className="mt-4 min-h-[150px] w-full rounded-[14px] border border-[#d4c2ad] bg-[#fbf5ec] px-4 py-3 font-['JetBrains_Mono'] text-[11px] text-[#2c2218] outline-none placeholder:text-[#ad9984] focus:border-[#a07a52]"
+            />
+          </section>
+        </div>
+
         <section className="rounded-[16px] border border-[#d8c5ad] bg-[#fff8ef] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.08)]">
           <SectionTitle
-            eyebrow="4. Preview Proposed Cleanup"
-            title="Preview proposed changes"
-            description="Accepted proposals are shown below for review. Rejected groups and ignored groups stay visible so the workflow remains explicit and inspectable."
+            eyebrow="3. Preview Decisions"
+            title="Review what is safe to apply now"
+            description="Merge suggestions still go through the existing safe merge engine. Rename and alias suggestions remain preview-only."
           />
 
-          <div className="mt-4 space-y-3">
-            <ValidationBanner result={validation} />
+          <div className="mt-4 space-y-4">
+            <ValidationBanner errors={validation.errors} />
 
             {!importText.trim() ? (
               <div className="rounded-[14px] border border-dashed border-[#d9c8b2] bg-[#fcf7ef] px-4 py-8 text-center">
                 <div className="text-[13px] font-semibold text-[#715d49]">No AI result pasted yet</div>
-                <p className="mt-1 text-[11px] text-[#9a8873]">
-                  Paste a `flagged_cleanup_result` payload to preview the proposed cleanup plan.
-                </p>
+                <p className="mt-1 text-[11px] text-[#9a8873]">Paste the AI output to preview decisions for this batch.</p>
               </div>
-            ) : null}
-
-            {validation.preview?.merge_groups.length ? (
-              <div className="space-y-3">
-                <div className="rounded-[14px] border border-[#dac8b1] bg-[#fcf7ef] p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Proposal selection</div>
-                      <p className="mt-1 text-[11px] text-[#8b7761]">
-                        Only valid proposals can be selected. Rejected proposals remain preview-only.
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={handleSelectAll}
-                        disabled={!validPreviewGroupIds.length}
-                        className="rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-3 py-2 text-[11px] font-semibold text-[#6d543a] transition-colors hover:bg-[#f2e5d2] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Select all valid
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleClearSelection}
-                        disabled={!selectedGroupIds.length}
-                        className="rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-3 py-2 text-[11px] font-semibold text-[#6d543a] transition-colors hover:bg-[#f2e5d2] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Clear selection
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmOpen(true)}
-                        disabled={!selectedPreviewGroups.length || applyLoading}
-                        className="rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2 text-[11px] font-bold text-[#523b25] shadow-[0_10px_18px_rgba(92,68,41,0.10),inset_0_1px_0_rgba(255,255,255,0.5)] transition-colors hover:bg-[#dcc39f] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Apply selected proposals
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 text-[11px] text-[#7d6954]">
-                    {selectedPreviewGroups.length
-                      ? `${selectedPreviewGroups.length} proposal${selectedPreviewGroups.length === 1 ? '' : 's'} selected for review before applying.`
-                      : 'No valid proposals selected yet.'}
-                  </div>
+            ) : validation.preview ? (
+              <div className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-4">
+                  <StatCard label="Merges" value={applyableMerges.length.toLocaleString()} meta="Applyable now." />
+                  <StatCard label="Renames" value={renameSuggestions.length.toLocaleString()} meta="Preview only." />
+                  <StatCard label="Aliases" value={aliasSuggestions.length.toLocaleString()} meta="Preview only." />
+                  <StatCard label="Review" value={reviewRequiredItems.length.toLocaleString()} meta="Needs human check." />
                 </div>
 
-                {validation.preview.merge_groups.map((group) => (
-                  <article
-                    key={group.group_id}
-                    className="rounded-[14px] border border-[#d7c3aa] bg-[linear-gradient(180deg,_#fffaf2_0%,_#f8efe2_100%)] p-4 shadow-[0_14px_24px_rgba(96,72,45,0.08)]"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
+                {applyableMerges.length ? (
+                  <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Accepted merge group</div>
-                        <h3 className="mt-1 text-[15px] font-extrabold text-[#2f2419]">{group.canonical_name}</h3>
-                        <p className="mt-1 text-[11px] text-[#8b7761]">
-                          Source flagged group: {group.export_label}
-                        </p>
+                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Applyable merges</div>
+                        <div className="mt-1 text-[13px] font-black text-[#2c2218]">
+                          {applyableMerges.length} merge suggestion{applyableMerges.length === 1 ? '' : 's'}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <label className="inline-flex items-center gap-2 rounded-full border border-[#d8c5ad] bg-[#fbf5ec] px-3 py-1.5 text-[11px] font-semibold text-[#6d543b]">
-                          <input
-                            type="checkbox"
-                            checked={selectedGroupIds.includes(group.group_id)}
-                            onChange={() => toggleGroupSelection(group.group_id)}
-                            className="h-3.5 w-3.5 rounded border-[#b89a76] text-[#8b6845] focus:ring-[#8b6845]"
-                          />
-                          Select
-                        </label>
-                        <PreviewPill>{group.group_id}</PreviewPill>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleApplySupportedDecisions()}
+                        disabled={applyLoading}
+                        className="rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2 text-[11px] font-bold text-[#523b25] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {applyLoading ? 'Applying...' : 'Apply supported merges'}
+                      </button>
                     </div>
 
-                    <div className="mt-4 grid gap-3 md:grid-cols-2">
-                      <div className="rounded-[12px] border border-[#dfcfbd] bg-[#fffaf3] p-3">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Primary item</div>
-                        <div className="mt-2 text-[13px] font-bold text-[#2f2419]">{group.winner.name}</div>
-                        <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-[#8b7761]">
-                          <PreviewPill>{group.winner.item_id}</PreviewPill>
-                          <PreviewPill>{group.winner.usage_count.toLocaleString()} uses</PreviewPill>
-                          <PreviewPill>{formatItemPrice(group.winner.last_price, 'No price')}</PreviewPill>
-                        </div>
-                      </div>
-
-                      <div className="rounded-[12px] border border-[#dfcfbd] bg-[#fffaf3] p-3">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Merge into primary</div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {group.merged_items.map((item) => (
-                            <PreviewPill key={item.item_id}>{item.name}</PreviewPill>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="rounded-[12px] border border-[#dfcfbd] bg-[#fffaf3] p-3">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Aliases to keep</div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {group.aliases_to_keep.length ? (
-                            group.aliases_to_keep.map((alias) => <PreviewPill key={alias}>{alias}</PreviewPill>)
-                          ) : (
-                            <span className="text-[11px] text-[#917d68]">No aliases proposed.</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="rounded-[12px] border border-[#dfcfbd] bg-[#fffaf3] p-3">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Aliases to retire</div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {group.aliases_to_retire.length ? (
-                            group.aliases_to_retire.map((alias) => <PreviewPill key={alias}>{alias}</PreviewPill>)
-                          ) : (
-                            <span className="text-[11px] text-[#917d68]">No retired aliases proposed.</span>
-                          )}
-                        </div>
-                      </div>
+                    <div className="mt-3 space-y-3">
+                      {applyableMerges.map((merge) => (
+                        <article key={`${merge.winner.item_id}-${merge.canonical_name}`} className="rounded-[12px] bg-[#f9f2e7] p-3">
+                          <h3 className="text-[13px] font-bold text-[#2c2218]">{merge.canonical_name}</h3>
+                          <p className="mt-1 text-[11px] text-[#6f5b46]">
+                            Winner: {merge.winner.name} • Merge: {merge.merged_items.map((item) => item.name).join(', ')}
+                          </p>
+                        </article>
+                      ))}
                     </div>
-                  </article>
-                ))}
-              </div>
-            ) : null}
+                  </div>
+                ) : null}
 
-            {validation.preview?.ignored_groups.length ? (
-              <div className="rounded-[14px] border border-[#dac8b1] bg-[#fcf7ef] p-4">
-                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Ignored groups</div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {validation.preview.ignored_groups.map((group) => (
-                    <PreviewPill key={group.group_id}>{group.label}</PreviewPill>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {validation.preview?.rejected_groups.length ? (
-              <div className="rounded-[14px] border border-[#e4c3ba] bg-[#fff2ee] p-4">
-                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#8f3f35]">Rejected groups</div>
-                <div className="mt-3 space-y-2">
-                  {validation.preview.rejected_groups.map((group) => (
-                    <div key={`${group.group_id}-${group.reason}`} className="rounded-[10px] border border-[#ebc8bf] bg-[#fff8f5] px-3 py-2">
-                      <div className="font-['JetBrains_Mono'] text-[10px] font-bold text-[#8f3f35]">{group.group_id}</div>
-                      <div className="mt-1 text-[11px] text-[#9a4a3f]">{group.reason}</div>
+                {renameSuggestions.length ? (
+                  <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Rename suggestions</div>
+                    <div className="mt-3 space-y-2">
+                      {renameSuggestions.map((suggestion) => (
+                        <div key={`${suggestion.item.item_id}-${suggestion.suggested_name}`} className="rounded-[12px] bg-[#f9f2e7] p-3 text-[11px] text-[#2c2218]">
+                          {suggestion.item.name} → {suggestion.suggested_name}
+                          <span className="ml-2 font-bold text-[#9a7c5e]">Preview only</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+                  </div>
+                ) : null}
 
-            {applyError ? (
-              <div className="rounded-[14px] border border-[#e4c3ba] bg-[#fff2ee] px-4 py-3 text-[11px] text-[#9a4a3f]">
-                {applyError}
-              </div>
-            ) : null}
+                {aliasSuggestions.length ? (
+                  <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Alias suggestions</div>
+                    <div className="mt-3 space-y-2">
+                      {aliasSuggestions.map((suggestion) => (
+                        <div key={`${suggestion.item.item_id}-${suggestion.suggested_aliases.join('|')}`} className="rounded-[12px] bg-[#f9f2e7] p-3 text-[11px] text-[#2c2218]">
+                          {suggestion.item.name}: {suggestion.suggested_aliases.join(', ')}
+                          <span className="ml-2 font-bold text-[#9a7c5e]">Preview only</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
 
-            {applyResults.length ? (
-              <div className="rounded-[14px] border border-[#dac8b1] bg-[#fcf7ef] p-4">
-                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Apply results</div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <PreviewPill>{resultSummary.applied.length} applied</PreviewPill>
-                  <PreviewPill>{resultSummary.stale.length} stale</PreviewPill>
-                  <PreviewPill>{resultSummary.failed.length} failed</PreviewPill>
-                </div>
+                {ignoredItems.length ? (
+                  <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Ignored / no action</div>
+                    <p className="mt-2 text-[11px] text-[#6f5b46]">{ignoredItems.map((item) => item.name).join(', ')}</p>
+                  </div>
+                ) : null}
 
-                <div className="mt-3 space-y-2">
-                  {applyResults.map((result) => (
-                    <div
-                      key={`${result.group_id}-${result.status}-${result.message}`}
-                      className={[
-                        'rounded-[10px] border px-3 py-2',
-                        result.status === 'applied'
-                          ? 'border-[#c9d7bd] bg-[#f4f8ef]'
-                          : result.status === 'stale'
-                            ? 'border-[#e2d3b6] bg-[#fff8ec]'
-                            : 'border-[#ebc8bf] bg-[#fff8f5]',
-                      ].join(' ')}
+                {reviewRequiredItems.length ? (
+                  <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Review required</div>
+                    <p className="mt-2 text-[11px] text-[#6f5b46]">{reviewRequiredItems.map((item) => item.name).join(', ')}</p>
+                  </div>
+                ) : null}
+
+                {currentBatchState?.applyResults.length ? (
+                  <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Apply results</div>
+                    <div className="mt-2 space-y-1 text-[11px] text-[#2c2218]">
+                      {currentBatchState.applyResults.map((result) => (
+                        <div key={`${result.group_id}-${result.status}`}>
+                          {result.canonical_name}: {result.status}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {applyError ? (
+                  <div className="rounded-[14px] border border-[#e4c3ba] bg-[#fff2ee] px-4 py-3 text-[11px] text-[#9a4a3f]">
+                    {applyError}
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#dac8b1] bg-[#fcf7ef] px-4 py-3">
+                  <div className="text-[11px] text-[#6f5b46]">
+                    Move on after reviewing this batch. Supported merge applies refresh the library data first.
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLockedSession(null)
+                        setBatchStates({})
+                        setCurrentBatchIndex(0)
+                        setApplyError(null)
+                      }}
+                      className="rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-3 py-2 text-[11px] font-semibold text-[#6d543a]"
                     >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-['JetBrains_Mono'] text-[10px] font-bold text-[#604c38]">{result.group_id}</span>
-                        <PreviewPill>{result.status}</PreviewPill>
-                        <span className="text-[11px] font-semibold text-[#2f2419]">{result.canonical_name}</span>
-                      </div>
-                      <div className="mt-1 text-[11px] text-[#7f6b56]">{result.message}</div>
-                    </div>
-                  ))}
+                      Start new session
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentBatchIndex((value) => value + 1)}
+                      disabled={!hasNextBatch || !canAdvance}
+                      className="rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2 text-[11px] font-bold text-[#523b25] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {hasNextBatch ? 'Next batch' : 'Last batch'}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : null}
           </div>
         </section>
       </div>
-
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Review before applying</AlertDialogTitle>
-            <AlertDialogDescription>
-              These changes will merge item records and relink history through the existing safe merge flow. The
-              selected proposals below will be applied one by one, and stale proposals will be rejected instead of
-              guessed.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              <PreviewPill>{selectionSummary.groupCount} merge groups</PreviewPill>
-              <PreviewPill>{selectionSummary.mergedItemCount} merged items</PreviewPill>
-              <PreviewPill>{selectionSummary.aliasKeepCount} aliases to keep</PreviewPill>
-              <PreviewPill>{selectionSummary.aliasRetireCount} aliases to retire</PreviewPill>
-            </div>
-
-            <div className="max-h-72 space-y-2 overflow-y-auto rounded-[12px] border border-[#ddd0be] bg-[#f9f2e7] p-3">
-              {selectedPreviewGroups.map((group) => {
-                const staleState = isCleanupProposalStale(createCleanupApplyProposal(group), exportPayload)
-
-                return (
-                  <div key={group.group_id} className="rounded-[10px] border border-[#e0d2c1] bg-[#fffaf3] px-3 py-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] font-bold text-[#2f2419]">{group.canonical_name}</span>
-                      <PreviewPill>{group.winner.name}</PreviewPill>
-                      {staleState.stale ? <PreviewPill>stale on current data</PreviewPill> : null}
-                    </div>
-                    <div className="mt-1 text-[11px] text-[#7f6b56]">
-                      Merge into primary: {group.merged_items.map((item) => item.name).join(', ')}
-                    </div>
-                    {staleState.stale ? (
-                      <div className="mt-1 text-[11px] text-[#9a4a3f]">{staleState.reason}</div>
-                    ) : null}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={applyLoading}>Keep reviewing</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={!selectedPreviewGroups.length || applyLoading}
-              onClick={(event) => {
-                event.preventDefault()
-                void handleApplySelected()
-              }}
-            >
-              {applyLoading ? 'Applying…' : 'Apply selected proposals'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }

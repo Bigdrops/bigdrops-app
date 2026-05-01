@@ -128,25 +128,7 @@ export function ItemLibraryListPanel({
             onClick={() => onFilterChange('quotation')}
           />
         </div>
-      ) : (
-        <div className="flex flex-shrink-0 gap-2 overflow-x-auto border-b border-[#e3d5c5]/80 px-4 py-[10px]">
-          <FilterChip
-            label={`Duplicate Groups${duplicateGroups.length ? ` (${duplicateGroups.length})` : ''}`}
-            active={viewMode === 'duplicates'}
-            onClick={() => onViewModeChange('duplicates')}
-          />
-          <FilterChip
-            label="Advanced Cleanup"
-            active={viewMode === 'advanced_cleanup'}
-            onClick={() => onViewModeChange('advanced_cleanup')}
-          />
-          <FilterChip
-            label="Merge History"
-            active={viewMode === 'merge_history'}
-            onClick={() => onViewModeChange('merge_history')}
-          />
-        </div>
-      )}
+      ) : null}
 
       <div className="flex-1 overflow-y-auto" role="listbox" aria-label="Item catalog">
         {loading ? (
@@ -158,7 +140,7 @@ export function ItemLibraryListPanel({
             <SkeletonRow wide />
             <SkeletonRow />
           </>
-        ) : !isLibrary && (viewMode === 'duplicates' || viewMode === 'advanced_cleanup') ? (
+        ) : !isLibrary && viewMode === 'duplicates' ? (
           duplicateGroups.length === 0 ? (
             <div className="px-4 py-10 text-center">
               <p className="text-[13px] font-semibold text-[#75624f]">No duplicate candidates found</p>

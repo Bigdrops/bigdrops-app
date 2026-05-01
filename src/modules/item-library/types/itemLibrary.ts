@@ -193,6 +193,114 @@ export interface CleanupApplyResult {
   status: 'applied' | 'stale' | 'failed'
   message: string
 }
+
+export type CatalogCleanupBatchStatus = 'not_started' | 'exported' | 'review_imported' | 'applied'
+
+export interface CatalogCleanupExportItem {
+  item_id: string
+  name: string
+  standard_price: number | null
+  last_sold_price: number | null
+  usage_count: number
+  aliases: string[]
+  appears_in_invoice: boolean
+  appears_in_quotation: boolean
+  cleanup_flags: string[]
+  duplicate_group_id: string | null
+}
+
+export interface CatalogCleanupBatch {
+  batch_id: string
+  title: string
+  item_count: number
+  items: CatalogCleanupExportItem[]
+  status: CatalogCleanupBatchStatus
+}
+
+export interface CatalogCleanupSession {
+  session_id: string
+  batch_size: number
+  batch_count: number
+  batches: CatalogCleanupBatch[]
+}
+
+export interface CatalogCleanupBatchExportPayload {
+  export_type: 'catalog_cleanup_batch'
+  schema_version: 1
+  session: {
+    session_id: string
+    batch_size: number
+    batch_index: number
+    batch_count: number
+  }
+  batch_id: string
+  generated_at: string
+  scope: {
+    mode: 'full_catalog_batch'
+    item_count: number
+  }
+  items: CatalogCleanupExportItem[]
+}
+
+export interface CatalogCleanupMergeSuggestion {
+  canonical_name: string
+  winner_item_id: string
+  merged_item_ids: string[]
+}
+
+export interface CatalogCleanupRenameSuggestion {
+  item_id: string
+  suggested_name: string
+}
+
+export interface CatalogCleanupAliasSuggestion {
+  item_id: string
+  suggested_aliases: string[]
+}
+
+export interface CatalogCleanupBatchImportPayload {
+  response_type: 'catalog_cleanup_batch_result'
+  schema_version: 1
+  source_export_type: 'catalog_cleanup_batch'
+  session_id: string
+  batch_id: string
+  merge_suggestions: CatalogCleanupMergeSuggestion[]
+  rename_suggestions: CatalogCleanupRenameSuggestion[]
+  alias_suggestions: CatalogCleanupAliasSuggestion[]
+  ignored_item_ids: string[]
+  review_required_item_ids: string[]
+}
+
+export interface CatalogCleanupPreviewMergeSuggestion {
+  canonical_name: string
+  winner: CatalogCleanupExportItem
+  merged_items: CatalogCleanupExportItem[]
+}
+
+export interface CatalogCleanupPreviewRenameSuggestion {
+  item: CatalogCleanupExportItem
+  suggested_name: string
+}
+
+export interface CatalogCleanupPreviewAliasSuggestion {
+  item: CatalogCleanupExportItem
+  suggested_aliases: string[]
+}
+
+export interface CatalogCleanupImportPreview {
+  merge_suggestions: CatalogCleanupPreviewMergeSuggestion[]
+  rename_suggestions: CatalogCleanupPreviewRenameSuggestion[]
+  alias_suggestions: CatalogCleanupPreviewAliasSuggestion[]
+  ignored_items: CatalogCleanupExportItem[]
+  review_required_items: CatalogCleanupExportItem[]
+}
+
+export interface CatalogCleanupImportValidationResult {
+  ok: boolean
+  errors: string[]
+  preview: CatalogCleanupImportPreview | null
+  parsed: CatalogCleanupBatchImportPayload | null
+}
 export interface ItemMergeLogRow {
   id: string
   from_item_id: string | null
@@ -202,4 +310,28 @@ export interface ItemMergeLogRow {
   action: 'merge' | 'alias_added' | 'alias_retired' | 'standard_price_updated' | 'relinked_rows'
   details: any
   created_at: string
+}
+export type CleanupBatchStatus = 'not_reviewed' | 'review_imported' | 'ready_to_apply' | 'applied'
+
+export interface FlaggedCleanupBatch {
+  batch_id: string
+  title: string
+  group_count: number
+  item_count: number
+  groups: FlaggedCleanupExportGroup[]
+  status: CleanupBatchStatus
+}
+
+export interface FlaggedCleanupBatchExportPayload {
+  export_type: 'flagged_cleanup_batch'
+  schema_version: 1
+  batch_id: string
+  batch_title: string
+  generated_at: string
+  scope: {
+    mode: 'flagged_batch'
+    group_count: number
+    item_count: number
+  }
+  groups: FlaggedCleanupExportGroup[]
 }
