@@ -65,7 +65,16 @@ export const RfqImportSheet: React.FC<RfqImportSheetProps> = ({
           </div>
         )
       }
-
+      tutorial={{
+        title: 'How RFQ JSON import works',
+        description: 'Populate your RFQ document by pasting extracted JSON from procurement or request documents.',
+        steps: [
+          'Copy the RFQ AI Prompt',
+          'Extract requested items and quantities from your source into JSON',
+          'Paste the resulting JSON here to review the preview before applying'
+        ],
+        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+      }}
     />
   );
 };

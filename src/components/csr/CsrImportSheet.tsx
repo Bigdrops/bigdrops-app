@@ -53,7 +53,16 @@ export default function CsrImportSheet({ open, onOpenChange, onApplyImport }: Cs
       onRawInputChange={setPastedText}
       onPreview={handleImport} // CSR import doesn't have a separate preview step in current code, it just applies.
       onSave={handleImport}    // We could split it, but keep it simple for now as per current behavior.
-
+      tutorial={{
+        title: 'How CSR JSON import works',
+        description: 'You can update CSR fields by pasting a JSON extraction from a service report document.',
+        steps: [
+          'Copy the CSR AI Prompt',
+          'Extract technical fields from your service report into JSON',
+          'Paste the resulting JSON here to update the form'
+        ],
+        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+      }}
     />
   )
 }

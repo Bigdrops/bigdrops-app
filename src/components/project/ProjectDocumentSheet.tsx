@@ -262,7 +262,17 @@ export default function ProjectDocumentSheet({ open, onOpenChange, projectId, on
               onSave={handleParse}
               error={parseError}
               helpText="Quick Guide: Copy the AI prompt, extract your document's data into JSON using any AI, then paste it here to review and save."
-
+              tutorial={{
+                title: `How ${config.label} import works`,
+                description: `You can populate this ${config.label} document by pasting a JSON extraction from your source file.`,
+                steps: [
+                  'Copy the AI prompt for this document type',
+                  'Extract the document data into JSON using any AI tool',
+                  'Paste the resulting JSON here to review the form',
+                  'Review all fields and save to the project'
+                ],
+                videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+              }}
               additionalActions={<button onClick={() => setStep(1)} className="text-xs font-bold text-slate-400 hover:text-slate-600 w-full pt-4">Change Document Type</button>}
             />
           )}
