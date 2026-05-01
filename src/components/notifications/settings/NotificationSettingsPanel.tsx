@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { BellRing } from 'lucide-react'
+import { BellRing, Send } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { NotificationChannelToggles } from './NotificationChannelToggles'
 import { ReminderThresholdSelector } from './ReminderThresholdSelector'
 import { SettingsLoadingState } from '@/pages/settings/SettingsLoadingState'
@@ -14,6 +15,7 @@ import {
   normalizeThresholdDays,
   parseCustomThresholdDay,
 } from '@/domain/notifications/notificationPreferences'
+import { sendPushForNotification } from '@/domain/notifications/sendPushForNotification'
 
 export function NotificationSettingsPanel({
   userId,
@@ -36,6 +38,7 @@ export function NotificationSettingsPanel({
   const [overdueCustomDay, setOverdueCustomDay] = useState('')
   const [unpaidCustomError, setUnpaidCustomError] = useState<string | null>(null)
   const [overdueCustomError, setOverdueCustomError] = useState<string | null>(null)
+  const [testingPush, setTestingPush] = useState(false)
 
   const unpaidOptions = useMemo(
     () =>
@@ -119,6 +122,25 @@ export function NotificationSettingsPanel({
       onToast('Notification preferences saved')
     } catch (saveError) {
       onToast(getErrorMessage(saveError))
+    }
+  }
+
+  const handleTestPush = async () => {
+    if (!userId) return
+
+    setTestingPush(true)
+    try {
+      await sendPushForNotification({
+        userId,
+        title: 'Test Notification',
+        message: 'This is a test push notification from your Bigdrops settings.',
+        notificationId: 'test-' + Date.now(),
+      })
+      onToast('Test push sequence initiated')
+    } catch (testError) {
+      onToast(getErrorMessage(testError))
+    } finally {
+      setTestingPush(false)
     }
   }
 
@@ -281,6 +303,42 @@ export function NotificationSettingsPanel({
           customError={overdueCustomError}
           helperText="Disabling one overdue day only affects that exact threshold."
         />
+      </div>
+
+      <div className="space-y-2">
+        <div className="px-1">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted-foreground">
+            Diagnostics
+          </p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-bold text-foreground">Test Delivery</div>
+              <div className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+                Trigger a manual push notification to verify your device registration and token
+                validity.
+              </div>
+            </div>
+            <button
+              onClick={handleTestPush}
+              disabled={testingPush || !preferences.channels.push}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all active:scale-95 disabled:opacity-50',
+                preferences.channels.push
+                  ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-md shadow-slate-900/10'
+                  : 'bg-muted text-muted-foreground border border-border cursor-not-allowed',
+              )}
+            >
+              {testingPush ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              ) : (
+                <Send size={14} />
+              )}
+              {testingPush ? 'Sending...' : 'Send Test Push'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {error ? (
