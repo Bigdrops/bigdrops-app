@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import MobilePageHeader from './MobilePageHeader'
 import { MobileChromeContext } from '@/components/Layout'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const toneStyles = {
   blue: {
@@ -264,15 +265,16 @@ export default function ModuleShell<T>({
               {filters.map((f) => (
                 <div key={f.label} className="flex items-center gap-2 rounded-[var(--bd-radius-md)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-[var(--bd-space-sm)] py-[var(--bd-space-xs)] shadow-sm">
                    <span className="text-[11px] font-extrabold uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-text-muted))]">{f.label}</span>
-                   <select
-                     value={f.value}
-                     onChange={(e) => f.onChange(e.target.value)}
-                     className="bg-transparent text-sm font-semibold text-[hsl(var(--bd-text))] outline-none focus:ring-0 cursor-pointer"
-                   >
-                     {f.options.map(opt => (
-                       <option key={opt} value={opt}>{opt}</option>
-                     ))}
-                   </select>
+                    <Select value={f.value} onValueChange={f.onChange}>
+                      <SelectTrigger className="h-auto border-0 bg-transparent p-0 text-sm font-semibold text-[hsl(var(--bd-text))] shadow-none ring-0 focus:ring-0">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {f.options.map(opt => (
+                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                 </div>
               ))}
            </div>

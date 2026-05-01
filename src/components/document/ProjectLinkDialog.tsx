@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Combobox } from '@/components/ui/combobox'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { cn } from '@/lib/utils'
 import { getClientMismatchMessage, isClientMismatch } from '@/domain/projects'
@@ -235,72 +236,49 @@ export default function ProjectLinkDialog({
         </DialogHeader>
 
         <div className="space-y-3">
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value)
+          <div className="space-y-4">
+            <Combobox
+              options={projects.map((project) => ({
+                value: project.id,
+                label: project.project_code || project.name,
+                description: `${project.name}${project.client_name ? ` • ${project.client_name}` : ''}`,
+              }))}
+              value={selectedProjectId}
+              onChange={(id) => {
+                setSelectedProjectId(id)
                 setError('')
               }}
-              placeholder="Search PRJ code, project name, or client"
-              className="h-11 border-0 px-0 shadow-none focus-visible:ring-0"
-              autoFocus
+              placeholder="Search projects..."
+              searchPlaceholder="PRJ code, name, or client..."
             />
-          </div>
-
-          {documentRecord?.client_name ? (
-            <div className="text-xs text-muted-foreground">
-              Document client: <span className="font-medium text-foreground">{documentRecord.client_name}</span>
-            </div>
-          ) : null}
-
-          <div className="max-h-72 space-y-2 overflow-y-auto">
-            {projects.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
-                {loading ? 'Loading projects...' : 'No matching projects found.'}
-              </div>
-            ) : (
-              projects.map((project) => {
-                const selected = String(project.id) === String(selectedProjectId)
-                const hasMismatch = isClientMismatch({
+            
+            {selectedProjectId && projects.find(p => p.id === selectedProjectId) && (
+              <div className={cn(
+                "rounded-xl border p-3",
+                isClientMismatch({
                   documentClientId: documentRecord?.client_id,
                   documentClientName: documentRecord?.client_name,
-                  projectClientId: project.client_id,
-                  projectClientName: project.client_name,
-                })
-
-                return (
-                  <button
-                    key={project.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedProjectId(project.id)
-                      setError('')
-                    }}
-                    className={cn(
-                      'w-full rounded-2xl border px-4 py-3 text-left transition',
-                      selected
-                        ? 'border-emerald-300 bg-emerald-50'
-                        : 'border-border bg-background hover:bg-muted/30',
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                          {project.project_code || 'Project'}
-                        </div>
-                        <div className="mt-1 truncate text-sm font-semibold text-foreground">{project.name}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">{project.client_name || 'No client'}</div>
-                        {hasMismatch ? (
-                          <div className="mt-2 text-xs font-medium text-red-600">Client does not match this document</div>
-                        ) : null}
-                      </div>
-                      {selected ? <Check className="mt-1 h-4 w-4 text-emerald-600" /> : null}
-                    </div>
-                  </button>
-                )
-              })
+                  projectClientId: projects.find(p => p.id === selectedProjectId)?.client_id,
+                  projectClientName: projects.find(p => p.id === selectedProjectId)?.client_name,
+                }) ? "border-red-200 bg-red-50" : "border-emerald-200 bg-emerald-50"
+              )}>
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Selected Project
+                </div>
+                <div className="text-sm font-bold mt-1">
+                  {projects.find(p => p.id === selectedProjectId)?.name}
+                </div>
+                {isClientMismatch({
+                  documentClientId: documentRecord?.client_id,
+                  documentClientName: documentRecord?.client_name,
+                  projectClientId: projects.find(p => p.id === selectedProjectId)?.client_id,
+                  projectClientName: projects.find(p => p.id === selectedProjectId)?.client_name,
+                }) && (
+                  <div className="mt-2 text-xs font-medium text-red-600">
+                    Client does not match this document
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

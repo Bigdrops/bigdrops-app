@@ -12,12 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Bell, PlusCircle, Edit, Trash2, Loader2, CheckCircle2, Calendar, Link as LinkIcon } from 'lucide-react'
+import { Combobox } from '@/components/ui/combobox'
+import { Bell, PlusCircle, Edit, Trash2, Loader2, CheckCircle2, Calendar, Link as LinkIcon, AlertCircle } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { toast } from 'sonner'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { TaxReminder, TaxReminderStatus, TaxFilingTaxType, TaxFiling } from '@/domain/compliance/types'
 import { formatDisplayDate } from '@/lib/formatters/date'
+import { formatNaira } from '@/lib/formatters/money'
 
 interface TaxRemindersPanelProps {
   reminders: TaxReminder[]
@@ -303,22 +305,19 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
 
             <div className="space-y-2.5">
               <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Link to Filing Record</Label>
-              <Select
+              <Combobox
+                options={[
+                  { value: 'none', label: 'No linked filing' },
+                  ...filings.map(f => ({
+                    value: f.id,
+                    label: `${TAX_TYPE_LABELS[f.tax_type]} (${formatDisplayDate(f.period_start)})`,
+                    description: `Due: ${formatNaira(f.amount_due)}`
+                  }))
+                ]}
                 value={editingReminder?.linked_filing_id || 'none'}
-                onValueChange={v => setEditingReminder({ ...editingReminder, linked_filing_id: v === 'none' ? null : v })}
-              >
-                <SelectTrigger className="rounded-xl border-slate-200">
-                  <SelectValue placeholder="No linked filing" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {filings.map(f => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {TAX_TYPE_LABELS[f.tax_type]} ({formatDisplayDate(f.period_start)})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={v => setEditingReminder({ ...editingReminder, linked_filing_id: v === 'none' ? null : v })}
+                placeholder="Search filings..."
+              />
             </div>
 
             <div className="space-y-2.5">
