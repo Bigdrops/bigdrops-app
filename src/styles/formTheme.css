@@ -98,6 +98,22 @@
   --bd-font-body-size: 0.875rem;
   --bd-label-letter-spacing: 0.05em;
 
+  /* Spacing Tokens */
+  --bd-space-xs: 4px;
+  --bd-space-sm: 8px;
+  --bd-space-md: 16px;
+  --bd-space-lg: 32px;
+  --bd-space-xl: 48px;
+
+  --bd-card-padding: var(--bd-space-md);
+  --bd-section-gap: var(--bd-space-lg);
+  --bd-row-gap: var(--bd-space-md);
+  --bd-field-gap: var(--bd-space-sm);
+  --bd-sheet-padding: var(--bd-space-md);
+
+  --bd-button-padding-x: var(--bd-space-md);
+  --bd-button-padding-y: var(--bd-space-sm);
+
   /* Backward Compatibility Mappings (Final Colors) */
   --bd-bg: hsl(var(--bd-app-bg));
   --bd-bg2: hsl(var(--muted));

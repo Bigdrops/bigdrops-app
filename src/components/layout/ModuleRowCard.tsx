@@ -40,7 +40,7 @@ export default function ModuleRowCard({
       role="button"
       tabIndex={0}
       className={cn(
-        "group relative flex w-full cursor-pointer items-center gap-4 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.99] shadow-sm",
+        "group relative flex w-full cursor-pointer items-center gap-[var(--bd-row-gap)] rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-[var(--bd-card-padding)] text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.99] shadow-sm",
         className
       )}
     >
@@ -49,12 +49,12 @@ export default function ModuleRowCard({
           {title}
         </div>
         {subtitle && (
-          <div className="mt-1 truncate text-[13px] font-medium leading-relaxed text-[hsl(var(--bd-text-muted))]">
+          <div className="mt-[var(--bd-space-xs)] truncate text-[13px] font-medium leading-relaxed text-[hsl(var(--bd-text-muted))]">
             {subtitle}
           </div>
         )}
         {tertiary && (
-          <div className="mt-0.5 truncate text-[12px] font-medium leading-relaxed text-[hsl(var(--bd-text-muted))] opacity-70">
+          <div className="mt-[var(--bd-space-xs)] truncate text-[12px] font-medium leading-relaxed text-[hsl(var(--bd-text-muted))] opacity-70">
             {tertiary}
           </div>
         )}
@@ -67,10 +67,10 @@ export default function ModuleRowCard({
           </div>
         )}
         {statusLabel && (
-          <div className="mt-1.5">
+          <div className="mt-[var(--bd-space-xs)]">
             <span
               className={cn(
-                "inline-flex h-6 items-center rounded-full px-2.5 text-[10px] font-black uppercase tracking-[0.08em] shadow-sm ring-1 ring-black/5",
+                "inline-flex h-6 items-center rounded-full px-[var(--bd-space-sm)] text-[10px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] shadow-sm ring-1 ring-black/5",
                 statusClassName
               )}
             >

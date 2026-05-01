@@ -159,7 +159,7 @@ export default function ModuleShell<T>({
           onMenuClick={mobileChrome.openSidebar}
           hideGlobalSearch
           actions={
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-[var(--bd-space-xs)]">
               <Button
                 type="button"
                 variant={searchOpen || searchValue ? 'outline' : 'ghost'}
@@ -191,14 +191,14 @@ export default function ModuleShell<T>({
 
         {/* Mobile Search Input */}
         {searchOpen && (
-          <div className="mt-3 px-4">
-            <div className="relative flex items-center rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))]/80 bg-[hsl(var(--bd-surface))]/95 p-1.5 shadow-sm">
-              <Search className="ml-2.5 h-4 w-4 text-[hsl(var(--bd-text-muted))]" />
+          <div className="mt-[var(--bd-space-sm)] px-[var(--bd-space-md)]">
+            <div className="relative flex items-center rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))]/80 bg-[hsl(var(--bd-surface))]/95 p-[var(--bd-space-xs)] shadow-sm">
+              <Search className="ml-[var(--bd-space-sm)] h-4 w-4 text-[hsl(var(--bd-text-muted))]" />
               <Input
                 value={searchValue}
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="h-9 border-0 bg-transparent px-2 text-sm shadow-none focus-visible:ring-0"
+                className="h-9 border-0 bg-transparent px-[var(--bd-space-sm)] text-sm shadow-none focus-visible:ring-0"
               />
               {searchValue && (
                  <button 
@@ -214,8 +214,8 @@ export default function ModuleShell<T>({
       </div>
 
       {/* Desktop Toolbar (Hidden on mobile) */}
-      <div className="hidden md:flex flex-col gap-5 mb-6">
-        <div className="flex items-center justify-between gap-4">
+      <div className="hidden md:flex flex-col gap-[var(--bd-space-md)] mb-[var(--bd-space-md)]">
+        <div className="flex items-center justify-between gap-[var(--bd-row-gap)]">
           <div className="flex-1 max-w-md relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-[hsl(var(--bd-text-muted))]" />
             <Input
@@ -225,7 +225,7 @@ export default function ModuleShell<T>({
               className="h-11 pl-11 pr-4 rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] shadow-sm focus:ring-2 focus:ring-primary/20"
             />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-[var(--bd-space-sm)]">
              {hasActiveFilters && (
                 <Button 
                   variant="ghost" 
@@ -246,10 +246,10 @@ export default function ModuleShell<T>({
 
         {/* Desktop Filters */}
         {filters && filters.length > 0 && (
-           <div className="flex flex-wrap items-center gap-2.5">
+           <div className="flex flex-wrap items-center gap-[var(--bd-space-sm)]">
               {filters.map((f) => (
-                <div key={f.label} className="flex items-center gap-2 rounded-[var(--bd-radius-md)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 py-1.5 shadow-sm">
-                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-[hsl(var(--bd-text-muted))]">{f.label}</span>
+                <div key={f.label} className="flex items-center gap-2 rounded-[var(--bd-radius-md)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-[var(--bd-space-sm)] py-[var(--bd-space-xs)] shadow-sm">
+                   <span className="text-[11px] font-extrabold uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-text-muted))]">{f.label}</span>
                    <select
                      value={f.value}
                      onChange={(e) => f.onChange(e.target.value)}
@@ -267,30 +267,30 @@ export default function ModuleShell<T>({
 
       {/* Segmented Control / Tabs */}
       {segmentedControl && (
-        <div className="mt-2.5 md:mt-0 mb-4 px-4 md:px-0">
+        <div className="mt-[var(--bd-space-sm)] md:mt-0 mb-[var(--bd-space-md)] px-[var(--bd-space-md)] md:px-0">
           {segmentedControl}
         </div>
       )}
 
       {/* Mobile Custom Filters Panel */}
       {filtersOpen && (
-         <div className="md:hidden mt-2.5 px-4">
+         <div className="md:hidden mt-[var(--bd-space-sm)] px-[var(--bd-space-md)]">
             {filterPanel ? (
-               <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))]/80 bg-[hsl(var(--bd-surface))]/95 p-4 shadow-sm">
+               <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))]/80 bg-[hsl(var(--bd-surface))]/95 p-[var(--bd-card-padding)] shadow-sm">
                   {filterPanel}
                </div>
             ) : filters ? (
-               <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))]/80 bg-[hsl(var(--bd-surface))]/95 p-4 shadow-sm space-y-4">
+               <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))]/80 bg-[hsl(var(--bd-surface))]/95 p-[var(--bd-card-padding)] shadow-sm space-y-[var(--bd-space-md)]">
                   {filters.map(f => (
                     <div key={f.label}>
-                       <div className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">{f.label}</div>
-                       <div className="flex flex-wrap gap-2">
+                       <div className="mb-[var(--bd-space-xs)] text-[10px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-text-muted))]">{f.label}</div>
+                       <div className="flex flex-wrap gap-[var(--bd-space-sm)]">
                           {f.options.map(opt => (
                             <button
                               key={opt}
                               onClick={() => f.onChange(opt)}
                               className={cn(
-                                "rounded-xl border px-3 py-2 text-xs font-bold transition-all",
+                                "rounded-xl border px-[var(--bd-space-sm)] py-[var(--bd-space-sm)] text-xs font-bold transition-all",
                                 f.value === opt 
                                   ? "border-primary bg-primary/10 text-primary" 
                                   : "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text-muted))]"
@@ -313,21 +313,21 @@ export default function ModuleShell<T>({
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 mt-2.5 px-4 md:px-0">
+      <div className="flex-1 mt-[var(--bd-space-sm)] px-[var(--bd-space-md)] md:px-0">
         {beforeListContent}
         
-        <div className="space-y-3">
+        <div className="space-y-[var(--bd-row-gap)]">
           {records && renderRow ? (
             records.length > 0 ? (
               records.map(renderRow)
             ) : (
               emptyState || (
-                <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-20 text-center shadow-inner">
+                <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-[var(--bd-space-xl)] text-center shadow-inner">
                   <div className="mx-auto grid h-14 w-14 place-items-center rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
                     <Search className="h-6 w-6" />
                   </div>
-                  <div className="mt-4 text-sm font-bold text-[hsl(var(--bd-text))]">No records found</div>
-                  <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">Try adjusting your search or filters</div>
+                  <div className="mt-[var(--bd-space-md)] text-sm font-bold text-[hsl(var(--bd-text))]">No records found</div>
+                  <div className="mt-[var(--bd-space-xs)] text-xs text-[hsl(var(--bd-text-muted))]">Try adjusting your search or filters</div>
                 </div>
               )
             )
@@ -335,7 +335,7 @@ export default function ModuleShell<T>({
         </div>
 
         {hasMore && (
-           <div className="mt-8 flex justify-center pb-12">
+           <div className="mt-[var(--bd-space-lg)] flex justify-center pb-[var(--bd-space-xl)]">
               <Button
                 variant="outline"
                 disabled={loadingMore}

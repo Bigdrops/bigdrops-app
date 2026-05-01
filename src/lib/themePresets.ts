@@ -403,6 +403,16 @@ const PRESET_SOURCE: Record<FixedThemePresetId, Omit<ThemePresetDefinition, "id"
       "bd-font-family": "'Manrope', 'Inter', ui-sans-serif, system-ui, sans-serif",
       "bd-font-body-size": "0.98rem",
       "bd-label-letter-spacing": "0.2em",
+
+      // Spacing (Scandi Pine specific)
+      "bd-space-sm": "10px",
+      "bd-space-md": "20px",
+      "bd-space-lg": "40px",
+      "bd-card-padding": "20px",
+      "bd-section-gap": "40px",
+      "bd-row-gap": "16px",
+      "bd-field-gap": "10px",
+      "bd-sheet-padding": "20px",
     },
   },
 }

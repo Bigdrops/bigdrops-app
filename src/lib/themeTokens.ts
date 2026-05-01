@@ -119,6 +119,18 @@ export const THEME_NON_COLOR_TOKENS = [
   "bd-font-body-size",
   "bd-label-letter-spacing",
   "bd-overlay-radius",
+  "bd-space-xs",
+  "bd-space-sm",
+  "bd-space-md",
+  "bd-space-lg",
+  "bd-space-xl",
+  "bd-card-padding",
+  "bd-section-gap",
+  "bd-row-gap",
+  "bd-field-gap",
+  "bd-sheet-padding",
+  "bd-button-padding-x",
+  "bd-button-padding-y",
 ] as const
 
 export const THEME_TOKENS = [...THEME_COLOR_TOKENS, ...THEME_NON_COLOR_TOKENS] as const
@@ -146,7 +158,19 @@ export function normalizeThemeTokenValue(
   const raw = value.trim()
   if (!raw) return null
 
-  if (token === "radius" || token === "bd-radius-sm" || token === "bd-radius-md" || token === "bd-radius-lg" || token === "bd-layout-padding" || token === "bd-layout-content-max" || token === "bd-font-body-size" || token === "bd-overlay-radius") {
+  if (
+    token === "radius" || 
+    token === "bd-radius-sm" || 
+    token === "bd-radius-md" || 
+    token === "bd-radius-lg" || 
+    token === "bd-layout-padding" || 
+    token === "bd-layout-content-max" || 
+    token === "bd-font-body-size" || 
+    token === "bd-overlay-radius" ||
+    token.startsWith("bd-space-") ||
+    token.includes("-padding") ||
+    token.includes("-gap")
+  ) {
     if (options.allowRadius === false && token.includes("radius")) return null
     return CSS_LENGTH_RE.test(raw) ? raw : null
   }

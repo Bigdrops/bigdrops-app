@@ -514,26 +514,6 @@ export default function Invoices() {
     )
   }
 
-  const formatInvoiceStatusLabel = (status: string | null | undefined) => formatStatusLabel(status, { fallback: "unpaid", lowercase: true })
-
-  const renderInvoiceRow = (invoice: InvoiceRow) => {
-    const tone = getStatusTone(invoice.status || 'unpaid')
-    const statusClasses = getStatusClasses(tone)
-    
-    return (
-      <ModuleRowCard
-        key={invoice.id}
-        title={invoice.client_name || "No client"}
-        subtitle={invoice.invoice_number || "Invoice"}
-        tertiary={formatInvoiceDate(invoice.issue_date) || "No date"}
-        amount={formatNaira(invoice.total)}
-        statusLabel={formatInvoiceStatusLabel(invoice.status)}
-        statusClassName={statusClasses}
-        onClick={() => navigate(`/invoices/${invoice.id}`)}
-        onActionClick={() => setActiveInvoice(invoice)}
-      />
-    )
-  }
 
   const resetFilters = () => {
     setSearch("")

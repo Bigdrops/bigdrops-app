@@ -32,17 +32,17 @@ export default function MobilePageHeader({
   return (
     <div
       className={cn(
-        'rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))/0.8] bg-[hsl(var(--bd-surface)/0.95)] px-3.5 py-2.5 shadow-sm',
+        'rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))/0.8] bg-[hsl(var(--bd-surface)/0.95)] px-[var(--bd-space-md)] py-[var(--bd-space-sm)] shadow-sm',
         className,
       )}
     >
-      <div className="flex items-start gap-2.5">
+      <div className="flex items-start gap-[var(--bd-space-sm)]">
         <Button
           type="button"
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
-          className="mt-0.5 h-9 w-9 shrink-0 rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))/0.45] text-[hsl(var(--bd-text))/0.8] hover:bg-[hsl(var(--bd-surface-muted))] active:scale-95 focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-focus-ring))]"
+          className="mt-[var(--bd-space-xs)] h-9 w-9 shrink-0 rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))/0.45] text-[hsl(var(--bd-text))/0.8] hover:bg-[hsl(var(--bd-surface-muted))] active:scale-95 focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-focus-ring))]"
           aria-label="Open navigation menu"
         >
           <Menu className="h-4.5 w-4.5" />
@@ -51,7 +51,7 @@ export default function MobilePageHeader({
         <div className="min-w-0 flex-1">
           {eyebrow ? (
             <div className={cn(
-              "mb-0.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]",
+              "mb-[var(--bd-space-xs)] flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[var(--bd-label-letter-spacing)]",
               eyebrowClassName || "text-[hsl(var(--bd-text-muted))]"
             )}>
               <span className={cn('h-1.5 w-1.5 rounded-full', accentClassName)} aria-hidden="true" />
@@ -59,7 +59,7 @@ export default function MobilePageHeader({
             </div>
           ) : null}
 
-          <div className="flex items-start justify-between gap-2.5">
+          <div className="flex items-start justify-between gap-[var(--bd-space-sm)]">
             <div className="min-w-0">
               <div className="truncate text-[16px] font-semibold leading-tight text-[hsl(var(--bd-text))]">
                 {title}

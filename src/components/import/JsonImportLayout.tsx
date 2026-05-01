@@ -93,7 +93,7 @@ export function JsonImportUI({
   return (
     <div className="flex flex-col h-full bg-[hsl(var(--bd-overlay-bg))] select-none">
       <div className="sticky top-0 z-30 border-b border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-section-bg))] shadow-sm shrink-0">
-        <div className="flex flex-row items-center justify-between p-4 text-left">
+        <div className="flex flex-row items-center justify-between p-[var(--bd-sheet-padding)] text-left">
           <div className="space-y-0.5">
             <h3 className="text-base font-black text-[hsl(var(--bd-overlay-text))] flex items-center gap-1.5 leading-tight">
               <Wand2 className="h-4 w-4 text-[hsl(var(--bd-feedback-success))]" />
@@ -108,7 +108,7 @@ export function JsonImportUI({
               variant="ghost"
               size="sm"
               onClick={handleCopyPrompt}
-              className="h-8 rounded-lg text-[9px] font-black uppercase tracking-widest text-[hsl(var(--bd-feedback-success))] bg-[hsl(var(--bd-status-success-bg))] hover:brightness-95 px-2.5 transition-colors"
+              className="h-8 rounded-lg text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-feedback-success))] bg-[hsl(var(--bd-status-success-bg))] hover:brightness-95 px-[var(--bd-space-md)] transition-colors"
             >
               {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
               {copied ? 'Copied' : 'AI Prompt'}
@@ -118,7 +118,7 @@ export function JsonImportUI({
                 onClick={onSave}
                 disabled={isSaving}
                 size="sm"
-                className="h-10 bg-[hsl(var(--bd-button-primary-bg))] hover:brightness-95 text-[hsl(var(--bd-button-primary-text))] font-black text-xs uppercase tracking-widest rounded-xl shadow-lg transition-all active:scale-[0.98] px-5"
+                className="h-10 bg-[hsl(var(--bd-button-primary-bg))] hover:brightness-95 text-[hsl(var(--bd-button-primary-text))] font-black text-xs uppercase tracking-[var(--bd-label-letter-spacing)] rounded-xl shadow-lg transition-all active:scale-[0.98] px-[var(--bd-space-lg)]"
               >
                 {isSaving ? 'Saving...' : saveLabel}
               </Button>
@@ -126,10 +126,10 @@ export function JsonImportUI({
           </div>
         </div>
         {isParsed ? (
-          <div className="border-t border-[hsl(var(--bd-overlay-border))] px-4 py-3">
+          <div className="border-t border-[hsl(var(--bd-overlay-border))] px-[var(--bd-sheet-padding)] py-[var(--bd-space-sm)]">
             <div className="flex items-center justify-between gap-3">
               <div className="flex flex-col">
-                <span className="text-[9px] font-black uppercase tracking-widest text-[hsl(var(--bd-overlay-muted))]">Review Extraction</span>
+                <span className="text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-overlay-muted))]">Review Extraction</span>
                 <div className="mt-0.5 flex items-center gap-1.5">
                   <div className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--bd-feedback-success))] animate-pulse" />
                   <span className="text-[10px] font-bold text-[hsl(var(--bd-feedback-success))]">Validated JSON</span>
@@ -139,7 +139,7 @@ export function JsonImportUI({
                 variant="ghost"
                 size="sm"
                 onClick={onEditJson || onPreview}
-                className="h-8 rounded-lg px-0 text-[9px] font-black uppercase tracking-widest text-[hsl(var(--bd-overlay-muted))] hover:bg-transparent hover:text-[hsl(var(--bd-overlay-text))]"
+                className="h-8 rounded-lg px-0 text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-overlay-muted))] hover:bg-transparent hover:text-[hsl(var(--bd-overlay-text))]"
               >
                 Edit JSON
               </Button>
@@ -148,26 +148,26 @@ export function JsonImportUI({
         ) : null}
       </div>
 
-      <div className="p-4 space-y-4 overflow-y-auto">
+      <div className="p-[var(--bd-sheet-padding)] space-y-[var(--bd-space-md)] overflow-y-auto">
         {/* Tutorial / Help Section */}
-        <div className="space-y-3">
+        <div className="space-y-[var(--bd-space-sm)]">
           <button
             onClick={() => setShowTutorial(!showTutorial)}
-            className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] p-3 text-left transition-colors hover:brightness-95"
+            className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] p-[var(--bd-space-sm)] text-left transition-colors hover:brightness-95"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-[var(--bd-space-sm)]">
               <Info className="h-4 w-4 text-[hsl(var(--bd-status-info-text))]" />
               <span className="text-xs font-bold text-[hsl(var(--bd-status-info-text))]">
                 {activeTutorial.title}
               </span>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--bd-status-info-text))] opacity-60">
+            <span className="text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-status-info-text))] opacity-60">
               {showTutorial ? 'Hide Guide' : 'How it works'}
             </span>
           </button>
 
           {showTutorial && (
-            <div className="space-y-4 rounded-2xl border border-[hsl(var(--bd-overlay-section-border))] bg-[hsl(var(--bd-overlay-section-bg))] p-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="space-y-[var(--bd-space-md)] rounded-2xl border border-[hsl(var(--bd-overlay-section-border))] bg-[hsl(var(--bd-overlay-section-bg))] p-[var(--bd-space-md)] shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="space-y-1">
                 <p className="text-xs font-medium text-[hsl(var(--bd-overlay-text))] leading-relaxed">
                   {activeTutorial.description}
@@ -175,7 +175,7 @@ export function JsonImportUI({
               </div>
 
               {activeTutorial.steps && activeTutorial.steps.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-[var(--bd-space-sm)]">
                   {activeTutorial.steps.map((step, idx) => (
                     <div key={idx} className="flex gap-3">
                       <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-action-icon-bg))] text-[9px] font-black text-[hsl(var(--bd-action-icon-text))]">
@@ -204,16 +204,16 @@ export function JsonImportUI({
         </div>
 
         {!isParsed ? (
-          <div className="space-y-3">
+          <div className="space-y-[var(--bd-space-sm)]">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-black uppercase tracking-widest text-[hsl(var(--bd-overlay-muted))]">Step 1: Paste JSON</span>
+              <span className="text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-overlay-muted))]">Step 1: Paste JSON</span>
               <span className="text-[9px] text-[hsl(var(--bd-overlay-muted))] italic">one object only</span>
             </div>
             <Textarea
               value={rawInput}
               onChange={(e) => onRawInputChange(e.target.value)}
               placeholder='{ "key": "value" }'
-              className="min-h-[160px] rounded-xl border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-input-bg))] font-mono text-[hsl(var(--bd-overlay-text))] text-xs p-3 focus-visible:ring-[hsl(var(--bd-focus-ring))] shadow-inner"
+              className="min-h-[160px] rounded-xl border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-input-bg))] font-mono text-[hsl(var(--bd-overlay-text))] text-xs p-[var(--bd-space-sm)] focus-visible:ring-[hsl(var(--bd-focus-ring))] shadow-inner"
             />
             {error && (
               <div className="p-2.5 rounded-lg bg-[hsl(var(--bd-status-danger-bg))] border border-[hsl(var(--bd-status-danger-border))] text-[11px] text-[hsl(var(--bd-status-danger-text))] font-bold">
@@ -229,9 +229,9 @@ export function JsonImportUI({
             </Button>
           </div>
         ) : (
-          <div className="space-y-4 pb-6">
+          <div className="space-y-[var(--bd-space-md)] pb-[var(--bd-space-lg)]">
             <div className="flex items-center justify-between px-1">
-              <span className="text-[9px] font-black uppercase tracking-widest text-[hsl(var(--bd-overlay-muted))]">Step 2: Verify Data</span>
+              <span className="text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-overlay-muted))]">Step 2: Verify Data</span>
             </div>
 
             {whtNotice && (
@@ -249,7 +249,7 @@ export function JsonImportUI({
             {previewContent}
 
             {additionalActions && (
-              <div className="pt-2 space-y-2">
+              <div className="pt-[var(--bd-space-sm)] space-y-[var(--bd-space-sm)]">
                 {additionalActions}
               </div>
             )}

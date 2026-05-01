@@ -91,7 +91,7 @@ export function UnifiedActionSheet({
           key={action.key || idx}
           type="button"
           onClick={() => handleActionClick(action)}
-          className="flex min-h-[92px] flex-col items-center justify-center gap-2 rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] px-2 py-3 text-center transition hover:bg-[hsl(var(--bd-surface-action-hover))] active:scale-[0.98]"
+          className="flex min-h-[92px] flex-col items-center justify-center gap-[var(--bd-space-sm)] rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] px-[var(--bd-space-xs)] py-[var(--bd-space-sm)] text-center transition hover:bg-[hsl(var(--bd-surface-action-hover))] active:scale-[0.98]"
         >
           <div
             className={cn(
@@ -115,7 +115,7 @@ export function UnifiedActionSheet({
         type="button"
         onClick={() => handleActionClick(action)}
         className={cn(
-          "grid w-full grid-cols-[44px,minmax(0,1fr),auto] items-center gap-3.5 rounded-[var(--bd-overlay-radius)] border px-4 py-4 text-left transition-all active:scale-[0.99]",
+          "grid w-full grid-cols-[44px,minmax(0,1fr),auto] items-center gap-[var(--bd-space-md)] rounded-[var(--bd-overlay-radius)] border px-[var(--bd-space-md)] py-[var(--bd-space-md)] text-left transition-all active:scale-[0.99]",
           tone.row
         )}
       >
@@ -127,7 +127,7 @@ export function UnifiedActionSheet({
             {action.label}
           </div>
           {action.description && (
-            <div className="truncate text-[12px] text-[hsl(var(--bd-overlay-muted))] font-medium mt-0.5">
+            <div className="truncate text-[12px] text-[hsl(var(--bd-overlay-muted))] font-medium mt-[var(--bd-space-xs)]">
               {action.description}
             </div>
           )}
@@ -151,17 +151,17 @@ export function UnifiedActionSheet({
         <div className="flex h-full flex-col">
           {/* Header */}
           {(showHandle || title || eyebrow || description) && (
-            <div className="shrink-0 border-b border-[hsl(var(--bd-overlay-border))] px-6 pb-5 pt-4">
+            <div className="shrink-0 border-b border-[hsl(var(--bd-overlay-border))] px-[var(--bd-sheet-padding)] pb-[var(--bd-space-md)] pt-[var(--bd-space-md)]">
               {showHandle && (
-                <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-[hsl(var(--bd-overlay-handle-bg))]" />
+                <div className="mx-auto mb-[var(--bd-space-md)] h-1.5 w-12 rounded-full bg-[hsl(var(--bd-overlay-handle-bg))]" />
               )}
               {eyebrow && (
-                <div className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[hsl(var(--bd-overlay-muted))]">
+                <div className="text-[10px] font-extrabold uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-overlay-muted))]">
                   {eyebrow}
                 </div>
               )}
               {(title || description) && (
-                <SheetHeader className="mt-1 space-y-1 p-0 text-left">
+                <SheetHeader className="mt-[var(--bd-space-xs)] space-y-[var(--bd-space-xs)] p-0 text-left">
                   {title && (
                     <SheetTitle className="text-[22px] font-black tracking-[-0.04em] text-[hsl(var(--bd-overlay-text))]">
                       {title}
@@ -178,24 +178,24 @@ export function UnifiedActionSheet({
           )}
 
           {/* Content */}
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4 bd-custom-scrollbar">
+          <div className="min-h-0 flex-1 overflow-y-auto px-[var(--bd-sheet-padding)] pb-[calc(var(--bd-space-lg)+env(safe-area-inset-bottom))] pt-[var(--bd-space-md)] bd-custom-scrollbar">
             {groups ? (
               <div className="space-y-6">
                 {groups.map((group, gIdx) => (
                   <div key={group.label || gIdx}>
                     {group.label && (
-                      <div className="mb-3 px-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[hsl(var(--bd-overlay-muted))]">
+                      <div className="mb-[var(--bd-space-sm)] px-[var(--bd-space-xs)] text-[10px] font-extrabold uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-overlay-muted))]">
                         {group.label}
                       </div>
                     )}
-                    <div className="space-y-2.5">
+                    <div className="space-y-[var(--bd-row-gap)]">
                       {group.actions.map((action, aIdx) => renderAction(action, `${gIdx}-${aIdx}`, layout === "grid"))}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className={cn(layout === "grid" ? "grid grid-cols-3 gap-2.5" : "space-y-2.5")}>
+              <div className={cn(layout === "grid" ? "grid grid-cols-3 gap-[var(--bd-space-sm)]" : "space-y-[var(--bd-row-gap)]")}>
                 {actions?.map((action, idx) => renderAction(action, idx, layout === "grid"))}
               </div>
             )}
@@ -204,7 +204,7 @@ export function UnifiedActionSheet({
               <button
                 type="button"
                 onClick={() => handleActionClick(deleteAction)}
-                className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-4 text-[15px] font-black text-[hsl(var(--bd-status-danger-text))] transition hover:brightness-95 active:scale-[0.99]"
+                className="mt-[var(--bd-space-md)] flex h-14 w-full items-center justify-center gap-[var(--bd-space-sm)] rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-[var(--bd-space-md)] text-[15px] font-black text-[hsl(var(--bd-status-danger-text))] transition hover:brightness-95 active:scale-[0.99]"
               >
                 <div className="shrink-0 [&_svg]:h-[18px] [&_svg]:w-[18px]">
                   {deleteAction.icon}

@@ -172,7 +172,7 @@ function RecentActivitySkeleton() {
       {Array.from({ length: 3 }).map((_, index) => (
         <div
           key={index}
-          className="flex items-center gap-[10px] border-t border-border px-[14px] py-[11px] first:border-t-0"
+          className="flex items-center gap-[var(--bd-space-sm)] border-t border-border px-[var(--bd-space-md)] py-[var(--bd-space-sm)] first:border-t-0"
         >
           <div className="grid h-[38px] w-[38px] place-items-center rounded-[var(--bd-radius-lg)] bg-muted/80" />
           <div className="min-w-0 flex-1">
@@ -204,9 +204,9 @@ export function DashboardOverview({
 
   return (
     <div className="mx-auto flex w-full max-w-[760px] flex-col pb-32 pt-[34px] md:pb-16">
-      <section className="sticky top-0 z-30 border-b border-border bg-background/95 px-[14px] pb-2.5 pt-[10px] backdrop-blur-[18px] md:px-6">
-        <div className="flex items-center justify-between gap-[10px]">
-          <div className="flex min-w-0 items-center gap-[10px]">
+      <section className="sticky top-0 z-30 border-b border-border bg-background/95 px-[var(--bd-space-md)] pb-[var(--bd-space-sm)] pt-[var(--bd-space-sm)] backdrop-blur-[18px] md:px-[var(--bd-space-lg)]">
+        <div className="flex items-center justify-between gap-[var(--bd-space-sm)]">
+          <div className="flex min-w-0 items-center gap-[var(--bd-space-sm)]">
             <button
               type="button"
               onClick={mobileChrome.openSidebar}
@@ -233,16 +233,16 @@ export function DashboardOverview({
         </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-[9px] px-[14px] pt-[10px] md:px-6">
+      <section className="grid grid-cols-2 gap-[var(--bd-space-sm)] px-[var(--bd-space-md)] pt-[var(--bd-space-sm)] md:px-[var(--bd-space-lg)]">
         {dashboardMetricCards.map((metric) => {
           const Icon = metric.Icon
 
           return (
             <article
               key={metric.key}
-              className="rounded-[var(--bd-radius-xl)] border border-border bg-card p-[14px] shadow-sm"
+              className="rounded-[var(--bd-radius-xl)] border border-border bg-card p-[var(--bd-card-padding)] shadow-sm"
             >
-              <div className="flex items-center gap-[8px]">
+              <div className="flex items-center gap-[var(--bd-space-sm)]">
                 <div
                   className={cn(
                     'grid h-7 w-7 place-items-center rounded-[var(--bd-radius-sm)]',
@@ -251,12 +251,12 @@ export function DashboardOverview({
                 >
                   <Icon className="h-[13px] w-[13px]" />
                 </div>
-                <div className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                <div className="text-[9px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-muted-foreground">
                   {metric.label}
                 </div>
               </div>
 
-              <div className="mt-[10px] text-[24px] font-extrabold tracking-[-0.05em] text-foreground">
+              <div className="mt-[var(--bd-space-sm)] text-[24px] font-extrabold tracking-[-0.05em] text-foreground">
                 {metric.value(heroStats)}
               </div>
               <div className="mt-[2px] text-[11px] text-muted-foreground">
@@ -267,14 +267,14 @@ export function DashboardOverview({
         })}
       </section>
 
-      <section className="mt-[14px] px-[14px] md:px-6">
-        <div className="mb-[10px] flex items-center justify-between">
-          <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+      <section className="mt-[var(--bd-section-gap)] px-[var(--bd-space-md)] md:px-[var(--bd-space-lg)]">
+        <div className="mb-[var(--bd-space-sm)] flex items-center justify-between">
+          <div className="text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-muted-foreground">
             Quick Actions
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-[9px]">
+        <div className="grid grid-cols-2 gap-[var(--bd-space-sm)]">
           {quickTiles.slice(0, 4).map((tile) => {
             const Icon = tile.icon
 
@@ -283,7 +283,7 @@ export function DashboardOverview({
                 key={tile.id}
                 type="button"
                 onClick={() => onQuickAction(tile.path)}
-                className="rounded-[var(--bd-radius-xl)] border border-border bg-card p-[15px] text-left shadow-sm"
+                className="rounded-[var(--bd-radius-xl)] border border-border bg-card p-[var(--bd-card-padding)] text-left shadow-sm"
               >
                 <div
                   className={cn(
@@ -306,19 +306,19 @@ export function DashboardOverview({
         </div>
       </section>
 
-      <section className="mt-[14px] px-[14px] md:px-6">
-        <div className="mb-[10px] flex items-center justify-between gap-3">
-          <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+      <section className="mt-[var(--bd-section-gap)] px-[var(--bd-space-md)] md:px-[var(--bd-space-lg)]">
+        <div className="mb-[var(--bd-space-sm)] flex items-center justify-between gap-3">
+          <div className="text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-muted-foreground">
             Follow Up Required
           </div>
-          <span className="inline-flex h-5 items-center rounded-full border border-[hsl(var(--destructive)/0.18)] bg-[hsl(var(--destructive)/0.08)] px-[7px] text-[9px] font-bold uppercase tracking-[0.06em] text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive)/0.15)]">
+          <span className="inline-flex h-5 items-center rounded-full border border-[hsl(var(--destructive)/0.18)] bg-[hsl(var(--destructive)/0.08)] px-[var(--bd-space-sm)] text-[9px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive)/0.15)]">
             {priorityItems.length} Tasks
           </span>
         </div>
 
-        <div className="space-y-[9px]">
+        <div className="space-y-[var(--bd-space-sm)]">
           {priorityItems.length === 0 ? (
-            <div className="flex items-center gap-[10px] rounded-[14px] border border-border bg-card px-[14px] py-[12px] shadow-sm">
+            <div className="flex items-center gap-[var(--bd-space-sm)] rounded-[var(--bd-radius-lg)] border border-border bg-card px-[var(--bd-space-md)] py-[var(--bd-space-sm)] shadow-sm">
               <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-muted-foreground/60" />
               <div className="min-w-0 flex-1">
                 <div className="text-[13px] font-bold tracking-[-0.02em] text-foreground">
@@ -335,7 +335,7 @@ export function DashboardOverview({
                 key={item.key}
                 type="button"
                 onClick={() => onPrioritySelect(item)}
-                className="flex w-full items-center gap-[10px] rounded-[14px] border border-border bg-card px-[14px] py-[12px] text-left shadow-sm"
+                className="flex w-full items-center gap-[var(--bd-space-sm)] rounded-[var(--bd-radius-lg)] border border-border bg-card px-[var(--bd-space-md)] py-[var(--bd-space-sm)] text-left shadow-sm"
               >
                 <span
                   className={cn(
@@ -351,7 +351,7 @@ export function DashboardOverview({
                 </div>
                 <span
                   className={cn(
-                    'inline-flex h-[22px] shrink-0 items-center rounded-full border px-[9px] text-[10px] font-bold uppercase tracking-[0.06em]',
+                    'inline-flex h-[22px] shrink-0 items-center rounded-full border px-[var(--bd-space-sm)] text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)]',
                     getFollowUpBadgeClassName(item),
                   )}
                 >
@@ -363,9 +363,9 @@ export function DashboardOverview({
         </div>
       </section>
 
-      <section className="mt-[14px] px-[14px] md:px-6">
-        <div className="mb-[10px] flex items-center justify-between">
-          <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+      <section className="mt-[var(--bd-section-gap)] px-[var(--bd-space-md)] md:px-[var(--bd-space-lg)]">
+        <div className="mb-[var(--bd-space-sm)] flex items-center justify-between">
+          <div className="text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-muted-foreground">
             Recent Records
           </div>
 
@@ -399,7 +399,7 @@ export function DashboardOverview({
                     key={`${doc.type}-${doc.id}`}
                     type="button"
                     onClick={() => onRecentDocSelect(doc)}
-                    className="flex w-full items-center gap-[10px] border-t border-border px-[14px] py-[11px] text-left first:border-t-0"
+                    className="flex w-full items-center gap-[var(--bd-space-sm)] border-t border-border px-[var(--bd-space-md)] py-[var(--bd-space-sm)] text-left first:border-t-0"
                   >
                     <div
                       className={cn(
