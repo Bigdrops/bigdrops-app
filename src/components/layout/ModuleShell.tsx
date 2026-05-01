@@ -215,49 +215,49 @@ export default function ModuleShell<T>({
       </div>
 
       {/* Desktop Header & Toolbar (Hidden on mobile) */}
-      <div className="hidden md:flex flex-col gap-[var(--bd-space-md)] mb-[var(--bd-space-lg)]">
-        <div className="flex items-center justify-between gap-[var(--bd-space-md)]">
+      <div className="hidden md:flex flex-col gap-4 mb-6">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col">
-            <div className={cn("text-[11px] font-extrabold uppercase tracking-[var(--bd-label-letter-spacing)]", toneStyle.foreground)}>
+            <div className={cn("text-[10px] font-black uppercase tracking-wider", toneStyle.foreground)}>
               {eyebrow}
             </div>
-            <h1 className="text-3xl font-black tracking-[-0.04em] text-[hsl(var(--bd-text))] mt-1">
+            <h1 className="text-2xl font-black tracking-tight text-[hsl(var(--bd-text))] mt-0.5">
               {title}
             </h1>
           </div>
-          <div className="flex items-center gap-[var(--bd-space-sm)]">
+          <div className="flex items-center gap-3">
              {onPrimaryAction && (
-                 <Button onClick={onPrimaryAction} className="h-12 px-8 rounded-[var(--bd-radius-lg)] shadow-lg transition-all active:scale-[0.985] text-sm font-bold">
+                 <Button onClick={onPrimaryAction} className="h-10 px-6 rounded-[var(--bd-radius-md)] shadow-sm transition-all active:scale-[0.99] text-xs font-black uppercase tracking-wider">
                    {primaryActionLabel}
                 </Button>
              )}
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-[var(--bd-space-md)] mt-2">
-          <div className="flex-1 max-w-2xl relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-[hsl(var(--bd-text-muted))]" />
+        <div className="flex items-center justify-between gap-4 mt-1">
+          <div className="flex-1 max-w-xl relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[hsl(var(--bd-text-muted))]" />
             <Input
               value={searchValue}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={searchPlaceholder}
-              className="h-11 pl-11 pr-4 rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] shadow-sm focus:ring-2 focus:ring-primary/20 transition-all active:scale-[0.99]"
+              className="h-9 pl-9 pr-3 rounded-[var(--bd-radius-md)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] shadow-none focus:ring-1 focus:ring-primary/20 transition-all active:scale-[0.99] text-sm"
             />
           </div>
-          <div className="flex items-center gap-[var(--bd-space-sm)]">
+          <div className="flex items-center gap-2">
              {hasActiveFilters && (
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={onResetFilters}
-                  className="text-xs font-bold text-[hsl(var(--bd-text-muted))] hover:text-primary"
+                  className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))] hover:text-primary h-8"
                 >
-                  Reset Filters
+                  Reset
                 </Button>
              )}
-             {/* Secondary actions can go here */}
           </div>
         </div>
+      </div>
 
         {/* Desktop Filters */}
         {filters && filters.length > 0 && (
@@ -279,7 +279,6 @@ export default function ModuleShell<T>({
               ))}
            </div>
         )}
-      </div>
 
       {/* Segmented Control / Tabs */}
       {segmentedControl && (
@@ -338,12 +337,12 @@ export default function ModuleShell<T>({
               records.map(renderRow)
             ) : (
               emptyState || (
-                <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-[var(--bd-space-xl)] text-center shadow-inner">
-                  <div className="mx-auto grid h-14 w-14 place-items-center rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
-                    <Search className="h-6 w-6" />
+                <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-10 text-center shadow-inner">
+                  <div className="mx-auto grid h-10 w-10 place-items-center rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+                    <Search className="h-4 w-4" />
                   </div>
-                  <div className="mt-[var(--bd-space-md)] text-sm font-bold text-[hsl(var(--bd-text))]">No records found</div>
-                  <div className="mt-[var(--bd-space-xs)] text-xs text-[hsl(var(--bd-text-muted))]">Try adjusting your search or filters</div>
+                  <div className="mt-3 text-sm font-bold text-[hsl(var(--bd-text))]">No records found</div>
+                  <div className="mt-1 text-[11px] text-[hsl(var(--bd-text-muted))]">Try adjusting your search or filters</div>
                 </div>
               )
             )

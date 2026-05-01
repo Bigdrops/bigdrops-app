@@ -180,29 +180,29 @@ export function DashboardOverview({
 
   return (
     <div className="mx-auto flex w-full max-w-[var(--bd-layout-content-max,1200px)] flex-col pb-32 md:pb-16">
-      <section className="sticky top-0 z-30 border-b border-border bg-background/95 px-[var(--bd-space-md)] pb-[var(--bd-space-sm)] pt-[var(--bd-space-sm)] backdrop-blur-[18px] md:px-[var(--bd-space-lg)]">
-        <div className="flex items-center justify-between gap-[var(--bd-space-sm)]">
-          <div className="flex min-w-0 items-center gap-[var(--bd-space-sm)]">
+      <section className="sticky top-0 z-30 border-b border-border bg-background/95 px-4 pb-2.5 pt-2.5 backdrop-blur-[18px] md:px-6">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               onClick={mobileChrome.openSidebar}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--bd-radius-md)] bg-muted text-foreground"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--bd-radius-md)] bg-muted text-foreground"
               aria-label="Open navigation menu"
             >
-              <Menu className="h-[15px] w-[15px]" />
+              <Menu className="h-3.5 w-3.5" />
             </button>
 
             <div className="min-w-0">
-              <h1 className="truncate text-[16px] font-bold tracking-[-0.03em] text-foreground">
+              <h1 className="truncate text-[15px] font-bold tracking-tight text-foreground">
                 {getIdentityLine(userName, businessName)}
               </h1>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5">
-            <NotificationBell className="h-9 w-9" />
+          <div className="flex shrink-0 items-center gap-1">
+            <NotificationBell className="h-8 w-8" />
             <div className="sr-only">Search</div>
-            <div className="[&>button]:grid [&>button]:h-9 [&>button]:w-9 [&>button]:place-items-center [&>button]:rounded-[var(--notification-radius,var(--radius))] [&>button]:bg-[var(--notification-bg,hsl(var(--muted)))] [&>button]:text-foreground [&_svg]:h-[15px] [&_svg]:w-[15px]">
+            <div className="[&>button]:grid [&>button]:h-8 [&>button]:w-8 [&>button]:place-items-center [&>button]:rounded-[var(--notification-radius,var(--radius))] [&>button]:bg-[var(--notification-bg,hsl(var(--muted)))] [&>button]:text-foreground [&_svg]:h-3.5 [&_svg]:w-3.5">
               <GlobalSearch />
             </div>
           </div>
@@ -210,14 +210,14 @@ export function DashboardOverview({
       </section>
 
 
-      <section className="mt-[var(--bd-space-md)] md:mt-[var(--bd-section-gap)] px-[var(--bd-space-md)] md:px-[var(--bd-space-lg)]">
-        <div className="mb-[var(--bd-space-sm)] flex items-center justify-between">
-          <div className="text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-muted-foreground">
+      <section className="mt-4 md:mt-6 px-4 md:px-6">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">
             Quick Actions
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-[var(--bd-space-sm)]">
+        <div className="grid grid-cols-2 gap-3">
           {quickTiles.slice(0, 4).map((tile) => {
             const Icon = tile.icon
 
@@ -226,22 +226,19 @@ export function DashboardOverview({
                 key={tile.id}
                 type="button"
                 onClick={() => onQuickAction(tile.path)}
-                className="rounded-[var(--bd-radius-xl)] border border-border bg-card p-[var(--bd-card-padding)] text-left shadow-sm"
+                className="rounded-[var(--bd-radius-xl)] border border-border bg-card p-3 text-left shadow-sm active:scale-[0.97] transition-all"
               >
                 <div
                   className={cn(
-                    'grid h-10 w-10 place-items-center rounded-[var(--bd-icon-container-radius)] bg-[var(--bd-icon-container-bg)] text-[var(--bd-icon-container-text)] shadow-sm',
+                    'grid h-8 w-8 place-items-center rounded-[var(--bd-icon-container-radius)] bg-[var(--bd-icon-container-bg)] text-[var(--bd-icon-container-text)] shadow-sm',
                     tile.iconBg,
                   )}
                 >
-                  <Icon size={18} strokeWidth={2} />
+                  <Icon size={16} strokeWidth={2.5} />
                 </div>
 
-                <div className="mt-[11px] text-[13px] font-bold tracking-[-0.02em] text-foreground">
+                <div className="mt-2 text-[12px] font-bold tracking-tight text-foreground">
                   {tile.label}
-                </div>
-                <div className="mt-[2px] text-[11px] leading-[1.4] text-muted-foreground">
-                  {getQuickActionHint(tile)}
                 </div>
               </button>
             )
@@ -249,26 +246,23 @@ export function DashboardOverview({
         </div>
       </section>
 
-      <section className="mt-[var(--bd-space-lg)] md:mt-[var(--bd-section-gap)] px-[var(--bd-space-md)] md:px-[var(--bd-space-lg)]">
-        <div className="mb-[var(--bd-space-sm)] flex items-center justify-between gap-3">
-          <div className="text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-muted-foreground">
-            Follow Up Required
+      <section className="mt-5 md:mt-8 px-4 md:px-6">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">
+            Tasks
           </div>
-          <span className="inline-flex h-5 items-center rounded-full border border-[hsl(var(--destructive)/0.18)] bg-[hsl(var(--destructive)/0.08)] px-[var(--bd-space-sm)] text-[9px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive)/0.15)]">
-            {priorityItems.length} Tasks
+          <span className="inline-flex h-4 items-center rounded-full border border-[hsl(var(--destructive)/0.18)] bg-[hsl(var(--destructive)/0.08)] px-2 text-[8px] font-bold uppercase tracking-wider text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive)/0.15)]">
+            {priorityItems.length} Pending
           </span>
         </div>
 
-        <div className="space-y-[var(--bd-space-sm)]">
+        <div className="space-y-1.5">
           {priorityItems.length === 0 ? (
-            <div className="flex items-center gap-[var(--bd-space-sm)] rounded-[var(--bd-radius-lg)] border border-border bg-card px-[var(--bd-space-md)] py-[var(--bd-space-sm)] shadow-sm">
-              <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-muted-foreground/60" />
+            <div className="flex items-center gap-3 rounded-[var(--bd-radius-lg)] border border-border bg-card px-4 py-2.5 shadow-sm">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/40" />
               <div className="min-w-0 flex-1">
-                <div className="text-[13px] font-bold tracking-[-0.02em] text-foreground">
-                  No follow-up required
-                </div>
-                <div className="mt-[3px] text-[11px] text-muted-foreground">
-                  Outstanding items will appear here.
+                <div className="text-[12px] font-bold tracking-tight text-foreground">
+                  No pending tasks
                 </div>
               </div>
             </div>
@@ -279,24 +273,24 @@ export function DashboardOverview({
                 type="button"
                 onClick={() => onPrioritySelect(item)}
                 className={cn(
-                  "group relative flex w-full cursor-pointer items-center gap-[var(--bd-row-gap)] rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-[var(--bd-card-padding)] text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.985] shadow-sm",
+                  "group relative flex w-full cursor-pointer items-center gap-3 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-2.5 text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.99] shadow-sm",
                 )}
               >
                 <span
                   className={cn(
-                    'h-[7px] w-[7px] shrink-0 rounded-full',
+                    'h-1.5 w-1.5 shrink-0 rounded-full',
                     getFollowUpDotClassName(item),
                   )}
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-bold tracking-[-0.02em] text-foreground">
+                  <div className="text-[12px] font-bold tracking-tight text-foreground">
                     {item.title}
                   </div>
-                  <div className="mt-[3px] text-[11px] text-muted-foreground">{item.meta}</div>
+                  <div className="text-[10px] text-muted-foreground truncate">{item.meta}</div>
                 </div>
                 <span
                   className={cn(
-                    'inline-flex h-[22px] shrink-0 items-center rounded-full border px-[var(--bd-space-sm)] text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)]',
+                    'inline-flex h-[18px] shrink-0 items-center rounded-full border px-1.5 text-[8px] font-black uppercase tracking-wider',
                     getFollowUpBadgeClassName(item),
                   )}
                 >
@@ -307,30 +301,29 @@ export function DashboardOverview({
           )}
         </div>
       </section>
-
-      <section className="mt-[var(--bd-space-lg)] md:mt-[var(--bd-section-gap)] px-[var(--bd-space-md)] md:px-[var(--bd-space-lg)]">
-        <div className="mb-[var(--bd-space-sm)] flex items-center justify-between">
-          <div className="text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-muted-foreground">
-            Recent Records
+      <section className="mt-5 md:mt-8 px-4 md:px-6">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">
+            Recent Activity
           </div>
 
           <button
             type="button"
             onClick={onViewAllActivity}
-            className="grid h-5 w-5 place-items-center text-muted-foreground"
+            className="grid h-4 w-4 place-items-center text-muted-foreground"
             aria-label="View all recent records"
           >
-            <ChevronRight className="h-[14px] w-[14px]" />
+            <ChevronRight className="h-3 w-3" />
           </button>
         </div>
 
         {loading ? (
           <RecentActivitySkeleton />
         ) : (
-          <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-sm">
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-sm">
             {recentDocs.length === 0 ? (
-              <div className="px-[var(--bd-space-md)] py-[var(--bd-space-xl)] text-center text-sm text-muted-foreground">
-                No recent records yet.
+              <div className="px-4 py-8 text-center text-[12px] text-muted-foreground">
+                No recent activity.
               </div>
             ) : (
               recentDocs.slice(0, 3).map((doc) => {
@@ -344,29 +337,29 @@ export function DashboardOverview({
                     key={`${doc.type}-${doc.id}`}
                     type="button"
                     onClick={() => onRecentDocSelect(doc)}
-                    className="flex w-full items-center gap-[var(--bd-space-sm)] border-t border-border px-[var(--bd-space-md)] py-[var(--bd-space-sm)] text-left first:border-t-0"
+                    className="flex w-full items-center gap-3 border-t border-border px-4 py-2.5 text-left first:border-t-0 hover:bg-muted/30 active:scale-[0.99] transition-all"
                   >
                     <div
                       className={cn(
-                        'grid h-10 w-10 shrink-0 place-items-center rounded-[var(--bd-icon-container-radius)] bg-[var(--bd-icon-container-bg)] text-[var(--bd-icon-container-text)] border border-border',
+                        'grid h-8 w-8 shrink-0 place-items-center rounded-[var(--bd-radius-md)] border border-border',
                         meta.iconClassName,
                       )}
                     >
-                      <Icon size={18} strokeWidth={2} />
+                      <Icon size={14} strokeWidth={2.5} />
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[16px] font-bold tracking-[-0.03em] text-[hsl(var(--bd-text))]">
+                      <div className="truncate text-[13px] font-bold tracking-tight text-[hsl(var(--bd-text))]">
                         {doc.number}
                       </div>
-                      <div className="mt-[3px] truncate text-[11px] text-muted-foreground">
+                      <div className="truncate text-[10px] text-muted-foreground">
                         {formatRecentRecordMeta(doc)}
                       </div>
                     </div>
 
                     <div
                       className={cn(
-                        'text-right text-[13px] font-extrabold tracking-[-0.03em]',
+                        'text-right text-[12px] font-black tracking-tight',
                         isAmount ? 'text-foreground' : 'text-muted-foreground',
                       )}
                     >
@@ -379,6 +372,7 @@ export function DashboardOverview({
           </div>
         )}
       </section>
+
     </div>
   )
 }

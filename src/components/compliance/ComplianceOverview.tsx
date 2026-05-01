@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { 
@@ -52,12 +53,12 @@ function MetricCard({ metric }: { metric: Metric }) {
   const tone = getMetricToneClasses(metric.tone)
   return (
     <Card className={`border shadow-sm ${tone.card}`}>
-      <CardContent className="p-4">
-        <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-white/70 shadow-sm ${tone.icon}`}>
+      <CardContent className="p-3">
+        <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-white/70 shadow-sm ${tone.icon}`}>
           {metric.icon}
         </div>
-        <div className={`text-2xl font-black tracking-tight ${tone.value}`}>{metric.value}</div>
-        <p className="mt-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">{metric.label}</p>
+        <div className={`text-xl font-black tracking-tight ${tone.value}`}>{metric.value}</div>
+        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">{metric.label}</p>
       </CardContent>
     </Card>
   )
@@ -86,9 +87,9 @@ export default function ComplianceOverview({
   const netVatPosition = vatCharged - recoverableVatTotal
 
   const metrics: Metric[] = [
-    { label: 'VAT Charged', value: formatNaira(vatCharged), tone: 'amber', icon: <Receipt className="h-5 w-5" /> },
-    { label: 'Recoverable VAT', value: formatNaira(recoverableVatTotal), tone: 'green', icon: <Wallet className="h-5 w-5" /> },
-    { label: 'Net VAT Position', value: formatNaira(netVatPosition), tone: netVatPosition >= 0 ? 'blue' : 'red', icon: <ClipboardList className="h-5 w-5" /> },
+    { label: 'VAT Charged', value: formatNaira(vatCharged), tone: 'amber', icon: <Receipt className="h-4 w-4" /> },
+    { label: 'Recoverable VAT', value: formatNaira(recoverableVatTotal), tone: 'green', icon: <Wallet className="h-4 w-4" /> },
+    { label: 'Net VAT Position', value: formatNaira(netVatPosition), tone: netVatPosition >= 0 ? 'blue' : 'red', icon: <ClipboardList className="h-4 w-4" /> },
   ]
 
   const untrackedWHTCount = recentPayments.filter(p => 
@@ -106,7 +107,7 @@ export default function ComplianceOverview({
   const nextReminder = reminders.find(r => r.status === 'upcoming' || r.status === 'due')
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Summary Metrics */}
       <div className="grid gap-4 md:grid-cols-3">
         {metrics.map((m) => <MetricCard key={m.label} metric={m} />)}
