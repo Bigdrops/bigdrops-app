@@ -276,7 +276,6 @@ export default function SharedDocumentForm(props: any) {
       <ClientSelector
         clientId={invoice.client_id || null}
         clientName={invoice.client_name || ''}
-        isMobile={isMobile}
         compact
         dense
         hideHeader

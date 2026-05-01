@@ -8,10 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import type { ClientRecord } from '@/domain/clientWorkspace'
+import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { cn } from '@/lib/utils'
 import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
@@ -35,7 +34,6 @@ export type ClientSelectorProps = {
   clientId?: string | null
   clientName?: string | null
   onClientChange: (clientId: string, clientName: string, client: ClientSelectorClient | null) => void
-  isMobile?: boolean
   compact?: boolean
   hideHeader?: boolean
   dense?: boolean
@@ -63,7 +61,6 @@ export default function ClientSelector({
   clientId,
   clientName,
   onClientChange,
-  isMobile,
   compact = false,
   hideHeader = false,
   dense = false,
@@ -72,6 +69,7 @@ export default function ClientSelector({
   hideTrigger = false,
   allowClear = true,
 }: ClientSelectorProps) {
+  const { isMobile } = useLayoutMode()
   const [clients, setClients] = useState<ClientSelectorClient[]>([])
   const [selectedClient, setSelectedClient] = useState<ClientSelectorClient | null>(null)
   const [internalOpen, setInternalOpen] = useState<boolean>(false)
@@ -205,30 +203,6 @@ export default function ClientSelector({
     </div>
   )
 
-  const pickerContent = (
-    <div className="space-y-4">
-      <Combobox
-        options={options}
-        value={clientId || ''}
-        onChange={selectClient}
-        placeholder="Search clients..."
-        searchPlaceholder="Search by name or contact..."
-      />
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full justify-start gap-2 h-11 border-dashed rounded-xl border-muted-foreground/30 hover:border-primary/50"
-        onClick={() => {
-          setOpen(false)
-          setShowAddModal(true)
-        }}
-      >
-        <UserPlus className="h-4 w-4" />
-        <span>Add New Client</span>
-      </Button>
-    </div>
-  )
-
   return (
     <>
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
@@ -328,33 +302,36 @@ export default function ClientSelector({
           </div>
         )}
 
-        {isMobile ? (
-          <Sheet open={open} onOpenChange={setOpen}>
-            {!hideTrigger && (
-              <SheetTrigger asChild>
-                <button type="button" className="w-full">{triggerContent}</button>
-              </SheetTrigger>
-            )}
-            <SheetContent side="bottom" className="rounded-t-[28px] px-5 pb-10 pt-2">
-              <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-muted" />
-              <SheetHeader className="mb-6 text-left">
-                <SheetTitle className="text-xl font-bold">Select Client</SheetTitle>
-              </SheetHeader>
-              {pickerContent}
-            </SheetContent>
-          </Sheet>
-        ) : (
-          <Popover open={open} onOpenChange={setOpen}>
-            {!hideTrigger && (
-              <PopoverTrigger asChild>
-                <button type="button" className="w-full">{triggerContent}</button>
-              </PopoverTrigger>
-            )}
-            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-4" align="start">
-              {pickerContent}
-            </PopoverContent>
-          </Popover>
-        )}
+        <Combobox
+          options={options}
+          value={clientId || ''}
+          onChange={selectClient}
+          title="Select Client"
+          placeholder="Search clients..."
+          searchPlaceholder="Search by name or contact..."
+          trigger={triggerContent}
+          hideTrigger={hideTrigger}
+          open={open}
+          onOpenChange={setOpen}
+          strategy={hideTrigger ? "drawer" : "auto"}
+          mobileBehavior="drawer"
+          desktopBehavior="popover"
+          contentClassName="p-3"
+          footer={
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 w-full justify-start gap-2 rounded-xl border-dashed border-muted-foreground/30 hover:border-primary/50"
+              onClick={() => {
+                setOpen(false)
+                setShowAddModal(true)
+              }}
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>Add New Client</span>
+            </Button>
+          }
+        />
 
         {!compact && selectedClient && (
           <Card className="border-border bg-muted/30 p-4 shadow-none">

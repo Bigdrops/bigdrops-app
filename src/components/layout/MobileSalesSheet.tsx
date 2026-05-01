@@ -28,7 +28,7 @@ export function MobileSalesSheet({
       title="Quick Create"
       description="Start a new sales or dispatch record"
       actions={actions}
-      layout="grid-scroll"
+      layout="grid"
       hideIcons={false}
       showDescriptions={false}
     />

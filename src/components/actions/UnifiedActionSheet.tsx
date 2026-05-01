@@ -28,7 +28,7 @@ export type UnifiedActionSheetProps = {
   onOpenChange: (open: boolean) => void
   actions?: ActionItem[]
   groups?: ActionGroup[]
-  layout?: "list" | "grid" | "grid-scroll" | "list-compact"
+  layout?: "list" | "grid" | "list-compact"
   title?: string
   eyebrow?: string
   description?: string
@@ -92,7 +92,7 @@ export function UnifiedActionSheet({
 
   const renderAction = (action: ActionItem, idx: number | string, isGrid: boolean) => {
     const tone = TONE_CLASSES[action.tone || "default"]
-    const isCompact = layout === "list-compact" || layout === "grid-scroll"
+    const isCompact = layout === "list-compact"
     
     if (isGrid) {
       return (
@@ -103,7 +103,7 @@ export function UnifiedActionSheet({
           onClick={() => handleActionClick(action)}
           className={cn(
             "flex flex-col items-center justify-center rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] transition hover:bg-[hsl(var(--bd-surface-action-hover))] active:scale-[0.97]",
-            layout === "grid-scroll" ? "min-w-[calc((100vw-3rem)/4)] h-[76px] flex-col justify-center text-center p-1" : "min-h-[84px] gap-1.5 px-2 py-2",
+            "min-h-[84px] gap-1.5 px-2 py-2",
             action.isLoading && "opacity-70 cursor-not-allowed"
           )}
         >
@@ -190,7 +190,7 @@ export function UnifiedActionSheet({
         className={cn(
           "overflow-hidden border-x-0 border-b-0 border-t border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-bg))] p-0 shadow-2xl transition-all duration-300",
           "rounded-t-[var(--bd-overlay-radius)]",
-          layout === "grid-scroll" ? "h-auto" : "h-auto max-h-[75vh]",
+          "h-auto max-h-[75vh]",
           className
         )}
       >
@@ -224,10 +224,7 @@ export function UnifiedActionSheet({
           )}
 
           {/* Content */}
-          <div className={cn(
-            "min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 bd-custom-scrollbar",
-            layout === "grid-scroll" && "overflow-y-hidden"
-          )}>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 bd-custom-scrollbar">
             {groups ? (
               <div className="space-y-4">
                 {groups.map((group, gIdx) => (
@@ -246,7 +243,6 @@ export function UnifiedActionSheet({
             ) : (
               <div className={cn(
                 layout === "grid" && "grid grid-cols-3 gap-2",
-                layout === "grid-scroll" && "flex gap-2 overflow-x-auto pb-1 snap-x bd-hide-scrollbar",
                 layout.startsWith("list") && "space-y-1.5"
               )}>
                 {actions?.map((action, idx) => renderAction(action, idx, layout.startsWith("grid")))}

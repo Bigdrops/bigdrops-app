@@ -104,7 +104,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
               setCreateOpen(false)
             }
           }))}
-          layout="list"
+          layout="list-compact"
         />
       ) : null}
     </Layout>

@@ -229,7 +229,6 @@ export default function CsrFormScreen({
             <ClientSelector
               clientId={String(csr.client_id || '')}
               clientName={String(csr.client_name || '')}
-              isMobile
               open={clientPickerOpen}
               onOpenChange={setClientPickerOpen}
               onClientChange={(clientId: string, clientName: string, client: { address?: string | null } | null) => {

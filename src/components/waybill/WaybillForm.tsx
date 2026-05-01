@@ -357,7 +357,6 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
                   updateWaybill('client_id', clientId || '')
                   updateWaybill('client_name', clientName || '')
                 }}
-                isMobile={false}
                 compact
               />
             </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Loader2, Plus, Banknote, Calendar, Receipt } from 'lucide-react'
 import { supabase } from '@/supabase'
 import DocumentSheet from '../shared/DocumentSheet'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import styles from './InvoiceRecordPaymentSheet.module.css'
 import { formatNaira } from '@/lib/formatters/money'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
@@ -249,34 +250,36 @@ export default function InvoiceRecordPaymentSheet({
               </div>
               <div className={styles.fieldGroup}>
                 <label className={styles.formLabel}>Mode</label>
-                <select
-                  className={styles.formSelect}
-                  value={form.method}
-                  onChange={(e) => setField('method', e.target.value as PaymentMethod)}
-                >
-                  <option value="Transfer">Transfer</option>
-                  <option value="Cash">Cash</option>
-                  <option value="POS">POS</option>
-                  <option value="Cheque">Cheque</option>
-                  <option value="Other">Other</option>
-                </select>
+                <Select value={form.method} onValueChange={(value) => setField('method', value as PaymentMethod)}>
+                  <SelectTrigger className={styles.formSelect}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Transfer">Transfer</SelectItem>
+                    <SelectItem value="Cash">Cash</SelectItem>
+                    <SelectItem value="POS">POS</SelectItem>
+                    <SelectItem value="Cheque">Cheque</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             {form.method === 'Transfer' && bankAccounts.length > 0 && (
               <div className={styles.fieldGroup}>
                 <label className={styles.formLabel}>Destination Account</label>
-                <select
-                  className={styles.formSelect}
-                  value={selectedBankId}
-                  onChange={(e) => setSelectedBankId(e.target.value)}
-                >
-                  {bankAccounts.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.bank_name} — {b.account_number}
-                    </option>
-                  ))}
-                </select>
+                <Select value={selectedBankId} onValueChange={setSelectedBankId}>
+                  <SelectTrigger className={styles.formSelect}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bankAccounts.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.bank_name} — {b.account_number}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 

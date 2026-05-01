@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Check, Search } from 'lucide-react'
 
 import { supabase } from '@/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -12,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Combobox } from '@/components/ui/combobox'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { cn } from '@/lib/utils'
@@ -248,8 +246,13 @@ export default function ProjectLinkDialog({
                 setSelectedProjectId(id)
                 setError('')
               }}
-              placeholder="Search projects..."
               searchPlaceholder="PRJ code, name, or client..."
+              title="Link to Project"
+              strategy="auto"
+              desktopBehavior="inline"
+              searchValue={query}
+              onSearchValueChange={setQuery}
+              filterOptions={false}
             />
             
             {selectedProjectId && projects.find(p => p.id === selectedProjectId) && (

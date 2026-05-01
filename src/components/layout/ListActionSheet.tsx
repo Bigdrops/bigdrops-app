@@ -37,7 +37,7 @@ export default function ListActionSheet({
       description={amount || undefined}
       actions={unifiedActions}
       deleteAction={unifiedDelete}
-      layout="list"
+      layout="list-compact"
     />
   )
 }
