@@ -323,6 +323,11 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
     normalizeHeaderLabel('PO Number'),
   ])
 
+  if (model.identity.kind === 'quotation') {
+    standardHeaderLabels.add(normalizeHeaderLabel('Client'))
+    standardHeaderLabels.add(normalizeHeaderLabel('Title'))
+  }
+
   return {
     title: primaryTitle,
     customTitle: (rawTitle && !isDuplicate) ? rawTitle : null,

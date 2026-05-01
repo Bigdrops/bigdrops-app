@@ -49,9 +49,13 @@ export default function IndustryTemplate({ data }: TemplateProps) {
   const surfaceColor = design.useCustomColors && design.surfaceColor ? design.surfaceColor : null
   const headerFontFamily = design.useCustomFonts && design.headerFont ? design.headerFont : undefined
   const bodyFontFamily = design.useCustomFonts && design.bodyFont ? design.bodyFont : undefined
-  const panelSurfaceColor = surfaceColor || (accentColor ? lightenHex(accentColor, 45) : null)
+  const panelSurfaceColor = (design.useCustomColors && accentColor)
+    ? (surfaceColor && surfaceColor !== '#f8fafc' ? surfaceColor : lightenHex(accentColor, 45))
+    : (surfaceColor || null)
   const subtleSurfaceColor = accentColor ? getAccentTint(accentColor, panelSurfaceColor || '#f5f7f6') : panelSurfaceColor
-  const panelBorderColor = borderColor || (accentColor ? lightenHex(accentColor, 28) : null)
+  const panelBorderColor = (design.useCustomColors && accentColor)
+    ? (borderColor && borderColor !== '#cbd5e1' ? borderColor : lightenHex(accentColor, 28))
+    : (borderColor || null)
   const groupRuleColor = accentColor || panelBorderColor
   const sectionTitleStyle = [
     styles.optionalTitle,
@@ -263,7 +267,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
                 key={`row-${rowIdx}`}
                 style={[
                   styles.tableRow,
-                  rowIdx % 2 === 1 ? styles.tableRowEven : null,
+                  rowIdx % 2 === 1 ? (accentColor ? { backgroundColor: subtleSurfaceColor } : styles.tableRowEven) : null,
                   row.isInGroup ? styles.tableRowInGroup : null,
                   row.isInGroup && accentColor ? { borderLeftColor: accentColor } : null,
                 ] as any}
@@ -581,7 +585,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
           {data.showTagline && data.company?.tagline ? (
             <Text style={styles.taglineFooter}>{data.company.tagline}</Text>
           ) : null}
-          <View style={styles.documentFooter}>
+          <View style={[styles.documentFooter, accentColor ? { borderTopColor: accentColor } : null]}>
             <Text
               style={styles.footerText}
               render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}

@@ -67,10 +67,10 @@ export const styles = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 7,
+    marginBottom: 9,
   },
   metaLabel: {
-    width: 88,
+    width: 96,
     flexShrink: 0,
     color: '#666666',
     fontSize: 10,
