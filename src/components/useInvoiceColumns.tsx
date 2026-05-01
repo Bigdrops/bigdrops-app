@@ -32,6 +32,9 @@ export {
   calcTotals,
 } from '../domain/invoice'
 
+const normalizeTitle = (title: string) => 
+  title.trim().toLowerCase().replace(/\s+/g, ' ')
+
 import {
   BUILTIN_COLUMNS,
   normalizeColumnConfig,
@@ -86,15 +89,30 @@ export function useInvoiceColumns(initial?: InvoiceColumn[]) {
     setColumns(cols => cols.map(c => c.key === key ? normalizeColumnConfig({ ...c, [field]: value }) as InvoiceColumn : c))
     
   const addCustomColumn = () => 
-    setColumns(cols => [...cols, { 
-      key: 'custom_' + Date.now(), 
-      label: 'New Column', 
-      type: 'text', 
-      visible: true, 
-      visibilityMode: 'show',
-      removable: true, 
-      includeInTotal: false 
-    } as InvoiceColumn])
+    setColumns(cols => {
+      const activeTitles = cols
+        .filter(c => (c.visibilityMode || 'show') !== 'hide_full')
+        .map(c => normalizeTitle(c.label || ''))
+      
+      const base = 'New Column'
+      let title = base
+      let counter = 2
+      
+      while (activeTitles.includes(normalizeTitle(title))) {
+        title = `${base} ${counter}`
+        counter++
+      }
+
+      return [...cols, { 
+        key: 'custom_' + Date.now(), 
+        label: title, 
+        type: 'text', 
+        visible: true, 
+        visibilityMode: 'show',
+        removable: true, 
+        includeInTotal: false 
+      } as InvoiceColumn]
+    })
     
   const removeCustomColumn = (key: string) => 
     setColumns(cols => cols.filter(c => c.key !== key))

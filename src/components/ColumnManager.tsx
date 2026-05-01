@@ -20,6 +20,9 @@ import { cn } from '@/lib/utils'
 import { COLUMN_TYPES } from './useInvoiceColumns'
 import type { ColumnConfig, InvoiceItem } from '@/domain/invoice/types'
 
+const normalizeTitle = (title: string) => 
+  title.trim().toLowerCase().replace(/\s+/g, ' ')
+
 const FIXED_PDF_COLUMNS: Array<{ key: string; label: string }> = [
   { key: 'description', label: 'Description' },
 ]
@@ -449,16 +452,16 @@ export default function ColumnManager({
   const customCols = columns.filter((c) => c.key.startsWith('custom_'))
 
   const handleUpdateLabel = (key: string, newLabel: string) => {
-    const trimmed = newLabel.trim().toLowerCase()
-    if (trimmed) {
+    const normalizedNew = normalizeTitle(newLabel)
+    if (normalizedNew) {
       const duplicate = columns.find(c => 
         c.key !== key && 
         (c.visibilityMode || 'show') !== 'hide_full' && 
-        (c.label || '').trim().toLowerCase() === trimmed
+        normalizeTitle(c.label || '') === normalizedNew
       )
       
       if (duplicate) {
-        setDuplicateTitleError(`"${newLabel.trim()}" is already used by ${duplicate.label || duplicate.key}. Choose a unique column title.`)
+        setDuplicateTitleError(`${newLabel.trim()} is already used. Choose a unique column title.`)
         // Still allow typing but set error
         onUpdate(key, 'label', newLabel)
         return
