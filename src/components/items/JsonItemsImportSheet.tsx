@@ -165,17 +165,7 @@ export default function JsonItemsImportSheet({
       saveLabel="Apply to Document"
       error={errorMessage}
       className={contentClassName}
-      tutorial={{
-        title: 'How JSON item import works',
-        description: `You can add new items or update existing ones by pasting extracted JSON for your ${adapter.documentType}.`,
-        steps: [
-          'Copy the AI prompt',
-          'Paste into ChatGPT or your preferred AI tool along with your source document',
-          'Paste the returned JSON result here',
-          'Review the items and apply them to the document'
-        ],
-        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-      }}
+
       previewContent={
         <div className="space-y-4">
           <div className="flex flex-col gap-1.5">
@@ -209,10 +199,7 @@ export default function JsonItemsImportSheet({
             </div>
           </div>
 
-          <div className="rounded-xl border border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-section-bg))] p-4">
-             <div className="text-[10px] font-extrabold uppercase tracking-widest text-[hsl(var(--bd-status-info-text))] opacity-80 mb-1">Mode Details</div>
-             <p className="text-[12px] font-medium leading-relaxed text-[hsl(var(--bd-overlay-text))]">{activeMode.description}</p>
-          </div>
+
         </div>
       }
     />

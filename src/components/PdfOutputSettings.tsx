@@ -252,7 +252,6 @@ export function PdfDocumentOptionsCard({
         >
           <div className="min-w-0">
             <div className="text-sm font-extrabold tracking-[-0.02em] text-foreground">Document options</div>
-            <div className="mt-1 text-xs text-muted-foreground">Output switches for footer, labels, wording, and totals display.</div>
           </div>
           {open ? (
             <ChevronUp className="h-4 w-4 shrink-0 text-slate-400" />
@@ -369,9 +368,6 @@ function BankAccountPickerSheet({
       <SheetContent side="bottom" className="rounded-t-[var(--bd-overlay-radius)]">
         <SheetHeader className="text-left">
           <SheetTitle>Select Bank Account</SheetTitle>
-          <SheetDescription>
-            Choose which saved account should appear on the PDF.
-          </SheetDescription>
         </SheetHeader>
 
         <div className="mt-4 space-y-2 pb-4">

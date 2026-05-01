@@ -182,7 +182,6 @@ export function NotificationSettingsPanel({
             {
               key: 'in_app',
               label: 'In-app notifications',
-              description: 'Keeps reminder rules available inside the app notification feed.',
               checked: preferences.channels.in_app,
               onCheckedChange: (checked) =>
                 setPreferences((current) => ({
@@ -193,8 +192,6 @@ export function NotificationSettingsPanel({
             {
               key: 'push',
               label: 'Push notifications',
-              description:
-                'Controls push delivery as a channel. Device platform and token registration are handled separately.',
               checked: preferences.channels.push,
               onCheckedChange: (checked) =>
                 setPreferences((current) => ({
@@ -205,7 +202,6 @@ export function NotificationSettingsPanel({
             {
               key: 'monthly_report',
               label: 'Monthly email reports',
-              description: 'Keeps the monthly report rule on the email channel without affecting invoice reminder thresholds.',
               checked: preferences.monthlyReportEnabled,
               onCheckedChange: (checked) =>
                 setPreferences((current) => ({
@@ -225,7 +221,6 @@ export function NotificationSettingsPanel({
         </div>
         <ReminderThresholdSelector
           title="Invoice unpaid reminders"
-          description="Pick any number of unpaid reminder days. Each selected day becomes its own independent preference rule."
           options={unpaidOptions}
           selectedDays={preferences.invoiceUnpaidAfterDays}
           onToggleDay={(day) => updateThresholdList('invoiceUnpaidAfterDays', day)}
@@ -243,7 +238,6 @@ export function NotificationSettingsPanel({
             )
           }
           customError={unpaidCustomError}
-          helperText="You can keep 3, 5, 7, 14, 30, and custom days active together."
         />
       </div>
 
@@ -255,7 +249,6 @@ export function NotificationSettingsPanel({
         </div>
         <ReminderThresholdSelector
           title="Due date reminders"
-          description="Use the same multi-select pattern for due-date reminders, including the due-date itself."
           options={dueBeforeOptions}
           selectedDays={[
             ...preferences.invoiceDueBeforeDays,
@@ -271,7 +264,6 @@ export function NotificationSettingsPanel({
             }
             updateThresholdList('invoiceDueBeforeDays', day)
           }}
-          helperText="These rules map to invoice_due_before and invoice_due_today separately."
         />
       </div>
 
@@ -283,7 +275,6 @@ export function NotificationSettingsPanel({
         </div>
         <ReminderThresholdSelector
           title="Overdue reminders"
-          description="Keep multiple overdue follow-ups active at once, including any custom day you need."
           options={overdueOptions}
           selectedDays={preferences.invoiceOverdueAfterDays}
           onToggleDay={(day) => updateThresholdList('invoiceOverdueAfterDays', day)}
@@ -301,7 +292,6 @@ export function NotificationSettingsPanel({
             )
           }
           customError={overdueCustomError}
-          helperText="Disabling one overdue day only affects that exact threshold."
         />
       </div>
 

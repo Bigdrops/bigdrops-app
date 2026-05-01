@@ -29,12 +29,7 @@ interface JsonImportUIProps {
   whtHasPayments?: boolean
   onEditJson?: () => void
   saveLabel?: string
-  tutorial?: {
-    title?: string
-    description?: string
-    steps?: string[]
-    videoUrl?: string
-  }
+
 }
 
 interface JsonImportLayoutProps extends JsonImportUIProps {
@@ -43,17 +38,7 @@ interface JsonImportLayoutProps extends JsonImportUIProps {
   className?: string
 }
 
-const DEFAULT_TUTORIAL = {
-  title: 'How JSON import works',
-  description: 'Copy the AI prompt, run it on your document using any AI, and paste the JSON result here.',
-  steps: [
-    'Copy the AI Prompt provided in this window',
-    'Extract your document data into JSON using any AI tool',
-    'Paste the resulting JSON object into the input area',
-    'Review the extracted values and save'
-  ],
-  videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-}
+
 
 export function JsonImportUI({
   title,
@@ -67,7 +52,6 @@ export function JsonImportUI({
   isParsed = false,
   error = null,
   helpText,
-  tutorial,
   previewContent,
   additionalActions,
   whtNotice = false,
@@ -76,9 +60,8 @@ export function JsonImportUI({
   saveLabel = 'Save Record',
 }: JsonImportUIProps) {
   const [copied, setCopied] = React.useState(false)
-  const [showTutorial, setShowTutorial] = React.useState(false)
 
-  const activeTutorial = tutorial || DEFAULT_TUTORIAL
+
 
   const handleCopyPrompt = async () => {
     try {
@@ -149,59 +132,7 @@ export function JsonImportUI({
       </div>
 
       <div className="p-[var(--bd-sheet-padding)] space-y-[var(--bd-section-gap)] overflow-y-auto">
-        {/* Tutorial / Help Section */}
-        <div className="space-y-[var(--bd-space-sm)]">
-          <button
-            onClick={() => setShowTutorial(!showTutorial)}
-            className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] p-[var(--bd-space-sm)] text-left transition-colors hover:brightness-95"
-          >
-            <div className="flex items-center gap-[var(--bd-space-sm)]">
-              <Info className="h-4 w-4 text-[hsl(var(--bd-status-info-text))]" />
-              <span className="text-xs font-bold text-[hsl(var(--bd-status-info-text))]">
-                {activeTutorial.title}
-              </span>
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-status-info-text))] opacity-60">
-              {showTutorial ? 'Hide Guide' : 'How it works'}
-            </span>
-          </button>
 
-          {showTutorial && (
-            <div className="space-y-[var(--bd-space-md)] rounded-2xl border border-[hsl(var(--bd-overlay-section-border))] bg-[hsl(var(--bd-overlay-section-bg))] p-[var(--bd-space-md)] shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-[hsl(var(--bd-overlay-text))] leading-relaxed">
-                  {activeTutorial.description}
-                </p>
-              </div>
-
-              {activeTutorial.steps && activeTutorial.steps.length > 0 && (
-                <div className="space-y-[var(--bd-space-sm)]">
-                  {activeTutorial.steps.map((step, idx) => (
-                    <div key={idx} className="flex gap-3">
-                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-action-icon-bg))] text-[9px] font-black text-[hsl(var(--bd-action-icon-text))]">
-                        {idx + 1}
-                      </div>
-                      <p className="text-[11px] font-medium text-[hsl(var(--bd-overlay-muted))] leading-snug pt-0.5">
-                        {step}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {activeTutorial.videoUrl && (
-                <div className="overflow-hidden rounded-xl border border-[hsl(var(--bd-overlay-section-border))] bg-black aspect-video shadow-inner">
-                  <iframe
-                    src={activeTutorial.videoUrl}
-                    className="h-full w-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-              )}
-            </div>
-          )}
-        </div>
 
         {!isParsed ? (
           <div className="space-y-[var(--bd-space-sm)]">

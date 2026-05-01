@@ -115,9 +115,6 @@ export function DocumentsSettingsSection({ onToast }: { onToast: SettingsToastFn
           >
             <div className="min-w-0 flex-1">
               <div className="text-sm font-bold text-slate-900">Fillable Writing</div>
-              <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
-                Show or hide fillable font and color controls on supported document pages.
-              </div>
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
@@ -149,9 +146,6 @@ export function DocumentsSettingsSection({ onToast }: { onToast: SettingsToastFn
 
         <div className="min-w-0 flex-1">
           <div className="text-sm font-bold text-slate-900">Fillable Writing</div>
-          <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
-            This controls whether font and color options appear under Customize. It does not set the actual fonts here.
-          </div>
         </div>
       </div>
 

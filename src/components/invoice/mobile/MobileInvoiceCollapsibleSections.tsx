@@ -49,7 +49,6 @@ export function MobileInvoiceNotesTermsSection({
       icon={NotebookText}
       iconTone={{ bg: '#f5f3ff', fg: '#7c3aed' }}
       title="Notes & Terms"
-      subtitle="Optional rich text blocks"
       open={open}
       onToggle={onToggle}
       sectionColor="#7c3aed"
@@ -111,7 +110,6 @@ export function MobileInvoiceSignatorySection({
       icon={Signature}
       iconTone={{ bg: '#eff6ff', fg: '#2563eb' }}
       title="Signatory"
-      subtitle="Who signs this document"
       open={open}
       onToggle={onToggle}
       sectionColor="#2563eb"
@@ -155,7 +153,6 @@ export function MobileInvoiceReferenceLinksSection({
       icon={Link2}
       iconTone={{ bg: '#f0fdf4', fg: '#059669' }}
       title="Reference Links"
-      subtitle="Paste URLs instead of uploading files"
       open={open}
       onToggle={onToggle}
       sectionColor="#059669"

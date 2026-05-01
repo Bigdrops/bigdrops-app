@@ -247,7 +247,6 @@ export default function MobileItemCard({
                     >
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-[13px] font-bold text-[var(--bd-text)]">{suggestion.name}</div>
-                        <div className="text-[11px] text-[var(--bd-text3)]">Master Item</div>
                       </div>
                       <div className="text-[13px] font-bold text-[var(--bd-indigo)]">
                         {suggestion.standard_price ? `N${Number(suggestion.standard_price).toLocaleString()}` : '—'}

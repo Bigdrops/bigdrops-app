@@ -218,9 +218,6 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
         <div className="flex items-start justify-between gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/40 px-4 py-3.5">
           <div className="min-w-0 flex-1">
             <div className="text-sm font-bold text-slate-900">Saved Branding</div>
-            <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
-              Review your logo and footer text before editing branding assets.
-            </div>
           </div>
 
           <button
@@ -296,9 +293,6 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
 
         <div className="min-w-0 flex-1">
           <div className="text-sm font-bold text-slate-900">Edit Branding</div>
-          <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
-            Update the company logo and footer text used in generated documents.
-          </div>
         </div>
       </div>
 
@@ -333,9 +327,6 @@ export function BrandingSettingsSection({ onToast }: { onToast: SettingsToastFn 
                       />
                     </div>
                     <div className="mt-3 text-sm font-bold text-slate-900">Current Logo</div>
-                    <div className="mt-1 text-[12px] leading-5 text-muted-foreground">
-                      This is the logo currently selected for branding.
-                    </div>
                     <div className="mt-4 flex flex-wrap justify-center gap-2">
                       <button
                         type="button"

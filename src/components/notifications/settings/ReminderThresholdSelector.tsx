@@ -22,7 +22,7 @@ export function ReminderThresholdSelector({
   helperText,
 }: {
   title: string
-  description: string
+  description?: string
   options: ReminderOption[]
   selectedDays: number[]
   onToggleDay: (day: number) => void
@@ -36,9 +36,11 @@ export function ReminderThresholdSelector({
     <div className="rounded-2xl border border-border bg-card">
       <div className="border-b border-border px-4 py-3.5">
         <div className="text-sm font-bold text-foreground">{title}</div>
-        <div className="mt-0.5 text-[12px] leading-5 text-muted-foreground">
-          {description}
-        </div>
+        {description ? (
+          <div className="mt-0.5 text-[12px] leading-5 text-muted-foreground">
+            {description}
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-4 px-4 py-4">

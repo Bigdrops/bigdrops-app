@@ -3,7 +3,7 @@ import { Switch } from '@/components/ui/switch'
 type ChannelToggleItem = {
   key: string
   label: string
-  description: string
+  description?: string
   checked: boolean
   onCheckedChange: (checked: boolean) => void
 }
@@ -24,9 +24,11 @@ export function NotificationChannelToggles({
         >
           <div className="min-w-0 flex-1">
             <div className="text-sm font-bold text-foreground">{item.label}</div>
-            <div className="mt-0.5 text-[12px] leading-5 text-muted-foreground">
-              {item.description}
-            </div>
+            {item.description ? (
+              <div className="mt-0.5 text-[12px] leading-5 text-muted-foreground">
+                {item.description}
+              </div>
+            ) : null}
           </div>
 
           <Switch

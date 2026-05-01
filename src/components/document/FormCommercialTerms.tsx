@@ -182,12 +182,6 @@ export function FormCommercialTerms({
                 className={fieldCls}
               />
             </div>
-            <div>
-              <label className={labelCls}>Basis</label>
-              <div className={`${fieldCls} flex items-center bg-[var(--bd-bg2)] text-[var(--bd-text3)]`}>
-                Real app basis
-              </div>
-            </div>
           </div>
         </CollapseCard>
 

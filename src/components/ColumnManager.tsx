@@ -525,9 +525,6 @@ export default function ColumnManager({
                 <h2 className="text-[22px] font-bold tracking-[-0.02em] text-[var(--bd-text)]">
                   Table Settings
                 </h2>
-                <p className="mt-0.5 text-[14px] text-[var(--bd-text3)]">
-                  Configure row data and column visibility
-                </p>
               </div>
 
               <button
@@ -623,9 +620,6 @@ export default function ColumnManager({
               {onResetItemOverrides ? (
                 <div className="mt-7 rounded-[24px] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
                   <div className="text-[16px] font-bold text-[var(--bd-text)]">D. Row Overrides Status</div>
-                  <div className="mt-1 text-[13px] text-[var(--bd-text3)]">
-                    Reset row-level VAT, discount, and install overrides.
-                  </div>
 
                   <div className="mt-4 space-y-2.5">
                     <OverrideRow
@@ -667,9 +661,6 @@ export default function ColumnManager({
                   <div>
                     <div className="text-[15px] font-semibold text-[var(--bd-text)]">
                       Reset Table Settings
-                    </div>
-                    <div className="text-[13px] text-[var(--bd-text3)]">
-                      Restores columns, labels, and layout. Does not remove items.
                     </div>
                   </div>
 

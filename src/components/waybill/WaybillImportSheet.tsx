@@ -75,16 +75,7 @@ Rules:
       onRawInputChange={setText}
       onPreview={() => onImport(text)}
       onSave={() => onImport(text)}
-      tutorial={{
-        title: 'How Waybill JSON import works',
-        description: 'Update Waybill details by pasting extracted JSON from dispatch or delivery documents.',
-        steps: [
-          'Copy the Waybill AI Prompt',
-          'Extract items and reference numbers from your document into JSON',
-          'Paste the resulting JSON here to review and apply'
-        ],
-        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-      }}
+
     />
   )
 }

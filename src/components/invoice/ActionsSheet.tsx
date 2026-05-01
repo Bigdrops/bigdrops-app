@@ -62,7 +62,6 @@ export default function ActionsSheet({
       title="Quick Actions"
       actions={unifiedActions}
       layout="list"
-      description="Most actions close after you tap one. Qty + Unit merge stays inline."
     />
   )
 }

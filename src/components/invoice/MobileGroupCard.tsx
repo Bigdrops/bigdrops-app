@@ -86,7 +86,7 @@ export default function MobileGroupCard({
         <div className="space-y-0">
           {items.length === 0 ? (
             <div className="flex h-20 items-center justify-center px-4 py-6 text-center text-[12px] font-medium text-[var(--bd-text3)] italic">
-              No items in this group. Tap "Add to Group" below to begin.
+              No items in this group
             </div>
           ) : (
             items.map(({ item, index, number, isFirst, isLast }) => (
