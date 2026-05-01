@@ -18,14 +18,14 @@ export const fieldCls =
 export const labelCls = 'mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text-muted)]'
 
 export function getSectionDotClass(color?: string) {
-  return {
-    '#0f172a': 'bg-[var(--bd-text)]',
-    '#7c3aed': 'bg-[var(--bd-violet)]',
-    '#475569': 'bg-[var(--bd-text-muted)]',
-    '#059669': 'bg-[var(--bd-emerald)]',
-    '#d97706': 'bg-[var(--bd-amber)]',
-    '#2563eb': 'bg-[var(--bd-indigo)]',
-  }[color || ''] || 'bg-[var(--bd-text-soft)]'
+  const c = String(color).toLowerCase()
+  if (c === '#0f172a') return 'bg-[hsl(var(--bd-text))]'
+  if (c === '#7c3aed') return 'bg-[hsl(var(--bd-violet))]'
+  if (c === '#475569') return 'bg-[hsl(var(--bd-text-muted))]'
+  if (c === '#059669') return 'bg-[hsl(var(--bd-emerald))]'
+  if (c === '#d97706') return 'bg-[hsl(var(--bd-amber))]'
+  if (c === '#2563eb') return 'bg-[hsl(var(--bd-indigo))]'
+  return 'bg-[hsl(var(--bd-text-soft))]'
 }
 
 interface IconTone {
@@ -34,12 +34,20 @@ interface IconTone {
 }
 
 function getIconToneClass(iconTone?: IconTone) {
-  const key = `${iconTone?.bg || ''}|${iconTone?.fg || ''}`
-  return {
-    '#f5f3ff|#7c3aed': 'bg-[var(--bd-violet-bg)] text-[var(--bd-violet)]',
-    '#eff6ff|#2563eb': 'bg-[var(--bd-indigo-bg)] text-[var(--bd-indigo)]',
-    '#f0fdf4|#059669': 'bg-[var(--bd-emerald-bg)] text-[var(--bd-emerald)]',
-  }[key] || 'bg-[var(--bd-surface-muted)] text-[var(--bd-text-muted)]'
+  const bg = String(iconTone?.bg).toLowerCase()
+  const fg = String(iconTone?.fg).toLowerCase()
+
+  if (bg === '#f5f3ff' || fg === '#7c3aed') return 'bg-[hsl(var(--bd-violet-bg))] text-[hsl(var(--bd-violet))]'
+  if (bg === '#eff6ff' || fg === '#2563eb') return 'bg-[hsl(var(--bd-indigo-bg))] text-[hsl(var(--bd-indigo))]'
+  if (bg === '#f0fdf4' || fg === '#059669') return 'bg-[hsl(var(--bd-emerald-bg))] text-[hsl(var(--bd-emerald))]'
+  if (bg === '#fff7ed' || fg === '#d97706') return 'bg-[hsl(var(--bd-amber-bg))] text-[hsl(var(--bd-amber))]'
+  if (bg === '#ecfdf5' || fg === '#059669') return 'bg-[hsl(var(--bd-emerald-bg))] text-[hsl(var(--bd-emerald))]'
+  if (bg === '#fef3c7' || fg === '#b45309') return 'bg-[hsl(var(--bd-amber-bg))] text-[hsl(var(--bd-amber-dark))]'
+  if (bg === '#f0f4ff' || fg === '#4338ca') return 'bg-[hsl(var(--bd-indigo-bg))] text-[hsl(var(--bd-indigo))]'
+  if (bg === '#f3f4f6' || fg === '#475569') return 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]'
+  if (bg === '#d1fae5' || fg === '#059669') return 'bg-[hsl(var(--bd-emerald-bg))] text-[hsl(var(--bd-emerald))]'
+  
+  return 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]'
 }
 
 export function formatCurrency(value: number | string | null | undefined) {

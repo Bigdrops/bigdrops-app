@@ -57,6 +57,7 @@ export function Combobox({
           onChange={(e) => setSearch(e.target.value)}
           placeholder={searchPlaceholder}
           disabled={disabled}
+          autoFocus
           className="h-10 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </div>

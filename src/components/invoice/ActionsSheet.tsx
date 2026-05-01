@@ -2,6 +2,7 @@ import * as React from 'react'
 import {
   Check,
   FileText,
+  Zap,
 } from 'lucide-react'
 import { UnifiedActionSheet, type ActionItem } from '@/components/actions/UnifiedActionSheet'
 import { getActionsSheetItems } from './mobileFormHelpers.js'
@@ -49,8 +50,10 @@ export default function ActionsSheet({
     key: action.key,
     label: action.label,
     description: action.description,
-    icon: action.key === 'qtyUnitMerge' && mergeQtyUnit ? <Check /> : <action.icon />,
+    icon: action.key === 'qtyUnitMerge' ? <Zap /> : <action.icon />,
     tone: action.key === 'qtyUnitMerge' && mergeQtyUnit ? "success" : "default",
+    isSwitch: action.key === 'qtyUnitMerge',
+    isActive: action.key === 'qtyUnitMerge' ? mergeQtyUnit : false,
     closeOnClick: action.key !== 'qtyUnitMerge',
     onClick: () => actionMap[action.key]?.()
   }))
@@ -61,7 +64,7 @@ export default function ActionsSheet({
       onOpenChange={onOpenChange}
       title="Quick Actions"
       actions={unifiedActions}
-      layout="list"
+      layout="list-compact"
     />
   )
 }

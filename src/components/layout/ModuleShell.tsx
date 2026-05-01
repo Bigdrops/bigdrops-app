@@ -245,6 +245,21 @@ export default function ModuleShell<T>({
             />
           </div>
           <div className="flex items-center gap-2">
+             {(filters || onFilterClick || filterPanel) && (
+                <Button
+                  type="button"
+                  variant={filtersOpen || hasActiveFilters ? 'outline' : 'ghost'}
+                  size="sm"
+                  onClick={toggleFilters}
+                  className={cn(
+                    "h-8 gap-2 rounded-[var(--bd-radius-md)] border-border text-foreground px-3",
+                    hasActiveFilters && "bg-primary/5 border-primary/20"
+                  )}
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  <span className="text-[11px] font-bold">Filters</span>
+                </Button>
+             )}
              {hasActiveFilters && (
                 <Button 
                   variant="ghost" 
@@ -257,11 +272,10 @@ export default function ModuleShell<T>({
              )}
           </div>
         </div>
-      </div>
 
-        {/* Desktop Filters */}
-        {filters && filters.length > 0 && (
-           <div className="flex flex-wrap items-center gap-[var(--bd-space-sm)]">
+        {/* Desktop Inline Filters Panel */}
+        {filtersOpen && filters && filters.length > 0 && (
+           <div className="flex flex-wrap items-center gap-[var(--bd-space-sm)] animate-in fade-in slide-in-from-top-1 duration-200">
               {filters.map((f) => (
                 <div key={f.label} className="flex items-center gap-2 rounded-[var(--bd-radius-md)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-[var(--bd-space-sm)] py-[var(--bd-space-xs)] shadow-sm">
                    <span className="text-[11px] font-extrabold uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-text-muted))]">{f.label}</span>
@@ -279,6 +293,7 @@ export default function ModuleShell<T>({
               ))}
            </div>
         )}
+      </div>
 
       {/* Segmented Control / Tabs */}
       {segmentedControl && (
@@ -328,7 +343,7 @@ export default function ModuleShell<T>({
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 mt-[var(--bd-row-gap)] px-[var(--bd-space-md)] md:px-0 md:mt-0">
+      <div className="flex-1 mt-0.5 px-[var(--bd-space-md)] md:px-0 md:mt-0">
         {beforeListContent}
         
         <div className="space-y-[var(--bd-row-gap)] md:space-y-1">

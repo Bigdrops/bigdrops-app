@@ -161,9 +161,9 @@ export default function SharedDocumentForm(props: any) {
   ]
 
   return (
-    <div className="bd-form-shell bd-custom-scrollbar overflow-x-hidden px-0 pt-1 sm:pt-3">
+    <div className="bd-form-shell bd-custom-scrollbar overflow-x-hidden px-0 pt-1 sm:pt-2">
       <div className="mx-auto w-full max-w-[780px] px-3 sm:px-4">
-        <div className="space-y-6 pb-12">
+        <div className="space-y-4 pb-6">
           <FormHeader
             modeLabel={modeLabel}
             title={title}
@@ -273,24 +273,22 @@ export default function SharedDocumentForm(props: any) {
         primaryLabel={primaryLabel}
       />
 
-      <div className="sr-only">
-        <ClientSelector
-          clientId={invoice.client_id || null}
-          clientName={invoice.client_name || ''}
-          isMobile={isMobile}
-          compact
-          dense
-          hideHeader
-          hideTrigger
-          allowClear={false}
-          open={showClientPicker}
-          onOpenChange={setShowClientPicker}
-          onClientChange={(id: string, name: string) => {
-            updateInvoice('client_id', id)
-            updateInvoice('client_name', name)
-          }}
-        />
-      </div>
+      <ClientSelector
+        clientId={invoice.client_id || null}
+        clientName={invoice.client_name || ''}
+        isMobile={isMobile}
+        compact
+        dense
+        hideHeader
+        hideTrigger
+        allowClear={false}
+        open={showClientPicker}
+        onOpenChange={setShowClientPicker}
+        onClientChange={(id: string, name: string) => {
+          updateInvoice('client_id', id)
+          updateInvoice('client_name', name)
+        }}
+      />
 
       <ActionsSheet
         open={showActionsSheet}

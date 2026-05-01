@@ -14,6 +14,8 @@ export type ActionItem = {
   description?: string
   key?: string
   isLoading?: boolean
+  isSwitch?: boolean
+  isActive?: boolean
 }
 
 export type ActionGroup = {
@@ -135,14 +137,18 @@ export function UnifiedActionSheet({
           isCompact 
             ? "grid-cols-[28px,minmax(0,1fr),auto] px-3 py-2" 
             : "grid-cols-[36px,minmax(0,1fr),auto] px-4 py-2.5",
-          tone.row,
+          action.isSwitch && action.isActive
+            ? "border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] ring-1 ring-[hsl(var(--bd-status-success-border))]"
+            : tone.row,
           action.isLoading && "opacity-70 cursor-not-allowed"
         )}
       >
         {!hideIcons && action.icon && (
           <div className={cn(
             "grid place-items-center shadow-sm ring-1 ring-black/5", 
-            tone.iconBg,
+            action.isSwitch && action.isActive
+              ? "bg-[hsl(var(--bd-status-success-text))] text-[hsl(var(--bd-surface))]"
+              : tone.iconBg,
             isCompact ? "h-7 w-7 rounded-[8px] [&_svg]:h-3.5 [&_svg]:w-3.5" : "h-9 w-9 rounded-[10px] [&_svg]:h-4.5 [&_svg]:w-4.5"
           )}>
             {action.isLoading ? <Loader2 className="animate-spin" /> : action.icon}
@@ -150,7 +156,7 @@ export function UnifiedActionSheet({
         )}
         {hideIcons && <div />}
         <div className="min-w-0">
-          <div className={cn("font-bold tracking-tight", isCompact ? "text-[12px]" : "text-[13px]", tone.text)}>
+          <div className={cn("font-bold tracking-tight", isCompact ? "text-[12px]" : "text-[13px]", action.isSwitch && action.isActive ? "text-[hsl(var(--bd-status-success-text))]" : tone.text)}>
             {action.isLoading ? "Processing..." : action.label}
           </div>
           {showDescriptions && action.description && !action.isLoading && (
@@ -159,7 +165,19 @@ export function UnifiedActionSheet({
             </div>
           )}
         </div>
-        <ChevronRight className="h-3.5 w-3.5 opacity-25" />
+        {action.isSwitch ? (
+           <div className={cn(
+             "h-5 w-9 rounded-full border-2 transition-colors relative",
+             action.isActive ? "bg-[hsl(var(--bd-status-success-text))] border-transparent" : "bg-[hsl(var(--bd-surface-muted))] border-[hsl(var(--bd-border))]"
+           )}>
+              <div className={cn(
+                "absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all shadow-sm",
+                action.isActive ? "left-[1.125rem]" : "left-0.5"
+              )} />
+           </div>
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5 opacity-25" />
+        )}
       </button>
     )
   }
@@ -172,7 +190,7 @@ export function UnifiedActionSheet({
         className={cn(
           "overflow-hidden border-x-0 border-b-0 border-t border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-bg))] p-0 shadow-2xl transition-all duration-300",
           "rounded-t-[var(--bd-overlay-radius)]",
-          layout === "grid-scroll" ? "h-auto" : "h-[min(600px,80vh)]",
+          layout === "grid-scroll" ? "h-auto" : "h-auto max-h-[75vh]",
           className
         )}
       >
@@ -207,7 +225,7 @@ export function UnifiedActionSheet({
 
           {/* Content */}
           <div className={cn(
-            "min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-3 bd-custom-scrollbar",
+            "min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 bd-custom-scrollbar",
             layout === "grid-scroll" && "overflow-y-hidden"
           )}>
             {groups ? (
