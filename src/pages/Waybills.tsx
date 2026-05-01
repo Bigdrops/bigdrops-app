@@ -23,6 +23,7 @@ import { formatStatusLabel } from '@/lib/formatters/status'
 import { getStatusTone, getStatusClasses } from '@/lib/statusTheme'
 import { feedback } from '@/lib/feedback'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
+import { isListCacheFresh, readListCache, writeListCache } from '@/lib/cache/listCache'
 import {
   listPendingOrFailedWaybillCreateQueueItems,
   processWaybillCreateQueueItem,
@@ -30,6 +31,9 @@ import {
 } from '@/lib/native/waybillSync'
 
 type FilterTab = 'all' | 'internal' | 'external'
+
+const WAYBILLS_LIST_CACHE_KEY = 'bd:list:waybills:v1:all'
+const WAYBILLS_LIST_CACHE_TTL_MS = 5 * 60 * 1000
 
 export default function Waybills() {
   const navigate = useNavigate()
@@ -49,14 +53,22 @@ export default function Waybills() {
   const [retryingQueueItemId, setRetryingQueueItemId] = useState<string | null>(null)
   const showWaybillSyncRecovery = useMemo(() => canUseNativeSqlite(), [])
 
-  const loadWaybills = async () => {
+  const loadWaybills = async (options?: { background?: boolean; isMounted?: () => boolean }) => {
+    if (!options?.background) {
+      setLoading(true)
+    }
+
     const { data } = await supabase
       .from('waybills')
       .select('*')
       .order('date', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
 
-    setWaybills(((data as Record<string, unknown>[]) || []).map((row) => mapDbWaybill(row)) as Waybill[])
+    if (options?.isMounted && !options.isMounted()) return
+
+    const nextRows = ((data as Record<string, unknown>[]) || []).map((row) => mapDbWaybill(row)) as Waybill[]
+    setWaybills(nextRows)
+    writeListCache(WAYBILLS_LIST_CACHE_KEY, nextRows)
     setLoading(false)
   }
 
@@ -70,11 +82,26 @@ export default function Waybills() {
   }
 
   useEffect(() => {
+    let mounted = true
     const timer = setTimeout(() => {
-      void loadWaybills()
+      const cachedEntry = readListCache<Waybill>(WAYBILLS_LIST_CACHE_KEY)
+      if (cachedEntry) {
+        setWaybills(cachedEntry.rows)
+        setLoading(false)
+
+        if (!isListCacheFresh(cachedEntry, WAYBILLS_LIST_CACHE_TTL_MS)) {
+          void loadWaybills({ background: true, isMounted: () => mounted })
+        }
+      } else {
+        void loadWaybills({ isMounted: () => mounted })
+      }
       void loadWaybillSyncQueue()
     }, 0)
-    return () => clearTimeout(timer)
+
+    return () => {
+      mounted = false
+      clearTimeout(timer)
+    }
   }, [])
 
   useEffect(() => {
@@ -133,7 +160,9 @@ export default function Waybills() {
   const handleDeleteWaybill = async () => {
     if (!activeWaybill?.id) return
     await supabase.from('waybills').delete().eq('id', activeWaybill.id)
-    setWaybills((prev) => prev.filter((w) => w.id !== activeWaybill.id))
+    const nextWaybills = waybills.filter((w) => w.id !== activeWaybill.id)
+    setWaybills(nextWaybills)
+    writeListCache(WAYBILLS_LIST_CACHE_KEY, nextWaybills)
     setActiveWaybill(null)
   }
 
