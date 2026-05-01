@@ -586,6 +586,8 @@ export default function Invoices() {
             <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">No invoices match the current filters</div>
           </div>
         )}
+        onPrimaryAction={() => navigate("/invoices/new")}
+        primaryActionLabel="New Invoice"
         hasMore={hasMore}
         loadingMore={loadingMore}
         onLoadMore={() => fetchInvoices(page + 1, false)}

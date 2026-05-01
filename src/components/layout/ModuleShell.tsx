@@ -213,9 +213,27 @@ export default function ModuleShell<T>({
         )}
       </div>
 
-      {/* Desktop Toolbar (Hidden on mobile) */}
+      {/* Desktop Header & Toolbar (Hidden on mobile) */}
       <div className="hidden md:flex flex-col gap-[var(--bd-space-md)] mb-[var(--bd-space-lg)]">
         <div className="flex items-center justify-between gap-[var(--bd-space-md)]">
+          <div className="flex flex-col">
+            <div className={cn("text-[11px] font-extrabold uppercase tracking-[var(--bd-label-letter-spacing)]", toneStyle.foreground)}>
+              {eyebrow}
+            </div>
+            <h1 className="text-3xl font-black tracking-[-0.04em] text-[hsl(var(--bd-text))] mt-1">
+              {title}
+            </h1>
+          </div>
+          <div className="flex items-center gap-[var(--bd-space-sm)]">
+             {onPrimaryAction && (
+                 <Button onClick={onPrimaryAction} className="h-12 px-8 rounded-[var(--bd-radius-lg)] shadow-lg transition-all active:scale-[0.985] text-sm font-bold">
+                   {primaryActionLabel}
+                </Button>
+             )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-[var(--bd-space-md)] mt-2">
           <div className="flex-1 max-w-2xl relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-[hsl(var(--bd-text-muted))]" />
             <Input
@@ -236,11 +254,7 @@ export default function ModuleShell<T>({
                   Reset Filters
                 </Button>
              )}
-             {onPrimaryAction && (
-                 <Button onClick={onPrimaryAction} className="h-11 px-6 rounded-[var(--bd-radius-lg)] shadow-md transition-all active:scale-[0.985]">
-                   {primaryActionLabel}
-                </Button>
-             )}
+             {/* Secondary actions can go here */}
           </div>
         </div>
 

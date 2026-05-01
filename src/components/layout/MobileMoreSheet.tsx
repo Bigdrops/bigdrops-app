@@ -30,7 +30,8 @@ export function MobileMoreSheet({
       title="More"
       description="Admin, reporting, and workspace utilities"
       groups={groups}
-      layout="list"
+      layout="list-compact"
+      showDescriptions={false}
     />
   )
 }

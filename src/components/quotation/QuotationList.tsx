@@ -480,6 +480,8 @@ export default function QuotationList() {
           setSortBy('Newest')
           setSearch('')
         }}
+        onPrimaryAction={() => navigate('/quotations/new')}
+        primaryActionLabel="New Quotation"
         records={mappedQuotations}
         renderRow={renderQuotationRow}
         beforeListContent={syncRecoveryBanner}
