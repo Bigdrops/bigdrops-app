@@ -5,6 +5,7 @@ import Layout from "../components/Layout"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"
 import { feedback } from "../lib/feedback"
 import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
+import { isListCacheFresh, readListCache, writeListCache } from "@/lib/cache/listCache"
 
 import MobileFab from "../components/layout/MobileFab"
 import ModuleShell from "@/components/layout/ModuleShell"
@@ -22,6 +23,9 @@ type Client = {
   state?: string | null
   category?: string | null
 }
+
+const CLIENTS_LIST_CACHE_KEY = "bd:list:clients:v1:all"
+const CLIENTS_LIST_CACHE_TTL_MS = 10 * 60 * 1000
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -60,18 +64,39 @@ export default function Clients() {
   useEffect(() => {
     let mounted = true
 
-    const run = async () => {
-      setLoading(true)
+    const fetchClients = async (options?: { background?: boolean }) => {
+      if (!options?.background) {
+        setLoading(true)
+      }
+
       const { data, error } = await supabase.from("clients").select("*").order("name")
 
       if (!mounted) return
-      if (error) console.error("Error:", error)
+      if (error) {
+        console.error("Error:", error)
+        setLoading(false)
+        return
+      }
 
-      setClients((data as Client[]) || [])
+      const nextRows = (data as Client[]) || []
+      setClients(nextRows)
+      writeListCache(CLIENTS_LIST_CACHE_KEY, nextRows)
       setLoading(false)
     }
 
-    run()
+    const cachedEntry = readListCache<Client>(CLIENTS_LIST_CACHE_KEY)
+
+    if (cachedEntry) {
+      setClients(cachedEntry.rows)
+      setLoading(false)
+
+      if (!isListCacheFresh(cachedEntry, CLIENTS_LIST_CACHE_TTL_MS)) {
+        void fetchClients({ background: true })
+      }
+    } else {
+      void fetchClients()
+    }
+
     return () => {
       mounted = false
     }
@@ -100,22 +125,17 @@ export default function Clients() {
     })
   }, [clients, query, category])
 
-  const reload = async () => {
-    setLoading(true)
-    const { data, error } = await supabase.from("clients").select("*").order("name")
-    if (error) console.error("Error:", error)
-    setClients((data as Client[]) || [])
-    setLoading(false)
-  }
-
   const handleDelete = async (clientId: string | number): Promise<void> => {
     try {
       setIsDeleting(true)
       const { error } = await supabase.from("clients").delete().eq("id", clientId)
       if (error) throw error
+      const nextClients = clients.filter((client) => client.id !== clientId)
+      setClients(nextClients)
+      writeListCache(CLIENTS_LIST_CACHE_KEY, nextClients)
+      setActiveClient((current) => (current?.id === clientId ? null : current))
       feedback.success('Client deleted')
       setClientToDelete(null)
-      await reload()
     } catch (err: any) {
       feedback.error(getUserFacingMutationMessage(err, { action: 'save' }))
     } finally {

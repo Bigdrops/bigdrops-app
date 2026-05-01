@@ -1,0 +1,74 @@
+export type ListCacheEntry<T> = {
+  rows: T[]
+  fetchedAt: number
+  version: 1
+  meta?: Record<string, unknown>
+}
+
+const LIST_CACHE_VERSION = 1
+
+function canUseStorage() {
+  return typeof window !== "undefined" && typeof window.localStorage !== "undefined"
+}
+
+export function readListCache<T>(key: string): ListCacheEntry<T> | null {
+  if (!canUseStorage()) return null
+
+  try {
+    const raw = window.localStorage.getItem(key)
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw) as Partial<ListCacheEntry<T>>
+    if (!parsed || parsed.version !== LIST_CACHE_VERSION) return null
+    if (!Array.isArray(parsed.rows) || typeof parsed.fetchedAt !== "number") return null
+
+    return {
+      rows: parsed.rows,
+      fetchedAt: parsed.fetchedAt,
+      version: LIST_CACHE_VERSION,
+      meta: parsed.meta && typeof parsed.meta === "object" ? parsed.meta : undefined,
+    }
+  } catch {
+    return null
+  }
+}
+
+export function writeListCache<T>(
+  key: string,
+  rows: T[],
+  meta?: Record<string, unknown>,
+): ListCacheEntry<T> | null {
+  if (!canUseStorage()) return null
+
+  const entry: ListCacheEntry<T> = {
+    rows,
+    fetchedAt: Date.now(),
+    version: LIST_CACHE_VERSION,
+    ...(meta ? { meta } : {}),
+  }
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(entry))
+    return entry
+  } catch {
+    return null
+  }
+}
+
+export function isListCacheFresh<T>(
+  entry: ListCacheEntry<T> | null | undefined,
+  ttlMs: number,
+): boolean {
+  if (!entry) return false
+  return Date.now() - entry.fetchedAt < ttlMs
+}
+
+export function invalidateListCache(key: string) {
+  if (!canUseStorage()) return
+
+  try {
+    window.localStorage.removeItem(key)
+  } catch {
+    // Ignore storage cleanup failures.
+  }
+}

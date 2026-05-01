@@ -4,6 +4,7 @@ import { Archive, Eye, FolderKanban, FolderOpen, MoreHorizontal, Pencil, Trash2 
 import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
+import { isListCacheFresh, readListCache, writeListCache } from '@/lib/cache/listCache'
 
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
@@ -40,6 +41,20 @@ const STATUS_CONFIG = {
   cancelled: { label: 'Cancelled' },
 } as const
 
+const PROJECTS_LIST_CACHE_KEY = 'bd:list:projects:v1:all'
+const PROJECTS_LIST_CACHE_TTL_MS = 5 * 60 * 1000
+
+function getCachedDocCounts(meta?: Record<string, unknown>) {
+  const rawDocCounts = meta?.docCounts
+  if (!rawDocCounts || typeof rawDocCounts !== 'object' || Array.isArray(rawDocCounts)) {
+    return {}
+  }
+
+  return Object.fromEntries(
+    Object.entries(rawDocCounts).map(([projectId, count]) => [projectId, Number(count) || 0]),
+  ) as Record<string, number>
+}
+
 export default function Projects() {
   const navigate = useNavigate()
   const [projects, setProjects] = useState<ProjectRow[]>([])
@@ -57,11 +72,31 @@ export default function Projects() {
   const [isArchiving, setIsArchiving] = useState(false)
 
   useEffect(() => {
-    void fetchProjects()
+    let mounted = true
+
+    const cachedEntry = readListCache<ProjectRow>(PROJECTS_LIST_CACHE_KEY)
+    if (cachedEntry) {
+      setProjects(cachedEntry.rows)
+      setDocCounts(getCachedDocCounts(cachedEntry.meta))
+      setLoading(false)
+
+      if (!isListCacheFresh(cachedEntry, PROJECTS_LIST_CACHE_TTL_MS)) {
+        void fetchProjects({ background: true, isMounted: () => mounted })
+      }
+    } else {
+      void fetchProjects({ isMounted: () => mounted })
+    }
+
+    return () => {
+      mounted = false
+    }
   }, [])
 
-  const fetchProjects = async (): Promise<void> => {
-    setLoading(true)
+  const fetchProjects = async (options?: { background?: boolean; isMounted?: () => boolean }): Promise<void> => {
+    if (!options?.background) {
+      setLoading(true)
+    }
+
     const { data } = await supabase
       .from('projects')
       .select('*')
@@ -69,9 +104,11 @@ export default function Projects() {
       .order('start_date', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
 
-    const projectRows = (data || []) as ProjectRow[]
-    setProjects(projectRows)
+    if (options?.isMounted && !options.isMounted()) return
 
+    const projectRows = (data || []) as ProjectRow[]
+
+    let counts: Record<string, number> = {}
     if (projectRows.length > 0) {
       const ids = projectRows.map((project) => project.id)
       const [invRes, csrRes, quotationRes, waybillRes] = await Promise.all([
@@ -81,17 +118,18 @@ export default function Projects() {
         supabase.from('waybills').select('project_id').in('project_id', ids),
       ])
 
-      const counts: Record<string, number> = {}
       ids.forEach((id) => { counts[id] = 0 })
       ;((invRes.data || []) as ProjectIdRow[]).forEach((row) => { if (row.project_id) counts[row.project_id] = (counts[row.project_id] || 0) + 1 })
       ;((csrRes.data || []) as ProjectIdRow[]).forEach((row) => { if (row.project_id) counts[row.project_id] = (counts[row.project_id] || 0) + 1 })
       ;((quotationRes.data || []) as ProjectIdRow[]).forEach((row) => { if (row.project_id) counts[row.project_id] = (counts[row.project_id] || 0) + 1 })
       ;((waybillRes.data || []) as ProjectIdRow[]).forEach((row) => { if (row.project_id) counts[row.project_id] = (counts[row.project_id] || 0) + 1 })
-      setDocCounts(counts)
-    } else {
-      setDocCounts({})
     }
 
+    if (options?.isMounted && !options.isMounted()) return
+
+    setProjects(projectRows)
+    setDocCounts(counts)
+    writeListCache(PROJECTS_LIST_CACHE_KEY, projectRows, { docCounts: counts })
     setLoading(false)
   }
 
@@ -154,10 +192,15 @@ export default function Projects() {
       setIsDeleting(true)
       const { error } = await supabase.from('projects').delete().eq('id', project.id)
       if (error) throw error
+      const nextProjects = projects.filter((row) => row.id !== project.id)
+      const nextDocCounts = { ...docCounts }
+      delete nextDocCounts[project.id]
+      setProjects(nextProjects)
+      setDocCounts(nextDocCounts)
+      writeListCache(PROJECTS_LIST_CACHE_KEY, nextProjects, { docCounts: nextDocCounts })
       feedback.success('Project deleted')
       setProjectToDelete(null)
       setActiveProject(null)
-      await fetchProjects()
     } catch (err: any) {
       feedback.error(getUserFacingMutationMessage(err, { action: 'save' }))
     } finally {
@@ -170,9 +213,14 @@ export default function Projects() {
       setIsArchiving(true)
       const { error } = await supabase.from('projects').update({ archived_at: new Date().toISOString() }).eq('id', project.id)
       if (error) throw error
+      const nextProjects = projects.filter((row) => row.id !== project.id)
+      const nextDocCounts = { ...docCounts }
+      delete nextDocCounts[project.id]
+      setProjects(nextProjects)
+      setDocCounts(nextDocCounts)
+      writeListCache(PROJECTS_LIST_CACHE_KEY, nextProjects, { docCounts: nextDocCounts })
       feedback.success('Project archived')
       setActiveProject(null)
-      await fetchProjects()
     } catch (err: any) {
       feedback.error(getUserFacingMutationMessage(err, { action: 'save' }))
     } finally {
