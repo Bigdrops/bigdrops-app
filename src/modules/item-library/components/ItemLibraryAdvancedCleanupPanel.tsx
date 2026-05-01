@@ -6,6 +6,10 @@ import {
   buildCatalogCleanupPrompt,
   createCatalogCleanupSession,
   validateCatalogCleanupBatchImport,
+  createCleanupBatches,
+  buildFlaggedCleanupBatchExportPayload,
+  buildFlaggedCleanupPrompt,
+  validateFlaggedCleanupImport,
 } from '../domain/itemCleanupExchange'
 import type {
   CatalogCleanupBatchExportPayload,
@@ -16,15 +20,19 @@ import type {
   DuplicateCandidateGroup,
   ItemAlias,
   ItemCatalogItem,
+  FlaggedCleanupBatch,
+  FlaggedCleanupBatchExportPayload,
+  CleanupImportPreview,
 } from '../types'
 
 type ItemLibraryAdvancedCleanupPanelProps = {
+  workflow: 'duplicates' | 'full_catalog'
   applyLoading: boolean
   items: ItemCatalogItem[]
   aliases: ItemAlias[]
   duplicateGroups: DuplicateCandidateGroup[]
   onApplyProposals: (
-    exportPayload: CatalogCleanupBatchExportPayload,
+    exportPayload: CatalogCleanupBatchExportPayload | FlaggedCleanupBatchExportPayload,
     proposals: CleanupApplyProposal[],
   ) => Promise<CleanupApplyResult[]>
 }
@@ -33,7 +41,7 @@ type BatchState = {
   status: CatalogCleanupBatchStatus
   importText: string
   applyResults: CleanupApplyResult[]
-  preview: CatalogCleanupImportPreview | null
+  preview: CatalogCleanupImportPreview | CleanupImportPreview | null
 }
 
 function copyText(value: string) {
@@ -136,6 +144,7 @@ function createMergeProposal(
 }
 
 export function ItemLibraryAdvancedCleanupPanel({
+  workflow,
   applyLoading,
   items,
   aliases,
@@ -145,41 +154,59 @@ export function ItemLibraryAdvancedCleanupPanel({
   const [batchSizeOption, setBatchSizeOption] = useState<'25' | '50' | '100' | 'custom'>('50')
   const [customBatchSize, setCustomBatchSize] = useState('')
   const [lockedSession, setLockedSession] = useState<ReturnType<typeof createCatalogCleanupSession> | null>(null)
+  const [duplicateBatches, setDuplicateBatches] = useState<FlaggedCleanupBatch[]>([])
   const [currentBatchIndex, setCurrentBatchIndex] = useState(0)
   const [batchStates, setBatchStates] = useState<Record<string, BatchState>>({})
   const [copyState, setCopyState] = useState<'idle' | 'json' | 'prompt'>('idle')
   const [applyError, setApplyError] = useState<string | null>(null)
 
+  const isDuplicates = workflow === 'duplicates'
+
+  useEffect(() => {
+    if (isDuplicates && duplicateGroups.length > 0 && duplicateBatches.length === 0) {
+      const batches = createCleanupBatches(duplicateGroups as any)
+      setDuplicateBatches(batches)
+      setBatchStates(
+        Object.fromEntries(
+          batches.map((batch) => [
+            batch.batch_id,
+            {
+              status: 'not_started',
+              importText: '',
+              applyResults: [],
+              preview: null,
+            },
+          ]),
+        ),
+      )
+    }
+  }, [isDuplicates, duplicateGroups, duplicateBatches.length])
+
   const resolvedBatchSize = getBatchSize(batchSizeOption, customBatchSize)
-  const customBatchTouched = batchSizeOption === 'custom' && customBatchSize.trim().length > 0
-  const customBatchInvalid = batchSizeOption === 'custom' && customBatchTouched && !resolvedBatchSize
-  const sessionEstimate = useMemo(() => {
-    if (!resolvedBatchSize) return null
-    return createCatalogCleanupSession({
-      items,
-      aliases,
-      duplicateGroups,
-      batchSize: resolvedBatchSize,
-      sessionId: 'preview-session',
-      generatedAt: 'preview',
-    })
-  }, [aliases, duplicateGroups, items, resolvedBatchSize])
-  const currentBatch = lockedSession?.batches[currentBatchIndex] || null
+  const currentBatch = isDuplicates ? duplicateBatches[currentBatchIndex] : (lockedSession?.batches[currentBatchIndex] || null)
   const currentBatchState = currentBatch ? batchStates[currentBatch.batch_id] : null
+
   const currentExportPayload = useMemo(() => {
+    if (isDuplicates) {
+      if (!currentBatch) return null
+      return buildFlaggedCleanupBatchExportPayload(currentBatch as FlaggedCleanupBatch)
+    }
     if (!lockedSession || !currentBatch) return null
     return buildCatalogCleanupBatchExportPayload({
       session: lockedSession,
-      batch: currentBatch,
+      batch: currentBatch as any,
       batchIndex: currentBatchIndex,
     })
-  }, [currentBatch, currentBatchIndex, lockedSession])
+  }, [isDuplicates, currentBatch, currentBatchIndex, lockedSession])
 
   const importText = currentBatchState?.importText || ''
   const validation = useMemo(() => {
     if (!currentExportPayload) return null
-    return validateCatalogCleanupBatchImport(importText, currentExportPayload)
-  }, [currentExportPayload, importText])
+    if (isDuplicates) {
+      return validateFlaggedCleanupImport(importText, currentExportPayload as FlaggedCleanupBatchExportPayload)
+    }
+    return validateCatalogCleanupBatchImport(importText, currentExportPayload as CatalogCleanupBatchExportPayload)
+  }, [isDuplicates, currentExportPayload, importText])
 
   useEffect(() => {
     if (!currentBatch || !validation) return
@@ -202,12 +229,18 @@ export function ItemLibraryAdvancedCleanupPanel({
     () => (currentExportPayload ? JSON.stringify(currentExportPayload, null, 2) : ''),
     [currentExportPayload],
   )
-  const aiPrompt = useMemo(() => buildCatalogCleanupPrompt(currentExportPayload), [currentExportPayload])
-  const applyableMerges = validation?.preview?.merge_suggestions || []
-  const renameSuggestions = validation?.preview?.rename_suggestions || []
-  const aliasSuggestions = validation?.preview?.alias_suggestions || []
-  const ignoredItems = validation?.preview?.ignored_items || []
-  const reviewRequiredItems = validation?.preview?.review_required_items || []
+  const aiPrompt = useMemo(() => {
+    if (!currentExportPayload) return ''
+    if (isDuplicates) return buildFlaggedCleanupPrompt(currentExportPayload as FlaggedCleanupBatchExportPayload)
+    return buildCatalogCleanupPrompt(currentExportPayload as CatalogCleanupBatchExportPayload)
+  }, [isDuplicates, currentExportPayload])
+  const preview = validation?.preview as (CatalogCleanupImportPreview | CleanupImportPreview | null)
+  const applyableMerges = isDuplicates ? (preview as CleanupImportPreview)?.merge_groups || [] : (preview as CatalogCleanupImportPreview)?.merge_suggestions || []
+  const renameSuggestions = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.rename_suggestions || [] : []
+  const aliasSuggestions = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.alias_suggestions || [] : []
+  const ignoredItems = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.ignored_items || [] : []
+  const reviewRequiredItems = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.review_required_items || [] : []
+  const ignoredGroups = isDuplicates ? (preview as CleanupImportPreview)?.ignored_groups || [] : []
 
   const markBatchStatus = (status: CatalogCleanupBatchStatus) => {
     if (!currentBatch) return
@@ -279,14 +312,23 @@ export function ItemLibraryAdvancedCleanupPanel({
       setApplyError(null)
       const results = await onApplyProposals(
         currentExportPayload,
-        applyableMerges.map((merge) =>
-          createMergeProposal(
-            currentExportPayload,
-            merge.winner.item_id,
-            merge.merged_items.map((item) => item.item_id),
-            merge.canonical_name,
-          ),
-        ),
+        isDuplicates
+          ? (applyableMerges as any[]).map((merge) => ({
+              group_id: merge.group.group_id,
+              canonical_name: merge.canonical_name,
+              winner_item_id: merge.winner.item_id,
+              merged_item_ids: merge.merged_items.map((item: any) => item.item_id),
+              aliases_to_keep: merge.aliases_to_keep,
+              aliases_to_retire: merge.aliases_to_retire,
+            }))
+          : (applyableMerges as any[]).map((merge) =>
+              createMergeProposal(
+                currentExportPayload as CatalogCleanupBatchExportPayload,
+                merge.winner.item_id,
+                merge.merged_items.map((item: any) => item.item_id),
+                merge.canonical_name,
+              ),
+            ),
       )
 
       setBatchStates((previous) => ({
@@ -303,7 +345,21 @@ export function ItemLibraryAdvancedCleanupPanel({
     }
   }
 
-  if (!lockedSession) {
+  if (!lockedSession && !isDuplicates) {
+    const customBatchTouched = batchSizeOption === 'custom' && customBatchSize.trim().length > 0
+    const customBatchInvalid = batchSizeOption === 'custom' && customBatchTouched && !resolvedBatchSize
+    const sessionEstimate = useMemo(() => {
+      if (!resolvedBatchSize) return null
+      return createCatalogCleanupSession({
+        items,
+        aliases,
+        duplicateGroups,
+        batchSize: resolvedBatchSize,
+        sessionId: 'preview-session',
+        generatedAt: 'preview',
+      })
+    }, [aliases, duplicateGroups, items, resolvedBatchSize])
+
     return (
       <div className="h-full overflow-y-auto bg-[linear-gradient(180deg,_#efe5d7_0%,_#e8dccb_100%)]">
         <div className="mx-auto max-w-3xl space-y-5 p-5 pb-28 md:p-6">
@@ -414,8 +470,10 @@ export function ItemLibraryAdvancedCleanupPanel({
         <section className="rounded-[18px] border border-[#d6c2a8] bg-[linear-gradient(180deg,_#fff9f1_0%,_#f7ecde_100%)] p-5 shadow-[0_20px_36px_rgba(93,68,42,0.10)]">
           <SectionTitle
             eyebrow="Locked Session"
-            title={`Batch ${currentBatchIndex + 1} of ${lockedSession.batch_count}`}
-            description="This session is locked to a fixed batch size. Export only the current batch, review the AI output, and apply supported merge decisions before moving forward."
+            title={isDuplicates ? currentBatch.title : `Batch ${currentBatchIndex + 1} of ${lockedSession.batch_count}`}
+            description={isDuplicates 
+              ? "This batch contains categorized duplicate groups. Review the AI output and apply merges before proceeding."
+              : "This session is locked to a fixed batch size. Export only the current batch, review the AI output, and apply supported merge decisions before moving forward."}
           />
 
           <div className="mt-4 grid gap-3 md:grid-cols-4">
@@ -424,13 +482,13 @@ export function ItemLibraryAdvancedCleanupPanel({
             <StatCard label="Status" value={currentStatus.replace('_', ' ')} meta="Tracked in component state." />
             <StatCard
               label="Progress"
-              value={`${currentBatchIndex + 1}/${lockedSession.batch_count}`}
-              meta="One numeric batch at a time."
+              value={`${currentBatchIndex + 1}/${isDuplicates ? duplicateBatches.length : lockedSession.batch_count}`}
+              meta={isDuplicates ? "Categorized batches." : "One numeric batch at a time."}
             />
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            {lockedSession.batches.map((batch, index) => {
+            {(isDuplicates ? duplicateBatches : lockedSession.batches).map((batch, index) => {
               const status = batchStates[batch.batch_id]?.status || 'not_started'
               return (
                 <span
@@ -540,10 +598,19 @@ export function ItemLibraryAdvancedCleanupPanel({
             ) : validation.preview ? (
               <div className="space-y-4">
                 <div className="grid gap-3 md:grid-cols-4">
-                  <StatCard label="Merges" value={applyableMerges.length.toLocaleString()} meta="Applyable now." />
-                  <StatCard label="Renames" value={renameSuggestions.length.toLocaleString()} meta="Preview only." />
-                  <StatCard label="Aliases" value={aliasSuggestions.length.toLocaleString()} meta="Preview only." />
-                  <StatCard label="Review" value={reviewRequiredItems.length.toLocaleString()} meta="Needs human check." />
+                  {!isDuplicates ? (
+                    <>
+                      <StatCard label="Merges" value={applyableMerges.length.toLocaleString()} meta="Applyable now." />
+                      <StatCard label="Renames" value={renameSuggestions.length.toLocaleString()} meta="Preview only." />
+                      <StatCard label="Aliases" value={aliasSuggestions.length.toLocaleString()} meta="Preview only." />
+                      <StatCard label="Review" value={reviewRequiredItems.length.toLocaleString()} meta="Needs human check." />
+                    </>
+                  ) : (
+                    <>
+                      <StatCard label="Merges" value={applyableMerges.length.toLocaleString()} meta="Detected groups." />
+                      <StatCard label="Ignored" value={ignoredGroups.length.toLocaleString()} meta="Ambiguous groups." />
+                    </>
+                  )}
                 </div>
 
                 {applyableMerges.length ? (
@@ -566,14 +633,24 @@ export function ItemLibraryAdvancedCleanupPanel({
                     </div>
 
                     <div className="mt-3 space-y-3">
-                      {applyableMerges.map((merge) => (
-                        <article key={`${merge.winner.item_id}-${merge.canonical_name}`} className="rounded-[12px] bg-[#f9f2e7] p-3">
-                          <h3 className="text-[13px] font-bold text-[#2c2218]">{merge.canonical_name}</h3>
-                          <p className="mt-1 text-[11px] text-[#6f5b46]">
-                            Winner: {merge.winner.name} • Merge: {merge.merged_items.map((item) => item.name).join(', ')}
-                          </p>
-                        </article>
-                      ))}
+                      {isDuplicates 
+                        ? (applyableMerges as any[]).map((merge) => (
+                          <article key={merge.group.group_id} className="rounded-[12px] bg-[#f9f2e7] p-3">
+                            <h3 className="text-[13px] font-bold text-[#2c2218]">{merge.canonical_name}</h3>
+                            <p className="mt-1 text-[11px] text-[#6f5b46]">
+                              Group: {merge.group.label} • Winner: {merge.winner.name} • Merge: {merge.merged_items.map((item: any) => item.name).join(', ')}
+                            </p>
+                          </article>
+                        ))
+                        : (applyableMerges as any[]).map((merge) => (
+                          <article key={`${merge.winner.item_id}-${merge.canonical_name}`} className="rounded-[12px] bg-[#f9f2e7] p-3">
+                            <h3 className="text-[13px] font-bold text-[#2c2218]">{merge.canonical_name}</h3>
+                            <p className="mt-1 text-[11px] text-[#6f5b46]">
+                              Winner: {merge.winner.name} • Merge: {merge.merged_items.map((item: any) => item.name).join(', ')}
+                            </p>
+                          </article>
+                        ))
+                      }
                     </div>
                   </div>
                 ) : null}
@@ -606,10 +683,10 @@ export function ItemLibraryAdvancedCleanupPanel({
                   </div>
                 ) : null}
 
-                {ignoredItems.length ? (
+                 {isDuplicates && ignoredGroups.length ? (
                   <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Ignored / no action</div>
-                    <p className="mt-2 text-[11px] text-[#6f5b46]">{ignoredItems.map((item) => item.name).join(', ')}</p>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Ignored groups</div>
+                    <p className="mt-2 text-[11px] text-[#6f5b46]">{ignoredGroups.map((g: any) => g.label).join(', ')}</p>
                   </div>
                 ) : null}
 
@@ -647,22 +724,26 @@ export function ItemLibraryAdvancedCleanupPanel({
                     <button
                       type="button"
                       onClick={() => {
-                        setLockedSession(null)
+                        if (isDuplicates) {
+                          setDuplicateBatches([])
+                        } else {
+                          setLockedSession(null)
+                        }
                         setBatchStates({})
                         setCurrentBatchIndex(0)
                         setApplyError(null)
                       }}
                       className="rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-3 py-2 text-[11px] font-semibold text-[#6d543a]"
                     >
-                      Start new session
+                      {isDuplicates ? 'Restart batches' : 'Start new session'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setCurrentBatchIndex((value) => value + 1)}
-                      disabled={!hasNextBatch || !canAdvance}
+                      disabled={!((isDuplicates ? currentBatchIndex < duplicateBatches.length - 1 : hasNextBatch)) || !canAdvance}
                       className="rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2 text-[11px] font-bold text-[#523b25] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {hasNextBatch ? 'Next batch' : 'Last batch'}
+                      {(isDuplicates ? currentBatchIndex < duplicateBatches.length - 1 : hasNextBatch) ? 'Next batch' : 'Last batch'}
                     </button>
                   </div>
                 </div>

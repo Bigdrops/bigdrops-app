@@ -447,30 +447,80 @@ export default function ItemLibraryPage() {
                   </button>
                   <div className="text-[11px] font-semibold text-[#8a745f]">
                     {viewMode === 'duplicates'
-                      ? 'Fix Duplicate Items'
-                      : viewMode === 'advanced_cleanup'
-                        ? 'Clean & Standardize Catalog'
-                        : 'Review Past Changes'}
+                      ? 'Fix Duplicate Items (Manual)'
+                      : viewMode === 'duplicates_outsourced'
+                        ? 'Fix Duplicate Items (AI Outsource)'
+                        : viewMode === 'duplicates_choice'
+                        ? 'Choose Review Method'
+                        : viewMode === 'advanced_cleanup'
+                          ? 'Clean & Standardize Catalog'
+                          : 'Review Past Changes'}
                   </div>
                 </div>
               ) : null}
 
-              {workflowMode === 'cleanup' && viewMode === 'duplicates' ? (
-                <ItemLibraryDuplicateReviewPanel
-                  aliases={selectedGroupAliases}
-                  aliasesError={aliasesError}
-                  aliasesLoading={aliasesLoading}
-                  group={selectedDuplicateGroup}
-                  item={selectedItem}
-                  historyRows={historyRows}
-                  loading={historyLoading}
-                  error={historyError}
-                  mergeLoading={mergeLoading}
-                  onInspectItem={(itemId) => setSelectedItemId(itemId)}
-                  onMerge={handleMerge}
-                />
+              {workflowMode === 'cleanup' && viewMode === 'duplicates_choice' ? (
+                <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-[#faf9f7]">
+                   <div className="max-w-2xl space-y-6">
+                      <div className="space-y-2">
+                        <h2 className="text-3xl font-extrabold tracking-tight text-[#2c2218]">Fix Duplicate Items</h2>
+                        <p className="text-[#7c6954] text-[13px] leading-relaxed">How would you like to review the {totalUnresolvedIssues} duplicate groups detected in your catalog?</p>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <button 
+                          onClick={() => setViewMode('duplicates')}
+                          className="flex flex-col items-center gap-2 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-6 text-center transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                        >
+                          <div className="text-sm font-bold text-[#2c2218]">Review in App</div>
+                          <div className="text-[11px] text-[#8a8277]">Manual review with side-by-side comparison and history inspection. Best for complex cases.</div>
+                        </button>
+
+                        <button 
+                          onClick={() => setViewMode('duplicates_outsourced')}
+                          className="flex flex-col items-center gap-2 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-6 text-center transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                        >
+                          <div className="text-sm font-bold text-[#2c2218]">Outsource Duplicate Review</div>
+                          <div className="text-[11px] text-[#8a8277]">Export groups to AI (Small Drops Assistant) for automated analysis and batch apply.</div>
+                        </button>
+                      </div>
+
+                      <button 
+                        onClick={() => setViewMode('catalog')}
+                        className="text-[12px] font-bold text-[#8c6a45] hover:underline"
+                      >
+                        Cancel and return to Hub
+                      </button>
+                   </div>
+                </div>
+              ) : workflowMode === 'cleanup' && (viewMode === 'duplicates' || viewMode === 'duplicates_outsourced') ? (
+                viewMode === 'duplicates' ? (
+                  <ItemLibraryDuplicateReviewPanel
+                    aliases={selectedGroupAliases}
+                    aliasesError={aliasesError}
+                    aliasesLoading={aliasesLoading}
+                    group={selectedDuplicateGroup}
+                    item={selectedItem}
+                    historyRows={historyRows}
+                    loading={historyLoading}
+                    error={historyError}
+                    mergeLoading={mergeLoading}
+                    onInspectItem={(itemId) => setSelectedItemId(itemId)}
+                    onMerge={handleMerge}
+                  />
+                ) : (
+                  <ItemLibraryAdvancedCleanupPanel
+                    workflow="duplicates"
+                    applyLoading={mergeLoading}
+                    items={summaryItems}
+                    aliases={allItemAliases}
+                    duplicateGroups={allDuplicateGroups}
+                    onApplyProposals={handleApplyCleanupProposals}
+                  />
+                )
               ) : workflowMode === 'cleanup' && viewMode === 'advanced_cleanup' ? (
                 <ItemLibraryAdvancedCleanupPanel
+                  workflow="full_catalog"
                   applyLoading={mergeLoading}
                   items={summaryItems}
                   aliases={allItemAliases}
@@ -493,14 +543,14 @@ export default function ItemLibraryPage() {
 
                       <div className="grid gap-3 md:grid-cols-3">
                         <button 
-                          onClick={() => setViewMode('duplicates')}
+                          onClick={() => setViewMode('duplicates_choice')}
                           className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
                         >
                           <div className="flex w-full items-center justify-between">
                             <span className="text-sm font-bold text-[#2c2218]">Fix Duplicate Items</span>
                             <span className="rounded-full bg-[#e8d5bc] px-2.5 py-0.5 text-[10px] font-bold text-[#634a31] group-hover:bg-[#8c6a45] group-hover:text-white transition-colors">{totalUnresolvedIssues} groups</span>
                           </div>
-                          <span className="text-[11px] text-[#8a8277]">Review detected duplicate groups, inspect history, and merge manually with the existing duplicate review flow.</span>
+                          <span className="text-[11px] text-[#8a8277]">Review detected duplicate groups, inspect history, and merge manually or via AI outsource.</span>
                         </button>
 
                         <button 
