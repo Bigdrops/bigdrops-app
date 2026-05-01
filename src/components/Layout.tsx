@@ -148,7 +148,7 @@ export default function Layout({
   }, [openSidebar])
 
   return (
-    <div className="app-ambient flex min-h-dvh flex-col bg-background text-foreground md:flex-row">
+    <div data-bd-shell="app" className="app-ambient">
       {/* Desktop Navigation */}
       <DesktopSidebar
         session={session}
@@ -159,7 +159,7 @@ export default function Layout({
       />
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col">
+      <div data-bd-shell="main">
         {/* Mobile Header (Home/Dashboard) */}
         <div className="md:hidden">
           {isHome && !hideMobileHomeHeader ? (
@@ -201,6 +201,7 @@ export default function Layout({
           <div 
             {...props}
             data-bd-layout="content"
+            data-bd-shell="content"
             className={cn(
               "flex-1 w-full",
               !isHome && "md:px-[var(--bd-layout-padding,1.5rem)] md:py-[var(--bd-space-md)]",

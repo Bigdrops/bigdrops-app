@@ -175,7 +175,31 @@
 }
 
 /* Scoped Layout Content Anchor */
-[data-bd-layout="content"] {
+[data-bd-shell="app"] {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  width: 100%;
+  background-color: hsl(var(--bd-app-bg));
+  color: hsl(var(--bd-text));
+}
+
+@media (min-width: 768px) {
+  [data-bd-shell="app"] {
+    flex-direction: row;
+  }
+}
+
+[data-bd-shell="main"] {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+[data-bd-layout="content"],
+[data-bd-shell="content"] {
   width: 100%;
   max-width: none;
   margin: 0;

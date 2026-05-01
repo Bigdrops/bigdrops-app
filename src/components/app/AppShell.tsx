@@ -158,50 +158,48 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
         </Suspense>
       )}
       <Suspense fallback={<PageLoader />}>
-        <main className="flex-1 w-full">
-          <Routes>
-            <Route path="/" element={withBoundary(<Dashboard session={session} />)} />
-            <Route path="/invoices" element={withBoundary(<Invoices />)} />
-            <Route path="/invoices/new" element={withBoundary(<NewInvoice />)} />
-            <Route path="/invoices/edit/:id" element={withBoundary(<EditInvoice />)} />
-            <Route path="/invoices/:id" element={withBoundary(<ViewInvoice />)} />
-            <Route path="/quotations" element={withBoundary(<Quotations />)} />
-            <Route path="/quotations/new" element={withBoundary(<NewQuotation />)} />
-            <Route path="/quotations/edit/:id" element={withBoundary(<EditQuotation />)} />
-            <Route path="/quotations/:id" element={withBoundary(<ViewQuotation />)} />
-            <Route path="/csr" element={withBoundary(<CSR />)} />
-            <Route path="/csr/new" element={withBoundary(<NewCSR />)} />
-            <Route path="/csr/edit/:id" element={withBoundary(<EditCSR />)} />
-            <Route path="/csr/:id" element={withBoundary(<ViewCSR />)} />
-            <Route path="/clients" element={withBoundary(<Clients />)} />
-            <Route path="/clients/new" element={withBoundary(<AddClient />)} />
-            <Route path="/clients/edit/:id" element={withBoundary(<EditClient />)} />
-            <Route path="/clients/:id" element={withBoundary(<ClientDetail />)} />
-            <Route path="/settings" element={withBoundary(<Settings />)} />
-            <Route path="/projects" element={withBoundary(<Projects />)} />
-            <Route path="/projects/new" element={withBoundary(<NewProject />)} />
-            <Route
-              path="/projects/:projectId/documents/:documentId"
-              element={withBoundary(<ProjectDocumentView />)}
-            />
-            <Route path="/projects/:id" element={withBoundary(<ProjectDetail />)} />
-            <Route path="/reports" element={withBoundary(<Reports />)} />
-            <Route path="/compliance" element={withBoundary(<ComplianceHub />)} />
-            <Route path="/item-library" element={withBoundary(<ItemLibraryPage />)} />
-            <Route path="/waybills" element={withBoundary(<Waybills />)} />
-            <Route path="/waybills/new" element={withBoundary(<NewWaybill />)} />
-            <Route path="/waybills/:id/edit" element={withBoundary(<EditWaybill />)} />
-            <Route path="/waybills/:id" element={withBoundary(<ViewWaybill />)} />
-            <Route path="/rfqs" element={withBoundary(<Rfqs />)} />
-            <Route path="/rfqs/new" element={withBoundary(<NewRfq />)} />
-            <Route path="/rfqs/edit/:id" element={withBoundary(<EditRfq />)} />
-            <Route path="/rfqs/:id" element={withBoundary(<ViewRfq />)} />
-            <Route path="/boqs" element={withBoundary(<Boqs />)} />
-            <Route path="/boqs/new" element={withBoundary(<NewBoq />)} />
-            <Route path="/boqs/edit/:id" element={withBoundary(<EditBoq />)} />
-            <Route path="/boqs/:id" element={withBoundary(<ViewBoq />)} />
-          </Routes>
-        </main>
+        <Routes>
+          <Route path="/" element={withBoundary(<Dashboard session={session} />)} />
+          <Route path="/invoices" element={withBoundary(<Invoices />)} />
+          <Route path="/invoices/new" element={withBoundary(<NewInvoice />)} />
+          <Route path="/invoices/edit/:id" element={withBoundary(<EditInvoice />)} />
+          <Route path="/invoices/:id" element={withBoundary(<ViewInvoice />)} />
+          <Route path="/quotations" element={withBoundary(<Quotations />)} />
+          <Route path="/quotations/new" element={withBoundary(<NewQuotation />)} />
+          <Route path="/quotations/edit/:id" element={withBoundary(<EditQuotation />)} />
+          <Route path="/quotations/:id" element={withBoundary(<ViewQuotation />)} />
+          <Route path="/csr" element={withBoundary(<CSR />)} />
+          <Route path="/csr/new" element={withBoundary(<NewCSR />)} />
+          <Route path="/csr/edit/:id" element={withBoundary(<EditCSR />)} />
+          <Route path="/csr/:id" element={withBoundary(<ViewCSR />)} />
+          <Route path="/clients" element={withBoundary(<Clients />)} />
+          <Route path="/clients/new" element={withBoundary(<AddClient />)} />
+          <Route path="/clients/edit/:id" element={withBoundary(<EditClient />)} />
+          <Route path="/clients/:id" element={withBoundary(<ClientDetail />)} />
+          <Route path="/settings" element={withBoundary(<Settings />)} />
+          <Route path="/projects" element={withBoundary(<Projects />)} />
+          <Route path="/projects/new" element={withBoundary(<NewProject />)} />
+          <Route
+            path="/projects/:projectId/documents/:documentId"
+            element={withBoundary(<ProjectDocumentView />)}
+          />
+          <Route path="/projects/:id" element={withBoundary(<ProjectDetail />)} />
+          <Route path="/reports" element={withBoundary(<Reports />)} />
+          <Route path="/compliance" element={withBoundary(<ComplianceHub />)} />
+          <Route path="/item-library" element={withBoundary(<ItemLibraryPage />)} />
+          <Route path="/waybills" element={withBoundary(<Waybills />)} />
+          <Route path="/waybills/new" element={withBoundary(<NewWaybill />)} />
+          <Route path="/waybills/:id/edit" element={withBoundary(<EditWaybill />)} />
+          <Route path="/waybills/:id" element={withBoundary(<ViewWaybill />)} />
+          <Route path="/rfqs" element={withBoundary(<Rfqs />)} />
+          <Route path="/rfqs/new" element={withBoundary(<NewRfq />)} />
+          <Route path="/rfqs/edit/:id" element={withBoundary(<EditRfq />)} />
+          <Route path="/rfqs/:id" element={withBoundary(<ViewRfq />)} />
+          <Route path="/boqs" element={withBoundary(<Boqs />)} />
+          <Route path="/boqs/new" element={withBoundary(<NewBoq />)} />
+          <Route path="/boqs/edit/:id" element={withBoundary(<EditBoq />)} />
+          <Route path="/boqs/:id" element={withBoundary(<ViewBoq />)} />
+        </Routes>
       </Suspense>
     </>
   )
