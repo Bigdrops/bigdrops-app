@@ -463,8 +463,8 @@ export default function ItemLibraryPage() {
                 <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-[#faf9f7]">
                    <div className="max-w-2xl space-y-6">
                       <div className="space-y-2">
-                        <h2 className="text-3xl font-extrabold tracking-tight text-[#2c2218]">Fix Duplicate Items</h2>
-                        <p className="text-[#7c6954] text-[13px] leading-relaxed">How would you like to review the {totalUnresolvedIssues} duplicate groups detected in your catalog?</p>
+                        <h2 className="text-3xl font-extrabold tracking-tight text-[#2c2218]">How do you want to handle duplicates?</h2>
+                        <p className="text-[#7c6954] text-[13px] leading-relaxed">Choose a review method for the {totalUnresolvedIssues} duplicate groups detected in your catalog.</p>
                       </div>
 
                       <div className="grid gap-4 md:grid-cols-2">
@@ -472,16 +472,16 @@ export default function ItemLibraryPage() {
                           onClick={() => setViewMode('duplicates')}
                           className="flex flex-col items-center gap-2 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-6 text-center transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
                         >
-                          <div className="text-sm font-bold text-[#2c2218]">Review in App</div>
-                          <div className="text-[11px] text-[#8a8277]">Manual review with side-by-side comparison and history inspection. Best for complex cases.</div>
+                          <div className="text-sm font-bold text-[#2c2218]">Review Manually in App</div>
+                          <div className="text-[11px] text-[#8a8277]">Side-by-side comparison with full price and history audit.</div>
                         </button>
 
                         <button 
                           onClick={() => setViewMode('duplicates_outsourced')}
                           className="flex flex-col items-center gap-2 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-6 text-center transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
                         >
-                          <div className="text-sm font-bold text-[#2c2218]">Outsource Duplicate Review</div>
-                          <div className="text-[11px] text-[#8a8277]">Export groups to AI (Small Drops Assistant) for automated analysis and batch apply.</div>
+                          <div className="text-sm font-bold text-[#2c2218]">Use AI for Duplicate Review</div>
+                          <div className="text-[11px] text-[11px] text-[#8a8277]">Export all groups for AI review. Faster for large lists.</div>
                         </button>
                       </div>
 
