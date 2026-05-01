@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { toast } from 'sonner'
+import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import { COMPLIANCE_IMPORT_CONTRACTS, ComplianceRecordType } from '@/domain/compliance/import/contracts'
 import { parseJsonObject, validateRequiredFields, normalizeDate, normalizeNumber } from '@/domain/compliance/import/parse'
@@ -83,7 +83,7 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
     }
 
     setParsedData(normalized)
-    toast.success('JSON parsed successfully')
+    feedback.success('JSON parsed successfully')
   }
 
   const handleSave = async () => {
@@ -124,7 +124,7 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
         }
       } else if (type === 'wht_receipt') {
         if (!selectedPaymentId) {
-          toast.error('Select a payment to link this receipt.')
+          feedback.error('Select a payment to link this receipt.')
           return
         }
         table = 'wht_receipts'
@@ -144,13 +144,13 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
       const { error: dbErr } = await supabase.from(table).insert([record])
       if (dbErr) throw dbErr
 
-      toast.success(`${contract.label} created successfully`)
+      feedback.success(`${contract.label} created successfully`)
       onSuccess()
       onOpenChange(false)
       setRawInput('')
       setParsedData(null)
     } catch (e: any) {
-      toast.error(`Save failed: ${e.message}`)
+      feedback.error(`Save failed: ${e.message}`)
     } finally {
       setIsSaving(false)
     }

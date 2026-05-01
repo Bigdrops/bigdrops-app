@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { App as CapacitorApp } from '@capacitor/app'
 import type { PluginListenerHandle } from '@capacitor/core'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { dismissActiveKeyboard, getKeyboardViewportState } from '@/lib/appKeyboard'
 import { isAndroidNative } from '@/lib/native/capacitor'
 
@@ -212,8 +212,7 @@ export default function AndroidBackHandler() {
         }
 
         lastBackPressAtRef.current = now
-        toast({
-          title: 'Press back again to exit',
+        feedback.info('Press back again to exit', {
           description: 'You are already at the top level of the app.',
         })
       })

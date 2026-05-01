@@ -1,6 +1,6 @@
 import React, { useState, useEffect, ChangeEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -55,7 +55,7 @@ export default function EditClient() {
     setSaving(false)
     if (error) {
       console.error('Update error', error)
-      toast({ title: 'Save failed', description: 'Failed to save client', variant: 'destructive' })
+      feedback.error('Save failed', { description: 'Failed to save client' })
     } else {
       navigate('/clients')
     }

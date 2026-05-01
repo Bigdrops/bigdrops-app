@@ -13,7 +13,7 @@ import {
   getProjectDocumentTypeMeta,
   type ProjectDocumentRecord,
 } from '@/domain/projectDocuments'
-import { useToast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 
 type ProjectDocumentCardProps = {
   document: ProjectDocumentRecord
@@ -45,7 +45,6 @@ const typeConfig = {
 
 export default function ProjectDocumentCard({ document, onDelete }: ProjectDocumentCardProps) {
   const navigate = useNavigate()
-  const { toast } = useToast()
 
   const config = typeConfig[document.type as keyof typeof typeConfig] || typeConfig.other
   const summaryParts = getProjectDocumentSummaryParts(document)
@@ -60,9 +59,9 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
   const handleCopyJson = async () => {
     try {
       await navigator.clipboard.writeText(rawJson)
-      toast({ title: 'Copied', description: 'Document JSON copied.' })
+      feedback.success('Copied', { description: 'Document JSON copied.' })
     } catch {
-      toast({ title: 'Copy failed', description: 'Could not copy JSON.', variant: 'destructive' })
+      feedback.error('Copy failed', { description: 'Could not copy JSON.' })
     }
   }
 
@@ -83,10 +82,14 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
         window.document.body.removeChild(anchor)
         URL.revokeObjectURL(url)
       }, 100)
-      toast({ title: 'PDF ready', description: `${meta.label} exported for internal use.` })
+      feedback.success('PDF ready', {
+        description: `${meta.label} exported for internal use.`,
+      })
     } catch (error) {
       console.error(error)
-      toast({ title: 'Export failed', description: 'Could not generate the PDF for this document.' })
+      feedback.error('Export failed', {
+        description: 'Could not generate the PDF for this document.',
+      })
     }
   }
 

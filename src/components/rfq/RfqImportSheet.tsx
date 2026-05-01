@@ -3,7 +3,7 @@ import { JsonImportLayout } from '@/components/import/JsonImportLayout'
 import { rfqImportAdapter } from '@/domain/rfq/importAdapter'
 import { Rfq, RfqItem } from '@/domain/rfq/types'
 import { RfqPreview } from './RfqPreview'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 
 interface RfqImportSheetProps {
   open: boolean;
@@ -36,7 +36,7 @@ export const RfqImportSheet: React.FC<RfqImportSheetProps> = ({
   const handleSave = () => {
     if (parsed) {
       onApply(parsed.rfq, parsed.items);
-      toast({ title: 'RFQ imported successfully' });
+      feedback.success('RFQ imported successfully');
       onOpenChange(false);
       setRawInput('');
       setParsed(null);

@@ -39,7 +39,7 @@ import { computeDocument } from '../lib/Calculations'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { numberToWords } from '../hooks/useInvoiceForm'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { validateProjectAssignment } from '@/domain/projects'
 
 interface InvoiceFormFields {
@@ -388,7 +388,7 @@ export default function NewInvoice() {
 
   const handleSave = async (status: string) => {
     if (!invoice.client_id) {
-      toast({ title: 'Validation Error', description: 'Pick a client before saving', variant: 'destructive' })
+      feedback.error('Validation Error', { description: 'Pick a client before saving' })
       return
     }
 
@@ -396,12 +396,12 @@ export default function NewInvoice() {
     const hasMeaningfulItem = standardItems.some((item) => item.description?.trim())
 
     if (!hasMeaningfulItem) {
-      toast({ title: 'Validation Error', description: 'Add at least one item before saving', variant: 'destructive' })
+      feedback.error('Validation Error', { description: 'Add at least one item before saving' })
       return
     }
 
     if (standardItems.some((item) => !item.description?.trim())) {
-      toast({ title: 'Validation Error', description: 'Each item needs a description', variant: 'destructive' })
+      feedback.error('Validation Error', { description: 'Each item needs a description' })
       return
     }
 
@@ -412,7 +412,7 @@ export default function NewInvoice() {
     })
 
     if (projectError) {
-      toast({ title: 'Project link invalid', description: projectError, variant: 'destructive' })
+      feedback.error('Project link invalid', { description: projectError })
       return
     }
 
@@ -483,10 +483,8 @@ export default function NewInvoice() {
       .single()
 
     if (error || !invoiceRow) {
-      toast({
-        title: 'Save failed',
+      feedback.error('Save failed', {
         description: getUserFacingMutationMessage(error, { action: 'save' }),
-        variant: 'destructive',
       })
       setSaving(false)
       return

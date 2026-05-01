@@ -5,7 +5,7 @@ import Layout from '@/components/Layout'
 import { BoqEditor } from '@/components/boq/BoqEditor'
 import { createEmptyBoq } from '@/domain/boq/factories'
 import { saveBoq } from '@/domain/boq/storage'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 
 export default function NewBoq() {
   const navigate = useNavigate()
@@ -20,7 +20,7 @@ export default function NewBoq() {
           setSaving(true)
           const saved = saveBoq(boq)
           setSaving(false)
-          toast({ title: 'BOQ created successfully' })
+          feedback.success('BOQ created successfully')
           navigate(`/boqs/${saved.id}`)
         }}
       />

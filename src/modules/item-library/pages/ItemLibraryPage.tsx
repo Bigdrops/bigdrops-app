@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import Layout from '@/components/Layout'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { ItemLibraryAdvancedCleanupPanel } from '../components/ItemLibraryAdvancedCleanupPanel'
 import { ItemLibraryDetailPanel } from '../components/ItemLibraryDetailPanel'
 import { ItemLibraryDuplicateReviewPanel } from '../components/ItemLibraryDuplicateReviewPanel'
@@ -212,8 +212,7 @@ export default function ItemLibraryPage() {
     reloadSummaryItems()
     reloadMergeHistory()
 
-    toast({
-      title: 'Merge complete',
+    feedback.success('Merge complete', {
       description: `${result.merged_item_ids.length} duplicate item${result.merged_item_ids.length === 1 ? '' : 's'} merged into the selected primary item. ${relinkedTotal.toLocaleString()} linked ${relinkedTotal === 1 ? 'row was' : 'rows were'} updated.`,
     })
   }
@@ -268,8 +267,7 @@ export default function ItemLibraryPage() {
     const staleCount = results.filter((result) => result.status === 'stale').length
     const failedCount = results.filter((result) => result.status === 'failed').length
 
-    toast({
-      title: 'Cleanup apply finished',
+    feedback.info('Cleanup apply finished', {
       description: `${appliedCount} applied, ${staleCount} stale, ${failedCount} failed.`,
     })
 
@@ -288,8 +286,7 @@ export default function ItemLibraryPage() {
     } else {
       setWorkflowMode('cleanup')
       setViewMode('duplicates')
-      toast({
-        title: 'Cleanup group not found',
+      feedback.warning('Cleanup group not found', {
         description: 'The item might have already been resolved or the group is no longer valid.',
       })
     }

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useRef, useState } from 'react'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import { ImagePlus, LoaderCircle } from 'lucide-react'
 
@@ -52,7 +52,7 @@ export default function ItemImageUpload({ value, onChange }: ItemImageUploadProp
       const data: CloudinaryResponse = await res.json()
       onChange(data.secure_url)
     } catch (e: any) {
-      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' })
+      feedback.error('Upload failed', { description: e.message })
     }
     setUploading(false)
   }

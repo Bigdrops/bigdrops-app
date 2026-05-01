@@ -5,7 +5,7 @@ import Layout from '@/components/Layout'
 import { BoqEditor } from '@/components/boq/BoqEditor'
 import type { Boq } from '@/domain/boq/types'
 import { getBoqById, saveBoq } from '@/domain/boq/storage'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 
 export default function EditBoq() {
   const { id } = useParams()
@@ -16,7 +16,7 @@ export default function EditBoq() {
   useEffect(() => {
     const loaded = id ? getBoqById(id) : null
     if (!loaded) {
-      toast({ title: 'BOQ not found', variant: 'destructive' })
+      feedback.error('BOQ not found')
       navigate('/boqs')
       return
     }
@@ -36,7 +36,7 @@ export default function EditBoq() {
           setSaving(true)
           const saved = saveBoq(nextBoq)
           setSaving(false)
-          toast({ title: 'BOQ updated successfully' })
+          feedback.success('BOQ updated successfully')
           navigate(`/boqs/${saved.id}`)
         }}
       />

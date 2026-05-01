@@ -5,7 +5,7 @@ import { RfqEditor } from '@/components/rfq/RfqEditor'
 import { Rfq, RfqItem } from '@/domain/rfq/types'
 import { denormalizeToDbRfq, denormalizeToDbRfqItem, normalizeDbRfq } from '@/domain/rfq/normalize'
 import { supabase } from '@/supabase'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 
 export default function EditRfq() {
@@ -28,7 +28,7 @@ export default function EditRfq() {
         setRfq(normalizeDbRfq(rfqResult.data, itemsResult.data || []));
         setItems(itemsResult.data || []);
       } else {
-        toast({ title: 'RFQ not found', variant: 'destructive' });
+        feedback.error('RFQ not found');
         navigate('/rfqs');
       }
       setLoading(false);
@@ -45,10 +45,8 @@ export default function EditRfq() {
       .eq('id', id);
 
     if (rfqError) {
-      toast({
-        title: 'Save failed',
+      feedback.error('Save failed', {
         description: getUserFacingMutationMessage(rfqError, { action: 'save' }),
-        variant: 'destructive',
       });
       setSaving(false);
       return;
@@ -57,10 +55,8 @@ export default function EditRfq() {
     // Upsert items (delete and re-insert for simplicity)
     const { error: deleteError } = await supabase.from('rfq_items').delete().eq('rfq_id', id);
     if (deleteError) {
-       toast({
-         title: 'Item save failed',
+       feedback.error('Item save failed', {
          description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
-         variant: 'destructive',
        });
        setSaving(false);
        return;
@@ -73,12 +69,12 @@ export default function EditRfq() {
     if (dbItems.length > 0) {
       const { error: itemsError } = await supabase.from('rfq_items').insert(dbItems);
       if (itemsError) {
-        toast({ title: 'Item save failed', description: itemsError.message, variant: 'destructive' });
+        feedback.error('Item save failed', { description: itemsError.message });
       }
     }
 
     setSaving(false);
-    toast({ title: 'RFQ updated successfully' });
+    feedback.success('RFQ updated successfully');
     navigate(`/rfqs/${id}`);
   };
 

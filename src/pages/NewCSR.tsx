@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { pdf } from '@react-pdf/renderer'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -198,7 +198,7 @@ export default function NewCSR() {
 
   const handleSave = async () => {
     if (!isField && !csr.client_id) {
-      toast({ title: 'Client required', description: 'Please select a client before saving', variant: 'destructive' })
+      feedback.error('Client required', { description: 'Please select a client before saving' })
       return
     }
 
@@ -209,7 +209,7 @@ export default function NewCSR() {
     })
 
     if (projectError) {
-      toast({ title: 'Project link invalid', description: projectError, variant: 'destructive' })
+      feedback.error('Project link invalid', { description: projectError })
       return
     }
 
@@ -227,16 +227,13 @@ export default function NewCSR() {
       try {
         const savedDraft = await createOfflineCsrDraft(csrData)
         setCsr((current: any) => ({ ...current, csr_number: savedDraft.csrNumber }))
-        toast({
-          title: 'Saved offline',
+        feedback.success('Saved offline', {
           description: 'CSR draft saved on this device and queued for sync when you are back online.',
         })
         navigate('/csr')
       } catch (error) {
-        toast({
-          title: 'Offline save failed',
+        feedback.error('Offline save failed', {
           description: error instanceof Error ? error.message : 'Could not save this CSR offline.',
-          variant: 'destructive',
         })
       } finally {
         setSaving(false)
@@ -247,7 +244,9 @@ export default function NewCSR() {
     const { data: existing } = await supabase.from('csrs').select('id').eq('csr_number', csrData.csr_number)
 
     if (existing && existing.length > 0) {
-      toast({ title: 'Duplicate CSR number', description: 'CSR number already exists. Please use a different number.', variant: 'destructive' })
+      feedback.error('Duplicate CSR number', {
+        description: 'CSR number already exists. Please use a different number.',
+      })
       return
     }
 
@@ -255,10 +254,8 @@ export default function NewCSR() {
     const { data: savedCsr, error } = await supabase.from('csrs').insert([csrData]).select('id, csr_number').single()
 
     if (error) {
-      toast({
-        title: 'Save failed',
+      feedback.error('Save failed', {
         description: getUserFacingMutationMessage(error, { action: 'save' }),
-        variant: 'destructive',
       })
       setSaving(false)
       return

@@ -5,7 +5,7 @@ import { RfqEditor } from '@/components/rfq/RfqEditor'
 import { Rfq, RfqItem } from '@/domain/rfq/types'
 import { denormalizeToDbRfq, denormalizeToDbRfqItem, getNextRfqNumber } from '@/domain/rfq/normalize'
 import { supabase } from '@/supabase'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 
 export default function NewRfq() {
@@ -27,10 +27,8 @@ export default function NewRfq() {
       .single();
 
     if (rfqError || !createdRfq) {
-      toast({
-        title: 'Save failed',
+      feedback.error('Save failed', {
         description: getUserFacingMutationMessage(rfqError, { action: 'save' }),
-        variant: 'destructive',
       });
       setSaving(false);
       return;
@@ -44,13 +42,13 @@ export default function NewRfq() {
     if (dbItems.length > 0) {
       const { error: itemsError } = await supabase.from('rfq_items').insert(dbItems);
       if (itemsError) {
-        toast({ title: 'Item save failed', description: itemsError.message, variant: 'destructive' });
+        feedback.error('Item save failed', { description: itemsError.message });
         // Optionally delete the parent RFQ here but let's keep it for now
       }
     }
 
     setSaving(false);
-    toast({ title: 'RFQ created successfully' });
+    feedback.success('RFQ created successfully');
     navigate(`/rfqs/${rfqId}`);
   };
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -32,7 +32,7 @@ export default function EditCSR() {
         const { data, error } = await supabase.from('csrs').select('*').eq('id', id).single()
 
         if (error) {
-          toast({ title: 'Load failed', description: error.message, variant: 'destructive' })
+          feedback.error('Load failed', { description: error.message })
           navigate('/csr')
           return
         }
@@ -93,7 +93,7 @@ export default function EditCSR() {
 
   const handleSave = async () => {
     if (!csr.client_id) {
-      toast({ title: 'Client required', description: 'Please select a client before saving', variant: 'destructive' })
+      feedback.error('Client required', { description: 'Please select a client before saving' })
       return
     }
 
@@ -108,7 +108,9 @@ export default function EditCSR() {
     const { data: existing } = await supabase.from('csrs').select('id').eq('csr_number', csrData.csr_number)
 
     if ((existing || []).some((item: any) => String(item.id) !== String(id))) {
-      toast({ title: 'Duplicate CSR number', description: 'CSR number already exists. Please use a different number.', variant: 'destructive' })
+      feedback.error('Duplicate CSR number', {
+        description: 'CSR number already exists. Please use a different number.',
+      })
       return
     }
 
@@ -116,10 +118,8 @@ export default function EditCSR() {
     const { error } = await supabase.from('csrs').update(csrData).eq('id', id)
 
     if (error) {
-      toast({
-        title: 'Save failed',
+      feedback.error('Save failed', {
         description: getUserFacingMutationMessage(error, { action: 'save' }),
-        variant: 'destructive',
       })
       setSaving(false)
       return

@@ -21,7 +21,7 @@ import { getDocumentActionState, getProjectActionState } from '@/domain/document
 import { fetchInvoiceSummary, fetchProjectSummary } from '@/domain/documentRelationships'
 import { formatStatusLabel } from '@/lib/formatters/status'
 import { getStatusTone, getStatusClasses } from '@/lib/statusTheme'
-import { useToast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
 import {
   listPendingOrFailedWaybillCreateQueueItems,
@@ -33,7 +33,6 @@ type FilterTab = 'all' | 'internal' | 'external'
 
 export default function Waybills() {
   const navigate = useNavigate()
-  const { toast } = useToast()
   const [waybills, setWaybills] = useState<Waybill[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -144,21 +143,17 @@ export default function Waybills() {
     const result = await processWaybillCreateQueueItem(queueItemId)
 
     if (result.status === 'synced') {
-      toast({
-        title: 'Waybill synced',
+      feedback.success('Waybill synced', {
         description: 'The offline waybill was uploaded successfully.',
       })
       await Promise.all([loadWaybills(), loadWaybillSyncQueue()])
     } else if (result.status === 'failed') {
-      toast({
-        title: 'Retry failed',
+      feedback.error('Retry failed', {
         description: result.error || 'Unable to sync this waybill right now.',
-        variant: 'destructive',
       })
       await loadWaybillSyncQueue()
     } else {
-      toast({
-        title: 'Retry skipped',
+      feedback.warning('Retry skipped', {
         description: 'Connect to the internet before retrying this waybill sync.',
       })
     }

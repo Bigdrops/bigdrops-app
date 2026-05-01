@@ -44,7 +44,7 @@ import { computeDocument } from '../lib/Calculations'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { numberToWords } from '../hooks/useInvoiceForm'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 
 interface InvoiceFormFields {
   invoice_number: string
@@ -387,7 +387,7 @@ export default function EditInvoice() {
 
   const handleSave = async (status: string) => {
     if (!invoice.client_id) {
-      toast({ title: 'Validation Error', description: 'Pick a client before saving', variant: 'destructive' })
+      feedback.error('Validation Error', { description: 'Pick a client before saving' })
       return
     }
 
@@ -395,12 +395,12 @@ export default function EditInvoice() {
     const hasMeaningfulItem = standardItems.some((item) => item.description?.trim())
 
     if (!hasMeaningfulItem) {
-      toast({ title: 'Validation Error', description: 'Add at least one item before saving', variant: 'destructive' })
+      feedback.error('Validation Error', { description: 'Add at least one item before saving' })
       return
     }
 
     if (standardItems.some((item) => !item.description?.trim())) {
-      toast({ title: 'Validation Error', description: 'Each item needs a description', variant: 'destructive' })
+      feedback.error('Validation Error', { description: 'Each item needs a description' })
       return
     }
 
@@ -468,10 +468,8 @@ export default function EditInvoice() {
       .eq('id', id)
 
     if (error) {
-      toast({
-        title: 'Save failed',
+      feedback.error('Save failed', {
         description: getUserFacingMutationMessage(error, { action: 'save' }),
-        variant: 'destructive',
       })
       setSaving(false)
       return
@@ -483,10 +481,8 @@ export default function EditInvoice() {
 
     const { error: deleteError } = await supabase.from('invoice_items').delete().eq('invoice_id', id)
     if (deleteError) {
-      toast({
-        title: 'Save failed',
+      feedback.error('Save failed', {
         description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
-        variant: 'destructive',
       })
       setSaving(false)
       return
@@ -495,10 +491,8 @@ export default function EditInvoice() {
     if (itemsToSave.length > 0) {
       const { error: insertError } = await supabase.from('invoice_items').insert(itemsToSave)
       if (insertError) {
-        toast({
-          title: 'Save failed',
+        feedback.error('Save failed', {
           description: getUserFacingMutationMessage(insertError, { action: 'save' }),
-          variant: 'destructive',
         })
         setSaving(false)
         return

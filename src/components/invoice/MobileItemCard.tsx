@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import UnitInput from '@/components/UnitInput'
 import { useItemSuggestions } from '@/modules/item-library/hooks'
 import { getInvoiceSuggestionSelection } from '@/modules/item-library/domain/invoiceSuggestionSelection'
@@ -185,7 +185,7 @@ export default function MobileItemCard({
       onUpdate(index, 'image_url', data.secure_url)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
-      toast({ title: 'Upload failed', description: message, variant: 'destructive' })
+      feedback.error('Upload failed', { description: message })
     } finally {
       setUploading(false)
       if (event.target) event.target.value = ''

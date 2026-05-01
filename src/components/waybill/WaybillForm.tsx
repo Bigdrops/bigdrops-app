@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import {
@@ -118,7 +118,7 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
       if (mode === 'edit' && waybillId) {
         const { data, error } = await supabase.from('waybills').select(`*, project:projects(name)`).eq('id', waybillId).single()
         if (error) {
-          toast({ title: 'Fetch failed', description: error.message, variant: 'destructive' })
+          feedback.error('Fetch failed', { description: error.message })
           navigate('/waybills')
           return
         }
@@ -181,7 +181,9 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
 
   const addCustomColumn = () => {
     if (customColumns.length >= WAYBILL_COLUMN_LIMIT) {
-      toast({ title: 'Limit reached', description: `Maximum ${WAYBILL_COLUMN_LIMIT} columns allowed.` })
+      feedback.warning('Limit reached', {
+        description: `Maximum ${WAYBILL_COLUMN_LIMIT} columns allowed.`,
+      })
       return
     }
     setCustomColumns((current) => [...current, { key: createCustomColumnKey(`custom_${Date.now()}`), label: '' }])
@@ -213,9 +215,11 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
       setCustomColumns(normalized.customColumns)
       setCustomFields(normalized.customFields)
       setImportOpen(false)
-      toast({ title: 'Import successful', description: 'Waybill draft updated.' })
+      feedback.success('Import successful', { description: 'Waybill draft updated.' })
     } catch (error) {
-      toast({ title: 'Parse failed', description: error instanceof Error ? error.message : 'Invalid JSON', variant: 'destructive' })
+      feedback.error('Parse failed', {
+        description: error instanceof Error ? error.message : 'Invalid JSON',
+      })
     }
   }
 
@@ -231,7 +235,7 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
 
   const onSave = async () => {
     if (!waybill.sender_name) {
-      toast({ title: 'Sender required', description: 'Please add a sender name.', variant: 'destructive' })
+      feedback.error('Sender required', { description: 'Please add a sender name.' })
       return
     }
 
@@ -244,7 +248,7 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
             items,
             custom_fields: finalFields as any
         })
-        toast({ title: 'Saved offline', description: 'Draft preserved locally.' })
+        feedback.success('Saved offline', { description: 'Draft preserved locally.' })
         navigate('/waybills')
         return
       }
@@ -264,13 +268,11 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
         if (error) throw error
       }
 
-      toast({ title: 'Waybill saved', description: 'Database updated successfully.' })
+      feedback.success('Waybill saved', { description: 'Database updated successfully.' })
       navigate('/waybills')
     } catch (error) {
-      toast({
-        title: 'Save failed',
+      feedback.error('Save failed', {
         description: getUserFacingMutationMessage(error, { action: 'save' }),
-        variant: 'destructive',
       })
     } finally {
       setSaving(false)

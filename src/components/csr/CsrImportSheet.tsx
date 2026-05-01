@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Wand2, ClipboardCheck } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { CSR_IMPORT_PROMPT, parseCsrImportText, type ParsedCsrImport } from '@/components/csr/csrImport'
 import { JsonImportLayout } from '@/components/import/JsonImportLayout'
 
@@ -14,7 +14,6 @@ type CsrImportSheetProps = {
 
 export default function CsrImportSheet({ open, onOpenChange, onApplyImport }: CsrImportSheetProps) {
   const [pastedText, setPastedText] = React.useState('')
-  const { toast } = useToast()
 
   React.useEffect(() => {
     if (!open) {
@@ -24,20 +23,18 @@ export default function CsrImportSheet({ open, onOpenChange, onApplyImport }: Cs
 
   const handleImport = () => {
     if (!pastedText.trim()) {
-      toast({ title: 'Paste JSON', description: 'Please paste the JSON extraction first.', variant: 'destructive' })
+      feedback.error('Paste JSON', { description: 'Please paste the JSON extraction first.' })
       return
     }
 
     try {
       const result = parseCsrImportText(pastedText)
       onApplyImport(result)
-      toast({ title: 'Import applied', description: 'CSR fields were updated successfully.' })
+      feedback.success('Import applied', { description: 'CSR fields were updated successfully.' })
       onOpenChange(false)
     } catch (error) {
-      toast({
-        title: 'Import failed',
+      feedback.error('Import failed', {
         description: error instanceof Error ? error.message : 'Invalid extraction format.',
-        variant: 'destructive',
       })
     }
   }
@@ -66,4 +63,3 @@ export default function CsrImportSheet({ open, onOpenChange, onApplyImport }: Cs
     />
   )
 }
-

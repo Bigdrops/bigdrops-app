@@ -13,7 +13,7 @@ import { hasMeaningfulStandardRows } from '@/domain/import/tableState'
 import { validateImportData } from '@/domain/import/validate'
 import type { ApplyImportResult, CustomColumnDecision, ImportMode } from '@/domain/import/types'
 import type { ColumnConfig, InvoiceItem } from '@/domain/invoice'
-import { useToast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { cn } from '@/lib/utils'
 
 type ImportAdapter = {
@@ -65,7 +65,6 @@ export default function JsonItemsImportSheet({
   side = 'bottom',
   contentClassName = '',
 }: JsonItemsImportSheetProps) {
-  const { toast } = useToast()
   const [mode, setMode] = useState<ImportMode>('Add')
   const [pastedText, setPastedText] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -141,7 +140,7 @@ export default function JsonItemsImportSheet({
       })
 
       onApplyImport(result)
-      toast({ title: mode === 'Add' ? 'Rows added' : 'Rows updated' })
+      feedback.success(mode === 'Add' ? 'Rows added' : 'Rows updated')
       onOpenChange(false)
     } catch (e: any) {
       setErrorMessage(e.message || 'Import failed.')

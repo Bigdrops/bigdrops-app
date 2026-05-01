@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import ComplianceJsonImportSheet from './import/ComplianceJsonImportSheet'
 import { supabase } from '@/supabase'
-import { toast } from 'sonner'
+import { feedback } from '@/lib/feedback'
 import { WhtReceipt, WhtReceiptStatus } from '@/domain/compliance/types'
 import { getStatusClasses } from '@/lib/statusTheme'
 
@@ -74,10 +74,10 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
       if (error) throw error
       if (data) {
         setLocalReceipts([...localReceipts, data])
-        toast.success('WHT tracking initialized')
+        feedback.success('WHT tracking initialized')
       }
     } catch (error: any) {
-      toast.error(getUserFacingMutationMessage(error, { action: 'create' }))
+      feedback.error(getUserFacingMutationMessage(error, { action: 'create' }))
     } finally {
       setProcessingId(null)
     }
@@ -96,10 +96,10 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
       if (error) throw error
       if (data) {
         setLocalReceipts(localReceipts.map(r => r.id === data.id ? data : r))
-        toast.success('Receipt updated')
+        feedback.success('Receipt updated')
       }
     } catch (error: any) {
-      toast.error(getUserFacingMutationMessage(error, { action: 'update' }))
+      feedback.error(getUserFacingMutationMessage(error, { action: 'update' }))
     } finally {
       setProcessingId(null)
     }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -49,7 +49,7 @@ export default function NewProject() {
 
   const handleSave = async () => {
     if (!form.name.trim()) {
-      toast({ title: 'Project name required', description: 'Project name is required', variant: 'destructive' })
+      feedback.error('Project name required', { description: 'Project name is required' })
       return
     }
     setSaving(true)
@@ -67,10 +67,8 @@ export default function NewProject() {
 
     setSaving(false)
     if (error) {
-      toast({
-        title: 'Create failed',
+      feedback.error('Create failed', {
         description: getUserFacingMutationMessage(error, { action: 'create' }),
-        variant: 'destructive',
       })
       return
     }

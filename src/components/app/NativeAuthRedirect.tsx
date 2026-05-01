@@ -4,7 +4,7 @@ import { App as CapacitorApp } from '@capacitor/app'
 import { Browser } from '@capacitor/browser'
 import type { PluginListenerHandle } from '@capacitor/core'
 import { supabase } from '@/supabase'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { isAndroidNative } from '@/lib/native/capacitor'
 
 const NATIVE_AUTH_SCHEME = 'com.bigdrops.app'
@@ -62,10 +62,8 @@ export default function NativeAuthRedirect() {
         navigate('/', { replace: true })
       } catch (error) {
         console.error('Native auth redirect failed', error)
-        toast({
-          title: 'Google sign-in failed',
+        feedback.error('Google sign-in failed', {
           description: error instanceof Error ? error.message : 'Could not complete sign-in.',
-          variant: 'destructive',
         })
       }
     }

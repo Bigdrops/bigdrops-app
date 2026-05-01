@@ -22,7 +22,7 @@ import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { formatMergedQtyUnit, resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '@/domain/documentMedia.js'
 import { getPdfDesignPreset, resolvePdfWebFontFamily, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { normalizeSettings } from '@/hooks/useSettings'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -431,10 +431,10 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
         },
         templateId: normalizeInvoicePdfTemplateId(templateId) || 'industry',
       })
-      toast({ title: 'PDF ready', description: 'Quotation PDF downloaded.' })
+      feedback.success('PDF ready', { description: 'Quotation PDF downloaded.' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
-      toast({ title: 'PDF generation failed', description: message, variant: 'destructive' })
+      feedback.error('PDF generation failed', { description: message })
     } finally {
       setPdfGenerating(false)
     }
@@ -451,10 +451,10 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     try {
       await navigator.clipboard.writeText(value)
     } catch {
-      toast({ title: 'Copy failed', description: `Could not copy ${label.toLowerCase()}.`, variant: 'destructive' })
+      feedback.error('Copy failed', { description: `Could not copy ${label.toLowerCase()}.` })
       return
     }
-    toast({ title: 'Copied', description: `${label} copied.` })
+    feedback.success('Copied', { description: `${label} copied.` })
   }
 
   const handlePdfOutputChange = async (next: PdfOutputState) => {
@@ -470,7 +470,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       .eq('id', quotationId)
 
     if (error) {
-      toast({ title: 'Save failed', description: error.message, variant: 'destructive' })
+      feedback.error('Save failed', { description: error.message })
       return
     }
 
@@ -485,7 +485,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       .update({ archived_at: new Date().toISOString() })
       .eq('id', quotationId)
     if (error) {
-      toast({ title: 'Archive failed', description: error.message, variant: 'destructive' })
+      feedback.error('Archive failed', { description: error.message })
       return
     }
     navigate('/quotations')
@@ -496,12 +496,12 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
     setShowDeleteConfirm(false)
     const { error: itemError } = await supabase.from('quotation_items').delete().eq('quotation_id', quotationId)
     if (itemError) {
-      toast({ title: 'Delete failed', description: itemError.message, variant: 'destructive' })
+      feedback.error('Delete failed', { description: itemError.message })
       return
     }
     const { error } = await supabase.from('quotations').delete().eq('id', quotationId)
     if (error) {
-      toast({ title: 'Delete failed', description: error.message, variant: 'destructive' })
+      feedback.error('Delete failed', { description: error.message })
       return
     }
     navigate('/quotations')
@@ -578,12 +578,14 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       navigate(`/quotations/${createdQuotation.id}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Clone failed'
-      toast({ title: 'Clone failed', description: message, variant: 'destructive' })
+      feedback.error('Clone failed', { description: message })
     }
   }
 
   const handleRecordPaymentPlaceholder = () => {
-    toast({ title: 'Unavailable', description: 'Create an invoice from this quotation to record a payment.' })
+    feedback.info('Unavailable', {
+      description: 'Create an invoice from this quotation to record a payment.',
+    })
   }
 
   const handleConvertToInvoice = async () => {
@@ -685,7 +687,7 @@ export default function QuotationDetail({ quotationId }: { quotationId: string }
       navigate(`/invoices/${createdInvoice.id}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Conversion failed'
-      toast({ title: 'Convert to invoice failed', description: message, variant: 'destructive' })
+      feedback.error('Convert to invoice failed', { description: message })
     } finally {
       setConverting(false)
     }

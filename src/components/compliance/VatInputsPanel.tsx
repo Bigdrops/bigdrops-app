@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Info, PlusCircle, Wallet, Edit, Trash2 } from 'lucide-react'
 import { supabase } from '@/supabase'
-import { toast } from 'sonner'
+import { feedback } from '@/lib/feedback'
 import { TaxInputEntry } from '@/domain/compliance/types'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { formatNaira } from '@/lib/formatters/money'
@@ -28,7 +28,7 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
 
   const handleSave = async () => {
     if (!editingEntry?.date || editingEntry.net_amount === undefined || editingEntry.vat_amount === undefined) {
-      toast.error('Date, net amount, and VAT amount are required')
+      feedback.error('Date, net amount, and VAT amount are required')
       return
     }
 
@@ -52,17 +52,17 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
       if (isNew) {
         const { error } = await supabase.from('tax_input_entries').insert([{ ...recordToSave, created_at: new Date().toISOString() }])
         if (error) throw error
-        toast.success('VAT input recorded')
+        feedback.success('VAT input recorded')
       } else {
         const { error } = await supabase.from('tax_input_entries').update(recordToSave).eq('id', editingEntry.id)
         if (error) throw error
-        toast.success('VAT input updated')
+        feedback.success('VAT input updated')
       }
 
       setEditingEntry(null)
       onInputsChanged()
     } catch (e: any) {
-      toast.error(getUserFacingMutationMessage(e, { action: 'save' }))
+      feedback.error(getUserFacingMutationMessage(e, { action: 'save' }))
     } finally {
       setSaving(false)
     }
@@ -73,10 +73,10 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
       setIsDeleting(id)
       const { error } = await supabase.from('tax_input_entries').delete().eq('id', id)
       if (error) throw error
-      toast.success('VAT input deleted')
+      feedback.success('VAT input deleted')
       onInputsChanged()
     } catch (e: any) {
-      toast.error(e.message || 'Failed to delete VAT input')
+      feedback.error(e.message || 'Failed to delete VAT input')
     } finally {
       setIsDeleting(null)
     }

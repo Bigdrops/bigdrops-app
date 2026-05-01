@@ -7,7 +7,7 @@ import { normalizeDbRfq } from '@/domain/rfq/normalize'
 import MobileFab from '@/components/layout/MobileFab'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { SkeletonRow } from '@/components/loading/AppLoadingStates'
 import ModuleShell from '@/components/layout/ModuleShell'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
@@ -84,7 +84,7 @@ export const RfqList: React.FC = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      toast({ title: 'Error loading RFQs', description: error.message, variant: 'destructive' });
+      feedback.error('Error loading RFQs', { description: error.message });
     } else {
       setRfqs((data || []).map(row => normalizeDbRfq(row)));
     }
@@ -99,9 +99,9 @@ export const RfqList: React.FC = () => {
     setDeleteId(null);
     const { error } = await supabase.from('rfqs').delete().eq('id', id);
     if (error) {
-       toast({ title: 'Delete failed', description: error.message, variant: 'destructive' });
+       feedback.error('Delete failed', { description: error.message });
     } else {
-       toast({ title: 'RFQ deleted' });
+       feedback.success('RFQ deleted');
        loadRfqs();
     }
   };

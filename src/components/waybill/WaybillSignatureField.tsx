@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { supabase } from '@/supabase'
 import { SignatureRole, normalizeSignatureEvidence } from './waybillUtils'
 
@@ -80,7 +80,7 @@ export function WaybillSignatureField({
     const path = `${role}_sig_${Date.now()}.${ext}`
     const { error } = await supabase.storage.from('signatures').upload(path, file, { upsert: true })
     if (error) {
-      toast({ title: 'Upload failed', description: `Upload failed: ${error.message}`, variant: 'destructive' })
+      feedback.error('Upload failed', { description: `Upload failed: ${error.message}` })
       setUploading(false)
       return
     }

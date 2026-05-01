@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
 import { shouldIncludeInvoiceInList } from '@/domain/invoice/advanceList'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
 import { supabase } from '@/supabase'
@@ -489,10 +489,8 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
       })
     } catch (error) {
       console.error('Dashboard data load failed:', error)
-      toast({
-        title: 'Dashboard unavailable',
+      feedback.error('Dashboard unavailable', {
         description: 'We could not load dashboard data right now.',
-        variant: 'destructive',
       })
     } finally {
       setLoading(false)

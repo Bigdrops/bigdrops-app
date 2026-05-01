@@ -1,5 +1,5 @@
 import { supabase } from '@/supabase'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import {
   buildTrailLink,
   parseDocumentCustomFields,
@@ -216,7 +216,7 @@ export function useInvoiceMutations({
         },
       })
     } catch (err: any) {
-      toast({ title: 'Clone failed', description: err?.message || 'Unknown error', variant: 'destructive' })
+      feedback.error('Clone failed', { description: err?.message || 'Unknown error' })
     }
   }
 
@@ -329,10 +329,8 @@ export function useInvoiceMutations({
 
       navigate(`/quotations/${createdQuotation.id}`)
     } catch (err: any) {
-      toast({
-        title: 'Revert to quotation failed',
+      feedback.error('Revert to quotation failed', {
         description: err?.message || 'Unknown error',
-        variant: 'destructive',
       })
     } finally {
       setConverting(false)
@@ -398,7 +396,7 @@ export function useInvoiceMutations({
       .eq('id', pendingVoidPaymentId)
 
     if (error) {
-      toast({ title: 'Void failed', description: error.message, variant: 'destructive' })
+      feedback.error('Void failed', { description: error.message })
       setVoidingPaymentId(null)
       return
     }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Share2, Check, ExternalLink, X } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { feedback } from '@/lib/feedback';
 
 interface RfqImagePreviewGridProps {
   images: string[];
@@ -16,18 +16,29 @@ interface RfqImagePreviewGridProps {
  */
 export const RfqImagePreviewGrid: React.FC<RfqImagePreviewGridProps> = ({ images, rfqNumber, onClose, onDownloadAll }) => {
   const handleShare = async () => {
+    const toastId = 'rfq-image-sharing';
     try {
       if (typeof navigator.share === 'undefined') {
-        toast({ title: 'Sharing not supported', description: 'Your browser does not support native sharing.' });
+        feedback.info('Sharing not supported', {
+          description: 'Your browser does not support native sharing.',
+        });
         return;
       }
       
       // Browser sharing for first image or blob conversion
-      toast({ title: 'Sharing...', description: 'Preparing images for sharing.' });
+      feedback.loading('Sharing...', {
+        description: 'Preparing images for sharing.',
+        id: toastId,
+      });
       
       // Simple blob download as fallback/step
       onDownloadAll();
+      feedback.dismiss(toastId);
     } catch (e) {
+      feedback.dismiss(toastId);
+      feedback.error('Sharing failed', {
+        description: e instanceof Error ? e.message : 'Could not prepare the shared output.',
+      });
       console.error('Sharing failed', e);
     }
   };

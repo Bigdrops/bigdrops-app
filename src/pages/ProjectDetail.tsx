@@ -8,7 +8,7 @@ import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { CenteredSpinner, SkeletonCard, SkeletonRow } from '@/components/loading/AppLoadingStates'
 import ProjectDocumentCard from '@/components/project/ProjectDocumentCard'
 import ProjectDocumentSheet from '@/components/project/ProjectDocumentSheet'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
 import { getClientMismatchMessage, isClientMismatch } from '@/domain/projects'
 import { supabase } from '../supabase'
@@ -207,7 +207,9 @@ export default function ProjectDetail() {
       })
     } catch (err) {
       console.error('[ProjectDetail] fetchAll error:', err)
-      toast({ title: 'Failed to load project', description: 'Please refresh and try again.', variant: 'destructive' })
+      feedback.error('Failed to load project', {
+        description: 'Please refresh and try again.',
+      })
     } finally {
       setLoading(false)
     }
@@ -231,7 +233,7 @@ export default function ProjectDetail() {
 
     setSaving(false)
     if (error) {
-      toast({ title: 'Save failed', description: error.message, variant: 'destructive' })
+      feedback.error('Save failed', { description: error.message })
       return
     }
 
@@ -386,19 +388,23 @@ export default function ProjectDetail() {
     const docLabel = (DOC_TYPE_LABELS as any)[linkType] || linkType
     setLinkDocId('')
     setShowLink(false)
-    toast({ title: `${docLabel} linked`, description: `${linkDocId.trim() || docLabel} has been linked to this project.` })
+    feedback.success(`${docLabel} linked`, {
+      description: `${linkDocId.trim() || docLabel} has been linked to this project.`,
+    })
     fetchAll()
   }
 
   const handleDeleteProjectDocument = async (docId: string) => {
     const { error } = await supabase.from('project_documents').delete().eq('id', docId)
     if (error) {
-      toast({ title: 'Delete failed', description: error.message, variant: 'destructive' })
+      feedback.error('Delete failed', { description: error.message })
       return
     }
 
     setProjectDocumentToDelete(null)
-    toast({ title: 'File removed', description: 'The external file has been removed from this project.' })
+    feedback.success('File removed', {
+      description: 'The external file has been removed from this project.',
+    })
     fetchAll()
   }
 

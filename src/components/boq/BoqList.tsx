@@ -9,7 +9,7 @@ import ModuleShell from '@/components/layout/ModuleShell'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
 import type { Boq } from '@/domain/boq/types'
 import { deleteBoq, ensureBoqSeed } from '@/domain/boq/storage'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { SkeletonRow } from '@/components/loading/AppLoadingStates'
 
 export function BoqList() {
@@ -94,7 +94,7 @@ export function BoqList() {
         onConfirm={() => {
           if (!deleteId) return
           deleteBoq(deleteId)
-          toast({ title: 'BOQ deleted' })
+          feedback.success('BOQ deleted')
           setDeleteId(null)
           setActiveBoq(null)
           load()

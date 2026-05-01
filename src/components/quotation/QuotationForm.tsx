@@ -34,7 +34,7 @@ import {
   createOfflineQuotationDraft,
   peekNextOfflineQuotationNumber,
 } from '@/lib/native/quotationOffline'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { formatQuotationStatus } from './quotationStatus'
 
@@ -441,7 +441,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         ])
 
         if (error || !quotationRow) {
-          toast({ title: 'Quotation not found', description: 'Quotation not found.', variant: 'destructive' })
+          feedback.error('Quotation not found', { description: 'Quotation not found.' })
           navigate('/quotations')
           return
         }
@@ -719,17 +719,15 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       .eq('id', quotationId)
 
     if (error) {
-      toast({
-        title: 'Save failed',
+      feedback.error('Save failed', {
         description: getUserFacingMutationMessage(error, { action: 'save' }),
-        variant: 'destructive',
       })
     }
   }
 
   const handleSave = async (status: Quotation['status']) => {
     if (!quotation.client_id) {
-      toast({ title: 'Validation Error', description: 'Pick a client before saving', variant: 'destructive' })
+      feedback.error('Validation Error', { description: 'Pick a client before saving' })
       return
     }
 
@@ -737,12 +735,12 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     const hasMeaningfulItem = standardItems.some((item) => item.description?.trim())
 
     if (!hasMeaningfulItem) {
-      toast({ title: 'Validation Error', description: 'Add at least one item before saving', variant: 'destructive' })
+      feedback.error('Validation Error', { description: 'Add at least one item before saving' })
       return
     }
 
     if (standardItems.some((item) => !item.description?.trim())) {
-      toast({ title: 'Validation Error', description: 'Each item needs a description', variant: 'destructive' })
+      feedback.error('Validation Error', { description: 'Each item needs a description' })
       return
     }
 
@@ -756,7 +754,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     )
 
     if (projectError) {
-      toast({ title: 'Project link invalid', description: projectError, variant: 'destructive' })
+      feedback.error('Project link invalid', { description: projectError })
       return
     }
 
@@ -818,16 +816,13 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           items: persistableItems.map((item, index) => ({ ...item, sort_order: index })),
         })
         setQuotation((current) => ({ ...current, quotation_number: localDraft.quotationNumber }))
-        toast({
-          title: 'Saved offline',
+        feedback.success('Saved offline', {
           description: `${localDraft.quotationNumber} was saved locally and queued for sync.`,
         })
         navigate('/quotations')
       } catch (error) {
-        toast({
-          title: 'Offline save failed',
+        feedback.error('Offline save failed', {
           description: error instanceof Error ? error.message : 'Could not save this quotation offline.',
-          variant: 'destructive',
         })
       } finally {
         setSaving(false)
@@ -858,10 +853,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
     const { data: savedQuotation, error } = await quoteQuery
     if (error || !savedQuotation) {
-      toast({
-        title: 'Save failed',
+      feedback.error('Save failed', {
         description: getUserFacingMutationMessage(error, { action: 'save' }),
-        variant: 'destructive',
       })
       setSaving(false)
       return
@@ -872,10 +865,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
     const { error: deleteError } = await supabase.from('quotation_items').delete().eq('quotation_id', resolvedId)
     if (deleteError) {
-      toast({
-        title: 'Save failed',
+      feedback.error('Save failed', {
         description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
-        variant: 'destructive',
       })
       setSaving(false)
       return
@@ -884,10 +875,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     if (itemRows.length > 0) {
       const { error: itemError } = await supabase.from('quotation_items').insert(itemRows)
       if (itemError) {
-        toast({
-          title: 'Save failed',
+        feedback.error('Save failed', {
           description: getUserFacingMutationMessage(itemError, { action: 'save' }),
-          variant: 'destructive',
         })
         setSaving(false)
         return

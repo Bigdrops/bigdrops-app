@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { getProjectDocumentMainLabel } from '@/domain/projectDocuments'
 import { getProjectDocumentPrompt } from '@/domain/projectDocumentPrompts'
 import { JsonImportUI } from '@/components/import/JsonImportLayout'
-import { useToast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { supabase } from '@/supabase'
 import { 
@@ -147,7 +147,6 @@ export default function ProjectDocumentSheet({ open, onOpenChange, projectId, on
   const [parseError, setParseError] = useState('')
   const [form, setForm] = useState<DocumentFormState>(makeInitialForm())
   const [saving, setSaving] = useState(false)
-  const { toast } = useToast()
 
   useEffect(() => {
     if (!open) {
@@ -184,7 +183,7 @@ export default function ProjectDocumentSheet({ open, onOpenChange, projectId, on
   const handleSave = async () => {
     const normalizedTitle = form.title.trim()
     if (docType === 'other' && !normalizedTitle) {
-      toast({ title: 'Title required', description: 'Add a title for Other documents.' })
+      feedback.error('Title required', { description: 'Add a title for Other documents.' })
       return
     }
 
@@ -204,10 +203,8 @@ export default function ProjectDocumentSheet({ open, onOpenChange, projectId, on
 
     setSaving(false)
     if (error) {
-      toast({
-        title: 'Save failed',
+      feedback.error('Save failed', {
         description: getUserFacingMutationMessage(error, { action: 'save' }),
-        variant: 'destructive',
       })
       return
     }
@@ -222,7 +219,9 @@ export default function ProjectDocumentSheet({ open, onOpenChange, projectId, on
       console.error('Audit trail failed:', auditErr)
     }
 
-    toast({ title: `${config.label} saved`, description: 'Ready to view or export.' })
+    feedback.success(`${config.label} saved`, {
+      description: 'Ready to view or export.',
+    })
     onOpenChange(false)
     onSuccess()
   }

@@ -18,14 +18,13 @@ import {
   getProjectDocumentTypeMeta,
   type ProjectDocumentRecord,
 } from '@/domain/projectDocuments'
-import { useToast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { useSettings } from '@/hooks/useSettings'
 import { supabase } from '@/supabase'
 
 export default function ProjectDocumentView() {
   const { projectId, documentId } = useParams<{ projectId: string; documentId: string }>()
   const navigate = useNavigate()
-  const { toast } = useToast()
   const { settings } = useSettings()
   const [projectName, setProjectName] = useState('')
   const [documentRecord, setDocumentRecord] = useState<ProjectDocumentRecord | null>(null)
@@ -65,9 +64,11 @@ export default function ProjectDocumentView() {
     if (!documentRecord) return
     try {
       await navigator.clipboard.writeText(rawJson)
-      toast({ title: 'Copied', description: 'Raw document JSON copied.' })
+      feedback.success('Copied', { description: 'Raw document JSON copied.' })
     } catch {
-      toast({ title: 'Copy failed', description: 'Could not copy the JSON for this document.' })
+      feedback.error('Copy failed', {
+        description: 'Could not copy the JSON for this document.',
+      })
     }
   }
 
@@ -92,10 +93,14 @@ export default function ProjectDocumentView() {
         window.document.body.removeChild(anchor)
         URL.revokeObjectURL(url)
       }, 100)
-      toast({ title: 'PDF ready', description: `${meta.label} exported for internal use.` })
+      feedback.success('PDF ready', {
+        description: `${meta.label} exported for internal use.`,
+      })
     } catch (error) {
       console.error(error)
-      toast({ title: 'Export failed', description: 'Could not generate the PDF for this document.' })
+      feedback.error('Export failed', {
+        description: 'Could not generate the PDF for this document.',
+      })
     } finally {
       setPdfLoading(false)
     }

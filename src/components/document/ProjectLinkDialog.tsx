@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { supabase } from '@/supabase'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -188,13 +188,12 @@ export default function ProjectLinkDialog({
 
     if (updateError) {
       setError(updateError.message)
-      toast({ title: 'Failed to link project', description: updateError.message, variant: 'destructive' })
+      feedback.error('Failed to link project', { description: updateError.message })
       return
     }
 
     onOpenChange(false)
-    toast({
-      title: 'Project linked',
+    feedback.success('Project linked', {
       description: `${documentLabel} is now attached to ${confirmedProject.project_code || confirmedProject.name}.`,
     })
     await onLinked?.()
@@ -211,13 +210,12 @@ export default function ProjectLinkDialog({
 
     if (updateError) {
       setError(updateError.message)
-      toast({ title: 'Failed to detach project', description: updateError.message, variant: 'destructive' })
+      feedback.error('Failed to detach project', { description: updateError.message })
       return
     }
 
     onOpenChange(false)
-    toast({
-      title: 'Project detached',
+    feedback.success('Project detached', {
       description: `${documentLabel} is no longer attached to the project.`,
     })
     await onLinked?.()

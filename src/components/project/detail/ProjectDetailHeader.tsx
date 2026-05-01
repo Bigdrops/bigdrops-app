@@ -2,7 +2,7 @@ import React from 'react'
 import { FolderKanban, Copy, Building2, MapPin, Hash, Calendar, DollarSign, Pencil } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PROJECT_STATUS_CONFIG, formatCurrency, formatDate, cardClassName, inputClassName } from '@/domain/projectDetailUtils'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 
 export default function ProjectDetailHeader({
   project,
@@ -42,9 +42,11 @@ export default function ProjectDetailHeader({
                   onClick={async () => {
                     try {
                       await navigator.clipboard.writeText(project.project_code)
-                      toast({ title: 'Copied', description: `${project.project_code} copied to clipboard.` })
+                      feedback.success('Copied', {
+                        description: `${project.project_code} copied to clipboard.`,
+                      })
                     } catch {
-                      toast({ title: 'Copy failed', variant: 'destructive' })
+                      feedback.error('Copy failed')
                     }
                   }}
                   className="rounded p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"

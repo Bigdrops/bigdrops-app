@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react'
 import { toPng } from 'html-to-image'
 
 import { TableDocumentExportSegment } from './TableDocumentExportSegment'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import { chunkTableRows } from '@/domain/rfq/exportHelpers'
 import type { TableDocumentColumn, TableDocumentRow, TableDocumentType, TableTemplateId } from '@/domain/table-document/types'
 
@@ -63,7 +63,7 @@ export function TableDocumentExportController({
       onDone(images)
     } catch (error) {
       console.error('Capture failed', error)
-      toast({ title: 'Export failed', description: 'Could not capture segments.', variant: 'destructive' })
+      feedback.error('Export failed', { description: 'Could not capture segments.' })
       onCancel()
     } finally {
       setCapturing(false)

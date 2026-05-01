@@ -4,7 +4,7 @@ import Layout from '../components/Layout'
 import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
 import { supabase } from '../supabase'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 
 // Domain & Utils
 import {
@@ -266,7 +266,7 @@ export default function ClientDetail() {
 
       console.error('[ClientDetail] Error:', err)
       setError((current) => ({ ...current, overview: 'An error occurred loading client data' }))
-      toast({ title: 'Error', description: 'Could not load client details', variant: 'destructive' })
+      feedback.error('Error', { description: 'Could not load client details' })
       setLoading((current) => ({ ...current, overview: false }))
     }
   }, [id])

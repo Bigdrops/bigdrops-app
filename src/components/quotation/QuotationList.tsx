@@ -17,7 +17,7 @@ import { supabase } from '@/supabase'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
-import { toast } from '@/hooks/use-toast'
+import { feedback } from '@/lib/feedback'
 import type { DbQuotation } from '@/domain/quotation'
 import { getNextQuotationNumber, mapDbQuotation } from '@/domain/quotation'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
@@ -111,7 +111,7 @@ export default function QuotationList() {
     const { error } = await supabase.from('quotations').update({ archived_at: new Date().toISOString() }).eq('id', id)
     setBusyAction(null)
     if (error) {
-      toast({ title: 'Archive failed', description: error.message, variant: 'destructive' })
+      feedback.error('Archive failed', { description: error.message })
       return
     }
     await loadQuotations()
@@ -123,13 +123,13 @@ export default function QuotationList() {
     const { error: itemError } = await supabase.from('quotation_items').delete().eq('quotation_id', id)
     if (itemError) {
       setBusyAction(null)
-      toast({ title: 'Delete failed', description: itemError.message, variant: 'destructive' })
+      feedback.error('Delete failed', { description: itemError.message })
       return
     }
     const { error } = await supabase.from('quotations').delete().eq('id', id)
     setBusyAction(null)
     if (error) {
-      toast({ title: 'Delete failed', description: error.message, variant: 'destructive' })
+      feedback.error('Delete failed', { description: error.message })
       return
     }
     await loadQuotations()
@@ -140,7 +140,9 @@ export default function QuotationList() {
     const { data: quotationRow, error: quotationError } = await supabase.from('quotations').select('*').eq('id', id).single()
     if (quotationError || !quotationRow) {
       setBusyAction(null)
-      toast({ title: 'Clone failed', description: quotationError?.message || 'Quotation not found', variant: 'destructive' })
+      feedback.error('Clone failed', {
+        description: quotationError?.message || 'Quotation not found',
+      })
       return
     }
 
@@ -172,7 +174,9 @@ export default function QuotationList() {
     const { data: createdQuotation, error: createError } = await supabase.from('quotations').insert([payload]).select().single()
     if (createError || !createdQuotation) {
       setBusyAction(null)
-      toast({ title: 'Clone failed', description: createError?.message || 'Unable to create clone', variant: 'destructive' })
+      feedback.error('Clone failed', {
+        description: createError?.message || 'Unable to create clone',
+      })
       return
     }
 
@@ -186,7 +190,7 @@ export default function QuotationList() {
       if (itemError) {
         await supabase.from('quotations').delete().eq('id', createdQuotation.id)
         setBusyAction(null)
-        toast({ title: 'Clone failed', description: itemError.message, variant: 'destructive' })
+        feedback.error('Clone failed', { description: itemError.message })
         return
       }
     }
@@ -203,21 +207,17 @@ export default function QuotationList() {
     const result = await processQuotationCreateQueueItem(queueItemId)
 
     if (result.status === 'synced') {
-      toast({
-        title: 'Quotation synced',
+      feedback.success('Quotation synced', {
         description: 'The offline quotation was uploaded successfully.',
       })
       await Promise.all([loadQuotations(), loadQuotationSyncQueue()])
     } else if (result.status === 'failed') {
-      toast({
-        title: 'Retry failed',
+      feedback.error('Retry failed', {
         description: result.error || 'Unable to sync this quotation right now.',
-        variant: 'destructive',
       })
       await loadQuotationSyncQueue()
     } else {
-      toast({
-        title: 'Retry skipped',
+      feedback.warning('Retry skipped', {
         description: 'Connect to the internet before retrying this quotation sync.',
       })
     }

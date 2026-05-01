@@ -10,7 +10,7 @@ import { SkeletonRow } from '@/components/loading/AppLoadingStates'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import ConfirmActionDialog from '../components/ConfirmActionDialog'
 import { supabase } from '../supabase'
-import { toast } from "@/hooks/use-toast"
+import { feedback } from '@/lib/feedback'
 import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
 import AttachExistingDocumentSheet from "@/components/document/AttachExistingDocumentSheet"
 import ProjectLinkDialog from "@/components/document/ProjectLinkDialog"
@@ -262,7 +262,9 @@ export default function CSR() {
   const handleDelete = async (csr: CsrRow) => {
     const { error } = await supabase.from("csrs").delete().eq("id", csr.id)
     if (error) {
-      toast({ title: "Delete failed", description: "Unable to delete CSR right now. Please try again.", variant: "destructive" })
+      feedback.error('Delete failed', {
+        description: 'Unable to delete CSR right now. Please try again.',
+      })
       return
     }
     setCsrToDelete(null)
@@ -275,22 +277,18 @@ export default function CSR() {
     const result = await processCsrCreateQueueItem(queueItemId)
 
     if (result.status === "synced") {
-      toast({
-        title: "CSR synced",
-        description: "The offline CSR was uploaded successfully.",
+      feedback.success('CSR synced', {
+        description: 'The offline CSR was uploaded successfully.',
       })
       await Promise.all([fetchCsrs(), loadCsrSyncQueue()])
     } else if (result.status === "failed") {
-      toast({
-        title: "Retry failed",
-        description: result.error || "Unable to sync this CSR right now.",
-        variant: "destructive",
+      feedback.error('Retry failed', {
+        description: result.error || 'Unable to sync this CSR right now.',
       })
       await loadCsrSyncQueue()
     } else {
-      toast({
-        title: "Retry skipped",
-        description: "Connect to the internet before retrying this CSR sync.",
+      feedback.warning('Retry skipped', {
+        description: 'Connect to the internet before retrying this CSR sync.',
       })
     }
 

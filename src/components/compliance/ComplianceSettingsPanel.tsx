@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
-import { toast } from 'sonner'
+import { feedback } from '@/lib/feedback'
 import { TaxSettings } from '@/domain/compliance/types'
 
 export default function ComplianceSettingsPanel() {
@@ -61,9 +61,9 @@ export default function ComplianceSettingsPanel() {
         }, { onConflict: 'settings_id' })
 
       if (error) throw error
-      toast.success('Tax settings updated successfully')
+      feedback.success('Tax settings updated successfully')
     } catch (error: any) {
-      toast.error(getUserFacingMutationMessage(error, { action: 'save' }))
+      feedback.error(getUserFacingMutationMessage(error, { action: 'save' }))
     } finally {
       setSaving(false)
     }
