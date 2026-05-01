@@ -1,31 +1,27 @@
 'use client'
 
-import { useToast } from '@/hooks/use-toast'
-import {
-  Toast,
-  ToastClose,
-  ToastDescription,
-  ToastProvider,
-  ToastTitle,
-  ToastViewport,
-} from '@/components/ui/toast'
+import { useTheme } from 'next-themes'
+import { GoeyToaster } from 'goey-toast'
 
 export function Toaster() {
-  const { toasts } = useToast()
+  const { theme = 'system' } = useTheme()
 
   return (
-    <ToastProvider>
-      {toasts.map(({ id, title, description, action, ...props }) => (
-        <Toast key={id} {...props}>
-          <div className="grid gap-1">
-            {title ? <ToastTitle>{title}</ToastTitle> : null}
-            {description ? <ToastDescription>{description}</ToastDescription> : null}
-          </div>
-          {action}
-          <ToastClose />
-        </Toast>
-      ))}
-      <ToastViewport />
-    </ToastProvider>
+    <GoeyToaster
+      position="bottom-right"
+      theme={theme === 'dark' ? 'dark' : 'light'}
+      offset="24px"
+      gap={12}
+      closeButton="top-right"
+      visibleToasts={3}
+      maxQueue={6}
+      queueOverflow="drop-oldest"
+      showProgress
+      toastOptions={{
+        classNames: {
+          toast: 'bd-goey-toast-host',
+        },
+      }}
+    />
   )
 }

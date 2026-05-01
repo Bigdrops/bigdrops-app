@@ -20,12 +20,22 @@
   --bd-button-primary-bg: var(--primary);
   --bd-button-primary-text: var(--primary-foreground);
   --bd-button-primary-hover-bg: var(--primary); /* Fallback to primary, can be overridden */
-  --bd-feedback-success-bg: 142 71% 45%; /* Semantic emerald/green */
-  --bd-feedback-error-bg: 0 84% 60%; /* Semantic rose/red */
+  --bd-feedback-success-bg: 142 46% 93%;
+  --bd-feedback-success-text: 147 51% 24%;
+  --bd-feedback-success-border: 145 39% 78%;
+  --bd-feedback-error-bg: 8 72% 95%;
+  --bd-feedback-error-text: 8 55% 32%;
+  --bd-feedback-error-border: 8 47% 82%;
+  --bd-feedback-warning-bg: 42 100% 94%;
+  --bd-feedback-warning-text: 29 68% 28%;
+  --bd-feedback-warning-border: 39 78% 80%;
+  --bd-feedback-info-bg: 194 62% 94%;
+  --bd-feedback-info-text: 196 56% 29%;
+  --bd-feedback-info-border: 194 45% 82%;
   --bd-feedback-success: var(--bd-feedback-success-bg);
   --bd-feedback-error: var(--bd-feedback-error-bg);
-  --bd-feedback-warning: 38 92% 50%;
-  --bd-feedback-info: 217 91% 60%;
+  --bd-feedback-warning: var(--bd-feedback-warning-bg);
+  --bd-feedback-info: var(--bd-feedback-info-bg);
   --bd-feedback-save: var(--primary);
   --bd-layout-nav: var(--bd-surface);
   --bd-layout-sidebar: var(--bd-surface);
@@ -247,4 +257,123 @@ body {
 
 label, .bd-label {
   letter-spacing: var(--bd-label-letter-spacing);
+}
+
+.bd-goey-toast {
+  --bd-goey-toast-fill: var(--bd-card-bg);
+  --bd-goey-toast-border: var(--bd-border);
+  color: hsl(var(--bd-text));
+}
+
+.bd-goey-toast__content {
+  min-width: 280px;
+}
+
+.bd-goey-toast__header {
+  gap: 10px;
+}
+
+.bd-goey-toast__title,
+.bd-goey-toast .gooey-title,
+.bd-goey-toast .gooey-timestamp,
+.bd-goey-toast__description,
+.bd-goey-toast .gooey-description {
+  color: inherit;
+}
+
+.bd-goey-toast__title,
+.bd-goey-toast .gooey-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.bd-goey-toast__description,
+.bd-goey-toast .gooey-description {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-top: 14px;
+}
+
+.bd-goey-toast .gooey-progressWrapper {
+  background: color-mix(in oklab, currentColor 12%, transparent);
+}
+
+.bd-goey-toast .gooey-progressBar {
+  background: currentColor;
+}
+
+.bd-goey-toast__action-button,
+.bd-goey-toast .gooey-actionButton {
+  border: 1px solid color-mix(in oklab, currentColor 18%, transparent);
+  background: color-mix(in oklab, currentColor 10%, white 90%);
+  color: inherit;
+}
+
+.bd-goey-toast__action-button:hover,
+.bd-goey-toast .gooey-actionButton:hover {
+  background: color-mix(in oklab, currentColor 16%, white 84%);
+}
+
+.bd-goey-toast__spinner {
+  animation: bd-goey-toast-spin 1s linear infinite;
+}
+
+.bd-goey-toast--default {
+  --bd-goey-toast-fill: var(--bd-card-bg);
+  --bd-goey-toast-border: var(--bd-border);
+  color: hsl(var(--bd-text));
+}
+
+.bd-goey-toast--success {
+  --bd-goey-toast-fill: var(--bd-feedback-success-bg);
+  --bd-goey-toast-border: var(--bd-feedback-success-border);
+  color: hsl(var(--bd-feedback-success-text));
+}
+
+.bd-goey-toast--error {
+  --bd-goey-toast-fill: var(--bd-feedback-error-bg);
+  --bd-goey-toast-border: var(--bd-feedback-error-border);
+  color: hsl(var(--bd-feedback-error-text));
+}
+
+.bd-goey-toast--warning {
+  --bd-goey-toast-fill: var(--bd-feedback-warning-bg);
+  --bd-goey-toast-border: var(--bd-feedback-warning-border);
+  color: hsl(var(--bd-feedback-warning-text));
+}
+
+.bd-goey-toast--info,
+.bd-goey-toast--promise {
+  --bd-goey-toast-fill: var(--bd-feedback-info-bg);
+  --bd-goey-toast-border: var(--bd-feedback-info-border);
+  color: hsl(var(--bd-feedback-info-text));
+}
+
+.bd-goey-toast--promise:has(.gooey-titleSuccess) {
+  --bd-goey-toast-fill: var(--bd-feedback-success-bg);
+  --bd-goey-toast-border: var(--bd-feedback-success-border);
+  color: hsl(var(--bd-feedback-success-text));
+}
+
+.bd-goey-toast--promise:has(.gooey-titleError) {
+  --bd-goey-toast-fill: var(--bd-feedback-error-bg);
+  --bd-goey-toast-border: var(--bd-feedback-error-border);
+  color: hsl(var(--bd-feedback-error-text));
+}
+
+.bd-goey-toast--promise:has(.gooey-titleWarning) {
+  --bd-goey-toast-fill: var(--bd-feedback-warning-bg);
+  --bd-goey-toast-border: var(--bd-feedback-warning-border);
+  color: hsl(var(--bd-feedback-warning-text));
+}
+
+@keyframes bd-goey-toast-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
