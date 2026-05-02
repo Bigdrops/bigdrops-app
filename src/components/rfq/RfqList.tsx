@@ -12,8 +12,6 @@ import { SkeletonRow } from '@/components/loading/AppLoadingStates'
 import ModuleShell from '@/components/layout/ModuleShell'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
-import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { RfqEditor } from './RfqEditor'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 
 const formatCompactDate = (value?: string) => {
@@ -85,9 +83,6 @@ export const RfqList: React.FC = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [showCreateSheet, setShowCreateSheet] = useState(false);
-  const [showEditSheet, setShowEditSheet] = useState(false);
-  const [editRfq, setEditRfq] = useState<{ rfq: Rfq; items: RfqItem[] } | null>(null);
 
   const loadRfqs = async () => {
     setLoading(true)
@@ -151,77 +146,6 @@ export const RfqList: React.FC = () => {
     }
   };
 
-  const handleSaveNew = async (rfq: Rfq, items: RfqItem[]) => {
-    setIsDeleting(true); // Using isDeleting as a generic busy state for the sheet save
-    try {
-      const { data: existingRfqs } = await supabase.from('rfqs').select('rfq_number');
-      const rfqNumber = rfq.rfq_number || getNextRfqNumber(existingRfqs || []);
-      const dbRfq = denormalizeToDbRfq({ ...rfq, rfq_number: rfqNumber });
-      const { data: createdRfq, error: rfqError } = await supabase.from('rfqs').insert([dbRfq]).select().single();
-      if (rfqError || !createdRfq) throw rfqError || new Error("Failed to create RFQ");
-
-      const dbItems = items
-        .filter((item) => item.description?.trim())
-        .map((item, idx) => denormalizeToDbRfqItem({ ...item, sort_order: idx }, createdRfq.id));
-
-      if (dbItems.length > 0) {
-        const { error: itemsError } = await supabase.from('rfq_items').insert(dbItems);
-        if (itemsError) throw itemsError;
-      }
-
-      feedback.success('RFQ created successfully');
-      setShowCreateSheet(false);
-      invalidateListCache(RFQ_CACHE_KEY);
-      await loadRfqs();
-    } catch (err: any) {
-      feedback.error('Save failed', { description: getUserFacingMutationMessage(err, { action: 'save' }) });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleUpdate = async (updatedRfq: Rfq, updatedItems: RfqItem[]) => {
-    if (!updatedRfq.id) return;
-    setIsDeleting(true);
-    try {
-      const dbRfq = denormalizeToDbRfq(updatedRfq);
-      const { error: rfqError } = await supabase.from('rfqs').update(dbRfq).eq('id', updatedRfq.id);
-      if (rfqError) throw rfqError;
-
-      await supabase.from('rfq_items').delete().eq('rfq_id', updatedRfq.id);
-      const dbItems = updatedItems
-        .filter((item) => item.description?.trim())
-        .map((item, idx) => denormalizeToDbRfqItem({ ...item, sort_order: idx }, updatedRfq.id!));
-
-      if (dbItems.length > 0) {
-        const { error: itemsError } = await supabase.from('rfq_items').insert(dbItems);
-        if (itemsError) throw itemsError;
-      }
-
-      feedback.success('RFQ updated successfully');
-      setShowEditSheet(false);
-      setEditRfq(null);
-      invalidateListCache(RFQ_CACHE_KEY);
-      await loadRfqs();
-    } catch (err: any) {
-      feedback.error('Update failed', { description: getUserFacingMutationMessage(err, { action: 'save' }) });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const openEdit = async (rfq: Rfq) => {
-    setLoading(true);
-    const { data: items, error } = await supabase.from('rfq_items').select('*').eq('rfq_id', rfq.id).order('sort_order');
-    setLoading(false);
-    if (error) {
-      feedback.error('Failed to load RFQ items');
-      return;
-    }
-    setEditRfq({ rfq, items: items || [] });
-    setShowEditSheet(true);
-    setActiveRfq(null);
-  };
 
   const handleDelete = async (id: string) => {
     setIsDeleting(true);
@@ -260,8 +184,7 @@ export const RfqList: React.FC = () => {
       title="Request for Quotes"
       summary={`${rfqs.length} documents`}
       tone="blue"
-      onPrimaryAction={() => setShowCreateSheet(true)}
-      primaryActionIcon="plus"
+      onPrimaryAction={() => navigate('/rfqs/new')}
       searchValue={search}
       onSearchChange={setSearch}
       searchPlaceholder="Search RFQs..."
@@ -291,29 +214,8 @@ export const RfqList: React.FC = () => {
         </div>
       )}
 
-      <Sheet open={showCreateSheet} onOpenChange={setShowCreateSheet}>
-        <SheetContent side="right" className="w-full sm:max-w-4xl p-0 border-l-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]">
-          <RfqEditor onSave={handleSaveNew} onCancel={() => setShowCreateSheet(false)} saving={isDeleting} />
-        </SheetContent>
-      </Sheet>
-
-      <Sheet open={showEditSheet} onOpenChange={setShowEditSheet}>
-        <SheetContent side="right" className="w-full sm:max-w-4xl p-0 border-l-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]">
-          {editRfq && (
-            <RfqEditor 
-              initialRfq={editRfq.rfq} 
-              initialItems={editRfq.items} 
-              onSave={handleUpdate} 
-              onCancel={() => {
-                setShowEditSheet(false)
-                setEditRfq(null)
-              }}
-              saving={isDeleting} 
-            />
-          )}
-        </SheetContent>
-      </Sheet>
-
+      <MobileFab onClick={() => navigate('/rfqs/new')} ariaLabel="Create RFQ" />
+ 
       <InvoiceListActionSheet
         open={Boolean(activeRfq)}
         onOpenChange={(open) => !open && setActiveRfq(null)}
@@ -335,8 +237,7 @@ export const RfqList: React.FC = () => {
             key: 'edit',
             label: 'Edit RFQ',
             icon: <Pencil className="h-6 w-6" />,
-            onClick: () => openEdit(activeRfq),
-            closeOnClick: false,
+            onClick: () => navigate(`/rfqs/edit/${activeRfq.id}`),
           },
           {
             key: 'archive',

@@ -11,6 +11,7 @@ import {
 } from "@/lib/native/invoiceCache"
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
 import Layout from "../components/Layout"
+import MobileFab from "../components/layout/MobileFab"
 import ModuleShell from "@/components/layout/ModuleShell"
 import ModuleRowCard from "@/components/layout/ModuleRowCard"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"
@@ -696,6 +697,7 @@ export default function Invoices() {
         onLoadMore={() => fetchInvoices(page + 1, false)}
       />
 
+      <MobileFab onClick={() => navigate("/invoices/new")} ariaLabel="Create invoice" />
       <InvoiceListActionSheet
         open={Boolean(activeInvoice) && !showArchiveWarn && !showDeleteWarn}
         onOpenChange={(open) => {

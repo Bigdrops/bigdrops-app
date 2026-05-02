@@ -11,10 +11,6 @@ import { feedback } from '@/lib/feedback'
 import { SkeletonRow } from '@/components/loading/AppLoadingStates'
 import { supabase } from '@/supabase'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
-import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { BoqEditor } from './BoqEditor'
-import { createEmptyBoq } from '@/domain/boq/factories'
-import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { getNextBoqNumber } from '@/domain/boq/storage'
 
 const BOQ_CACHE_KEY = 'bd:list:boqs:v1:all'
@@ -30,9 +26,6 @@ export function BoqList() {
   const [isArchiving, setIsArchiving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [search, setSearch] = useState('')
-  const [showCreateSheet, setShowCreateSheet] = useState(false)
-  const [showEditSheet, setShowEditSheet] = useState(false)
-  const [editBoqData, setEditBoqData] = useState<any | null>(null)
 
   const loadBoqs = async (options?: { background?: boolean }) => {
     if (!options?.background) {
@@ -108,60 +101,6 @@ export function BoqList() {
     await loadBoqs({ background: true })
   }
 
-  const handleSaveNew = async (boq: any) => {
-    setIsDeleting(true)
-    try {
-      const nextNum = getNextBoqNumber()
-      const payload = {
-        ...boq,
-        boq_number: boq.boq_number || nextNum,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }
-      delete payload.id
-
-      const { error } = await supabase.from('boqs').insert([payload])
-      if (error) throw error
-
-      feedback.success('BOQ created successfully')
-      setShowCreateSheet(false)
-      invalidateListCache(BOQ_CACHE_KEY)
-      await loadBoqs()
-    } catch (err: any) {
-      feedback.error('Save failed', { description: getUserFacingMutationMessage(err, { action: 'save' }) })
-    } finally {
-      setIsDeleting(false)
-    }
-  }
-
-  const handleUpdate = async (boq: any) => {
-    if (!boq.id) return
-    setIsDeleting(true)
-    try {
-      const payload = {
-        ...boq,
-        updated_at: new Date().toISOString(),
-      }
-      const { error } = await supabase.from('boqs').update(payload).eq('id', boq.id)
-      if (error) throw error
-
-      feedback.success('BOQ updated successfully')
-      setShowEditSheet(false)
-      setEditBoqData(null)
-      invalidateListCache(BOQ_CACHE_KEY)
-      await loadBoqs()
-    } catch (err: any) {
-      feedback.error('Update failed', { description: getUserFacingMutationMessage(err, { action: 'save' }) })
-    } finally {
-      setIsDeleting(false)
-    }
-  }
-
-  const openEdit = (boq: any) => {
-    setEditBoqData(boq)
-    setShowEditSheet(true)
-    setActiveBoq(null)
-  }
 
   const filtered = boqs.filter(b => 
     (b.title || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -175,8 +114,7 @@ export function BoqList() {
       title="BOQs"
       summary={`${boqs.length} documents total`}
       tone="blue"
-      onPrimaryAction={() => setShowCreateSheet(true)}
-      primaryActionIcon="plus"
+      onPrimaryAction={() => navigate('/boqs/new')}
       searchValue={search}
       onSearchChange={setSearch}
       searchPlaceholder="Search BOQs..."
@@ -200,28 +138,8 @@ export function BoqList() {
         </div>
       )}
 
-      <Sheet open={showCreateSheet} onOpenChange={setShowCreateSheet}>
-        <SheetContent side="right" className="w-full sm:max-w-4xl p-0 border-l-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]">
-          <BoqEditor initialBoq={createEmptyBoq()} onSave={handleSaveNew} onCancel={() => setShowCreateSheet(false)} saving={isDeleting} />
-        </SheetContent>
-      </Sheet>
-
-      <Sheet open={showEditSheet} onOpenChange={setShowEditSheet}>
-        <SheetContent side="right" className="w-full sm:max-w-4xl p-0 border-l-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]">
-          {editBoqData && (
-            <BoqEditor 
-              initialBoq={editBoqData} 
-              onSave={handleUpdate} 
-              onCancel={() => {
-                setShowEditSheet(false)
-                setEditBoqData(null)
-              }}
-              saving={isDeleting} 
-            />
-          )}
-        </SheetContent>
-      </Sheet>
-
+      <MobileFab onClick={() => navigate('/boqs/new')} ariaLabel="Create BOQ" />
+ 
       <InvoiceListActionSheet
         open={Boolean(activeBoq)}
         onOpenChange={(open) => !open && setActiveBoq(null)}
@@ -230,7 +148,7 @@ export function BoqList() {
         subtitle={activeBoq?.client_name || undefined}
         actions={activeBoq ? [
           { key: 'view', label: 'View / Export', icon: <Eye className="h-6 w-6" />, onClick: () => navigate(`/boqs/${activeBoq.id}`) },
-          { key: 'edit', label: 'Edit BOQ', icon: <Pencil className="h-6 w-6" />, onClick: () => openEdit(activeBoq) },
+          { key: 'edit', label: 'Edit BOQ', icon: <Pencil className="h-6 w-6" />, onClick: () => navigate(`/boqs/edit/${activeBoq.id}`) },
           { 
             key: 'archive', 
             label: isArchiving ? 'Archiving...' : 'Archive', 

@@ -29,6 +29,7 @@ import { getDocumentActionState, getProjectActionState } from '@/domain/document
 import { fetchProjectSummary, getQuotationDocumentRelations } from '@/domain/documentRelationships'
 import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
 import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
+import MobileFab from '@/components/layout/MobileFab'
 import { Button } from '@/components/ui/button'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
 import {
@@ -518,6 +519,7 @@ export default function QuotationList() {
         loadingMore={false}
         onLoadMore={() => {}}
       />
+      <MobileFab onClick={() => navigate('/quotations/new')} ariaLabel="Create quotation" />
       <ConfirmActionDialog
         open={archiveId !== null}
         onOpenChange={(open) => {

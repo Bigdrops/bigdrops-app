@@ -17,8 +17,6 @@ import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import WaybillForm from '@/components/waybill/WaybillForm'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 import { fetchInvoiceSummary, fetchProjectSummary } from '@/domain/documentRelationships'
 import { formatStatusLabel } from '@/lib/formatters/status'
@@ -53,9 +51,6 @@ export default function Waybills() {
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const [showAttachInvoice, setShowAttachInvoice] = useState(false)
-  const [showCreateSheet, setShowCreateSheet] = useState(false)
-  const [showEditSheet, setShowEditSheet] = useState(false)
-  const [editWaybillId, setEditWaybillId] = useState<string | null>(null)
   const [pendingAttachInvoice, setPendingAttachInvoice] = useState<{ id: string; invoice_number?: string | null } | null>(null)
   const [syncQueueItems, setSyncQueueItems] = useState<WaybillCreateQueueItem[]>([])
   const [syncQueueLoading, setSyncQueueLoading] = useState(() => canUseNativeSqlite())
@@ -297,8 +292,7 @@ export default function Waybills() {
           title="Waybills"
           summary={`${waybills.length} waybill${waybills.length === 1 ? '' : 's'}`}
           tone="cyan"
-          onPrimaryAction={() => setShowCreateSheet(true)}
-          primaryActionIcon="plus"
+          onPrimaryAction={() => navigate('/waybills/new')}
           primaryActionLabel="New Waybill"
           searchValue={search}
           onSearchChange={setSearch}
@@ -440,39 +434,7 @@ export default function Waybills() {
             </div>
           }
       />
-
-      <Sheet open={showCreateSheet} onOpenChange={setShowCreateSheet}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl p-0 border-l-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]">
-          <div className="h-full overflow-y-auto">
-            <WaybillForm mode="new" onCancel={() => setShowCreateSheet(false)} onSaved={() => {
-              setShowCreateSheet(false)
-              loadWaybills({ background: true })
-            }} />
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      <Sheet open={showEditSheet} onOpenChange={setShowEditSheet}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl p-0 border-l-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]">
-          <div className="h-full overflow-y-auto">
-            {editWaybillId && (
-              <WaybillForm 
-                mode="edit" 
-                waybillId={editWaybillId} 
-                onCancel={() => {
-                  setShowEditSheet(false)
-                  setEditWaybillId(null)
-                }} 
-                onSaved={() => {
-                  setShowEditSheet(false)
-                  setEditWaybillId(null)
-                  loadWaybills({ background: true })
-                }} 
-              />
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+      <MobileFab onClick={() => navigate('/waybills/new')} ariaLabel="Create waybill" />
 
       <InvoiceListActionSheet
         open={Boolean(activeWaybill)}
@@ -497,10 +459,7 @@ export default function Waybills() {
              key: 'edit',
              label: 'Edit',
              icon: <Pencil size={20} />,
-             onClick: () => {
-               setEditWaybillId(activeWaybill.id)
-               setShowEditSheet(true)
-             },
+             onClick: () => navigate(`/waybills/${activeWaybill.id}/edit`),
            },
           {
             key: 'project',
