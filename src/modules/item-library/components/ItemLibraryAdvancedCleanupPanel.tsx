@@ -11,6 +11,7 @@ import {
   buildFlaggedCleanupExportPayload,
   buildFlaggedCleanupPrompt,
   validateFlaggedCleanupImport,
+  createCleanupApplyProposal,
 } from '../domain/itemCleanupExchange'
 import type {
   CatalogCleanupBatchExportPayload,
@@ -64,6 +65,10 @@ function copyText(value: string) {
   return Promise.resolve()
 }
 
+function asArray<T>(value: T[] | null | undefined): T[] {
+  return Array.isArray(value) ? value : []
+}
+
 function downloadJson(filename: string, value: string) {
   const blob = new Blob([value], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -109,7 +114,7 @@ function ValidationBanner({ errors }: { errors: string[] }) {
     <div className="rounded-[14px] border border-[#e4c3ba] bg-[#fff2ee] px-4 py-3">
       <div className="text-[12px] font-bold text-[#8f3f35]">Import result needs correction</div>
       <ul className="mt-2 space-y-1 text-[11px] leading-relaxed text-[#9a4a3f]">
-        {errors.map((error) => (
+        {asArray(errors).map((error) => (
           <li key={error}>• {error}</li>
         ))}
       </ul>
@@ -314,23 +319,15 @@ export function ItemLibraryAdvancedCleanupPanel({
 
       const proposals: CleanupApplyProposal[] = isDuplicates
         ? (applyableMerges as CleanupPreviewGroup[])
-            .filter((merge) => merge && merge.group_id && merge.winner_item_id && merge.merged_item_ids?.length > 0)
-            .map((merge) => ({
-              group_id: merge.group_id,
-              export_label: merge.export_label,
-              canonical_name: merge.canonical_name,
-              winner_item_id: merge.winner_item_id,
-              merged_item_ids: merge.merged_item_ids,
-              aliases_to_keep: merge.aliases_to_keep,
-              aliases_to_retire: merge.aliases_to_retire,
-            }))
+            .filter((merge) => merge && merge.group_id && (merge.winner_item_id || merge.winner?.item_id))
+            .map((merge) => createCleanupApplyProposal(merge))
         : (applyableMerges as any[])
-            .filter((merge) => merge && merge.winner?.item_id && merge.merged_items?.length > 0)
+            .filter((merge) => merge && merge.winner?.item_id && asArray(merge.merged_items).length > 0)
             .map((merge) =>
               createMergeProposal(
                 currentExportPayload as CatalogCleanupBatchExportPayload,
                 merge.winner.item_id,
-                merge.merged_items.map((item: any) => item.item_id),
+                asArray(merge.merged_items).map((item: any) => item.item_id),
                 merge.canonical_name,
               ),
             )
@@ -633,11 +630,11 @@ export function ItemLibraryAdvancedCleanupPanel({
                       </div>
 
                       <div className="mt-3 space-y-3">
-                        {(applyableMerges as any[]).map((merge) => (
+                        {asArray(applyableMerges as CleanupPreviewGroup[]).map((merge) => (
                           <article key={merge.group_id} className="rounded-[12px] bg-[#f9f2e7] p-3">
                             <h3 className="text-[13px] font-bold text-[#2c2218]">{merge.canonical_name}</h3>
                             <p className="mt-1 text-[11px] text-[#6f5b46]">
-                              Group: {merge.export_label} • Winner: {merge.winner.name} • Merge: {merge.merged_items.map((item: any) => item.name).join(', ')}
+                              Group: {merge.export_label} • Winner: {merge.winner?.name} • Merge: {asArray(merge.merged_items).map((item) => item.name).join(', ')}
                             </p>
                           </article>
                         ))}
@@ -649,7 +646,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                     <div className="rounded-[14px] border border-[#e4c3ba] bg-[#fff2ee] p-4">
                       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#8f3f35]">Rejected proposals</div>
                       <div className="mt-3 space-y-2">
-                        {(preview as CleanupImportPreview).rejected_groups.map((rejected) => (
+                        {asArray((preview as CleanupImportPreview).rejected_groups).map((rejected) => (
                           <div key={rejected.group_id} className="rounded-[12px] bg-[#ffeae4] p-3">
                             <div className="text-[12px] font-bold text-[#8f3f35]">{rejected.group_id}</div>
                             <div className="mt-0.5 text-[11px] text-[#9a4a3f]">{rejected.reason}</div>
@@ -662,7 +659,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                   {ignoredGroups.length ? (
                     <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
                       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Ignored groups</div>
-                      <p className="mt-2 text-[11px] text-[#6f5b46]">{ignoredGroups.map((g: any) => g.label).join(', ')}</p>
+                      <p className="mt-2 text-[11px] text-[#6f5b46]">{asArray(ignoredGroups).map((g: any) => g.label).join(', ')}</p>
                     </div>
                   ) : null}
 
@@ -670,7 +667,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                     <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
                       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Apply results</div>
                       <div className="mt-2 space-y-1 text-[11px] text-[#2c2218]">
-                        {currentBatchState.applyResults.map((result) => (
+                        {asArray(currentBatchState.applyResults).map((result) => (
                           <div key={`${result.group_id}-${result.status}`}>
                             {result.canonical_name}: {result.status}
                           </div>
@@ -738,7 +735,7 @@ export function ItemLibraryAdvancedCleanupPanel({
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            {(lockedSession?.batches ?? []).map((batch, index) => {
+            {asArray(lockedSession?.batches).map((batch, index) => {
               const status = batchStates[batch.batch_id]?.status || 'not_started'
               return (
                 <span
@@ -874,11 +871,11 @@ export function ItemLibraryAdvancedCleanupPanel({
                     </div>
 
                     <div className="mt-3 space-y-3">
-                      {(applyableMerges as any[]).map((merge) => (
-                        <article key={`${merge.winner.item_id}-${merge.canonical_name}`} className="rounded-[12px] bg-[#f9f2e7] p-3">
+                      {asArray(applyableMerges as any[]).map((merge) => (
+                        <article key={`${merge.winner?.item_id}-${merge.canonical_name}`} className="rounded-[12px] bg-[#f9f2e7] p-3">
                           <h3 className="text-[13px] font-bold text-[#2c2218]">{merge.canonical_name}</h3>
                           <p className="mt-1 text-[11px] text-[#6f5b46]">
-                            Winner: {merge.winner.name} • Merge: {merge.merged_items.map((item: any) => item.name).join(', ')}
+                            Winner: {merge.winner?.name} • Merge: {asArray(merge.merged_items).map((item: any) => item.name).join(', ')}
                           </p>
                         </article>
                       ))}
@@ -890,9 +887,9 @@ export function ItemLibraryAdvancedCleanupPanel({
                   <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
                     <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Rename suggestions</div>
                     <div className="mt-3 space-y-2">
-                      {renameSuggestions.map((suggestion) => (
-                        <div key={`${suggestion.item.item_id}-${suggestion.suggested_name}`} className="rounded-[12px] bg-[#f9f2e7] p-3 text-[11px] text-[#2c2218]">
-                          {suggestion.item.name} → {suggestion.suggested_name}
+                      {asArray(renameSuggestions).map((suggestion) => (
+                        <div key={`${suggestion.item?.item_id}-${suggestion.suggested_name}`} className="rounded-[12px] bg-[#f9f2e7] p-3 text-[11px] text-[#2c2218]">
+                          {suggestion.item?.name} → {suggestion.suggested_name}
                           <span className="ml-2 font-bold text-[#9a7c5e]">Preview only</span>
                         </div>
                       ))}
@@ -904,9 +901,9 @@ export function ItemLibraryAdvancedCleanupPanel({
                   <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
                     <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Alias suggestions</div>
                     <div className="mt-3 space-y-2">
-                      {aliasSuggestions.map((suggestion) => (
-                        <div key={`${suggestion.item.item_id}-${suggestion.suggested_aliases.join('|')}`} className="rounded-[12px] bg-[#f9f2e7] p-3 text-[11px] text-[#2c2218]">
-                          {suggestion.item.name}: {suggestion.suggested_aliases.join(', ')}
+                      {asArray(aliasSuggestions).map((suggestion) => (
+                        <div key={`${suggestion.item?.item_id}-${asArray(suggestion.suggested_aliases).join('|')}`} className="rounded-[12px] bg-[#f9f2e7] p-3 text-[11px] text-[#2c2218]">
+                          {suggestion.item?.name}: {asArray(suggestion.suggested_aliases).join(', ')}
                           <span className="ml-2 font-bold text-[#9a7c5e]">Preview only</span>
                         </div>
                       ))}
@@ -917,7 +914,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                 {reviewRequiredItems.length ? (
                   <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
                     <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Review required</div>
-                    <p className="mt-2 text-[11px] text-[#6f5b46]">{reviewRequiredItems.map((item) => item.name).join(', ')}</p>
+                    <p className="mt-2 text-[11px] text-[#6f5b46]">{asArray(reviewRequiredItems).map((item) => item.name).join(', ')}</p>
                   </div>
                 ) : null}
 
@@ -925,7 +922,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                   <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
                     <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Apply results</div>
                     <div className="mt-2 space-y-1 text-[11px] text-[#2c2218]">
-                      {currentBatchState.applyResults.map((result) => (
+                      {asArray(currentBatchState.applyResults).map((result) => (
                         <div key={`${result.group_id}-${result.status}`}>
                           {result.canonical_name}: {result.status}
                         </div>

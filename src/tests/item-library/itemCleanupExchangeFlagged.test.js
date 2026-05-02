@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import {
   buildFlaggedCleanupExportPayload,
   validateFlaggedCleanupImport,
+  createCleanupApplyProposal,
 } from '../../modules/item-library/domain/itemCleanupExchange.ts'
 
 const duplicateGroups = [
@@ -190,4 +191,90 @@ I suggest merging Item 1 and Item 2.
 
   assert.equal(validation.ok, false)
   assert.match(validation.errors[0], /Paste the final JSON result, not the review text/i)
+})
+
+test('complex flagged cleanup result with many ignored groups and mix of alias arrays', () => {
+  const manyGroups = Array.from({ length: 10 }, (_, i) => ({
+    group_id: `group-${i}`,
+    label: `Item Group ${i}`,
+    reason: 'Duplicate',
+    normalized_label: `item group ${i}`,
+    members: [
+      { item_id: `item-${i}-1`, name: `Item ${i} Version A`, usage_count: 2, last_sold_price: 100 },
+      { item_id: `item-${i}-2`, name: `Item ${i} Version B`, usage_count: 1, last_sold_price: 110 },
+    ],
+  }))
+
+  const exportPayload = buildFlaggedCleanupExportPayload({
+    duplicateGroups: manyGroups,
+    aliases: [],
+  })
+
+  const complexResult = JSON.stringify({
+    response_type: 'flagged_cleanup_result',
+    schema_version: 1,
+    source_export_type: 'flagged_cleanup',
+    merge_groups: [
+      {
+        group_id: 'group-0',
+        canonical_name: 'Item 0 Canonical',
+        winner_item_id: 'item-0-1',
+        merged_item_ids: ['item-0-2'],
+        aliases_to_keep: ['Alias 0'],
+        aliases_to_retire: [],
+      },
+      {
+        group_id: 'group-1',
+        canonical_name: 'Item 1 Canonical',
+        winner_item_id: 'item-1-1',
+        merged_item_ids: ['item-1-2'],
+        aliases_to_keep: [],
+        aliases_to_retire: ['Alias 1 Old'],
+      },
+      {
+        group_id: 'group-2',
+        canonical_name: 'Item 2 Canonical',
+        winner_item_id: 'item-2-1',
+        merged_item_ids: ['item-2-2'],
+        aliases_to_keep: ['A', 'B'],
+        aliases_to_retire: ['C'],
+      },
+      {
+        group_id: 'group-3',
+        canonical_name: 'Item 3 Canonical',
+        winner_item_id: 'item-3-1',
+        merged_item_ids: ['item-3-2'],
+        aliases_to_keep: [],
+        aliases_to_retire: [],
+      },
+      {
+        group_id: 'group-4',
+        canonical_name: 'Item 4 Canonical',
+        winner_item_id: 'item-4-1',
+        merged_item_ids: ['item-4-2'],
+        aliases_to_keep: ['Keep'],
+        aliases_to_retire: [],
+      },
+    ],
+    ignored_group_ids: ['group-5', 'group-6', 'group-7', 'group-8', 'group-9'],
+  })
+
+  const validation = validateFlaggedCleanupImport(complexResult, exportPayload)
+
+  assert.equal(validation.ok, true)
+  assert.equal(validation.preview.merge_groups.length, 5)
+  assert.equal(validation.preview.ignored_groups.length, 5)
+
+  // Verify that createCleanupApplyProposal works for all 5 and has normalized arrays
+  validation.preview.merge_groups.forEach((group, index) => {
+    const proposal = createCleanupApplyProposal(group)
+    assert.equal(proposal.group_id, `group-${index}`)
+    assert.ok(Array.isArray(proposal.merged_item_ids), 'merged_item_ids must be an array')
+    assert.ok(Array.isArray(proposal.aliases_to_keep), 'aliases_to_keep must be an array')
+    assert.ok(Array.isArray(proposal.aliases_to_retire), 'aliases_to_retire must be an array')
+    assert.equal(proposal.merged_item_ids.length, 1)
+  })
+
+  // Verify ignored groups display safely
+  assert.equal(validation.preview.ignored_groups[0].label, 'Item Group 5')
 })

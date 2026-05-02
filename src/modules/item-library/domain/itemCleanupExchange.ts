@@ -75,6 +75,10 @@ function readString(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+function asArray<T>(value: T[] | null | undefined): T[] {
+  return Array.isArray(value) ? value : []
+}
+
 function readStringArray(value: unknown) {
   if (!Array.isArray(value)) return null
   const collected = value.map((entry) => readString(entry))
@@ -991,19 +995,19 @@ export function validateFlaggedCleanupImport(
         groupErrors.push('merged_item_ids must not include the winner_item_id.')
       }
 
-      if (!groupErrors.length && winner && mergedItemIds && aliasesToKeep && aliasesToRetire) {
+      if (!groupErrors.length && winner) {
         validPreviewGroups.push({
           group_id: groupId,
           export_label: exportGroup.label,
           canonical_name: canonicalName,
           winner_item_id: winnerItemId,
-          merged_item_ids: mergedItemIds,
+          merged_item_ids: asArray(mergedItemIds),
           winner,
-          merged_items: mergedItemIds
+          merged_items: asArray(mergedItemIds)
             .map((itemId) => groupItems.get(itemId))
             .filter((item): item is FlaggedCleanupExportItem => Boolean(item)),
-          aliases_to_keep: aliasesToKeep,
-          aliases_to_retire: aliasesToRetire,
+          aliases_to_keep: asArray(aliasesToKeep),
+          aliases_to_retire: asArray(aliasesToRetire),
         })
         return
       }
@@ -1025,9 +1029,9 @@ export function validateFlaggedCleanupImport(
       group_id: group.group_id,
       canonical_name: group.canonical_name,
       winner_item_id: group.winner.item_id,
-      merged_item_ids: group.merged_items.map((item) => item.item_id),
-      aliases_to_keep: group.aliases_to_keep,
-      aliases_to_retire: group.aliases_to_retire,
+      merged_item_ids: asArray(group.merged_items).map((item) => item.item_id),
+      aliases_to_keep: asArray(group.aliases_to_keep),
+      aliases_to_retire: asArray(group.aliases_to_retire),
     })),
     ignored_group_ids: ignoredGroupIds || [],
   }
@@ -1086,14 +1090,22 @@ export function isCleanupProposalStale(
 }
 
 export function createCleanupApplyProposal(group: CleanupPreviewGroup): CleanupApplyProposal {
+  const mergedItemIds = asArray(group.merged_item_ids).length > 0 
+    ? asArray(group.merged_item_ids)
+    : asArray(group.merged_items).map(item => item.item_id)
+
+  if (!group.group_id || !group.winner_item_id || mergedItemIds.length === 0) {
+    throw new Error(`Invalid cleanup proposal for group ${group.group_id || 'unknown'}: missing required IDs or merge items.`)
+  }
+
   return {
     group_id: group.group_id,
     export_label: group.export_label,
     canonical_name: group.canonical_name,
     winner_item_id: group.winner_item_id,
-    merged_item_ids: group.merged_item_ids,
-    aliases_to_keep: group.aliases_to_keep,
-    aliases_to_retire: group.aliases_to_retire,
+    merged_item_ids: mergedItemIds,
+    aliases_to_keep: asArray(group.aliases_to_keep),
+    aliases_to_retire: asArray(group.aliases_to_retire),
   }
 }
 
