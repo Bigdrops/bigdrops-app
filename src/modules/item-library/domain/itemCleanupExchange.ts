@@ -966,29 +966,29 @@ export function validateFlaggedCleanupImport(
     const groupErrors: string[] = []
     const exportGroup = exportGroups.get(groupId)
 
-    if (!exportGroup) groupErrors.push('group_id does not match any currently exported flagged group.')
+    if (!groupId || groupId.startsWith('row-')) groupErrors.push('group_id is missing or invalid.')
     if (!canonicalName) groupErrors.push('canonical_name is required.')
     if (!winnerItemId) groupErrors.push('winner_item_id is required.')
     if (!mergedItemIds || mergedItemIds.length === 0) groupErrors.push('merged_item_ids must contain at least one item id.')
     if (!aliasesToKeep) groupErrors.push('aliases_to_keep must be an array of strings.')
     if (!aliasesToRetire) groupErrors.push('aliases_to_retire must be an array of strings.')
 
-    if (exportGroup) {
+    if (!groupId || groupErrors.length) {
+      // Skip deep validation if basics are missing
+    } else if (exportGroup) {
       const groupItems = new Map(exportGroup.items.map((item) => [item.item_id, item]))
-      const winner = winnerItemId ? groupItems.get(winnerItemId) : null
+      const winner = groupItems.get(winnerItemId)
 
       if (!winner) {
         groupErrors.push('winner_item_id must reference an item inside the same exported group.')
       }
 
-      if (mergedItemIds) {
-        const outsideGroupIds = mergedItemIds.filter((itemId) => !groupItems.has(itemId))
-        if (outsideGroupIds.length) {
-          groupErrors.push('merged_item_ids must all reference items inside the same exported group.')
-        }
-        if (winnerItemId && mergedItemIds.includes(winnerItemId)) {
-          groupErrors.push('merged_item_ids must not include the winner_item_id.')
-        }
+      const outsideGroupIds = mergedItemIds?.filter((itemId) => !groupItems.has(itemId)) || []
+      if (outsideGroupIds.length) {
+        groupErrors.push('merged_item_ids must all reference items inside the same exported group.')
+      }
+      if (winnerItemId && mergedItemIds?.includes(winnerItemId)) {
+        groupErrors.push('merged_item_ids must not include the winner_item_id.')
       }
 
       if (!groupErrors.length && winner && mergedItemIds && aliasesToKeep && aliasesToRetire) {
@@ -996,6 +996,8 @@ export function validateFlaggedCleanupImport(
           group_id: groupId,
           export_label: exportGroup.label,
           canonical_name: canonicalName,
+          winner_item_id: winnerItemId,
+          merged_item_ids: mergedItemIds,
           winner,
           merged_items: mergedItemIds
             .map((itemId) => groupItems.get(itemId))
@@ -1005,6 +1007,8 @@ export function validateFlaggedCleanupImport(
         })
         return
       }
+    } else if (!groupId.startsWith('row-')) {
+      groupErrors.push('group_id does not match any currently exported flagged group.')
     }
 
     rejectedGroups.push({
@@ -1084,9 +1088,10 @@ export function isCleanupProposalStale(
 export function createCleanupApplyProposal(group: CleanupPreviewGroup): CleanupApplyProposal {
   return {
     group_id: group.group_id,
+    export_label: group.export_label,
     canonical_name: group.canonical_name,
-    winner_item_id: group.winner.item_id,
-    merged_item_ids: group.merged_items.map((item) => item.item_id),
+    winner_item_id: group.winner_item_id,
+    merged_item_ids: group.merged_item_ids,
     aliases_to_keep: group.aliases_to_keep,
     aliases_to_retire: group.aliases_to_retire,
   }

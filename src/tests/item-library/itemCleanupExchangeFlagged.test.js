@@ -51,6 +51,8 @@ test('valid flagged duplicate import does not crash and identifies as ok', () =>
   assert.equal(validation.ok, true)
   assert.equal(validation.preview.merge_groups.length, 1)
   assert.equal(validation.preview.merge_groups[0].export_label, 'Cable Lug 10mm')
+  assert.equal(validation.preview.merge_groups[0].winner_item_id, 'item-1')
+  assert.deepEqual(validation.preview.merge_groups[0].merged_item_ids, ['item-2'])
 })
 
 test('unknown group_id is rejected cleanly', () => {
@@ -141,6 +143,36 @@ test('merged item from another group is rejected cleanly', () => {
   assert.equal(validation.ok, false)
   assert.equal(validation.preview.rejected_groups.length, 1)
   assert.match(validation.preview.rejected_groups[0].reason, /merged_item_ids must all reference items inside the same exported group/i)
+})
+
+test('empty merged_item_ids is rejected cleanly', () => {
+  const exportPayload = buildFlaggedCleanupExportPayload({
+    duplicateGroups,
+    aliases,
+  })
+
+  const invalidResult = JSON.stringify({
+    response_type: 'flagged_cleanup_result',
+    schema_version: 1,
+    source_export_type: 'flagged_cleanup',
+    merge_groups: [
+      {
+        group_id: 'group-1',
+        canonical_name: 'Cable Lug 10mm',
+        winner_item_id: 'item-1',
+        merged_item_ids: [],
+        aliases_to_keep: [],
+        aliases_to_retire: [],
+      },
+    ],
+    ignored_group_ids: [],
+  })
+
+  const validation = validateFlaggedCleanupImport(invalidResult, exportPayload)
+
+  assert.equal(validation.ok, false)
+  assert.equal(validation.preview.rejected_groups.length, 1)
+  assert.match(validation.preview.rejected_groups[0].reason, /merged_item_ids must contain at least one item id/i)
 })
 
 test('non-JSON review text produces friendly validation error', () => {

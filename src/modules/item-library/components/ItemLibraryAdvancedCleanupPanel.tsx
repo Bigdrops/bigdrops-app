@@ -18,6 +18,7 @@ import type {
   CatalogCleanupImportPreview,
   CleanupApplyProposal,
   CleanupApplyResult,
+  CleanupPreviewGroup,
   DuplicateCandidateGroup,
   ItemAlias,
   ItemCatalogItem,
@@ -138,6 +139,7 @@ function createMergeProposal(
 
   return {
     group_id: winner?.duplicate_group_id || winnerItemId,
+    export_label: winner?.name || canonicalName,
     canonical_name: canonicalName,
     winner_item_id: winnerItemId,
     merged_item_ids: mergedItemIds,
@@ -309,25 +311,38 @@ export function ItemLibraryAdvancedCleanupPanel({
 
     try {
       setApplyError(null)
-      const results = await onApplyProposals(
-        currentExportPayload as CatalogCleanupBatchExportPayload | FlaggedCleanupBatchExportPayload,
-        isDuplicates
-          ? (applyableMerges as any[]).map((merge) => ({
-              group_id: merge.group.group_id,
+
+      const proposals: CleanupApplyProposal[] = isDuplicates
+        ? (applyableMerges as CleanupPreviewGroup[])
+            .filter((merge) => merge && merge.group_id && merge.winner_item_id && merge.merged_item_ids?.length > 0)
+            .map((merge) => ({
+              group_id: merge.group_id,
+              export_label: merge.export_label,
               canonical_name: merge.canonical_name,
-              winner_item_id: merge.winner.item_id,
-              merged_item_ids: merge.merged_items.map((item: any) => item.item_id),
+              winner_item_id: merge.winner_item_id,
+              merged_item_ids: merge.merged_item_ids,
               aliases_to_keep: merge.aliases_to_keep,
               aliases_to_retire: merge.aliases_to_retire,
             }))
-          : (applyableMerges as any[]).map((merge) =>
+        : (applyableMerges as any[])
+            .filter((merge) => merge && merge.winner?.item_id && merge.merged_items?.length > 0)
+            .map((merge) =>
               createMergeProposal(
                 currentExportPayload as CatalogCleanupBatchExportPayload,
                 merge.winner.item_id,
                 merge.merged_items.map((item: any) => item.item_id),
                 merge.canonical_name,
               ),
-            ),
+            )
+
+      if (proposals.length === 0) {
+        setApplyError('No valid or supported merges to apply.')
+        return
+      }
+
+      const results = await onApplyProposals(
+        currentExportPayload as CatalogCleanupBatchExportPayload | FlaggedCleanupBatchExportPayload,
+        proposals,
       )
 
       setBatchStates((previous) => ({

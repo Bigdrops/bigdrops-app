@@ -154,6 +154,8 @@ export interface CleanupPreviewGroup {
   group_id: string
   export_label: string
   canonical_name: string
+  winner_item_id: string
+  merged_item_ids: string[]
   winner: FlaggedCleanupExportItem
   merged_items: FlaggedCleanupExportItem[]
   aliases_to_keep: string[]
@@ -180,6 +182,7 @@ export interface CleanupImportValidationResult {
 
 export interface CleanupApplyProposal {
   group_id: string
+  export_label: string
   canonical_name: string
   winner_item_id: string
   merged_item_ids: string[]
