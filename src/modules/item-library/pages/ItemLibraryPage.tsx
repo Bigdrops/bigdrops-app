@@ -72,15 +72,16 @@ export default function ItemLibraryPage() {
     data: summaryItems,
     loading: summaryLoading,
     error: summaryError,
+    setData: setSummaryItems,
     reload: reloadSummaryItems,
-  } = useItemHistoryList(200)
+  } = useItemHistoryList(200, { includeHeavyFallbacks: workflowMode === 'cleanup' })
 
   const {
     data: mergeHistory,
     count: mergeHistoryCount,
     loading: mergeHistoryLoading,
     reload: reloadMergeHistory,
-  } = useItemMergeHistory()
+  } = useItemMergeHistory({ enabled: workflowMode === 'cleanup' })
 
   const allDuplicateGroups = useMemo(() => detectDuplicateGroups(summaryItems), [summaryItems])
   const allDuplicateItemIdsSet = useMemo(
@@ -167,7 +168,7 @@ export default function ItemLibraryPage() {
     data: duplicateAliases,
     loading: aliasesLoading,
     error: aliasesError,
-  } = useItemAliases(duplicateItemIdsArray)
+  } = useItemAliases(duplicateItemIdsArray, { enabled: workflowMode === 'cleanup' })
   const selectedGroupAliases = useMemo(
     () =>
       selectedDuplicateGroup
@@ -182,7 +183,7 @@ export default function ItemLibraryPage() {
     [allDuplicateGroups, duplicateAliases],
   )
   const summaryItemIds = useMemo(() => summaryItems.map((item) => item.item_id), [summaryItems])
-  const { data: allItemAliases } = useItemAliases(summaryItemIds)
+  const { data: allItemAliases } = useItemAliases(summaryItemIds, { enabled: workflowMode === 'cleanup' && viewMode === 'advanced_cleanup' })
   const { mergeItems, loading: mergeLoading } = useItemMerge()
 
   const {
@@ -190,7 +191,10 @@ export default function ItemLibraryPage() {
     loading: historyLoading,
     error: historyError,
     reload: reloadHistoryRows,
-  } = useItemHistoryDetail(selectedItem?.item_id, 50)
+  } = useItemHistoryDetail(selectedItem?.item_id, 50, { 
+    enabled: !!selectedItem && (workflowMode === 'cleanup' || mobileDetailOpen || (workflowMode === 'library' && !!selectedItemId)),
+    includeHeavyFallbacks: workflowMode === 'cleanup'
+  })
 
   useEffect(() => {
     if (!pendingHistoryRefreshItemId || selectedItemId !== pendingHistoryRefreshItemId) return
@@ -208,8 +212,13 @@ export default function ItemLibraryPage() {
     setSelectedItemId(result.winner_item_id)
     setPendingHistoryRefreshItemId(result.winner_item_id)
     if (window.innerWidth < 768) setMobileDetailOpen(true)
+    
+    // Optimistic Patch
+    const nextItems = summaryItems.filter(item => !result.retired_item_ids.includes(item.item_id))
+    setSummaryItems(nextItems)
+    const { writeListCache } = await import('@/lib/cache/listCache')
+    writeListCache("bd:item-library:summary:v1", nextItems)
 
-    reloadSummaryItems()
     reloadMergeHistory()
 
     feedback.success('Merge complete', {
@@ -259,7 +268,18 @@ export default function ItemLibraryPage() {
       }
     }
 
-    reloadSummaryItems()
+    const appliedItemIds = new Set(results.filter(r => r.status === 'applied').flatMap(r => {
+      const proposal = proposals.find(p => p.group_id === r.group_id)
+      return proposal ? proposal.merged_item_ids : []
+    }))
+
+    if (appliedItemIds.size > 0) {
+      const nextItems = summaryItems.filter(item => !appliedItemIds.has(item.item_id))
+      setSummaryItems(nextItems)
+      const { writeListCache } = await import('@/lib/cache/listCache')
+      writeListCache("bd:item-library:summary:v1", nextItems)
+    }
+
     reloadMergeHistory()
     reloadHistoryRows()
 

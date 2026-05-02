@@ -275,7 +275,8 @@ export async function getItemPriceContext(itemId: string, clientId?: string | nu
   return buildItemPriceContext(stableItemId, historyRows, clientId)
 }
 
-export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]> {
+export async function getItemSummaryList(limit = 100, options: { includeHeavyFallbacks?: boolean } = {}): Promise<ItemCatalogItem[]> {
+  const { includeHeavyFallbacks = false } = options
   const summaryResult = await supabase
     .from('item_price_summary_v')
     .select('*')
@@ -317,7 +318,7 @@ export async function getItemSummaryList(limit = 100): Promise<ItemCatalogItem[]
     }),
   )
 
-  if (summaryRows.length >= limit) {
+  if (!includeHeavyFallbacks || summaryRows.length >= limit) {
     return summaryRows
       .filter((row) => row.is_active !== false)
       .sort((left, right) => {
@@ -411,8 +412,14 @@ export async function mergeItems(request: ItemLibraryMergeRequest): Promise<Item
   return normalizeMergeResult(data, { winnerItemId, mergedItemIds: stableMergedIds })
 }
 
-export async function getItemHistoryDetail(itemId: string, limit = 50): Promise<ItemHistoryRow[]> {
+export async function getItemHistoryDetail(itemId: string, limit = 50, options: { includeHeavyFallbacks?: boolean } = {}): Promise<ItemHistoryRow[]> {
+  const { includeHeavyFallbacks = false } = options
   const isImportedDescription = isImportedDescriptionItemId(itemId)
+  
+  if (isImportedDescription && !includeHeavyFallbacks) {
+    return []
+  }
+
   const [invoiceRowsResult, quotationRowsResult] = await Promise.all([
     (() => {
       const query = supabase

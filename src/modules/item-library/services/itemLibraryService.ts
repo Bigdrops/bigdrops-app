@@ -40,13 +40,13 @@ export async function loadItemPriceContext(itemId: string, clientId?: string | n
   return getItemPriceContext(itemId, clientId)
 }
 
-export async function loadSummaryList(limit = 100): Promise<ItemCatalogItem[]> {
-  return getItemSummaryList(limit)
+export async function loadSummaryList(limit = 100, options: { includeHeavyFallbacks?: boolean } = {}): Promise<ItemCatalogItem[]> {
+  return getItemSummaryList(limit, options)
 }
 
-export async function loadItemHistoryDetail(itemId: string, limit = 50): Promise<ItemHistoryRow[]> {
+export async function loadItemHistoryDetail(itemId: string, limit = 50, options: { includeHeavyFallbacks?: boolean } = {}): Promise<ItemHistoryRow[]> {
   if (!itemId) return []
-  return getItemHistoryDetail(itemId, limit)
+  return getItemHistoryDetail(itemId, limit, options)
 }
 
 export async function loadItemAliases(itemIds: string[]): Promise<ItemAlias[]> {

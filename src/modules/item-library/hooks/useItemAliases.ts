@@ -3,9 +3,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { loadItemAliases } from '../services'
 import type { ItemAlias } from '../types'
 
-export function useItemAliases(itemIds: string[]) {
+export function useItemAliases(itemIds: string[], options: { enabled?: boolean } = {}) {
+  const { enabled = true } = options
   const [data, setData] = useState<ItemAlias[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(enabled && itemIds.length > 0)
   const [error, setError] = useState<Error | null>(null)
 
   const stableItemIds = useMemo(
@@ -18,10 +19,12 @@ export function useItemAliases(itemIds: string[]) {
     let cancelled = false
 
     const run = async () => {
-      if (!stableItemIds.length) {
-        setData([])
-        setLoading(false)
-        setError(null)
+      if (!enabled || !stableItemIds.length) {
+        if (!enabled || !stableItemIds.length) {
+           setData([])
+           setLoading(false)
+           setError(null)
+        }
         return
       }
 
@@ -44,7 +47,7 @@ export function useItemAliases(itemIds: string[]) {
     return () => {
       cancelled = true
     }
-  }, [itemIdsKey, stableItemIds])
+  }, [itemIdsKey, stableItemIds, enabled])
 
   return { data, loading, error }
 }

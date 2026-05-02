@@ -2,10 +2,11 @@ import { useEffect, useState, useCallback } from 'react'
 import { getItemMergeHistory, getItemMergeHistoryCount } from '../repositories/itemLibraryRepository'
 import type { ItemMergeLogRow } from '../types'
 
-export function useItemMergeHistory() {
+export function useItemMergeHistory(options: { enabled?: boolean } = {}) {
+  const { enabled = true } = options
   const [data, setData] = useState<ItemMergeLogRow[]>([])
   const [count, setCount] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(enabled)
   const [error, setError] = useState<Error | null>(null)
 
   const loadHistory = useCallback(async () => {
@@ -26,8 +27,10 @@ export function useItemMergeHistory() {
   }, [])
 
   useEffect(() => {
-    void loadHistory()
-  }, [loadHistory])
+    if (enabled) {
+      void loadHistory()
+    }
+  }, [loadHistory, enabled])
 
   return { data, count, loading, error, reload: loadHistory }
 }
