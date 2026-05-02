@@ -1,20 +1,12 @@
 import * as React from 'react'
-import { ChevronRight, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import type { Session } from '@supabase/supabase-js'
 import { useNavigate } from 'react-router-dom'
 
 import Layout from '@/components/Layout'
 import { DashboardOverview } from '@/components/dashboard/DashboardOverview'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
 import { useSettings } from '@/hooks/useSettings'
 import { useDashboardData, type PriorityItem, type RecentDoc } from '@/hooks/useDashboardData'
-import { cn } from '@/lib/utils'
 import { getCreateActions, getQuickTiles, loadStoredQuickTiles } from '@/config/quickTiles'
 import { UnifiedActionSheet } from '@/components/actions/UnifiedActionSheet'
 
@@ -50,6 +42,8 @@ export default function DashboardRedesign({ session }: { session: Session }) {
         Quotation: '/quotations',
         CSR: '/csr',
         Waybill: '/waybills',
+        RFQ: '/rfqs',
+        BOQ: '/boqs',
       } as const
 
       navigate(`${pathByType[doc.type]}/${doc.id}`)
@@ -78,7 +72,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
         onQuickAction={(path) => navigate(path)}
         onPrioritySelect={handlePrioritySelect}
         onRecentDocSelect={handleRecentDocSelect}
-        onViewAllActivity={() => navigate('/invoices')}
+        onViewAllActivity={() => {}}
       />
 
       <button

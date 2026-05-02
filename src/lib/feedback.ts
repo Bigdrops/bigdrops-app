@@ -37,8 +37,8 @@ const toneTokens: Record<FeedbackTone, { fillColor: string; borderColor: string 
     borderColor: 'hsl(var(--bd-goey-toast-border))',
   },
   error: {
-    fillColor: 'hsl(var(--bd-goey-toast-fill))',
-    borderColor: 'hsl(var(--bd-goey-toast-border))',
+    fillColor: 'hsl(var(--bd-feedback-error-bg))',
+    borderColor: 'hsl(var(--bd-feedback-error-border))',
   },
   warning: {
     fillColor: 'hsl(var(--bd-goey-toast-fill))',

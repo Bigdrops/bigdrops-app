@@ -125,73 +125,73 @@ export default function ComplianceHub() {
   }, [invoices, payments])
 
   return (
-    <Layout title="Compliance Hub" session={null} contentClassName="w-full max-w-none bg-slate-50 p-0 pb-24 md:px-4 md:pb-10">
+    <Layout title="Compliance Hub" session={null} contentClassName="w-full max-w-none bg-[hsl(var(--bd-surface))] p-0 pb-24 md:px-4 md:pb-10">
       <div className="w-full py-4 max-w-5xl mx-auto px-4 md:px-0">
         <div className="space-y-6">
           {/* Section Header */}
-          <div className="rounded-[var(--bd-overlay-radius)] border border-slate-900 bg-[#0F172A] p-6 text-white shadow-xl relative overflow-hidden">
+          <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-bg))] p-6 text-[hsl(var(--bd-overlay-text))] shadow-xl relative overflow-hidden">
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-2">
-                <div className="bg-blue-500 rounded-full h-2 w-2 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">Operations workspace</span>
+                <div className="bg-[hsl(var(--bd-status-info-text))] rounded-full h-2 w-2 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-info-text))]">Operations workspace</span>
               </div>
               <h1 className="text-2xl font-black tracking-tight">Compliance Hub</h1>
-              <p className="mt-2 text-sm text-slate-300 leading-relaxed max-w-md">
+              <p className="mt-2 text-sm text-[hsl(var(--bd-overlay-muted))] leading-relaxed max-w-md">
                 Dedicated operational area for tax compliance, VAT tracking, and withholding certificates.
               </p>
             </div>
-            <FileSpreadsheet className="absolute top-1/2 right-10 -translate-y-1/2 h-32 w-32 text-slate-800 opacity-40 -rotate-12" />
+            <FileSpreadsheet className="absolute top-1/2 right-10 -translate-y-1/2 h-32 w-32 text-[hsl(var(--bd-overlay-muted))] opacity-10 -rotate-12" />
           </div>
 
           {error && (
-            <div className="rounded-[var(--bd-radius-xl)] bg-red-500/10 border border-red-500/20 p-4 text-red-700 text-sm flex items-center gap-3">
+            <div className="rounded-[var(--bd-radius-xl)] bg-[hsl(var(--bd-status-danger-bg))] border border-[hsl(var(--bd-status-danger-border))] p-4 text-[hsl(var(--bd-status-danger-text))] text-sm flex items-center gap-3">
               <AlertCircle className="h-5 w-5" />
               {error}
             </div>
           )}
 
           <Tabs value={tab} onValueChange={(value) => setTab(value as ComplianceTab)} className="w-full">
-            <div className="rounded-[var(--bd-radius-xl)] border border-slate-200 bg-white p-2 shadow-sm sticky top-4 z-40">
+            <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-2 shadow-sm sticky top-4 z-40">
               <div className="overflow-x-auto">
                 <TabsList className="inline-flex h-auto w-max gap-2 bg-transparent p-0">
                   <TabsTrigger 
                     value="reminders" 
-                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[#0F172A] data-[state=active]:text-white flex items-center gap-2"
+                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-md flex items-center gap-2"
                   >
                     <Bell className="h-3.5 w-3.5" />
                     Obligations
                   </TabsTrigger>
                   <TabsTrigger 
                     value="overview" 
-                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[#0F172A] data-[state=active]:text-white flex items-center gap-2"
+                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-md flex items-center gap-2"
                   >
                     <LayoutDashboard className="h-3.5 w-3.5" />
                     Overview
                   </TabsTrigger>
                   <TabsTrigger 
                     value="wht" 
-                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[#0F172A] data-[state=active]:text-white flex items-center gap-2"
+                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-md flex items-center gap-2"
                   >
                     <Receipt className="h-3.5 w-3.5" />
                     WHT Receipts
                   </TabsTrigger>
                   <TabsTrigger 
                     value="vat" 
-                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[#0F172A] data-[state=active]:text-white flex items-center gap-2"
+                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-md flex items-center gap-2"
                   >
                     <Wallet className="h-3.5 w-3.5" />
                     VAT Inputs
                   </TabsTrigger>
                   <TabsTrigger 
                     value="filings" 
-                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[#0F172A] data-[state=active]:text-white flex items-center gap-2"
+                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-md flex items-center gap-2"
                   >
                     <History className="h-3.5 w-3.5" />
                     Filings
                   </TabsTrigger>
                   <TabsTrigger 
                     value="settings" 
-                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[#0F172A] data-[state=active]:text-white flex items-center gap-2"
+                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-md flex items-center gap-2"
                   >
                     <Settings2 className="h-3.5 w-3.5" />
                     Settings

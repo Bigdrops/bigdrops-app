@@ -9,6 +9,8 @@ import {
   Receipt,
   TrendingUp,
   Truck,
+  FileText,
+  ClipboardList,
 } from 'lucide-react'
 import type { ComponentType } from 'react'
 
@@ -75,6 +77,16 @@ const recentRecordMeta = {
     Icon: Truck,
     iconClassName:
       'tone-data-panel text-[var(--tone-data)] dark:bg-[var(--tone-data)]/10 dark:border-[var(--tone-data-border)]',
+  },
+  RFQ: {
+    Icon: FileText,
+    iconClassName:
+      'bg-sky-50 text-sky-600 border-sky-100 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/20',
+  },
+  BOQ: {
+    Icon: ClipboardList,
+    iconClassName:
+      'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20',
   },
 } as const
 
@@ -302,19 +314,10 @@ export function DashboardOverview({
         </div>
       </section>
       <section className="mt-5 md:mt-8 px-4 md:px-6">
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-2">
           <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">
             Recent Activity
           </div>
-
-          <button
-            type="button"
-            onClick={onViewAllActivity}
-            className="grid h-4 w-4 place-items-center text-muted-foreground"
-            aria-label="View all recent records"
-          >
-            <ChevronRight className="h-3 w-3" />
-          </button>
         </div>
 
         {loading ? (
@@ -326,7 +329,7 @@ export function DashboardOverview({
                 No recent activity.
               </div>
             ) : (
-              recentDocs.slice(0, 3).map((doc) => {
+              recentDocs.slice(0, 6).map((doc) => {
                 const meta = recentRecordMeta[doc.type]
                 const Icon = meta.Icon
                 const recordValue = formatRecentRecordValue(doc)

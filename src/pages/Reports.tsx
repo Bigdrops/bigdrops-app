@@ -120,7 +120,7 @@ export default function Reports() {
   }, [tab, rangeKey, collectionsLoadedRange, collectionsLoading, queryStart, queryEnd, loadCollections])
 
   return (
-    <Layout title="Reports" session={null} hidePageHeader contentClassName="w-full max-w-none bg-slate-50 p-0 pb-24 md:px-4 md:pb-10">
+    <Layout title="Reports" session={null} hidePageHeader contentClassName="w-full max-w-none bg-[hsl(var(--bd-surface))] p-0 pb-24 md:px-4 md:pb-10">
       <div className="w-full py-4">
         <div className="space-y-4">
           <SectionHeader 
@@ -129,13 +129,13 @@ export default function Reports() {
           />
           
           <Tabs value={tab} onValueChange={(value) => setTab(value as ReportTab)} className="w-full">
-            <div className="rounded-2xl border border-border bg-card p-2 shadow-sm">
+            <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-2 shadow-sm">
               <div className="overflow-x-auto">
                 <TabsList className="inline-flex h-auto w-max gap-2 bg-transparent p-0">
-                  <TabsTrigger value="receivables" className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-700 data-[state=active]:border-red-500 data-[state=active]:bg-red-500 data-[state=active]:text-white">Receivables</TabsTrigger>
-                  <TabsTrigger value="collections" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Collections</TabsTrigger>
-                  <TabsTrigger value="projects" className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 data-[state=active]:border-blue-500 data-[state=active]:bg-blue-500 data-[state=active]:text-white">Projects</TabsTrigger>
-                  <TabsTrigger value="tax" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 data-[state=active]:border-amber-500 data-[state=active]:bg-amber-500 data-[state=active]:text-white">Tax</TabsTrigger>
+                  <TabsTrigger value="receivables" className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-4 py-2 text-xs font-bold text-[hsl(var(--bd-status-danger-text))] data-[state=active]:border-transparent data-[state=active]:bg-[hsl(var(--bd-status-danger-text))] data-[state=active]:text-white">Receivables</TabsTrigger>
+                  <TabsTrigger value="collections" className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] px-4 py-2 text-xs font-bold text-[hsl(var(--bd-status-success-text))] data-[state=active]:border-transparent data-[state=active]:bg-[hsl(var(--bd-status-success-text))] data-[state=active]:text-white">Collections</TabsTrigger>
+                  <TabsTrigger value="projects" className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] px-4 py-2 text-xs font-bold text-[hsl(var(--bd-status-info-text))] data-[state=active]:border-transparent data-[state=active]:bg-[hsl(var(--bd-status-info-text))] data-[state=active]:text-white">Projects</TabsTrigger>
+                  <TabsTrigger value="tax" className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-4 py-2 text-xs font-bold text-[hsl(var(--bd-status-warning-text))] data-[state=active]:border-transparent data-[state=active]:bg-[hsl(var(--bd-status-warning-text))] data-[state=active]:text-white">Tax</TabsTrigger>
                 </TabsList>
               </div>
             </div>

@@ -6,10 +6,11 @@ import { feedback } from '@/lib/feedback'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
 import { supabase } from '@/supabase'
+import { listBoqs } from '@/domain/boq/storage'
 
 export type RecentDoc = {
   id: string
-  type: 'Invoice' | 'Quotation' | 'CSR' | 'Waybill'
+  type: 'Invoice' | 'Quotation' | 'CSR' | 'Waybill' | 'RFQ' | 'BOQ'
   number: string
   client: string
   date: string
@@ -220,7 +221,7 @@ function buildOverviewPriorityItems(projects: RecentProject[], quotations: any[]
   return items.slice(0, 3)
 }
 
-function buildClassicRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[]) {
+function buildClassicRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[], rfqs: any[], boqs: any[]) {
   return mergeRecentDocs([
     ...invoices.map((doc) => ({
       id: doc.id,
@@ -263,10 +264,30 @@ function buildClassicRecentDocs(invoices: any[], quotations: any[], csrs: any[],
       meta: doc.vehicle_plate || 'Waybill',
       path: `/waybills/${doc.id}`,
     })),
+    ...rfqs.map((doc) => ({
+      id: doc.id,
+      type: 'RFQ' as const,
+      number: doc.rfq_number || 'RFQ',
+      client: doc.vendor_name || 'No vendor',
+      date: doc.created_at,
+      status: 'Open',
+      amount: null,
+      path: `/rfqs/${doc.id}`,
+    })),
+    ...boqs.map((doc) => ({
+      id: doc.id,
+      type: 'BOQ' as const,
+      number: doc.boq_number || 'BOQ',
+      client: doc.vendor_name || 'No vendor',
+      date: doc.created_at,
+      status: 'Local',
+      amount: null,
+      path: `/boqs/${doc.id}`,
+    })),
   ])
 }
 
-function buildOverviewRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[]) {
+function buildOverviewRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[], rfqs: any[], boqs: any[]) {
   return mergeRecentDocs([
     ...invoices.map((doc) => ({
       id: doc.id,
@@ -309,6 +330,26 @@ function buildOverviewRecentDocs(invoices: any[], quotations: any[], csrs: any[]
       meta: doc.vehicle_plate,
       path: `/waybills/${doc.id}`,
     })),
+    ...rfqs.map((doc) => ({
+      id: doc.id,
+      type: 'RFQ' as const,
+      number: doc.rfq_number || 'RFQ',
+      client: doc.vendor_name || 'No vendor',
+      date: doc.created_at,
+      status: 'Open',
+      amount: null,
+      path: `/rfqs/${doc.id}`,
+    })),
+    ...boqs.map((doc) => ({
+      id: doc.id,
+      type: 'BOQ' as const,
+      number: doc.boq_number || 'BOQ',
+      client: doc.vendor_name || 'No vendor',
+      date: doc.created_at,
+      status: 'Local',
+      amount: null,
+      path: `/boqs/${doc.id}`,
+    })),
   ])
 }
 
@@ -336,7 +377,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         endOfWeek.setDate(now.getDate() + 7)
         endOfWeek.setHours(23, 59, 59, 999)
 
-        const [invoiceRes, quotationRes, csrRes, waybillRes, financialsRes, projectsRes] = await Promise.all([
+        const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, financialsRes, projectsRes] = await Promise.all([
           applyParentInvoiceFilter(supabase
             .from('invoices')
             .select('id, invoice_number, client_name, status, created_at, total, custom_fields'))
@@ -345,6 +386,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
           supabase.from('csrs').select('id, csr_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
           supabase.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
+          supabase.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(5),
           supabase.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
           supabase.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
         ])
@@ -353,6 +395,8 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         const quotations = quotationRes.data || []
         const csrs = csrRes.data || []
         const waybills = waybillRes.data || []
+        const rfqs = rfqRes.data || []
+        const boqs = listBoqs()
         const projects = (projectsRes.data || []) as RecentProject[]
         const invoiceFinancials = financialsRes.data || []
 
@@ -397,7 +441,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
 
         const reminders = buildClassicPriorityItems(projects, invoices, quotations)
 
-        setRecentDocs(buildClassicRecentDocs(invoices, quotations, csrs, waybills))
+        setRecentDocs(buildClassicRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs))
         setRecentProjects(projects)
         setPriorityItems(reminders)
         setHeroStats({
@@ -435,7 +479,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
     const endOfWeekIso = endOfWeek.toISOString()
 
     try {
-      const [invoiceRes, quotationRes, csrRes, waybillRes, financialMetricsRes, projectsRes] = await Promise.all([
+      const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, financialMetricsRes, projectsRes] = await Promise.all([
         applyParentInvoiceFilter(supabase
           .from('invoices')
           .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields'))
@@ -444,6 +488,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, issue_date, total').order('issue_date', { ascending: false }).limit(8),
         supabase.from('csrs').select('id, csr_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
         supabase.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
+        supabase.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(5),
         supabase.rpc('get_dashboard_financial_metrics', {
           p_now: nowIso,
           p_end_of_week: endOfWeekIso,
@@ -456,6 +501,8 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
       const quotations = quotationRes.data || []
       const csrs = csrRes.data || []
       const waybills = waybillRes.data || []
+      const rfqs = rfqRes.data || []
+      const boqs = listBoqs()
       const projects = (projectsRes.data || []) as RecentProject[]
       const financialMetrics = Array.isArray(financialMetricsRes.data)
         ? (financialMetricsRes.data[0] as DashboardFinancialMetrics | undefined)
@@ -471,7 +518,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
       ).length
       const reminders = buildOverviewPriorityItems(projects, quotations, Boolean(financialMetrics?.has_past_due))
 
-      setRecentDocs(buildOverviewRecentDocs(invoices, quotations, csrs, waybills))
+      setRecentDocs(buildOverviewRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs))
       setRecentProjects(projects)
       setPriorityItems(reminders)
       setHeroStats({

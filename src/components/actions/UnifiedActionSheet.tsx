@@ -242,7 +242,7 @@ export function UnifiedActionSheet({
               </div>
             ) : (
               <div className={cn(
-                layout === "grid" && "grid grid-cols-3 gap-2",
+                layout === "grid" && (actions?.length === 4 ? "grid grid-cols-2 gap-2" : "grid grid-cols-3 gap-2"),
                 layout.startsWith("list") && "space-y-1.5"
               )}>
                 {actions?.map((action, idx) => renderAction(action, idx, layout.startsWith("grid")))}
