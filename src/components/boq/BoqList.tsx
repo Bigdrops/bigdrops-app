@@ -109,7 +109,8 @@ export function BoqList() {
   )
 
   return (
-    <ModuleShell
+    <>
+      <ModuleShell
       eyebrow="Documents"
       title="BOQs"
       summary={`${boqs.length} documents total`}
@@ -138,54 +139,55 @@ export function BoqList() {
         </div>
       )}
 
-      <MobileFab onClick={() => navigate('/boqs/new')} ariaLabel="Create BOQ" />
- 
-      <InvoiceListActionSheet
-        open={Boolean(activeBoq)}
-        onOpenChange={(open) => !open && setActiveBoq(null)}
-        eyebrow={`BOQ ${activeBoq?.boq_number}`}
-        title={activeBoq?.title || 'Untitled BOQ'}
-        subtitle={activeBoq?.client_name || undefined}
-        actions={activeBoq ? [
-          { key: 'view', label: 'View / Export', icon: <Eye className="h-6 w-6" />, onClick: () => navigate(`/boqs/${activeBoq.id}`) },
-          { key: 'edit', label: 'Edit BOQ', icon: <Pencil className="h-6 w-6" />, onClick: () => navigate(`/boqs/edit/${activeBoq.id}`) },
-          { 
-            key: 'archive', 
-            label: isArchiving ? 'Archiving...' : 'Archive', 
-            icon: isArchiving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6" />, 
-            onClick: () => setArchiveId(activeBoq.id),
-            closeOnClick: false
-          },
-        ] : []}
-        deleteAction={activeBoq ? {
-          key: 'delete',
-          label: isDeleting ? 'Deleting...' : 'Delete BOQ',
-          icon: isDeleting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Trash2 className="h-6 w-6" />,
-          onClick: () => setDeleteId(activeBoq.id),
-          closeOnClick: false
-        } : undefined}
-      />
-
-      <ConfirmActionDialog
-        open={archiveId !== null}
-        onOpenChange={(open) => !open && setArchiveId(null)}
-        title="Archive this BOQ?"
-        description="This will move the BOQ to the archive. You can restore it later from Settings."
-        confirmLabel="Archive"
-        loading={isArchiving}
-        onConfirm={handleArchive}
-      />
-
-      <ConfirmActionDialog
-        open={deleteId !== null}
-        onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete this BOQ?"
-        description="This action is permanent and cannot be undone."
-        confirmLabel="Delete"
-        variant="destructive"
-        loading={isDeleting}
-        onConfirm={handleDelete}
-      />
     </ModuleShell>
-  )
+    <MobileFab onClick={() => navigate('/boqs/new')} ariaLabel="Create BOQ" />
+ 
+    <InvoiceListActionSheet
+      open={Boolean(activeBoq)}
+      onOpenChange={(open) => !open && setActiveBoq(null)}
+      eyebrow={`BOQ ${activeBoq?.boq_number}`}
+      title={activeBoq?.title || 'Untitled BOQ'}
+      subtitle={activeBoq?.client_name || undefined}
+      actions={activeBoq ? [
+        { key: 'view', label: 'View / Export', icon: <Eye className="h-6 w-6" />, onClick: () => navigate(`/boqs/${activeBoq.id}`) },
+        { key: 'edit', label: 'Edit BOQ', icon: <Pencil className="h-6 w-6" />, onClick: () => navigate(`/boqs/edit/${activeBoq.id}`) },
+        { 
+          key: 'archive', 
+          label: isArchiving ? 'Archiving...' : 'Archive', 
+          icon: isArchiving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6" />, 
+          onClick: () => setArchiveId(activeBoq.id),
+          closeOnClick: false
+        },
+      ] : []}
+      deleteAction={activeBoq ? {
+        key: 'delete',
+        label: isDeleting ? 'Deleting...' : 'Delete BOQ',
+        icon: isDeleting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Trash2 className="h-6 w-6" />,
+        onClick: () => setDeleteId(activeBoq.id),
+        closeOnClick: false
+      } : undefined}
+    />
+
+    <ConfirmActionDialog
+      open={archiveId !== null}
+      onOpenChange={(open) => !open && setArchiveId(null)}
+      title="Archive this BOQ?"
+      description="This will move the BOQ to the archive. You can restore it later from Settings."
+      confirmLabel="Archive"
+      loading={isArchiving}
+      onConfirm={handleArchive}
+    />
+
+    <ConfirmActionDialog
+      open={deleteId !== null}
+      onOpenChange={(open) => !open && setDeleteId(null)}
+      title="Delete this BOQ?"
+      description="This action is permanent and cannot be undone."
+      confirmLabel="Delete"
+      variant="destructive"
+      loading={isDeleting}
+      onConfirm={handleDelete}
+    />
+  </>
+)
 }

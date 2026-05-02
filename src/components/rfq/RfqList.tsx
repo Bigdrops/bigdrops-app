@@ -179,7 +179,8 @@ export const RfqList: React.FC = () => {
   }, [rfqs, search]);
 
   return (
-    <ModuleShell
+    <>
+      <ModuleShell
       eyebrow="Inventory"
       title="Request for Quotes"
       summary={`${rfqs.length} documents`}
@@ -214,68 +215,69 @@ export const RfqList: React.FC = () => {
         </div>
       )}
 
-      <MobileFab onClick={() => navigate('/rfqs/new')} ariaLabel="Create RFQ" />
- 
-      <InvoiceListActionSheet
-        open={Boolean(activeRfq)}
-        onOpenChange={(open) => !open && setActiveRfq(null)}
-        eyebrow={`RFQ ${activeRfq?.rfq_number}`}
-        title={activeRfq?.title || 'Untitled RFQ'}
-        subtitle={
-          activeRfq
-            ? `${activeRfq.vendor_name || 'Guest vendor'}${activeRfq.expiry_date ? ` · Due ${formatCompactDate(activeRfq.expiry_date)}` : ''}`
-            : undefined
-        }
-        actions={activeRfq ? [
-          {
-            key: 'view',
-            label: 'View / Export',
-            icon: <Eye className="h-6 w-6" />,
-            onClick: () => navigate(`/rfqs/${activeRfq.id}`),
-          },
-          {
-            key: 'edit',
-            label: 'Edit RFQ',
-            icon: <Pencil className="h-6 w-6" />,
-            onClick: () => navigate(`/rfqs/edit/${activeRfq.id}`),
-          },
-          {
-            key: 'archive',
-            label: isArchiving ? 'Archiving...' : 'Archive',
-            icon: isArchiving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6" />,
-            onClick: () => setArchiveId(activeRfq.id!),
-            closeOnClick: false,
-          },
-        ] : []}
-        deleteAction={activeRfq ? {
-          key: 'delete',
-          label: isDeleting ? 'Deleting...' : 'Delete RFQ',
-          icon: isDeleting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Trash2 className="h-6 w-6" />,
-          onClick: () => setDeleteId(activeRfq.id!),
-          closeOnClick: false,
-        } : undefined}
-      />
-
-      <ConfirmActionDialog
-        open={archiveId !== null}
-        onOpenChange={(open) => !open && setArchiveId(null)}
-        title="Archive this RFQ?"
-        description="This will move the RFQ to the archive. You can restore it later from Settings."
-        confirmLabel="Archive"
-        loading={isArchiving}
-        onConfirm={() => archiveId && handleArchive(archiveId)}
-      />
-
-      <ConfirmActionDialog
-        open={deleteId !== null}
-        onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete this RFQ?"
-        description="This action is permanent and cannot be undone."
-        confirmLabel="Delete"
-        variant="destructive"
-        loading={isDeleting}
-        onConfirm={() => deleteId && handleDelete(deleteId)}
-      />
     </ModuleShell>
+    <MobileFab onClick={() => navigate('/rfqs/new')} ariaLabel="Create RFQ" />
+
+    <InvoiceListActionSheet
+      open={Boolean(activeRfq)}
+      onOpenChange={(open) => !open && setActiveRfq(null)}
+      eyebrow={`RFQ ${activeRfq?.rfq_number}`}
+      title={activeRfq?.title || 'Untitled RFQ'}
+      subtitle={
+        activeRfq
+          ? `${activeRfq.vendor_name || 'Guest vendor'}${activeRfq.expiry_date ? ` · Due ${formatCompactDate(activeRfq.expiry_date)}` : ''}`
+          : undefined
+      }
+      actions={activeRfq ? [
+        {
+          key: 'view',
+          label: 'View / Export',
+          icon: <Eye className="h-6 w-6" />,
+          onClick: () => navigate(`/rfqs/${activeRfq.id}`),
+        },
+        {
+          key: 'edit',
+          label: 'Edit RFQ',
+          icon: <Pencil className="h-6 w-6" />,
+          onClick: () => navigate(`/rfqs/edit/${activeRfq.id}`),
+        },
+        {
+          key: 'archive',
+          label: isArchiving ? 'Archiving...' : 'Archive',
+          icon: isArchiving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6" />,
+          onClick: () => setArchiveId(activeRfq.id!),
+          closeOnClick: false,
+        },
+      ] : []}
+      deleteAction={activeRfq ? {
+        key: 'delete',
+        label: isDeleting ? 'Deleting...' : 'Delete RFQ',
+        icon: isDeleting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Trash2 className="h-6 w-6" />,
+        onClick: () => setDeleteId(activeRfq.id!),
+        closeOnClick: false,
+      } : undefined}
+    />
+
+    <ConfirmActionDialog
+      open={archiveId !== null}
+      onOpenChange={(open) => !open && setArchiveId(null)}
+      title="Archive this RFQ?"
+      description="This will move the RFQ to the archive. You can restore it later from Settings."
+      confirmLabel="Archive"
+      loading={isArchiving}
+      onConfirm={() => archiveId && handleArchive(archiveId)}
+    />
+
+    <ConfirmActionDialog
+      open={deleteId !== null}
+      onOpenChange={(open) => !open && setDeleteId(null)}
+      title="Delete this RFQ?"
+      description="This action is permanent and cannot be undone."
+      confirmLabel="Delete"
+      variant="destructive"
+      loading={isDeleting}
+      onConfirm={() => deleteId && handleDelete(deleteId)}
+    />
+  </>
   );
-};
+}

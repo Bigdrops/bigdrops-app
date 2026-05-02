@@ -261,9 +261,9 @@ export default function ProjectLinkDialog({
                   documentClientName: documentRecord?.client_name,
                   projectClientId: projects.find(p => p.id === selectedProjectId)?.client_id,
                   projectClientName: projects.find(p => p.id === selectedProjectId)?.client_name,
-                }) ? "border-red-200 bg-red-50" : "border-emerald-200 bg-emerald-50"
+                }) ? "border-[hsl(var(--bd-error))]/20 bg-[hsl(var(--bd-error))]/10" : "border-[hsl(var(--bd-success))]/20 bg-[hsl(var(--bd-success))]/10"
               )}>
-                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <div className="text-xs font-semibold text-[hsl(var(--bd-text-muted))] uppercase tracking-wider">
                   Selected Project
                 </div>
                 <div className="text-sm font-bold mt-1">
@@ -275,7 +275,7 @@ export default function ProjectLinkDialog({
                   projectClientId: projects.find(p => p.id === selectedProjectId)?.client_id,
                   projectClientName: projects.find(p => p.id === selectedProjectId)?.client_name,
                 }) && (
-                  <div className="mt-2 text-xs font-medium text-red-600">
+                  <div className="mt-2 text-xs font-medium text-[hsl(var(--bd-error))]">
                     Client does not match this document
                   </div>
                 )}
@@ -283,7 +283,7 @@ export default function ProjectLinkDialog({
             )}
           </div>
 
-          {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div> : null}
+          {error ? <div className="rounded-xl border border-[hsl(var(--bd-error))]/20 bg-[hsl(var(--bd-error))]/10 px-3 py-2 text-sm text-[hsl(var(--bd-error))]">{error}</div> : null}
         </div>
 
         <DialogFooter className="gap-2 sm:justify-between">
@@ -292,7 +292,7 @@ export default function ProjectLinkDialog({
               Cancel
             </Button>
             {documentRecord?.project_id ? (
-              <Button type="button" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setConfirmingDetach(true)}>
+              <Button type="button" variant="outline" className="border-[hsl(var(--bd-error))]/20 text-[hsl(var(--bd-error))] hover:bg-[hsl(var(--bd-error))]/10 hover:text-[hsl(var(--bd-error))]" onClick={() => setConfirmingDetach(true)}>
                 Unlink Project
               </Button>
             ) : null}
