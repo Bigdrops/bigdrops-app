@@ -223,7 +223,7 @@ export default function ProjectLinkDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="rounded-[28px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]">
         <DialogHeader>
           <DialogTitle>Link to Project</DialogTitle>
           <DialogDescription>
@@ -255,18 +255,18 @@ export default function ProjectLinkDialog({
             
             {selectedProjectId && projects.find(p => p.id === selectedProjectId) && (
               <div className={cn(
-                "rounded-xl border p-3",
+                "rounded-2xl border p-4 shadow-sm transition-all",
                 isClientMismatch({
                   documentClientId: documentRecord?.client_id,
                   documentClientName: documentRecord?.client_name,
                   projectClientId: projects.find(p => p.id === selectedProjectId)?.client_id,
                   projectClientName: projects.find(p => p.id === selectedProjectId)?.client_name,
-                }) ? "border-[hsl(var(--bd-error))]/20 bg-[hsl(var(--bd-error))]/10" : "border-[hsl(var(--bd-success))]/20 bg-[hsl(var(--bd-success))]/10"
+                }) ? "border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))]" : "border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))]"
               )}>
-                <div className="text-xs font-semibold text-[hsl(var(--bd-text-muted))] uppercase tracking-wider">
+                <div className="text-[10px] font-extrabold text-[hsl(var(--bd-text-muted))] uppercase tracking-[0.12em]">
                   Selected Project
                 </div>
-                <div className="text-sm font-bold mt-1">
+                <div className="text-[15px] font-black mt-1 text-[hsl(var(--bd-text))]">
                   {projects.find(p => p.id === selectedProjectId)?.name}
                 </div>
                 {isClientMismatch({
@@ -275,7 +275,7 @@ export default function ProjectLinkDialog({
                   projectClientId: projects.find(p => p.id === selectedProjectId)?.client_id,
                   projectClientName: projects.find(p => p.id === selectedProjectId)?.client_name,
                 }) && (
-                  <div className="mt-2 text-xs font-medium text-[hsl(var(--bd-error))]">
+                  <div className="mt-2 text-[12px] font-bold text-[hsl(var(--bd-status-danger-text))]">
                     Client does not match this document
                   </div>
                 )}
@@ -283,22 +283,22 @@ export default function ProjectLinkDialog({
             )}
           </div>
 
-          {error ? <div className="rounded-xl border border-[hsl(var(--bd-error))]/20 bg-[hsl(var(--bd-error))]/10 px-3 py-2 text-sm text-[hsl(var(--bd-error))]">{error}</div> : null}
+          {error ? <div className="rounded-2xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-4 py-3 text-sm font-bold text-[hsl(var(--bd-status-danger-text))]">{error}</div> : null}
         </div>
 
-        <DialogFooter className="gap-2 sm:justify-between">
+        <DialogFooter className="gap-3 sm:justify-between pt-2">
           <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" className="rounded-2xl h-12 px-6 font-bold" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             {documentRecord?.project_id ? (
-              <Button type="button" variant="outline" className="border-[hsl(var(--bd-error))]/20 text-[hsl(var(--bd-error))] hover:bg-[hsl(var(--bd-error))]/10 hover:text-[hsl(var(--bd-error))]" onClick={() => setConfirmingDetach(true)}>
+              <Button type="button" variant="outline" className="rounded-2xl h-12 px-6 border-[hsl(var(--bd-status-danger-border))] text-[hsl(var(--bd-status-danger-text))] hover:bg-[hsl(var(--bd-status-danger-bg))] font-bold" onClick={() => setConfirmingDetach(true)}>
                 Unlink Project
               </Button>
             ) : null}
           </div>
           <div className="flex gap-2">
-            <Button type="button" onClick={() => void handleLink()} disabled={saving || !selectedProjectId}>
+            <Button type="button" className="rounded-2xl h-12 px-8 bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] font-black uppercase tracking-wide shadow-lg hover:shadow-xl active:scale-95 transition-all" onClick={() => void handleLink()} disabled={saving || !selectedProjectId}>
               {saving ? 'Linking...' : 'Link Project'}
             </Button>
           </div>

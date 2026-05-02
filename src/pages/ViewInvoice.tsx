@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { PdfBankControls, PdfDocumentOptionsCard, PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
-import { DocumentLivePreviewCard } from '@/components/document/DocumentViewShell'
+import InvoiceHtmlView from '@/components/document-view/invoice/InvoiceHtmlView'
 import {
   InvoiceHero,
 } from '@/components/document-view/invoice/InvoiceFidelityPrimitives'
@@ -950,73 +950,20 @@ export default function ViewInvoice() {
       >
         <InvoiceViewPage
           documentPreview={
-            <DocumentLivePreviewCard
-              templateLabel="Live PDF"
-              documentLabel="Invoice"
-              documentNumber={invoice.invoice_number || 'Invoice'}
-              companyName={settingsData?.company_name || ''}
-              companyTagline={pdfOutput.showTagline ? settingsData?.company_tagline || '' : ''}
-              companyLines={[
-                settingsData?.company_address,
-                settingsData?.company_city,
-                settingsData?.company_phone,
-                settingsData?.company_email,
-              ].filter(Boolean) as string[]}
-              recipientLabel="Prepared For"
-              recipientName={invoice.client_name || 'Unassigned'}
-              recipientLines={[
-                invoice.client_address,
-                invoice.client_city,
-                invoice.client_phone,
-                invoice.client_email,
-              ].filter(Boolean) as string[]}
-              meta={[
-                { label: 'Issue Date', value: formatDisplayDate(invoice.issue_date) || 'Not set' },
-                { label: 'Due Date', value: formatDisplayDate(invoice.due_date) || 'Open' },
-                { label: 'Status', value: String(invoice.status || 'draft').toUpperCase() },
-              ]}
-              detailRows={(previewModel?.previewDetailRows || []).map((row: any) => ({
-                label: row.label,
-                value: row.value,
-              }))}
-              items={(previewModel?.previewItems || []).map((item: any) => {
-                if (item.type === 'group') return { type: 'group' as const, label: item.label }
-                if (item.type === 'group_footer') {
-                  return {
-                    type: 'group_footer' as const,
-                    label: 'Subtotal',
-                    showSubtotal: item.showSubtotal === true,
-                    value: item.value,
-                  }
-                }
-
-                return {
-                  label: item.label || 'Item',
-                  detail: item.detail || '',
-                  imageUrl: item.imageUrl,
-                  value: item.value || '—',
-                  facts: Array.isArray(item.facts) ? item.facts : [],
-                }
-              })}
-              totals={(previewModel?.previewTotals || []).map((row: any) => ({
-                label: row.label,
-                value: row.value,
-                emphasis: row.emphasis,
-              }))}
-              amountInWords={previewModel?.previewAmountInWords}
-              notesSections={(previewModel?.previewNotesSections || []).map((section: any) => ({
-                title: section.title,
-                content: section.kind === 'html' ? section.html : section.text,
-              }))}
-              bankDetails={previewModel?.selectedPreviewBank ? {
-                bankName: previewModel.selectedPreviewBank.bankName,
-                accountName: previewModel.selectedPreviewBank.accountName,
-                accountNumber: previewModel.selectedPreviewBank.accountNumber,
-                sortCode: previewModel.selectedPreviewBank.sortCode,
-              } : undefined}
-              accentColor={getPdfDesignPreset('invoice').accentColor}
-              headerFontFamily={resolvePdfWebFontFamily(getPdfDesignPreset('invoice').headerFont)}
-              bodyFontFamily={resolvePdfWebFontFamily(getPdfDesignPreset('invoice').bodyFont)}
+            <InvoiceHtmlView
+              invoice={invoice}
+              items={items}
+              client={client}
+              settings={settings}
+              bankAccounts={bankAccounts}
+              customFields={customFields}
+              pdfOutput={pdfOutput}
+              invoiceTotal={previewTotalsSource?.invoiceTotal || 0}
+              cashReceived={viewModel.cashReceived || 0}
+              balanceDue={previewTotalsSource?.balanceDue || 0}
+              attachments={attachments}
+              relatedAdvanceInvoices={relatedAdvanceInvoices}
+              onAttachmentsChange={refresh}
             />
           }
           previewControls={

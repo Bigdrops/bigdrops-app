@@ -16,7 +16,7 @@ import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { RfqCustomizationPanel } from '@/components/rfq/RfqCustomizationPanel'
 import { RfqPdfDocument } from '@/components/rfq/RfqPdfDocument'
-import { DocumentLivePreviewCard } from '@/components/document/DocumentViewShell'
+import { RfqPreview } from '@/components/rfq/RfqPreview'
 import { denormalizeToDbRfq, normalizeDbRfq } from '@/domain/rfq/normalize'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { feedback } from '@/lib/feedback'
@@ -378,42 +378,7 @@ export default function ViewRfq() {
         <RfqViewPage
           document={docProps}
           metrics={metrics}
-          preview={
-            <DocumentLivePreviewCard
-              templateLabel="Live PDF"
-              documentLabel="RFQ"
-              documentNumber={rfq.rfq_number || 'RFQ'}
-              companyName={rfq.identity_name || ''}
-              companyTagline={rfq.identity_tagline || ''}
-              companyLines={[rfq.identity_address, rfq.identity_phone, rfq.identity_email].filter(Boolean) as string[]}
-              recipientLabel="Vendor Information"
-              recipientName={rfq.vendor_name || 'Vendor not specified'}
-              recipientLines={[rfq.vendor_address, rfq.vendor_contact].filter(Boolean) as string[]}
-              meta={[
-                { label: 'Issue Date', value: rfq.created_at ? new Date(rfq.created_at).toLocaleDateString() : 'Not set' },
-                { label: 'Deadline', value: rfq.expiry_date || 'No deadline' },
-                { label: 'Status', value: String(rfq.status || 'open').toUpperCase() },
-              ]}
-              detailRows={[
-                { label: 'Project Ref', value: rfq.project_title || '—' },
-                { label: 'Tender Type', value: rfq.tender_type || 'General Request' },
-              ]}
-              items={(rfq.table_rows || []).map((item: any) => {
-                if (item.row_type === 'section') return { type: 'group' as const, label: item.description }
-                return {
-                  type: 'line' as const,
-                  label: item.description || 'Item',
-                  detail: item.specification || '',
-                  value: String(item.quantity ?? '—'),
-                  facts: [item.unit, item.make_brand].filter(Boolean) as string[],
-                }
-              })}
-              notesSections={[
-                { title: 'Tender Instructions', content: rfq.notes || 'No special instructions.' },
-              ]}
-              accentColor="#0f172a"
-            />
-          }
+          preview={<RfqPreview rfq={rfq} rows={rfqRows} columns={rfq.table_columns} />}
           onConvert={() => ui.openModal(MODAL_CONVERT)}
           onEdit={() => navigate(`/rfqs/edit/${id}`)}
           onDuplicate={() => void handleDuplicate()}

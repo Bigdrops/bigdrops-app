@@ -3,18 +3,19 @@
   align-items: center;
   gap: 8px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--bd-radius-xl);
   font-family: var(--dv-font-ui);
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  color: #ffffff;
+  background: hsl(var(--bd-fab-bg));
+  color: hsl(var(--bd-fab-text));
   padding: 12px 24px;
   font-size: 14px;
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.4), 0 8px 10px -6px rgba(15, 23, 42, 0.4);
+  box-shadow: 0 10px 25px -5px hsla(var(--primary), 0.4);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   letter-spacing: -0.01em;
+  text-transform: uppercase;
 }
 
 .button:hover {

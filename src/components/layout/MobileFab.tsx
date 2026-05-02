@@ -14,7 +14,7 @@ export default function MobileFab({ onClick, icon: Icon = Plus, ariaLabel }: Mob
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
-      className="fixed bottom-[94px] right-4 z-50 grid h-14 w-14 place-items-center rounded-[var(--bd-overlay-radius)] border border-transparent bg-[hsl(var(--bd-fab-bg))] text-[hsl(var(--bd-fab-text))] shadow-lg md:hidden"
+      className="fixed bottom-[94px] right-4 z-50 grid h-14 w-14 place-items-center rounded-2xl border border-transparent bg-[hsl(var(--bd-fab-bg))] text-[hsl(var(--bd-fab-text))] shadow-lg transition-transform hover:scale-105 active:scale-95 md:hidden"
     >
       <Icon aria-hidden="true" className="h-7 w-7 stroke-[2.4]" />
     </button>

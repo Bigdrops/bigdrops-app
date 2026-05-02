@@ -77,12 +77,13 @@ function Section({
   return (
     <section>
       <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
-        <div className="flex min-w-0 items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#64748b]">
+        <div className="flex min-w-0 items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">
           <span className={`h-2 w-2 rounded-full ${dotClassName}`} />
           <span className="truncate">{title}</span>
         </div>
         {action}
       </div>
+
       <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]">
         {children}
       </div>
@@ -156,7 +157,7 @@ function HeaderActionButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-8 items-center gap-2 rounded-full border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-[13px] text-[12px] font-bold text-[#334155] disabled:opacity-60"
+      className="inline-flex h-8 items-center gap-2 rounded-full border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-[13px] text-[12px] font-bold text-[hsl(var(--bd-text))] disabled:opacity-60"
     >
       {children}
     </button>
@@ -206,9 +207,9 @@ export default function CsrFormScreen({
   const materialCount = materialsRows.filter((row) => row.item || row.quantity || row.unit).length
 
   return (
-    <div className="mx-auto min-h-screen max-w-md bg-[#f2f4f8] px-3 pb-[200px] pt-4 sm:px-4">
+    <div className="mx-auto min-h-screen max-w-md bg-[hsl(var(--bd-app-bg))] px-3 pb-[200px] pt-4 sm:px-4">
       <div className="space-y-5">
-        <Section title="Document Details" dotClassName="bg-[#0f172a]">
+        <Section title="Document Details" dotClassName="bg-slate-900">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-[hsl(var(--bd-text-muted))]">
@@ -220,13 +221,13 @@ export default function CsrFormScreen({
             </div>
             <button
               type="button"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[#475569]"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text-muted))]"
             >
               <MoreHorizontal className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="mt-4 rounded-[16px] border-2 border-dashed border-[#d8e1ec] bg-[hsl(var(--bd-surface-muted))] p-3">
+          <div className="mt-4 rounded-[16px] border-2 border-dashed border-[hsl(var(--bd-border-strong))] bg-[hsl(var(--bd-surface-muted))] p-3">
             <ClientSelector
               clientId={String(csr.client_id || '')}
               clientName={String(csr.client_name || '')}
@@ -285,26 +286,26 @@ export default function CsrFormScreen({
           </div>
         </Section>
 
-        <Section title="Item Controls" dotClassName="bg-[#475569]">
+        <Section title="Item Controls" dotClassName="bg-slate-700">
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => setImportSheetOpen(true)}
-              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 text-[13px] font-bold text-[#334155]"
+              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 text-[13px] font-bold text-[hsl(var(--bd-text))]"
             >
               Import
             </button>
             <button
               type="button"
               disabled
-              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 text-[13px] font-bold text-[#334155] opacity-70"
+              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 text-[13px] font-bold text-[hsl(var(--bd-text))] opacity-70"
             >
               Settings
             </button>
           </div>
         </Section>
 
-        <Section title="Main Details" dotClassName="bg-[#8b5cf6]">
+        <Section title="Main Details" dotClassName="bg-[hsl(var(--bd-violet))]">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <FieldLabel>Call Type</FieldLabel>
@@ -333,7 +334,7 @@ export default function CsrFormScreen({
           </div>
         </Section>
 
-        <Section title="Equipment" dotClassName="bg-[#475569]">
+        <Section title="Equipment" dotClassName="bg-slate-600">
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -380,7 +381,7 @@ export default function CsrFormScreen({
           </div>
         </Section>
 
-        <Section title="Problem & Service" dotClassName="bg-[#ef4444]">
+        <Section title="Problem & Service" dotClassName="bg-[hsl(var(--bd-rose))]">
           <div className="space-y-3">
             <div>
               <FieldLabel>Problem Reported</FieldLabel>
@@ -414,7 +415,7 @@ export default function CsrFormScreen({
           </div>
         </Section>
 
-        <Section title="Service Execution" dotClassName="bg-[#0f172a]">
+        <Section title="Service Execution" dotClassName="bg-slate-900">
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -517,12 +518,12 @@ export default function CsrFormScreen({
             <input
               value={materialsTitle}
               onChange={(event) => setMaterialsTitle(event.target.value)}
-              className="w-32 bg-transparent text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#64748b] outline-none"
+              className="w-32 bg-transparent text-[11px] font-extrabold uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))] outline-none"
             />
           }
-          dotClassName="bg-[#059669]"
+          dotClassName="bg-[hsl(var(--bd-emerald))]"
           action={
-            <span className="inline-flex h-8 items-center rounded-full border border-[#bbf7d0] bg-[#f0fdf4] px-3 text-[12px] font-bold text-[#16a34a]">
+            <span className="inline-flex h-8 items-center rounded-full border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] px-3 text-[12px] font-bold text-[hsl(var(--bd-status-success-text))]">
               {materialCount} item{materialCount === 1 ? '' : 's'}
             </span>
           }
@@ -533,7 +534,7 @@ export default function CsrFormScreen({
                 type="button"
                 onClick={() => onUpdateMeta('materialsOutputStyle', 'comma')}
                 className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${
-                  csrMeta.materialsOutputStyle === 'comma' ? 'bg-[#0f172a] text-white' : 'text-[#64748b]'
+                  csrMeta.materialsOutputStyle === 'comma' ? 'bg-slate-900 text-white' : 'text-[hsl(var(--bd-text-muted))]'
                 }`}
               >
                 Comma
@@ -542,7 +543,7 @@ export default function CsrFormScreen({
                 type="button"
                 onClick={() => onUpdateMeta('materialsOutputStyle', 'list')}
                 className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${
-                  csrMeta.materialsOutputStyle !== 'comma' ? 'bg-[#0f172a] text-white' : 'text-[#64748b]'
+                  csrMeta.materialsOutputStyle !== 'comma' ? 'bg-slate-900 text-white' : 'text-[hsl(var(--bd-text-muted))]'
                 }`}
               >
                 Enumerate
@@ -585,7 +586,7 @@ export default function CsrFormScreen({
                     <button
                       type="button"
                       onClick={() => onRemoveMaterialRow(index)}
-                      className="mt-3 text-[12px] font-bold text-[#ef4444]"
+                      className="mt-3 text-[12px] font-bold text-[hsl(var(--bd-status-danger-text))]"
                     >
                       Remove
                     </button>
@@ -597,7 +598,7 @@ export default function CsrFormScreen({
             <button
               type="button"
               onClick={onAddMaterialRow}
-              className="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[hsl(var(--bd-border))] px-3 text-[13px] font-bold text-[#334155]"
+              className="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[hsl(var(--bd-border))] px-3 text-[13px] font-bold text-[hsl(var(--bd-text))]"
             >
               Add material
             </button>
@@ -631,14 +632,14 @@ export default function CsrFormScreen({
                   <button
                     type="button"
                     onClick={() => setSignatorySheetOpen(true)}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[#0f172a] bg-[#0f172a] px-[13px] text-[12px] font-bold text-white"
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-slate-900 bg-slate-900 px-[13px] text-[12px] font-bold text-white"
                   >
                     {selectedSignatory ? 'Change signatory' : 'Choose signatory'}
                   </button>
                   <button
                     type="button"
                     onClick={() => onUpdate('technician_signatory_id', null)}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-[13px] text-[12px] font-bold text-[#334155]"
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-[13px] text-[12px] font-bold text-[hsl(var(--bd-text))]"
                   >
                     Leave blank
                   </button>
@@ -700,7 +701,7 @@ export default function CsrFormScreen({
                   <button
                     type="button"
                     onClick={() => recipientSignatureInputRef.current?.click()}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[#0f172a] bg-[#0f172a] px-[13px] text-[12px] font-bold text-white"
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-slate-900 bg-slate-900 px-[13px] text-[12px] font-bold text-white"
                   >
                     Upload signature
                   </button>
@@ -712,7 +713,7 @@ export default function CsrFormScreen({
                         recipientSignatureInputRef.current.value = ''
                       }
                     }}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-[13px] text-[12px] font-bold text-[#334155]"
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-[13px] text-[12px] font-bold text-[hsl(var(--bd-text))]"
                   >
                     Leave blank
                   </button>
@@ -723,11 +724,24 @@ export default function CsrFormScreen({
         </Section>
       </div>
 
-            <MobileFab 
-        onClick={onSave} 
-        icon={Save} 
-        ariaLabel={saving ? 'Saving CSR' : 'Save CSR'} 
-      />
+      {/* Floating Save Button */}
+      <div className="hidden sm:block fixed bottom-6 right-6 z-30">
+        <button
+          onClick={onSave}
+          disabled={saving}
+          className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+        >
+          <Save className="h-6 w-6" />
+        </button>
+      </div>
+
+      <div className="sm:hidden">
+        <MobileFab 
+          onClick={onSave} 
+          icon={Save} 
+          ariaLabel="Save CSR" 
+        />
+      </div>
 
       <Sheet open={signatorySheetOpen} onOpenChange={setSignatorySheetOpen}>
         <SheetContent side="bottom" className="rounded-t-[24px]">
@@ -736,7 +750,7 @@ export default function CsrFormScreen({
           </SheetHeader>
           <div className="mt-4 space-y-2 pb-4">
             {signatories.length === 0 ? (
-              <div className="rounded-[16px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-4 py-6 text-center text-[13px] text-[#64748b]">
+              <div className="rounded-[16px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-4 py-6 text-center text-[13px] text-[hsl(var(--bd-text-muted))]">
                 No signatories found.
               </div>
             ) : (
@@ -756,7 +770,7 @@ export default function CsrFormScreen({
                   >
                     <div className="text-[14px] font-bold">{signatory.name}</div>
                     {signatory.role ? (
-                      <div className={`mt-1 text-[12px] ${active ? 'text-slate-300' : 'text-[#64748b]'}`}>
+                      <div className={`mt-1 text-[12px] ${active ? 'text-slate-300' : 'text-[hsl(var(--bd-text-muted))]'}`}>
                         {signatory.role}
                       </div>
                     ) : null}
