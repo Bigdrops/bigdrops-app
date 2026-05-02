@@ -873,6 +873,15 @@ export function validateFlaggedCleanupImport(
   try {
     parsedJson = JSON.parse(trimmed)
   } catch {
+    // Check if it looks like the AI review summary instead of JSON
+    if (trimmed.includes('#') || trimmed.includes('Summary') || trimmed.includes('Propose')) {
+      return {
+        ok: false,
+        errors: ['Paste the final JSON result, not the review text.'],
+        preview: null,
+        parsed: null,
+      }
+    }
     return {
       ok: false,
       errors: ['AI result is not valid JSON. Paste the raw JSON response only.'],
@@ -908,7 +917,7 @@ export function validateFlaggedCleanupImport(
     topLevelErrors.push(`schema_version must be ${FLAGGED_CLEANUP_SCHEMA_VERSION}.`)
   }
   if (sourceExportType !== exportPayload.export_type) {
-    topLevelErrors.push(`source_export_type must be "${exportPayload.export_type}".`)
+    topLevelErrors.push(`The result identifies as "${sourceExportType || 'unknown'}", but you are reviewing "${exportPayload.export_type}".`)
   }
   if (isBatchExport && importBatchId !== expectedBatchId) {
     topLevelErrors.push(`The AI result belongs to batch "${importBatchId || 'unknown'}", but you are currently reviewing batch "${expectedBatchId}".`)
@@ -1019,9 +1028,13 @@ export function validateFlaggedCleanupImport(
     ignored_group_ids: ignoredGroupIds || [],
   }
 
+  const rejectedCount = rejectedGroups.length + unknownIgnoredGroupIds.length
+  const ok = topLevelErrors.length === 0 && rejectedCount === 0
+  const errors = ok ? [] : [`The result contains ${rejectedCount} invalid or unknown proposal(s). Review the "Rejected proposals" section below.`]
+
   return {
-    ok: topLevelErrors.length === 0 && rejectedGroups.length === 0 && unknownIgnoredGroupIds.length === 0,
-    errors: [],
+    ok,
+    errors,
     preview: {
       merge_groups: validPreviewGroups,
       ignored_groups: ignoredGroups,
@@ -1029,7 +1042,7 @@ export function validateFlaggedCleanupImport(
         ...rejectedGroups,
         ...unknownIgnoredGroupIds.map((groupId) => ({
           group_id: groupId,
-          reason: 'ignored_group_ids must reference groups inside the current flagged export scope.',
+          reason: 'This group_id is not present in the current duplicate review scope.',
         })),
       ],
     },

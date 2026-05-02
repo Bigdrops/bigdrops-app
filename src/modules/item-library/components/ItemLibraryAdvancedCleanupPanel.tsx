@@ -619,12 +619,26 @@ export function ItemLibraryAdvancedCleanupPanel({
 
                       <div className="mt-3 space-y-3">
                         {(applyableMerges as any[]).map((merge) => (
-                          <article key={merge.group.group_id} className="rounded-[12px] bg-[#f9f2e7] p-3">
+                          <article key={merge.group_id} className="rounded-[12px] bg-[#f9f2e7] p-3">
                             <h3 className="text-[13px] font-bold text-[#2c2218]">{merge.canonical_name}</h3>
                             <p className="mt-1 text-[11px] text-[#6f5b46]">
-                              Group: {merge.group.label} • Winner: {merge.winner.name} • Merge: {merge.merged_items.map((item: any) => item.name).join(', ')}
+                              Group: {merge.export_label} • Winner: {merge.winner.name} • Merge: {merge.merged_items.map((item: any) => item.name).join(', ')}
                             </p>
                           </article>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {(preview as CleanupImportPreview).rejected_groups?.length ? (
+                    <div className="rounded-[14px] border border-[#e4c3ba] bg-[#fff2ee] p-4">
+                      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#8f3f35]">Rejected proposals</div>
+                      <div className="mt-3 space-y-2">
+                        {(preview as CleanupImportPreview).rejected_groups.map((rejected) => (
+                          <div key={rejected.group_id} className="rounded-[12px] bg-[#ffeae4] p-3">
+                            <div className="text-[12px] font-bold text-[#8f3f35]">{rejected.group_id}</div>
+                            <div className="mt-0.5 text-[11px] text-[#9a4a3f]">{rejected.reason}</div>
+                          </div>
                         ))}
                       </div>
                     </div>
