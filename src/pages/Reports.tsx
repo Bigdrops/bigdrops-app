@@ -13,7 +13,6 @@ import {
 import { safeDate, getPresetRange } from '@/components/reports/reportUtils'
 
 // Report Sections
-import { SectionHeader } from '@/components/reports/ReportShared'
 import { ReceivablesSection } from '@/components/reports/ReceivablesSection'
 import { CollectionsSection } from '@/components/reports/CollectionsSection'
 import { ProjectsSection } from '@/components/reports/ProjectsSection'
@@ -120,13 +119,20 @@ export default function Reports() {
   }, [tab, rangeKey, collectionsLoadedRange, collectionsLoading, queryStart, queryEnd, loadCollections])
 
   return (
-    <Layout title="Reports" session={null} hidePageHeader contentClassName="w-full max-w-none bg-[hsl(var(--bd-surface))] p-0 pb-24 md:px-4 md:pb-10">
-      <div className="w-full py-4">
-        <div className="space-y-4">
-          <SectionHeader 
-            title="Reports" 
-            subtitle="Live receivables, collections, project finance snapshots, and a tax placeholder for the next phase." 
-          />
+    <Layout title="Reports" session={null} contentClassName="w-full max-w-none bg-[hsl(var(--bd-surface))] p-0 pb-24 md:px-4 md:pb-10">
+      <div className="w-full py-4 max-w-5xl mx-auto px-4 md:px-0">
+        <div className="space-y-6">
+          {/* Operational Header */}
+          <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-5 shadow-sm">
+            <div className="flex items-center gap-3 mb-1.5">
+              <div className="bg-[hsl(var(--bd-status-success-text))] rounded-full h-1.5 w-1.5 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-success-text))]">Finance Intelligence</span>
+            </div>
+            <h1 className="text-xl font-black tracking-tight text-[hsl(var(--bd-text))]">Financial Reports</h1>
+            <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))] leading-relaxed max-w-md">
+              Review receivables, collections, and tax positions across all projects.
+            </p>
+          </div>
           
           <Tabs value={tab} onValueChange={(value) => setTab(value as ReportTab)} className="w-full">
             <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-2 shadow-sm">

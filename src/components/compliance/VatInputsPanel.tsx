@@ -84,59 +84,59 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
 
   return (
     <div className="space-y-4 pb-20">
-      <Card className="border-amber-200 bg-white">
-        <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-bold flex items-center gap-2">
-            <Wallet className="h-4 w-4 text-amber-600" />
+      <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden">
+        <div className="px-4 py-3 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] flex flex-row items-center justify-between">
+          <h3 className="text-sm font-bold flex items-center gap-2 text-[hsl(var(--bd-text))]">
+            <Wallet className="h-4 w-4 text-[hsl(var(--bd-status-warning-text))]" />
             VAT Input Entries
-          </CardTitle>
+          </h3>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 border-emerald-100 bg-emerald-50/50 hover:bg-emerald-50">
+            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-success-text))] border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] hover:opacity-80">
               <FileJson className="h-3 w-3 mr-1.5" />
               Import JSON
             </Button>
-            <Button size="sm" onClick={() => setEditingEntry({ date: new Date().toISOString().split('T')[0], is_recoverable: true, net_amount: 0, vat_amount: 0 })} className="h-8 rounded-full px-4 text-xs font-bold bg-slate-900 border border-slate-800 shadow hover:bg-slate-800">
+            <Button size="sm" onClick={() => setEditingEntry({ date: new Date().toISOString().split('T')[0], is_recoverable: true, net_amount: 0, vat_amount: 0 })} className="h-8 rounded-full px-4 text-xs font-bold bg-[hsl(var(--bd-overlay-bg))] text-[hsl(var(--bd-overlay-text))] border border-[hsl(var(--bd-overlay-border))] shadow-sm hover:opacity-90">
               <PlusCircle className="h-3 w-3 mr-2" />
               Add Entry
             </Button>
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
+        </div>
+        <div className="p-0">
           {taxInputs.length === 0 ? (
-            <div className="text-center py-12 px-4 rounded-b-[var(--bd-radius-xl)] bg-slate-50 border-t border-dashed border-slate-200">
-              <Wallet className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-              <div className="text-sm font-bold text-slate-800">No VAT Inputs Recorded</div>
-              <div className="text-xs text-muted-foreground mt-1 max-w-[280px] mx-auto">
+            <div className="text-center py-12 px-4 bg-[hsl(var(--bd-surface-muted))] border-t border-dashed border-[hsl(var(--bd-border))]">
+              <Wallet className="h-10 w-10 text-[hsl(var(--bd-text-muted))] opacity-20 mx-auto mb-3" />
+              <div className="text-sm font-bold text-[hsl(var(--bd-text))]">No VAT Inputs Recorded</div>
+              <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1 max-w-[280px] mx-auto">
                 Track recoverable VAT from your business purchases and expenses.
               </div>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-[hsl(var(--bd-border))]">
               {taxInputs.map(entry => (
-                <div key={entry.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
+                <div key={entry.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[hsl(var(--bd-surface-muted))] transition-colors">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{formatDisplayDate(entry.date)}</div>
+                      <div className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))] uppercase tracking-wider">{formatDisplayDate(entry.date)}</div>
                       {!entry.is_recoverable && (
-                        <span className="text-[9px] font-black uppercase tracking-wider text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">Non-Recoverable</span>
+                        <span className="text-[9px] font-black uppercase tracking-wider text-[hsl(var(--bd-status-warning-text))] bg-[hsl(var(--bd-status-warning-bg))] px-2 py-0.5 rounded-full border border-[hsl(var(--bd-status-warning-border))]">Non-Recoverable</span>
                       )}
                     </div>
-                    <div className="text-sm font-bold text-slate-900">{entry.vendor_name || 'Unknown Vendor'}</div>
-                    <div className="text-xs text-slate-500 mt-0.5 flex flex-wrap gap-2">
+                    <div className="text-sm font-bold text-[hsl(var(--bd-text))]">{entry.vendor_name || 'Unknown Vendor'}</div>
+                    <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-0.5 flex flex-wrap gap-2">
                       {entry.category && <span>{entry.category}</span>}
                       {entry.reference && <span>• Ref: {entry.reference}</span>}
                     </div>
                   </div>
                   <div className="flex items-center justify-between sm:justify-end gap-6 sm:w-auto">
                     <div className="text-right">
-                      <div className="text-xs text-slate-500 mb-0.5">VAT: <span className="font-bold text-slate-700">{formatNaira(entry.vat_amount)}</span></div>
-                      <div className="text-xs text-slate-400">Net: {formatNaira(entry.net_amount)}</div>
+                      <div className="text-xs text-[hsl(var(--bd-text-muted))] mb-0.5">VAT: <span className="font-bold text-[hsl(var(--bd-text))]">{formatNaira(entry.vat_amount)}</span></div>
+                      <div className="text-xs text-[hsl(var(--bd-text-muted))] opacity-70">Net: {formatNaira(entry.net_amount)}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-900" onClick={() => setEditingEntry(entry)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]" onClick={() => setEditingEntry(entry)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-300 hover:text-red-600 hover:bg-red-50" disabled={isDeleting === entry.id} onClick={() => { if(confirm('Delete entry?')) handleDelete(entry.id) }}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-[hsl(var(--bd-status-danger-text))] opacity-50 hover:opacity-100 hover:bg-[hsl(var(--bd-status-danger-bg))]" disabled={isDeleting === entry.id} onClick={() => { if(confirm('Delete entry?')) handleDelete(entry.id) }}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -145,8 +145,8 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <Sheet open={!!editingEntry} onOpenChange={(open) => !open && setEditingEntry(null)}>
         <SheetContent className="sm:max-w-md overflow-y-auto">

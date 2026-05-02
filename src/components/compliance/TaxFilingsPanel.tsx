@@ -27,11 +27,11 @@ interface TaxFilingsPanelProps {
 }
 
 const STATUS_TONES: Record<TaxFilingStatus, string> = {
-  draft:    'bg-slate-100 text-slate-600 border-slate-200',
-  ready:    'bg-blue-50 text-blue-700 border-blue-200',
-  filed:    'bg-emerald-50 text-emerald-700 border-emerald-200',
-  paid:     'bg-emerald-100 text-emerald-800 border-emerald-300',
-  overdue:  'bg-red-50 text-red-700 border-red-200',
+  draft:    'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] border-[hsl(var(--bd-border))]',
+  ready:    'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))] border-[hsl(var(--bd-status-info-border))]',
+  filed:    'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))] border-[hsl(var(--bd-status-success-border))]',
+  paid:     'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))] border-[hsl(var(--bd-status-success-border))] opacity-90',
+  overdue:  'bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))] border-[hsl(var(--bd-status-danger-border))]',
 }
 
 const TAX_TYPE_LABELS: Record<TaxFilingTaxType, string> = {
@@ -122,59 +122,59 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
 
   return (
     <div className="space-y-4 pb-20">
-      <Card className="border-emerald-100 bg-white">
-        <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-bold flex items-center gap-2">
-            <ClipboardList className="h-4 w-4 text-emerald-600" />
+      <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden">
+        <div className="px-4 py-3 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] flex flex-row items-center justify-between">
+          <h3 className="text-sm font-bold flex items-center gap-2 text-[hsl(var(--bd-text))]">
+            <ClipboardList className="h-4 w-4 text-[hsl(var(--bd-status-success-text))]" />
             Tax Filing Records
-          </CardTitle>
+          </h3>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 border-emerald-100 bg-emerald-50/50 hover:bg-emerald-50">
+            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-success-text))] border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] hover:opacity-80">
               <FileJson className="h-3 w-3 mr-1.5" />
               Import JSON
             </Button>
             <Button
               size="sm"
               onClick={openNew}
-              className="h-8 rounded-full px-4 text-xs font-bold bg-slate-900 border border-slate-800 shadow hover:bg-slate-800"
+              className="h-8 rounded-full px-4 text-xs font-bold bg-[hsl(var(--bd-overlay-bg))] text-[hsl(var(--bd-overlay-text))] border border-[hsl(var(--bd-overlay-border))] shadow-sm hover:opacity-90"
             >
               <PlusCircle className="h-3 w-3 mr-2" />
               Add Filing
             </Button>
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
+        </div>
+        <div className="p-0">
           {filings.length === 0 ? (
-            <div className="text-center py-16 px-4 bg-slate-50 rounded-b-xl border-t border-dashed border-slate-200">
-              <ClipboardList className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-              <div className="text-sm font-bold text-slate-800">No Filing Records</div>
-              <div className="text-xs text-muted-foreground mt-1 max-w-[280px] mx-auto">
+            <div className="text-center py-16 px-4 bg-[hsl(var(--bd-surface-muted))] border-t border-dashed border-[hsl(var(--bd-border))]">
+              <ClipboardList className="h-10 w-10 text-[hsl(var(--bd-text-muted))] opacity-20 mx-auto mb-3" />
+              <div className="text-sm font-bold text-[hsl(var(--bd-text))]">No Filing Records</div>
+              <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1 max-w-[280px] mx-auto">
                 Create records to track VAT, WHT, and CIT submissions and their payment status.
               </div>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-[hsl(var(--bd-border))]">
               {filings.map(filing => (
                 <div
                   key={filing.id}
-                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
+                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[hsl(var(--bd-surface-muted))] transition-colors"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="text-xs font-black uppercase tracking-widest text-slate-400">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
                         {TAX_TYPE_LABELS[filing.tax_type]}
                       </span>
                       <Badge
                         variant="outline"
-                        className={`text-[9px] font-bold uppercase rounded-full px-2 ${STATUS_TONES[filing.status]}`}
+                        className={`text-[9px] font-bold uppercase rounded-full px-2 border ${STATUS_TONES[filing.status]}`}
                       >
                         {filing.status}
                       </Badge>
                     </div>
-                    <div className="text-sm font-bold text-slate-900">
+                    <div className="text-sm font-bold text-[hsl(var(--bd-text))]">
                       {formatDisplayDate(filing.period_start)} — {formatDisplayDate(filing.period_end)}
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5 flex flex-wrap gap-3">
+                    <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-0.5 flex flex-wrap gap-3">
                       {filing.receipt_reference && <span>Ref: {filing.receipt_reference}</span>}
                       {filing.portal_reference && <span>Portal: {filing.portal_reference}</span>}
                       {filing.submitted_at && <span>Filed: {formatDisplayDate(filing.submitted_at)}</span>}
@@ -183,11 +183,11 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
 
                   <div className="flex items-center justify-between sm:justify-end gap-5 shrink-0">
                     <div className="text-right">
-                      <div className="text-xs text-slate-500">
-                        Due: <span className="font-bold text-slate-700">{formatNaira(filing.amount_due)}</span>
+                      <div className="text-xs text-[hsl(var(--bd-text-muted))]">
+                        Due: <span className="font-bold text-[hsl(var(--bd-text))]">{formatNaira(filing.amount_due)}</span>
                       </div>
                       {filing.amount_paid > 0 && (
-                        <div className="text-xs text-emerald-600 font-medium">
+                        <div className="text-xs text-[hsl(var(--bd-status-success-text))] font-medium">
                           Paid: {formatNaira(filing.amount_paid)}
                         </div>
                       )}
@@ -196,7 +196,7 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-slate-400 hover:text-slate-900"
+                        className="h-8 w-8 text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]"
                         onClick={() => setEditingFiling(filing)}
                       >
                         <Edit className="h-4 w-4" />
@@ -204,7 +204,7 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-red-300 hover:text-red-600 hover:bg-red-50"
+                        className="h-8 w-8 text-[hsl(var(--bd-status-danger-text))] opacity-40 hover:opacity-100 hover:bg-[hsl(var(--bd-status-danger-bg))]"
                         onClick={() => handleDelete(filing.id)}
                         loading={isDeleting === filing.id}
                       >
@@ -216,8 +216,8 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Create / Edit Sheet */}
       <Sheet open={!!editingFiling} onOpenChange={open => !open && setEditingFiling(null)}>

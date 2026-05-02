@@ -10,7 +10,6 @@ import {
   ClipboardList,
   Bell
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { WhtReceipt, TaxInputEntry, TaxFiling, TaxReminder } from '@/domain/compliance/types'
@@ -39,28 +38,26 @@ interface ComplianceOverviewProps {
 const getMetricToneClasses = (tone: MetricTone) => {
   switch (tone) {
     case 'green':
-      return { card: 'border-emerald-200 bg-emerald-50/60', icon: 'bg-emerald-100 text-emerald-700', value: 'text-emerald-700' }
+      return { card: 'bg-[hsl(var(--bd-status-success-bg))] border-[hsl(var(--bd-status-success-border))]', icon: 'bg-[hsl(var(--bd-status-success-text))] text-white', value: 'text-[hsl(var(--bd-status-success-text))]' }
     case 'red':
-      return { card: 'border-red-200 bg-red-50/60', icon: 'bg-red-100 text-red-700', value: 'text-red-700' }
+      return { card: 'bg-[hsl(var(--bd-status-danger-bg))] border-[hsl(var(--bd-status-danger-border))]', icon: 'bg-[hsl(var(--bd-status-danger-text))] text-white', value: 'text-[hsl(var(--bd-status-danger-text))]' }
     case 'amber':
-      return { card: 'border-amber-200 bg-amber-50/70', icon: 'bg-amber-100 text-amber-700', value: 'text-amber-700' }
+      return { card: 'bg-[hsl(var(--bd-status-warning-bg))] border-[hsl(var(--bd-status-warning-border))]', icon: 'bg-[hsl(var(--bd-status-warning-text))] text-white', value: 'text-[hsl(var(--bd-status-warning-text))]' }
     default:
-      return { card: 'border-blue-200 bg-blue-50/60', icon: 'bg-blue-100 text-blue-700', value: 'text-blue-700' }
+      return { card: 'bg-[hsl(var(--bd-status-info-bg))] border-[hsl(var(--bd-status-info-border))]', icon: 'bg-[hsl(var(--bd-status-info-text))] text-white', value: 'text-[hsl(var(--bd-status-info-text))]' }
   }
 }
 
 function MetricCard({ metric }: { metric: Metric }) {
   const tone = getMetricToneClasses(metric.tone)
   return (
-    <Card className={`border shadow-sm ${tone.card}`}>
-      <CardContent className="p-3">
-        <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-white/70 shadow-sm ${tone.icon}`}>
-          {metric.icon}
-        </div>
-        <div className={`text-xl font-black tracking-tight ${tone.value}`}>{metric.value}</div>
-        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">{metric.label}</p>
-      </CardContent>
-    </Card>
+    <div className={`rounded-[var(--bd-radius-lg)] border p-3.5 shadow-sm ${tone.card}`}>
+      <div className={`mb-2.5 flex h-8 w-8 items-center justify-center rounded-full shadow-sm ${tone.icon}`}>
+        {metric.icon}
+      </div>
+      <div className={`text-xl font-black tracking-tight ${tone.value}`}>{metric.value}</div>
+      <p className="text-[10px] font-bold text-[hsl(var(--bd-text-muted))] uppercase tracking-wider">{metric.label}</p>
+    </div>
   )
 }
 
@@ -107,7 +104,7 @@ export default function ComplianceOverview({
   const nextReminder = reminders.find(r => r.status === 'upcoming' || r.status === 'due')
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Summary Metrics */}
       <div className="grid gap-4 md:grid-cols-3">
         {metrics.map((m) => <MetricCard key={m.label} metric={m} />)}
@@ -115,159 +112,159 @@ export default function ComplianceOverview({
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Next Actions */}
-        <Card className="border-blue-100 bg-blue-50/30">
-          <CardHeader className="pb-3 border-b border-white/40">
-            <CardTitle className="text-sm font-bold flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-blue-600" />
+        <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]">
+            <h3 className="text-sm font-bold flex items-center gap-2 text-[hsl(var(--bd-text))]">
+              <AlertCircle className="h-4 w-4 text-[hsl(var(--bd-status-info-text))]" />
               Next Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-3">
+            </h3>
+          </div>
+          <div className="p-4 space-y-3">
             {overdueRemindersCount > 0 ? (
-              <div className="rounded-xl border border-red-100 bg-red-50 p-4 shadow-sm group">
+              <div className="rounded-xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-4 shadow-sm group">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="text-sm font-black text-red-800 flex items-center gap-2 uppercase tracking-tight">
+                    <div className="text-sm font-black text-[hsl(var(--bd-status-danger-text))] flex items-center gap-2 uppercase tracking-tight">
                       Attention Required
                     </div>
-                    <div className="text-xs text-red-700 mt-1 font-bold">
+                    <div className="text-xs text-[hsl(var(--bd-status-danger-text))] mt-1 font-bold">
                       {overdueRemindersCount} overdue tax obligations need immediate resolution.
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-red-400 group-hover:text-red-600 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-4 w-4 text-[hsl(var(--bd-status-danger-text))] opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm hover:border-blue-300 transition-colors group">
+              <div className="rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm hover:border-[hsl(var(--bd-status-info-border))] transition-colors group">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                    <div className="text-sm font-bold text-[hsl(var(--bd-text))] flex items-center gap-2">
                       Initialize Tracking
                     </div>
-                    <div className="text-xs text-slate-500 mt-1">
+                    <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1">
                       {untrackedWHTCount} WHT payments have not been initialized as tracking records yet.
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-blue-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-4 w-4 text-[hsl(var(--bd-status-info-text))] opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                 </div>
               </div>
             )}
 
             {nextReminder ? (
-              <div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm group">
+              <div className="rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm group">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="text-sm font-semibold text-slate-800">Next Due: {formatDisplayDate(nextReminder.due_date)}</div>
-                    <div className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-black">
+                    <div className="text-sm font-bold text-[hsl(var(--bd-text))]">Next Due: {formatDisplayDate(nextReminder.due_date)}</div>
+                    <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1 uppercase tracking-widest font-black">
                       {nextReminder.tax_type} Periodical 
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-4 w-4 text-[hsl(var(--bd-text-muted))] group-hover:text-[hsl(var(--bd-status-info-text))] group-hover:translate-x-1 transition-all" />
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm group">
+              <div className="rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm group">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="text-sm font-semibold text-slate-800">Review Requested Receipts</div>
-                    <div className="text-xs text-slate-500 mt-1">
+                    <div className="text-sm font-bold text-[hsl(var(--bd-text))]">Review Requested Receipts</div>
+                    <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1">
                       {requestedReceiptsCount} certificates are currently in "requested" status.
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-4 w-4 text-[hsl(var(--bd-text-muted))] group-hover:text-[hsl(var(--bd-status-info-text))] group-hover:translate-x-1 transition-all" />
                 </div>
               </div>
             )}
 
-            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm group">
-              <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                <ClipboardList className="h-3.5 w-3.5 text-slate-400" />
+            <div className="rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm group">
+              <div className="text-sm font-bold text-[hsl(var(--bd-text))] flex items-center gap-2">
+                <ClipboardList className="h-3.5 w-3.5 text-[hsl(var(--bd-text-muted))]" />
                 Input VAT Efficiency
               </div>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-lg font-bold text-slate-900">{taxInputs.length}</span>
-                <span className="text-[10px] text-slate-500 uppercase font-black">Entries Captured</span>
+                <span className="text-lg font-bold text-[hsl(var(--bd-text))]">{taxInputs.length}</span>
+                <span className="text-[10px] text-[hsl(var(--bd-text-muted))] uppercase font-black">Entries Captured</span>
               </div>
               {nonRecoverableVatTotal > 0 && (
-                <div className="mt-1 text-[11px] text-amber-600 font-medium italic">
+                <div className="mt-1 text-[11px] text-[hsl(var(--bd-status-warning-text))] font-medium italic">
                   Note: {formatNaira(nonRecoverableVatTotal)} marked as non-recoverable
                 </div>
               )}
             </div>
 
             {/* Filing summary */}
-            <div className="rounded-xl border border-emerald-100 bg-white p-4 shadow-sm">
-              <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                <ClipboardList className="h-3.5 w-3.5 text-emerald-500" />
+            <div className="rounded-xl border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm">
+              <div className="text-sm font-bold text-[hsl(var(--bd-text))] flex items-center gap-2">
+                <ClipboardList className="h-3.5 w-3.5 text-[hsl(var(--bd-status-success-text))]" />
                 Filing Health
               </div>
               <div className="mt-2 flex flex-wrap gap-4">
                 <div>
-                  <span className="text-lg font-bold text-slate-900">{openFilingsCount}</span>
-                  <span className="ml-1 text-[10px] text-slate-500 uppercase font-black">Drafts</span>
+                  <span className="text-lg font-bold text-[hsl(var(--bd-text))]">{openFilingsCount}</span>
+                  <span className="ml-1 text-[10px] text-[hsl(var(--bd-text-muted))] uppercase font-black">Drafts</span>
                 </div>
                 <div>
-                  <span className="text-lg font-bold text-emerald-700">{paidFilingsCount}</span>
-                  <span className="ml-1 text-[10px] text-slate-500 uppercase font-black">Settled</span>
+                  <span className="text-lg font-bold text-[hsl(var(--bd-status-success-text))]">{paidFilingsCount}</span>
+                  <span className="ml-1 text-[10px] text-[hsl(var(--bd-text-muted))] uppercase font-black">Settled</span>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm">
-              <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                <Bell className="h-3.5 w-3.5 text-blue-500" />
+            <div className="rounded-xl border border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm">
+              <div className="text-sm font-bold text-[hsl(var(--bd-text))] flex items-center gap-2">
+                <Bell className="h-3.5 w-3.5 text-[hsl(var(--bd-status-info-text))]" />
                 Next Obligations
               </div>
               <div className="mt-2 flex flex-wrap gap-4">
                 <div>
-                  <span className="text-lg font-bold text-blue-700">{upcomingRemindersCount}</span>
-                  <span className="ml-1 text-[10px] text-slate-500 uppercase font-black">Upcoming</span>
+                  <span className="text-lg font-bold text-[hsl(var(--bd-status-info-text))]">{upcomingRemindersCount}</span>
+                  <span className="ml-1 text-[10px] text-[hsl(var(--bd-text-muted))] uppercase font-black">Upcoming</span>
                 </div>
                 {overdueRemindersCount > 0 && (
                   <div>
-                    <span className="text-lg font-bold text-red-600">{overdueRemindersCount}</span>
-                    <span className="ml-1 text-[10px] text-slate-500 uppercase font-black">Overdue</span>
+                    <span className="text-lg font-bold text-[hsl(var(--bd-status-danger-text))]">{overdueRemindersCount}</span>
+                    <span className="ml-1 text-[10px] text-[hsl(var(--bd-text-muted))] uppercase font-black">Overdue</span>
                   </div>
                 )}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Recent Tax Activity */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-bold">Recent Tax Activity</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]">
+            <h3 className="text-sm font-bold text-[hsl(var(--bd-text))]">Recent Tax Activity</h3>
+          </div>
+          <div className="p-4 space-y-4">
             {recentInvoices.length === 0 && recentPayments.length === 0 ? (
-              <div className="text-center py-6 text-sm text-muted-foreground">
+              <div className="text-center py-6 text-xs text-[hsl(var(--bd-text-muted))] italic">
                 No recent tax activity found.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {recentInvoices.slice(0, 3).map((inv) => (
-                  <div key={inv.id} className="flex items-center justify-between text-sm">
-                    <div className="flex flex-col">
-                      <span className="font-medium text-slate-700">{inv.invoice_number}</span>
-                      <span className="text-[11px] text-muted-foreground">{formatDisplayDate(inv.issue_date)} · VAT</span>
+                  <div key={inv.id} className="flex items-center justify-between text-xs">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-bold text-[hsl(var(--bd-text))]">{inv.invoice_number}</span>
+                      <span className="text-[10px] font-medium text-[hsl(var(--bd-text-muted))] uppercase tracking-wider">{formatDisplayDate(inv.issue_date)} · VAT</span>
                     </div>
-                    <span className="font-bold text-amber-600">+{formatNaira(inv.vat)}</span>
+                    <span className="font-black text-[hsl(var(--bd-status-warning-text))]">+{formatNaira(inv.vat)}</span>
                   </div>
                 ))}
                 {recentPayments.slice(0, 2).map((pay) => (
-                  <div key={pay.id} className="flex items-center justify-between text-sm">
-                    <div className="flex flex-col">
-                      <span className="font-medium text-slate-700">{pay.invoice_number || 'Payment'}</span>
-                      <span className="text-[11px] text-muted-foreground">{formatDisplayDate(pay.date)} · WHT</span>
+                  <div key={pay.id} className="flex items-center justify-between text-xs">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-bold text-[hsl(var(--bd-text))]">{pay.invoice_number || 'Payment'}</span>
+                      <span className="text-[10px] font-medium text-[hsl(var(--bd-text-muted))] uppercase tracking-wider">{formatDisplayDate(pay.date)} · WHT</span>
                     </div>
-                    <span className="font-bold text-red-600">-{formatNaira(pay.wht_amount)}</span>
+                    <span className="font-black text-[hsl(var(--bd-status-danger-text))]">-{formatNaira(pay.wht_amount)}</span>
                   </div>
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

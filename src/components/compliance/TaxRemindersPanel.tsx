@@ -28,11 +28,11 @@ interface TaxRemindersPanelProps {
 }
 
 const STATUS_TONES: Record<TaxReminderStatus, string> = {
-  upcoming:  'bg-blue-50 text-blue-700 border-blue-200',
-  due:       'bg-amber-50 text-amber-700 border-amber-200',
-  overdue:   'bg-red-50 text-red-700 border-red-200',
-  resolved:  'bg-emerald-50 text-emerald-700 border-emerald-200',
-  cancelled: 'bg-slate-100 text-slate-500 border-slate-200',
+  upcoming:  'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))] border-[hsl(var(--bd-status-info-border))]',
+  due:       'bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))] border-[hsl(var(--bd-status-warning-border))]',
+  overdue:   'bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))] border-[hsl(var(--bd-status-danger-border))]',
+  resolved:  'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))] border-[hsl(var(--bd-status-success-border))]',
+  cancelled: 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] border-[hsl(var(--bd-border))]',
 }
 
 const TAX_TYPE_LABELS: Record<TaxFilingTaxType, string> = {
@@ -132,54 +132,54 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
 
   return (
     <div className="space-y-4 pb-20">
-      <Card className="border-blue-100 bg-white">
-        <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-bold flex items-center gap-2">
-            <Bell className="h-4 w-4 text-blue-600" />
+      <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden">
+        <div className="px-4 py-3 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] flex flex-row items-center justify-between">
+          <h3 className="text-sm font-bold flex items-center gap-2 text-[hsl(var(--bd-text))]">
+            <Bell className="h-4 w-4 text-[hsl(var(--bd-status-info-text))]" />
             Tax Obligations & Deadlines
-          </CardTitle>
+          </h3>
           <Button
             size="sm"
             onClick={openNew}
-            className="h-8 rounded-full px-4 text-xs font-bold bg-slate-900 border border-slate-800 shadow hover:bg-slate-800"
+            className="h-8 rounded-full px-4 text-xs font-bold bg-[hsl(var(--bd-overlay-bg))] text-[hsl(var(--bd-overlay-text))] border border-[hsl(var(--bd-overlay-border))] shadow-sm hover:opacity-90"
           >
             <PlusCircle className="h-3 w-3 mr-2" />
             New Deadline
           </Button>
-        </CardHeader>
-        <CardContent className="p-0">
+        </div>
+        <div className="p-0">
           {reminders.length === 0 ? (
-            <div className="text-center py-20 px-4 bg-slate-50/50 rounded-b-xl border-t border-dashed border-slate-200">
-              <Calendar className="h-10 w-10 text-slate-200 mx-auto mb-3" />
-              <div className="text-sm font-bold text-slate-800">No Tracked Obligations</div>
-              <div className="text-xs text-muted-foreground mt-1 max-w-[280px] mx-auto">
+            <div className="text-center py-20 px-4 bg-[hsl(var(--bd-surface-muted))] border-t border-dashed border-[hsl(var(--bd-border))]">
+              <Calendar className="h-10 w-10 text-[hsl(var(--bd-text-muted))] opacity-20 mx-auto mb-3" />
+              <div className="text-sm font-bold text-[hsl(var(--bd-text))]">No Tracked Obligations</div>
+              <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1 max-w-[280px] mx-auto">
                 Keep track of upcoming VAT deliveries, WHT remittances and tax filing dates.
               </div>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-[hsl(var(--bd-border))]">
               {reminders.map(reminder => (
                 <div
                   key={reminder.id}
-                  className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${reminder.status === 'resolved' ? 'opacity-60 grayscale-[0.5]' : 'hover:bg-slate-50'}`}
+                  className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${reminder.status === 'resolved' ? 'opacity-60 grayscale-[0.5]' : 'hover:bg-[hsl(var(--bd-surface-muted))]'}`}
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
                         {TAX_TYPE_LABELS[reminder.tax_type]}
                       </span>
                       <Badge
                         variant="outline"
-                        className={`text-[9px] font-bold uppercase rounded-full px-2 ${STATUS_TONES[reminder.status]}`}
+                        className={`text-[9px] font-bold uppercase rounded-full px-2 border ${STATUS_TONES[reminder.status]}`}
                       >
                         {reminder.status}
                       </Badge>
                     </div>
-                    <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <div className="text-sm font-bold text-[hsl(var(--bd-text))] flex items-center gap-2">
                        Due: {formatDisplayDate(reminder.due_date)}
-                       {reminder.status === 'overdue' && <AlertCircle className="h-3 w-3 text-red-500" />}
+                       {reminder.status === 'overdue' && <AlertCircle className="h-3 w-3 text-[hsl(var(--bd-status-danger-text))]" />}
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5">
+                    <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-0.5">
                       {reminder.period_start && reminder.period_end ? (
                         <span>Period: {formatDisplayDate(reminder.period_start)} — {formatDisplayDate(reminder.period_end)}</span>
                       ) : (
@@ -195,7 +195,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
                         <Button
                           variant="ghost" 
                           size="sm"
-                          className="h-8 text-[10px] uppercase font-black tracking-widest text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-3"
+                          className="h-8 text-[10px] uppercase font-black tracking-widest text-[hsl(var(--bd-status-success-text))] hover:bg-[hsl(var(--bd-status-success-bg))] px-3"
                           onClick={() => resolveReminder(reminder.id)}
                         >
                           <CheckCircle2 className="h-3 w-3 mr-1.5" />
@@ -205,7 +205,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-slate-300 hover:text-slate-900 transition-colors"
+                        className="h-8 w-8 text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]"
                         onClick={() => setEditingReminder(reminder)}
                       >
                         <Edit className="h-4 w-4" />
@@ -213,7 +213,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-red-100 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        className="h-8 w-8 text-[hsl(var(--bd-status-danger-text))] opacity-30 hover:opacity-100 hover:bg-[hsl(var(--bd-status-danger-bg))]"
                         onClick={() => handleDelete(reminder.id)}
                         loading={isDeleting === reminder.id}
                       >
@@ -225,8 +225,8 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <Sheet open={!!editingReminder} onOpenChange={open => !open && setEditingReminder(null)}>
         <SheetContent className="sm:max-w-md overflow-y-auto">

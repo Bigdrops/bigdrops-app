@@ -128,19 +128,18 @@ export default function ComplianceHub() {
     <Layout title="Compliance Hub" session={null} contentClassName="w-full max-w-none bg-[hsl(var(--bd-surface))] p-0 pb-24 md:px-4 md:pb-10">
       <div className="w-full py-4 max-w-5xl mx-auto px-4 md:px-0">
         <div className="space-y-6">
-          {/* Section Header */}
-          <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-bg))] p-6 text-[hsl(var(--bd-overlay-text))] shadow-xl relative overflow-hidden">
+          {/* Operational Header */}
+          <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-5 shadow-sm relative overflow-hidden">
             <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="bg-[hsl(var(--bd-status-info-text))] rounded-full h-2 w-2 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-info-text))]">Operations workspace</span>
+              <div className="flex items-center gap-3 mb-1.5">
+                <div className="bg-[hsl(var(--bd-status-info-text))] rounded-full h-1.5 w-1.5 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-info-text))]">Tax & Compliance</span>
               </div>
-              <h1 className="text-2xl font-black tracking-tight">Compliance Hub</h1>
-              <p className="mt-2 text-sm text-[hsl(var(--bd-overlay-muted))] leading-relaxed max-w-md">
-                Dedicated operational area for tax compliance, VAT tracking, and withholding certificates.
+              <h1 className="text-xl font-black tracking-tight text-[hsl(var(--bd-text))]">Compliance Hub</h1>
+              <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))] leading-relaxed max-w-md">
+                Operational workspace for tax obligations, VAT tracking, and withholding certificates.
               </p>
             </div>
-            <FileSpreadsheet className="absolute top-1/2 right-10 -translate-y-1/2 h-32 w-32 text-[hsl(var(--bd-overlay-muted))] opacity-10 -rotate-12" />
           </div>
 
           {error && (
