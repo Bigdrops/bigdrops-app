@@ -6,9 +6,7 @@ import { Input } from '@/components/ui/input'
 import MobilePageHeader from './MobilePageHeader'
 import { MobileChromeContext } from '@/components/Layout'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Combobox } from '@/components/ui/combobox'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 const toneStyles = {
   blue: {
@@ -165,13 +163,15 @@ export default function ModuleShell<T>({
           onChange={f.onChange}
           placeholder={`Select ${f.label}`}
           searchPlaceholder={`Search ${f.label.toLowerCase()}...`}
-          className="w-full min-w-[140px]"
-          contentClassName="z-[1600]"
+          className="w-full"
           trigger={
             <Button
               variant="outline"
               size="sm"
-              className="h-7 w-full justify-between rounded-md border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-2 text-[10px] font-bold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface))] transition-colors"
+              className={cn(
+                "w-full justify-between rounded-[var(--bd-radius-md)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 text-[11px] font-bold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface))] transition-colors",
+                isMobile ? "h-10" : "h-8"
+              )}
             >
               <span className="truncate">{f.value || `All ${f.label}s`}</span>
               <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-40" />
@@ -181,15 +181,16 @@ export default function ModuleShell<T>({
       )
     }
 
-    if (type === 'segmented' && isMobile) {
+    if (type === 'segmented') {
       return (
-        <div className="flex flex-wrap justify-end gap-1">
+        <div className="flex flex-wrap gap-1">
           {f.options.map(opt => (
             <button
               key={opt}
               onClick={() => f.onChange(opt)}
               className={cn(
-                "h-7 rounded-md border px-2.5 text-[10px] font-bold transition-all",
+                "rounded-[var(--bd-radius-md)] border px-3 text-[10px] font-bold transition-all",
+                isMobile ? "h-10 px-4 text-[11px]" : "h-8 px-3",
                 f.value === opt
                   ? "border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]"
                   : "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))]"
@@ -204,7 +205,10 @@ export default function ModuleShell<T>({
 
     return (
       <Select value={f.value} onValueChange={f.onChange}>
-        <SelectTrigger className="h-7 w-full min-w-[120px] rounded-md border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-2 text-[10px] font-bold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface))] transition-colors">
+        <SelectTrigger className={cn(
+          "w-full rounded-[var(--bd-radius-md)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 text-[11px] font-bold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface))] transition-colors",
+          isMobile ? "h-10" : "h-8"
+        )}>
           <SelectValue placeholder={f.label} />
         </SelectTrigger>
         <SelectContent className="z-[1600]">
@@ -216,26 +220,47 @@ export default function ModuleShell<T>({
     )
   }
 
-  const FilterList = ({ isMobile = false }: { isMobile?: boolean }) => (
-    <div className="space-y-1.5 py-1">
-      {filters?.map(f => (
-        <div key={f.label} className="flex items-center justify-between gap-4 py-1.5 border-b border-[hsl(var(--bd-border))]/30 last:border-0">
-          <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-70">
-            {f.label}
-          </span>
-          <div className={cn(isMobile ? "flex-1 max-w-[200px]" : "w-40")}>
+  const FilterTray = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <div className={cn(
+      "overflow-hidden transition-all duration-300 ease-in-out border-b border-[hsl(var(--bd-border))]/40 bg-[hsl(var(--bd-card-bg))]",
+      filtersOpen ? "max-h-[800px] opacity-100 py-4" : "max-h-0 opacity-0 py-0 border-b-0"
+    )}>
+      <div className={cn("grid gap-4", isMobile ? "px-4 grid-cols-1" : "px-0 grid-cols-2 lg:grid-cols-3")}>
+        {filters?.map(f => (
+          <div key={f.label} className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
+                {f.label}
+              </span>
+              {f.value && f.value !== 'All' && (
+                <button 
+                  onClick={() => f.onChange('All')}
+                  className="text-[9px] font-bold text-primary hover:underline"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
             {renderFilterControl(f, isMobile)}
           </div>
-        </div>
-      ))}
+        ))}
+        {filterPanel && (
+          <div className="col-span-full pt-2 border-t border-[hsl(var(--bd-border))]/20">
+            {filterPanel}
+          </div>
+        )}
+      </div>
       {hasActiveFilters && (
-        <Button 
-          variant="ghost" 
-          onClick={onResetFilters}
-          className="mt-2 h-8 w-full rounded-md text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-danger-text))] hover:bg-[hsl(var(--bd-status-danger-bg))] hover:text-[hsl(var(--bd-status-danger-text))]"
-        >
-          Reset All Filters
-        </Button>
+        <div className={cn("mt-4 flex justify-end", isMobile ? "px-4" : "px-0")}>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={onResetFilters}
+            className="h-8 rounded-md text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-danger-text))] hover:bg-[hsl(var(--bd-status-danger-bg))]"
+          >
+            Reset All Filters
+          </Button>
+        </div>
       )}
     </div>
   )
@@ -252,6 +277,7 @@ export default function ModuleShell<T>({
           eyebrowClassName={toneStyle.foreground}
           onMenuClick={mobileChrome.openSidebar}
           hideGlobalSearch
+          className="rounded-none border-x-0 border-t-0 shadow-none"
           actions={
             <div className="flex items-center gap-[var(--bd-space-xs)]">
               <Button
@@ -259,7 +285,10 @@ export default function ModuleShell<T>({
                 variant={searchOpen || searchValue ? 'outline' : 'ghost'}
                 size="icon"
                 onClick={toggleSearch}
-                className="h-9 w-9 rounded-[var(--bd-radius-md)] border-border text-foreground"
+                className={cn(
+                  "h-9 w-9 rounded-xl transition-all",
+                  (searchOpen || searchValue) ? "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]" : "border-transparent"
+                )}
                 aria-label={searchOpen ? 'Hide search' : 'Show search'}
               >
                 {searchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
@@ -271,8 +300,9 @@ export default function ModuleShell<T>({
                   size="icon"
                   onClick={toggleFilters}
                   className={cn(
-                    "h-9 w-9 rounded-[var(--bd-radius-md)] border-border text-foreground",
-                    hasActiveFilters && "bg-primary/5 border-primary/20"
+                    "h-9 w-9 rounded-xl transition-all",
+                    (filtersOpen || hasActiveFilters) ? "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]" : "border-transparent",
+                    hasActiveFilters && "text-primary"
                   )}
                   aria-label="Toggle filters"
                 >
@@ -283,112 +313,90 @@ export default function ModuleShell<T>({
           }
         />
 
-        {/* Mobile Search Input */}
-        {searchOpen && (
-          <div className="mt-[var(--bd-space-sm)] px-[var(--bd-space-md)]">
-            <div className="relative flex items-center rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))]/80 bg-[hsl(var(--bd-surface-muted))] p-[var(--bd-space-xs)] shadow-sm">
-              <Search className="ml-[var(--bd-space-sm)] h-4 w-4 text-[hsl(var(--bd-text-muted))]" />
+        {/* Mobile Search Input (Revealed) */}
+        <div className={cn(
+          "overflow-hidden transition-all duration-200 ease-in-out border-b border-[hsl(var(--bd-border))]/30 bg-[hsl(var(--bd-surface))]",
+          searchOpen ? "max-h-16 py-3" : "max-h-0 py-0 border-b-0"
+        )}>
+          <div className="px-4">
+            <div className="relative flex items-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] h-10 px-3">
+              <Search className="h-4 w-4 text-[hsl(var(--bd-text-muted))]" />
               <Input
                 value={searchValue}
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="h-9 border-0 bg-transparent px-[var(--bd-space-sm)] text-sm shadow-none focus-visible:ring-0 text-[hsl(var(--bd-text))]"
+                className="h-full border-0 bg-transparent px-2 text-sm shadow-none focus-visible:ring-0 text-[hsl(var(--bd-text))]"
               />
               {searchValue && (
-                 <button 
-                   onClick={() => onSearchChange('')}
-                   className="p-1.5 text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))]"
-                 >
-                   <X className="h-4 w-4" />
+                 <button onClick={() => onSearchChange('')} className="p-1">
+                   <X className="h-4 w-4 text-[hsl(var(--bd-text-muted))]" />
                  </button>
               )}
             </div>
           </div>
-        )}
+        </div>
+
+        {/* Mobile Filter Tray (Revealed) */}
+        <FilterTray isMobile />
       </div>
 
-      {/* Desktop Header & Toolbar (Hidden on mobile) */}
-      <div className="hidden md:flex flex-col gap-4 mb-6">
-        <div className="flex items-center justify-between gap-4">
+      <div className="hidden md:flex flex-col mb-4">
+        <div className="flex items-center justify-between gap-4 py-2">
           <div className="flex flex-col">
             <div className={cn("text-[10px] font-black uppercase tracking-wider", toneStyle.foreground)}>
               {eyebrow}
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-[hsl(var(--bd-text))] mt-0.5">
+            <h1 className="text-xl font-black tracking-tight text-[hsl(var(--bd-text))]">
               {title}
             </h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+             <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[hsl(var(--bd-text-muted))]" />
+                <Input
+                  value={searchValue}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  className="h-9 pl-9 pr-3 rounded-xl border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] shadow-none text-[11px] font-bold text-[hsl(var(--bd-text))]"
+                />
+             </div>
+             {(filters || onFilterClick || filterPanel) && (
+                <Button
+                  type="button"
+                  variant={filtersOpen || hasActiveFilters ? 'outline' : 'ghost'}
+                  size="sm"
+                  onClick={toggleFilters}
+                  className={cn(
+                    "h-9 gap-2 rounded-xl border-[hsl(var(--bd-border))] text-[hsl(var(--bd-text-muted))] px-4 hover:text-[hsl(var(--bd-text))]",
+                    (filtersOpen || hasActiveFilters) && "bg-[hsl(var(--bd-surface-muted))]"
+                  )}
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Filters</span>
+                </Button>
+             )}
              {onPrimaryAction && (
-                 <Button onClick={onPrimaryAction} className="h-10 px-6 rounded-[var(--bd-radius-md)] shadow-sm transition-all active:scale-[0.99] text-xs font-black uppercase tracking-wider">
+                 <Button onClick={onPrimaryAction} className="h-9 px-6 rounded-xl shadow-none font-black uppercase tracking-wider text-[10px]">
                    {primaryActionLabel}
                 </Button>
              )}
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 mt-1">
-          <div className="flex-1 max-w-xl relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[hsl(var(--bd-text-muted))]" />
-            <Input
-              value={searchValue}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder={searchPlaceholder}
-              className="h-8 pl-9 pr-3 rounded-md border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] shadow-none focus:ring-1 focus:ring-primary/20 transition-all text-[11px] font-medium text-[hsl(var(--bd-text))]"
-            />
-          </div>
-          <div className="flex items-center gap-1.5">
-             {(filters || onFilterClick || filterPanel) && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant={hasActiveFilters ? 'outline' : 'ghost'}
-                      size="sm"
-                      className={cn(
-                        "h-8 gap-2 rounded-md border-[hsl(var(--bd-border))] text-[hsl(var(--bd-text-muted))] px-3 hover:text-[hsl(var(--bd-text))] transition-all",
-                        hasActiveFilters && "bg-[hsl(var(--bd-status-info-bg))] border-[hsl(var(--bd-status-info-border))] text-[hsl(var(--bd-status-info-text))]"
-                      )}
-                    >
-                      <SlidersHorizontal className="h-3.5 w-3.5" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Filters</span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-80 p-3 bg-[hsl(var(--bd-card-bg))] border-[hsl(var(--bd-border))] shadow-xl z-[1500]">
-                    <div className="mb-2 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] border-b border-[hsl(var(--bd-border))]/50 pb-2">
-                      Active Filters
-                    </div>
-                    {filterPanel || <FilterList />}
-                  </PopoverContent>
-                </Popover>
-             )}
-          </div>
-        </div>
+        {/* Desktop Filter Tray (Revealed) */}
+        <FilterTray />
       </div>
+
 
       {/* Segmented Control / Tabs */}
       {segmentedControl && (
-        <div className="mt-[var(--bd-space-sm)] md:mt-0 mb-[var(--bd-space-md)] px-[var(--bd-space-md)] md:px-0">
+        <div className="mb-4">
           {segmentedControl}
         </div>
       )}
 
-      {/* Mobile Filter Sheet */}
-      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <SheetContent side="bottom" className="rounded-t-[32px] px-4 pb-12 pt-2 h-[auto] max-h-[85vh] bg-[hsl(var(--bd-card-bg))] border-t border-[hsl(var(--bd-border))]">
-          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[hsl(var(--bd-border))] opacity-20" />
-          <SheetHeader className="mb-4 px-1 text-left">
-            <SheetTitle className="text-lg font-black tracking-tight text-[hsl(var(--bd-text))]">Filters</SheetTitle>
-          </SheetHeader>
-          
-          <div className="overflow-y-auto max-h-[calc(85vh-120px)] px-1 bd-custom-scrollbar">
-            {filterPanel || <FilterList isMobile />}
-          </div>
-        </SheetContent>
-      </Sheet>
-
       {/* Main Content Area */}
-      <div className="flex-1 mt-0.5 px-[var(--bd-space-md)] md:px-0 md:mt-0">
+      <div className="flex-1">
         {beforeListContent}
         
         <div className="space-y-[var(--bd-row-gap)] md:space-y-1">
