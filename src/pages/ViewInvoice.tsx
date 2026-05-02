@@ -952,18 +952,11 @@ export default function ViewInvoice() {
           documentPreview={
             <InvoiceHtmlView
               invoice={invoice}
-              items={items}
-              client={client}
-              settings={settings}
-              bankAccounts={bankAccounts}
-              customFields={customFields}
+              viewModel={viewModel}
+              previewModel={previewModel}
               pdfOutput={pdfOutput}
-              invoiceTotal={previewTotalsSource?.invoiceTotal || 0}
-              cashReceived={viewModel.cashReceived || 0}
-              balanceDue={previewTotalsSource?.balanceDue || 0}
-              attachments={attachments}
-              relatedAdvanceInvoices={relatedAdvanceInvoices}
-              onAttachmentsChange={refresh}
+              settingsData={settingsData}
+              mergeQtyUnit={customFields?.mergeQtyUnit === true}
             />
           }
           previewControls={
