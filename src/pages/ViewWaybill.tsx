@@ -6,7 +6,7 @@ import WaybillHeroMeta from '@/components/document-view/waybill/WaybillHeroMeta'
 import WaybillViewPage from '@/components/document-view/waybill/WaybillViewPage'
 import WaybillMoreSheet from '@/components/document-view/waybill/WaybillMoreSheet'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
-import WaybillDocumentPreview from '@/components/document-view/waybill/WaybillDocumentPreview'
+import { DocumentLivePreviewCard } from '@/components/document/DocumentViewShell'
 import DocumentPage from '@/components/document-view/shared/DocumentPage'
 import '@/components/document-view/shared/documentViewTheme.css'
 import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
@@ -18,7 +18,7 @@ import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { supabase } from '@/supabase'
 import { mapDbWaybill, parseWaybillCustomFields } from '@/components/waybill/waybillUtils'
 import { feedback } from '@/lib/feedback'
-import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset, setPdfDesignPreset, resolvePdfWebFontFamily, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
@@ -327,7 +327,39 @@ export default function ViewWaybill() {
         <WaybillViewPage
           document={docProps}
           metrics={metrics}
-          preview={<WaybillDocumentPreview preview={preview} />}
+          preview={
+            <DocumentLivePreviewCard
+              templateLabel="Live PDF"
+              documentLabel="Waybill"
+              documentNumber={waybill.waybill_number || 'Waybill'}
+              companyName={String(settings?.company_name || '')}
+              companyTagline={settings?.company_tagline || ''}
+              companyLines={companyLines}
+              recipientLabel="Consignee / Deliver To"
+              recipientName={waybill.receiver_name || waybill.client_name || 'Unassigned'}
+              recipientLines={[waybill.delivery_location].filter(Boolean) as string[]}
+              meta={[
+                { label: 'Dispatch Date', value: waybill.date || 'Not set' },
+                { label: 'Vehicle Reg', value: waybill.vehicle_plate || 'Self Pickup' },
+                { label: 'Status', value: String(waybill.status || 'dispatched').toUpperCase() },
+              ]}
+              detailRows={[
+                { label: 'Driver Name', value: waybill.sender_name || '—' },
+                { label: 'Delivery Ref', value: customFields.references?.linkedInvoiceNumber || waybill.po_number || '—' },
+              ]}
+              items={(waybill.items || []).map((item: any) => ({
+                label: item.description || 'Item',
+                value: String(item.quantity ?? '—'),
+                facts: [item.unit, item.condition].filter(Boolean) as string[],
+              }))}
+              notesSections={[
+                { title: 'Delivery Remarks', content: waybill.notes || 'No delivery notes recorded.' },
+              ]}
+              accentColor={designPreset.accentColor || '#0f172a'}
+              headerFontFamily={resolvePdfWebFontFamily(designPreset.headerFont)}
+              bodyFontFamily={resolvePdfWebFontFamily(designPreset.bodyFont)}
+            />
+          }
           onMarkAsDelivered={() => ui.openModal(MODAL_DELIVERED)}
           onEdit={() => navigate(`/waybills/${id}/edit`)}
           onDuplicate={() => void handleDuplicate()}

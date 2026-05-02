@@ -1,37 +1,57 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --dv-bg: #faf9f7;
-  --dv-bg-2: #f4f2ee;
-  --dv-bg-3: #edeae4;
-  --dv-surface: #ffffff;
-  --dv-surface-2: #f9f8f6;
-  --dv-border: #e4e0d8;
-  --dv-border-soft: #ede9e1;
-  --dv-text: #1a1814;
-  --dv-text-2: #57534a;
-  --dv-text-3: #9c9589;
-  --dv-text-4: #c4bfb5;
+  /* Base Surface & Background */
+  --dv-bg: hsl(var(--bd-surface));
+  --dv-bg-2: hsl(var(--bd-surface-muted));
+  --dv-bg-3: hsl(var(--bd-surface-muted) / 0.8);
+  --dv-surface: hsl(var(--bd-card-bg));
+  --dv-surface-2: hsl(var(--bd-surface-muted));
+  --dv-card-bg: hsl(var(--bd-card-bg));
+  --dv-surface-muted: hsl(var(--bd-surface-muted));
+  
+  /* Borders */
+  --dv-border: hsl(var(--bd-border));
+  --dv-border-soft: hsl(var(--bd-border) / 0.5);
+  
+  /* Text */
+  --dv-text: hsl(var(--bd-text));
+  --dv-text-2: hsl(var(--bd-text-muted));
+  --dv-text-3: hsl(var(--bd-text-muted) / 0.8);
+  --dv-text-4: hsl(var(--bd-text-muted) / 0.6);
+  
+  /* Primary & Accents */
+  --dv-primary: hsl(var(--bd-fab-bg));
+  --dv-primary-bg: hsl(var(--bd-fab-bg) / 0.1);
+  --dv-primary-border: hsl(var(--bd-fab-bg) / 0.2);
+  --dv-primary-light: hsl(var(--bd-fab-bg) / 0.8);
+  --dv-primary-text: hsl(var(--bd-fab-text));
+  
+  /* Semantic Colors */
   --dv-amber: #d97706;
   --dv-amber-bg: #fef3c7;
   --dv-amber-border: #fcd34d;
   --dv-amber-dark: #b45309;
-  --dv-primary: #1e293b;
-  --dv-primary-bg: #f1f5f9;
-  --dv-primary-border: #cbd5e1;
-  --dv-primary-light: #334155;
-  --dv-emerald: #059669;
-  --dv-emerald-bg: #d1fae5;
-  --dv-emerald-border: #6ee7b7;
-  --dv-rose: #be185d;
-  --dv-rose-bg: #fce7f3;
-  --dv-rose-border: #fbcfe8;
+  
+  --dv-emerald: hsl(var(--bd-success));
+  --dv-emerald-bg: hsl(var(--bd-success) / 0.1);
+  --dv-emerald-border: hsl(var(--bd-success) / 0.2);
+  
+  --dv-rose: hsl(var(--bd-error));
+  --dv-rose-bg: hsl(var(--bd-error) / 0.1);
+  --dv-rose-border: hsl(var(--bd-error) / 0.2);
+  
+  /* Typography */
   --dv-font-ui: 'Plus Jakarta Sans', sans-serif;
   --dv-font-display: 'DM Serif Display', serif;
   --dv-font-mono: 'JetBrains Mono', monospace;
-  --dv-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --dv-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
-  --dv-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+  
+  /* Effects */
+  --dv-shadow-sm: var(--bd-shadow-sm);
+  --dv-shadow: var(--bd-shadow);
+  --dv-shadow-lg: var(--bd-shadow-lg);
+  
+  /* Border Radius */
   --dv-radius: var(--bd-radius-md);
   --dv-radius-lg: var(--bd-radius-lg);
   --dv-radius-xl: var(--bd-radius-xl);

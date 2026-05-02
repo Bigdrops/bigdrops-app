@@ -79,7 +79,7 @@ type PreviewNormalItem = {
   imageUrl?: string
   value?: ReactNode
   facts?: string[]
-  showSubtotal?: never
+  showSubtotal?: boolean
 }
 
 type PreviewGroupItem = {
@@ -138,7 +138,7 @@ export function DocumentTopBar({
   onMore,
 }: DocumentTopBarProps) {
   return (
-    <div className="sticky top-0 z-30 -mx-4 border-b border-border bg-muted/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6">
+    <div className="sticky top-0 z-30 -mx-4 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6">
       <div className="flex items-center gap-3 pl-12 md:pl-0">
         <button
           type="button"
@@ -148,7 +148,7 @@ export function DocumentTopBar({
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-extrabold text-foreground">{title}</div>
+          <div className="truncate text-sm font-extrabold text-[hsl(var(--bd-text))]">{title}</div>
           <div className="text-[11px] font-semibold text-muted-foreground">{subtitle}</div>
         </div>
         {statusLabel ? (
@@ -177,16 +177,16 @@ export type DocumentHeroCardProps = {
 
 export function DocumentHeroCard({ eyebrow, value, helper, stats = [] }: DocumentHeroCardProps) {
   return (
-    <div className="overflow-hidden rounded-[26px] bg-slate-950 p-5 text-white shadow-[0_18px_40px_-18px_rgba(15,23,42,0.65)]">
-      <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</div>
+    <div className="overflow-hidden rounded-[26px] bg-[hsl(var(--bd-accent))] p-5 text-[hsl(var(--bd-accent-foreground))] shadow-[var(--bd-shadow-lg)]">
+      <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[hsl(var(--bd-accent-foreground))]/60">{eyebrow}</div>
       <div className="mt-2 text-[2.2rem] font-black leading-none tracking-[-0.04em]">{value}</div>
-      {helper ? <div className="mt-3 text-sm leading-6 text-slate-300">{helper}</div> : null}
+      {helper ? <div className="mt-3 text-sm leading-6 text-[hsl(var(--bd-accent-foreground))]/80">{helper}</div> : null}
       {stats.length > 0 ? (
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
           {stats.map((stat) => (
-            <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
-              <div className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-slate-500">{stat.label}</div>
-              <div className={cn('mt-1 text-base font-extrabold', stat.className || 'text-white')}>{stat.value}</div>
+            <div key={stat.label} className="rounded-2xl border border-[hsl(var(--bd-accent-foreground))]/10 bg-[hsl(var(--bd-accent-foreground))]/5 px-3 py-3">
+               <div className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-accent-foreground))]/50">{stat.label}</div>
+               <div className={cn('mt-1 text-base font-extrabold', stat.className || 'text-[hsl(var(--bd-accent-foreground))]')}>{stat.value}</div>
             </div>
           ))}
         </div>
@@ -224,25 +224,25 @@ export function DocumentSummaryDisclosure({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="w-full rounded-[24px] border border-border bg-card p-4 text-left shadow-sm transition hover:bg-muted/30"
+        className="w-full rounded-[24px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 text-left shadow-sm transition hover:bg-[hsl(var(--bd-surface-muted))]/30"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">{compactLabel}</div>
-            <div className="mt-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{eyebrow}</div>
-            <div className="mt-1 text-[1.6rem] font-black leading-none tracking-[-0.04em] text-foreground">{value}</div>
+            <div className="mt-2 text-xs font-bold uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">{eyebrow}</div>
+            <div className="mt-1 text-[1.6rem] font-black leading-none tracking-[-0.04em] text-[hsl(var(--bd-text))]">{value}</div>
             {helper ? <div className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{helper}</div> : null}
             {compactStats.length > 0 ? (
               <div className="mt-3 flex flex-wrap gap-2">
                 {compactStats.map((stat) => (
-                  <div key={stat.label} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
-                    <span className="font-extrabold text-slate-900">{stat.value}</span> · {stat.label}
+                  <div key={stat.label} className="rounded-full border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 py-1.5 text-xs font-semibold text-[hsl(var(--bd-text-muted))]">
+                    <span className="font-extrabold text-[hsl(var(--bd-text))]">{stat.value}</span> · {stat.label}
                   </div>
                 ))}
               </div>
             ) : null}
           </div>
-          <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-600">
+          <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[hsl(var(--bd-text-muted))]">
             <span>{open ? closeLabel : openLabel}</span>
             {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </div>
@@ -274,14 +274,14 @@ export function DocumentTextSummaryDisclosure({
   const [open, setOpen] = React.useState(defaultOpen)
 
   return (
-    <div className="space-y-3 border-b border-slate-200/80 pb-4">
+    <div className="space-y-3 border-b border-[hsl(var(--bd-border))]/80 pb-4">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
         className="flex w-full items-start justify-between gap-3 text-left"
       >
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold leading-6 text-foreground">{summary}</div>
+          <div className="text-sm font-semibold leading-6 text-[hsl(var(--bd-text))]">{summary}</div>
           {helper ? <div className="mt-1 text-sm leading-6 text-muted-foreground">{helper}</div> : null}
         </div>
         <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-600">
@@ -320,10 +320,10 @@ export function DocumentActionGrid({ actions }: DocumentActionGridProps) {
             disabled={action.disabled}
             className={cn(
               'flex h-[64px] flex-col items-center justify-center gap-1 rounded-[18px] border text-[10px] font-extrabold uppercase tracking-[0.08em] shadow-sm transition',
-              action.variant === 'dark' && 'border-slate-950 bg-slate-950 text-white',
+              action.variant === 'dark' && 'border-[hsl(var(--bd-accent))] bg-[hsl(var(--bd-accent))] text-[hsl(var(--bd-accent-foreground))]',
               action.variant === 'emerald' && 'border-emerald-600 bg-emerald-600 text-white',
               action.variant === 'blue' && 'border-blue-600 bg-blue-600 text-white',
-              (!action.variant || action.variant === 'outline') && 'border-border bg-card text-slate-600 hover:bg-muted/50',
+              (!action.variant || action.variant === 'outline') && 'border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]/50',
               action.disabled && 'cursor-default opacity-60',
             )}
           >
@@ -353,7 +353,7 @@ export function DocumentStatusStrip({ items }: DocumentStatusStripProps) {
             disabled={item.disabled}
             className={cn(
               'h-9 shrink-0 rounded-full border px-4 text-xs font-bold transition',
-              item.active ? 'border-slate-950 bg-slate-950 text-white' : 'border-border bg-card text-slate-600',
+              item.active ? 'border-[hsl(var(--bd-accent))] bg-[hsl(var(--bd-accent))] text-[hsl(var(--bd-accent-foreground))]' : 'border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text-muted))]',
               item.disabled && 'cursor-default opacity-70',
             )}
           >
@@ -381,13 +381,13 @@ export function DocumentSection({ title, children, className = '', defaultOpen =
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center justify-between gap-3 rounded-[20px] border border-border bg-card px-4 py-3 text-left shadow-sm transition hover:bg-muted/30"
+        className="flex w-full items-center justify-between gap-3 rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 py-3 text-left shadow-sm transition hover:bg-[hsl(var(--bd-surface-muted))]/30"
       >
         <div className="min-w-0">
           <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">{title}</div>
           {summary ? <div className="mt-1 text-sm text-muted-foreground">{summary}</div> : null}
         </div>
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-slate-500">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text-muted))]">
           {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </div>
       </button>
@@ -453,31 +453,31 @@ export function DocumentLivePreviewCard({
   bodyFontFamily,
   previewNote = '',
 }: DocumentLivePreviewCardProps) {
-  const previewItems = items.slice(0, 16)
+  const previewItems = items
   const previewNotes = notesSections.filter((section) => section?.title && section?.content)
 
   return (
-    <Card className="overflow-hidden rounded-[26px] border-border bg-[linear-gradient(180deg,#f8fafc,rgba(255,255,255,0.98))] shadow-sm">
+    <Card className="overflow-hidden rounded-[26px] border-[hsl(var(--bd-border))] bg-[linear-gradient(180deg,var(--dv-bg-2),var(--dv-bg))] shadow-sm">
       <CardContent className="p-0">
         <div className="flex items-center justify-between gap-3 px-3 py-3 sm:px-4">
           <div>
             <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Preview</div>
             {previewNote ? <div className="mt-1 text-xs text-muted-foreground">{previewNote}</div> : null}
           </div>
-          <div className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600">
+          <div className="rounded-full border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 py-1.5 text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">
             {templateLabel}
           </div>
         </div>
 
-        <div className="overflow-hidden border-t border-slate-200 bg-white sm:mx-2 sm:mb-2 sm:rounded-[24px] sm:border sm:shadow-[0_18px_34px_rgba(15,23,42,0.08)]">
+        <div className="overflow-hidden border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] sm:mx-2 sm:mb-2 sm:rounded-[24px] sm:border sm:shadow-[var(--bd-shadow-lg)]">
           <div className="h-1.5 w-full" style={{ backgroundColor: accentColor }} />
           <div className="space-y-5 px-3 py-4 sm:px-5 sm:py-6" style={{ fontFamily: bodyFontFamily }}>
             <div className="space-y-4 border-b border-slate-200 pb-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-2">
-                  <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-500">{documentLabel}</div>
+                  <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">{documentLabel}</div>
                   <div
-                    className="break-words text-[2rem] font-black leading-none tracking-[-0.05em] text-foreground"
+                    className="break-words text-[2rem] font-black leading-none tracking-[-0.05em] text-[hsl(var(--bd-text))]"
                     style={{ fontFamily: headerFontFamily }}
                   >
                     {documentNumber || documentLabel}
@@ -493,21 +493,21 @@ export function DocumentLivePreviewCard({
 
               <div className="space-y-4 sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,0.88fr)] sm:gap-4 sm:space-y-0">
                 <div className="min-w-0 space-y-2">
-                  <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">From</div>
-                  <div className="break-words text-base font-bold text-foreground" style={{ fontFamily: headerFontFamily }}>{companyName || documentLabel}</div>
-                  {companyTagline ? <div className="text-sm text-slate-500">{companyTagline}</div> : null}
+                  <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">From</div>
+                  <div className="break-words text-base font-bold text-[hsl(var(--bd-text))]" style={{ fontFamily: headerFontFamily }}>{companyName || documentLabel}</div>
+                  {companyTagline ? <div className="text-sm text-[hsl(var(--bd-text-muted))]">{companyTagline}</div> : null}
                   {companyLines.length > 0 ? (
-                    <div className="space-y-1 text-sm leading-6 text-slate-600">
+                    <div className="space-y-1 text-sm leading-6 text-[hsl(var(--bd-text-muted))]">
                       {companyLines.map((line) => <div key={line}>{line}</div>)}
                     </div>
                   ) : null}
                 </div>
 
-                <div className="min-w-0 rounded-[20px] bg-slate-50 px-4 py-4">
-                  <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">{recipientLabel}</div>
-                  <div className="mt-2 break-words text-base font-bold text-foreground" style={{ fontFamily: headerFontFamily }}>{recipientName || 'Unassigned'}</div>
+                <div className="min-w-0 rounded-[20px] bg-[hsl(var(--bd-surface-muted))] px-4 py-4">
+                  <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">{recipientLabel}</div>
+                  <div className="mt-2 break-words text-base font-bold text-[hsl(var(--bd-text))]" style={{ fontFamily: headerFontFamily }}>{recipientName || 'Unassigned'}</div>
                   {recipientLines.length > 0 ? (
-                    <div className="mt-2 space-y-1 text-sm leading-6 text-slate-600">
+                    <div className="mt-2 space-y-1 text-sm leading-6 text-[hsl(var(--bd-text-muted))]">
                       {recipientLines.map((line) => <div key={line}>{line}</div>)}
                     </div>
                   ) : null}
@@ -516,69 +516,69 @@ export function DocumentLivePreviewCard({
             </div>
 
             {meta.length > 0 ? (
-              <div className="grid gap-3 border-b border-slate-200 pb-5 sm:grid-cols-2">
+              <div className="grid gap-3 border-b border-[hsl(var(--bd-border))] pb-5 sm:grid-cols-2">
                 {meta.map((entry) => (
-                  <div key={entry.label} className="min-w-0 rounded-[18px] border border-slate-200 bg-white px-4 py-3">
-                    <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">{entry.label}</div>
-                    <div className="mt-1 break-words text-sm font-semibold text-foreground">{entry.value || '—'}</div>
+                  <div key={entry.label} className="min-w-0 rounded-[18px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 py-3">
+                    <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">{entry.label}</div>
+                    <div className="mt-1 break-words text-sm font-semibold text-[hsl(var(--bd-text))]">{entry.value || '—'}</div>
                   </div>
                 ))}
               </div>
             ) : null}
 
             {detailRows.length > 0 ? (
-              <div className="space-y-3 border-b border-slate-200 pb-5">
-                <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Document Snapshot</div>
+              <div className="space-y-3 border-b border-[hsl(var(--bd-border))] pb-5">
+                <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Document Snapshot</div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {detailRows.map((row) => (
                     <div key={row.label} className="min-w-0">
-                      <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">{row.label}</div>
-                      <div className="mt-1 break-words text-sm leading-6 text-foreground">{row.value || '—'}</div>
+                      <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">{row.label}</div>
+                      <div className="mt-1 break-words text-sm leading-6 text-[hsl(var(--bd-text))]">{row.value || '—'}</div>
                     </div>
                   ))}
                 </div>
               </div>
             ) : null}
 
-            <div className="space-y-3 border-b border-slate-200 pb-5">
-              <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Line Items</div>
+            <div className="space-y-3 border-b border-[hsl(var(--bd-border))] pb-5">
+              <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Line Items</div>
               {previewItems.length > 0 ? (
                 <div className="space-y-3">
                   {previewItems.map((item, index) =>
                     isGroupPreviewItem(item) ? (
-                      <div key={`${item.label}-${index}`} className="rounded-[18px] bg-slate-950 px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-300">
+                      <div key={`${item.label}-${index}`} className="rounded-[18px] bg-[hsl(var(--bd-accent))] px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-accent-foreground))]">
                         {item.label}
                       </div>
                     ) : isGroupFooterPreviewItem(item) ? (
-                      <div key={`group-footer-${index}`} className="rounded-[18px] border-t border-b border-slate-200 bg-slate-50/40 px-4 py-2.5">
+                      <div key={`group-footer-${index}`} className="rounded-[18px] border-t border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/40 px-4 py-2.5">
                         {item.showSubtotal && item.value ? (
-                          <div className="text-right text-sm font-bold text-foreground">{item.value}</div>
+                          <div className="text-right text-sm font-bold text-[hsl(var(--bd-text))]">{item.value}</div>
                         ) : null}
                       </div>
                     ) : (
-                      <div key={`${item.label}-${index}`} className="rounded-[20px] border border-slate-200 bg-slate-50/70 px-4 py-4">
+                      <div key={`${item.label}-${index}`} className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/70 px-4 py-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
-                            <div className="break-words text-sm font-bold text-foreground">{item.label}</div>
-                            {item.detail ? <div className="mt-1 break-words text-sm leading-6 text-slate-500">{item.detail}</div> : null}
+                            <div className="break-words text-sm font-bold text-[hsl(var(--bd-text))]">{item.label}</div>
+                            {item.detail ? <div className="mt-1 break-words text-sm leading-6 text-[hsl(var(--bd-text-muted))]">{item.detail}</div> : null}
                             {item.imageUrl ? (
                               <img
                                 src={item.imageUrl}
                                 alt={item.label || 'Item image'}
-                                className="mt-3 h-20 w-20 rounded-xl border border-slate-200 object-cover"
+                                className="mt-3 h-20 w-20 rounded-xl border border-[hsl(var(--bd-border))] object-cover"
                               />
                             ) : null}
                           </div>
                           <div className="shrink-0 text-right">
-                            <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Amount</div>
-                            <div className="mt-1 text-sm font-extrabold text-foreground">{item.value || '-'}</div>
+                            <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Amount</div>
+                            <div className="mt-1 text-sm font-extrabold text-[hsl(var(--bd-text))]">{item.value || '-'}</div>
                           </div>
                         </div>
 
                         {item.facts?.length ? (
                           <div className="mt-3 flex flex-wrap gap-2">
                             {item.facts.map((fact) => (
-                              <div key={fact} className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                              <div key={fact} className="rounded-full border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-2.5 py-1 text-[11px] font-medium text-[hsl(var(--bd-text-muted))]">
                                 {fact}
                               </div>
                             ))}
@@ -589,26 +589,26 @@ export function DocumentLivePreviewCard({
                   )}
                 </div>
               ) : (
-                <div className="rounded-[18px] border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
+                <div className="rounded-[18px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-4 py-4 text-sm text-muted-foreground">
                   No line items.
                 </div>
               )}
             </div>
 
             {totals.length > 0 ? (
-              <div className="space-y-2 border-b border-slate-200 pb-5">
-                <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Totals</div>
+              <div className="space-y-2 border-b border-[hsl(var(--bd-border))] pb-5">
+                <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Totals</div>
                 {totals.map((row) => (
                   <div
                     key={row.label}
                     className={cn(
                       'flex items-start justify-between gap-4 rounded-[16px] px-3 py-2.5 text-sm',
-                      row.emphasis ? 'bg-slate-950 text-white' : 'bg-slate-50 text-foreground',
+                      row.emphasis ? 'bg-[hsl(var(--bd-accent))] text-[hsl(var(--bd-accent-foreground))]' : 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text))]',
                     )}
                   >
                     <span
                       className={cn(
-                        row.emphasis ? 'font-bold text-white' : 'font-medium text-slate-500',
+                        row.emphasis ? 'font-bold text-[hsl(var(--bd-accent-foreground))]' : 'font-medium text-[hsl(var(--bd-text-muted))]',
                         row.labelClassName,
                       )}
                     >
@@ -617,7 +617,7 @@ export function DocumentLivePreviewCard({
                     <span
                       className={cn(
                         'text-right',
-                        row.emphasis ? 'font-extrabold text-white' : 'font-bold text-foreground',
+                        row.emphasis ? 'font-extrabold text-[hsl(var(--bd-accent-foreground))]' : 'font-bold text-[hsl(var(--bd-text))]',
                         row.valueClassName,
                       )}
                     >
@@ -629,18 +629,18 @@ export function DocumentLivePreviewCard({
             ) : null}
 
             {amountInWords ? (
-              <div className="space-y-2 border-b border-slate-200 pb-5">
-                <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Amount in Words</div>
-                <div className="rounded-[18px] bg-slate-50 px-4 py-4 text-sm font-semibold leading-6 text-foreground">{amountInWords}</div>
+              <div className="space-y-2 border-b border-[hsl(var(--bd-border))] pb-5">
+                <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Amount in Words</div>
+                <div className="rounded-[18px] bg-[hsl(var(--bd-surface-muted))] px-4 py-4 text-sm font-semibold leading-6 text-[hsl(var(--bd-text))]">{amountInWords}</div>
               </div>
             ) : null}
 
             {previewNotes.length > 0 ? (
-              <div className="space-y-4 border-b border-slate-200 pb-5">
+              <div className="space-y-4 border-b border-[hsl(var(--bd-border))] pb-5">
                 {previewNotes.map((section) => (
                   <div key={String(section.title)} className="space-y-2">
-                    <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">{section.title}</div>
-                    <div className="rounded-[18px] bg-slate-50 px-4 py-4 text-sm leading-6 text-foreground">
+                    <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">{section.title}</div>
+                    <div className="rounded-[18px] bg-[hsl(var(--bd-surface-muted))] px-4 py-4 text-sm leading-6 text-[hsl(var(--bd-text))]">
                       {section.content}
                     </div>
                   </div>
@@ -650,24 +650,24 @@ export function DocumentLivePreviewCard({
 
             {bankDetails ? (
               <div className="space-y-3 border-b border-slate-200 pb-5">
-                <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Bank Details</div>
+                <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Bank Details</div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Account Name</div>
-                    <div className="mt-1 break-words text-sm leading-6 text-foreground">{bankDetails.accountName}</div>
+                    <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Account Name</div>
+                    <div className="mt-1 break-words text-sm leading-6 text-[hsl(var(--bd-text))]">{bankDetails.accountName}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Account Number</div>
-                    <div className="mt-1 break-words text-sm leading-6 text-foreground">{bankDetails.accountNumber}</div>
+                    <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Account Number</div>
+                    <div className="mt-1 break-words text-sm leading-6 text-[hsl(var(--bd-text))]">{bankDetails.accountNumber}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Bank</div>
-                    <div className="mt-1 break-words text-sm leading-6 text-foreground">{bankDetails.bankName}</div>
+                    <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Bank</div>
+                    <div className="mt-1 break-words text-sm leading-6 text-[hsl(var(--bd-text))]">{bankDetails.bankName}</div>
                   </div>
                   {bankDetails.sortCode ? (
                     <div>
-                      <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Sort Code</div>
-                      <div className="mt-1 break-words text-sm leading-6 text-foreground">{bankDetails.sortCode}</div>
+                      <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Sort Code</div>
+                      <div className="mt-1 break-words text-sm leading-6 text-[hsl(var(--bd-text))]">{bankDetails.sortCode}</div>
                     </div>
                   ) : null}
                 </div>
@@ -675,18 +675,18 @@ export function DocumentLivePreviewCard({
             ) : null}
 
             {signatory ? (
-              <div className="flex items-center gap-3 rounded-[18px] bg-slate-50 px-4 py-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div className="flex items-center gap-3 rounded-[18px] bg-[hsl(var(--bd-surface-muted))] px-4 py-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]">
                   {signatory.signatureUrl ? (
                     <img src={signatory.signatureUrl} alt={`${signatory.name} signature`} className="h-full w-full object-cover" />
                   ) : (
-                    <span className="text-xs font-bold text-slate-400">SIG</span>
+                    <span className="text-xs font-bold text-[hsl(var(--bd-text-muted))]">SIG</span>
                   )}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Authorized Signatory</div>
-                  <div className="mt-1 break-words text-sm font-bold text-foreground">{signatory.name}</div>
-                  {signatory.role ? <div className="text-sm text-slate-500">{signatory.role}</div> : null}
+                  <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Authorized Signatory</div>
+                  <div className="mt-1 break-words text-sm font-bold text-[hsl(var(--bd-text))]">{signatory.name}</div>
+                  {signatory.role ? <div className="text-sm text-[hsl(var(--bd-text-muted))]">{signatory.role}</div> : null}
                 </div>
               </div>
             ) : null}
@@ -706,9 +706,9 @@ export function DocumentDetailRows({ rows }: DocumentDetailRowsProps) {
     <Card className="rounded-[22px] border-border shadow-sm">
       <CardContent className="px-4 py-1.5">
         {rows.map((row) => (
-          <div key={row.label} className="flex items-start justify-between gap-4 border-b border-slate-100 py-3 last:border-b-0">
+          <div key={row.label} className="flex items-start justify-between gap-4 border-b border-[hsl(var(--bd-surface-muted))] py-3 last:border-b-0">
             <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">{row.label}</div>
-            <div className="min-w-0 text-right text-sm font-semibold text-foreground">{row.value}</div>
+            <div className="min-w-0 text-right text-sm font-semibold text-[hsl(var(--bd-text))]">{row.value}</div>
           </div>
         ))}
       </CardContent>
@@ -731,11 +731,11 @@ export function DocumentSummaryList({ rows }: DocumentSummaryListProps) {
               className={cn(
                 'flex items-center justify-between text-sm',
                 row.emphasis ? 'pt-2 text-base font-extrabold' : 'font-medium',
-                row.divider && 'border-t border-slate-100 pt-3',
+                row.divider && 'border-t border-[hsl(var(--bd-surface-muted))] pt-3',
               )}
             >
-              <span className={cn(row.labelClassName || 'text-slate-600')}>{row.label}</span>
-              <span className={cn(row.valueClassName || 'text-foreground')}>{row.value}</span>
+              <span className={cn(row.labelClassName || 'text-[hsl(var(--bd-text-muted))]')}>{row.label}</span>
+              <span className={cn(row.valueClassName || 'text-[hsl(var(--bd-text))]')}>{row.value}</span>
             </div>
           ))}
         </div>
@@ -752,8 +752,8 @@ export function DocumentBottomBar({ actions }: DocumentBottomBarProps) {
   const columnsClassName = actions.length === 3 ? 'grid-cols-[1fr_1fr_1.4fr]' : actions.length === 2 ? 'grid-cols-2' : ''
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t from-muted via-muted/95 to-transparent px-4 pb-5 pt-4 md:px-6">
-      <div className="mx-auto max-w-3xl rounded-[24px] border border-border bg-card/98 p-2 shadow-[0_-16px_34px_-26px_rgba(15,23,42,0.52)] backdrop-blur">
+    <div className="fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t from-[hsl(var(--bd-surface-muted))] via-[hsl(var(--bd-surface-muted))]/95 to-transparent px-4 pb-5 pt-4 md:px-6">
+      <div className="mx-auto max-w-3xl rounded-[24px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/98 p-2 shadow-[var(--bd-shadow-lg)] backdrop-blur">
         <div className={cn('grid gap-2', columnsClassName)} style={actions.length > 3 ? { gridTemplateColumns: `repeat(${actions.length}, minmax(0, 1fr))` } : undefined}>
           {actions.map((action) => (
             <Button
@@ -784,7 +784,7 @@ export function DocumentFloatingFab({ onClick, label = 'Download PDF' }: Documen
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="fixed bottom-28 right-4 z-20 grid h-14 w-14 place-items-center rounded-[18px] bg-slate-950 text-white shadow-[0_16px_36px_-18px_rgba(15,23,42,0.7)] transition hover:bg-slate-800 md:right-6"
+      className="fixed bottom-28 right-4 z-20 grid h-14 w-14 place-items-center rounded-[18px] bg-[hsl(var(--bd-accent))] text-[hsl(var(--bd-accent-foreground))] shadow-[var(--bd-shadow-lg)] transition hover:opacity-90 md:right-6"
     >
       <Download className="h-5 w-5" />
     </button>

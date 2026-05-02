@@ -341,12 +341,12 @@ export default function CSRPreviewPanel({
     <>
       <div
         style={{
-          background: theme.previewShell,
-          border: '1px solid #DBE5F3',
+          background: 'hsl(var(--bd-surface-variant))',
+          border: '1px solid hsl(var(--bd-border))',
           borderRadius: isMobile ? '12px' : '16px',
           padding: isMobile ? '12px' : '14px',
           marginBottom: isMobile ? '14px' : '18px',
-          boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)',
+          boxShadow: 'var(--bd-shadow-sm)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '10px', flexWrap: 'wrap' }}>
@@ -389,11 +389,11 @@ export default function CSRPreviewPanel({
 
       <div
         style={{
-          background: theme.previewSurface,
-          border: `1px solid ${theme.border}`,
+          background: 'hsl(var(--bd-surface))',
+          border: `1px solid hsl(var(--bd-border))`,
           borderRadius: isMobile ? '12px' : '16px',
           padding: isMobile ? '12px' : (compact ? '16px' : '18px'),
-          boxShadow: '0 12px 34px rgba(15, 23, 42, 0.08)',
+          boxShadow: 'var(--bd-shadow-lg)',
         }}
       >
         <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>

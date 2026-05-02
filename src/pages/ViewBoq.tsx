@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { BoqPdfDocument } from '@/components/boq/BoqPdfDocument'
-import { BoqPreview } from '@/components/boq/BoqPreview'
+import { DocumentLivePreviewCard } from '@/components/document/DocumentViewShell'
 import BoqHeroMeta from '@/components/document-view/boq/BoqHeroMeta'
 import BoqMoreSheet from '@/components/document-view/boq/BoqMoreSheet'
 import BoqViewPage from '@/components/document-view/boq/BoqViewPage'
@@ -321,7 +321,45 @@ export default function ViewBoq() {
         <BoqViewPage
           document={docProps}
           metrics={metrics}
-          preview={<BoqPreview boq={boq} />}
+          preview={
+            <DocumentLivePreviewCard
+              templateLabel="Live PDF"
+              documentLabel="BOQ"
+              documentNumber={boq.boq_number || 'BOQ'}
+              companyName={boq.identity_name || ''}
+              companyTagline={boq.identity_tagline || ''}
+              companyLines={[boq.identity_address, boq.identity_phone, boq.identity_email].filter(Boolean) as string[]}
+              recipientLabel="Project Owner / Client"
+              recipientName={boq.client_name || 'Client not specified'}
+              recipientLines={[boq.client_address].filter(Boolean) as string[]}
+              meta={[
+                { label: 'Issue Date', value: boq.created_at ? new Date(boq.created_at).toLocaleDateString() : 'Not set' },
+                { label: 'Revision', value: boq.revision_number ? `REV ${boq.revision_number}` : 'Initial' },
+                { label: 'Status', value: String(boq.status || 'open').toUpperCase() },
+              ]}
+              detailRows={[
+                { label: 'Project Ref', value: boq.project_title || '—' },
+                { label: 'Total Value', value: new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(subtotal) },
+              ]}
+              items={(boq.table_rows || []).map((item: any) => {
+                if (item.row_type === 'section') return { type: 'group' as const, label: item.description }
+                return {
+                  type: 'line' as const,
+                  label: item.description || 'Item',
+                  detail: item.specification || '',
+                  value: String(item.quantity ?? '—'),
+                  facts: [item.unit, item.rate ? `Rate: ${item.rate}` : null].filter(Boolean) as string[],
+                }
+              })}
+              totals={[
+                { label: 'Grand Total', value: new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(subtotal), emphasis: true },
+              ]}
+              notesSections={[
+                { title: 'Project Notes', content: boq.notes || 'No project notes recorded.' },
+              ]}
+              accentColor="#0f172a"
+            />
+          }
           onGenerateQuotation={() => ui.openModal(MODAL_GENERATE_QUOTE)}
           onEdit={() => navigate(`/boqs/edit/${id}`)}
           onDuplicate={() => void handleDuplicate()}
