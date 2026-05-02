@@ -32,7 +32,7 @@ export default function MobilePageHeader({
   return (
     <div
       className={cn(
-        'rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))/0.8] bg-[hsl(var(--bd-surface)/0.95)] px-[var(--bd-space-md)] py-[var(--bd-space-sm)] shadow-sm',
+        'rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)_/_0.8)] bg-[hsl(var(--bd-surface)_/_0.95)] px-[var(--bd-space-md)] py-[var(--bd-space-sm)] shadow-sm',
         className,
       )}
     >
