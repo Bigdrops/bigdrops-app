@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { ClipboardList, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, MoreHorizontal, Pencil, RefreshCw, Trash2, Workflow } from "lucide-react"
 
 import Layout from '../components/Layout'
+import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
 import MobileFab from '../components/layout/MobileFab'
 import ModuleShell from '@/components/layout/ModuleShell'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
@@ -50,6 +51,9 @@ function normalizeStatus(status: string | null | undefined): string {
   return (status || "").trim().toLowerCase()
 }
 
+const CSR_CACHE_KEY = "bd:list:csr:v1:all"
+const CSR_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
 export default function CSR() {
   const navigate = useNavigate()
 
@@ -76,14 +80,40 @@ export default function CSR() {
   const fetchCsrs = async () => {
     setLoading(true)
 
+    const cached = readListCache<CsrRow>(CSR_CACHE_KEY)
+    const fresh = isListCacheFresh(cached, CSR_CACHE_TTL)
+
+    if (fresh && cached.rows.length > 0) {
+      setCsrs(cached.rows)
+      setLoading(false)
+      return
+    }
+
+    if (cached && !fresh) {
+      setCsrs(cached.rows)
+      setLoading(true)
+      setTimeout(async () => {
+        await supabaseFetchAndCache()
+      }, 0)
+      return
+    }
+
+    await supabaseFetchAndCache()
+  }
+
+  const supabaseFetchAndCache = async () => {
     const { data } = await supabase
       .from("csrs")
       .select("*")
       .order("date", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
 
-    setCsrs((data as CsrRow[]) || [])
+    const rows = (data as CsrRow[]) || []
+    setCsrs(rows)
     setLoading(false)
+    if (rows.length > 0) {
+      writeListCache(CSR_CACHE_KEY, rows)
+    }
   }
 
   const loadCsrSyncQueue = async () => {
@@ -268,7 +298,8 @@ export default function CSR() {
       return
     }
     setCsrToDelete(null)
-    await fetchCsrs()
+    setCsrs(prev => prev.filter(c => c.id !== csr.id))
+    invalidateListCache(CSR_CACHE_KEY)
   }
 
   const handleRetryQueueItem = async (queueItemId: string) => {
@@ -280,6 +311,7 @@ export default function CSR() {
       feedback.success('CSR synced', {
         description: 'The offline CSR was uploaded successfully.',
       })
+      invalidateListCache(CSR_CACHE_KEY)
       await Promise.all([fetchCsrs(), loadCsrSyncQueue()])
     } else if (result.status === "failed") {
       feedback.error('Retry failed', {

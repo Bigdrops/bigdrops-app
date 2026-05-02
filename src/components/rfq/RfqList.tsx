@@ -11,6 +11,7 @@ import { feedback } from '@/lib/feedback'
 import { SkeletonRow } from '@/components/loading/AppLoadingStates'
 import ModuleShell from '@/components/layout/ModuleShell'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
+import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
 
 const formatCompactDate = (value?: string) => {
   if (!value) return null
@@ -68,6 +69,9 @@ const getRfqStatusMeta = (expiryDate?: string) => {
   }
 }
 
+const RFQ_CACHE_KEY = "bd:list:rfqs:v1:all"
+const RFQ_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
 export const RfqList: React.FC = () => {
   const navigate = useNavigate();
   const [rfqs, setRfqs] = useState<Rfq[]>([]);
@@ -77,19 +81,46 @@ export const RfqList: React.FC = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const loadRfqs = async () => {
-    setLoading(true);
+    setLoading(true)
+
+    const cached = readListCache<Rfq>(RFQ_CACHE_KEY)
+    const fresh = isListCacheFresh(cached, RFQ_CACHE_TTL)
+
+    if (fresh && cached.rows.length > 0) {
+      setRfqs(cached.rows.map(row => normalizeDbRfq(row)))
+      setLoading(false)
+      return
+    }
+
+    if (cached && !fresh) {
+      setRfqs(cached.rows.map(row => normalizeDbRfq(row)))
+      setLoading(true)
+      setTimeout(async () => {
+        await supabaseFetchAndCache()
+      }, 0)
+      return
+    }
+
+    await supabaseFetchAndCache()
+  }
+
+  const supabaseFetchAndCache = async () => {
     const { data, error } = await supabase
       .from('rfqs')
       .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
-      feedback.error('Error loading RFQs', { description: error.message });
+      feedback.error('Error loading RFQs', { description: error.message })
     } else {
-      setRfqs((data || []).map(row => normalizeDbRfq(row)));
+      const rows = (data || [])
+      setRfqs(rows.map(row => normalizeDbRfq(row)))
+      if (rows.length > 0) {
+        writeListCache(RFQ_CACHE_KEY, rows)
+      }
     }
-    setLoading(false);
-  };
+    setLoading(false)
+  }
 
   useEffect(() => {
     loadRfqs();
@@ -102,7 +133,8 @@ export const RfqList: React.FC = () => {
        feedback.error('Delete failed', { description: error.message });
     } else {
        feedback.success('RFQ deleted');
-       loadRfqs();
+       setRfqs(prev => prev.filter(r => r.id !== id))
+       invalidateListCache(RFQ_CACHE_KEY);
     }
   };
 
