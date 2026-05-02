@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabase'
+import { cn } from '@/lib/utils'
 import Layout from '../components/Layout'
 import {
   AdminSettingsSection,
@@ -71,34 +72,34 @@ type SettingsGroup = {
 // Group visual identities
 const GROUP_UI: Record<GroupId, GroupUIConfig> = {
   account: {
-    label: 'text-slate-500',
-    icon: 'bg-slate-100 text-slate-600',
-    hover: 'hover:bg-slate-50',
-    border: 'border-slate-200/80',
+    label: 'text-[hsl(var(--bd-status-info-text))]',
+    icon: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
+    hover: 'hover:bg-[hsl(var(--bd-surface-muted))]',
+    border: 'border-[hsl(var(--bd-border))]',
   },
   workspace: {
-    label: 'text-indigo-600/80',
-    icon: 'bg-indigo-100 text-indigo-700',
-    hover: 'hover:bg-indigo-50/60',
-    border: 'border-slate-200/80',
+    label: 'text-[hsl(var(--bd-status-success-text))]',
+    icon: 'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]',
+    hover: 'hover:bg-[hsl(var(--bd-surface-muted))]',
+    border: 'border-[hsl(var(--bd-border))]',
   },
   operations: {
-    label: 'text-amber-700/80',
-    icon: 'bg-amber-100 text-amber-700',
-    hover: 'hover:bg-amber-50/60',
-    border: 'border-slate-200/80',
+    label: 'text-[hsl(var(--bd-status-warning-text))]',
+    icon: 'bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]',
+    hover: 'hover:bg-[hsl(var(--bd-surface-muted))]',
+    border: 'border-[hsl(var(--bd-border))]',
   },
   interface: {
-    label: 'text-violet-700/80',
-    icon: 'bg-violet-100 text-violet-700',
-    hover: 'hover:bg-violet-50/60',
-    border: 'border-slate-200/80',
+    label: 'text-[hsl(var(--bd-status-info-text))]',
+    icon: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
+    hover: 'hover:bg-[hsl(var(--bd-surface-muted))]',
+    border: 'border-[hsl(var(--bd-border))]',
   },
   system: {
-    label: 'text-rose-600/80',
-    icon: 'bg-rose-100 text-rose-700',
-    hover: 'hover:bg-rose-50/60',
-    border: 'border-rose-100',
+    label: 'text-[hsl(var(--bd-status-danger-text))]',
+    icon: 'bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]',
+    hover: 'hover:bg-[hsl(var(--bd-surface-muted))]',
+    border: 'border-[hsl(var(--bd-border))]',
   },
 }
 
@@ -277,10 +278,10 @@ export default function Settings() {
   const activeSection = allSections.find((section) => section.id === active)
 
   return (
-    <Layout title="Settings" session={session}>
+    <Layout title="Settings" session={session} contentClassName="bg-[hsl(var(--bd-surface))]">
       {toast && <SettingsToast message={toast} onDone={() => setToast(null)} />}
 
-      <div className="max-w-2xl mx-auto pb-4">
+      <div className="w-full">
         {!active ? (
           <div className="space-y-5">
             {groups.map((group) => {
@@ -288,19 +289,20 @@ export default function Settings() {
               const ui = GROUP_UI[group.id] || GROUP_UI.system
 
               return (
-                <section key={group.id} className="space-y-1.5">
-                  <div className="px-1">
+                <section key={group.id} className="space-y-1">
+                  <div className="px-4 md:px-0">
                     <p
-                      className={`text-[12px] font-extrabold tracking-[0.14em] uppercase ${ui.label}`}
+                      className={cn("text-[10px] font-black uppercase tracking-widest opacity-60", ui.label)}
                     >
                       {group.label}
                     </p>
                   </div>
 
                   <div
-                    className={`overflow-hidden bg-card border shadow-sm ${
+                    className={cn(
+                      "overflow-hidden bg-[hsl(var(--bd-card-bg))] border-[hsl(var(--bd-border))] shadow-sm",
                       isSingle ? 'rounded-xl' : 'rounded-2xl'
-                    } ${ui.border}`}
+                    )}
                   >
                     {group.items.map(({ id, label, icon: Icon, desc }) => {
                       const summary = getSectionSummary(id, session, isAdmin)
@@ -311,33 +313,35 @@ export default function Settings() {
                         <button
                           key={id}
                           onClick={() => setActive(id)}
-                          className={`group w-full flex items-center gap-2.5 px-4 ${
-                            isSingle ? 'py-3' : 'py-3.5'
-                          } text-left transition-colors border-b last:border-b-0 ${
-                            isSystemItem ? 'border-red-50' : 'border-slate-200/80'
-                          } ${ui.hover}`}
+                          className={cn(
+                            "group w-full flex items-center gap-3 px-4 transition-colors border-b border-[hsl(var(--bd-border))]/40 last:border-b-0",
+                            isSingle ? 'py-3' : 'py-3.5',
+                            ui.hover
+                          )}
                         >
                           <div
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                            className={cn(
+                              "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all group-hover:scale-105",
                               isAdminItem
-                                ? 'bg-red-100/80 text-red-600'
+                                ? 'bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]'
                                 : isSystemItem
-                                ? 'bg-amber-100/80 text-amber-700'
+                                ? 'bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]'
                                 : ui.icon
-                            }`}
+                            )}
                           >
                             <Icon size={16} />
                           </div>
 
                           <div className="flex-1 min-w-0">
                             <p
-                              className={`text-sm font-bold ${
-                                isAdminItem ? 'text-red-700' : 'text-slate-800'
-                              }`}
+                              className={cn(
+                                "text-sm font-bold",
+                                isAdminItem ? 'text-[hsl(var(--bd-status-danger-text))]' : 'text-[hsl(var(--bd-text))]'
+                              )}
                             >
                               {label}
                             </p>
-                            <p className="mt-0 text-[12px] leading-5 text-muted-foreground">
+                            <p className="mt-0.5 text-[11px] leading-tight text-[hsl(var(--bd-text-muted))]">
                               {desc}
                             </p>
                           </div>
@@ -345,20 +349,21 @@ export default function Settings() {
                           <div className="flex items-center gap-1.5 shrink-0">
                             {summary ? (
                               <span
-                                className={`hidden sm:inline text-[11px] font-semibold rounded-full px-2.5 py-1 ${
+                                className={cn(
+                                  "hidden sm:inline text-[10px] font-black uppercase tracking-widest rounded-full px-2.5 py-1",
                                   isAdminItem
-                                    ? 'bg-red-50 text-red-700'
+                                    ? 'bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]'
                                     : isSystemItem
-                                    ? 'bg-amber-50 text-amber-700'
-                                    : 'bg-slate-100 text-slate-600'
-                                }`}
+                                    ? 'bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]'
+                                    : 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]'
+                                )}
                               >
                                 {summary}
                               </span>
                             ) : null}
                             <ChevronRight
                               size={14}
-                              className="text-slate-200 group-hover:text-slate-300 transition-colors"
+                              className="text-[hsl(var(--bd-text-muted))] opacity-20 group-hover:opacity-100 transition-all"
                             />
                           </div>
                         </button>
@@ -372,33 +377,33 @@ export default function Settings() {
         ) : (
           <div>
             {/* Refined header */}
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-6 px-4 md:px-0">
               <button
                 onClick={() => setActive(null)}
-                className="w-9 h-9 rounded-xl bg-card border border-slate-200/80 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors shadow-sm"
+                className="w-10 h-10 rounded-xl bg-[hsl(var(--bd-card-bg))] border border-[hsl(var(--bd-border))] flex items-center justify-center text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))] transition-all active:scale-95 shadow-sm"
                 aria-label="Back to settings"
               >
                 ←
               </button>
 
               <div className="min-w-0">
-                <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-400">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">
                   Settings
                 </p>
-                <h2 className="text-base font-extrabold text-slate-900 truncate">
+                <h2 className="text-lg font-black tracking-tight text-[hsl(var(--bd-text))] truncate">
                   {activeSection?.label}
                 </h2>
               </div>
             </div>
 
-            {/* Lighter outer card */}
-            <div className="bg-card rounded-2xl border border-slate-200/80 shadow-sm p-4 sm:p-5">
+            {/* Content Area */}
+            <div className="bg-[hsl(var(--bd-card-bg))] rounded-2xl border border-[hsl(var(--bd-border))] shadow-sm p-4 sm:p-6">
               {renderSection()}
             </div>
           </div>
         )}
 
-        <p className="text-center text-[11px] text-slate-300 font-bold uppercase tracking-widest mt-6 pb-3">
+        <p className="text-center text-[10px] text-[hsl(var(--bd-text-muted))] font-black uppercase tracking-[0.3em] mt-10 pb-6 opacity-40">
           BIGDROPS ERP
         </p>
       </div>

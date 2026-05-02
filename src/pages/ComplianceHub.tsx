@@ -13,6 +13,7 @@ import {
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
 import PageLoader from '@/components/app/PageLoader'
 
 // Sub-components
@@ -125,11 +126,11 @@ export default function ComplianceHub() {
   }, [invoices, payments])
 
   return (
-    <Layout title="Compliance Hub" session={null} contentClassName="w-full max-w-none bg-[hsl(var(--bd-surface))] p-0 pb-24 md:px-4 md:pb-10">
-      <div className="w-full py-4 max-w-5xl mx-auto px-4 md:px-0">
+    <Layout title="Compliance Hub" session={null} contentClassName="bg-[hsl(var(--bd-surface))]">
+      <div className="w-full space-y-6">
         <div className="space-y-6">
           {/* Operational Header */}
-          <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-5 shadow-sm relative overflow-hidden">
+          <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-5 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-1.5">
                 <div className="bg-[hsl(var(--bd-status-info-text))] rounded-full h-1.5 w-1.5 animate-pulse" />
@@ -139,6 +140,11 @@ export default function ComplianceHub() {
               <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))] leading-relaxed max-w-md">
                 Operational workspace for tax obligations, VAT tracking, and withholding certificates.
               </p>
+            </div>
+            <div className="flex shrink-0">
+               <Button className="w-full md:w-auto h-10 px-6 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-sm">
+                 {tab === 'reminders' ? 'Add Obligation' : tab === 'vat' ? 'Add VAT Input' : tab === 'filings' ? 'New Filing' : 'Quick Action'}
+               </Button>
             </div>
           </div>
 
@@ -152,45 +158,45 @@ export default function ComplianceHub() {
           <Tabs value={tab} onValueChange={(value) => setTab(value as ComplianceTab)} className="w-full">
             <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-2 shadow-sm sticky top-4 z-40">
               <div className="overflow-x-auto">
-                <TabsList className="inline-flex h-auto w-max gap-2 bg-transparent p-0">
+                <TabsList className="inline-flex h-auto w-max gap-1 bg-[hsl(var(--bd-surface-muted))] p-1 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))]/50">
                   <TabsTrigger 
                     value="reminders" 
-                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-md flex items-center gap-2"
+                    className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm flex items-center gap-2"
                   >
                     <Bell className="h-3.5 w-3.5" />
                     Obligations
                   </TabsTrigger>
                   <TabsTrigger 
                     value="overview" 
-                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-md flex items-center gap-2"
+                    className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm flex items-center gap-2"
                   >
                     <LayoutDashboard className="h-3.5 w-3.5" />
                     Overview
                   </TabsTrigger>
                   <TabsTrigger 
                     value="wht" 
-                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-md flex items-center gap-2"
+                    className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm flex items-center gap-2"
                   >
                     <Receipt className="h-3.5 w-3.5" />
                     WHT Receipts
                   </TabsTrigger>
                   <TabsTrigger 
                     value="vat" 
-                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-md flex items-center gap-2"
+                    className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm flex items-center gap-2"
                   >
                     <Wallet className="h-3.5 w-3.5" />
                     VAT Inputs
                   </TabsTrigger>
                   <TabsTrigger 
                     value="filings" 
-                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-md flex items-center gap-2"
+                    className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm flex items-center gap-2"
                   >
                     <History className="h-3.5 w-3.5" />
                     Filings
                   </TabsTrigger>
                   <TabsTrigger 
                     value="settings" 
-                    className="rounded-[var(--bd-radius-lg)] px-4 py-2 text-xs font-bold transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-md flex items-center gap-2"
+                    className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm flex items-center gap-2"
                   >
                     <Settings2 className="h-3.5 w-3.5" />
                     Settings

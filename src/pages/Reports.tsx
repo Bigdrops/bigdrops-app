@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Download } from 'lucide-react'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
 
 // Shared Report Types & Utils
 import {
@@ -119,29 +121,37 @@ export default function Reports() {
   }, [tab, rangeKey, collectionsLoadedRange, collectionsLoading, queryStart, queryEnd, loadCollections])
 
   return (
-    <Layout title="Reports" session={null} contentClassName="w-full max-w-none bg-[hsl(var(--bd-surface))] p-0 pb-24 md:px-4 md:pb-10">
-      <div className="w-full py-4 max-w-5xl mx-auto px-4 md:px-0">
+    <Layout title="Reports" session={null} contentClassName="bg-[hsl(var(--bd-surface))]">
+      <div className="w-full space-y-6">
         <div className="space-y-6">
           {/* Operational Header */}
-          <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-5 shadow-sm">
-            <div className="flex items-center gap-3 mb-1.5">
-              <div className="bg-[hsl(var(--bd-status-success-text))] rounded-full h-1.5 w-1.5 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-success-text))]">Finance Intelligence</span>
+          <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-1.5">
+                <div className="bg-[hsl(var(--bd-status-success-text))] rounded-full h-1.5 w-1.5 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-success-text))]">Finance Intelligence</span>
+              </div>
+              <h1 className="text-xl font-black tracking-tight text-[hsl(var(--bd-text))]">Financial Reports</h1>
+              <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))] leading-relaxed max-w-md">
+                Review receivables, collections, and tax positions across all projects.
+              </p>
             </div>
-            <h1 className="text-xl font-black tracking-tight text-[hsl(var(--bd-text))]">Financial Reports</h1>
-            <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))] leading-relaxed max-w-md">
-              Review receivables, collections, and tax positions across all projects.
-            </p>
+            <div className="flex shrink-0">
+               <Button variant="outline" className="w-full md:w-auto h-10 px-6 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-sm gap-2">
+                 <Download className="h-3.5 w-3.5" />
+                 Export Report
+               </Button>
+            </div>
           </div>
           
           <Tabs value={tab} onValueChange={(value) => setTab(value as ReportTab)} className="w-full">
             <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-2 shadow-sm">
               <div className="overflow-x-auto">
-                <TabsList className="inline-flex h-auto w-max gap-2 bg-transparent p-0">
-                  <TabsTrigger value="receivables" className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-4 py-2 text-xs font-bold text-[hsl(var(--bd-status-danger-text))] data-[state=active]:border-transparent data-[state=active]:bg-[hsl(var(--bd-status-danger-text))] data-[state=active]:text-white">Receivables</TabsTrigger>
-                  <TabsTrigger value="collections" className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] px-4 py-2 text-xs font-bold text-[hsl(var(--bd-status-success-text))] data-[state=active]:border-transparent data-[state=active]:bg-[hsl(var(--bd-status-success-text))] data-[state=active]:text-white">Collections</TabsTrigger>
-                  <TabsTrigger value="projects" className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] px-4 py-2 text-xs font-bold text-[hsl(var(--bd-status-info-text))] data-[state=active]:border-transparent data-[state=active]:bg-[hsl(var(--bd-status-info-text))] data-[state=active]:text-white">Projects</TabsTrigger>
-                  <TabsTrigger value="tax" className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-4 py-2 text-xs font-bold text-[hsl(var(--bd-status-warning-text))] data-[state=active]:border-transparent data-[state=active]:bg-[hsl(var(--bd-status-warning-text))] data-[state=active]:text-white">Tax</TabsTrigger>
+                <TabsList className="inline-flex h-auto w-max gap-1 bg-[hsl(var(--bd-surface-muted))] p-1 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))]/50">
+                  <TabsTrigger value="receivables" className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm">Receivables</TabsTrigger>
+                  <TabsTrigger value="collections" className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm">Collections</TabsTrigger>
+                  <TabsTrigger value="projects" className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm">Projects</TabsTrigger>
+                  <TabsTrigger value="tax" className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm">Tax</TabsTrigger>
                 </TabsList>
               </div>
             </div>
