@@ -7,6 +7,14 @@ import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
 import { supabase } from '@/supabase'
 import { listBoqs } from '@/domain/boq/storage'
+import {
+  readDashboardCache,
+  writeDashboardCache,
+  isDashboardCacheFresh,
+  DashboardCacheData,
+} from '@/lib/cache/dashboardCache'
+
+const DASHBOARD_CACHE_TTL = 2 * 60 * 1000 // 2 minutes
 
 export type RecentDoc = {
   id: string
@@ -355,16 +363,45 @@ function buildOverviewRecentDocs(invoices: any[], quotations: any[], csrs: any[]
 
 export function useDashboardData(options: UseDashboardDataOptions = {}): UseDashboardDataResult {
   const { variant = 'overview' } = options
+  const cacheKey = `bd:dashboard:${variant}:v1`
 
-  const [loading, setLoading] = React.useState(true)
-  const [recentDocs, setRecentDocs] = React.useState<RecentDoc[]>([])
-  const [recentProjects, setRecentProjects] = React.useState<RecentProject[]>([])
-  const [priorityItems, setPriorityItems] = React.useState<PriorityItem[]>([])
-  const [heroStats, setHeroStats] = React.useState<HeroStats>(defaultHeroStats)
-  const [summary, setSummary] = React.useState<SummaryStats>(defaultSummary)
+  const [loading, setLoading] = React.useState(() => {
+    const cached = readDashboardCache(cacheKey)
+    return !cached
+  })
+  
+  const [recentDocs, setRecentDocs] = React.useState<RecentDoc[]>(() => {
+    const cached = readDashboardCache(cacheKey)
+    return cached?.data.recentDocs || []
+  })
+  const [recentProjects, setRecentProjects] = React.useState<RecentProject[]>(() => {
+    const cached = readDashboardCache(cacheKey)
+    return cached?.data.recentProjects || []
+  })
+  const [priorityItems, setPriorityItems] = React.useState<PriorityItem[]>(() => {
+    const cached = readDashboardCache(cacheKey)
+    return cached?.data.priorityItems || []
+  })
+  const [heroStats, setHeroStats] = React.useState<HeroStats>(() => {
+    const cached = readDashboardCache(cacheKey)
+    return cached?.data.heroStats || defaultHeroStats
+  })
+  const [summary, setSummary] = React.useState<SummaryStats>(() => {
+    const cached = readDashboardCache(cacheKey)
+    return cached?.data.summary || defaultSummary
+  })
 
   const load = React.useCallback(async () => {
-    setLoading(true)
+    const cached = readDashboardCache(cacheKey)
+    if (cached && isDashboardCacheFresh(cached, DASHBOARD_CACHE_TTL)) {
+      setLoading(false)
+      return
+    }
+
+    // Only show loading if we don't have ANY data to show (including stale)
+    if (!cached) {
+      setLoading(true)
+    }
 
     if (variant === 'classic') {
       try {
@@ -440,22 +477,34 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         }).length
 
         const reminders = buildClassicPriorityItems(projects, invoices, quotations)
-
-        setRecentDocs(buildClassicRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs))
-        setRecentProjects(projects)
-        setPriorityItems(reminders)
-        setHeroStats({
+        
+        const nextRecentDocs = buildClassicRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs)
+        const nextHeroStats = {
           collections: thisMonthCollections,
           openWork: reminders.length || pendingFollowUp,
           awaitingPaymentCount: 0,
           inTransitWaybills: 0,
-        })
-        setSummary({
+        }
+        const nextSummary = {
           overdue,
           pastDue: overdue,
           dueThisWeek,
           thisMonthCollections,
           pendingFollowUp,
+        }
+
+        setRecentDocs(nextRecentDocs)
+        setRecentProjects(projects)
+        setPriorityItems(reminders)
+        setHeroStats(nextHeroStats)
+        setSummary(nextSummary)
+
+        writeDashboardCache(cacheKey, {
+          recentDocs: nextRecentDocs,
+          recentProjects: projects,
+          priorityItems: reminders,
+          heroStats: nextHeroStats,
+          summary: nextSummary,
         })
       } catch (error) {
         console.error('Dashboard data load failed:', error)
@@ -518,21 +567,33 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
       ).length
       const reminders = buildOverviewPriorityItems(projects, quotations, Boolean(financialMetrics?.has_past_due))
 
-      setRecentDocs(buildOverviewRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs))
-      setRecentProjects(projects)
-      setPriorityItems(reminders)
-      setHeroStats({
+      const nextRecentDocs = buildOverviewRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs)
+      const nextHeroStats = {
         collections: thisMonthCollections,
         openWork: reminders.length || pendingFollowUp,
         awaitingPaymentCount,
         inTransitWaybills,
-      })
-      setSummary({
+      }
+      const nextSummary = {
         overdue: pastDue,
         pastDue,
         dueThisWeek,
         thisMonthCollections,
         pendingFollowUp,
+      }
+
+      setRecentDocs(nextRecentDocs)
+      setRecentProjects(projects)
+      setPriorityItems(reminders)
+      setHeroStats(nextHeroStats)
+      setSummary(nextSummary)
+
+      writeDashboardCache(cacheKey, {
+        recentDocs: nextRecentDocs,
+        recentProjects: projects,
+        priorityItems: reminders,
+        heroStats: nextHeroStats,
+        summary: nextSummary,
       })
     } catch (error) {
       console.error('Dashboard data load failed:', error)
@@ -542,7 +603,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
     } finally {
       setLoading(false)
     }
-  }, [variant])
+  }, [variant, cacheKey])
 
   React.useEffect(() => {
     void load()
