@@ -9,6 +9,7 @@ import {
   cacheInvoiceList,
   getCachedInvoiceList,
 } from "@/lib/native/invoiceCache"
+import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
 import Layout from "../components/Layout"
 import MobileFab from "../components/layout/MobileFab"
 import ModuleShell from "@/components/layout/ModuleShell"
@@ -35,6 +36,8 @@ import { Receipt } from "lucide-react"
 import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
 
 const PAGE_SIZE = 25
+const INVOICE_CACHE_KEY = "bd:list:invoices:v1:all"
+const INVOICE_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 function canUseInvoiceCacheFallback() {
   return (
@@ -136,6 +139,64 @@ export default function Invoices() {
   }
 
   const fetchInvoices = async (pageIndex = 0, replace = false) => {
+    const isInitialLoad = pageIndex === 0 && replace
+    const hasFilters = search.trim() !== "" || clientFilter !== "All" || statusFilter !== "All" || dateFilter !== "All Time"
+
+    // Only attempt list caching for the primary "All" view or when we have a full cache to filter against
+    if (isInitialLoad) {
+      const cached = readListCache<InvoiceRow>(INVOICE_CACHE_KEY)
+      if (cached) {
+        let rowsToDisplay = cached.rows
+        
+        // If we have filters, apply them to the cached "all" list
+        if (hasFilters) {
+          const searchTerm = search.trim().toLowerCase()
+          rowsToDisplay = cached.rows.filter((row: any) => {
+            const matchesSearch = !searchTerm || 
+              String(row.invoice_number || "").toLowerCase().includes(searchTerm) || 
+              String(row.client_name || "").toLowerCase().includes(searchTerm)
+            const matchesClient = clientFilter === "All" || row.client_name === clientFilter
+            const matchesStatus = statusFilter === "All" || String(row.status || "").toLowerCase() === statusFilter.toLowerCase()
+            
+            let matchesDate = true
+            if (dateFilter !== "All Time" && row.issue_date) {
+              const issueTime = new Date(row.issue_date).getTime()
+              const now = new Date()
+              if (dateFilter === "This Month") {
+                matchesDate = issueTime >= new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+              } else if (dateFilter === "Last Month") {
+                const fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime()
+                const toDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999).getTime()
+                matchesDate = issueTime >= fromDate && issueTime <= toDate
+              } else if (dateFilter === "This Year") {
+                matchesDate = issueTime >= new Date(now.getFullYear(), 0, 1).getTime()
+              }
+            }
+            
+            return matchesSearch && matchesClient && matchesStatus && matchesDate
+          })
+
+          // Apply sorting to the filtered cached rows
+          rowsToDisplay.sort((left: any, right: any) => {
+            if (sortBy === "Highest Value") return Number(right.total || 0) - Number(left.total || 0)
+            if (sortBy === "Lowest Value") return Number(left.total || 0) - Number(right.total || 0)
+            const leftTime = new Date(left.issue_date || left.created_at || 0).getTime() || 0
+            const rightTime = new Date(right.issue_date || right.created_at || 0).getTime() || 0
+            return sortBy === "Oldest" ? leftTime - rightTime : rightTime - leftTime
+          })
+        }
+
+        setInvoices(rowsToDisplay.slice(0, PAGE_SIZE))
+        setTotalCount(rowsToDisplay.length)
+        setPage(0)
+        setHasMore(PAGE_SIZE < rowsToDisplay.length)
+
+        if (isListCacheFresh(cached, INVOICE_CACHE_TTL)) {
+          return // Fresh enough, skip network
+        }
+      }
+    }
+
     setLoadingMore(true)
     const from = pageIndex * PAGE_SIZE
     const to = from + PAGE_SIZE - 1
@@ -143,16 +204,23 @@ export default function Invoices() {
       const { data, error } = await buildInvoiceQuery()
       if (error) throw error
 
-      const filteredRows = ((data as any[]) || []).filter(shouldIncludeInvoiceInList)
-      const nextRows = filteredRows.slice(from, to + 1)
+      const allRows = ((data as any[]) || []).filter(shouldIncludeInvoiceInList)
+      
+      // Update the "all" cache if we just fetched the base list (no search/client filters that Supabase handled)
+      // Actually, since buildInvoiceQuery handles filters on server, we only update the 'all' cache if no filters were sent to server.
+      if (!hasFilters) {
+        writeListCache(INVOICE_CACHE_KEY, allRows)
+      }
+
+      const nextRows = allRows.slice(from, to + 1)
 
       setInvoices((current) => (replace ? nextRows : [...current, ...nextRows]))
-      setTotalCount(filteredRows.length)
+      setTotalCount(allRows.length)
       setPage(pageIndex)
-      setHasMore(to + 1 < filteredRows.length)
+      setHasMore(to + 1 < allRows.length)
 
-      if (canUseNativeSqlite() && filteredRows.length > 0) {
-        void cacheInvoiceList(filteredRows).catch((cacheError) => {
+      if (canUseNativeSqlite() && allRows.length > 0) {
+        void cacheInvoiceList(allRows).catch((cacheError) => {
           console.warn("Invoice list cache write failed:", cacheError)
         })
       }
@@ -235,6 +303,16 @@ export default function Invoices() {
   }
 
   const fetchClientOptions = async () => {
+    // Try cache first
+    const cached = readListCache<InvoiceRow>(INVOICE_CACHE_KEY)
+    if (cached) {
+      const nextOptions = Array.from(
+        new Set(cached.rows.filter(shouldIncludeInvoiceInList).map((row) => row.client_name).filter(Boolean)),
+      ).sort((a: any, b: any) => a.localeCompare(b))
+      setClientOptions(nextOptions)
+      if (isListCacheFresh(cached, INVOICE_CACHE_TTL)) return
+    }
+
     try {
       const { data, error } = await supabase
         .from("invoices")
@@ -360,6 +438,7 @@ export default function Invoices() {
       }
       const newNumber = "SASINV-B" + String(nextNum).padStart(3, "0")
       const { data: srcItems } = await supabase.from("invoice_items").select("*").eq("invoice_id", inv.id).order("sort_order")
+      invalidateListCache(INVOICE_CACHE_KEY)
       navigate("/invoices/new", {
         state: {
           prefill: {
@@ -388,6 +467,7 @@ export default function Invoices() {
       setIsArchiving(true)
       const { error } = await supabase.from("invoices").update({ archived_at: new Date().toISOString() }).eq("id", inv.id)
       if (error) throw error
+      invalidateListCache(INVOICE_CACHE_KEY)
       feedback.success('Invoice archived')
       closeSheet()
       await fetchInvoices(0, true)
@@ -407,6 +487,7 @@ export default function Invoices() {
       await supabase.from("invoice_items").delete().eq("invoice_id", inv.id)
       const { error } = await supabase.from("invoices").delete().eq("id", inv.id)
       if (error) throw error
+      invalidateListCache(INVOICE_CACHE_KEY)
       feedback.success('Invoice deleted permanentely')
       closeSheet()
       await fetchInvoices(0, true)

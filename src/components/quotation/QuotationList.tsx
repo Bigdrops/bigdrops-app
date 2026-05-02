@@ -14,6 +14,11 @@ import {
   Workflow,
 } from 'lucide-react'
 import { supabase } from '@/supabase'
+import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
+
+const QUOTATION_CACHE_KEY = 'bd:list:quotations:v1:all'
+const QUOTATION_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
@@ -58,13 +63,25 @@ export default function QuotationList() {
   const [retryingQueueItemId, setRetryingQueueItemId] = useState<string | null>(null)
   const showQuotationSyncRecovery = useMemo(() => canUseNativeSqlite(), [])
 
-  const loadQuotations = async () => {
+  const loadQuotations = async (options?: { forceFetch?: boolean }) => {
+    if (!options?.forceFetch) {
+      const cached = readListCache<DbQuotation>(QUOTATION_CACHE_KEY)
+      if (cached) {
+        setQuotations(cached.rows)
+        if (isListCacheFresh(cached, QUOTATION_CACHE_TTL)) {
+          return
+        }
+      }
+    }
+
     const { data } = await supabase
       .from('quotations')
       .select('*')
       .is('archived_at', null)
       .order('issue_date', { ascending: false })
-    setQuotations((data || []) as DbQuotation[])
+    const rows = (data || []) as DbQuotation[]
+    setQuotations(rows)
+    writeListCache(QUOTATION_CACHE_KEY, rows)
   }
 
   const loadQuotationSyncQueue = async () => {
@@ -114,6 +131,7 @@ export default function QuotationList() {
       feedback.error('Archive failed', { description: error.message })
       return
     }
+    invalidateListCache(QUOTATION_CACHE_KEY)
     await loadQuotations()
   }
 
@@ -132,6 +150,7 @@ export default function QuotationList() {
       feedback.error('Delete failed', { description: error.message })
       return
     }
+    invalidateListCache(QUOTATION_CACHE_KEY)
     await loadQuotations()
   }
 
@@ -197,6 +216,7 @@ export default function QuotationList() {
 
     setBusyAction(null)
     setActiveQuotation(null)
+    invalidateListCache(QUOTATION_CACHE_KEY)
     await loadQuotations()
     navigate(`/quotations/${createdQuotation.id}`)
   }
@@ -210,6 +230,7 @@ export default function QuotationList() {
       feedback.success('Quotation synced', {
         description: 'The offline quotation was uploaded successfully.',
       })
+      invalidateListCache(QUOTATION_CACHE_KEY)
       await Promise.all([loadQuotations(), loadQuotationSyncQueue()])
     } else if (result.status === 'failed') {
       feedback.error('Retry failed', {
