@@ -5,13 +5,14 @@ import { RfqForm } from './RfqForm'
 import { RfqPreview } from './RfqPreview'
 import { RfqImportSheet } from './RfqImportSheet'
 import { Button } from '@/components/ui/button'
-import { Wand2, Save, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Wand2, Save, Eye, EyeOff, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface RfqEditorProps {
   initialRfq?: Rfq;
   initialItems?: RfqItem[];
   onSave: (rfq: Rfq, items: RfqItem[]) => Promise<void>;
+  onCancel?: () => void;
   saving?: boolean;
 }
 
@@ -19,6 +20,7 @@ export const RfqEditor: React.FC<RfqEditorProps> = ({
   initialRfq,
   initialItems,
   onSave,
+  onCancel,
   saving = false,
 }) => {
   const [rfq, setRfq] = useState<Rfq>(initialRfq || createEmptyRfq());
@@ -39,7 +41,13 @@ export const RfqEditor: React.FC<RfqEditorProps> = ({
     <div className="flex flex-col min-h-screen bg-slate-50/50">
       {/* Header Sticky */}
       <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border/50 px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {onCancel && (
+            <Button variant="ghost" size="icon" onClick={onCancel} className="h-9 w-9 rounded-xl">
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+          <div className="flex items-center gap-3 ml-1">
           <Button 
              variant="ghost" 
              size="sm" 
@@ -49,6 +57,7 @@ export const RfqEditor: React.FC<RfqEditorProps> = ({
              <Wand2 className="h-3 w-3 mr-1.5" />
              AI Import
           </Button>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

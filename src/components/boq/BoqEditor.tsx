@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Eye, EyeOff, Loader2, Save } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Save, X } from 'lucide-react'
 
 import type { Boq } from '@/domain/boq/types'
 import { BoqForm } from './BoqForm'
@@ -10,10 +10,12 @@ import { cn } from '@/lib/utils'
 export function BoqEditor({
   initialBoq,
   onSave,
+  onCancel,
   saving = false,
 }: {
   initialBoq: Boq
   onSave: (boq: Boq) => Promise<void>
+  onCancel?: () => void
   saving?: boolean
 }) {
   const [boq, setBoq] = useState<Boq>(initialBoq)
@@ -21,7 +23,14 @@ export function BoqEditor({
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50">
-      <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border/50 px-4 h-16 flex items-center justify-end">
+      <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border/50 px-4 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {onCancel && (
+            <Button variant="ghost" size="icon" onClick={onCancel} className="h-9 w-9 rounded-xl">
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setShowPreview((current) => !current)} className="h-9 gap-1.5 text-xs font-bold uppercase tracking-wider">
             {showPreview ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}

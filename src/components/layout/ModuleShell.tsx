@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState, type ReactNode } from 'react'
-import { Search, SlidersHorizontal, X, Loader2, ChevronRight, Check, ChevronsUpDown } from 'lucide-react'
+import { Search, SlidersHorizontal, X, Loader2, ChevronRight, Check, ChevronsUpDown, Plus, PlusCircle, FilePlus, UserPlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -77,6 +77,7 @@ interface ModuleShellProps<T = any> {
   // Actions
   onPrimaryAction?: () => void
   primaryActionLabel?: string
+  primaryActionIcon?: 'plus' | 'plus-circle' | 'file-plus' | 'user-plus' | 'plus'
   
   // Navigation
   segmentedControl?: ReactNode
@@ -116,6 +117,7 @@ export default function ModuleShell<T>({
   filterPanel,
   onPrimaryAction,
   primaryActionLabel = 'New',
+  primaryActionIcon = 'plus',
   segmentedControl,
   beforeListContent,
   afterListContent,
@@ -437,6 +439,27 @@ export default function ModuleShell<T>({
 
         {afterListContent}
       </div>
+
+      {/* Integrated Mobile FAB */}
+      {onPrimaryAction && (
+        <button
+          onClick={onPrimaryAction}
+          className={cn(
+            "md:hidden fixed right-5 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 flex h-14 w-14 items-center justify-center rounded-2xl shadow-xl transition-all active:scale-90",
+            toneStyle.accent === 'tone-info-accent' ? 'bg-[hsl(var(--bd-status-info-text))] text-white' :
+            toneStyle.accent === 'tone-success-accent' ? 'bg-[hsl(var(--bd-status-success-text))] text-white' :
+            toneStyle.accent === 'tone-warning-accent' ? 'bg-[hsl(var(--bd-status-warning-text))] text-white' :
+            toneStyle.accent === 'tone-data-accent' ? 'bg-[hsl(var(--bd-status-info-text))] text-white' :
+            'bg-primary text-primary-foreground'
+          )}
+          aria-label={primaryActionLabel}
+        >
+          {primaryActionIcon === 'plus' && <Plus className="h-6 w-6" />}
+          {primaryActionIcon === 'plus-circle' && <PlusCircle className="h-6 w-6" />}
+          {primaryActionIcon === 'file-plus' && <FilePlus className="h-6 w-6" />}
+          {primaryActionIcon === 'user-plus' && <UserPlus className="h-6 w-6" />}
+        </button>
+      )}
     </div>
   )
 }

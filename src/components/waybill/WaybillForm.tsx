@@ -48,6 +48,8 @@ import { WaybillSignatureField } from './WaybillSignatureField'
 type WaybillFormProps = {
   mode: 'new' | 'edit'
   waybillId?: string
+  onCancel?: () => void
+  onSaved?: () => void
 }
 
 type ProjectPrefillState = {
@@ -96,7 +98,7 @@ function SectionCard({ title, accent, subtitle, children }: { title: string; acc
   )
 }
 
-export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
+export default function WaybillForm({ mode, waybillId, onCancel, onSaved }: WaybillFormProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const prefill = location.state as ProjectPrefillState | undefined
@@ -249,7 +251,8 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
             custom_fields: finalFields as any
         })
         feedback.success('Saved offline', { description: 'Draft preserved locally.' })
-        navigate('/waybills')
+        if (onSaved) onSaved()
+        else navigate('/waybills')
         return
       }
 
@@ -269,7 +272,8 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
       }
 
       feedback.success('Waybill saved', { description: 'Database updated successfully.' })
-      navigate('/waybills')
+      if (onSaved) onSaved()
+      else navigate('/waybills')
     } catch (error) {
       feedback.error('Save failed', {
         description: getUserFacingMutationMessage(error, { action: 'save' }),
@@ -294,7 +298,7 @@ export default function WaybillForm({ mode, waybillId }: WaybillFormProps) {
           <p className="text-xs font-medium text-muted-foreground">{typeContent.intro.slice(0, 50)}...</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" size="icon" className="rounded-xl" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" className="rounded-xl" onClick={() => onCancel ? onCancel() : navigate(-1)}>
             <X className="h-4 w-4" />
           </Button>
           <Button className="rounded-xl bg-emerald-600 font-bold text-white hover:bg-emerald-700 shadow-md transition-all active:scale-95" onClick={onSave} disabled={saving}>
