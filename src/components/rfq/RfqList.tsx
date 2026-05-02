@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Archive, Eye, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { supabase } from '@/supabase'
-import { Rfq } from '@/domain/rfq/types'
-import { normalizeDbRfq } from '@/domain/rfq/normalize'
+import { Rfq, RfqItem } from '@/domain/rfq/types'
+import { normalizeDbRfq, denormalizeToDbRfq, denormalizeToDbRfqItem, getNextRfqNumber } from '@/domain/rfq/normalize'
 import MobileFab from '@/components/layout/MobileFab'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
@@ -14,8 +14,6 @@ import ModuleRowCard from '@/components/layout/ModuleRowCard'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { RfqEditor } from './RfqEditor'
-import { Rfq, RfqItem } from '@/domain/rfq/types'
-import { denormalizeToDbRfq, denormalizeToDbRfqItem, getNextRfqNumber } from '@/domain/rfq/normalize'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 
 const formatCompactDate = (value?: string) => {
