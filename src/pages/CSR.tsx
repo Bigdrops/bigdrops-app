@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ClipboardList, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, MoreHorizontal, Pencil, RefreshCw, Trash2, Workflow } from "lucide-react"
+import { Archive, ClipboardList, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, MoreHorizontal, Pencil, RefreshCw, Trash2, Workflow } from "lucide-react"
 
 import Layout from '../components/Layout'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
@@ -64,6 +64,10 @@ export default function CSR() {
   const [statusFilter, setStatusFilter] = useState("All")
   const [dateFilter, setDateFilter] = useState("All Time")
   const [sortBy, setSortBy] = useState("Newest")
+  const [archiveId, setArchiveId] = useState<string | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isArchiving, setIsArchiving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [csrToDelete, setCsrToDelete] = useState<CsrRow | null>(null)
   const [activeCsr, setActiveCsr] = useState<CsrRow | null>(null)
   const [showAttachInvoice, setShowAttachInvoice] = useState(false)
@@ -105,6 +109,7 @@ export default function CSR() {
     const { data } = await supabase
       .from("csrs")
       .select("*")
+      .is('archived_at', null)
       .order("date", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
 
@@ -289,17 +294,38 @@ export default function CSR() {
     setSortBy("Newest")
   }
 
-  const handleDelete = async (csr: CsrRow) => {
-    const { error } = await supabase.from("csrs").delete().eq("id", csr.id)
+  const handleArchive = async () => {
+    if (!archiveId) return
+    setIsArchiving(true)
+    const { error } = await supabase.from('csrs').update({ archived_at: new Date().toISOString() }).eq('id', archiveId)
+    setIsArchiving(false)
+    if (error) {
+      feedback.error('Archive failed', { description: error.message })
+      return
+    }
+    feedback.success('CSR archived')
+    setArchiveId(null)
+    setActiveCsr(null)
+    invalidateListCache(CSR_CACHE_KEY)
+    await supabaseFetchAndCache()
+  }
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    setIsDeleting(true)
+    const { error } = await supabase.from("csrs").delete().eq("id", deleteId)
+    setIsDeleting(false)
     if (error) {
       feedback.error('Delete failed', {
-        description: 'Unable to delete CSR right now. Please try again.',
+        description: error.message,
       })
       return
     }
-    setCsrToDelete(null)
-    setCsrs(prev => prev.filter(c => c.id !== csr.id))
+    feedback.success('CSR deleted')
+    setDeleteId(null)
+    setActiveCsr(null)
     invalidateListCache(CSR_CACHE_KEY)
+    await supabaseFetchAndCache()
   }
 
   const handleRetryQueueItem = async (queueItemId: string) => {
@@ -475,16 +501,24 @@ export default function CSR() {
       <MobileFab onClick={() => navigate("/csr/new")} ariaLabel="Create CSR" />
 
       <ConfirmActionDialog
-        open={Boolean(csrToDelete)}
-        onOpenChange={(open) => {
-          if (!open) setCsrToDelete(null)
-        }}
+        open={archiveId !== null}
+        onOpenChange={(open) => !open && setArchiveId(null)}
+        title="Archive this CSR?"
+        description="This will move the CSR to the archive. You can restore it later from Settings."
+        confirmLabel="Archive"
+        loading={isArchiving}
+        onConfirm={handleArchive}
+      />
+
+      <ConfirmActionDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
         title="Delete this CSR?"
-        description="Delete this CSR permanently? This cannot be undone."
-        confirmLabel="Delete CSR"
-        onConfirm={() => {
-          if (csrToDelete) void handleDelete(csrToDelete)
-        }}
+        description="This action is permanent and cannot be undone."
+        confirmLabel="Delete"
+        variant="destructive"
+        loading={isDeleting}
+        onConfirm={handleDelete}
       />
       <InvoiceListActionSheet
         open={Boolean(activeCsr)}
@@ -531,12 +565,20 @@ export default function CSR() {
             onClick: () => setShowLinkedDocuments(true),
             closeOnClick: false,
           },
+          {
+            key: 'archive',
+            label: isArchiving ? 'Archiving...' : 'Archive',
+            icon: isArchiving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6" />,
+            onClick: () => setArchiveId(activeCsr.id),
+            closeOnClick: false,
+          },
         ] : []}
         deleteAction={activeCsr ? {
           key: "delete",
-          label: "Delete CSR",
-          icon: <Trash2 className="h-6 w-6" />,
-          onClick: () => setCsrToDelete(activeCsr),
+          label: isDeleting ? 'Deleting...' : 'Delete CSR',
+          icon: isDeleting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Trash2 className="h-6 w-6" />,
+          onClick: () => setDeleteId(activeCsr.id),
+          closeOnClick: false,
         } : undefined}
       />
       <LinkedDocumentsSheet

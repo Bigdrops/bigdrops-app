@@ -44,6 +44,10 @@ export default function Waybills() {
   const [activeWaybill, setActiveWaybill] = useState<Waybill | null>(null)
   const [activeWaybillInvoice, setActiveWaybillInvoice] = useState<{ id: string; invoice_number?: string | null } | null>(null)
   const [activeWaybillProject, setActiveWaybillProject] = useState<{ id: string; name?: string | null } | null>(null)
+  const [archiveId, setArchiveId] = useState<string | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isArchiving, setIsArchiving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const [showAttachInvoice, setShowAttachInvoice] = useState(false)
@@ -61,6 +65,7 @@ export default function Waybills() {
     const { data } = await supabase
       .from('waybills')
       .select('*')
+      .is('archived_at', null)
       .order('date', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
 
@@ -157,13 +162,34 @@ export default function Waybills() {
     { key: 'external', label: 'External' },
   ]
 
-  const handleDeleteWaybill = async () => {
-    if (!activeWaybill?.id) return
-    await supabase.from('waybills').delete().eq('id', activeWaybill.id)
-    const nextWaybills = waybills.filter((w) => w.id !== activeWaybill.id)
-    setWaybills(nextWaybills)
-    writeListCache(WAYBILLS_LIST_CACHE_KEY, nextWaybills)
+  const handleArchiveWaybill = async () => {
+    if (!archiveId) return
+    setIsArchiving(true)
+    const { error } = await supabase.from('waybills').update({ archived_at: new Date().toISOString() }).eq('id', archiveId)
+    setIsArchiving(false)
+    if (error) {
+      feedback.error('Archive failed', { description: error.message })
+      return
+    }
+    feedback.success('Waybill archived')
+    setArchiveId(null)
     setActiveWaybill(null)
+    await loadWaybills({ background: true })
+  }
+
+  const handleDeleteWaybill = async () => {
+    if (!deleteId) return
+    setIsDeleting(true)
+    const { error } = await supabase.from('waybills').delete().eq('id', deleteId)
+    setIsDeleting(false)
+    if (error) {
+      feedback.error('Delete failed', { description: error.message })
+      return
+    }
+    feedback.success('Waybill deleted')
+    setDeleteId(null)
+    setActiveWaybill(null)
+    await loadWaybills({ background: true })
   }
 
   const handleRetryQueueItem = async (queueItemId: string) => {
@@ -454,13 +480,40 @@ export default function Waybills() {
             onClick: () => setShowLinkedDocuments(true),
             closeOnClick: false,
           },
+          {
+            key: 'archive',
+            label: isArchiving ? 'Archiving...' : 'Archive',
+            icon: isArchiving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />,
+            onClick: () => setArchiveId(activeWaybill.id),
+            closeOnClick: false,
+          },
         ] : []}
         deleteAction={activeWaybill ? {
           key: 'delete',
-          label: 'Delete Waybill',
-          icon: <Trash2 size={20} />,
-          onClick: handleDeleteWaybill,
+          label: isDeleting ? 'Deleting...' : 'Delete Waybill',
+          icon: isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 size={20} />,
+          onClick: () => setDeleteId(activeWaybill.id),
+          closeOnClick: false,
         } : undefined}
+      />
+      <ConfirmActionDialog
+        open={archiveId !== null}
+        onOpenChange={(open) => !open && setArchiveId(null)}
+        title="Archive Waybill?"
+        description="This will move the waybill to the archive section. You can restore it later if needed."
+        confirmLabel="Archive"
+        loading={isArchiving}
+        onConfirm={handleArchiveWaybill}
+      />
+      <ConfirmActionDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete Waybill?"
+        description="Are you sure you want to delete this waybill? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="destructive"
+        loading={isDeleting}
+        onConfirm={handleDeleteWaybill}
       />
       <LinkedDocumentsSheet
         open={showLinkedDocuments}

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Archive, Eye, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { Rfq } from '@/domain/rfq/types'
 import { normalizeDbRfq } from '@/domain/rfq/normalize'
@@ -78,7 +78,10 @@ export const RfqList: React.FC = () => {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [activeRfq, setActiveRfq] = useState<Rfq | null>(null);
+  const [archiveId, setArchiveId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadRfqs = async () => {
     setLoading(true)
@@ -108,6 +111,7 @@ export const RfqList: React.FC = () => {
     const { data, error } = await supabase
       .from('rfqs')
       .select('*')
+      .is('archived_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -126,15 +130,39 @@ export const RfqList: React.FC = () => {
     loadRfqs();
   }, []);
 
+  const handleArchive = async (id: string) => {
+    setIsArchiving(true);
+    const { error } = await supabase.from('rfqs').update({ archived_at: new Date().toISOString() }).eq('id', id);
+    setIsArchiving(false);
+    if (error) {
+      feedback.error('Archive failed', { description: error.message });
+    } else {
+      feedback.success('RFQ archived');
+      setRfqs(prev => prev.filter(r => r.id !== id));
+      invalidateListCache(RFQ_CACHE_KEY);
+      setArchiveId(null);
+      setActiveRfq(null);
+    }
+  };
+
   const handleDelete = async (id: string) => {
-    setDeleteId(null);
+    setIsDeleting(true);
+    const { error: itemsError } = await supabase.from('rfq_items').delete().eq('rfq_id', id);
+    if (itemsError) {
+      setIsDeleting(false);
+      feedback.error('Delete failed', { description: itemsError.message });
+      return;
+    }
     const { error } = await supabase.from('rfqs').delete().eq('id', id);
+    setIsDeleting(false);
     if (error) {
        feedback.error('Delete failed', { description: error.message });
     } else {
        feedback.success('RFQ deleted');
        setRfqs(prev => prev.filter(r => r.id !== id))
        invalidateListCache(RFQ_CACHE_KEY);
+       setDeleteId(null);
+       setActiveRfq(null);
     }
   };
 
@@ -209,13 +237,31 @@ export const RfqList: React.FC = () => {
             icon: <Pencil className="h-6 w-6" />,
             onClick: () => navigate(`/rfqs/edit/${activeRfq.id}`),
           },
+          {
+            key: 'archive',
+            label: isArchiving ? 'Archiving...' : 'Archive',
+            icon: isArchiving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6" />,
+            onClick: () => setArchiveId(activeRfq.id!),
+            closeOnClick: false,
+          },
         ] : []}
         deleteAction={activeRfq ? {
           key: 'delete',
-          label: 'Delete RFQ',
-          icon: <Trash2 className="h-6 w-6" />,
+          label: isDeleting ? 'Deleting...' : 'Delete RFQ',
+          icon: isDeleting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Trash2 className="h-6 w-6" />,
           onClick: () => setDeleteId(activeRfq.id!),
+          closeOnClick: false,
         } : undefined}
+      />
+
+      <ConfirmActionDialog
+        open={archiveId !== null}
+        onOpenChange={(open) => !open && setArchiveId(null)}
+        title="Archive this RFQ?"
+        description="This will move the RFQ to the archive. You can restore it later from Settings."
+        confirmLabel="Archive"
+        loading={isArchiving}
+        onConfirm={() => archiveId && handleArchive(archiveId)}
       />
 
       <ConfirmActionDialog
@@ -223,7 +269,9 @@ export const RfqList: React.FC = () => {
         onOpenChange={(open) => !open && setDeleteId(null)}
         title="Delete this RFQ?"
         description="This action is permanent and cannot be undone."
-        confirmLabel="Delete RFQ"
+        confirmLabel="Delete"
+        variant="destructive"
+        loading={isDeleting}
         onConfirm={() => deleteId && handleDelete(deleteId)}
       />
     </ModuleShell>
