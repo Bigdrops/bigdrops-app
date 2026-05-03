@@ -54,6 +54,7 @@ const Boqs = lazy(() => import('@/pages/Boqs'))
 const NewBoq = lazy(() => import('@/pages/NewBoq'))
 const EditBoq = lazy(() => import('@/pages/EditBoq'))
 const ViewBoq = lazy(() => import('@/pages/ViewBoq'))
+const NotificationSettingsPage = lazy(() => import('@/pages/settings/NotificationSettingsPage'))
 const SetPasswordModal = lazy(() => import('@/components/app/SetPasswordModal'))
 
 type Profile = {
@@ -177,6 +178,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/clients/edit/:id" element={withBoundary(<EditClient />)} />
           <Route path="/clients/:id" element={withBoundary(<ClientDetail />)} />
           <Route path="/settings" element={withBoundary(<Settings />)} />
+          <Route path="/settings/notifications" element={withBoundary(<NotificationSettingsPage />)} />
           <Route path="/projects" element={withBoundary(<Projects />)} />
           <Route path="/projects/new" element={withBoundary(<NewProject />)} />
           <Route

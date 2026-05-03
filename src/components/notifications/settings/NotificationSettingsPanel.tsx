@@ -146,7 +146,7 @@ export function NotificationSettingsPanel({
 
   if (!userId) {
     return (
-      <div className="rounded-2xl border border-border bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
+      <div className="rounded-[var(--notification-radius)] border border-[var(--notification-border)] bg-[var(--notification-bg)] px-4 py-4 text-sm text-[var(--notification-muted-text)]">
         Sign in to manage notification preferences.
       </div>
     )
@@ -156,14 +156,14 @@ export function NotificationSettingsPanel({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-border bg-muted/20 px-4 py-3.5">
+      <div className="rounded-[var(--notification-radius)] border border-[var(--notification-border)] bg-[var(--notification-bg)] px-4 py-3.5">
         <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-background text-foreground shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--notification-radius)] bg-[var(--notification-bg)] text-[var(--notification-text)] shadow-sm border border-[var(--notification-border)]">
             <BellRing size={16} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-bold text-foreground">Notification Preferences</div>
-            <div className="mt-0.5 text-[12px] leading-5 text-muted-foreground">
+            <div className="text-sm font-bold text-[var(--notification-text)]">Notification Preferences</div>
+            <div className="mt-0.5 text-[12px] leading-5 text-[var(--notification-muted-text)]">
               Choose which reminders stay active. Reminder days are multi-select, and push
               stays a delivery channel separate from device platform.
             </div>
@@ -173,7 +173,7 @@ export function NotificationSettingsPanel({
 
       <div className="space-y-2">
         <div className="px-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--notification-muted-text)]">
             Channels
           </p>
         </div>
@@ -215,7 +215,7 @@ export function NotificationSettingsPanel({
 
       <div className="space-y-2">
         <div className="px-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--notification-muted-text)]">
             Invoice unpaid reminders
           </p>
         </div>
@@ -243,7 +243,7 @@ export function NotificationSettingsPanel({
 
       <div className="space-y-2">
         <div className="px-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--notification-muted-text)]">
             Due date reminders
           </p>
         </div>
@@ -269,7 +269,7 @@ export function NotificationSettingsPanel({
 
       <div className="space-y-2">
         <div className="px-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--notification-muted-text)]">
             Overdue reminders
           </p>
         </div>
@@ -297,15 +297,15 @@ export function NotificationSettingsPanel({
 
       <div className="space-y-2">
         <div className="px-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--notification-muted-text)]">
             Diagnostics
           </p>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-[var(--notification-radius)] border border-[var(--notification-border)] bg-[var(--notification-bg)] p-4 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-foreground">Test Delivery</div>
-              <div className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+              <div className="text-sm font-bold text-[var(--notification-text)]">Test Delivery</div>
+              <div className="mt-0.5 text-[12px] leading-relaxed text-[var(--notification-muted-text)]">
                 Trigger a manual push notification to verify your device registration and token
                 validity.
               </div>
@@ -314,10 +314,10 @@ export function NotificationSettingsPanel({
               onClick={handleTestPush}
               disabled={testingPush || !preferences.channels.push}
               className={cn(
-                'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all active:scale-95 disabled:opacity-50',
+                'inline-flex items-center gap-2 rounded-[var(--notification-radius)] px-4 py-2 text-xs font-bold transition-all active:scale-95 disabled:opacity-50',
                 preferences.channels.push
-                  ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] hover:bg-[hsl(var(--bd-button-primary-bg))]/90 shadow-md shadow-slate-900/10'
-                  : 'bg-muted text-muted-foreground border border-border cursor-not-allowed',
+                  ? 'bg-[var(--notification-active-bg)] text-[var(--notification-active-text)] hover:opacity-90'
+                  : 'bg-[var(--notification-bg)] text-[var(--notification-muted-text)] border border-[var(--notification-border)] cursor-not-allowed',
               )}
             >
               {testingPush ? (
@@ -332,7 +332,7 @@ export function NotificationSettingsPanel({
       </div>
 
       {error ? (
-        <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+        <div className="rounded-[var(--notification-radius)] border border-[var(--notification-danger)]/20 bg-[var(--notification-danger)]/5 px-3 py-2 text-xs text-[var(--notification-danger)]">
           {error}
         </div>
       ) : null}

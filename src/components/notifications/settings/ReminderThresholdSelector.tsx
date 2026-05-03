@@ -33,11 +33,11 @@ export function ReminderThresholdSelector({
   helperText?: string
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card">
-      <div className="border-b border-border px-4 py-3.5">
-        <div className="text-sm font-bold text-foreground">{title}</div>
+    <div className="rounded-[var(--notification-radius)] border border-[var(--notification-border)] bg-[var(--notification-bg)]">
+      <div className="border-b border-[var(--notification-border)] px-4 py-3.5">
+        <div className="text-sm font-bold text-[var(--notification-text)]">{title}</div>
         {description ? (
-          <div className="mt-0.5 text-[12px] leading-5 text-muted-foreground">
+          <div className="mt-0.5 text-[12px] leading-5 text-[var(--notification-muted-text)]">
             {description}
           </div>
         ) : null}
@@ -57,8 +57,8 @@ export function ReminderThresholdSelector({
                 className={cn(
                   'inline-flex items-center rounded-full border px-3 py-2 text-sm font-medium transition-colors',
                   active
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border bg-background text-foreground hover:bg-muted',
+                    ? 'border-[var(--notification-active-bg)] bg-[var(--notification-active-bg)] text-[var(--notification-active-text)]'
+                    : 'border-[var(--notification-border)] bg-[var(--notification-bg)] text-[var(--notification-text)] hover:opacity-80',
                 )}
               >
                 {option.label}
@@ -68,8 +68,8 @@ export function ReminderThresholdSelector({
         </div>
 
         {helperText ? (
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            <Badge variant="outline" className="bg-muted/50">
+          <div className="flex items-center gap-2 text-[11px] text-[var(--notification-muted-text)]">
+            <Badge variant="outline" className="bg-[var(--notification-bg)] border-[var(--notification-border)]">
               Multi-select
             </Badge>
             <span>{helperText}</span>
@@ -77,26 +77,27 @@ export function ReminderThresholdSelector({
         ) : null}
 
         {onCustomValueChange && onAddCustomDay ? (
-          <div className="rounded-xl border border-dashed border-border bg-muted/20 p-3">
+          <div className="rounded-[var(--notification-radius)] border border-dashed border-[var(--notification-border)] bg-[var(--notification-bg)] p-3">
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 value={customValue || ''}
                 onChange={(event) => onCustomValueChange(event.target.value)}
                 placeholder="Add custom day"
                 inputMode="numeric"
+                className="bg-[var(--notification-bg)] border-[var(--notification-border)] text-[var(--notification-text)]"
               />
               <Button
                 type="button"
                 variant="outline"
                 onClick={onAddCustomDay}
-                className="sm:w-auto"
+                className="sm:w-auto border-[var(--notification-border)] text-[var(--notification-text)] hover:bg-[var(--notification-muted-text)]/10"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Add custom day
               </Button>
             </div>
             {customError ? (
-              <div className="mt-2 text-[11px] font-medium text-destructive">
+              <div className="mt-2 text-[11px] font-medium text-[var(--notification-danger)]">
                 {customError}
               </div>
             ) : null}

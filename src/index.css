@@ -68,6 +68,16 @@
   --tone-success-foreground: var(--tone-success);
   --tone-warning-foreground: var(--tone-warning);
   --tone-data-foreground: var(--tone-data);
+
+  /* Notification Tokens */
+  --notification-bg: hsl(var(--card));
+  --notification-border: hsl(var(--border));
+  --notification-text: hsl(var(--foreground));
+  --notification-muted-text: hsl(var(--muted-foreground));
+  --notification-active-bg: hsl(var(--primary));
+  --notification-active-text: hsl(var(--primary-foreground));
+  --notification-danger: hsl(var(--destructive));
+  --notification-radius: var(--radius);
 }
 
 .dark {
@@ -105,6 +115,16 @@
   --tone-success-foreground: var(--tone-success);
   --tone-warning-foreground: var(--tone-warning);
   --tone-data-foreground: var(--tone-data);
+
+  /* Notification Tokens */
+  --notification-bg: hsl(var(--card));
+  --notification-border: hsl(var(--border));
+  --notification-text: hsl(var(--foreground));
+  --notification-muted-text: hsl(var(--muted-foreground));
+  --notification-active-bg: hsl(var(--primary));
+  --notification-active-text: hsl(var(--primary-foreground));
+  --notification-danger: hsl(var(--destructive));
+  --notification-radius: var(--radius);
 }
 
 @layer base {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ChevronLeft, LockKeyhole, X } from 'lucide-react'
+import { Bell, ChevronLeft, ChevronRight, LockKeyhole, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/supabase'
-import { NotificationSettingsPanel } from '@/components/notifications/settings/NotificationSettingsPanel'
 import { SettingsField, SettingsSummaryField } from './SettingsFormPrimitives'
 import { pageFormPrimaryActionClassName } from '@/components/ui/form-page-styles'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
@@ -20,6 +20,7 @@ export function UserSettingsSection({
   session: SettingsSession
   onToast: SettingsToastFn
 }) {
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<PasswordForm>({
     currentPassword: '',
@@ -169,7 +170,23 @@ export function UserSettingsSection({
         </div>
       </div>
 
-      <NotificationSettingsPanel userId={session?.user?.id} onToast={onToast} />
+      <button
+        onClick={() => navigate('/settings/notifications')}
+        className="group w-full overflow-hidden rounded-[var(--notification-radius,1rem)] border border-slate-200/80 bg-card shadow-sm transition-all hover:bg-slate-50/80 active:scale-[0.99]"
+      >
+        <div className="flex items-center gap-4 px-4 py-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-100">
+            <Bell size={20} />
+          </div>
+          <div className="min-w-0 flex-1 text-left">
+            <div className="text-sm font-bold text-slate-900">Notification Settings</div>
+            <div className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
+              Manage your reminder preferences and delivery channels.
+            </div>
+          </div>
+          <ChevronRight size={18} className="text-slate-300 transition-transform group-hover:translate-x-0.5" />
+        </div>
+      </button>
 
       {canUseAndroidNativeSqlite() ? (
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">

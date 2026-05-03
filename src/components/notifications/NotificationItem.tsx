@@ -42,19 +42,18 @@ export default function NotificationItem({ notification, onSelect }: Notificatio
       onClick={() => onSelect(notification)}
       className={cn(
         'group flex w-full gap-3 border text-left transition-colors',
-        'bg-[var(--notification-bg,hsl(var(--card)))]',
-        'border-[var(--notification-border,hsl(var(--border)))]',
-        'text-[var(--notification-text,hsl(var(--foreground)))]',
-        'rounded-[var(--notification-radius,var(--radius))]',
-        'shadow-[var(--notification-shadow,none)]',
-        'hover:bg-[var(--notification-itemHover,hsl(var(--muted)/0.55))]',
+        'bg-[var(--notification-bg)]',
+        'border-[var(--notification-border)]',
+        'text-[var(--notification-text)]',
+        'rounded-[var(--notification-radius)]',
+        'hover:opacity-90',
         unread ? 'opacity-100' : 'opacity-75',
       )}
     >
-      <span className="relative mt-3 ml-3 grid size-9 shrink-0 place-items-center rounded-[var(--notification-radius,var(--radius))] bg-[var(--notification-info,hsl(var(--muted)))]">
+      <span className="relative mt-3 ml-3 grid size-9 shrink-0 place-items-center rounded-[var(--notification-radius)] bg-[var(--notification-bg)] border border-[var(--notification-border)]">
         <Icon className="size-4" />
         {unread && (
-          <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-[var(--notification-unreadIndicator,hsl(var(--primary)))]" />
+          <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-[var(--notification-active-bg)]" />
         )}
       </span>
 
@@ -63,13 +62,13 @@ export default function NotificationItem({ notification, onSelect }: Notificatio
           <span className="line-clamp-2 text-sm font-semibold tracking-[-0.02em]">
             {notification.title}
           </span>
-          <span className="shrink-0 text-[11px] text-[var(--notification-mutedText,hsl(var(--muted-foreground)))]">
+          <span className="shrink-0 text-[11px] text-[var(--notification-muted-text)]">
             {formatTime(notification.created_at)}
           </span>
         </span>
 
         {notification.message ? (
-          <span className="mt-1 line-clamp-2 block text-xs leading-5 text-[var(--notification-mutedText,hsl(var(--muted-foreground)))]">
+          <span className="mt-1 line-clamp-2 block text-xs leading-5 text-[var(--notification-muted-text)]">
             {notification.message}
           </span>
         ) : null}
