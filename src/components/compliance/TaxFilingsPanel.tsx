@@ -358,7 +358,7 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
               <Button
                 onClick={handleSave}
                 loading={saving}
-                className="w-full h-10 bg-slate-900 text-white text-xs font-black uppercase tracking-widest rounded-lg shadow border-slate-800"
+                className="w-full h-10 bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] text-xs font-black uppercase tracking-widest rounded-lg shadow border-[hsl(var(--bd-border))]"
               >
                 Save Filing
               </Button>

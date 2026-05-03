@@ -332,7 +332,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
               <Button
                 onClick={handleSave}
                 loading={saving}
-                className="w-full h-12 bg-slate-900 text-white font-bold rounded-2xl shadow-lg border-slate-800 transition-all hover:scale-[1.01] active:scale-100"
+                className="w-full h-12 bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] font-bold rounded-2xl shadow-lg border-[hsl(var(--bd-border))] transition-all hover:scale-[1.01] active:scale-100"
               >
                 {editingReminder?.id ? 'Update Reminder' : 'Save Reminder'}
               </Button>

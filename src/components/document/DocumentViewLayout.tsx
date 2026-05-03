@@ -684,7 +684,7 @@ export function DocumentFloatingFab({ onClick, label = 'Download PDF' }: Documen
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="fixed bottom-28 right-4 z-20 grid h-14 w-14 place-items-center rounded-[18px] bg-slate-950 text-white shadow-[0_16px_36px_-18px_rgba(15,23,42,0.7)] transition hover:bg-slate-800 md:right-6"
+      className="fixed bottom-28 right-4 z-20 grid h-14 w-14 place-items-center rounded-[18px] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] shadow-[0_16px_36px_-18px_rgba(15,23,42,0.7)] transition hover:bg-[hsl(var(--bd-button-primary-bg))]/90 md:right-6"
     >
       <Download className="h-5 w-5" />
     </button>

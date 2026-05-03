@@ -316,7 +316,7 @@ export function NotificationSettingsPanel({
               className={cn(
                 'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all active:scale-95 disabled:opacity-50',
                 preferences.channels.push
-                  ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-md shadow-slate-900/10'
+                  ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] hover:bg-[hsl(var(--bd-button-primary-bg))]/90 shadow-md shadow-slate-900/10'
                   : 'bg-muted text-muted-foreground border border-border cursor-not-allowed',
               )}
             >

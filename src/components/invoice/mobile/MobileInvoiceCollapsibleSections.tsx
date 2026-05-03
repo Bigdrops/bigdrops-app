@@ -244,7 +244,7 @@ export function MobileInvoiceFooterActions({
                 type="button"
                 onClick={onSaveSent}
                 disabled={saving}
-                className="h-[52px] rounded-[14px] border-0 bg-[#0f172a] text-[15px] font-extrabold text-white shadow-[0_4px_18px_rgba(15,23,42,0.22)] disabled:opacity-60"
+                className="h-[52px] rounded-[14px] border-0 bg-[hsl(var(--bd-button-primary-bg))] text-[15px] font-extrabold text-[hsl(var(--bd-button-primary-text))] shadow-[0_4px_18px_rgba(15,23,42,0.22)] disabled:opacity-60"
               >
                 {saving ? 'Saving…' : primaryLabel}
               </button>
@@ -257,7 +257,7 @@ export function MobileInvoiceFooterActions({
         type="button"
         onClick={onFloatingSave}
         disabled={saving}
-        className="fixed bottom-[92px] right-4 z-[60] flex h-[52px] w-[52px] items-center justify-center rounded-[16px] bg-[#0f172a] text-white shadow-[0_8px_24px_rgba(15,23,42,0.28)] disabled:opacity-60"
+        className="fixed bottom-[92px] right-4 z-[60] flex h-[52px] w-[52px] items-center justify-center rounded-[16px] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] shadow-[0_8px_24px_rgba(15,23,42,0.28)] disabled:opacity-60"
       >
         <Save className="h-5 w-5" />
       </button>

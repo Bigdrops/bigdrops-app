@@ -210,7 +210,7 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
             </div>
 
             <div className="pt-4">
-              <Button onClick={handleSave} disabled={saving} className="w-full h-11 bg-slate-900 text-white font-bold rounded-xl shadow-lg border-slate-800">
+              <Button onClick={handleSave} disabled={saving} className="w-full h-11 bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] font-bold rounded-xl shadow-lg border-[hsl(var(--bd-border))]">
                 {saving ? 'Saving...' : 'Save Entry'}
               </Button>
             </div>

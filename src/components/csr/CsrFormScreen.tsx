@@ -534,7 +534,7 @@ export default function CsrFormScreen({
                 type="button"
                 onClick={() => onUpdateMeta('materialsOutputStyle', 'comma')}
                 className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${
-                  csrMeta.materialsOutputStyle === 'comma' ? 'bg-slate-900 text-white' : 'text-[hsl(var(--bd-text-muted))]'
+                  csrMeta.materialsOutputStyle === 'comma' ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]' : 'text-[hsl(var(--bd-text-muted))]'
                 }`}
               >
                 Comma
@@ -543,7 +543,7 @@ export default function CsrFormScreen({
                 type="button"
                 onClick={() => onUpdateMeta('materialsOutputStyle', 'list')}
                 className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${
-                  csrMeta.materialsOutputStyle !== 'comma' ? 'bg-slate-900 text-white' : 'text-[hsl(var(--bd-text-muted))]'
+                  csrMeta.materialsOutputStyle !== 'comma' ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]' : 'text-[hsl(var(--bd-text-muted))]'
                 }`}
               >
                 Enumerate
@@ -632,7 +632,7 @@ export default function CsrFormScreen({
                   <button
                     type="button"
                     onClick={() => setSignatorySheetOpen(true)}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-slate-900 bg-slate-900 px-[13px] text-[12px] font-bold text-white"
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))] px-[13px] text-[12px] font-bold text-[hsl(var(--bd-button-primary-text))]"
                   >
                     {selectedSignatory ? 'Change signatory' : 'Choose signatory'}
                   </button>
@@ -701,7 +701,7 @@ export default function CsrFormScreen({
                   <button
                     type="button"
                     onClick={() => recipientSignatureInputRef.current?.click()}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-slate-900 bg-slate-900 px-[13px] text-[12px] font-bold text-white"
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))] px-[13px] text-[12px] font-bold text-[hsl(var(--bd-button-primary-text))]"
                   >
                     Upload signature
                   </button>
@@ -765,12 +765,12 @@ export default function CsrFormScreen({
                       setSignatorySheetOpen(false)
                     }}
                     className={`w-full rounded-[16px] border p-4 text-left ${
-                      active ? 'border-[#0f172a] bg-[#0f172a] text-white' : 'border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text))]'
+                      active ? 'border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]' : 'border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text))]'
                     }`}
                   >
                     <div className="text-[14px] font-bold">{signatory.name}</div>
                     {signatory.role ? (
-                      <div className={`mt-1 text-[12px] ${active ? 'text-slate-300' : 'text-[hsl(var(--bd-text-muted))]'}`}>
+                      <div className={`mt-1 text-[12px] ${active ? 'text-[hsl(var(--bd-text-muted))]' : 'text-[hsl(var(--bd-text-muted))]'}`}>
                         {signatory.role}
                       </div>
                     ) : null}

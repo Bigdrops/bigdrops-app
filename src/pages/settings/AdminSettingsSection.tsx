@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Loader2, Smartphone, Trash2, UserCheck, UserX } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { pageFormPrimaryActionClassName } from '@/components/ui/form-page-styles'
 import { supabase } from '@/supabase'
 import { adminUpdateDeviceAssignment } from '@/lib/native/deviceAssignment'
 import { getErrorMessage } from './settings-helpers'
@@ -453,7 +454,7 @@ export function AdminSettingsSection({
                     type="button"
                     onClick={() => updateDeviceCode(device)}
                     disabled={actionId === device.id || codeValue === device.device_code}
-                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+                    className={`rounded-lg ${pageFormPrimaryActionClassName} px-4 py-2 text-xs font-bold uppercase tracking-wide transition-colors disabled:opacity-50`}
                   >
                     {actionId === device.id ? (
                       <span className="inline-flex items-center gap-1">

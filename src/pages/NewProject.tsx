@@ -210,7 +210,7 @@ export default function NewProject() {
           </Button>
           <Button
             type="button"
-            className={`${pageFormPrimaryActionClassName} flex-[2] bg-slate-900 text-white hover:bg-slate-800`}
+            className={`${pageFormPrimaryActionClassName} flex-[2] hover:opacity-90`}
             onClick={() => void handleSave()}
             disabled={saving}
           >

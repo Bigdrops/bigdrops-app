@@ -3,6 +3,7 @@ import { ChevronLeft, LockKeyhole, X } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { NotificationSettingsPanel } from '@/components/notifications/settings/NotificationSettingsPanel'
 import { SettingsField, SettingsSummaryField } from './SettingsFormPrimitives'
+import { pageFormPrimaryActionClassName } from '@/components/ui/form-page-styles'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import type { SettingsSession, SettingsToastFn } from './settings-types'
 
@@ -325,7 +326,7 @@ export function UserSettingsSection({
                     !meetsRequirements ||
                     !passwordsMatch
                   }
-                  className="flex-1 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+                  className={`flex-1 rounded-xl ${pageFormPrimaryActionClassName} px-4 py-3 text-sm font-bold transition-colors disabled:opacity-50`}
                 >
                   {saving ? 'Saving...' : 'Save'}
                 </button>

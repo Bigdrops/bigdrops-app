@@ -215,7 +215,7 @@ export default function PdfOutputCustomizeSheet({
 
         <button
           type="button"
-          className="h-11 w-full rounded-[18px] bg-slate-950 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-11 w-full rounded-[18px] bg-[hsl(var(--bd-button-primary-bg))] text-sm font-semibold text-[hsl(var(--bd-button-primary-text))] transition hover:bg-[hsl(var(--bd-button-primary-bg))]/90 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={saving}
           onClick={() => void handleSave()}
         >
