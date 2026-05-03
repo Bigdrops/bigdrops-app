@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Download } from 'lucide-react'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
 
 // Shared Report Types & Utils
 import {
@@ -14,14 +11,44 @@ import {
 } from '@/components/reports/reportTypes'
 import { safeDate, getPresetRange } from '@/components/reports/reportUtils'
 
+// Shell Components
+import { ReportsShell } from '@/components/reports/ReportsShell'
+import { ReportsNav } from '@/components/reports/ReportsNav'
+import { ReportsHeader } from '@/components/reports/ReportsHeader'
+import { ReportsFilterBar } from '@/components/reports/ReportsFilterBar'
+
 // Report Sections
+import { OverviewSection } from '@/components/reports/OverviewSection'
 import { ReceivablesSection } from '@/components/reports/ReceivablesSection'
 import { CollectionsSection } from '@/components/reports/CollectionsSection'
 import { ProjectsSection } from '@/components/reports/ProjectsSection'
 import { TaxSection } from '@/components/reports/TaxSection'
 
+const TAB_METADATA: Record<ReportTab, { title: string; description: string }> = {
+  overview: {
+    title: 'Financial Overview',
+    description: 'High-level perspective of your receivables, collections, and tax liability.'
+  },
+  receivables: {
+    title: 'Account Receivables',
+    description: 'Detailed analysis of outstanding invoices, client debt, and aging buckets.'
+  },
+  collections: {
+    title: 'Collections Registry',
+    description: 'Comprehensive log of all payments received across all projects.'
+  },
+  projects: {
+    title: 'Project Performance',
+    description: 'Profitability analysis and financial health tracking per project.'
+  },
+  tax: {
+    title: 'Tax Positions',
+    description: 'Calculated VAT and Withholding Tax positions for compliance tracking.'
+  }
+}
+
 export default function Reports() {
-  const [tab, setTab] = useState<ReportTab>('receivables')
+  const [tab, setTab] = useState<ReportTab>('overview')
   const [datePreset, setDatePreset] = useState<DatePreset>('this_month')
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
@@ -120,126 +147,109 @@ export default function Reports() {
     }
   }, [tab, rangeKey, collectionsLoadedRange, collectionsLoading, queryStart, queryEnd, loadCollections])
 
+  const activeMetadata = TAB_METADATA[tab]
+
   return (
-    <Layout title="Reports" session={null} contentClassName="bg-[hsl(var(--bd-surface))]">
-      <div className="w-full space-y-6">
-        <div className="space-y-6">
-          {/* Operational Header */}
-          <div className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-1.5">
-                <div className="bg-[hsl(var(--bd-status-success-text))] rounded-full h-1.5 w-1.5 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-success-text))]">Finance Intelligence</span>
-              </div>
-              <h1 className="text-xl font-black tracking-tight text-[hsl(var(--bd-text))]">Financial Reports</h1>
-              <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))] leading-relaxed max-w-md">
-                Review receivables, collections, and tax positions across all projects.
-              </p>
-            </div>
-            <div className="flex shrink-0">
-               <Button variant="outline" className="w-full md:w-auto h-10 px-6 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-sm gap-2">
-                 <Download className="h-3.5 w-3.5" />
-                 Export Report
-               </Button>
-            </div>
-          </div>
-          
-          <Tabs value={tab} onValueChange={(value) => setTab(value as ReportTab)} className="w-full">
-            <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-2 shadow-sm">
-              <div className="overflow-x-auto">
-                <TabsList className="inline-flex h-auto w-max gap-1 bg-[hsl(var(--bd-surface-muted))] p-1 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))]/50">
-                  <TabsTrigger value="receivables" className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm">Receivables</TabsTrigger>
-                  <TabsTrigger value="collections" className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm">Collections</TabsTrigger>
-                  <TabsTrigger value="projects" className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm">Projects</TabsTrigger>
-                  <TabsTrigger value="tax" className="rounded-[var(--bd-radius-lg)] px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-[hsl(var(--bd-overlay-bg))] data-[state=active]:text-[hsl(var(--bd-overlay-text))] data-[state=active]:shadow-sm">Tax</TabsTrigger>
-                </TabsList>
-              </div>
-            </div>
+    <Layout title="Reports" session={null} contentClassName="bg-[hsl(var(--bd-surface))]" hidePageHeader>
+      <ReportsShell
+        header={
+          <ReportsHeader 
+            title={activeMetadata.title}
+            description={activeMetadata.description}
+            onExport={() => console.log('Exporting data for', tab)}
+          />
+        }
+        navigation={
+          <ReportsNav activeTab={tab} onTabChange={setTab} />
+        }
+        filterBar={
+          <ReportsFilterBar 
+            datePreset={datePreset}
+            setDatePreset={setDatePreset}
+            customStart={customStart}
+            setCustomStart={setCustomStart}
+            customEnd={customEnd}
+            setCustomEnd={setCustomEnd}
+            clientFilter={clientFilter}
+            setClientFilter={setClientFilter}
+            search={search}
+            setSearch={setSearch}
+          />
+        }
+      >
+        <OverviewSection isActive={tab === 'overview'} />
 
-            <div className="mt-4 space-y-4">
-              <TabsContent value="receivables" className="mt-0 space-y-4">
-                <ReceivablesSection
-                  isActive={tab === 'receivables'}
-                  start={start}
-                  end={end}
-                  rangeKey={rangeKey}
-                  clientFilter={clientFilter}
-                  setClientFilter={setClientFilter}
-                  search={search}
-                  setSearch={setSearch}
-                  datePreset={datePreset}
-                  setDatePreset={setDatePreset}
-                  customStart={customStart}
-                  setCustomStart={setCustomStart}
-                  customEnd={customEnd}
-                  setCustomEnd={setCustomEnd}
-                />
-              </TabsContent>
+        <ReceivablesSection
+          isActive={tab === 'receivables'}
+          start={start}
+          end={end}
+          rangeKey={rangeKey}
+          clientFilter={clientFilter}
+          setClientFilter={setClientFilter}
+          search={search}
+          setSearch={setSearch}
+          datePreset={datePreset}
+          setDatePreset={setDatePreset}
+          customStart={customStart}
+          setCustomStart={setCustomStart}
+          customEnd={customEnd}
+          setCustomEnd={setCustomEnd}
+        />
 
-              <TabsContent value="collections" className="mt-0 space-y-4">
-                <CollectionsSection
-                  isActive={tab === 'collections'}
-                  start={start}
-                  end={end}
-                  rangeKey={rangeKey}
-                  clientFilter={clientFilter}
-                  setClientFilter={setClientFilter}
-                  search={search}
-                  setSearch={setSearch}
-                  datePreset={datePreset}
-                  setDatePreset={setDatePreset}
-                  customStart={customStart}
-                  setCustomStart={setCustomStart}
-                  customEnd={customEnd}
-                  setCustomEnd={setCustomEnd}
-                  // Shared data pattern
-                  collections={collections}
-                  isLoading={collectionsLoading || collectionsLoadedRange !== rangeKey}
-                  error={collectionsError}
-                />
-              </TabsContent>
+        <CollectionsSection
+          isActive={tab === 'collections'}
+          start={start}
+          end={end}
+          rangeKey={rangeKey}
+          clientFilter={clientFilter}
+          setClientFilter={setClientFilter}
+          search={search}
+          setSearch={setSearch}
+          datePreset={datePreset}
+          setDatePreset={setDatePreset}
+          customStart={customStart}
+          setCustomStart={setCustomStart}
+          customEnd={customEnd}
+          setCustomEnd={setCustomEnd}
+          collections={collections}
+          isLoading={collectionsLoading || collectionsLoadedRange !== rangeKey}
+          error={collectionsError}
+        />
 
-              <TabsContent value="projects" className="mt-0 space-y-4">
-                <ProjectsSection
-                  isActive={tab === 'projects'}
-                  rangeKey={rangeKey}
-                  clientFilter={clientFilter}
-                  setClientFilter={setClientFilter}
-                  search={search}
-                  setSearch={setSearch}
-                  datePreset={datePreset}
-                  setDatePreset={setDatePreset}
-                  customStart={customStart}
-                  setCustomStart={setCustomStart}
-                  customEnd={customEnd}
-                  setCustomEnd={setCustomEnd}
-                />
-              </TabsContent>
+        <ProjectsSection
+          isActive={tab === 'projects'}
+          rangeKey={rangeKey}
+          clientFilter={clientFilter}
+          setClientFilter={setClientFilter}
+          search={search}
+          setSearch={setSearch}
+          datePreset={datePreset}
+          setDatePreset={setDatePreset}
+          customStart={customStart}
+          setCustomStart={setCustomStart}
+          customEnd={customEnd}
+          setCustomEnd={setCustomEnd}
+        />
 
-              <TabsContent value="tax" className="mt-0 space-y-4">
-                <TaxSection
-                  isActive={tab === 'tax'}
-                  start={start}
-                  end={end}
-                  rangeKey={rangeKey}
-                  clientFilter={clientFilter}
-                  setClientFilter={setClientFilter}
-                  search={search}
-                  setSearch={setSearch}
-                  datePreset={datePreset}
-                  setDatePreset={setDatePreset}
-                  customStart={customStart}
-                  setCustomStart={setCustomStart}
-                  customEnd={customEnd}
-                  setCustomEnd={setCustomEnd}
-                  collections={collections}
-                  isCollectionsLoading={collectionsLoading || collectionsLoadedRange !== rangeKey}
-                />
-              </TabsContent>
-            </div>
-          </Tabs>
-        </div>
-      </div>
+        <TaxSection
+          isActive={tab === 'tax'}
+          start={start}
+          end={end}
+          rangeKey={rangeKey}
+          clientFilter={clientFilter}
+          setClientFilter={setClientFilter}
+          search={search}
+          setSearch={setSearch}
+          datePreset={datePreset}
+          setDatePreset={setDatePreset}
+          customStart={customStart}
+          setCustomStart={setCustomStart}
+          customEnd={customEnd}
+          setCustomEnd={setCustomEnd}
+          collections={collections}
+          isCollectionsLoading={collectionsLoading || collectionsLoadedRange !== rangeKey}
+        />
+      </ReportsShell>
     </Layout>
   )
 }

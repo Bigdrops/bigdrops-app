@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type ReportTab = 'receivables' | 'collections' | 'projects' | 'tax'
+export type ReportTab = 'overview' | 'receivables' | 'collections' | 'projects' | 'tax'
 export type DatePreset = 'this_month' | 'last_month' | 'this_quarter' | 'custom'
 export type ReceivablesFilter = 'all' | 'unpaid' | 'paid' | 'past_due'
 export type MetricTone = 'green' | 'red' | 'amber' | 'blue'
