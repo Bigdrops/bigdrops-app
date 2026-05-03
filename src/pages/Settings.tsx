@@ -48,21 +48,21 @@ export default function Settings() {
       case 'branding':
         return <BrandingSettingsSection />
       case 'banking':
-        return <BankingSettingsSection onToast={showToast} />
+        return <BankingSettingsSection />
       case 'signatories':
         return <SignatoriesSettingsSection />
       case 'theme':
-        return <AppThemeSettingsSection onToast={showToast} />
+        return <AppThemeSettingsSection />
       case 'notifications':
         return <NotificationSettingsPage />
       case 'dashboard':
         return <DashboardSettingsSection />
       case 'documents':
-        return <DocumentsSettingsSection onToast={showToast} />
+        return <DocumentsSettingsSection />
       case 'archives':
-        return <ArchivesSettingsSection onToast={showToast} />
+        return <ArchivesSettingsSection />
       case 'admin':
-        return <AdminSettingsSection onToast={showToast} session={session} />
+        return <AdminSettingsSection session={session} />
       default:
         return null
     }

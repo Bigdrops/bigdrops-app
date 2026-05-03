@@ -1,16 +1,24 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Palette, RotateCcw, Sparkles } from 'lucide-react'
+import { CheckCircle2, Palette, RotateCcw, Sparkles, Check, Pencil } from 'lucide-react'
 import { saveSettings, useSettings } from '@/hooks/useSettings'
 import { normalizeHexColor } from '@/lib/colorTheme'
 import { BASE_THEME_MODE, THEME_PRESETS, type FixedThemePresetId, type ThemeMode, resolveThemeMode } from '@/lib/themePresets'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { SettingsField, SettingsInput, SettingsSaveButton } from './SettingsFormPrimitives'
+import { SettingsField, SettingsInput } from './SettingsFormPrimitives'
 import { SettingsLoadingState } from './SettingsLoadingState'
 import { getErrorMessage } from './settings-helpers'
-import type { SettingsToastFn } from './settings-types'
+import { SettingsSummaryCard, SettingsSummaryRow } from '@/components/settings/SettingsSummaryCard'
+import { SettingsActionFooter } from '@/components/settings/SettingsActionFooter'
+import { feedback } from '@/lib/feedback'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet'
 
 const BASE_BACKGROUND = '#EDF1F5'
 const BASE_CARD = '#FFFFFF'
@@ -38,57 +46,60 @@ function PresetCard({ title, description, preview, selected, onSelect }: PresetC
       type="button"
       onClick={onSelect}
       className={cn(
-        'text-left transition-transform active:scale-[0.99]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30'
+        'group text-left transition-all active:scale-[0.98] outline-none',
       )}
     >
-      <Card
+      <div
         className={cn(
-          'h-full border bg-card/95 shadow-sm ring-1 ring-transparent transition-colors',
+          'h-full rounded-[var(--bd-radius-xl)] border p-4 transition-all',
           selected
-            ? 'border-primary bg-primary/5 ring-primary/20'
-            : 'border-border hover:border-primary/30 hover:bg-muted/30'
+            ? 'border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg)/0.03)] ring-1 ring-[hsl(var(--bd-button-primary-bg)/0.2)]'
+            : 'border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] hover:border-[hsl(var(--bd-border))] hover:bg-[hsl(var(--bd-surface-muted)/0.3)]'
         )}
       >
-        <CardHeader className="gap-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1">
-              <CardTitle className="text-sm font-semibold">{title}</CardTitle>
-              <CardDescription className="text-[11px] leading-relaxed">
-                {description}
-              </CardDescription>
-            </div>
-            {selected ? <CheckCircle2 className="h-4 w-4 text-primary" /> : null}
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="space-y-1">
+            <h4 className="text-sm font-bold text-[hsl(var(--bd-text))]">{title}</h4>
+            <p className="text-[11px] leading-relaxed text-[hsl(var(--bd-text-muted))]">
+              {description}
+            </p>
           </div>
-          <div
-            className="rounded-xl border border-border/70 p-2"
-            style={{ backgroundColor: preview.background }}
-          >
-            <div className="flex items-center gap-2 rounded-lg p-2" style={{ backgroundColor: preview.card }}>
-              <div className="h-6 w-6 rounded-md" style={{ backgroundColor: preview.primary }} />
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="h-2.5 w-16 rounded-full bg-black/15" />
-                <div className="h-2 w-12 rounded-full bg-black/10" />
-              </div>
-              <div
-                className="h-6 w-10 rounded-md"
-                style={{ backgroundColor: preview.accent }}
-              />
-            </div>
+          <div className={cn(
+            "flex h-5 w-5 items-center justify-center rounded-full border transition-all",
+            selected ? "border-emerald-500 bg-emerald-500 text-white" : "border-[hsl(var(--bd-border))] bg-transparent text-transparent"
+          )}>
+            <Check size={12} strokeWidth={3} />
           </div>
-        </CardHeader>
-      </Card>
+        </div>
+        
+        <div
+          className="rounded-xl border border-[hsl(var(--bd-border)/0.5)] p-2"
+          style={{ backgroundColor: preview.background }}
+        >
+          <div className="flex items-center gap-2 rounded-lg p-2 shadow-sm" style={{ backgroundColor: preview.card }}>
+            <div className="h-6 w-6 rounded-md" style={{ backgroundColor: preview.primary }} />
+            <div className="min-w-0 flex-1 space-y-1">
+              <div className="h-2.5 w-16 rounded-full bg-black/15" />
+              <div className="h-2 w-12 rounded-full bg-black/10" />
+            </div>
+            <div
+              className="h-6 w-10 rounded-md"
+              style={{ backgroundColor: preview.accent }}
+            />
+          </div>
+        </div>
+      </div>
     </button>
   )
 }
 
-export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn }) {
+export function AppThemeSettingsSection() {
   const { settings, loading } = useSettings()
   const [selectedMode, setSelectedMode] = useState<ThemeMode>(BASE_THEME_MODE)
   const [background, setBackground] = useState('')
   const [card, setCard] = useState('')
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [isEditorOpen, setIsEditorOpen] = useState(false)
 
   useEffect(() => {
     if (loading || !settings) return
@@ -111,37 +122,33 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
         })
         setBackground('')
         setCard('')
-        setSaved(true)
-        onToast('Default Bigdrops theme restored')
+        feedback.success('Default Bigdrops theme restored')
       } else if (presetId === 'custom') {
         await saveSettings({ app_theme_preset_id: 'custom' })
-        setSaved(true)
-        onToast('Custom mode active')
+        feedback.success('Custom mode active')
       } else {
         await saveSettings({ app_theme_preset_id: presetId })
-        setSaved(true)
         const label = THEME_PRESETS.find((preset) => preset.id === presetId)?.label
-        onToast(`${label ?? 'Theme preset'} applied`)
+        feedback.success(`${label ?? 'Theme preset'} applied`)
       }
-      setTimeout(() => setSaved(false), 2000)
     } catch (error) {
-      onToast(getErrorMessage(error))
+      feedback.error(getErrorMessage(error))
     }
     setSaving(false)
   }
 
-  const handleSave = async () => {
+  const handleSaveCustom = async () => {
     if (selectedMode !== 'custom') return
 
     const normBg = background ? normalizeHexColor(background) : null
     const normCard = card ? normalizeHexColor(card) : null
 
     if (background && !normBg) {
-      onToast('Invalid background hex color code.')
+      feedback.error('Invalid background hex color code.')
       return
     }
     if (card && !normCard) {
-      onToast('Invalid card hex color code.')
+      feedback.error('Invalid card hex color code.')
       return
     }
 
@@ -153,11 +160,10 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
         app_card_color: normCard,
         app_theme_tokens: null,
       })
-      setSaved(true)
-      onToast('Custom app theme updated')
-      setTimeout(() => setSaved(false), 2500)
+      feedback.success('Custom theme updated')
+      setIsEditorOpen(false)
     } catch (error) {
-      onToast(getErrorMessage(error))
+      feedback.error(getErrorMessage(error))
     }
     setSaving(false)
   }
@@ -174,211 +180,220 @@ export function AppThemeSettingsSection({ onToast }: { onToast: SettingsToastFn 
       setSelectedMode(BASE_THEME_MODE)
       setBackground('')
       setCard('')
-      onToast('Default Bigdrops theme restored')
+      feedback.success('Default Bigdrops theme restored')
+      setIsEditorOpen(false)
     } catch (error) {
-      onToast(getErrorMessage(error))
+      feedback.error(getErrorMessage(error))
     }
     setSaving(false)
   }
 
   if (loading) return <SettingsLoadingState />
 
+  const activePreset = THEME_PRESETS.find(p => p.id === selectedMode)
+  const themeLabel = selectedMode === 'custom' ? 'Custom Theme' : activePreset?.label || 'Default Theme'
+
   return (
-    <div className="space-y-6">
-      <Card className="border-border bg-muted/40">
-        <CardHeader className="gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Palette size={18} />
-            </div>
-            <div className="space-y-1">
-              <CardTitle className="text-sm font-semibold">App Theme</CardTitle>
-              <CardDescription className="text-xs leading-relaxed">
-                Pick a preset for the whole product, or switch to Custom to keep using
-                manual background and card colors.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-sm font-semibold text-foreground">Presets</div>
-            <div className="text-xs text-muted-foreground">
-              One selection updates the full semantic token bundle.
-            </div>
-          </div>
-          <Badge variant="secondary" className="gap-1">
-            <Sparkles className="h-3 w-3" />
-            Global
-          </Badge>
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="flex items-center justify-between gap-4 px-1">
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--bd-text-muted))] opacity-60">
+            Aesthetics
+          </p>
         </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {THEME_PRESETS.map((preset) => (
-            <PresetCard
-              key={preset.id}
-              title={preset.label}
-              description={preset.description}
-              preview={preset.preview}
-              selected={selectedMode === preset.id}
-              onSelect={() => handleSelectPreset(preset.id)}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <div>
-          <div className="text-sm font-semibold text-foreground">Custom</div>
-          <div className="text-xs text-muted-foreground">
-            Use manual colors only when you want to override the default Bigdrops base theme.
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => handleSelectPreset(BASE_THEME_MODE)}
-          className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setIsEditorOpen(true)}
+          className="rounded-full border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-xs font-bold shadow-sm hover:bg-[hsl(var(--bd-surface-muted))]"
         >
-          <Card
-            className={cn(
-              'border transition-colors',
-              selectedMode === BASE_THEME_MODE
-                ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                : 'border-border hover:border-primary/30 hover:bg-muted/20'
-            )}
-          >
-            <CardHeader className="gap-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <CardTitle className="text-sm font-semibold">Default Bigdrops Theme</CardTitle>
-                  <CardDescription className="text-[11px] leading-relaxed">
-                    Restores the default theme colors and surfaces.
-                  </CardDescription>
-                </div>
-                {selectedMode === BASE_THEME_MODE ? (
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                ) : null}
-              </div>
-              <div
-                className="rounded-xl border border-border/70 p-2"
-                style={{ backgroundColor: BASE_BACKGROUND }}
-              >
-                <div className="flex items-center gap-2 rounded-lg p-2" style={{ backgroundColor: BASE_CARD }}>
-                  <div className="h-6 w-6 rounded-md" style={{ backgroundColor: BASE_PRIMARY }} />
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div className="h-2.5 w-16 rounded-full bg-black/15" />
-                    <div className="h-2 w-12 rounded-full bg-black/10" />
-                  </div>
-                  <div className="h-6 w-10 rounded-md" style={{ backgroundColor: BASE_ACCENT }} />
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleSelectPreset('custom')}
-          className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-        >
-          <Card
-            className={cn(
-              'border transition-colors',
-              selectedMode === 'custom'
-                ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                : 'border-border hover:border-primary/30 hover:bg-muted/20'
-            )}
-          >
-            <CardHeader className="gap-2">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <CardTitle className="text-sm font-semibold">Custom Theme</CardTitle>
-                  <CardDescription className="text-[11px] leading-relaxed">
-                    Manual background and card surface editor. This mode is only active when
-                    explicitly selected.
-                  </CardDescription>
-                </div>
-                {selectedMode === 'custom' ? (
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                ) : null}
-              </div>
-            </CardHeader>
-          </Card>
-        </button>
-      </div>
-
-      {selectedMode === 'custom' ? (
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold">Custom Color Editor</CardTitle>
-            <CardDescription className="text-xs leading-relaxed">
-              These values apply only when Custom mode is selected.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <SettingsField label="Page Background">
-                <div className="flex gap-2">
-                  <SettingsInput
-                    value={background}
-                    onChange={setBackground}
-                    placeholder={DEFAULT_BACKGROUND}
-                  />
-                  <input
-                    type="color"
-                    value={normalizeHexColor(background) || DEFAULT_BACKGROUND}
-                    onChange={(e) => setBackground(e.target.value.toUpperCase())
-                    }
-                    className="h-[42px] w-12 cursor-pointer rounded-lg border border-input bg-background p-1"
-                  />
-                </div>
-              </SettingsField>
-
-              <SettingsField label="Card / Box Surface">
-                <div className="flex gap-2">
-                  <SettingsInput
-                    value={card}
-                    onChange={setCard}
-                    placeholder={DEFAULT_CARD}
-                  />
-                  <input
-                    type="color"
-                    value={normalizeHexColor(card) || DEFAULT_CARD}
-                    onChange={(e) => setCard(e.target.value.toUpperCase())}
-                    className="h-[42px] w-12 cursor-pointer rounded-lg border border-input bg-background p-1"
-                  />
-                </div>
-              </SettingsField>
-            </div>
-
-            <div className="rounded-xl border border-border bg-muted/40 p-3">
-              <p className="text-[11px] leading-relaxed text-muted-foreground">
-                Theme settings are global. Preset mode ignores these manual values until you
-                switch back to Custom.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <div className="flex flex-col gap-3">
-        <SettingsSaveButton saving={saving} saved={saved} onClick={handleSave} />
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          onClick={handleReset}
-          disabled={saving}
-          className="w-full gap-2 rounded-xl py-3 text-sm font-bold"
-        >
-          <RotateCcw size={15} />
-          Reset to Default
+          <Pencil className="mr-2 h-3.5 w-3.5" />
+          Configure Theme
         </Button>
       </div>
+
+      <SettingsSummaryCard 
+        title="App Appearance"
+        description="Global theme settings that define the visual language of your workspace."
+      >
+        <SettingsSummaryRow 
+          label="Active Language" 
+          value={
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold">{themeLabel}</span>
+              {selectedMode === 'custom' && (
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 h-5 px-1.5 text-[9px] font-black uppercase">
+                  Manual
+                </Badge>
+              )}
+            </div>
+          }
+          icon={<Palette size={16} />}
+        />
+        
+        <div className="px-5 py-4 border-t border-[hsl(var(--bd-border)/0.3)] bg-[hsl(var(--bd-surface-muted)/0.1)]">
+          <div className="flex items-center gap-3">
+             <div className="h-10 w-20 rounded-lg border border-[hsl(var(--bd-border)/0.5)] overflow-hidden shadow-sm flex">
+                <div className="flex-1" style={{ backgroundColor: selectedMode === 'custom' ? (normalizeHexColor(background) || BASE_BACKGROUND) : (activePreset?.preview.background || BASE_BACKGROUND) }} />
+                <div className="flex-1" style={{ backgroundColor: selectedMode === 'custom' ? (normalizeHexColor(card) || BASE_CARD) : (activePreset?.preview.card || BASE_CARD) }} />
+             </div>
+             <p className="text-[11px] text-[hsl(var(--bd-text-muted))] leading-relaxed max-w-[200px]">
+               Selected theme applies to all pages and surfaces across the application.
+             </p>
+          </div>
+        </div>
+      </SettingsSummaryCard>
+
+      <Sheet open={isEditorOpen} onOpenChange={setIsEditorOpen}>
+        <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-lg">
+          <SheetHeader className="p-6 pb-2">
+            <SheetTitle>Configure Theme</SheetTitle>
+            <SheetDescription>
+              Switch between presets or define a custom workspace color palette.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-6">
+            <div className="space-y-8 py-6">
+              {/* Presets Grid */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h5 className="text-[11px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">Semantic Presets</h5>
+                  <Badge variant="outline" className="gap-1 border-emerald-100 bg-emerald-50 text-emerald-700 font-bold text-[9px] uppercase">
+                    <Sparkles className="h-2.5 w-2.5" />
+                    Recommended
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {THEME_PRESETS.map((preset) => (
+                    <PresetCard
+                      key={preset.id}
+                      title={preset.label}
+                      description={preset.description}
+                      preview={preset.preview}
+                      selected={selectedMode === preset.id}
+                      onSelect={() => handleSelectPreset(preset.id)}
+                    />
+                  ))}
+                  
+                  {/* Default Reset Button Styled as Card */}
+                  <button
+                    type="button"
+                    onClick={() => handleSelectPreset(BASE_THEME_MODE)}
+                    className="group text-left transition-all active:scale-[0.98] outline-none"
+                  >
+                    <div className={cn(
+                      "h-full rounded-[var(--bd-radius-xl)] border p-4 transition-all",
+                      selectedMode === BASE_THEME_MODE
+                        ? "border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg)/0.03)] ring-1 ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
+                        : "border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] hover:border-[hsl(var(--bd-border))] hover:bg-[hsl(var(--bd-surface-muted)/0.3)]"
+                    )}>
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <h4 className="text-sm font-bold">Standard UI</h4>
+                        <div className={cn(
+                          "flex h-5 w-5 items-center justify-center rounded-full border transition-all",
+                          selectedMode === BASE_THEME_MODE ? "border-emerald-500 bg-emerald-500 text-white" : "border-[hsl(var(--bd-border))] bg-transparent text-transparent"
+                        )}>
+                          <Check size={12} strokeWidth={3} />
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-[hsl(var(--bd-text-muted))]">Default Bigdrops experience.</p>
+                    </div>
+                  </button>
+
+                  {/* Custom Trigger Styled as Card */}
+                  <button
+                    type="button"
+                    onClick={() => handleSelectPreset('custom')}
+                    className="group text-left transition-all active:scale-[0.98] outline-none"
+                  >
+                    <div className={cn(
+                      "h-full rounded-[var(--bd-radius-xl)] border p-4 transition-all",
+                      selectedMode === 'custom'
+                        ? "border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg)/0.03)] ring-1 ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
+                        : "border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] hover:border-[hsl(var(--bd-border))] hover:bg-[hsl(var(--bd-surface-muted)/0.3)]"
+                    )}>
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <h4 className="text-sm font-bold">Custom Build</h4>
+                        <div className={cn(
+                          "flex h-5 w-5 items-center justify-center rounded-full border transition-all",
+                          selectedMode === 'custom' ? "border-emerald-500 bg-emerald-500 text-white" : "border-[hsl(var(--bd-border))] bg-transparent text-transparent"
+                        )}>
+                          <Check size={12} strokeWidth={3} />
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-[hsl(var(--bd-text-muted))]">Manual surface overrides.</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Custom Editor Section */}
+              {selectedMode === 'custom' && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                   <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
+                   <h5 className="text-[11px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">Manual Color Overrides</h5>
+                   
+                   <div className="grid gap-4">
+                      <SettingsField label="Page Background">
+                        <div className="flex gap-2">
+                          <SettingsInput
+                            value={background}
+                            onChange={setBackground}
+                            placeholder={DEFAULT_BACKGROUND}
+                          />
+                          <input
+                            type="color"
+                            value={normalizeHexColor(background) || DEFAULT_BACKGROUND}
+                            onChange={(e) => setBackground(e.target.value.toUpperCase())}
+                            className="h-10 w-12 cursor-pointer rounded-lg border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-1"
+                          />
+                        </div>
+                      </SettingsField>
+
+                      <SettingsField label="Surface Color">
+                        <div className="flex gap-2">
+                          <SettingsInput
+                            value={card}
+                            onChange={setCard}
+                            placeholder={DEFAULT_CARD}
+                          />
+                          <input
+                            type="color"
+                            value={normalizeHexColor(card) || DEFAULT_CARD}
+                            onChange={(e) => setCard(e.target.value.toUpperCase())}
+                            className="h-10 w-12 cursor-pointer rounded-lg border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-1"
+                          />
+                        </div>
+                      </SettingsField>
+                   </div>
+                </div>
+              )}
+
+              {/* Reset Control */}
+              <div className="pt-4">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleReset}
+                  className="w-full h-12 rounded-xl border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-xs font-black uppercase tracking-widest shadow-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all"
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Restore Factory Defaults
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <SettingsActionFooter 
+            onSave={selectedMode === 'custom' ? handleSaveCustom : () => setIsEditorOpen(false)}
+            onCancel={() => setIsEditorOpen(false)}
+            saving={saving}
+            saveLabel={selectedMode === 'custom' ? "Save Custom Colors" : "Close Configuration"}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
+
