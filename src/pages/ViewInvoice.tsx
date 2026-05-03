@@ -107,7 +107,7 @@ export default function ViewInvoice() {
   const [advancePdfGenerating, setAdvancePdfGenerating] = useState(false)
   const [advanceDeleteConfirmOpen, setAdvanceDeleteConfirmOpen] = useState(false)
   const [advanceMode, setAdvanceMode] = useState<AdvanceMode>('percent')
-  const [advanceInputValue, setAdvanceInputValue] = useState('30')
+  const [advanceInputValue, setAdvanceInputValue] = useState<number>(30)
   const [advanceSuffixValue, setAdvanceSuffixValue] = useState(ADVANCE_SUFFIX_DEFAULT)
   const [advancePrimaryLabel, setAdvancePrimaryLabel] = useState(ADVANCE_PRIMARY_LABEL_DEFAULT)
   const [advanceSecondaryLabel, setAdvanceSecondaryLabel] = useState(ADVANCE_SECONDARY_LABEL_DEFAULT)
@@ -120,7 +120,7 @@ export default function ViewInvoice() {
 
   const resetAdvanceDraft = useCallback(() => {
     setAdvanceMode('percent')
-    setAdvanceInputValue('30')
+    setAdvanceInputValue(30)
     setAdvanceSuffixValue(ADVANCE_SUFFIX_DEFAULT)
     setAdvancePrimaryLabel(ADVANCE_PRIMARY_LABEL_DEFAULT)
     setAdvanceSecondaryLabel(ADVANCE_SECONDARY_LABEL_DEFAULT)

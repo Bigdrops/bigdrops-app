@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import styles from './InvoiceRecordPaymentSheet.module.css'
 import { formatNaira } from '@/lib/formatters/money'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
+import { NumericInput } from '@/components/ui/numeric-input'
 
 interface InvoiceSummary {
   id: string
@@ -32,7 +33,7 @@ type PaymentMethod = 'Transfer' | 'Cash' | 'POS' | 'Cheque' | 'Other'
 type PaymentType = 'full' | 'partial'
 
 interface FormState {
-  amount: string
+  amount: number | null
   date: string
   method: PaymentMethod
   reference: string
@@ -41,7 +42,7 @@ interface FormState {
 }
 
 const DEFAULT_FORM = (): FormState => ({
-  amount: '',
+  amount: null,
   date: new Date().toISOString().split('T')[0] || '',
   method: 'Transfer',
   reference: '',
@@ -225,11 +226,10 @@ export default function InvoiceRecordPaymentSheet({
             {form.type === 'partial' && (
               <div className={styles.fieldGroup}>
                 <label className={styles.formLabel}>Amount (₦)</label>
-                <input
-                  type="number"
+                <NumericInput
                   className={styles.formInput}
                   value={form.amount}
-                  onChange={(e) => setField('amount', e.target.value)}
+                  onChange={(val) => setField('amount', val)}
                   placeholder="0.00"
                 />
               </div>

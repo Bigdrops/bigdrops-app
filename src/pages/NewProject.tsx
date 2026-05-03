@@ -4,6 +4,7 @@ import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -19,7 +20,7 @@ interface ProjectFormState {
   client_id: string | null
   client_name: string
   status: string
-  project_value: string
+  project_value: number | null
   po_number: string
   notes: string
   location: string
@@ -37,7 +38,7 @@ export default function NewProject() {
     client_id: prefill.clientId || null,
     client_name: prefill.clientName || '',
     status: 'active',
-    project_value: '',
+    project_value: null,
     po_number: '',
     notes: '',
     location: '',
@@ -59,7 +60,7 @@ export default function NewProject() {
       client_name: form.client_name || null,
       status: form.status,
       start_date: form.start_date,
-      project_value: form.project_value ? parseFloat(form.project_value) : null,
+      project_value: form.project_value,
       po_number: form.po_number.trim() || null,
       notes: form.notes.trim() || null,
       location: form.location.trim() || null,
@@ -141,11 +142,10 @@ export default function NewProject() {
               <Label className={pageFormLabelClassName}>Project Value (₦)</Label>
               <div className="flex h-10 items-center overflow-hidden rounded-lg border border-zinc-300 bg-white">
                 <span className="flex h-full items-center border-r border-zinc-300 bg-slate-50 px-3 text-sm text-slate-500">₦</span>
-                <Input
-                  type="number"
-                  min="0"
+                <NumericInput
+                  min={0}
                   value={form.project_value}
-                  onChange={e => set('project_value', e.target.value)}
+                  onChange={val => set('project_value', val)}
                   placeholder="Optional"
                   className="h-full rounded-none border-0 px-3 shadow-none focus-visible:ring-0"
                 />

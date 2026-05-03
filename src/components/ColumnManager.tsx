@@ -15,6 +15,7 @@ import {
 import { Button } from '../components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Input } from '../components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Sheet, SheetContent } from '../components/ui/sheet'
 import { cn } from '@/lib/utils'
 import { COLUMN_TYPES } from './useInvoiceColumns'
@@ -174,12 +175,11 @@ function BuiltInColumnRow({
 
           {col.key === 'install_rate' ? (
             <div className="mt-2 flex items-center gap-2">
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={col.formula || ''}
-                onChange={(e) => onUpdate(col.key, 'formula', e.target.value)}
+              <NumericInput
+                step={0.01}
+                min={0}
+                value={col.formula || 0}
+                onChange={(val) => onUpdate(col.key, 'formula', String(val))}
                 placeholder="e.g. 0.15"
                 className="h-10 rounded-[12px] border-[var(--bd-border)] bg-[var(--bd-bg)] text-sm"
               />

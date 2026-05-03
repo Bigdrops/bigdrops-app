@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Textarea } from '@/components/ui/textarea'
 import { feedback } from '@/lib/feedback'
 import UnitInput from '@/components/UnitInput'
@@ -319,7 +320,7 @@ export default function MobileItemCard({
             {isVisible('quantity') && (
             <div className="min-w-0">
               <label className={labelCls}>Qty</label>
-              <Input type="number" min="1" value={(item.quantity as number) ?? 1} onChange={(e) => onUpdate(index, 'quantity', normalizeQuantity(e.target.value, 1))} className="h-9 px-2 text-center text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
+              <NumericInput min={1} value={(item.quantity as number) ?? 1} onChange={(val) => onUpdate(index, 'quantity', normalizeQuantity(val, 1))} className="h-9 px-2 text-center text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
             </div>
             )}
             {isVisible('unit') && (
@@ -331,20 +332,18 @@ export default function MobileItemCard({
             {isVisible('unit_price') && (
             <div className="min-w-0">
               <label className={labelCls}>Rate</label>
-              <Input type="number" value={(item.unit_price as number) ?? 0} onChange={(e) => onUpdate(index, 'unit_price', Number(e.target.value))} className="h-9 px-2.5 text-right font-mono text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
+              <NumericInput value={(item.unit_price as number) ?? 0} onChange={(val) => onUpdate(index, 'unit_price', val)} className="h-9 px-2.5 text-right font-mono text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
             </div>
             )}
 
             {isVisible('install_rate') && (
               <div className="min-w-0">
                 <label className={labelCls}>{getColumn('install_rate')?.label || 'Install'}</label>
-                <Input
-                  type="number"
+                <NumericInput
                   value={item.install_rate_override ? (item.install_rate as number) ?? '' : ''}
                   placeholder={autoInstall !== null ? String(Number(autoInstall.toFixed(2))) : 'Auto'}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    onUpdate(index, '__install_rate_override', val === '' ? { install_rate_override: false, install_rate: null } : { install_rate_override: true, install_rate: Number(val) })
+                  onChange={(val) => {
+                    onUpdate(index, '__install_rate_override', val === 0 ? { install_rate_override: false, install_rate: null } : { install_rate_override: true, install_rate: val })
                   }}
                   className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
                 />
@@ -354,11 +353,10 @@ export default function MobileItemCard({
             {isVisible('vat_rate') && (
               <div className="min-w-0">
                 <label className={labelCls}>{getColumn('vat_rate')?.label || 'VAT %'}</label>
-                <Input
-                  type="number"
+                <NumericInput
                   value={(item.vat_rate as number) ?? ''}
                   placeholder="0"
-                  onChange={(e) => onUpdate(index, 'vat_rate', e.target.value === '' ? null : Number(e.target.value))}
+                  onChange={(val) => onUpdate(index, 'vat_rate', val === 0 ? null : val)}
                   className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
                 />
               </div>
@@ -367,11 +365,10 @@ export default function MobileItemCard({
             {isVisible('discount_rate') && (
               <div className="min-w-0">
                 <label className={labelCls}>{getColumn('discount_rate')?.label || 'Disc %'}</label>
-                <Input
-                  type="number"
+                <NumericInput
                   value={(item.discount_rate as number) ?? ''}
                   placeholder="0"
-                  onChange={(e) => onUpdate(index, 'discount_rate', e.target.value === '' ? null : Number(e.target.value))}
+                  onChange={(val) => onUpdate(index, 'discount_rate', val === 0 ? null : val)}
                   className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
                 />
               </div>
@@ -384,11 +381,9 @@ export default function MobileItemCard({
               return (
                 <div key={col.key} className="min-w-0">
                   <label className={labelCls}>{col.label}</label>
-                  <Input
-                    type={col.type === 'number' ? 'number' : 'text'}
+                  <NumericInput
                     value={val}
-                    onChange={(e) => {
-                      const nextVal = col.type === 'number' ? (e.target.value === '' ? null : Number(e.target.value)) : e.target.value
+                    onChange={(nextVal) => {
                       onUpdate(index, 'custom_data', { ...(item.custom_data || {}), [col.key]: nextVal })
                     }}
                     className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"

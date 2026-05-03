@@ -56,7 +56,7 @@ export function calculateAdvanceAmount({
 }: {
   contractValue: number | string | null | undefined
   mode: AdvanceMode
-  inputValue: string
+  inputValue: string | number
 }) {
   const total = Math.max(0, toNumber(contractValue))
   const rawValue = Math.max(0, toNumber(inputValue))
@@ -77,7 +77,7 @@ export function getAdvanceDraftFromInvoice(invoice: AdvanceInvoiceLike | null | 
   }
 
   const mode: AdvanceMode = advanceConfig?.mode === 'fixed' ? 'fixed' : 'percent'
-  const inputValue = String(advanceConfig?.value ?? '')
+  const inputValue = advanceConfig?.value ?? (advanceConfig?.mode === 'fixed' ? 0 : 30)
   const invoiceNumber = String(invoice?.invoice_number || '')
   
   // Do NOT rely on suffix extraction from string if we have it in config
@@ -85,7 +85,7 @@ export function getAdvanceDraftFromInvoice(invoice: AdvanceInvoiceLike | null | 
 
   return {
     mode,
-    inputValue,
+    inputValue: Number(inputValue),
     suffix: suffix || ADVANCE_SUFFIX_DEFAULT,
     primaryLabel: String(advanceConfig?.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT),
     secondaryLabel: String(advanceConfig?.secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT),
@@ -103,7 +103,7 @@ export function buildAdvanceChildInvoicePayload({
 }: {
   parentInvoice: AdvanceParentInvoice
   mode: AdvanceMode
-  inputValue: string
+  inputValue: string | number
   suffix: string
   primaryLabel: string
   secondaryLabel: string

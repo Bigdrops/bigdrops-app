@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, Minus, Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Switch } from '@/components/ui/switch'
 
 const sectionLabelCls = 'mb-3 flex items-center gap-2 px-0.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#64748b]'
@@ -277,11 +278,10 @@ export default function TotalsPanel({
                       placeholder="Charge label"
                       className={inputCls}
                     />
-                    <Input
-                      type="number"
-                      min="0"
+                    <NumericInput
+                      min={0}
                       value={charge.value || 0}
-                      onChange={(event) => onUpdateExtraCharge(charge.id, 'value', Number(event.target.value))}
+                      onChange={(val) => onUpdateExtraCharge(charge.id, 'value', val)}
                       className={`${inputCls} text-right`}
                     />
                     <div className="flex h-11 items-center justify-between rounded-[12px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-3">
@@ -332,11 +332,10 @@ export default function TotalsPanel({
               { value: 'after', label: 'After Tax' },
             ]}
           />
-          <Input
-            type="number"
-            min="0"
+          <NumericInput
+            min={0}
             value={discountValue}
-            onChange={(event) => onDiscountValueChange(Number(event.target.value))}
+            onChange={(val) => onDiscountValueChange(val)}
             className={inputCls}
           />
           {discountAmount > 0 ? (
@@ -364,11 +363,10 @@ export default function TotalsPanel({
               { value: 'fixed', label: 'NGN' },
             ]}
           />
-          <Input
-            type="number"
-            min="0"
+          <NumericInput
+            min={0}
             value={whtValue}
-            onChange={(event) => onWhtValueChange(Number(event.target.value))}
+            onChange={(val) => onWhtValueChange(val)}
             className={inputCls}
           />
           {whtAmount > 0 ? (

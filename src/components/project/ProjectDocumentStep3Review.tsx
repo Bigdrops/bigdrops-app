@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Rows3, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Textarea } from '@/components/ui/textarea'
 import { ProjectDocumentType, DOCUMENT_TYPE_CONFIG } from './ProjectDocumentTypeSelector'
 
@@ -133,11 +134,11 @@ export function ProjectDocumentStep3Review({
             </div>
             <div>
               <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">VAT (₦)</label>
-              <Input type="number" value={form.vat} onChange={(event) => updateForm({ vat: toNumber(event.target.value) })} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
+              <NumericInput value={form.vat} onChange={(val) => updateForm({ vat: val })} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
             </div>
             <div>
               <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">WHT (₦)</label>
-              <Input type="number" value={form.wht} onChange={(event) => updateForm({ wht: toNumber(event.target.value) })} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
+              <NumericInput value={form.wht} onChange={(val) => updateForm({ wht: val })} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
             </div>
             <div>
               <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Total (₦)</label>
@@ -159,13 +160,13 @@ export function ProjectDocumentStep3Review({
                 <div key={`po-item-${index}`} className="rounded-2xl border border-zinc-200 bg-card p-3">
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
                     <Input value={item.description} onChange={(event) => setForm((current) => ({ ...current, purchaseOrderItems: current.purchaseOrderItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, description: event.target.value } : entry) }))} placeholder="Description" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm md:col-span-2" />
-                    <Input type="number" value={item.quantity} onChange={(event) => setForm((current) => ({ ...current, purchaseOrderItems: current.purchaseOrderItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, quantity: toNumber(event.target.value) } : entry) }))} placeholder="Qty" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm" />
+                    <NumericInput value={item.quantity} onChange={(val) => setForm((current) => ({ ...current, purchaseOrderItems: current.purchaseOrderItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, quantity: val } : entry) }))} placeholder="Qty" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm" />
                     <Input value={item.unit} onChange={(event) => setForm((current) => ({ ...current, purchaseOrderItems: current.purchaseOrderItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, unit: event.target.value } : entry) }))} placeholder="Unit" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm" />
-                    <Input type="number" value={item.unit_price} onChange={(event) => setForm((current) => ({ ...current, purchaseOrderItems: current.purchaseOrderItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, unit_price: toNumber(event.target.value) } : entry) }))} placeholder="Unit price" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm" />
+                    <NumericInput value={item.unit_price} onChange={(val) => setForm((current) => ({ ...current, purchaseOrderItems: current.purchaseOrderItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, unit_price: val } : entry) }))} placeholder="Unit price" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm" />
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                    <Input type="number" value={item.amount} onChange={(event) => setForm((current) => ({ ...current, purchaseOrderItems: current.purchaseOrderItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, amount: toNumber(event.target.value) } : entry) }))} placeholder="Amount" className="h-10 w-full rounded-xl border-zinc-200 bg-zinc-50 text-sm sm:max-w-[220px]" />
+                    <NumericInput value={item.amount} onChange={(val) => setForm((current) => ({ ...current, purchaseOrderItems: current.purchaseOrderItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, amount: val } : entry) }))} placeholder="Amount" className="h-10 w-full rounded-xl border-zinc-200 bg-zinc-50 text-sm sm:max-w-[220px]" />
                     <Button type="button" variant="outline" className={neutralButtonClassName} onClick={() => setForm((current) => ({ ...current, purchaseOrderItems: current.purchaseOrderItems.length === 1 ? [makeEmptyPurchaseOrderItem()] : current.purchaseOrderItems.filter((_, itemIndex) => itemIndex !== index) }))}>
                       <Trash2 className="h-3.5 w-3.5 text-red-500" />
                       Delete Row
@@ -182,7 +183,7 @@ export function ProjectDocumentStep3Review({
         <div className="grid grid-cols-2 gap-3 rounded-[24px] border-l-4 border-l-emerald-500 border border-zinc-200 bg-card p-4 shadow-sm">
           <div>
             <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Amount (₦)</label>
-            <Input type="number" value={form.amount} onChange={(event) => updateForm({ amount: toNumber(event.target.value) })} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
+            <NumericInput value={form.amount} onChange={(val) => updateForm({ amount: val })} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
           </div>
           <div>
             <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Payment Method</label>
@@ -190,11 +191,11 @@ export function ProjectDocumentStep3Review({
           </div>
           <div>
             <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">VAT (₦)</label>
-            <Input type="number" value={form.vat} onChange={(event) => updateForm({ vat: toNumber(event.target.value) })} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
+            <NumericInput value={form.vat} onChange={(val) => updateForm({ vat: val })} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
           </div>
           <div>
             <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">WHT (₦)</label>
-            <Input type="number" value={form.wht} onChange={(event) => updateForm({ wht: toNumber(event.target.value) })} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
+            <NumericInput value={form.wht} onChange={(val) => updateForm({ wht: val })} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
           </div>
         </div>
       )}
@@ -218,7 +219,7 @@ export function ProjectDocumentStep3Review({
                 <div key={`waybill-item-${index}`} className="rounded-2xl border border-zinc-200 bg-card p-3">
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
                     <Input value={item.description} onChange={(event) => setForm((current) => ({ ...current, waybillItems: current.waybillItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, description: event.target.value } : entry) }))} placeholder="Description" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm" />
-                    <Input type="number" value={item.quantity} onChange={(event) => setForm((current) => ({ ...current, waybillItems: current.waybillItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, quantity: toNumber(event.target.value) } : entry) }))} placeholder="Qty" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm" />
+                    <NumericInput value={item.quantity} onChange={(val) => setForm((current) => ({ ...current, waybillItems: current.waybillItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, quantity: val } : entry) }))} placeholder="Qty" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm" />
                     <Input value={item.unit} onChange={(event) => setForm((current) => ({ ...current, waybillItems: current.waybillItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, unit: event.target.value } : entry) }))} placeholder="Unit" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm" />
                     <Input value={item.condition} onChange={(event) => setForm((current) => ({ ...current, waybillItems: current.waybillItems.map((entry, itemIndex) => itemIndex === index ? { ...entry, condition: event.target.value } : entry) }))} placeholder="Condition" className="h-10 rounded-xl border-zinc-200 bg-zinc-50 text-sm" />
                   </div>

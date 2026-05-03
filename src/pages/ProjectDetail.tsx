@@ -199,7 +199,7 @@ export default function ProjectDetail() {
       setEditForm({
         name: projectData?.name || '',
         status: projectData?.status || 'active',
-        project_value: projectData?.project_value || '',
+        project_value: projectData?.project_value ?? null,
         po_number: projectData?.po_number || '',
         start_date: projectData?.start_date || '',
         notes: projectData?.notes || '',
@@ -223,7 +223,7 @@ export default function ProjectDetail() {
       .update({
         name: editForm.name.trim(),
         status: editForm.status,
-        project_value: editForm.project_value ? parseFloat(editForm.project_value) : null,
+        project_value: editForm.project_value,
         po_number: editForm.po_number.trim() || null,
         start_date: editForm.start_date,
         notes: editForm.notes.trim() || null,

@@ -7,6 +7,7 @@ import {
   SectionLabel,
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 
 interface FormTotalsProps {
   invoice: any
@@ -66,11 +67,10 @@ export function FormTotals({
           {showVatAdjust && (
             <div className="mt-3 animate-in fade-in slide-in-from-top-1">
               <label className={labelCls}>VAT Rate (%)</label>
-              <Input
-                type="number"
-                min="0"
+              <NumericInput
+                min={0}
                 value={Number(invoice.vat || 0)}
-                onChange={(e) => updateInvoice('vat', Number(e.target.value))}
+                onChange={(val) => updateInvoice('vat', val)}
                 className={fieldCls}
               />
             </div>

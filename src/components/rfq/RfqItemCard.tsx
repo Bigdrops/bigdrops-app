@@ -2,6 +2,7 @@ import React from 'react';
 import { Rfq, RfqItem } from '@/domain/rfq/types'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -80,10 +81,9 @@ export const RfqItemCard: React.FC<RfqItemCardProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label className={pageFormLabelClassName}>Quantity</Label>
-            <Input
-              type="number"
-              value={item.quantity || ''}
-              onChange={(e) => onUpdate({ quantity: parseFloat(e.target.value) || 0 })}
+            <NumericInput
+              value={item.quantity || 0}
+              onChange={(val) => onUpdate({ quantity: val })}
               placeholder="0"
               className="mt-1"
             />

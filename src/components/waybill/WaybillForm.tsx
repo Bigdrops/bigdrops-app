@@ -7,6 +7,7 @@ import ClientSelector from '@/components/ClientSelector'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -424,7 +425,7 @@ export default function WaybillForm({ mode, waybillId, onCancel, onSaved }: Wayb
                       </div>
 
                       <Field label="Qty">
-                        <Input type="number" value={item.quantity} onChange={(event) => updateItem(index, 'quantity', Number(event.target.value) || 0)} className="rounded-xl" />
+                        <NumericInput value={item.quantity} onChange={(val) => updateItem(index, 'quantity', val)} className="rounded-xl" />
                       </Field>
                       <Field label="Unit">
                         <Input value={item.unit} onChange={(event) => updateItem(index, 'unit', event.target.value)} placeholder="pcs" className="rounded-xl" />

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -270,22 +271,18 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
               <div className="space-y-1">
                 <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Amount Due</Label>
-                <Input
-                  type="number"
-                  step="0.01"
+                <NumericInput
                   className="h-9"
-                  value={editingFiling?.amount_due ?? ''}
-                  onChange={e => setEditingFiling({ ...editingFiling, amount_due: parseFloat(e.target.value) || 0 })}
+                  value={editingFiling?.amount_due ?? 0}
+                  onChange={val => setEditingFiling({ ...editingFiling, amount_due: val })}
                 />
               </div>
               <div className="space-y-1">
                 <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Amount Paid</Label>
-                <Input
-                  type="number"
-                  step="0.01"
+                <NumericInput
                   className="h-9"
-                  value={editingFiling?.amount_paid ?? ''}
-                  onChange={e => setEditingFiling({ ...editingFiling, amount_paid: parseFloat(e.target.value) || 0 })}
+                  value={editingFiling?.amount_paid ?? 0}
+                  onChange={val => setEditingFiling({ ...editingFiling, amount_paid: val })}
                 />
               </div>
             </div>

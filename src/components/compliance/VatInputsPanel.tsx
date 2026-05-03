@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Info, PlusCircle, Wallet, Edit, Trash2 } from 'lucide-react'
@@ -178,20 +179,16 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
             <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
               <div className="space-y-2.5">
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Net Amount</Label>
-                <Input 
-                  type="number" 
-                  step="0.01"
-                  value={editingEntry?.net_amount ?? ''} 
-                  onChange={e => setEditingEntry({ ...editingEntry, net_amount: parseFloat(e.target.value) || 0 })} 
+                <NumericInput 
+                  value={editingEntry?.net_amount ?? 0} 
+                  onChange={val => setEditingEntry({ ...editingEntry, net_amount: val })} 
                 />
               </div>
               <div className="space-y-2.5">
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">VAT Amount</Label>
-                <Input 
-                  type="number"
-                  step="0.01" 
-                  value={editingEntry?.vat_amount ?? ''} 
-                  onChange={e => setEditingEntry({ ...editingEntry, vat_amount: parseFloat(e.target.value) || 0 })} 
+                <NumericInput 
+                  value={editingEntry?.vat_amount ?? 0} 
+                  onChange={val => setEditingEntry({ ...editingEntry, vat_amount: val })} 
                 />
               </div>
             </div>

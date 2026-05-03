@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { NumericInput } from "@/components/ui/numeric-input"
 import {
   Select,
   SelectContent,
@@ -52,7 +53,7 @@ type FinancialRow = {
 }
 
 type FormState = {
-  amount: string
+  amount: number | null
   date: string
   method: PaymentMethod
   reference: string
@@ -61,7 +62,7 @@ type FormState = {
 }
 
 const DEFAULT_FORM = (): FormState => ({
-  amount: "",
+  amount: null,
   date: new Date().toISOString().split("T")[0] || "",
   method: "Transfer",
   reference: "",
@@ -276,11 +277,10 @@ export default function RecordPaymentModal({
           {form.type === "partial" ? (
             <div>
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Amount (₦)</div>
-              <Input
-                type="number"
-                min="0"
+              <NumericInput
+                min={0}
                 value={form.amount}
-                onChange={(e) => setField("amount", e.target.value)}
+                onChange={(val) => setField("amount", val)}
                 placeholder="Enter amount"
               />
             </div>

@@ -3,6 +3,7 @@ import { FolderKanban, Copy, Building2, MapPin, Hash, Calendar, DollarSign, Penc
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PROJECT_STATUS_CONFIG, formatCurrency, formatDate, cardClassName, inputClassName } from '@/domain/projectDetailUtils'
 import { feedback } from '@/lib/feedback'
+import { NumericInput } from '@/components/ui/numeric-input'
 
 export default function ProjectDetailHeader({
   project,
@@ -159,11 +160,10 @@ export default function ProjectDetailHeader({
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Project Value (₦)
             </label>
-            <input
-              type="number"
+            <NumericInput
               className={inputClassName}
               value={editForm.project_value}
-              onChange={(e) => setEditForm((form) => ({ ...form, project_value: e.target.value }))}
+              onChange={(val) => setEditForm((form) => ({ ...form, project_value: val }))}
               placeholder="Optional"
             />
           </div>

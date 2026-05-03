@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { ParsedCsrImport } from '@/components/csr/csrImport'
 import MobileFab from '@/components/layout/MobileFab'
+import { NumericInput } from '@/components/ui/numeric-input'
 
 type SignatoryRow = {
   id: string
@@ -561,18 +562,9 @@ export default function CsrFormScreen({
                       className="bg-[hsl(var(--bd-surface))]"
                     />
 
-                    <TextInput
-                      type="number"
-                      inputMode="decimal"
-                      min="0"
-                      step="any"
+                    <NumericInput
                       value={row.quantity}
-                      onChange={(event) => {
-                        const next = event.target.value
-                        if (next === '' || /^\d*\.?\d*$/.test(next)) {
-                          onUpdateMaterialRow(index, 'quantity', next)
-                        }
-                      }}
+                      onChange={(val) => onUpdateMaterialRow(index, 'quantity', String(val))}
                       placeholder="Qty"
                       className="bg-[hsl(var(--bd-surface))] text-center"
                     />

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { DiscountTiming, DiscountType, ExtraCharge, InvoiceFieldEntry, WhtType } from '@/domain/invoice'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Percent, Plus, X } from 'lucide-react'
 import {
@@ -128,11 +129,10 @@ export function FormCommercialTerms({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Value</label>
-                <Input
-                  type="number"
-                  min="0"
+                <NumericInput
+                  min={0}
                   value={Number(invoice.discount || 0)}
-                  onChange={(e) => updateInvoice('discount', Number(e.target.value))}
+                  onChange={(val) => updateInvoice('discount', val)}
                   className={fieldCls}
                 />
               </div>
@@ -174,11 +174,10 @@ export function FormCommercialTerms({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>VAT Rate (%)</label>
-              <Input
-                type="number"
-                min="0"
+              <NumericInput
+                min={0}
                 value={Number(invoice.vat || 0)}
-                onChange={(e) => updateInvoice('vat', Number(e.target.value))}
+                onChange={(val) => updateInvoice('vat', val)}
                 className={fieldCls}
               />
             </div>
@@ -197,11 +196,10 @@ export function FormCommercialTerms({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>WHT Rate</label>
-              <Input
-                type="number"
-                min="0"
+              <NumericInput
+                min={0}
                 value={Number(invoice.wht || 0)}
-                onChange={(e) => updateInvoice('wht', Number(e.target.value))}
+                onChange={(val) => updateInvoice('wht', val)}
                 className={fieldCls}
               />
             </div>
@@ -240,11 +238,10 @@ export function FormCommercialTerms({
                   />
                 </div>
                 <div className="w-28">
-                  <Input
-                    type="number"
-                    min="0"
+                  <NumericInput
+                    min={0}
                     value={Number(charge.value || 0)}
-                    onChange={(event) => onUpdateExtraCharge(charge.id, 'value', Number(event.target.value))}
+                    onChange={(val) => onUpdateExtraCharge(charge.id, 'value', val)}
                     className={`${fieldCls} text-right font-bold`}
                   />
                 </div>

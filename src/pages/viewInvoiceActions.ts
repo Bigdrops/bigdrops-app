@@ -90,7 +90,7 @@ export async function createAdvanceInvoiceRecord({
 }: {
   parentInvoice: any
   mode: 'percent' | 'fixed'
-  inputValue: string
+  inputValue: number | string
   suffix: string
   primaryLabel: string
   secondaryLabel: string
@@ -154,7 +154,7 @@ export async function updateAdvanceInvoiceRecord({
   advanceInvoiceId: string
   parentInvoice: any
   mode: 'percent' | 'fixed'
-  inputValue: string
+  inputValue: number | string
   suffix: string
   primaryLabel: string
   secondaryLabel: string

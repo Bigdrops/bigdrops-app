@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { NumericInput } from '@/components/ui/numeric-input'
 import {
   ADVANCE_PRIMARY_LABEL_DEFAULT,
   ADVANCE_SECONDARY_LABEL_DEFAULT,
@@ -32,8 +33,8 @@ interface InvoiceAdvanceSheetProps {
   advancePdfGenerating: boolean
   advanceMode: AdvanceMode
   setAdvanceMode: Dispatch<SetStateAction<AdvanceMode>>
-  advanceInputValue: string
-  setAdvanceInputValue: Dispatch<SetStateAction<string>>
+  advanceInputValue: number | string
+  setAdvanceInputValue: Dispatch<SetStateAction<number>>
   advanceSuffixValue: string
   setAdvanceSuffixValue: Dispatch<SetStateAction<string>>
   advancePrimaryLabel: string
@@ -151,15 +152,13 @@ export default function InvoiceAdvanceSheet({
                   <Label htmlFor="advance-value" className="text-[10px] font-black uppercase tracking-widest text-slate-500">
                     {advanceMode === 'fixed' ? 'Amount' : 'Percentage'}
                   </Label>
-                  <Input
+                  <NumericInput
                     id="advance-value"
-                    type="number"
-                    min="0"
-                    max={advanceMode === 'fixed' ? String(contractValue) : '100'}
-                    step={advanceMode === 'fixed' ? '0.01' : '1'}
-                    inputMode="decimal"
+                    min={0}
+                    max={advanceMode === 'fixed' ? contractValue : 100}
+                    step={advanceMode === 'fixed' ? 0.01 : 1}
                     value={advanceInputValue}
-                    onChange={(event) => setAdvanceInputValue(event.target.value)}
+                    onChange={(val) => setAdvanceInputValue(Number(val))}
                     disabled={isViewMode || advanceSaving}
                     className="h-10 rounded-xl border-slate-200 bg-white text-sm font-bold shadow-none ring-offset-0 focus:border-slate-400 focus:ring-0"
                   />

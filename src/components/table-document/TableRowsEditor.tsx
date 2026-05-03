@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, Plus, Rows3, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -113,7 +114,7 @@ export function TableRowsEditor({
                   {visibleColumns.some((column) => column.key === 'quantity') ? (
                     <div>
                       <Label className={pageFormLabelClassName}>Quantity</Label>
-                      <Input type="number" value={row.quantity || ''} onChange={(event) => updateRow(index, { quantity: parseFloat(event.target.value) || 0 })} className="mt-1" />
+                      <NumericInput value={row.quantity || 0} onChange={(val) => updateRow(index, { quantity: val })} className="mt-1" />
                     </div>
                   ) : null}
                   {visibleColumns.some((column) => column.key === 'unit') ? (
