@@ -44,7 +44,7 @@ export default function Settings() {
       case 'user':
         return <UserSettingsSection session={session} onToast={showToast} />
       case 'company':
-        return <CompanySettingsSection onToast={showToast} />
+        return <CompanySettingsSection />
       case 'branding':
         return <BrandingSettingsSection onToast={showToast} />
       case 'banking':

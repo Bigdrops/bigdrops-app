@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react'
-import { BellRing, Send } from 'lucide-react'
+import { BellRing, Send, MessageSquare, Smartphone, Mail, Calendar, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NotificationChannelToggles } from './NotificationChannelToggles'
 import { ReminderThresholdSelector } from './ReminderThresholdSelector'
 import { SettingsLoadingState } from '@/pages/settings/SettingsLoadingState'
-import { SettingsSaveButton } from '@/pages/settings/SettingsFormPrimitives'
-import type { SettingsToastFn } from '@/pages/settings/settings-types'
-import { getErrorMessage } from '@/pages/settings/settings-helpers'
+import { SettingsSummaryCard, SettingsSummaryRow } from '@/components/settings/SettingsSummaryCard'
+import { SettingsActionFooter } from '@/components/settings/SettingsActionFooter'
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences'
+import { feedback } from '@/lib/feedback'
 import {
   DUE_BEFORE_REMINDER_OPTIONS,
   OVERDUE_REMINDER_OPTIONS,
@@ -16,21 +16,26 @@ import {
   parseCustomThresholdDay,
 } from '@/domain/notifications/notificationPreferences'
 import { sendPushForNotification } from '@/domain/notifications/sendPushForNotification'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
+
 
 export function NotificationSettingsPanel({
   userId,
-  onToast,
 }: {
   userId?: string | null
-  onToast: SettingsToastFn
 }) {
   const {
     preferences,
     setPreferences,
     loading,
     saving,
-    saved,
-    error,
     save,
   } = useNotificationPreferences(userId)
 
@@ -39,6 +44,8 @@ export function NotificationSettingsPanel({
   const [unpaidCustomError, setUnpaidCustomError] = useState<string | null>(null)
   const [overdueCustomError, setOverdueCustomError] = useState<string | null>(null)
   const [testingPush, setTestingPush] = useState(false)
+  
+  const [activeSheet, setActiveSheet] = useState<'channels' | 'schedules' | null>(null)
 
   const unpaidOptions = useMemo(
     () =>
@@ -119,9 +126,10 @@ export function NotificationSettingsPanel({
 
     try {
       await save(preferences)
-      onToast('Notification preferences saved')
+      feedback.success('Preferences saved')
+      setActiveSheet(null)
     } catch (saveError) {
-      onToast(getErrorMessage(saveError))
+      feedback.error(saveError instanceof Error ? saveError.message : 'Failed to save')
     }
   }
 
@@ -136,9 +144,9 @@ export function NotificationSettingsPanel({
         message: 'This is a test push notification from your Bigdrops settings.',
         notificationId: 'test-' + Date.now(),
       })
-      onToast('Test push sequence initiated')
+      feedback.success('Test push sequence initiated')
     } catch (testError) {
-      onToast(getErrorMessage(testError))
+      feedback.error(testError instanceof Error ? testError.message : 'Test failed')
     } finally {
       setTestingPush(false)
     }
@@ -146,7 +154,7 @@ export function NotificationSettingsPanel({
 
   if (!userId) {
     return (
-      <div className="rounded-[var(--notification-radius)] border border-[var(--notification-border)] bg-[var(--notification-bg)] px-4 py-4 text-sm text-[var(--notification-muted-text)]">
+      <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface-muted)/0.3)] px-4 py-4 text-sm text-[hsl(var(--bd-text-muted))]">
         Sign in to manage notification preferences.
       </div>
     )
@@ -155,189 +163,240 @@ export function NotificationSettingsPanel({
   if (loading) return <SettingsLoadingState />
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-[var(--notification-radius)] border border-[var(--notification-border)] bg-[var(--notification-bg)] px-4 py-3.5">
-        <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--notification-radius)] bg-[var(--notification-bg)] text-[var(--notification-text)] shadow-sm border border-[var(--notification-border)]">
-            <BellRing size={16} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-bold text-[var(--notification-text)]">Notification Preferences</div>
-            <div className="mt-0.5 text-[12px] leading-5 text-[var(--notification-muted-text)]">
-              Choose which reminders stay active. Reminder days are multi-select, and push
-              stays a delivery channel separate from device platform.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <div className="px-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--notification-muted-text)]">
-            Channels
-          </p>
-        </div>
-        <NotificationChannelToggles
-          items={[
-            {
-              key: 'in_app',
-              label: 'In-app notifications',
-              checked: preferences.channels.in_app,
-              onCheckedChange: (checked) =>
-                setPreferences((current) => ({
-                  ...current,
-                  channels: { ...current.channels, in_app: checked },
-                })),
-            },
-            {
-              key: 'push',
-              label: 'Push notifications',
-              checked: preferences.channels.push,
-              onCheckedChange: (checked) =>
-                setPreferences((current) => ({
-                  ...current,
-                  channels: { ...current.channels, push: checked },
-                })),
-            },
-            {
-              key: 'monthly_report',
-              label: 'Monthly email reports',
-              checked: preferences.monthlyReportEnabled,
-              onCheckedChange: (checked) =>
-                setPreferences((current) => ({
-                  ...current,
-                  monthlyReportEnabled: checked,
-                })),
-            },
-          ]}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <div className="px-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--notification-muted-text)]">
-            Invoice unpaid reminders
-          </p>
-        </div>
-        <ReminderThresholdSelector
-          title="Invoice unpaid reminders"
-          options={unpaidOptions}
-          selectedDays={preferences.invoiceUnpaidAfterDays}
-          onToggleDay={(day) => updateThresholdList('invoiceUnpaidAfterDays', day)}
-          customValue={unpaidCustomDay}
-          onCustomValueChange={(value) => {
-            setUnpaidCustomDay(value)
-            setUnpaidCustomError(null)
-          }}
-          onAddCustomDay={() =>
-            addCustomDay(
-              unpaidCustomDay,
-              'invoiceUnpaidAfterDays',
-              () => setUnpaidCustomDay(''),
-              setUnpaidCustomError,
-            )
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="grid gap-6">
+        {/* Delivery Channels Summary */}
+        <SettingsSummaryCard 
+          title="Delivery Channels"
+          description="Control how you receive alerts and reports."
+          action={
+            <Button variant="ghost" size="sm" onClick={() => setActiveSheet('channels')} className="h-8 rounded-full text-xs font-bold text-[hsl(var(--bd-button-primary-bg))]">
+              Edit Channels
+            </Button>
           }
-          customError={unpaidCustomError}
-        />
-      </div>
+        >
+          <SettingsSummaryRow 
+            label="In-App Notifications" 
+            value={preferences.channels.in_app ? "Enabled" : "Disabled"} 
+            icon={<MessageSquare size={16} />}
+          />
+          <SettingsSummaryRow 
+            label="Push Notifications" 
+            value={preferences.channels.push ? "Enabled" : "Disabled"} 
+            icon={<Smartphone size={16} />}
+          />
+          <SettingsSummaryRow 
+            label="Monthly Reports" 
+            value={preferences.monthlyReportEnabled ? "Enabled" : "Disabled"} 
+            icon={<Mail size={16} />}
+          />
+        </SettingsSummaryCard>
 
-      <div className="space-y-2">
-        <div className="px-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--notification-muted-text)]">
-            Due date reminders
-          </p>
-        </div>
-        <ReminderThresholdSelector
-          title="Due date reminders"
-          options={dueBeforeOptions}
-          selectedDays={[
-            ...preferences.invoiceDueBeforeDays,
-            ...(preferences.invoiceDueToday ? [0] : []),
-          ]}
-          onToggleDay={(day) => {
-            if (day === 0) {
-              setPreferences((current) => ({
-                ...current,
-                invoiceDueToday: !current.invoiceDueToday,
-              }))
-              return
-            }
-            updateThresholdList('invoiceDueBeforeDays', day)
-          }}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <div className="px-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--notification-muted-text)]">
-            Overdue reminders
-          </p>
-        </div>
-        <ReminderThresholdSelector
-          title="Overdue reminders"
-          options={overdueOptions}
-          selectedDays={preferences.invoiceOverdueAfterDays}
-          onToggleDay={(day) => updateThresholdList('invoiceOverdueAfterDays', day)}
-          customValue={overdueCustomDay}
-          onCustomValueChange={(value) => {
-            setOverdueCustomDay(value)
-            setOverdueCustomError(null)
-          }}
-          onAddCustomDay={() =>
-            addCustomDay(
-              overdueCustomDay,
-              'invoiceOverdueAfterDays',
-              () => setOverdueCustomDay(''),
-              setOverdueCustomError,
-            )
+        {/* Reminder Thresholds Summary */}
+        <SettingsSummaryCard 
+          title="Reminder Schedules"
+          description="Automated alerts for pending and overdue invoices."
+          action={
+            <Button variant="ghost" size="sm" onClick={() => setActiveSheet('schedules')} className="h-8 rounded-full text-xs font-bold text-[hsl(var(--bd-button-primary-bg))]">
+              Edit Schedules
+            </Button>
           }
-          customError={overdueCustomError}
-        />
-      </div>
+        >
+          <SettingsSummaryRow 
+            label="Unpaid Reminders" 
+            value={`${preferences.invoiceUnpaidAfterDays.length} active triggers`} 
+            icon={<Calendar size={16} />}
+          />
+          <SettingsSummaryRow 
+            label="Due Date Alerts" 
+            value={`${preferences.invoiceDueBeforeDays.length + (preferences.invoiceDueToday ? 1 : 0)} active triggers`} 
+            icon={<AlertCircle size={16} />}
+          />
+          <SettingsSummaryRow 
+            label="Overdue Reminders" 
+            value={`${preferences.invoiceOverdueAfterDays.length} active triggers`} 
+            icon={<Calendar size={16} />}
+          />
+        </SettingsSummaryCard>
 
-      <div className="space-y-2">
-        <div className="px-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--notification-muted-text)]">
-            Diagnostics
-          </p>
-        </div>
-        <div className="rounded-[var(--notification-radius)] border border-[var(--notification-border)] bg-[var(--notification-bg)] p-4 shadow-sm">
-          <div className="flex items-center justify-between gap-4">
+        {/* Diagnostics Card */}
+        <SettingsSummaryCard 
+          title="System Diagnostics"
+          description="Verify notification delivery on this device."
+        >
+          <div className="flex items-center justify-between gap-4 px-5 py-4">
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-[var(--notification-text)]">Test Delivery</div>
-              <div className="mt-0.5 text-[12px] leading-relaxed text-[var(--notification-muted-text)]">
-                Trigger a manual push notification to verify your device registration and token
-                validity.
-              </div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[hsl(var(--bd-text-muted))] opacity-70">
+                Push Token Validity
+              </p>
+              <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
+                Send a test push to ensure your device is correctly registered.
+              </p>
             </div>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleTestPush}
               disabled={testingPush || !preferences.channels.push}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-[var(--notification-radius)] px-4 py-2 text-xs font-bold transition-all active:scale-95 disabled:opacity-50',
-                preferences.channels.push
-                  ? 'bg-[var(--notification-active-bg)] text-[var(--notification-active-text)] hover:opacity-90'
-                  : 'bg-[var(--notification-bg)] text-[var(--notification-muted-text)] border border-[var(--notification-border)] cursor-not-allowed',
-              )}
+              className="rounded-full border-[hsl(var(--bd-border))] text-xs font-bold"
             >
               {testingPush ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
               ) : (
-                <Send size={14} />
+                <Send size={14} className="mr-2" />
               )}
-              {testingPush ? 'Sending...' : 'Send Test Push'}
-            </button>
+              {testingPush ? 'Testing...' : 'Test Push'}
+            </Button>
           </div>
-        </div>
+        </SettingsSummaryCard>
       </div>
 
-      {error ? (
-        <div className="rounded-[var(--notification-radius)] border border-[var(--notification-danger)]/20 bg-[var(--notification-danger)]/5 px-3 py-2 text-xs text-[var(--notification-danger)]">
-          {error}
-        </div>
-      ) : null}
+      {/* Delivery Channels Editor */}
+      <Sheet open={activeSheet === 'channels'} onOpenChange={(open) => !open && setActiveSheet(null)}>
+        <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-md">
+          <SheetHeader className="p-6 pb-2">
+            <SheetTitle>Delivery Channels</SheetTitle>
+            <SheetDescription>
+              Toggle preferred communication methods for workspace activity.
+            </SheetDescription>
+          </SheetHeader>
 
-      <SettingsSaveButton saving={saving} saved={saved} onClick={handleSave} />
+          <div className="flex-1 overflow-y-auto px-6">
+            <div className="py-6">
+              <NotificationChannelToggles
+                items={[
+                  {
+                    key: 'in_app',
+                    label: 'In-app notifications',
+                    description: 'Alerts shown inside the application bell menu.',
+                    checked: preferences.channels.in_app,
+                    onCheckedChange: (checked) =>
+                      setPreferences((current) => ({
+                        ...current,
+                        channels: { ...current.channels, in_app: checked },
+                      })),
+                  },
+                  {
+                    key: 'push',
+                    label: 'Push notifications',
+                    description: 'Direct alerts to your mobile or desktop device.',
+                    checked: preferences.channels.push,
+                    onCheckedChange: (checked) =>
+                      setPreferences((current) => ({
+                        ...current,
+                        channels: { ...current.channels, push: checked },
+                      })),
+                  },
+                  {
+                    key: 'monthly_report',
+                    label: 'Monthly email reports',
+                    description: 'A summary of your performance delivered via email.',
+                    checked: preferences.monthlyReportEnabled,
+                    onCheckedChange: (checked) =>
+                      setPreferences((current) => ({
+                        ...current,
+                        monthlyReportEnabled: checked,
+                      })),
+                  },
+                ]}
+              />
+            </div>
+          </div>
+
+          <SettingsActionFooter 
+            onSave={handleSave}
+            onCancel={() => setActiveSheet(null)}
+            saving={saving}
+          />
+        </SheetContent>
+      </Sheet>
+
+      {/* Reminder Schedules Editor */}
+      <Sheet open={activeSheet === 'schedules'} onOpenChange={(open) => !open && setActiveSheet(null)}>
+        <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-md">
+          <SheetHeader className="p-6 pb-2">
+            <SheetTitle>Reminder Schedules</SheetTitle>
+            <SheetDescription>
+              Configure when automated reminders are sent for your documents.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-6">
+            <div className="space-y-8 py-6">
+              <ReminderThresholdSelector
+                title="Unpaid Reminders"
+                options={unpaidOptions}
+                selectedDays={preferences.invoiceUnpaidAfterDays}
+                onToggleDay={(day) => updateThresholdList('invoiceUnpaidAfterDays', day)}
+                customValue={unpaidCustomDay}
+                onCustomValueChange={(value) => {
+                  setUnpaidCustomDay(value)
+                  setUnpaidCustomError(null)
+                }}
+                onAddCustomDay={() =>
+                  addCustomDay(
+                    unpaidCustomDay,
+                    'invoiceUnpaidAfterDays',
+                    () => setUnpaidCustomDay(''),
+                    setUnpaidCustomError,
+                  )
+                }
+                customError={unpaidCustomError}
+              />
+
+              <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
+
+              <ReminderThresholdSelector
+                title="Due Date Reminders"
+                options={dueBeforeOptions}
+                selectedDays={[
+                  ...preferences.invoiceDueBeforeDays,
+                  ...(preferences.invoiceDueToday ? [0] : []),
+                ]}
+                onToggleDay={(day) => {
+                  if (day === 0) {
+                    setPreferences((current) => ({
+                      ...current,
+                      invoiceDueToday: !current.invoiceDueToday,
+                    }))
+                    return
+                  }
+                  updateThresholdList('invoiceDueBeforeDays', day)
+                }}
+              />
+
+              <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
+
+              <ReminderThresholdSelector
+                title="Overdue Reminders"
+                options={overdueOptions}
+                selectedDays={preferences.invoiceOverdueAfterDays}
+                onToggleDay={(day) => updateThresholdList('invoiceOverdueAfterDays', day)}
+                customValue={overdueCustomDay}
+                onCustomValueChange={(value) => {
+                  setOverdueCustomDay(value)
+                  setOverdueCustomError(null)
+                }}
+                onAddCustomDay={() =>
+                  addCustomDay(
+                    overdueCustomDay,
+                    'invoiceOverdueAfterDays',
+                    () => setOverdueCustomDay(''),
+                    setOverdueCustomError,
+                  )
+                }
+                customError={overdueCustomError}
+              />
+            </div>
+          </div>
+
+          <SettingsActionFooter 
+            onSave={handleSave}
+            onCancel={() => setActiveSheet(null)}
+            saving={saving}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
