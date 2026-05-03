@@ -118,6 +118,9 @@ export const THEME_NON_COLOR_TOKENS = [
   "bd-layout-padding",
   "bd-layout-content-max",
   "bd-font-family",
+  "bd-font-display-family",
+  "bd-font-h1-family",
+  "bd-font-label-family",
   "bd-font-body-size",
   "bd-font-body-line-height",
   "bd-font-display-size",
@@ -200,7 +203,7 @@ export function normalizeThemeTokenValue(
     return /^\s*\d{3}\s*$/.test(raw) ? raw : null
   }
 
-  if (token === "bd-font-family") {
+  if (token === "bd-font-family" || token === "bd-font-display-family" || token === "bd-font-h1-family" || token === "bd-font-label-family") {
     return raw.length > 0 ? raw : null
   }
 

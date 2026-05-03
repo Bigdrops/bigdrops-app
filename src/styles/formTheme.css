@@ -105,6 +105,9 @@
 
   /* Typography Defaults */
   --bd-font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --bd-font-display-family: var(--bd-font-family);
+  --bd-font-h1-family: var(--bd-font-family);
+  --bd-font-label-family: var(--bd-font-family);
   --bd-font-body-size: 0.875rem;
   --bd-font-body-line-height: 1.5;
   --bd-font-display-size: 3.5rem;
@@ -264,16 +267,19 @@ body {
 }
 
 label, .bd-label {
+  font-family: var(--bd-font-label-family) !important;
   letter-spacing: var(--bd-label-letter-spacing);
 }
 
 h1, .bd-h1 {
+  font-family: var(--bd-font-h1-family) !important;
   font-size: var(--bd-font-h1-size) !important;
   font-weight: var(--bd-font-h1-weight) !important;
   letter-spacing: var(--bd-font-h1-spacing) !important;
 }
 
 .bd-display {
+  font-family: var(--bd-font-display-family) !important;
   font-size: var(--bd-font-display-size) !important;
   font-weight: var(--bd-font-display-weight) !important;
   letter-spacing: var(--bd-font-display-spacing) !important;
