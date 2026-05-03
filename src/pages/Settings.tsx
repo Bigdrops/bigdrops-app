@@ -46,11 +46,11 @@ export default function Settings() {
       case 'company':
         return <CompanySettingsSection />
       case 'branding':
-        return <BrandingSettingsSection onToast={showToast} />
+        return <BrandingSettingsSection />
       case 'banking':
         return <BankingSettingsSection onToast={showToast} />
       case 'signatories':
-        return <SignatoriesSettingsSection onToast={showToast} />
+        return <SignatoriesSettingsSection />
       case 'theme':
         return <AppThemeSettingsSection onToast={showToast} />
       case 'notifications':
