@@ -284,7 +284,7 @@ export function DocumentTextSummaryDisclosure({
           <div className="text-sm font-semibold leading-6 text-[hsl(var(--bd-text))]">{summary}</div>
           {helper ? <div className="mt-1 text-sm leading-6 text-muted-foreground">{helper}</div> : null}
         </div>
-        <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-600">
+        <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[hsl(var(--bd-text-muted))]">
           <span>{open ? closeLabel : openLabel}</span>
           {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </div>
@@ -472,7 +472,7 @@ export function DocumentLivePreviewCard({
         <div className="overflow-hidden border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] sm:mx-2 sm:mb-2 sm:rounded-[24px] sm:border sm:shadow-[var(--bd-shadow-lg)]">
           <div className="h-1.5 w-full" style={{ backgroundColor: accentColor }} />
           <div className="space-y-5 px-3 py-4 sm:px-5 sm:py-6" style={{ fontFamily: bodyFontFamily }}>
-            <div className="space-y-4 border-b border-slate-200 pb-5">
+            <div className="space-y-4 border-b border-[hsl(var(--bd-border))] pb-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-2">
                   <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">{documentLabel}</div>

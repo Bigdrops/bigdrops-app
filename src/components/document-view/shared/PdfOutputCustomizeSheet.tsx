@@ -141,11 +141,11 @@ export default function PdfOutputCustomizeSheet({
           </>
         ) : null}
 
-        <div className="rounded-[24px] border border-border bg-card p-4">
+        <div className="rounded-[24px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-foreground">PDF Design</div>
-              <div className="mt-1 text-xs text-muted-foreground">Pick a template, then fine-tune fonts and colors.</div>
+              <div className="text-sm font-semibold text-[hsl(var(--bd-text))]">PDF Design</div>
+              <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">Pick a template, then fine-tune fonts and colors.</div>
             </div>
           </div>
 
@@ -161,8 +161,8 @@ export default function PdfOutputCustomizeSheet({
                   className={cn(
                     'relative flex w-[240px] shrink-0 flex-col overflow-hidden rounded-[24px] border p-1.5 transition-all duration-300',
                     active
-                      ? 'border-slate-950 bg-slate-950 text-white shadow-xl ring-2 ring-slate-950 ring-offset-2'
-                      : 'border-border bg-card text-foreground hover:border-slate-300 hover:bg-slate-50/50',
+                      ? 'border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] shadow-xl ring-2 ring-[hsl(var(--bd-button-primary-bg))] ring-offset-2'
+                      : 'border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text))] hover:border-[hsl(var(--bd-border))] hover:bg-[hsl(var(--bd-surface-muted))]/50',
                   )}
                 >
                   <div className={cn('mb-3 flex h-[120px] flex-col justify-between rounded-[18px] p-3.5 shadow-inner', option.shell)}>
@@ -183,17 +183,20 @@ export default function PdfOutputCustomizeSheet({
                       <div className="min-w-0">
                         <div className={cn(
                           'text-[10px] font-extrabold uppercase tracking-[0.16em]',
-                          active ? 'text-slate-400' : 'text-muted-foreground'
+                          active ? 'text-[hsl(var(--bd-text-muted))]' : 'text-[hsl(var(--bd-text-muted))]'
                         )}>
                           {option.eyebrow}
                         </div>
-                        <div className="mt-0.5 truncate text-sm font-bold tracking-tight">
+                        <div className={cn(
+                          'mt-0.5 truncate text-sm font-bold tracking-tight',
+                          active ? 'text-[hsl(var(--bd-button-primary-text))]' : 'text-[hsl(var(--bd-text))]'
+                        )}>
                           {option.label}
                         </div>
                       </div>
                       {active && (
-                        <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-500">
-                          <CheckCircle2 className="size-3 text-white" />
+                        <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-button-primary-bg))]">
+                          <CheckCircle2 className="size-3 text-[hsl(var(--bd-button-primary-text))]" />
                         </div>
                       )}
                     </div>
@@ -208,7 +211,7 @@ export default function PdfOutputCustomizeSheet({
           </div>
 
 
-          <div className="mt-4 border-t border-slate-100 pt-4">
+          <div className="mt-4 border-t border-[hsl(var(--bd-border))] pt-4">
             <DocumentTemplateDesignOverrides value={draftPreset} onChange={setDraftPreset} />
           </div>
         </div>

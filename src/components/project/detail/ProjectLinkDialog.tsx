@@ -18,7 +18,7 @@ export default function ProjectLinkDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950/55 p-5"
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-[hsl(var(--bd-overlay-bg))] p-5"
       onClick={() => {
         setShowLink(false)
         setLinkDocId('')
@@ -26,13 +26,13 @@ export default function ProjectLinkDialog({
       }}
     >
       <div
-        className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl ring-1 ring-ring"
+        className="w-full max-w-md rounded-3xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-2 flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-extrabold tracking-tight text-foreground">Link Existing Document</h3>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            <h3 className="text-lg font-extrabold tracking-tight text-[hsl(var(--bd-text))]">Link Existing Document</h3>
+            <p className="mt-1 text-sm leading-6 text-[hsl(var(--bd-text-muted))]">
               Search by the exact document number, like <strong>SASINV-B021</strong>, <strong>SASQ-0012</strong>, or{' '}
               <strong>CSR-004</strong>.
             </p>
@@ -44,7 +44,7 @@ export default function ProjectLinkDialog({
               setLinkDocId('')
               setLinkError('')
             }}
-            className="rounded-full border border-border bg-muted/50 p-2 text-muted-foreground transition hover:bg-muted/50"
+            className="rounded-full border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-2 text-[hsl(var(--bd-text-muted))] transition hover:bg-[hsl(var(--bd-surface-muted))]"
           >
             <X size={16} />
           </button>
@@ -52,7 +52,7 @@ export default function ProjectLinkDialog({
 
         <div className="mt-5 space-y-4">
           <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Document Type</div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--bd-text-muted))]">Document Type</div>
             <div className="grid grid-cols-2 gap-2">
               {['invoice', 'quotation', 'csr', 'waybill'].map((type) => {
                 const typeLabels = { invoice: 'Invoice', quotation: 'Quotation', csr: 'CSR', waybill: 'Waybill' }
@@ -64,8 +64,8 @@ export default function ProjectLinkDialog({
                     onClick={() => setLinkType(type)}
                     className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
                       active
-                        ? 'bg-blue-600 text-white'
-                        : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                        ? 'bg-[hsl(var(--bd-accent))] text-[hsl(var(--bd-accent-foreground))]'
+                        : 'border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]'
                     }`}
                   >
                     {typeLabels[type]}
@@ -76,7 +76,7 @@ export default function ProjectLinkDialog({
           </div>
 
           <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--bd-text-muted))]">
               Document Number
             </div>
             <input
@@ -99,7 +99,7 @@ export default function ProjectLinkDialog({
               onKeyDown={(e) => e.key === 'Enter' && handleLink()}
             />
             {linkError ? (
-              <div className="mt-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-600">
+              <div className="mt-3 flex items-start gap-2 rounded-xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-3 py-2.5 text-sm text-[hsl(var(--bd-status-danger-text))]">
                 <AlertCircle size={16} className="mt-0.5 shrink-0" />
                 <span>{linkError}</span>
               </div>
@@ -114,7 +114,7 @@ export default function ProjectLinkDialog({
                 setLinkDocId('')
                 setLinkError('')
               }}
-              className="rounded-lg border border-border bg-muted/50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-muted/50"
+              className="rounded-lg border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-4 py-2.5 text-sm font-semibold text-[hsl(var(--bd-text))] transition hover:bg-[hsl(var(--bd-surface-muted))]"
             >
               Cancel
             </button>
@@ -122,7 +122,7 @@ export default function ProjectLinkDialog({
               type="button"
               onClick={handleLink}
               disabled={linking}
-              className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+              className="rounded-lg bg-[hsl(var(--bd-status-success-bg))] px-4 py-2.5 text-sm font-semibold text-[hsl(var(--bd-status-success-text))] transition hover:bg-[hsl(var(--bd-status-success-hover-bg))] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {linking ? 'Linking...' : 'Link Document'}
             </button>

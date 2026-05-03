@@ -36,7 +36,7 @@ export default function DocumentSheet({
       aria-hidden={!open}
       onClick={onClose}
       style={{
-        background: 'rgba(15, 23, 42, 0.4)',
+        background: 'rgba(var(--bd-overlay-rgb, 15, 23, 42), 0.4)',
         inset: 0,
         position: 'fixed',
         zIndex: 60,
@@ -47,7 +47,7 @@ export default function DocumentSheet({
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         style={{
-          background: '#fff',
+          background: 'hsl(var(--bd-surface))',
           borderRadius: '24px 24px 0 0',
           bottom: 0,
           left: 0,
@@ -62,7 +62,7 @@ export default function DocumentSheet({
       >
         <div
           style={{
-            background: '#d6d3d1',
+            background: 'hsl(var(--bd-border))',
             borderRadius: 999,
             height: 4,
             margin: '0 auto 16px',
@@ -78,9 +78,9 @@ export default function DocumentSheet({
           }}
         >
           <div>
-            <h3 style={{ fontSize: 18, margin: 0 }}>{title}</h3>
+            <h3 style={{ color: 'hsl(var(--bd-text))', fontSize: 18, margin: 0 }}>{title}</h3>
             {subtitle ? (
-              <p style={{ color: '#6b7280', fontSize: 13, margin: '6px 0 0' }}>
+              <p style={{ color: 'hsl(var(--bd-text-muted))', fontSize: 13, margin: '6px 0 0' }}>
                 {subtitle}
               </p>
             ) : null}
@@ -89,9 +89,10 @@ export default function DocumentSheet({
             type="button"
             onClick={onClose}
             style={{
-              background: '#f5f5f4',
-              border: '1px solid #e7e5e4',
+              background: 'hsl(var(--bd-surface-muted))',
+              border: '1px solid hsl(var(--bd-border))',
               borderRadius: 999,
+              color: 'hsl(var(--bd-text-muted))',
               cursor: 'pointer',
               height: 36,
               width: 36,

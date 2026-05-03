@@ -5,6 +5,8 @@ import { PdfBankControls, PdfDocumentOptionsCard, PdfOutputSettingsValue } from 
 import InvoiceHtmlView from '@/components/document-view/invoice/InvoiceHtmlView'
 import {
   InvoiceHero,
+  InvoicePageShell,
+  InvoiceFloatingDownloadButton,
 } from '@/components/document-view/invoice/InvoiceFidelityPrimitives'
 import InvoiceMoreSheet from '@/components/document-view/invoice/InvoiceMoreSheet'
 import InvoiceRecordPaymentSheet from '@/components/document-view/invoice/InvoiceRecordPaymentSheet'
@@ -13,9 +15,7 @@ import InvoiceViewPage from '@/components/document-view/invoice/InvoiceViewPage'
 import AuditTrailPanel from '@/components/audit/AuditTrailPanel'
 import PdfOutputCustomizeSheet from '@/components/document-view/shared/PdfOutputCustomizeSheet'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
-import DocumentPage from '@/components/document-view/shared/DocumentPage'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
-import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import '@/components/document-view/shared/documentViewTheme.css'
@@ -702,9 +702,9 @@ export default function ViewInvoice() {
 
   if (loading) {
     return (
-      <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="Invoices" onBack={() => navigate('/invoices')} />}>
+      <InvoicePageShell topNav={<DocumentTopNav title="Loading..." backLabel="Invoices" onBack={() => navigate('/invoices')} />}>
         <CenteredSpinner />
-      </DocumentPage>
+      </InvoicePageShell>
     )
   }
 
@@ -785,11 +785,11 @@ export default function ViewInvoice() {
 
   return (
     <>
-      <DocumentPage
+      <InvoicePageShell
         topNav={
           <DocumentTopNav
             title={docProps.number}
-            subtitle={docProps.title}
+            subtitle={invoice.invoice_title || 'Tax Invoice'}
             backLabel="Invoices"
             onBack={() => navigate('/invoices')}
             onShare={handleShare}
@@ -806,28 +806,8 @@ export default function ViewInvoice() {
             }
           />
         }
-        hero={
-          <InvoiceHero
-            eyebrow="Invoice"
-            number={docProps.number}
-            title={docProps.title}
-            clientName={invoice.client_name || 'No client specified'}
-            status={docProps.status}
-            metrics={[
-              { label: 'Total Due', value: formatNaira(viewModel.invoiceTotal || 0), hint: invoice.issue_date ? `Issued ${formatDisplayDate(invoice.issue_date)}` : 'Issue date not set', tone: 'default' },
-              { label: 'Received', value: formatNaira(viewModel.cashReceived || 0), hint: `${viewModel.activePaymentCount || 0} payment${viewModel.activePaymentCount === 1 ? '' : 's'} recorded`, tone: 'positive' },
-              { label: 'Balance Due', value: formatNaira(viewModel.balanceDue || 0), hint: invoice.due_date ? `Due ${formatDisplayDate(invoice.due_date)}` : 'Open due date', tone: (viewModel.balanceDue || 0) > 0 ? 'warning' : 'positive' },
-            ]}
-            meta={[
-              { label: 'Client', value: invoice.client_name || 'Unassigned' },
-              { label: 'Issue date', value: invoice.issue_date ? formatDisplayDate(invoice.issue_date) : 'Not set' },
-              { label: 'Due date', value: invoice.due_date ? formatDisplayDate(invoice.due_date) : 'Open' },
-              { label: linkedProject ? 'Project' : sourceDocument ? 'Source' : 'PO number', value: (linkedProject?.name && String(linkedProject.name)) || (sourceDocument?.number && String(sourceDocument.number)) || invoice.po_number || 'Not linked' },
-            ]}
-          />
-        }
-        floating={<FloatingDownloadButton onClick={() => void handleDownload()} disabled={downloading} />}
-        overlays={
+        floating={<InvoiceFloatingDownloadButton onClick={() => void handleDownload()} disabled={downloading} />}
+        overlay={
           <>
             <PdfOutputCustomizeSheet
               open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
@@ -948,6 +928,25 @@ export default function ViewInvoice() {
           </>
         }
       >
+        <InvoiceHero
+          eyebrow="Invoice"
+          number={docProps.number}
+          title={docProps.title}
+          clientName={invoice.client_name || 'No client specified'}
+          status={docProps.status}
+          metrics={[
+            { label: 'Total Due', value: formatNaira(viewModel.invoiceTotal || 0), hint: invoice.issue_date ? `Issued ${formatDisplayDate(invoice.issue_date)}` : 'Issue date not set', tone: 'default' },
+            { label: 'Received', value: formatNaira(viewModel.cashReceived || 0), hint: `${viewModel.activePaymentCount || 0} payment${viewModel.activePaymentCount === 1 ? '' : 's'} recorded`, tone: 'positive' },
+            { label: 'Balance Due', value: formatNaira(viewModel.balanceDue || 0), hint: invoice.due_date ? `Due ${formatDisplayDate(invoice.due_date)}` : 'Open due date', tone: (viewModel.balanceDue || 0) > 0 ? 'warning' : 'positive' },
+          ]}
+          meta={[
+            { label: 'Client', value: invoice.client_name || 'Unassigned' },
+            { label: 'Issue date', value: invoice.issue_date ? formatDisplayDate(invoice.issue_date) : 'Not set' },
+            { label: 'Due date', value: invoice.due_date ? formatDisplayDate(invoice.due_date) : 'Open' },
+            { label: linkedProject ? 'Project' : sourceDocument ? 'Source' : 'PO number', value: (linkedProject?.name && String(linkedProject.name)) || (sourceDocument?.number && String(sourceDocument.number)) || invoice.po_number || 'Not linked' },
+          ]}
+        />
+
         <InvoiceViewPage
           documentPreview={
             <InvoiceHtmlView
@@ -1024,8 +1023,7 @@ export default function ViewInvoice() {
           onDownload={() => void handleDownload()}
           canRecordPayment={viewModel.canRecordPayment}
         />
-      </DocumentPage>
-
+      </InvoicePageShell>
     </>
   )
 }
