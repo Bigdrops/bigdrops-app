@@ -28,10 +28,10 @@
   --dv-primary-text: hsl(var(--bd-fab-text));
   
   /* Semantic Colors */
-  --dv-amber: #d97706;
-  --dv-amber-bg: #fef3c7;
-  --dv-amber-border: #fcd34d;
-  --dv-amber-dark: #b45309;
+  --dv-amber: hsl(var(--bd-status-warning-text));
+  --dv-amber-bg: hsl(var(--bd-status-warning-bg));
+  --dv-amber-border: hsl(var(--bd-status-warning-border));
+  --dv-amber-dark: hsl(var(--bd-status-warning-text));
   
   --dv-emerald: hsl(var(--bd-success));
   --dv-emerald-bg: hsl(var(--bd-success) / 0.1);

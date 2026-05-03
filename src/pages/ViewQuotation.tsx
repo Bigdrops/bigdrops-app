@@ -288,9 +288,9 @@ export default function ViewQuotation() {
       label: row.label,
       value: formatNaira(row.amount || 0),
       emphasis: false,
-      valueClassName: row.tone === 'danger' ? 'text-red-600' : undefined,
+      valueClassName: row.tone === 'danger' ? 'text-[hsl(var(--bd-status-danger-text))]' : undefined,
     })),
-    { label: 'Total', value: formatNaira(totals?.totalPayable || 0), emphasis: true, valueClassName: 'text-slate-950' },
+    { label: 'Total', value: formatNaira(totals?.totalPayable || 0), emphasis: true, valueClassName: 'text-[hsl(var(--bd-text))]' },
   ]
 
   const previewNotesSections = [
@@ -305,7 +305,7 @@ export default function ViewQuotation() {
                 .filter((field: any) => field?.label || field?.value)
                 .map((field: any, index: number) => (
                   <div key={`field-${index}`} className="grid gap-1">
-                    {field.label ? <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">{field.label}</div> : null}
+                    {field.label ? <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">{field.label}</div> : null}
                     <div className="whitespace-pre-wrap break-words">{field.value || '—'}</div>
                   </div>
                 ))}

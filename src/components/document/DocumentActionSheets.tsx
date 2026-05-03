@@ -77,64 +77,64 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
   }
   const toneMap: Record<string, { tile: string; chevron: string; row: string }> = {
     payment: {
-      tile: 'bg-emerald-600 text-white',
-      chevron: 'text-emerald-300',
-      row: 'hover:bg-emerald-50/60',
+      tile: 'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]',
+      chevron: 'text-[hsl(var(--bd-status-success-text))]/60',
+      row: 'hover:bg-[hsl(var(--bd-status-success-bg))]/30',
     },
     copy: {
-      tile: 'bg-sky-600 text-white',
-      chevron: 'text-blue-300',
-      row: 'hover:bg-sky-50/60',
+      tile: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
+      chevron: 'text-[hsl(var(--bd-status-info-text))]/60',
+      row: 'hover:bg-[hsl(var(--bd-status-info-bg))]/30',
     },
     clone: {
-      tile: 'bg-violet-600 text-white',
-      chevron: 'text-violet-300',
-      row: 'hover:bg-violet-50/60',
+      tile: 'bg-[hsl(var(--bd-button-primary-bg))]/10 text-[hsl(var(--bd-button-primary-bg))]',
+      chevron: 'text-[hsl(var(--bd-button-primary-bg))]/60',
+      row: 'hover:bg-[hsl(var(--bd-button-primary-bg))]/5',
     },
     convert: {
-      tile: 'bg-amber-500 text-slate-950',
-      chevron: 'text-amber-300',
-      row: 'hover:bg-amber-50/60',
+      tile: 'bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]',
+      chevron: 'text-[hsl(var(--bd-status-warning-text))]/60',
+      row: 'hover:bg-[hsl(var(--bd-status-warning-bg))]/30',
     },
     archive: {
-      tile: 'bg-slate-700 text-white',
-      chevron: 'text-slate-300',
-      row: 'hover:bg-slate-50/60',
+      tile: 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]',
+      chevron: 'text-[hsl(var(--bd-text-muted))]/60',
+      row: 'hover:bg-[hsl(var(--bd-surface-muted))]/30',
     },
     open: {
-      tile: 'bg-sky-600 text-white',
-      chevron: 'text-blue-300',
-      row: 'hover:bg-sky-50/60',
+      tile: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
+      chevron: 'text-[hsl(var(--bd-status-info-text))]/60',
+      row: 'hover:bg-[hsl(var(--bd-status-info-bg))]/30',
     },
     export: {
-      tile: 'bg-sky-600 text-white',
-      chevron: 'text-blue-300',
-      row: 'hover:bg-sky-50/60',
+      tile: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
+      chevron: 'text-[hsl(var(--bd-status-info-text))]/60',
+      row: 'hover:bg-[hsl(var(--bd-status-info-bg))]/30',
     },
     pdf: {
-      tile: 'bg-slate-700 text-white',
-      chevron: 'text-slate-300',
-      row: 'hover:bg-slate-50/60',
+      tile: 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]',
+      chevron: 'text-[hsl(var(--bd-text-muted))]/60',
+      row: 'hover:bg-[hsl(var(--bd-surface-muted))]/30',
     },
     projectLink: {
-      tile: 'bg-emerald-600 text-white',
-      chevron: 'text-emerald-300',
-      row: 'hover:bg-emerald-50/60',
+      tile: 'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]',
+      chevron: 'text-[hsl(var(--bd-status-success-text))]/60',
+      row: 'hover:bg-[hsl(var(--bd-status-success-bg))]/30',
     },
     projectView: {
-      tile: 'bg-emerald-600 text-white',
-      chevron: 'text-emerald-300',
-      row: 'hover:bg-emerald-50/60',
+      tile: 'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]',
+      chevron: 'text-[hsl(var(--bd-status-success-text))]/60',
+      row: 'hover:bg-[hsl(var(--bd-status-success-bg))]/30',
     },
     documentsLink: {
-      tile: 'bg-cyan-700 text-white',
-      chevron: 'text-violet-300',
-      row: 'hover:bg-cyan-50/60',
+      tile: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
+      chevron: 'text-[hsl(var(--bd-status-info-text))]/60',
+      row: 'hover:bg-[hsl(var(--bd-status-info-bg))]/30',
     },
     documentsView: {
-      tile: 'bg-cyan-700 text-white',
-      chevron: 'text-violet-300',
-      row: 'hover:bg-cyan-50/60',
+      tile: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
+      chevron: 'text-[hsl(var(--bd-status-info-text))]/60',
+      row: 'hover:bg-[hsl(var(--bd-status-info-bg))]/30',
     },
   }
 
@@ -144,9 +144,9 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
         side="bottom"
         className="flex h-[50vh] max-h-[50vh] flex-col overflow-hidden rounded-t-[26px] px-0 pb-4"
       >
-        <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-slate-200" />
-        <SheetHeader className="border-b border-border px-4 pb-3 pt-3 text-left">
-          <SheetTitle className="text-base font-extrabold text-foreground">{title}</SheetTitle>
+        <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-[hsl(var(--bd-border))]" />
+        <SheetHeader className="border-b border-[hsl(var(--bd-border))] px-4 pb-3 pt-3 text-left">
+          <SheetTitle className="text-base font-extrabold text-[hsl(var(--bd-text))]">{title}</SheetTitle>
           {subtitle ? <SheetDescription>{subtitle}</SheetDescription> : null}
         </SheetHeader>
         <div className="min-h-0 overflow-y-auto px-3 pt-2">
@@ -168,25 +168,25 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
                     }}
                     className={cn(
                       'flex w-full items-center gap-2.5 rounded-[18px] px-3 py-2.5 text-left transition',
-                      danger ? 'hover:bg-red-50' : tone.row,
+                      danger ? 'hover:bg-[hsl(var(--bd-status-danger-bg))]/30' : tone.row,
                       action.disabled && 'opacity-60',
                     )}
                   >
                     <span
                       className={cn(
                         'grid h-9 w-9 shrink-0 place-items-center rounded-[12px] shadow-sm',
-                        danger ? 'bg-red-600 text-white' : tone.tile,
+                        danger ? 'bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]' : tone.tile,
                       )}
                     >
                       <Icon className="h-4 w-4" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <div className={cn('text-sm font-bold', danger ? 'text-red-700' : 'text-foreground')}>{action.label}</div>
-                      {action.subtitle ? <div className="mt-0.5 text-[10px] leading-4 text-muted-foreground">{action.subtitle}</div> : null}
+                      <div className={cn('text-sm font-bold', danger ? 'text-[hsl(var(--bd-status-danger-text))]' : 'text-[hsl(var(--bd-text))]')}>{action.label}</div>
+                      {action.subtitle ? <div className="mt-0.5 text-[10px] leading-4 text-[hsl(var(--bd-text-muted))]">{action.subtitle}</div> : null}
                     </span>
-                    <ChevronRight className={cn('h-4 w-4 shrink-0', danger ? 'text-red-300' : tone.chevron)} />
+                    <ChevronRight className={cn('h-4 w-4 shrink-0', danger ? 'text-[hsl(var(--bd-status-danger-text))]/60' : tone.chevron)} />
                   </button>
-                  {nextNeedsSeparator ? <div className="mx-3 mt-1.5 border-t border-slate-100" /> : null}
+                  {nextNeedsSeparator ? <div className="mx-3 mt-1.5 border-t border-[hsl(var(--bd-border))]" /> : null}
                 </div>
               )
             })}
@@ -231,16 +231,16 @@ export function DocumentPdfSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-[50vh] max-h-[50vh] overflow-hidden rounded-t-[30px] px-0 pb-6">
-        <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-slate-200" />
-        <SheetHeader className="border-b border-border px-5 pb-4 pt-4 text-left">
-          <SheetTitle className="text-base font-extrabold text-foreground">{title}</SheetTitle>
+        <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-[hsl(var(--bd-border))]" />
+        <SheetHeader className="border-b border-[hsl(var(--bd-border))] px-5 pb-4 pt-4 text-left">
+          <SheetTitle className="text-base font-extrabold text-[hsl(var(--bd-text))]">{title}</SheetTitle>
           {subtitle ? <SheetDescription>{subtitle}</SheetDescription> : null}
         </SheetHeader>
         <div className="min-h-0 space-y-5 overflow-y-auto px-5 py-5">
           {settingsNode ? settingsNode : null}
           {templateValue && onTemplateChange && templates?.length ? (
             <div className="space-y-2">
-              <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">Template</div>
+              <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">Template</div>
               <DocumentTemplatePicker value={templateValue} onChange={onTemplateChange} templates={templates as any} />
             </div>
           ) : null}
