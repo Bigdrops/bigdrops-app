@@ -413,7 +413,7 @@ export default function Waybills() {
             )
           }}
           emptyState={
-            <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-border bg-card p-16 text-center shadow-inner">
+            <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 p-16 text-center shadow-inner">
               <div className="mx-auto grid h-14 w-14 place-items-center rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
                 <Truck className="h-7 w-7" />
               </div>

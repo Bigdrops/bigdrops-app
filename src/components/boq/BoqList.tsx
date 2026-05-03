@@ -127,7 +127,7 @@ export function BoqList() {
           subtitle={boq.boq_number || 'BOQ'}
           tertiary={boq.status || 'open'}
           statusLabel={boq.status || 'open'}
-          statusClassName={boq.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}
+          statusClassName={boq.status === 'approved' ? 'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]' : 'bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]'}
           onClick={() => navigate(`/boqs/${boq.id}`)}
           onActionClick={() => setActiveBoq(boq)}
         />

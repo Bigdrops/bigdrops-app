@@ -388,27 +388,27 @@ export default function CSR() {
           )
         }}
         emptyState={
-          <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-border bg-card p-5 text-center shadow-inner">
-            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-[var(--bd-radius-lg)] bg-foreground text-background">
+          <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 p-5 text-center shadow-inner">
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
               <ClipboardList className="h-5 w-5" />
             </div>
-            <div className="text-base font-semibold text-foreground">
+            <div className="text-base font-semibold text-[hsl(var(--bd-text))]">
               {hasActiveFilters ? "No service reports found" : "No service reports yet"}
             </div>
-            <div className="mt-1 text-sm text-muted-foreground">
+            <div className="mt-1 text-sm text-[hsl(var(--bd-text-muted))]">
               {hasActiveFilters ? "Try a different search or filter." : "Create your first CSR to start tracking service activity."}
             </div>
           </div>
         }
       >
         {showCsrSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
-          <div className="mb-4 rounded-[22px] border border-accent/30 bg-accent/10 p-4 shadow-sm">
+          <div className="mb-4 rounded-[22px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/30 p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-accent-foreground">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">
                   Offline sync recovery
                 </div>
-                <div className="mt-1 text-sm text-muted-foreground">
+                <div className="mt-1 text-sm text-[hsl(var(--bd-text-muted))]">
                   Retry pending or failed CSR uploads from this device.
                 </div>
               </div>
@@ -418,7 +418,7 @@ export default function CSR() {
                 size="icon-lg"
                 onClick={loadCsrSyncQueue}
                 disabled={syncQueueLoading || retryingQueueItemId != null}
-                className="h-10 w-10 rounded-2xl border-accent/30 bg-background text-accent-foreground hover:bg-accent/10"
+                className="h-10 w-10 rounded-2xl border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]"
                 aria-label="Refresh CSR sync queue"
               >
                 {syncQueueLoading ? (
@@ -437,12 +437,12 @@ export default function CSR() {
                   return (
                     <div
                       key={item.id}
-                      className="rounded-2xl border border-accent/30 bg-background p-3"
+                      className="rounded-2xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-3"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <div className="truncate text-sm font-bold text-foreground">
+                            <div className="truncate text-sm font-bold text-[hsl(var(--bd-text))]">
                               {item.csrNumber || item.localCsrId || `Queue #${item.id}`}
                             </div>
                             <span
@@ -456,7 +456,7 @@ export default function CSR() {
                             </span>
                           </div>
 
-                          <div className="mt-1 truncate text-xs text-muted-foreground">
+                          <div className="mt-1 truncate text-xs text-[hsl(var(--bd-text-muted))]">
                             {item.clientName || "No client"} · Attempts {item.attempts}
                           </div>
 
@@ -473,7 +473,7 @@ export default function CSR() {
                           size="sm"
                           onClick={() => handleRetryQueueItem(item.id)}
                           disabled={retryingQueueItemId != null}
-                          className="h-9 rounded-xl border-accent/30 bg-background px-3 text-xs font-bold text-accent-foreground hover:bg-accent/10"
+                          className="h-9 rounded-xl border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 text-xs font-bold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]"
                         >
                           {isRetrying ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />

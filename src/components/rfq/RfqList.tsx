@@ -32,7 +32,7 @@ const getRfqStatusMeta = (expiryDate?: string) => {
   if (!expiryDate) {
     return {
       label: 'Open',
-      className: 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300',
+      className: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
     }
   }
 
@@ -40,7 +40,7 @@ const getRfqStatusMeta = (expiryDate?: string) => {
   if (Number.isNaN(expiry.getTime())) {
     return {
       label: 'Open',
-      className: 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300',
+      className: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
     }
   }
 
@@ -60,13 +60,13 @@ const getRfqStatusMeta = (expiryDate?: string) => {
   if (diffInDays <= 7) {
     return {
       label: 'Due soon',
-      className: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300',
+      className: 'bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]',
     }
   }
 
   return {
     label: 'Open',
-    className: 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300',
+    className: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
   }
 }
 
