@@ -1,8 +1,11 @@
 import * as React from 'react'
+import { Menu, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SettingsNav } from './SettingsNav'
 import { SettingsSectionFrame } from './SettingsSectionFrame'
-import type { SettingsGroup, SettingsItem, ActiveSectionId } from '@/pages/settings/settings-config'
+import type { SettingsGroup, ActiveSectionId } from '@/pages/settings/settings-config'
+import { MobileChromeContext } from '@/components/Layout'
+import { Button } from '@/components/ui/button'
 
 interface SettingsShellProps {
   groups: SettingsGroup[]
@@ -20,6 +23,7 @@ export function SettingsShell({
   isAdmin
 }: SettingsShellProps) {
   const [viewportWidth, setViewportWidth] = React.useState(typeof window !== 'undefined' ? window.innerWidth : 1200)
+  const { openSidebar } = React.useContext(MobileChromeContext)
 
   React.useEffect(() => {
     const handleResize = () => setViewportWidth(window.innerWidth)
@@ -45,26 +49,55 @@ export function SettingsShell({
   // Mobile View: Drill-down logic
   if (isMobile) {
     return (
-      <div className="w-full pb-10">
-        {!activeSection ? (
-          <SettingsNav 
-            groups={groups} 
-            activeSection={null} 
-            onSelect={(id) => setActiveSection(id)} 
-            variant="list" 
-          />
-        ) : (
-          currentSection && (
-            <SettingsSectionFrame 
-              section={currentSection} 
-              onBack={() => setActiveSection(null)} 
-              showBackButton={true}
+      <div className="flex flex-col min-h-[100dvh] w-full bg-[hsl(var(--bd-surface))]">
+        {/* Compact Mobile Header */}
+        {!activeSection && (
+          <header className="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-[hsl(var(--bd-surface))] border-b border-[hsl(var(--bd-border)/0.5)]">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={openSidebar}
+                className="h-9 w-9 rounded-full bg-[hsl(var(--bd-surface-muted))/0.5] text-[hsl(var(--bd-text))]"
+              >
+                <Menu size={18} />
+              </Button>
+              <h1 className="text-lg font-bold tracking-tight text-[hsl(var(--bd-text))]">Settings</h1>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full text-[hsl(var(--bd-text-muted))]"
             >
-              {renderContent()}
-            </SettingsSectionFrame>
-          )
+              <Search size={18} />
+            </Button>
+          </header>
         )}
-        <Footer />
+
+        <div className={cn(
+          "flex-1 w-full",
+          !activeSection ? "px-4 pt-4 pb-24" : "px-0 pb-24"
+        )}>
+          {!activeSection ? (
+            <SettingsNav 
+              groups={groups} 
+              activeSection={null} 
+              onSelect={(id) => setActiveSection(id)} 
+              variant="list" 
+            />
+          ) : (
+            currentSection && (
+              <SettingsSectionFrame 
+                section={currentSection} 
+                onBack={() => setActiveSection(null)} 
+                showBackButton={true}
+              >
+                {renderContent()}
+              </SettingsSectionFrame>
+            )
+          )}
+          <Footer />
+        </div>
       </div>
     )
   }

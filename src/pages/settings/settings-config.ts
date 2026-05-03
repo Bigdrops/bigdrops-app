@@ -9,17 +9,19 @@ import {
   Palette,
   Shield,
   UserCheck,
+  Bell,
   type LucideIcon,
 } from 'lucide-react'
 
 export type ActiveSectionId =
   | 'user'
   | 'theme'
+  | 'notifications'
   | 'company'
   | 'branding'
   | 'banking'
-  | 'documents'
   | 'signatories'
+  | 'documents'
   | 'dashboard'
   | 'archives'
   | 'admin'
@@ -32,7 +34,7 @@ export type SettingsItem = {
   adminOnly?: boolean
 }
 
-export type GroupId = 'account' | 'workspace' | 'operations' | 'interface' | 'system'
+export type GroupId = 'account' | 'workspace' | 'preferences' | 'system'
 
 export type SettingsGroup = {
   id: GroupId
@@ -48,15 +50,9 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     items: [
       {
         id: 'user',
-        label: 'User Settings',
+        label: 'User Profile',
         icon: FileText,
-        desc: 'Profile, password, and notifications',
-      },
-      {
-        id: 'theme',
-        label: 'Theme & Appearance',
-        icon: Palette,
-        desc: 'Colors, cards, and display preferences',
+        desc: 'Update your personal info and avatar',
       },
     ],
   },
@@ -74,14 +70,8 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
         id: 'branding',
         label: 'Logo & Branding',
         icon: ImageIcon,
-        desc: 'Logo and document branding',
+        desc: 'Manage your logo and document branding',
       },
-    ],
-  },
-  {
-    id: 'operations',
-    label: 'Operations',
-    items: [
       {
         id: 'banking',
         label: 'Banking',
@@ -89,28 +79,40 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
         desc: 'Bank accounts for documents and payments',
       },
       {
-        id: 'documents',
-        label: 'Document Controls',
-        icon: FolderKanban,
-        desc: 'Invoice, quotation, and PDF defaults',
-      },
-      {
         id: 'signatories',
         label: 'Signatories',
         icon: UserCheck,
-        desc: 'People who can sign documents',
+        desc: 'Authorized people who can sign documents',
       },
     ],
   },
   {
-    id: 'interface',
-    label: 'Interface',
+    id: 'preferences',
+    label: 'Preferences',
     items: [
+      {
+        id: 'theme',
+        label: 'Theme & Appearance',
+        icon: Palette,
+        desc: 'Colors, cards, and display preferences',
+      },
+      {
+        id: 'notifications',
+        label: 'Notifications',
+        icon: Bell,
+        desc: 'Manage email and push notification alerts',
+      },
       {
         id: 'dashboard',
         label: 'Dashboard Layout',
         icon: LayoutDashboard,
-        desc: 'Quick tiles on your dashboard',
+        desc: 'Configure quick tiles on your dashboard',
+      },
+      {
+        id: 'documents',
+        label: 'Document Controls',
+        icon: FolderKanban,
+        desc: 'Set invoice, quotation, and PDF defaults',
       },
     ],
   },

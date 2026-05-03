@@ -14,18 +14,20 @@ export function SettingsNav({ groups, activeSection, onSelect, variant = 'list',
   const isSidebar = variant === 'sidebar'
 
   return (
-    <nav className={cn("space-y-6", isSidebar ? "w-full" : "w-full max-w-2xl mx-auto")}>
+    <nav className={cn(
+      isSidebar ? "space-y-6 w-full" : "w-full max-w-2xl mx-auto pb-12"
+    )}>
       {groups.map((group) => (
-        <div key={group.id} className="space-y-2">
-          <div className="px-3">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[hsl(var(--bd-text-muted))] opacity-60">
+        <div key={group.id} className={cn(isSidebar ? "space-y-2" : "mb-6")}>
+          <div className="px-3 mb-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[hsl(var(--bd-text-muted))] opacity-50">
               {group.label}
             </p>
           </div>
 
           <div className={cn(
-            "grid gap-1",
-            !isSidebar && "rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden shadow-sm"
+            "grid",
+            isSidebar ? "gap-1" : "divide-y divide-[hsl(var(--bd-border)/0.4)]"
           )}>
             {group.items.map((item) => {
               const isActive = activeSection === item.id
@@ -36,14 +38,14 @@ export function SettingsNav({ groups, activeSection, onSelect, variant = 'list',
                   key={item.id}
                   onClick={() => onSelect(item.id)}
                   className={cn(
-                    "group relative flex items-center gap-3 transition-all",
+                    "group relative flex items-center gap-3 transition-all text-left",
                     isSidebar 
-                      ? "w-full rounded-[var(--bd-radius-md)] px-3 py-2 text-left" 
-                      : "w-full px-4 py-3.5 text-left border-b border-[hsl(var(--bd-border))]/40 last:border-b-0",
+                      ? "w-full rounded-[var(--bd-radius-md)] px-3 py-2" 
+                      : "w-full px-4 py-3 hover:bg-[hsl(var(--bd-surface-muted)/0.4)]",
                     isSidebar && isActive 
                       ? "bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text))]" 
                       : isSidebar ? "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]/50 hover:text-[hsl(var(--bd-text))]"
-                      : "hover:bg-[hsl(var(--bd-surface-muted))]"
+                      : ""
                   )}
                 >
                   {/* Active Indicator Line for Sidebar */}
@@ -52,35 +54,32 @@ export function SettingsNav({ groups, activeSection, onSelect, variant = 'list',
                   )}
 
                   <div className={cn(
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--bd-radius-sm)] transition-all",
+                    "flex shrink-0 items-center justify-center rounded-[var(--bd-radius-sm)] transition-all",
+                    isSidebar ? "h-8 w-8" : "h-9 w-9",
                     isActive 
                       ? "bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]" 
-                      : "bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] group-hover:bg-[hsl(var(--bd-surface-muted))] group-hover:text-[hsl(var(--bd-text))]"
+                      : "bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] group-hover:text-[hsl(var(--bd-text))]"
                   )}>
-                    <Icon size={16} />
+                    <Icon size={isSidebar ? 16 : 18} />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <p className={cn(
-                      "text-sm font-bold truncate",
-                      isActive ? "text-[hsl(var(--bd-text))]" : "text-[hsl(var(--bd-text))]"
+                      "text-sm font-semibold truncate",
+                      isActive || !isSidebar ? "text-[hsl(var(--bd-text))]" : "text-[hsl(var(--bd-text-muted))]"
                     )}>
                       {item.label}
                     </p>
-                    {!isSidebar && (
-                      <p className="mt-0.5 text-[11px] leading-tight text-[hsl(var(--bd-text-muted))] truncate">
-                        {item.desc}
-                      </p>
-                    )}
-                    {isSidebar && !isTablet && (
-                      <p className="text-[10px] font-medium text-[hsl(var(--bd-text-muted))] truncate opacity-70">
-                        {item.desc}
-                      </p>
-                    )}
+                    <p className={cn(
+                      "text-[11px] leading-tight text-[hsl(var(--bd-text-muted))] truncate opacity-70",
+                      isSidebar && isTablet && "hidden"
+                    )}>
+                      {item.desc}
+                    </p>
                   </div>
 
                   {!isSidebar && (
-                    <ChevronRight size={14} className="text-[hsl(var(--bd-text-muted))] opacity-20 group-hover:opacity-100 transition-all" />
+                    <ChevronRight size={14} className="text-[hsl(var(--bd-text-muted))] opacity-30 group-hover:opacity-100 transition-all" />
                   )}
                 </button>
               )
