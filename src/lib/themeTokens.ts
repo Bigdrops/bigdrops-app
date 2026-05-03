@@ -119,6 +119,13 @@ export const THEME_NON_COLOR_TOKENS = [
   "bd-layout-content-max",
   "bd-font-family",
   "bd-font-body-size",
+  "bd-font-body-line-height",
+  "bd-font-display-size",
+  "bd-font-display-weight",
+  "bd-font-display-spacing",
+  "bd-font-h1-size",
+  "bd-font-h1-weight",
+  "bd-font-h1-spacing",
   "bd-label-letter-spacing",
   "bd-overlay-radius",
   "bd-space-xs",
@@ -173,17 +180,24 @@ export function normalizeThemeTokenValue(
     token === "bd-layout-padding" || 
     token === "bd-layout-content-max" || 
     token === "bd-font-body-size" || 
+    token === "bd-font-body-line-height" || 
+    token === "bd-font-display-size" || 
+    token === "bd-font-h1-size" || 
     token === "bd-overlay-radius" ||
     token.startsWith("bd-space-") ||
     token.includes("-padding") ||
     token.includes("-gap")
   ) {
     if (options.allowRadius === false && token.includes("radius")) return null
-    return CSS_LENGTH_RE.test(raw) ? raw : null
+    return /^\s*\d+(\.\d+)?(px|rem|em)?\s*$/.test(raw) ? raw : null
   }
 
-  if (token === "bd-label-letter-spacing") {
+  if (token === "bd-label-letter-spacing" || token === "bd-font-h1-spacing" || token === "bd-font-display-spacing") {
     return /^\s*-?\d+(\.\d+)?(em|px|rem)\s*$/.test(raw) ? raw : null
+  }
+
+  if (token === "bd-font-h1-weight" || token === "bd-font-display-weight") {
+    return /^\s*\d{3}\s*$/.test(raw) ? raw : null
   }
 
   if (token === "bd-font-family") {

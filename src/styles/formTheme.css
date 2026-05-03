@@ -106,6 +106,13 @@
   /* Typography Defaults */
   --bd-font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --bd-font-body-size: 0.875rem;
+  --bd-font-body-line-height: 1.5;
+  --bd-font-display-size: 3.5rem;
+  --bd-font-display-weight: 800;
+  --bd-font-display-spacing: -0.02em;
+  --bd-font-h1-size: 2.25rem;
+  --bd-font-h1-weight: 700;
+  --bd-font-h1-spacing: -0.02em;
   --bd-label-letter-spacing: 0.05em;
 
   /* Spacing Tokens */
@@ -253,10 +260,23 @@
 body {
   font-family: var(--bd-font-family) !important;
   font-size: var(--bd-font-body-size) !important;
+  line-height: var(--bd-font-body-line-height) !important;
 }
 
 label, .bd-label {
   letter-spacing: var(--bd-label-letter-spacing);
+}
+
+h1, .bd-h1 {
+  font-size: var(--bd-font-h1-size) !important;
+  font-weight: var(--bd-font-h1-weight) !important;
+  letter-spacing: var(--bd-font-h1-spacing) !important;
+}
+
+.bd-display {
+  font-size: var(--bd-font-display-size) !important;
+  font-weight: var(--bd-font-display-weight) !important;
+  letter-spacing: var(--bd-font-display-spacing) !important;
 }
 
 .bd-goey-toast {
