@@ -36,26 +36,26 @@ export const DOC_TYPE: Record<string, DocTypeConfig> = {
   invoice: {
     label: 'Invoice',
     icon: FileText,
-    iconWrapClassName: 'bg-blue-50 text-blue-700 ring-1 ring-blue-100',
-    labelClassName: 'text-blue-700',
+    iconWrapClassName: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))] ring-1 ring-[hsl(var(--bd-status-info-border))]',
+    labelClassName: 'text-[hsl(var(--bd-status-info-text))]',
   },
   csr: {
     label: 'CSR',
     icon: Wrench,
-    iconWrapClassName: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100',
-    labelClassName: 'text-emerald-700',
+    iconWrapClassName: 'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))] ring-1 ring-[hsl(var(--bd-status-success-border))]',
+    labelClassName: 'text-[hsl(var(--bd-status-success-text))]',
   },
   quotation: {
     label: 'Quotation',
     icon: ClipboardList,
-    iconWrapClassName: 'bg-violet-50 text-violet-700 ring-1 ring-violet-100',
-    labelClassName: 'text-violet-700',
+    iconWrapClassName: 'bg-[hsl(var(--bd-status-accent-bg))] text-[hsl(var(--bd-status-accent-text))] ring-1 ring-[hsl(var(--bd-status-accent-border))]',
+    labelClassName: 'text-[hsl(var(--bd-status-accent-text))]',
   },
   waybill: {
     label: 'Waybill',
     icon: Truck,
-    iconWrapClassName: 'bg-orange-50 text-orange-700 ring-1 ring-orange-100',
-    labelClassName: 'text-orange-700',
+    iconWrapClassName: 'bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))] ring-1 ring-[hsl(var(--bd-status-warning-border))]',
+    labelClassName: 'text-[hsl(var(--bd-status-warning-text))]',
   },
 }
 
@@ -80,8 +80,8 @@ export function getPaymentStatusConfig(status: string | null | undefined): Proje
   }
 }
 
-export const cardClassName = 'rounded-2xl border border-slate-200 bg-card shadow-sm ring-1 ring-slate-100'
-export const inputClassName = 'w-full rounded-lg border border-slate-200 bg-background px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+export const cardClassName = 'rounded-2xl border border-[hsl(var(--bd-border))] bg-card shadow-sm ring-1 ring-[hsl(var(--bd-border-soft))]'
+export const inputClassName = 'w-full rounded-lg border border-[hsl(var(--bd-border))] bg-background px-3 py-2.5 text-sm text-[hsl(var(--bd-text))] outline-none transition focus:border-[hsl(var(--bd-status-success-border))] focus:ring-2 focus:ring-[hsl(var(--bd-status-success-bg))]'
 export const DOC_TYPE_LABELS: Record<string, string> = {
   invoice: 'Invoice',
   quotation: 'Quotation',

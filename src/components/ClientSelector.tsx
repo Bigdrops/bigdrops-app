@@ -177,23 +177,23 @@ export default function ClientSelector({
 
   const triggerContent = (
     <div className={cn(
-      "flex w-full items-center justify-between gap-3 rounded-xl border border-input bg-background px-3 transition-all",
+      "flex w-full items-center justify-between gap-3 rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 transition-all",
       compact ? "h-10" : "h-12 px-4 py-2"
     )}>
       <div className="flex-1 min-w-0 text-left">
         <span className={cn(
           "block truncate font-medium",
-          !selectedSummary?.name && "text-muted-foreground"
+          !selectedSummary?.name && "text-[hsl(var(--bd-text-muted))]"
         )}>
           {selectedSummary?.name || 'Select client...'}
         </span>
       </div>
-      <div className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+      <div className="flex shrink-0 items-center gap-1.5 text-[hsl(var(--bd-text-muted))]">
         {selectedSummary?.name && allowClear && (
           <button 
             type="button" 
             onClick={clearSelection}
-            className="hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted"
+            className="hover:text-[hsl(var(--bd-text))] transition-colors p-1 rounded-full hover:bg-[hsl(var(--bd-surface-muted))]"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -206,7 +206,7 @@ export default function ClientSelector({
   return (
     <>
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-2xl bg-card p-0 sm:max-w-2xl">
+        <DialogContent className="max-w-2xl border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-0 sm:max-w-2xl">
           <div className="max-h-[85vh] overflow-y-auto p-6">
             <DialogHeader className="mb-4">
               <DialogTitle>Add New Client</DialogTitle>
@@ -214,9 +214,9 @@ export default function ClientSelector({
 
             <div className="space-y-4">
               <div>
-                <Label>Company / Client Name *</Label>
+                <Label className="text-[11px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">Company / Client Name *</Label>
                 <Input
-                  className="mt-2 bg-background"
+                  className="mt-2 border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/50"
                   value={newClient.name}
                   onChange={handleDraftChange('name')}
                   placeholder="e.g. Coronation Power & Gas Ltd"
@@ -296,7 +296,7 @@ export default function ClientSelector({
       <div className={cn("space-y-1.5", compact ? "" : "space-y-3")}>
         {!hideHeader && (
           <div className="flex items-center justify-between gap-2">
-            <Label className={cn(compact && "text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground")}>
+            <Label className={cn(compact ? "text-[10px] font-semibold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]" : "text-[11px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]")}>
               Client
             </Label>
           </div>
@@ -321,23 +321,23 @@ export default function ClientSelector({
             <Button
               type="button"
               variant="outline"
-              className="h-10 w-full justify-start gap-2 rounded-xl border-dashed border-muted-foreground/30 hover:border-primary/50"
+              className="h-10 w-full justify-start gap-2 rounded-xl border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] hover:border-[hsl(var(--bd-button-primary-bg))]/50"
               onClick={() => {
                 setOpen(false)
                 setShowAddModal(true)
               }}
             >
               <UserPlus className="h-4 w-4" />
-              <span>Add New Client</span>
+              <span className="text-xs font-bold">Add New Client</span>
             </Button>
           }
         />
 
         {!compact && selectedClient && (
-          <Card className="border-border bg-muted/30 p-4 shadow-none">
+          <Card className="border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/30 p-4 shadow-none">
             <div className="space-y-1">
-              <div className="text-sm font-bold text-foreground">{selectedClient.name}</div>
-              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <div className="text-sm font-bold text-[hsl(var(--bd-text))]">{selectedClient.name}</div>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[hsl(var(--bd-text-muted))]">
                 {selectedClient.contact_person && <span>{selectedClient.contact_person}</span>}
                 {selectedClient.phone && <span>{selectedClient.phone}</span>}
                 {selectedClient.email && <span>{selectedClient.email}</span>}
