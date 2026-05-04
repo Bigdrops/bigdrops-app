@@ -603,8 +603,7 @@ export default function ViewQuotation() {
           documentPreview={
             <QuotationDocumentPreview
               quotation={quotation}
-              viewModel={viewModel}
-              previewModel={previewModel}
+              previewModel={quotation}
               pdfOutput={pdfOutput}
               settingsData={settingsData}
             />
