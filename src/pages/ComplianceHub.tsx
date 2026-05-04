@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import {
   AlertCircle,
   Bell,
@@ -150,14 +150,6 @@ export default function ComplianceHub() {
     }
   }, [])
 
-  const taxMetrics = useMemo(() => {
-    const vatCharged = invoices.reduce((sum, row) => sum + Number(row.vat || 0), 0)
-    const whtDeducted = payments.reduce((sum, row) => sum + Number(row.wht_amount || 0), 0)
-    const netPosition = vatCharged - whtDeducted
-
-    return { vatCharged, whtDeducted, netPosition }
-  }, [invoices, payments])
-
   const activeSection = sectionMeta[section]
   const ActiveSectionIcon = activeSection.icon
 
@@ -174,15 +166,13 @@ export default function ComplianceHub() {
       <Suspense fallback={<PageLoader />}>
         {section === 'today' ? (
           <ComplianceOverview
-            vatCharged={taxMetrics.vatCharged}
-            whtDeducted={taxMetrics.whtDeducted}
-            netPosition={taxMetrics.netPosition}
-            recentInvoices={invoices}
-            recentPayments={payments}
+            invoices={invoices}
+            payments={payments}
             receipts={receipts}
             taxInputs={taxInputs}
             filings={filings}
             reminders={reminders}
+            onNavigateSection={setSection}
           />
         ) : null}
 

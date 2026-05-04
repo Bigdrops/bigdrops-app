@@ -1,271 +1,389 @@
-import * as React from 'react'
-import { type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
-import { 
-  Receipt, 
-  Wallet, 
-  Banknote, 
-  AlertCircle,
-  ArrowRight,
-  ClipboardList,
-  Bell
-} from 'lucide-react'
-import { formatNaira } from '@/lib/formatters/money'
+import { AlertCircle, Bell, ClipboardList, Receipt, Wallet } from 'lucide-react'
+
 import { formatDisplayDate } from '@/lib/formatters/date'
-import { WhtReceipt, TaxInputEntry, TaxFiling, TaxReminder } from '@/domain/compliance/types'
+import { formatNaira } from '@/lib/formatters/money'
+import { type TaxFiling, type TaxInputEntry, type TaxReminder, type WhtReceipt } from '@/domain/compliance/types'
 
-type MetricTone = 'green' | 'red' | 'amber' | 'blue'
+import ComplianceActionQueue from './ComplianceActionQueue'
+import { type ComplianceActionItem } from './ComplianceActionRow'
+import ComplianceKpiStrip, { type ComplianceKpiItem } from './ComplianceKpiStrip'
+import ComplianceRecentActivity, { type ComplianceActivityItem } from './ComplianceRecentActivity'
 
-type Metric = {
-  label: string
-  value: string
-  tone: MetricTone
-  icon: ReactNode
+type ComplianceTargetSection = 'vat' | 'wht' | 'filings' | 'obligations'
+
+type InvoiceRecord = {
+  id: string
+  invoice_number?: string | null
+  client_name?: string | null
+  issue_date?: string | null
+  vat?: number | string | null
+}
+
+type PaymentRecord = {
+  id: string
+  invoice_id?: string | null
+  invoice_number?: string | null
+  client_name?: string | null
+  date?: string | null
+  wht_amount?: number | string | null
 }
 
 interface ComplianceOverviewProps {
-  vatCharged: number
-  whtDeducted: number
-  netPosition: number
-  recentInvoices: any[]
-  recentPayments: any[]
+  invoices: InvoiceRecord[]
+  payments: PaymentRecord[]
   receipts: WhtReceipt[]
   taxInputs: TaxInputEntry[]
   filings: TaxFiling[]
   reminders: TaxReminder[]
+  onNavigateSection: (section: ComplianceTargetSection) => void
 }
 
-const getMetricToneClasses = (tone: MetricTone) => {
-  switch (tone) {
-    case 'green':
-      return { card: 'bg-[hsl(var(--bd-status-success-bg))] border-[hsl(var(--bd-status-success-border))]', icon: 'bg-[hsl(var(--bd-status-success-text))] text-white', value: 'text-[hsl(var(--bd-status-success-text))]' }
-    case 'red':
-      return { card: 'bg-[hsl(var(--bd-status-danger-bg))] border-[hsl(var(--bd-status-danger-border))]', icon: 'bg-[hsl(var(--bd-status-danger-text))] text-white', value: 'text-[hsl(var(--bd-status-danger-text))]' }
-    case 'amber':
-      return { card: 'bg-[hsl(var(--bd-status-warning-bg))] border-[hsl(var(--bd-status-warning-border))]', icon: 'bg-[hsl(var(--bd-status-warning-text))] text-white', value: 'text-[hsl(var(--bd-status-warning-text))]' }
-    default:
-      return { card: 'bg-[hsl(var(--bd-status-info-bg))] border-[hsl(var(--bd-status-info-border))]', icon: 'bg-[hsl(var(--bd-status-info-text))] text-white', value: 'text-[hsl(var(--bd-status-info-text))]' }
+type QueueCandidate = ComplianceActionItem & {
+  groupRank: number
+  dueSortValue: number | null
+  amountSortValue: number
+}
+
+type ActivityCandidate = ComplianceActivityItem & {
+  sortValue: number
+}
+
+const TAX_TYPE_LABELS: Record<'vat' | 'wht' | 'cit', string> = {
+  vat: 'VAT',
+  wht: 'WHT',
+  cit: 'CIT',
+}
+
+function getTimestamp(value?: string | null) {
+  if (!value) return Number.NaN
+  return new Date(value).getTime()
+}
+
+function getAmount(value?: number | string | null) {
+  return Number(value || 0)
+}
+
+function isDateBeforeToday(value?: string | null) {
+  if (!value) return false
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return false
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  date.setHours(0, 0, 0, 0)
+
+  return date.getTime() < today.getTime()
+}
+
+function formatPeriod(periodStart?: string | null, periodEnd?: string | null) {
+  if (periodStart && periodEnd) {
+    return `Period ${formatDisplayDate(periodStart)} - ${formatDisplayDate(periodEnd)}`
   }
+
+  if (periodStart) {
+    return `Period ${formatDisplayDate(periodStart)}`
+  }
+
+  return undefined
 }
 
-function MetricCard({ metric }: { metric: Metric }) {
-  const tone = getMetricToneClasses(metric.tone)
-  return (
-    <div className={`rounded-[var(--bd-radius-lg)] border p-3.5 shadow-sm ${tone.card}`}>
-      <div className={`mb-2.5 flex h-8 w-8 items-center justify-center rounded-full shadow-sm ${tone.icon}`}>
-        {metric.icon}
-      </div>
-      <div className={`text-xl font-black tracking-tight ${tone.value}`}>{metric.value}</div>
-      <p className="text-[10px] font-bold text-[hsl(var(--bd-text-muted))] uppercase tracking-wider">{metric.label}</p>
-    </div>
-  )
+function sortQueue(items: QueueCandidate[]) {
+  return [...items].sort((left, right) => {
+    if (left.groupRank !== right.groupRank) return left.groupRank - right.groupRank
+    if (left.dueSortValue !== null && right.dueSortValue !== null) return left.dueSortValue - right.dueSortValue
+    if (left.dueSortValue !== null) return -1
+    if (right.dueSortValue !== null) return 1
+    if (left.amountSortValue !== right.amountSortValue) return right.amountSortValue - left.amountSortValue
+    return left.title.localeCompare(right.title)
+  })
 }
 
-export default function ComplianceOverview({ 
-  vatCharged, 
-  whtDeducted, 
-  netPosition,
-  recentInvoices,
-  recentPayments,
+export default function ComplianceOverview({
+  invoices,
+  payments,
   receipts,
   taxInputs,
   filings,
-  reminders
+  reminders,
+  onNavigateSection,
 }: ComplianceOverviewProps) {
-  
   const recoverableVatTotal = taxInputs
-    .filter(ti => ti.is_recoverable)
-    .reduce((sum, ti) => sum + Number(ti.vat_amount || 0), 0)
+    .filter((entry) => entry.is_recoverable)
+    .reduce((sum, entry) => sum + getAmount(entry.vat_amount), 0)
 
-  const nonRecoverableVatTotal = taxInputs
-    .filter(ti => !ti.is_recoverable)
-    .reduce((sum, ti) => sum + Number(ti.vat_amount || 0), 0)
+  const vatCharged = invoices.reduce((sum, invoice) => sum + getAmount(invoice.vat), 0)
 
-  const netVatPosition = vatCharged - recoverableVatTotal
+  const receiptByPaymentId = new Map(receipts.map((receipt) => [receipt.payment_id, receipt]))
 
-  const metrics: Metric[] = [
-    { label: 'VAT Charged', value: formatNaira(vatCharged), tone: 'amber', icon: <Receipt className="h-4 w-4" /> },
-    { label: 'Recoverable VAT', value: formatNaira(recoverableVatTotal), tone: 'green', icon: <Wallet className="h-4 w-4" /> },
-    { label: 'Net VAT Position', value: formatNaira(netVatPosition), tone: netVatPosition >= 0 ? 'blue' : 'red', icon: <ClipboardList className="h-4 w-4" /> },
+  const untrackedWhtPayments = payments.filter((payment) => {
+    return getAmount(payment.wht_amount) > 0 && !receiptByPaymentId.has(payment.id)
+  })
+
+  const requestedReceipts = receipts.filter((receipt) => receipt.receipt_status === 'requested')
+  const verificationReceipts = receipts.filter((receipt) => receipt.receipt_status === 'pending' || receipt.receipt_status === 'received')
+
+  const overdueReminders = reminders.filter((reminder) => {
+    if (reminder.status === 'resolved' || reminder.status === 'cancelled') return false
+    return reminder.status === 'overdue' || isDateBeforeToday(reminder.due_date)
+  })
+
+  const dueReminders = reminders.filter((reminder) => {
+    if (reminder.status !== 'due') return false
+    return !isDateBeforeToday(reminder.due_date)
+  })
+
+  const upcomingReminders = reminders.filter((reminder) => {
+    return reminder.status === 'upcoming' && !isDateBeforeToday(reminder.due_date)
+  })
+
+  const overdueFilings = filings.filter((filing) => filing.status === 'overdue')
+  const openFilings = filings.filter((filing) => filing.status === 'draft' || filing.status === 'ready')
+
+  const filingsAttentionCount = overdueFilings.length + openFilings.length
+  const whtAwaitingReceiptCount = untrackedWhtPayments.length + requestedReceipts.length + verificationReceipts.length
+
+  const kpiItems: ComplianceKpiItem[] = [
+    {
+      label: 'VAT Charged',
+      value: formatNaira(vatCharged),
+      detail: `${invoices.length} invoices in current view`,
+      icon: <Receipt className="h-4 w-4" />,
+      tone: 'warning',
+    },
+    {
+      label: 'Recoverable VAT',
+      value: formatNaira(recoverableVatTotal),
+      detail: `${taxInputs.filter((entry) => entry.is_recoverable).length} recoverable inputs`,
+      icon: <Wallet className="h-4 w-4" />,
+      tone: 'success',
+    },
+    {
+      label: 'WHT Awaiting Receipt',
+      value: String(whtAwaitingReceiptCount),
+      detail: `${untrackedWhtPayments.length} untracked, ${requestedReceipts.length + verificationReceipts.length} in follow-up`,
+      icon: <AlertCircle className="h-4 w-4" />,
+      tone: whtAwaitingReceiptCount > 0 ? 'danger' : 'info',
+    },
+    {
+      label: 'Open / Overdue Filings',
+      value: String(filingsAttentionCount),
+      detail: `${overdueFilings.length} overdue, ${openFilings.length} open`,
+      icon: <ClipboardList className="h-4 w-4" />,
+      tone: overdueFilings.length > 0 ? 'danger' : filingsAttentionCount > 0 ? 'info' : 'success',
+    },
   ]
 
-  const untrackedWHTCount = recentPayments.filter(p => 
-    Number(p.wht_amount || 0) > 0 && !receipts.some(r => r.payment_id === p.id)
-  ).length
+  const paymentById = new Map(payments.map((payment) => [payment.id, payment]))
 
-  const requestedReceiptsCount = receipts.filter(r => r.receipt_status === 'requested').length
+  const queueItems = sortQueue([
+    ...overdueReminders.map<QueueCandidate>((reminder) => ({
+      id: `obligation-overdue-${reminder.id}`,
+      sourceType: 'Obligation',
+      title: `${TAX_TYPE_LABELS[reminder.tax_type]} obligation is overdue`,
+      context: reminder.notes || 'Resolve the overdue obligation and confirm its filing linkage if needed.',
+      statusLabel: 'Overdue',
+      severity: 'overdue',
+      actionLabel: 'Open obligations',
+      targetSection: 'obligations',
+      taxTypeLabel: TAX_TYPE_LABELS[reminder.tax_type],
+      dueLabel: `Due ${formatDisplayDate(reminder.due_date)}`,
+      periodLabel: formatPeriod(reminder.period_start, reminder.period_end),
+      secondaryMeta: reminder.linked_filing_id ? ['Linked filing'] : undefined,
+      groupRank: 1,
+      dueSortValue: getTimestamp(reminder.due_date),
+      amountSortValue: 0,
+    })),
+    ...overdueFilings.map<QueueCandidate>((filing) => ({
+      id: `filing-overdue-${filing.id}`,
+      sourceType: 'Filing',
+      title: `${TAX_TYPE_LABELS[filing.tax_type]} filing is overdue`,
+      context: filing.notes || 'Review the record, confirm submission status, and settle any outstanding amount.',
+      statusLabel: 'Overdue',
+      severity: 'overdue',
+      actionLabel: 'Open filings',
+      targetSection: 'filings',
+      amountLabel: formatNaira(filing.amount_due),
+      taxTypeLabel: TAX_TYPE_LABELS[filing.tax_type],
+      periodLabel: formatPeriod(filing.period_start, filing.period_end),
+      secondaryMeta: filing.receipt_reference ? [`Ref ${filing.receipt_reference}`] : undefined,
+      groupRank: 2,
+      dueSortValue: null,
+      amountSortValue: getAmount(filing.amount_due),
+    })),
+    ...untrackedWhtPayments.map<QueueCandidate>((payment) => ({
+      id: `wht-untracked-${payment.id}`,
+      sourceType: 'WHT',
+      title: 'Initialize WHT receipt tracking',
+      context: `${payment.invoice_number || 'Payment'}${payment.client_name ? ` · ${payment.client_name}` : ''}`,
+      statusLabel: 'Untracked',
+      severity: 'warning',
+      actionLabel: 'Open WHT receipts',
+      targetSection: 'wht',
+      amountLabel: formatNaira(payment.wht_amount),
+      taxTypeLabel: 'WHT',
+      dueLabel: payment.date ? `Paid ${formatDisplayDate(payment.date)}` : undefined,
+      groupRank: 3,
+      dueSortValue: null,
+      amountSortValue: getAmount(payment.wht_amount),
+    })),
+    ...requestedReceipts.map<QueueCandidate>((receipt) => {
+      const payment = paymentById.get(receipt.payment_id)
+      return {
+        id: `wht-requested-${receipt.id}`,
+        sourceType: 'WHT',
+        title: 'Follow up on requested WHT receipt',
+        context: `${payment?.invoice_number || receipt.client_name || 'Receipt request'}${payment?.client_name ? ` · ${payment.client_name}` : ''}`,
+        statusLabel: 'Requested',
+        severity: 'warning',
+        actionLabel: 'Open WHT receipts',
+        targetSection: 'wht',
+        amountLabel: formatNaira(receipt.wht_amount),
+        taxTypeLabel: 'WHT',
+        dueLabel: payment?.date ? `Paid ${formatDisplayDate(payment.date)}` : undefined,
+        secondaryMeta: receipt.receipt_number ? [`Receipt ${receipt.receipt_number}`] : undefined,
+        groupRank: 4,
+        dueSortValue: null,
+        amountSortValue: getAmount(receipt.wht_amount),
+      }
+    }),
+    ...verificationReceipts.map<QueueCandidate>((receipt) => {
+      const payment = paymentById.get(receipt.payment_id)
+      return {
+        id: `wht-followup-${receipt.id}`,
+        sourceType: 'WHT',
+        title: receipt.receipt_status === 'received' ? 'Verify received WHT receipt' : 'Advance pending WHT receipt',
+        context: `${payment?.invoice_number || receipt.client_name || 'WHT receipt'}${payment?.client_name ? ` · ${payment.client_name}` : ''}`,
+        statusLabel: receipt.receipt_status === 'received' ? 'Received' : 'Pending',
+        severity: receipt.receipt_status === 'received' ? 'info' : 'warning',
+        actionLabel: 'Open WHT receipts',
+        targetSection: 'wht',
+        amountLabel: formatNaira(receipt.wht_amount),
+        taxTypeLabel: 'WHT',
+        dueLabel: payment?.date ? `Paid ${formatDisplayDate(payment.date)}` : undefined,
+        secondaryMeta: receipt.received_at ? [`Received ${formatDisplayDate(receipt.received_at)}`] : undefined,
+        groupRank: 4.5,
+        dueSortValue: null,
+        amountSortValue: getAmount(receipt.wht_amount),
+      }
+    }),
+    ...dueReminders.map<QueueCandidate>((reminder) => ({
+      id: `obligation-due-${reminder.id}`,
+      sourceType: 'Obligation',
+      title: `${TAX_TYPE_LABELS[reminder.tax_type]} obligation is due`,
+      context: reminder.notes || 'Handle this due obligation before it becomes overdue.',
+      statusLabel: 'Due',
+      severity: 'warning',
+      actionLabel: 'Open obligations',
+      targetSection: 'obligations',
+      taxTypeLabel: TAX_TYPE_LABELS[reminder.tax_type],
+      dueLabel: `Due ${formatDisplayDate(reminder.due_date)}`,
+      periodLabel: formatPeriod(reminder.period_start, reminder.period_end),
+      secondaryMeta: reminder.linked_filing_id ? ['Linked filing'] : undefined,
+      groupRank: 5,
+      dueSortValue: getTimestamp(reminder.due_date),
+      amountSortValue: 0,
+    })),
+    ...openFilings.map<QueueCandidate>((filing) => ({
+      id: `filing-open-${filing.id}`,
+      sourceType: 'Filing',
+      title: `${TAX_TYPE_LABELS[filing.tax_type]} filing is ${filing.status}`,
+      context: filing.notes || 'Finish preparation, confirm submission, or settle the remaining filing amount.',
+      statusLabel: filing.status === 'ready' ? 'Ready' : 'Draft',
+      severity: filing.status === 'ready' ? 'info' : 'warning',
+      actionLabel: 'Open filings',
+      targetSection: 'filings',
+      amountLabel: formatNaira(filing.amount_due),
+      taxTypeLabel: TAX_TYPE_LABELS[filing.tax_type],
+      periodLabel: formatPeriod(filing.period_start, filing.period_end),
+      secondaryMeta: filing.portal_reference ? [`Portal ${filing.portal_reference}`] : undefined,
+      groupRank: 6,
+      dueSortValue: null,
+      amountSortValue: getAmount(filing.amount_due),
+    })),
+    ...upcomingReminders.map<QueueCandidate>((reminder) => ({
+      id: `obligation-upcoming-${reminder.id}`,
+      sourceType: 'Obligation',
+      title: `Upcoming ${TAX_TYPE_LABELS[reminder.tax_type]} obligation`,
+      context: reminder.notes || 'Keep this obligation in view and prepare supporting records early.',
+      statusLabel: 'Upcoming',
+      severity: 'info',
+      actionLabel: 'Open obligations',
+      targetSection: 'obligations',
+      taxTypeLabel: TAX_TYPE_LABELS[reminder.tax_type],
+      dueLabel: `Due ${formatDisplayDate(reminder.due_date)}`,
+      periodLabel: formatPeriod(reminder.period_start, reminder.period_end),
+      secondaryMeta: reminder.linked_filing_id ? ['Linked filing'] : undefined,
+      groupRank: 7,
+      dueSortValue: getTimestamp(reminder.due_date),
+      amountSortValue: 0,
+    })),
+  ]).map(({ groupRank, dueSortValue, amountSortValue, ...item }) => item)
 
-  const openFilingsCount = filings.filter(f => f.status === 'draft' || f.status === 'ready').length
-  const overdueFilingsCount = filings.filter(f => f.status === 'overdue').length
-  const paidFilingsCount = filings.filter(f => f.status === 'paid').length
-
-  const overdueRemindersCount = reminders.filter(r => r.status === 'overdue').length
-  const upcomingRemindersCount = reminders.filter(r => r.status === 'upcoming' || r.status === 'due').length
-  const nextReminder = reminders.find(r => r.status === 'upcoming' || r.status === 'due')
+  const recentActivityItems = [
+    ...invoices
+      .filter((invoice) => getAmount(invoice.vat) > 0 && invoice.issue_date)
+      .map<ActivityCandidate>((invoice) => ({
+        id: `invoice-${invoice.id}`,
+        title: `VAT charged on ${invoice.invoice_number || 'invoice'}`,
+        detail: invoice.client_name || 'Invoice VAT exposure recorded.',
+        dateLabel: formatDisplayDate(invoice.issue_date!),
+        amountLabel: formatNaira(invoice.vat),
+        tone: 'warning',
+        sortValue: getTimestamp(invoice.issue_date),
+      })),
+    ...payments
+      .filter((payment) => getAmount(payment.wht_amount) > 0 && payment.date)
+      .map<ActivityCandidate>((payment) => ({
+        id: `payment-${payment.id}`,
+        title: `WHT deducted from ${payment.invoice_number || 'payment'}`,
+        detail: payment.client_name || 'Payment created a WHT follow-up item.',
+        dateLabel: formatDisplayDate(payment.date!),
+        amountLabel: formatNaira(payment.wht_amount),
+        tone: 'danger',
+        sortValue: getTimestamp(payment.date),
+      })),
+    ...receipts
+      .filter((receipt) => receipt.updated_at || receipt.received_at)
+      .map<ActivityCandidate>((receipt) => ({
+        id: `receipt-${receipt.id}`,
+        title: `WHT receipt marked ${receipt.receipt_status}`,
+        detail: receipt.client_name || 'Receipt status changed.',
+        dateLabel: formatDisplayDate(receipt.received_at || receipt.updated_at),
+        amountLabel: receipt.wht_amount ? formatNaira(receipt.wht_amount) : undefined,
+        tone: receipt.receipt_status === 'verified' ? 'success' : receipt.receipt_status === 'requested' ? 'warning' : 'info',
+        sortValue: getTimestamp(receipt.received_at || receipt.updated_at),
+      })),
+    ...filings
+      .filter((filing) => filing.updated_at || filing.submitted_at || filing.created_at)
+      .map<ActivityCandidate>((filing) => ({
+        id: `filing-${filing.id}`,
+        title: `${TAX_TYPE_LABELS[filing.tax_type]} filing is ${filing.status}`,
+        detail: formatPeriod(filing.period_start, filing.period_end) || 'Filing activity recorded.',
+        dateLabel: formatDisplayDate(filing.submitted_at || filing.updated_at || filing.created_at),
+        amountLabel: filing.amount_due ? formatNaira(filing.amount_due) : undefined,
+        tone: filing.status === 'paid' ? 'success' : filing.status === 'overdue' ? 'danger' : 'info',
+        sortValue: getTimestamp(filing.submitted_at || filing.updated_at || filing.created_at),
+      })),
+  ]
+    .filter((item) => Number.isFinite(item.sortValue))
+    .sort((left, right) => right.sortValue - left.sortValue)
+    .slice(0, 6)
+    .map(({ sortValue, ...item }) => item)
 
   return (
-    <div className="space-y-6">
-      {/* Summary Metrics */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {metrics.map((m) => <MetricCard key={m.label} metric={m} />)}
+    <div className="space-y-4">
+      <ComplianceKpiStrip items={kpiItems} />
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)]">
+        <ComplianceActionQueue items={queueItems} onNavigate={onNavigateSection} />
+        <ComplianceRecentActivity items={recentActivityItems} />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Next Actions */}
-        <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]">
-            <h3 className="text-sm font-bold flex items-center gap-2 text-[hsl(var(--bd-text))]">
-              <AlertCircle className="h-4 w-4 text-[hsl(var(--bd-status-info-text))]" />
-              Next Actions
-            </h3>
-          </div>
-          <div className="p-4 space-y-3">
-            {overdueRemindersCount > 0 ? (
-              <div className="rounded-xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-4 shadow-sm group">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-sm font-black text-[hsl(var(--bd-status-danger-text))] flex items-center gap-2 uppercase tracking-tight">
-                      Attention Required
-                    </div>
-                    <div className="text-xs text-[hsl(var(--bd-status-danger-text))] mt-1 font-bold">
-                      {overdueRemindersCount} overdue tax obligations need immediate resolution.
-                    </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-[hsl(var(--bd-status-danger-text))] opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm hover:border-[hsl(var(--bd-status-info-border))] transition-colors group">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-sm font-bold text-[hsl(var(--bd-text))] flex items-center gap-2">
-                      Initialize Tracking
-                    </div>
-                    <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1">
-                      {untrackedWHTCount} WHT payments have not been initialized as tracking records yet.
-                    </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-[hsl(var(--bd-status-info-text))] opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                </div>
-              </div>
-            )}
-
-            {nextReminder ? (
-              <div className="rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm group">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-sm font-bold text-[hsl(var(--bd-text))]">Next Due: {formatDisplayDate(nextReminder.due_date)}</div>
-                    <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1 uppercase tracking-widest font-black">
-                      {nextReminder.tax_type} Periodical 
-                    </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-[hsl(var(--bd-text-muted))] group-hover:text-[hsl(var(--bd-status-info-text))] group-hover:translate-x-1 transition-all" />
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm group">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-sm font-bold text-[hsl(var(--bd-text))]">Review Requested Receipts</div>
-                    <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1">
-                      {requestedReceiptsCount} certificates are currently in "requested" status.
-                    </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-[hsl(var(--bd-text-muted))] group-hover:text-[hsl(var(--bd-status-info-text))] group-hover:translate-x-1 transition-all" />
-                </div>
-              </div>
-            )}
-
-            <div className="rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm group">
-              <div className="text-sm font-bold text-[hsl(var(--bd-text))] flex items-center gap-2">
-                <ClipboardList className="h-3.5 w-3.5 text-[hsl(var(--bd-text-muted))]" />
-                Input VAT Efficiency
-              </div>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-lg font-bold text-[hsl(var(--bd-text))]">{taxInputs.length}</span>
-                <span className="text-[10px] text-[hsl(var(--bd-text-muted))] uppercase font-black">Entries Captured</span>
-              </div>
-              {nonRecoverableVatTotal > 0 && (
-                <div className="mt-1 text-[11px] text-[hsl(var(--bd-status-warning-text))] font-medium italic">
-                  Note: {formatNaira(nonRecoverableVatTotal)} marked as non-recoverable
-                </div>
-              )}
-            </div>
-
-            {/* Filing summary */}
-            <div className="rounded-xl border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm">
-              <div className="text-sm font-bold text-[hsl(var(--bd-text))] flex items-center gap-2">
-                <ClipboardList className="h-3.5 w-3.5 text-[hsl(var(--bd-status-success-text))]" />
-                Filing Health
-              </div>
-              <div className="mt-2 flex flex-wrap gap-4">
-                <div>
-                  <span className="text-lg font-bold text-[hsl(var(--bd-text))]">{openFilingsCount}</span>
-                  <span className="ml-1 text-[10px] text-[hsl(var(--bd-text-muted))] uppercase font-black">Drafts</span>
-                </div>
-                <div>
-                  <span className="text-lg font-bold text-[hsl(var(--bd-status-success-text))]">{paidFilingsCount}</span>
-                  <span className="ml-1 text-[10px] text-[hsl(var(--bd-text-muted))] uppercase font-black">Settled</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm">
-              <div className="text-sm font-bold text-[hsl(var(--bd-text))] flex items-center gap-2">
-                <Bell className="h-3.5 w-3.5 text-[hsl(var(--bd-status-info-text))]" />
-                Next Obligations
-              </div>
-              <div className="mt-2 flex flex-wrap gap-4">
-                <div>
-                  <span className="text-lg font-bold text-[hsl(var(--bd-status-info-text))]">{upcomingRemindersCount}</span>
-                  <span className="ml-1 text-[10px] text-[hsl(var(--bd-text-muted))] uppercase font-black">Upcoming</span>
-                </div>
-                {overdueRemindersCount > 0 && (
-                  <div>
-                    <span className="text-lg font-bold text-[hsl(var(--bd-status-danger-text))]">{overdueRemindersCount}</span>
-                    <span className="ml-1 text-[10px] text-[hsl(var(--bd-text-muted))] uppercase font-black">Overdue</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+      {queueItems.length > 0 ? (
+        <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 py-3 text-xs text-[hsl(var(--bd-text-muted))]">
+          Action items route into the existing VAT, WHT Receipts, Filings, and Obligations workflows without creating any fake in-place actions.
         </div>
-
-        {/* Recent Tax Activity */}
-        <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]">
-            <h3 className="text-sm font-bold text-[hsl(var(--bd-text))]">Recent Tax Activity</h3>
-          </div>
-          <div className="p-4 space-y-4">
-            {recentInvoices.length === 0 && recentPayments.length === 0 ? (
-              <div className="text-center py-6 text-xs text-[hsl(var(--bd-text-muted))] italic">
-                No recent tax activity found.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {recentInvoices.slice(0, 3).map((inv) => (
-                  <div key={inv.id} className="flex items-center justify-between text-xs">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-bold text-[hsl(var(--bd-text))]">{inv.invoice_number}</span>
-                      <span className="text-[10px] font-medium text-[hsl(var(--bd-text-muted))] uppercase tracking-wider">{formatDisplayDate(inv.issue_date)} · VAT</span>
-                    </div>
-                    <span className="font-black text-[hsl(var(--bd-status-warning-text))]">+{formatNaira(inv.vat)}</span>
-                  </div>
-                ))}
-                {recentPayments.slice(0, 2).map((pay) => (
-                  <div key={pay.id} className="flex items-center justify-between text-xs">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-bold text-[hsl(var(--bd-text))]">{pay.invoice_number || 'Payment'}</span>
-                      <span className="text-[10px] font-medium text-[hsl(var(--bd-text-muted))] uppercase tracking-wider">{formatDisplayDate(pay.date)} · WHT</span>
-                    </div>
-                    <span className="font-black text-[hsl(var(--bd-status-danger-text))]">-{formatNaira(pay.wht_amount)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      ) : null}
     </div>
   )
 }
