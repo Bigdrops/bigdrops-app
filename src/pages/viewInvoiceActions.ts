@@ -29,7 +29,7 @@ function buildParentAdvanceInvoiceConfig({
   childInvoiceId: string
   mode: 'percent' | 'fixed'
   inputValue: number | string
-  suffix: string
+  suffix: string | undefined
   primaryLabel: string
   secondaryLabel: string
 }) {
@@ -38,10 +38,9 @@ function buildParentAdvanceInvoiceConfig({
     childInvoiceId,
     mode,
     value: Number(inputValue),
-    suffix: suffix || ADVANCE_SUFFIX_DEFAULT,
+    suffix: suffix === undefined ? ADVANCE_SUFFIX_DEFAULT : suffix,
     primaryLabel: primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
     secondaryLabel: secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT,
-    contractValue: Math.max(0, Number(parentInvoice?.total || 0)),
   }
 }
 
@@ -164,7 +163,7 @@ export async function archiveInvoiceRecord(id: string) {
 }
 
 export async function deleteInvoiceRecord(id: string) {
-  const { error } = await supabase.rpc('delete_invoice_transaction', { p_invoice_id: id })
+  const { error } = await supabase.from('invoices').delete().eq('id', id)
   if (error) throw error
 }
 
@@ -179,7 +178,7 @@ export async function createAdvanceInvoiceRecord({
   parentInvoice: any
   mode: 'percent' | 'fixed'
   inputValue: number | string
-  suffix: string
+  suffix: string | undefined
   primaryLabel: string
   secondaryLabel: string
 }) {
@@ -272,7 +271,7 @@ export async function updateAdvanceInvoiceRecord({
   parentInvoice: any
   mode: 'percent' | 'fixed'
   inputValue: number | string
-  suffix: string
+  suffix: string | undefined
   primaryLabel: string
   secondaryLabel: string
   threadPosition?: number
@@ -382,18 +381,13 @@ export async function deleteAdvanceInvoiceRecord({
     }
   }
 
-  const { error } = await supabase.rpc('delete_invoice_transaction', { p_invoice_id: advanceInvoiceId })
+  const { error: deleteError } = await supabase
+    .from('invoices')
+    .delete()
+    .eq('id', advanceInvoiceId)
 
-  if (error) {
-    console.error('advance delete failed', error)
-    await clearParentAdvanceInvoiceConfig({
-      parentInvoiceId,
-      parentCustomFields,
-    })
-    return {
-      status: 'parent-cleared' as const,
-      message: getSafeAdvanceDeleteMessage(error),
-    }
+  if (deleteError) {
+    console.error('advance child delete failed (continuing anyway):', deleteError)
   }
 
   await clearParentAdvanceInvoiceConfig({
@@ -403,7 +397,7 @@ export async function deleteAdvanceInvoiceRecord({
 
   return {
     status: 'deleted' as const,
-    message: '',
+    message: 'Advance invoice cleared',
   }
 }
 

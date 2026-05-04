@@ -152,6 +152,7 @@ function AlertDialogAction({
   variant = "default",
   size = "default",
   loading = false,
+  children,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Action> &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size" | "loading">) {
@@ -163,7 +164,9 @@ function AlertDialogAction({
         size={size}
         loading={loading}
         className={cn(className)}
-      />
+      >
+        {children}
+      </Button>
     </AlertDialogPrimitive.Action>
   )
 }
@@ -172,6 +175,7 @@ function AlertDialogCancel({
   className,
   variant = "outline",
   size = "default",
+  children,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Cancel> &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
@@ -182,7 +186,9 @@ function AlertDialogCancel({
         variant={variant}
         size={size}
         className={cn(className)}
-      />
+      >
+        {children}
+      </Button>
     </AlertDialogPrimitive.Cancel>
   )
 }

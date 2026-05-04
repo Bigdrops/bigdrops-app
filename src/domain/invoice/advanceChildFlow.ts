@@ -8,7 +8,14 @@ export type AdvanceMode = 'percent' | 'fixed'
 
 function getAdvanceNumber(parentNumber: string, suffix?: string) {
   if (!parentNumber) return ''
-  if (!suffix || !suffix.trim()) return parentNumber
+  // Empty suffix should produce just the base number (e.g., SASINV-B022)
+  // Undefined/new config defaults to ADVANCE_SUFFIX_DEFAULT (e.g., SASINV-B022-A)
+  if (suffix === undefined) {
+    return `${parentNumber}-${ADVANCE_SUFFIX_DEFAULT}`
+  }
+  if (!suffix.trim()) {
+    return parentNumber
+  }
   return `${parentNumber}-${suffix.trim()}`
 }
 
@@ -80,13 +87,23 @@ export function getAdvanceDraftFromInvoice(invoice: AdvanceInvoiceLike | null | 
   const inputValue = advanceConfig?.value ?? (advanceConfig?.mode === 'fixed' ? 0 : 30)
   const invoiceNumber = String(invoice?.invoice_number || '')
   
-  // Do NOT rely on suffix extraction from string if we have it in config
-  const suffix = advanceConfig?.suffix || (invoiceNumber.includes('-') ? invoiceNumber.split('-').pop() : ADVANCE_SUFFIX_DEFAULT)
+  // Preserve existing suffix in config, even if empty string
+  // Only default to ADVANCE_SUFFIX_DEFAULT if suffix is undefined (not present in config)
+  const suffix = advanceConfig?.suffix
+  const hasExistingSuffix = 'suffix' in (advanceConfig || {})
+
+  // If no suffix exists in config, derive from invoice number or default
+  let finalSuffix: string
+  if (!hasExistingSuffix) {
+    finalSuffix = invoiceNumber.includes('-') ? invoiceNumber.split('-').pop()! : ADVANCE_SUFFIX_DEFAULT
+  } else {
+    finalSuffix = suffix === undefined ? ADVANCE_SUFFIX_DEFAULT : String(suffix)
+  }
 
   return {
     mode,
     inputValue: Number(inputValue),
-    suffix: suffix || ADVANCE_SUFFIX_DEFAULT,
+    suffix: finalSuffix,
     primaryLabel: String(advanceConfig?.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT),
     secondaryLabel: String(advanceConfig?.secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT),
   }
@@ -104,11 +121,12 @@ export function buildAdvanceChildInvoicePayload({
   parentInvoice: AdvanceParentInvoice
   mode: AdvanceMode
   inputValue: string | number
-  suffix: string
+  suffix: string | undefined
   primaryLabel: string
   secondaryLabel: string
   threadPosition?: number
 }) {
+  // Use invoice total for calculations only - do not persist in custom_fields
   const contractValue = Math.max(0, toNumber(parentInvoice?.total))
   const advanceAmount = calculateAdvanceAmount({ contractValue, mode, inputValue })
   const numericInput = clamp(
@@ -138,20 +156,22 @@ export function buildAdvanceChildInvoicePayload({
     console.warn('Warning: custom_fields parsed to empty object from non-empty string')
   }
 
+  // Only default suffix to ADVANCE_SUFFIX_DEFAULT when undefined
+  const finalSuffix = suffix === undefined ? ADVANCE_SUFFIX_DEFAULT : suffix
+
   const advanceConfig = {
     mode,
     value: numericInput,
     primaryLabel: primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
     secondaryLabel: secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT,
-    contractValue,
     parentId: parentInvoice?.id || null,
     role: 'advance',
     position: threadPosition,
-    suffix: suffix || ADVANCE_SUFFIX_DEFAULT,
+    suffix: finalSuffix,
   }
 
   return {
-    invoice_number: getAdvanceNumber(String(parentInvoice?.invoice_number || ''), suffix || ADVANCE_SUFFIX_DEFAULT),
+    invoice_number: getAdvanceNumber(String(parentInvoice?.invoice_number || ''), finalSuffix),
     invoice_title: parentInvoice?.invoice_title || null,
     po_number: parentInvoice?.po_number || null,
     client_id: parentInvoice?.client_id || null,
