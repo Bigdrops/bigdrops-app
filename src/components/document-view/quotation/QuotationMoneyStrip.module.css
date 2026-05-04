@@ -1,11 +1,10 @@
 .strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border: 1px solid var(--dv-border);
+  border: 1px solid var(--dv-border-soft);
   border-radius: var(--dv-radius-lg);
   overflow: hidden;
-  background: var(--dv-surface);
-  box-shadow: var(--dv-shadow-sm);
+  background: var(--dv-surface-muted);
 }
 
 .cell {
@@ -40,7 +39,7 @@
 }
 
 .amber {
-  color: var(--dv-amber);
+  color: var(--dv-amber-dark);
 }
 
 .green {
@@ -51,4 +50,19 @@
   font-size: 10px;
   color: var(--dv-text-4);
   margin-top: 1px;
+}
+
+@media (max-width: 640px) {
+  .strip {
+    grid-template-columns: 1fr;
+  }
+
+  .cell {
+    border-right: none;
+    border-bottom: 1px solid var(--dv-border-soft);
+  }
+
+  .cell:last-child {
+    border-bottom: none;
+  }
 }

@@ -2,11 +2,13 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   border: 1px solid transparent;
   border-radius: var(--dv-radius);
@@ -15,6 +17,7 @@
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
+  min-height: 42px;
 }
 
 .amber {
@@ -23,6 +26,8 @@
   padding: 9px 16px;
   font-size: 13px;
   box-shadow: 0 10px 20px -12px hsl(var(--bd-button-primary-bg) / 0.45);
+  border-color: hsl(var(--bd-button-primary-bg));
+  flex: 1 1 210px;
 }
 
 .amber:hover {
@@ -35,10 +40,12 @@
   border-color: hsl(var(--bd-border));
   padding: 9px 14px;
   font-size: 13px;
+  flex: 0 1 auto;
 }
 
 .outline:hover {
   background: hsl(var(--bd-surface-muted));
+  border-color: hsl(var(--bd-button-primary-bg) / 0.3);
 }
 
 .chips {
@@ -67,4 +74,15 @@
   background: hsl(var(--bd-surface-muted));
   color: hsl(var(--bd-text));
   border-color: hsl(var(--bd-border));
+}
+
+@media (max-width: 640px) {
+  .row {
+    align-items: stretch;
+  }
+
+  .amber,
+  .outline {
+    flex: 1 1 calc(50% - 4px);
+  }
 }

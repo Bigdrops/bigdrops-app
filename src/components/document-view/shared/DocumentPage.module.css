@@ -7,7 +7,7 @@
 .content {
   max-width: 680px;
   margin: 0 auto;
-  padding: 0 16px 120px;
+  padding: 0 16px calc(var(--bd-app-bottom-nav-offset, 72px) + env(safe-area-inset-bottom) + 40px);
 }
 
 .hero {
@@ -18,7 +18,7 @@
   position: fixed;
   right: 0;
   left: 0;
-  bottom: calc(1rem + env(safe-area-inset-bottom));
+  bottom: calc(var(--bd-app-bottom-nav-offset, 72px) + env(safe-area-inset-bottom) + 16px);
   z-index: 40;
   pointer-events: none;
 }

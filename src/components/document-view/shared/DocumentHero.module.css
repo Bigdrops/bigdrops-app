@@ -1,8 +1,13 @@
 .hero {
-  padding: 24px 0 0;
+  padding: 20px 18px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  margin-top: 16px;
+  border: 1px solid var(--dv-border);
+  border-radius: var(--dv-radius-xl);
+  background: var(--dv-card-bg);
+  box-shadow: var(--dv-shadow-sm);
 }
 
 .top {
@@ -36,11 +41,12 @@
 
 .subtitle {
   margin: 5px 0 0;
-  max-width: 240px;
+  max-width: 280px;
   font-size: 13px;
   color: var(--dv-text-2);
   font-weight: 500;
   line-height: 1.4;
+  white-space: normal;
 }
 
 .meta {
@@ -97,4 +103,19 @@
   background: var(--dv-primary-bg);
   color: var(--dv-primary);
   border-color: var(--dv-primary-border);
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 18px 16px;
+  }
+
+  .top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .subtitle {
+    max-width: none;
+  }
 }

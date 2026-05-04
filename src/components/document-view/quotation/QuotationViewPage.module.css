@@ -20,10 +20,11 @@
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 5px;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
   font-family: var(--dv-font-ui);
 }
 
 .sectionLink:hover {
   background: var(--dv-primary-bg);
+  color: var(--dv-text);
 }

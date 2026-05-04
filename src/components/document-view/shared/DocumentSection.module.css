@@ -22,12 +22,9 @@
 .description {
   margin: 4px 0 0;
   font-size: 12px;
-  font-weight: 700;
-  color: var(--dv-primary);
-  background: none;
-  border: none;
-  padding: 2px 6px;
-  border-radius: 5px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--dv-text-2);
 }
 
 .body {
