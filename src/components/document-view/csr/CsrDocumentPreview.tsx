@@ -1,88 +1,165 @@
-import DocumentPreviewShell from '../shared/DocumentPreviewShell'
-import styles from './CsrDocumentPreview.module.css'
-import { csrPreviewData } from './csrViewMockData'
+import './CsrDocumentPreview.css'
 
-export default function CsrDocumentPreview() {
+type CsrDocumentPreviewProps = {
+  csr: any
+  previewModel: any
+  settingsData: any
+}
+
+export default function CsrDocumentPreview({
+  csr,
+  previewModel,
+  settingsData,
+}: CsrDocumentPreviewProps) {
+  const csrData = csr || {}
+  const model = previewModel || {}
+  const settings = settingsData || {}
+
+  const clientLines = [
+    csrData.client_name,
+    csrData.address,
+    csrData.phone,
+    csrData.email,
+  ].filter(Boolean)
+
+  const equipmentLines = [
+    csrData.equipment_type,
+    csrData.equipment_location,
+    csrData.make,
+    csrData.model,
+    csrData.serial_no,
+    csrData.capacity,
+  ].filter(Boolean)
+
+  const materialsRows = Array.isArray(model?.materialsRows) ? model.materialsRows : []
+  const parsedMaterials = materialsRows.filter((row: any) => row.item || row.quantity || row.unit)
+
+  const statusLabel = csrData.status ? String(csrData.status).toUpperCase() : ''
+
   return (
-    <DocumentPreviewShell>
-      <div className={styles.head}>
-        <div>
-          <div className={styles.companyName}>{csrPreviewData.serviceCompany}</div>
-          <div className={styles.companyContact}>{csrPreviewData.companyContact}</div>
-        </div>
+    <div className="csrDocumentPreview">
+      <div className="doc-top-accent" />
 
-        <div className={styles.idBlock}>
-          <div className={styles.typeLabel}>CSR No.</div>
-          <div className={styles.number}>{csrPreviewData.documentNumber}</div>
+      <div className="doc-head">
+        <div className="doc-company">
+          {settings.company_logo_url ? (
+            <div className="doc-logo-container" style={{ marginBottom: '1rem' }}>
+              <img
+                src={settings.company_logo_url}
+                alt="Logo"
+                className="doc-logo"
+                style={{ maxHeight: '80px', maxWidth: '200px', objectFit: 'contain' }}
+              />
+            </div>
+          ) : null}
+          <div className="doc-co-name">{settings.company_name || 'BigDrops'}</div>
+          <div className="doc-co-addr">
+            {[
+              settings.company_address,
+              settings.company_city,
+              settings.company_phone,
+              settings.company_email,
+            ]
+              .filter(Boolean)
+              .map((line: string, i: number) => (
+                <div key={i}>{line}</div>
+              ))}
+          </div>
+        </div>
+        <div className="doc-id-block">
+          <div className="doc-type-label">SERVICE REPORT</div>
+          <div className="doc-number">{csrData.csr_number || 'Draft'}</div>
+          {statusLabel && <div className="doc-csr-status">{statusLabel}</div>}
         </div>
       </div>
 
-      <div className={styles.metaGrid}>
-        <div className={styles.metaCell}>
-          <div className={styles.metaLabel}>Client Info</div>
-          <div className={styles.metaValue}>{csrPreviewData.clientName}</div>
-          <div className={styles.metaSub}>{csrPreviewData.clientContact}</div>
+      <div className="doc-meta-grid">
+        <div className="doc-meta-cell">
+          <div className="doc-meta-label">Service Date</div>
+          <div className="doc-meta-value">{csrData.date || '—'}</div>
         </div>
-        <div className={styles.metaCell}>
-          <div className={styles.metaLabel}>Service Asset</div>
-          <div className={styles.metaValue}>{csrPreviewData.assetInfo}</div>
-          <div className={styles.metaSub}>{csrPreviewData.dateTime}</div>
+        <div className="doc-meta-cell">
+          <div className="doc-meta-label">Client</div>
+          <div className="doc-meta-value">{csrData.client_name || 'Unassigned'}</div>
         </div>
+        {clientLines.length > 0 && (
+          <div className="doc-meta-cell" style={{ gridColumn: '1 / -1' }}>
+            <div className="doc-meta-label">Client Details</div>
+            <div className="doc-meta-sub">{clientLines.slice(1).join(' · ')}</div>
+          </div>
+        )}
+        {equipmentLines.length > 0 && (
+          <div className="doc-meta-cell" style={{ gridColumn: '1 / -1' }}>
+            <div className="doc-meta-label">Equipment / Asset</div>
+            <div className="doc-meta-sub">{equipmentLines.join(' · ')}</div>
+          </div>
+        )}
       </div>
 
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>Problem Description</div>
-        <div className={styles.narrativeText}>{csrPreviewData.problemDescription}</div>
-      </div>
+      {csrData.problem_reported && (
+        <div className="doc-section">
+          <div className="doc-section-title">Problem Reported</div>
+          <div className="doc-narrative">{csrData.problem_reported}</div>
+        </div>
+      )}
 
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>Work Performed</div>
-        <div className={styles.narrativeText}>{csrPreviewData.workPerformed}</div>
-      </div>
+      {csrData.service_rendered && (
+        <div className="doc-section">
+          <div className="doc-section-title">Service Rendered</div>
+          <div className="doc-narrative">{csrData.service_rendered}</div>
+        </div>
+      )}
 
-      {csrPreviewData.materialsUsed.length > 0 && (
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>Materials Used</div>
-          <div className={styles.materialList}>
-            {csrPreviewData.materialsUsed.map((item, i) => (
-              <div key={i} className={styles.materialItem}>
-                <div className={styles.materialName}>{item.name}</div>
-                <div className={styles.materialQuantity}>{item.quantity}</div>
+      {csrData.defects_found && (
+        <div className="doc-section">
+          <div className="doc-section-title">Defects Found</div>
+          <div className="doc-narrative">{csrData.defects_found}</div>
+        </div>
+      )}
+
+      {parsedMaterials.length > 0 && (
+        <div className="doc-section">
+          <div className="doc-section-title">Materials Used</div>
+          <div className="doc-materials-list">
+            {parsedMaterials.map((row: any, i: number) => (
+              <div key={i} className="doc-material-item">
+                <div className="doc-material-name">{row.item || '—'}</div>
+                <div className="doc-material-qty">
+                  {row.quantity} {row.unit || ''}
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>Observations</div>
-        <div className={styles.narrativeText}>{csrPreviewData.observations}</div>
-      </div>
+      {csrData.engineer_remarks && (
+        <div className="doc-section">
+          <div className="doc-section-title">Engineer Remarks</div>
+          <div className="doc-narrative">{csrData.engineer_remarks}</div>
+        </div>
+      )}
 
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>Recommendations</div>
-        <div className={styles.narrativeText}>{csrPreviewData.recommendations}</div>
-      </div>
+      {csrData.customer_feedback && (
+        <div className="doc-section">
+          <div className="doc-section-title">Customer Feedback</div>
+          <div className="doc-narrative">{csrData.customer_feedback}</div>
+        </div>
+      )}
 
-      <div className={styles.section} style={{ background: 'var(--dv-bg-2)' }}>
-        <div className={styles.sectionTitle} style={{ color: 'var(--dv-text-2)' }}>Technician Notes</div>
-        <div className={styles.narrativeText} style={{ fontStyle: 'italic', color: 'var(--dv-text-2)' }}>
-          {csrPreviewData.technicianNotes}
+      <div className="doc-signature-grid">
+        <div className="doc-signature-box">
+          <div className="doc-signature-line" />
+          <div className="doc-signature-label">Technician Sign & Date</div>
+          {model.technicianName && (
+            <div className="doc-signature-name">{model.technicianName}</div>
+          )}
+        </div>
+        <div className="doc-signature-box">
+          <div className="doc-signature-line" />
+          <div className="doc-signature-label">Client Acknowledgement</div>
         </div>
       </div>
-
-      <div className={styles.section}>
-        <div className={styles.signatureGrid}>
-          <div className={styles.signatureBox}>
-            <div className={styles.signatureLine} />
-            <div className={styles.signatureTitle}>Technician Sign & Date</div>
-          </div>
-          <div className={styles.signatureBox}>
-            <div className={styles.signatureLine} />
-            <div className={styles.signatureTitle}>Client Acknowledgement</div>
-          </div>
-        </div>
-      </div>
-    </DocumentPreviewShell>
+    </div>
   )
 }

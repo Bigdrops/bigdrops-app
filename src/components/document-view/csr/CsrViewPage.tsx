@@ -10,7 +10,8 @@ import type { CsrMetric } from './csrViewMockData'
 interface CsrViewPageProps {
   document: BaseDocument
   metrics: CsrMetric[]
-  preview: ReactNode
+  documentPreview?: ReactNode
+  preview?: ReactNode // deprecated, use documentPreview
   onComplete: () => void
   onEdit: () => void
   onDuplicate: () => void
@@ -20,12 +21,15 @@ interface CsrViewPageProps {
 export default function CsrViewPage({
   document: _document,
   metrics,
+  documentPreview,
   preview,
   onComplete,
   onEdit,
   onDuplicate,
   onCopyNumber,
 }: CsrViewPageProps) {
+  const previewContent = documentPreview || preview
+
   return (
     <div className={styles.stack}>
       <CsrSummaryStrip items={metrics} />
@@ -35,7 +39,7 @@ export default function CsrViewPage({
       </div>
 
       <DocumentSection title="Service report content">
-        {preview}
+        {previewContent}
       </DocumentSection>
     </div>
   )

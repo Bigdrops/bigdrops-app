@@ -16,6 +16,7 @@ import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { supabase } from '@/supabase'
 import CSRPreviewPanel from '@/components/csr/CSRPreviewPanel'
+import CsrDocumentPreview from '@/components/document-view/csr/CsrDocumentPreview'
 import { buildCsrPreviewData, getCsrBranding, getCsrPdfDocument } from '@/components/csr/csrUtils'
 import { feedback } from '@/lib/feedback'
 import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
@@ -336,7 +337,7 @@ export default function ViewCSR() {
         <CsrViewPage
           document={docProps}
           metrics={metrics}
-          preview={<CSRPreviewPanel csr={previewData} template={template} onTemplateChange={setTemplate} branding={branding} designPreset={designPreset} />}
+          documentPreview={<CsrDocumentPreview csr={csr} previewModel={previewData} settingsData={settings} />}
           onComplete={() => ui.openModal(MODAL_COMPLETE)}
           onEdit={() => navigate(`/csr/edit/${id}`)}
           onDuplicate={() => void handleDuplicate()}
