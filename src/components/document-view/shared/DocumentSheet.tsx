@@ -1,5 +1,14 @@
-import { useEffect } from 'react'
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { X } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet'
 
 interface DocumentSheetProps {
   open: boolean
@@ -16,93 +25,61 @@ export default function DocumentSheet({
   onClose,
   children,
 }: DocumentSheetProps) {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window === 'undefined' ? false : window.innerWidth < 768
+  )
+
   useEffect(() => {
-    if (!open) return undefined
+    if (typeof window === 'undefined') return undefined
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose, open])
-
-  if (!open) return null
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   return (
-    <div
-      aria-hidden={!open}
-      onClick={onClose}
-      style={{
-        background: 'rgba(var(--bd-overlay-rgb, 15, 23, 42), 0.4)',
-        inset: 0,
-        position: 'fixed',
-        zIndex: 60,
+    <Sheet
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose()
       }}
     >
-      <div
-        aria-modal="true"
-        onClick={(event) => event.stopPropagation()}
-        role="dialog"
-        style={{
-          background: 'hsl(var(--bd-surface))',
-          borderRadius: '24px 24px 0 0',
-          bottom: 0,
-          left: 0,
-          margin: '0 auto',
-          maxHeight: '80vh',
-          maxWidth: 960,
-          overflowY: 'auto',
-          padding: '16px 16px 24px',
-          position: 'absolute',
-          right: 0,
-        }}
+      <SheetContent
+        side={isMobile ? 'bottom' : 'right'}
+        showCloseButton={false}
+        className={
+          isMobile
+            ? 'flex h-auto max-h-[88vh] w-full max-w-full flex-col overflow-hidden rounded-t-[var(--bd-overlay-radius)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-0'
+            : 'flex h-full w-full max-w-full flex-col overflow-hidden border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-0 sm:max-w-xl'
+        }
       >
-        <div
-          style={{
-            background: 'hsl(var(--bd-border))',
-            borderRadius: 999,
-            height: 4,
-            margin: '0 auto 16px',
-            width: 56,
-          }}
-        />
-        <div
-          style={{
-            alignItems: 'flex-start',
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginBottom: 16,
-          }}
+        <SheetHeader className="border-b border-[hsl(var(--bd-border))] px-5 py-4 pr-14 sm:px-6">
+          <SheetTitle className="text-base font-black tracking-tight text-[hsl(var(--bd-text))]">
+            {title}
+          </SheetTitle>
+          {subtitle ? (
+            <SheetDescription className="pt-1 text-sm leading-relaxed text-[hsl(var(--bd-text-muted))]">
+              {subtitle}
+            </SheetDescription>
+          ) : null}
+        </SheetHeader>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={onClose}
+          className="absolute right-4 top-4 bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] hover:text-[hsl(var(--bd-text))]"
         >
-          <div>
-            <h3 style={{ color: 'hsl(var(--bd-text))', fontSize: 18, margin: 0 }}>{title}</h3>
-            {subtitle ? (
-              <p style={{ color: 'hsl(var(--bd-text-muted))', fontSize: 13, margin: '6px 0 0' }}>
-                {subtitle}
-              </p>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              background: 'hsl(var(--bd-surface-muted))',
-              border: '1px solid hsl(var(--bd-border))',
-              borderRadius: 999,
-              color: 'hsl(var(--bd-text-muted))',
-              cursor: 'pointer',
-              height: 36,
-              width: 36,
-            }}
-          >
-            ×
-          </button>
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </Button>
+
+        <div className="flex-1 overflow-y-auto px-5 py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:px-6">
+          {children}
         </div>
-        {children}
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   )
 }

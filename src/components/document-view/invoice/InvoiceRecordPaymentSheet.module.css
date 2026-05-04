@@ -196,6 +196,11 @@
   display: flex;
   gap: 12px;
   margin-top: 10px;
+  position: sticky;
+  bottom: calc(-1.25rem - env(safe-area-inset-bottom));
+  padding-top: 12px;
+  padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
+  background: hsl(var(--bd-card-bg));
 }
 
 .btnCancel {
@@ -213,6 +218,7 @@
 
 .btnCancel:hover {
   background: hsl(var(--bd-surface));
+  color: hsl(var(--bd-text));
 }
 
 .btnSave {
@@ -240,4 +246,14 @@
 .btnSave:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .footerActions {
+    flex-direction: column;
+  }
 }

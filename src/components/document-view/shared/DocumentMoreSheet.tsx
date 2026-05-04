@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useState } from 'react'
+import { ReactNode } from 'react'
+import DocumentSheet from './DocumentSheet'
 import styles from './DocumentMoreSheet.module.css'
 
 export type DocumentMoreSheetItem = {
@@ -32,30 +33,9 @@ export default function DocumentMoreSheet({
   title = 'More Actions',
   sections = [],
 }: DocumentMoreSheetProps) {
-  const [isVisible, setIsVisible] = useState(false)
-
-  // Handle animation timing
-  useEffect(() => {
-    if (open) {
-      setIsVisible(true)
-    } else {
-      const timer = setTimeout(() => setIsVisible(false), 300)
-      return () => clearTimeout(timer)
-    }
-  }, [open])
-
-  if (!open && !isVisible) return null
-
   return (
-    <>
-      <div
-        className={`${styles.overlay} ${open ? styles.open : ''}`}
-        onClick={onClose}
-      />
-      <div className={`${styles.sheet} ${open ? styles.open : ''}`}>
-        <div className={styles.handle} />
-        <div className={styles.title}>{title}</div>
-
+    <DocumentSheet open={open} onClose={onClose} title={title} subtitle="Quick document actions and destructive controls.">
+      <div className={styles.sections}>
         {(sections || []).map((section, sIdx) => (
           <div key={sIdx} className={styles.section}>
             <div className={styles.sectionHeader}>{section.title}</div>
@@ -94,6 +74,6 @@ export default function DocumentMoreSheet({
           </div>
         ))}
       </div>
-    </>
+    </DocumentSheet>
   )
 }

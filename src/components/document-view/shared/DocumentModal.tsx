@@ -1,5 +1,13 @@
-import { useEffect } from 'react'
 import type { ReactNode } from 'react'
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 interface DocumentModalProps {
   open: boolean
@@ -18,72 +26,35 @@ export default function DocumentModal({
   footer,
   children,
 }: DocumentModalProps) {
-  useEffect(() => {
-    if (!open) return undefined
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose, open])
-
-  if (!open) return null
-
   return (
-    <div
-      onClick={onClose}
-      style={{
-        alignItems: 'center',
-        background: 'rgba(15, 23, 42, 0.5)',
-        display: 'flex',
-        inset: 0,
-        justifyContent: 'center',
-        padding: 16,
-        position: 'fixed',
-        zIndex: 70,
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose()
       }}
     >
-      <div
-        aria-modal="true"
-        onClick={(event) => event.stopPropagation()}
-        role="dialog"
-        style={{
-          background: '#fff',
-          border: '1px solid #e7e5e4',
-          borderRadius: 24,
-          maxWidth: 520,
-          padding: 24,
-          width: '100%',
-        }}
+      <DialogContent
+        className="max-w-[min(32rem,calc(100%-1.5rem))] gap-0 rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-0 text-[hsl(var(--bd-text))] shadow-2xl"
       >
-        <div style={{ marginBottom: 16 }}>
-          <h3 style={{ fontSize: 20, margin: 0 }}>{title}</h3>
+        <DialogHeader className="border-b border-[hsl(var(--bd-border))] px-5 py-4 pr-12 sm:px-6">
+          <DialogTitle className="text-base font-black tracking-tight text-[hsl(var(--bd-text))]">
+            {title}
+          </DialogTitle>
           {description ? (
-            <p style={{ color: '#6b7280', fontSize: 14, lineHeight: 1.6, margin: '8px 0 0' }}>
+            <DialogDescription className="pt-1 text-sm leading-relaxed text-[hsl(var(--bd-text-muted))]">
               {description}
-            </p>
+            </DialogDescription>
           ) : null}
-        </div>
+        </DialogHeader>
 
-        <div>{children}</div>
+        <div className="px-5 py-5 sm:px-6">{children}</div>
 
         {footer ? (
-          <div
-            style={{
-              display: 'flex',
-              gap: 12,
-              justifyContent: 'flex-end',
-              marginTop: 20,
-            }}
-          >
+          <DialogFooter className="border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-6">
             {footer}
-          </div>
+          </DialogFooter>
         ) : null}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -2,10 +2,10 @@
   position: sticky;
   top: 0;
   z-index: 30;
-  background: hsl(var(--bd-surface) / 0.92);
+  background: hsl(var(--bd-card-bg) / 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--dv-border-soft);
+  border-bottom: 1px solid hsl(var(--bd-border));
   display: flex;
   align-items: center;
   gap: 0;
@@ -17,7 +17,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--dv-text-2);
+  color: hsl(var(--bd-text-muted));
   text-decoration: none;
   font-size: 13px;
   font-weight: 600;
@@ -32,8 +32,8 @@
 }
 
 .backButton:hover {
-  background: var(--dv-bg-3);
-  color: var(--dv-text);
+  background: hsl(var(--bd-surface-muted));
+  color: hsl(var(--bd-text));
 }
 
 .center {
@@ -50,7 +50,7 @@
   font-family: var(--dv-font-mono);
   font-size: 13px;
   font-weight: 600;
-  color: var(--dv-text);
+  color: hsl(var(--bd-text));
   letter-spacing: 0.02em;
   white-space: nowrap;
   overflow: hidden;
@@ -61,7 +61,7 @@
 
 .subtitle {
   font-size: 11px;
-  color: var(--dv-text-3);
+  color: hsl(var(--bd-text-muted));
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -87,19 +87,20 @@
   background: transparent;
   border-radius: var(--dv-radius);
   cursor: pointer;
-  color: var(--dv-text-2);
+  color: hsl(var(--bd-text-muted));
   transition: background 0.15s, color 0.15s;
 }
 
 .iconBtn:hover {
-  background: var(--dv-bg-3);
-  color: var(--dv-text);
+  background: hsl(var(--bd-surface-muted));
+  color: hsl(var(--bd-text));
 }
 
 .iconBtn.primary {
-  color: var(--dv-primary);
+  background: hsl(var(--bd-surface-muted));
+  color: hsl(var(--bd-button-primary-bg));
 }
 
 .iconBtn.primary:hover {
-  background: var(--dv-primary-bg);
+  background: hsl(var(--bd-surface));
 }

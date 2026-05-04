@@ -1,10 +1,10 @@
-import { type Dispatch, type SetStateAction } from 'react'
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { NumericInput } from '@/components/ui/numeric-input'
 import {
   ADVANCE_PRIMARY_LABEL_DEFAULT,
@@ -78,6 +78,26 @@ export default function InvoiceAdvanceSheet({
   onDeleteConfirm,
 }: InvoiceAdvanceSheetProps) {
   const isViewMode = advanceSheetMode === 'view' && Boolean(advanceInvoice)
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window === 'undefined' ? false : window.innerWidth < 768
+  )
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const segmentedButtonClass = (active: boolean) =>
+    [
+      'flex-1 rounded-[var(--bd-radius-md)] px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] transition-colors',
+      active
+        ? 'bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text))] shadow-sm'
+        : 'text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))]',
+    ].join(' ')
 
   return (
     <>
@@ -89,24 +109,32 @@ export default function InvoiceAdvanceSheet({
         }}
       >
         <SheetContent
-          side="bottom"
-          className="max-h-[75vh] overflow-y-auto rounded-t-[28px] border-t-0 bg-[#fafaf9] p-0 shadow-[0_-12px_44px_-10px_rgba(0,0,0,0.15)] [&>[data-slot=sheet-close]]:hidden"
+          side={isMobile ? 'bottom' : 'right'}
+          showCloseButton={false}
+          className={
+            isMobile
+              ? 'flex h-auto max-h-[88vh] w-full max-w-full flex-col overflow-hidden rounded-t-[var(--bd-overlay-radius)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-0'
+              : 'flex h-full w-full max-w-full flex-col overflow-hidden border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-0 sm:max-w-xl'
+          }
         >
-          <div className="flex flex-col">
-            <SheetHeader className="border-b border-[#e7e5e4] bg-[#f5f5f4]/70 px-6 pb-3 pt-4 text-left">
-              <SheetTitle className="text-base font-black tracking-tight text-slate-900">
+          <div className="flex h-full flex-col">
+            <SheetHeader className="border-b border-[hsl(var(--bd-border))] px-6 pb-4 pt-5 text-left">
+              <SheetTitle className="text-base font-black tracking-tight text-[hsl(var(--bd-text))]">
                 Advance Invoice
               </SheetTitle>
+              <SheetDescription className="text-sm leading-relaxed text-[hsl(var(--bd-text-muted))]">
+                Set numbering, advance mode, and labels for the child invoice.
+              </SheetDescription>
             </SheetHeader>
 
-            <div className="px-6 py-4">
+            <div className="flex-1 overflow-y-auto px-6 py-5">
               <div className="mb-4 space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Invoice Number</Label>
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 pr-3 shadow-sm focus-within:border-slate-400 transition-colors">
-                  <div className="flex h-8 items-center rounded-lg bg-slate-50 px-3 text-[12px] font-black tracking-tight text-slate-400 select-none">
+                <Label className="text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">Invoice Number</Label>
+                <div className="flex items-center gap-2 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-1 pr-3 transition-colors focus-within:border-[hsl(var(--bd-input-focus))]">
+                  <div className="select-none rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))] px-3 text-[12px] font-black tracking-tight text-[hsl(var(--bd-text-muted))]">
                     {invoiceNumber || 'INV-000'}
                   </div>
-                  <div className="h-4 w-[1px] bg-slate-200" />
+                  <div className="h-5 w-px bg-[hsl(var(--bd-border))]" />
                   <div className="relative flex-1">
                     <Input
                       id="advance-suffix"
@@ -115,7 +143,7 @@ export default function InvoiceAdvanceSheet({
                       value={advanceSuffixValue}
                       onChange={(event) => setAdvanceSuffixValue(event.target.value.toUpperCase())}
                       disabled={isViewMode || advanceSaving}
-                      className="h-8 w-full border-none bg-transparent px-0 text-center font-mono text-sm font-black text-slate-900 shadow-none ring-0 ring-offset-0 focus:ring-0 focus-visible:ring-0"
+                      className="h-8 w-full border-none bg-transparent px-0 text-center font-mono text-sm font-black text-[hsl(var(--bd-text))] shadow-none ring-0 ring-offset-0 focus-visible:ring-0"
                     />
                   </div>
                 </div>
@@ -123,15 +151,13 @@ export default function InvoiceAdvanceSheet({
 
               <div className="grid gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Advance Type</Label>
-                  <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
+                  <Label className="text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">Advance Type</Label>
+                  <div className="flex gap-1 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-1">
                     <button
                       type="button"
                       disabled={isViewMode || advanceSaving}
                       onClick={() => setAdvanceMode('percent')}
-                      className={`flex-1 rounded-lg py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
-                        advanceMode === 'percent' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                      } disabled:opacity-50`}
+                      className={`${segmentedButtonClass(advanceMode === 'percent')} disabled:opacity-50`}
                     >
                       Percent
                     </button>
@@ -139,9 +165,7 @@ export default function InvoiceAdvanceSheet({
                       type="button"
                       disabled={isViewMode || advanceSaving}
                       onClick={() => setAdvanceMode('fixed')}
-                      className={`flex-1 rounded-lg py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
-                        advanceMode === 'fixed' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                      } disabled:opacity-50`}
+                      className={`${segmentedButtonClass(advanceMode === 'fixed')} disabled:opacity-50`}
                     >
                       Fixed
                     </button>
@@ -149,7 +173,7 @@ export default function InvoiceAdvanceSheet({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="advance-value" className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  <Label htmlFor="advance-value" className="text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">
                     {advanceMode === 'fixed' ? 'Amount' : 'Percentage'}
                   </Label>
                   <NumericInput
@@ -160,13 +184,13 @@ export default function InvoiceAdvanceSheet({
                     value={advanceInputValue}
                     onChange={(val) => setAdvanceInputValue(Number(val))}
                     disabled={isViewMode || advanceSaving}
-                    className="h-10 rounded-xl border-slate-200 bg-white text-sm font-bold shadow-none ring-offset-0 focus:border-slate-400 focus:ring-0"
+                    className="h-10 rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-sm font-bold text-[hsl(var(--bd-text))] shadow-none ring-offset-0 focus:border-[hsl(var(--bd-input-focus))] focus:ring-0"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-3 md:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="primary-label" className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    <Label htmlFor="primary-label" className="text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">
                       Primary Label
                     </Label>
                     <Input
@@ -175,12 +199,12 @@ export default function InvoiceAdvanceSheet({
                       value={advancePrimaryLabel}
                       onChange={(event) => setAdvancePrimaryLabel(event.target.value)}
                       disabled={isViewMode || advanceSaving}
-                      className="h-10 rounded-xl border-slate-200 bg-white text-[11px] font-semibold shadow-none ring-offset-0 focus:border-slate-400 focus:ring-0"
+                      className="h-10 rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[11px] font-semibold text-[hsl(var(--bd-text))] shadow-none ring-offset-0 focus:border-[hsl(var(--bd-input-focus))] focus:ring-0"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="secondary-label" className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    <Label htmlFor="secondary-label" className="text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">
                       Secondary Label
                     </Label>
                     <Input
@@ -189,22 +213,22 @@ export default function InvoiceAdvanceSheet({
                       value={advanceSecondaryLabel}
                       onChange={(event) => setAdvanceSecondaryLabel(event.target.value)}
                       disabled={isViewMode || advanceSaving}
-                      className="h-10 rounded-xl border-slate-200 bg-white text-[11px] font-semibold shadow-none ring-offset-0 focus:border-slate-400 focus:ring-0"
+                      className="h-10 rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[11px] font-semibold text-[hsl(var(--bd-text))] shadow-none ring-offset-0 focus:border-[hsl(var(--bd-input-focus))] focus:ring-0"
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-[#e7e5e4] bg-[#f5f5f4]/80 px-6 py-4">
+            <SheetFooter className="border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
               {isViewMode ? (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid w-full gap-2 sm:grid-cols-3">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={onDownloadPdf}
                     disabled={advanceSaving || advancePdfGenerating}
-                    className="h-10 rounded-xl border-[#d6d3d1] bg-white text-xs font-bold shadow-sm"
+                    className="h-10 rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-xs font-semibold text-[hsl(var(--bd-text))]"
                   >
                     {advancePdfGenerating ? '...' : 'Download'}
                   </Button>
@@ -212,7 +236,7 @@ export default function InvoiceAdvanceSheet({
                     type="button"
                     onClick={onEdit}
                     disabled={advanceSaving || advancePdfGenerating}
-                    className="h-10 rounded-xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white hover:bg-slate-800"
+                    className="h-10 rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-button-primary-bg))] text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-button-primary-text))] hover:bg-[hsl(var(--bd-button-primary-hover-bg))]"
                   >
                     Edit
                   </Button>
@@ -221,19 +245,19 @@ export default function InvoiceAdvanceSheet({
                     variant="ghost"
                     onClick={onRequestDelete}
                     disabled={advanceSaving || advancePdfGenerating}
-                    className="h-10 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50"
+                    className="h-10 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] text-xs font-semibold text-[hsl(var(--bd-status-danger-text))] hover:opacity-90"
                   >
                     Delete
                   </Button>
                 </div>
               ) : (
-                <div className="flex gap-2">
+                <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     onClick={() => onOpenChange(false)}
                     disabled={advanceSaving}
-                    className="h-10 rounded-xl text-xs font-bold text-slate-500"
+                    className="h-10 rounded-[var(--bd-radius-lg)] text-xs font-semibold sm:min-w-28"
                   >
                     Cancel
                   </Button>
@@ -241,13 +265,13 @@ export default function InvoiceAdvanceSheet({
                     type="button"
                     onClick={onSave}
                     disabled={advanceSaving}
-                    className="h-10 flex-1 rounded-xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white hover:bg-slate-800"
+                    className="h-10 rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-button-primary-bg))] text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-button-primary-text))] hover:bg-[hsl(var(--bd-button-primary-hover-bg))] sm:min-w-36"
                   >
                     {advanceSaving ? 'Saving...' : advanceSheetMode === 'edit' ? 'Save' : 'Create'}
                   </Button>
                 </div>
               )}
-            </div>
+            </SheetFooter>
           </div>
         </SheetContent>
       </Sheet>
@@ -263,4 +287,3 @@ export default function InvoiceAdvanceSheet({
     </>
   )
 }
-

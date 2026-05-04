@@ -892,6 +892,7 @@ export default function ViewInvoice() {
               description={`${docProps.number} will be converted back to an open quotation. Existing payment records will be deleted and cannot be recovered.`}
               cancelLabel="Cancel"
               confirmLabel={reverting ? 'Reverting...' : 'Revert'}
+              confirmDisabled={reverting}
               onConfirm={() => void handleRevertToQuotation()}
               onCancel={ui.closeModal}
             />

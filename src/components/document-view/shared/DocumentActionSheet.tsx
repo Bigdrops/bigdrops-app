@@ -24,13 +24,7 @@ export default function DocumentActionSheet({
 }: DocumentActionSheetProps) {
   return (
     <DocumentSheet open={open} title={title} subtitle={subtitle} onClose={onClose}>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-        }}
-      >
+      <div className="flex flex-col gap-2">
         {actions.map((action, i) => (
           <button
             key={i}
@@ -39,22 +33,14 @@ export default function DocumentActionSheet({
               action.onClick()
               onClose()
             }}
-            style={{
-              padding: '16px',
-              textAlign: 'left',
-              background: '#f9fafb',
-              border: '1px solid #e7e5e4',
-              borderRadius: 12,
-              color: action.destructive ? '#ef4444' : '#1f2937',
-              cursor: 'pointer',
-              fontSize: 16,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-            }}
+            className={
+              action.destructive
+                ? 'flex items-center gap-3 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-4 py-4 text-left text-[hsl(var(--bd-status-danger-text))] transition-opacity hover:opacity-90'
+                : 'flex items-center gap-3 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 py-4 text-left text-[hsl(var(--bd-text))] transition-colors hover:bg-[hsl(var(--bd-surface-muted))]'
+            }
           >
             {action.icon}
-            <span style={{ fontWeight: 500 }}>{action.label}</span>
+            <span className="text-sm font-semibold">{action.label}</span>
           </button>
         ))}
       </div>

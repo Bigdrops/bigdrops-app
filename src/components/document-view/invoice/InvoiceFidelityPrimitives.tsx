@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { Download } from 'lucide-react'
 
 import styles from './InvoicePresentation.module.css'
+import FloatingDownloadButton from '../shared/FloatingDownloadButton'
 
 type InvoicePageShellProps = {
   children: ReactNode
@@ -41,7 +41,11 @@ export function InvoicePageShell({ children, overlay, topNav, floating }: Invoic
           {children}
         </div>
       </main>
-      {floating}
+      {floating ? (
+        <div className={styles.floatingDock}>
+          <div className={styles.floatingInner}>{floating}</div>
+        </div>
+      ) : null}
       {overlay}
     </div>
   )
@@ -55,10 +59,11 @@ export function InvoiceFloatingDownloadButton({
   disabled?: boolean
 }) {
   return (
-    <button type="button" className={styles['fab-download']} onClick={onClick} disabled={disabled}>
-      <Download size={17} strokeWidth={2.4} />
-      {disabled ? 'Preparing...' : 'Download PDF'}
-    </button>
+    <FloatingDownloadButton
+      onClick={onClick}
+      disabled={disabled}
+      label={disabled ? 'Preparing...' : 'Download PDF'}
+    />
   )
 }
 

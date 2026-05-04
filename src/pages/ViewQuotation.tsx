@@ -560,6 +560,7 @@ export default function ViewQuotation() {
               description="This will generate a new unpaid invoice based on this quotation. The quotation will be marked as converted."
               cancelLabel="Cancel"
               confirmLabel={converting ? 'Converting...' : 'Convert to Invoice'}
+              confirmDisabled={converting}
               onConfirm={() => void handleConvertToInvoice()}
               onCancel={ui.closeModal}
             />

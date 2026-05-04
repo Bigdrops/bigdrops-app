@@ -3,25 +3,26 @@
   align-items: center;
   gap: 8px;
   border: none;
-  border-radius: var(--bd-radius-xl);
+  min-height: 48px;
+  border-radius: 999px;
   font-family: var(--dv-font-ui);
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  background: hsl(var(--bd-fab-bg));
-  color: hsl(var(--bd-fab-text));
-  padding: 12px 24px;
-  font-size: 14px;
-  box-shadow: 0 10px 25px -5px hsl(var(--bd-button-primary-bg) / 0.4);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  letter-spacing: -0.01em;
+  background: hsl(var(--bd-button-primary-bg));
+  color: hsl(var(--bd-button-primary-text));
+  padding: 12px 20px;
+  font-size: 13px;
+  box-shadow: 0 14px 24px -18px hsl(var(--bd-button-primary-bg) / 0.55);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
 .button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 25px -5px hsl(var(--bd-text) / 0.2), 0 10px 10px -5px hsl(var(--bd-text) / 0.1);
-  filter: brightness(1.1);
+  background: hsl(var(--bd-button-primary-hover-bg));
+  transform: translateY(-1px);
+  box-shadow: 0 18px 28px -18px hsl(var(--bd-button-primary-bg) / 0.5);
 }
 
 .button:active {
@@ -29,7 +30,9 @@
 }
 
 .disabled {
-  opacity: 0.6;
+  opacity: 1;
+  background: hsl(var(--bd-surface-muted));
+  color: hsl(var(--bd-text-muted));
   cursor: not-allowed;
   transform: none !important;
   box-shadow: none !important;
