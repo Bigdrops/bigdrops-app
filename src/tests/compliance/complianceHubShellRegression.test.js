@@ -4,37 +4,38 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const complianceHubPath = path.resolve('src/pages/ComplianceHub.tsx')
+const complianceImportLayoutPath = path.resolve('src/components/import/JsonImportLayout.tsx')
 
-test('compliance hub shell uses workflow sections instead of equal-weight overview/settings tabs', () => {
+test('compliance hub shell keeps workflow navigation but removes duplicate shell chrome', () => {
   const source = fs.readFileSync(complianceHubPath, 'utf8')
 
   assert.match(source, /type ComplianceSection = 'today' \| 'vat' \| 'wht' \| 'filings' \| 'obligations'/)
-  assert.doesNotMatch(source, /type ComplianceTab = 'overview'/)
-  assert.doesNotMatch(source, /TabsTrigger[\s\S]*Settings/)
   assert.match(source, /label: 'Today'/)
   assert.match(source, /label: 'VAT'/)
   assert.match(source, /label: 'WHT Receipts'/)
   assert.match(source, /label: 'Filings'/)
   assert.match(source, /label: 'Obligations'/)
+  assert.match(source, /<h1[^>]*>Compliance Hub<\/h1>/)
+  assert.doesNotMatch(source, /Tax & Compliance/)
+  assert.doesNotMatch(source, /Workspace filters/i)
+  assert.doesNotMatch(source, /Workspace health/i)
 })
 
-test('compliance hub shell exposes a shared filter bar and shell-owned settings sheet', () => {
+test('compliance hub shell keeps settings access but removes dead global actions and fake action copy', () => {
   const source = fs.readFileSync(complianceHubPath, 'utf8')
 
-  assert.match(source, /label: 'Period'/)
-  assert.match(source, /label: 'Tax Type'/)
-  assert.match(source, /label: 'Status'/)
-  assert.match(source, /label: 'Evidence'/)
+  assert.match(source, /Tax Profile/)
   assert.match(source, /<Sheet open=\{settingsOpen\} onOpenChange=\{setSettingsOpen\}/)
   assert.match(source, /<ComplianceSettingsPanel \/>/)
+  assert.doesNotMatch(source, /Add Filing/)
+  assert.doesNotMatch(source, /Initialize Receipt/)
+  assert.doesNotMatch(source, /Primary action/i)
+  assert.doesNotMatch(source, /handlePrimaryAction/)
 })
 
-test('compliance hub shell maps primary actions to the active workflow section', () => {
-  const source = fs.readFileSync(complianceHubPath, 'utf8')
+test('compliance import utility uses desktop side-sheet placement instead of forcing a bottom sheet everywhere', () => {
+  const source = fs.readFileSync(complianceImportLayoutPath, 'utf8')
 
-  assert.match(source, /today: \{[\s\S]*label: 'Add Filing'/)
-  assert.match(source, /vat: \{[\s\S]*label: 'Add VAT Input'/)
-  assert.match(source, /wht: \{[\s\S]*label: 'Initialize Receipt'/)
-  assert.match(source, /filings: \{[\s\S]*label: 'New Filing'/)
-  assert.match(source, /obligations: \{[\s\S]*label: 'Add Obligation'/)
+  assert.doesNotMatch(source, /side="bottom"/)
+  assert.match(source, /side=\{isMobile \? 'bottom' : 'right'\}/)
 })

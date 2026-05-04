@@ -2,13 +2,10 @@ import * as React from 'react'
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Wand2, Copy, Check, Info, Play } from 'lucide-react'
+import { Wand2, Copy, Check, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface JsonImportUIProps {
@@ -271,12 +268,28 @@ export function JsonImportLayout({
   className,
   ...props
 }: JsonImportLayoutProps) {
+  const [isMobile, setIsMobile] = React.useState(() =>
+    typeof window === 'undefined' ? false : window.innerWidth < 768
+  )
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    handleResize()
+    window.addEventListener('resize', handleResize)
+
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        side="bottom"
+        side={isMobile ? 'bottom' : 'right'}
         className={cn(
-          "max-h-[94vh] rounded-t-[var(--bd-overlay-radius)] bg-[hsl(var(--bd-overlay-bg))] p-0 border-none sm:max-w-2xl sm:mx-auto select-none overflow-y-auto",
+          isMobile
+            ? "max-h-[94vh] rounded-t-[var(--bd-overlay-radius)] bg-[hsl(var(--bd-overlay-bg))] p-0 border-none select-none overflow-y-auto"
+            : "w-full max-w-2xl rounded-none bg-[hsl(var(--bd-overlay-bg))] p-0 select-none overflow-y-auto",
           className
         )}
       >

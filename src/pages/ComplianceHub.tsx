@@ -2,12 +2,10 @@ import { Suspense, useEffect, useMemo, useState } from 'react'
 import {
   AlertCircle,
   Bell,
-  FileSpreadsheet,
   History,
   LayoutDashboard,
   Receipt,
   Settings2,
-  ShieldCheck,
   Wallet,
 } from 'lucide-react'
 
@@ -36,64 +34,30 @@ const sectionMeta: Record<
   ComplianceSection,
   {
     label: string
-    eyebrow: string
-    description: string
     icon: typeof LayoutDashboard
   }
 > = {
   today: {
     label: 'Today',
-    eyebrow: 'Action queue',
-    description: 'Start with the compliance tasks that need attention now, then drill into the workflow that owns them.',
     icon: LayoutDashboard,
   },
   vat: {
     label: 'VAT',
-    eyebrow: 'Exposure and recovery',
-    description: 'Track output exposure and manual input VAT capture from one shared VAT workspace.',
     icon: Wallet,
   },
   wht: {
     label: 'WHT Receipts',
-    eyebrow: 'Evidence tracking',
-    description: 'Manage missing, requested, received, and verified withholding receipts without losing payment context.',
     icon: Receipt,
   },
   filings: {
     label: 'Filings',
-    eyebrow: 'Submission register',
-    description: 'Maintain filing periods, status, and settlement references in one lifecycle-oriented workspace.',
     icon: History,
   },
   obligations: {
     label: 'Obligations',
-    eyebrow: 'Due dates and reminders',
-    description: 'Keep upcoming and overdue obligations visible so filing and payment work stays on schedule.',
     icon: Bell,
   },
 }
-
-const primaryActions: Record<
-  ComplianceSection,
-  {
-    label: string
-    hint: string
-  }
-> = {
-  today: { label: 'Add Filing', hint: 'Open the filing workspace to register a new submission record.' },
-  vat: { label: 'Add VAT Input', hint: 'Capture a recoverable or non-recoverable input VAT entry.' },
-  wht: { label: 'Initialize Receipt', hint: 'Create a new WHT receipt tracking record from payment activity.' },
-  filings: { label: 'New Filing', hint: 'Register a new tax filing period and status.' },
-  obligations: { label: 'Add Obligation', hint: 'Create a due-date reminder for an upcoming compliance obligation.' },
-}
-
-const filterChips = [
-  { label: 'Period', value: 'Current month' },
-  { label: 'Tax Type', value: 'All workflows' },
-  { label: 'Status', value: 'Open and due' },
-  { label: 'Evidence', value: 'Any state' },
-  { label: 'Client', value: 'All clients' },
-] as const
 
 export default function ComplianceHub() {
   const [section, setSection] = useState<ComplianceSection>('today')
@@ -194,40 +158,8 @@ export default function ComplianceHub() {
     return { vatCharged, whtDeducted, netPosition }
   }, [invoices, payments])
 
-  const workspaceSignals = useMemo(
-    () => [
-      {
-        label: 'Open Filings',
-        value: filings.filter((filing) => filing.status === 'draft' || filing.status === 'ready').length,
-      },
-      {
-        label: 'Due Soon',
-        value: reminders.filter((reminder) => reminder.status === 'upcoming' || reminder.status === 'due').length,
-      },
-      {
-        label: 'Overdue',
-        value: reminders.filter((reminder) => reminder.status === 'overdue').length,
-      },
-      {
-        label: 'WHT Pending',
-        value: receipts.filter((receipt) => receipt.receipt_status === 'pending' || receipt.receipt_status === 'requested').length,
-      },
-    ],
-    [filings, reminders, receipts]
-  )
-
   const activeSection = sectionMeta[section]
-  const activeAction = primaryActions[section]
   const ActiveSectionIcon = activeSection.icon
-
-  const handlePrimaryAction = () => {
-    if (section === 'today') {
-      setSection('filings')
-      return
-    }
-
-    setSection(section)
-  }
 
   const renderActiveSection = () => {
     if (loading) {
@@ -301,50 +233,30 @@ export default function ComplianceHub() {
   }
 
   return (
-    <Layout title="Compliance Hub" session={null} contentClassName="bg-[hsl(var(--bd-surface))]">
+    <Layout
+      title="Compliance Hub"
+      session={null}
+      hidePageHeader
+      contentClassName="bg-[hsl(var(--bd-surface))]"
+    >
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <div className="w-full space-y-6">
-          <section className="rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-5 shadow-sm">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]">
-                    <ShieldCheck className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[hsl(var(--bd-status-info-text))]">
-                      Tax & Compliance
-                    </p>
-                    <h1 className="text-xl font-black tracking-tight text-[hsl(var(--bd-text))]">Compliance Hub</h1>
-                  </div>
-                </div>
-                <p className="max-w-2xl text-sm text-[hsl(var(--bd-text-muted))]">
-                  A focused operations center for VAT, WHT receipts, filings, and due-date work. Start with what needs action today,
-                  then move into the workflow that owns it.
-                </p>
+        <div className="w-full min-w-0 space-y-4 overflow-x-hidden px-4 pt-4 md:px-0 md:pt-0">
+          <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] px-4 py-4 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <h1 className="text-xl font-black tracking-tight text-[hsl(var(--bd-text))]">Compliance Hub</h1>
+                <p className="text-sm text-[hsl(var(--bd-text-muted))]">Tax actions, filings, and evidence tracking.</p>
               </div>
 
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Button
-                  type="button"
-                  size="lg"
-                  className="h-10 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
-                  onClick={handlePrimaryAction}
-                >
-                  <FileSpreadsheet className="h-4 w-4" />
-                  {activeAction.label}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  className="h-10 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
-                  onClick={() => setSettingsOpen(true)}
-                >
-                  <Settings2 className="h-4 w-4" />
-                  Tax Profile
-                </Button>
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 shrink-0 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
+                onClick={() => setSettingsOpen(true)}
+              >
+                <Settings2 className="h-4 w-4" />
+                Tax Profile
+              </Button>
             </div>
           </section>
 
@@ -355,36 +267,8 @@ export default function ComplianceHub() {
             </div>
           ) : null}
 
-          <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-3 shadow-sm">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">Workspace filters</p>
-                  <p className="text-xs text-[hsl(var(--bd-text-muted))]">Shared shell controls for period, workflow, and evidence state.</p>
-                </div>
-              </div>
-
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {filterChips.map((chip, index) => (
-                  <button
-                    key={chip.label}
-                    type="button"
-                    className="flex min-w-fit items-center gap-2 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 py-2 text-left transition-colors hover:border-[hsl(var(--bd-status-info-border))] hover:bg-[hsl(var(--bd-card-bg))]"
-                  >
-                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">{chip.label}</span>
-                    <span className="text-xs font-semibold text-[hsl(var(--bd-text))]">
-                      {chip.value}
-                      {chip.label === 'Client' ? '' : ''}
-                    </span>
-                    {index < filterChips.length - 1 ? <span className="text-[hsl(var(--bd-text-soft))]">+</span> : null}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="grid gap-6 xl:grid-cols-[220px_minmax(0,1fr)]">
-            <aside className="space-y-3 xl:sticky xl:top-4 xl:self-start">
+          <section className="grid min-w-0 gap-4 xl:grid-cols-[220px_minmax(0,1fr)]">
+            <aside className="min-w-0 xl:sticky xl:top-4 xl:self-start">
               <div className="hidden xl:block">
                 <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-2 shadow-sm">
                   <nav className="space-y-1" aria-label="Compliance workflows">
@@ -413,11 +297,8 @@ export default function ComplianceHub() {
                           }`}>
                             <Icon className="h-4 w-4" />
                           </div>
-                          <div className="space-y-1">
+                          <div className="min-w-0">
                             <div className="text-[11px] font-black uppercase tracking-[0.18em]">{item.label}</div>
-                            <p className={`text-xs leading-relaxed ${isActive ? 'text-[hsl(var(--bd-overlay-text))]/75' : 'text-[hsl(var(--bd-text-muted))]'}`}>
-                              {item.eyebrow}
-                            </p>
                           </div>
                         </button>
                       )
@@ -425,26 +306,11 @@ export default function ComplianceHub() {
                   </nav>
                 </div>
               </div>
-
-              <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-3 shadow-sm">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">Workspace health</p>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-                  {workspaceSignals.map((signal) => (
-                    <div
-                      key={signal.label}
-                      className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 py-2"
-                    >
-                      <div className="text-lg font-black tracking-tight text-[hsl(var(--bd-text))]">{signal.value}</div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">{signal.label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </aside>
 
-            <div className="space-y-4">
-              <div className="overflow-x-auto xl:hidden">
-                <div className="flex w-max gap-2 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-2 shadow-sm">
+            <div className="min-w-0 space-y-3">
+              <div className="max-w-full overflow-x-auto xl:hidden">
+                <div className="flex w-max min-w-full gap-2 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-2 shadow-sm">
                   {(
                     Object.entries(sectionMeta) as Array<
                       [ComplianceSection, (typeof sectionMeta)[ComplianceSection]]
@@ -456,7 +322,7 @@ export default function ComplianceHub() {
                         key={key}
                         type="button"
                         variant={isActive ? 'default' : 'outline'}
-                        className="h-9 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
+                        className="h-9 shrink-0 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
                         onClick={() => setSection(key)}
                       >
                         {item.label}
@@ -466,28 +332,15 @@ export default function ComplianceHub() {
                 </div>
               </div>
 
-              <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-5 shadow-sm">
-                <div className="flex flex-col gap-4 border-b border-[hsl(var(--bd-border))] pb-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
-                        <ActiveSectionIcon className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">{activeSection.eyebrow}</p>
-                        <h2 className="text-lg font-black tracking-tight text-[hsl(var(--bd-text))]">{activeSection.label}</h2>
-                      </div>
-                    </div>
-                    <p className="max-w-2xl text-sm text-[hsl(var(--bd-text-muted))]">{activeSection.description}</p>
+              <section className="min-w-0 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4 shadow-sm md:p-5">
+                <div className="mb-4 flex items-center gap-3 border-b border-[hsl(var(--bd-border))] pb-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+                    <ActiveSectionIcon className="h-4 w-4" />
                   </div>
-
-                  <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 py-2 text-xs text-[hsl(var(--bd-text-muted))] sm:max-w-xs">
-                    <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text))]">Primary action</span>
-                    {activeAction.hint}
-                  </div>
+                  <h2 className="text-base font-black tracking-tight text-[hsl(var(--bd-text))]">{activeSection.label}</h2>
                 </div>
 
-                <div className="pt-5">
+                <div className="min-w-0">
                   {renderActiveSection()}
                 </div>
               </section>
