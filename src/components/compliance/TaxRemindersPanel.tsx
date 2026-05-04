@@ -4,7 +4,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import {
   Select,
   SelectContent,
@@ -229,18 +237,22 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
       </div>
 
       <Sheet open={!!editingReminder} onOpenChange={open => !open && setEditingReminder(null)}>
-        <SheetContent className="sm:max-w-md overflow-y-auto">
-          <SheetHeader>
+        <SheetContent className="flex h-full w-full max-w-full flex-col overflow-hidden bg-[hsl(var(--bd-card-bg))] p-0 sm:max-w-xl">
+          <SheetHeader className="border-b border-[hsl(var(--bd-border))]">
             <SheetTitle>{editingReminder?.id ? 'Edit Obligation' : 'New Obligation'}</SheetTitle>
+            <SheetDescription>
+              Maintain one tax deadline, linked filing, and status record from a single operational sheet.
+            </SheetDescription>
           </SheetHeader>
-          <div className="mt-6 space-y-6">
-            <div className="space-y-2.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Obligation Type</Label>
+          <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Obligation Type</Label>
               <Select
                 value={editingReminder?.tax_type ?? 'vat'}
                 onValueChange={v => setEditingReminder({ ...editingReminder, tax_type: v as TaxFilingTaxType })}
               >
-                <SelectTrigger className="rounded-xl border-slate-200">
+                <SelectTrigger className="h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -251,44 +263,44 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
               </Select>
             </div>
 
-            <div className="space-y-2.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Due Date</Label>
+            <div className="space-y-2">
+              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Due Date</Label>
               <Input
                 type="date"
                 value={editingReminder?.due_date ?? ''}
                 onChange={e => setEditingReminder({ ...editingReminder, due_date: e.target.value })}
-                className="rounded-xl border-slate-200"
+                className="h-10"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Filing Start</Label>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Filing Start</Label>
                 <Input
                   type="date"
                   value={editingReminder?.period_start ?? ''}
                   onChange={e => setEditingReminder({ ...editingReminder, period_start: e.target.value || null })}
-                  className="rounded-xl border-slate-200"
+                  className="h-10"
                 />
               </div>
-              <div className="space-y-2.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Filing End</Label>
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Filing End</Label>
                 <Input
                   type="date"
                   value={editingReminder?.period_end ?? ''}
                   onChange={e => setEditingReminder({ ...editingReminder, period_end: e.target.value || null })}
-                  className="rounded-xl border-slate-200"
+                  className="h-10"
                 />
               </div>
             </div>
 
-            <div className="space-y-2.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Status</Label>
+            <div className="space-y-2">
+              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Status</Label>
               <Select
                 value={editingReminder?.status ?? 'upcoming'}
                 onValueChange={v => setEditingReminder({ ...editingReminder, status: v as TaxReminderStatus })}
               >
-                <SelectTrigger className="rounded-xl border-slate-200">
+                <SelectTrigger className="h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -301,8 +313,8 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
               </Select>
             </div>
 
-            <div className="space-y-2.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Link to Filing Record</Label>
+            <div className="space-y-2">
+              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Link to Filing Record</Label>
               <Combobox
                 options={[
                   { value: 'none', label: 'No linked filing' },
@@ -318,29 +330,26 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
               />
             </div>
 
-            <div className="space-y-2.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Notes & Context</Label>
-              <Input
+            <div className="space-y-2">
+              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Notes</Label>
+              <Textarea
                 placeholder="Optional notes..."
                 value={editingReminder?.notes ?? ''}
                 onChange={e => setEditingReminder({ ...editingReminder, notes: e.target.value })}
-                className="rounded-xl border-slate-200"
               />
             </div>
-
-            <div className="pt-2">
-              <Button
-                onClick={handleSave}
-                loading={saving}
-                className="w-full h-12 bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] font-bold rounded-2xl shadow-lg border-[hsl(var(--bd-border))] transition-all hover:scale-[1.01] active:scale-100"
-              >
-                {editingReminder?.id ? 'Update Reminder' : 'Save Reminder'}
-              </Button>
             </div>
           </div>
+          <SheetFooter className="border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] pb-[calc(1rem+env(safe-area-inset-bottom))] sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={() => setEditingReminder(null)} className="h-10 sm:min-w-28">
+              Cancel
+            </Button>
+            <Button onClick={handleSave} loading={saving} className="h-10 sm:min-w-36">
+              {editingReminder?.id ? 'Update Reminder' : 'Save Reminder'}
+            </Button>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
     </div>
   )
 }
-

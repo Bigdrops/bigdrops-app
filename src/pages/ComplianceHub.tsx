@@ -348,14 +348,17 @@ export default function ComplianceHub() {
           </section>
         </div>
 
-        <SheetContent side="right" className="overflow-y-auto">
+        <SheetContent
+          side="right"
+          className="flex h-full w-full max-w-full flex-col overflow-hidden bg-[hsl(var(--bd-card-bg))] p-0 sm:max-w-xl"
+        >
           <SheetHeader>
             <SheetTitle>Tax Profile</SheetTitle>
             <SheetDescription>
-              Keep registration details and tax profile settings available without turning configuration into a first-class workflow tab.
+              Tax identity, VAT registration, and profile-level metadata.
             </SheetDescription>
           </SheetHeader>
-          <div className="px-6 pb-6">
+          <div className="min-h-0 flex-1">
             <ComplianceSettingsPanel />
           </div>
         </SheetContent>

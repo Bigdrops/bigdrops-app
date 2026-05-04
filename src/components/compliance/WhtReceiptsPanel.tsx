@@ -5,7 +5,17 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
@@ -107,8 +117,8 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
 
   if (loading) {
     return (
-      <Card className="border-slate-200 bg-slate-50">
-        <CardContent className="p-6 text-sm text-muted-foreground flex items-center gap-2">
+      <Card className="border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]">
+        <CardContent className="flex items-center gap-2 p-6 text-sm text-[hsl(var(--bd-text-muted))]">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading WHT records...
         </CardContent>
@@ -118,22 +128,22 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
 
   return (
     <div className="space-y-4">
-      <Card className="border-red-100 bg-red-50/20">
-        <CardHeader className="pb-3 border-b border-red-50">
-          <CardTitle className="text-sm font-bold flex items-center gap-2">
-            <ReceiptIcon className="h-4 w-4 text-red-600" />
+      <Card className="border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))]">
+        <CardHeader className="border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--bd-text))]">
+            <ReceiptIcon className="h-4 w-4 text-[hsl(var(--bd-status-danger-text))]" />
             WHT Deductions Tracking
           </CardTitle>
-          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 border-emerald-100 bg-emerald-50/50 hover:bg-emerald-50">
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest">
             <FileJson className="h-3 w-3 mr-1.5" />
             Import JSON
           </Button>
         </CardHeader>
         <CardContent className="p-4">
           {whtPayments.length === 0 ? (
-            <div className="text-center py-10 bg-white rounded-[var(--bd-radius-xl)] border border-dashed border-slate-200">
-              <div className="text-sm font-bold text-slate-800">No WHT recorded</div>
-              <div className="text-xs text-muted-foreground mt-1">No payments with WHT deductions have been recorded yet.</div>
+            <div className="rounded-[var(--bd-radius-xl)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] py-10 text-center">
+              <div className="text-sm font-bold text-[hsl(var(--bd-text))]">No WHT recorded</div>
+              <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">No payments with WHT deductions have been recorded yet.</div>
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
@@ -142,19 +152,25 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
                 const isProcessing = processingId === p.id
 
                 return (
-                  <div key={p.id} className="rounded-[var(--bd-radius-xl)] border border-slate-100 bg-white p-4 shadow-sm hover:border-red-200 transition-colors">
+                  <div
+                    key={p.id}
+                    className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm transition-colors hover:bg-[hsl(var(--bd-surface-muted))]"
+                  >
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="min-w-0">
-                        <div className="text-sm font-bold text-slate-800 truncate">
+                        <div className="truncate text-sm font-bold text-[hsl(var(--bd-text))]">
                           {p.invoice_id ? (
-                            <Link to={`/invoices/${p.invoice_id}`} className="hover:text-blue-700 hover:underline">
+                            <Link
+                              to={`/invoices/${p.invoice_id}`}
+                              className="transition-colors hover:text-[hsl(var(--bd-button-primary-bg))] hover:underline"
+                            >
                               {p.invoice_number || '—'}
                             </Link>
                           ) : (
                             p.invoice_number || '—'
                           )}
                         </div>
-                        <div className="text-[11px] text-muted-foreground truncate">{p.client_name || '—'}</div>
+                        <div className="truncate text-[11px] text-[hsl(var(--bd-text-muted))]">{p.client_name || '—'}</div>
                       </div>
                       
                       {receipt ? (
@@ -162,7 +178,10 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
                           {receipt.receipt_status}
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-slate-50 text-slate-400 border-slate-200 text-[9px] font-bold uppercase rounded-full">
+                        <Badge
+                          variant="outline"
+                          className="rounded-full border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[9px] font-bold uppercase text-[hsl(var(--bd-text-muted))]"
+                        >
                           Untracked
                         </Badge>
                       )}
@@ -170,57 +189,65 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
                     
                     <div className="grid grid-cols-2 gap-4 mt-4">
                       <div>
-                        <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">WHT Amount</div>
-                        <div className="text-base font-black text-red-600">{formatNaira(p.wht_amount)}</div>
+                        <div className="text-[10px] font-bold uppercase tracking-tight text-[hsl(var(--bd-text-muted))]">WHT Amount</div>
+                        <div className="text-base font-black text-[hsl(var(--bd-status-danger-text))]">{formatNaira(p.wht_amount)}</div>
                       </div>
                       <div className="flex flex-col justify-end items-end">
                         {receipt ? (
                           <Sheet>
                             <SheetTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 rounded-full text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 rounded-full px-3 text-[hsl(var(--bd-button-primary-bg))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-button-primary-bg))]"
+                              >
                                 {isProcessing ? <Loader2 className="h-3 w-3 animate-spin" /> : <ExternalLink className="h-3 w-3 mr-1" />}
                                 Manage
                               </Button>
                             </SheetTrigger>
-                            <SheetContent className="rounded-l-[var(--bd-overlay-radius)]">
-                              <SheetHeader className="mb-6">
-                                <SheetTitle className="text-lg font-black tracking-tight">WHT Receipt Detail</SheetTitle>
-                                <p className="text-xs text-muted-foreground">Manage certification for {p.invoice_number}</p>
+                            <SheetContent className="flex h-full w-full max-w-full flex-col overflow-hidden bg-[hsl(var(--bd-card-bg))] p-0 sm:max-w-xl">
+                              <SheetHeader className="border-b border-[hsl(var(--bd-border))]">
+                                <SheetTitle>WHT Receipt Detail</SheetTitle>
+                                <SheetDescription>
+                                  Manage certification for {p.invoice_number || 'this payment'}.
+                                </SheetDescription>
                               </SheetHeader>
-                              <div className="space-y-6">
-                                <div className="p-4 rounded-[var(--bd-radius-xl)] bg-slate-50 border border-slate-100 space-y-3">
-                                  <div className="flex justify-between items-center text-xs">
-                                    <span className="text-muted-foreground">Amount Withheld</span>
-                                    <span className="font-bold text-red-600">{formatNaira(p.wht_amount)}</span>
-                                  </div>
-                                  <div className="flex justify-between items-center text-xs">
-                                    <span className="text-muted-foreground">Payment Date</span>
-                                    <span className="font-semibold">{formatDisplayDate(p.date)}</span>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                  <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Current Status</Label>
-                                    <div className="flex flex-wrap gap-2">
-                                      {(['pending', 'requested', 'received', 'verified'] as WhtReceiptStatus[]).map((s) => (
-                                        <Button
-                                          key={s}
-                                          variant={receipt.receipt_status === s ? 'default' : 'outline'}
-                                          size="sm"
-                                          className="rounded-full text-[10px] h-7 px-3"
-                                          onClick={() => updateRecord(receipt, { receipt_status: s })}
-                                          disabled={isProcessing}
-                                        >
-                                          {s.charAt(0).toUpperCase() + s.slice(1)}
-                                        </Button>
-                                      ))}
+                              <div className="flex-1 overflow-y-auto px-6 py-6">
+                                <div className="space-y-6">
+                                  <div className="space-y-3 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-4">
+                                    <div className="flex items-center justify-between text-xs">
+                                      <span className="text-[hsl(var(--bd-text-muted))]">Amount Withheld</span>
+                                      <span className="font-bold text-[hsl(var(--bd-status-danger-text))]">{formatNaira(p.wht_amount)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs">
+                                      <span className="text-[hsl(var(--bd-text-muted))]">Payment Date</span>
+                                      <span className="font-semibold text-[hsl(var(--bd-text))]">{formatDisplayDate(p.date)}</span>
                                     </div>
                                   </div>
 
-                                  <div className="space-y-2">
-                                    <Label htmlFor="receipt_number" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Credential / Receipt #</Label>
-                                    <div className="flex gap-2">
+                                  <div className="space-y-4">
+                                    <div className="space-y-2">
+                                      <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Current Status</Label>
+                                      <div className="flex flex-wrap gap-2">
+                                        {(['pending', 'requested', 'received', 'verified'] as WhtReceiptStatus[]).map((s) => (
+                                          <Button
+                                            key={s}
+                                            variant={receipt.receipt_status === s ? 'default' : 'outline'}
+                                            size="sm"
+                                            className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-[0.14em]"
+                                            onClick={() => updateRecord(receipt, { receipt_status: s })}
+                                            disabled={isProcessing}
+                                          >
+                                            {s.charAt(0).toUpperCase() + s.slice(1)}
+                                          </Button>
+                                        ))}
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                      <Label htmlFor="receipt_number" className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">
+                                        Credential / Receipt Number
+                                      </Label>
                                       <Input 
                                         id="receipt_number"
                                         placeholder="e.g. FIRS-12345"
@@ -230,15 +257,13 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
                                             updateRecord(receipt, { receipt_number: e.target.value })
                                           }
                                         }}
-                                        className="h-9 text-sm"
+                                        className="h-10"
                                       />
                                     </div>
-                                  </div>
 
-                                  <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Notes</Label>
-                                    <textarea 
-                                      className="w-full min-h-[80px] rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm focus:bg-white transition-colors"
+                                    <div className="space-y-2">
+                                      <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Notes</Label>
+                                      <Textarea
                                       placeholder="Add follow-up notes..."
                                       defaultValue={receipt.notes || ''}
                                       onBlur={(e) => {
@@ -246,17 +271,25 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
                                           updateRecord(receipt, { notes: e.target.value })
                                         }
                                       }}
-                                    />
+                                      />
+                                    </div>
                                   </div>
                                 </div>
                               </div>
+                              <SheetFooter className="border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] pb-[calc(1rem+env(safe-area-inset-bottom))] sm:flex-row sm:justify-end">
+                                <SheetClose asChild>
+                                  <Button variant="outline" className="h-10 sm:min-w-28">
+                                    Done
+                                  </Button>
+                                </SheetClose>
+                              </SheetFooter>
                             </SheetContent>
                           </Sheet>
                         ) : (
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="h-8 rounded-full border-blue-200 text-blue-600 hover:bg-blue-50 px-3"
+                            className="h-8 rounded-full px-3"
                             onClick={() => initializeRecord(p)}
                             disabled={isProcessing}
                           >
@@ -275,46 +308,46 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="p-4 rounded-[var(--bd-radius-xl)] border border-slate-100 bg-white shadow-sm flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+        <div className="flex items-center gap-3 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
             <Clock className="h-5 w-5" />
           </div>
           <div>
-            <div className="text-[10px] font-bold text-muted-foreground uppercase">Pending</div>
-            <div className="text-lg font-black text-slate-700">
+            <div className="text-[10px] font-bold uppercase text-[hsl(var(--bd-text-muted))]">Pending</div>
+            <div className="text-lg font-black text-[hsl(var(--bd-text))]">
               {localReceipts.filter(r => r.receipt_status === 'pending').length}
             </div>
           </div>
         </div>
-        <div className="p-4 rounded-[var(--bd-radius-xl)] border border-amber-100 bg-amber-50/50 shadow-sm flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+        <div className="flex items-center gap-3 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] p-4 shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-status-warning-text))]">
             <AlertCircle className="h-5 w-5" />
           </div>
           <div>
-            <div className="text-[10px] font-bold text-amber-600 uppercase">Requested</div>
-            <div className="text-lg font-black text-amber-700">
+            <div className="text-[10px] font-bold uppercase text-[hsl(var(--bd-status-warning-text))]">Requested</div>
+            <div className="text-lg font-black text-[hsl(var(--bd-status-warning-text))]">
               {localReceipts.filter(r => r.receipt_status === 'requested').length}
             </div>
           </div>
         </div>
-        <div className="p-4 rounded-[var(--bd-radius-xl)] border border-emerald-100 bg-emerald-50/50 shadow-sm flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+        <div className="flex items-center gap-3 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] p-4 shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-status-success-text))]">
             <CheckCircle2 className="h-5 w-5" />
           </div>
           <div>
-            <div className="text-[10px] font-bold text-emerald-600 uppercase">Verified</div>
-            <div className="text-lg font-black text-emerald-700">
+            <div className="text-[10px] font-bold uppercase text-[hsl(var(--bd-status-success-text))]">Verified</div>
+            <div className="text-lg font-black text-[hsl(var(--bd-status-success-text))]">
               {localReceipts.filter(r => r.receipt_status === 'verified' || r.receipt_status === 'received').length}
             </div>
           </div>
         </div>
       </div>
 
-      <Card className="border-slate-100 bg-slate-50/50">
-        <CardContent className="p-4 flex items-center gap-3">
-          <FileText className="h-5 w-5 text-slate-400" />
-          <div className="text-xs text-muted-foreground">
-            <span className="font-bold text-slate-700">Storage Tip:</span> WHT Receipt records initialized here help track the lifecycle of tax deduction evidence needed for CIT audits.
+      <Card className="border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]">
+        <CardContent className="flex items-center gap-3 p-4">
+          <FileText className="h-5 w-5 text-[hsl(var(--bd-text-muted))]" />
+          <div className="text-xs text-[hsl(var(--bd-text-muted))]">
+            <span className="font-bold text-[hsl(var(--bd-text))]">Storage Tip:</span> WHT Receipt records initialized here help track the lifecycle of tax deduction evidence needed for CIT audits.
           </div>
         </CardContent>
       </Card>

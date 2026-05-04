@@ -91,16 +91,22 @@ export function JsonImportUI({
     }
   }
 
+  const footerPrimaryLabel = isParsed ? saveLabel : 'Preview Extraction'
+  const footerPrimaryAction = isParsed ? onSave : onPreview
+  const footerPrimaryDisabled = isParsed ? isSaving : !rawInput.trim()
+  const footerSecondaryLabel = isParsed ? 'Edit JSON' : null
+  const footerSecondaryAction = isParsed ? (onEditJson || onPreview) : null
+
   return (
     <div className="flex flex-col h-full bg-[hsl(var(--bd-overlay-bg))] select-none">
       <div className="sticky top-0 z-30 border-b border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-section-bg))] shadow-sm shrink-0">
         <div className="flex flex-row items-center justify-between p-[var(--bd-sheet-padding)] text-left">
           <div className="space-y-0.5">
-            <h3 className="text-[20px] font-black tracking-[-0.03em] text-[hsl(var(--bd-overlay-text))] flex items-center gap-1.5 leading-tight">
+            <h3 className="flex items-center gap-1.5 text-base font-black tracking-tight text-[hsl(var(--bd-overlay-text))]">
               <Wand2 className="h-4 w-4 text-[hsl(var(--bd-feedback-success))]" />
               {title}
             </h3>
-            <p className="text-[11px] font-medium text-[hsl(var(--bd-overlay-muted))] leading-tight">
+            <p className="text-xs leading-tight text-[hsl(var(--bd-overlay-muted))]">
               {description}
             </p>
           </div>
@@ -114,16 +120,6 @@ export function JsonImportUI({
               {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
               {copied ? 'Copied' : 'AI Prompt'}
             </Button>
-            {isParsed ? (
-              <Button
-                onClick={onSave}
-                disabled={isSaving}
-                size="sm"
-                className="h-10 bg-[hsl(var(--bd-button-primary-bg))] hover:brightness-95 text-[hsl(var(--bd-button-primary-text))] font-black text-xs uppercase tracking-[var(--bd-label-letter-spacing)] rounded-xl shadow-lg transition-all active:scale-[0.985] px-[var(--bd-space-lg)]"
-              >
-                {isSaving ? 'Saving...' : saveLabel}
-              </Button>
-            ) : null}
           </div>
         </div>
         {isParsed ? (
@@ -153,6 +149,7 @@ export function JsonImportUI({
         {/* Tutorial / Help Section */}
         <div className="space-y-[var(--bd-space-sm)]">
           <button
+            type="button"
             onClick={() => setShowTutorial(!showTutorial)}
             className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] p-[var(--bd-space-sm)] text-left transition-colors hover:brightness-95"
           >
@@ -191,7 +188,7 @@ export function JsonImportUI({
               )}
 
               {activeTutorial.videoUrl && (
-                <div className="overflow-hidden rounded-xl border border-[hsl(var(--bd-overlay-section-border))] bg-black aspect-video shadow-inner">
+                <div className="aspect-video overflow-hidden rounded-xl border border-[hsl(var(--bd-overlay-section-border))] bg-[hsl(var(--bd-overlay-section-bg))] shadow-inner">
                   <iframe
                     src={activeTutorial.videoUrl}
                     className="h-full w-full"
@@ -222,13 +219,6 @@ export function JsonImportUI({
                 {error}
               </div>
             )}
-            <Button
-              onClick={onPreview}
-              disabled={!rawInput.trim()}
-              className="w-full h-11 bg-[hsl(var(--bd-text))] hover:brightness-90 text-[hsl(var(--bd-app-bg))] font-bold rounded-xl shadow-md transition-all active:scale-[0.985]"
-            >
-              Preview Extraction
-            </Button>
           </div>
         ) : (
           <div className="space-y-[var(--bd-space-md)] pb-[var(--bd-space-lg)]">
@@ -238,8 +228,10 @@ export function JsonImportUI({
 
             {whtNotice && (
               <div className={cn(
-                "p-3 rounded-xl border-2 text-[11px] font-bold",
-                whtHasPayments ? "bg-amber-50/50 border-amber-100 text-amber-800" : "bg-red-50 border-red-100 text-red-600"
+                "rounded-xl border p-3 text-[11px] font-medium",
+                whtHasPayments
+                  ? "border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]"
+                  : "border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]"
               )}>
                 {whtHasPayments 
                   ? "Before saving, choose the payment this receipt belongs to."
@@ -257,6 +249,27 @@ export function JsonImportUI({
             )}
           </div>
         )}
+      </div>
+
+      <div className="border-t border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-bg))] p-[var(--bd-sheet-padding)] pb-[calc(var(--bd-sheet-padding)+env(safe-area-inset-bottom))]">
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          {footerSecondaryLabel && footerSecondaryAction ? (
+            <Button
+              variant="outline"
+              onClick={footerSecondaryAction}
+              className="h-10 sm:min-w-28"
+            >
+              {footerSecondaryLabel}
+            </Button>
+          ) : null}
+          <Button
+            onClick={footerPrimaryAction}
+            disabled={footerPrimaryDisabled}
+            className="h-10 sm:min-w-36"
+          >
+            {isParsed && isSaving ? 'Saving...' : footerPrimaryLabel}
+          </Button>
+        </div>
       </div>
     </div>
   )

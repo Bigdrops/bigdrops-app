@@ -5,7 +5,15 @@ import { Input } from '@/components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import {
   Select,
   SelectContent,
@@ -222,19 +230,23 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
 
       {/* Create / Edit Sheet */}
       <Sheet open={!!editingFiling} onOpenChange={open => !open && setEditingFiling(null)}>
-        <SheetContent className="sm:max-w-md overflow-y-auto">
-          <SheetHeader>
+        <SheetContent className="flex h-full w-full max-w-full flex-col overflow-hidden bg-[hsl(var(--bd-card-bg))] p-0 sm:max-w-xl">
+          <SheetHeader className="border-b border-[hsl(var(--bd-border))]">
             <SheetTitle>{editingFiling?.id ? 'Edit Filing' : 'New Filing'}</SheetTitle>
+            <SheetDescription>
+              Track period dates, payment amounts, status, and references for one filing record.
+            </SheetDescription>
           </SheetHeader>
-          <div className="mt-4 space-y-3.5">
+          <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div className="space-y-4">
             {/* Tax Type */}
-            <div className="space-y-1">
-              <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Tax Type</Label>
+            <div className="space-y-2">
+              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Tax Type</Label>
               <Select
                 value={editingFiling?.tax_type ?? 'vat'}
                 onValueChange={v => setEditingFiling({ ...editingFiling, tax_type: v as TaxFilingTaxType })}
               >
-                <SelectTrigger className="rounded-lg h-9">
+                <SelectTrigger className="h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -246,21 +258,21 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
             </div>
 
             {/* Period */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Period Start</Label>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Period Start</Label>
                 <Input
                   type="date"
-                  className="h-9"
+                  className="h-10"
                   value={editingFiling?.period_start ?? ''}
                   onChange={e => setEditingFiling({ ...editingFiling, period_start: e.target.value })}
                 />
               </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Period End</Label>
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Period End</Label>
                 <Input
                   type="date"
-                  className="h-9"
+                  className="h-10"
                   value={editingFiling?.period_end ?? ''}
                   onChange={e => setEditingFiling({ ...editingFiling, period_end: e.target.value })}
                 />
@@ -268,19 +280,19 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
             </div>
 
             {/* Amounts */}
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Amount Due</Label>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Amount Due</Label>
                 <NumericInput
-                  className="h-9"
+                  className="h-10"
                   value={editingFiling?.amount_due ?? 0}
                   onChange={val => setEditingFiling({ ...editingFiling, amount_due: val })}
                 />
               </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Amount Paid</Label>
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Amount Paid</Label>
                 <NumericInput
-                  className="h-9"
+                  className="h-10"
                   value={editingFiling?.amount_paid ?? 0}
                   onChange={val => setEditingFiling({ ...editingFiling, amount_paid: val })}
                 />
@@ -288,13 +300,13 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
             </div>
 
             {/* Status */}
-            <div className="space-y-1">
-              <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Status</Label>
+            <div className="space-y-2">
+              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Status</Label>
               <Select
                 value={editingFiling?.status ?? 'draft'}
                 onValueChange={v => setEditingFiling({ ...editingFiling, status: v as TaxFilingStatus })}
               >
-                <SelectTrigger className="rounded-lg h-9">
+                <SelectTrigger className="h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -308,32 +320,32 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
             </div>
 
             {/* Submitted date */}
-            <div className="space-y-1">
-              <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Submission Date</Label>
+            <div className="space-y-2">
+              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Submission Date</Label>
               <Input
                 type="date"
-                className="h-9"
+                className="h-10"
                 value={editingFiling?.submitted_at ?? ''}
                 onChange={e => setEditingFiling({ ...editingFiling, submitted_at: e.target.value || null })}
               />
             </div>
 
             {/* References */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Receipt Ref</Label>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Receipt Reference</Label>
                 <Input
                   placeholder="e.g. RCT-0001"
-                  className="h-9"
+                  className="h-10"
                   value={editingFiling?.receipt_reference ?? ''}
                   onChange={e => setEditingFiling({ ...editingFiling, receipt_reference: e.target.value })}
                 />
               </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Portal Ref</Label>
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Portal Reference</Label>
                 <Input
                   placeholder="e.g. FIRS-2025-001"
-                  className="h-9"
+                  className="h-10"
                   value={editingFiling?.portal_reference ?? ''}
                   onChange={e => setEditingFiling({ ...editingFiling, portal_reference: e.target.value })}
                 />
@@ -341,26 +353,24 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
             </div>
 
             {/* Notes */}
-            <div className="space-y-1">
-              <Label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Notes</Label>
-              <Input
+            <div className="space-y-2">
+              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Notes</Label>
+              <Textarea
                 placeholder="Optional context..."
-                className="h-9 text-xs"
                 value={editingFiling?.notes ?? ''}
                 onChange={e => setEditingFiling({ ...editingFiling, notes: e.target.value })}
               />
             </div>
-
-            <div className="pt-3">
-              <Button
-                onClick={handleSave}
-                loading={saving}
-                className="w-full h-10 bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] text-xs font-black uppercase tracking-widest rounded-lg shadow border-[hsl(var(--bd-border))]"
-              >
-                Save Filing
-              </Button>
             </div>
           </div>
+          <SheetFooter className="border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] pb-[calc(1rem+env(safe-area-inset-bottom))] sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={() => setEditingFiling(null)} className="h-10 sm:min-w-28">
+              Cancel
+            </Button>
+            <Button onClick={handleSave} loading={saving} className="h-10 sm:min-w-32">
+              Save Filing
+            </Button>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
       <ComplianceJsonImportSheet 

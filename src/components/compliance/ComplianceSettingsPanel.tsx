@@ -1,17 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { AlertCircle, Building, Loader2, Save } from 'lucide-react'
+
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { 
-  Building, 
-  HelpCircle, 
-  Loader2, 
-  Save, 
-  AlertCircle 
-} from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/supabase'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { feedback } from '@/lib/feedback'
@@ -21,7 +15,7 @@ export default function ComplianceSettingsPanel() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState<Partial<TaxSettings>>({
-    settings_id: 1, // Global settings
+    settings_id: 1,
     tin: '',
     vat_enabled: false,
     vat_threshold: 0,
@@ -37,7 +31,7 @@ export default function ComplianceSettingsPanel() {
           .select('*')
           .eq('settings_id', 1)
           .single()
-        
+
         if (error && error.code !== 'PGRST116') throw error
         if (data) setSettings(data)
       } catch (error: any) {
@@ -46,6 +40,7 @@ export default function ComplianceSettingsPanel() {
         setLoading(false)
       }
     }
+
     void loadSettings()
   }, [])
 
@@ -54,11 +49,14 @@ export default function ComplianceSettingsPanel() {
       setSaving(true)
       const { error } = await supabase
         .from('tax_settings')
-        .upsert({ 
-          settings_id: 1, 
-          ...settings,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'settings_id' })
+        .upsert(
+          {
+            settings_id: 1,
+            ...settings,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'settings_id' }
+        )
 
       if (error) throw error
       feedback.success('Tax settings updated successfully')
@@ -71,105 +69,142 @@ export default function ComplianceSettingsPanel() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-muted-foreground">
-        <Loader2 className="h-6 w-6 animate-spin mr-2" />
-        Loading profiles...
+      <div className="flex min-h-[320px] items-center justify-center text-[hsl(var(--bd-text-muted))]">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+        Loading tax profile...
       </div>
     )
   }
 
   return (
-    <div className="space-y-4 pb-20">
-      <Card className="border-slate-200 bg-slate-50/50">
-        <CardHeader className="pb-3 border-b border-white flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-bold flex items-center gap-2">
-            <Building className="h-4 w-4 text-slate-600" />
-            Entity Tax Profile
-          </CardTitle>
-          <Button 
-            size="sm" 
-            onClick={handleSave} 
-            disabled={saving}
-            className="rounded-full h-8 px-4"
-          >
-            {saving ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Save className="h-3 w-3 mr-2" />}
-            Save Profile
-          </Button>
-        </CardHeader>
-        <CardContent className="p-4 space-y-4">
-          <div className="rounded-2xl bg-white p-5 border border-slate-100 shadow-sm space-y-6">
-            <div className="grid gap-6 sm:grid-cols-2">
+    <div className="flex h-full min-h-0 flex-col bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text))]">
+      <div className="flex-1 overflow-y-auto px-6 pb-6">
+        <div className="space-y-6">
+          <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+                <Building className="h-4 w-4" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-[hsl(var(--bd-text))]">Tax identity</h3>
+                <p className="text-xs text-[hsl(var(--bd-text-muted))]">
+                  Keep the entity tax details used across Compliance workflows.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="tin" className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
-                  TIN (Tax ID Number)
+                <Label htmlFor="tax-profile-tin" className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">
+                  TIN
                 </Label>
-                <Input 
-                  id="tin"
-                  placeholder="Not set"
+                <Input
+                  id="tax-profile-tin"
+                  placeholder="Enter tax identification number"
                   value={settings.tin || ''}
                   onChange={(e) => setSettings({ ...settings, tin: e.target.value })}
-                  className="bg-slate-50/50 border-slate-100 focus:bg-white"
+                  className="h-10"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block mb-3">
-                  VAT Status
+                <Label htmlFor="tax-profile-year-end" className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">
+                  Year-end month
                 </Label>
-                <div className="flex items-center gap-3">
-                  <Switch 
-                    id="vat-enabled"
-                    checked={settings.vat_enabled}
-                    onCheckedChange={(checked) => setSettings({ ...settings, vat_enabled: checked })}
-                  />
-                  <Label htmlFor="vat-enabled" className="text-sm font-semibold">
-                    {settings.vat_enabled ? 'VAT Registered' : 'Not VAT Registered'}
-                  </Label>
-                </div>
+                <Input
+                  id="tax-profile-year-end"
+                  value={settings.year_end_month ? String(settings.year_end_month) : ''}
+                  placeholder="Not set"
+                  readOnly
+                  className="h-10"
+                />
               </div>
+            </div>
+          </section>
 
-              <div className="space-y-2 opacity-50">
-                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">
-                  CIT Category
+          <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-[hsl(var(--bd-text))]">Registration state</h3>
+              <p className="text-xs text-[hsl(var(--bd-text-muted))]">
+                Control whether VAT-related features and filings apply to this entity.
+              </p>
+            </div>
+
+            <div className="mt-5 flex items-center justify-between gap-4 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-4 py-3">
+              <div className="space-y-1">
+                <Label htmlFor="tax-profile-vat" className="text-sm font-semibold text-[hsl(var(--bd-text))]">
+                  VAT registration
                 </Label>
-                <div className="pt-1">
-                  <Badge variant="outline" className="bg-slate-100 text-slate-600 border-slate-200">
+                <p className="text-xs text-[hsl(var(--bd-text-muted))]">
+                  {settings.vat_enabled ? 'VAT registered and active' : 'Not VAT registered'}
+                </p>
+              </div>
+              <Switch
+                id="tax-profile-vat"
+                checked={settings.vat_enabled}
+                onCheckedChange={(checked) => setSettings({ ...settings, vat_enabled: checked })}
+              />
+            </div>
+          </section>
+
+          <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-[hsl(var(--bd-text))]">Read-only tax metadata</h3>
+              <p className="text-xs text-[hsl(var(--bd-text-muted))]">
+                Reference values already attached to the current tax profile.
+              </p>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">CIT category</Label>
+                <div className="flex h-10 items-center">
+                  <Badge
+                    variant="outline"
+                    className="border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text))]"
+                  >
                     {settings.cit_category || 'small'}
                   </Badge>
                 </div>
-                <p className="text-[10px] text-muted-foreground">Currently read-only</p>
               </div>
 
-              <div className="space-y-2 opacity-50">
-                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">
-                  Year-end Month
-                </Label>
-                <div className="text-sm font-bold text-slate-800 italic pt-1">
-                  {settings.year_end_month || 'Not set'}
-                </div>
+              <div className="space-y-2">
+                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Year-end day</Label>
+                <Input
+                  value={settings.year_end_day ? String(settings.year_end_day) : ''}
+                  placeholder="Not set"
+                  readOnly
+                  className="h-10"
+                />
               </div>
             </div>
+          </section>
 
-            {!settings.tin && (
-              <div className="rounded-xl bg-amber-50 border border-amber-100 p-3 flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
-                <p className="text-[11px] text-amber-800 leading-tight">
-                  TIN is required for generating valid withholding tax (WHT) recovery documents.
+          {!settings.tin ? (
+            <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-4 py-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="mt-0.5 h-4 w-4 text-[hsl(var(--bd-status-warning-text))]" />
+                <p className="text-xs leading-relaxed text-[hsl(var(--bd-status-warning-text))]">
+                  Add a TIN to keep generated tax recovery records and compliance exports complete.
                 </p>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </section>
+          ) : null}
+        </div>
+      </div>
 
-      <Card className="border-blue-100 bg-blue-50/20">
-        <CardContent className="p-4 flex items-start gap-3">
-          <HelpCircle className="h-5 w-5 text-blue-400 mt-0.5" />
-          <div className="text-[11px] text-blue-800 leading-relaxed">
-            <span className="font-bold text-blue-900">Note:</span> These settings control tax-related features across BigDrops.
-          </div>
-        </CardContent>
-      </Card>
+      <div className="border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="h-10 rounded-[var(--bd-radius-lg)] px-4 sm:min-w-36"
+          >
+            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Save Profile
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

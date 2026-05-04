@@ -157,13 +157,13 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
   }
 
   const whtPaymentsSection = type === 'wht_receipt' && (
-    <div className="space-y-3 p-3 rounded-xl border border-slate-200 bg-white">
-       <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+    <div className="space-y-3 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
+       <div className="flex items-center gap-2 text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">
          Link to Payment
        </div>
        {whtEligiblePayments.length > 0 ? (
          <Select value={selectedPaymentId || ''} onValueChange={setSelectedPaymentId}>
-           <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg h-10 text-xs font-bold shadow-sm">
+           <SelectTrigger className="h-10 text-xs font-semibold">
              <SelectValue placeholder="Select a payment..." />
            </SelectTrigger>
            <SelectContent className="max-h-60">
@@ -171,14 +171,14 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
                 <SelectItem key={p.id} value={p.id}>
                   <div className="flex flex-col text-left">
                     <span className="font-bold">{p.client_name}</span>
-                    <span className="text-[10px] text-slate-500">{formatDisplayDate(p.date)} • {formatNaira(p.wht_amount)} WHT</span>
+                    <span className="text-[10px] text-[hsl(var(--bd-text-muted))]">{formatDisplayDate(p.date)} • {formatNaira(p.wht_amount)} WHT</span>
                   </div>
                 </SelectItem>
               ))}
            </SelectContent>
          </Select>
        ) : (
-         <div className="text-[11px] text-slate-600 font-bold bg-slate-50 p-2.5 rounded-lg border border-slate-100 italic">
+         <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-3 text-[11px] font-medium text-[hsl(var(--bd-status-danger-text))]">
            No WHT payments are available to link this receipt to yet.
          </div>
        )}
@@ -215,7 +215,7 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
         <Button 
           variant="ghost" 
           onClick={() => setParsedData(null)}
-          className="w-full h-10 text-slate-400 text-xs font-bold hover:text-slate-600"
+          className="h-10 w-full text-xs font-bold text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))]"
         >
           Clear and Start Over
         </Button>
