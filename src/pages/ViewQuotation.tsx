@@ -605,7 +605,7 @@ export default function ViewQuotation() {
               quotation={quotation}
               previewModel={quotation}
               pdfOutput={pdfOutput}
-              settingsData={settingsData}
+              settingsData={settings}
             />
           }
           onConvert={() => ui.openModal(MODAL_CONVERT)}
