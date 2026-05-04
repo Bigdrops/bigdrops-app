@@ -15,7 +15,7 @@ interface ReportsFilterBarProps {
   setClientFilter: (val: string) => void
   search: string
   setSearch: (val: string) => void
-  clients?: string[] // Optional list of clients for a dropdown if we want to expand later
+  clients?: string[]
 }
 
 export function ReportsFilterBar({
@@ -29,12 +29,11 @@ export function ReportsFilterBar({
   setClientFilter,
   search,
   setSearch,
+  clients = [],
 }: ReportsFilterBarProps) {
   return (
     <div className="flex flex-col gap-4">
-      {/* Primary Filters Row */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
-        {/* Search */}
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center">
         <div className="relative flex-1 group">
           <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[hsl(var(--bd-text-muted))] opacity-40 group-focus-within:opacity-100 transition-opacity">
             <Search size={14} />
@@ -43,7 +42,7 @@ export function ReportsFilterBar({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search report data..."
-            className="h-10 pl-10 pr-4 rounded-xl border-[hsl(var(--bd-border)/0.6)] bg-[hsl(var(--bd-surface-muted)/0.3)] text-xs font-medium placeholder:text-[hsl(var(--bd-text-muted))]/50 transition-all focus:bg-white focus:ring-4 focus:ring-[hsl(var(--bd-button-primary-bg)/0.04)]"
+            className="h-10 rounded-xl border-[hsl(var(--bd-border)/0.6)] bg-[hsl(var(--bd-surface))] pl-10 pr-4 text-xs font-medium placeholder:text-[hsl(var(--bd-text-muted))]/50 transition-all focus:bg-[hsl(var(--bd-card-bg))] focus:ring-4 focus:ring-[hsl(var(--bd-button-primary-bg)/0.08)]"
           />
           {search && (
             <button 
@@ -55,8 +54,8 @@ export function ReportsFilterBar({
           )}
         </div>
 
-        {/* Date Preset Selection */}
-        <div className="flex bg-[hsl(var(--bd-surface-muted)/0.4)] rounded-xl p-1 border border-[hsl(var(--bd-border)/0.4)]">
+        <div className="flex flex-wrap gap-3 xl:justify-end">
+          <div className="flex flex-wrap bg-[hsl(var(--bd-surface-muted)/0.4)] rounded-xl p-1 border border-[hsl(var(--bd-border)/0.4)]">
           {(['this_month', 'last_month', 'this_quarter', 'custom'] as DatePreset[]).map((p) => (
             <button
               key={p}
@@ -64,7 +63,7 @@ export function ReportsFilterBar({
               className={cn(
                 "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all",
                 datePreset === p 
-                  ? "bg-white text-[hsl(var(--bd-text))] shadow-sm" 
+                  ? "bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text))] shadow-sm" 
                   : "text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))]"
               )}
             >
@@ -72,51 +71,53 @@ export function ReportsFilterBar({
             </button>
           ))}
         </div>
+          <div className="flex min-w-[180px] items-center gap-2 rounded-xl border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface))] px-3 py-2">
+            <Users size={12} className="text-[hsl(var(--bd-text-muted))]" />
+            <select
+              value={clientFilter}
+              onChange={(e) => setClientFilter(e.target.value)}
+              className="w-full cursor-pointer bg-transparent text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--bd-text))] outline-none"
+            >
+              <option value="all">All Clients</option>
+              {clients.map((client) => (
+                <option key={client} value={client}>
+                  {client}
+                </option>
+              ))}
+            </select>
+            {clientFilter !== 'all' ? (
+              <button onClick={() => setClientFilter('all')} className="text-[hsl(var(--bd-text-muted))] transition-colors hover:text-[hsl(var(--bd-text))]">
+                <X size={10} />
+              </button>
+            ) : null}
+          </div>
+        </div>
       </div>
 
-      {/* Secondary/Custom Filters Row */}
-      {(datePreset === 'custom' || clientFilter !== 'all') && (
+      {datePreset === 'custom' ? (
         <div className="flex flex-wrap items-center gap-3 animate-in slide-in-from-top-1 duration-300">
           {datePreset === 'custom' && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-blue-100 bg-blue-50/40">
-              <Calendar size={12} className="text-blue-600" />
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 py-2">
+              <Calendar size={12} className="text-[hsl(var(--bd-text-muted))]" />
               <div className="flex items-center gap-1">
                 <input 
                   type="date" 
                   value={customStart} 
                   onChange={(e) => setCustomStart(e.target.value)}
-                  className="bg-transparent text-[10px] font-bold text-blue-700 outline-none"
+                  className="bg-transparent text-[10px] font-bold text-[hsl(var(--bd-text))] outline-none"
                 />
-                <span className="text-[10px] text-blue-300 font-black">TO</span>
+                <span className="text-[10px] font-black text-[hsl(var(--bd-text-muted))]">TO</span>
                 <input 
                   type="date" 
                   value={customEnd} 
                   onChange={(e) => setCustomEnd(e.target.value)}
-                  className="bg-transparent text-[10px] font-bold text-blue-700 outline-none"
+                  className="bg-transparent text-[10px] font-bold text-[hsl(var(--bd-text))] outline-none"
                 />
               </div>
             </div>
           )}
-
-          {/* Client Filter (Simple Version for Shell Rebuild) */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface-muted)/0.3)]">
-            <Users size={12} className="text-[hsl(var(--bd-text-muted))]" />
-            <select 
-              value={clientFilter} 
-              onChange={(e) => setClientFilter(e.target.value)}
-              className="bg-transparent text-[10px] font-bold text-[hsl(var(--bd-text))] outline-none appearance-none cursor-pointer"
-            >
-              <option value="all">All Clients</option>
-              {/* Clients will be populated by internals, shell just provides the container for now or we keep it simple */}
-            </select>
-            {clientFilter !== 'all' && (
-              <button onClick={() => setClientFilter('all')} className="ml-1 text-red-500 hover:text-red-600">
-                <X size={10} />
-              </button>
-            )}
-          </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

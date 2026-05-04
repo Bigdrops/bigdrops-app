@@ -23,17 +23,17 @@ interface SimpleMetricItem {
 }
 
 const iconTones = {
-  green: "bg-emerald-50 text-emerald-600",
-  red: "bg-red-50 text-red-600",
-  amber: "bg-amber-50 text-amber-600",
-  blue: "bg-blue-50 text-blue-600",
+  green: "bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]",
+  red: "bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]",
+  amber: "bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]",
+  blue: "bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]",
 }
 
 const iconBgTones = {
-  green: "bg-emerald-100 text-emerald-700",
-  red: "bg-red-100 text-red-700",
-  amber: "bg-amber-100 text-amber-700",
-  blue: "bg-blue-100 text-blue-700",
+  green: "bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]",
+  red: "bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]",
+  amber: "bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]",
+  blue: "bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]",
 }
 
 function SimpleMetricItemCard({ label, value, description, icon, tone = 'blue' }: SimpleMetricItem) {
@@ -69,9 +69,9 @@ function CompactMetricCard({ label, value, description, tone = 'blue', trend, su
       <div className="flex items-baseline gap-2">
         <p className={cn(
           "text-lg font-black tracking-tight leading-none",
-          tone === 'green' && "text-emerald-600",
-          tone === 'red' && "text-red-600",
-          tone === 'amber' && "text-amber-600",
+          tone === 'green' && "text-[hsl(var(--bd-status-success-text))]",
+          tone === 'red' && "text-[hsl(var(--bd-status-danger-text))]",
+          tone === 'amber' && "text-[hsl(var(--bd-status-warning-text))]",
           tone === 'blue' && "text-[hsl(var(--bd-text))]",
         )}>
           {value}
@@ -80,8 +80,8 @@ function CompactMetricCard({ label, value, description, tone = 'blue', trend, su
           <span className={cn(
             "text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full",
             trend.startsWith('+') 
-              ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
-              : "bg-red-50 text-red-600 border border-red-100"
+              ? "border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]"
+              : "border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]"
           )}>
             {trend}
           </span>

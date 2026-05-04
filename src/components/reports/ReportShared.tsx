@@ -21,14 +21,14 @@ export const dateChips: Array<{ label: string; value: DatePreset }> = [
 
 export function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-[#0F172A] p-4 text-white shadow-md">
+    <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-lg font-bold">{title}</h1>
-          <p className="mt-1 text-xs text-slate-300">{subtitle}</p>
+          <h1 className="text-lg font-bold text-[hsl(var(--bd-text))]">{title}</h1>
+          <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">{subtitle}</p>
         </div>
-        <div className="rounded-full border border-slate-700 bg-slate-800/80 p-2">
-          <FileSpreadsheet className="h-4 w-4 text-blue-300" />
+        <div className="rounded-full border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-2">
+          <FileSpreadsheet className="h-4 w-4 text-[hsl(var(--bd-status-info-text))]" />
         </div>
       </div>
     </div>
@@ -146,10 +146,15 @@ export function Filters({
 
 export function LoadingState({ label }: { label: string }) {
   return (
-    <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-6 shadow-sm text-center">
-      <SkeletonCard className="h-[72px] rounded-2xl border-0 p-0 shadow-none bg-[hsl(var(--bd-surface-muted))]" />
-      <div className="mt-4 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">Syncing {label}</div>
-      <div className="mt-4 flex justify-center">
+    <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4 shadow-sm">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <SkeletonCard className="h-[64px] rounded-[var(--bd-radius-lg)] border-0 p-0 shadow-none bg-[hsl(var(--bd-surface-muted))]" />
+        <SkeletonCard className="h-[64px] rounded-[var(--bd-radius-lg)] border-0 p-0 shadow-none bg-[hsl(var(--bd-surface-muted))]" />
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-3 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 py-2">
+        <div className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">
+          Syncing {label}
+        </div>
         <CenteredSpinner />
       </div>
     </div>

@@ -78,3 +78,43 @@ export type Metric = {
   tone: MetricTone
   icon: ReactNode
 }
+
+export type OverviewAgingBucket = {
+  key: 'current' | '1_30' | '31_60' | '61_plus'
+  label: string
+  amount: string
+  percent: number
+  tone: 'info' | 'warning' | 'danger'
+  invoiceCount: number
+}
+
+export type OverviewHighRiskRow = {
+  id: string
+  client: string
+  invoiceNumber: string
+  amount: string
+  dueDate: string
+  agingLabel: string
+  statusLabel: string
+  tone: 'info' | 'warning' | 'danger'
+}
+
+export type OverviewSummary = {
+  totalExposure: string
+  outstandingInvoices: number
+  pastDueAmount: string
+  pastDueCount: number
+  pastDuePercent: number
+  collectedAmount: string
+  collectionCount: number
+  taxPosition: string
+  vatCharged: string
+  whtReceived: string
+  projectsWithOutstanding: number
+  agingBuckets: OverviewAgingBucket[]
+  highRiskReceivables: OverviewHighRiskRow[]
+  errors: string[]
+  unsupported: {
+    tax: boolean
+  }
+}

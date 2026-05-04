@@ -84,67 +84,83 @@ export const getAgingBucket = (dueDate: string | null | undefined) => {
 export const getStatusClass = (status: string | null | undefined) => {
   switch (String(status || '').toLowerCase()) {
     case 'paid':
-      return 'bg-emerald-500 text-white'
+      return 'border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]'
     case 'past_due':
-      return 'bg-red-500 text-white'
+      return 'border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]'
     case 'partially_paid':
-      return 'bg-amber-500 text-white'
+      return 'border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]'
     case 'unpaid':
     case 'active':
     case 'current':
-      return 'bg-blue-500 text-white'
+      return 'border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]'
     case 'completed':
     case 'open':
-      return 'bg-slate-500 text-white'
+      return 'border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]'
     default:
-      return 'bg-slate-500 text-white'
+      return 'border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]'
   }
 }
 
 export const getMetricToneClasses = (tone: MetricTone) => {
   switch (tone) {
     case 'green':
-      return { card: 'border-emerald-200 bg-emerald-50/60', icon: 'bg-emerald-100 text-emerald-700', value: 'text-emerald-700' }
+      return {
+        card: 'border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))]',
+        icon: 'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]',
+        value: 'text-[hsl(var(--bd-status-success-text))]',
+      }
     case 'red':
-      return { card: 'border-red-200 bg-red-50/60', icon: 'bg-red-100 text-red-700', value: 'text-red-700' }
+      return {
+        card: 'border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))]',
+        icon: 'bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]',
+        value: 'text-[hsl(var(--bd-status-danger-text))]',
+      }
     case 'amber':
-      return { card: 'border-amber-200 bg-amber-50/70', icon: 'bg-amber-100 text-amber-700', value: 'text-amber-700' }
+      return {
+        card: 'border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))]',
+        icon: 'bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]',
+        value: 'text-[hsl(var(--bd-status-warning-text))]',
+      }
     default:
-      return { card: 'border-blue-200 bg-blue-50/60', icon: 'bg-blue-100 text-blue-700', value: 'text-blue-700' }
+      return {
+        card: 'border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))]',
+        icon: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
+        value: 'text-[hsl(var(--bd-status-info-text))]',
+      }
   }
 }
 
 export const getAgingBadgeClass = (aging: string) => {
   switch (aging) {
     case 'Current':
-      return 'bg-blue-500 text-white'
+      return 'border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]'
     case '1–30':
-      return 'bg-amber-500 text-white'
+      return 'border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]'
     case '31–60':
-      return 'bg-orange-500 text-white'
+      return 'border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]'
     case '61+':
-      return 'bg-red-500 text-white'
+      return 'border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]'
     default:
-      return 'bg-slate-500 text-white'
+      return 'border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]'
   }
 }
 
 export const getLeftBorderClass = (status: string | null | undefined) => {
   switch (String(status || '').toLowerCase()) {
     case 'paid':
-      return 'border-l-4 border-l-emerald-500'
+      return 'border-l-4 border-l-[hsl(var(--bd-status-success-border))]'
     case 'past_due':
-      return 'border-l-4 border-l-red-500'
+      return 'border-l-4 border-l-[hsl(var(--bd-status-danger-border))]'
     case 'partially_paid':
-      return 'border-l-4 border-l-amber-500'
+      return 'border-l-4 border-l-[hsl(var(--bd-status-warning-border))]'
     case 'unpaid':
     case 'active':
     case 'current':
-      return 'border-l-4 border-l-blue-500'
+      return 'border-l-4 border-l-[hsl(var(--bd-status-info-border))]'
     case 'completed':
     case 'open':
-      return 'border-l-4 border-l-slate-500'
+      return 'border-l-4 border-l-[hsl(var(--bd-border))]'
     default:
-      return 'border-l-4 border-l-slate-300'
+      return 'border-l-4 border-l-[hsl(var(--bd-border))]'
   }
 }
