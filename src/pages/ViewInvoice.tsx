@@ -95,6 +95,7 @@ export default function ViewInvoice() {
     linkedProject,
     loading,
     refresh,
+    setInvoice,
   } = useInvoiceDetailData(id)
 
   const [downloading, setDownloading] = useState(false)
@@ -114,6 +115,8 @@ export default function ViewInvoice() {
   const settingsData: any = settings || {}
 
   const customFields = useMemo(() => parseCustomFields(invoice?.custom_fields), [invoice?.custom_fields])
+  const hasParentAdvanceConfig = Boolean(customFields?.advance_invoice)
+  const visibleAdvanceInvoices = hasParentAdvanceConfig ? (Array.isArray(relatedAdvanceInvoices) ? relatedAdvanceInvoices : []) : []
   const pdfTemplateId: InvoicePdfTemplateId = normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || 'industry'
   const sourceDocument = useMemo(() => getInvoiceSourceDocument(invoice), [invoice])
   const contractValue = Math.max(0, Number(invoice?.total || 0))
@@ -193,8 +196,8 @@ export default function ViewInvoice() {
   }, [applyAdvanceDraft, ui])
 
   const openCreateAdvanceSheet = useCallback(() => {
-    if (Array.isArray(relatedAdvanceInvoices) && relatedAdvanceInvoices.length > 0) {
-      openAdvanceDetails(relatedAdvanceInvoices[0], 'view')
+    if (visibleAdvanceInvoices.length > 0) {
+      openAdvanceDetails(visibleAdvanceInvoices[0], 'view')
       return
     }
 
@@ -206,7 +209,7 @@ export default function ViewInvoice() {
     requestAnimationFrame(() => {
       ui.openSheet(SHEET_ADVANCE)
     })
-  }, [relatedAdvanceInvoices, openAdvanceDetails, resetAdvanceDraft, ui])
+  }, [visibleAdvanceInvoices, openAdvanceDetails, resetAdvanceDraft, ui])
 
   const closeAdvanceSheet = useCallback((nextOpen: boolean) => {
     if (nextOpen) {
@@ -636,16 +639,40 @@ export default function ViewInvoice() {
   }, [advancePdfGenerating, downloadInvoicePdfDocument, invoice, items, selectedAdvanceInvoice])
 
   const handleAdvanceDelete = async () => {
-    if (!selectedAdvanceInvoice?.id || advanceSaving) return
+    if (!selectedAdvanceInvoice?.id || !invoice?.id || advanceSaving) return
     setAdvanceSaving(true)
     try {
-      await deleteAdvanceInvoiceRecord(String(selectedAdvanceInvoice.id))
+      const result = await deleteAdvanceInvoiceRecord({
+        advanceInvoiceId: String(selectedAdvanceInvoice.id),
+        parentInvoiceId: String(invoice.id),
+        parentCustomFields: invoice.custom_fields,
+      })
+      setInvoice((current: any) => {
+        if (!current) return current
+        const nextCustomFields = {
+          ...parseCustomFields(current.custom_fields),
+        }
+        delete nextCustomFields.advance_invoice
+        return {
+          ...current,
+          custom_fields: nextCustomFields,
+        }
+      })
       await refresh()
       setAdvanceDeleteConfirmOpen(false)
       closeAdvanceSheet(false)
-      showToast('Advance invoice deleted', 'Advance child record removed.', 'success')
+      showToast(
+        result.status === 'deleted' ? 'Advance invoice deleted' : 'Advance invoice cleared',
+        result.status === 'deleted'
+          ? 'Advance child record removed.'
+          : (result.message || 'Advance settings were cleared from the parent invoice.'),
+        'success'
+      )
     } catch (error) {
-      showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete advance invoice')
+      const message = error instanceof Error && error.message.trim()
+        ? error.message.trim()
+        : 'Could not delete advance invoice'
+      showToast('Delete failed', message)
     } finally {
       setAdvanceSaving(false)
     }
@@ -997,7 +1024,7 @@ export default function ViewInvoice() {
             referenceLabel: payment.reference || '',
             kind: Number(payment.wht_amount || 0) > 0 && Number(payment.cash_amount || 0) === 0 ? 'wht' : 'cash',
           }))}
-          advanceInvoices={(Array.isArray(relatedAdvanceInvoices) ? relatedAdvanceInvoices : []).map((advance: any) => {
+          advanceInvoices={visibleAdvanceInvoices.map((advance: any) => {
             const rawCf = advance.custom_fields
             const cf = typeof rawCf === 'string' ? parseCustomFields(rawCf) : (rawCf || {})
             const advConfig = cf.advance_invoice || {}

@@ -22,6 +22,7 @@ export interface AdvanceConfig {
   enabled?: boolean
   mode: 'percent' | 'fixed'
   value: number
+  childInvoiceId?: string | null
   suffix?: string
   primaryLabel?: string
   secondaryLabel?: string

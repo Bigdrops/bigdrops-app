@@ -5,5 +5,5 @@
  * query.not('custom_fields', 'cs', '{"advance_invoice":{}}') or similar.
  */
 export function applyParentInvoiceFilter<T extends { or: (query: string) => any }>(query: T): T {
-  return query.or('custom_fields.is.null,custom_fields.not.ilike.%"advance_invoice"%') as unknown as T;
+  return query.or('custom_fields.is.null,custom_fields.not.ilike.%"role":"advance"%') as unknown as T;
 }

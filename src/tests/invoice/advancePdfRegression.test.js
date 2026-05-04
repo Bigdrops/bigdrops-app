@@ -27,7 +27,24 @@ test('advance invoice creation flow opens the existing child and skips duplicate
   const viewInvoiceSource = fs.readFileSync(viewInvoicePath, 'utf8')
   const viewInvoiceActionsSource = fs.readFileSync(viewInvoiceActionsPath, 'utf8')
 
-  assert.match(viewInvoiceSource, /relatedAdvanceInvoices\)\s*&&\s*relatedAdvanceInvoices\.length\s*>\s*0/)
+  assert.match(viewInvoiceSource, /visibleAdvanceInvoices\.length\s*>\s*0/)
   assert.match(viewInvoiceActionsSource, /select\('id,\s*invoice_number,\s*invoice_title,\s*total,\s*custom_fields'\)/)
   assert.match(viewInvoiceActionsSource, /return\s*\{\s*invoice:\s*existingAdvance,\s*created:\s*false\s*\}/)
+})
+
+test('advance invoice delete flow logs the real rpc error, validates the child id, and falls back to parent cleanup', () => {
+  const viewInvoiceSource = fs.readFileSync(viewInvoicePath, 'utf8')
+  const viewInvoiceActionsSource = fs.readFileSync(viewInvoiceActionsPath, 'utf8')
+
+  assert.match(viewInvoiceActionsSource, /console\.log\('advance delete id',\s*advanceInvoiceId\)/)
+  assert.match(viewInvoiceActionsSource, /console\.error\('advance delete failed',\s*error\)/)
+  assert.match(viewInvoiceActionsSource, /select\('id,\s*custom_fields'\)\s*\.eq\('id',\s*advanceInvoiceId\)/s)
+  assert.match(viewInvoiceActionsSource, /console\.error\('advance delete id mismatch',[^)]*parentInvoiceId[^)]*advanceInvoiceId/s)
+  assert.match(viewInvoiceActionsSource, /await clearParentAdvanceInvoiceConfig\(\{[^}]*parentInvoiceId[^}]*parentCustomFields/s)
+  assert.match(viewInvoiceActionsSource, /throw new Error\(getSafeAdvanceDeleteMessage\(/)
+
+  assert.match(viewInvoiceSource, /await deleteAdvanceInvoiceRecord\(\{\s*advanceInvoiceId:\s*String\(selectedAdvanceInvoice\.id\),\s*parentInvoiceId:\s*String\(invoice\.id\),\s*parentCustomFields:\s*invoice\.custom_fields,/s)
+  assert.match(viewInvoiceSource, /const hasParentAdvanceConfig = Boolean\(customFields\?\.advance_invoice\)/)
+  assert.match(viewInvoiceSource, /const visibleAdvanceInvoices = hasParentAdvanceConfig \? \(Array\.isArray\(relatedAdvanceInvoices\) \? relatedAdvanceInvoices : \[\]\) : \[\]/)
+  assert.match(viewInvoiceSource, /setInvoice\(\(current(?::\s*any)?\) => \{/)
 })

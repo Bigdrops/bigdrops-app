@@ -5,7 +5,7 @@ type InvoiceListLike = {
 } | null | undefined
 
 export const ADVANCE_INVOICE_EXCLUSION_FILTER =
-  'custom_fields.is.null,custom_fields.not.ilike.%"advance_invoice"%'
+  'custom_fields.is.null,custom_fields.not.ilike.%"role":"advance"%'
 
 export function isAdvanceInvoice(invoice: InvoiceListLike) {
   return getAdvanceConfig(invoice?.custom_fields)?.role === 'advance'
